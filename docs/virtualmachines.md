@@ -26,9 +26,19 @@ These sections outline the required steps to achieve a running virtual machine f
 Prerequisite: [KubeVirt Big Bang Package](https://repo1.dso.mil/platform-one/big-bang/apps/third-party/kubevirt) installed and running.
 
 ### Uploading
-KubeVirt supports a wide range of virtual machine image types (i.e. ova, cqow2, etc...). Firts this image needs to be made available to the operator. For this, SREs can leverage Containerized Data Importer [CDI](https://github.com/kubevirt/containerized-data-importer) to upload the image to a Persistent Volume.
+KubeVirt supports a wide range of virtual machine image types.  First this image needs to be made available to the operator. For this, SREs can leverage Containerized Data Importer [CDI](https://github.com/kubevirt/containerized-data-importer) (and [CDI Big Bang Package](https://repo1.dso.mil/platform-one/big-bang/apps/sandbox/cdi) )to upload the image to a Persistent Volume.
 
 The most immediate mechanism to upload is interacting the the CDI API via `virtctl image-upload ...`
+
+#### Options when using Zarf
+
+The options are:
+
+raw or qcow2 formatted images, via HTTP/HTTPS
+containerDisk images from a docker registry (which internally contain a raw or qcow2 image, but inside a real Docker image, with the file on a Docker layer)
+The containerDisk can be pulled by CDI itself (in which case it needs image credentials) or CDI can have the node pull the image pullMethod: node. When the node pulls the image, we did test that it can come from a Zarf registry, the Zarf image rewrite works, and Zarf imagePullSecret credentials work.
+
+This basically means that you can avoid a real "upload" step, and it can just be part of normal zarf Docker image mirroring.
 
 ### Install
 
