@@ -1,3 +1,4 @@
+
 function tranform(json: string) {
   const resource = JSON.parse(json);
   console.log(resource);

@@ -15,6 +15,7 @@ func create(r *v1.AdmissionRequest) (*operations.Result, error) {
 	var patchOperations []operations.PatchOperation
 
 	// todo: parse r.Object.Raw and add patchOperations to it
+	message.Debug(r)
 
 	return &operations.Result{
 		Allowed:  true,

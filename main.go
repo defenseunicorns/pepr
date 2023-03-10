@@ -1,10 +1,22 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 package main
 
-import "github.com/defenseunicorns/pepr/cmd"
+import (
+	"embed"
+
+	"github.com/defenseunicorns/pepr/cmd"
+	"github.com/defenseunicorns/pepr/pkg/setup"
+)
+
+//go:embed all:sdk/*
+var sdkFiles embed.FS
 
 func main() {
+
+	// Store the embedded sdk files as a pointer for later use.
+	setup.StoreSDK(&sdkFiles)
+
+	// Execute the root command.
 	cmd.Execute()
 }
