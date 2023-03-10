@@ -5,12 +5,13 @@
 package setup
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-func writeSDK() error {
+func writeSDK(base string) error {
 	if sdkFiles == nil {
 		return ErrMissingSDKFiles
 	}
@@ -20,18 +21,27 @@ func writeSDK() error {
 		if err != nil {
 			return err
 		}
+
+		// Change sdk -> .sdk for all paths
+		orgPath := path
+		if path != "." {
+			path = fmt.Sprintf(".%s", path)
+		}
+
 		if d.IsDir() {
 			// Create a corresponding directory in the output directory.
-			outputSubdir := filepath.Join(dir, path)
+			outputSubdir := filepath.Join(base, path)
 			return os.MkdirAll(outputSubdir, 0755)
 		}
+
 		// Read the file contents from the embedded filesystem.
-		fileContents, err := sdkFiles.ReadFile(path)
+		fileContents, err := sdkFiles.ReadFile(orgPath)
 		if err != nil {
 			return err
 		}
+
 		// Write the file to the output directory.
-		outputPath := filepath.Join(dir, path)
+		outputPath := filepath.Join(base, path)
 		return os.WriteFile(outputPath, fileContents, 0644)
 	})
 }

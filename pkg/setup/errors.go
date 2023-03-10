@@ -7,5 +7,6 @@ package setup
 import "errors"
 
 var (
-	ErrMissingSDKFiles = errors.New("missing sdk files")
+	ErrMissingSDKFiles  = errors.New("missing sdk files")
+	ErrCapabilityExists = errors.New("capability already exists")
 )

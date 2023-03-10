@@ -10,22 +10,22 @@ import (
 	"github.com/defenseunicorns/pepr/pkg/webhook"
 )
 
-var internalCmd = &cobra.Command{
-	Use:    "internal",
-	Short:  "Internal commands for Pepr",
-	Hidden: true,
-}
-
-// buildCmd represents the build command
-var internalStartWebhook = &cobra.Command{
-	Use:   "start-webhook",
-	Short: "Start the webhook server",
-	Run: func(cmd *cobra.Command, args []string) {
-		webhook.StartWebhook()
-	},
-}
-
 func init() {
+	var internalCmd = &cobra.Command{
+		Use:    "internal",
+		Short:  "Internal commands for Pepr",
+		Hidden: true,
+	}
+
+	// buildCmd represents the build command
+	var internalStartWebhook = &cobra.Command{
+		Use:   "start-webhook",
+		Short: "Start the webhook server",
+		Run: func(cmd *cobra.Command, args []string) {
+			webhook.StartWebhook()
+		},
+	}
+
 	rootCmd.AddCommand(internalCmd)
 	internalCmd.AddCommand(internalStartWebhook)
 }

@@ -16,29 +16,44 @@ import (
 
 var (
 	sdkFiles *embed.FS
-	// The pepr sdk sits in ~/.pepr/sdk
-	dir = path.Join(os.Getenv("HOME"), ".pepr", "sdk")
 )
 
 func New(name, base string) error {
-	// Ensure the directory exists.
-	if err := utils.CreateDirectory(dir, 0755); err != nil {
-		return err
-	}
-
-	// Copy the sdkFiles to the new directory.
-	if err := writeSDK(); err != nil {
-		return err
-	}
-
 	// Convert the name to all lowercase and replace spaces with dashes.
-	name = sanitizeString(name)
+	namePath := sanitizeString(name)
+	p := path.Join(base, namePath)
 
-	// Create the new capability.
-	p := path.Join(base, name)
+	// Ensure the capability doesn't already exist.
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		return ErrCapabilityExists
+	}
 
-	// Ensure the capability directory exists.
+	// Ensure the directory exists.
+	if err := utils.CreateDirectory(base, 0755); err != nil {
+		return err
+	}
+
+	// Create the tsconfig.json file if it doesn't exist.
+	tsconfigPath := path.Join(base, "tsconfig.json")
+	if _, err := os.Stat(tsconfigPath); os.IsNotExist(err) {
+		if err := utils.WriteFile(tsconfigPath, tsconfigTemplate()); err != nil {
+			return err
+		}
+	}
+
+	// Copy the sdkFiles to the base directory.
+	if err := writeSDK(base); err != nil {
+		return err
+	}
+
+	// Create the capability directory exists.
 	if err := utils.CreateDirectory(p, 0755); err != nil {
+		return err
+	}
+
+	entryPath := path.Join(p, "index.ts")
+	entryTs := entryTemplate(name)
+	if err := utils.WriteFile(entryPath, entryTs); err != nil {
 		return err
 	}
 
