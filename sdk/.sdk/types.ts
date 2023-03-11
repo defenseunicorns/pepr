@@ -27,9 +27,9 @@ export type Config = {
      *
      * This example will ignore any resources with the label `my-label=ulta-secret`.
      *
-     * @example
      * ```
-     * labels: ["my-label=ulta-secret"]
+     * alwaysIgnore:
+     *   labels: ["my-label=ulta-secret"]
      * ```
      */
     labels?: string[];
