@@ -18,7 +18,7 @@ func (b *Build) Compress() error {
 	writer := gzip.NewWriter(&buf)
 
 	// Write the byte array to the gzip writer.
-	_, err := writer.Write(b.Result.Code)
+	_, err := writer.Write(b.Transpiled)
 	if err != nil {
 		return err
 	}
@@ -31,6 +31,11 @@ func (b *Build) Compress() error {
 	// Write the compressed bytes to the build object and calculate the hash.
 	b.Compressed = buf.Bytes()
 	b.Hash = sha1.Sum(b.Compressed)
+
+	// Check if the code is too large to be stored in a secret.
+	if len(b.Compressed) > 950*1024 {
+		return ErrTooLarge
+	}
 
 	return nil
 }

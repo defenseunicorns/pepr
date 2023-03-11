@@ -13,7 +13,7 @@ import (
 func New(b *builder.Build) *Script {
 	return &Script{
 		path: b.Path,
-		code: string(b.Result.Code),
+		code: string(b.Transpiled),
 	}
 }
 

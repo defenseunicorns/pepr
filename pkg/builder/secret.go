@@ -6,6 +6,7 @@ package builder
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	corev1 "k8s.io/api/core/v1"
@@ -41,6 +42,9 @@ func (b *Build) CreateSecret() error {
 	}
 
 	message.Debugf("Secret generated:\n\n%s\n", string(out))
+
+	// write out to a file
+	_ = os.WriteFile("secret.yaml", out, 0644)
 
 	// Store the secret data in the final output
 	b.Output[OutSecret] = out

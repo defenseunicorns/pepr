@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1Pod } from "@models";
+import { V1ObjectMeta, V1Pod } from "@models";
+let meta: V1ObjectMeta = {
+  name: "test",
+};
 
-const thing = new V1Pod();
+let pod: V1Pod = {
+  metadata: meta,
+};
 
-thing.metadata.name = "hello";
+mutate("test", pod);
 
 export function mutate(name: string, options: any) {}

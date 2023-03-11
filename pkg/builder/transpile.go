@@ -5,40 +5,47 @@
 package builder
 
 import (
-	"os"
 	"path/filepath"
 
+	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/evanw/esbuild/pkg/api"
 )
 
 // TranspileAndPack converts a source file to a Build Result.
 func (b *Build) TranspileAndPack(path string) error {
 
-	var loader api.Loader
+	// Get the path to the tsconfig.json file.
+	tsconfigPath := filepath.Join(filepath.Dir(b.Path), "..", "tsconfig.json")
 
-	// Switch on file extension to determine the loader.
-	switch ext := filepath.Ext(b.Path); ext {
-	case ".ts":
-		loader = api.LoaderTS
-	case ".js":
-		loader = api.LoaderJS
-	default:
-		return ErrInvalidExt
-	}
-
-	// Read the file contents.
-	rawCode, err := os.ReadFile(b.Path)
-	if err != nil {
-		return err
-	}
-
-	// Compile the code with esbuild.
-	b.Result = api.Transform(string(rawCode), api.TransformOptions{
-		Loader: loader,
+	// Perform transpile -> bundle -> minify (whitspace).
+	out := api.Build(api.BuildOptions{
+		Bundle:           true,
+		MinifyWhitespace: true,
+		EntryPoints:      []string{b.Path},
+		Loader: map[string]api.Loader{
+			".js": api.LoaderJS,
+			".ts": api.LoaderTS,
+		},
+		// Platform: api.PlatformNode,
+		Tsconfig: tsconfigPath,
 	})
 
 	// Fail if there are any errors.
-	if len(b.Result.Errors) > 0 {
+	if len(out.Errors) > 0 {
+		message.Debug(out)
+		return ErrCompileFail
+	}
+
+	// Fail if there are no output files.
+	if len(out.OutputFiles) < 1 {
+		return ErrCompileFail
+	}
+
+	// Store the contents of esbuild.
+	b.Transpiled = out.OutputFiles[0].Contents
+
+	// There should be content from the build.
+	if len(b.Transpiled) < 100 {
 		return ErrCompileFail
 	}
 
