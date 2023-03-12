@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "paths": {
+      "@pepr": [".sdk"],
+      "@k8s/*": [".sdk/k8s/*"],
+      "@models": [".sdk/k8s-models/gen/model/models"]
+    },
+    "strict": true
+  }
+}

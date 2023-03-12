@@ -9,4 +9,5 @@ import "errors"
 var (
 	ErrInvalidExt  = errors.New("invalid extension")
 	ErrCompileFail = errors.New("failed to compile")
+	ErrTooLarge    = errors.New("the built capabilities are too large, must be < 950KBs compressed")
 )

@@ -4,13 +4,9 @@
 // builder package contains the esbuild wrapper for building Pepr capabilities.
 package builder
 
-import (
-	"github.com/evanw/esbuild/pkg/api"
-)
-
 type Build struct {
 	Path       string
-	Result     api.TransformResult
+	Transpiled []byte
 	Compressed []byte
 	Hash       [20]byte
 	Output     map[string][]byte

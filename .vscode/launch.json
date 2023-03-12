@@ -11,9 +11,9 @@
       "mode": "debug",
       "program": "${workspaceFolder}/main.go",
       "args": [
-        "new",
-        "thing",
-        "-d=demo"
+        "build",
+        "doug/service-mesh/index.ts",
+        "-l=trace"
       ]
     }
   ]
