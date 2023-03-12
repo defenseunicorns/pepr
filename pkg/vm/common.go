@@ -16,7 +16,7 @@ import (
 func New(b *builder.Build) *Script {
 	return &Script{
 		path: b.Path,
-		code: string(b.Result.Code),
+		code: string(b.Transpiled),
 	}
 }
 
@@ -56,7 +56,7 @@ func (s *Script) Run(payload []byte) (*v8.Value, func(), error) {
 		return nil, ctx.Close, err
 	}
 
-	out, err := ctx.RunScript("transform(__pepr_payload)", "main.js")
+	out, err := ctx.RunScript("global.transform(__pepr_payload)", "main.js")
 	if err != nil {
 		fmt.Println(err)
 	}

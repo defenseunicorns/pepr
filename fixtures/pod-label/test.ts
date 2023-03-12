@@ -1,5 +1,4 @@
-
-function transform(json: string) {
+export function transform(json: string) {
   const resource = JSON.parse(json);
 
   resource.metadata.labels["example"] = "test-value";

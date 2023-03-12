@@ -45,7 +45,7 @@ func init() {
 				message.Fatalf(err, "Failed to build the capabilites at %s (%s)", path, err)
 			}
 
-			message.Debugf("Successfully built the capabilities at %s:\n\n%s", path, string(b.Result.Code))
+			message.Debugf("Successfully built the capabilities at %s:\n\n%s", path, string(b.Transpiled))
 
 			script := vm.New(b)
 
