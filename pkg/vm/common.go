@@ -52,7 +52,7 @@ func (s *Script) Run(payload []byte) (*v8.Value, func(), error) {
 	// Run the script.
 	_, err = script.Run(ctx)
 	if err != nil {
-		return nil, ctx.Close, err
+		return nil, iso.Dispose, err
 	}
 
 	out, err := ctx.RunScript("global.transform(__pepr_payload)", "main.js")
