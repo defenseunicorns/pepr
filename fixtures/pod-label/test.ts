@@ -1,9 +1,10 @@
 
-function tranform(json: string) {
+function transform(json: string) {
   const resource = JSON.parse(json);
-  console.log(resource);
 
   resource.metadata.labels["example"] = "test-value";
+
+  console.log("LOG FROM V8")
 
   return JSON.stringify(resource);
 }
