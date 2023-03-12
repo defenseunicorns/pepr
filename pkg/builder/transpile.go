@@ -5,6 +5,8 @@
 package builder
 
 import (
+	"path/filepath"
+
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/evanw/esbuild/pkg/api"
 )
@@ -13,7 +15,7 @@ import (
 func (b *Build) TranspileAndPack(path string) error {
 
 	// Get the path to the tsconfig.json file.
-	// tsconfigPath := filepath.Join(filepath.Dir(b.Path), "..", "tsconfig.json")
+	tsconfigPath := filepath.Join(filepath.Dir(b.Path), "..", "tsconfig.json")
 
 	// Perform transpile -> bundle -> minify (whitspace).
 	out := api.Build(api.BuildOptions{
@@ -26,7 +28,7 @@ func (b *Build) TranspileAndPack(path string) error {
 		},
 		GlobalName: "global",
 		// Platform: api.PlatformNode,
-		// Tsconfig: tsconfigPath,
+		Tsconfig: tsconfigPath,
 	})
 
 	// Fail if there are any errors.
