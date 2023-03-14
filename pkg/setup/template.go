@@ -8,21 +8,12 @@ import (
 	"fmt"
 )
 
-func tsconfigTemplate() []byte {
-	return []byte(`{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@pepr": [".sdk"]
-    }
-  }
-}
-`)
+func gitIgnoreTemplate() []byte {
+	text := "# Ignore the .sdk folder, use `pepr setup` command to recreate\n.sdk/\n"
+	return []byte(text)
 }
 
 func entryTemplate(name string) []byte {
 	text := fmt.Sprintf("// Pepr Capability: %s\nimport Pepr from '@pepr';", name)
-
-	// Return the text as a byte slice.
 	return []byte(text)
 }
