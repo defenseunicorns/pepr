@@ -11,7 +11,9 @@ export enum HookPhase {
   valdiate = "validate",
 }
 
-export type MutateBinding = {};
+export interface MutateBinding {
+  (): void;
+}
 
 export interface CapabilityCfg {
   /**

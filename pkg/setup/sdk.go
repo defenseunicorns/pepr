@@ -6,19 +6,23 @@ package setup
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/defenseunicorns/zarf/src/pkg/utils"
 )
 
 var (
-	sdkFiles *embed.FS
+	sdkFiles  *embed.FS
+	baseFiles *embed.FS
 )
+
+// StoreBase stores the base files in memory.
+func StoreBase(files *embed.FS) {
+	baseFiles = files
+}
 
 // StoreSDK stores the SDK files in memory.
 func StoreSDK(files *embed.FS) {
@@ -32,6 +36,11 @@ func SyncSDK(base string) error {
 		return err
 	}
 
+	// Check if the base files and SDK files are present.
+	if baseFiles == nil || sdkFiles == nil {
+		return ErrMissingSDKFiles
+	}
+
 	// Check if the .gitignore file exists.
 	ignorePath := path.Join(base, ".gitignore")
 	if utils.InvalidPath(ignorePath) {
@@ -41,28 +50,24 @@ func SyncSDK(base string) error {
 		}
 	}
 
-	if sdkFiles == nil {
-		return ErrMissingSDKFiles
+	// Writ the example.ts and tsconfig.json files to the base directory.
+	if err := writeBaseFile(base, "example.ts"); err != nil {
+		return err
+	}
+
+	if err := writeBaseFile(base, "tsconfig.json"); err != nil {
+		return err
 	}
 
 	// Walk the directory tree and copy the files to the output directory.
-	return fs.WalkDir(sdkFiles, "sdk", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(sdkFiles, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if path == "sdk" {
-			// Skip the root directory.
-			return nil
-		}
-
-		// Remove the first directory from the path, respecting the OS path separator.
-		prefix := fmt.Sprintf("sdk%c", filepath.Separator)
-		strippedPath := strings.TrimPrefix(path, prefix)
-
 		if d.IsDir() {
 			// Create a corresponding directory in the output directory.
-			outputSubdir := filepath.Join(base, strippedPath)
+			outputSubdir := filepath.Join(base, path)
 			return os.MkdirAll(outputSubdir, 0755)
 		}
 
@@ -73,8 +78,22 @@ func SyncSDK(base string) error {
 		}
 
 		// Write the file to the output directory.
-		outputPath := filepath.Join(base, strippedPath)
+		outputPath := filepath.Join(base, path)
 		return os.WriteFile(outputPath, fileContents, 0644)
 	})
 
+}
+
+func writeBaseFile(base, name string) error {
+	b, err := baseFiles.ReadFile(name)
+	if err != nil {
+		return err
+	}
+
+	p := path.Join(base, name)
+	if err := utils.WriteFile(p, b); err != nil {
+		return err
+	}
+
+	return nil
 }

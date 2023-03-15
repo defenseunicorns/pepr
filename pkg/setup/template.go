@@ -9,7 +9,7 @@ import (
 )
 
 func gitIgnoreTemplate() []byte {
-	text := "# Ignore the .sdk folder, use `pepr setup` command to recreate\n.sdk/\n"
+	text := "# Ignore the sdk folder, use `pepr setup` command to recreate\nsdk/\n"
 	return []byte(text)
 }
 

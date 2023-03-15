@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { CapabilityCfg, HookPhase } from "./types";
+import { AdmissionRequest } from "@k8s";
+import { CapabilityCfg, HookPhase, MutateBinding } from "./types";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -35,9 +36,27 @@ export class Capability implements CapabilityCfg {
     this._namespaces = cfg.namespaces;
   }
 
-  RegisterCreate() {}
+  From(kind: string) {
+    return this;
+  }
 
-  RegisterUpdate() {}
+  IsCreated() {
+    return this;
+  }
 
-  RegisterDelete() {}
+  Mutate(binding: (request: AdmissionRequest) => void) {}
+
+  When(kind: string) {
+    return this;
+  }
+
+  OnCreate(kind: string) {
+    return this;
+  }
+
+  RegisterCreate(binding: (request: AdmissionRequest) => void) {}
+
+  RegisterUpdate(binding: MutateBinding) {}
+
+  RegisterDelete(binding: MutateBinding) {}
 }

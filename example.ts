@@ -14,12 +14,3 @@ let c = new Pepr.Capability({
   name: "example-thing",
   description: "Add some cool words here",
 });
-
-// WIP decide how to do the registration stuffs
-c.RegisterCreate();
-c.RegisterCreate();
-
-c.RegisterUpdate();
-c.RegisterUpdate();
-
-c.RegisterDelete();
