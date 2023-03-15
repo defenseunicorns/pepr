@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Capability, Config } from "./types";
+import { Capability } from "./capability";
+import { Config } from "./types";
 
 const defaultConfig: Config = {
   alwaysIgnore: {
@@ -28,10 +29,12 @@ export class State {
     this._state = [];
 
     this._config.alwaysIgnore.kinds?.forEach((kind) => {
-      this.register({ name: kind, description: "Always ignore" });
+      // this.register({ name: kind, description: "Always ignore" });
     });
 
     this._config.alwaysIgnore.labels;
+
+    let c = new Capability({ name: "test", description: "test" });
   }
 
   register(capability: Capability) {

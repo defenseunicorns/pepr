@@ -7,4 +7,19 @@ NOTE: This file will be overwritten by the `pepr setup` command and should only 
 reference for ways to use the Pepr SDK. If you want to generate a new capability, run the
 `pepr new` command.
 */
+// Pepr Capability: example-thing
 import Pepr from "@pepr";
+
+let c = new Pepr.Capability({
+  name: "example-thing",
+  description: "Add some cool words here",
+});
+
+// WIP decide how to do the registration stuffs
+c.RegisterCreate();
+c.RegisterCreate();
+
+c.RegisterUpdate();
+c.RegisterUpdate();
+
+c.RegisterDelete();

@@ -8,6 +8,7 @@
       "@k8s/*": [".sdk/k8s/*"],
       "@models": [".sdk/k8s-models/gen/model/models"]
     },
-    "strict": true
+    "strict": true,
+    "target": "ES2022"
   }
 }
