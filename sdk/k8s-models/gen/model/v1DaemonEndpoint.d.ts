@@ -12,7 +12,7 @@
 /**
 * DaemonEndpoint contains information about a single Daemon endpoint.
 */
-export declare class V1DaemonEndpoint {
+export declare class DaemonEndpoint {
     /**
     * Port number of the given endpoint.
     */

@@ -12,7 +12,7 @@
 /**
 * APIServiceCondition describes the state of an APIService at a particular point
 */
-export declare class V1APIServiceCondition {
+export declare class APIServiceCondition {
     /**
     * Last time the condition transitioned from one status to another.
     */

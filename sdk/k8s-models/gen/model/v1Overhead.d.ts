@@ -12,7 +12,7 @@
 /**
 * Overhead structure represents the resource overhead associated with running a pod.
 */
-export declare class V1Overhead {
+export declare class Overhead {
     /**
     * PodFixed represents the fixed resource overhead associated with running a pod.
     */

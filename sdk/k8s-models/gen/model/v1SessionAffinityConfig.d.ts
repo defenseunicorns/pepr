@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ClientIPConfig } from './v1ClientIPConfig';
+import { ClientIPConfig } from './v1ClientIPConfig';
 /**
 * SessionAffinityConfig represents the configurations of session affinity.
 */
-export declare class V1SessionAffinityConfig {
-    'clientIP'?: V1ClientIPConfig;
+export declare class SessionAffinityConfig {
+    'clientIP'?: ClientIPConfig;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

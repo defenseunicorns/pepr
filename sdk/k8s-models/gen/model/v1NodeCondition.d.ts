@@ -12,7 +12,7 @@
 /**
 * NodeCondition contains condition information for a node.
 */
-export declare class V1NodeCondition {
+export declare class NodeCondition {
     /**
     * Last time we got an update on a given condition.
     */

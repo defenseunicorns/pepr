@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NodeConfigSource } from './v1NodeConfigSource';
-import { V1Taint } from './v1Taint';
+import { NodeConfigSource } from './v1NodeConfigSource';
+import { Taint } from './v1Taint';
 /**
 * NodeSpec describes the attributes that a node is created with.
 */
-export declare class V1NodeSpec {
-    'configSource'?: V1NodeConfigSource;
+export declare class NodeSpec {
+    'configSource'?: NodeConfigSource;
     /**
     * Deprecated. Not all kubelets will set this field. Remove field after 1.13. see: https://issues.k8s.io/61966
     */
@@ -35,7 +35,7 @@ export declare class V1NodeSpec {
     /**
     * If specified, the node\'s taints.
     */
-    'taints'?: Array<V1Taint>;
+    'taints'?: Array<Taint>;
     /**
     * Unschedulable controls node schedulability of new pods. By default, node is schedulable. More info: https://kubernetes.io/docs/concepts/nodes/node/#manual-node-administration
     */

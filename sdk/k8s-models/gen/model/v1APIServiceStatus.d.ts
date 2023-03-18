@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1APIServiceCondition } from './v1APIServiceCondition';
+import { APIServiceCondition } from './v1APIServiceCondition';
 /**
 * APIServiceStatus contains derived information about an API server
 */
-export declare class V1APIServiceStatus {
+export declare class APIServiceStatus {
     /**
     * Current service state of apiService.
     */
-    'conditions'?: Array<V1APIServiceCondition>;
+    'conditions'?: Array<APIServiceCondition>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

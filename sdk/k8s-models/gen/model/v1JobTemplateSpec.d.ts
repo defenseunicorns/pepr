@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1JobSpec } from './v1JobSpec';
-import { V1ObjectMeta } from './v1ObjectMeta';
+import { JobSpec } from './v1JobSpec';
+import { ObjectMeta } from './v1ObjectMeta';
 /**
 * JobTemplateSpec describes the data a Job should have when created from a template
 */
-export declare class V1JobTemplateSpec {
-    'metadata'?: V1ObjectMeta;
-    'spec'?: V1JobSpec;
+export declare class JobTemplateSpec {
+    'metadata'?: ObjectMeta;
+    'spec'?: JobSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

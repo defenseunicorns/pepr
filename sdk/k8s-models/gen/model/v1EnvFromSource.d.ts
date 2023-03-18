@@ -9,18 +9,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ConfigMapEnvSource } from './v1ConfigMapEnvSource';
-import { V1SecretEnvSource } from './v1SecretEnvSource';
+import { ConfigMapEnvSource } from './v1ConfigMapEnvSource';
+import { SecretEnvSource } from './v1SecretEnvSource';
 /**
 * EnvFromSource represents the source of a set of ConfigMaps
 */
-export declare class V1EnvFromSource {
-    'configMapRef'?: V1ConfigMapEnvSource;
+export declare class EnvFromSource {
+    'configMapRef'?: ConfigMapEnvSource;
     /**
     * An optional identifier to prepend to each key in the ConfigMap. Must be a C_IDENTIFIER.
     */
     'prefix'?: string;
-    'secretRef'?: V1SecretEnvSource;
+    'secretRef'?: SecretEnvSource;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

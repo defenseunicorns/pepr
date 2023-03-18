@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1VolumeNodeResources } from './v1VolumeNodeResources';
+import { VolumeNodeResources } from './v1VolumeNodeResources';
 /**
 * CSINodeDriver holds information about the specification of one CSI driver installed on a node
 */
-export declare class V1CSINodeDriver {
-    'allocatable'?: V1VolumeNodeResources;
+export declare class CSINodeDriver {
+    'allocatable'?: VolumeNodeResources;
     /**
     * This is the name of the CSI driver that this object refers to. This MUST be the same name returned by the CSI GetPluginName() call for that driver.
     */

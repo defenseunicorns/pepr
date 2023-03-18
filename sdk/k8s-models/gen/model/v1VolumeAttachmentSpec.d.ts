@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1VolumeAttachmentSource } from './v1VolumeAttachmentSource';
+import { VolumeAttachmentSource } from './v1VolumeAttachmentSource';
 /**
 * VolumeAttachmentSpec is the specification of a VolumeAttachment request.
 */
-export declare class V1VolumeAttachmentSpec {
+export declare class VolumeAttachmentSpec {
     /**
     * Attacher indicates the name of the volume driver that MUST handle this request. This is the name returned by GetPluginName().
     */
@@ -22,7 +22,7 @@ export declare class V1VolumeAttachmentSpec {
     * The node that the volume should be attached to.
     */
     'nodeName': string;
-    'source': V1VolumeAttachmentSource;
+    'source': VolumeAttachmentSource;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

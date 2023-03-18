@@ -12,7 +12,7 @@
 /**
 * RuleWithOperations is a tuple of Operations and Resources. It is recommended to make sure that all the tuple expansions are valid.
 */
-export declare class V1RuleWithOperations {
+export declare class RuleWithOperations {
     /**
     * APIGroups is the API groups the resources belong to. \'*\' is all groups. If \'*\' is present, the length of the slice must be one. Required.
     */

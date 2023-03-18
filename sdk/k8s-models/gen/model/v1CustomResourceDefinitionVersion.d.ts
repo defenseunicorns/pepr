@@ -9,17 +9,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1CustomResourceColumnDefinition } from './v1CustomResourceColumnDefinition';
-import { V1CustomResourceSubresources } from './v1CustomResourceSubresources';
-import { V1CustomResourceValidation } from './v1CustomResourceValidation';
+import { CustomResourceColumnDefinition } from './v1CustomResourceColumnDefinition';
+import { CustomResourceSubresources } from './v1CustomResourceSubresources';
+import { CustomResourceValidation } from './v1CustomResourceValidation';
 /**
 * CustomResourceDefinitionVersion describes a version for CRD.
 */
-export declare class V1CustomResourceDefinitionVersion {
+export declare class CustomResourceDefinitionVersion {
     /**
     * additionalPrinterColumns specifies additional columns returned in Table output. See https://kubernetes.io/docs/reference/using-api/api-concepts/#receiving-resources-as-tables for details. If no columns are specified, a single column displaying the age of the custom resource is used.
     */
-    'additionalPrinterColumns'?: Array<V1CustomResourceColumnDefinition>;
+    'additionalPrinterColumns'?: Array<CustomResourceColumnDefinition>;
     /**
     * deprecated indicates this version of the custom resource API is deprecated. When set to true, API requests to this version receive a warning header in the server response. Defaults to false.
     */
@@ -32,7 +32,7 @@ export declare class V1CustomResourceDefinitionVersion {
     * name is the version name, e.g. “v1”, “v2beta1”, etc. The custom resources are served under this version at `/apis/<group>/<version>/...` if `served` is true.
     */
     'name': string;
-    'schema'?: V1CustomResourceValidation;
+    'schema'?: CustomResourceValidation;
     /**
     * served is a flag enabling/disabling this version from being served via REST APIs
     */
@@ -41,7 +41,7 @@ export declare class V1CustomResourceDefinitionVersion {
     * storage indicates this version should be used when persisting custom resources to storage. There must be exactly one version with storage=true.
     */
     'storage': boolean;
-    'subresources'?: V1CustomResourceSubresources;
+    'subresources'?: CustomResourceSubresources;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

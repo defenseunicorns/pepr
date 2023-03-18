@@ -12,7 +12,7 @@
 /**
 * ResourceRequirements describes the compute resource requirements.
 */
-export declare class V1ResourceRequirements {
+export declare class ResourceRequirements {
     /**
     * Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     */

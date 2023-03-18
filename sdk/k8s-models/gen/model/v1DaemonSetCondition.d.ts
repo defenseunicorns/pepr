@@ -12,7 +12,7 @@
 /**
 * DaemonSetCondition describes the state of a DaemonSet at a certain point.
 */
-export declare class V1DaemonSetCondition {
+export declare class DaemonSetCondition {
     /**
     * Last time the condition transitioned from one status to another.
     */

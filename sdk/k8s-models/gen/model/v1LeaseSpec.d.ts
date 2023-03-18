@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1MicroTime } from '../../types';
+import { MicroTime } from '../../types';
 /**
 * LeaseSpec is a specification of a Lease.
 */
-export declare class V1LeaseSpec {
+export declare class LeaseSpec {
     /**
     * MicroTime is version of Time with microsecond level precision.
     */
-    'acquireTime'?: V1MicroTime;
+    'acquireTime'?: MicroTime;
     /**
     * holderIdentity contains the identity of the holder of a current lease.
     */
@@ -33,7 +33,7 @@ export declare class V1LeaseSpec {
     /**
     * MicroTime is version of Time with microsecond level precision.
     */
-    'renewTime'?: V1MicroTime;
+    'renewTime'?: MicroTime;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

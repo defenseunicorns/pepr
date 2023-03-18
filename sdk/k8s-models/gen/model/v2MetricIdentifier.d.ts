@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LabelSelector } from './v1LabelSelector';
+import { LabelSelector } from './v1LabelSelector';
 /**
 * MetricIdentifier defines the name and optionally selector for a metric
 */
-export declare class V2MetricIdentifier {
+export declare class MetricIdentifier {
     /**
     * name is the name of the given metric
     */
     'name': string;
-    'selector'?: V1LabelSelector;
+    'selector'?: LabelSelector;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

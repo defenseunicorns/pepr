@@ -12,7 +12,7 @@
 /**
 * NonResourceAttributes includes the authorization attributes available for non-resource requests to the Authorizer interface
 */
-export declare class V1NonResourceAttributes {
+export declare class NonResourceAttributes {
     /**
     * Path is the URL path of the request
     */

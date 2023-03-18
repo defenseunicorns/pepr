@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1JSONSchemaProps } from './v1JSONSchemaProps';
+import { JSONSchemaProps } from './v1JSONSchemaProps';
 /**
 * CustomResourceValidation is a list of validation methods for CustomResources.
 */
-export declare class V1CustomResourceValidation {
-    'openAPIV3Schema'?: V1JSONSchemaProps;
+export declare class CustomResourceValidation {
+    'openAPIV3Schema'?: JSONSchemaProps;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

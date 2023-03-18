@@ -12,7 +12,7 @@
 /**
 * SecretKeySelector selects a key of a Secret.
 */
-export declare class V1SecretKeySelector {
+export declare class SecretKeySelector {
     /**
     * The key of the secret to select from.  Must be a valid secret key.
     */

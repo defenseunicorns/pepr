@@ -12,7 +12,7 @@
 /**
 * Local represents directly-attached storage with node affinity (Beta feature)
 */
-export declare class V1LocalVolumeSource {
+export declare class LocalVolumeSource {
     /**
     * fsType is the filesystem type to mount. It applies only when the Path is a block device. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". The default value is to auto-select a filesystem if unspecified.
     */

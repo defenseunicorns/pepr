@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1RollingUpdateStatefulSetStrategy } from './v1RollingUpdateStatefulSetStrategy';
+import { RollingUpdateStatefulSetStrategy } from './v1RollingUpdateStatefulSetStrategy';
 /**
 * StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.
 */
-export declare class V1StatefulSetUpdateStrategy {
-    'rollingUpdate'?: V1RollingUpdateStatefulSetStrategy;
+export declare class StatefulSetUpdateStrategy {
+    'rollingUpdate'?: RollingUpdateStatefulSetStrategy;
     /**
     * Type indicates the type of the StatefulSetUpdateStrategy. Default is RollingUpdate.
     */

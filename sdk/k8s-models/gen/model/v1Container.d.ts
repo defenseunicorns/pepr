@@ -9,19 +9,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ContainerPort } from './v1ContainerPort';
-import { V1EnvFromSource } from './v1EnvFromSource';
-import { V1EnvVar } from './v1EnvVar';
-import { V1Lifecycle } from './v1Lifecycle';
-import { V1Probe } from './v1Probe';
-import { V1ResourceRequirements } from './v1ResourceRequirements';
-import { V1SecurityContext } from './v1SecurityContext';
-import { V1VolumeDevice } from './v1VolumeDevice';
-import { V1VolumeMount } from './v1VolumeMount';
+import { ContainerPort } from './v1ContainerPort';
+import { EnvFromSource } from './v1EnvFromSource';
+import { EnvVar } from './v1EnvVar';
+import { Lifecycle } from './v1Lifecycle';
+import { Probe } from './v1Probe';
+import { ResourceRequirements } from './v1ResourceRequirements';
+import { SecurityContext } from './v1SecurityContext';
+import { VolumeDevice } from './v1VolumeDevice';
+import { VolumeMount } from './v1VolumeMount';
 /**
 * A single application container that you want to run within a pod.
 */
-export declare class V1Container {
+export declare class Container {
     /**
     * Arguments to the entrypoint. The container image\'s CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container\'s environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
     */
@@ -33,11 +33,11 @@ export declare class V1Container {
     /**
     * List of environment variables to set in the container. Cannot be updated.
     */
-    'env'?: Array<V1EnvVar>;
+    'env'?: Array<EnvVar>;
     /**
     * List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.
     */
-    'envFrom'?: Array<V1EnvFromSource>;
+    'envFrom'?: Array<EnvFromSource>;
     /**
     * Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.
     */
@@ -46,8 +46,8 @@ export declare class V1Container {
     * Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images
     */
     'imagePullPolicy'?: string;
-    'lifecycle'?: V1Lifecycle;
-    'livenessProbe'?: V1Probe;
+    'lifecycle'?: Lifecycle;
+    'livenessProbe'?: Probe;
     /**
     * Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.
     */
@@ -55,11 +55,11 @@ export declare class V1Container {
     /**
     * List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.
     */
-    'ports'?: Array<V1ContainerPort>;
-    'readinessProbe'?: V1Probe;
-    'resources'?: V1ResourceRequirements;
-    'securityContext'?: V1SecurityContext;
-    'startupProbe'?: V1Probe;
+    'ports'?: Array<ContainerPort>;
+    'readinessProbe'?: Probe;
+    'resources'?: ResourceRequirements;
+    'securityContext'?: SecurityContext;
+    'startupProbe'?: Probe;
     /**
     * Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.
     */
@@ -83,11 +83,11 @@ export declare class V1Container {
     /**
     * volumeDevices is the list of block devices to be used by the container.
     */
-    'volumeDevices'?: Array<V1VolumeDevice>;
+    'volumeDevices'?: Array<VolumeDevice>;
     /**
     * Pod volumes to mount into the container\'s filesystem. Cannot be updated.
     */
-    'volumeMounts'?: Array<V1VolumeMount>;
+    'volumeMounts'?: Array<VolumeMount>;
     /**
     * Container\'s working directory. If not specified, the container runtime\'s default will be used, which might be configured in the container image. Cannot be updated.
     */

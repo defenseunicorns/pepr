@@ -12,7 +12,7 @@
 /**
 * AttachedVolume describes a volume attached to a node
 */
-export declare class V1AttachedVolume {
+export declare class AttachedVolume {
     /**
     * DevicePath represents the device path where the volume should be available
     */

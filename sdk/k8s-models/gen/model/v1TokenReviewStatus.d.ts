@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1UserInfo } from './v1UserInfo';
+import { UserInfo } from './v1UserInfo';
 /**
 * TokenReviewStatus is the result of the token authentication request.
 */
-export declare class V1TokenReviewStatus {
+export declare class TokenReviewStatus {
     /**
     * Audiences are audience identifiers chosen by the authenticator that are compatible with both the TokenReview and token. An identifier is any identifier in the intersection of the TokenReviewSpec audiences and the token\'s audiences. A client of the TokenReview API that sets the spec.audiences field should validate that a compatible audience identifier is returned in the status.audiences field to ensure that the TokenReview server is audience aware. If a TokenReview returns an empty status.audience field where status.authenticated is \"true\", the token is valid against the audience of the Kubernetes API server.
     */
@@ -26,7 +26,7 @@ export declare class V1TokenReviewStatus {
     * Error indicates that the token couldn\'t be checked
     */
     'error'?: string;
-    'user'?: V1UserInfo;
+    'user'?: UserInfo;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

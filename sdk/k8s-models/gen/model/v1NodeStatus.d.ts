@@ -9,21 +9,21 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1AttachedVolume } from './v1AttachedVolume';
-import { V1ContainerImage } from './v1ContainerImage';
-import { V1NodeAddress } from './v1NodeAddress';
-import { V1NodeCondition } from './v1NodeCondition';
-import { V1NodeConfigStatus } from './v1NodeConfigStatus';
-import { V1NodeDaemonEndpoints } from './v1NodeDaemonEndpoints';
-import { V1NodeSystemInfo } from './v1NodeSystemInfo';
+import { AttachedVolume } from './v1AttachedVolume';
+import { ContainerImage } from './v1ContainerImage';
+import { NodeAddress } from './v1NodeAddress';
+import { NodeCondition } from './v1NodeCondition';
+import { NodeConfigStatus } from './v1NodeConfigStatus';
+import { NodeDaemonEndpoints } from './v1NodeDaemonEndpoints';
+import { NodeSystemInfo } from './v1NodeSystemInfo';
 /**
 * NodeStatus is information about the current status of a node.
 */
-export declare class V1NodeStatus {
+export declare class NodeStatus {
     /**
     * List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See http://pr.k8s.io/79391 for an example.
     */
-    'addresses'?: Array<V1NodeAddress>;
+    'addresses'?: Array<NodeAddress>;
     /**
     * Allocatable represents the resources of a node that are available for scheduling. Defaults to Capacity.
     */
@@ -39,14 +39,14 @@ export declare class V1NodeStatus {
     /**
     * Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/concepts/nodes/node/#condition
     */
-    'conditions'?: Array<V1NodeCondition>;
-    'config'?: V1NodeConfigStatus;
-    'daemonEndpoints'?: V1NodeDaemonEndpoints;
+    'conditions'?: Array<NodeCondition>;
+    'config'?: NodeConfigStatus;
+    'daemonEndpoints'?: NodeDaemonEndpoints;
     /**
     * List of container images on this node
     */
-    'images'?: Array<V1ContainerImage>;
-    'nodeInfo'?: V1NodeSystemInfo;
+    'images'?: Array<ContainerImage>;
+    'nodeInfo'?: NodeSystemInfo;
     /**
     * NodePhase is the recently observed lifecycle phase of the node. More info: https://kubernetes.io/docs/concepts/nodes/node/#phase The field is never populated, and now is deprecated.
     */
@@ -54,7 +54,7 @@ export declare class V1NodeStatus {
     /**
     * List of volumes that are attached to the node.
     */
-    'volumesAttached'?: Array<V1AttachedVolume>;
+    'volumesAttached'?: Array<AttachedVolume>;
     /**
     * List of attachable volumes in use (mounted) by the node.
     */

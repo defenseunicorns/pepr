@@ -9,27 +9,27 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1Affinity } from './v1Affinity';
-import { V1Container } from './v1Container';
-import { V1EphemeralContainer } from './v1EphemeralContainer';
-import { V1HostAlias } from './v1HostAlias';
-import { V1LocalObjectReference } from './v1LocalObjectReference';
-import { V1PodDNSConfig } from './v1PodDNSConfig';
-import { V1PodOS } from './v1PodOS';
-import { V1PodReadinessGate } from './v1PodReadinessGate';
-import { V1PodSecurityContext } from './v1PodSecurityContext';
-import { V1Toleration } from './v1Toleration';
-import { V1TopologySpreadConstraint } from './v1TopologySpreadConstraint';
-import { V1Volume } from './v1Volume';
+import { Affinity } from './v1Affinity';
+import { Container } from './v1Container';
+import { EphemeralContainer } from './v1EphemeralContainer';
+import { HostAlias } from './v1HostAlias';
+import { LocalObjectReference } from './v1LocalObjectReference';
+import { PodDNSConfig } from './v1PodDNSConfig';
+import { PodOS } from './v1PodOS';
+import { PodReadinessGate } from './v1PodReadinessGate';
+import { PodSecurityContext } from './v1PodSecurityContext';
+import { Toleration } from './v1Toleration';
+import { TopologySpreadConstraint } from './v1TopologySpreadConstraint';
+import { Volume } from './v1Volume';
 /**
 * PodSpec is a description of a pod.
 */
-export declare class V1PodSpec {
+export declare class PodSpec {
     /**
     * Optional duration in seconds the pod may be active on the node relative to StartTime before the system will actively try to mark it failed and kill associated containers. Value must be a positive integer.
     */
     'activeDeadlineSeconds'?: number;
-    'affinity'?: V1Affinity;
+    'affinity'?: Affinity;
     /**
     * AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.
     */
@@ -37,8 +37,8 @@ export declare class V1PodSpec {
     /**
     * List of containers belonging to the pod. Containers cannot currently be added or removed. There must be at least one container in a Pod. Cannot be updated.
     */
-    'containers': Array<V1Container>;
-    'dnsConfig'?: V1PodDNSConfig;
+    'containers': Array<Container>;
+    'dnsConfig'?: PodDNSConfig;
     /**
     * Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are \'ClusterFirstWithHostNet\', \'ClusterFirst\', \'Default\' or \'None\'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to \'ClusterFirstWithHostNet\'.
     */
@@ -50,11 +50,11 @@ export declare class V1PodSpec {
     /**
     * List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing pod to perform user-initiated actions such as debugging. This list cannot be specified when creating a pod, and it cannot be modified by updating the pod spec. In order to add an ephemeral container to an existing pod, use the pod\'s ephemeralcontainers subresource.
     */
-    'ephemeralContainers'?: Array<V1EphemeralContainer>;
+    'ephemeralContainers'?: Array<EphemeralContainer>;
     /**
     * HostAliases is an optional list of hosts and IPs that will be injected into the pod\'s hosts file if specified. This is only valid for non-hostNetwork pods.
     */
-    'hostAliases'?: Array<V1HostAlias>;
+    'hostAliases'?: Array<HostAlias>;
     /**
     * Use the host\'s ipc namespace. Optional: Default to false.
     */
@@ -78,11 +78,11 @@ export declare class V1PodSpec {
     /**
     * ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod
     */
-    'imagePullSecrets'?: Array<V1LocalObjectReference>;
+    'imagePullSecrets'?: Array<LocalObjectReference>;
     /**
     * List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
     */
-    'initContainers'?: Array<V1Container>;
+    'initContainers'?: Array<Container>;
     /**
     * NodeName is a request to schedule this pod onto a specific node. If it is non-empty, the scheduler simply schedules this pod onto that node, assuming that it fits resource requirements.
     */
@@ -93,7 +93,7 @@ export declare class V1PodSpec {
     'nodeSelector'?: {
         [key: string]: string;
     };
-    'os'?: V1PodOS;
+    'os'?: PodOS;
     /**
     * Overhead represents the resource overhead associated with running a pod for a given RuntimeClass. This field will be autopopulated at admission time by the RuntimeClass admission controller. If the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests. The RuntimeClass admission controller will reject Pod create requests which have the overhead already set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero. More info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md
     */
@@ -115,7 +115,7 @@ export declare class V1PodSpec {
     /**
     * If specified, all readiness gates will be evaluated for pod readiness. A pod is ready when all its containers are ready AND all conditions specified in the readiness gates have status equal to \"True\" More info: https://git.k8s.io/enhancements/keps/sig-network/580-pod-readiness-gates
     */
-    'readinessGates'?: Array<V1PodReadinessGate>;
+    'readinessGates'?: Array<PodReadinessGate>;
     /**
     * Restart policy for all containers within the pod. One of Always, OnFailure, Never. Default to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy
     */
@@ -128,7 +128,7 @@ export declare class V1PodSpec {
     * If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.
     */
     'schedulerName'?: string;
-    'securityContext'?: V1PodSecurityContext;
+    'securityContext'?: PodSecurityContext;
     /**
     * DeprecatedServiceAccount is a depreciated alias for ServiceAccountName. Deprecated: Use serviceAccountName instead.
     */
@@ -156,15 +156,15 @@ export declare class V1PodSpec {
     /**
     * If specified, the pod\'s tolerations.
     */
-    'tolerations'?: Array<V1Toleration>;
+    'tolerations'?: Array<Toleration>;
     /**
     * TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. All topologySpreadConstraints are ANDed.
     */
-    'topologySpreadConstraints'?: Array<V1TopologySpreadConstraint>;
+    'topologySpreadConstraints'?: Array<TopologySpreadConstraint>;
     /**
     * List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes
     */
-    'volumes'?: Array<V1Volume>;
+    'volumes'?: Array<Volume>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

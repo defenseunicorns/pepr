@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1EnvVarSource } from './v1EnvVarSource';
+import { EnvVarSource } from './v1EnvVarSource';
 /**
 * EnvVar represents an environment variable present in a Container.
 */
-export declare class V1EnvVar {
+export declare class EnvVar {
     /**
     * Name of the environment variable. Must be a C_IDENTIFIER.
     */
@@ -22,7 +22,7 @@ export declare class V1EnvVar {
     * Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".
     */
     'value'?: string;
-    'valueFrom'?: V1EnvVarSource;
+    'valueFrom'?: EnvVarSource;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

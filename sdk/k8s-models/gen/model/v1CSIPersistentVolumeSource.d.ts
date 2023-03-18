@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1SecretReference } from './v1SecretReference';
+import { SecretReference } from './v1SecretReference';
 /**
 * Represents storage that is managed by an external CSI volume driver (Beta feature)
 */
-export declare class V1CSIPersistentVolumeSource {
-    'controllerExpandSecretRef'?: V1SecretReference;
-    'controllerPublishSecretRef'?: V1SecretReference;
+export declare class CSIPersistentVolumeSource {
+    'controllerExpandSecretRef'?: SecretReference;
+    'controllerPublishSecretRef'?: SecretReference;
     /**
     * driver is the name of the driver to use for this volume. Required.
     */
@@ -24,9 +24,9 @@ export declare class V1CSIPersistentVolumeSource {
     * fsType to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\".
     */
     'fsType'?: string;
-    'nodeExpandSecretRef'?: V1SecretReference;
-    'nodePublishSecretRef'?: V1SecretReference;
-    'nodeStageSecretRef'?: V1SecretReference;
+    'nodeExpandSecretRef'?: SecretReference;
+    'nodePublishSecretRef'?: SecretReference;
+    'nodeStageSecretRef'?: SecretReference;
     /**
     * readOnly value to pass to ControllerPublishVolumeRequest. Defaults to false (read/write).
     */

@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricValueStatus } from './v2MetricValueStatus';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricValueStatus } from './v2MetricValueStatus';
 /**
 * ExternalMetricStatus indicates the current value of a global metric not associated with any Kubernetes object.
 */
-export declare class V2ExternalMetricStatus {
-    'current': V2MetricValueStatus;
-    'metric': V2MetricIdentifier;
+export declare class ExternalMetricStatus {
+    'current': MetricValueStatus;
+    'metric': MetricIdentifier;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

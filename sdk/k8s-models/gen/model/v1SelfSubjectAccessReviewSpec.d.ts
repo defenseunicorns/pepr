@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NonResourceAttributes } from './v1NonResourceAttributes';
-import { V1ResourceAttributes } from './v1ResourceAttributes';
+import { NonResourceAttributes } from './v1NonResourceAttributes';
+import { ResourceAttributes } from './v1ResourceAttributes';
 /**
 * SelfSubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAuthorizationAttributes and NonResourceAuthorizationAttributes must be set
 */
-export declare class V1SelfSubjectAccessReviewSpec {
-    'nonResourceAttributes'?: V1NonResourceAttributes;
-    'resourceAttributes'?: V1ResourceAttributes;
+export declare class SelfSubjectAccessReviewSpec {
+    'nonResourceAttributes'?: NonResourceAttributes;
+    'resourceAttributes'?: ResourceAttributes;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

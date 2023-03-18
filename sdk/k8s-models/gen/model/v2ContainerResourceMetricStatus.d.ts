@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2MetricValueStatus } from './v2MetricValueStatus';
+import { MetricValueStatus } from './v2MetricValueStatus';
 /**
 * ContainerResourceMetricStatus indicates the current value of a resource metric known to Kubernetes, as specified in requests and limits, describing a single container in each pod in the current scale target (e.g. CPU or memory).  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the \"pods\" source.
 */
-export declare class V2ContainerResourceMetricStatus {
+export declare class ContainerResourceMetricStatus {
     /**
     * Container is the name of the container in the pods of the scaling target
     */
     'container': string;
-    'current': V2MetricValueStatus;
+    'current': MetricValueStatus;
     /**
     * Name is the name of the resource in question.
     */

@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LabelSelector } from './v1LabelSelector';
-import { V1PodFailurePolicy } from './v1PodFailurePolicy';
-import { V1PodTemplateSpec } from './v1PodTemplateSpec';
+import { LabelSelector } from './v1LabelSelector';
+import { PodFailurePolicy } from './v1PodFailurePolicy';
+import { PodTemplateSpec } from './v1PodTemplateSpec';
 /**
 * JobSpec describes how the job execution will look like.
 */
-export declare class V1JobSpec {
+export declare class JobSpec {
     /**
     * Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it; value must be positive integer. If a Job is suspended (at creation or through an update), this timer will effectively be stopped and reset when the Job is resumed again.
     */
@@ -40,13 +40,13 @@ export declare class V1JobSpec {
     * Specifies the maximum desired number of pods the job should run at any given time. The actual number of pods running in steady state will be less than this number when ((.spec.completions - .status.successful) < .spec.parallelism), i.e. when the work left to do is less than max parallelism. More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
     */
     'parallelism'?: number;
-    'podFailurePolicy'?: V1PodFailurePolicy;
-    'selector'?: V1LabelSelector;
+    'podFailurePolicy'?: PodFailurePolicy;
+    'selector'?: LabelSelector;
     /**
     * Suspend specifies whether the Job controller should create Pods or not. If a Job is created with suspend set to true, no Pods are created by the Job controller. If a Job is suspended after creation (i.e. the flag goes from false to true), the Job controller will delete all active Pods associated with this Job. Users must design their workload to gracefully handle this. Suspending a Job will reset the StartTime field of the Job, effectively resetting the ActiveDeadlineSeconds timer too. Defaults to false.
     */
     'suspend'?: boolean;
-    'template': V1PodTemplateSpec;
+    'template': PodTemplateSpec;
     /**
     * ttlSecondsAfterFinished limits the lifetime of a Job that has finished execution (either Complete or Failed). If this field is set, ttlSecondsAfterFinished after the Job finishes, it is eligible to be automatically deleted. When the Job is being deleted, its lifecycle guarantees (e.g. finalizers) will be honored. If this field is unset, the Job won\'t be automatically deleted. If this field is set to zero, the Job becomes eligible to be deleted immediately after it finishes.
     */

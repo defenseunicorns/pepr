@@ -12,7 +12,7 @@
 /**
 * ContainerStateRunning is a running state of a container.
 */
-export declare class V1ContainerStateRunning {
+export declare class ContainerStateRunning {
     /**
     * Time at which the container was last (re-)started
     */

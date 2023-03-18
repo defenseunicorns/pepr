@@ -12,7 +12,7 @@
 /**
 * HPAScalingPolicy is a single policy which must hold true for a specified past interval.
 */
-export declare class V2HPAScalingPolicy {
+export declare class HPAScalingPolicy {
     /**
     * PeriodSeconds specifies the window of time for which the policy should hold true. PeriodSeconds must be greater than zero and less than or equal to 1800 (30 min).
     */

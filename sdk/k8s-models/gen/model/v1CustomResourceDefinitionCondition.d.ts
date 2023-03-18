@@ -12,7 +12,7 @@
 /**
 * CustomResourceDefinitionCondition contains details for the current condition of this pod.
 */
-export declare class V1CustomResourceDefinitionCondition {
+export declare class CustomResourceDefinitionCondition {
     /**
     * lastTransitionTime last time the condition transitioned from one status to another.
     */

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ListMeta } from './v1ListMeta';
-import { V1StatusDetails } from './v1StatusDetails';
+import { ListMeta } from './v1ListMeta';
+import { StatusDetails } from './v1StatusDetails';
 /**
 * Status is a return value for calls that don\'t return other objects.
 */
-export declare class V1Status {
+export declare class Status {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -23,7 +23,7 @@ export declare class V1Status {
     * Suggested HTTP return code for this status, 0 if not set.
     */
     'code'?: number;
-    'details'?: V1StatusDetails;
+    'details'?: StatusDetails;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
@@ -32,7 +32,7 @@ export declare class V1Status {
     * A human-readable description of the status of this operation.
     */
     'message'?: string;
-    'metadata'?: V1ListMeta;
+    'metadata'?: ListMeta;
     /**
     * A machine-readable description of why this operation is in the \"Failure\" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it.
     */

@@ -12,7 +12,7 @@
 /**
 * ContainerStateWaiting is a waiting state of a container.
 */
-export declare class V1ContainerStateWaiting {
+export declare class ContainerStateWaiting {
     /**
     * Message regarding why the container is not yet running.
     */

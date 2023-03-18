@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2CrossVersionObjectReference } from './v2CrossVersionObjectReference';
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricTarget } from './v2MetricTarget';
+import { CrossVersionObjectReference } from './v2CrossVersionObjectReference';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricTarget } from './v2MetricTarget';
 /**
 * ObjectMetricSource indicates how to scale on a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).
 */
-export declare class V2ObjectMetricSource {
-    'describedObject': V2CrossVersionObjectReference;
-    'metric': V2MetricIdentifier;
-    'target': V2MetricTarget;
+export declare class ObjectMetricSource {
+    'describedObject': CrossVersionObjectReference;
+    'metric': MetricIdentifier;
+    'target': MetricTarget;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

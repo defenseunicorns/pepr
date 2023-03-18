@@ -12,7 +12,7 @@
 /**
 * APIResource specifies the name of a resource and whether it is namespaced.
 */
-export declare class V1APIResource {
+export declare class APIResource {
     /**
     * categories is a list of the grouped resources this resource belongs to (e.g. \'all\')
     */

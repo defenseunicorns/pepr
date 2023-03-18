@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1PodAffinityTerm } from './v1PodAffinityTerm';
+import { PodAffinityTerm } from './v1PodAffinityTerm';
 /**
 * The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
 */
-export declare class V1WeightedPodAffinityTerm {
-    'podAffinityTerm': V1PodAffinityTerm;
+export declare class WeightedPodAffinityTerm {
+    'podAffinityTerm': PodAffinityTerm;
     /**
     * weight associated with matching the corresponding podAffinityTerm, in the range 1-100.
     */

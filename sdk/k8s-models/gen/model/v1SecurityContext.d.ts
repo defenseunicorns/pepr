@@ -9,19 +9,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1Capabilities } from './v1Capabilities';
-import { V1SELinuxOptions } from './v1SELinuxOptions';
-import { V1SeccompProfile } from './v1SeccompProfile';
-import { V1WindowsSecurityContextOptions } from './v1WindowsSecurityContextOptions';
+import { Capabilities } from './v1Capabilities';
+import { SELinuxOptions } from './v1SELinuxOptions';
+import { SeccompProfile } from './v1SeccompProfile';
+import { WindowsSecurityContextOptions } from './v1WindowsSecurityContextOptions';
 /**
 * SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.
 */
-export declare class V1SecurityContext {
+export declare class SecurityContext {
     /**
     * AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.
     */
     'allowPrivilegeEscalation'?: boolean;
-    'capabilities'?: V1Capabilities;
+    'capabilities'?: Capabilities;
     /**
     * Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.
     */
@@ -46,9 +46,9 @@ export declare class V1SecurityContext {
     * The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.
     */
     'runAsUser'?: number;
-    'seLinuxOptions'?: V1SELinuxOptions;
-    'seccompProfile'?: V1SeccompProfile;
-    'windowsOptions'?: V1WindowsSecurityContextOptions;
+    'seLinuxOptions'?: SELinuxOptions;
+    'seccompProfile'?: SeccompProfile;
+    'windowsOptions'?: WindowsSecurityContextOptions;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NonResourceRule } from './v1NonResourceRule';
-import { V1ResourceRule } from './v1ResourceRule';
+import { NonResourceRule } from './v1NonResourceRule';
+import { ResourceRule } from './v1ResourceRule';
 /**
 * SubjectRulesReviewStatus contains the result of a rules check. This check can be incomplete depending on the set of authorizers the server is configured with and any errors experienced during evaluation. Because authorization rules are additive, if a rule appears in a list it\'s safe to assume the subject has that permission, even if that list is incomplete.
 */
-export declare class V1SubjectRulesReviewStatus {
+export declare class SubjectRulesReviewStatus {
     /**
     * EvaluationError can appear in combination with Rules. It indicates an error occurred during rule evaluation, such as an authorizer that doesn\'t support rule evaluation, and that ResourceRules and/or NonResourceRules may be incomplete.
     */
@@ -26,11 +26,11 @@ export declare class V1SubjectRulesReviewStatus {
     /**
     * NonResourceRules is the list of actions the subject is allowed to perform on non-resources. The list ordering isn\'t significant, may contain duplicates, and possibly be incomplete.
     */
-    'nonResourceRules': Array<V1NonResourceRule>;
+    'nonResourceRules': Array<NonResourceRule>;
     /**
     * ResourceRules is the list of actions the subject is allowed to perform on resources. The list ordering isn\'t significant, may contain duplicates, and possibly be incomplete.
     */
-    'resourceRules': Array<V1ResourceRule>;
+    'resourceRules': Array<ResourceRule>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

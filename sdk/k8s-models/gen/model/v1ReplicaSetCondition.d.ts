@@ -12,7 +12,7 @@
 /**
 * ReplicaSetCondition describes the state of a replica set at a certain point.
 */
-export declare class V1ReplicaSetCondition {
+export declare class ReplicaSetCondition {
     /**
     * The last time the condition transitioned from one status to another.
     */

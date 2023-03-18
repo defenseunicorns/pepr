@@ -12,7 +12,7 @@
 /**
 * RoleRef contains information that points to the role being used
 */
-export declare class V1RoleRef {
+export declare class RoleRef {
     /**
     * APIGroup is the group for the resource being referenced
     */

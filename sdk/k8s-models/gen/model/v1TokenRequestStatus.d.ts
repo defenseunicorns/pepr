@@ -12,7 +12,7 @@
 /**
 * TokenRequestStatus is the result of a token request.
 */
-export declare class V1TokenRequestStatus {
+export declare class TokenRequestStatus {
     /**
     * ExpirationTimestamp is the time of expiration of the returned token.
     */

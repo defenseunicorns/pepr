@@ -12,7 +12,7 @@
 /**
 * SelfSubjectRulesReviewSpec defines the specification for SelfSubjectRulesReview.
 */
-export declare class V1SelfSubjectRulesReviewSpec {
+export declare class SelfSubjectRulesReviewSpec {
     /**
     * Namespace to evaluate rules for. Required.
     */

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ListMeta } from './v1ListMeta';
-import { V1StatefulSet } from './v1StatefulSet';
+import { ListMeta } from './v1ListMeta';
+import { StatefulSet } from './v1StatefulSet';
 /**
 * StatefulSetList is a collection of StatefulSets.
 */
-export declare class V1StatefulSetList {
+export declare class StatefulSetList {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -22,12 +22,12 @@ export declare class V1StatefulSetList {
     /**
     * Items is the list of stateful sets.
     */
-    'items': Array<V1StatefulSet>;
+    'items': Array<StatefulSet>;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ListMeta;
+    'metadata'?: ListMeta;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -13,7 +13,7 @@ import { ApiregistrationV1ServiceReference } from './apiregistrationV1ServiceRef
 /**
 * APIServiceSpec contains information for locating and communicating with a server. Only https is supported, though you are able to disable certificate verification.
 */
-export declare class V1APIServiceSpec {
+export declare class APIServiceSpec {
     /**
     * CABundle is a PEM encoded CA bundle which will be used to validate an API server\'s serving certificate. If unspecified, system trust roots on the apiserver are used.
     */

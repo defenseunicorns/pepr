@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ReplicaSetCondition } from './v1ReplicaSetCondition';
+import { ReplicaSetCondition } from './v1ReplicaSetCondition';
 /**
 * ReplicaSetStatus represents the current status of a ReplicaSet.
 */
-export declare class V1ReplicaSetStatus {
+export declare class ReplicaSetStatus {
     /**
     * The number of available replicas (ready for at least minReadySeconds) for this replica set.
     */
@@ -21,7 +21,7 @@ export declare class V1ReplicaSetStatus {
     /**
     * Represents the latest available observations of a replica set\'s current state.
     */
-    'conditions'?: Array<V1ReplicaSetCondition>;
+    'conditions'?: Array<ReplicaSetCondition>;
     /**
     * The number of pods that have labels matching the labels of the pod template of the replicaset.
     */

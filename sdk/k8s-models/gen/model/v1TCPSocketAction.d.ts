@@ -13,7 +13,7 @@ import { IntOrString } from '../../types';
 /**
 * TCPSocketAction describes an action based on opening a socket
 */
-export declare class V1TCPSocketAction {
+export declare class TCPSocketAction {
     /**
     * Optional: Host name to connect to, defaults to the pod IP.
     */

@@ -12,7 +12,7 @@
 /**
 * Information about the condition of a component.
 */
-export declare class V1ComponentCondition {
+export declare class ComponentCondition {
     /**
     * Condition error code for a component. For example, a health check error code.
     */

@@ -12,7 +12,7 @@
 /**
 * LimitRangeItem defines a min/max usage limit for any resource that matches on kind.
 */
-export declare class V1LimitRangeItem {
+export declare class LimitRangeItem {
     /**
     * Default resource requirement limit value by resource name if resource limit is omitted.
     */

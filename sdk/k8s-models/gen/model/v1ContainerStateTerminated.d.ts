@@ -12,7 +12,7 @@
 /**
 * ContainerStateTerminated is a terminated state of a container.
 */
-export declare class V1ContainerStateTerminated {
+export declare class ContainerStateTerminated {
     /**
     * Container\'s ID in the format \'<type>://<container_id>\'
     */

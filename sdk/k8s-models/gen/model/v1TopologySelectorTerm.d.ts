@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1TopologySelectorLabelRequirement } from './v1TopologySelectorLabelRequirement';
+import { TopologySelectorLabelRequirement } from './v1TopologySelectorLabelRequirement';
 /**
 * A topology selector term represents the result of label queries. A null or empty topology selector term matches no objects. The requirements of them are ANDed. It provides a subset of functionality as NodeSelectorTerm. This is an alpha feature and may change in the future.
 */
-export declare class V1TopologySelectorTerm {
+export declare class TopologySelectorTerm {
     /**
     * A list of topology selector requirements by labels.
     */
-    'matchLabelExpressions'?: Array<V1TopologySelectorLabelRequirement>;
+    'matchLabelExpressions'?: Array<TopologySelectorLabelRequirement>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

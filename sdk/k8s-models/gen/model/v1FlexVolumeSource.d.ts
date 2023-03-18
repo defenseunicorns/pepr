@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LocalObjectReference } from './v1LocalObjectReference';
+import { LocalObjectReference } from './v1LocalObjectReference';
 /**
 * FlexVolume represents a generic volume resource that is provisioned/attached using an exec based plugin.
 */
-export declare class V1FlexVolumeSource {
+export declare class FlexVolumeSource {
     /**
     * driver is the name of the driver to use for this volume.
     */
@@ -32,7 +32,7 @@ export declare class V1FlexVolumeSource {
     * readOnly is Optional: defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
     */
     'readOnly'?: boolean;
-    'secretRef'?: V1LocalObjectReference;
+    'secretRef'?: LocalObjectReference;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

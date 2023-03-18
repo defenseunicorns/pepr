@@ -9,9 +9,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V1TokenRequestSpec } from './v1TokenRequestSpec';
-import { V1TokenRequestStatus } from './v1TokenRequestStatus';
+import { ObjectMeta } from './v1ObjectMeta';
+import { TokenRequestSpec } from './v1TokenRequestSpec';
+import { TokenRequestStatus } from './v1TokenRequestStatus';
 /**
 * TokenRequest requests a token for a given service account.
 */
@@ -24,9 +24,9 @@ export declare class AuthenticationV1TokenRequest {
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
-    'spec': V1TokenRequestSpec;
-    'status'?: V1TokenRequestStatus;
+    'metadata'?: ObjectMeta;
+    'spec': TokenRequestSpec;
+    'status'?: TokenRequestStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

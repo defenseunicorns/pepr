@@ -12,7 +12,7 @@
 /**
 * ResourceAttributes includes the authorization attributes available for resource requests to the Authorizer interface
 */
-export declare class V1ResourceAttributes {
+export declare class ResourceAttributes {
     /**
     * Group is the API Group of the Resource.  \"*\" means all.
     */

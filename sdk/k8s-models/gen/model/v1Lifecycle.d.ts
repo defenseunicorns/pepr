@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LifecycleHandler } from './v1LifecycleHandler';
+import { LifecycleHandler } from './v1LifecycleHandler';
 /**
 * Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.
 */
-export declare class V1Lifecycle {
-    'postStart'?: V1LifecycleHandler;
-    'preStop'?: V1LifecycleHandler;
+export declare class Lifecycle {
+    'postStart'?: LifecycleHandler;
+    'preStop'?: LifecycleHandler;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -12,7 +12,7 @@
 /**
 * GroupVersion contains the \"group/version\" and \"version\" string of a version. It is made a struct to keep extensibility.
 */
-export declare class V1GroupVersionForDiscovery {
+export declare class GroupVersionForDiscovery {
     /**
     * groupVersion specifies the API group and version in the form \"group/version\"
     */

@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1StatefulSetCondition } from './v1StatefulSetCondition';
+import { StatefulSetCondition } from './v1StatefulSetCondition';
 /**
 * StatefulSetStatus represents the current state of a StatefulSet.
 */
-export declare class V1StatefulSetStatus {
+export declare class StatefulSetStatus {
     /**
     * Total number of available pods (ready for at least minReadySeconds) targeted by this statefulset.
     */
@@ -25,7 +25,7 @@ export declare class V1StatefulSetStatus {
     /**
     * Represents the latest available observations of a statefulset\'s current state.
     */
-    'conditions'?: Array<V1StatefulSetCondition>;
+    'conditions'?: Array<StatefulSetCondition>;
     /**
     * currentReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version indicated by currentRevision.
     */

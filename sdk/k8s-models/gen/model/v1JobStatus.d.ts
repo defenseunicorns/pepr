@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1JobCondition } from './v1JobCondition';
-import { V1UncountedTerminatedPods } from './v1UncountedTerminatedPods';
+import { JobCondition } from './v1JobCondition';
+import { UncountedTerminatedPods } from './v1UncountedTerminatedPods';
 /**
 * JobStatus represents the current state of a Job.
 */
-export declare class V1JobStatus {
+export declare class JobStatus {
     /**
     * The number of pending and running pods.
     */
@@ -30,7 +30,7 @@ export declare class V1JobStatus {
     /**
     * The latest available observations of an object\'s current state. When a Job fails, one of the conditions will have type \"Failed\" and status true. When a Job is suspended, one of the conditions will have type \"Suspended\" and status true; when the Job is resumed, the status of this condition will become false. When a Job is completed, one of the conditions will have type \"Complete\" and status true. More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
     */
-    'conditions'?: Array<V1JobCondition>;
+    'conditions'?: Array<JobCondition>;
     /**
     * The number of pods which reached phase Failed.
     */
@@ -47,7 +47,7 @@ export declare class V1JobStatus {
     * The number of pods which reached phase Succeeded.
     */
     'succeeded'?: number;
-    'uncountedTerminatedPods'?: V1UncountedTerminatedPods;
+    'uncountedTerminatedPods'?: UncountedTerminatedPods;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

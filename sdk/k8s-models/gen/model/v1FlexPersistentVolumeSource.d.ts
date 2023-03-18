@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1SecretReference } from './v1SecretReference';
+import { SecretReference } from './v1SecretReference';
 /**
 * FlexPersistentVolumeSource represents a generic persistent volume resource that is provisioned/attached using an exec based plugin.
 */
-export declare class V1FlexPersistentVolumeSource {
+export declare class FlexPersistentVolumeSource {
     /**
     * driver is the name of the driver to use for this volume.
     */
@@ -32,7 +32,7 @@ export declare class V1FlexPersistentVolumeSource {
     * readOnly is Optional: defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
     */
     'readOnly'?: boolean;
-    'secretRef'?: V1SecretReference;
+    'secretRef'?: SecretReference;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

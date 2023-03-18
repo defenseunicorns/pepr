@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1DaemonSetSpec } from './v1DaemonSetSpec';
-import { V1DaemonSetStatus } from './v1DaemonSetStatus';
-import { V1ObjectMeta } from './v1ObjectMeta';
+import { DaemonSetSpec } from './v1DaemonSetSpec';
+import { DaemonSetStatus } from './v1DaemonSetStatus';
+import { ObjectMeta } from './v1ObjectMeta';
 /**
 * DaemonSet represents the configuration of a daemon set.
 */
-export declare class V1DaemonSet {
+export declare class DaemonSet {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -24,9 +24,9 @@ export declare class V1DaemonSet {
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
-    'spec'?: V1DaemonSetSpec;
-    'status'?: V1DaemonSetStatus;
+    'metadata'?: ObjectMeta;
+    'spec'?: DaemonSetSpec;
+    'status'?: DaemonSetStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

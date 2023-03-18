@@ -12,7 +12,7 @@
 /**
 * NonResourceRule holds information that describes a rule for the non-resource
 */
-export declare class V1NonResourceRule {
+export declare class NonResourceRule {
     /**
     * NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path.  \"*\" means all.
     */

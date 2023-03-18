@@ -12,7 +12,7 @@
 /**
 * CustomResourceDefinitionNames indicates the names to serve this CustomResourceDefinition
 */
-export declare class V1CustomResourceDefinitionNames {
+export declare class CustomResourceDefinitionNames {
     /**
     * categories is a list of grouped resources this custom resource belongs to (e.g. \'all\'). This is published in API discovery documents, and used by clients to support invocations like `kubectl get all`.
     */

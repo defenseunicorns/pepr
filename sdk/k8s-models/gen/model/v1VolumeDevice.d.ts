@@ -12,7 +12,7 @@
 /**
 * volumeDevice describes a mapping of a raw block device within a container.
 */
-export declare class V1VolumeDevice {
+export declare class VolumeDevice {
     /**
     * devicePath is the path inside of the container that the device will be mapped to.
     */

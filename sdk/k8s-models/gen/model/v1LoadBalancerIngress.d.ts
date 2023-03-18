@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1PortStatus } from './v1PortStatus';
+import { PortStatus } from './v1PortStatus';
 /**
 * LoadBalancerIngress represents the status of a load-balancer ingress point: traffic intended for the service should be sent to an ingress point.
 */
-export declare class V1LoadBalancerIngress {
+export declare class LoadBalancerIngress {
     /**
     * Hostname is set for load-balancer ingress points that are DNS based (typically AWS load-balancers)
     */
@@ -25,7 +25,7 @@ export declare class V1LoadBalancerIngress {
     /**
     * Ports is a list of records of service ports If used, every port defined in the service should have an entry in it
     */
-    'ports'?: Array<V1PortStatus>;
+    'ports'?: Array<PortStatus>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

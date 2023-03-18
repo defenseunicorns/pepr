@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricTarget } from './v2MetricTarget';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricTarget } from './v2MetricTarget';
 /**
 * PodsMetricSource indicates how to scale on a metric describing each pod in the current scale target (for example, transactions-processed-per-second). The values will be averaged together before being compared to the target value.
 */
-export declare class V2PodsMetricSource {
-    'metric': V2MetricIdentifier;
-    'target': V2MetricTarget;
+export declare class PodsMetricSource {
+    'metric': MetricIdentifier;
+    'target': MetricTarget;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

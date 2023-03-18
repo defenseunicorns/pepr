@@ -9,17 +9,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1Condition } from './v1Condition';
-import { V1LoadBalancerStatus } from './v1LoadBalancerStatus';
+import { Condition } from './v1Condition';
+import { LoadBalancerStatus } from './v1LoadBalancerStatus';
 /**
 * ServiceStatus represents the current status of a service.
 */
-export declare class V1ServiceStatus {
+export declare class ServiceStatus {
     /**
     * Current service state
     */
-    'conditions'?: Array<V1Condition>;
-    'loadBalancer'?: V1LoadBalancerStatus;
+    'conditions'?: Array<Condition>;
+    'loadBalancer'?: LoadBalancerStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

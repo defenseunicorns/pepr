@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1DaemonSetCondition } from './v1DaemonSetCondition';
+import { DaemonSetCondition } from './v1DaemonSetCondition';
 /**
 * DaemonSetStatus represents the current status of a daemon set.
 */
-export declare class V1DaemonSetStatus {
+export declare class DaemonSetStatus {
     /**
     * Count of hash collisions for the DaemonSet. The DaemonSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.
     */
@@ -21,7 +21,7 @@ export declare class V1DaemonSetStatus {
     /**
     * Represents the latest available observations of a DaemonSet\'s current state.
     */
-    'conditions'?: Array<V1DaemonSetCondition>;
+    'conditions'?: Array<DaemonSetCondition>;
     /**
     * The number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod. More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
     */

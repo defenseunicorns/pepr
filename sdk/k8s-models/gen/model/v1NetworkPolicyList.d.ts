@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ListMeta } from './v1ListMeta';
-import { V1NetworkPolicy } from './v1NetworkPolicy';
+import { ListMeta } from './v1ListMeta';
+import { NetworkPolicy } from './v1NetworkPolicy';
 /**
 * NetworkPolicyList is a list of NetworkPolicy objects.
 */
-export declare class V1NetworkPolicyList {
+export declare class NetworkPolicyList {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -22,12 +22,12 @@ export declare class V1NetworkPolicyList {
     /**
     * Items is a list of schema objects.
     */
-    'items': Array<V1NetworkPolicy>;
+    'items': Array<NetworkPolicy>;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ListMeta;
+    'metadata'?: ListMeta;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

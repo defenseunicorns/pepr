@@ -9,17 +9,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1CustomResourceDefinitionCondition } from './v1CustomResourceDefinitionCondition';
-import { V1CustomResourceDefinitionNames } from './v1CustomResourceDefinitionNames';
+import { CustomResourceDefinitionCondition } from './v1CustomResourceDefinitionCondition';
+import { CustomResourceDefinitionNames } from './v1CustomResourceDefinitionNames';
 /**
 * CustomResourceDefinitionStatus indicates the state of the CustomResourceDefinition
 */
-export declare class V1CustomResourceDefinitionStatus {
-    'acceptedNames'?: V1CustomResourceDefinitionNames;
+export declare class CustomResourceDefinitionStatus {
+    'acceptedNames'?: CustomResourceDefinitionNames;
     /**
     * conditions indicate state for particular aspects of a CustomResourceDefinition
     */
-    'conditions'?: Array<V1CustomResourceDefinitionCondition>;
+    'conditions'?: Array<CustomResourceDefinitionCondition>;
     /**
     * storedVersions lists all versions of CustomResources that were ever persisted. Tracking these versions allows a migration path for stored versions in etcd. The field is mutable so a migration controller can finish a migration to another version (ensuring no old objects are left in storage), and then remove the rest of the versions from this list. Versions may not be removed from `spec.versions` while they exist in this list.
     */

@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2CrossVersionObjectReference } from './v2CrossVersionObjectReference';
-import { V2HorizontalPodAutoscalerBehavior } from './v2HorizontalPodAutoscalerBehavior';
-import { V2MetricSpec } from './v2MetricSpec';
+import { CrossVersionObjectReference } from './v2CrossVersionObjectReference';
+import { HorizontalPodAutoscalerBehavior } from './v2HorizontalPodAutoscalerBehavior';
+import { MetricSpec } from './v2MetricSpec';
 /**
 * HorizontalPodAutoscalerSpec describes the desired functionality of the HorizontalPodAutoscaler.
 */
-export declare class V2HorizontalPodAutoscalerSpec {
-    'behavior'?: V2HorizontalPodAutoscalerBehavior;
+export declare class HorizontalPodAutoscalerSpec {
+    'behavior'?: HorizontalPodAutoscalerBehavior;
     /**
     * maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.
     */
@@ -24,12 +24,12 @@ export declare class V2HorizontalPodAutoscalerSpec {
     /**
     * metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).  The desired replica count is calculated multiplying the ratio between the target value and the current value by the current number of pods.  Ergo, metrics used must decrease as the pod count is increased, and vice-versa.  See the individual metric source types for more information about how each type of metric must respond. If not set, the default metric will be set to 80% average CPU utilization.
     */
-    'metrics'?: Array<V2MetricSpec>;
+    'metrics'?: Array<MetricSpec>;
     /**
     * minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.
     */
     'minReplicas'?: number;
-    'scaleTargetRef': V2CrossVersionObjectReference;
+    'scaleTargetRef': CrossVersionObjectReference;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

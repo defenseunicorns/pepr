@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricTarget } from './v2MetricTarget';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricTarget } from './v2MetricTarget';
 /**
 * ExternalMetricSource indicates how to scale on a metric not associated with any Kubernetes object (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
 */
-export declare class V2ExternalMetricSource {
-    'metric': V2MetricIdentifier;
-    'target': V2MetricTarget;
+export declare class ExternalMetricSource {
+    'metric': MetricIdentifier;
+    'target': MetricTarget;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

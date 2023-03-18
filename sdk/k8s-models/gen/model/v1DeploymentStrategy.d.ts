@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1RollingUpdateDeployment } from './v1RollingUpdateDeployment';
+import { RollingUpdateDeployment } from './v1RollingUpdateDeployment';
 /**
 * DeploymentStrategy describes how to replace existing pods with new ones.
 */
-export declare class V1DeploymentStrategy {
-    'rollingUpdate'?: V1RollingUpdateDeployment;
+export declare class DeploymentStrategy {
+    'rollingUpdate'?: RollingUpdateDeployment;
     /**
     * Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.
     */

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1DaemonEndpoint } from './v1DaemonEndpoint';
+import { DaemonEndpoint } from './v1DaemonEndpoint';
 /**
 * NodeDaemonEndpoints lists ports opened by daemons running on the Node.
 */
-export declare class V1NodeDaemonEndpoints {
-    'kubeletEndpoint'?: V1DaemonEndpoint;
+export declare class NodeDaemonEndpoints {
+    'kubeletEndpoint'?: DaemonEndpoint;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

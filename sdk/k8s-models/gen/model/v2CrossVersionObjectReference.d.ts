@@ -12,7 +12,7 @@
 /**
 * CrossVersionObjectReference contains enough information to let you identify the referred resource.
 */
-export declare class V2CrossVersionObjectReference {
+export declare class CrossVersionObjectReference {
     /**
     * API version of the referent
     */

@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LocalObjectReference } from './v1LocalObjectReference';
+import { LocalObjectReference } from './v1LocalObjectReference';
 /**
 * ScaleIOVolumeSource represents a persistent ScaleIO volume
 */
-export declare class V1ScaleIOVolumeSource {
+export declare class ScaleIOVolumeSource {
     /**
     * fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Default is \"xfs\".
     */
@@ -30,7 +30,7 @@ export declare class V1ScaleIOVolumeSource {
     * readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
     */
     'readOnly'?: boolean;
-    'secretRef': V1LocalObjectReference;
+    'secretRef': LocalObjectReference;
     /**
     * sslEnabled Flag enable/disable SSL communication with Gateway, default false
     */

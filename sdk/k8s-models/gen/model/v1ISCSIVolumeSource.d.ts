@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LocalObjectReference } from './v1LocalObjectReference';
+import { LocalObjectReference } from './v1LocalObjectReference';
 /**
 * Represents an ISCSI disk. ISCSI volumes can only be mounted as read/write once. ISCSI volumes support ownership management and SELinux relabeling.
 */
-export declare class V1ISCSIVolumeSource {
+export declare class ISCSIVolumeSource {
     /**
     * chapAuthDiscovery defines whether support iSCSI Discovery CHAP authentication
     */
@@ -50,7 +50,7 @@ export declare class V1ISCSIVolumeSource {
     * readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false.
     */
     'readOnly'?: boolean;
-    'secretRef'?: V1LocalObjectReference;
+    'secretRef'?: LocalObjectReference;
     /**
     * targetPortal is iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).
     */

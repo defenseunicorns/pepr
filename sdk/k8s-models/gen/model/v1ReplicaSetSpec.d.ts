@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LabelSelector } from './v1LabelSelector';
-import { V1PodTemplateSpec } from './v1PodTemplateSpec';
+import { LabelSelector } from './v1LabelSelector';
+import { PodTemplateSpec } from './v1PodTemplateSpec';
 /**
 * ReplicaSetSpec is the specification of a ReplicaSet.
 */
-export declare class V1ReplicaSetSpec {
+export declare class ReplicaSetSpec {
     /**
     * Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)
     */
@@ -23,8 +23,8 @@ export declare class V1ReplicaSetSpec {
     * Replicas is the number of desired replicas. This is a pointer to distinguish between explicit zero and unspecified. Defaults to 1. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/#what-is-a-replicationcontroller
     */
     'replicas'?: number;
-    'selector': V1LabelSelector;
-    'template'?: V1PodTemplateSpec;
+    'selector': LabelSelector;
+    'template'?: PodTemplateSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

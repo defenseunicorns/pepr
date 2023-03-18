@@ -12,7 +12,7 @@
 /**
 * MetricValueStatus holds the current value for a metric
 */
-export declare class V2MetricValueStatus {
+export declare class MetricValueStatus {
     /**
     * currentAverageUtilization is the current value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.
     */

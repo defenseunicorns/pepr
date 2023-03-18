@@ -12,7 +12,7 @@
 /**
 * ValidationRule describes a validation rule written in the CEL expression language.
 */
-export declare class V1ValidationRule {
+export declare class ValidationRule {
     /**
     * Message represents the message displayed when validation fails. The message is required if the Rule contains line breaks. The message must not contain line breaks. If unset, the message is \"failed rule: {Rule}\". e.g. \"must be a URL with the host matching spec.host\"
     */

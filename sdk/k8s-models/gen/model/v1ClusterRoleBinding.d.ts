@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V1RoleRef } from './v1RoleRef';
-import { V1Subject } from './v1Subject';
+import { ObjectMeta } from './v1ObjectMeta';
+import { RoleRef } from './v1RoleRef';
+import { Subject } from './v1Subject';
 /**
 * ClusterRoleBinding references a ClusterRole, but not contain it.  It can reference a ClusterRole in the global namespace, and adds who information via Subject.
 */
-export declare class V1ClusterRoleBinding {
+export declare class ClusterRoleBinding {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -24,12 +24,12 @@ export declare class V1ClusterRoleBinding {
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
-    'roleRef': V1RoleRef;
+    'metadata'?: ObjectMeta;
+    'roleRef': RoleRef;
     /**
     * Subjects holds references to the objects the role applies to.
     */
-    'subjects'?: Array<V1Subject>;
+    'subjects'?: Array<Subject>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

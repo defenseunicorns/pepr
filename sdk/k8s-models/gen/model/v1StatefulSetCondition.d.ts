@@ -12,7 +12,7 @@
 /**
 * StatefulSetCondition describes the state of a statefulset at a certain point.
 */
-export declare class V1StatefulSetCondition {
+export declare class StatefulSetCondition {
     /**
     * Last time the condition transitioned from one status to another.
     */

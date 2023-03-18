@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
@@ -5,7 +8,20 @@ export enum Operation {
   CONNECT = "CONNECT",
 }
 
-export interface AdmissionRequest {
+/**
+ * Bindings to filter if a request should be responded to or not.
+ *
+ * These are used to filter out requests that are not relevant to the capability.
+ * The list can be found via `kubectl api-resources`.
+ * */
+export interface GroupVersionKind {
+  /** The K8s resource kind, e..g "Pod". */
+  readonly kind: string;
+  readonly group: string;
+  readonly version: string;
+}
+
+export interface AdmissionRequest<T> {
   /** UID is an identifier for the individual request/response. */
   readonly uid: string;
 
@@ -63,10 +79,10 @@ export interface AdmissionRequest {
   };
 
   /** Object is the object from the incoming request prior to default values being applied */
-  readonly object?: any;
+  object?: T;
 
   /** OldObject is the existing object. Only populated for UPDATE requests. */
-  readonly oldObject?: any;
+  readonly oldObject?: T;
 
   /** DryRun indicates that modifications will definitely not be persisted for this request. Defaults to false. */
   readonly dryRun?: boolean;

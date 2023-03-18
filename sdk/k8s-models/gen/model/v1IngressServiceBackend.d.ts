@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ServiceBackendPort } from './v1ServiceBackendPort';
+import { ServiceBackendPort } from './v1ServiceBackendPort';
 /**
 * IngressServiceBackend references a Kubernetes Service as a Backend.
 */
-export declare class V1IngressServiceBackend {
+export declare class IngressServiceBackend {
     /**
     * Name is the referenced service. The service must exist in the same namespace as the Ingress object.
     */
     'name': string;
-    'port'?: V1ServiceBackendPort;
+    'port'?: ServiceBackendPort;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

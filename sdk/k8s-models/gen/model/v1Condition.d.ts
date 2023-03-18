@@ -12,7 +12,7 @@
 /**
 * Condition contains details for one aspect of the current state of this API Resource.
 */
-export declare class V1Condition {
+export declare class Condition {
     /**
     * lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
     */

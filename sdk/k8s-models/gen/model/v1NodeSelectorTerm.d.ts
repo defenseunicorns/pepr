@@ -9,19 +9,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NodeSelectorRequirement } from './v1NodeSelectorRequirement';
+import { NodeSelectorRequirement } from './v1NodeSelectorRequirement';
 /**
 * A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 */
-export declare class V1NodeSelectorTerm {
+export declare class NodeSelectorTerm {
     /**
     * A list of node selector requirements by node\'s labels.
     */
-    'matchExpressions'?: Array<V1NodeSelectorRequirement>;
+    'matchExpressions'?: Array<NodeSelectorRequirement>;
     /**
     * A list of node selector requirements by node\'s fields.
     */
-    'matchFields'?: Array<V1NodeSelectorRequirement>;
+    'matchFields'?: Array<NodeSelectorRequirement>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

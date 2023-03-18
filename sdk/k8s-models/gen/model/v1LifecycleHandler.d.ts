@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ExecAction } from './v1ExecAction';
-import { V1HTTPGetAction } from './v1HTTPGetAction';
-import { V1TCPSocketAction } from './v1TCPSocketAction';
+import { ExecAction } from './v1ExecAction';
+import { HTTPGetAction } from './v1HTTPGetAction';
+import { TCPSocketAction } from './v1TCPSocketAction';
 /**
 * LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.
 */
-export declare class V1LifecycleHandler {
-    'exec'?: V1ExecAction;
-    'httpGet'?: V1HTTPGetAction;
-    'tcpSocket'?: V1TCPSocketAction;
+export declare class LifecycleHandler {
+    'exec'?: ExecAction;
+    'httpGet'?: HTTPGetAction;
+    'tcpSocket'?: TCPSocketAction;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

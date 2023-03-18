@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LimitRangeItem } from './v1LimitRangeItem';
+import { LimitRangeItem } from './v1LimitRangeItem';
 /**
 * LimitRangeSpec defines a min/max usage limit for resources that match on kind.
 */
-export declare class V1LimitRangeSpec {
+export declare class LimitRangeSpec {
     /**
     * Limits is the list of LimitRangeItem objects that are enforced.
     */
-    'limits': Array<V1LimitRangeItem>;
+    'limits': Array<LimitRangeItem>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

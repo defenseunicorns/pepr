@@ -12,7 +12,7 @@
 /**
 * ObjectReference contains enough information to let you inspect or modify the referred object.
 */
-export declare class V1ObjectReference {
+export declare class ObjectReference {
     /**
     * API version of the referent.
     */

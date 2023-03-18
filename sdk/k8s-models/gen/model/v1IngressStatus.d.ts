@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LoadBalancerStatus } from './v1LoadBalancerStatus';
+import { LoadBalancerStatus } from './v1LoadBalancerStatus';
 /**
 * IngressStatus describe the current state of the Ingress.
 */
-export declare class V1IngressStatus {
-    'loadBalancer'?: V1LoadBalancerStatus;
+export declare class IngressStatus {
+    'loadBalancer'?: LoadBalancerStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

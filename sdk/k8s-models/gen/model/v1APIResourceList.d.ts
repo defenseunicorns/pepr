@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1APIResource } from './v1APIResource';
+import { APIResource } from './v1APIResource';
 /**
 * APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.
 */
-export declare class V1APIResourceList {
+export declare class APIResourceList {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -29,7 +29,7 @@ export declare class V1APIResourceList {
     /**
     * resources contains the name of the resources and if they are namespaced.
     */
-    'resources': Array<V1APIResource>;
+    'resources': Array<APIResource>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

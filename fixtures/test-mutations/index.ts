@@ -1,98 +1,32 @@
-import { AdmissionRequest } from "@k8s";
+import { kind as a } from "@k8s";
 import Pepr from "@pepr";
 
-let c = new Pepr.Capability({
+const { When } = new Pepr.Capability({
   name: "mutation-tests",
   description: "A collection of examples of resource mutations.",
   namespaces: ["mutation-namespace"],
 });
 
-// separate function (could be in a different file)
-c.When("pod").From("core/v1").IsCreated().Mutate(mutatePod);
+When(a.CronJob).IsCreated().Run(mutateCronJob);
 
-c.When("v1.Pod").IsCreated().Mutate(mutatePod);
+When(a.Deployment).IsUpdated().Run(mutatePod);
 
-c.When("v1/Pod").IsCreated().Mutate(mutatePod);
+When(a.Deployment).IsDeleted().Run(mutatePod);
 
-c.When("core.v1.Pod").IsCreated().Mutate(mutatePod);
+When({
+  group: "source.toolkit.fluxcd.io",
+  version: "v1beta1",
+  kind: "GitRepository",
+})
+  .IsCreated()
+  .Run(mutatePod);
 
-c.When("core/v1/Pod").IsCreated().Mutate(mutatePod);
-
-c.OnCreate("pod").From("core/v1").Mutate(mutatePod);
-
-c.OnCreate("v1.Pod").Mutate(mutatePod);
-
-c.OnCreate("v1/Pod").Mutate(mutatePod);
-
-c.OnCreate("core.v1.Pod").Mutate(mutatePod);
-
-c.OnCreate("core/v1/Pod").Mutate(mutatePod);
-
-function mutatePod(resource: AdmissionRequest) {
-  resource.object.metadata.labels["mutated"] = "true";
+function mutateCronJob(resource) {
+  resource.object.spec.schedule = "*/5 * * * *";
   return resource;
 }
 
-// inline function
-c.When("pod")
-  .From("core/v1")
-  .IsCreated()
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.When("v1.Pod")
-  .IsCreated()
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.When("v1/Pod")
-  .IsCreated()
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.When("core.v1.Pod")
-  .IsCreated()
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.When("core/v1/Pod")
-  .IsCreated()
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.OnCreate("pod")
-  .From("core/v1")
-  .Mutate((resource) => {
-    resource.object.metadata.labels["mutated"] = "true";
-    return resource;
-  });
-
-c.OnCreate("v1.Pod").Mutate((resource) => {
+function mutatePod(resource) {
   resource.object.metadata.labels["mutated"] = "true";
   return resource;
-});
-
-c.OnCreate("v1/Pod").Mutate((resource) => {
-  resource.object.metadata.labels["mutated"] = "true";
-  return resource;
-});
-
-c.OnCreate("core.v1.Pod").Mutate((resource) => {
-  resource.object.metadata.labels["mutated"] = "true";
-  return resource;
-});
-
-c.OnCreate("core/v1/Pod").Mutate((resource) => {
-  resource.object.metadata.labels["mutated"] = "true";
-  return resource;
-});
+}

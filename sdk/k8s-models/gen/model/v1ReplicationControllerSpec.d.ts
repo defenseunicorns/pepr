@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1PodTemplateSpec } from './v1PodTemplateSpec';
+import { PodTemplateSpec } from './v1PodTemplateSpec';
 /**
 * ReplicationControllerSpec is the specification of a replication controller.
 */
-export declare class V1ReplicationControllerSpec {
+export declare class ReplicationControllerSpec {
     /**
     * Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)
     */
@@ -28,7 +28,7 @@ export declare class V1ReplicationControllerSpec {
     'selector'?: {
         [key: string]: string;
     };
-    'template'?: V1PodTemplateSpec;
+    'template'?: PodTemplateSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

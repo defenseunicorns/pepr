@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectReference } from './v1ObjectReference';
+import { ObjectReference } from './v1ObjectReference';
 /**
 * EndpointAddress is a tuple that describes single IP address.
 */
-export declare class V1EndpointAddress {
+export declare class EndpointAddress {
     /**
     * The Hostname of this endpoint
     */
@@ -26,7 +26,7 @@ export declare class V1EndpointAddress {
     * Optional: Node hosting this endpoint. This can be used to determine endpoints local to a node.
     */
     'nodeName'?: string;
-    'targetRef'?: V1ObjectReference;
+    'targetRef'?: ObjectReference;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

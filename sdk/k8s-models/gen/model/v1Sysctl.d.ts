@@ -12,7 +12,7 @@
 /**
 * Sysctl defines a kernel parameter to be set
 */
-export declare class V1Sysctl {
+export declare class Sysctl {
     /**
     * Name of a property to set
     */

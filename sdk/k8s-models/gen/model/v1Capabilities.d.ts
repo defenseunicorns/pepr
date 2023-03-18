@@ -12,7 +12,7 @@
 /**
 * Adds and removes POSIX capabilities from running containers.
 */
-export declare class V1Capabilities {
+export declare class Capabilities {
     /**
     * Added capabilities
     */

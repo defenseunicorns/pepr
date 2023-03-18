@@ -9,20 +9,20 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2ContainerResourceMetricStatus } from './v2ContainerResourceMetricStatus';
-import { V2ExternalMetricStatus } from './v2ExternalMetricStatus';
-import { V2ObjectMetricStatus } from './v2ObjectMetricStatus';
-import { V2PodsMetricStatus } from './v2PodsMetricStatus';
-import { V2ResourceMetricStatus } from './v2ResourceMetricStatus';
+import { ContainerResourceMetricStatus } from './v2ContainerResourceMetricStatus';
+import { ExternalMetricStatus } from './v2ExternalMetricStatus';
+import { ObjectMetricStatus } from './v2ObjectMetricStatus';
+import { PodsMetricStatus } from './v2PodsMetricStatus';
+import { ResourceMetricStatus } from './v2ResourceMetricStatus';
 /**
 * MetricStatus describes the last-read state of a single metric.
 */
-export declare class V2MetricStatus {
-    'containerResource'?: V2ContainerResourceMetricStatus;
-    'external'?: V2ExternalMetricStatus;
-    'object'?: V2ObjectMetricStatus;
-    'pods'?: V2PodsMetricStatus;
-    'resource'?: V2ResourceMetricStatus;
+export declare class MetricStatus {
+    'containerResource'?: ContainerResourceMetricStatus;
+    'external'?: ExternalMetricStatus;
+    'object'?: ObjectMetricStatus;
+    'pods'?: PodsMetricStatus;
+    'resource'?: ResourceMetricStatus;
     /**
     * type is the type of metric source.  It will be one of \"ContainerResource\", \"External\", \"Object\", \"Pods\" or \"Resource\", each corresponds to a matching field in the object. Note: \"ContainerResource\" type is available on when the feature-gate HPAContainerMetrics is enabled
     */

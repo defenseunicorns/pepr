@@ -12,7 +12,7 @@
 /**
 * ResourceFieldSelector represents container resources (cpu, memory) and their output format
 */
-export declare class V1ResourceFieldSelector {
+export declare class ResourceFieldSelector {
     /**
     * Container name: required for volumes, optional for env vars
     */

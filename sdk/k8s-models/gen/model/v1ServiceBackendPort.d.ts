@@ -12,7 +12,7 @@
 /**
 * ServiceBackendPort is the service port being referenced.
 */
-export declare class V1ServiceBackendPort {
+export declare class ServiceBackendPort {
     /**
     * Name is the name of the port on the Service. This is a mutually exclusive setting with \"Number\".
     */

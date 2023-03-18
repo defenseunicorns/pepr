@@ -12,7 +12,7 @@
 /**
 * PodReadinessGate contains the reference to a pod condition
 */
-export declare class V1PodReadinessGate {
+export declare class PodReadinessGate {
     /**
     * ConditionType refers to a condition in the pod\'s condition list with matching type.
     */

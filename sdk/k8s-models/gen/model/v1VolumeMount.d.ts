@@ -12,7 +12,7 @@
 /**
 * VolumeMount describes a mounting of a Volume within a container.
 */
-export declare class V1VolumeMount {
+export declare class VolumeMount {
     /**
     * Path within the container at which the volume should be mounted.  Must not contain \':\'.
     */

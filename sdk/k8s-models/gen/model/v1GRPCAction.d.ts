@@ -9,7 +9,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-export declare class V1GRPCAction {
+export declare class GRPCAction {
     /**
     * Port number of the gRPC service. Number must be in the range 1 to 65535.
     */

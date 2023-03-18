@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ScopedResourceSelectorRequirement } from './v1ScopedResourceSelectorRequirement';
+import { ScopedResourceSelectorRequirement } from './v1ScopedResourceSelectorRequirement';
 /**
 * A scope selector represents the AND of the selectors represented by the scoped-resource selector requirements.
 */
-export declare class V1ScopeSelector {
+export declare class ScopeSelector {
     /**
     * A list of scope selector requirements by scope of the resources.
     */
-    'matchExpressions'?: Array<V1ScopedResourceSelectorRequirement>;
+    'matchExpressions'?: Array<ScopedResourceSelectorRequirement>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ConfigMapNodeConfigSource } from './v1ConfigMapNodeConfigSource';
+import { ConfigMapNodeConfigSource } from './v1ConfigMapNodeConfigSource';
 /**
 * NodeConfigSource specifies a source of node configuration. Exactly one subfield (excluding metadata) must be non-nil. This API is deprecated since 1.22
 */
-export declare class V1NodeConfigSource {
-    'configMap'?: V1ConfigMapNodeConfigSource;
+export declare class NodeConfigSource {
+    'configMap'?: ConfigMapNodeConfigSource;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V1SelfSubjectAccessReviewSpec } from './v1SelfSubjectAccessReviewSpec';
-import { V1SubjectAccessReviewStatus } from './v1SubjectAccessReviewStatus';
+import { ObjectMeta } from './v1ObjectMeta';
+import { SelfSubjectAccessReviewSpec } from './v1SelfSubjectAccessReviewSpec';
+import { SubjectAccessReviewStatus } from './v1SubjectAccessReviewStatus';
 /**
 * SelfSubjectAccessReview checks whether or the current user can perform an action.  Not filling in a spec.namespace means \"in all namespaces\".  Self is a special case, because users should always be able to check whether they can perform an action
 */
-export declare class V1SelfSubjectAccessReview {
+export declare class SelfSubjectAccessReview {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -24,9 +24,9 @@ export declare class V1SelfSubjectAccessReview {
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
-    'spec': V1SelfSubjectAccessReviewSpec;
-    'status'?: V1SubjectAccessReviewStatus;
+    'metadata'?: ObjectMeta;
+    'spec': SelfSubjectAccessReviewSpec;
+    'status'?: SubjectAccessReviewStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NodeSelectorTerm } from './v1NodeSelectorTerm';
+import { NodeSelectorTerm } from './v1NodeSelectorTerm';
 /**
 * An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it\'s a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
 */
-export declare class V1PreferredSchedulingTerm {
-    'preference': V1NodeSelectorTerm;
+export declare class PreferredSchedulingTerm {
+    'preference': NodeSelectorTerm;
     /**
     * Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
     */

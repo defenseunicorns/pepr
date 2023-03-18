@@ -9,18 +9,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ConfigMapKeySelector } from './v1ConfigMapKeySelector';
-import { V1ObjectFieldSelector } from './v1ObjectFieldSelector';
-import { V1ResourceFieldSelector } from './v1ResourceFieldSelector';
-import { V1SecretKeySelector } from './v1SecretKeySelector';
+import { ConfigMapKeySelector } from './v1ConfigMapKeySelector';
+import { ObjectFieldSelector } from './v1ObjectFieldSelector';
+import { ResourceFieldSelector } from './v1ResourceFieldSelector';
+import { SecretKeySelector } from './v1SecretKeySelector';
 /**
 * EnvVarSource represents a source for the value of an EnvVar.
 */
-export declare class V1EnvVarSource {
-    'configMapKeyRef'?: V1ConfigMapKeySelector;
-    'fieldRef'?: V1ObjectFieldSelector;
-    'resourceFieldRef'?: V1ResourceFieldSelector;
-    'secretKeyRef'?: V1SecretKeySelector;
+export declare class EnvVarSource {
+    'configMapKeyRef'?: ConfigMapKeySelector;
+    'fieldRef'?: ObjectFieldSelector;
+    'resourceFieldRef'?: ResourceFieldSelector;
+    'secretKeyRef'?: SecretKeySelector;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

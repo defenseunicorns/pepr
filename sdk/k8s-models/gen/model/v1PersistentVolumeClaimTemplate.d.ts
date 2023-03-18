@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V1PersistentVolumeClaimSpec } from './v1PersistentVolumeClaimSpec';
+import { ObjectMeta } from './v1ObjectMeta';
+import { PersistentVolumeClaimSpec } from './v1PersistentVolumeClaimSpec';
 /**
 * PersistentVolumeClaimTemplate is used to produce PersistentVolumeClaim objects as part of an EphemeralVolumeSource.
 */
-export declare class V1PersistentVolumeClaimTemplate {
-    'metadata'?: V1ObjectMeta;
-    'spec': V1PersistentVolumeClaimSpec;
+export declare class PersistentVolumeClaimTemplate {
+    'metadata'?: ObjectMeta;
+    'spec': PersistentVolumeClaimSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

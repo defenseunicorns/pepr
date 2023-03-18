@@ -12,7 +12,7 @@
 /**
 * NodeSystemInfo is a set of ids/uuids to uniquely identify the node.
 */
-export declare class V1NodeSystemInfo {
+export declare class NodeSystemInfo {
     /**
     * The Architecture reported by the node
     */

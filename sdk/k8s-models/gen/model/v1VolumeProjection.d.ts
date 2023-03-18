@@ -9,18 +9,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ConfigMapProjection } from './v1ConfigMapProjection';
-import { V1DownwardAPIProjection } from './v1DownwardAPIProjection';
-import { V1SecretProjection } from './v1SecretProjection';
-import { V1ServiceAccountTokenProjection } from './v1ServiceAccountTokenProjection';
+import { ConfigMapProjection } from './v1ConfigMapProjection';
+import { DownwardAPIProjection } from './v1DownwardAPIProjection';
+import { SecretProjection } from './v1SecretProjection';
+import { ServiceAccountTokenProjection } from './v1ServiceAccountTokenProjection';
 /**
 * Projection that may be projected along with other supported volume types
 */
-export declare class V1VolumeProjection {
-    'configMap'?: V1ConfigMapProjection;
-    'downwardAPI'?: V1DownwardAPIProjection;
-    'secret'?: V1SecretProjection;
-    'serviceAccountToken'?: V1ServiceAccountTokenProjection;
+export declare class VolumeProjection {
+    'configMap'?: ConfigMapProjection;
+    'downwardAPI'?: DownwardAPIProjection;
+    'secret'?: SecretProjection;
+    'serviceAccountToken'?: ServiceAccountTokenProjection;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

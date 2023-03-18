@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NodeSelectorTerm } from './v1NodeSelectorTerm';
+import { NodeSelectorTerm } from './v1NodeSelectorTerm';
 /**
 * A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.
 */
-export declare class V1NodeSelector {
+export declare class NodeSelector {
     /**
     * Required. A list of node selector terms. The terms are ORed.
     */
-    'nodeSelectorTerms': Array<V1NodeSelectorTerm>;
+    'nodeSelectorTerms': Array<NodeSelectorTerm>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

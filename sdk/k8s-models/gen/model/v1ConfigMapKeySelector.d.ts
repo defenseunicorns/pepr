@@ -12,7 +12,7 @@
 /**
 * Selects a key from a ConfigMap.
 */
-export declare class V1ConfigMapKeySelector {
+export declare class ConfigMapKeySelector {
     /**
     * The key to select.
     */

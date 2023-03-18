@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ContainerStateRunning } from './v1ContainerStateRunning';
-import { V1ContainerStateTerminated } from './v1ContainerStateTerminated';
-import { V1ContainerStateWaiting } from './v1ContainerStateWaiting';
+import { ContainerStateRunning } from './v1ContainerStateRunning';
+import { ContainerStateTerminated } from './v1ContainerStateTerminated';
+import { ContainerStateWaiting } from './v1ContainerStateWaiting';
 /**
 * ContainerState holds a possible state of container. Only one of its members may be specified. If none of them is specified, the default one is ContainerStateWaiting.
 */
-export declare class V1ContainerState {
-    'running'?: V1ContainerStateRunning;
-    'terminated'?: V1ContainerStateTerminated;
-    'waiting'?: V1ContainerStateWaiting;
+export declare class ContainerState {
+    'running'?: ContainerStateRunning;
+    'terminated'?: ContainerStateTerminated;
+    'waiting'?: ContainerStateWaiting;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

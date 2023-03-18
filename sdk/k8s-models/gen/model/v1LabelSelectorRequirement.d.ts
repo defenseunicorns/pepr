@@ -12,7 +12,7 @@
 /**
 * A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
 */
-export declare class V1LabelSelectorRequirement {
+export declare class LabelSelectorRequirement {
     /**
     * key is the label key that the selector applies to.
     */

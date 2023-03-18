@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NonResourceAttributes } from './v1NonResourceAttributes';
-import { V1ResourceAttributes } from './v1ResourceAttributes';
+import { NonResourceAttributes } from './v1NonResourceAttributes';
+import { ResourceAttributes } from './v1ResourceAttributes';
 /**
 * SubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAuthorizationAttributes and NonResourceAuthorizationAttributes must be set
 */
-export declare class V1SubjectAccessReviewSpec {
+export declare class SubjectAccessReviewSpec {
     /**
     * Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.
     */
@@ -25,8 +25,8 @@ export declare class V1SubjectAccessReviewSpec {
     * Groups is the groups you\'re testing for.
     */
     'groups'?: Array<string>;
-    'nonResourceAttributes'?: V1NonResourceAttributes;
-    'resourceAttributes'?: V1ResourceAttributes;
+    'nonResourceAttributes'?: NonResourceAttributes;
+    'resourceAttributes'?: ResourceAttributes;
     /**
     * UID information about the requesting user.
     */

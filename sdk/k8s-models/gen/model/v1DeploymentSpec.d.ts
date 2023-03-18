@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1DeploymentStrategy } from './v1DeploymentStrategy';
-import { V1LabelSelector } from './v1LabelSelector';
-import { V1PodTemplateSpec } from './v1PodTemplateSpec';
+import { DeploymentStrategy } from './v1DeploymentStrategy';
+import { LabelSelector } from './v1LabelSelector';
+import { PodTemplateSpec } from './v1PodTemplateSpec';
 /**
 * DeploymentSpec is the specification of the desired behavior of the Deployment.
 */
-export declare class V1DeploymentSpec {
+export declare class DeploymentSpec {
     /**
     * Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)
     */
@@ -36,9 +36,9 @@ export declare class V1DeploymentSpec {
     * The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.
     */
     'revisionHistoryLimit'?: number;
-    'selector': V1LabelSelector;
-    'strategy'?: V1DeploymentStrategy;
-    'template': V1PodTemplateSpec;
+    'selector': LabelSelector;
+    'strategy'?: DeploymentStrategy;
+    'template': PodTemplateSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

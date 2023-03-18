@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1IngressServiceBackend } from './v1IngressServiceBackend';
-import { V1TypedLocalObjectReference } from './v1TypedLocalObjectReference';
+import { IngressServiceBackend } from './v1IngressServiceBackend';
+import { TypedLocalObjectReference } from './v1TypedLocalObjectReference';
 /**
 * IngressBackend describes all endpoints for a given service and port.
 */
-export declare class V1IngressBackend {
-    'resource'?: V1TypedLocalObjectReference;
-    'service'?: V1IngressServiceBackend;
+export declare class IngressBackend {
+    'resource'?: TypedLocalObjectReference;
+    'service'?: IngressServiceBackend;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricValueStatus } from './v2MetricValueStatus';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricValueStatus } from './v2MetricValueStatus';
 /**
 * PodsMetricStatus indicates the current value of a metric describing each pod in the current scale target (for example, transactions-processed-per-second).
 */
-export declare class V2PodsMetricStatus {
-    'current': V2MetricValueStatus;
-    'metric': V2MetricIdentifier;
+export declare class PodsMetricStatus {
+    'current': MetricValueStatus;
+    'metric': MetricIdentifier;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

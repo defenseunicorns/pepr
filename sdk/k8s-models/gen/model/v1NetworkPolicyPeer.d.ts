@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1IPBlock } from './v1IPBlock';
-import { V1LabelSelector } from './v1LabelSelector';
+import { IPBlock } from './v1IPBlock';
+import { LabelSelector } from './v1LabelSelector';
 /**
 * NetworkPolicyPeer describes a peer to allow traffic to/from. Only certain combinations of fields are allowed
 */
-export declare class V1NetworkPolicyPeer {
-    'ipBlock'?: V1IPBlock;
-    'namespaceSelector'?: V1LabelSelector;
-    'podSelector'?: V1LabelSelector;
+export declare class NetworkPolicyPeer {
+    'ipBlock'?: IPBlock;
+    'namespaceSelector'?: LabelSelector;
+    'podSelector'?: LabelSelector;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

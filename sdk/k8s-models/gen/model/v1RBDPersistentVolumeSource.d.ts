@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1SecretReference } from './v1SecretReference';
+import { SecretReference } from './v1SecretReference';
 /**
 * Represents a Rados Block Device mount that lasts the lifetime of a pod. RBD volumes support ownership management and SELinux relabeling.
 */
-export declare class V1RBDPersistentVolumeSource {
+export declare class RBDPersistentVolumeSource {
     /**
     * fsType is the filesystem type of the volume that you want to mount. Tip: Ensure that the filesystem type is supported by the host operating system. Examples: \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified. More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd
     */
@@ -38,7 +38,7 @@ export declare class V1RBDPersistentVolumeSource {
     * readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
     */
     'readOnly'?: boolean;
-    'secretRef'?: V1SecretReference;
+    'secretRef'?: SecretReference;
     /**
     * user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
     */

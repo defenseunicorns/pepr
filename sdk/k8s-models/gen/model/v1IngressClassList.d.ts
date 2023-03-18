@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1IngressClass } from './v1IngressClass';
-import { V1ListMeta } from './v1ListMeta';
+import { IngressClass } from './v1IngressClass';
+import { ListMeta } from './v1ListMeta';
 /**
 * IngressClassList is a collection of IngressClasses.
 */
-export declare class V1IngressClassList {
+export declare class IngressClassList {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -22,12 +22,12 @@ export declare class V1IngressClassList {
     /**
     * Items is the list of IngressClasses.
     */
-    'items': Array<V1IngressClass>;
+    'items': Array<IngressClass>;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ListMeta;
+    'metadata'?: ListMeta;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

@@ -12,7 +12,7 @@
 /**
 * HorizontalPodAutoscalerCondition describes the state of a HorizontalPodAutoscaler at a certain point.
 */
-export declare class V2HorizontalPodAutoscalerCondition {
+export declare class HorizontalPodAutoscalerCondition {
     /**
     * lastTransitionTime is the last time the condition transitioned from one status to another
     */

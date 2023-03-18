@@ -12,7 +12,7 @@
 /**
 * PersistentVolumeClaimCondition contails details about state of pvc
 */
-export declare class V1PersistentVolumeClaimCondition {
+export declare class PersistentVolumeClaimCondition {
     /**
     * lastProbeTime is the time we probed the condition.
     */

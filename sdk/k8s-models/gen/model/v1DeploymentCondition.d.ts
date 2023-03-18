@@ -12,7 +12,7 @@
 /**
 * DeploymentCondition describes the state of a deployment at a certain point.
 */
-export declare class V1DeploymentCondition {
+export declare class DeploymentCondition {
     /**
     * Last time the condition transitioned from one status to another.
     */

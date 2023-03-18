@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2HPAScalingRules } from './v2HPAScalingRules';
+import { HPAScalingRules } from './v2HPAScalingRules';
 /**
 * HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).
 */
-export declare class V2HorizontalPodAutoscalerBehavior {
-    'scaleDown'?: V2HPAScalingRules;
-    'scaleUp'?: V2HPAScalingRules;
+export declare class HorizontalPodAutoscalerBehavior {
+    'scaleDown'?: HPAScalingRules;
+    'scaleUp'?: HPAScalingRules;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

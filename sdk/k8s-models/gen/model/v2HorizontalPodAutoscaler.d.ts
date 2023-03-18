@@ -9,13 +9,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V2HorizontalPodAutoscalerSpec } from './v2HorizontalPodAutoscalerSpec';
-import { V2HorizontalPodAutoscalerStatus } from './v2HorizontalPodAutoscalerStatus';
+import { ObjectMeta } from './v1ObjectMeta';
+import { HorizontalPodAutoscalerSpec } from './v2HorizontalPodAutoscalerSpec';
+import { HorizontalPodAutoscalerStatus } from './v2HorizontalPodAutoscalerStatus';
 /**
 * HorizontalPodAutoscaler is the configuration for a horizontal pod autoscaler, which automatically manages the replica count of any resource implementing the scale subresource based on the metrics specified.
 */
-export declare class V2HorizontalPodAutoscaler {
+export declare class HorizontalPodAutoscaler {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -24,9 +24,9 @@ export declare class V2HorizontalPodAutoscaler {
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
-    'spec'?: V2HorizontalPodAutoscalerSpec;
-    'status'?: V2HorizontalPodAutoscalerStatus;
+    'metadata'?: ObjectMeta;
+    'spec'?: HorizontalPodAutoscalerSpec;
+    'status'?: HorizontalPodAutoscalerStatus;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

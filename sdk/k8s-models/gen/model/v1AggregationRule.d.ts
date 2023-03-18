@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LabelSelector } from './v1LabelSelector';
+import { LabelSelector } from './v1LabelSelector';
 /**
 * AggregationRule describes how to locate ClusterRoles to aggregate into the ClusterRole
 */
-export declare class V1AggregationRule {
+export declare class AggregationRule {
     /**
     * ClusterRoleSelectors holds a list of selectors which will be used to find ClusterRoles and create the rules. If any of the selectors match, then the ClusterRole\'s permissions will be added
     */
-    'clusterRoleSelectors'?: Array<V1LabelSelector>;
+    'clusterRoleSelectors'?: Array<LabelSelector>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

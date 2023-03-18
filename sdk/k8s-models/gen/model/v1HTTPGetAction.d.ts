@@ -10,11 +10,11 @@
  * Do not edit the class manually.
  */
 import { IntOrString } from '../../types';
-import { V1HTTPHeader } from './v1HTTPHeader';
+import { HTTPHeader } from './v1HTTPHeader';
 /**
 * HTTPGetAction describes an action based on HTTP Get requests.
 */
-export declare class V1HTTPGetAction {
+export declare class HTTPGetAction {
     /**
     * Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.
     */
@@ -22,7 +22,7 @@ export declare class V1HTTPGetAction {
     /**
     * Custom headers to set in the request. HTTP allows repeated headers.
     */
-    'httpHeaders'?: Array<V1HTTPHeader>;
+    'httpHeaders'?: Array<HTTPHeader>;
     /**
     * Path to access on the HTTP server.
     */

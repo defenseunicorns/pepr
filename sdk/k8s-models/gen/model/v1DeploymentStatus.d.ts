@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1DeploymentCondition } from './v1DeploymentCondition';
+import { DeploymentCondition } from './v1DeploymentCondition';
 /**
 * DeploymentStatus is the most recently observed status of the Deployment.
 */
-export declare class V1DeploymentStatus {
+export declare class DeploymentStatus {
     /**
     * Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.
     */
@@ -25,7 +25,7 @@ export declare class V1DeploymentStatus {
     /**
     * Represents the latest available observations of a deployment\'s current state.
     */
-    'conditions'?: Array<V1DeploymentCondition>;
+    'conditions'?: Array<DeploymentCondition>;
     /**
     * The generation observed by the deployment controller.
     */

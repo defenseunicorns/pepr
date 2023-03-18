@@ -12,7 +12,7 @@
 /**
 * ScaleSpec describes the attributes of a scale subresource.
 */
-export declare class V1ScaleSpec {
+export declare class ScaleSpec {
     /**
     * desired number of instances for the scaled object.
     */

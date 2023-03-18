@@ -12,7 +12,7 @@
 /**
 * WindowsSecurityContextOptions contain Windows-specific options and credentials.
 */
-export declare class V1WindowsSecurityContextOptions {
+export declare class WindowsSecurityContextOptions {
     /**
     * GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.
     */

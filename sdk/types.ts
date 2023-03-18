@@ -11,6 +11,15 @@ export enum HookPhase {
   valdiate = "validate",
 }
 
+/**
+ * The type of Kubernetes mutating webhook event that the capability action is registered for.
+ */
+export enum EventType {
+  create = "create",
+  update = "update",
+  delete = "delete",
+}
+
 export interface MutateBinding {
   (): void;
 }

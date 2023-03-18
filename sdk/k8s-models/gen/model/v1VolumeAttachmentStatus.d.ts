@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1VolumeError } from './v1VolumeError';
+import { VolumeError } from './v1VolumeError';
 /**
 * VolumeAttachmentStatus is the status of a VolumeAttachment request.
 */
-export declare class V1VolumeAttachmentStatus {
-    'attachError'?: V1VolumeError;
+export declare class VolumeAttachmentStatus {
+    'attachError'?: VolumeError;
     /**
     * Indicates the volume is successfully attached. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.
     */
@@ -25,7 +25,7 @@ export declare class V1VolumeAttachmentStatus {
     'attachmentMetadata'?: {
         [key: string]: string;
     };
-    'detachError'?: V1VolumeError;
+    'detachError'?: VolumeError;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

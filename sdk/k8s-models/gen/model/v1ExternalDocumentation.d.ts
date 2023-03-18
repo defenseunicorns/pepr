@@ -12,7 +12,7 @@
 /**
 * ExternalDocumentation allows referencing an external resource for extended documentation.
 */
-export declare class V1ExternalDocumentation {
+export declare class ExternalDocumentation {
     'description'?: string;
     'url'?: string;
     static discriminator: string | undefined;

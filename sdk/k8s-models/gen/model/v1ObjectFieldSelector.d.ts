@@ -12,7 +12,7 @@
 /**
 * ObjectFieldSelector selects an APIVersioned field of an object.
 */
-export declare class V1ObjectFieldSelector {
+export declare class ObjectFieldSelector {
     /**
     * Version of the schema the FieldPath is written in terms of, defaults to \"v1\".
     */

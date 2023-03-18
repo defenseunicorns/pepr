@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ComponentCondition } from './v1ComponentCondition';
-import { V1ObjectMeta } from './v1ObjectMeta';
+import { ComponentCondition } from './v1ComponentCondition';
+import { ObjectMeta } from './v1ObjectMeta';
 /**
 * ComponentStatus (and ComponentStatusList) holds the cluster validation info. Deprecated: This API is deprecated in v1.19+
 */
-export declare class V1ComponentStatus {
+export declare class ComponentStatus {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -22,12 +22,12 @@ export declare class V1ComponentStatus {
     /**
     * List of component conditions observed
     */
-    'conditions'?: Array<V1ComponentCondition>;
+    'conditions'?: Array<ComponentCondition>;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ObjectMeta;
+    'metadata'?: ObjectMeta;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

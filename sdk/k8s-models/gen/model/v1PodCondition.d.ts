@@ -12,7 +12,7 @@
 /**
 * PodCondition contains details for the current condition of this pod.
 */
-export declare class V1PodCondition {
+export declare class PodCondition {
     /**
     * Last time we probed the condition.
     */

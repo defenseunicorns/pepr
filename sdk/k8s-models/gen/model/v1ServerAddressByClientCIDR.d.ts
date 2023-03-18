@@ -12,7 +12,7 @@
 /**
 * ServerAddressByClientCIDR helps the client to determine the server address that they should use, depending on the clientCIDR that they match.
 */
-export declare class V1ServerAddressByClientCIDR {
+export declare class ServerAddressByClientCIDR {
     /**
     * The CIDR with which clients can match their IP to figure out the server address that they should use.
     */

@@ -12,7 +12,7 @@
 /**
 * Describe a container image
 */
-export declare class V1ContainerImage {
+export declare class ContainerImage {
     /**
     * Names by which this image is known. e.g. [\"kubernetes.example/hyperkube:v1.0.7\", \"cloud-vendor.registry.example/cloud-vendor/hyperkube:v1.0.7\"]
     */

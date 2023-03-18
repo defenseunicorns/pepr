@@ -9,18 +9,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ScopeSelector } from './v1ScopeSelector';
+import { ScopeSelector } from './v1ScopeSelector';
 /**
 * ResourceQuotaSpec defines the desired hard limits to enforce for Quota.
 */
-export declare class V1ResourceQuotaSpec {
+export declare class ResourceQuotaSpec {
     /**
     * hard is the set of desired hard limits for each named resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/
     */
     'hard'?: {
         [key: string]: string;
     };
-    'scopeSelector'?: V1ScopeSelector;
+    'scopeSelector'?: ScopeSelector;
     /**
     * A collection of filters that must match each object tracked by a quota. If not specified, the quota matches all objects.
     */

@@ -12,7 +12,7 @@
 /**
 * BoundObjectReference is a reference to an object that a token is bound to.
 */
-export declare class V1BoundObjectReference {
+export declare class BoundObjectReference {
     /**
     * API version of the referent.
     */

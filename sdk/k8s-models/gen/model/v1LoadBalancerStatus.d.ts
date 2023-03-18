@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1LoadBalancerIngress } from './v1LoadBalancerIngress';
+import { LoadBalancerIngress } from './v1LoadBalancerIngress';
 /**
 * LoadBalancerStatus represents the status of a load-balancer.
 */
-export declare class V1LoadBalancerStatus {
+export declare class LoadBalancerStatus {
     /**
     * Ingress is a list containing ingress points for the load-balancer. Traffic intended for the service should be sent to these ingress points.
     */
-    'ingress'?: Array<V1LoadBalancerIngress>;
+    'ingress'?: Array<LoadBalancerIngress>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

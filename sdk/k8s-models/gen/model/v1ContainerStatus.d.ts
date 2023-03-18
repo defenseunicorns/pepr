@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ContainerState } from './v1ContainerState';
+import { ContainerState } from './v1ContainerState';
 /**
 * ContainerStatus contains details for the current status of this container.
 */
-export declare class V1ContainerStatus {
+export declare class ContainerStatus {
     /**
     * Container\'s ID in the format \'<type>://<container_id>\'.
     */
@@ -26,7 +26,7 @@ export declare class V1ContainerStatus {
     * ImageID of the container\'s image.
     */
     'imageID': string;
-    'lastState'?: V1ContainerState;
+    'lastState'?: ContainerState;
     /**
     * This must be a DNS_LABEL. Each container in a pod must have a unique name. Cannot be updated.
     */
@@ -43,7 +43,7 @@ export declare class V1ContainerStatus {
     * Specifies whether the container has passed its startup probe. Initialized as false, becomes true after startupProbe is considered successful. Resets to false when the container is restarted, or if kubelet loses state temporarily. Is always true when no startupProbe is defined.
     */
     'started'?: boolean;
-    'state'?: V1ContainerState;
+    'state'?: ContainerState;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

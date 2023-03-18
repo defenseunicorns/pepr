@@ -12,7 +12,7 @@
 /**
 * UserInfo holds the information about the user needed to implement the user.Info interface.
 */
-export declare class V1UserInfo {
+export declare class UserInfo {
     /**
     * Any additional information provided by the authenticator.
     */

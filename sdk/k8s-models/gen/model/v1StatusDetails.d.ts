@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1StatusCause } from './v1StatusCause';
+import { StatusCause } from './v1StatusCause';
 /**
 * StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.
 */
-export declare class V1StatusDetails {
+export declare class StatusDetails {
     /**
     * The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.
     */
-    'causes'?: Array<V1StatusCause>;
+    'causes'?: Array<StatusCause>;
     /**
     * The group attribute of the resource associated with the status StatusReason.
     */

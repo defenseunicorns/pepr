@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ListMeta } from './v1ListMeta';
-import { V1Pod } from './v1Pod';
+import { ListMeta } from './v1ListMeta';
+import { Pod } from './v1Pod';
 /**
 * PodList is a list of Pods.
 */
-export declare class V1PodList {
+export declare class PodList {
     /**
     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
     */
@@ -22,12 +22,12 @@ export declare class V1PodList {
     /**
     * List of pods. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md
     */
-    'items': Array<V1Pod>;
+    'items': Array<Pod>;
     /**
     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
     */
     'kind'?: string;
-    'metadata'?: V1ListMeta;
+    'metadata'?: ListMeta;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

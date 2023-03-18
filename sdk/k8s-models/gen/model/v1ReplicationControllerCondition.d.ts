@@ -12,7 +12,7 @@
 /**
 * ReplicationControllerCondition describes the state of a replication controller at a certain point.
 */
-export declare class V1ReplicationControllerCondition {
+export declare class ReplicationControllerCondition {
     /**
     * The last time the condition transitioned from one status to another.
     */

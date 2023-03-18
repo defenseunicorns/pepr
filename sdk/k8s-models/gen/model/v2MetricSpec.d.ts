@@ -9,20 +9,20 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2ContainerResourceMetricSource } from './v2ContainerResourceMetricSource';
-import { V2ExternalMetricSource } from './v2ExternalMetricSource';
-import { V2ObjectMetricSource } from './v2ObjectMetricSource';
-import { V2PodsMetricSource } from './v2PodsMetricSource';
-import { V2ResourceMetricSource } from './v2ResourceMetricSource';
+import { ContainerResourceMetricSource } from './v2ContainerResourceMetricSource';
+import { ExternalMetricSource } from './v2ExternalMetricSource';
+import { ObjectMetricSource } from './v2ObjectMetricSource';
+import { PodsMetricSource } from './v2PodsMetricSource';
+import { ResourceMetricSource } from './v2ResourceMetricSource';
 /**
 * MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
 */
-export declare class V2MetricSpec {
-    'containerResource'?: V2ContainerResourceMetricSource;
-    'external'?: V2ExternalMetricSource;
-    'object'?: V2ObjectMetricSource;
-    'pods'?: V2PodsMetricSource;
-    'resource'?: V2ResourceMetricSource;
+export declare class MetricSpec {
+    'containerResource'?: ContainerResourceMetricSource;
+    'external'?: ExternalMetricSource;
+    'object'?: ObjectMetricSource;
+    'pods'?: PodsMetricSource;
+    'resource'?: ResourceMetricSource;
     /**
     * type is the type of metric source.  It should be one of \"ContainerResource\", \"External\", \"Object\", \"Pods\" or \"Resource\", each mapping to a matching field in the object. Note: \"ContainerResource\" type is available on when the feature-gate HPAContainerMetrics is enabled
     */

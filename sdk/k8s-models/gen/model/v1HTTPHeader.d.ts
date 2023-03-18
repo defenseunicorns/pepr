@@ -12,7 +12,7 @@
 /**
 * HTTPHeader describes a custom header to be used in HTTP probes
 */
-export declare class V1HTTPHeader {
+export declare class HTTPHeader {
     /**
     * The header field name
     */

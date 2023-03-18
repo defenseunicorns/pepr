@@ -12,7 +12,7 @@
 /**
 * ScaleStatus represents the current status of a scale subresource.
 */
-export declare class V1ScaleStatus {
+export declare class ScaleStatus {
     /**
     * actual number of observed instances of the scaled object.
     */

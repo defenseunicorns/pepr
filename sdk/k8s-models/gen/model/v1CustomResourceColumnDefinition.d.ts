@@ -12,7 +12,7 @@
 /**
 * CustomResourceColumnDefinition specifies a column for server side printing.
 */
-export declare class V1CustomResourceColumnDefinition {
+export declare class CustomResourceColumnDefinition {
     /**
     * description is a human readable description of this column.
     */

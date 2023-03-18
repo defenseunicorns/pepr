@@ -9,11 +9,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectReference } from './v1ObjectReference';
+import { ObjectReference } from './v1ObjectReference';
 /**
 * Represents a StorageOS persistent volume resource.
 */
-export declare class V1StorageOSPersistentVolumeSource {
+export declare class StorageOSPersistentVolumeSource {
     /**
     * fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.
     */
@@ -22,7 +22,7 @@ export declare class V1StorageOSPersistentVolumeSource {
     * readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
     */
     'readOnly'?: boolean;
-    'secretRef'?: V1ObjectReference;
+    'secretRef'?: ObjectReference;
     /**
     * volumeName is the human-readable name of the StorageOS volume.  Volume names are only unique within a namespace.
     */

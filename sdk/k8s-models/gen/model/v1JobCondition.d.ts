@@ -12,7 +12,7 @@
 /**
 * JobCondition describes current state of a job.
 */
-export declare class V1JobCondition {
+export declare class JobCondition {
     /**
     * Last time the condition was checked.
     */

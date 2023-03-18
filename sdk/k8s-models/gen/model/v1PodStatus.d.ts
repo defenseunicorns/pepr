@@ -9,25 +9,25 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ContainerStatus } from './v1ContainerStatus';
-import { V1PodCondition } from './v1PodCondition';
-import { V1PodIP } from './v1PodIP';
+import { ContainerStatus } from './v1ContainerStatus';
+import { PodCondition } from './v1PodCondition';
+import { PodIP } from './v1PodIP';
 /**
 * PodStatus represents information about the status of a pod. Status may trail the actual state of a system, especially if the node that hosts the pod cannot contact the control plane.
 */
-export declare class V1PodStatus {
+export declare class PodStatus {
     /**
     * Current service state of pod. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-conditions
     */
-    'conditions'?: Array<V1PodCondition>;
+    'conditions'?: Array<PodCondition>;
     /**
     * The list has one entry per container in the manifest. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-and-container-status
     */
-    'containerStatuses'?: Array<V1ContainerStatus>;
+    'containerStatuses'?: Array<ContainerStatus>;
     /**
     * Status for any ephemeral containers that have run in this pod.
     */
-    'ephemeralContainerStatuses'?: Array<V1ContainerStatus>;
+    'ephemeralContainerStatuses'?: Array<ContainerStatus>;
     /**
     * IP address of the host to which the pod is assigned. Empty if not yet scheduled.
     */
@@ -35,7 +35,7 @@ export declare class V1PodStatus {
     /**
     * The list has one entry per init container in the manifest. The most recent successful init container will have ready = true, the most recently started container will have startTime set. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-and-container-status
     */
-    'initContainerStatuses'?: Array<V1ContainerStatus>;
+    'initContainerStatuses'?: Array<ContainerStatus>;
     /**
     * A human readable message indicating details about why the pod is in this condition.
     */
@@ -55,7 +55,7 @@ export declare class V1PodStatus {
     /**
     * podIPs holds the IP addresses allocated to the pod. If this field is specified, the 0th entry must match the podIP field. Pods may be allocated at most 1 value for each of IPv4 and IPv6. This list is empty if no IPs have been allocated yet.
     */
-    'podIPs'?: Array<V1PodIP>;
+    'podIPs'?: Array<PodIP>;
     /**
     * The Quality of Service (QOS) classification assigned to the pod based on resource requirements See PodQOSClass type for available QOS classes More info: https://git.k8s.io/community/contributors/design-proposals/node/resource-qos.md
     */

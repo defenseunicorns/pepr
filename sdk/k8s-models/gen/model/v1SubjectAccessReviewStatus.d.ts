@@ -12,7 +12,7 @@
 /**
 * SubjectAccessReviewStatus
 */
-export declare class V1SubjectAccessReviewStatus {
+export declare class SubjectAccessReviewStatus {
     /**
     * Allowed is required. True if the action would be allowed, false otherwise.
     */

@@ -12,7 +12,7 @@
 /**
 * NodeAddress contains information for the node\'s address.
 */
-export declare class V1NodeAddress {
+export declare class NodeAddress {
     /**
     * The node address.
     */

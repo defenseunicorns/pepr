@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ForZone } from './v1ForZone';
+import { ForZone } from './v1ForZone';
 /**
 * EndpointHints provides hints describing how an endpoint should be consumed.
 */
-export declare class V1EndpointHints {
+export declare class EndpointHints {
     /**
     * forZones indicates the zone(s) this endpoint should be consumed by to enable topology aware routing.
     */
-    'forZones'?: Array<V1ForZone>;
+    'forZones'?: Array<ForZone>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

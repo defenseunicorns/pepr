@@ -12,7 +12,7 @@
 /**
 * PodFailurePolicyOnPodConditionsPattern describes a pattern for matching an actual pod condition type.
 */
-export declare class V1PodFailurePolicyOnPodConditionsPattern {
+export declare class PodFailurePolicyOnPodConditionsPattern {
     /**
     * Specifies the required Pod condition status. To match a pod condition it is required that the specified status equals the pod condition status. Defaults to True.
     */

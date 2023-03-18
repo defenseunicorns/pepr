@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectReference } from './v1ObjectReference';
+import { ObjectReference } from './v1ObjectReference';
 /**
 * CronJobStatus represents the current state of a cron job.
 */
-export declare class V1CronJobStatus {
+export declare class CronJobStatus {
     /**
     * A list of pointers to currently running jobs.
     */
-    'active'?: Array<V1ObjectReference>;
+    'active'?: Array<ObjectReference>;
     /**
     * Information when was the last time the job was successfully scheduled.
     */

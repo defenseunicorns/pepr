@@ -10,11 +10,11 @@
  * Do not edit the class manually.
  */
 import { IntOrString } from '../../types';
-import { V1LabelSelector } from './v1LabelSelector';
+import { LabelSelector } from './v1LabelSelector';
 /**
 * PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.
 */
-export declare class V1PodDisruptionBudgetSpec {
+export declare class PodDisruptionBudgetSpec {
     /**
     * IntOrString is a type that can hold an int32 or a string.  When used in JSON or YAML marshalling and unmarshalling, it produces or consumes the inner type.  This allows you to have, for example, a JSON field that can accept a name or number.
     */
@@ -23,7 +23,7 @@ export declare class V1PodDisruptionBudgetSpec {
     * IntOrString is a type that can hold an int32 or a string.  When used in JSON or YAML marshalling and unmarshalling, it produces or consumes the inner type.  This allows you to have, for example, a JSON field that can accept a name or number.
     */
     'minAvailable'?: IntOrString;
-    'selector'?: V1LabelSelector;
+    'selector'?: LabelSelector;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

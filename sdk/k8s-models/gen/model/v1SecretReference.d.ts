@@ -12,7 +12,7 @@
 /**
 * SecretReference represents a Secret Reference. It has enough information to retrieve secret in any namespace
 */
-export declare class V1SecretReference {
+export declare class SecretReference {
     /**
     * name is unique within a namespace to reference a secret resource.
     */

@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1PersistentVolumeClaimTemplate } from './v1PersistentVolumeClaimTemplate';
+import { PersistentVolumeClaimTemplate } from './v1PersistentVolumeClaimTemplate';
 /**
 * Represents an ephemeral volume that is handled by a normal storage driver.
 */
-export declare class V1EphemeralVolumeSource {
-    'volumeClaimTemplate'?: V1PersistentVolumeClaimTemplate;
+export declare class EphemeralVolumeSource {
+    'volumeClaimTemplate'?: PersistentVolumeClaimTemplate;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

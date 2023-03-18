@@ -9,72 +9,72 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1AWSElasticBlockStoreVolumeSource } from './v1AWSElasticBlockStoreVolumeSource';
-import { V1AzureDiskVolumeSource } from './v1AzureDiskVolumeSource';
-import { V1AzureFileVolumeSource } from './v1AzureFileVolumeSource';
-import { V1CSIVolumeSource } from './v1CSIVolumeSource';
-import { V1CephFSVolumeSource } from './v1CephFSVolumeSource';
-import { V1CinderVolumeSource } from './v1CinderVolumeSource';
-import { V1ConfigMapVolumeSource } from './v1ConfigMapVolumeSource';
-import { V1DownwardAPIVolumeSource } from './v1DownwardAPIVolumeSource';
-import { V1EmptyDirVolumeSource } from './v1EmptyDirVolumeSource';
-import { V1EphemeralVolumeSource } from './v1EphemeralVolumeSource';
-import { V1FCVolumeSource } from './v1FCVolumeSource';
-import { V1FlexVolumeSource } from './v1FlexVolumeSource';
-import { V1FlockerVolumeSource } from './v1FlockerVolumeSource';
-import { V1GCEPersistentDiskVolumeSource } from './v1GCEPersistentDiskVolumeSource';
-import { V1GitRepoVolumeSource } from './v1GitRepoVolumeSource';
-import { V1GlusterfsVolumeSource } from './v1GlusterfsVolumeSource';
-import { V1HostPathVolumeSource } from './v1HostPathVolumeSource';
-import { V1ISCSIVolumeSource } from './v1ISCSIVolumeSource';
-import { V1NFSVolumeSource } from './v1NFSVolumeSource';
-import { V1PersistentVolumeClaimVolumeSource } from './v1PersistentVolumeClaimVolumeSource';
-import { V1PhotonPersistentDiskVolumeSource } from './v1PhotonPersistentDiskVolumeSource';
-import { V1PortworxVolumeSource } from './v1PortworxVolumeSource';
-import { V1ProjectedVolumeSource } from './v1ProjectedVolumeSource';
-import { V1QuobyteVolumeSource } from './v1QuobyteVolumeSource';
-import { V1RBDVolumeSource } from './v1RBDVolumeSource';
-import { V1ScaleIOVolumeSource } from './v1ScaleIOVolumeSource';
-import { V1SecretVolumeSource } from './v1SecretVolumeSource';
-import { V1StorageOSVolumeSource } from './v1StorageOSVolumeSource';
-import { V1VsphereVirtualDiskVolumeSource } from './v1VsphereVirtualDiskVolumeSource';
+import { AWSElasticBlockStoreVolumeSource } from './v1AWSElasticBlockStoreVolumeSource';
+import { AzureDiskVolumeSource } from './v1AzureDiskVolumeSource';
+import { AzureFileVolumeSource } from './v1AzureFileVolumeSource';
+import { CSIVolumeSource } from './v1CSIVolumeSource';
+import { CephFSVolumeSource } from './v1CephFSVolumeSource';
+import { CinderVolumeSource } from './v1CinderVolumeSource';
+import { ConfigMapVolumeSource } from './v1ConfigMapVolumeSource';
+import { DownwardAPIVolumeSource } from './v1DownwardAPIVolumeSource';
+import { EmptyDirVolumeSource } from './v1EmptyDirVolumeSource';
+import { EphemeralVolumeSource } from './v1EphemeralVolumeSource';
+import { FCVolumeSource } from './v1FCVolumeSource';
+import { FlexVolumeSource } from './v1FlexVolumeSource';
+import { FlockerVolumeSource } from './v1FlockerVolumeSource';
+import { GCEPersistentDiskVolumeSource } from './v1GCEPersistentDiskVolumeSource';
+import { GitRepoVolumeSource } from './v1GitRepoVolumeSource';
+import { GlusterfsVolumeSource } from './v1GlusterfsVolumeSource';
+import { HostPathVolumeSource } from './v1HostPathVolumeSource';
+import { ISCSIVolumeSource } from './v1ISCSIVolumeSource';
+import { NFSVolumeSource } from './v1NFSVolumeSource';
+import { PersistentVolumeClaimVolumeSource } from './v1PersistentVolumeClaimVolumeSource';
+import { PhotonPersistentDiskVolumeSource } from './v1PhotonPersistentDiskVolumeSource';
+import { PortworxVolumeSource } from './v1PortworxVolumeSource';
+import { ProjectedVolumeSource } from './v1ProjectedVolumeSource';
+import { QuobyteVolumeSource } from './v1QuobyteVolumeSource';
+import { RBDVolumeSource } from './v1RBDVolumeSource';
+import { ScaleIOVolumeSource } from './v1ScaleIOVolumeSource';
+import { SecretVolumeSource } from './v1SecretVolumeSource';
+import { StorageOSVolumeSource } from './v1StorageOSVolumeSource';
+import { VsphereVirtualDiskVolumeSource } from './v1VsphereVirtualDiskVolumeSource';
 /**
 * Volume represents a named volume in a pod that may be accessed by any container in the pod.
 */
-export declare class V1Volume {
-    'awsElasticBlockStore'?: V1AWSElasticBlockStoreVolumeSource;
-    'azureDisk'?: V1AzureDiskVolumeSource;
-    'azureFile'?: V1AzureFileVolumeSource;
-    'cephfs'?: V1CephFSVolumeSource;
-    'cinder'?: V1CinderVolumeSource;
-    'configMap'?: V1ConfigMapVolumeSource;
-    'csi'?: V1CSIVolumeSource;
-    'downwardAPI'?: V1DownwardAPIVolumeSource;
-    'emptyDir'?: V1EmptyDirVolumeSource;
-    'ephemeral'?: V1EphemeralVolumeSource;
-    'fc'?: V1FCVolumeSource;
-    'flexVolume'?: V1FlexVolumeSource;
-    'flocker'?: V1FlockerVolumeSource;
-    'gcePersistentDisk'?: V1GCEPersistentDiskVolumeSource;
-    'gitRepo'?: V1GitRepoVolumeSource;
-    'glusterfs'?: V1GlusterfsVolumeSource;
-    'hostPath'?: V1HostPathVolumeSource;
-    'iscsi'?: V1ISCSIVolumeSource;
+export declare class Volume {
+    'awsElasticBlockStore'?: AWSElasticBlockStoreVolumeSource;
+    'azureDisk'?: AzureDiskVolumeSource;
+    'azureFile'?: AzureFileVolumeSource;
+    'cephfs'?: CephFSVolumeSource;
+    'cinder'?: CinderVolumeSource;
+    'configMap'?: ConfigMapVolumeSource;
+    'csi'?: CSIVolumeSource;
+    'downwardAPI'?: DownwardAPIVolumeSource;
+    'emptyDir'?: EmptyDirVolumeSource;
+    'ephemeral'?: EphemeralVolumeSource;
+    'fc'?: FCVolumeSource;
+    'flexVolume'?: FlexVolumeSource;
+    'flocker'?: FlockerVolumeSource;
+    'gcePersistentDisk'?: GCEPersistentDiskVolumeSource;
+    'gitRepo'?: GitRepoVolumeSource;
+    'glusterfs'?: GlusterfsVolumeSource;
+    'hostPath'?: HostPathVolumeSource;
+    'iscsi'?: ISCSIVolumeSource;
     /**
     * name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
     */
     'name': string;
-    'nfs'?: V1NFSVolumeSource;
-    'persistentVolumeClaim'?: V1PersistentVolumeClaimVolumeSource;
-    'photonPersistentDisk'?: V1PhotonPersistentDiskVolumeSource;
-    'portworxVolume'?: V1PortworxVolumeSource;
-    'projected'?: V1ProjectedVolumeSource;
-    'quobyte'?: V1QuobyteVolumeSource;
-    'rbd'?: V1RBDVolumeSource;
-    'scaleIO'?: V1ScaleIOVolumeSource;
-    'secret'?: V1SecretVolumeSource;
-    'storageos'?: V1StorageOSVolumeSource;
-    'vsphereVolume'?: V1VsphereVirtualDiskVolumeSource;
+    'nfs'?: NFSVolumeSource;
+    'persistentVolumeClaim'?: PersistentVolumeClaimVolumeSource;
+    'photonPersistentDisk'?: PhotonPersistentDiskVolumeSource;
+    'portworxVolume'?: PortworxVolumeSource;
+    'projected'?: ProjectedVolumeSource;
+    'quobyte'?: QuobyteVolumeSource;
+    'rbd'?: RBDVolumeSource;
+    'scaleIO'?: ScaleIOVolumeSource;
+    'secret'?: SecretVolumeSource;
+    'storageos'?: StorageOSVolumeSource;
+    'vsphereVolume'?: VsphereVirtualDiskVolumeSource;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

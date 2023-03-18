@@ -12,7 +12,7 @@
 /**
 * UncountedTerminatedPods holds UIDs of Pods that have terminated but haven\'t been accounted in Job status counters.
 */
-export declare class V1UncountedTerminatedPods {
+export declare class UncountedTerminatedPods {
     /**
     * Failed holds UIDs of failed Pods.
     */

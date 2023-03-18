@@ -12,7 +12,7 @@
 /**
 * Maps a string key to a path within a volume.
 */
-export declare class V1KeyToPath {
+export declare class KeyToPath {
     /**
     * key is the key to project.
     */

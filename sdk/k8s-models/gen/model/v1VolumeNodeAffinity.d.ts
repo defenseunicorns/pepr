@@ -9,12 +9,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1NodeSelector } from './v1NodeSelector';
+import { NodeSelector } from './v1NodeSelector';
 /**
 * VolumeNodeAffinity defines constraints that limit what nodes this volume can be accessed from.
 */
-export declare class V1VolumeNodeAffinity {
-    'required'?: V1NodeSelector;
+export declare class VolumeNodeAffinity {
+    'required'?: NodeSelector;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

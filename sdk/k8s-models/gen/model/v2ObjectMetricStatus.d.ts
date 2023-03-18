@@ -9,16 +9,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V2CrossVersionObjectReference } from './v2CrossVersionObjectReference';
-import { V2MetricIdentifier } from './v2MetricIdentifier';
-import { V2MetricValueStatus } from './v2MetricValueStatus';
+import { CrossVersionObjectReference } from './v2CrossVersionObjectReference';
+import { MetricIdentifier } from './v2MetricIdentifier';
+import { MetricValueStatus } from './v2MetricValueStatus';
 /**
 * ObjectMetricStatus indicates the current value of a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).
 */
-export declare class V2ObjectMetricStatus {
-    'current': V2MetricValueStatus;
-    'describedObject': V2CrossVersionObjectReference;
-    'metric': V2MetricIdentifier;
+export declare class ObjectMetricStatus {
+    'current': MetricValueStatus;
+    'describedObject': CrossVersionObjectReference;
+    'metric': MetricIdentifier;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

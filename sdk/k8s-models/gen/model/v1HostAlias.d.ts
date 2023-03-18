@@ -12,7 +12,7 @@
 /**
 * HostAlias holds the mapping between IP and hostnames that will be injected as an entry in the pod\'s hosts file.
 */
-export declare class V1HostAlias {
+export declare class HostAlias {
     /**
     * Hostnames for the above IP address.
     */

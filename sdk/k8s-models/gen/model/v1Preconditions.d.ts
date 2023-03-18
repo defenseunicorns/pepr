@@ -12,7 +12,7 @@
 /**
 * Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.
 */
-export declare class V1Preconditions {
+export declare class Preconditions {
     /**
     * Specifies the target ResourceVersion
     */

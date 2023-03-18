@@ -9,15 +9,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1Condition } from './v1Condition';
+import { Condition } from './v1Condition';
 /**
 * NetworkPolicyStatus describe the current state of the NetworkPolicy.
 */
-export declare class V1NetworkPolicyStatus {
+export declare class NetworkPolicyStatus {
     /**
     * Conditions holds an array of metav1.Condition that describe the state of the NetworkPolicy. Current service state
     */
-    'conditions'?: Array<V1Condition>;
+    'conditions'?: Array<Condition>;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;

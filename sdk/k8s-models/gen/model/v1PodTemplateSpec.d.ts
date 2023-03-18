@@ -9,14 +9,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { V1ObjectMeta } from './v1ObjectMeta';
-import { V1PodSpec } from './v1PodSpec';
+import { ObjectMeta } from './v1ObjectMeta';
+import { PodSpec } from './v1PodSpec';
 /**
 * PodTemplateSpec describes the data a pod should have when created from a template
 */
-export declare class V1PodTemplateSpec {
-    'metadata'?: V1ObjectMeta;
-    'spec'?: V1PodSpec;
+export declare class PodTemplateSpec {
+    'metadata'?: ObjectMeta;
+    'spec'?: PodSpec;
     static discriminator: string | undefined;
     static attributeTypeMap: Array<{
         name: string;
