@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { Request } from "@k8s";
+
 /**
  * The phase of the Kubernetes admission webhook that the capability is registered for.
  *
@@ -12,12 +14,21 @@ export enum HookPhase {
 }
 
 /**
- * The type of Kubernetes mutating webhook event that the capability action is registered for.
+ * Recursively make all properties in T optional.
  */
-export enum EventType {
-  create = "create",
-  update = "update",
-  delete = "delete",
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+/**
+ * The type of Kubernetes mutating webhook event ethat the capability action is registered for.
+ */
+
+export enum Event {
+  Create = "create",
+  Update = "update",
+  Delete = "delete",
+  CreateOrUpdate = "createOrUpdate",
 }
 
 export interface MutateBinding {

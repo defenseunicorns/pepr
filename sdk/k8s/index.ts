@@ -3,7 +3,6 @@
 
 // Export kinds as a single object
 import * as kind from "./kinds";
-export { kind };
+export { kind as a };
 
-export * from "./kinds";
 export * from "./types";

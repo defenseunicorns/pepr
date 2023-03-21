@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, GroupVersionKind } from "@k8s";
-import { CapabilityCfg, EventType, HookPhase } from "./types";
+import { Request, GroupVersionKind } from "@k8s";
+import { Action } from "./actions";
+import { KubernetesObject } from "./k8s-models/types";
+import { CapabilityCfg, Event as Event, HookPhase } from "./types";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -14,6 +16,8 @@ export class Capability implements CapabilityCfg {
 
   // Currently everything is considered a mutation
   private _mutateOrValidate = HookPhase.mutate;
+
+  private _eventBindings: Binding<KubernetesObject>[] = [];
 
   get name() {
     return this._name;
@@ -39,9 +43,10 @@ export class Capability implements CapabilityCfg {
 
   When(kind: GroupVersionKind) {
     return {
-      IsCreated: () => this.EventBinding(EventType.create, kind),
-      IsUpdated: () => this.EventBinding(EventType.update, kind),
-      IsDeleted: () => this.EventBinding(EventType.delete, kind),
+      IsCreatedOrUpdated: () => this.Bind(Event.CreateOrUpdate, kind),
+      IsCreated: () => this.Bind(Event.Create, kind),
+      IsUpdated: () => this.Bind(Event.Update, kind),
+      IsDeleted: () => this.Bind(Event.Delete, kind),
     };
   }
 
@@ -53,13 +58,20 @@ export class Capability implements CapabilityCfg {
    * @param kind The Kubernetes resource Group, Version, Kind to match, e.g. `Deployment`
    * @returns
    */
-  EventBinding(event: EventType, kind: GroupVersionKind) {
-    return {
+  Bind(event: Event, kind: GroupVersionKind) {
+    const current = {
       /**
        * The action that will be executed if the resources matches the binding.
        * @param binding The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
        */
-      Run: <T>(binding: (request: AdmissionRequest<T>) => void) => {},
+      Then: <T = KubernetesObject>(binding: Binding<T>) => {
+        this._eventBindings.push(binding);
+        return current;
+      },
     };
+
+    return current;
   }
 }
+
+type Binding<T> = (input: Action<T>) => void;

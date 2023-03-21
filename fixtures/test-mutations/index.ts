@@ -1,32 +1,14 @@
-import { kind as a } from "@k8s";
-import Pepr from "@pepr";
+import { a } from "@k8s";
+import { Capability } from "@pepr";
+import { changeABunchOfDeploymentThings } from "./change-a-bunch-of-deployment-things";
+import { modifyCronJobSchedule } from "./modify-cron-job-schedule";
 
-const { When } = new Pepr.Capability({
+const { When } = new Capability({
   name: "mutation-tests",
-  description: "A collection of examples of resource mutations.",
+  description: "A collection of examples of data mutations.",
   namespaces: ["mutation-namespace"],
 });
 
-When(a.CronJob).IsCreated().Run(mutateCronJob);
+When(a.CronJob).IsCreated().Then(modifyCronJobSchedule);
 
-When(a.Deployment).IsUpdated().Run(mutatePod);
-
-When(a.Deployment).IsDeleted().Run(mutatePod);
-
-When({
-  group: "source.toolkit.fluxcd.io",
-  version: "v1beta1",
-  kind: "GitRepository",
-})
-  .IsCreated()
-  .Run(mutatePod);
-
-function mutateCronJob(resource) {
-  resource.object.spec.schedule = "*/5 * * * *";
-  return resource;
-}
-
-function mutatePod(resource) {
-  resource.object.metadata.labels["mutated"] = "true";
-  return resource;
-}
+When(a.Deployment).IsDeleted().Then(changeABunchOfDeploymentThings);

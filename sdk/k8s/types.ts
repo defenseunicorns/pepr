@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { KubernetesObject } from "sdk/k8s-models/types";
+
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
@@ -18,10 +20,13 @@ export interface GroupVersionKind {
   /** The K8s resource kind, e..g "Pod". */
   readonly kind: string;
   readonly group: string;
-  readonly version: string;
+  readonly version?: string;
 }
 
-export interface AdmissionRequest<T> {
+/**
+ * A Kubernetes admission request to be processed by a capability.
+ */
+export interface Request<T = KubernetesObject> {
   /** UID is an identifier for the individual request/response. */
   readonly uid: string;
 
@@ -97,7 +102,7 @@ export interface AdmissionRequest<T> {
   readonly options?: any;
 }
 
-export interface AdmissionResponse {
+export interface Response {
   /** UID is an identifier for the individual request/response. This must be copied over from the corresponding AdmissionRequest. */
   uid: string;
 

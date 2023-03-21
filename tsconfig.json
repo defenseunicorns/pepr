@@ -6,7 +6,7 @@
     "paths": {
       "@pepr": ["sdk"],
       "@k8s": ["sdk/k8s"],
-      "@models": ["sdk/k8s-models/gen/model/models"]
+      "@k8s-types": ["sdk/k8s-models/gen/model/models"]
     },
     "target": "ES2022"
   }
