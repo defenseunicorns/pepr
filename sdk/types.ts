@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request } from "@k8s";
+import { GroupVersionKind } from "@k8s";
+import { Action } from "./actions";
+import { KubernetesObject } from "./k8s-models/types";
 
 /**
  * The phase of the Kubernetes admission webhook that the capability is registered for.
@@ -71,7 +72,7 @@ export type Config = {
      * List of Kubernetes resource kinds to always ignore.
      * This prevents Pepr from processing the specified resource kinds.
      */
-    kinds?: string[];
+    kinds?: GroupVersionKind[];
     /**
      * List of Kubernetes namespaces to always ignore.
      * Any resources in these namespaces will be ignored by Pepr.
@@ -84,10 +85,10 @@ export type Config = {
      * The example below will ignore any resources with the label `my-label=ulta-secret`:
      * ```
      * alwaysIgnore:
-     *   labels: ["my-label=ulta-secret"]
+     *   labels: [{ "my-label": "ultra-secret" }]
      * ```
      */
-    labels?: string[];
+    labels?: Record<string, string>[];
   };
 
   /**
@@ -111,3 +112,81 @@ export type Config = {
     authorizedKeys?: string[];
   };
 };
+
+export type WhenSelector = {
+  /** Register a capability action to be executed when a Kubernetes resource is created or updated. */
+  IsCreatedOrUpdated: () => BindingAll;
+  /** Register a capability action to be executed when a Kubernetes resource is created. */
+  IsCreated: () => BindingAll;
+  /** Register a capability action to be executed when a Kubernetes resource is updated. */
+  IsUpdated: () => BindingAll;
+  /** Register a capability action to be executed when a Kubernetes resource is deleted. */
+  IsDeleted: () => BindingAll;
+};
+
+export type Binding = {
+  readonly event: Event;
+  readonly kind: GroupVersionKind;
+  readonly filters: {
+    namespaces?: string[];
+    labels?: Record<string, string>;
+    annotations?: Record<string, string>;
+  };
+  readonly callback?: Callback<KubernetesObject>;
+};
+
+export type BindingFilter = BindingAction & {
+  /**
+   * Only apply the capability action if the resource has the specified label. If no value is specified, the label must exist.
+   * Note multiple calls to this method will result in an AND condition. e.g.
+   *
+   * ```ts
+   * When(a.Deployment)
+   *   .IsCreated()
+   *   .WithLabel("foo", "bar")
+   *   .WithLabel("baz", "qux")
+   *   .Then(...)
+   * ```
+   *
+   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` labels.
+   *
+   * @param key
+   * @param value
+   */
+  WithLabel: (key: string, value?: string) => BindingFilter;
+  /**
+   * Only apply the capability action if the resource has the specified annotation. If no value is specified, the annotation must exist.
+   * Note multiple calls to this method will result in an AND condition. e.g.
+   *
+   * ```ts
+   * When(a.Deployment)
+   *   .IsCreated()
+   *   .WithAnnotation("foo", "bar")
+   *   .WithAnnotation("baz", "qux")
+   *   .Then(...)
+   * ```
+   *
+   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` annotations.
+   *
+   * @param key
+   * @param value
+   */
+  WithAnnotation: (key: string, value?: string) => BindingFilter;
+};
+
+export type BindingAll = BindingFilter & {
+  /** Only apply the capability action to resources in the specified namespace.*/
+  InNamespace: (namespace: string) => BindingFilter;
+  /** Only apply the cabability action if the resource is in one of the specified namespaces.*/
+  InOneOfNamespaces: (...namespaces: string[]) => BindingFilter;
+};
+
+export type BindingAction = {
+  /**
+   * The action that will be executed if the resources matches the binding.
+   * @param cb The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
+   */
+  Then: <T>(cb: Callback<T>) => BindingAction;
+};
+
+export type Callback<T> = (input: Action<T>) => void;

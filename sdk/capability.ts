@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request, GroupVersionKind } from "@k8s";
-import { Action } from "./actions";
+import { GroupVersionKind } from "@k8s";
 import { KubernetesObject } from "./k8s-models/types";
-import { CapabilityCfg, Event as Event, HookPhase } from "./types";
+import {
+  Binding,
+  BindingAction,
+  BindingFilter,
+  Callback,
+  CapabilityCfg,
+  Event,
+  HookPhase,
+  WhenSelector
+} from "./types";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -17,7 +25,11 @@ export class Capability implements CapabilityCfg {
   // Currently everything is considered a mutation
   private _mutateOrValidate = HookPhase.mutate;
 
-  private _eventBindings: Binding<KubernetesObject>[] = [];
+  private _bindings: Binding[] = [];
+
+  get bindings(): Binding[] {
+    return { ...this._bindings };
+  }
 
   get name() {
     return this._name;
@@ -41,12 +53,30 @@ export class Capability implements CapabilityCfg {
     this._namespaces = cfg.namespaces;
   }
 
-  When(kind: GroupVersionKind) {
+  /**
+   * The Register method is used to register a capability with the Pepr runtime. This method is
+   * called in the order that the capabilities should be executed.
+   *
+   * @param callback the state register method to call, passing the capability as an argument
+   */
+  Register(register: (self: Capability) => void) {
+    register(this);
+  }
+
+  /**
+   * The When method is used to register a capability action to be executed when a Kubernetes resource is
+   * processed by Pepr. The action will be executed if the resource matches the specified kind and any
+   * filters that are applied.
+   *
+   * @param kind
+   * @returns
+   */
+  When(kind: GroupVersionKind): WhenSelector {
     return {
-      IsCreatedOrUpdated: () => this.Bind(Event.CreateOrUpdate, kind),
-      IsCreated: () => this.Bind(Event.Create, kind),
-      IsUpdated: () => this.Bind(Event.Update, kind),
-      IsDeleted: () => this.Bind(Event.Delete, kind),
+      IsCreatedOrUpdated: () => this._bind(Event.CreateOrUpdate, kind),
+      IsCreated: () => this._bind(Event.Create, kind),
+      IsUpdated: () => this._bind(Event.Update, kind),
+      IsDeleted: () => this._bind(Event.Delete, kind),
     };
   }
 
@@ -58,20 +88,55 @@ export class Capability implements CapabilityCfg {
    * @param kind The Kubernetes resource Group, Version, Kind to match, e.g. `Deployment`
    * @returns
    */
-  Bind(event: Event, kind: GroupVersionKind) {
-    const current = {
-      /**
-       * The action that will be executed if the resources matches the binding.
-       * @param binding The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
-       */
-      Then: <T = KubernetesObject>(binding: Binding<T>) => {
-        this._eventBindings.push(binding);
-        return current;
+  private _bind(event: Event, kind: GroupVersionKind) {
+    const binding: Binding = {
+      event,
+      kind,
+      filters: {
+        namespaces: [],
+        labels: {},
+        annotations: {},
       },
     };
 
-    return current;
+    const Then = <T = KubernetesObject>(cb: Callback<T>): BindingAction => {
+      // Push the binding to the list of bindings for this capability as a new BindingAction
+      // with the callback function to preserve
+      this._bindings.push({
+        ...binding,
+        callback: cb,
+      });
+
+      // Now only allow adding actions to the same binding
+      return { Then };
+    };
+
+    function InNamespace(namespace: string): BindingFilter {
+      binding.filters.namespaces.push(namespace);
+      return { WithLabel, WithAnnotation, Then };
+    }
+
+    function InOneOfNamespaces(...namespaces: string[]): BindingFilter {
+      binding.filters.namespaces.push(...namespaces);
+      return { WithLabel, WithAnnotation, Then };
+    }
+
+    function WithLabel(key: string, value = "*"): BindingFilter {
+      binding.filters.labels[key] = value;
+      return { WithLabel, WithAnnotation, Then };
+    }
+
+    const WithAnnotation = (key: string, value = "*"): BindingFilter => {
+      binding.filters.annotations[key] = value;
+      return { WithLabel, WithAnnotation, Then };
+    };
+
+    return {
+      InNamespace,
+      InOneOfNamespaces,
+      WithLabel,
+      WithAnnotation,
+      Then,
+    };
   }
 }
-
-type Binding<T> = (input: Action<T>) => void;
