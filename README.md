@@ -8,6 +8,22 @@ Pepr is an open-source project licensed under the Apache 2 license, designed to 
 - Write capabilities in TypeScript and bundle them for in-cluster processing using [v8go](https://github.com/rogchap/v8go) and V8 isolates (cached for performance).
 - React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary API calls.
 
+## Concepts
+
+### Module
+
+A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their capability actions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster for processing by a common Pepr controller.
+
+### Capability
+
+A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be used in multiple Pepr modules if needed.
+
+### CapabilityAction
+
+CapabilityAction is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in from Kubernetes. CapabilityActions are the atomic operations that are performed on Kubernetes resources by Pepr.
+
+For example, a CapabilityAction could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. CapabilityActions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
+
 ## Example
 
 Define a new capability:
@@ -84,6 +100,52 @@ Now you can build and bundle your capability:
 
 ```
 pepr build hello-world
+```
+
+## Logical Pepr Flow
+
+```mermaid
+graph LR
+
+subgraph "Module 3 (Validate Only)"
+    direction LR
+    Q[entrypoint 3] --> R[Validate Webhook];
+    R --> S[Capability a <br><i>- action 1<br>- action 2</i>];
+    S --> T[Capability b <br><i>- action 1<br>- action 2</i>];
+end
+
+subgraph "Module 2 (Mutate Only)"
+    direction LR
+    K[entrypoint 2] --> L[Mutate Webhook];
+    L --> M[Capability a <br><i>- action 1<br>- action 2</i>];
+    M --> N[Capability b <br><i>- action 1<br>- action 2<br>- action 3</i>];
+    N --> O[Capability c <br><i>- action 1</i>];
+end
+
+subgraph "Module 1 (Mutate & Validate)"
+    direction LR
+    A[entrypoint 1] --> B[Mutate Webhook];
+    A --> C[Validate Webhook];
+    B --> D[Capability a <br><i>- action 1</i>];
+    D --> E[Capability b <br><i>- action 1<br>- action 2</i>];
+    E --> F[Capability c <br><i>- action 1<br>- action 2</i>];
+    C --> G[Capability d <br><i>- action 1<br>- action 2</i>];
+    G --> H[Capability e <br><i>- action 1</i>];
+    H --> I[Capability f <br><i>- action 1<br>- action 2<br>- action 3</i>];
+end
+
+
+
+%% Defining node styles
+classDef Validate fill:#66ff66,color:#000;
+classDef Mutate fill:#5786ea,color:#000;
+
+
+class L,M,N,O Mutate;
+class B,D,E,F Mutate;
+
+class R,S,T Validate;
+class C,G,H,I Validate;
 ```
 
 ## TypeScript

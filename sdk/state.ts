@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind } from "@k8s";
+import { GroupVersionKind, Request } from "@k8s";
 import { Capability } from "./capability";
-import { Config } from "./types";
+import { RequestWrapper } from "./request";
+import { ModuleConfig } from "./types";
 
 export class State {
-  private _config: Config;
+  private _config: ModuleConfig;
   private _state: Capability[];
   private _kinds: GroupVersionKind[];
 
@@ -15,7 +16,7 @@ export class State {
    *
    * @param config The configuration for the Pepr runtime
    */
-  constructor(config: Config) {
+  constructor(config: ModuleConfig) {
     // Merge the default config with the provided config
     this._config = config;
 
@@ -31,5 +32,16 @@ export class State {
 
     // Add the capability to the state
     this._state.push(capability);
+  }
+
+  ProcessRequest(req: Request) {
+    const wrapped = new RequestWrapper(req);
+
+    this._state.forEach((capability) => {
+      capability.bindings.forEach((binding) => {
+        // todo: handle bindings and filters
+        binding.callback(wrapped);
+      });
+    });
   }
 }

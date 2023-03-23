@@ -9,7 +9,30 @@ import (
 )
 
 func gitIgnoreTemplate() []byte {
-	text := "# Ignore the sdk folder, use `pepr setup` command to recreate\nsdk/\n"
+	text := `# Gitignore created by Pepr
+# Ignore the sdk folder, use "pepr setup" command to recreate
+sdk/
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore compiled JavaScript files
+*.js
+
+# Ignore source map files
+*.map
+
+# Ignore TypeScript declaration files
+*.d.ts
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+`
 	return []byte(text)
 }
 

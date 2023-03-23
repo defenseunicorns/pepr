@@ -5,9 +5,9 @@ import { GroupVersionKind } from "@k8s";
 import { KubernetesObject } from "./k8s-models/types";
 import {
   Binding,
-  BindingAction,
+  BindToAction,
   BindingFilter,
-  Callback,
+  CapabilityAction,
   CapabilityCfg,
   Event,
   HookPhase,
@@ -99,7 +99,7 @@ export class Capability implements CapabilityCfg {
       },
     };
 
-    const Then = <T = KubernetesObject>(cb: Callback<T>): BindingAction => {
+    const Then = <T = KubernetesObject>(cb: CapabilityAction<T>): BindToAction => {
       // Push the binding to the list of bindings for this capability as a new BindingAction
       // with the callback function to preserve
       this._bindings.push({

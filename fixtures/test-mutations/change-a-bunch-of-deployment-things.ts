@@ -1,7 +1,7 @@
 import { Deployment } from "@k8s-types";
-import { Action } from "@pepr";
+import { RequestWrapper } from "@pepr";
 
-export function changeABunchOfDeploymentThings(deployment: Action<Deployment>) {
+export function changeABunchOfDeploymentThings(deployment: RequestWrapper<Deployment>) {
   deployment
     .SetLabel("mutated", "true")
     .SetLabel("test", "thing")

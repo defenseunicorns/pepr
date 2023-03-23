@@ -4,15 +4,11 @@
 import { Request } from "@k8s";
 import { KubernetesObject } from "./k8s-models/types";
 
-export function Modify<T>(input: Request<T>) {
-  return new Action(input);
-}
-
 /**
- * The Action class provides methods to modify Kubernetes objects in the context
+ * The RequestWrapper class provides methods to modify Kubernetes objects in the context
  * of a mutating webhook request.
  */
-export class Action<T extends KubernetesObject> {
+export class RequestWrapper<T extends KubernetesObject> {
   private _input: Request<T>;
 
   /**
