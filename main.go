@@ -9,11 +9,15 @@ import (
 	"github.com/defenseunicorns/pepr/pkg/setup"
 )
 
-//go:embed all:sdk/*
+//go:embed example.ts tsconfig.json
+var baseFiles embed.FS
+
+//go:embed sdk/*
 var sdkFiles embed.FS
 
 func main() {
-
+	// Store the embedded base files as a pointer for later use.
+	setup.StoreBase(&baseFiles)
 	// Store the embedded sdk files as a pointer for later use.
 	setup.StoreSDK(&sdkFiles)
 
