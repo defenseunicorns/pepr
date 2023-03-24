@@ -2,16 +2,15 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GroupVersionKind } from "@k8s";
-import { KubernetesObject } from "./k8s-models/types";
 import {
   Binding,
-  BindToAction,
   BindingFilter,
+  BindToAction,
   CapabilityAction,
   CapabilityCfg,
   Event,
   HookPhase,
-  WhenSelector
+  WhenSelector,
 } from "./types";
 
 /**
@@ -72,25 +71,7 @@ export class Capability implements CapabilityCfg {
    * @returns
    */
   When(kind: GroupVersionKind): WhenSelector {
-    return {
-      IsCreatedOrUpdated: () => this._bind(Event.CreateOrUpdate, kind),
-      IsCreated: () => this._bind(Event.Create, kind),
-      IsUpdated: () => this._bind(Event.Update, kind),
-      IsDeleted: () => this._bind(Event.Delete, kind),
-    };
-  }
-
-  /**
-   * Internal method to register a capability action to be executed when a Kubernetes resource is
-   * processed by the AdmissionController.
-   *
-   * @param event The type of Kubernetes mutating webhook event that the capability action is registered for.
-   * @param kind The Kubernetes resource Group, Version, Kind to match, e.g. `Deployment`
-   * @returns
-   */
-  private _bind(event: Event, kind: GroupVersionKind) {
     const binding: Binding = {
-      event,
       kind,
       filters: {
         namespaces: [],
@@ -99,7 +80,7 @@ export class Capability implements CapabilityCfg {
       },
     };
 
-    const Then = <T = KubernetesObject>(cb: CapabilityAction<T>): BindToAction => {
+    const Then = <T>(cb: CapabilityAction<T>): BindToAction => {
       // Push the binding to the list of bindings for this capability as a new BindingAction
       // with the callback function to preserve
       this._bindings.push({
@@ -131,12 +112,22 @@ export class Capability implements CapabilityCfg {
       return { WithLabel, WithAnnotation, Then };
     };
 
+    const bindEvent = (event: Event) => {
+      binding.event = event;
+      return {
+        InNamespace,
+        InOneOfNamespaces,
+        WithLabel,
+        WithAnnotation,
+        Then,
+      };
+    };
+
     return {
-      InNamespace,
-      InOneOfNamespaces,
-      WithLabel,
-      WithAnnotation,
-      Then,
+      IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
+      IsCreated: () => bindEvent(Event.Create),
+      IsUpdated: () => bindEvent(Event.Update),
+      IsDeleted: () => bindEvent(Event.Delete),
     };
   }
 }

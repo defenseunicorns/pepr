@@ -9,7 +9,7 @@ import (
 	"github.com/defenseunicorns/pepr/pkg/setup"
 )
 
-//go:embed example.ts tsconfig.json
+//go:embed example.ts tsconfig.json .prettierrc .vscode/settings.json
 var baseFiles embed.FS
 
 //go:embed sdk/*

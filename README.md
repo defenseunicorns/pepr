@@ -105,47 +105,69 @@ pepr build hello-world
 ## Logical Pepr Flow
 
 ```mermaid
-graph LR
+graph TD
 
-subgraph "Module 3 (Validate Only)"
+subgraph M1["Module 1 (Mutate & Validate)"]
     direction LR
-    Q[entrypoint 3] --> R[Validate Webhook];
-    R --> S[Capability a <br><i>- action 1<br>- action 2</i>];
-    S --> T[Capability b <br><i>- action 1<br>- action 2</i>];
+    A(MutatingWebhookConfiguration) --> PR1;
+    B(ValidatingWebhookConfiguration) --> PR1;
+    
+    PR1{Pepr Runtime} --> C(use module 1)
+    
+    C -->|mutate| D(Capability a <br><i>- action 1</i>);
+    D --> E(Capability b <br><i>- action 1<br>- action 2</i>);
+    E --> F(Capability c <br><i>- action 1<br>- action 2</i>);
+    
+    C -->|validate| G(Capability d <br><i>- action 1<br>- action 2</i>);
+    G --> H(Capability e <br><i>- action 1</i>);
+    H --> I(Capability f <br><i>- action 1<br>- action 2<br>- action 3</i>);
+
+    Out1("Result →")
+    F --> Out1
+    I --> Out1
 end
 
-subgraph "Module 2 (Mutate Only)"
+subgraph M2["Module 2 (Mutate Only)"]
     direction LR
-    K[entrypoint 2] --> L[Mutate Webhook];
-    L --> M[Capability a <br><i>- action 1<br>- action 2</i>];
-    M --> N[Capability b <br><i>- action 1<br>- action 2<br>- action 3</i>];
-    N --> O[Capability c <br><i>- action 1</i>];
+    K(MutatingWebhookConfiguration) --> PR2;
+
+    PR2{Pepr Runtime} -->L(use module 2) -->|mutate| M
+
+    M(Capability a <br><i>- action 1<br>- action 2</i>);
+    M --> N(Capability b <br><i>- action 1<br>- action 2<br>- action 3</i>);
+    N --> O(Capability c <br><i>- action 1</i>);
+
+    O --> Out2("Result →")
 end
 
-subgraph "Module 1 (Mutate & Validate)"
+subgraph M3["Module 3 (Validate Only)"]
     direction LR
-    A[entrypoint 1] --> B[Mutate Webhook];
-    A --> C[Validate Webhook];
-    B --> D[Capability a <br><i>- action 1</i>];
-    D --> E[Capability b <br><i>- action 1<br>- action 2</i>];
-    E --> F[Capability c <br><i>- action 1<br>- action 2</i>];
-    C --> G[Capability d <br><i>- action 1<br>- action 2</i>];
-    G --> H[Capability e <br><i>- action 1</i>];
-    H --> I[Capability f <br><i>- action 1<br>- action 2<br>- action 3</i>];
+    Q(ValidatingWebhookConfiguration) --> PR3
+
+    PR3{Pepr Runtime} -->R(use module 3) -->|validate| S
+
+    S(Capability a <br><i>- action 1<br>- action 2</i>);
+    S --> T(Capability b <br><i>- action 1<br>- action 2</i>);
+
+    T --> Out3("Result →")
 end
 
+cp1(K8s Control Plane) ==>|AdmissionRequest| M1 ==>|AdmissionResponse| cp2(K8s Control Plane)
 
+cp2 ==>|AdmissionRequest| M2 ==>|AdmissionResponse| cp3(K8s Control Plane)
+
+cp3 ==>|AdmissionRequest| M3 ==>|AdmissionResponse| CP4(K8s Control Plane)
 
 %% Defining node styles
 classDef Validate fill:#66ff66,color:#000;
 classDef Mutate fill:#5786ea,color:#000;
 
 
-class L,M,N,O Mutate;
-class B,D,E,F Mutate;
+class K,M,N,O Mutate;
+class A,D,E,F Mutate;
 
-class R,S,T Validate;
-class C,G,H,I Validate;
+class Q,S,T Validate;
+class B,G,H,I Validate;
 ```
 
 ## TypeScript

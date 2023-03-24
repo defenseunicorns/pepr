@@ -137,7 +137,7 @@ export type WhenSelector = {
 };
 
 export type Binding = {
-  readonly event: Event;
+  event?: Event;
   readonly kind: GroupVersionKind;
   readonly filters: {
     namespaces?: string[];

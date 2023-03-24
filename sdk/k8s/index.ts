@@ -5,4 +5,7 @@
 import * as kind from "./kinds";
 export { kind as a };
 
+import * as use from "../k8s-models/gen/model/models";
+export { use };
+
 export * from "./types";

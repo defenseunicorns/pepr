@@ -5,9 +5,11 @@
     "moduleResolution": "node",
     "paths": {
       "@pepr": ["sdk"],
-      "@k8s": ["sdk/k8s"],
-      "@k8s-types": ["sdk/k8s-models/gen/model/models"]
+      "@k8s": ["sdk/k8s"]
     },
     "target": "ES2022"
+  },
+  "watchOptions": {
+    "excludeDirectories": ["node_modules", "sdk"]
   }
 }
