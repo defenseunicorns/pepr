@@ -8,9 +8,9 @@
       "type": "node",
       "request": "launch",
       "name": "Run current script",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx"],
-      "program": "${workspaceFolder}/fixtures/default.ts",
+      "runtimeExecutable": "rollup",
+      "runtimeArgs": ["-c"],
+      "program": "${workspaceFolder}/dist/default.js",
       "skipFiles": ["<node_internals>/**"]
     },
     {

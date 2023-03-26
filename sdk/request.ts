@@ -64,7 +64,12 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetLabel(key: string, value: string) {
-    this._write("labels", key, value);
+    let ref = this._input.object;
+
+    ref.metadata = ref.metadata ?? {};
+    ref.metadata.labels = ref.metadata.labels ?? {};
+    ref.metadata.labels[key] = value;
+
     return this;
   }
 
@@ -75,7 +80,12 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
-    this._write("annotations", key, value);
+    let ref = this._input.object;
+
+    ref.metadata = ref.metadata ?? {};
+    ref.metadata.annotations = ref.metadata.annotations ?? {};
+    ref.metadata.annotations[key] = value;
+
     return this;
   }
 
@@ -85,7 +95,9 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveLabel(key: string) {
-    this._remove("labels", key);
+    if (this._input.object?.metadata?.labels?.[key]) {
+      delete this._input.object.metadata.labels[key];
+    }
     return this;
   }
 
@@ -95,7 +107,9 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveAnnotation(key: string) {
-    this._remove("annotations", key);
+    if (this._input.object?.metadata?.annotations?.[key]) {
+      delete this._input.object.metadata.annotations[key];
+    }
     return this;
   }
 
@@ -119,17 +133,13 @@ export class RequestWrapper<T extends KubernetesObject> {
     return this._input.object?.metadata?.annotations?.[key] !== undefined;
   }
 
-  // Write metadata to the Kubernetes resource.
-  private _write(parent: string, key: string, value: any) {
-    let meta = this._input.object?.metadata ?? {};
-    meta[parent] = meta[parent] ?? {};
-    meta[parent][key] = value;
-  }
-
-  // Remove metadata from the Kubernetes resource.
-  private _remove(parent: string, key: string) {
-    if (this._input.object?.metadata?.[parent]) {
-      delete this._input.object?.metadata[parent][key];
-    }
+  Has(obj: NestedKeyOf<T>): boolean {
+    return !!obj;
   }
 }
+
+type NestedKeyOf<ObjectType extends object> = {
+  [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
+    ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`
+    : `${Key}`;
+}[keyof ObjectType & (string | number)];

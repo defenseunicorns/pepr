@@ -12,7 +12,9 @@ export default Register;
 When(a.Pod)
   .IsCreated()
   .Then(request => {
-    request.Raw.spec.initContainers[0].image = "nginx:1.19.1";
+    if (request.Has("spec.initContainers.0")) {
+      request.Raw.spec.initContainers[0].image = "nginx:1.19.1";
+    }
   })
   .Then(request => {
     request.Raw.spec.containers[0].image = "nginx:1.19.0";

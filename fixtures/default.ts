@@ -1,6 +1,6 @@
-import { Operation } from "@k8s";
-import { V1Pod } from "@kubernetes/client-node";
+import { Operation, Request } from "@k8s";
 import { State } from "@pepr";
+import { Pod } from "sdk/k8s/upstream";
 
 import TestMutations from "./test-mutations";
 
@@ -17,38 +17,48 @@ export const { ProcessRequest } = state;
 
 TestMutations(state.Register);
 
-const pod: V1Pod = {
-  apiVersion: "v1",
-  kind: "Pod",
-  metadata: {
-    name: "test",
-    namespace: "default",
-    labels: {
-      thing: "test",
-    },
+const example: Request<Pod> = {
+  uid: "af5c3d45-72b8-11eb-a3a3-0242ac130003",
+  kind: {
+    group: "",
+    version: "v1",
+    kind: "Pod",
   },
-  spec: {
-    initContainers: [
-      { name: "test", image: "nginx:1.19.1" },
-      { name: "test2", image: "nginx:1.19.1" },
-    ],
-    containers: [
-      { name: "test", image: "nginx:1.19.2" },
-      { name: "test2", image: "nginx:1.19.2" },
-    ],
+  resource: {
+    group: "",
+    version: "v1",
+    resource: "pods",
   },
-};
-ProcessRequest({
-  object: pod,
-  uid: "some-uid",
-  kind: "Pod",
-  resource: "",
-  name: "thingy",
+  subResource: "",
+  name: "nginx",
+  namespace: "default",
   operation: Operation.CREATE,
   userInfo: {
-    username: "",
-    uid: "",
-    groups: [],
-    extra: {},
+    username: "system:serviceaccount:kube-system:replicaset-controller",
+    uid: "95c8f0ca-d31a-4d3f-9f27-9a2a2661ab3c",
+    groups: [
+      "system:serviceaccounts",
+      "system:serviceaccounts:kube-system",
+      "system:authenticated",
+    ],
   },
-});
+  object: {
+    metadata: {
+      name: "nginx",
+      namespace: "default",
+    },
+    spec: {
+      containers: [
+        {
+          name: "nginx",
+          image: "nginx:latest",
+        },
+      ],
+    },
+  },
+  oldObject: {},
+  dryRun: false,
+  options: null,
+};
+
+ProcessRequest(example);

@@ -89,4 +89,4 @@ export class Logger {
   }
 }
 
-export default new Logger(LogLevel.debug);
+export default new Logger(LogLevel.info);

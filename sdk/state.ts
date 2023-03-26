@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Capability } from "./capability";
-import { filterBinding } from "./filter";
+import { shouldSkipRequest as shouldSkipAction } from "./filter";
 import { GroupVersionKind, Request } from "./k8s";
 import logger from "./logger";
 import { RequestWrapper } from "./request";
@@ -10,8 +10,12 @@ import { ModuleConfig } from "./types";
 
 export class State {
   private _config: ModuleConfig;
-  private _state: Capability[];
-  private _kinds: GroupVersionKind[];
+  private _state: Capability[] = [];
+  private _kinds: GroupVersionKind[] = [];
+
+  get kinds(): GroupVersionKind[] {
+    return this._kinds;
+  }
 
   /**
    * Create a new Pepr runtime
@@ -21,11 +25,6 @@ export class State {
   constructor(config: ModuleConfig) {
     // Merge the default config with the provided config
     this._config = config;
-
-    // Establish the initial state
-    this._state = [];
-
-    this._config.alwaysIgnore.labels;
   }
 
   Register = (capability: Capability) => {
@@ -47,17 +46,18 @@ export class State {
       const prefix = `${req.uid} ${req.name}: ${capability.name}`;
       logger.info(`Processing capability ${capability.name}`, prefix);
 
-      capability.bindings.forEach(binding => {
-        if (!filterBinding(binding, req)) {
+      capability.bindings.forEach(action => {
+        if (shouldSkipAction(action, req)) {
           return;
         }
 
-        logger.info(`Processing matched binding ${binding.kind.kind}`, prefix);
+        logger.info(`Processing matched action ${action.kind.kind}`, prefix);
 
         try {
-          binding.callback(wrapped);
+          action.callback(wrapped);
         } catch (e) {
-          console.log(e);
+          logger.error(`Error processing action ${action.kind.kind}: ${e}`, prefix);
+          logger.debug(e);
         }
       });
     });

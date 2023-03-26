@@ -23,16 +23,24 @@ export interface KubernetesListObject<T extends KubernetesObject> {
 }
 
 /**
- * Bindings to filter if a request should be responded to or not.
- *
- * These are used to filter out requests that are not relevant to the capability.
- * The list can be found via `kubectl api-resources`.
- * */
+ *  GroupVersionKind unambiguously identifies a kind.  It doesn't anonymously include GroupVersion
+ * to avoid automatic coercion.  It doesn't use a GroupVersion to avoid custom marshalling
+ **/
 export interface GroupVersionKind {
   /** The K8s resource kind, e..g "Pod". */
   readonly kind: string;
   readonly group: string;
   readonly version?: string;
+}
+
+/**
+ * GroupVersionResource unambiguously identifies a resource.  It doesn't anonymously include GroupVersion
+ * to avoid automatic coercion.  It doesn't use a GroupVersion to avoid custom marshalling
+ */
+export interface GroupVersionResource {
+  readonly group: string;
+  readonly version: string;
+  readonly resource: string;
 }
 
 /**
@@ -43,19 +51,19 @@ export interface Request<T = KubernetesObject> {
   readonly uid: string;
 
   /** Kind is the fully-qualified type of object being submitted (for example, v1.Pod or autoscaling.v1.Scale) */
-  readonly kind: string;
+  readonly kind: GroupVersionKind;
 
   /** Resource is the fully-qualified resource being requested (for example, v1.pods) */
-  readonly resource: string;
+  readonly resource: GroupVersionResource;
 
   /** SubResource is the subresource being requested, if any (for example, "status" or "scale") */
   readonly subResource?: string;
 
   /** RequestKind is the fully-qualified type of the original API request (for example, v1.Pod or autoscaling.v1.Scale). */
-  readonly requestKind?: string;
+  readonly requestKind?: GroupVersionKind;
 
   /** RequestResource is the fully-qualified resource of the original API request (for example, v1.pods). */
-  readonly requestResource?: string;
+  readonly requestResource?: GroupVersionResource;
 
   /** RequestSubResource is the subresource of the original API request, if any (for example, "status" or "scale"). */
   readonly requestSubResource?: string;
@@ -96,7 +104,7 @@ export interface Request<T = KubernetesObject> {
   };
 
   /** Object is the object from the incoming request prior to default values being applied */
-  object?: T;
+  object: T;
 
   /** OldObject is the existing object. Only populated for UPDATE requests. */
   readonly oldObject?: T;

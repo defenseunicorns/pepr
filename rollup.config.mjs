@@ -8,17 +8,18 @@ export default {
     output: {
         dir: 'dist',
         format: 'cjs',
+        sourcemap: true,
     },
     plugins: [
         typescript({
             tsconfig: "./tsconfig.json",
             declaration: false,
-            sourceMap: false,
+            sourceMap: true,
         }),
-        terser({
-            keep_classnames: true,
-            keep_fnames: true,
-        })
+        // terser({
+        //     keep_classnames: true,
+        //     keep_fnames: true,
+        // })
     ],
     treeshake: true,
 };
