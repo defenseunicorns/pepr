@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind } from "@k8s";
+import { GroupVersionKind, KubernetesObject } from "./k8s";
 import { RequestWrapper } from "./request";
-import { KubernetesObject } from "./k8s-models/types";
 
 /**
  * The phase of the Kubernetes admission webhook that the capability is registered for.
@@ -30,10 +30,6 @@ export enum Event {
   Update = "update",
   Delete = "delete",
   CreateOrUpdate = "createOrUpdate",
-}
-
-export interface MutateBinding {
-  (): void;
 }
 
 export interface CapabilityCfg {
@@ -125,29 +121,31 @@ export type ModuleConfig = {
   signing?: ModuleSigning;
 };
 
-export type WhenSelector = {
+export type GenericClass = abstract new () => any;
+
+export type WhenSelector<T extends GenericClass> = {
   /** Register a capability action to be executed when a Kubernetes resource is created or updated. */
-  IsCreatedOrUpdated: () => BindingAll;
+  IsCreatedOrUpdated: () => BindingAll<T>;
   /** Register a capability action to be executed when a Kubernetes resource is created. */
-  IsCreated: () => BindingAll;
+  IsCreated: () => BindingAll<T>;
   /** Register a capability action to be executed when a Kubernetes resource is updated. */
-  IsUpdated: () => BindingAll;
+  IsUpdated: () => BindingAll<T>;
   /** Register a capability action to be executed when a Kubernetes resource is deleted. */
-  IsDeleted: () => BindingAll;
+  IsDeleted: () => BindingAll<T>;
 };
 
 export type Binding = {
-  readonly event: Event;
+  event?: Event;
   readonly kind: GroupVersionKind;
   readonly filters: {
-    namespaces?: string[];
-    labels?: Record<string, string>;
-    annotations?: Record<string, string>;
+    namespaces: string[];
+    labels: Record<string, string>;
+    annotations: Record<string, string>;
   };
-  readonly callback?: CapabilityAction<KubernetesObject>;
+  readonly callback: CapabilityAction<GenericClass, InstanceType<GenericClass>>;
 };
 
-export type BindingFilter = BindToAction & {
+export type BindingFilter<T extends GenericClass> = BindToAction<T> & {
   /**
    * Only apply the capability action if the resource has the specified label. If no value is specified, the label must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
@@ -165,7 +163,7 @@ export type BindingFilter = BindToAction & {
    * @param key
    * @param value
    */
-  WithLabel: (key: string, value?: string) => BindingFilter;
+  WithLabel: (key: string, value?: string) => BindingFilter<T>;
   /**
    * Only apply the capability action if the resource has the specified annotation. If no value is specified, the annotation must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
@@ -183,22 +181,25 @@ export type BindingFilter = BindToAction & {
    * @param key
    * @param value
    */
-  WithAnnotation: (key: string, value?: string) => BindingFilter;
+  WithAnnotation: (key: string, value?: string) => BindingFilter<T>;
 };
 
-export type BindingAll = BindingFilter & {
+export type BindingAll<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the capability action to resources in the specified namespace.*/
-  InNamespace: (namespace: string) => BindingFilter;
+  InNamespace: (namespace: string) => BindingFilter<T>;
   /** Only apply the cabability action if the resource is in one of the specified namespaces.*/
-  InOneOfNamespaces: (...namespaces: string[]) => BindingFilter;
+  InOneOfNamespaces: (...namespaces: string[]) => BindingFilter<T>;
 };
 
-export type BindToAction = {
+export type BindToAction<T extends GenericClass> = {
   /**
    * The action that will be executed if the resources matches the binding.
    * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
-  Then: <T>(action: CapabilityAction<T>) => BindToAction;
+  Then: (action: CapabilityAction<T, InstanceType<T>>) => BindToAction<T>;
 };
 
-export type CapabilityAction<T> = (req: RequestWrapper<T>) => void;
+export type CapabilityAction<
+  T extends GenericClass,
+  K extends KubernetesObject = InstanceType<T>
+> = (req: RequestWrapper<K>) => void;

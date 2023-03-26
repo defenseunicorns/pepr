@@ -8,9 +8,3 @@ reference for ways to use the Pepr SDK. If you want to generate a new capability
 `pepr new` command.
 */
 // Pepr Capability: example-thing
-import Pepr from "@pepr";
-
-let c = new Pepr.Capability({
-  name: "example-thing",
-  description: "Add some cool words here",
-});

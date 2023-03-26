@@ -1,13 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesObject } from "sdk/k8s-models/types";
+import { V1ListMeta, V1ObjectMeta } from "@kubernetes/client-node";
 
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
   DELETE = "DELETE",
   CONNECT = "CONNECT",
+}
+
+export interface KubernetesObject {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: V1ObjectMeta;
+}
+export interface KubernetesListObject<T extends KubernetesObject> {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: V1ListMeta;
+  items: T[];
 }
 
 /**

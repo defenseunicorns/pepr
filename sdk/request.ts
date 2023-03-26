@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request } from "@k8s";
-import { KubernetesObject } from "./k8s-models/types";
+import { KubernetesObject, Request } from "./k8s";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -107,7 +106,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns
    */
   HasLabel(key: string) {
-    return this._input.object.metadata?.labels?.[key] !== undefined;
+    return this._input.object?.metadata?.labels?.[key] !== undefined;
   }
 
   /**
@@ -117,20 +116,20 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns
    */
   HasAnnotation(key: string) {
-    return this._input.object.metadata?.annotations?.[key] !== undefined;
+    return this._input.object?.metadata?.annotations?.[key] !== undefined;
   }
 
   // Write metadata to the Kubernetes resource.
   private _write(parent: string, key: string, value: any) {
-    let meta = this._input.object.metadata ?? {};
+    let meta = this._input.object?.metadata ?? {};
     meta[parent] = meta[parent] ?? {};
     meta[parent][key] = value;
   }
 
   // Remove metadata from the Kubernetes resource.
   private _remove(parent: string, key: string) {
-    if (this._input.object.metadata?.[parent]) {
-      delete this._input.object.metadata[parent][key];
+    if (this._input.object?.metadata?.[parent]) {
+      delete this._input.object?.metadata[parent][key];
     }
   }
 }

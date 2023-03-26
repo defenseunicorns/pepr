@@ -1,13 +1,17 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "lib": ["ES2022"],
+    "lib": ["ES2020"],
     "moduleResolution": "node",
     "paths": {
       "@pepr": ["sdk"],
-      "@k8s": ["sdk/k8s"],
-      "@k8s-types": ["sdk/k8s-models/gen/model/models"]
+      "@k8s": ["sdk/k8s"]
     },
-    "target": "ES2022"
+    "sourceMap": false,
+    "target": "ES2020"
+  },
+  "include": ["fixtures/default.ts"],
+  "watchOptions": {
+    "excludeDirectories": ["node_modules", "sdk"]
   }
 }

@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind } from "@k8s";
-import { KubernetesObject } from "./k8s-models/types";
+import { modelToGroupVersionKind } from "./k8s";
+import logger from "./logger";
 import {
   Binding,
-  BindToAction,
   BindingFilter,
+  BindToAction,
   CapabilityAction,
   CapabilityCfg,
   Event,
+  GenericClass,
   HookPhase,
-  WhenSelector
+  WhenSelector,
 } from "./types";
 
 /**
@@ -28,7 +29,7 @@ export class Capability implements CapabilityCfg {
   private _bindings: Binding[] = [];
 
   get bindings(): Binding[] {
-    return { ...this._bindings };
+    return this._bindings;
   }
 
   get name() {
@@ -51,6 +52,8 @@ export class Capability implements CapabilityCfg {
     this._name = cfg.name;
     this._description = cfg.description;
     this._namespaces = cfg.namespaces;
+    logger.info(`Capability ${this._name} registered`);
+    logger.debug(cfg);
   }
 
   /**
@@ -59,47 +62,35 @@ export class Capability implements CapabilityCfg {
    *
    * @param callback the state register method to call, passing the capability as an argument
    */
-  Register(register: (self: Capability) => void) {
-    register(this);
-  }
+  Register = (register: Function) => register(this);
 
   /**
    * The When method is used to register a capability action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
    * filters that are applied.
    *
-   * @param kind
+   * @param model if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When(kind: GroupVersionKind): WhenSelector {
-    return {
-      IsCreatedOrUpdated: () => this._bind(Event.CreateOrUpdate, kind),
-      IsCreated: () => this._bind(Event.Create, kind),
-      IsUpdated: () => this._bind(Event.Update, kind),
-      IsDeleted: () => this._bind(Event.Delete, kind),
-    };
-  }
-
-  /**
-   * Internal method to register a capability action to be executed when a Kubernetes resource is
-   * processed by the AdmissionController.
-   *
-   * @param event The type of Kubernetes mutating webhook event that the capability action is registered for.
-   * @param kind The Kubernetes resource Group, Version, Kind to match, e.g. `Deployment`
-   * @returns
-   */
-  private _bind(event: Event, kind: GroupVersionKind) {
+  When = <T extends GenericClass>(model: T): WhenSelector<T> => {
     const binding: Binding = {
-      event,
-      kind,
+      // If the kind is not specified, use the default KubernetesObject
+      kind: modelToGroupVersionKind(model.name),
       filters: {
         namespaces: [],
         labels: {},
         annotations: {},
       },
+      callback: () => {},
     };
 
-    const Then = <T = KubernetesObject>(cb: CapabilityAction<T>): BindToAction => {
+    const prefix = `${this._name}: ${model.name}`;
+
+    logger.info(`Binding created`, prefix);
+
+    const Then = (cb: CapabilityAction<T>): BindToAction<T> => {
+      logger.info(`Binding action created`, prefix);
+      logger.debug(cb.toString(), prefix);
       // Push the binding to the list of bindings for this capability as a new BindingAction
       // with the callback function to preserve
       this._bindings.push({
@@ -111,32 +102,46 @@ export class Capability implements CapabilityCfg {
       return { Then };
     };
 
-    function InNamespace(namespace: string): BindingFilter {
+    function InNamespace(namespace: string): BindingFilter<T> {
+      logger.debug(`Add namespace filter ${namespace}`, prefix);
       binding.filters.namespaces.push(namespace);
       return { WithLabel, WithAnnotation, Then };
     }
 
-    function InOneOfNamespaces(...namespaces: string[]): BindingFilter {
+    function InOneOfNamespaces(...namespaces: string[]): BindingFilter<T> {
+      logger.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
       return { WithLabel, WithAnnotation, Then };
     }
 
-    function WithLabel(key: string, value = "*"): BindingFilter {
+    function WithLabel(key: string, value = ""): BindingFilter<T> {
+      logger.debug(`Add label filter ${key}=${value}`, prefix);
       binding.filters.labels[key] = value;
       return { WithLabel, WithAnnotation, Then };
     }
 
-    const WithAnnotation = (key: string, value = "*"): BindingFilter => {
+    const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
+      logger.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
       return { WithLabel, WithAnnotation, Then };
     };
 
-    return {
-      InNamespace,
-      InOneOfNamespaces,
-      WithLabel,
-      WithAnnotation,
-      Then,
+    const bindEvent = (event: Event) => {
+      binding.event = event;
+      return {
+        InNamespace,
+        InOneOfNamespaces,
+        WithLabel,
+        WithAnnotation,
+        Then,
+      };
     };
-  }
+
+    return {
+      IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
+      IsCreated: () => bindEvent(Event.Create),
+      IsUpdated: () => bindEvent(Event.Update),
+      IsDeleted: () => bindEvent(Event.Delete),
+    };
+  };
 }
