@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { compare } from "fast-json-patch";
-import * as R from "ramda";
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, Response } from "./k8s/types";
@@ -15,7 +14,6 @@ export function processor(
   capabilities: Capability[],
   req: Request
 ): Response {
-  const original = R.clone(req.object);
   const wrapped = new RequestWrapper(req);
   const response: Response = {
     uid: req.uid,
@@ -40,7 +38,7 @@ export function processor(
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
-      const { metadata } = req.object;
+      const { metadata } = wrapped.Raw;
       const identifier = `pepr.dev/${config.id}/${name}`;
       metadata.annotations = metadata.annotations || {};
       metadata.annotations[identifier] = "started";
@@ -69,7 +67,7 @@ export function processor(
 
   response.allowed = true;
 
-  const patches = compare(original, req.object);
+  const patches = compare(req.object, wrapped.Raw);
   response.patch = JSON.stringify(patches);
 
   logger.debug(patches);

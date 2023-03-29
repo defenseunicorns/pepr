@@ -104,7 +104,7 @@ export interface Request<T = KubernetesObject> {
   };
 
   /** Object is the object from the incoming request prior to default values being applied */
-  object: T;
+  readonly object: T;
 
   /** OldObject is the existing object. Only populated for UPDATE requests. */
   readonly oldObject?: T;

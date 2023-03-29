@@ -12,6 +12,8 @@ import { DeepPartial } from "./types";
 export class RequestWrapper<T extends KubernetesObject> {
   private _input: Request<T>;
 
+  public Raw: T;
+
   get PermitSideEffects() {
     return !this._input.dryRun;
   }
@@ -22,14 +24,6 @@ export class RequestWrapper<T extends KubernetesObject> {
    */
   get IsDryRun() {
     return this._input.dryRun;
-  }
-
-  /**
-   * Provides access to the resource in the request.
-   * @returns The Kubernetes resource object.
-   */
-  get Raw() {
-    return this._input.object;
   }
 
   /**
@@ -53,6 +47,9 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @param input - The request object containing the Kubernetes resource to modify.
    */
   constructor(input: Request<T>) {
+    // Deep clone the object to prevent mutation of the original object
+    this.Raw = R.clone(input.object);
+    // Store the input
     this._input = input;
   }
 
@@ -62,7 +59,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @param obj - The object to merge with the current resource.
    */
   Merge(obj: DeepPartial<T>) {
-    this._input.object = R.mergeDeepRight(this._input.object, obj) as T;
+    this.Raw = R.mergeDeepRight(this.Raw, obj) as T;
   }
 
   /**
@@ -72,7 +69,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetLabel(key: string, value: string) {
-    const ref = this._input.object;
+    const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.labels = ref.metadata.labels ?? {};
@@ -88,7 +85,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
-    const ref = this._input.object;
+    const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.annotations = ref.metadata.annotations ?? {};
@@ -103,8 +100,8 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveLabel(key: string) {
-    if (this._input.object?.metadata?.labels?.[key]) {
-      delete this._input.object.metadata.labels[key];
+    if (this.Raw.metadata?.labels?.[key]) {
+      delete this.Raw.metadata.labels[key];
     }
     return this;
   }
@@ -115,8 +112,8 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveAnnotation(key: string) {
-    if (this._input.object?.metadata?.annotations?.[key]) {
-      delete this._input.object.metadata.annotations[key];
+    if (this.Raw.metadata?.annotations?.[key]) {
+      delete this.Raw.metadata.annotations[key];
     }
     return this;
   }
@@ -128,7 +125,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns
    */
   HasLabel(key: string) {
-    return this._input.object?.metadata?.labels?.[key] !== undefined;
+    return this.Raw?.metadata?.labels?.[key] !== undefined;
   }
 
   /**
@@ -138,6 +135,6 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns
    */
   HasAnnotation(key: string) {
-    return this._input.object?.metadata?.annotations?.[key] !== undefined;
+    return this.Raw?.metadata?.annotations?.[key] !== undefined;
   }
 }
