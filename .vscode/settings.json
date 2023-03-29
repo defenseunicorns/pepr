@@ -1,7 +1,6 @@
 {
   "typescript.preferences.autoImportFileExcludePatterns": [
-    "sdk/k8s-models/gen/model/*",
-    "sdk/k8s/kinds.ts",
-    "sdk/k8s/kinds"
+    "lib/k8s/kinds.ts",
+    "lib/k8s/kinds"
   ]
 }

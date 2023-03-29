@@ -31,7 +31,7 @@ export class Logger {
    * Log a debug message.
    * @param message - The message to log.
    */
-  public debug(message: any, prefix?: string): void {
+  public debug<T>(message: T, prefix?: string): void {
     this.log(LogLevel.debug, message, prefix);
   }
 
@@ -39,7 +39,7 @@ export class Logger {
    * Log an info message.
    * @param message - The message to log.
    */
-  public info(message: any, prefix?: string): void {
+  public info<T>(message: T, prefix?: string): void {
     this.log(LogLevel.info, message, prefix);
   }
 
@@ -47,7 +47,7 @@ export class Logger {
    * Log a warning message.
    * @param message - The message to log.
    */
-  public warn(message: any, prefix?: string): void {
+  public warn<T>(message: T, prefix?: string): void {
     this.log(LogLevel.warn, message, prefix);
   }
 
@@ -55,7 +55,7 @@ export class Logger {
    * Log an error message.
    * @param message - The message to log.
    */
-  public error(message: any, prefix?: string): void {
+  public error<T>(message: T, prefix?: string): void {
     this.log(LogLevel.error, message, prefix);
   }
 
@@ -64,7 +64,7 @@ export class Logger {
    * @param logLevel - The log level of the message.
    * @param message - The message to log.
    */
-  private log(logLevel: LogLevel, message: any, callerPrefix = ""): void {
+  private log<T>(logLevel: LogLevel, message: T, callerPrefix = ""): void {
     const color = {
       [LogLevel.debug]: gray,
       [LogLevel.info]: cyan,

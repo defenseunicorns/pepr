@@ -2,7 +2,11 @@
     "scripts": {
         "build": "rollup -c",
         "start": "rollup -c -w --watch.onEnd 'sleep 1 && node dist/default.js'",
-        "test": "ava"
+        "test": "ava",
+        "lint": "npx eslint lib fixtures",
+        "lint:fix": "npm run lint -- --fix",
+        "prettier": "npx prettier lib fixtures --check",
+        "prettier:fix": "npm run prettier -- --write"
     },
     "dependencies": {
         "@kubernetes/client-node": "^0.18.1",
@@ -16,7 +20,10 @@
         "@rollup/plugin-node-resolve": "^15.0.1",
         "@rollup/plugin-terser": "^0.4.0",
         "@rollup/plugin-typescript": "^11.0.0",
+        "@typescript-eslint/eslint-plugin": "^5.57.0",
+        "@typescript-eslint/parser": "^5.57.0",
         "ava": "^5.2.0",
+        "eslint": "^8.37.0",
         "rollup": "^3.20.2",
         "ts-node": "^10.9.1",
         "tsconfig-paths": "^4.1.2",

@@ -76,7 +76,7 @@ When(a.Deployment)
       request.SetLabel("test5", "thing");
     }
 
-    let { spec } = request.Raw;
+    const { spec } = request.Raw;
     spec.strategy.type = "Recreate";
     spec.minReadySeconds = 3;
 

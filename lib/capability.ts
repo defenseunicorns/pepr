@@ -14,7 +14,7 @@ import {
   Event,
   GenericClass,
   HookPhase,
-  WhenSelector
+  WhenSelector,
 } from "./types";
 
 /**
@@ -64,7 +64,7 @@ export class Capability implements CapabilityCfg {
    *
    * @param callback the state register method to call, passing the capability as an argument
    */
-  Register = (register: Function) => register(this);
+  Register = (register: (capability: Capability) => void) => register(this);
 
   /**
    * The When method is used to register a capability action to be executed when a Kubernetes resource is
@@ -84,7 +84,7 @@ export class Capability implements CapabilityCfg {
         labels: {},
         annotations: {},
       },
-      callback: () => {},
+      callback: () => null,
     };
 
     const prefix = `${this._name}: ${model.name}`;

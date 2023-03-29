@@ -4,15 +4,15 @@
     "lib": ["ES2020"],
     "moduleResolution": "node",
     "paths": {
-      "@pepr": ["sdk"],
-      "@k8s": ["sdk/k8s"]
+      "@pepr": ["lib"],
+      "@k8s": ["lib/k8s"]
     },
     "resolveJsonModule": true,
     "sourceMap": true,
     "strict": false,
     "target": "ES2020"
   },
-  "include": ["sdk/**/*.ts", "fixtures/**/*.ts"],
+  "include": ["lib/**/*.ts", "fixtures/**/*.ts"],
   "watchOptions": {
     "excludeDirectories": ["node_modules", "sdk"]
   }

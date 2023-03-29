@@ -72,7 +72,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetLabel(key: string, value: string) {
-    let ref = this._input.object;
+    const ref = this._input.object;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.labels = ref.metadata.labels ?? {};
@@ -88,7 +88,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
-    let ref = this._input.object;
+    const ref = this._input.object;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.annotations = ref.metadata.annotations ?? {};

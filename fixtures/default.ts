@@ -1,7 +1,5 @@
-import { Operation, Request } from "@k8s";
 import { State } from "@pepr";
-import { Pod } from "sdk/k8s/upstream";
-import logger from "sdk/logger";
+import logger from "lib/logger";
 import { POD } from "./loader";
 
 import TestMutations from "./test-mutations";

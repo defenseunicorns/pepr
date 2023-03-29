@@ -118,6 +118,7 @@ export type ModuleConfig = {
   signing?: ModuleSigning;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GenericClass = abstract new () => any;
 
 export type WhenSelector<T extends GenericClass> = {

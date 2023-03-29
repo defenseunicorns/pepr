@@ -119,6 +119,7 @@ export interface Request<T = KubernetesObject> {
    * Operation might be a CREATE, in which case the Options will a
    * `meta.k8s.io/v1.CreateOptions` even though the caller provided `meta.k8s.io/v1.PatchOptions`.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly options?: any;
 }
 
@@ -130,7 +131,7 @@ export interface Response {
   allowed: boolean;
 
   /** Result contains extra details into why an admission request was denied. This field IS NOT consulted in any way if "Allowed" is "true". */
-  result?: any;
+  result?: string;
 
   /** The patch body. Currently we only support "JSONPatch" which implements RFC 6902. */
   patch?: string;

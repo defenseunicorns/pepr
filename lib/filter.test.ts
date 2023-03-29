@@ -12,7 +12,7 @@ test("should reject when kind does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -28,7 +28,7 @@ test("should reject when group does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -48,7 +48,7 @@ test("should reject when version does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -64,7 +64,7 @@ test("should allow when group, version, and kind match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -84,7 +84,7 @@ test("should allow when kind match and others are empty", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -100,7 +100,7 @@ test("should reject when namespace does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -116,7 +116,7 @@ test("should allow when namespace is match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -134,7 +134,7 @@ test("should reject when label does not match", t => {
       },
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -154,7 +154,7 @@ test("should allow when label is match", t => {
       },
       annotations: {},
     },
-    callback: () => {},
+    callback: () => null,
   };
 
   const pod = POD();
@@ -178,7 +178,7 @@ test("should reject when annotation does not match", t => {
         foo: "bar",
       },
     },
-    callback: () => {},
+    callback: () => null,
   };
   const pod = POD();
 
@@ -197,7 +197,7 @@ test("should allow when annotation is match", t => {
         test: "test1",
       },
     },
-    callback: () => {},
+    callback: () => null,
   };
 
   const pod = POD();
