@@ -5,6 +5,6 @@
 import * as kind from "./upstream";
 export { kind as a };
 
-export { modelToGroupVersionKind } from "./kinds";
+export { modelToGroupVersionKind, gvkMap } from "./kinds";
 
 export * from "./types";

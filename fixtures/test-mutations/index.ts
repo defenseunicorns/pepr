@@ -9,15 +9,33 @@ const { When, Register } = new Capability({
 
 export default Register;
 
-When(a.Pod)
+When(a.Deployment)
   .IsCreated()
-  .Then(request => {
-    if (request.Has("spec.initContainers.0")) {
-      request.Raw.spec.initContainers[0].image = "nginx:1.19.1";
-    }
+  .ThenSet({
+    spec: {
+      minReadySeconds: 3,
+    },
+  });
+
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .ThenSet({
+    metadata: {
+      labels: {
+        "pepr.dev": "was-here",
+      },
+    },
+    spec: {
+      initContainers: [
+        {
+          name: "pepr-extra-spice",
+          image: "nginx:1.19.1",
+        },
+      ],
+    },
   })
   .Then(request => {
-    request.Raw.spec.containers[0].image = "nginx:1.19.0";
+    request.Raw.spec.containers[3].image = "nginx:1.19.1";
   });
 
 When(a.ConfigMap)
@@ -46,7 +64,7 @@ When(a.CronJob)
 
 When(a.Deployment)
   .IsCreatedOrUpdated()
-  .InOneOfNamespaces("ns1", "ns2")
+  .InNamespace("ns1", "ns2")
   .Then(request => {
     request
       .SetLabel("mutated", "true")

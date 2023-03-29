@@ -1,4 +1,5 @@
 // rollup.config.js
+import json from '@rollup/plugin-json';
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 
@@ -11,6 +12,7 @@ export default {
         sourcemap: true,
     },
     plugins: [
+        json(),
         typescript({
             tsconfig: "./tsconfig.json",
             declaration: false,

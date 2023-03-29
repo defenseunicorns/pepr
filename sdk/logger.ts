@@ -78,13 +78,13 @@ export class Logger {
 
       prefix = color[logLevel](prefix);
 
-      // If the message is an object, stringify it.
-      if (message == "[object Object]") {
-        message = JSON.stringify(message, null, 2);
+      // If the message is not a string, use the debug method to log the object.
+      if (typeof message !== "string") {
+        console.log(prefix);
+        console.debug("%o", message);
+      } else {
+        console.log(prefix + "\t" + message);
       }
-
-      // Log the message.
-      console.log(prefix + "\t" + message);
     }
   }
 }

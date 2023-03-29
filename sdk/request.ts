@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import * as R from "ramda";
 import { KubernetesObject, Request } from "./k8s";
+import { DeepPartial } from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -10,9 +12,6 @@ import { KubernetesObject, Request } from "./k8s";
 export class RequestWrapper<T extends KubernetesObject> {
   private _input: Request<T>;
 
-  /**
-   *
-   */
   get PermitSideEffects() {
     return !this._input.dryRun;
   }
@@ -55,6 +54,15 @@ export class RequestWrapper<T extends KubernetesObject> {
    */
   constructor(input: Request<T>) {
     this._input = input;
+  }
+
+  /**
+   * Deep merges the provided object with the current resource.
+   *
+   * @param obj - The object to merge with the current resource.
+   */
+  Merge(obj: DeepPartial<T>) {
+    this._input.object = R.mergeDeepRight(this._input.object, obj) as T;
   }
 
   /**
@@ -132,14 +140,4 @@ export class RequestWrapper<T extends KubernetesObject> {
   HasAnnotation(key: string) {
     return this._input.object?.metadata?.annotations?.[key] !== undefined;
   }
-
-  Has(obj: NestedKeyOf<T>): boolean {
-    return !!obj;
-  }
 }
-
-type NestedKeyOf<ObjectType extends object> = {
-  [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
-    ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`
-    : `${Key}`;
-}[keyof ObjectType & (string | number)];

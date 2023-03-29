@@ -6,13 +6,15 @@ import logger from "./logger";
 import {
   Binding,
   BindingFilter,
+  BindingWithName,
   BindToAction,
   CapabilityAction,
   CapabilityCfg,
+  DeepPartial,
   Event,
   GenericClass,
   HookPhase,
-  WhenSelector,
+  WhenSelector
 } from "./types";
 
 /**
@@ -77,6 +79,7 @@ export class Capability implements CapabilityCfg {
       // If the kind is not specified, use the default KubernetesObject
       kind: modelToGroupVersionKind(model.name),
       filters: {
+        name: "",
         namespaces: [],
         labels: {},
         annotations: {},
@@ -102,38 +105,46 @@ export class Capability implements CapabilityCfg {
       return { Then };
     };
 
-    function InNamespace(namespace: string): BindingFilter<T> {
-      logger.debug(`Add namespace filter ${namespace}`, prefix);
-      binding.filters.namespaces.push(namespace);
-      return { WithLabel, WithAnnotation, Then };
-    }
+    const ThenSet = (merge: DeepPartial<InstanceType<T>>): BindToAction<T> => {
+      // Add the new action to the binding
+      Then(req => req.Merge(merge));
 
-    function InOneOfNamespaces(...namespaces: string[]): BindingFilter<T> {
+      return { Then };
+    };
+
+    function InNamespace(...namespaces: string[]): BindingWithName<T> {
       logger.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
-      return { WithLabel, WithAnnotation, Then };
+      return { WithLabel, WithAnnotation, WithName, Then, ThenSet };
+    }
+
+    function WithName(name: string): BindingFilter<T> {
+      logger.debug(`Add name filter ${name}`, prefix);
+      binding.filters.name = name;
+      return { WithLabel, WithAnnotation, Then, ThenSet };
     }
 
     function WithLabel(key: string, value = ""): BindingFilter<T> {
       logger.debug(`Add label filter ${key}=${value}`, prefix);
       binding.filters.labels[key] = value;
-      return { WithLabel, WithAnnotation, Then };
+      return { WithLabel, WithAnnotation, Then, ThenSet };
     }
 
     const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
       logger.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
-      return { WithLabel, WithAnnotation, Then };
+      return { WithLabel, WithAnnotation, Then, ThenSet };
     };
 
     const bindEvent = (event: Event) => {
       binding.event = event;
       return {
         InNamespace,
-        InOneOfNamespaces,
-        WithLabel,
-        WithAnnotation,
         Then,
+        ThenSet,
+        WithAnnotation,
+        WithLabel,
+        WithName,
       };
     };
 

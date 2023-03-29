@@ -7,10 +7,12 @@
       "@pepr": ["sdk"],
       "@k8s": ["sdk/k8s"]
     },
+    "resolveJsonModule": true,
     "sourceMap": true,
+    "strict": false,
     "target": "ES2020"
   },
-  "include": ["fixtures/default.ts"],
+  "include": ["sdk/**/*.ts", "fixtures/**/*.ts"],
   "watchOptions": {
     "excludeDirectories": ["node_modules", "sdk"]
   }

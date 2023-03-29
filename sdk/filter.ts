@@ -15,6 +15,7 @@ import { Binding } from "./types";
 export function shouldSkipRequest(binding: Binding, req: Request) {
   const { group, kind, version } = binding.kind;
   const { namespaces, labels, annotations } = binding.filters;
+  const { metadata } = req.object;
 
   if (kind !== req.kind.kind) {
     logger.debug(`${req.kind.kind} does not match ${kind}`);
@@ -36,7 +37,19 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
     return true;
   }
 
-  // @todo: implement labels and annotations
+  for (const [key, value] of Object.entries(labels)) {
+    if (metadata?.labels?.[key] !== value) {
+      logger.debug(`${metadata?.labels?.[key]} does not match ${value}`);
+      return true;
+    }
+  }
+
+  for (const [key, value] of Object.entries(annotations)) {
+    if (metadata?.annotations?.[key] !== value) {
+      logger.debug(`${metadata?.annotations?.[key]} does not match ${value}`);
+      return true;
+    }
+  }
 
   return false;
 }

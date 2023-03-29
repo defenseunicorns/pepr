@@ -2,14 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Capability } from "./capability";
-import { shouldSkipRequest as shouldSkipAction } from "./filter";
-import { GroupVersionKind, Request } from "./k8s";
+import { GroupVersionKind, Request, Response } from "./k8s";
 import logger from "./logger";
-import { RequestWrapper } from "./request";
+import { processor } from "./processor";
 import { ModuleConfig } from "./types";
 
 export class State {
-  private _config: ModuleConfig;
   private _state: Capability[] = [];
   private _kinds: GroupVersionKind[] = [];
 
@@ -22,10 +20,7 @@ export class State {
    *
    * @param config The configuration for the Pepr runtime
    */
-  constructor(config: ModuleConfig) {
-    // Merge the default config with the provided config
-    this._config = config;
-  }
+  constructor(private readonly _config: ModuleConfig) {}
 
   Register = (capability: Capability) => {
     logger.info(`Registering capability ${capability.name}`);
@@ -37,29 +32,7 @@ export class State {
     this._state.push(capability);
   };
 
-  ProcessRequest = (req: Request) => {
-    const wrapped = new RequestWrapper(req);
-
-    logger.info(`Processing '${req.uid}' for '${req.kind}' '${req.name}'`);
-
-    this._state.forEach(capability => {
-      const prefix = `${req.uid} ${req.name}: ${capability.name}`;
-      logger.info(`Processing capability ${capability.name}`, prefix);
-
-      capability.bindings.forEach(action => {
-        if (shouldSkipAction(action, req)) {
-          return;
-        }
-
-        logger.info(`Processing matched action ${action.kind.kind}`, prefix);
-
-        try {
-          action.callback(wrapped);
-        } catch (e) {
-          logger.error(`Error processing action ${action.kind.kind}: ${e}`, prefix);
-          logger.debug(e);
-        }
-      });
-    });
+  ProcessRequest = (req: Request): Response => {
+    return processor(this._config, this._state, req);
   };
 }
