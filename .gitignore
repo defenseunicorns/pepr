@@ -8,6 +8,12 @@
 bin
 testbin/*
 Dockerfile.cross
+pepr
+dist/
+*.js
+*.js.amp
+node_modules/
+stats.html
 
 # Test binary, build with `go test -c`
 *.test
