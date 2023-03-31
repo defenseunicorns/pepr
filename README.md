@@ -5,8 +5,8 @@ Pepr is an open-source project licensed under the Apache 2 license, designed to 
 ## Features
 
 - Define a set of Kubernetes transformations/actions as Pepr capabilities.
-- Write capabilities in TypeScript and bundle them for in-cluster processing using [v8go](https://github.com/rogchap/v8go) and V8 isolates (cached for performance).
-- React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary API calls.
+- Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
+- React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
 
 ## Concepts
 

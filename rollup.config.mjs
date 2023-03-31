@@ -1,7 +1,6 @@
 // rollup.config.js
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import { visualizer } from 'rollup-plugin-visualizer';
 
@@ -11,7 +10,7 @@ export default {
         'fast-json-patch',
         'ramda',
     ],
-    input: 'fixtures/default.ts',
+    input: 'src/fixtures/default.ts',
     output: {
         dir: 'dist',
         format: 'cjs',
@@ -21,7 +20,6 @@ export default {
         resolve({
             preferBuiltins: true,
         }),
-        commonjs(),
         json(),
         typescript({
             tsconfig: "./tsconfig.json",

@@ -1,5 +1,4 @@
-import { State } from "@pepr";
-import logger from "lib/logger";
+import { Log, State } from "@pepr";
 import { POD } from "./loader";
 
 import TestMutations from "./test-mutations";
@@ -21,4 +20,4 @@ TestMutations(state.Register);
 const example = POD();
 
 const request = ProcessRequest(example);
-logger.info(request, "Final response");
+Log.info(request, "Final response");

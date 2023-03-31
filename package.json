@@ -7,10 +7,14 @@
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "repository": "defenseunicorns/pepr",
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "bin": {
         "pepr": "dist/cli.js"
     },
     "scripts": {
+        "webhook": "node dist/default.js",
         "build": "rollup -c",
         "start": "rollup -c -w --watch.onEnd 'sleep 1 && node dist/default.js'",
         "test": "ava",
@@ -22,7 +26,9 @@
     "dependencies": {
         "@kubernetes/client-node": "^0.18.1",
         "@types/ramda": "^0.28.23",
+        "express": "^4.18.2",
         "fast-json-patch": "^3.1.1",
+        "koa": "^2.14.1",
         "ramda": "^0.28.0"
     },
     "devDependencies": {
@@ -35,6 +41,7 @@
         "@typescript-eslint/parser": "^5.57.0",
         "ava": "^5.2.0",
         "eslint": "^8.37.0",
+        "prettier": "^2.8.7",
         "rollup": "^3.20.2",
         "rollup-plugin-visualizer": "^5.9.0",
         "ts-node": "^10.9.1",
