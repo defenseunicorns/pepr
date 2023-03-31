@@ -7,14 +7,21 @@ import { visualizer } from 'rollup-plugin-visualizer';
 export default {
     external: [
         /@kubernetes\/client-node(\/.*)?/,
+        'commander',
+        'express',
         'fast-json-patch',
         'ramda',
     ],
-    input: 'src/fixtures/default.ts',
+    input: {
+        cli: 'src/cli/index.ts',
+        controller: 'src/controller/index.ts',
+        // test: 'src/fixtures/default.ts',
+    },
     output: {
         dir: 'dist',
         format: 'cjs',
         sourcemap: true,
+        entryFileNames: 'pepr-[name].js'
     },
     plugins: [
         resolve({
