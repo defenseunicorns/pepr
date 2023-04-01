@@ -9,11 +9,7 @@ import logger from "./logger";
 import { RequestWrapper } from "./request";
 import { ModuleConfig } from "./types";
 
-export function processor(
-  config: ModuleConfig,
-  capabilities: Capability[],
-  req: Request
-): Response {
+export function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Response {
   const wrapped = new RequestWrapper(req);
   const response: Response = {
     uid: req.uid,
@@ -65,10 +61,21 @@ export function processor(
     }
   }
 
+  // If we've made it this far, the request is allowed
   response.allowed = true;
 
+  // Compare the original request to the modified request to get the patches
   const patches = compare(req.object, wrapped.Raw);
-  response.patch = JSON.stringify(patches);
+
+  // Only add the patch if there are patches to apply
+  if (patches.length > 0) {
+    response.patch = JSON.stringify(patches);
+  }
+
+  // Remove the warnings array if it's empty
+  if (response.warnings.length < 1) {
+    delete response.warnings;
+  }
 
   logger.debug(patches);
 
