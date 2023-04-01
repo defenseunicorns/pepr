@@ -10,7 +10,7 @@
       "name": "Run current script",
       "runtimeExecutable": "rollup",
       "runtimeArgs": ["-c"],
-      "program": "${workspaceFolder}/dist/default.js",
+      "program": "${workspaceFolder}/dist/pepr-test.js",
       "skipFiles": ["<node_internals>/**"]
     },
     {

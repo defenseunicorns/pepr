@@ -16,7 +16,7 @@
     "scripts": {
         "webhook": "node dist/default.js",
         "build": "rollup -c",
-        "start": "rollup -c -w --watch.onEnd 'sleep 1 && node dist/default.js'",
+        "start": "rollup -c -w --watch.onEnd 'sleep 1 && node dist/pepr-test.js'",
         "test": "ava",
         "lint": "npx eslint lib fixtures",
         "lint:fix": "npm run lint -- --fix",

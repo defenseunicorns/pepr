@@ -15,7 +15,7 @@ export default {
     input: {
         cli: 'src/cli/index.ts',
         controller: 'src/controller/index.ts',
-        // test: 'src/fixtures/default.ts',
+        test: 'src/fixtures/default.ts',
     },
     output: {
         dir: 'dist',
