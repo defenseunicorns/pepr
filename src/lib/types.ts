@@ -221,7 +221,6 @@ export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
   ThenSet: (val: DeepPartial<InstanceType<T>>) => BindToAction<T>;
 };
 
-export type CapabilityAction<
-  T extends GenericClass,
-  K extends KubernetesObject = InstanceType<T>
-> = (req: RequestWrapper<K>) => void;
+export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  req: RequestWrapper<K>
+) => void;

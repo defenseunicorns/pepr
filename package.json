@@ -18,9 +18,9 @@
         "build": "rollup -c",
         "start": "rollup -c -w --watch.onEnd 'sleep 1 && node dist/pepr-test.js'",
         "test": "ava",
-        "lint": "npx eslint lib fixtures",
+        "lint": "npx eslint src",
         "lint:fix": "npm run lint -- --fix",
-        "prettier": "npx prettier lib fixtures --check",
+        "prettier": "npx prettier src --check",
         "prettier:fix": "npm run prettier -- --write"
     },
     "dependencies": {
