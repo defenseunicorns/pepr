@@ -1,5 +1,5 @@
 import { Log, State } from "@pepr";
-import { POD } from "./loader";
+import { CM1, DEPLOYMENT1, NS1, POD1, POD2, SVC1 } from "./loader";
 
 import TestMutations from "./test-mutations";
 
@@ -17,7 +17,9 @@ export const { ProcessRequest } = state;
 
 TestMutations(state.Register);
 
-const example = POD();
-
-const request = ProcessRequest(example);
-Log.info(request, "Final response");
+Log.info(ProcessRequest(SVC1()), "svc1");
+Log.info(ProcessRequest(POD1()), "pod1");
+Log.info(ProcessRequest(POD2()), "pod2");
+Log.info(ProcessRequest(CM1()), "cm1");
+Log.info(ProcessRequest(NS1()), "ns1");
+Log.info(ProcessRequest(DEPLOYMENT1()), "deployment1");

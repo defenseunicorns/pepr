@@ -1,0 +1,100 @@
+{
+  "uid": "f7b55ff2-18ef-403c-87fe-bac8435e0ed7",
+  "kind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Service"
+  },
+  "resource": {
+    "group": "",
+    "version": "v1",
+    "resource": "services"
+  },
+  "requestKind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Service"
+  },
+  "requestResource": {
+    "group": "",
+    "version": "v1",
+    "resource": "services"
+  },
+  "name": "my-service",
+  "namespace": "apps",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "kubernetes-admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": {
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "my-service",
+      "namespace": "apps",
+      "creationTimestamp": null,
+      "annotations": {
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"annotations\":{},\"name\":\"my-service\",\"namespace\":\"apps\"},\"spec\":{\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9376}],\"selector\":{\"app.kubernetes.io/name\":\"MyApp\"}}}\n"
+      },
+      "managedFields": [
+        {
+          "manager": "kubectl-client-side-apply",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2023-03-31T19:08:48Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                ".": {},
+                "f:kubectl.kubernetes.io/last-applied-configuration": {}
+              }
+            },
+            "f:spec": {
+              "f:ports": {
+                ".": {},
+                "k:{\"port\":80,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                }
+              },
+              "f:selector": {
+                ".": {},
+                "f:app.kubernetes.io/name": {}
+              },
+              "f:sessionAffinity": {},
+              "f:type": {}
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 80,
+          "targetPort": 9376
+        }
+      ],
+      "selector": {
+        "app.kubernetes.io/name": "MyApp"
+      },
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "oldObject": null,
+  "dryRun": false,
+  "options": {
+    "kind": "CreateOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "fieldManager": "kubectl-client-side-apply"
+  }
+}

@@ -1,6 +1,6 @@
 import { gvkMap } from "@k8s";
 import test from "ava";
-import { POD } from "@fixtures/loader";
+import { POD1 } from "@fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 
 test("should reject when kind does not match", t => {
@@ -14,7 +14,7 @@ test("should reject when kind does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -30,7 +30,7 @@ test("should reject when group does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -50,7 +50,7 @@ test("should reject when version does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -66,7 +66,7 @@ test("should allow when group, version, and kind match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -86,7 +86,7 @@ test("should allow when kind match and others are empty", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -102,7 +102,7 @@ test("should reject when namespace does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -118,7 +118,7 @@ test("should allow when namespace is match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -136,7 +136,7 @@ test("should reject when label does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -157,7 +157,7 @@ test("should allow when label is match", t => {
     callback: () => null,
   };
 
-  const pod = POD();
+  const pod = POD1();
   pod.object.metadata.labels = {
     foo: "bar",
     test: "test1",
@@ -180,7 +180,7 @@ test("should reject when annotation does not match", t => {
     },
     callback: () => null,
   };
-  const pod = POD();
+  const pod = POD1();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -200,7 +200,7 @@ test("should allow when annotation is match", t => {
     callback: () => null,
   };
 
-  const pod = POD();
+  const pod = POD1();
   pod.object.metadata.annotations = {
     foo: "bar",
     test: "test1",

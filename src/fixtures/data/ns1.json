@@ -1,0 +1,72 @@
+{
+  "uid": "e309ad02-d69b-499d-adb4-0eae6dfa5a89",
+  "kind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Namespace"
+  },
+  "resource": {
+    "group": "",
+    "version": "v1",
+    "resource": "namespaces"
+  },
+  "requestKind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Namespace"
+  },
+  "requestResource": {
+    "group": "",
+    "version": "v1",
+    "resource": "namespaces"
+  },
+  "name": "hijeff",
+  "namespace": "hijeff",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "kubernetes-admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": {
+    "kind": "Namespace",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "hijeff",
+      "uid": "e8c1d87c-dff1-49c6-aa9d-ef83f2702d7f",
+      "creationTimestamp": "2023-03-31T19:42:39Z",
+      "labels": {
+        "kubernetes.io/metadata.name": "hijeff"
+      },
+      "managedFields": [
+        {
+          "manager": "kubectl-create",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2023-03-31T19:42:39Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:labels": {
+                ".": {},
+                "f:kubernetes.io/metadata.name": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "finalizers": ["kubernetes"]
+    },
+    "status": {
+      "phase": "Active"
+    }
+  },
+  "oldObject": null,
+  "dryRun": false,
+  "options": {
+    "kind": "CreateOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "fieldManager": "kubectl-create"
+  }
+}

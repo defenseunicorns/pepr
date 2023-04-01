@@ -1,0 +1,257 @@
+{
+  "uid": "e40aafc4-db17-4368-89e9-e7bda15b814d",
+  "kind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Pod"
+  },
+  "resource": {
+    "group": "",
+    "version": "v1",
+    "resource": "pods"
+  },
+  "requestKind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Pod"
+  },
+  "requestResource": {
+    "group": "",
+    "version": "v1",
+    "resource": "pods"
+  },
+  "name": "lifespan-seven",
+  "namespace": "apps",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "kubernetes-admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "lifespan-seven",
+      "namespace": "apps",
+      "uid": "6cc7f934-7054-4387-9a69-84fb3dc9fd87",
+      "creationTimestamp": "2023-03-31T18:15:31Z",
+      "labels": {
+        "acme.com/lifespan-requested": "7"
+      },
+      "annotations": {
+        "kubectl.kubernetes.io/last-applied-configuration": {
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "metadata": {
+            "annotations": {},
+            "labels": {
+              "acme.com/lifespan-requested": "7"
+            },
+            "name": "lifespan-seven",
+            "namespace": "apps"
+          },
+          "spec": {
+            "containers": [
+              {
+                "args": ["sleep", "3600"],
+                "image": "busybox",
+                "name": "lifespan-seven"
+              }
+            ],
+            "restartPolicy": "Always"
+          }
+        }
+      },
+      "managedFields": [
+        {
+          "manager": "kubectl-client-side-apply",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2023-03-31T18:15:31Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                ".": {},
+                "f:kubectl.kubernetes.io/last-applied-configuration": {}
+              },
+              "f:labels": {
+                ".": {},
+                "f:acme.com/lifespan-requested": {}
+              }
+            },
+            "f:spec": {
+              "f:containers": {
+                "k:{\"name\":\"lifespan-seven\"}": {
+                  ".": {},
+                  "f:args": {},
+                  "f:image": {},
+                  "f:imagePullPolicy": {},
+                  "f:name": {},
+                  "f:resources": {},
+                  "f:terminationMessagePath": {},
+                  "f:terminationMessagePolicy": {}
+                }
+              },
+              "f:dnsPolicy": {},
+              "f:enableServiceLinks": {},
+              "f:restartPolicy": {},
+              "f:schedulerName": {},
+              "f:securityContext": {},
+              "f:terminationGracePeriodSeconds": {}
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "kube-api-access-65g4k",
+          "projected": {
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "name": "kube-root-ca.crt",
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ]
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "path": "namespace",
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "lifespan-seven",
+          "image": "busybox",
+          "args": ["sleep", "3600"],
+          "env": [
+            {
+              "name": "KUBE",
+              "value": "true"
+            }
+          ],
+          "resources": {},
+          "volumeMounts": [
+            {
+              "name": "kube-api-access-65g4k",
+              "readOnly": true,
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "Always"
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "default",
+      "serviceAccount": "default",
+      "securityContext": {},
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "14",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "13",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "12",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "11",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "10",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "9",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "8",
+          "effect": "NoSchedule"
+        },
+        {
+          "key": "acme.com/lifespan-remaining",
+          "operator": "Equal",
+          "value": "7",
+          "effect": "NoSchedule"
+        }
+      ],
+      "priority": 0,
+      "enableServiceLinks": true,
+      "preemptionPolicy": "PreemptLowerPriority"
+    },
+    "status": {
+      "phase": "Pending",
+      "qosClass": "BestEffort"
+    }
+  },
+  "oldObject": null,
+  "dryRun": false,
+  "options": {
+    "kind": "CreateOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "fieldManager": "kubectl-client-side-apply"
+  }
+}
