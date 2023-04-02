@@ -152,14 +152,6 @@ class C,G,H,I Validate;
 
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
 
-## V8 and V8 Isolates
-
-[V8](https://v8.dev/) is an open-source JavaScript engine developed by Google. It is responsible for running JavaScript code in Google Chrome and other web browsers based on the Chromium project. V8 is also used as the runtime for Node.js.
-
-V8 Isolates are lightweight instances of the V8 engine that allow running multiple JavaScript contexts in parallel while maintaining isolation between them. Each isolate has its own memory heap and can execute JavaScript code independently, making them ideal for running untrusted code, parallelizing tasks, or sandboxing.
-
-[v8go](https://github.com/rogchap/v8go) is a Go library that enables you to run JavaScript code using the V8 engine, leveraging the performance benefits of V8 Isolates. In Pepr, v8go is used to execute TypeScript code bundled for in-cluster processing.
-
 ## Kubernetes Mutating Webhooks
 
 Kubernetes mutating webhooks are a powerful feature that allows users to intercept and modify Kubernetes API requests, such as resource creation or updates, before they are persisted to the cluster. They can be used to enforce security policies, default values, or perform custom transformations on resources.
