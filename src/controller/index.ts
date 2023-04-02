@@ -17,8 +17,8 @@ app.get("/", (req, res) => {
 
 // Load SSL certificate and key
 const options = {
-  key: fs.readFileSync(process.env.SSL_KEY_PATH),
-  cert: fs.readFileSync(process.env.SSL_CERT_PATH),
+  key: fs.readFileSync(process.env.SSL_KEY_PATH || ""),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH || ""),
 };
 
 // Create HTTPS server
