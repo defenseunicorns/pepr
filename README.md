@@ -1,6 +1,6 @@
 # Pepr
 
-<img style="float:right; max-width:25%;" src=".images/pepr.png" />
+<img align="right" width="350" src=".images/pepr.png" />
 
 Pepr is an open-source project that helps IT Ops teams of all skill levels manage and modify resources in a Kubernetes (K8s) cluster using TypeScript. Kubernetes simplifies the management of multiple computers working together to run and scale applications. Pepr acts as a smart assistant, automatically changing or validating parts of the system as needed.
 
@@ -9,8 +9,6 @@ TypeScript is used to create Pepr capabilities, benefiting from its error-catchi
 Capabilities are logical groupings of actions, which are the atomic units of change within Pepr. Actions _modify_, _create_, or _interact_ with resources in response to events. Pepr's capabilities and actions work together in the cluster, offering a versatile and customizable tool that enhances Kubernetes by building glue code or plumbing for system interactions. This makes Pepr useful for various tasks such as creating robust policy engines or seamlessly connecting applications.
 
 Imagine Pepr as a smart home system where different devices communicate with each other. Pepr provides instructions, simplifying the management of the smart home. The project enables both expert and novice capability authors to improve management and interactions within the Kubernetes environment, making its features accessible to everyone.
-
-<div style="clear:both">&nbsp;</div>
 
 ## Features
 
