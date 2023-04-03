@@ -6,5 +6,5 @@ import logger from "./logger";
 export { logger as Log };
 export * from "./capability";
 export * from "./request";
-export * from "./state";
+export * from "./module";
 export * from "./types";

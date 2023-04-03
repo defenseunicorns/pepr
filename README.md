@@ -34,7 +34,7 @@ pepr new hello-world -d demo
 
 This will create a new directory tree called `demo/hello-world` with the following structure:
 
-### demo/hello-world/default.ts
+### demo/hello-world/index.ts
 
 ```typescript
 import "./test-mutations";

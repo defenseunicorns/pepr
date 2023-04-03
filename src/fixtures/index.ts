@@ -1,10 +1,10 @@
-import { Log, State } from "@pepr";
+import { Log, PeprModule } from "@pepr";
 import { CM1, DEPLOYMENT1, NS1, POD1, POD2, SVC1 } from "./loader";
 
 import TestMutations from "./test-mutations";
 
-const state = new State({
-  id: "20e17cf6-a2e4-46b2-b626-75d88d96c88b",
+export const peprModule = new PeprModule({
+  peprModuleUUID: "20e17cf6-a2e4-46b2-b626-75d88d96c88b",
   description: "",
   alwaysIgnore: {
     namespaces: ["kube-system", "pepr-system"],
@@ -13,9 +13,9 @@ const state = new State({
   rejectOnError: false,
 });
 
-export const { ProcessRequest } = state;
+export const { ProcessRequest } = peprModule;
 
-TestMutations(state.Register);
+TestMutations(peprModule.Register);
 
 Log.info(ProcessRequest(SVC1()), "svc1");
 Log.info(ProcessRequest(POD1()), "pod1");

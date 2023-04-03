@@ -7,12 +7,16 @@ import logger from "./logger";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
 
-export class State {
+export class PeprModule {
   private _state: Capability[] = [];
   private _kinds: GroupVersionKind[] = [];
 
   get kinds(): GroupVersionKind[] {
     return this._kinds;
+  }
+
+  get ModuleUUID(): string {
+    return this._config.peprModuleUUID;
   }
 
   /**
