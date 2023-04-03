@@ -11,6 +11,13 @@ import {
   V1ServiceAccount,
 } from "@kubernetes/client-node";
 import { tlsCA, tlsCert, tlsKey } from "./stub-tls";
+import { WebhookConfig } from "./types";
+
+const peprIgnore = {
+  key: "pepr.dev",
+  operator: "NotIn",
+  values: ["ignore"],
+};
 
 // @todo: make all this 💩 real
 
@@ -20,21 +27,22 @@ import { tlsCA, tlsCert, tlsKey } from "./stub-tls";
  * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns
  */
-export function role(): V1ClusterRole {
+export function role(config: WebhookConfig): V1ClusterRole {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
     metadata: {
-      name: "pepr-test",
+      name: `pepr-${config.peprModuleUUID}`,
     },
     rules: [
       {
+        // @todo: make this configurable
         apiGroups: ["*"],
         resources: ["*"],
         verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
       },
       {
-        apiGroups: [""],
+        apiGroups: ["admissionregistration.k8s.io/v1"],
         resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"],
         verbs: ["get", "list", "update"],
       },
@@ -42,17 +50,16 @@ export function role(): V1ClusterRole {
   };
 }
 
-export function roleBinding(): V1ClusterRoleBinding {
+export function roleBinding(config: WebhookConfig): V1ClusterRoleBinding {
+  const name = `pepr-${config.peprModuleUUID}`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRoleBinding",
-    metadata: {
-      name: "pepr-test",
-    },
+    metadata: { name },
     roleRef: {
       apiGroup: "rbac.authorization.k8s.io",
       kind: "ClusterRole",
-      name: "pepr-test",
+      name,
     },
     subjects: [
       {
@@ -91,60 +98,69 @@ export function tlsSecret(): V1Secret {
   };
 }
 
-export function mutatingWebhook(): V1MutatingWebhookConfiguration {
+export function mutatingWebhook(config: WebhookConfig): V1MutatingWebhookConfiguration {
+  const name = `pepr-${config.peprModuleUUID}`;
+
+  const ignore = [peprIgnore];
+  if (config.alwaysIgnore.kinds.length > 0) {
+    // ignore.push({
+    //   key: "pepr.dev/kind",
+    //   operator: "NotIn",
+    //   values: config.alwaysIgnore.kinds,
+    // });
+  }
+
+  // Add any namespaces to ignore
+  if (config.alwaysIgnore.namespaces.length > 0) {
+    ignore.push({
+      key: "kubernetes.io/metadata.name",
+      operator: "NotIn",
+      values: config.alwaysIgnore.namespaces,
+    });
+  }
+
   return {
     apiVersion: "admissionregistration.k8s.io/v1",
     kind: "MutatingWebhookConfiguration",
-    metadata: {
-      name: "pepr-test",
-    },
+    metadata: { name },
     webhooks: [
       {
         admissionReviewVersions: ["v1", "v1beta1"],
         clientConfig: {
           caBundle: tlsCA(),
           service: {
-            name: "pepr",
+            name: "controller",
             namespace: "pepr-system",
             path: "/mutate",
           },
         },
         failurePolicy: "Ignore",
         matchPolicy: "Equivalent",
-        name: "pepr-test",
+        name,
+        timeoutSeconds: 15,
         namespaceSelector: {
-          matchExpressions: [
-            {
-              key: "pepr.dev",
-              operator: "NotIn",
-              values: ["ignore"],
-            },
-          ],
+          matchExpressions: ignore,
         },
         objectSelector: {
-          matchExpressions: [
-            {
-              key: "pepr.dev",
-              operator: "NotIn",
-              values: ["ignore"],
-            },
-          ],
+          matchExpressions: ignore,
         },
+        // @todo: make this configurable
         rules: [
           {
             apiGroups: ["*"],
             apiVersions: ["*"],
-            operations: ["CREATE", "UPDATE"],
+            operations: ["CREATE", "UPDATE", "DELETE"],
             resources: ["*"],
           },
         ],
+        // @todo: track side effects state
         sideEffects: "None",
       },
     ],
   };
 }
 
-export function deployment(): V1Deployment {
+export function deployment(config: WebhookConfig): V1Deployment {
   return {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -170,7 +186,7 @@ export function deployment(): V1Deployment {
         },
         spec: {
           priorityClassName: "system-node-critical",
-          serviceAccountName: "pepr",
+          serviceAccountName: `pepr-${config.peprModuleUUID}`,
           containers: [
             {
               name: "server",
@@ -179,13 +195,13 @@ export function deployment(): V1Deployment {
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: 8443,
+                  port: 3000,
                   scheme: "HTTPS",
                 },
               },
               ports: [
                 {
-                  containerPort: 8443,
+                  containerPort: 3000,
                 },
               ],
               resources: {
@@ -236,7 +252,7 @@ export function service(): V1Service {
       ports: [
         {
           port: 443,
-          targetPort: 8443,
+          targetPort: 3000,
         },
       ],
     },
