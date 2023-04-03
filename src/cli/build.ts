@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { dumpYaml } from "@kubernetes/client-node";
 import json from "@rollup/plugin-json";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import { resolve } from "path";
 import { promises as fs } from "fs";
-
+import { resolve } from "path";
 import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import { RootCmd } from "./root";
 import { Log } from "../lib";
+import { moduleSecret } from "../lib/k8s/webhook";
+import { RootCmd } from "./root";
 
 const externalLibs: ExternalOption = [
   /@kubernetes\/client-node(\/.*)?/,
@@ -27,6 +28,7 @@ const plugins: InputPluginOption = [
   typescript({
     tsconfig: "./tsconfig.json",
     declaration: false,
+    removeComments: true,
     sourceMap: false,
   }),
 ];
@@ -62,7 +64,10 @@ export async function buildModule(moduleDir: string) {
       entryFileNames: name,
     });
 
-    return resolve("dist", name);
+    return {
+      path: resolve("dist", name),
+      uuid: peprModuleUUID,
+    };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.error(e.message);
@@ -75,8 +80,20 @@ export default function (program: RootCmd) {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .action(async opts => {
-      const moduleDir = opts.dir;
-      const output = await buildModule(moduleDir);
-      Log.info(`Module built successfully at ${output}`);
+      // Build the module
+      const { path, uuid } = await buildModule(opts.dir);
+
+      // Read the compiled module code
+      const code = await fs.readFile(path, { encoding: "utf-8" });
+
+      // Generate a secret for the module
+      const secret = moduleSecret(uuid, code);
+      const yaml = dumpYaml(secret);
+      const yamlPath = resolve("dist", `pepr-module-${uuid}.yaml`);
+
+      await fs.writeFile(yamlPath, yaml);
+
+      Log.debug(`Module compiled successfully at ${path}`);
+      Log.info(`K8s resource for the module saved to ${yamlPath}`);
     });
 }

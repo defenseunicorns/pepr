@@ -10,6 +10,7 @@ import {
   V1Service,
   V1ServiceAccount,
 } from "@kubernetes/client-node";
+import { gzipSync } from "zlib";
 import { tlsCA, tlsCert, tlsKey } from "./stub-tls";
 import { WebhookConfig } from "./types";
 
@@ -255,6 +256,23 @@ export function service(): V1Service {
           targetPort: 3000,
         },
       ],
+    },
+  };
+}
+
+export function moduleSecret(uuid: string, data: string): V1Secret {
+  // Compress the data
+  const compressed = gzipSync(data);
+  return {
+    apiVersion: "v1",
+    kind: "Secret",
+    metadata: {
+      name: `module-${uuid}`,
+      namespace: "pepr-system",
+    },
+    type: "Opaque",
+    data: {
+      module: compressed.toString("base64"),
     },
   };
 }

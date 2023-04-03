@@ -37,11 +37,11 @@ export default function (program: RootCmd) {
 }
 
 async function buildAndTest(dir: string) {
-  const filename = await buildModule(dir);
-  Log.info(`Module built successfully at ${filename}`);
+  const { path } = await buildModule(dir);
+  Log.info(`Module built successfully at ${path}`);
 
   try {
-    const { stdout, stderr } = await exec(`node ${filename}`);
+    const { stdout, stderr } = await exec(`node ${path}`);
     console.log(stdout);
     console.log(stderr);
   } catch (e) {
