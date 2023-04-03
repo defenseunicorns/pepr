@@ -1,6 +1,6 @@
 {
   "name": "pepr",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "description": "Kubernetes application engine",
   "author": "Defense Unicorns",
   "homepage": "https://github.com/defenseunicorns/pepr",
@@ -19,7 +19,7 @@
     "lint:fix": "npm run lint -- --fix",
     "prettier": "npx prettier src --check",
     "prettier:fix": "npm run prettier -- --write",
-    "publish": "npm run build && npm publish"
+    "prepublishOnly": "npm run lint && npm run prettier && npm run test && npm run build"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",

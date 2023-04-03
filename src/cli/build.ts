@@ -20,19 +20,6 @@ const externalLibs: ExternalOption = [
   "ramda",
 ];
 
-const plugins: InputPluginOption = [
-  nodeResolve({
-    preferBuiltins: true,
-  }),
-  json(),
-  typescript({
-    tsconfig: "./tsconfig.json",
-    declaration: false,
-    removeComments: true,
-    sourceMap: false,
-  }),
-];
-
 export async function buildModule(moduleDir: string) {
   try {
     // Resolve the path to the module's index.ts file
@@ -48,6 +35,19 @@ export async function buildModule(moduleDir: string) {
     if (!peprModuleUUID) {
       throw new Error("Could not load the peprModuleUUID in index.ts");
     }
+
+    const plugins: InputPluginOption = [
+      nodeResolve({
+        preferBuiltins: true,
+      }),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        removeComments: true,
+        sourceMap: false,
+      }),
+    ];
 
     // Build the module using Rollup
     const bundle = await rollup({
