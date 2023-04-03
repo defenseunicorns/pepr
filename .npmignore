@@ -1,0 +1,11 @@
+.vscode
+.github
+stats.html
+src
+apko.yaml
+.adr-dir
+.dockerignore
+Dockerfile
+adr
+dist/pepr-controller*
+dist/pepr-module*

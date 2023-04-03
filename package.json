@@ -1,17 +1,14 @@
 {
   "name": "pepr",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "Kubernetes application engine",
   "author": "Defense Unicorns",
   "homepage": "https://github.com/defenseunicorns/pepr",
   "license": "Apache-2.0",
-  "main": "dist/index.js",
+  "bin": "dist/pepr-cli.js",
   "repository": "defenseunicorns/pepr",
   "engines": {
     "node": ">=18.0.0"
-  },
-  "bin": {
-    "pepr": "dist/cli.js"
   },
   "scripts": {
     "webhook": "node dist/default.js",
@@ -21,29 +18,28 @@
     "lint": "npx eslint src",
     "lint:fix": "npm run lint -- --fix",
     "prettier": "npx prettier src --check",
-    "prettier:fix": "npm run prettier -- --write"
+    "prettier:fix": "npm run prettier -- --write",
+    "publish": "npm run build && npm publish"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-typescript": "^11.0.0",
     "@types/ramda": "^0.28.23",
     "chokidar": "^3.5.3",
     "commander": "^10.0.0",
     "express": "^4.18.2",
     "fast-json-patch": "^3.1.1",
-    "ramda": "^0.28.0"
+    "ramda": "^0.28.0",
+    "rollup": "^3.20.2"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-json": "^6.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.4.0",
-    "@rollup/plugin-typescript": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "ava": "^5.2.0",
     "eslint": "^8.37.0",
     "prettier": "^2.8.7",
-    "rollup": "^3.20.2",
     "rollup-plugin-visualizer": "^5.9.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.2",

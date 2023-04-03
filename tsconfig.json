@@ -9,6 +9,7 @@
       "@pepr": ["src/lib"],
       "@k8s": ["src/lib/k8s"]
     },
+    "removeComments": true,
     "resolveJsonModule": true,
     "sourceMap": true,
     "strict": false,
