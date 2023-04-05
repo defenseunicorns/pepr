@@ -157,7 +157,7 @@ export type WebhookIgnore = {
   /**
    * List of Kubernetes namespaces to always ignore.
    * Any resources in these namespaces will be ignored by Pepr.
-   * 
+   *
    * Note: `kube-system` and `pepr-system` are always ignored.
    */
   namespaces?: string[];

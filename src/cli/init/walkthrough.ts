@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { promises as fs } from "fs";
-import * as prompt from "prompts";
+import prompt from "prompts";
 import { Answers, PromptObject } from "prompts";
 import { ErrorBehavior } from "../../lib";
 import { gitIgnore, prettierRC, readme, tsConfig } from "./templates";

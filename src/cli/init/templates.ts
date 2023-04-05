@@ -15,12 +15,12 @@ import { PeprModule } from "pepr";
 import cfg from "./package.json";
 
 // This initializes the Pepr module with the configuration from package.json
-export const peprModule = new PeprModule(cfg, {
-// Modify as needed
-alwaysIgnore: {
+export const { Register, ProcessRequest } = new PeprModule(cfg, {
+  // Modify as needed
+  alwaysIgnore: {
     namespaces: [],
     labels: [],
-},
+  },
 });
 
 /**
@@ -29,11 +29,11 @@ alwaysIgnore: {
  * 'pepr new <capability name>'
  *
  * Example:
- * import Capability1 from "./capability1";
- * import Capability2 from "./capability2";
+ * import {Capability1} from "./capabilities/capability1";
+ * import {Capability2} from "./capabilities/capability2";
  *
- * Capability1(peprModule.Register);
- * Capability2(peprModule.Register);
+ * Capability1(Register);
+ * Capability2(Register);
  */
   
 `,
