@@ -12,7 +12,7 @@ import {
 } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
 import { tlsCA, tlsCert, tlsKey } from "./stub-tls";
-import { WebhookConfig } from "./types";
+import { ModuleConfig } from "../types";
 
 const peprIgnore = {
   key: "pepr.dev",
@@ -28,12 +28,12 @@ const peprIgnore = {
  * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns
  */
-export function role(config: WebhookConfig): V1ClusterRole {
+export function role(config: ModuleConfig): V1ClusterRole {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
     metadata: {
-      name: `pepr-${config.peprModuleUUID}`,
+      name: `pepr-${config.uuid}`,
     },
     rules: [
       {
@@ -51,8 +51,8 @@ export function role(config: WebhookConfig): V1ClusterRole {
   };
 }
 
-export function roleBinding(config: WebhookConfig): V1ClusterRoleBinding {
-  const name = `pepr-${config.peprModuleUUID}`;
+export function roleBinding(config: ModuleConfig): V1ClusterRoleBinding {
+  const name = `pepr-${config.uuid}`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRoleBinding",
@@ -99,8 +99,8 @@ export function tlsSecret(): V1Secret {
   };
 }
 
-export function mutatingWebhook(config: WebhookConfig): V1MutatingWebhookConfiguration {
-  const name = `pepr-${config.peprModuleUUID}`;
+export function mutatingWebhook(config: ModuleConfig): V1MutatingWebhookConfiguration {
+  const name = `pepr-${config.uuid}`;
 
   const ignore = [peprIgnore];
   if (config.alwaysIgnore.kinds.length > 0) {
@@ -161,7 +161,7 @@ export function mutatingWebhook(config: WebhookConfig): V1MutatingWebhookConfigu
   };
 }
 
-export function deployment(config: WebhookConfig): V1Deployment {
+export function deployment(config: ModuleConfig): V1Deployment {
   return {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -187,7 +187,7 @@ export function deployment(config: WebhookConfig): V1Deployment {
         },
         spec: {
           priorityClassName: "system-node-critical",
-          serviceAccountName: `pepr-${config.peprModuleUUID}`,
+          serviceAccountName: `pepr-${config.uuid}`,
           containers: [
             {
               name: "server",

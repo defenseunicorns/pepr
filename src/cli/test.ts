@@ -15,6 +15,7 @@ export default function (program: RootCmd) {
   program
     .command("test")
     .description("Test a Pepr Module locally")
+    .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-w, --watch", "Watch for changes and re-run the test")
     .action(async opts => {
       Log.info("Test Module");

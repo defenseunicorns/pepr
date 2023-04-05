@@ -5,9 +5,20 @@ import { Capability } from "./capability";
 import { GroupVersionKind, Request, Response } from "./k8s";
 import logger from "./logger";
 import { processor } from "./processor";
-import { ModuleConfig } from "./types";
+import { ModuleAdditionalCfg, ModuleConfig } from "./types";
+
+export type PackageJSON = {
+  description: string;
+  pepr: {
+    uuid: string;
+    name: string;
+    version: string;
+    onError: string;
+  };
+};
 
 export class PeprModule {
+  private _config: ModuleConfig;
   private _state: Capability[] = [];
   private _kinds: GroupVersionKind[] = [];
 
@@ -15,8 +26,8 @@ export class PeprModule {
     return this._kinds;
   }
 
-  get ModuleUUID(): string {
-    return this._config.peprModuleUUID;
+  get UUID(): string {
+    return this._config.uuid;
   }
 
   /**
@@ -24,7 +35,18 @@ export class PeprModule {
    *
    * @param config The configuration for the Pepr runtime
    */
-  constructor(private readonly _config: ModuleConfig) {}
+  constructor({ description, pepr }: PackageJSON, additionalCfg: ModuleAdditionalCfg) {
+    this._config = {
+      // Hardcode default values
+      alwaysIgnore: {
+        namespaces: ["kube-system", "pepr-system"],
+        labels: [{ "pepr.dev": "ignore" }],
+      },
+      ...pepr,
+      ...additionalCfg,
+      description,
+    } as ModuleConfig;
+  }
 
   Register = (capability: Capability) => {
     logger.info(`Registering capability ${capability.name}`);

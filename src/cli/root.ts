@@ -13,7 +13,6 @@ export class RootCmd extends Command {
       "Log level: debug, info, warn, error",
       "info"
     );
-    cmd.option("-d, --dir [directory]", "Pepr module directory", ".");
 
     cmd.hook("preAction", run => {
       Log.SetLogLevel(run.opts().logLevel);

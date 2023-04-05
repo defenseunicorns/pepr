@@ -35,7 +35,7 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
       const { metadata } = wrapped.Raw;
-      const identifier = `pepr.dev/${config.peprModuleUUID}/${name}`;
+      const identifier = `pepr.dev/${config.uuid}/${name}`;
       metadata.annotations = metadata.annotations || {};
       metadata.annotations[identifier] = "started";
 
@@ -49,7 +49,7 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
         response.warnings.push(`Action failed: ${e}`);
 
         // If errors are not allowed, note the failure in the Reponse
-        if (config.rejectOnError) {
+        if (config.onError) {
           logger.error(`Action failed: ${e}`, prefix);
           response.result = "Pepr module configured to reject on error";
           return response;

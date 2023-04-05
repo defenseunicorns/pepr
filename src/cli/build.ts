@@ -12,6 +12,30 @@ import { Log } from "../lib";
 import { moduleSecret } from "../lib/k8s/webhook";
 import { RootCmd } from "./root";
 
+export default function (program: RootCmd) {
+  program
+    .command("build")
+    .description("Build a Pepr Module for deployment")
+    .option("-d, --dir [directory]", "Pepr module directory", ".")
+    .action(async opts => {
+      // Build the module
+      const { path, uuid } = await buildModule(opts.dir);
+
+      // Read the compiled module code
+      const code = await fs.readFile(path, { encoding: "utf-8" });
+
+      // Generate a secret for the module
+      const secret = moduleSecret(uuid, code);
+      const yaml = dumpYaml(secret);
+      const yamlPath = resolve("dist", `pepr-module-${uuid}.yaml`);
+
+      await fs.writeFile(yamlPath, yaml);
+
+      Log.debug(`Module compiled successfully at ${path}`);
+      Log.info(`K8s resource for the module saved to ${yamlPath}`);
+    });
+}
+
 const externalLibs: ExternalOption = [
   /@kubernetes\/client-node(\/.*)?/,
   "commander",
@@ -22,18 +46,18 @@ const externalLibs: ExternalOption = [
 
 export async function buildModule(moduleDir: string) {
   try {
-    // Resolve the path to the module's index.ts file
-    const modulePath = resolve(moduleDir, "index.ts");
+    // Resolve the path to the module's package.json file
+    const cfgPath = resolve(moduleDir, "package.json");
+    const input = resolve(moduleDir, "src", "pepr.ts");
 
-    // Read the module's UUID from the index.ts filel
-    const moduleText = await fs.readFile(modulePath, { encoding: "utf-8" });
-    const match = moduleText.match(/peprModuleUUID:\s*"(.+?)"/);
-    const peprModuleUUID = match && match[1];
-    const name = `pepr-${peprModuleUUID}.js`;
+    // Read the module's UUID from the package.json filel
+    const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
+    const uuid = JSON.parse(moduleText).pepr.uuid;
+    const name = `pepr-${uuid}.js`;
 
     // Exit if the module's UUID could not be found
-    if (!peprModuleUUID) {
-      throw new Error("Could not load the peprModuleUUID in index.ts");
+    if (!uuid) {
+      throw new Error("Could not load the uuid in package.json");
     }
 
     const plugins: InputPluginOption = [
@@ -54,7 +78,7 @@ export async function buildModule(moduleDir: string) {
       plugins,
       external: externalLibs,
       treeshake: true,
-      input: modulePath,
+      input,
     });
 
     // Write the module to the dist directory
@@ -66,34 +90,11 @@ export async function buildModule(moduleDir: string) {
 
     return {
       path: resolve("dist", name),
-      uuid: peprModuleUUID,
+      uuid: uuid,
     };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.error(e.message);
     process.exit(1);
   }
-}
-
-export default function (program: RootCmd) {
-  program
-    .command("build")
-    .description("Build a Pepr Module for deployment")
-    .action(async opts => {
-      // Build the module
-      const { path, uuid } = await buildModule(opts.dir);
-
-      // Read the compiled module code
-      const code = await fs.readFile(path, { encoding: "utf-8" });
-
-      // Generate a secret for the module
-      const secret = moduleSecret(uuid, code);
-      const yaml = dumpYaml(secret);
-      const yamlPath = resolve("dist", `pepr-module-${uuid}.yaml`);
-
-      await fs.writeFile(yamlPath, yaml);
-
-      Log.debug(`Module compiled successfully at ${path}`);
-      Log.info(`K8s resource for the module saved to ${yamlPath}`);
-    });
 }

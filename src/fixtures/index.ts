@@ -1,16 +1,14 @@
-import { Log, PeprModule } from "@pepr";
+import packageJSON from "../../package.json";
+import { Log, PeprModule } from "@lib";
 import { CM1, DEPLOYMENT1, NS1, POD1, POD2, SVC1 } from "./loader";
 
 import TestMutations from "./test-mutations";
 
-export const peprModule = new PeprModule({
-  peprModuleUUID: "20e17cf6-a2e4-46b2-b626-75d88d96c88b",
-  description: "",
+export const peprModule = new PeprModule(packageJSON, {
   alwaysIgnore: {
     namespaces: ["kube-system", "pepr-system"],
     labels: [{ "pepr.dev": "ignore" }],
   },
-  rejectOnError: false,
 });
 
 export const { ProcessRequest } = peprModule;

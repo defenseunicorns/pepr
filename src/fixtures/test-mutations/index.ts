@@ -1,5 +1,5 @@
 import { a } from "@k8s";
-import { Capability } from "@pepr";
+import { Capability } from "@lib";
 
 const { When, Register } = new Capability({
   name: "test-mutations",
