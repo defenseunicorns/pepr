@@ -5,6 +5,8 @@ import { resolve } from "path";
 import { RootCmd } from "../root";
 import { Log } from "../../lib";
 import {
+  capabilityHelloPeprTS,
+  capabilitySnippet,
   genPeprTS,
   genPkgJSON,
   gitIgnore,
@@ -32,6 +34,8 @@ export default function (program: RootCmd) {
 
         try {
           await createDir(dirName);
+          await createDir(resolve(dirName, ".vscode"));
+          await createDir(resolve(dirName, "capabilities"));
 
           await write(resolve(dirName, gitIgnore.path), gitIgnore.data);
           await write(resolve(dirName, prettierRC.path), prettierRC.data);
@@ -39,11 +43,20 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, readme.path), readme.data);
           await write(resolve(dirName, tsConfig.path), tsConfig.data);
           await write(resolve(dirName, peprTS.path), peprTS.data);
+          await write(
+            resolve(dirName, ".vscode", capabilitySnippet.path),
+            capabilitySnippet.data
+          );
+          await write(
+            resolve(dirName, "capabilities", capabilityHelloPeprTS.path),
+            capabilityHelloPeprTS.data
+          );
 
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Run "cd ${dirName} && npm install" to get started`);
-        } catch (err) {
-          Log.error(err);
+        } catch (e) {
+          Log.debug(e);
+          Log.error(e.message);
           process.exit(1);
         }
       }

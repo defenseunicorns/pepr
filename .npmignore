@@ -14,3 +14,6 @@ src/fixtures
 .eslintrc.json
 .images
 .prettierrc
+pepr.ts
+rollup.config.mjs
+**/*.test.ts

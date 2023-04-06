@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { a, modelToGroupVersionKind } from "@k8s";
 import test from "ava";
+import { a, modelToGroupVersionKind } from ".";
 
 test("should return the correct GroupVersionKind for 'a.V1APIService'", t => {
   const { name } = a.APIService;

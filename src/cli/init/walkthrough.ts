@@ -81,6 +81,8 @@ export async function confirm(
     \x1b[1m${dirName}\x1b[0m
     ├── \x1b[1m${gitIgnore.path}\x1b[0m
     ├── \x1b[1m${prettierRC.path}\x1b[0m
+    ├── \x1b[1mcapabilties\x1b[0m
+    |   └── \x1b[1mhello-pepr.ts\x1b[0m     
     ├── \x1b[1m${packageJSON.path}\x1b[0m
 ${packageJSON.print.replace(/^/gm, "    │   ")}
     ├── \x1b[1m${peprTSPath}\x1b[0m

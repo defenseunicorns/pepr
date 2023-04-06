@@ -1,22 +1,11 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "esModuleInterop": true,
     "lib": ["ES2020"],
     "moduleResolution": "node",
-    "paths": {
-      "@fixtures/*": ["src/fixtures/*"],
-      "@lib": ["src/lib"],
-      "@k8s": ["src/lib/k8s"]
-    },
-    "removeComments": true,
     "resolveJsonModule": true,
-    "sourceMap": true,
     "strict": false,
     "target": "ES2020"
-  },
-  "include": ["src/**/*.ts"],
-  "watchOptions": {
-    "excludeDirectories": ["node_modules"]
   }
 }

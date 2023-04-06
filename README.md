@@ -51,8 +51,7 @@ import "./test-mutations";
 ### demo/hello-world/index.ts
 
 ```typescript
-import { a } from "@k8s";
-import { Capability } from "@pepr";
+import { Capability, a } from "pepr";
 
 const { When } = new Capability({
   // The unique name of the capability

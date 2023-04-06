@@ -48,7 +48,7 @@ export async function buildModule(moduleDir: string) {
   try {
     // Resolve the path to the module's package.json file
     const cfgPath = resolve(moduleDir, "package.json");
-    const input = resolve(moduleDir, "src", "pepr.ts");
+    const input = resolve(moduleDir, "pepr.ts");
 
     // Read the module's UUID from the package.json filel
     const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
@@ -70,6 +70,7 @@ export async function buildModule(moduleDir: string) {
         declaration: false,
         removeComments: true,
         sourceMap: false,
+        include: ["**/*.ts", "node_modules/pepr/**/*.ts"],
       }),
     ];
 
@@ -94,6 +95,7 @@ export async function buildModule(moduleDir: string) {
     };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
+    Log.debug(e);
     Log.error(e.message);
     process.exit(1);
   }
