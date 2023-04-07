@@ -15,12 +15,7 @@ import cfg from "./package.json";
 // import { HelloPepr } from "./capabilities/hello-pepr";
 
 // This initializes the Pepr module with the configuration from package.json
-export const { ProcessRequest, Register } = new PeprModule(cfg, {
-  alwaysIgnore: {
-    namespaces: [],
-    labels: [],
-  },
-});
+export const { ProcessRequest, Register } = new PeprModule(cfg);
 
 /**
  * Each Pepr Capability is registered with the module using the Register function.
@@ -62,6 +57,10 @@ export function genPkgJSON(opts: InitOptions) {
       version,
       uuid,
       onError: opts.errorBehavior,
+      alwaysIgnore: {
+        namespaces: [],
+        labels: [],
+      },
     },
     scripts: {
       build: "pepr build",

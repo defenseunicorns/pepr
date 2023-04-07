@@ -150,11 +150,6 @@ export interface Response {
 
 export type WebhookIgnore = {
   /**
-   * List of Kubernetes resource kinds to always ignore.
-   * This prevents Pepr from processing the specified resource kinds.
-   */
-  kinds?: GroupVersionKind[];
-  /**
    * List of Kubernetes namespaces to always ignore.
    * Any resources in these namespaces will be ignored by Pepr.
    *

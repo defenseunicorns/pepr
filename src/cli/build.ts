@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml } from "@kubernetes/client-node";
 import json from "@rollup/plugin-json";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
@@ -9,7 +8,7 @@ import { promises as fs } from "fs";
 import { resolve } from "path";
 import { ExternalOption, InputPluginOption, rollup } from "rollup";
 import { Log } from "../lib";
-import { moduleSecret } from "../lib/k8s/webhook";
+import { Webhook } from "../lib/k8s/webhook";
 import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
@@ -19,17 +18,25 @@ export default function (program: RootCmd) {
     .option("-d, --dir [directory]", "Pepr module directory", ".")
     .action(async opts => {
       // Build the module
-      const { path, uuid } = await buildModule(opts.dir);
+      const { cfg, path, uuid } = await buildModule(opts.dir);
 
       // Read the compiled module code
       const code = await fs.readFile(path, { encoding: "utf-8" });
 
       // Generate a secret for the module
-      const secret = moduleSecret(uuid, code);
-      const yaml = dumpYaml(secret);
-      const yamlPath = resolve("dist", `pepr-module-${uuid}.yaml`);
+      const webhook = new Webhook({
+        ...cfg.pepr,
+        description: cfg.description,
+      });
+      const yamlFile = `pepr-module-${uuid}.yaml`;
+      const yamlPath = resolve("dist", yamlFile);
+      const yaml = webhook.allYaml(code);
+
+      const zarfPath = resolve("dist", "zarf.yaml");
+      const zarf = webhook.zarfYaml(yamlFile);
 
       await fs.writeFile(yamlPath, yaml);
+      await fs.writeFile(zarfPath, zarf);
 
       Log.debug(`Module compiled successfully at ${path}`);
       Log.info(`K8s resource for the module saved to ${yamlPath}`);
@@ -41,6 +48,7 @@ const externalLibs: ExternalOption = [
   "commander",
   "express",
   "fast-json-patch",
+  "pepr",
   "ramda",
 ];
 
@@ -52,7 +60,8 @@ export async function buildModule(moduleDir: string) {
 
     // Read the module's UUID from the package.json filel
     const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
-    const uuid = JSON.parse(moduleText).pepr.uuid;
+    const cfg = JSON.parse(moduleText);
+    const { uuid } = cfg.pepr;
     const name = `pepr-${uuid}.js`;
 
     // Exit if the module's UUID could not be found
@@ -91,7 +100,8 @@ export async function buildModule(moduleDir: string) {
 
     return {
       path: resolve("dist", name),
-      uuid: uuid,
+      cfg,
+      uuid,
     };
   } catch (e) {
     // On any other error, exit with a non-zero exit code

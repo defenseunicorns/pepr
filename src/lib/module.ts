@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import R from "ramda";
 import { Capability } from "./capability";
 import { GroupVersionKind, Request, Response } from "./k8s";
 import logger from "./logger";
 import { processor } from "./processor";
-import { ModuleAdditionalCfg, ModuleConfig } from "./types";
+import { ModuleConfig } from "./types";
+
+const alwaysIgnore = {
+  namespaces: ["kube-system", "pepr-system"],
+  labels: [{ "pepr.dev": "ignore" }],
+};
 
 export type PackageJSON = {
   description: string;
-  pepr: {
-    uuid: string;
-    name: string;
-    version: string;
-    onError: string;
-  };
+  pepr: ModuleConfig;
 };
 
 export class PeprModule {
@@ -35,17 +36,9 @@ export class PeprModule {
    *
    * @param config The configuration for the Pepr runtime
    */
-  constructor({ description, pepr }: PackageJSON, additionalCfg: ModuleAdditionalCfg) {
-    this._config = {
-      // Hardcode default values
-      alwaysIgnore: {
-        namespaces: ["kube-system", "pepr-system"],
-        labels: [{ "pepr.dev": "ignore" }],
-      },
-      ...pepr,
-      ...additionalCfg,
-      description,
-    } as ModuleConfig;
+  constructor({ description, pepr }: PackageJSON) {
+    pepr.description = description;
+    this._config = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
   }
 
   Register = (capability: Capability) => {
