@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { execSync } from "child_process";
 import { resolve } from "path";
-import { RootCmd } from "../root";
 import { Log } from "../../lib";
+import { RootCmd } from "../root";
 import {
   capabilityHelloPeprTS,
   capabilitySnippet,
@@ -52,8 +53,16 @@ export default function (program: RootCmd) {
             capabilityHelloPeprTS.data
           );
 
+          // run npm install from the new directory
+          process.chdir(dirName);
+          execSync("npm install", {
+            stdio: "inherit",
+          });
+
           console.log(`New Pepr module created at ${dirName}`);
-          console.log(`Run "cd ${dirName} && npm install" to get started`);
+          console.log(
+            `Open VSCode or your editor of choice in ${dirName} to get started!`
+          );
         } catch (e) {
           Log.debug(e);
           Log.error(e.message);
