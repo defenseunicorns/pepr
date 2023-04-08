@@ -13,17 +13,22 @@ export default function (program: RootCmd) {
     .command("deploy")
     .description("Deploy a Pepr Module")
     .option("-d, --dir [directory]", "Pepr module directory", ".")
+    .option("-i, --image [image]", "Override the image tag")
+    .option("-f, --force", "Force redeployment")
     .action(async opts => {
-      // Prompt the user to confirm
-      const confirm = await prompt({
-        type: "confirm",
-        name: "confirm",
-        message: "This will remove and redeploy the module. Continue?",
-      });
 
-      // Exit if the user doesn't confirm
-      if (!confirm.confirm) {
-        process.exit(0);
+      if (!opts.force) {
+        // Prompt the user to confirm
+        const confirm = await prompt({
+          type: "confirm",
+          name: "confirm",
+          message: "This will remove and redeploy the module. Continue?",
+        });
+
+        // Exit if the user doesn't confirm
+        if (!confirm.confirm) {
+          process.exit(0);
+        }
       }
 
       // Build the module
@@ -37,6 +42,10 @@ export default function (program: RootCmd) {
         ...cfg.pepr,
         description: cfg.description,
       });
+
+      if (opts.image) {
+        webhook.image = opts.image;
+      }
 
       try {
         await webhook.deploy(code);

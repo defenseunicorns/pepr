@@ -31,10 +31,9 @@ const peprIgnore: V1LabelSelectorRequirement = {
 
 export class Webhook {
   private name: string;
-  private image: string;
   private tls: TLSOut;
 
-  private ns = "pepr-system";
+  public image: string;
 
   constructor(private readonly config: ModuleConfig) {
     this.name = `pepr-${config.uuid}`;
@@ -190,7 +189,7 @@ export class Webhook {
         },
       },
       spec: {
-        replicas: 2,
+        replicas: 1,
         selector: {
           matchLabels: {
             app: this.name,

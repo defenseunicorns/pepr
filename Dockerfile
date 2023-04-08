@@ -3,20 +3,20 @@ FROM cgr.dev/chainguard/node:18
 
 WORKDIR /app
 
-# Get the new version of pepr
-ARG VER
-
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
-
-# Copy the built files 
-COPY --chown=node:node dist/pepr-controller.js ./dist/
 
 # Install the dependencies in production mode
 RUN npm ci --omit=dev
 
-# Install new version of pepr
-RUN npm i pepr@${VER}
+# Sync the pepr dist files
+COPY --chown=node:node ./dist/*.js  ./node_modules/pepr/
+
+# Copy the controller file 
+COPY --chown=node:node dist/pepr-controller.js ./
+
+# pepr-core.js is the NPM entry point
+RUN mv ./node_modules/pepr/pepr-core.js ./node_modules/pepr/index.js
 
 # Start the application
-CMD [ "dist/pepr-controller.js" ]
+CMD [ "pepr-controller.js" ]

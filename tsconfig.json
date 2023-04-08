@@ -4,6 +4,9 @@
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "moduleResolution": "node",
+    "paths": {
+      "pepr": ["./index.ts"],
+    },
     "resolveJsonModule": true,
     "strict": false,
     "target": "ES2020"
