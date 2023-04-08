@@ -3,14 +3,17 @@ import json from '@rollup/plugin-json';
 import typescript from '@rollup/plugin-typescript';
 
 export default {
+    external: [
+        'pepr',
+    ],
     input: {
         cli: 'src/cli/index.ts',
         controller: 'src/controller/index.ts',
+        core: 'index.ts',
     },
     output: {
         dir: 'dist',
         format: 'cjs',
-        sourcemap: true,
         entryFileNames: 'pepr-[name].js',
         banner: '#!/usr/bin/env node',
     },
@@ -18,7 +21,6 @@ export default {
         json(),
         typescript({
             tsconfig: "./tsconfig.json",
-            sourceMap: true,
         }),
     ],
     treeshake: true,
