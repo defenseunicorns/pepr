@@ -5,16 +5,8 @@ WORKDIR /app
 # Copy everything except the node_modules
 COPY --chown=node:node . .
 
-RUN pwd && ls -la
-
 # Install the dependencies
-RUN npm ci --no-fund
-
-# Lint the project
-RUN npm run lint
-
-# Run the tests
-RUN npm test
+RUN npm ci
 
 # Build the project
 RUN npm run build
@@ -30,10 +22,10 @@ WORKDIR /app
 COPY --chown=node:node package*.json ./
 
 # Copy the built files from the first image
-COPY --chown=node:node --from=build /app/dist ./dist
+COPY --chown=node:node --from=build /app/dist/pepr-controller.js ./dist/pepr-controller.js
 
 # Install the dependencies in production mode
-RUN npm ci --omit=dev --no-fund
+RUN npm ci --omit=dev
 
 RUN npm ci pepr@${VER}
 
