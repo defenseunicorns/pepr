@@ -2,13 +2,11 @@ name: Version Releaes
 
 on:
   push:
-    tags:
-      - v*
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: contains(github.base_ref, 'main')
 
     steps:
       - uses: actions/checkout@v3
@@ -18,8 +16,24 @@ jobs:
           node-version: 18
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
+
       - run: npm ci
+
       - name: Publish to NPM
-        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          #!/bin/bash
+
+          LOCAL_VER=$(npm pkg get version)
+          PUB_VER=$(npm view pepr version)
+
+          echo "Checking if pepr@${LOCAL_VER} exists in the npm registry..."
+
+          if [[ ${LOCAL_VER} == ${PUB_VER} ]]; then
+            echo "pepr@${LOCAL_VER} already exists in the npm registry."
+          else
+            echo "pepr@${LOCAL_VER} does not exist in the npm registry."
+            echo "Publishing the package..."
+            npm publish
+          fi
