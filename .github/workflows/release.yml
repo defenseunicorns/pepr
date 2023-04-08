@@ -25,15 +25,15 @@ jobs:
         run: |
           #!/bin/bash
 
-          LOCAL_VER=$(npm pkg get version)
-          PUB_VER=$(npm view pepr version)
+          LOCAL_VER=$(npm pkg get version | tr -d '"')
+          PUB_VER=$(npm view pepr version | tr -d '"')
 
-          echo "Checking if pepr@${LOCAL_VER} exists in the npm registry..."
+          echo "Checking if ${LOCAL_VER} exists in the npm registry..."
 
           if [[ ${LOCAL_VER} == ${PUB_VER} ]]; then
-            echo "pepr@${LOCAL_VER} already exists in the npm registry."
+            echo "${LOCAL_VER} already exists in the npm registry."
           else
-            echo "pepr@${LOCAL_VER} does not exist in the npm registry."
+            echo "${LOCAL_VER} does not exist in the npm registry."
             echo "Publishing the package..."
             npm publish
           fi
