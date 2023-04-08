@@ -1,0 +1,6 @@
+* @jeff-mccoy @bdw617
+
+# Additional privileged files
+/CODEOWNERS @jeff-mccoy @runyontr
+/cosign.pub @jeff-mccoy @runyontr
+/LICENSE @jeff-mccoy @runyontr
