@@ -39,7 +39,7 @@ export class Webhook {
   constructor(private readonly config: ModuleConfig) {
     this.name = `pepr-${config.uuid}`;
 
-    this.image = `ghcr.io/defenseunicorns/pepr-controller:${config.version}`;
+    this.image = `ghcr.io/defenseunicorns/pepr/controller:${config.version}`;
 
     // Generate the ephemeral tls things
     this.tls = genTLS(this.name);

@@ -22,6 +22,8 @@ RUN npm run build
 # Copy the built files and node_modules into a new image
 FROM cgr.dev/chainguard/node:18
 
+ARG VER
+
 WORKDIR /app
 
 # Copy the node config files
@@ -33,5 +35,7 @@ COPY --chown=node:node --from=build /app/dist ./dist
 # Install the dependencies in production mode
 RUN npm ci --omit=dev --no-fund
 
+RUN npm ci pepr@${VER}
+
 # Start the application
-CMD [ "dist/default.js" ]
+CMD [ "dist/pepr-controller.js" ]
