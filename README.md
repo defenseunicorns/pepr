@@ -1,6 +1,6 @@
 # Pepr
 
-<img align="right" width="350" src=".images/pepr.png" />
+<img align="right" width="40%" src=".images/pepr.png" />
 
 Pepr is an open-source project that helps IT Ops teams of all skill levels manage and modify resources in a Kubernetes (K8s) cluster using TypeScript. Kubernetes simplifies the management of multiple computers working together to run and scale applications. Pepr acts as a smart assistant, automatically changing or validating parts of the system as needed.
 
