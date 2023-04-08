@@ -14,6 +14,7 @@ dist/
 *.js.amp
 node_modules/
 stats.html
+.vscode
 
 # Test binary, build with `go test -c`
 *.test
