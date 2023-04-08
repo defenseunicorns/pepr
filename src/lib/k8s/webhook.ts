@@ -2,6 +2,11 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import {
+  AdmissionregistrationV1Api,
+  AppsV1Api,
+  CoreV1Api,
+  KubeConfig,
+  RbacAuthorizationV1Api,
   V1ClusterRole,
   V1ClusterRoleBinding,
   V1Deployment,
@@ -14,6 +19,7 @@ import {
   dumpYaml,
 } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
+import logger from "../logger";
 import { ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "./tls";
 
@@ -27,6 +33,8 @@ export class Webhook {
   private name: string;
   private image: string;
   private tls: TLSOut;
+
+  private ns = "pepr-system";
 
   constructor(private readonly config: ModuleConfig) {
     this.name = `pepr-${config.uuid}`;
@@ -329,5 +337,122 @@ export class Webhook {
 
     // Convert the resources to a single YAML string
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
+  }
+
+  async deploy(code: string) {
+    logger.info("Establishing connection to Kubernetes");
+
+    const namespace = "pepr-system";
+
+    // Deploy the resources using the k8s API
+    const kubeConfig = new KubeConfig();
+    kubeConfig.loadFromDefault();
+
+    const coreV1Api = kubeConfig.makeApiClient(CoreV1Api);
+    const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
+    const appsApi = kubeConfig.makeApiClient(AppsV1Api);
+    const admissionApi = kubeConfig.makeApiClient(AdmissionregistrationV1Api);
+
+    const ns = this.namespace();
+    try {
+      logger.info("Checking for namespace");
+      await coreV1Api.readNamespace(namespace);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Creating namespace");
+      await coreV1Api.createNamespace(ns);
+    }
+
+    const wh = this.mutatingWebhook();
+    try {
+      logger.info("Creating mutating webhook");
+      await admissionApi.createMutatingWebhookConfiguration(wh);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating mutating webhook");
+      await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata.name);
+      await admissionApi.createMutatingWebhookConfiguration(wh);
+    }
+
+    const crb = this.clusterRoleBinding();
+    try {
+      logger.info("Creating cluster role binding");
+      await rbacApi.createClusterRoleBinding(crb);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating cluster role binding");
+      await rbacApi.deleteClusterRoleBinding(crb.metadata.name);
+      await rbacApi.createClusterRoleBinding(crb);
+    }
+
+    const cr = this.clusterRole();
+    try {
+      logger.info("Creating cluster role");
+      await rbacApi.createClusterRole(cr);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating  the cluster role");
+      try {
+        await rbacApi.deleteClusterRole(cr.metadata.name);
+        await rbacApi.createClusterRole(cr);
+      } catch (e) {
+        logger.debug(e.body);
+      }
+    }
+
+    const sa = this.serviceAccount();
+    try {
+      logger.info("Creating service account");
+      await coreV1Api.createNamespacedServiceAccount(namespace, sa);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating service account");
+      await coreV1Api.deleteNamespacedServiceAccount(sa.metadata.name, namespace);
+      await coreV1Api.createNamespacedServiceAccount(namespace, sa);
+    }
+
+    const mod = this.moduleSecret(code);
+    try {
+      logger.info("Creating module secret");
+      await coreV1Api.createNamespacedSecret(namespace, mod);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating module secret");
+      await coreV1Api.deleteNamespacedSecret(mod.metadata.name, namespace);
+      await coreV1Api.createNamespacedSecret(namespace, mod);
+    }
+
+    const svc = this.service();
+    try {
+      logger.info("Creating service");
+      await coreV1Api.createNamespacedService(namespace, svc);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating service");
+      await coreV1Api.deleteNamespacedService(svc.metadata.name, namespace);
+      await coreV1Api.createNamespacedService(namespace, svc);
+    }
+
+    const tls = this.tlsSecret();
+    try {
+      logger.info("Creating TLS secret");
+      await coreV1Api.createNamespacedSecret(namespace, tls);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating TLS secret");
+      await coreV1Api.deleteNamespacedSecret(tls.metadata.name, namespace);
+      await coreV1Api.createNamespacedSecret(namespace, tls);
+    }
+
+    const dep = this.deployment();
+    try {
+      logger.info("Creating deployment");
+      await appsApi.createNamespacedDeployment(namespace, dep);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Removing and re-creating deployment");
+      await appsApi.deleteNamespacedDeployment(dep.metadata.name, namespace);
+      await appsApi.createNamespacedDeployment(namespace, dep);
+    }
   }
 }

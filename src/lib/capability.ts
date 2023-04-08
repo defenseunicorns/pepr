@@ -4,10 +4,10 @@
 import { modelToGroupVersionKind } from "./k8s";
 import logger from "./logger";
 import {
+  BindToAction,
   Binding,
   BindingFilter,
   BindingWithName,
-  BindToAction,
   CapabilityAction,
   CapabilityCfg,
   DeepPartial,

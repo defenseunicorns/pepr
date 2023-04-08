@@ -5,6 +5,7 @@ import { version } from "../../package.json";
 import { banner } from "./banner";
 import build from "./build";
 import capability from "./capability";
+import deploy from "./deploy";
 import init from "./init";
 import { RootCmd } from "./root";
 import test from "./test";
@@ -25,5 +26,6 @@ init(program);
 build(program);
 capability(program);
 test(program);
+deploy(program);
 
 program.parse();

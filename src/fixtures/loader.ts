@@ -1,4 +1,4 @@
-import { a, Request } from "../lib/k8s";
+import { Request, a } from "../lib/k8s";
 import * as cm1 from "./data/cm1.json";
 import * as deployment1 from "./data/deployment1.json";
 import * as ns1 from "./data/ns1.json";

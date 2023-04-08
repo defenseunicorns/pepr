@@ -9,6 +9,5 @@
   "requirePragma": false,
   "semi": true,
   "useTabs": false,
-  "vueIndentScriptAndStyle": false,
   "tabWidth": 2
 }
