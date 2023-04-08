@@ -1,7 +1,6 @@
 // rollup.config.js
 import json from '@rollup/plugin-json';
 import typescript from '@rollup/plugin-typescript';
-import { visualizer } from 'rollup-plugin-visualizer';
 
 export default {
     input: {
@@ -21,7 +20,6 @@ export default {
             tsconfig: "./tsconfig.json",
             sourceMap: true,
         }),
-        visualizer(),
     ],
     treeshake: true,
 };
