@@ -17,8 +17,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
-      - run: npm ci
-
       - name: Publish to NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -35,5 +33,6 @@ jobs:
           else
             echo "${LOCAL_VER} does not exist in the npm registry."
             echo "Publishing the package..."
+            npm ci
             npm publish
           fi
