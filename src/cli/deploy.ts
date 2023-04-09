@@ -3,7 +3,7 @@
 
 import { promises as fs } from "fs";
 import { Webhook } from "../lib/k8s/webhook";
-import logger from "../lib/logger";
+import Log from "../lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 import { prompt } from "prompts";
@@ -48,9 +48,9 @@ export default function (program: RootCmd) {
 
       try {
         await webhook.deploy(code);
-        logger.info(`Module deployed successfully`);
+        Log.info(`Module deployed successfully`);
       } catch (e) {
-        logger.error(`Error deploying module: ${e}`);
+        Log.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command } from "commander";
-import { Log } from "../lib";
+import Log from "../lib/logger";
 
 export class RootCmd extends Command {
   createCommand(name: string) {

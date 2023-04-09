@@ -7,7 +7,7 @@ import typescript from "@rollup/plugin-typescript";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import { Log } from "../lib";
+import Log from "../lib/logger";
 import { Webhook } from "../lib/k8s/webhook";
 import { RootCmd } from "./root";
 

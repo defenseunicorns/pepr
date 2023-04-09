@@ -22,7 +22,7 @@ import {
   dumpYaml,
 } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
-import logger from "../logger";
+import Log from "../logger";
 import { ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "./tls";
 
@@ -406,7 +406,7 @@ export class Webhook {
   }
 
   async deploy(code: string) {
-    logger.info("Establishing connection to Kubernetes");
+    Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
 
@@ -422,68 +422,68 @@ export class Webhook {
 
     const ns = this.namespace();
     try {
-      logger.info("Checking for namespace");
+      Log.info("Checking for namespace");
       await coreV1Api.readNamespace(namespace);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Creating namespace");
+      Log.debug(e.body);
+      Log.info("Creating namespace");
       await coreV1Api.createNamespace(ns);
     }
 
     const netpol = this.networkPolicy();
     try {
-      logger.info("Checking for network policy");
+      Log.info("Checking for network policy");
       await networkApi.readNamespacedNetworkPolicy(netpol.metadata.name, namespace);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Creating network policy");
+      Log.debug(e.body);
+      Log.info("Creating network policy");
       await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
     }
 
     const wh = this.mutatingWebhook();
     try {
-      logger.info("Creating mutating webhook");
+      Log.info("Creating mutating webhook");
       await admissionApi.createMutatingWebhookConfiguration(wh);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating mutating webhook");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating mutating webhook");
       await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata.name);
       await admissionApi.createMutatingWebhookConfiguration(wh);
     }
 
     const crb = this.clusterRoleBinding();
     try {
-      logger.info("Creating cluster role binding");
+      Log.info("Creating cluster role binding");
       await rbacApi.createClusterRoleBinding(crb);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating cluster role binding");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating cluster role binding");
       await rbacApi.deleteClusterRoleBinding(crb.metadata.name);
       await rbacApi.createClusterRoleBinding(crb);
     }
 
     const cr = this.clusterRole();
     try {
-      logger.info("Creating cluster role");
+      Log.info("Creating cluster role");
       await rbacApi.createClusterRole(cr);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating  the cluster role");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating  the cluster role");
       try {
         await rbacApi.deleteClusterRole(cr.metadata.name);
         await rbacApi.createClusterRole(cr);
       } catch (e) {
-        logger.debug(e.body);
+        Log.debug(e.body);
       }
     }
 
     const sa = this.serviceAccount();
     try {
-      logger.info("Creating service account");
+      Log.info("Creating service account");
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating service account");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating service account");
       await coreV1Api.deleteNamespacedServiceAccount(sa.metadata.name, namespace);
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
     }
@@ -495,44 +495,44 @@ export class Webhook {
 
     const mod = this.moduleSecret(code);
     try {
-      logger.info("Creating module secret");
+      Log.info("Creating module secret");
       await coreV1Api.createNamespacedSecret(namespace, mod);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating module secret");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating module secret");
       await coreV1Api.deleteNamespacedSecret(mod.metadata.name, namespace);
       await coreV1Api.createNamespacedSecret(namespace, mod);
     }
 
     const svc = this.service();
     try {
-      logger.info("Creating service");
+      Log.info("Creating service");
       await coreV1Api.createNamespacedService(namespace, svc);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating service");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating service");
       await coreV1Api.deleteNamespacedService(svc.metadata.name, namespace);
       await coreV1Api.createNamespacedService(namespace, svc);
     }
 
     const tls = this.tlsSecret();
     try {
-      logger.info("Creating TLS secret");
+      Log.info("Creating TLS secret");
       await coreV1Api.createNamespacedSecret(namespace, tls);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating TLS secret");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating TLS secret");
       await coreV1Api.deleteNamespacedSecret(tls.metadata.name, namespace);
       await coreV1Api.createNamespacedSecret(namespace, tls);
     }
 
     const dep = this.deployment();
     try {
-      logger.info("Creating deployment");
+      Log.info("Creating deployment");
       await appsApi.createNamespacedDeployment(namespace, dep);
     } catch (e) {
-      logger.debug(e.body);
-      logger.info("Removing and re-creating deployment");
+      Log.debug(e.body);
+      Log.info("Removing and re-creating deployment");
       await appsApi.deleteNamespacedDeployment(dep.metadata.name, namespace);
       await appsApi.createNamespacedDeployment(namespace, dep);
     }

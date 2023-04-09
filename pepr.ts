@@ -1,4 +1,4 @@
-import { PeprModule } from "./src/lib";
+import { PeprModule } from "./src/lib/module";
 import cfg from "./package.json";
 
 // This initializes the Pepr module with the configuration from package.json
