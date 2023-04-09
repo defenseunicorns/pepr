@@ -5,7 +5,7 @@ import { exec as execCallback } from "child_process";
 import { watch } from "chokidar";
 import { resolve } from "path";
 import { promisify } from "util";
-import { Log } from "../lib";
+import Log from "../lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 
