@@ -21,17 +21,17 @@ export function genTLS(name: string): TLSOut {
 
   caCert.setExtensions([
     {
-      name: 'basicConstraints',
-      cA: true
+      name: "basicConstraints",
+      cA: true,
     },
     {
-      name: 'keyUsage',
+      name: "keyUsage",
       keyCertSign: true,
       digitalSignature: true,
       nonRepudiation: true,
       keyEncipherment: true,
-      dataEncipherment: true
-    }
+      dataEncipherment: true,
+    },
   ]);
 
   // Generate a new server key pair and create a server certificate signed by the CA
@@ -59,15 +59,17 @@ function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.Cer
   crt.validity.notAfter.setFullYear(crt.validity.notBefore.getFullYear() + 1);
 
   // Add SANs to the server certificate
-  crt.setExtensions([{
-    name: "subjectAltName",
-    altNames: [
-      {
-        type: 2, // DNS
-        value: name,
-      },
-    ],
-  }]);
+  crt.setExtensions([
+    {
+      name: "subjectAltName",
+      altNames: [
+        {
+          type: 2, // DNS
+          value: name,
+        },
+      ],
+    },
+  ]);
 
   // Set the server certificate's issuer to the CA
   crt.setIssuer(issuer);

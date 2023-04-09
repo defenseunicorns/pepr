@@ -16,7 +16,6 @@ export default function (program: RootCmd) {
     .option("-i, --image [image]", "Override the image tag")
     .option("-f, --force", "Force redeployment")
     .action(async opts => {
-
       if (!opts.force) {
         // Prompt the user to confirm
         const confirm = await prompt({
