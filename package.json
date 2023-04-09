@@ -22,6 +22,7 @@
     }
   },
   "scripts": {
+    "preversion": "npm run prepublishOnly",
     "build": "rollup -c",
     "test": "ava",
     "lint": "npx eslint src",
