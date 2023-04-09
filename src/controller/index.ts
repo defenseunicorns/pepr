@@ -47,7 +47,7 @@ app.post("/mutate", (req, res) => {
     const gvk = req.body?.request?.kind || { group: "", version: "", kind: "" };
 
     console.log(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`);
-    name && console.log(`                ${namespace}/${name}\n`)
+    name && console.log(`                ${namespace}/${name}\n`);
 
     // Send a no prob bob response
     res.send({

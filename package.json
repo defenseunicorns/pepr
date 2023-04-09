@@ -29,7 +29,9 @@
     "prettier": "npx prettier src --check",
     "prettier:fix": "npm run prettier -- --write",
     "prepublishOnly": "rm -fr dist/* && npm run lint:fix && npm run prettier:fix && npm run test && npm run build",
-    "e2e-dev": "npm run build && docker buildx build --tag pepr:dev . && k3d image import pepr:dev && node dist/pepr-cli.js deploy -f -i pepr:dev"
+    "e2e-dev": "npm run build && docker buildx build --tag pepr:dev . && k3d image import pepr:dev && node dist/pepr-cli.js deploy -f -i pepr:dev",
+    "prestart": "ts-node src/cli dev",
+    "start": "chokidar 'src/**/*.ts' -c 'SSL_KEY_PATH=insecure-tls.key SSL_CERT_PATH=insecure-tls.crt ts-node src/controller/index.ts' --initial --silent"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",
@@ -59,6 +61,7 @@
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "ava": "^5.2.0",
+    "chokidar-cli": "^3.0.0",
     "eslint": "^8.37.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.2"

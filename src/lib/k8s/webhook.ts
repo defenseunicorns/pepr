@@ -3,6 +3,7 @@
 
 import {
   AdmissionregistrationV1Api,
+  AdmissionregistrationV1WebhookClientConfig,
   AppsV1Api,
   CoreV1Api,
   KubeConfig,
@@ -31,17 +32,21 @@ const peprIgnore: V1LabelSelectorRequirement = {
 
 export class Webhook {
   private name: string;
-  private tls: TLSOut;
+  private _tls: TLSOut;
 
   public image: string;
 
-  constructor(private readonly config: ModuleConfig) {
+  public get tls(): TLSOut {
+    return this._tls;
+  }
+
+  constructor(private readonly config: ModuleConfig, private readonly host?: string) {
     this.name = `pepr-${config.uuid}`;
 
     this.image = `ghcr.io/defenseunicorns/pepr/controller:${config.version}`;
 
     // Generate the ephemeral tls things
-    this.tls = genTLS(this.name);
+    this._tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
   }
 
   /** Generate the pepr-system namespace */
@@ -117,8 +122,8 @@ export class Webhook {
       },
       type: "kubernetes.io/tls",
       data: {
-        "tls.crt": this.tls.crt,
-        "tls.key": this.tls.key,
+        "tls.crt": this._tls.crt,
+        "tls.key": this._tls.key,
       },
     };
   }
@@ -136,6 +141,22 @@ export class Webhook {
       });
     }
 
+    const clientConfig: AdmissionregistrationV1WebhookClientConfig = {
+      caBundle: this._tls.ca,
+    };
+
+    // If a host is specified, use that with a port of 3000
+    if (this.host) {
+      clientConfig.url = `https://${this.host}:3000/mutate`;
+    } else {
+      // Otherwise, use the service
+      clientConfig.service = {
+        name: this.name,
+        namespace: "pepr-system",
+        path: "/mutate",
+      };
+    }
+
     return {
       apiVersion: "admissionregistration.k8s.io/v1",
       kind: "MutatingWebhookConfiguration",
@@ -144,14 +165,7 @@ export class Webhook {
         {
           name: `${name}.pepr.dev`,
           admissionReviewVersions: ["v1", "v1beta1"],
-          clientConfig: {
-            caBundle: this.tls.ca,
-            service: {
-              name: this.name,
-              namespace: "pepr-system",
-              path: "/mutate",
-            },
-          },
+          clientConfig,
           failurePolicy: "Ignore",
           matchPolicy: "Equivalent",
           timeoutSeconds: 15,
@@ -408,6 +422,11 @@ export class Webhook {
       logger.info("Removing and re-creating service account");
       await coreV1Api.deleteNamespacedServiceAccount(sa.metadata.name, namespace);
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
+    }
+
+    // If a host is specified, we don't need to deploy the rest of the resources
+    if (this.host) {
+      return
     }
 
     const mod = this.moduleSecret(code);

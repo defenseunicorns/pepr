@@ -6,6 +6,11 @@ export interface TLSOut {
   ca: string;
   crt: string;
   key: string;
+  pem: {
+    ca: string;
+    crt: string;
+    key: string;
+  }
 }
 
 /**
@@ -36,18 +41,25 @@ export function genTLS(name: string): TLSOut {
 
   // Generate a new server key pair and create a server certificate signed by the CA
   const serverKeys = forge.pki.rsa.generateKeyPair(2048);
-  const serverCert = genCert(serverKeys, `${name}.pepr-system.svc`, caCert.subject.attributes);
+  const serverCert = genCert(serverKeys, name, caCert.subject.attributes);
 
   // Sign both certificates with the CA private key
   caCert.sign(caKeys.privateKey, forge.md.sha256.create());
   serverCert.sign(caKeys.privateKey, forge.md.sha256.create());
 
-  // Convert the keys and certificates to PEM format and Base64-encode them
-  const ca = Buffer.from(forge.pki.certificateToPem(caCert)).toString("base64");
-  const key = Buffer.from(forge.pki.privateKeyToPem(serverKeys.privateKey)).toString("base64");
-  const crt = Buffer.from(forge.pki.certificateToPem(serverCert)).toString("base64");
+  // Convert the keys and certificates to PEM format
+  const pem = {
+    ca: forge.pki.certificateToPem(caCert),
+    crt: forge.pki.certificateToPem(serverCert),
+    key: forge.pki.privateKeyToPem(serverKeys.privateKey),
+  };
 
-  return { ca, key, crt };
+  // Base64-encode the PEM strings
+  const ca = Buffer.from(pem.ca).toString("base64");
+  const key = Buffer.from(pem.key).toString("base64");
+  const crt = Buffer.from(pem.crt).toString("base64");
+
+  return { ca, key, crt, pem };
 }
 
 function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.CertificateField[]) {

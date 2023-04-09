@@ -6,6 +6,7 @@ import { banner } from "./banner";
 import build from "./build";
 import capability from "./capability";
 import deploy from "./deploy";
+import dev from "./dev";
 import init from "./init";
 import { RootCmd } from "./root";
 import test from "./test";
@@ -27,5 +28,6 @@ build(program);
 capability(program);
 test(program);
 deploy(program);
+dev(program);
 
 program.parse();
