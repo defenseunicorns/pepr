@@ -7,6 +7,7 @@ import {
   AppsV1Api,
   CoreV1Api,
   KubeConfig,
+  NetworkingV1Api,
   RbacAuthorizationV1Api,
   V1ClusterRole,
   V1ClusterRoleBinding,
@@ -14,6 +15,7 @@ import {
   V1LabelSelectorRequirement,
   V1MutatingWebhookConfiguration,
   V1Namespace,
+  V1NetworkPolicy,
   V1Secret,
   V1Service,
   V1ServiceAccount,
@@ -251,6 +253,11 @@ export class Webhook {
                     mountPath: "/etc/certs",
                     readOnly: true,
                   },
+                  {
+                    name: "module",
+                    mountPath: "/app/module.js.gz",
+                    readOnly: true,
+                  },
                 ],
               },
             ],
@@ -261,9 +268,54 @@ export class Webhook {
                   secretName: `${this.name}-tls`,
                 },
               },
+              {
+                name: "module",
+                secret: {
+                  secretName: `${this.name}-module`,
+                },
+              },
             ],
           },
         },
+      },
+    };
+  }
+
+  /** Only permit the  */
+  networkPolicy(): V1NetworkPolicy {
+    return {
+      apiVersion: "networking.k8s.io/v1",
+      kind: "NetworkPolicy",
+      metadata: {
+        name: this.name,
+        namespace: "pepr-system",
+      },
+      spec: {
+        podSelector: {
+          matchLabels: {
+            app: this.name,
+          },
+        },
+        policyTypes: ["Ingress"],
+        ingress: [
+          {
+            from: [
+              {
+                namespaceSelector: {
+                  matchLabels: {
+                    "kubernetes.io/metadata.name": "kube-system",
+                  },
+                },
+              },
+            ],
+            ports: [
+              {
+                protocol: "TCP",
+                port: 443,
+              },
+            ],
+          },
+        ],
       },
     };
   }
@@ -338,6 +390,7 @@ export class Webhook {
   allYaml(code: string) {
     const resources = [
       this.namespace(),
+      this.networkPolicy(),
       this.clusterRole(),
       this.clusterRoleBinding(),
       this.serviceAccount(),
@@ -365,6 +418,7 @@ export class Webhook {
     const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
     const appsApi = kubeConfig.makeApiClient(AppsV1Api);
     const admissionApi = kubeConfig.makeApiClient(AdmissionregistrationV1Api);
+    const networkApi = kubeConfig.makeApiClient(NetworkingV1Api);
 
     const ns = this.namespace();
     try {
@@ -374,6 +428,16 @@ export class Webhook {
       logger.debug(e.body);
       logger.info("Creating namespace");
       await coreV1Api.createNamespace(ns);
+    }
+
+    const netpol = this.networkPolicy();
+    try {
+      logger.info("Checking for network policy");
+      await networkApi.readNamespacedNetworkPolicy(netpol.metadata.name, namespace);
+    } catch (e) {
+      logger.debug(e.body);
+      logger.info("Creating network policy");
+      await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
     }
 
     const wh = this.mutatingWebhook();
@@ -426,7 +490,7 @@ export class Webhook {
 
     // If a host is specified, we don't need to deploy the rest of the resources
     if (this.host) {
-      return
+      return;
     }
 
     const mod = this.moduleSecret(code);
