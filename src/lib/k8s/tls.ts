@@ -10,7 +10,7 @@ export interface TLSOut {
     ca: string;
     crt: string;
     key: string;
-  }
+  };
 }
 
 /**

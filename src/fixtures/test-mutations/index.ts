@@ -88,8 +88,5 @@ When(a.Deployment)
 When(a.Service)
   .IsCreated()
   .Then(request => {
-    request
-      .SetLabel("mutated", "true")
-      .SetLabel("test", "thing")
-      .RemoveLabel("test3");
+    request.SetLabel("mutated", "true").SetLabel("test", "thing").RemoveLabel("test3");
   });

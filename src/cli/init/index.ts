@@ -44,10 +44,7 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, readme.path), readme.data);
           await write(resolve(dirName, tsConfig.path), tsConfig.data);
           await write(resolve(dirName, peprTS.path), peprTS.data);
-          await write(
-            resolve(dirName, ".vscode", capabilitySnippet.path),
-            capabilitySnippet.data
-          );
+          await write(resolve(dirName, ".vscode", capabilitySnippet.path), capabilitySnippet.data);
           await write(
             resolve(dirName, "capabilities", capabilityHelloPeprTS.path),
             capabilityHelloPeprTS.data
@@ -60,9 +57,7 @@ export default function (program: RootCmd) {
           });
 
           console.log(`New Pepr module created at ${dirName}`);
-          console.log(
-            `Open VSCode or your editor of choice in ${dirName} to get started!`
-          );
+          console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (e) {
           Log.debug(e);
           Log.error(e.message);

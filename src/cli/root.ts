@@ -8,11 +8,7 @@ export class RootCmd extends Command {
   createCommand(name: string) {
     const cmd = new Command(name);
 
-    cmd.option(
-      "-l, --log-level [level]",
-      "Log level: debug, info, warn, error",
-      "info"
-    );
+    cmd.option("-l, --log-level [level]", "Log level: debug, info, warn, error", "info");
 
     cmd.hook("preAction", run => {
       Log.SetLogLevel(run.opts().logLevel);

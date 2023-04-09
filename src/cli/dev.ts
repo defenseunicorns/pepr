@@ -34,10 +34,13 @@ export default function (program: RootCmd) {
       const code = await fs.readFile(path, { encoding: "utf-8" });
 
       // Generate a secret for the module
-      const webhook = new Webhook({
-        ...cfg.pepr,
-        description: cfg.description,
-      }, opts.host);
+      const webhook = new Webhook(
+        {
+          ...cfg.pepr,
+          description: cfg.description,
+        },
+        opts.host
+      );
 
       // Write the TLS cert and key to disk
       await fs.writeFile("insecure-tls.crt", webhook.tls.pem.crt);

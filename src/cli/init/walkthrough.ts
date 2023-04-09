@@ -38,8 +38,7 @@ export function walkthrough(): Promise<InitOptions> {
     type: "select",
     name: "errorBehavior",
     validate: val => ErrorBehavior[val],
-    message:
-      "How do you want Pepr to handle errors encountered during K8s operations?",
+    message: "How do you want Pepr to handle errors encountered during K8s operations?",
     choices: [
       {
         title: "Ignore",
@@ -57,17 +56,12 @@ export function walkthrough(): Promise<InitOptions> {
       {
         title: "Reject the operation",
         value: ErrorBehavior.reject,
-        description:
-          "Pepr will reject the operation and return an error to the client.",
+        description: "Pepr will reject the operation and return an error to the client.",
       },
     ],
   };
 
-  return prompt([
-    askName,
-    askDescription,
-    askErrorBehavior,
-  ]) as Promise<InitOptions>;
+  return prompt([askName, askDescription, askErrorBehavior]) as Promise<InitOptions>;
 }
 
 export async function confirm(
