@@ -3,7 +3,7 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import { Log } from "../../lib";
+import Log from "../../lib/logger";
 import { RootCmd } from "../root";
 import {
   capabilityHelloPeprTS,
