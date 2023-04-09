@@ -167,7 +167,7 @@ export class Webhook {
               apiGroups: ["*"],
               apiVersions: ["*"],
               operations: ["CREATE", "UPDATE", "DELETE"],
-              resources: ["*"],
+              resources: ["*/*"],
             },
           ],
           // @todo: track side effects state
@@ -189,7 +189,7 @@ export class Webhook {
         },
       },
       spec: {
-        replicas: 1,
+        replicas: 2,
         selector: {
           matchLabels: {
             app: this.name,
