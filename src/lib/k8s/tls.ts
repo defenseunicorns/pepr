@@ -1,9 +1,6 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
-// @todo: quick and dirty temp tls chain for testing, to be replaced at runtime
-// Don't freak out, this is a self-signed cert for testing purposes only.
 import forge from "node-forge";
+
+const caName = "Pepr Ephemeral CA";
 
 export interface TLSOut {
   ca: string;
@@ -11,47 +8,69 @@ export interface TLSOut {
   key: string;
 }
 
+/**
+ * Generates a self-signed CA and server certificate with Subject Alternative Names (SANs) for the K8s webhook.
+ *
+ * @param {string} name - The name to use for the server certificate's Common Name and SAN DNS entry.
+ * @returns {TLSOut} - An object containing the Base64-encoded CA, server certificate, and server private key.
+ */
 export function genTLS(name: string): TLSOut {
-  // Generate a new CA key pair
+  // Generate a new CA key pair and create a self-signed CA certificate
   const caKeys = forge.pki.rsa.generateKeyPair(2048);
-  const caCert = forge.pki.createCertificate();
-  caCert.publicKey = caKeys.publicKey;
-  caCert.serialNumber = "01";
-  caCert.validity.notBefore = new Date();
-  caCert.validity.notAfter = new Date();
-  caCert.validity.notAfter.setFullYear(caCert.validity.notBefore.getFullYear() + 1);
-  const caAttrs = [
+  const caCert = genCert(caKeys, caName, [{ name: "commonName", value: caName }]);
+
+  caCert.setExtensions([
     {
-      name: "commonName",
-      value: "Pepr Ephemeral CA",
+      name: 'basicConstraints',
+      cA: true
     },
-  ];
-  caCert.setSubject(caAttrs);
-  caCert.setIssuer(caAttrs);
+    {
+      name: 'keyUsage',
+      keyCertSign: true,
+      digitalSignature: true,
+      nonRepudiation: true,
+      keyEncipherment: true,
+      dataEncipherment: true
+    }
+  ]);
+
+  // Generate a new server key pair and create a server certificate signed by the CA
+  const serverKeys = forge.pki.rsa.generateKeyPair(2048);
+  const serverCert = genCert(serverKeys, `${name}.pepr-system.svc`, caCert.subject.attributes);
+
+  // Sign both certificates with the CA private key
   caCert.sign(caKeys.privateKey, forge.md.sha256.create());
+  serverCert.sign(caKeys.privateKey, forge.md.sha256.create());
 
-  // Generate a new key pair
-  const keys = forge.pki.rsa.generateKeyPair(2048);
-  const cert = forge.pki.createCertificate();
-  cert.publicKey = keys.publicKey;
-  cert.serialNumber = "01";
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date();
-  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-  const attrs = [
-    {
-      name: "commonName",
-      value: `${name}.pepr-system.svc`,
-    },
-  ];
-  cert.setSubject(attrs);
-  cert.setIssuer(caCert.subject.attributes);
-  cert.sign(caKeys.privateKey, forge.md.sha256.create());
-
-  // Convert the keys and certificates to PEM format
+  // Convert the keys and certificates to PEM format and Base64-encode them
   const ca = Buffer.from(forge.pki.certificateToPem(caCert)).toString("base64");
-  const key = Buffer.from(forge.pki.privateKeyToPem(keys.privateKey)).toString("base64");
-  const crt = Buffer.from(forge.pki.certificateToPem(cert)).toString("base64");
+  const key = Buffer.from(forge.pki.privateKeyToPem(serverKeys.privateKey)).toString("base64");
+  const crt = Buffer.from(forge.pki.certificateToPem(serverCert)).toString("base64");
 
   return { ca, key, crt };
+}
+
+function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.CertificateField[]) {
+  const crt = forge.pki.createCertificate();
+  crt.publicKey = key.publicKey;
+  crt.serialNumber = "01";
+  crt.validity.notBefore = new Date();
+  crt.validity.notAfter = new Date();
+  crt.validity.notAfter.setFullYear(crt.validity.notBefore.getFullYear() + 1);
+
+  // Add SANs to the server certificate
+  crt.setExtensions([{
+    name: "subjectAltName",
+    altNames: [
+      {
+        type: 2, // DNS
+        value: name,
+      },
+    ],
+  }]);
+
+  // Set the server certificate's issuer to the CA
+  crt.setIssuer(issuer);
+
+  return crt;
 }
