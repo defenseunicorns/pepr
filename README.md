@@ -2,6 +2,14 @@
 
 <img align="right" width="40%" src=".images/pepr.png" />
 
+Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops tribal knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
+
+## Features
+
+- Define a set of Kubernetes transformations/actions as Pepr capabilities.
+- Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
+- React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
+
 Pepr is an open-source project that helps IT Ops teams of all skill levels manage and modify resources in a Kubernetes (K8s) cluster using TypeScript. Kubernetes simplifies the management of multiple computers working together to run and scale applications. Pepr acts as a smart assistant, automatically changing or validating parts of the system as needed.
 
 TypeScript is used to create Pepr capabilities, benefiting from its error-catching and clean code features, but without requiring specialized software engineering experience or prior Typescript knowledge. Pepr also provides a user-friendly interface for writing commands in plain English in a [Fluent Interface](https://en.wikipedia.org/wiki/Fluent_interface) style.
@@ -9,12 +17,6 @@ TypeScript is used to create Pepr capabilities, benefiting from its error-catchi
 Capabilities are logical groupings of actions, which are the atomic units of change within Pepr. Actions _modify_, _create_, or _interact_ with resources in response to events. Pepr's capabilities and actions work together in the cluster, offering a versatile and customizable tool that enhances Kubernetes by building glue code or plumbing for system interactions. This makes Pepr useful for various tasks such as creating robust policy engines or seamlessly connecting applications.
 
 Imagine Pepr as a smart home system where different devices communicate with each other. Pepr provides instructions, simplifying the management of the smart home. The project enables both expert and novice capability authors to improve management and interactions within the Kubernetes environment, making its features accessible to everyone.
-
-## Features
-
-- Define a set of Kubernetes transformations/actions as Pepr capabilities.
-- Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
-- React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
 
 ## Concepts
 
