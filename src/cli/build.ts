@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import json from "@rollup/plugin-json";
+import { dependencies } from "../../package.json";
+
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import { promises as fs } from "fs";
@@ -43,12 +45,11 @@ export default function (program: RootCmd) {
     });
 }
 
-const externalLibs: ExternalOption = [
-  /@kubernetes\/client-node(\/.*)?/,
-  "express",
-  "fast-json-patch",
-  "ramda",
-];
+// Create a list of external libraries to exclude from the bundle, these are already stored in the containe
+const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
+
+// Add the pepr library to the list of external libraries
+externalLibs.push("pepr")
 
 export async function buildModule(moduleDir: string) {
   try {

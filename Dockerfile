@@ -10,7 +10,4 @@ COPY --chown=node:node ./package*.json ./
 RUN npm ci --omit=dev
 
 # Sync the pepr dist files
-COPY --chown=node:node ./dist/*.js  ./node_modules/pepr/
-
-# pepr-core.js is the NPM entry point
-RUN mv ./node_modules/pepr/pepr-core.js ./node_modules/pepr/index.js
+COPY --chown=node:node ./dist/  ./node_modules/pepr/dist/
