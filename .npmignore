@@ -13,4 +13,4 @@ rollup.config.mjs
 tsconfig.json
 /src
 /fixtures
-/index.ts
+/*.ts

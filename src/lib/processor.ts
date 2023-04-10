@@ -13,7 +13,6 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
   const wrapped = new RequestWrapper(req);
   const response: Response = {
     uid: req.uid,
-    patchType: "JSONPatch",
     warnings: [],
     allowed: false,
   };
@@ -69,6 +68,7 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
 
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
+    response.patchType = "JSONPatch";
     response.patch = JSON.stringify(patches);
   }
 

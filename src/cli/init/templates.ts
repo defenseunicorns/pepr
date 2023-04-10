@@ -24,7 +24,7 @@ new PeprModule(cfg, [
   HelloPepr,
 
   // Your additional capabilities go here
-]);    
+]);
 `,
   };
 }
@@ -140,8 +140,8 @@ Module Root
 };
 
 export const samplesYaml = {
-  path: "samples.yaml",
-  data: dumpYaml([
+  path: "hello-pepr.samples.yaml",
+  data: [
     {
       apiVersion: "v1",
       kind: "Namespace",
@@ -185,7 +185,9 @@ export const samplesYaml = {
         key: "ex-3-val",
       },
     },
-  ]),
+  ]
+    .map(r => dumpYaml(r, { noRefs: true }))
+    .join("---\n"),
 };
 
 export const helloPeprTS = {
@@ -195,7 +197,7 @@ export const helloPeprTS = {
 /**
  *  The HelloPepr is an example capability to demonstrate some general concepts of Pepr.
  *  To test this capability you can run \`pepr dev\` and then run the following command:
- *  \`kubectl apply -f capabilities/hello-pepr/samples.yaml\`
+ *  \`kubectl apply -f capabilities/hello-pepr.samples.yaml\`
  */ 
 export const HelloPepr = new Capability({
   name: "hello-pepr",

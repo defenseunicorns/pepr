@@ -71,7 +71,6 @@ export class Controller {
       console.log(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`);
       name && console.log(`                ${namespace}/${name}\n`);
 
-      // @todo: make this actually do something
       const response = processor(this.config, this.capabilities, req.body.request);
       console.debug(response);
 
@@ -79,10 +78,7 @@ export class Controller {
       res.send({
         apiVersion: "admission.k8s.io/v1",
         kind: "AdmissionReview",
-        response: {
-          uid: req.body.request.uid,
-          allowed: true,
-        },
+        response,
       });
     } catch (err) {
       console.error(err);
