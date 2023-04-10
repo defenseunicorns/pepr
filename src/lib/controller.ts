@@ -62,7 +62,7 @@ export class Controller {
     }
   };
 
-  private mutate = (req: express.Request, res: express.Response) => {
+  private mutate = async (req: express.Request, res: express.Response) => {
     try {
       const name = req.body?.request?.name || "";
       const namespace = req.body?.request?.namespace || "";
@@ -71,7 +71,7 @@ export class Controller {
       console.log(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`);
       name && console.log(`                ${namespace}/${name}\n`);
 
-      const response = processor(this.config, this.capabilities, req.body.request);
+      const response = await processor(this.config, this.capabilities, req.body.request);
       console.debug(response);
 
       // Send a no prob bob response

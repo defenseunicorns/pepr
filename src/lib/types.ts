@@ -208,4 +208,4 @@ export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
 
 export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: RequestWrapper<K>
-) => void;
+) => Promise<void> | void | Promise<RequestWrapper<K>> | RequestWrapper<K>;

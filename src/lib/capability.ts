@@ -99,7 +99,7 @@ export class Capability implements CapabilityCfg {
 
     const ThenSet = (merge: DeepPartial<InstanceType<T>>): BindToAction<T> => {
       // Add the new action to the binding
-      Then(req => req.Merge(merge));
+      Then(async req => req.Merge(merge));
 
       return { Then };
     };

@@ -9,7 +9,7 @@ import logger from "./logger";
 import { RequestWrapper } from "./request";
 import { ModuleConfig } from "./types";
 
-export function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Response {
+export async function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Promise<Response> {
   const wrapped = new RequestWrapper(req);
   const response: Response = {
     uid: req.uid,
@@ -40,7 +40,7 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
 
       try {
         // Run the action
-        action.callback(wrapped);
+        await action.callback(wrapped);
 
         // Add annotations to the request to indicate that the capability succeeded
         metadata.annotations[identifier] = "succeeded";
