@@ -34,7 +34,7 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
       const { metadata } = wrapped.Raw;
-      const identifier = `pepr.dev/${config.uuid}/${name}`;
+      const identifier = `${config.uuid}.pepr.dev/${name}`;
       metadata.annotations = metadata.annotations || {};
       metadata.annotations[identifier] = "started";
 
