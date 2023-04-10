@@ -6,10 +6,8 @@ apko.yaml
 .dockerignore
 Dockerfile
 adr
-dist/pepr-controller*
 dist/pepr-module*
 src/cli
-src/controller
 src/fixtures
 .eslintrc.json
 .images

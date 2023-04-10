@@ -18,22 +18,19 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   const { metadata } = req.object;
 
   if (kind !== req.kind.kind) {
-    logger.debug(`${req.kind.kind} does not match ${kind}`);
     return true;
   }
 
   if (group && group !== req.kind.group) {
-    logger.debug(`${req.kind.group} does not match ${group}`);
     return true;
   }
 
   if (version && version !== req.kind.version) {
-    logger.debug(`${req.kind.version} does not match ${version}`);
     return true;
   }
 
   if (namespaces.length && !namespaces.includes(req.namespace || "")) {
-    logger.debug(`${req.namespace} is not in ${namespaces}`);
+    logger.debug("Namespace does not match");
     return true;
   }
 

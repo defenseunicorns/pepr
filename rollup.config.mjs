@@ -8,7 +8,6 @@ export default {
     ],
     input: {
         cli: 'src/cli/index.ts',
-        controller: 'src/controller/index.ts',
         core: 'index.ts',
     },
     output: {

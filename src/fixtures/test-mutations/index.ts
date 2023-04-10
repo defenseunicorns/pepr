@@ -1,13 +1,13 @@
 import { a } from "../../lib/k8s";
 import { Capability } from "../../lib/capability";
 
-const { When, Register } = new Capability({
+export const TestMutations = new Capability({
   name: "test-mutations",
   description: "A collection of examples of data mutations.",
   namespaces: ["mutation-namespace"],
 });
 
-export default Register;
+const { When } = TestMutations;
 
 When(a.Deployment)
   .IsCreated()

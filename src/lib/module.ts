@@ -3,9 +3,7 @@
 
 import R from "ramda";
 import { Capability } from "./capability";
-import { GroupVersionKind, Request, Response } from "./k8s";
-import logger from "./logger";
-import { processor } from "./processor";
+import { Controller } from "./controller";
 import { ModuleConfig } from "./types";
 
 const alwaysIgnore = {
@@ -19,39 +17,31 @@ export type PackageJSON = {
 };
 
 export class PeprModule {
-  private _config: ModuleConfig;
-  private _state: Capability[] = [];
-  private _kinds: GroupVersionKind[] = [];
-
-  get kinds(): GroupVersionKind[] {
-    return this._kinds;
-  }
-
-  get UUID(): string {
-    return this._config.uuid;
-  }
+  private _controller: Controller;
 
   /**
    * Create a new Pepr runtime
    *
    * @param config The configuration for the Pepr runtime
    */
-  constructor({ description, pepr }: PackageJSON) {
-    pepr.description = description;
-    this._config = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
+  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], deferStart = false) {
+    const config: ModuleConfig = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
+    config.description = description;
+
+    this._controller = new Controller(config, capabilities);
+
+    if (!deferStart) {
+      this.start();
+    }
   }
 
-  Register = (capability: Capability) => {
-    logger.info(`Registering capability ${capability.name}`);
-
-    // Add the kinds to the list of kinds (ignoring duplicates for now)
-    this._kinds = capability.bindings.map(({ kind }) => kind);
-
-    // Add the capability to the state
-    this._state.push(capability);
-  };
-
-  ProcessRequest = (req: Request): Response => {
-    return processor(this._config, this._state, req);
-  };
+  /**
+   * Start the Pepr runtime manually.
+   * Normally this is called automatically when the Pepr module is instantiated, but can be called manually if `deferStart` is set to `true` in the constructor.
+   *
+   * @param port
+   */
+  start(port = 3000) {
+    this._controller.startServer(port);
+  }
 }

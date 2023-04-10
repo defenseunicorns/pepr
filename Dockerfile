@@ -12,11 +12,5 @@ RUN npm ci --omit=dev
 # Sync the pepr dist files
 COPY --chown=node:node ./dist/*.js  ./node_modules/pepr/
 
-# Copy the controller file 
-COPY --chown=node:node dist/pepr-controller.js ./
-
 # pepr-core.js is the NPM entry point
 RUN mv ./node_modules/pepr/pepr-core.js ./node_modules/pepr/index.js
-
-# Start the application
-CMD [ "pepr-controller.js" ]

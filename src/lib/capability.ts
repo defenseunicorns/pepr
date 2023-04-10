@@ -59,14 +59,6 @@ export class Capability implements CapabilityCfg {
   }
 
   /**
-   * The Register method is used to register a capability with the Pepr runtime. This method is
-   * called in the order that the capabilities should be executed.
-   *
-   * @param callback the state register method to call, passing the capability as an argument
-   */
-  Register = (register: (capability: Capability) => void) => register(this);
-
-  /**
    * The When method is used to register a capability action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
    * filters that are applied.
