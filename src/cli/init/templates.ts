@@ -6,6 +6,7 @@ import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 import { dependencies, version } from "../../../package.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
+import { dumpYaml } from "@kubernetes/client-node";
 
 export function genPeprTS() {
   return {
@@ -138,10 +139,64 @@ Module Root
 `,
 };
 
-export const capabilityHelloPeprTS = {
+export const samplesYaml = {
+  path: "samples.yaml",
+  data: dumpYaml([
+    {
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name: "pepr-demo",
+      },
+    },
+    {
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: {
+        name: "example-1",
+        namespace: "pepr-demo",
+      },
+      data: {
+        key: "ex-1-val",
+      },
+    },
+    {
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: {
+        name: "example-2",
+        namespace: "pepr-demo",
+      },
+      data: {
+        key: "ex-2-val",
+      },
+    },
+    {
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: {
+        name: "example-3",
+        namespace: "pepr-demo",
+        labels: {
+          change: "by-label",
+        },
+      },
+      data: {
+        key: "ex-3-val",
+      },
+    },
+  ]),
+};
+
+export const helloPeprTS = {
   path: "hello-pepr.ts",
   data: `import { Capability, a } from "pepr";
 
+/**
+ *  The HelloPepr is an example capability to demonstrate some general concepts of Pepr.
+ *  To test this capability you can run \`pepr dev\` and then run the following command:
+ *  \`kubectl apply -f capabilities/hello-pepr/samples.yaml\`
+ */ 
 export const HelloPepr = new Capability({
   name: "hello-pepr",
   description: "A simple example capability to show how things work.",
@@ -188,11 +243,12 @@ When(a.ConfigMap)
 
 /**
  * This Capability Action combines different styles. Unlike the previous actions, this one will look for any ConfigMap
- * in the \`pepr-demo\` namespace that has the label \`change=by-label\`. Note that all conditions added such as \`WithName()\`,
- * \`WithLabel()\`, \`InNamespace()\`, are ANDs so all conditions must be true for the request to be procssed.
+ * in the \`pepr-demo\` namespace that has the label \`change=by-label\` during either CREATE or UPDATE. Note that all 
+ * conditions added such as \`WithName()\`, \`WithLabel()\`, \`InNamespace()\`, are ANDs so all conditions must be true 
+ * for the request to be procssed.
  */
 When(a.ConfigMap)
-  .IsCreated()
+  .IsCreatedOrUpdated()
   .WithLabel("change", "by-label")
   .Then(request => {
     // The K8s object e are going to mutate
@@ -211,7 +267,7 @@ When(a.ConfigMap)
 `,
 };
 
-export const capabilitySnippet = {
+export const snippet = {
   path: "pepr.code-snippets",
   data: `{
   "Create a new Pepr capability": {
