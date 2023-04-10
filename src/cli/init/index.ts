@@ -6,13 +6,14 @@ import { resolve } from "path";
 import Log from "../../lib/logger";
 import { RootCmd } from "../root";
 import {
-  capabilityHelloPeprTS,
-  capabilitySnippet,
   genPeprTS,
   genPkgJSON,
   gitIgnore,
+  helloPeprTS,
   prettierRC,
   readme,
+  samplesYaml,
+  snippet,
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
@@ -22,7 +23,9 @@ export default function (program: RootCmd) {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .action(async () => {
+    // skip auto npm install and git init
+    .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
+    .action(async opts => {
       const response = await walkthrough();
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response);
@@ -44,17 +47,31 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, readme.path), readme.data);
           await write(resolve(dirName, tsConfig.path), tsConfig.data);
           await write(resolve(dirName, peprTS.path), peprTS.data);
-          await write(resolve(dirName, ".vscode", capabilitySnippet.path), capabilitySnippet.data);
-          await write(
-            resolve(dirName, "capabilities", capabilityHelloPeprTS.path),
-            capabilityHelloPeprTS.data
-          );
+          await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
+          await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
+          await write(resolve(dirName, "capabilities", helloPeprTS.path), helloPeprTS.data);
 
-          // run npm install from the new directory
-          process.chdir(dirName);
-          execSync("npm install", {
-            stdio: "inherit",
-          });
+          if (!opts.skipPostInit) {
+            // run npm install from the new directory
+            process.chdir(dirName);
+            execSync("npm install", {
+              stdio: "inherit",
+            });
+
+            // setup git
+            execSync("git init", {
+              stdio: "inherit",
+            });
+
+            // try to open vscode
+            try {
+              execSync("code .", {
+                stdio: "inherit",
+              });
+            } catch (e) {
+              // vscode not found, do nothing
+            }
+          }
 
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
