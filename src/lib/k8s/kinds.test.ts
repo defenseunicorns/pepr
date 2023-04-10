@@ -84,14 +84,6 @@ test("should return the correct GroupVersionKind for 'a.V1Deployment'", t => {
   t.is(gvk.kind, "Deployment");
 });
 
-test("should return the correct GroupVersionKind for 'a.V1Endpoint'", t => {
-  const { name } = a.Endpoint;
-  const gvk = modelToGroupVersionKind(name);
-  t.is(gvk.group, "");
-  t.is(gvk.version, "v1");
-  t.is(gvk.kind, "Endpoints");
-});
-
 test("should return the correct GroupVersionKind for 'a.V1EndpointSlice'", t => {
   const { name } = a.EndpointSlice;
   const gvk = modelToGroupVersionKind(name);

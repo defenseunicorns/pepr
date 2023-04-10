@@ -12,7 +12,6 @@ export {
   V1CustomResourceDefinition as CustomResourceDefinition,
   V1DaemonSet as DaemonSet,
   V1Deployment as Deployment,
-  V1Endpoint as Endpoint,
   V1EndpointSlice as EndpointSlice,
   V1HorizontalPodAutoscaler as HorizontalPodAutoscaler,
   V1Ingress as Ingress,
