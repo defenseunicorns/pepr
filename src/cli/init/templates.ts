@@ -88,9 +88,10 @@ export const tsConfig = {
 
 export const gitIgnore = {
   path: ".gitignore",
-  data: `# Ignore node_modules
-  node_modules
-  dist
+  data: `# Ignore node_modules and Pepr build artifacts
+node_modules
+dist
+insecure*
 `,
 };
 
