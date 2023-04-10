@@ -49,7 +49,7 @@ export default function (program: RootCmd) {
 const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
 
 // Add the pepr library to the list of external libraries
-externalLibs.push("pepr")
+externalLibs.push("pepr");
 
 export async function buildModule(moduleDir: string) {
   try {

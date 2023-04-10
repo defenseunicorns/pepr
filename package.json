@@ -5,7 +5,7 @@
   "author": "Defense Unicorns",
   "homepage": "https://github.com/defenseunicorns/pepr",
   "license": "Apache-2.0",
-  "bin": "dist/pepr-cli.js",
+  "bin": "dist/cli.js",
   "repository": "defenseunicorns/pepr",
   "engines": {
     "node": ">=18.0.0"
