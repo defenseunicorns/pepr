@@ -18,6 +18,8 @@ Capabilities are logical groupings of actions, which are the atomic units of cha
 
 Imagine Pepr as a smart home system where different devices communicate with each other. Pepr provides instructions, simplifying the management of the smart home. The project enables both expert and novice capability authors to improve management and interactions within the Kubernetes environment, making its features accessible to everyone.
 
+https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4
+
 ## Concepts
 
 ### Module
@@ -26,7 +28,7 @@ A module is the top-level collection of capabilities. It is a single, complete T
 
 ### Capability
 
-A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
+A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules. 
 
 ### CapabilityAction
 
@@ -36,26 +38,22 @@ For example, a CapabilityAction could be responsible for adding a specific label
 
 ## Example
 
-Define a new capability:
+Define a new capability can be done via [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets): create a file `capabilities/your-capability-name.ts` and then type `create` in the file, a suggestion should prompt you to generate the content from there.
+
+https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4
+
+Alternatively, you can use the `pepr new <capability-name>` command to this:
 
 ```
-pepr new hello-world -d demo
+pepr new hello-world
 ```
 
-This will create a new directory tree called `demo/hello-world` with the following structure:
-
-### demo/hello-world/index.ts
-
-```typescript
-import "./test-mutations";
-```
-
-### demo/hello-world/index.ts
+This will create a new file called `capabilities/hello-world.ts` with the following contents:
 
 ```typescript
 import { Capability, a } from "pepr";
 
-const { When } = new Capability({
+export const HelloWorld = new Capability({
   // The unique name of the capability
   name: "hello-world",
   // A short description of the capability
@@ -63,6 +61,9 @@ const { When } = new Capability({
   // Limit what namespaces the capability can be used in (optional)
   namespaces: [],
 });
+
+// Use the 'When' function to create a new Capability Action
+const { When } = HelloWorld;
 ```
 
 Next, we need to define some actions to perform when specific Kubernetes resources are created, updated or deleted in the cluster. Pepr provides a set of actions that can be used to react to Kubernetes resources, such as `a.Pod`, `a.Deployment`, `a.CronJob`, etc. These actions can be chained together to create complex conditions, such as `a.Pod.IsCreated().InNamespace("default")` or `a.Deployment.IsUpdated().WithLabel("changeme=true")`. Below is an example of a capability that reacts to the creation of a Deployment resource:
