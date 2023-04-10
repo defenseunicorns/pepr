@@ -1,6 +1,6 @@
 {
   "name": "pepr",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Kubernetes application engine",
   "author": "Defense Unicorns",
   "homepage": "https://github.com/defenseunicorns/pepr",
