@@ -69,7 +69,9 @@ export function processor(config: ModuleConfig, capabilities: Capability[], req:
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
     response.patchType = "JSONPatch";
-    response.patch = JSON.stringify(patches);
+    // Webhook must be base64-encoded
+    // https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
+    response.patch = Buffer.from(JSON.stringify(patches)).toString("base64");
   }
 
   // Remove the warnings array if it's empty
