@@ -3,7 +3,7 @@
 
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
-import { version } from "../../../package.json";
+import { dependencies, version } from "../../../package.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
@@ -33,6 +33,8 @@ export function genPkgJSON(opts: InitOptions) {
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
+  // Make typescript a dev dependency
+  const { typescript } = dependencies;
 
   const data = {
     name,
@@ -51,10 +53,13 @@ export function genPkgJSON(opts: InitOptions) {
     },
     scripts: {
       build: "pepr build",
-      start: "pepr test",
+      start: "pepr dev",
     },
     dependencies: {
       pepr: `^${version}`,
+    },
+    devDependencies: {
+      typescript,
     },
   };
 
@@ -77,7 +82,7 @@ export const tsConfig = {
       strict: false,
       target: "ES2020",
     },
-    include: ["**/*.ts", "node_modules/pepr/**/*.ts"],
+    include: ["**/*.ts"],
   },
 };
 

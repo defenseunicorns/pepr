@@ -2,16 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
-    "declarationDir": "dist",
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "moduleResolution": "node",
-    "paths": {
-      "pepr": ["./index.ts"],
-    },
+    "outDir": "./dist",
     "resolveJsonModule": true,
     "strict": false,
     "target": "ES2020"
   },
-  "include": ["src/**/*.ts"]
+  "exclude": ["node_modules", "dist"]
 }

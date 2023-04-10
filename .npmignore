@@ -5,10 +5,12 @@
 .images
 .prettierrc
 .vscode
-**/*.ts
 adr
 CODEOWNERS
 Dockerfile
 insecure*
 rollup.config.mjs
+tsconfig.json
 /src
+/fixtures
+/index.ts

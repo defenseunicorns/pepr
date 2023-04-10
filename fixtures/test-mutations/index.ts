@@ -1,5 +1,5 @@
-import { a } from "../../lib/k8s";
-import { Capability } from "../../lib/capability";
+import { a } from "../../src/lib/k8s";
+import { Capability } from "../../src/lib/capability";
 
 export const TestMutations = new Capability({
   name: "test-mutations",

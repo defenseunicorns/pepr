@@ -45,10 +45,8 @@ export default function (program: RootCmd) {
 
 const externalLibs: ExternalOption = [
   /@kubernetes\/client-node(\/.*)?/,
-  "commander",
   "express",
   "fast-json-patch",
-  "pepr",
   "ramda",
 ];
 
@@ -79,7 +77,7 @@ export async function buildModule(moduleDir: string) {
         declaration: false,
         removeComments: true,
         sourceMap: false,
-        include: ["**/*.ts", "node_modules/pepr/**/*.ts"],
+        include: ["**/*.ts"],
       }),
     ];
 
