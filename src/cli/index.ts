@@ -25,9 +25,11 @@ program
 
 init(program);
 build(program);
-capability(program);
-test(program);
 deploy(program);
 dev(program);
+
+// @todo: finish/re-evaluate these commands
+test(program);
+capability(program);
 
 program.parse();
