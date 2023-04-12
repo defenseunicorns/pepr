@@ -10,6 +10,22 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
 - React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
 
+## Wow too many words! tl;dr;
+```bash
+# Install Pepr (you can also use npx)
+npm i -g pepr
+
+# Initialize a new Pepr Module
+pepr init
+
+# Follow the prompts...
+
+# Within the new project dir, start playing with things
+pepr dev
+
+# Be amazed and ⭐️ this repo
+```
+
 Pepr is an open-source project that helps IT Ops teams of all skill levels manage and modify resources in a Kubernetes (K8s) cluster using TypeScript. Kubernetes simplifies the management of multiple computers working together to run and scale applications. Pepr acts as a smart assistant, automatically changing or validating parts of the system as needed.
 
 TypeScript is used to create Pepr capabilities, benefiting from its error-catching and clean code features, but without requiring specialized software engineering experience or prior Typescript knowledge. Pepr also provides a user-friendly interface for writing commands in plain English in a [Fluent Interface](https://en.wikipedia.org/wiki/Fluent_interface) style.
