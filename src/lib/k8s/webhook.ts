@@ -22,8 +22,8 @@ import {
   dumpYaml,
 } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
-import Log from "../logger";
-import { ModuleConfig } from "../types";
+import Log from "src/lib/logger";
+import { ModuleConfig } from "src/lib/types";
 import { TLSOut, genTLS } from "./tls";
 
 const peprIgnore: V1LabelSelectorRequirement = {

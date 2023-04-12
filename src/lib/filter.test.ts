@@ -1,6 +1,6 @@
 import { gvkMap } from "./k8s";
 import test from "ava";
-import { POD1 } from "../../fixtures/loader";
+import { POD1 } from "fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 
 test("should reject when kind does not match", t => {

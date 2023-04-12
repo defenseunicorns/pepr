@@ -1,6 +1,6 @@
-import Log from "../src/lib/logger";
-import cfg from "../package.json";
-import { PeprModule } from "../src/lib/module";
+import Log from "src/lib/logger";
+import cfg from "package.json";
+import { PeprModule } from "src/lib/module";
 import { TestMutations } from "./test-mutations";
 
 Log.SetLogLevel("debug");

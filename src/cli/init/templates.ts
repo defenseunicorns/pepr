@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { dumpYaml } from "@kubernetes/client-node";
+import { dependencies } from "package.json";
+import { version } from "src/cli/version";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
-import { dependencies, version } from "../../../package.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
-import { dumpYaml } from "@kubernetes/client-node";
 
 export function genPeprTS() {
   return {

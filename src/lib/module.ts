@@ -23,14 +23,16 @@ export class PeprModule {
    * Create a new Pepr runtime
    *
    * @param config The configuration for the Pepr runtime
+   * @param capabilities The capabilities to be loaded into the Pepr runtime
+   * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
-  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], deferStart = false) {
+  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], private readonly _deferStart = false) {
     const config: ModuleConfig = utils.mergeDeepWith(utils.concat, pepr, alwaysIgnore);
     config.description = description;
 
     this._controller = new Controller(config, capabilities);
 
-    if (!deferStart) {
+    if (!_deferStart) {
       this.start();
     }
   }
@@ -42,6 +44,10 @@ export class PeprModule {
    * @param port
    */
   start(port = 3000) {
+    if (!this._deferStart) {
+      throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
+    }
+
     this._controller.startServer(port);
   }
 }
