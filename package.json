@@ -31,8 +31,7 @@
     "prettier:fix": "npm run prettier -- --write",
     "prepublishOnly": "npm run lint:fix && npm run prettier:fix && npm run test && npm run build",
     "e2e-dev-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
-    "e2e-dev": "npm run build && docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev && node dist/pepr-cli.js deploy -f -i pepr:dev",
-    "release": "semantic-release"
+    "e2e-dev": "npm run build && docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev && node dist/pepr-cli.js deploy -f -i pepr:dev"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",
