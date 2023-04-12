@@ -3,8 +3,8 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import Log from "src/lib/logger";
-import { RootCmd } from "src/cli/root";
+import Log from "../../../src/lib/logger";
+import { RootCmd } from "../root";
 import {
   genPeprTS,
   genPkgJSON,

@@ -5,6 +5,7 @@
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "module": "commonjs",
+    "moduleResolution": "node",
     "outDir": "./dist",
     "resolveJsonModule": true,
     "strict": false,

@@ -2,15 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import json from "@rollup/plugin-json";
-import { dependencies } from "package.json";
-
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import Log from "src/lib/logger";
-import { Webhook } from "src/lib/k8s/webhook";
+import { dependencies } from "../../package.json";
+import { Webhook } from "../../src/lib/k8s/webhook";
+import Log from "../../src/lib/logger";
 import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {

@@ -6,8 +6,8 @@ import { watch } from "chokidar";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { prompt } from "prompts";
-import { Webhook } from "src/lib/k8s/webhook";
-import Log from "src/lib/logger";
+import { Webhook } from "../../src/lib/k8s/webhook";
+import Log from "../../src/lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 

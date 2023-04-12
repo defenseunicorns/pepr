@@ -3,7 +3,7 @@
 
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
-import { ErrorBehavior } from "src/lib/types";
+import { ErrorBehavior } from "../../../src/lib/types";
 import { gitIgnore, prettierRC, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
