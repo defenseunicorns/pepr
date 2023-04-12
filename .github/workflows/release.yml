@@ -9,8 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
+      issues: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v3
