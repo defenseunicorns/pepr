@@ -1,4 +1,4 @@
-name: Version Releaes
+name: Version Release
 
 on:
   push:
@@ -10,12 +10,15 @@ jobs:
 
     permissions:
       contents: read
-      packages: write    
+      packages: write
+
+    env:
+      NEW_VERSION: ${{ steps.semantic.outputs.new_version }}
 
     steps:
       - uses: actions/checkout@v3
 
-      - uses: docker/setup-buildx-action@v2      
+      - uses: docker/setup-buildx-action@v2
 
       - name: Use Node.js 18
         uses: actions/setup-node@v3
@@ -29,28 +32,19 @@ jobs:
         with:
           registry: ghcr.io
           username: dummy
-          password: ${{ github.token }}          
+          password: ${{ github.token }}
 
-      - name: Publish to GHCR & NPM
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npx semantic-release
+
+      - name: Publish to GHCR
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          #!/bin/bash
-
-          LOCAL_VER=$(npm pkg get version | tr -d '"')
-          PUB_VER=$(npm view pepr version | tr -d '"')
-
-          echo "Checking if ${LOCAL_VER} exists in the npm registry..."
-
-          if [[ ${LOCAL_VER} == ${PUB_VER} ]]; then
-            echo "${LOCAL_VER} already exists in the npm registry."
-          else
-            echo "${LOCAL_VER} does not exist in the npm registry."
-            
-            echo "Publishing the package..."
-            npm ci
-            npm publish
-
-            echo "Publishing the image..."
-            docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=$LOCAL_VER --tag ghcr.io/defenseunicorns/pepr/controller:$LOCAL_VER .
-          fi
+          echo "Publishing the image..."
+          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=${{ env.NEW_VERSION }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ env.NEW_VERSION }} .
