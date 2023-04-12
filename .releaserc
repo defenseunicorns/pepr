@@ -2,6 +2,7 @@
   "branches": [
     "main"
   ],
+  "repositoryUrl": "https://github.com/defenseunicorns/pepr.git",
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
