@@ -26,7 +26,11 @@ export class PeprModule {
    * @param capabilities The capabilities to be loaded into the Pepr runtime
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
-  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], private readonly _deferStart = false) {
+  constructor(
+    { description, pepr }: PackageJSON,
+    capabilities: Capability[] = [],
+    private readonly _deferStart = false
+  ) {
     const config: ModuleConfig = utils.mergeDeepWith(utils.concat, pepr, alwaysIgnore);
     config.description = description;
 
