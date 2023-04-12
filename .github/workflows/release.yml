@@ -12,9 +12,6 @@ jobs:
       contents: read
       packages: write
 
-    env:
-      NEW_VERSION: ${{ steps.semantic.outputs.new_version }}
-
     steps:
       - uses: actions/checkout@v3
 
@@ -47,4 +44,5 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "Publishing the image..."
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=${{ env.NEW_VERSION }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ env.NEW_VERSION }} .
+          source .env
+          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=$NEW_VERSION --tag ghcr.io/defenseunicorns/pepr/controller:$NEW_VERSION .
