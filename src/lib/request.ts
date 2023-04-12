@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import * as R from "ramda";
+import { utils } from "index";
 import { KubernetesObject, Request } from "./k8s";
 import { DeepPartial } from "./types";
 
@@ -48,7 +48,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    */
   constructor(input: Request<T>) {
     // Deep clone the object to prevent mutation of the original object
-    this.Raw = R.clone(input.object);
+    this.Raw = utils.clone(input.object);
     // Store the input
     this._input = input;
   }
@@ -59,7 +59,7 @@ export class RequestWrapper<T extends KubernetesObject> {
    * @param obj - The object to merge with the current resource.
    */
   Merge(obj: DeepPartial<T>) {
-    this.Raw = R.mergeDeepRight(this.Raw, obj) as T;
+    this.Raw = utils.mergeDeepRight(this.Raw, obj) as unknown as T;
   }
 
   /**

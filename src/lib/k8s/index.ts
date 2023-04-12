@@ -3,6 +3,7 @@
 
 // Export kinds as a single object
 import * as kind from "./upstream";
+/** a is a colleciton of K8s types to be used within a CapabilityAction: `When(a.Configmap)` */
 export { kind as a };
 
 export { modelToGroupVersionKind, gvkMap } from "./kinds";

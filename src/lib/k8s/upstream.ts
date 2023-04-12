@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+/** a is a colleciton of K8s types to be used within a CapabilityAction: `When(a.Configmap)` */
 export {
   V1APIService as APIService,
   V1CertificateSigningRequest as CertificateSigningRequest,

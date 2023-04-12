@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import R from "ramda";
+import { utils } from "index";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ModuleConfig } from "./types";
@@ -25,7 +25,7 @@ export class PeprModule {
    * @param config The configuration for the Pepr runtime
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], deferStart = false) {
-    const config: ModuleConfig = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
+    const config: ModuleConfig = utils.mergeDeepWith(utils.concat, pepr, alwaysIgnore);
     config.description = description;
 
     this._controller = new Controller(config, capabilities);

@@ -128,4 +128,6 @@ export class Logger {
   }
 }
 
-export default new Logger(LogLevel.info);
+/** Log is an instance of Logger used to generate log entries. */
+const Log = new Logger(LogLevel.info);
+export default Log;
