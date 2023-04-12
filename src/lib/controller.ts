@@ -16,6 +16,7 @@ const options = {
 
 export class Controller {
   private readonly app = express();
+  private running = false;
 
   constructor(private readonly config: ModuleConfig, private readonly capabilities: Capability[]) {
     // Middleware for logging requests
@@ -33,9 +34,15 @@ export class Controller {
 
   /** Start the webhook server */
   public startServer = (port: number) => {
+    if (this.running) {
+      throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
+    }
+
     // Create HTTPS server
     https.createServer(options, this.app).listen(port, () => {
       console.log(`Server listening on port ${port}`);
+      // Track that the server is running
+      this.running = true;
     });
   };
 

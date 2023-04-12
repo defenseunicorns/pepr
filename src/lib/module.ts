@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { utils } from "index";
+import R from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ModuleConfig } from "./types";
@@ -31,7 +31,7 @@ export class PeprModule {
     capabilities: Capability[] = [],
     private readonly _deferStart = false
   ) {
-    const config: ModuleConfig = utils.mergeDeepWith(utils.concat, pepr, alwaysIgnore);
+    const config: ModuleConfig = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
     config.description = description;
 
     this._controller = new Controller(config, capabilities);
@@ -48,10 +48,6 @@ export class PeprModule {
    * @param port
    */
   start(port = 3000) {
-    if (!this._deferStart) {
-      throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
-    }
-
     this._controller.startServer(port);
   }
 }
