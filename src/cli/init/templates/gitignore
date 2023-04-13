@@ -1,0 +1,4 @@
+# Ignore node_modules and Pepr build artifacts
+node_modules
+dist
+insecure*

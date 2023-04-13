@@ -1,0 +1,45 @@
+[
+  {
+    "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+      "name": "pepr-demo"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-1",
+      "namespace": "pepr-demo"
+    },
+    "data": {
+      "key": "ex-1-val"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-2",
+      "namespace": "pepr-demo"
+    },
+    "data": {
+      "key": "ex-2-val"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-3",
+      "namespace": "pepr-demo",
+      "labels": {
+        "change": "by-label"
+      }
+    },
+    "data": {
+      "key": "ex-3-val"
+    }
+  }
+]

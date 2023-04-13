@@ -1,4 +1,4 @@
 {
-    "extends": "./tsconfig.json",
-    "exclude": ["node_modules", "dist", "fixtures", "**/*.test.ts"]
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "dist", "fixtures", "**/*.test.ts", "src/cli/init/templates"]
 }
