@@ -9,7 +9,7 @@ import generatedJSON from "./templates/data.json";
 import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
 import prettierRCJSON from "./templates/prettierrc.json";
 import samplesJSON from "./templates/samples.json";
-import tsConfigJSON from "./templates/tsconfig.json";
+import tsConfigJSON from "./templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
