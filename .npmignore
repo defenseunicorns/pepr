@@ -11,6 +11,8 @@ Dockerfile
 insecure*
 rollup.config.mjs
 tsconfig.json
+tsconfig.build.json
 /src
 /fixtures
 /*.ts
+/hack
