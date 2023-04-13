@@ -15,6 +15,15 @@ export const HelloPepr = new Capability({
 const { When } = HelloPepr;
 
 /**
+ * This action removes the label `remove-me` when a Namespace is created, but preserve the `keep-me` label.
+ * Note we don't need to specify the namespace here, because we've already specified it in the Capability
+ * definition above.
+ */
+When(a.Namespace)
+  .IsCreated()
+  .Then(ns => ns.RemoveLabel("remove-me"));
+
+/**
  * This is a single Capability Action. They can be in the same file or imported from other files.
  * In this exmaple, when a ConfigMap is created with the name `example-1`, we add a label and annotation.
  *
@@ -69,4 +78,47 @@ When(a.ConfigMap)
 
     // You can still mix other ways of making changes too
     request.SetAnnotation("pepr.dev", "making-waves");
+  });
+
+/**
+ * This Capability Action is a bit more complex. It will look for any ConfigMap in the `pepr-demo` namespace that has
+ * the label `chuck-norris` during CREATE. When it finds one, it will fetch a random Chuck Norris fact from the API
+ * and add it to the ConfigMap. This is a great example of how you can use Pepr to make changes to your K8s
+ * objects based on external data.
+ *
+ * Note the use of the `async` keyword. This is required for any Capability Action that uses `await` or `fetch()`.
+ *
+ * Also note we are passing a type to the `fetch()` function. This is optional, but it will help you avoid mistakes
+ * when working with the data returned from the API. You can also use the `as` keyword to cast the data returned from
+ * the API.
+ *
+ * These are equivelant:
+ * ```ts
+ * const fact = await fetch<TheChuckNorrisFact>("https://api.chucknorris.io/jokes/random?category=dev");
+ * const fact = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisFact;
+ * ```
+ *
+ * Alternatively, you can drop the type completely:
+ *
+ * ```ts
+ * fetch("https://api.chucknorris.io/jokes/random?category=dev")
+ * ```
+ */
+interface TheChuckNorrisFact {
+  icon_url: string;
+  id: string;
+  url: string;
+  value: string;
+}
+
+When(a.ConfigMap)
+  .IsCreated()
+  .WithLabel("chuck-norris")
+  .Then(async change => {
+    const fact = await fetch<TheChuckNorrisFact>(
+      "https://api.chucknorris.io/jokes/random?category=dev"
+    );
+
+    // Add the Chuck Norris fact to the configmap
+    change.Raw.data["chuck-says"] = fact.value;
   });
