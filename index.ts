@@ -1,5 +1,6 @@
 import k8s from "@kubernetes/client-node";
 import utils from "ramda";
+import { PeprRequest } from "src/lib/request";
 import { Capability } from "./src/lib/capability";
 import { fetch, fetchRaw } from "./src/lib/fetch";
 import { a } from "./src/lib/k8s";
@@ -14,6 +15,7 @@ export {
   a,
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
+  PeprRequest,
   Capability,
   Log,
   utils,
