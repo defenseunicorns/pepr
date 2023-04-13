@@ -59,5 +59,13 @@
     "data": {
       "key": "ex-4-val"
     }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-5",
+      "namespace": "pepr-demo"
+    }
   }
 ]
