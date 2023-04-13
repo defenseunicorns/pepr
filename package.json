@@ -24,7 +24,8 @@
     }
   },
   "scripts": {
-    "build": "rm -fr dist/* && tsc -p tsconfig.build.json",
+    "prebuild": "rm -fr dist/* && node src/cli/init/templates/collect.js",
+    "build": "tsc -p tsconfig.build.json",
     "test": "npm run build && ava && node dist/cli.js -V",
     "lint": "npx eslint src",
     "lint:fix": "npm run lint -- --fix",
