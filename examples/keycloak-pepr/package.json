@@ -1,0 +1,34 @@
+{
+  "name": "keycloak-unicorn",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [
+    "pepr",
+    "k8s",
+    "policy-engine",
+    "pepr-module",
+    "security"
+  ],
+  "pepr": {
+    "name": "keycloak-unicorn",
+    "version": "0.1.43",
+    "uuid": "24106d6a-c3ba-542e-b0f8-6b2bc767b43b",
+    "onError": "ignore",
+    "alwaysIgnore": {
+      "namespaces": [],
+      "labels": []
+    }
+  },
+  "scripts": {
+    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
+    "build": "pepr build",
+    "start": "pepr dev"
+  },
+  "dependencies": {
+    "pepr": "^0.1.43"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.3",
+    "typescript": "^5.0.2"
+  }
+}
