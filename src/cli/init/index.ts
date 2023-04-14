@@ -3,6 +3,7 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
+import prompts from "prompts";
 import Log from "../../../src/lib/logger";
 import { RootCmd } from "../root";
 import {
@@ -19,6 +20,9 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, walkthrough } from "./walkthrough";
 
+// Overrides for testing. @todo: don't be so gross with Node CLI testing
+const testMode = process.env.TEST_MODE === "true";
+
 export default function (program: RootCmd) {
   program
     .command("init")
@@ -26,10 +30,19 @@ export default function (program: RootCmd) {
     // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
     .action(async opts => {
+      if (testMode) {
+        opts.skipPostInit = true;
+        prompts.inject(["pepr-test-module", "A test module for Pepr", 0]);
+      }
+
       const response = await walkthrough();
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response);
       const peprTS = genPeprTS();
+
+      if (testMode) {
+        prompts.inject(["y"]);
+      }
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path);
 
