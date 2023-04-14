@@ -16,9 +16,9 @@ const { When } = HelloPepr;
 
 /**
  * This is a single Capability Action. They can be in the same file or imported from other files.
- * In this exmaple, when a ConfigMap is created with the name `example-1`, we add a label and annotation.
+ * In this example, when a ConfigMap is created with the name `example-1`, we add a label and annotation.
  *
- * Equivelant to manually running:
+ * Equivalent to manually running:
  * `kubectl label configmap example-1 pepr=was-here`
  * `kubectl annotate configmap example-1 pepr.dev=annotations-work-too`
  */
@@ -30,7 +30,7 @@ When(a.ConfigMap)
   });
 
 /**
- * This Capabiility Action does the exact same changes for example-2, except this time it uses the `.ThenSet()` feature.
+ * This Capability Action does the exact same changes for example-2, except this time it uses the `.ThenSet()` feature.
  * You can stack multiple `.Then()` calls, but only a single `.ThenSet()`
  */
 When(a.ConfigMap)
@@ -51,7 +51,7 @@ When(a.ConfigMap)
  * This Capability Action combines different styles. Unlike the previous actions, this one will look for any ConfigMap
  * in the `pepr-demo` namespace that has the label `change=by-label` during either CREATE or UPDATE. Note that all
  * conditions added such as `WithName()`, `WithLabel()`, `InNamespace()`, are ANDs so all conditions must be true
- * for the request to be procssed.
+ * for the request to be processed.
  */
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
