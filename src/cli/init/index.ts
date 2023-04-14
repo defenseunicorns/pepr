@@ -31,13 +31,12 @@ export default function (program: RootCmd) {
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
     .action(async opts => {
       if (testMode) {
-        opts.skipPostInit = true;
-        prompts.inject(["pepr-test-module", "A test module for Pepr", 0]);
+        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore"]);
       }
 
       const response = await walkthrough();
       const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response);
+      const packageJSON = genPkgJSON(response, testMode && "file:../");
       const peprTS = genPeprTS();
 
       if (testMode) {

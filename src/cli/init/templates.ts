@@ -13,13 +13,13 @@ import tsConfigJSON from "./templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
-export function genPkgJSON(opts: InitOptions) {
+export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   // Generate a random UUID for the module based on the module name
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
-  const { typescript } = dependencies;
+  const { typescript, "ts-node": tsNode } = dependencies;
 
   const data = {
     name,
@@ -42,10 +42,11 @@ export function genPkgJSON(opts: InitOptions) {
       start: "pepr dev",
     },
     dependencies: {
-      pepr: `^${version}`,
+      pepr: pgkVerOverride || `^${version}`,
     },
     devDependencies: {
       typescript,
+      "ts-node": tsNode,
     },
   };
 

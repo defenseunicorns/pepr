@@ -16,3 +16,4 @@ tsconfig.build.json
 /fixtures
 /*.ts
 /hack
+pepr-test-module
