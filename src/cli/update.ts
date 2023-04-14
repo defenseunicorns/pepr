@@ -36,7 +36,7 @@ export default function (program: RootCmd) {
         }
       }
 
-      console.log("Creating new Pepr module...");
+      console.log("Updating the Pepr module...");
 
       try {
         await write(resolve(prettierRC.path), prettierRC.data);
