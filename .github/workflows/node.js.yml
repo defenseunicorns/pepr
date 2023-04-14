@@ -41,11 +41,16 @@ jobs:
     needs: [lint, test]
     steps:
       - uses: actions/checkout@v3
+
       - name: Use Node.js latest
         uses: actions/setup-node@v3
         with:
           node-version: latest
           cache: "npm"
+      - name: "Install K3d"
+        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        shell: bash
+
       - run: npm ci
       - run: npm run build
       - run: npm install -g .
