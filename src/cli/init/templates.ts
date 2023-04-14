@@ -29,7 +29,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     pepr: {
       name: opts.name.trim(),
       version,
-      uuid,
+      uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       alwaysIgnore: {
         namespaces: [],

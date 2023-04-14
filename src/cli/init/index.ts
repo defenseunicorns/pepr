@@ -20,9 +20,6 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, walkthrough } from "./walkthrough";
 
-// Overrides for testing. @todo: don't be so gross with Node CLI testing
-const testMode = process.env.TEST_MODE === "true";
-
 export default function (program: RootCmd) {
   program
     .command("init")
@@ -30,18 +27,18 @@ export default function (program: RootCmd) {
     // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
     .action(async opts => {
-      if (testMode) {
-        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore"]);
+      let pkgOverride = "";
+
+      // Overrides for testing. @todo: don't be so gross with Node CLI testing
+      if (process.env.TEST_MODE === "true") {
+        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
+        pkgOverride = "file:../";
       }
 
       const response = await walkthrough();
       const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response, testMode && "file:../");
+      const packageJSON = genPkgJSON(response, pkgOverride);
       const peprTS = genPeprTS();
-
-      if (testMode) {
-        prompts.inject(["y"]);
-      }
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path);
 
