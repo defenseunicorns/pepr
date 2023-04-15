@@ -3,7 +3,11 @@
     "apiVersion": "v1",
     "kind": "Namespace",
     "metadata": {
-      "name": "pepr-demo"
+      "name": "pepr-demo",
+      "labels": {
+        "keep-me": "please",
+        "remove-me": "please"
+      }
     }
   },
   {
@@ -40,6 +44,28 @@
     },
     "data": {
       "key": "ex-3-val"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-4",
+      "namespace": "pepr-demo",
+      "labels": {
+        "chuck-norris": "test"
+      }
+    },
+    "data": {
+      "key": "ex-4-val"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-5",
+      "namespace": "pepr-demo"
     }
   }
 ]

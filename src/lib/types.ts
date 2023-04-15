@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s";
-import { RequestWrapper } from "./request";
+import { PeprRequest } from "./request";
 
 /**
  * The behavior of this module when an error occurs.
@@ -207,5 +207,5 @@ export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
 };
 
 export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: RequestWrapper<K>
-) => Promise<void> | void | Promise<RequestWrapper<K>> | RequestWrapper<K>;
+  req: PeprRequest<K>
+) => Promise<void> | void | Promise<PeprRequest<K>> | PeprRequest<K>;

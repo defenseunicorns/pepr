@@ -6,11 +6,11 @@ import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, Response } from "./k8s/types";
 import logger from "./logger";
-import { RequestWrapper } from "./request";
+import { PeprRequest } from "./request";
 import { ModuleConfig } from "./types";
 
 export async function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Promise<Response> {
-  const wrapped = new RequestWrapper(req);
+  const wrapped = new PeprRequest(req);
   const response: Response = {
     uid: req.uid,
     warnings: [],
