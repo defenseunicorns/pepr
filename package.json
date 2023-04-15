@@ -27,6 +27,7 @@
     "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
     "build": "tsc -p tsconfig.build.json",
     "test": "npm run build && ava && node dist/cli.js -V",
+    "test:e2e": "ava hack/e2e.test.js",
     "lint": "npx eslint src",
     "lint:fix": "npm run lint -- --fix",
     "prettier": "npx prettier src --check",

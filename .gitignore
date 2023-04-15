@@ -18,6 +18,7 @@ node_modules/
 stats.html
 .vscode
 insecure-tls*
+pepr-test-module
 
 # Test binary, build with `go test -c`
 *.test

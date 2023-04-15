@@ -1,6 +1,6 @@
 # Pepr Module
 
-This is a Pepr Module. [Pepr](https://github.com/defenseunicorns/pepr) is a Kubernetes tranformation system
+This is a Pepr Module. [Pepr](https://github.com/defenseunicorns/pepr) is a Kubernetes transformation system
 written in Typescript.
 
 The `capabilities` directory contains all the capabilities for this module. By default,

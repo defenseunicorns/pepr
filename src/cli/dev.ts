@@ -17,17 +17,20 @@ export default function (program: RootCmd) {
     .description("Setup a local webhook development environment")
     .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-h, --host [host]", "Host to listen on", "host.docker.internal")
+    .option("--confirm", "Skip confirmation prompt")
     .action(async opts => {
-      // Prompt the user to confirm
-      const confirm = await prompt({
-        type: "confirm",
-        name: "confirm",
-        message: "This will remove and redeploy the module. Continue?",
-      });
+      // Prompt the user to confirm if they didn't pass the --confirm flag
+      if (!opts.confirm) {
+        const confirm = await prompt({
+          type: "confirm",
+          name: "confirm",
+          message: "This will remove and redeploy the module. Continue?",
+        });
 
-      // Exit if the user doesn't confirm
-      if (!confirm.confirm) {
-        process.exit(0);
+        // Exit if the user doesn't confirm
+        if (!confirm.confirm) {
+          process.exit(0);
+        }
       }
 
       // Build the module
