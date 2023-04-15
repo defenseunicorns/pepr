@@ -1,4 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "fixtures", "**/*.test.ts", "src/cli/init/templates"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "fixtures",
+    "**/*.test.ts",
+    "src/cli/init/templates",
+    "pepr-test-module"
+  ]
 }
