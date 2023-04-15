@@ -1,8 +1,13 @@
 /* eslint-disable */
 const test = require("ava");
-const { spawn } = require("child_process");
+const fs = require('fs').promises;
+const path = require('path');
+
+const { spawn, execSync } = require("child_process");
 
 const TIMEOUT = 30 * 000; // Timeout in milliseconds
+
+const testDir = "pepr-test-module";
 
 let expectedLines = [
   "Establishing connection to Kubernetes",
@@ -16,54 +21,88 @@ function stripAnsiCodes(input) {
   return input.replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "");
 }
 
-function runCommand(command, args, timeout) {
-  return new Promise((resolve, reject) => {
-    const cmd = spawn(command, args, { cwd: "pepr-test-module" });
+test.before(async t => {
+  const dir = path.resolve(__dirname, testDir);
 
-    cmd.stdout.on("data", data => {
-      // Convert buffer to string
-      data = stripAnsiCodes(data.toString());
-      console.log(data);
-      // Check if any expected lines are found
-      expectedLines = expectedLines.filter(expectedLine => {
-        const match = data.includes(expectedLine);
-        if (match) {
-          console.log(`Found expected line: ${expectedLine}`);
-        }
-        return !match;
-      });
+  try {
+    await fs.access(dir);
+    await fs.rm(dir, { recursive: true, force: true });
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+    // The directory does not exist, do nothing
+  }
+});
 
-      // If all expected lines are found, resolve the promise
-      if (expectedLines.length < 1) {
-        cmd.kill();
-        resolve();
-      }
-    });
+test("E2E: Pepr Init", async t => {
+  try {
+    execSync("TEST_MODE=true pepr init", { stdio: "ignore" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
 
-    // Log stderr
-    cmd.stderr.on("data", data => {
-      console.error(`stderr: ${data}`);
-    });
-
-    // This command should not exit on its own
-    cmd.on("close", code => {
-      reject(new Error("Command exited before finding all expected lines."));
-    });
-
-    // Reject on error
-    cmd.on("error", error => {
-      reject(error);
-    });
-
-    // Reject on timeout
-    setTimeout(() => {
-      console.error("Remaining expected lines:" + JSON.stringify(expectedLines, null, 2));
-      cmd.kill();
-      reject(new Error("Timeout: Expected lines not found"));
-    }, timeout);
-  });
-}
+test("E2E: Pepr Build", async t => {
+  try {
+    execSync("pepr build", { cwd: testDir, stdio: "ignore" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
 
 test("E2E: Pepr Dev", async t => {
-  await t.notThrowsAsync(() => runCommand("pepr", ["dev", "--confirm"], TIMEOUT));
+  const cmd = spawn("pepr", ["dev", "--confirm"], { cwd: testDir });
+
+  try {
+    await new Promise((resolve, reject) => {
+      cmd.stdout.on("data", data => {
+        // Convert buffer to string
+        data = stripAnsiCodes(data.toString());
+        console.log(data);
+        // Check if any expected lines are found
+        expectedLines = expectedLines.filter(expectedLine => {
+          const match = data.includes(expectedLine);
+          if (match) {
+            console.log(`Found expected line: ${expectedLine}`);
+          }
+          return !match;
+        });
+
+        // If all expected lines are found, resolve the promise
+        if (expectedLines.length < 1) {
+          cmd.kill();
+          resolve();
+        }
+      });
+
+      // Log stderr
+      cmd.stderr.on("data", data => {
+        console.error(`stderr: ${data}`);
+      });
+
+      // This command should not exit on its own
+      cmd.on("close", code => {
+        reject(new Error(`Command exited with code ${code}`));
+      });
+
+      // Reject on error
+      cmd.on("error", error => {
+        reject(error);
+      });
+
+      // Reject on timeout
+      setTimeout(() => {
+        console.error("Remaining expected lines:" + JSON.stringify(expectedLines, null, 2));
+        cmd.kill();
+        reject(new Error("Timeout: Expected lines not found"));
+      }, TIMEOUT);
+    });
+
+    t.pass();
+  } catch (error) {
+    t.fail(error.message);
+  }
 });

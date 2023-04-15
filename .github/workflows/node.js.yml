@@ -57,11 +57,4 @@ jobs:
       - run: npm run e2e-dev-setup
       - run: pepr
       - run: pepr -V
-      - run: TEST_MODE=true pepr init
-
-      - run: |
-          # Build the module
-          pepr build
-
-          npm run test:e2e
-        working-directory: pepr-test-module
+      - run: npm run test:e2e
