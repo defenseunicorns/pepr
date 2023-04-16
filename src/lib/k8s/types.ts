@@ -23,6 +23,19 @@ export interface KubernetesListObject<T extends KubernetesObject> {
 }
 
 /**
+ * GenericKind is a generic Kubernetes object that can be used to represent any Kubernetes object
+ * that is not explicitly supported by Pepr. This can be used on its own or as a base class for
+ * other types. See the examples in `HelloPepr.ts` for more information.
+ */
+export class GenericKind {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: V1ObjectMeta;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+/**
  *  GroupVersionKind unambiguously identifies a kind.  It doesn't anonymously include GroupVersion
  * to avoid automatic coercion.  It doesn't use a GroupVersion to avoid custom marshalling
  **/
