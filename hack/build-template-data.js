@@ -10,7 +10,7 @@ const baseDir = path.join(__dirname, "..", "src", "cli", "init", "templates");
 const gitignore = fs.readFileSync(path.join(baseDir, "gitignore"), "utf8");
 const readme = fs.readFileSync(path.join(baseDir, "README.md"), "utf8");
 const peprTS = fs.readFileSync(path.join(baseDir, "pepr.ts"), "utf8");
-const helloPeprTS = fs.readFileSync(path.join(baseDir, "hello-pepr.ts"), "utf8");
+const helloPeprTS = fs.readFileSync(path.join(baseDir, "capabilities", "hello-pepr.ts"), "utf8");
 
 fs.writeFileSync(
   path.join(baseDir, "data.json"),

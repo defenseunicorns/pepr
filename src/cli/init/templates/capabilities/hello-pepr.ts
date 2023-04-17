@@ -1,4 +1,4 @@
-import { Capability, PeprRequest, a, fetch } from "pepr";
+import { Capability, PeprRequest, RegisterKind, a, fetch } from "pepr";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -174,4 +174,105 @@ When(a.ConfigMap)
 
     // Add the Chuck Norris joke to the configmap
     change.Raw.data["chuck-says"] = joke.value;
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION                                               *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * Out of the box, Pepr supports all the standard Kubernetes objects. However, you can also create
+ * your own types. This is useful if you are working with an Operator that creates custom resources.
+ * There are two ways to do this, the first is to use the `When()` function with a `GenericKind`,
+ * the second is to create a new class that extends `GenericKind` and use the `RegisterKind()` function.
+ *
+ * This example shows how to use the `When()` function with a `GenericKind`. Note that you
+ * must specify the `group`, `version`, and `kind` of the object (if applicable). This is how Pepr knows
+ * if the Capability Action should be triggered or not. Since we are using a `GenericKind`,
+ * Pepr will not be able to provide any intelisense for the object, so you will need to refer to the
+ * Kubernetes API documentation for the object you are working with.
+ *
+ * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ *
+ * ```yaml
+ * apiVersion: pepr.dev/v1
+ * kind: Unicorn
+ * metadata:
+ *   name: example-1
+ *   namespace: pepr-demo
+ * spec:
+ *   message: replace-me
+ *   counter: 0
+ * ```
+ */
+When(a.GenericKind, {
+  group: "pepr.dev",
+  version: "v1",
+  kind: "Unicorn",
+})
+  .IsCreated()
+  .WithName("example-1")
+  .ThenSet({
+    spec: {
+      message: "Hello Pepr without type data!",
+      counter: Math.random(),
+    },
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION                                               *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
+ * if you are working with an Operator that creates custom resources and you want to have intelisense
+ * for the object. Note that you must specify the `group`, `version`, and `kind` of the object (if applicable)
+ * as this is how Pepr knows if the Capability Action should be triggered or not.
+ *
+ * Once you register a new Kind with Pepr, you can use the `When()` function with the new Kind. Ideally,
+ * you should register custom Kinds at the top of your Capability file or Pepr Module so they are available
+ * to all Capability Actions, but we are putting it here for demonstration purposes.
+ *
+ * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ *
+ * ```yaml
+ * apiVersion: pepr.dev/v1
+ * kind: Unicorn
+ * metadata:
+ *   name: example-2
+ *   namespace: pepr-demo
+ * spec:
+ *   message: replace-me
+ *   counter: 0
+ * ```*
+ */
+class UnicornKind extends a.GenericKind {
+  spec: {
+    /**
+     * JSDoc comments can be added to explain more details about the field.
+     *
+     * @example
+     * ```ts
+     * request.Raw.spec.message = "Hello Pepr!";
+     * ```
+     * */
+    message: string;
+    counter: number;
+  };
+}
+
+RegisterKind(UnicornKind, {
+  group: "pepr.dev",
+  version: "v1",
+  kind: "Unicorn",
+});
+
+When(UnicornKind)
+  .IsCreated()
+  .WithName("example-2")
+  .ThenSet({
+    spec: {
+      message: "Hello Pepr now with type data!",
+      counter: Math.random(),
+    },
   });

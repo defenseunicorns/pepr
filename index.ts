@@ -2,7 +2,7 @@ import k8s from "@kubernetes/client-node";
 import utils from "ramda";
 import { Capability } from "./src/lib/capability";
 import { fetch, fetchRaw } from "./src/lib/fetch";
-import { a } from "./src/lib/k8s";
+import { RegisterKind, a } from "./src/lib/k8s";
 import Log from "./src/lib/logger";
 import { PeprModule } from "./src/lib/module";
 import { PeprRequest } from "./src/lib/request";
@@ -16,6 +16,7 @@ export {
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
   PeprRequest,
+  RegisterKind,
   Capability,
   Log,
   utils,
