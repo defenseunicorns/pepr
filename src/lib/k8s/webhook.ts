@@ -225,6 +225,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
+                command: ["node", "dist/run.js", "/app/module.js.gz"],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",

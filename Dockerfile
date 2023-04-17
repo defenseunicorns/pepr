@@ -11,3 +11,4 @@ RUN npm ci --omit=dev
 
 # Sync the pepr dist files
 COPY --chown=node:node ./dist/  ./node_modules/pepr/dist/
+COPY --chown=node:node ./package.json  ./node_modules/pepr/package.json
