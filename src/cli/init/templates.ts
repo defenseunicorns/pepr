@@ -5,21 +5,21 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 import { dependencies, scripts, version } from "../../../package.json";
+import prettierRCJSON from "./templates/.prettierrc.json";
 import generatedJSON from "./templates/data.json";
 import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
-import prettierRCJSON from "./templates/prettierrc.json";
 import samplesJSON from "./templates/samples.json";
 import tsConfigJSON from "./templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
-export function genPkgJSON(opts: InitOptions) {
+export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   // Generate a random UUID for the module based on the module name
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
-  const { typescript } = dependencies;
+  const { typescript, "ts-node": tsNode } = dependencies;
 
   const data = {
     name,
@@ -29,7 +29,7 @@ export function genPkgJSON(opts: InitOptions) {
     pepr: {
       name: opts.name.trim(),
       version,
-      uuid,
+      uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       alwaysIgnore: {
         namespaces: [],
@@ -42,10 +42,11 @@ export function genPkgJSON(opts: InitOptions) {
       start: "pepr dev",
     },
     dependencies: {
-      pepr: `^${version}`,
+      pepr: pgkVerOverride || `^${version}`,
     },
     devDependencies: {
       typescript,
+      "ts-node": tsNode,
     },
   };
 

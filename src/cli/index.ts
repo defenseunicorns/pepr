@@ -8,6 +8,7 @@ import deploy from "./deploy";
 import dev from "./dev";
 import init from "./init";
 import { RootCmd } from "./root";
+import update from "./update";
 
 const program = new RootCmd();
 
@@ -25,6 +26,7 @@ init(program);
 build(program);
 deploy(program);
 dev(program);
+update(program);
 
 // @todo: finish/re-evaluate these commands
 // test(program);

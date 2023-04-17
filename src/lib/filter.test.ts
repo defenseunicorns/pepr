@@ -1,7 +1,23 @@
-import { POD1 } from "../../fixtures/loader";
 import test from "ava";
+import { POD1 } from "../../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 import { gvkMap } from "./k8s";
+
+test("should reject when name does not match", t => {
+  const binding = {
+    kind: gvkMap.V1Pod,
+    filters: {
+      name: "bleh",
+      namespaces: [],
+      labels: {},
+      annotations: {},
+    },
+    callback: () => null,
+  };
+  const pod = POD1();
+
+  t.true(shouldSkipRequest(binding, pod));
+});
 
 test("should reject when kind does not match", t => {
   const binding = {

@@ -5,6 +5,7 @@ import { fetch, fetchRaw } from "./src/lib/fetch";
 import { a } from "./src/lib/k8s";
 import Log from "./src/lib/logger";
 import { PeprModule } from "./src/lib/module";
+import { PeprRequest } from "./src/lib/request";
 
 // Import type information for external packages
 import type * as KubernetesClientNode from "@kubernetes/client-node";
@@ -14,6 +15,7 @@ export {
   a,
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
+  PeprRequest,
   Capability,
   Log,
   utils,

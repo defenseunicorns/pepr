@@ -20,8 +20,12 @@ pepr init
 
 # Follow the prompts...
 
-# Within the new project dir, start playing with things
+# If you already have a Kind or K3d cluster you want to use, skip this step
+npm run k3d-setup
+
+# Start playing with Pepr now
 pepr dev
+kubectl apply -f capabilities/hello-pepr.samples.yaml 
 
 # Be amazed and ⭐️ this repo
 ```
