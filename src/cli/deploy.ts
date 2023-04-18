@@ -34,7 +34,7 @@ export default function (program: RootCmd) {
       const { cfg, path } = await buildModule(opts.dir);
 
       // Read the compiled module code
-      const code = await fs.readFile(path, { encoding: "utf-8" });
+      const code = await fs.readFile(path);
 
       // Generate a secret for the module
       const webhook = new Webhook({

@@ -21,6 +21,7 @@ import {
   V1ServiceAccount,
   dumpYaml,
 } from "@kubernetes/client-node";
+import crypto from "crypto";
 import { gzipSync } from "zlib";
 import Log from "../logger";
 import { ModuleConfig } from "../types";
@@ -193,7 +194,7 @@ export class Webhook {
     };
   }
 
-  deployment(): V1Deployment {
+  deployment(hash: string): V1Deployment {
     return {
       apiVersion: "apps/v1",
       kind: "Deployment",
@@ -225,7 +226,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
-                command: ["node", "dist/run.js", "/app/module.js.gz"],
+                command: ["node", "/app/node_modules/pepr/dist/run.js", hash, "-l", "debug"],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",
@@ -256,7 +257,7 @@ export class Webhook {
                   },
                   {
                     name: "module",
-                    mountPath: "/app/module.js.gz",
+                    mountPath: `/app/load`,
                     readOnly: true,
                   },
                 ],
@@ -282,7 +283,7 @@ export class Webhook {
     };
   }
 
-  /** Only permit the  */
+  /** Only permit the kube-system ns ingress access to the controller */
   networkPolicy(): V1NetworkPolicy {
     return {
       apiVersion: "networking.k8s.io/v1",
@@ -343,9 +344,10 @@ export class Webhook {
     };
   }
 
-  moduleSecret(data: string): V1Secret {
+  moduleSecret(data: Buffer, hash: string): V1Secret {
     // Compress the data
     const compressed = gzipSync(data);
+    const path = `module-${hash}.js.gz`;
     return {
       apiVersion: "v1",
       kind: "Secret",
@@ -355,7 +357,7 @@ export class Webhook {
       },
       type: "Opaque",
       data: {
-        module: compressed.toString("base64"),
+        [path]: compressed.toString("base64"),
       },
     };
   }
@@ -388,7 +390,10 @@ export class Webhook {
     return dumpYaml(zarfCfg, { noRefs: true });
   }
 
-  allYaml(code: string) {
+  allYaml(code: Buffer) {
+    // Generate a hash of the code
+    const hash = crypto.createHash("sha256").update(code).digest("hex");
+
     const resources = [
       this.namespace(),
       this.networkPolicy(),
@@ -397,19 +402,20 @@ export class Webhook {
       this.serviceAccount(),
       this.tlsSecret(),
       this.mutatingWebhook(),
-      this.deployment(),
+      this.deployment(hash),
       this.service(),
-      this.moduleSecret(code),
+      this.moduleSecret(code, hash),
     ];
 
     // Convert the resources to a single YAML string
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
   }
 
-  async deploy(code: string) {
+  async deploy(code: Buffer) {
     Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
+    const hash = crypto.createHash("sha256").update(code).digest("hex");
 
     // Deploy the resources using the k8s API
     const kubeConfig = new KubeConfig();
@@ -494,7 +500,7 @@ export class Webhook {
       return;
     }
 
-    const mod = this.moduleSecret(code);
+    const mod = this.moduleSecret(code, hash);
     try {
       Log.info("Creating module secret");
       await coreV1Api.createNamespacedSecret(namespace, mod);
@@ -527,7 +533,7 @@ export class Webhook {
       await coreV1Api.createNamespacedSecret(namespace, tls);
     }
 
-    const dep = this.deployment();
+    const dep = this.deployment(hash);
     try {
       Log.info("Creating deployment");
       await appsApi.createNamespacedDeployment(namespace, dep);
