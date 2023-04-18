@@ -33,9 +33,9 @@ When(a.Namespace)
  * ---------------------------------------------------------------------------------------------------
  *
  * This is a single Capability Action. They can be in the same file or put imported from other files.
- * In this exmaple, when a ConfigMap is created with the name `example-1`, then add a label and annotation.
+ * In this example, when a ConfigMap is created with the name `example-1`, then add a label and annotation.
  *
- * Equivelant to manually running:
+ * Equivalent to manually running:
  * `kubectl label configmap example-1 pepr=was-here`
  * `kubectl annotate configmap example-1 pepr.dev=annotations-work-too`
  */
@@ -53,7 +53,7 @@ When(a.ConfigMap)
  *                                   CAPABILITY ACTION                                               *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capabiility Action does the exact same changes for example-2, except this time it uses
+ * This Capability Action does the exact same changes for example-2, except this time it uses
  * the `.ThenSet()` feature. You can stack multiple `.Then()` calls, but only a single `.ThenSet()`
  */
 When(a.ConfigMap)
@@ -78,7 +78,7 @@ When(a.ConfigMap)
  * This Capability Action combines different styles. Unlike the previous actions, this one will look
  * for any ConfigMap in the `pepr-demo` namespace that has the label `change=by-label` during either
  * CREATE or UPDATE. Note that all conditions added such as `WithName()`, `WithLabel()`, `InNamespace()`,
- * are ANDs so all conditions must be true for the request to be procssed.
+ * are ANDs so all conditions must be true for the request to be processed.
  */
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
@@ -87,7 +87,7 @@ When(a.ConfigMap)
     // The K8s object e are going to mutate
     const cm = request.Raw;
 
-    // Get the username and uid of the K8s reuest
+    // Get the username and uid of the K8s request
     const { username, uid } = request.Request.userInfo;
 
     // Store some data about the request in the configmap
@@ -124,7 +124,7 @@ function addSecond(cm: PeprRequest<a.ConfigMap>) {
   cm.SetLabel("pepr.dev/second", "true");
 }
 
-// This function has no type definition, so you won't have intelisense in the function body.
+// This function has no type definition, so you won't have intellisense in the function body.
 function addThird(cm) {
   cm.SetLabel("pepr.dev/third", "true");
 }
@@ -145,7 +145,7 @@ function addThird(cm) {
  * avoid mistakes when working with the data returned from the API. You can also use the `as` keyword to
  * cast the data returned from the API.
  *
- * These are equivelant:
+ * These are equivalent:
  * ```ts
  * const joke = await fetch<TheChuckNorrisJoke>("https://api.chucknorris.io/jokes/random?category=dev");
  * const joke = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisJoke;
@@ -189,7 +189,7 @@ When(a.ConfigMap)
  * This example shows how to use the `When()` function with a `GenericKind`. Note that you
  * must specify the `group`, `version`, and `kind` of the object (if applicable). This is how Pepr knows
  * if the Capability Action should be triggered or not. Since we are using a `GenericKind`,
- * Pepr will not be able to provide any intelisense for the object, so you will need to refer to the
+ * Pepr will not be able to provide any intellisense for the object, so you will need to refer to the
  * Kubernetes API documentation for the object you are working with.
  *
  * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
@@ -225,7 +225,7 @@ When(a.GenericKind, {
  * ---------------------------------------------------------------------------------------------------
  *
  * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
- * if you are working with an Operator that creates custom resources and you want to have intelisense
+ * if you are working with an Operator that creates custom resources and you want to have intellisense
  * for the object. Note that you must specify the `group`, `version`, and `kind` of the object (if applicable)
  * as this is how Pepr knows if the Capability Action should be triggered or not.
  *

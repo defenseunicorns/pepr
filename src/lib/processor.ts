@@ -47,7 +47,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
       } catch (e) {
         response.warnings.push(`Action failed: ${e}`);
 
-        // If errors are not allowed, note the failure in the Reponse
+        // If errors are not allowed, note the failure in the Response
         if (config.onError) {
           logger.error(`Action failed: ${e}`, prefix);
           response.result = "Pepr module configured to reject on error";

@@ -20,7 +20,7 @@ export enum ErrorBehavior {
  */
 export enum HookPhase {
   mutate = "mutate",
-  valdiate = "validate",
+  validate = "validate",
 }
 
 /**
@@ -31,7 +31,7 @@ export type DeepPartial<T> = {
 };
 
 /**
- * The type of Kubernetes mutating webhook event ethat the capability action is registered for.
+ * The type of Kubernetes mutating webhook event that the capability action is registered for.
  */
 
 export enum Event {
@@ -174,7 +174,7 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
 };
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
-  /** Only apply the cabability action if the resource is in one of the specified namespaces.*/
+  /** Only apply the capability action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingFilter<T>;
 };
 

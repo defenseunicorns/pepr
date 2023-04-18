@@ -56,7 +56,7 @@ export async function buildModule(moduleDir: string) {
     const cfgPath = resolve(moduleDir, "package.json");
     const input = resolve(moduleDir, "pepr.ts");
 
-    // Read the module's UUID from the package.json filel
+    // Read the module's UUID from the package.json file
     const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
     const cfg = JSON.parse(moduleText);
     const { uuid } = cfg.pepr;
