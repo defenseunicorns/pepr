@@ -437,16 +437,6 @@ export class Webhook {
       await coreV1Api.createNamespace(ns);
     }
 
-    const netpol = this.networkPolicy();
-    try {
-      Log.info("Checking for network policy");
-      await networkApi.readNamespacedNetworkPolicy(netpol.metadata.name, namespace);
-    } catch (e) {
-      Log.debug(e.body);
-      Log.info("Creating network policy");
-      await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
-    }
-
     const wh = this.mutatingWebhook();
     try {
       Log.info("Creating mutating webhook");
@@ -456,6 +446,21 @@ export class Webhook {
       Log.info("Removing and re-creating mutating webhook");
       await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata.name);
       await admissionApi.createMutatingWebhookConfiguration(wh);
+    }
+
+    // If a host is specified, we don't need to deploy the rest of the resources
+    if (this.host) {
+      return;
+    }
+
+    const netpol = this.networkPolicy();
+    try {
+      Log.info("Checking for network policy");
+      await networkApi.readNamespacedNetworkPolicy(netpol.metadata.name, namespace);
+    } catch (e) {
+      Log.debug(e.body);
+      Log.info("Creating network policy");
+      await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
     }
 
     const crb = this.clusterRoleBinding();
@@ -493,11 +498,6 @@ export class Webhook {
       Log.info("Removing and re-creating service account");
       await coreV1Api.deleteNamespacedServiceAccount(sa.metadata.name, namespace);
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
-    }
-
-    // If a host is specified, we don't need to deploy the rest of the resources
-    if (this.host) {
-      return;
     }
 
     const mod = this.moduleSecret(code, hash);
