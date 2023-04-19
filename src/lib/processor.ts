@@ -33,17 +33,27 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
-      const { metadata } = wrapped.Raw;
-      const identifier = `${config.uuid}.pepr.dev/${name}`;
-      metadata.annotations = metadata.annotations || {};
-      metadata.annotations[identifier] = "started";
+      const updateStatus = (status: string) => {
+        // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
+        if (req.operation == "DELETE") {
+          return;
+        }
+
+        const identifier = `${config.uuid}.pepr.dev/${name}`;
+        wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
+        wrapped.Raw.metadata.annotations[identifier] = status;
+      };
+
+      updateStatus("started");
 
       try {
         // Run the action
         await action.callback(wrapped);
 
+        logger.info(`Action succeeded`, prefix);
+
         // Add annotations to the request to indicate that the capability succeeded
-        metadata.annotations[identifier] = "succeeded";
+        updateStatus("succeeded");
       } catch (e) {
         response.warnings.push(`Action failed: ${e}`);
 
@@ -54,7 +64,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
           return response;
         } else {
           logger.warn(`Action failed: ${e}`, prefix);
-          metadata.annotations[identifier] = "warning";
+          updateStatus("warning");
         }
       }
     }
