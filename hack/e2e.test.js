@@ -105,8 +105,7 @@ test.serial("E2E: Pepr Deploy", async t => {
 
     // Validate the example-2 CM
     t.is(cm2.metadata.labels["pepr"], "was-here");
-    // @todo: This is failing, but it should be working....
-    // t.is(cm2.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm2.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(cm2.metadata.annotations["pepr.dev"], "annotations-work-too");
 
 
