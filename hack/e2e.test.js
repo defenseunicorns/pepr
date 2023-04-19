@@ -5,7 +5,7 @@ const path = require("path");
 const { spawn, execSync } = require("child_process");
 
 // Timeout in milliseconds
-const TIMEOUT = 30 * 1000;
+const TIMEOUT = 60 * 1000;
 const testDir = "pepr-test-module";
 
 let expectedLines = [
@@ -34,7 +34,7 @@ test.before(async t => {
   }
 });
 
-test("E2E: Pepr Init", async t => {
+test.serial("E2E: Pepr Init", async t => {
   try {
     execSync("TEST_MODE=true pepr init", { stdio: "inherit" });
     t.pass();
@@ -43,7 +43,7 @@ test("E2E: Pepr Init", async t => {
   }
 });
 
-test("E2E: Pepr Build", async t => {
+test.serial("E2E: Pepr Build", async t => {
   try {
     execSync("pepr build", { cwd: testDir, stdio: "inherit" });
     t.pass();
@@ -52,7 +52,16 @@ test("E2E: Pepr Build", async t => {
   }
 });
 
-test("E2E: Pepr Dev", async t => {
+test.serial("E2E: Pepr Deploy", async t => {
+  try {
+    execSync("pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+test.serial("E2E: Pepr Dev", async t => {
   await t.notThrowsAsync(new Promise(peprDev));
 });
 
