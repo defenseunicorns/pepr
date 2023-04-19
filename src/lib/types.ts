@@ -35,10 +35,10 @@ export type DeepPartial<T> = {
  */
 
 export enum Event {
-  Create = "create",
-  Update = "update",
-  Delete = "delete",
-  CreateOrUpdate = "createOrUpdate",
+  Create = "CREATE",
+  Update = "UPDATE",
+  Delete = "DELETE",
+  CreateOrUpdate = "CREATEORUPDATE",
 }
 
 export interface CapabilityCfg {
