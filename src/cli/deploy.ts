@@ -12,7 +12,6 @@ export default function (program: RootCmd) {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
-    .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-i, --image [image]", "Override the image tag")
     .option("--confirm", "Skip confirmation prompt")
     .action(async opts => {
@@ -31,7 +30,7 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule(opts.dir);
+      const { cfg, path } = await buildModule();
 
       // Read the compiled module code
       const code = await fs.readFile(path);

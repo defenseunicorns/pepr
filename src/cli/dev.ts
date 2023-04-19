@@ -15,7 +15,6 @@ export default function (program: RootCmd) {
   program
     .command("dev")
     .description("Setup a local webhook development environment")
-    .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-h, --host [host]", "Host to listen on", "host.docker.internal")
     .option("--confirm", "Skip confirmation prompt")
     .action(async opts => {
@@ -34,7 +33,7 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule(opts.dir);
+      const { cfg, path } = await buildModule();
 
       // Read the compiled module code
       const code = await fs.readFile(path);
@@ -56,9 +55,9 @@ export default function (program: RootCmd) {
         await webhook.deploy(code);
         Log.info(`Module deployed successfully`);
 
-        const moduleFiles = resolve(opts.dir, "**", "*.ts");
+        const moduleFiles = resolve(".", "**", "*.ts");
         const watcher = watch(moduleFiles);
-        const peprTS = resolve(opts.dir, "pepr.ts");
+        const peprTS = resolve(".", "pepr.ts");
         let program: ChildProcessWithoutNullStreams;
 
         // Run the module once to start the server
@@ -91,6 +90,7 @@ function runDev(path: string) {
     const program = spawn("./node_modules/.bin/ts-node", [path], {
       env: {
         ...process.env,
+        LOG_LEVEL: "debug",
         SSL_KEY_PATH: "insecure-tls.key",
         SSL_CERT_PATH: "insecure-tls.crt",
       },

@@ -15,30 +15,29 @@ export default function (program: RootCmd) {
   program
     .command("test")
     .description("Test a Pepr Module locally")
-    .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-w, --watch", "Watch for changes and re-run the test")
     .action(async opts => {
       Log.info("Test Module");
 
-      await buildAndTest(opts.dir);
+      await buildAndTest();
 
       if (opts.watch) {
-        const moduleFiles = resolve(opts.dir, "**", "*.ts");
+        const moduleFiles = resolve(".", "**", "*.ts");
         const watcher = watch(moduleFiles);
 
         watcher.on("ready", () => {
           Log.info(`Watching for changes in ${moduleFiles}`);
           watcher.on("all", async (event, path) => {
             Log.debug({ event, path }, "File changed");
-            await buildAndTest(opts.dir);
+            await buildAndTest();
           });
         });
       }
     });
 }
 
-async function buildAndTest(dir: string) {
-  const { path } = await buildModule(dir);
+async function buildAndTest() {
+  const { path } = await buildModule();
   Log.info(`Module built successfully at ${path}`);
 
   try {
