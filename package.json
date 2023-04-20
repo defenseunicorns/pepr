@@ -31,7 +31,7 @@
     "test:e2e:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "test:e2e:build": "npm run build && npm uninstall pepr -g && npm install -g . && pepr",
     "test:e2e:image": "docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
-    "test:e2e:run": "ava hack/e2e.test.js --sequential",
+    "test:e2e:run": "ava hack/e2e.test.js --sequential --timeout=2m",
     "format:check": "eslint src && prettier src --check",
     "format:fix": "eslint src --fix && prettier src --write"
   },
@@ -74,6 +74,8 @@
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "failFast": true,
+    "verbose": true
   }
 }
