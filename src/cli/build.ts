@@ -72,6 +72,15 @@ export async function buildModule() {
     const { uuid } = cfg.pepr;
     const name = `pepr-${uuid}.js`;
 
+    // Read the module's version from the package.json file
+    if (cfg.dependencies.pepr && cfg.dependencies.pepr !== "file:../") {
+      const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
+      if (!versionMatch || versionMatch.length < 2) {
+        throw new Error("Could not find the Pepr version in package.json");
+      }
+      cfg.pepr.version = versionMatch[1];
+    }
+
     // Exit if the module's UUID could not be found
     if (!uuid) {
       throw new Error("Could not load the uuid in package.json");
