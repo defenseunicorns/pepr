@@ -28,7 +28,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     pepr: {
       name: opts.name.trim(),
-      version,
       uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       alwaysIgnore: {
@@ -43,7 +42,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       start: "pepr dev",
     },
     dependencies: {
-      pepr: pgkVerOverride || `^${version}`,
+      pepr: pgkVerOverride || `${version}`,
     },
     devDependencies: {
       typescript,
