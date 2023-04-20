@@ -78,7 +78,7 @@ export async function buildModule() {
       if (!versionMatch || versionMatch.length < 2) {
         throw new Error("Could not find the Pepr version in package.json");
       }
-      cfg.version = versionMatch[1];
+      cfg.pepr.version = versionMatch[1];
     }
 
     // Exit if the module's UUID could not be found
