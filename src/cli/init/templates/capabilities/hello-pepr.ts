@@ -16,7 +16,7 @@ const { When } = HelloPepr;
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (Namespace)                                   *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action removes the label `remove-me` when a Namespace is created.
@@ -29,7 +29,7 @@ When(a.Namespace)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 1)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This is a single Capability Action. They can be in the same file or put imported from other files.
@@ -50,7 +50,7 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action does the exact same changes for example-2, except this time it uses
@@ -72,7 +72,7 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 3)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action combines different styles. Unlike the previous actions, this one will look
@@ -100,7 +100,7 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 4)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action show how you can use the `Then()` function to make multiple changes to the
@@ -114,7 +114,7 @@ When(a.ConfigMap)
  */
 When(a.ConfigMap)
   .IsCreated()
-  .WithName("example-5")
+  .WithName("example-4")
   .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
   .Then(addSecond)
   .Then(addThird);
@@ -131,7 +131,7 @@ function addThird(cm) {
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 5)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action is a bit more complex. It will look for any ConfigMap in the `pepr-demo`
@@ -178,7 +178,7 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (Untyped Custom Resource)                     *
  * ---------------------------------------------------------------------------------------------------
  *
  * Out of the box, Pepr supports all the standard Kubernetes objects. However, you can also create
@@ -221,7 +221,7 @@ When(a.GenericKind, {
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (Typed Custom Resource)                       *
  * ---------------------------------------------------------------------------------------------------
  *
  * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
