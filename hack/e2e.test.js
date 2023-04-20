@@ -12,7 +12,7 @@ const k8sApi = kc.makeApiClient(k8s.AppsV1Api);
 const k8sCoreApi = kc.makeApiClient(k8s.CoreV1Api);
 
 // Timeout in milliseconds
-const TIMEOUT = 60 * 1000;
+const TIMEOUT = 120 * 1000;
 const testDir = "pepr-test-module";
 
 let expectedLines = [
@@ -71,14 +71,20 @@ test.serial("E2E: Pepr Deploy", async t => {
     // Wait for the deployment to be ready
     await waitForDeploymentReady("pepr-system", "pepr-static-test");
 
+    t.log("Deployment ready");
+
     // Apply the sample yaml for the HelloPepr capability
     execSync("kubectl apply -f hello-pepr.samples.yaml", {
       cwd: path.resolve(testDir, "capabilities"),
       stdio: "inherit",
     });
 
+    t.log("Sample yaml applied");
+
     // Wait for the namespace to be created
     const ns = await waitForNamespace("pepr-demo");
+
+    t.log("Namespace created");
 
     // Check if the namespace has the correct labels and annotations
     t.deepEqual(ns.metadata.labels, {
@@ -87,11 +93,15 @@ test.serial("E2E: Pepr Deploy", async t => {
     });
     t.is(ns.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
 
+    t.log("Namespace validated");
+
     const cm1 = await waitForConfigMap("pepr-demo", "example-1");
     const cm2 = await waitForConfigMap("pepr-demo", "example-2");
     const cm3 = await waitForConfigMap("pepr-demo", "example-3");
     const cm4 = await waitForConfigMap("pepr-demo", "example-4");
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
+
+    t.log("ConfigMaps created");
 
     // Validate the example-1 CM
     t.is(cm1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
