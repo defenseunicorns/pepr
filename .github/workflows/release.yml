@@ -40,7 +40,7 @@ jobs:
 
           npm ci
           npm --no-git-tag-version version ${{ github.ref_name }}
-          npm build
+          npm run build
 
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 
