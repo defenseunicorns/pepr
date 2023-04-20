@@ -12,11 +12,10 @@ export default function (program: RootCmd) {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
-    .option("-d, --dir [directory]", "Pepr module directory", ".")
     .option("-i, --image [image]", "Override the image tag")
-    .option("-f, --force", "Force redeployment")
+    .option("--confirm", "Skip confirmation prompt")
     .action(async opts => {
-      if (!opts.force) {
+      if (!opts.confirm) {
         // Prompt the user to confirm
         const confirm = await prompt({
           type: "confirm",
@@ -31,10 +30,10 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule(opts.dir);
+      const { cfg, path } = await buildModule();
 
       // Read the compiled module code
-      const code = await fs.readFile(path, { encoding: "utf-8" });
+      const code = await fs.readFile(path);
 
       // Generate a secret for the module
       const webhook = new Webhook({

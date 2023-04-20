@@ -17,6 +17,11 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   const { namespaces, labels, annotations, name } = binding.filters || {};
   const { metadata } = req.object || {};
 
+  // Test for matching operation
+  if (binding.event && !binding.event.includes(req.operation)) {
+    return true;
+  }
+
   // Test name first, since it's the most specific
   if (name && name !== req.name) {
     return true;
@@ -43,7 +48,7 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
     return true;
   }
 
-  // Test for matching lables
+  // Test for matching labels
   for (const [key, value] of Object.entries(labels)) {
     const testKey = metadata?.labels?.[key];
 

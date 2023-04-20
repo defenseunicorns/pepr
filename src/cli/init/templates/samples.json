@@ -51,10 +51,7 @@
     "kind": "ConfigMap",
     "metadata": {
       "name": "example-4",
-      "namespace": "pepr-demo",
-      "labels": {
-        "chuck-norris": "test"
-      }
+      "namespace": "pepr-demo"
     },
     "data": {
       "key": "ex-4-val"
@@ -65,7 +62,13 @@
     "kind": "ConfigMap",
     "metadata": {
       "name": "example-5",
-      "namespace": "pepr-demo"
+      "namespace": "pepr-demo",
+      "labels": {
+        "chuck-norris": "test"
+      }
+    },
+    "data": {
+      "key": "ex-5-val"
     }
   },
   {

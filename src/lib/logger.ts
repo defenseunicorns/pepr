@@ -130,4 +130,7 @@ export class Logger {
 
 /** Log is an instance of Logger used to generate log entries. */
 const Log = new Logger(LogLevel.info);
+if (process.env.LOG_LEVEL) {
+  Log.SetLogLevel(process.env.LOG_LEVEL);
+}
 export default Log;

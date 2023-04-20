@@ -16,13 +16,12 @@ export default function (program: RootCmd) {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
-    .option("-d, --dir [directory]", "Pepr module directory", ".")
-    .action(async opts => {
+    .action(async () => {
       // Build the module
-      const { cfg, path, uuid } = await buildModule(opts.dir);
+      const { cfg, path, uuid } = await buildModule();
 
       // Read the compiled module code
-      const code = await fs.readFile(path, { encoding: "utf-8" });
+      const code = await fs.readFile(path);
 
       // Generate a secret for the module
       const webhook = new Webhook({
@@ -50,13 +49,24 @@ const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new Re
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
 
-export async function buildModule(moduleDir: string) {
+export async function buildModule() {
   try {
     // Resolve the path to the module's package.json file
-    const cfgPath = resolve(moduleDir, "package.json");
-    const input = resolve(moduleDir, "pepr.ts");
+    const cfgPath = resolve(".", "package.json");
+    const input = resolve(".", "pepr.ts");
 
-    // Read the module's UUID from the package.json filel
+    // Ensure the module's package.json and pepr.ts files exist
+    try {
+      await fs.access(cfgPath);
+      await fs.access(input);
+    } catch (e) {
+      Log.error(
+        `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
+      );
+      process.exit(1);
+    }
+
+    // Read the module's UUID from the package.json file
     const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
     const cfg = JSON.parse(moduleText);
     const { uuid } = cfg.pepr;
