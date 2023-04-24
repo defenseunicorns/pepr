@@ -1,7 +1,5 @@
-import { Capability, a } from "pepr";
-import { getKeycloakAccessToken, createOrGetKeycloakRealm, createOrGetClient, createUser} from './keycloak-api';
-import { getSecretValue, createKubernetesSecret } from './kubernetes-api';
-
+import { Capability, a } from "pepr";import {keycloakAPI } from './keycloak-api';
+import { createKubernetesSecret, getSecretValue } from './kubernetes-api';
 
 export const KeyCloakPepr = new Capability({
   name: "keycloakpepr",
@@ -13,28 +11,63 @@ export const KeyCloakPepr = new Capability({
 //const keycloakBaseUrl = "http://keycloak.default.svc.cluster.local"
 const keycloakBaseUrl = "http://localhost:9999"
 
+// stuff that should come from the configmap
 const secretName = "keycloak"
-const namespaceName = "default"
+const keycloakNameSpace = "default"
 
+const realmName = "yoda"
+const clientId = "dagoba"
+const clientName = "swamp"
+
+
+// XXX: TODO: should we be able to revoke the root keycloak creds.
+// XXX: TODO: key rotation example.
+// XXX: TODO: Rollback if failure.
 
 const { When } = KeyCloakPepr;
 
-When(a.ConfigMap)
+// XXX: BDW: fix up the When()
+When(a.Secret)
   .IsCreatedOrUpdated()
   .WithName("config")
+  .WithLabel("create", "clientidsecret")
   .Then(async request => {
-    const token = await getKeycloakAccessToken(keycloakBaseUrl, "admin-cli", "user",namespaceName,secretName)
-    console.log(`keycloak token is ${token}`)
+    // XXX: TODO grab dry-run things
+    // XXX: BDW: TODO: keep track of requests per second, don't break the keycloak api...
 
-    const realm = await createOrGetKeycloakRealm(keycloakBaseUrl,token,"yoda")
-    console.log(`keycloak realm is ${realm}`)
+    const realmName = getVal(request.Raw.data, 'realmName')
+    if (realmName == undefined) {
+      return
+    }
+    const clientId = getVal(request.Raw.data, 'clientId')
+    if (clientId == undefined) {
+      return
+    }
+    const clientName = getVal(request.Raw.data, 'clientName')
+    if (clientName == undefined) {
+      return
+    }
+    const namespaceName = request.Raw.metadata.namespace || "default"
+    // XXX: BDW: TODO: read creds from kubernetes secret.
+    // XXX:BDW this will be in the keycloak namespace, not where I am currently maybe.
 
-    const clientId = "dagoba"
-    const clientName = "swamp"
-    const secret = await createOrGetClient(keycloakBaseUrl,token,realm,clientId,clientName)
+    const password = await getSecretValue(keycloakNameSpace, secretName, "admin-password")
+
+    // XXX: BDW: init the kc API, pass in username/password, get a token
+    const kcAPI = new keycloakAPI(keycloakBaseUrl,password,clientId)
+
+    // XXX: BDW: realmname should come from config
+    await kcAPI.createOrGetKeycloakRealm(realmName)
+
+    const secret = await kcAPI.createOrGetClientSecret(realmName, clientId, clientName)
+    // XXX: BDW: create a secret for this secret
     console.log(`keycloak client secret is ${secret}`)
 
   });
+
+// XXX: BDW: handle the keycloak clientid/secret and do the authservice stuff...
+// When.....
+
 
 
 When(a.Secret).IsCreated().WithName("user")
@@ -44,15 +77,18 @@ When(a.Secret).IsCreated().WithName("user")
   if (userName == undefined) {
     return
   }
+  const namespaceName = request.Raw.metadata.namespace || "default"
 
-  const token = await getKeycloakAccessToken(keycloakBaseUrl, "admin-cli", "user",namespaceName,secretName)
-  console.log(`keycloak token is ${token}`)
+  const password = await getSecretValue(keycloakNameSpace, secretName, "admin-password")
 
-  const password = await createUser(keycloakBaseUrl, token, "yoda", userName, `barry+${userName}@defenseunicorns.com`, "baby", "yoda")
-  if (password != undefined) {
-    await createKubernetesSecret("default", userName, userName, password)
-  }
-});
+  const kcAPI = new keycloakAPI(keycloakBaseUrl,password,clientId)
+
+  const generatedPassword = await kcAPI.createUser(realmName,userName,`barry+${userName}@defenseunicorns.com`, "baby", "yoda")
+
+
+  await createKubernetesSecret("default", userName, userName, generatedPassword)
+
+  });
 
 function getVal(data: {[key: string]: string}, p: string): string {
   if (data && data[p]) {
@@ -60,3 +96,4 @@ function getVal(data: {[key: string]: string}, p: string): string {
   }
   return undefined
 }
+

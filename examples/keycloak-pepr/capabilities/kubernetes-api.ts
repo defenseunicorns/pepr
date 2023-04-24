@@ -1,6 +1,9 @@
 import { V1ResourceRequirements, V1ConfigMap, CoreV1Api, KubeConfig , V1Secret } from '@kubernetes/client-node';
 
 export { getSecretValue, createKubernetesSecret }
+
+
+
 async function getSecretValue(namespace: string, secretName: string, key: string): Promise<string | undefined> {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -17,7 +20,7 @@ async function getSecretValue(namespace: string, secretName: string, key: string
         const decodedValue = Buffer.from(secret.data[key], 'base64').toString('utf-8');
         return decodedValue;
       } else {
-        console.log(`No data found for key '${key}' in the secret`);
+        console.log(`Could not find key '${key}' in the secret`);
         return undefined;
       }
     } catch (err) {

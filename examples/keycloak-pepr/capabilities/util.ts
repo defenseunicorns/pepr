@@ -9,6 +9,7 @@ function generateRandomPassword(length: number): string {
   let result = '';
 
   for (let i = 0; i < length; i++) {
+    // XXX: BDW blake will never ever allow this in production.
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
 

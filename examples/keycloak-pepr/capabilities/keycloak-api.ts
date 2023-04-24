@@ -1,286 +1,234 @@
-import fetch from 'node-fetch';
 import { generateRandomPassword } from './util';
-import { getSecretValue } from './kubernetes-api';
+import { fetch  } from "pepr";
+import { fetchRaw  } from 'pepr';
 
-export { getKeycloakAccessToken, createOrGetKeycloakRealm, createOrGetClient, createUser  };
+export { keycloakAPI };
 
+class keycloakAPI {
+  baseURL: string;
+  connected: boolean;
+  clientId: string;
+  username: string;
+  password: string;
+  accessToken: string;
 
+  constructor(baseURL: string, password: string, clientId: string) {
+    this.baseURL = baseURL
+    this.connected = false
+    this.password = password
+    this.clientId = clientId
+    this.username = 'user'
+  }
 
-async function createUser(
-  keycloakBaseUrl: string,
-  accessToken: string,
-  realmName: string,
-  username: string,
-  email: string,
-  firstName: string,
-  lastName: string
-): Promise<string | undefined> {
-  try {
-    const response = await fetch(`${keycloakBaseUrl}/admin/realms/${realmName}/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        username,
-        email,
-        firstName,
-        lastName,
-        enabled: true,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error(`Error creating user: ${response.statusText}`);
-      return;
+  private async connect() {
+    if (this.connected == true) {
+      return
     }
 
-    console.log(`Successfully created user '${username}'`);
+    interface TokenResponse {
+      access_token: string
+    }
 
-    const userIdResponse = await fetch(
-      `${keycloakBaseUrl}/admin/realms/${realmName}/users?username=${encodeURIComponent(username)}`,
-      {
-        method: 'GET',
+    const tokenUrl = `${this.baseURL}/realms/master/protocol/openid-connect/token`;
+
+    const requestData = {
+      'grant_type': 'password',
+      'client_id': 'admin-cli',
+      'username': this.username,
+      'password': this.password
+    }
+
+    try {
+      const response = await fetch<TokenResponse>(tokenUrl, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-      }
-    );
-
-    if (!userIdResponse.ok) {
-      console.error(`Error getting user ID: ${userIdResponse.statusText}`);
-      return;
+        body: new URLSearchParams(requestData),
+      });
+      this.accessToken = response.access_token;
+    } catch (err) {
+      throw new Error(`Error obtaining access token: ${err}`)
     }
+    this.connected = true
+  }
 
-    const users = await userIdResponse.json();
-    const user = users[0];
-    const userId = user.id;
+  
+  getHeaders() {
+    return{
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${this.accessToken}`,
+    }
+  }
 
-    const password = generateRandomPassword(12);
+  async createUser(realmName: string, username: string, email: string, firstName: string, lastName: string): Promise<string> {
+    try {
+      this.connect()
 
-    const setPasswordResponse = await fetch(
-      `${keycloakBaseUrl}/admin/realms/${realmName}/users/${userId}/reset-password`,
-      {
-        method: 'PUT',
+      const response = await fetch(`${this.baseURL}/admin/realms/${realmName}/users`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${this.accessToken}`,
         },
         body: JSON.stringify({
-          temporary: false,
-          value: password,
+          username,
+          email,
+          firstName,
+          lastName,
+          enabled: true,
         }),
-      }
-    );
+      });
 
-    if (!setPasswordResponse.ok) {
-      console.error(`Error setting user password: ${setPasswordResponse.statusText}`);
-      return;
+      const users = await fetch(
+        `${this.baseURL}/admin/realms/${realmName}/users?username=${encodeURIComponent(username)}`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
+
+      const user = users[0];
+      const userId = user.id;
+
+      const password = generateRandomPassword(12);
+
+      await fetch(
+        `${this.baseURL}/admin/realms/${realmName}/users/${userId}/reset-password`,
+        {
+          method: 'PUT',
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            temporary: false,
+            value: password,
+          }),
+        }
+      );
+
+      return password;
+    } catch (err) {
+      throw new Error(`Error creating user: ${err}`);
     }
-
-    console.log(`Successfully set password for user '${username}'`);
-    return password;
-  } catch (err) {
-    console.error(`Error creating user: ${err}`);
-    return undefined;
   }
-}
 
-
-
-async function getKeycloakAccessToken(
-  keycloakBaseUrl: string,
-  clientId: string,
-  username: string,
-  namespace: string,
-  secretName: string
-): Promise<string | undefined> {
-
-  const password = await getSecretValue(namespace, secretName, "admin-password")
-
-  const tokenUrl = `${keycloakBaseUrl}/realms/master/protocol/openid-connect/token`;
-
-  const requestBody = new URLSearchParams();
-  requestBody.append('grant_type', 'password');
-  requestBody.append('client_id', clientId);
-  requestBody.append('username', username);
-  requestBody.append('password', password);
-
-  try {
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: requestBody.toString(),
-    });
-
-    if (!response.ok) {
-      console.error(`Error obtaining access token: ${response.statusText}`);
-      return undefined;
-    }
-
-    const data = await response.json();
-    const accessToken = data.access_token;
-    return accessToken;
-  } catch (err) {
-    console.error(`Error obtaining access token: ${err}`);
-    return undefined;
-  }
-}
-
-
-async function createOrGetKeycloakRealm(keycloakBaseUrl: string, accessToken: string, realmName: string): Promise<string|undefined> {
-  try {
-    const getRealmResponse = await fetch(`${keycloakBaseUrl}/admin/realms/${realmName}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (getRealmResponse.ok) {
-      console.log(`Realm '${realmName}' already exists.`);
-      return realmName;
-    }
-
-    if (getRealmResponse.status !== 404) {
-      console.error(`Error checking for realm existence: ${getRealmResponse.statusText}`);
-      return undefined;
-    }
-
-    const createRealmResponse = await fetch(`${keycloakBaseUrl}/admin/realms`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        realm: realmName,
-        enabled: true,
-      }),
-    });
-
-    if (!createRealmResponse.ok) {
-      console.error(`Error creating realm: ${createRealmResponse.statusText}`);
-      return undefined;
-    }
-
-    console.log(`Successfully created realm '${realmName}'`);
-    return realmName
-  } catch (err) {
-    console.error(`Error in createOrGetKeycloakRealm: ${err}`);
-    return undefined
-  }
-}
-
-
-async function createOrGetClient(
-  keycloakBaseUrl: string,
-  accessToken: string,
-  realmName: string,
-  clientId: string,
-  clientName: string
-): Promise<string | undefined> {
-  try {
-    const getClientsResponse = await fetch(`${keycloakBaseUrl}/admin/realms/${realmName}/clients`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!getClientsResponse.ok) {
-      console.error(`Error getting clients: ${getClientsResponse.statusText}`);
-      return;
-    }
-
-    const clients = await getClientsResponse.json();
-    const existingClient = clients.find((client: any) => client.clientId === clientId);
-
-    if (existingClient) {
-      console.log(`Client '${clientName}' with client ID '${clientId}' already exists.`);
-
-      if (existingClient.secret) {
-        return existingClient.secret;
-      } else {
-        console.log(`Existing client is not a confidential client, no secret is available.`);
-        return;
-      }
-    }
-
-    const createClientResponse = await fetch(`${keycloakBaseUrl}/admin/realms/${realmName}/clients`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        clientId,
-        name: clientName,
-        enabled: true,
-        protocol: 'openid-connect',
-        publicClient: false, // Make this a confidential client
-        clientAuthenticatorType: 'client-secret', // Use client secret for authentication
-      }),
-    });
-
-    if (!createClientResponse.ok) {
-      console.error(`Error creating client: ${createClientResponse.statusText}`);
-      return;
-    }
-
-    console.log(`Successfully created client '${clientName}' with client ID '${clientId}'`);
-
-    const createdClientResponse = await fetch(
-      `${keycloakBaseUrl}/admin/realms/${realmName}/clients?clientId=${encodeURIComponent(clientId)}`,
-      {
+  // return true if found, false is not found, and throw an exception for other errors
+  async getRealm(realmName: string): Promise<boolean> {
+    try {
+      // XXX: BDW: when we can catch the 404 Error we can use fetch() versus fetchRaw
+      const response = await fetchRaw(`${this.baseURL}/admin/realms/${realmName}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: this.getHeaders(),
+      });
+
+      if (response.ok) {
+        return true
       }
-    );
 
-    if (!createdClientResponse.ok) {
-      console.error(`Error getting the created client: ${createdClientResponse.statusText}`);
-      return;
-    }
-
-    const createdClients = await createdClientResponse.json();
-    const createdClient = createdClients[0];
-
-    const clientSecretResponse = await fetch(
-      `${keycloakBaseUrl}/admin/realms/${realmName}/clients/${createdClient.id}/client-secret`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
+      if (response.status !== 404) {
+        throw new Error(`Error checking for realm existence: ${response.statusText}`);
       }
-    );
 
-    if (!clientSecretResponse.ok) {
-      console.error(`Error getting client secret: ${clientSecretResponse.statusText}`);
-      return;
+    } catch (err) {
+      throw new Error(err)
     }
-
-    const clientSecretData = await clientSecretResponse.json();
-    const clientSecret = clientSecretData.value;
-    console.log(`Client secret for '${clientName}' with client ID '${clientId}': ${clientSecret}`);
-    return clientSecret;
-  } catch (err) {
-    console.error(`Error increateOrGetClient: ${err}`);
-    return undefined;
+    return false
   }
+
+  async createOrGetKeycloakRealm(realmName: string) {
+    try {
+      await this.connect()
+      const doesRealmExist = await this.getRealm(realmName)
+      if (doesRealmExist) {
+        return
+      }
+
+      const createRealmResponse = await fetch(`${this.baseURL}/admin/realms`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+
+        body: JSON.stringify({
+          realm: realmName,
+          enabled: true,
+        }),
+      });
+    } catch (err) {
+      throw new Error(err)
+    }
+  }
+
+  async createOrGetClientSecret(
+    realmName: string,
+    clientId: string,
+    clientName: string
+  ): Promise<string> {
+    try {
+      this.connect()
+      // XXX: BDW: cleanup use a <T>
+      const getClientsResponse = await fetchRaw(`${this.baseURL}/admin/realms/${realmName}/clients`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!getClientsResponse.ok) {
+        throw new Error(`Error getting clients: ${getClientsResponse.statusText}`);
+      }
+
+      const clients = await getClientsResponse.json();
+      const existingClient = clients.find((client: any) => client.clientId === clientId);
+
+      if (existingClient) {
+        console.log(`Client '${clientName}' with client ID '${clientId}' already exists.`);
+
+        if (existingClient.secret) {
+          return existingClient.secret;
+        } else {
+          throw new Error(`Existing client is not a confidential client, no secret is available.`);
+        }
+      }
+
+      const createClientResponse = await fetch(`${this.baseURL}/admin/realms/${realmName}/clients`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          clientId,
+          name: clientName,
+          enabled: true,
+          protocol: 'openid-connect',
+          publicClient: false, // Make this a confidential client
+          clientAuthenticatorType: 'client-secret', // Use client secret for authentication
+        }),
+      });
+
+      console.log(`Successfully created client '${clientName}' with client ID '${clientId}'`);
+
+      const createdClientResponse = await fetch(
+        `${this.baseURL}/admin/realms/${realmName}/clients?clientId=${encodeURIComponent(clientId)}`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
+
+      const createdClient = createdClientResponse[0];
+
+      interface valueInterface {
+        value: string
+      }
+  
+      const clientSecretResponse = await fetch<valueInterface>(
+        `${this.baseURL}/admin/realms/${realmName}/clients/${createdClient.id}/client-secret`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
+
+      return clientSecretResponse.value;
+    } catch (err) {
+      throw new Error(err)
+    }
+  }
+
+
+
 }
-
-
-
-
