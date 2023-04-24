@@ -23,8 +23,21 @@ export interface KubernetesListObject<T extends KubernetesObject> {
 }
 
 /**
- *  GroupVersionKind unambiguously identifies a kind.  It doesn't anonymously include GroupVersion
- * to avoid automatic coercion.  It doesn't use a GroupVersion to avoid custom marshalling
+ * GenericKind is a generic Kubernetes object that can be used to represent any Kubernetes object
+ * that is not explicitly supported by Pepr. This can be used on its own or as a base class for
+ * other types. See the examples in `HelloPepr.ts` for more information.
+ */
+export class GenericKind {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: V1ObjectMeta;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+/**
+ * GroupVersionKind unambiguously identifies a kind. It doesn't anonymously include GroupVersion
+ * to avoid automatic coercion. It doesn't use a GroupVersion to avoid custom marshalling
  **/
 export interface GroupVersionKind {
   /** The K8s resource kind, e..g "Pod". */
@@ -34,8 +47,8 @@ export interface GroupVersionKind {
 }
 
 /**
- * GroupVersionResource unambiguously identifies a resource.  It doesn't anonymously include GroupVersion
- * to avoid automatic coercion.  It doesn't use a GroupVersion to avoid custom marshalling
+ * GroupVersionResource unambiguously identifies a resource. It doesn't anonymously include GroupVersion
+ * to avoid automatic coercion. It doesn't use a GroupVersion to avoid custom marshalling
  */
 export interface GroupVersionResource {
   readonly group: string;
@@ -56,7 +69,7 @@ export interface Request<T = KubernetesObject> {
   /** Resource is the fully-qualified resource being requested (for example, v1.pods) */
   readonly resource: GroupVersionResource;
 
-  /** SubResource is the subresource being requested, if any (for example, "status" or "scale") */
+  /** SubResource is the sub-resource being requested, if any (for example, "status" or "scale") */
   readonly subResource?: string;
 
   /** RequestKind is the fully-qualified type of the original API request (for example, v1.Pod or autoscaling.v1.Scale). */
@@ -65,7 +78,7 @@ export interface Request<T = KubernetesObject> {
   /** RequestResource is the fully-qualified resource of the original API request (for example, v1.pods). */
   readonly requestResource?: GroupVersionResource;
 
-  /** RequestSubResource is the subresource of the original API request, if any (for example, "status" or "scale"). */
+  /** RequestSubResource is the sub-resource of the original API request, if any (for example, "status" or "scale"). */
   readonly requestSubResource?: string;
 
   /**

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { modelToGroupVersionKind } from "./k8s";
+import { GroupVersionKind, modelToGroupVersionKind } from "./k8s";
 import logger from "./logger";
 import {
   BindToAction,
@@ -63,13 +63,21 @@ export class Capability implements CapabilityCfg {
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
    * filters that are applied.
    *
-   * @param model if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
+   * @param model the KubernetesObject model to match
+   * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When = <T extends GenericClass>(model: T): WhenSelector<T> => {
+  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
+    const matchedKind = modelToGroupVersionKind(model.name);
+
+    // If the kind is not specified and the model is not a KubernetesObject, throw an error
+    if (!matchedKind && !kind) {
+      throw new Error(`Kind not specified for ${model.name}`);
+    }
+
     const binding: Binding = {
-      // If the kind is not specified, use the default KubernetesObject
-      kind: modelToGroupVersionKind(model.name),
+      // If the kind is not specified, use the matched kind from the model
+      kind: kind || matchedKind,
       filters: {
         name: "",
         namespaces: [],
@@ -99,7 +107,7 @@ export class Capability implements CapabilityCfg {
 
     const ThenSet = (merge: DeepPartial<InstanceType<T>>): BindToAction<T> => {
       // Add the new action to the binding
-      Then(async req => req.Merge(merge));
+      Then(req => req.Merge(merge));
 
       return { Then };
     };

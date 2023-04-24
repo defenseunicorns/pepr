@@ -1,9 +1,8 @@
 name: Version Releaes
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -12,6 +11,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v3
@@ -38,9 +38,12 @@ jobs:
         run: |
           #!/bin/bash
 
+          npm install -g npm
+
           npm ci
           npm --no-git-tag-version version ${{ github.ref_name }}
-          PEPR_VERSION=${{ github.ref_name }} npm publish
+          npm run build
 
-          echo "Publishing the image..."
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
+
+          PEPR_VERSION=${{ github.ref_name }} npm publish --provenance --access public

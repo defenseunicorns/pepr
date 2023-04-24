@@ -26,24 +26,23 @@
   "scripts": {
     "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
     "build": "tsc -p tsconfig.build.json",
-    "test": "npm run build && ava && node dist/cli.js -V",
-    "test:e2e": "ava hack/e2e.test.js",
-    "test:e2e-setup": "npm run build && npm uninstall pepr -g && npm install -g .",
-    "lint": "npx eslint src",
-    "lint:fix": "npm run lint -- --fix",
-    "prettier": "npx prettier src --check",
-    "prettier:fix": "npm run prettier -- --write",
-    "prepublishOnly": "npm run lint:fix && npm run prettier:fix && npm run test",
-    "e2e-dev-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
+    "test:unit": "npm run build && ava",
+    "test:e2e": "npm run test:e2e:k3d && npm run test:e2e:build && npm run test:e2e:image && npm run test:e2e:run",
+    "test:e2e:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
+    "test:e2e:build": "npm run build && npm uninstall pepr -g && npm install -g . && pepr",
+    "test:e2e:image": "docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
+    "test:e2e:run": "ava hack/e2e.test.js --sequential --timeout=2m",
+    "format:check": "eslint src && prettier src --check",
+    "format:fix": "eslint src --fix && prettier src --write"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.18.1",
     "@rollup/plugin-json": "^6.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-typescript": "^11.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-typescript": "^11.1.0",
     "@types/ramda": "^0.29.0",
     "chokidar": "^3.5.3",
-    "commander": "^10.0.0",
+    "commander": "^10.0.1",
     "express": "^4.18.2",
     "fast-json-patch": "^3.1.1",
     "node-fetch": "^2.6.9",
@@ -51,10 +50,10 @@
     "prettier": "^2.8.7",
     "prompts": "^2.4.2",
     "ramda": "^0.29.0",
-    "rollup": "^3.20.2",
+    "rollup": "^3.20.6",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
-    "typescript": "^5.0.2",
+    "typescript": "^5.0.4",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
@@ -63,10 +62,10 @@
     "@types/node-forge": "^1.3.2",
     "@types/prompts": "^2.4.4",
     "@types/uuid": "^9.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.57.0",
-    "@typescript-eslint/parser": "^5.57.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
     "ava": "^5.2.0",
-    "eslint": "^8.37.0",
+    "eslint": "^8.38.0",
     "nock": "^13.3.0"
   },
   "ava": {
@@ -75,6 +74,8 @@
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "failFast": true,
+    "verbose": true
   }
 }

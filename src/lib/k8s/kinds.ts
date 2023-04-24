@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { GenericClass } from "../types";
 import { GroupVersionKind } from "./types";
 
 export const gvkMap: Record<string, GroupVersionKind> = {
@@ -468,3 +469,21 @@ export const gvkMap: Record<string, GroupVersionKind> = {
 export function modelToGroupVersionKind(key: string): GroupVersionKind {
   return gvkMap[key];
 }
+
+/**
+ * Registers a new model and GroupVersionKind with Pepr for use with `When(a.<Kind>)`
+ *
+ * @param model Used to match the GroupVersionKind and define the type-data for the request
+ * @param groupVersionKind Contains the match parameters to determine the request should be handled
+ */
+export const RegisterKind = (model: GenericClass, groupVersionKind: GroupVersionKind) => {
+  const name = model.name;
+
+  // Do not allow overwriting existing GVKs
+  if (gvkMap[name]) {
+    throw new Error(`GVK ${name} already registered`);
+  }
+
+  // Set the GVK
+  gvkMap[name] = groupVersionKind;
+};

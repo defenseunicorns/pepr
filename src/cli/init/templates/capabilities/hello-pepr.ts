@@ -1,4 +1,4 @@
-import { Capability, PeprRequest, a, fetch } from "pepr";
+import { Capability, PeprRequest, RegisterKind, a, fetch } from "pepr";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -16,7 +16,7 @@ const { When } = HelloPepr;
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (Namespace)                                   *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action removes the label `remove-me` when a Namespace is created.
@@ -29,13 +29,13 @@ When(a.Namespace)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 1)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This is a single Capability Action. They can be in the same file or put imported from other files.
- * In this exmaple, when a ConfigMap is created with the name `example-1`, then add a label and annotation.
+ * In this example, when a ConfigMap is created with the name `example-1`, then add a label and annotation.
  *
- * Equivelant to manually running:
+ * Equivalent to manually running:
  * `kubectl label configmap example-1 pepr=was-here`
  * `kubectl annotate configmap example-1 pepr.dev=annotations-work-too`
  */
@@ -50,10 +50,10 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capabiility Action does the exact same changes for example-2, except this time it uses
+ * This Capability Action does the exact same changes for example-2, except this time it uses
  * the `.ThenSet()` feature. You can stack multiple `.Then()` calls, but only a single `.ThenSet()`
  */
 When(a.ConfigMap)
@@ -72,13 +72,13 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 3)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action combines different styles. Unlike the previous actions, this one will look
  * for any ConfigMap in the `pepr-demo` namespace that has the label `change=by-label` during either
  * CREATE or UPDATE. Note that all conditions added such as `WithName()`, `WithLabel()`, `InNamespace()`,
- * are ANDs so all conditions must be true for the request to be procssed.
+ * are ANDs so all conditions must be true for the request to be processed.
  */
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
@@ -87,7 +87,7 @@ When(a.ConfigMap)
     // The K8s object e are going to mutate
     const cm = request.Raw;
 
-    // Get the username and uid of the K8s reuest
+    // Get the username and uid of the K8s request
     const { username, uid } = request.Request.userInfo;
 
     // Store some data about the request in the configmap
@@ -100,7 +100,7 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 4)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action show how you can use the `Then()` function to make multiple changes to the
@@ -114,7 +114,7 @@ When(a.ConfigMap)
  */
 When(a.ConfigMap)
   .IsCreated()
-  .WithName("example-5")
+  .WithName("example-4")
   .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
   .Then(addSecond)
   .Then(addThird);
@@ -124,14 +124,14 @@ function addSecond(cm: PeprRequest<a.ConfigMap>) {
   cm.SetLabel("pepr.dev/second", "true");
 }
 
-// This function has no type definition, so you won't have intelisense in the function body.
+// This function has no type definition, so you won't have intellisense in the function body.
 function addThird(cm) {
   cm.SetLabel("pepr.dev/third", "true");
 }
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION                                               *
+ *                                   CAPABILITY ACTION (CM Example 5)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This Capability Action is a bit more complex. It will look for any ConfigMap in the `pepr-demo`
@@ -145,7 +145,7 @@ function addThird(cm) {
  * avoid mistakes when working with the data returned from the API. You can also use the `as` keyword to
  * cast the data returned from the API.
  *
- * These are equivelant:
+ * These are equivalent:
  * ```ts
  * const joke = await fetch<TheChuckNorrisJoke>("https://api.chucknorris.io/jokes/random?category=dev");
  * const joke = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisJoke;
@@ -174,4 +174,105 @@ When(a.ConfigMap)
 
     // Add the Chuck Norris joke to the configmap
     change.Raw.data["chuck-says"] = joke.value;
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION (Untyped Custom Resource)                     *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * Out of the box, Pepr supports all the standard Kubernetes objects. However, you can also create
+ * your own types. This is useful if you are working with an Operator that creates custom resources.
+ * There are two ways to do this, the first is to use the `When()` function with a `GenericKind`,
+ * the second is to create a new class that extends `GenericKind` and use the `RegisterKind()` function.
+ *
+ * This example shows how to use the `When()` function with a `GenericKind`. Note that you
+ * must specify the `group`, `version`, and `kind` of the object (if applicable). This is how Pepr knows
+ * if the Capability Action should be triggered or not. Since we are using a `GenericKind`,
+ * Pepr will not be able to provide any intellisense for the object, so you will need to refer to the
+ * Kubernetes API documentation for the object you are working with.
+ *
+ * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ *
+ * ```yaml
+ * apiVersion: pepr.dev/v1
+ * kind: Unicorn
+ * metadata:
+ *   name: example-1
+ *   namespace: pepr-demo
+ * spec:
+ *   message: replace-me
+ *   counter: 0
+ * ```
+ */
+When(a.GenericKind, {
+  group: "pepr.dev",
+  version: "v1",
+  kind: "Unicorn",
+})
+  .IsCreated()
+  .WithName("example-1")
+  .ThenSet({
+    spec: {
+      message: "Hello Pepr without type data!",
+      counter: Math.random(),
+    },
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION (Typed Custom Resource)                       *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
+ * if you are working with an Operator that creates custom resources and you want to have intellisense
+ * for the object. Note that you must specify the `group`, `version`, and `kind` of the object (if applicable)
+ * as this is how Pepr knows if the Capability Action should be triggered or not.
+ *
+ * Once you register a new Kind with Pepr, you can use the `When()` function with the new Kind. Ideally,
+ * you should register custom Kinds at the top of your Capability file or Pepr Module so they are available
+ * to all Capability Actions, but we are putting it here for demonstration purposes.
+ *
+ * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ *
+ * ```yaml
+ * apiVersion: pepr.dev/v1
+ * kind: Unicorn
+ * metadata:
+ *   name: example-2
+ *   namespace: pepr-demo
+ * spec:
+ *   message: replace-me
+ *   counter: 0
+ * ```*
+ */
+class UnicornKind extends a.GenericKind {
+  spec: {
+    /**
+     * JSDoc comments can be added to explain more details about the field.
+     *
+     * @example
+     * ```ts
+     * request.Raw.spec.message = "Hello Pepr!";
+     * ```
+     * */
+    message: string;
+    counter: number;
+  };
+}
+
+RegisterKind(UnicornKind, {
+  group: "pepr.dev",
+  version: "v1",
+  kind: "Unicorn",
+});
+
+When(UnicornKind)
+  .IsCreated()
+  .WithName("example-2")
+  .ThenSet({
+    spec: {
+      message: "Hello Pepr now with type data!",
+      counter: Math.random(),
+    },
   });

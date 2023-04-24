@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 jobs:
-  lint:
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,8 +17,7 @@ jobs:
           node-version: latest
           cache: "npm"
       - run: npm ci
-      - run: npm run prettier
-      - run: npm run lint
+      - run: npm run format:check
 
   test:
     runs-on: ubuntu-latest
@@ -33,8 +32,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm run build
-      - run: npm test
+      - run: npm run test:unit
 
   e2e:
     runs-on: ubuntu-latest
@@ -51,9 +49,4 @@ jobs:
         shell: bash
 
       - run: npm ci
-      - run: npm run build
-      - run: npm install -g .
-      - run: npm run e2e-dev-setup
-      - run: pepr
-      - run: pepr -V
       - run: npm run test:e2e

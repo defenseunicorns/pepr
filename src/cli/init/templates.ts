@@ -28,7 +28,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     pepr: {
       name: opts.name.trim(),
-      version,
       uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       alwaysIgnore: {
@@ -37,12 +36,13 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       },
     },
     scripts: {
-      "k3d-setup": scripts["e2e-dev-setup"],
+      "k3d-setup": scripts["test:e2e:k3d"],
       build: "pepr build",
+      deploy: "pepr deploy",
       start: "pepr dev",
     },
     dependencies: {
-      pepr: pgkVerOverride || `^${version}`,
+      pepr: pgkVerOverride || `${version}`,
     },
     devDependencies: {
       typescript,
