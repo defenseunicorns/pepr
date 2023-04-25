@@ -1,6 +1,7 @@
+// XXX:BDW TODO: will need to use fetch from Jeff, we didn't for this POC/pilot because some REST calls return nada in the body and response.json() does not like that :) 
 import { generateRandomPassword } from './util';
-import { fetch  } from "pepr";
-import { fetchRaw  } from 'pepr';
+import { fetch } from "pepr";
+import { fetchRaw } from 'pepr';
 
 export { keycloakAPI };
 
@@ -38,24 +39,23 @@ class keycloakAPI {
       'password': this.password
     }
 
-    try {
-      const response = await fetch<TokenResponse>(tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(requestData),
-      });
-      this.accessToken = response.access_token;
-    } catch (err) {
-      throw new Error(`Error obtaining access token: ${err}`)
+    var { data, ok, status, statusText } = await fetch<TokenResponse>(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(requestData),
+    });
+    if (!ok) {
+      throw new Error(`${status} ${statusText} from tokenUrl`)
     }
+    this.accessToken = data.access_token;
     this.connected = true
   }
 
-  
+
   getHeaders() {
-    return{
+    return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.accessToken}`,
     }
@@ -63,24 +63,59 @@ class keycloakAPI {
 
   async createUser(realmName: string, username: string, email: string, firstName: string, lastName: string): Promise<string> {
     try {
-      this.connect()
+      await this.connect()
+      /*
+            // XXX: TODO Check the users for this realm
+            const listUsersUrl = `${this.baseURL}/${realmName}/users`
+            var {data, ok, status, statusText} = await fetch(listUsersUrl, {
+              method: 'GET',
+              headers: this.getHeaders()
+            });
+            
+            if (!ok) {
+              throw new Error(`${status} ${statusText} from ${listUsersUrl}`)
+            }
+      */
 
-      const response = await fetch(`${this.baseURL}/admin/realms/${realmName}/users`, {
+      // XXX: BDW: This will get a 409 conflict if the user exists.
+      const createUserUrl = `${this.baseURL}/admin/realms/${realmName}/users`
+
+      const requestData = {
+        username: username,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        enabled: true,
+      }
+
+
+
+      var response = await fetchRaw(createUserUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          firstName,
-          lastName,
-          enabled: true,
-        }),
+        headers: this.getHeaders(),
+        body: JSON.stringify(requestData),
       });
 
-      const users = await fetch(
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText} from ${createUserUrl}`)
+      }
+      // XXX: BDW: check status, 
+
+
+      /*
+      var {data, ok, status, statusText } = await fetch(createUserUrl, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(requestData),
+      });
+
+      
+      if (!ok) {
+        throw new Error(`${status} ${statusText} from ${createUserUrl}`)
+      }
+*/
+      // XXX: BDW: add a <T>
+      var response = await fetchRaw(
         `${this.baseURL}/admin/realms/${realmName}/users?username=${encodeURIComponent(username)}`,
         {
           method: 'GET',
@@ -88,13 +123,21 @@ class keycloakAPI {
         }
       );
 
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText} from ${createUserUrl}`)
+      }
+
+      // XXX: BDW: TODO: deal with more than 1 user.
+      const users = await response.json()
       const user = users[0];
       const userId = user.id;
 
       const password = generateRandomPassword(12);
 
-      await fetch(
-        `${this.baseURL}/admin/realms/${realmName}/users/${userId}/reset-password`,
+      const setPasswordUrl = `${this.baseURL}/admin/realms/${realmName}/users/${userId}/reset-password`
+
+      var response = await fetchRaw(
+        setPasswordUrl,
         {
           method: 'PUT',
           headers: this.getHeaders(),
@@ -104,6 +147,10 @@ class keycloakAPI {
           }),
         }
       );
+
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText} from ${setPasswordUrl}`)
+      }
 
       return password;
     } catch (err) {
@@ -135,24 +182,23 @@ class keycloakAPI {
   }
 
   async createOrGetKeycloakRealm(realmName: string) {
-    try {
-      await this.connect()
-      const doesRealmExist = await this.getRealm(realmName)
-      if (doesRealmExist) {
-        return
-      }
+    await this.connect()
+    const doesRealmExist = await this.getRealm(realmName)
+    if (doesRealmExist) {
+      return
+    }
 
-      const createRealmResponse = await fetch(`${this.baseURL}/admin/realms`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-
-        body: JSON.stringify({
-          realm: realmName,
-          enabled: true,
-        }),
-      });
-    } catch (err) {
-      throw new Error(err)
+    const createReamUrl = `${this.baseURL}/admin/realms`
+    var response = await fetchRaw(createReamUrl, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        realm: realmName,
+        enabled: true,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText} from ${createReamUrl}`)
     }
   }
 
@@ -162,7 +208,7 @@ class keycloakAPI {
     clientName: string
   ): Promise<string> {
     try {
-      this.connect()
+      await this.connect()
       // XXX: BDW: cleanup use a <T>
       const getClientsResponse = await fetchRaw(`${this.baseURL}/admin/realms/${realmName}/clients`, {
         method: 'GET',
@@ -214,8 +260,8 @@ class keycloakAPI {
       interface valueInterface {
         value: string
       }
-  
-      const clientSecretResponse = await fetch<valueInterface>(
+
+      var { data, ok } = await fetch<valueInterface>(
         `${this.baseURL}/admin/realms/${realmName}/clients/${createdClient.id}/client-secret`,
         {
           method: 'GET',
@@ -223,7 +269,7 @@ class keycloakAPI {
         }
       );
 
-      return clientSecretResponse.value;
+      return data.value;
     } catch (err) {
       throw new Error(err)
     }

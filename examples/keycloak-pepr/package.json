@@ -25,10 +25,10 @@
     "start": "pepr dev"
   },
   "dependencies": {
-    "pepr": "^0.2.4"
+    "pepr": "^0.2.6"
   },
   "devDependencies": {
-    "@types/node-fetch": "^2.6.3",
-    "typescript": "^5.0.2"
+    "typescript": "5.0.4",
+    "ts-node": "10.9.1"
   }
 }
