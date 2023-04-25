@@ -26,8 +26,9 @@ test.beforeEach(() => {
 
 test("fetch: should return without type data", async t => {
   const url = "https://jsonplaceholder.typicode.com/todos/1";
-  const response = await fetch(url);
-  t.is(response["title"], "Example title");
+  const { data, ok } = await fetch(url);
+  t.is(ok, true);
+  t.is(data["title"], "Example title");
 });
 
 test("fetch: should return parsed JSON response as a specific type", async t => {
@@ -39,7 +40,8 @@ test("fetch: should return parsed JSON response as a specific type", async t => 
   }
 
   const url = "https://jsonplaceholder.typicode.com/todos/1";
-  const data = await fetch<Todo>(url);
+  const { data, ok } = await fetch<Todo>(url);
+  t.is(ok, true);
   t.is(data.id, 1);
   t.is(typeof data.title, "string");
   t.is(typeof data.completed, "boolean");
@@ -59,7 +61,8 @@ test("fetch: should handle additional request options", async t => {
     },
   };
 
-  const data = await fetch(url, requestOptions);
+  const { data, ok } = await fetch(url, requestOptions);
+  t.is(ok, true);
   t.is(data["title"], "test todo");
   t.is(data["userId"], 1);
   t.is(data["completed"], false);
