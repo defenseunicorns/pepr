@@ -1,4 +1,5 @@
 import k8s from "@kubernetes/client-node";
+import { StatusCodes as fetchStatus } from "http-status-codes";
 import utils from "ramda";
 import { Capability } from "./src/lib/capability";
 import { fetch, fetchRaw } from "./src/lib/fetch";
@@ -22,6 +23,7 @@ export {
   utils,
   fetch,
   fetchRaw,
+  fetchStatus,
   k8s,
 
   // Export the imported type information for external packages
