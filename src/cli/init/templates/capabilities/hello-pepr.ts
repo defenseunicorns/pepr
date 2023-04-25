@@ -168,12 +168,14 @@ When(a.ConfigMap)
   .IsCreated()
   .WithLabel("chuck-norris")
   .Then(async change => {
-    const joke = await fetch<TheChuckNorrisJoke>(
+    const response = await fetch<TheChuckNorrisJoke>(
       "https://api.chucknorris.io/jokes/random?category=dev"
     );
 
-    // Add the Chuck Norris joke to the configmap
-    change.Raw.data["chuck-says"] = joke.value;
+    if (response.ok) {
+      // Add the Chuck Norris joke to the configmap
+      change.Raw.data["chuck-says"] = response.data.value;
+    }
   });
 
 /**

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { StatusCodes } from "http-status-codes";
 import f, { RequestInfo, RequestInit } from "node-fetch";
+import logger from "./logger";
 export { f as fetchRaw };
 
 /**
@@ -18,13 +20,30 @@ export { f as fetchRaw };
  * @returns
  */
 export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit) {
-  const resp = await f(url, init);
+  try {
+    logger.debug(`Fetching ${url}`);
 
-  // Throw an error if the response is not OK
-  if (!resp.ok) {
-    throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+    const resp = await f(url, init);
+    let data: T;
+
+    if (resp.ok) {
+      data = await resp.json();
+    }
+
+    return {
+      data,
+      ok: resp.ok,
+      status: resp.status,
+      statusText: resp.statusText,
+    };
+  } catch (e) {
+    logger.debug(`Fetch failed: ${e.message}`);
+
+    return {
+      data: null,
+      ok: false,
+      status: e.code || StatusCodes.BAD_REQUEST,
+      statusText: e.message,
+    };
   }
-
-  const data = await resp.json();
-  return data as T;
 }
