@@ -24,7 +24,7 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit) {
     logger.debug(`Fetching ${url}`);
 
     const resp = await f(url, init);
-    const contentType = resp.headers.get("content-type");
+    const contentType = resp.headers.get("content-type") || "";
 
     let data: T;
 
