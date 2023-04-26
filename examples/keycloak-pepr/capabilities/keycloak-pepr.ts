@@ -1,5 +1,5 @@
 import { Capability, a } from "pepr"; import { keycloakAPI } from './keycloak-api';
-import { createKubernetesSecret, getSecretValue, createKubernetesClientSecret } from './kubernetes-api';
+import { k8sAPI } from './kubernetes-api';
 
 export const KeyCloakPepr = new Capability({
   name: "keycloakpepr",
@@ -31,13 +31,14 @@ When(a.Secret)
     // XXX: TODO grab dry-run things
     // XXX: BDW: TODO: keep track of requests per second, don't break the keycloak api...
 
+    var k8sApi = new k8sAPI()
     const realmName = getVal(request.Raw.data, 'realmName')
     const clientId = getVal(request.Raw.data, 'clientId')
     const clientName = getVal(request.Raw.data, 'clientName')
 
     const namespaceName = request.Raw.metadata.namespace
 
-    const password = await getSecretValue(keycloakNameSpace, secretName, "admin-password")
+    const password = await k8sApi.getSecretValue(keycloakNameSpace, secretName, "admin-password")
 
     // XXX: BDW: init the kc API, pass in username/password, get a token
     const kcAPI = new keycloakAPI(keycloakBaseUrl, password, clientId)
@@ -47,7 +48,7 @@ When(a.Secret)
 
     const secret = await kcAPI.createOrGetClientSecret(realmName, clientId, clientName)
 
-    await createKubernetesClientSecret(namespaceName, "clientsecret", realmName, clientId, clientName, secret)
+    await k8sApi.createKubernetesClientSecret(namespaceName, "clientsecret", realmName, clientId, clientName, secret)
     console.log(`keycloak client secret has been stored`)
 
   });
@@ -70,11 +71,12 @@ When(a.Secret).IsCreated().WithName("user")
     const realmName = "yoda"
     const clientId = "dagoba"
     const clientName = "swamp"
+    var k8sApi = new k8sAPI()
 
-    const password = await getSecretValue(keycloakNameSpace, secretName, "admin-password")
+    const password = await k8sApi.getSecretValue(keycloakNameSpace, secretName, "admin-password")
     const kcAPI = new keycloakAPI(keycloakBaseUrl, password, clientId)
     const generatedPassword = await kcAPI.createUser(realmName, userName, email, firstname, lastname)
-    await createKubernetesSecret(namespaceName, userName, userName, generatedPassword)
+    await k8sApi.createKubernetesSecret(namespaceName, userName, userName, generatedPassword)
 
   });
 
@@ -82,6 +84,6 @@ function getVal(data: { [key: string]: string }, p: string): string {
   if (data && data[p]) {
     return Buffer.from(data[p], "base64").toString("utf-8");
   }
-  throw new Error("${p} not in the secret")
+  throw new Error(`${p} not in the secret`)
 }
 
