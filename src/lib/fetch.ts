@@ -30,7 +30,7 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit) {
 
     if (resp.ok) {
       // Parse the response as JSON if the content type is JSON
-      if (contentType === "application/json") {
+      if (contentType.includes("application/json")) {
         data = await resp.json();
       } else {
         // Otherwise, return however the response was read
