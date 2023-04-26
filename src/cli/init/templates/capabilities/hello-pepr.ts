@@ -1,4 +1,11 @@
-import { Capability, PeprRequest, RegisterKind, a, fetch } from "pepr";
+import {
+  Capability,
+  PeprRequest,
+  RegisterKind,
+  a,
+  fetch,
+  fetchStatus,
+} from "pepr";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -168,13 +175,22 @@ When(a.ConfigMap)
   .IsCreated()
   .WithLabel("chuck-norris")
   .Then(async change => {
+    // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
       "https://api.chucknorris.io/jokes/random?category=dev"
     );
 
+    // Instead, check the `response.ok` field
     if (response.ok) {
       // Add the Chuck Norris joke to the configmap
       change.Raw.data["chuck-says"] = response.data.value;
+      return;
+    }
+
+    // You can also assert on different HTTP response codes
+    if (response.status === fetchStatus.NOT_FOUND) {
+      // Do something else
+      return;
     }
   });
 

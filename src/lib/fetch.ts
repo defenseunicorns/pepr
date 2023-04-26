@@ -24,10 +24,18 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit) {
     logger.debug(`Fetching ${url}`);
 
     const resp = await f(url, init);
+    const contentType = resp.headers.get("content-type");
+
     let data: T;
 
     if (resp.ok) {
-      data = await resp.json();
+      // Parse the response as JSON if the content type is JSON
+      if (contentType === "application/json") {
+        data = await resp.json();
+      } else {
+        // Otherwise, return however the response was read
+        data = (await resp.text()) as unknown as T;
+      }
     }
 
     return {
