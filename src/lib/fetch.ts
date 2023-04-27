@@ -6,6 +6,13 @@ import f, { RequestInfo, RequestInit } from "node-fetch";
 import logger from "./logger";
 export { f as fetchRaw };
 
+export type FetchResponse<T> = {
+  data: T;
+  ok: boolean;
+  status: number;
+  statusText: string;
+};
+
 /**
  * Perform an async HTTP call and return the parsed JSON response, optionally
  * as a specific type.
@@ -19,7 +26,7 @@ export { f as fetchRaw };
  * @param init Additional options for the request
  * @returns
  */
-export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit) {
+export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Promise<FetchResponse<T>> {
   try {
     logger.debug(`Fetching ${url}`);
 
