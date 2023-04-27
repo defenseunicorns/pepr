@@ -14,7 +14,7 @@ const keycloakBaseUrl = "http://localhost:9999";
 
 // stuff that should come from the configmap
 const secretName = "keycloak";
-const keycloakNameSpace = "default";
+const keycloakNameSpace = "keycloak";
 
 // XXX: TODO: should we be able to revoke the root keycloak creds.
 // XXX: TODO: key rotation example.
@@ -55,15 +55,11 @@ When(a.Secret)
       clientId,
       clientName
     );
+    request.Raw.data['clientSecret'] = Buffer.from(secret).toString("base64")
+    request.RemoveLabel("create")
+    request.SetLabel("secret", "created")
 
-    await k8sApi.createKubernetesClientSecret(
-      namespaceName,
-      "clientsecret",
-      realmName,
-      clientId,
-      clientName,
-      secret
-    );
+
     console.log(`keycloak client secret has been stored`);
   });
 
