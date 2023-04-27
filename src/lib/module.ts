@@ -4,6 +4,7 @@
 import R from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
+import { Request, Response } from "./k8s/types";
 import { ModuleConfig } from "./types";
 
 const alwaysIgnore = {
@@ -16,6 +17,16 @@ export type PackageJSON = {
   pepr: ModuleConfig;
 };
 
+export type PeprModuleOptions = {
+  deferStart?: boolean;
+
+  /** A user-defined callback to pre-process or intercept a Pepr request from K8s immediately before it is processed */
+  beforeHook?: (req: Request) => void;
+
+  /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
+  afterHook?: (res: Response) => void;
+};
+
 export class PeprModule {
   private _controller: Controller;
 
@@ -26,19 +37,18 @@ export class PeprModule {
    * @param capabilities The capabilities to be loaded into the Pepr runtime
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
-  constructor(
-    { description, pepr }: PackageJSON,
-    capabilities: Capability[] = [],
-    private readonly _deferStart = false
-  ) {
+  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
     config.description = description;
 
-    this._controller = new Controller(config, capabilities);
+    this._controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
 
-    if (!_deferStart) {
-      this.start();
+    // Stop processing if deferStart is set to true
+    if (opts.deferStart) {
+      return;
     }
+
+    this.start();
   }
 
   /**
