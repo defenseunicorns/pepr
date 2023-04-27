@@ -25,7 +25,7 @@
     "start": "pepr dev"
   },
   "dependencies": {
-    "pepr": "^0.2.7"
+    "pepr": "^0.2.8"
   },
   "devDependencies": {
     "ts-node": "10.9.1",
