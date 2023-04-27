@@ -7,7 +7,6 @@ written in Typescript.
 
 You should have a kubernetes cluster ready with keycloak deployed (I started with the bitnami chart), this example currently requires running in VScode
 
-
 ## module
 
 This module
