@@ -59,9 +59,19 @@ When(a.Secret)
     request.RemoveLabel("create")
     request.SetLabel("secret", "created")
 
-
-    console.log(`keycloak client secret has been stored`);
+    console.log(`keycloak client secret has been updated`);
   });
+
+
+  When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithName("config")
+  .WithLabel("secret", "created")
+  .Then(async request => {
+    console.log(`keycloak client secret is ready for authservice`);
+
+  });
+
 
 // XXX: BDW: handle the keycloak clientid/secret and do the authservice stuff...
 // When.....
