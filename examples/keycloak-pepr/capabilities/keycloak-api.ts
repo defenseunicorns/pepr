@@ -1,209 +1,223 @@
-import { generateRandomPassword } from './util';
-import { fetch } from "pepr";
-export { keycloakAPI };
+import { HeadersInit } from "node-fetch";
+import { Log, fetch, fetchStatus } from "pepr";
+import { generatePassword } from "./util";
 
-class keycloakAPI {
-  baseURL: string;
-  connected: boolean;
-  clientId: string;
-  username: string;
-  password: string;
-  accessToken: string;
+interface TokenResponse {
+  access_token: string;
+}
 
-  constructor(baseURL: string, password: string, clientId: string) {
-    this.baseURL = baseURL
-    this.connected = false
-    this.password = password
-    this.clientId = clientId
-    this.username = 'user'
-  }
+interface usersResponse {
+  id: string;
+}
 
-  // makes the connection to the keycloak API and gets an accessToken
+interface clientIdInterface {
+  secret: string;
+}
+
+export class KeycloakAPI {
+  headers: HeadersInit;
+  connected = false;
+  username = "user";
+
+  constructor(
+    private readonly baseURL: string,
+    private readonly password: string,
+    private readonly clientId: string
+  ) {}
+
+  /**
+   * makes the connection to the keycloak API and gets an accessToken
+   *
+   * @returns void
+   */
   private async connect() {
-    if (this.connected == true) {
-      return
+    // If we're already connected, do nothing
+    if (this.connected) {
+      return;
     }
 
-    interface TokenResponse {
-      access_token: string
-    }
+    const url = `${this.baseURL}/realms/master/protocol/openid-connect/token`;
+    const body = {
+      grant_type: "password",
+      client_id: "admin-cli",
+      username: this.username,
+      password: this.password,
+    };
 
-    const tokenUrl = `${this.baseURL}/realms/master/protocol/openid-connect/token`;
-
-    const requestData = {
-      'grant_type': 'password',
-      'client_id': 'admin-cli',
-      'username': this.username,
-      'password': this.password
-    }
-
-    var { data, ok, status, statusText } = await fetch<TokenResponse>(tokenUrl, {
-      method: 'POST',
+    const { data, ok, status, statusText } = await fetch<TokenResponse>(url, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams(requestData),
+      body: new URLSearchParams(body),
     });
+
     if (!ok) {
-      throw new Error(`${status} ${statusText} from tokenUrl`)
+      throw new Error(`${status} ${statusText} from tokenUrl`);
     }
-    this.accessToken = data.access_token;
-    this.connected = true
+
+    // Set the headers for future requests
+    this.headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${data.access_token}`,
+    };
+
+    // Mark the connection as established
+    this.connected = true;
   }
 
+  async createUser(
+    realmName: string,
+    username: string,
+    email: string,
+    firstName: string,
+    lastName: string
+  ): Promise<string> {
+    await this.connect();
 
-  // return the tokenized headers
-  getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.accessToken}`,
-    }
-  }
-
-  // 
-  async createUser(realmName: string, username: string, email: string, firstName: string, lastName: string): Promise<string> {
-    await this.connect()
-
-    var userId = await this.getUser(realmName, username);
+    let userId = await this.getUser(realmName, username);
     if (userId == undefined) {
-
       // XXX: BDW: This will get a 409 conflict if the user exists.
-      const createUserUrl = `${this.baseURL}/admin/realms/${realmName}/users`
-
-      const requestData = {
+      const url = `${this.baseURL}/admin/realms/${realmName}/users`;
+      const body = {
         username: username,
         email: email,
         firstName: firstName,
         lastName: lastName,
         enabled: true,
-      }
-      var { data, ok, status, statusText } = await fetch(
-        createUserUrl, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(requestData),
+      };
+
+      const { ok, status, statusText } = await fetch(url, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify(body),
       });
 
       if (!ok) {
-        throw new Error(`${status} ${statusText} from ${createUserUrl}`)
+        throw new Error(`${status} ${statusText} from ${url}`);
       }
 
-      var userId = await this.getUser(realmName, username);
+      userId = await this.getUser(realmName, username);
 
-      // XXXX: BDW maybe not necesaary
+      // XXXX: BDW maybe not necessary
       if (userId === undefined) {
-        throw new Error(`failed to find the user created for ${username}`)
+        throw new Error(`failed to find the user created for ${username}`);
       }
-      return userId
+
+      return userId;
     }
 
     // If we're getting an update on the user, it will regenerate their password
     // likely we want to only do this for a new user....
-    const password = generateRandomPassword(12);
+    const password = generatePassword(12);
 
-    const setPasswordUrl = `${this.baseURL}/admin/realms/${realmName}/users/${userId}/reset-password`
+    const url = `${this.baseURL}/admin/realms/${realmName}/users/${userId}/reset-password`;
+    const body = {
+      temporary: false,
+      value: password,
+    };
 
-    var { data, ok, status, statusText } = await fetch(
-      setPasswordUrl,
-      {
-        method: 'PUT',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          temporary: false,
-          value: password,
-        }),
-      }
-    );
+    const { ok, status, statusText } = await fetch(url, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
 
     if (!ok) {
-      throw new Error(`${status} ${statusText} from ${setPasswordUrl}`)
+      throw new Error(`${status} ${statusText} from ${url}`);
     }
-    return password;
 
+    return password;
   }
 
-  private async getUser(realmName: string, username: string): Promise<string | undefined> {
-    interface usersResponse {
-      id: string
-    }
-    const getUserUrl = `${this.baseURL}/admin/realms/${realmName}/users?username=${encodeURIComponent(username)}`;
-    const { data, ok, status, statusText } = await fetch<usersResponse[]>(
-      getUserUrl,
-      {
-        method: 'GET',
-        headers: this.getHeaders(),
-      }
-    );
+  private async getUser(
+    realmName: string,
+    username: string
+  ): Promise<string | undefined> {
+    const encodedUsername = encodeURIComponent(username);
+    const url = `${this.baseURL}/admin/realms/${realmName}/users?username=${encodedUsername}`;
+
+    const { data, ok, status, statusText } = await fetch<usersResponse[]>(url, {
+      method: "GET",
+      headers: this.headers,
+    });
 
     if (!ok) {
-      throw new Error(`${status} ${statusText} from ${getUserUrl}`);
+      throw new Error(`${status} ${statusText} from ${url}`);
     }
 
     if (data.length === 0) {
-      return undefined
+      return undefined;
     }
 
     if (data.length !== 1) {
-      throw new Error(`Too many usersIds for user ${username} in realm ${realmName}`);
+      throw new Error(
+        `Too many usersIds for user ${username} in realm ${realmName}`
+      );
     }
 
-    return data[0].id
+    return data[0].id;
   }
-
 
   // return true if found, false is not found, and throw an exception for other errors
-  async getRealm(realmName: string): Promise<boolean> {
-    const { data, ok, status, statusText } = await fetch(
-      `${this.baseURL}/admin/realms/${realmName}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
+  async getRealm(realmName: string) {
+    const url = `${this.baseURL}/admin/realms/${realmName}`;
+
+    const { ok, status, statusText } = await fetch<unknown>(url, {
+      method: "GET",
+      headers: this.headers,
     });
+
     if (ok) {
-      return true
+      return true;
     }
-    if (status !== 404) {
+
+    if (status !== fetchStatus.NOT_FOUND) {
       throw new Error(`Error checking for realm existence: ${statusText}`);
     }
-    return false
+
+    return false;
   }
 
-
   async createOrGetKeycloakRealm(realmName: string) {
-    await this.connect()
-    const doesRealmExist = await this.getRealm(realmName)
+    await this.connect();
+    const doesRealmExist = await this.getRealm(realmName);
     if (doesRealmExist) {
-      return
+      return;
     }
 
-    const createReamUrl = `${this.baseURL}/admin/realms`
-    const { data, ok, status, statusText } = await fetch(
-      createReamUrl, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({
-        realm: realmName,
-        enabled: true,
-      }),
+    const url = `${this.baseURL}/admin/realms`;
+    const body = {
+      realm: realmName,
+      enabled: true,
+    };
+
+    const { ok, status, statusText } = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
     });
+
     if (!ok) {
-      throw new Error(`${status} ${statusText} from ${createReamUrl}`)
+      throw new Error(`${status} ${statusText} from ${url}`);
     }
   }
 
   async getClientSecret(realmName: string, clientId: string): Promise<string> {
-    interface clientIdInterface {
-      secret: string
-    }
+    const url = `${this.baseURL}/admin/realms/${realmName}/clients?clientId=${clientId}`;
 
-    const getClientIdUrl = `${this.baseURL}/admin/realms/${realmName}/clients?clientId=${clientId}`
-    var { data, ok, status, statusText } = await fetch<clientIdInterface[]>(
-      getClientIdUrl, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
+    const { data, ok, status, statusText } = await fetch<clientIdInterface[]>(
+      url,
+      {
+        method: "GET",
+        headers: this.headers,
+      }
+    );
 
     if (!ok) {
-      throw new Error(`Error getting clients for clientId ${clientId}: ${status} ${statusText}`);
+      throw new Error(
+        `Error getting clients for clientId ${clientId}: ${status} ${statusText}`
+      );
     }
 
     if (data.length > 1) {
@@ -211,11 +225,13 @@ class keycloakAPI {
     }
 
     if (data.length == 1) {
-      console.log(`Client ID '${clientId}' already exists.`);
+      Log.info(`Client ID '${clientId}' already exists.`);
       if (data[0].secret) {
         return data[0].secret;
       } else {
-        throw new Error(`Existing client '${clientId}' is not a confidential client, no secret is available.`);
+        throw new Error(
+          `Existing client '${clientId}' is not a confidential client, no secret is available.`
+        );
       }
     }
   }
@@ -224,40 +240,45 @@ class keycloakAPI {
     realmName: string,
     clientId: string,
     clientName: string
-  ): Promise<string> {
-    await this.connect()
+  ) {
+    await this.connect();
 
     // if the client secret already exists, return it.
-    var secret = await this.getClientSecret(realmName, clientId)
+    let secret = await this.getClientSecret(realmName, clientId);
     if (secret !== undefined) {
-      return secret
+      return secret;
     }
 
-    const createClientUrl = `${this.baseURL}/admin/realms/${realmName}/clients`
-    const {data, ok, status, statusText} = await fetch(
-      createClientUrl, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({
-        clientId,
-        name: clientName,
-        enabled: true,
-        protocol: 'openid-connect',
-        publicClient: false, // Make this a confidential client
-        clientAuthenticatorType: 'client-secret', // Use client secret for authentication
-      }),
+    const url = `${this.baseURL}/admin/realms/${realmName}/clients`;
+    const body = {
+      clientId,
+      name: clientName,
+      enabled: true,
+      protocol: "openid-connect",
+      publicClient: false, // Make this a confidential client
+      clientAuthenticatorType: "client-secret", // Use client secret for authentication
+    };
+
+    const { ok, status, statusText } = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
     });
+
     if (!ok) {
-      throw new Error(`${status} ${statusText} from ${createClientUrl}`)
+      throw new Error(`${status} ${statusText} from ${url}`);
     }
 
-    secret = await this.getClientSecret(realmName, clientId)
+    secret = await this.getClientSecret(realmName, clientId);
     if (secret === undefined) {
-      throw new Error(`Could not find secret for the ${clientName} and id ${clientId}`)
+      throw new Error(
+        `Could not find secret for the ${clientName} and id ${clientId}`
+      );
     }
 
-    console.log(`Successfully created client '${clientName}' with client ID '${clientId}'`);
-
+    Log.info(
+      `Successfully created client '${clientName}' with client ID '${clientId}'`
+    );
 
     return secret;
   }

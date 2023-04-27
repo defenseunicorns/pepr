@@ -1,17 +1,16 @@
-import fetch from 'node-fetch';
+import * as crypto from "crypto";
 
-export { generateRandomPassword  };
-  
+/**
+ * Generate a random password of the given length
+ *
+ * @param length
+ * @returns
+ */
+export function generatePassword(length = 16) {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const buf = crypto.randomBytes(length);
+  const password = Array.from(buf, byte => chars[byte % chars.length]).join("");
 
-function generateRandomPassword(length: number): string {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  let result = '';
-
-  for (let i = 0; i < length; i++) {
-    // XXX: BDW Blake will never ever allow this in production.
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-
-  return result;
+  return password;
 }
