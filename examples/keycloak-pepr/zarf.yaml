@@ -1,0 +1,41 @@
+kind: ZarfPackageConfig
+metadata:
+  name: pepr-keycloak-demo
+  yolo: true
+
+components:
+  - name: keycloak
+    required: true
+    charts:
+      - name: keycloak
+        url: https://charts.bitnami.com/bitnami
+        version: 14.4.0
+        namespace: keycloak
+    actions:
+      onDeploy:
+        defaults:
+          mute: true
+        before:
+          - cmd: helm uninstall traefik -n kube-system || true
+          - cmd: helm uninstall traefik-crd -n kube-system || true
+        onSuccess:
+          - cmd: |
+              echo "Keycloak admin password:"
+              kubectl get secret -n keycloak keycloak -o yaml | awk -F ': ' '/admin-password/ {print $2}' | base64 -d
+              echo ""
+              echo "Run 'kubectl port-forward svc/keycloak -n keycloak 9999:80' and then navigate to http://localhost:9999/"
+            mute: false
+
+  - name: istio
+    required: true
+    charts:
+      - name: base
+        releaseName: istio
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.17.2
+        namespace: istio-system
+      - name: istiod
+        releaseName: istiod
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.17.2
+        namespace: istio-system
