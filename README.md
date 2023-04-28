@@ -48,6 +48,7 @@ pepr init
 npm run k3d-setup
 
 # Start playing with Pepr now
+# If using another local K8s distro instead of k3d, run `pepr dev --host host.docker.internal`
 pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
 
