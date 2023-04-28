@@ -1,0 +1,3 @@
+image:
+  repository: ghcr.io/istio-ecosystem/authservice/authservice
+  tag: 0.5.3

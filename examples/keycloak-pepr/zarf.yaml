@@ -39,3 +39,14 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.17.2
         namespace: istio-system
+
+  - name: authservice
+    required: true
+    charts:
+      - name: authservice
+        gitPath: chart
+        url: https://repo1.dso.mil/big-bang/product/packages/authservice.git
+        version: 0.5.3-bb.7
+        namespace: authservice
+        valuesFiles:
+          - "authservice-image.yaml"
