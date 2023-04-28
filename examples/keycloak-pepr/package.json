@@ -21,11 +21,11 @@
   "scripts": {
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "build": "pepr build",
-    "start": "pepr dev", 
+    "start": "pepr dev",
     "zarf": "zarf package create --confirm && zarf package deploy zarf-package-pepr-keycloak-demo-*.tar.zst --confirm"
   },
   "dependencies": {
-    "pepr": "^0.2.8"
+    "pepr": "^0.2.9"
   },
   "devDependencies": {
     "ts-node": "10.9.1",
