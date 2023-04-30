@@ -23,6 +23,7 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](./cli
    npm run k3d-setup
 
    # Launch pepr dev mode (npm start or pepr dev)
+   # If using another local K8s distro instead of k3d, use `pepr dev --host host.docker.internal`
    pepr dev
 
    # From another terminal, apply the sample yaml
