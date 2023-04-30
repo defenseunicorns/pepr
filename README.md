@@ -6,9 +6,16 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Features
 
-- Define a set of Kubernetes transformations/actions as Pepr capabilities.
-- Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
-- React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
+- Zero-config K8s webhook mutations and [validations soon](https://github.com/defenseunicorns/pepr/issues/73).
+- Human-readable fluent API for generating [Pepr Capabilities](#capability)
+- Generate new K8s resources based off of cluster resource changes
+- Perform other exec/API calls based off of cluster resources changes or any other abitrary schedule
+- Out of the box airgap support with [Zarf](https://zarf.dev)
+- Entire NPM ecosystem available for advanced operations
+- Realtime K8s debugging system for testing/reacting to cluster changes
+- Controller network isolation and tamper-resistent module execution
+- Automatic least-privelege RBAC generation [soon](https://github.com/defenseunicorns/pepr/issues/31)
+- AMD64 and ARM64 support 
 
 ## Example Pepr CapabilityAction
 
