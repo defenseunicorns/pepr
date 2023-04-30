@@ -1,0 +1,4 @@
+# One entry for each vulnerability group
+[[IgnoredVulns]]
+id = "GHSA-p8p7-x288-28g6"
+reason = "Library only used client-side and not affected by this vulnerability."

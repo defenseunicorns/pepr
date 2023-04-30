@@ -4,9 +4,10 @@
 import express from "express";
 import fs from "fs";
 import https from "https";
-import { ModuleConfig } from "./types";
 import { Capability } from "./capability";
+import { Request, Response } from "./k8s/types";
 import { processor } from "./processor";
+import { ModuleConfig } from "./types";
 
 // Load SSL certificate and key
 const options = {
@@ -18,7 +19,12 @@ export class Controller {
   private readonly app = express();
   private running = false;
 
-  constructor(private readonly config: ModuleConfig, private readonly capabilities: Capability[]) {
+  constructor(
+    private readonly config: ModuleConfig,
+    private readonly capabilities: Capability[],
+    private readonly beforeHook?: (req: Request) => void,
+    private readonly afterHook?: (res: Response) => void
+  ) {
     // Middleware for logging requests
     this.app.use(this.logger);
 
@@ -30,6 +36,14 @@ export class Controller {
 
     // Mutate endpoint
     this.app.post("/mutate", this.mutate);
+
+    if (beforeHook) {
+      console.info(`Using beforeHook: ${beforeHook}`);
+    }
+
+    if (afterHook) {
+      console.info(`Using afterHook: ${afterHook}`);
+    }
   }
 
   /** Start the webhook server */
@@ -71,6 +85,9 @@ export class Controller {
 
   private mutate = async (req: express.Request, res: express.Response) => {
     try {
+      // Run the before hook if it exists
+      this.beforeHook && this.beforeHook(req.body?.request || {});
+
       const name = req.body?.request?.name || "";
       const namespace = req.body?.request?.namespace || "";
       const gvk = req.body?.request?.kind || { group: "", version: "", kind: "" };
@@ -78,7 +95,13 @@ export class Controller {
       console.log(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`);
       name && console.log(`                ${namespace}/${name}\n`);
 
+      // Process the request
       const response = await processor(this.config, this.capabilities, req.body.request);
+
+      // Run the after hook if it exists
+      this.afterHook && this.afterHook(response);
+
+      // Log the response
       console.debug(response);
 
       // Send a no prob bob response

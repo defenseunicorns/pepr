@@ -10,7 +10,31 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Write capabilities in TypeScript and bundle them for in-cluster processing in [NodeJS](https://nodejs.org/).
 - React to cluster resources by mutating them, creating new Kubernetes resources, or performing arbitrary exec/API operations.
 
+## Example Pepr CapabilityAction
+
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. Finally, it logs a message to the Pepr controller logs. For more see [CapabilityActions](./docs/actions.md).
+
+```ts
+When(a.ConfigMap)
+  .IsCreatedOrUpdated()
+  .InNamespace("pepr-demo")
+  .WithLabel("unicorn", "rainbow")
+  .Then(request => {
+    // Add a label and annotation to the ConfigMap
+    request
+      .SetLabel("pepr", "was-here")
+      .SetAnnotation("pepr.dev", "annotations-work-too");
+
+    // Add some data to the ConfigMap
+    request.Raw.data["doug-says"] = "Pepr is awesome!";
+
+    // Log a message to the Pepr controller logs
+    Log.info("A 🦄 ConfigMap was created or updated:");
+  });
+```
+
 ## Wow too many words! tl;dr;
+
 ```bash
 # Install Pepr (you can also use npx)
 npm i -g pepr
@@ -24,8 +48,9 @@ pepr init
 npm run k3d-setup
 
 # Start playing with Pepr now
+# If using another local K8s distro instead of k3d, run `pepr dev --host host.docker.internal`
 pepr dev
-kubectl apply -f capabilities/hello-pepr.samples.yaml 
+kubectl apply -f capabilities/hello-pepr.samples.yaml
 
 # Be amazed and ⭐️ this repo
 ```
@@ -46,9 +71,13 @@ https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb
 
 A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their CapabilityActions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster for processing by a common Pepr controller.
 
+See [Module](./docs/module.md) for more details.
+
 ### Capability
 
-A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules. 
+A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
+
+See [Capabilities](./docs/capabilities.md) for more details.
 
 ### CapabilityAction
 
@@ -56,81 +85,7 @@ CapabilityAction is a discrete set of behaviors defined in a single function tha
 
 For example, a CapabilityAction could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. CapabilityActions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-## Example
-
-Define a new capability can be done via [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets): create a file `capabilities/your-capability-name.ts` and then type `create` in the file, a suggestion should prompt you to generate the content from there.
-
-https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4
-
-Alternatively, you can use the `pepr new <capability-name>` command to this:
-
-```
-pepr new hello-world
-```
-
-This will create a new file called `capabilities/hello-world.ts` with the following contents:
-
-```typescript
-import { Capability, a } from "pepr";
-
-export const HelloWorld = new Capability({
-  // The unique name of the capability
-  name: "hello-world",
-  // A short description of the capability
-  description: "Type a useful description here 🦄",
-  // Limit what namespaces the capability can be used in (optional)
-  namespaces: [],
-});
-
-// Use the 'When' function to create a new Capability Action
-const { When } = HelloWorld;
-```
-
-Next, we need to define some actions to perform when specific Kubernetes resources are created, updated or deleted in the cluster. Pepr provides a set of actions that can be used to react to Kubernetes resources, such as `a.Pod`, `a.Deployment`, `a.CronJob`, etc. These actions can be chained together to create complex conditions, such as `a.Pod.IsCreated().InNamespace("default")` or `a.Deployment.IsUpdated().WithLabel("changeme=true")`. Below is an example of a capability that reacts to the creation of a Deployment resource:
-
-```typescript
-When(a.Deployment)
-  .IsCreated()
-  .ThenSet({
-    spec: {
-      minReadySeconds: 3,
-    },
-  });
-```
-
-Here's a more complex example that reacts to the creation of a Deployment resource:
-
-```typescript
-When(a.Deployment)
-  .IsCreatedOrUpdated()
-  .InNamespace("ns1", "ns2")
-  .WithLabel("changeme", "true")
-  .Then(request => {
-    request
-      .SetLabel("mutated", "true")
-      .SetLabel("test", "thing")
-      .SetAnnotation("test2", "thing")
-      .RemoveLabel("test3");
-
-    if (request.HasLabel("test")) {
-      request.SetLabel("test5", "thing");
-    }
-
-    const { spec } = request.Raw;
-    spec.strategy.type = "Recreate";
-    spec.minReadySeconds = 3;
-
-    if (request.PermitSideEffects) {
-      // Do side-effect inducing things
-    }
-  });
-```
-
-Now you can build and bundle your capability:
-
-```
-pepr build hello-world
-```
+See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
 
