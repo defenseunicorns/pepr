@@ -1,3 +1,12 @@
 image:
   repository: ghcr.io/istio-ecosystem/authservice/authservice
   tag: 0.5.3
+
+chains:
+  podinfo:
+    match:
+      header: ":authority"
+      prefix: "podinfo"
+    callback_uri: "https://podinfo.bigbang.net/login/generic_oauth"
+    client_id: "podinfo"
+    client_secret: "CHANGE_ME_MISSION_APP_SECRET"
