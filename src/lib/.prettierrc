@@ -1,14 +1,16 @@
 {
-  "arrowParens": "avoid",
-  "bracketSameLine": false,
-  "bracketSpacing": true,
-  "embeddedLanguageFormatting": "auto",
-  "insertPragma": false,
-  "printWidth": 120,
-  "quoteProps": "as-needed",
-  "requirePragma": false,
+  // Use single quotes for consistency and readability
+  "singleQuote": true,
+  // Use 2 spaces for indentation for consistency with most JavaScript projects
+  "tabWidth": 2,
+  // Use semicolons for consistency and to avoid potential issues with automatic semicolon insertion
   "semi": true,
-  "useTabs": false,
-  "vueIndentScriptAndStyle": false,
-  "tabWidth": 2
+  // Use consistent spacing around brackets for readability
+  "bracketSpacing": true,
+  // Use consistent spacing around object properties for readability
+  "quoteProps": "consistent",
+  // Use consistent line breaks for readability
+  "endOfLine": "lf",
+  // Use consistent maximum line length for readability
+  "printWidth": 80
 }

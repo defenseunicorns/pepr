@@ -1,4 +1,5 @@
-# One entry for each vulnerability group
+# Ignore vulnerability group with ID GHSA-p8p7-x288-28g6
+# Reason: The library is only used client-side and not affected by this vulnerability.
 [[IgnoredVulns]]
 id = "GHSA-p8p7-x288-28g6"
-reason = "Library only used client-side and not affected by this vulnerability."
+reason = "Library not affected by vulnerability."

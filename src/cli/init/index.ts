@@ -5,7 +5,6 @@ import { execSync } from "child_process";
 import { resolve } from "path";
 import prompts from "prompts";
 import Log from "../../../src/lib/logger";
-import { RootCmd } from "../root";
 import {
   genPeprTS,
   genPkgJSON,
@@ -20,13 +19,16 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, walkthrough } from "./walkthrough";
 
-export default function (program: RootCmd) {
+/**
+ * Initializes a new Pepr module.
+ * @param {RootCmd} program - The root command object.
+ */
+export default function initPeprModule(program: RootCmd): void {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
-    .action(async opts => {
+    .action(async (opts) => {
       let pkgOverride = "";
 
       // Overrides for testing. @todo: don't be so gross with Node CLI testing
@@ -50,15 +52,17 @@ export default function (program: RootCmd) {
           await createDir(resolve(dirName, ".vscode"));
           await createDir(resolve(dirName, "capabilities"));
 
-          await write(resolve(dirName, gitIgnore.path), gitIgnore.data);
-          await write(resolve(dirName, prettierRC.path), prettierRC.data);
-          await write(resolve(dirName, packageJSON.path), packageJSON.data);
-          await write(resolve(dirName, readme.path), readme.data);
-          await write(resolve(dirName, tsConfig.path), tsConfig.data);
-          await write(resolve(dirName, peprTS.path), peprTS.data);
-          await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
-          await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
-          await write(resolve(dirName, "capabilities", helloPeprTS.path), helloPeprTS.data);
+          await Promise.all([
+            write(resolve(dirName, gitIgnore.path), gitIgnore.data),
+            write(resolve(dirName, prettierRC.path), prettierRC.data),
+            write(resolve(dirName, packageJSON.path), packageJSON.data),
+            write(resolve(dirName, readme.path), readme.data),
+            write(resolve(dirName, tsConfig.path), tsConfig.data),
+            write(resolve(dirName, peprTS.path), peprTS.data),
+            write(resolve(dirName, ".vscode", snippet.path), snippet.data),
+            write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data),
+            write(resolve(dirName, "capabilities", helloPeprTS.path), helloPeprTS.data),
+          ]);
 
           if (!opts.skipPostInit) {
             // run npm install from the new directory
@@ -84,9 +88,9 @@ export default function (program: RootCmd) {
 
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
-        } catch (e) {
-          Log.debug(e);
-          Log.error(e.message);
+        } catch (error) {
+          Log.debug(error);
+          Log.error(error.message);
           process.exit(1);
         }
       }

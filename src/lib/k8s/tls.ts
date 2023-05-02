@@ -1,6 +1,6 @@
 import forge from "node-forge";
 
-const caName = "Pepr Ephemeral CA";
+const CA_NAME = "Pepr Ephemeral CA";
 
 export interface TLSOut {
   ca: string;
@@ -22,21 +22,12 @@ export interface TLSOut {
 export function genTLS(name: string): TLSOut {
   // Generate a new CA key pair and create a self-signed CA certificate
   const caKeys = forge.pki.rsa.generateKeyPair(2048);
-  const caCert = genCert(caKeys, caName, [{ name: "commonName", value: caName }]);
+  const caCert = genCert(caKeys, CA_NAME, [{ name: "commonName", value: CA_NAME }]);
 
-  caCert.setExtensions([
-    {
-      name: "basicConstraints",
-      cA: true,
-    },
-    {
-      name: "keyUsage",
-      keyCertSign: true,
-      digitalSignature: true,
-      nonRepudiation: true,
-      keyEncipherment: true,
-      dataEncipherment: true,
-    },
+  // Set extensions for the CA certificate
+  setExtensions(caCert, [
+    { name: "basicConstraints", cA: true },
+    { name: "keyUsage", keyCertSign: true, digitalSignature: true, nonRepudiation: true, keyEncipherment: true, dataEncipherment: true },
   ]);
 
   // Generate a new server key pair and create a server certificate signed by the CA
@@ -62,29 +53,37 @@ export function genTLS(name: string): TLSOut {
   return { ca, key, crt, pem };
 }
 
-function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.CertificateField[]) {
-  const crt = forge.pki.createCertificate();
-  crt.publicKey = key.publicKey;
-  crt.serialNumber = "01";
-  crt.validity.notBefore = new Date();
-  crt.validity.notAfter = new Date();
-  crt.validity.notAfter.setFullYear(crt.validity.notBefore.getFullYear() + 1);
+/**
+ * Generates a new certificate with the given key pair, name, and issuer.
+ *
+ * @param {forge.pki.rsa.KeyPair} key - The key pair to use for the certificate.
+ * @param {string} name - The name to use for the certificate's Common Name and SAN DNS entry.
+ * @param {forge.pki.CertificateField[]} issuer - The issuer of the certificate.
+ * @returns {forge.pki.Certificate} - The generated certificate.
+ */
+function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.CertificateField[]): forge.pki.Certificate {
+  const cert = forge.pki.createCertificate();
+  cert.publicKey = key.publicKey;
+  cert.serialNumber = "01";
+  cert.validity.notBefore = new Date();
+  cert.validity.notAfter = new Date();
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
 
-  // Add SANs to the server certificate
-  crt.setExtensions([
-    {
-      name: "subjectAltName",
-      altNames: [
-        {
-          type: 2, // DNS
-          value: name,
-        },
-      ],
-    },
-  ]);
+  // Add SANs to the certificate
+  setExtensions(cert, [{ name: "subjectAltName", altNames: [{ type: 2, value: name }] }]);
 
-  // Set the server certificate's issuer to the CA
-  crt.setIssuer(issuer);
+  // Set the certificate's issuer
+  cert.setIssuer(issuer);
 
-  return crt;
+  return cert;
+}
+
+/**
+ * Sets extensions for the given certificate.
+ *
+ * @param {forge.pki.Certificate} cert - The certificate to set extensions for.
+ * @param {forge.pki.Extension[]} extensions - The extensions to set.
+ */
+function setExtensions(cert: forge.pki.Certificate, extensions: forge.pki.Extension[]): void {
+  cert.setExtensions(extensions);
 }

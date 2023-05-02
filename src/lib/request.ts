@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import R from "ramda";
 import { KubernetesObject, Request } from "./k8s";
 import { DeepPartial } from "./types";
 
@@ -9,72 +8,70 @@ import { DeepPartial } from "./types";
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
  * of a mutating webhook request.
  */
-export class PeprRequest<T extends KubernetesObject> {
-  private _input: Request<T>;
+export class RequestWrapper<T extends KubernetesObject> {
+  private readonly _input: Request<T>;
 
-  public Raw: T;
+  /**
+   * The raw Kubernetes resource object.
+   */
+  public readonly Raw: T;
 
-  get PermitSideEffects() {
+  /**
+   * Indicates whether side effects are permitted for the request.
+   */
+  get PermitSideEffects(): boolean {
     return !this._input.dryRun;
   }
 
   /**
    * Indicates whether the request is a dry run.
-   * @returns true if the request is a dry run, false otherwise.
    */
-  get IsDryRun() {
+  get IsDryRun(): boolean {
     return this._input.dryRun;
   }
 
   /**
-   * Provides access to the old resource in the request if available.
-   * @returns The old Kubernetes resource object or null if not available.
+   * The old Kubernetes resource object, if available.
    */
-  get OldResource() {
-    return this._input.oldObject;
+  get OldResource(): T | null {
+    return this._input.oldObject ?? null;
   }
 
   /**
-   * Provides access to the request object.
-   * @returns The request object containing the Kubernetes resource.
+   * The request object containing the Kubernetes resource.
    */
-  get Request() {
+  get Request(): Request<T> {
     return this._input;
   }
 
   /**
-   * Creates a new instance of the Action class.
+   * Creates a new instance of the RequestWrapper class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
   constructor(input: Request<T>) {
-    // Deep clone the object to prevent mutation of the original object
-    this.Raw = R.clone(input.object);
-    // Store the input
     this._input = input;
+    this.Raw = Object.assign({}, input.object);
+    Object.freeze(this.Raw);
   }
 
   /**
    * Deep merges the provided object with the current resource.
-   *
    * @param obj - The object to merge with the current resource.
    */
-  Merge(obj: DeepPartial<T>) {
-    this.Raw = R.mergeDeepRight(this.Raw, obj) as unknown as T;
+  Merge(obj: DeepPartial<T>): void {
+    Object.assign(this.Raw, obj);
   }
 
   /**
    * Updates a label on the Kubernetes resource.
    * @param key - The key of the label to update.
    * @param value - The value of the label.
-   * @returns The current Action instance for method chaining.
+   * @returns The current RequestWrapper instance for method chaining.
    */
-  SetLabel(key: string, value: string) {
-    const ref = this.Raw;
-
-    ref.metadata = ref.metadata ?? {};
-    ref.metadata.labels = ref.metadata.labels ?? {};
-    ref.metadata.labels[key] = value;
-
+  SetLabel(key: string, value: string): RequestWrapper<T> {
+    const metadata = this.Raw.metadata ?? {};
+    metadata.labels = metadata.labels ?? {};
+    metadata.labels[key] = value;
     return this;
   }
 
@@ -82,26 +79,24 @@ export class PeprRequest<T extends KubernetesObject> {
    * Updates an annotation on the Kubernetes resource.
    * @param key - The key of the annotation to update.
    * @param value - The value of the annotation.
-   * @returns The current Action instance for method chaining.
+   * @returns The current RequestWrapper instance for method chaining.
    */
-  SetAnnotation(key: string, value: string) {
-    const ref = this.Raw;
-
-    ref.metadata = ref.metadata ?? {};
-    ref.metadata.annotations = ref.metadata.annotations ?? {};
-    ref.metadata.annotations[key] = value;
-
+  SetAnnotation(key: string, value: string): RequestWrapper<T> {
+    const metadata = this.Raw.metadata ?? {};
+    metadata.annotations = metadata.annotations ?? {};
+    metadata.annotations[key] = value;
     return this;
   }
 
   /**
    * Removes a label from the Kubernetes resource.
    * @param key - The key of the label to remove.
-   * @returns The current Action instance for method chaining.
+   * @returns The current RequestWrapper instance for method chaining.
    */
-  RemoveLabel(key: string) {
-    if (this.Raw.metadata?.labels?.[key]) {
-      delete this.Raw.metadata.labels[key];
+  RemoveLabel(key: string): RequestWrapper<T> {
+    const metadata = this.Raw.metadata ?? {};
+    if (metadata.labels?.hasOwnProperty(key)) {
+      delete metadata.labels[key];
     }
     return this;
   }
@@ -109,32 +104,31 @@ export class PeprRequest<T extends KubernetesObject> {
   /**
    * Removes an annotation from the Kubernetes resource.
    * @param key - The key of the annotation to remove.
-   * @returns The current Action instance for method chaining.
+   * @returns The current RequestWrapper instance for method chaining.
    */
-  RemoveAnnotation(key: string) {
-    if (this.Raw.metadata?.annotations?.[key]) {
-      delete this.Raw.metadata.annotations[key];
+  RemoveAnnotation(key: string): RequestWrapper<T> {
+    const metadata = this.Raw.metadata ?? {};
+    if (metadata.annotations?.hasOwnProperty(key)) {
+      delete metadata.annotations[key];
     }
     return this;
   }
 
   /**
-   * Check if a label exists on the Kubernetes resource.
-   *
-   * @param key the label key to check
-   * @returns
+   * Checks if a label exists on the Kubernetes resource.
+   * @param key - The label key to check.
+   * @returns true if the label exists, false otherwise.
    */
-  HasLabel(key: string) {
-    return this.Raw?.metadata?.labels?.[key] !== undefined;
+  HasLabel(key: string): boolean {
+    return this.Raw?.metadata?.labels?.hasOwnProperty(key) ?? false;
   }
 
   /**
-   * Check if an annotation exists on the Kubernetes resource.
-   *
-   * @param key the annotation key to check
-   * @returns
+   * Checks if an annotation exists on the Kubernetes resource.
+   * @param key - The annotation key to check.
+   * @returns true if the annotation exists, false otherwise.
    */
-  HasAnnotation(key: string) {
-    return this.Raw?.metadata?.annotations?.[key] !== undefined;
+  HasAnnotation(key: string): boolean {
+    return this.Raw?.metadata?.annotations?.hasOwnProperty(key) ?? false;
   }
 }

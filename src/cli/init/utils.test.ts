@@ -4,6 +4,7 @@
 import test from "ava";
 import { sanitizeName } from "./utils";
 
+// Test cases for sanitizeName function
 test("sanitizeName() sanitizes names correctly", t => {
   const cases = [
     {
@@ -20,6 +21,7 @@ test("sanitizeName() sanitizes names correctly", t => {
     },
   ];
 
+  // Loop through each test case and assert the expected result
   for (const { input, expected } of cases) {
     const result = sanitizeName(input);
     t.is(result, expected, `sanitizeName(${input}) should be ${expected}`);

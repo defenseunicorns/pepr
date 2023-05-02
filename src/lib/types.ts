@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s";
-import { PeprRequest } from "./request";
+import { GroupVersionKind, KubernetesObject, PeprRequest, WebhookIgnore } from './k8s';
 
 /**
  * The behavior of this module when an error occurs.
  */
 export enum ErrorBehavior {
-  ignore = "ignore",
-  audit = "audit",
-  reject = "reject",
+  ignore = 'ignore',
+  audit = 'audit',
+  reject = 'reject',
 }
 
 /**
@@ -19,8 +18,8 @@ export enum ErrorBehavior {
  * Currently only `mutate` is supported.
  */
 export enum HookPhase {
-  mutate = "mutate",
-  validate = "validate",
+  mutate = 'mutate',
+  validate = 'validate',
 }
 
 /**
@@ -33,15 +32,17 @@ export type DeepPartial<T> = {
 /**
  * The type of Kubernetes mutating webhook event that the capability action is registered for.
  */
-
 export enum Event {
-  Create = "CREATE",
-  Update = "UPDATE",
-  Delete = "DELETE",
-  CreateOrUpdate = "CREATEORUPDATE",
+  Create = 'CREATE',
+  Update = 'UPDATE',
+  Delete = 'DELETE',
+  CreateOrUpdate = 'CREATEORUPDATE',
 }
 
-export interface CapabilityCfg {
+/**
+ * Configuration for a Pepr capability.
+ */
+export interface CapabilityConfig {
   /**
    * The name of the capability. This should be unique.
    */
@@ -65,22 +66,9 @@ export interface CapabilityCfg {
   mutateOrValidate?: HookPhase;
 }
 
-export type ModuleSigning = {
-  /**
-   * Specifies the signing policy.
-   * "requireAuthorizedKey" - only authorized keys are accepted.
-   * "requireAnyKey" - any key is accepted, as long as it's valid.
-   * "none" - no signing required.
-   */
-  signingPolicy?: "requireAuthorizedKey" | "requireAnyKey" | "none";
-  /**
-   * List of authorized keys for the "requireAuthorizedKey" policy.
-   * These keys are allowed to sign Pepr capabilities.
-   */
-  authorizedKeys?: string[];
-};
-
-/** Global configuration for the Pepr runtime. */
+/**
+ * Global configuration for the Pepr runtime.
+ */
 export type ModuleConfig = {
   /** The user-defined name for the module */
   name: string;
@@ -100,112 +88,62 @@ export type ModuleConfig = {
    * Configure the signing policy for Pepr capabilities.
    * This setting determines the requirements for signing keys in Pepr.
    */
-  signing?: ModuleSigning;
+  signing?: {
+    /**
+     * Specifies the signing policy.
+     * "requireAuthorizedKey" - only authorized keys are accepted.
+     * "requireAnyKey" - any key is accepted, as long as it's valid.
+     * "none" - no signing required.
+     */
+    signingPolicy?: 'requireAuthorizedKey' | 'requireAnyKey' | 'none';
+    /**
+     * List of authorized keys for the "requireAuthorizedKey" policy.
+     * These keys are allowed to sign Pepr capabilities.
+     */
+    authorizedKeys?: string[];
+  };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GenericClass = abstract new () => any;
+/**
+ * A class constructor.
+ */
+export type GenericClass = abstract new () => unknown;
 
-export type WhenSelector<T extends GenericClass> = {
+/**
+ * A selector for a Pepr capability.
+ */
+export type CapabilitySelector<T extends GenericClass> = {
   /** Register a capability action to be executed when a Kubernetes resource is created or updated. */
-  IsCreatedOrUpdated: () => BindingAll<T>;
+  IsCreatedOrUpdated: () => CapabilityBinding<T>;
   /** Register a capability action to be executed when a Kubernetes resource is created. */
-  IsCreated: () => BindingAll<T>;
+  IsCreated: () => CapabilityBinding<T>;
   /** Register a capability action to be executed when a Kubernetes resource is updated. */
-  IsUpdated: () => BindingAll<T>;
+  IsUpdated: () => CapabilityBinding<T>;
   /** Register a capability action to be executed when a Kubernetes resource is deleted. */
-  IsDeleted: () => BindingAll<T>;
+  IsDeleted: () => CapabilityBinding<T>;
 };
 
-export type Binding = {
+/**
+ * A binding for a Pepr capability.
+ */
+export type CapabilityBinding<T extends GenericClass> = {
   event?: Event;
   readonly kind: GroupVersionKind;
   readonly filters: {
-    name: string;
-    namespaces: string[];
-    labels: Record<string, string>;
-    annotations: Record<string, string>;
+    readonly name: string;
+    readonly namespaces: readonly string[];
+    readonly labels: Readonly<Record<string, string>>;
+    readonly annotations: Readonly<Record<string, string>>;
   };
-  readonly callback: CapabilityAction<GenericClass, InstanceType<GenericClass>>;
+  readonly callback: CapabilityAction<T>;
 };
 
-export type BindingFilter<T extends GenericClass> = BindToActionOrSet<T> & {
+/**
+ * A filter for a Pepr capability binding.
+ */
+export type CapabilityFilter<T extends GenericClass> = BindToActionOrSet<T> & {
   /**
    * Only apply the capability action if the resource has the specified label. If no value is specified, the label must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
    *
-   * ```ts
-   * When(a.Deployment)
-   *   .IsCreated()
-   *   .WithLabel("foo", "bar")
-   *   .WithLabel("baz", "qux")
-   *   .Then(...)
-   * ```
    *
-   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` labels.
-   *
-   * @param key
-   * @param value
-   */
-  WithLabel: (key: string, value?: string) => BindingFilter<T>;
-  /**
-   * Only apply the capability action if the resource has the specified annotation. If no value is specified, the annotation must exist.
-   * Note multiple calls to this method will result in an AND condition. e.g.
-   *
-   * ```ts
-   * When(a.Deployment)
-   *   .IsCreated()
-   *   .WithAnnotation("foo", "bar")
-   *   .WithAnnotation("baz", "qux")
-   *   .Then(...)
-   * ```
-   *
-   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` annotations.
-   *
-   * @param key
-   * @param value
-   */
-  WithAnnotation: (key: string, value?: string) => BindingFilter<T>;
-};
-
-export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
-  /** Only apply the capability action if the resource name matches the specified name. */
-  WithName: (name: string) => BindingFilter<T>;
-};
-
-export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
-  /** Only apply the capability action if the resource is in one of the specified namespaces.*/
-  InNamespace: (...namespaces: string[]) => BindingFilter<T>;
-};
-
-export type BindToAction<T extends GenericClass> = {
-  /**
-   * Create a new capability action with the specified callback function and previously specified
-   * filters.
-   * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
-   */
-  Then: (action: CapabilityAction<T, InstanceType<T>>) => BindToAction<T>;
-};
-
-export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
-  /**
-   * Merge the specified updates into the resource, this can only be used once per binding.
-   * Note this is just a convenience method for `request.Merge(values)`.
-   *
-   * Example change the `minReadySeconds` to 3 of a deployment when it is created:
-   *
-   * ```ts
-   * When(a.Deployment)
-   *  .IsCreated()
-   *  .ThenSet({ spec: { minReadySeconds: 3 } });
-   * ```
-   *
-   * @param merge
-   * @returns
-   */
-  ThenSet: (val: DeepPartial<InstanceType<T>>) => BindToAction<T>;
-};
-
-export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprRequest<K>
-) => Promise<void> | void | Promise<PeprRequest<K>> | PeprRequest<K>;

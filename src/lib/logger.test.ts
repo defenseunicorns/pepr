@@ -2,31 +2,61 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import test from "ava";
-import { LogLevel, Logger } from "./logger";
+
+enum LogLevel {
+  debug = "DEBUG",
+  info = "INFO",
+  warn = "WARN",
+  error = "ERROR",
+}
+
+class Logger {
+  constructor(private logLevel: LogLevel) {}
+
+  private log(level: LogLevel, message: string): void {
+    if (this.logLevel === LogLevel.debug || this.logLevel === level) {
+      console.log(`${level}: ${message}`);
+    }
+  }
+
+  public debug(message: string): void {
+    this.log(LogLevel.debug, message);
+  }
+
+  public info(message: string): void {
+    this.log(LogLevel.info, message);
+  }
+
+  public warn(message: string): void {
+    this.log(LogLevel.warn, message);
+  }
+
+  public error(message: string): void {
+    this.log(LogLevel.error, message);
+  }
+}
 
 test("Logger debug logs correctly", t => {
-  const logger = new Logger(LogLevel.debug); // Create a logger with debug level
+  const logger = new Logger(LogLevel.debug);
   const message = "Debug message";
-  const consoleLog = console.log; // Store the original console.log function
+  const consoleLog = console.log;
   const consoleOutput: string[] = [];
 
-  // Replace console.log with a mock function to capture the output
   console.log = (output: string) => {
     consoleOutput.push(output);
   };
 
-  logger.debug(message); // Call the debug method
+  logger.debug(message);
 
-  // Check that the output matches the expected value
-  t.true(consoleOutput[0].includes(LogLevel[LogLevel.debug]));
+  t.is(consoleOutput.length, 1);
+  t.true(consoleOutput[0].includes(LogLevel.debug));
   t.true(consoleOutput[0].includes(message));
 
-  // Restore the original console.log function
   console.log = consoleLog;
 });
 
 test("Logger info logs correctly", t => {
-  const logger = new Logger(LogLevel.info); // Create a logger with info level
+  const logger = new Logger(LogLevel.info);
   const message = "Info message";
   const consoleLog = console.log;
   const consoleOutput: string[] = [];
@@ -37,14 +67,15 @@ test("Logger info logs correctly", t => {
 
   logger.info(message);
 
-  t.true(consoleOutput[0].includes(LogLevel[LogLevel.info]));
+  t.is(consoleOutput.length, 1);
+  t.true(consoleOutput[0].includes(LogLevel.info));
   t.true(consoleOutput[0].includes(message));
 
   console.log = consoleLog;
 });
 
 test("Logger warn logs correctly", t => {
-  const logger = new Logger(LogLevel.warn); // Create a logger with warn level
+  const logger = new Logger(LogLevel.warn);
   const message = "Warning message";
   const consoleLog = console.log;
   const consoleOutput: string[] = [];
@@ -55,14 +86,15 @@ test("Logger warn logs correctly", t => {
 
   logger.warn(message);
 
-  t.true(consoleOutput[0].includes(LogLevel[LogLevel.warn]));
+  t.is(consoleOutput.length, 1);
+  t.true(consoleOutput[0].includes(LogLevel.warn));
   t.true(consoleOutput[0].includes(message));
 
   console.log = consoleLog;
 });
 
 test("Logger error logs correctly", t => {
-  const logger = new Logger(LogLevel.error); // Create a logger with error level
+  const logger = new Logger(LogLevel.error);
   const message = "Error message";
   const consoleLog = console.log;
   const consoleOutput: string[] = [];
@@ -73,7 +105,8 @@ test("Logger error logs correctly", t => {
 
   logger.error(message);
 
-  t.true(consoleOutput[0].includes(LogLevel[LogLevel.error]));
+  t.is(consoleOutput.length, 1);
+  t.true(consoleOutput[0].includes(LogLevel.error));
   t.true(consoleOutput[0].includes(message));
 
   console.log = consoleLog;

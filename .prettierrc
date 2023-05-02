@@ -1,13 +1,18 @@
 {
-  "arrowParens": "avoid",
-  "bracketSameLine": true,
-  "bracketSpacing": true,
-  "embeddedLanguageFormatting": "auto",
-  "insertPragma": false,
-  "printWidth": 100,
-  "quoteProps": "as-needed",
-  "requirePragma": false,
+  // Use single quotes for consistency and readability
+  "singleQuote": true,
+  // Use trailing commas for easier git diffs and cleaner code
+  "trailingComma": "all",
+  // Use 4 spaces for indentation for better readability
+  "tabWidth": 4,
+  // Use semicolons for consistency and to avoid potential issues with ASI
   "semi": true,
-  "useTabs": false,
-  "tabWidth": 2
+  // Use consistent spacing for object literals
+  "bracketSpacing": false,
+  // Use consistent spacing for arrow functions
+  "arrowParens": "always",
+  // Use consistent quote style for object properties
+  "quoteProps": "consistent",
+  // Use consistent line breaks for better readability
+  "endOfLine": "auto"
 }

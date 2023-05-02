@@ -13,43 +13,65 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      # Checkout code
+      - uses: actions/checkout@v2
+      
+      # Use Node.js latest
       - name: Use Node.js latest
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        uses: actions/setup-node@v2
         with:
-          node-version: latest
+          node-version: "14.x"
           cache: "npm"
-      - run: npm ci
-      - run: npm run format:check
+      
+      # Install dependencies and run format check
+      - name: Install dependencies and run format check
+        run: |
+          npm ci
+          npm run format:check
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, latest]
+        node-version: ["14.x", "16.x"]
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      # Checkout code
+      - uses: actions/checkout@v2
+      
+      # Use specified Node.js version
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm ci
-      - run: npm run test:unit
+      
+      # Install dependencies and run unit tests
+      - name: Install dependencies and run unit tests
+        run: |
+          npm ci
+          npm run test:unit
 
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-
+      # Checkout code
+      - uses: actions/checkout@v2
+      
+      # Use Node.js latest
       - name: Use Node.js latest
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        uses: actions/setup-node@v2
         with:
-          node-version: latest
+          node-version: "14.x"
           cache: "npm"
-      - name: "Install K3d"
-        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+      
+      # Install K3d
+      - name: Install K3d
+        run: |
+          curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
         shell: bash
-
-      - run: npm ci
-      - run: npm run test:e2e
+      
+      # Install dependencies and run end-to-end tests
+      - name: Install dependencies and run end-to-end tests
+        run: |
+          npm ci
+          npm run test:e2e

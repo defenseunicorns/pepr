@@ -12,65 +12,62 @@ import { Webhook } from "../../src/lib/k8s/webhook";
 import Log from "../../src/lib/logger";
 import { RootCmd } from "./root";
 
+// Define external libraries to exclude from the bundle
+const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
+externalLibs.push("pepr");
+
 export default function (program: RootCmd) {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
     .action(async () => {
-      // Build the module
-      const { cfg, path, uuid } = await buildModule();
+      try {
+        const { cfg, path, uuid } = await buildModule();
 
-      // Read the compiled module code
-      const code = await fs.readFile(path);
+        // Read the compiled module code
+        const code = await fs.readFile(path);
 
-      // Generate a secret for the module
-      const webhook = new Webhook({
-        ...cfg.pepr,
-        description: cfg.description,
-      });
-      const yamlFile = `pepr-module-${uuid}.yaml`;
-      const yamlPath = resolve("dist", yamlFile);
-      const yaml = webhook.allYaml(code);
+        // Generate a secret for the module
+        const webhook = new Webhook({
+          ...cfg.pepr,
+          description: cfg.description,
+        });
 
-      const zarfPath = resolve("dist", "zarf.yaml");
-      const zarf = webhook.zarfYaml(yamlFile);
+        // Write the YAML files
+        const yamlFile = `pepr-module-${uuid}.yaml`;
+        const yamlPath = resolve("dist", yamlFile);
+        const yaml = webhook.allYaml(code);
+        await fs.writeFile(yamlPath, yaml);
 
-      await fs.writeFile(yamlPath, yaml);
-      await fs.writeFile(zarfPath, zarf);
+        const zarfPath = resolve("dist", "zarf.yaml");
+        const zarf = webhook.zarfYaml(yamlFile);
+        await fs.writeFile(zarfPath, zarf);
 
-      Log.debug(`Module compiled successfully at ${path}`);
-      Log.info(`K8s resource for the module saved to ${yamlPath}`);
+        Log.info(`Module compiled successfully at ${path}`);
+        Log.info(`K8s resource for the module saved to ${yamlPath}`);
+      } catch (e) {
+        Log.error(e.message);
+        process.exit(1);
+      }
     });
 }
 
-// Create a list of external libraries to exclude from the bundle, these are already stored in the containe
-const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
-
-// Add the pepr library to the list of external libraries
-externalLibs.push("pepr");
-
-export async function buildModule() {
+async function buildModule() {
   try {
     // Resolve the path to the module's package.json file
     const cfgPath = resolve(".", "package.json");
     const input = resolve(".", "pepr.ts");
 
     // Ensure the module's package.json and pepr.ts files exist
-    try {
-      await fs.access(cfgPath);
-      await fs.access(input);
-    } catch (e) {
-      Log.error(
-        `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
-      );
-      process.exit(1);
-    }
+    await Promise.all([
+      fs.access(cfgPath),
+      fs.access(input),
+    ]);
 
     // Read the module's UUID from the package.json file
     const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
     const cfg = JSON.parse(moduleText);
     const { uuid } = cfg.pepr;
-    const name = `pepr-${uuid}.js`;
 
     // Read the module's version from the package.json file
     if (cfg.dependencies.pepr && cfg.dependencies.pepr !== "file:../") {
@@ -109,11 +106,13 @@ export async function buildModule() {
     });
 
     // Write the module to the dist directory
-    await bundle.write({
+    const name = `pepr-${uuid}.js`;
+    const outputOptions = {
       dir: "dist",
       format: "cjs",
       entryFileNames: name,
-    });
+    };
+    await bundle.write(outputOptions);
 
     return {
       path: resolve("dist", name),
@@ -122,7 +121,6 @@ export async function buildModule() {
     };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
-    Log.debug(e);
     Log.error(e.message);
     process.exit(1);
   }

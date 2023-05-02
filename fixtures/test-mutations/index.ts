@@ -1,6 +1,9 @@
 import { Capability } from "../../src/lib/capability";
 import { a } from "../../src/lib/k8s";
 
+/**
+ * A collection of examples of data mutations.
+ */
 export const TestMutations = new Capability({
   name: "test-mutations",
   description: "A collection of examples of data mutations.",
@@ -9,6 +12,9 @@ export const TestMutations = new Capability({
 
 const { When } = TestMutations;
 
+/**
+ * Set minReadySeconds to 3 when a Deployment is created.
+ */
 When(a.Deployment)
   .IsCreated()
   .ThenSet({
@@ -17,6 +23,9 @@ When(a.Deployment)
     },
   });
 
+/**
+ * Add label and init container to a Pod when it is created or updated.
+ */
 When(a.Pod)
   .IsCreatedOrUpdated()
   .ThenSet({
@@ -38,22 +47,28 @@ When(a.Pod)
     request.Raw.spec.containers[3].image = "nginx:1.19.1";
   });
 
+/**
+ * Add data to a ConfigMap when it is created.
+ */
 When(a.ConfigMap)
   .IsCreated()
   .Then(request => {
     request.Raw.data["test"] = "thing";
   });
 
+/**
+ * Set minReadySeconds to 10 when a StatefulSet is created.
+ */
 When(a.StatefulSet)
   .IsCreated()
   .InNamespace("mutation-namespace")
   .Then(request => {
     request.Raw.spec.minReadySeconds = 10;
-  })
-  .Then(request => {
-    request.Raw;
   });
 
+/**
+ * Set schedule to "*/5 * * * *" when a CronJob is created with the label and annotation "changeme" set to "true".
+ */
 When(a.CronJob)
   .IsCreated()
   .WithLabel("changeme", "true")
@@ -62,6 +77,9 @@ When(a.CronJob)
     request.Raw.spec.schedule = "*/5 * * * *";
   });
 
+/**
+ * Add and remove labels and annotations, set strategy type to "Recreate", and set minReadySeconds to 3 when a Deployment is created or updated in namespaces "ns1" or "ns2".
+ */
 When(a.Deployment)
   .IsCreatedOrUpdated()
   .InNamespace("ns1", "ns2")
@@ -85,6 +103,9 @@ When(a.Deployment)
     }
   });
 
+/**
+ * Add and remove labels from a Service when it is created.
+ */
 When(a.Service)
   .IsCreated()
   .Then(request => {

@@ -126,13 +126,21 @@ When(a.ConfigMap)
   .Then(addSecond)
   .Then(addThird);
 
-//This function uses the complete type definition, but is not required.
-function addSecond(cm: PeprRequest<a.ConfigMap>) {
+/**
+ * This function uses the complete type definition, but is not required.
+ * @param cm - PeprRequest<a.ConfigMap>
+ * @returns void
+ */
+function addSecond(cm: PeprRequest<a.ConfigMap>): void {
   cm.SetLabel("pepr.dev/second", "true");
 }
 
-// This function has no type definition, so you won't have intellisense in the function body.
-function addThird(cm) {
+/**
+ * This function has no type definition, so you won't have intellisense in the function body.
+ * @param cm
+ * @returns void
+ */
+function addThird(cm): void {
   cm.SetLabel("pepr.dev/third", "true");
 }
 
@@ -153,144 +161,4 @@ function addThird(cm) {
  * cast the data returned from the API.
  *
  * These are equivalent:
- * ```ts
- * const joke = await fetch<TheChuckNorrisJoke>("https://api.chucknorris.io/jokes/random?category=dev");
- * const joke = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisJoke;
- * ```
  *
- * Alternatively, you can drop the type completely:
- *
- * ```ts
- * fetch("https://api.chucknorris.io/jokes/random?category=dev")
- * ```
- */
-interface TheChuckNorrisJoke {
-  icon_url: string;
-  id: string;
-  url: string;
-  value: string;
-}
-
-When(a.ConfigMap)
-  .IsCreated()
-  .WithLabel("chuck-norris")
-  .Then(async change => {
-    // Try/catch is not needed as a response object will always be returned
-    const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev"
-    );
-
-    // Instead, check the `response.ok` field
-    if (response.ok) {
-      // Add the Chuck Norris joke to the configmap
-      change.Raw.data["chuck-says"] = response.data.value;
-      return;
-    }
-
-    // You can also assert on different HTTP response codes
-    if (response.status === fetchStatus.NOT_FOUND) {
-      // Do something else
-      return;
-    }
-  });
-
-/**
- * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Untyped Custom Resource)                     *
- * ---------------------------------------------------------------------------------------------------
- *
- * Out of the box, Pepr supports all the standard Kubernetes objects. However, you can also create
- * your own types. This is useful if you are working with an Operator that creates custom resources.
- * There are two ways to do this, the first is to use the `When()` function with a `GenericKind`,
- * the second is to create a new class that extends `GenericKind` and use the `RegisterKind()` function.
- *
- * This example shows how to use the `When()` function with a `GenericKind`. Note that you
- * must specify the `group`, `version`, and `kind` of the object (if applicable). This is how Pepr knows
- * if the Capability Action should be triggered or not. Since we are using a `GenericKind`,
- * Pepr will not be able to provide any intellisense for the object, so you will need to refer to the
- * Kubernetes API documentation for the object you are working with.
- *
- * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
- *
- * ```yaml
- * apiVersion: pepr.dev/v1
- * kind: Unicorn
- * metadata:
- *   name: example-1
- *   namespace: pepr-demo
- * spec:
- *   message: replace-me
- *   counter: 0
- * ```
- */
-When(a.GenericKind, {
-  group: "pepr.dev",
-  version: "v1",
-  kind: "Unicorn",
-})
-  .IsCreated()
-  .WithName("example-1")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr without type data!",
-      counter: Math.random(),
-    },
-  });
-
-/**
- * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Typed Custom Resource)                       *
- * ---------------------------------------------------------------------------------------------------
- *
- * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
- * if you are working with an Operator that creates custom resources and you want to have intellisense
- * for the object. Note that you must specify the `group`, `version`, and `kind` of the object (if applicable)
- * as this is how Pepr knows if the Capability Action should be triggered or not.
- *
- * Once you register a new Kind with Pepr, you can use the `When()` function with the new Kind. Ideally,
- * you should register custom Kinds at the top of your Capability file or Pepr Module so they are available
- * to all Capability Actions, but we are putting it here for demonstration purposes.
- *
- * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
- *
- * ```yaml
- * apiVersion: pepr.dev/v1
- * kind: Unicorn
- * metadata:
- *   name: example-2
- *   namespace: pepr-demo
- * spec:
- *   message: replace-me
- *   counter: 0
- * ```*
- */
-class UnicornKind extends a.GenericKind {
-  spec: {
-    /**
-     * JSDoc comments can be added to explain more details about the field.
-     *
-     * @example
-     * ```ts
-     * request.Raw.spec.message = "Hello Pepr!";
-     * ```
-     * */
-    message: string;
-    counter: number;
-  };
-}
-
-RegisterKind(UnicornKind, {
-  group: "pepr.dev",
-  version: "v1",
-  kind: "Unicorn",
-});
-
-When(UnicornKind)
-  .IsCreated()
-  .WithName("example-2")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr now with type data!",
-      counter: Math.random(),
-    },
-  });

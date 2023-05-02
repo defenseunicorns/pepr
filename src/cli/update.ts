@@ -9,18 +9,22 @@ import { helloPeprTS, prettierRC, samplesYaml, snippet, tsConfig } from "./init/
 import { write } from "./init/utils";
 import { RootCmd } from "./root";
 
-export default function (program: RootCmd) {
+/**
+ * Updates the Pepr module and its dependencies.
+ * @param program The root command object.
+ */
+export default function updateCommand(program: RootCmd): void {
   program
     .command("update")
     .description("Update this Pepr module")
-    .option("--skip-template-update", "Skip updating the template files`")
-    .action(async opts => {
+    .option("--skip-template-update", "Skip updating the template files")
+    .action(async (opts) => {
       if (!opts.skipTemplateUpdate) {
         const { confirm } = await prompt({
           type: "confirm",
           name: "confirm",
           message:
-            "This will overwrite previously auto-generated files inluding the capabilities/HelloPepr.ts file.\n" +
+            "This will overwrite previously auto-generated files including the capabilities/HelloPepr.ts file.\n" +
             "Are you sure you want to continue?",
         });
 
@@ -30,26 +34,23 @@ export default function (program: RootCmd) {
         }
       }
 
-      console.log("Updating the Pepr module...");
+      Log.info("Updating the Pepr module...");
 
       try {
-        await write(resolve(prettierRC.path), prettierRC.data);
-        await write(resolve(tsConfig.path), tsConfig.data);
-        await write(resolve(".vscode", snippet.path), snippet.data);
-        await write(resolve("capabilities", samplesYaml.path), samplesYaml.data);
-        await write(resolve("capabilities", helloPeprTS.path), helloPeprTS.data);
+        await Promise.all([
+          write(resolve(prettierRC.path), prettierRC.data),
+          write(resolve(tsConfig.path), tsConfig.data),
+          write(resolve(".vscode", snippet.path), snippet.data),
+          write(resolve("capabilities", samplesYaml.path), samplesYaml.data),
+          write(resolve("capabilities", helloPeprTS.path), helloPeprTS.data),
+        ]);
 
-        // Update Pepr for the module
-        execSync("npm install pepr@latest", {
+        // Update Pepr for the module and globally
+        execSync("npm install pepr@latest -g", {
           stdio: "inherit",
         });
 
-        // Update Pepr globally
-        execSync("npm install -g pepr@latest", {
-          stdio: "inherit",
-        });
-
-        console.log(`Module updated!`);
+        Log.success("Module updated!");
       } catch (e) {
         Log.debug(e);
         Log.error(e.message);
