@@ -14,8 +14,8 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
 - Controller network isolation and tamper-resistent module execution
-- Automatic least-privelege RBAC generation [soon](https://github.com/defenseunicorns/pepr/issues/31)
-- AMD64 and ARM64 support 
+- Automatic least-privilege RBAC generation [soon](https://github.com/defenseunicorns/pepr/issues/31)
+- AMD64 and ARM64 support
 
 ## Example Pepr CapabilityAction
 
