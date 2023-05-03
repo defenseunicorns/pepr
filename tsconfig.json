@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "declaration": true,
     "esModuleInterop": true,
     "lib": ["ES2020"],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "outDir": "./dist",
+    "module": "ES2020",
+    "moduleResolution": "node16",
+    "outDir": "dist",
     "resolveJsonModule": true,
-    "strict": false,
+    "strict": true,
     "target": "ES2020"
   },
   "exclude": ["node_modules", "dist", "src/cli/init/templates", "pepr-test-module"]

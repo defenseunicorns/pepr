@@ -32,6 +32,7 @@ export async function createDir(dir: string) {
     await fs.mkdir(dir);
   } catch (err) {
     // The directory already exists
+    // @ts-expect-error - The error code is not defined in the Node types
     if (err.code === "EEXIST") {
       throw new Error(`Directory ${dir} already exists`);
     } else {

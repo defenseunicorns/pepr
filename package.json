@@ -24,9 +24,8 @@
     }
   },
   "scripts": {
-    "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
-    "build": "tsc -p tsconfig.build.json",
-    "test:unit": "npm run build && ava",
+    "build": "rm -fr dist/* && node hack/build-template-data.cjs && rollup -c",
+    "test:unit": "npm run build && ava dist/**/*.test.js",
     "test:e2e": "npm run test:e2e:k3d && npm run test:e2e:build && npm run test:e2e:image && npm run test:e2e:run",
     "test:e2e:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "test:e2e:build": "npm run build && npm uninstall pepr -g && npm install -g . && pepr",
@@ -37,27 +36,19 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "0.18.1",
-    "@rollup/plugin-json": "6.0.0",
-    "@rollup/plugin-node-resolve": "15.0.2",
-    "@rollup/plugin-typescript": "11.1.0",
     "@types/ramda": "0.29.1",
-    "chokidar": "3.5.3",
-    "commander": "10.0.1",
     "express": "4.18.2",
     "fast-json-patch": "3.1.1",
     "http-status-codes": "2.2.0",
     "node-fetch": "2.6.9",
-    "node-forge": "1.3.1",
-    "prettier": "2.8.8",
-    "prompts": "2.4.2",
     "ramda": "0.29.0",
-    "rollup": "3.21.3",
-    "ts-node": "10.9.1",
-    "tslib": "2.5.0",
-    "typescript": "5.0.4",
-    "uuid": "9.0.0"
+    "typescript": "5.0.4"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-json": "6.0.0",
+    "@rollup/plugin-node-resolve": "15.0.2",
+    "@rollup/plugin-typescript": "11.1.0",
     "@types/express": "4.17.17",
     "@types/node-fetch": "2.6.3",
     "@types/node-forge": "1.3.2",
@@ -66,16 +57,19 @@
     "@typescript-eslint/eslint-plugin": "5.59.2",
     "@typescript-eslint/parser": "5.59.2",
     "ava": "5.2.0",
+    "chokidar": "3.5.3",
+    "commander": "10.0.1",
     "eslint": "8.39.0",
-    "nock": "13.3.1"
+    "nock": "13.3.1",
+    "node-forge": "1.3.1",
+    "prettier": "2.8.8",
+    "prompts": "2.4.2",
+    "rollup": "3.21.3",
+    "rollup-plugin-visualizer": "^5.9.0",
+    "tslib": "2.5.0",
+    "uuid": "9.0.0"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
     "failFast": true,
     "verbose": true
   }

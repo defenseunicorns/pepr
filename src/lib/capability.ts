@@ -84,7 +84,7 @@ export class Capability implements CapabilityCfg {
         labels: {},
         annotations: {},
       },
-      callback: () => null,
+      callback: () => undefined,
     };
 
     const prefix = `${this._name}: ${model.name}`;

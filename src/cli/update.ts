@@ -52,7 +52,9 @@ export default function (program: RootCmd) {
         console.log(`Module updated!`);
       } catch (e) {
         Log.debug(e);
-        Log.error(e.message);
+        if (e instanceof Error) {
+          Log.error(e.message);
+        }
         process.exit(1);
       }
     });

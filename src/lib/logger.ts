@@ -58,7 +58,7 @@ export class Logger {
    * @param logLevel - The log level to log the message at.
    */
   public SetLogLevel(logLevel: string): void {
-    this._logLevel = LogLevel[logLevel];
+    this._logLevel = LogLevel[logLevel as keyof typeof LogLevel];
     this.debug(`Log level set to ${logLevel}`);
   }
 

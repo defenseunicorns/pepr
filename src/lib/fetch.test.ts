@@ -24,7 +24,7 @@ test.beforeEach(() => {
     })
     .reply(200, (uri, requestBody) => requestBody)
     .get("/todos/empty-null")
-    .reply(200, null)
+    .reply(200, undefined)
     .get("/todos/empty-string")
     .reply(200, "")
     .get("/todos/empty-object")
@@ -35,7 +35,7 @@ test.beforeEach(() => {
 
 test("fetch: should return without type data", async t => {
   const url = "https://jsonplaceholder.typicode.com/todos/1";
-  const { data, ok } = await fetch(url);
+  const { data, ok } = await fetch<{ title: string }>(url);
   t.is(ok, true);
   t.is(data["title"], "Example title");
 });
@@ -70,7 +70,8 @@ test("fetch: should handle additional request options", async t => {
     },
   };
 
-  const { data, ok } = await fetch(url, requestOptions);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, ok } = await fetch<any>(url, requestOptions);
   t.is(ok, true);
   t.is(data["title"], "test todo");
   t.is(data["userId"], 1);

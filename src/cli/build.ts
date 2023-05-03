@@ -123,7 +123,9 @@ export async function buildModule() {
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.debug(e);
-    Log.error(e.message);
+    if (e instanceof Error) {
+      Log.error(e.message);
+    }
     process.exit(1);
   }
 }
