@@ -56,7 +56,8 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
-        // @ts-expect-error This array is optional, but we know it exists
+        // Annoying ts false positive
+        response.warnings = response.warnings || [];
         response.warnings.push(`Action failed: ${e}`);
 
         // If errors are not allowed, note the failure in the Response
@@ -87,8 +88,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
   }
 
   // Remove the warnings array if it's empty
-  // @ts-expect-error This array is optional, but we know it exists¬
-  if (response.warnings.length < 1) {
+  if (response.warnings && response.warnings.length < 1) {
     delete response.warnings;
   }
 

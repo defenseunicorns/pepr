@@ -1,6 +1,4 @@
 // This is a helper script to collect the contents of the template files before building the CLI
-
-/* eslint-disable */
 const fs = require("fs");
 const path = require("path");
 
