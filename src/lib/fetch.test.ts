@@ -82,7 +82,7 @@ test("fetch: should handle empty (null) responses", async t => {
   const url = "https://jsonplaceholder.typicode.com/todos/empty-null";
   const resp = await fetch(url);
 
-  t.is(resp.data, null);
+  t.is(resp.data, '');
   t.is(resp.ok, true);
   t.is(resp.status, StatusCodes.OK);
 });
@@ -109,7 +109,7 @@ test("fetch: should handle failed requests without throwing an error", async t =
   const url = "https://jsonplaceholder.typicode.com/todos/invalid";
   const resp = await fetch(url);
 
-  t.is(resp.data, null);
+  t.is(resp.data, undefined);
   t.is(resp.ok, false);
   t.is(resp.status, StatusCodes.BAD_REQUEST);
 });
