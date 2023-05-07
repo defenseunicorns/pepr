@@ -3,6 +3,8 @@ import { POD1 } from "../../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 import { gvkMap } from "./k8s";
 
+const callback = () => undefined;
+
 test("should reject when name does not match", t => {
   const binding = {
     kind: gvkMap.V1Pod,
@@ -12,7 +14,7 @@ test("should reject when name does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -28,7 +30,7 @@ test("should reject when kind does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -44,7 +46,7 @@ test("should reject when group does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -64,7 +66,7 @@ test("should reject when version does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -80,7 +82,7 @@ test("should allow when group, version, and kind match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -100,7 +102,7 @@ test("should allow when kind match and others are empty", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -116,7 +118,7 @@ test("should reject when namespace does not match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -132,7 +134,7 @@ test("should allow when namespace is match", t => {
       labels: {},
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -150,7 +152,7 @@ test("should reject when label does not match", t => {
       },
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -170,10 +172,11 @@ test("should allow when label is match", t => {
       },
       annotations: {},
     },
-    callback: () => null,
+    callback,
   };
 
   const pod = POD1();
+  pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.labels = {
     foo: "bar",
     test: "test1",
@@ -194,7 +197,7 @@ test("should reject when annotation does not match", t => {
         foo: "bar",
       },
     },
-    callback: () => null,
+    callback,
   };
   const pod = POD1();
 
@@ -213,10 +216,11 @@ test("should allow when annotation is match", t => {
         test: "test1",
       },
     },
-    callback: () => null,
+    callback,
   };
 
   const pod = POD1();
+  pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.annotations = {
     foo: "bar",
     test: "test1",

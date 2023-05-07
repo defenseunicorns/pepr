@@ -12,8 +12,11 @@ insecure*
 rollup.config.mjs
 tsconfig.json
 tsconfig.build.json
-/src
+/src/cli
 /fixtures
-/*.ts
 /hack
 pepr-test-module
+*.toml
+docs/
+dist/fixtures
+*.test.*

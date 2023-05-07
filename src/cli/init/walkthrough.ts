@@ -36,7 +36,7 @@ export function walkthrough(): Promise<InitOptions> {
   const askErrorBehavior: PromptObject = {
     type: "select",
     name: "errorBehavior",
-    validate: val => ErrorBehavior[val],
+    validate: (val: ErrorBehavior) => ErrorBehavior[val],
     message: "How do you want Pepr to handle errors encountered during K8s operations?",
     choices: [
       {

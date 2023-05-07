@@ -40,6 +40,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
         }
 
         const identifier = `${config.uuid}.pepr.dev/${name}`;
+        wrapped.Raw.metadata = wrapped.Raw.metadata || {};
         wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
         wrapped.Raw.metadata.annotations[identifier] = status;
       };
@@ -55,6 +56,8 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
+        // Annoying ts false positive
+        response.warnings = response.warnings || [];
         response.warnings.push(`Action failed: ${e}`);
 
         // If errors are not allowed, note the failure in the Response
@@ -85,7 +88,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
   }
 
   // Remove the warnings array if it's empty
-  if (response.warnings.length < 1) {
+  if (response.warnings && response.warnings.length < 1) {
     delete response.warnings;
   }
 

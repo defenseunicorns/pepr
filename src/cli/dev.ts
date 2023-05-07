@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { ChildProcessWithoutNullStreams, spawn } from "child_process";
+import { fork } from "child_process";
 import { watch } from "chokidar";
 import { promises as fs } from "fs";
 import { resolve } from "path";
@@ -55,27 +55,44 @@ export default function (program: RootCmd) {
         await webhook.deploy(code);
         Log.info(`Module deployed successfully`);
 
-        const moduleFiles = resolve(".", "**", "*.ts");
-        const watcher = watch(moduleFiles);
-        const peprTS = resolve(".", "pepr.ts");
-        let program: ChildProcessWithoutNullStreams;
-
-        // Run the module once to start the server
-        runDev(peprTS);
+        const moduleFiles = [
+          resolve(".", "pepr.ts"),
+          resolve(".", "capabilities", "*.ts"),
+          resolve(".", "capabilities", "**", "*.ts"),
+        ];
+        const watcher = watch(moduleFiles, {
+          awaitWriteFinish: {
+            stabilityThreshold: 3000,
+            pollInterval: 500,
+          },
+        });
 
         // Watch for changes
-        watcher.on("ready", () => {
+        watcher.on("ready", async () => {
+          let building = false;
+
+          // Run the module once to start the server
+          let program = await runDev();
           Log.info(`Watching for changes in ${moduleFiles}`);
           watcher.on("all", async (event, path) => {
             Log.debug({ event, path }, "File changed");
 
-            // Kill the running process
-            if (program) {
-              program.kill("SIGKILL");
+            // If we're already building, skip this event
+            if (building) {
+              return;
             }
 
-            // Start the process again
-            program = runDev(peprTS);
+            // Set building to true
+            building = true;
+
+            // Don't start a new process until the old one exits
+            program.once("exit", async () => {
+              program = await runDev();
+              building = false;
+            });
+
+            // Kill the running process
+            program.kill();
           });
         });
       } catch (e) {
@@ -85,22 +102,19 @@ export default function (program: RootCmd) {
     });
 }
 
-function runDev(path: string) {
+async function runDev() {
   try {
-    const program = spawn("./node_modules/.bin/ts-node", [path], {
+    const { path } = await buildModule();
+
+    Log.info(`Running module ${path}`);
+
+    const program = fork(path, {
       env: {
         ...process.env,
         LOG_LEVEL: "debug",
         SSL_KEY_PATH: "insecure-tls.key",
         SSL_CERT_PATH: "insecure-tls.crt",
       },
-    });
-
-    program.stdout.on("data", data => console.log(data.toString()));
-    program.stderr.on("data", data => console.error(data.toString()));
-
-    program.on("close", code => {
-      Log.info(`Process exited with code ${code}`);
     });
 
     return program;

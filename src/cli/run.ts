@@ -1,65 +1,68 @@
+#!/usr/bin/env node
+
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { program } from "commander";
+import { fork } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
 import { gunzipSync } from "zlib";
 import { version } from "../../package.json";
 import Log from "../lib/logger";
 
-program
-  .version(version)
-  .description(`Pepr Kubernetes Runtime (v${version})`)
-  .argument("<hash>", "Hash of the module to run")
-  .option("-l, --log-level [level]", "Log level: debug, info, warn, error", "info")
-  .action((expectedHash: string, opts) => {
-    const gzPath = `/app/load/module-${expectedHash}.js.gz`;
-    const jsPath = `/app/module-${expectedHash}.js`;
+function validateHash(expectedHash: string) {
+  // Require the hash to be 64 characters long
+  if (!expectedHash || expectedHash.length !== 64) {
+    Log.error("Invalid hash");
+    process.exit(1);
+  }
+}
 
-    // Require the has to be 64 characters long
-    if (expectedHash.length !== 64) {
-      Log.error("Invalid hash");
+function runModule(expectedHash: string) {
+  const gzPath = `/app/load/module-${expectedHash}.js.gz`;
+  const jsPath = `/app/module-${expectedHash}.js`;
+
+  // Set the log level
+  Log.SetLogLevel("debug");
+
+  // Check if the path is a valid file
+  if (!fs.existsSync(gzPath)) {
+    Log.error(`File not found: ${gzPath}`);
+    process.exit(1);
+  }
+
+  try {
+    Log.info(`Loading module ${gzPath}`);
+
+    // Extract the code from the file
+    const codeGZ = fs.readFileSync(gzPath);
+    const code = gunzipSync(codeGZ);
+
+    // Get the hash of the extracted code
+    const actualHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    // If the hash doesn't match, exit
+    if (expectedHash !== actualHash) {
+      Log.error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
       process.exit(1);
     }
 
-    // Check if the path is a valid file
-    if (!fs.existsSync(gzPath)) {
-      Log.error(`File not found: ${gzPath}`);
-      process.exit(1);
-    }
+    Log.info(`File hash matches, running module`);
 
-    // Set the log level
-    Log.SetLogLevel(opts.logLevel);
+    // Write the code to a file
+    fs.writeFileSync(jsPath, code);
 
-    try {
-      Log.info(`Loading module ${gzPath}`);
+    // Run the module
+    fork(jsPath);
+  } catch (e) {
+    Log.error(`Failed to decompress module: ${e}`);
+    process.exit(1);
+  }
+}
 
-      // Extract the code from the file
-      const codeGZ = fs.readFileSync(gzPath);
-      const code = gunzipSync(codeGZ);
+Log.info(`Pepr Controller (v${version})`);
 
-      // Get the hash of the extracted code
-      const actualHash = crypto.createHash("sha256").update(code).digest("hex");
+const hash = process.argv[2];
 
-      // If the hash doesn't match, exit
-      if (expectedHash !== actualHash) {
-        Log.error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
-        process.exit(1);
-      }
-
-      Log.info(`File hash matches, running module`);
-
-      // Write the code to a file
-      fs.writeFileSync(jsPath, code);
-
-      // Run the module
-      // @todo: evaluate vm (isolate) vs require
-      require(jsPath);
-    } catch (e) {
-      Log.error(`Failed to decompress module: ${e}`);
-      process.exit(1);
-    }
-  });
-
-program.parse();
+validateHash(hash);
+runModule(hash);

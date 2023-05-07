@@ -7,7 +7,7 @@ WORKDIR /app
 COPY --chown=node:node ./package*.json ./
 
 # Install the dependencies in production mode
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --omit=peer
 
 # Sync the pepr dist files
 COPY --chown=node:node ./dist/  ./node_modules/pepr/dist/

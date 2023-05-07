@@ -4,7 +4,7 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
-import { dependencies, scripts, version } from "../../../package.json";
+import { devDependencies, peerDependencies, scripts, version } from "../../../package.json";
 import prettierRCJSON from "./templates/.prettierrc.json";
 import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
 import generatedJSON from "./templates/data.json";
@@ -19,7 +19,8 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
-  const { typescript, "ts-node": tsNode } = dependencies;
+  const { typescript } = peerDependencies;
+  const { prettier } = devDependencies;
 
   const data = {
     name,
@@ -45,8 +46,8 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       pepr: pgkVerOverride || `${version}`,
     },
     devDependencies: {
+      prettier,
       typescript,
-      "ts-node": tsNode,
     },
   };
 

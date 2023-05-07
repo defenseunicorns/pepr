@@ -24,7 +24,7 @@ test.beforeEach(() => {
     })
     .reply(200, (uri, requestBody) => requestBody)
     .get("/todos/empty-null")
-    .reply(200, null)
+    .reply(200, undefined)
     .get("/todos/empty-string")
     .reply(200, "")
     .get("/todos/empty-object")
@@ -35,7 +35,7 @@ test.beforeEach(() => {
 
 test("fetch: should return without type data", async t => {
   const url = "https://jsonplaceholder.typicode.com/todos/1";
-  const { data, ok } = await fetch(url);
+  const { data, ok } = await fetch<{ title: string }>(url);
   t.is(ok, true);
   t.is(data["title"], "Example title");
 });
@@ -70,7 +70,8 @@ test("fetch: should handle additional request options", async t => {
     },
   };
 
-  const { data, ok } = await fetch(url, requestOptions);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, ok } = await fetch<any>(url, requestOptions);
   t.is(ok, true);
   t.is(data["title"], "test todo");
   t.is(data["userId"], 1);
@@ -81,7 +82,7 @@ test("fetch: should handle empty (null) responses", async t => {
   const url = "https://jsonplaceholder.typicode.com/todos/empty-null";
   const resp = await fetch(url);
 
-  t.is(resp.data, null);
+  t.is(resp.data, "");
   t.is(resp.ok, true);
   t.is(resp.status, StatusCodes.OK);
 });
@@ -108,7 +109,7 @@ test("fetch: should handle failed requests without throwing an error", async t =
   const url = "https://jsonplaceholder.typicode.com/todos/invalid";
   const resp = await fetch(url);
 
-  t.is(resp.data, null);
+  t.is(resp.data, undefined);
   t.is(resp.ok, false);
   t.is(resp.status, StatusCodes.BAD_REQUEST);
 });

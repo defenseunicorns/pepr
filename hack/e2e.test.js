@@ -21,8 +21,8 @@ let expectedLines = [
   "hello-pepr: V1ConfigMap Binding created",
   "hello-pepr: V1ConfigMap Binding action created",
   "Server listening on port 3000",
-  "Using beforeHook: req => pepr_1.Log.debug(`beforeHook: ${req.uid}`)",
-  "Using afterHook: res => pepr_1.Log.debug(`afterHook: ${res.uid}`)",
+  "Using beforeHook: req => pepr$1.Log.debug(`beforeHook: ${req.uid}`)",
+  "Using afterHook: res => pepr$1.Log.debug(`afterHook: ${res.uid}`)",
 ];
 
 function stripAnsiCodes(input) {
@@ -164,6 +164,8 @@ function peprDev(resolve, reject) {
       // Check if the expected line is found in the output, ignoring whitespace
       return !data.replace(/\s+/g, " ").includes(expectedLine);
     });
+
+    console.log("\x1b[36m%s\x1b[0m'", "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2));
 
     // If all expected lines are found, resolve the promise
     if (expectedLines.length < 1) {

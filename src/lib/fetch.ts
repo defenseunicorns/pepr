@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { StatusCodes } from "http-status-codes";
-import f, { RequestInfo, RequestInit } from "node-fetch";
+import f, { FetchError, RequestInfo, RequestInit } from "node-fetch";
 import logger from "./logger";
 export { f as fetchRaw };
 
@@ -27,13 +27,12 @@ export type FetchResponse<T> = {
  * @returns
  */
 export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Promise<FetchResponse<T>> {
+  let data = undefined as unknown as T;
   try {
     logger.debug(`Fetching ${url}`);
 
     const resp = await f(url, init);
     const contentType = resp.headers.get("content-type") || "";
-
-    let data: T;
 
     if (resp.ok) {
       // Parse the response as JSON if the content type is JSON
@@ -52,13 +51,25 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Prom
       statusText: resp.statusText,
     };
   } catch (e) {
-    logger.debug(`Fetch failed: ${e.message}`);
+    if (e instanceof FetchError) {
+      logger.debug(`Fetch failed: ${e instanceof Error ? e.message : e}`);
+
+      // Parse the error code from the FetchError or default to 400 (Bad Request)
+      const status = parseInt(e.code || "400");
+
+      return {
+        data,
+        ok: false,
+        status,
+        statusText: e.message,
+      };
+    }
 
     return {
-      data: null,
+      data,
       ok: false,
-      status: e.code || StatusCodes.BAD_REQUEST,
-      statusText: e.message,
+      status: StatusCodes.BAD_REQUEST,
+      statusText: "Unknown error",
     };
   }
 }

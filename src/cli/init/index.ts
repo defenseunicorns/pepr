@@ -86,7 +86,9 @@ export default function (program: RootCmd) {
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (e) {
           Log.debug(e);
-          Log.error(e.message);
+          if (e instanceof Error) {
+            Log.error(e.message);
+          }
           process.exit(1);
         }
       }

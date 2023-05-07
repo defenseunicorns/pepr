@@ -32,7 +32,7 @@ export async function createDir(dir: string) {
     await fs.mkdir(dir);
   } catch (err) {
     // The directory already exists
-    if (err.code === "EEXIST") {
+    if (err && (err as NodeJS.ErrnoException).code === "EEXIST") {
       throw new Error(`Directory ${dir} already exists`);
     } else {
       throw err;

@@ -14,5 +14,5 @@
   "rules": {
     "sort-imports": ["error", { "ignoreDeclarationSort": true }]
   },
-  "ignorePatterns": ["node_modules", "dist", "src/cli/init/templates/data.json"]
+  "ignorePatterns": ["node_modules", "dist", "src/cli/init/templates/data.json", "hack"]
 }

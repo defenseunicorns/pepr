@@ -6,6 +6,7 @@ import {
   AdmissionregistrationV1WebhookClientConfig,
   AppsV1Api,
   CoreV1Api,
+  HttpError,
   KubeConfig,
   NetworkingV1Api,
   RbacAuthorizationV1Api,
@@ -136,7 +137,7 @@ export class Webhook {
     const ignore = [peprIgnore];
 
     // Add any namespaces to ignore
-    if (this.config.alwaysIgnore.namespaces.length > 0) {
+    if (this.config.alwaysIgnore.namespaces && this.config.alwaysIgnore.namespaces.length > 0) {
       ignore.push({
         key: "kubernetes.io/metadata.name",
         operator: "NotIn",
@@ -226,7 +227,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
-                command: ["node", "/app/node_modules/pepr/dist/run.js", hash, "-l", "debug"],
+                command: ["node", "/app/node_modules/pepr/dist/src/cli/run.js", hash],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",
@@ -431,7 +432,7 @@ export class Webhook {
       Log.info("Checking for namespace");
       await coreV1Api.readNamespace(namespace);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Creating namespace");
       await coreV1Api.createNamespace(ns);
     }
@@ -441,9 +442,9 @@ export class Webhook {
       Log.info("Creating mutating webhook");
       await admissionApi.createMutatingWebhookConfiguration(wh);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating mutating webhook");
-      await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata.name);
+      await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata?.name ?? "");
       await admissionApi.createMutatingWebhookConfiguration(wh);
     }
 
@@ -455,9 +456,9 @@ export class Webhook {
     const netpol = this.networkPolicy();
     try {
       Log.info("Checking for network policy");
-      await networkApi.readNamespacedNetworkPolicy(netpol.metadata.name, namespace);
+      await networkApi.readNamespacedNetworkPolicy(netpol.metadata?.name ?? "", namespace);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Creating network policy");
       await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
     }
@@ -467,9 +468,9 @@ export class Webhook {
       Log.info("Creating cluster role binding");
       await rbacApi.createClusterRoleBinding(crb);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating cluster role binding");
-      await rbacApi.deleteClusterRoleBinding(crb.metadata.name);
+      await rbacApi.deleteClusterRoleBinding(crb.metadata?.name ?? "");
       await rbacApi.createClusterRoleBinding(crb);
     }
 
@@ -478,13 +479,13 @@ export class Webhook {
       Log.info("Creating cluster role");
       await rbacApi.createClusterRole(cr);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating  the cluster role");
       try {
-        await rbacApi.deleteClusterRole(cr.metadata.name);
+        await rbacApi.deleteClusterRole(cr.metadata?.name ?? "");
         await rbacApi.createClusterRole(cr);
       } catch (e) {
-        Log.debug(e.body);
+        Log.debug(e instanceof HttpError ? e.body : e);
       }
     }
 
@@ -493,9 +494,9 @@ export class Webhook {
       Log.info("Creating service account");
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating service account");
-      await coreV1Api.deleteNamespacedServiceAccount(sa.metadata.name, namespace);
+      await coreV1Api.deleteNamespacedServiceAccount(sa.metadata?.name ?? "", namespace);
       await coreV1Api.createNamespacedServiceAccount(namespace, sa);
     }
 
@@ -504,9 +505,9 @@ export class Webhook {
       Log.info("Creating module secret");
       await coreV1Api.createNamespacedSecret(namespace, mod);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating module secret");
-      await coreV1Api.deleteNamespacedSecret(mod.metadata.name, namespace);
+      await coreV1Api.deleteNamespacedSecret(mod.metadata?.name ?? "", namespace);
       await coreV1Api.createNamespacedSecret(namespace, mod);
     }
 
@@ -515,9 +516,9 @@ export class Webhook {
       Log.info("Creating service");
       await coreV1Api.createNamespacedService(namespace, svc);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating service");
-      await coreV1Api.deleteNamespacedService(svc.metadata.name, namespace);
+      await coreV1Api.deleteNamespacedService(svc.metadata?.name ?? "", namespace);
       await coreV1Api.createNamespacedService(namespace, svc);
     }
 
@@ -526,9 +527,9 @@ export class Webhook {
       Log.info("Creating TLS secret");
       await coreV1Api.createNamespacedSecret(namespace, tls);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating TLS secret");
-      await coreV1Api.deleteNamespacedSecret(tls.metadata.name, namespace);
+      await coreV1Api.deleteNamespacedSecret(tls.metadata?.name ?? "", namespace);
       await coreV1Api.createNamespacedSecret(namespace, tls);
     }
 
@@ -537,9 +538,9 @@ export class Webhook {
       Log.info("Creating deployment");
       await appsApi.createNamespacedDeployment(namespace, dep);
     } catch (e) {
-      Log.debug(e.body);
+      Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Removing and re-creating deployment");
-      await appsApi.deleteNamespacedDeployment(dep.metadata.name, namespace);
+      await appsApi.deleteNamespacedDeployment(dep.metadata?.name ?? "", namespace);
       await appsApi.createNamespacedDeployment(namespace, dep);
     }
   }

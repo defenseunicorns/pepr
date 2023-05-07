@@ -53,10 +53,19 @@ export class Controller {
     }
 
     // Create HTTPS server
-    https.createServer(options, this.app).listen(port, () => {
+    const server = https.createServer(options, this.app).listen(port, () => {
       console.log(`Server listening on port ${port}`);
       // Track that the server is running
       this.running = true;
+    });
+
+    // Listen for the SIGTERM signal and gracefully close the server
+    process.on("SIGTERM", () => {
+      console.log("Received SIGTERM, closing server");
+      server.close(() => {
+        console.log("Server closed");
+        process.exit(0);
+      });
     });
   };
 
