@@ -9,7 +9,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Zero-config K8s webhook mutations and [validations soon](https://github.com/defenseunicorns/pepr/issues/73).
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
 - Generate new K8s resources based off of cluster resource changes
-- Perform other exec/API calls based off of cluster resources changes or any other abitrary schedule
+- Perform other exec/API calls based off of cluster resources changes or any other arbitrary schedule
 - Out of the box airgap support with [Zarf](https://zarf.dev)
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
@@ -76,7 +76,7 @@ https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb
 
 ### Module
 
-A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their CapabilityActions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster for processing by a common Pepr controller.
+A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their CapabilityActions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
 
 See [Module](./docs/module.md) for more details.
 
@@ -95,50 +95,7 @@ For example, a CapabilityAction could be responsible for adding a specific label
 See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
-
-```mermaid
-graph LR
-
-subgraph "Module 3 (Validate Only)"
-    direction LR
-    Q[entrypoint 3] --> R[Validate Webhook];
-    R --> S[Capability a <br><i>- action 1<br>- action 2</i>];
-    S --> T[Capability b <br><i>- action 1<br>- action 2</i>];
-end
-
-subgraph "Module 2 (Mutate Only)"
-    direction LR
-    K[entrypoint 2] --> L[Mutate Webhook];
-    L --> M[Capability a <br><i>- action 1<br>- action 2</i>];
-    M --> N[Capability b <br><i>- action 1<br>- action 2<br>- action 3</i>];
-    N --> O[Capability c <br><i>- action 1</i>];
-end
-
-subgraph "Module 1 (Mutate & Validate)"
-    direction LR
-    A[entrypoint 1] --> B[Mutate Webhook];
-    A --> C[Validate Webhook];
-    B --> D[Capability a <br><i>- action 1</i>];
-    D --> E[Capability b <br><i>- action 1<br>- action 2</i>];
-    E --> F[Capability c <br><i>- action 1<br>- action 2</i>];
-    C --> G[Capability d <br><i>- action 1<br>- action 2</i>];
-    G --> H[Capability e <br><i>- action 1</i>];
-    H --> I[Capability f <br><i>- action 1<br>- action 2<br>- action 3</i>];
-end
-
-
-
-%% Defining node styles
-classDef Validate fill:#66ff66,color:#000;
-classDef Mutate fill:#5786ea,color:#000;
-
-
-class L,M,N,O Mutate;
-class B,D,E,F Mutate;
-
-class R,S,T Validate;
-class C,G,H,I Validate;
-```
+![Module Diagram](./.images/modules.svg)
 
 ## TypeScript
 
