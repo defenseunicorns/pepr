@@ -16,3 +16,7 @@ tsconfig.build.json
 /fixtures
 /hack
 pepr-test-module
+*.toml
+docs/
+dist/fixtures
+*.test.*
