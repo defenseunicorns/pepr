@@ -10,6 +10,7 @@ import { Webhook } from "../../src/lib/k8s/webhook";
 import Log from "../../src/lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
+import { register } from "ts-node";
 
 export default function (program: RootCmd) {
   program
@@ -104,11 +105,14 @@ export default function (program: RootCmd) {
 
 async function runDev() {
   try {
-    const { path } = await buildModule();
+    const path = resolve(".", "pepr.ts");
 
     Log.info(`Running module ${path}`);
 
     const program = fork(path, {
+      // Register ts-node
+      execArgv: ["-r", "ts-node/register"],
+      // Pass the environment variables
       env: {
         ...process.env,
         LOG_LEVEL: "debug",
