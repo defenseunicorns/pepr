@@ -13,6 +13,7 @@ rollup.config.mjs
 tsconfig.json
 tsconfig.build.json
 /src/cli
+/dist/src/cli/**/*.d.*
 /fixtures
 /hack
 pepr-test-module
@@ -20,3 +21,4 @@ pepr-test-module
 docs/
 dist/fixtures
 *.test.*
+*.tgz

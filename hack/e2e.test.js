@@ -109,31 +109,31 @@ test.serial("E2E: Pepr Deploy", async t => {
     t.is(cm1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(cm1.metadata.annotations["pepr.dev"], "annotations-work-too");
     t.is(cm1.metadata.labels["pepr"], "was-here");
-    t.log("Validated example-1 configmap data");
+    t.log("Validated example-1 ConfigMap data");
 
     // Validate the example-2 CM
     t.is(cm2.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(cm2.metadata.annotations["pepr.dev"], "annotations-work-too");
     t.is(cm2.metadata.labels["pepr"], "was-here");
-    t.log("Validated example-2 configmap data");
+    t.log("Validated example-2 ConfigMap data");
 
     // Validate the example-3 CM
     t.is(cm3.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(cm3.metadata.annotations["pepr.dev"], "making-waves");
     t.deepEqual(cm3.data, { key: "ex-3-val", username: "system:admin" });
-    t.log("Validated example-3 configmap data");
+    t.log("Validated example-3 ConfigMap data");
 
     // Validate the example-4 CM
     t.is(cm4.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(cm4.metadata.labels["pepr.dev/first"], "true");
     t.is(cm4.metadata.labels["pepr.dev/second"], "true");
     t.is(cm4.metadata.labels["pepr.dev/third"], "true");
-    t.log("Validated example-4 configmap data");
+    t.log("Validated example-4 ConfigMap data");
 
     // Validate the example-5 CM
     t.is(cm5.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.truthy(cm5.data["chuck-says"]);
-    t.log("Validated example-5 configmap data");
+    t.log("Validated example-5 ConfigMap data");
 
     // Remove the sample yaml for the HelloPepr capability
     execSync("kubectl delete -f hello-pepr.samples.yaml", {

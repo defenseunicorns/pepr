@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "module": "commonjs",

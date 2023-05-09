@@ -32,7 +32,7 @@ export default function (program: RootCmd) {
       // Overrides for testing. @todo: don't be so gross with Node CLI testing
       if (process.env.TEST_MODE === "true") {
         prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
-        pkgOverride = "file:../";
+        pkgOverride = "file:../pepr-0.0.0-development.tgz";
       }
 
       const response = await walkthrough();

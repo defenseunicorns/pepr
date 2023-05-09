@@ -6,8 +6,17 @@ WORKDIR /app
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
 
-# Install the dependencies in production mode
-RUN npm ci --omit=dev --omit=peer
+# Load only direct dependencies for Production use
+RUN npm ci --omit=dev --omit=peer && \
+    # Clean up npm cache
+    npm cache clean --force && \
+    # Remove @types
+    rm -fr node_modules/@types && \
+    # Remove Ramda unused Ramda files
+    rm -fr node_modules/ramda/dist && \
+    rm -fr node_modules/ramda/es && \
+    # Remove all typescript files
+    find . -name "*.ts" -type f -delete
 
 # Sync the pepr dist files
 COPY --chown=node:node ./dist/  ./node_modules/pepr/dist/
