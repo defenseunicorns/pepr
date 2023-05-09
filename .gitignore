@@ -19,6 +19,7 @@ stats.html
 .vscode
 insecure-tls*
 pepr-test-module
+*.tgz
 
 # Test binary, build with `go test -c`
 *.test
