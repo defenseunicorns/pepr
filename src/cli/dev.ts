@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { fork } from "child_process";
+import { ChildProcess, fork, spawn } from "child_process";
 import { watch } from "chokidar";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { prompt } from "prompts";
-import { Webhook } from "../../src/lib/k8s/webhook";
-import Log from "../../src/lib/logger";
-import { buildModule } from "./build";
-import { RootCmd } from "./root";
-import { register } from "ts-node";
+import prompt from "prompts";
+import { Webhook } from "../../src/lib/k8s/webhook.js";
+import Log from "../../src/lib/logger.js";
+import { loadModule } from "./build.js";
+import { RootCmd } from "./root.js";
 
 export default function (program: RootCmd) {
   program
@@ -34,10 +33,7 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule();
-
-      // Read the compiled module code
-      const code = await fs.readFile(path);
+      const { cfg, input } = await loadModule();
 
       // Generate a secret for the module
       const webhook = new Webhook(
@@ -53,7 +49,7 @@ export default function (program: RootCmd) {
       await fs.writeFile("insecure-tls.key", webhook.tls.pem.key);
 
       try {
-        await webhook.deploy(code);
+        await webhook.deploy();
         Log.info(`Module deployed successfully`);
 
         const moduleFiles = [
@@ -73,7 +69,7 @@ export default function (program: RootCmd) {
           let building = false;
 
           // Run the module once to start the server
-          let program = await runDev();
+          let program = await runDev(input);
           Log.info(`Watching for changes in ${moduleFiles}`);
           watcher.on("all", async (event, path) => {
             Log.debug({ event, path }, "File changed");
@@ -88,7 +84,7 @@ export default function (program: RootCmd) {
 
             // Don't start a new process until the old one exits
             program.once("exit", async () => {
-              program = await runDev();
+              program = await runDev(input);
               building = false;
             });
 
@@ -103,28 +99,46 @@ export default function (program: RootCmd) {
     });
 }
 
-async function runDev() {
-  try {
-    const path = resolve(".", "pepr.ts");
+async function runDev(path: string): Promise<ChildProcess> {
+  return new Promise((resolve, reject) => {
+    try {
+      Log.info(`Running module ${path}`);
 
-    Log.info(`Running module ${path}`);
+      // Compile the module with tsc
+      const tsc = spawn("./node_modules/.bin/tsc");
 
-    const program = fork(path, {
-      // Register ts-node
-      execArgv: ["-r", "ts-node/register"],
-      // Pass the environment variables
-      env: {
-        ...process.env,
-        LOG_LEVEL: "debug",
-        SSL_KEY_PATH: "insecure-tls.key",
-        SSL_CERT_PATH: "insecure-tls.crt",
-      },
-    });
+      tsc.stdout.on("data", data => Log.debug(data.toString()));
+      tsc.stderr.on("data", data => Log.error(data.toString()));
 
-    return program;
-  } catch (e) {
-    Log.debug(e);
-    Log.error(`Error running module: ${e}`);
-    process.exit(1);
-  }
+      tsc.on("error", err => {
+        Log.error(`Error running tsc: ${err}`);
+        reject(err);
+      });
+
+      tsc.on("close", code => {
+        // If tsc exited with a non-zero code, exit
+        if (code !== 0) {
+          Log.error(`tsc exited with code ${code}`);
+          reject(code);
+        }
+
+        // Run the module
+        const program = fork("./dist/pepr.js", {
+          env: {
+            ...process.env,
+            LOG_LEVEL: "debug",
+            SSL_KEY_PATH: "insecure-tls.key",
+            SSL_CERT_PATH: "insecure-tls.crt",
+          },
+        });
+
+        // Resolve the promise with the running process
+        resolve(program);
+      });
+    } catch (e) {
+      Log.debug(e);
+      Log.error(`Error running module: ${e}`);
+      reject(1);
+    }
+  });
 }

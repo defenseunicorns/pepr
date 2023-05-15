@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind, modelToGroupVersionKind } from "./k8s";
-import logger from "./logger";
+import { modelToGroupVersionKind } from "./k8s/index.js";
+import { GroupVersionKind } from "./k8s/types.js";
+import logger from "./logger.js";
 import {
   BindToAction,
   Binding,
@@ -15,7 +16,7 @@ import {
   GenericClass,
   HookPhase,
   WhenSelector,
-} from "./types";
+} from "./types.js";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.

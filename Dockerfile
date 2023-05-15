@@ -14,7 +14,7 @@ RUN npm ci --omit=dev --omit=peer && \
     rm -fr node_modules/@types && \
     # Remove Ramda unused Ramda files
     rm -fr node_modules/ramda/dist && \
-    rm -fr node_modules/ramda/es && \
+    rm -fr node_modules/ramda/src && \
     # Remove all typescript files
     find . -name "*.ts" -type f -delete
 

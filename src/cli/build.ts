@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import json from "@rollup/plugin-json";
-import nodeResolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import jsonModule from "@rollup/plugin-json";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import typescriptModule from "@rollup/plugin-typescript";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import { dependencies } from "../../package.json";
-import { Webhook } from "../../src/lib/k8s/webhook";
-import Log from "../../src/lib/logger";
-import { RootCmd } from "./root";
+import packageJSON from "../../package.json" assert { type: "json" };
+import { Webhook } from "../../src/lib/k8s/webhook.js";
+import Log from "../../src/lib/logger.js";
+import { RootCmd } from "./root.js";
+
+// Uhhh why is this soooo nasty? TS not respecting the ESM export?
+const json = jsonModule.default || jsonModule;
+const typescript = typescriptModule.default || typescriptModule;
 
 export default function (program: RootCmd) {
   program
@@ -43,83 +47,94 @@ export default function (program: RootCmd) {
     });
 }
 
-// Create a list of external libraries to exclude from the bundle, these are already stored in the containe
-const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
+// Create a list of external libraries to exclude from the bundle, these are already stored in the container
+const externalLibs: ExternalOption = Object.keys(packageJSON.dependencies).map(
+  dep => new RegExp(`^${dep}.*`)
+);
 
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
 
+export async function loadModule() {
+  // Resolve the path to the module's package.json file
+  const cfgPath = resolve(".", "package.json");
+  const input = resolve(".", "pepr.ts");
+
+  // Ensure the module's package.json and pepr.ts files exist
+  try {
+    await fs.access(cfgPath);
+    await fs.access(input);
+  } catch (e) {
+    Log.error(
+      `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
+    );
+    process.exit(1);
+  }
+
+  // Read the module's UUID from the package.json file
+  const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
+  const cfg = JSON.parse(moduleText);
+  const { uuid } = cfg.pepr;
+  const name = `pepr-${uuid}.js`;
+
+  // Read the module's version from the package.json file
+  if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
+    const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
+    if (!versionMatch || versionMatch.length < 2) {
+      throw new Error("Could not find the Pepr version in package.json");
+    }
+    cfg.pepr.version = versionMatch[1];
+  }
+
+  // Exit if the module's UUID could not be found
+  if (!uuid) {
+    throw new Error("Could not load the uuid in package.json");
+  }
+
+  return {
+    cfg,
+    input,
+    name,
+    path: resolve("dist", name),
+    uuid,
+  };
+}
+
 export async function buildModule() {
   try {
-    // Resolve the path to the module's package.json file
-    const cfgPath = resolve(".", "package.json");
-    const input = resolve(".", "pepr.ts");
-
-    // Ensure the module's package.json and pepr.ts files exist
-    try {
-      await fs.access(cfgPath);
-      await fs.access(input);
-    } catch (e) {
-      Log.error(
-        `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
-      );
-      process.exit(1);
-    }
-
-    // Read the module's UUID from the package.json file
-    const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
-    const cfg = JSON.parse(moduleText);
-    const { uuid } = cfg.pepr;
-    const name = `pepr-${uuid}.js`;
-
-    // Read the module's version from the package.json file
-    if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
-      const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
-      if (!versionMatch || versionMatch.length < 2) {
-        throw new Error("Could not find the Pepr version in package.json");
-      }
-      cfg.pepr.version = versionMatch[1];
-    }
-
-    // Exit if the module's UUID could not be found
-    if (!uuid) {
-      throw new Error("Could not load the uuid in package.json");
-    }
+    const { cfg, input, name, path, uuid } = await loadModule();
 
     const plugins: InputPluginOption = [
       nodeResolve({
         preferBuiltins: true,
       }),
-      json(),
+      json({
+        compact: true,
+      }),
       typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
+        include: ["**/*.ts"],
         removeComments: true,
         sourceMap: false,
-        include: ["**/*.ts"],
+        tsconfig: "./tsconfig.json",
       }),
     ];
 
     // Build the module using Rollup
     const bundle = await rollup({
-      plugins,
       external: externalLibs,
-      treeshake: true,
       input,
+      plugins,
+      treeshake: true,
     });
 
     // Write the module to the dist directory
     await bundle.write({
       dir: "dist",
-      format: "cjs",
       entryFileNames: name,
+      format: "esm",
     });
 
-    return {
-      path: resolve("dist", name),
-      cfg,
-      uuid,
-    };
+    return { path, cfg, uuid };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.debug(e);

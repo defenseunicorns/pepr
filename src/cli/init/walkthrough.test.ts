@@ -3,7 +3,7 @@
 
 import test from "ava";
 import prompts from "prompts";
-import { walkthrough } from "./walkthrough";
+import { walkthrough } from "./walkthrough.js";
 
 test("walkthrough() returns expected results", async t => {
   // Inject predefined answers for the prompts

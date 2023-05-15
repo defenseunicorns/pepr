@@ -4,16 +4,18 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
-import { devDependencies, peerDependencies, scripts, version } from "../../../package.json";
-import prettierRCJSON from "./templates/.prettierrc.json";
-import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
-import generatedJSON from "./templates/data.json";
-import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
-import tsConfigJSON from "./templates/tsconfig.module.json";
-import { sanitizeName } from "./utils";
-import { InitOptions } from "./walkthrough";
+import packageJSON from "../../../package.json" assert { type: "json" };
+import prettierJSON from "./templates/.prettierrc.json" assert { type: "json" };
+import samplesJSON from "./templates/capabilities/hello-pepr.samples.json" assert { type: "json" };
+import generatedJSON from "./templates/data.json" assert { type: "json" };
+import peprSnippetsJSON from "./templates/pepr.code-snippets.json" assert { type: "json" };
+import tsConfigJSON from "./templates/tsconfig.module.json" assert { type: "json" };
+import { sanitizeName } from "./utils.js";
+import { InitOptions } from "./walkthrough.js";
 
 export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
+  const { devDependencies, peerDependencies, scripts, version } = packageJSON;
+
   // Generate a random UUID for the module based on the module name
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
@@ -27,6 +29,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     version: "0.0.1",
     description: opts.description,
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
+    type: "module",
     pepr: {
       name: opts.name.trim(),
       uuid: pgkVerOverride ? "static-test" : uuid,
@@ -97,5 +100,5 @@ export const tsConfig = {
 
 export const prettierRC = {
   path: ".prettierrc",
-  data: prettierRCJSON,
+  data: prettierJSON,
 };

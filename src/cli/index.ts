@@ -3,16 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { version } from "../../package.json";
-import { banner } from "./banner";
-import build from "./build";
-import deploy from "./deploy";
-import dev from "./dev";
-import init from "./init";
-import { RootCmd } from "./root";
-import update from "./update";
+import packageJSON from "../../package.json" assert { type: "json" };
+import { banner } from "./banner.js";
+import build from "./build.js";
+import deploy from "./deploy.js";
+import dev from "./dev.js";
+import init from "./init/index.js";
+import { RootCmd } from "./root.js";
+import update from "./update.js";
 
 const program = new RootCmd();
+const { version } = packageJSON;
 
 program
   .version(version)

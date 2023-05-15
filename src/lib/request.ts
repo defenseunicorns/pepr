@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import R from "ramda";
-import { KubernetesObject, Request } from "./k8s";
-import { DeepPartial } from "./types";
+import { clone, mergeDeepRight } from "ramda";
+import { KubernetesObject, Request } from "./k8s/types.js";
+import { DeepPartial } from "./types.js";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -48,7 +48,7 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   constructor(input: Request<T>) {
     // Deep clone the object to prevent mutation of the original object
-    this.Raw = R.clone(input.object);
+    this.Raw = clone(input.object);
     // Store the input
     this._input = input;
   }
@@ -59,7 +59,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @param obj - The object to merge with the current resource.
    */
   Merge(obj: DeepPartial<T>) {
-    this.Raw = R.mergeDeepRight(this.Raw, obj) as unknown as T;
+    this.Raw = mergeDeepRight(this.Raw, obj) as unknown as T;
   }
 
   /**

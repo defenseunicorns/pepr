@@ -1,15 +1,14 @@
-/* eslint-disable */
-const test = require("ava");
-const fs = require("fs").promises;
-const path = require("path");
-const { spawn, execSync } = require("child_process");
-const k8s = require("@kubernetes/client-node");
+import { AppsV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import test from "ava";
+import { execSync, spawn } from "child_process";
+import { promises as fs } from "fs";
+import { resolve } from "path";
 
-const kc = new k8s.KubeConfig();
+const kc = new KubeConfig();
 kc.loadFromDefault();
 
-const k8sApi = kc.makeApiClient(k8s.AppsV1Api);
-const k8sCoreApi = kc.makeApiClient(k8s.CoreV1Api);
+const k8sApi = kc.makeApiClient(AppsV1Api);
+const k8sCoreApi = kc.makeApiClient(CoreV1Api);
 
 // Timeout in milliseconds
 const TIMEOUT = 120 * 1000;
@@ -30,7 +29,7 @@ function stripAnsiCodes(input) {
 }
 
 test.before(async t => {
-  const dir = path.resolve(testDir);
+  const dir = resolve(testDir);
 
   try {
     await fs.access(dir);
@@ -56,8 +55,8 @@ test.serial("E2E: Pepr Build", async t => {
   try {
     execSync("pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
-    await fs.access(path.resolve(testDir, "dist", "zarf.yaml"));
-    await fs.access(path.resolve(testDir, "dist", "pepr-module-static-test.yaml"));
+    await fs.access(resolve(testDir, "dist", "zarf.yaml"));
+    await fs.access(resolve(testDir, "dist", "pepr-module-static-test.yaml"));
 
     t.pass();
   } catch (e) {
@@ -77,7 +76,7 @@ test.serial("E2E: Pepr Deploy", async t => {
 
     // Apply the sample yaml for the HelloPepr capability
     execSync("kubectl apply -f hello-pepr.samples.yaml", {
-      cwd: path.resolve(testDir, "capabilities"),
+      cwd: resolve(testDir, "capabilities"),
       stdio: "inherit",
     });
 
@@ -137,7 +136,7 @@ test.serial("E2E: Pepr Deploy", async t => {
 
     // Remove the sample yaml for the HelloPepr capability
     execSync("kubectl delete -f hello-pepr.samples.yaml", {
-      cwd: path.resolve(testDir, "capabilities"),
+      cwd: resolve(testDir, "capabilities"),
       stdio: "inherit",
     });
 
@@ -165,7 +164,10 @@ function peprDev(resolve, reject) {
       return !data.replace(/\s+/g, " ").includes(expectedLine);
     });
 
-    console.log("\x1b[36m%s\x1b[0m'", "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2));
+    console.log(
+      "\x1b[36m%s\x1b[0m'",
+      "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2)
+    );
 
     // If all expected lines are found, resolve the promise
     if (expectedLines.length < 1) {

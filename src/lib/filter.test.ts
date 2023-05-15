@@ -1,7 +1,7 @@
 import test from "ava";
-import { POD1 } from "../../fixtures/loader";
-import { shouldSkipRequest } from "./filter";
-import { gvkMap } from "./k8s";
+import { POD1 } from "../../fixtures/loader.js";
+import { shouldSkipRequest } from "./filter.js";
+import { gvkMap } from "./k8s/kinds.js";
 
 const callback = () => undefined;
 

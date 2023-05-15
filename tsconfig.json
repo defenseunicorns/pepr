@@ -1,15 +1,17 @@
 {
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "lib": ["ES2020"],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "outDir": "dist",
     "resolveJsonModule": true,
     "strict": true,
-    "target": "ES2020"
+    "target": "ES2022"
   },
   "exclude": ["node_modules", "dist", "fixtures", "src/cli/init/templates", "pepr-test-module"]
 }

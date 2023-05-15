@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request } from "./k8s";
-import logger from "./logger";
-import { Binding } from "./types";
+import { Request } from "./k8s/types.js";
+import logger from "./logger.js";
+import { Binding } from "./types.js";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.

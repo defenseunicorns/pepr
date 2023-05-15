@@ -4,8 +4,8 @@
 import { execSync } from "child_process";
 import { resolve } from "path";
 import prompts from "prompts";
-import Log from "../../../src/lib/logger";
-import { RootCmd } from "../root";
+import Log from "../../../src/lib/logger.js";
+import { RootCmd } from "../root.js";
 import {
   genPeprTS,
   genPkgJSON,
@@ -16,9 +16,9 @@ import {
   samplesYaml,
   snippet,
   tsConfig,
-} from "./templates";
-import { createDir, sanitizeName, write } from "./utils";
-import { confirm, walkthrough } from "./walkthrough";
+} from "./templates.js";
+import { createDir, sanitizeName, write } from "./utils.js";
+import { confirm, walkthrough } from "./walkthrough.js";
 
 export default function (program: RootCmd) {
   program

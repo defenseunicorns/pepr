@@ -24,9 +24,9 @@ import {
 } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { gzipSync } from "zlib";
-import Log from "../logger";
-import { ModuleConfig } from "../types";
-import { TLSOut, genTLS } from "./tls";
+import Log from "../logger.js";
+import { ModuleConfig } from "../types.js";
+import { TLSOut, genTLS } from "./tls.js";
 
 const peprIgnore: V1LabelSelectorRequirement = {
   key: "pepr.dev",
@@ -411,11 +411,10 @@ export class Webhook {
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
   }
 
-  async deploy(code: Buffer) {
+  async deploy(code?: Buffer) {
     Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
-    const hash = crypto.createHash("sha256").update(code).digest("hex");
 
     // Deploy the resources using the k8s API
     const kubeConfig = new KubeConfig();
@@ -452,6 +451,12 @@ export class Webhook {
     if (this.host) {
       return;
     }
+
+    if (!code) {
+      throw new Error("No code provided");
+    }
+
+    const hash = crypto.createHash("sha256").update(code).digest("hex");
 
     const netpol = this.networkPolicy();
     try {

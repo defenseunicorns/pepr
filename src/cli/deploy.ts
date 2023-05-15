@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { promises as fs } from "fs";
-import { prompt } from "prompts";
-import { Webhook } from "../../src/lib/k8s/webhook";
-import Log from "../../src/lib/logger";
-import { buildModule } from "./build";
-import { RootCmd } from "./root";
+import prompt from "prompts";
+import { Webhook } from "../../src/lib/k8s/webhook.js";
+import Log from "../../src/lib/logger.js";
+import { buildModule } from "./build.js";
+import { RootCmd } from "./root.js";
 
 export default function (program: RootCmd) {
   program

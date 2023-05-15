@@ -7,8 +7,10 @@ import { fork } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
 import { gunzipSync } from "zlib";
-import { version } from "../../package.json";
-import Log from "../lib/logger";
+import packageJSON from "../../package.json" assert { type: "json" };
+import Log from "../lib/logger.js";
+
+const { version } = packageJSON;
 
 function validateHash(expectedHash: string) {
   // Require the hash to be 64 characters long

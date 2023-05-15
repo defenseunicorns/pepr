@@ -1,6 +1,7 @@
 {
   "name": "pepr-dev-module",
   "description": "static test package.json for local pepr core development",
+  "type": "module",
   "pepr": {
     "name": "Development Module",
     "uuid": "20e17cf6-a2e4-46b2-b626-75d88d96c88b",

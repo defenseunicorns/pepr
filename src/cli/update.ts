@@ -3,11 +3,11 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import { prompt } from "prompts";
-import Log from "../../src/lib/logger";
-import { helloPeprTS, prettierRC, samplesYaml, snippet, tsConfig } from "./init/templates";
-import { write } from "./init/utils";
-import { RootCmd } from "./root";
+import prompt from "prompts";
+import Log from "../../src/lib/logger.js";
+import { helloPeprTS, prettierRC, samplesYaml, snippet, tsConfig } from "./init/templates.js";
+import { write } from "./init/utils.js";
+import { RootCmd } from "./root.js";
 
 export default function (program: RootCmd) {
   program
@@ -20,7 +20,7 @@ export default function (program: RootCmd) {
           type: "confirm",
           name: "confirm",
           message:
-            "This will overwrite previously auto-generated files inluding the capabilities/HelloPepr.ts file.\n" +
+            "This will overwrite previously auto-generated files including the capabilities/HelloPepr.ts file.\n" +
             "Are you sure you want to continue?",
         });
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GenericClass } from "../types";
-import { GroupVersionKind } from "./types";
+import { GenericClass } from "../types.js";
+import { GroupVersionKind } from "./types.js";
 
 export const gvkMap: Record<string, GroupVersionKind> = {
   /**

@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "lib": ["ES2020"],
-    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "outDir": "dist",
     "resolveJsonModule": true,
     "rootDir": ".",
+    "sourceMap": true,
     "strict": false,
-    "target": "ES2020"
+    "target": "ES2022"
   },
   "include": ["**/*.ts"]
 }
