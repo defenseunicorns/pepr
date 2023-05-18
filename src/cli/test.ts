@@ -5,9 +5,10 @@ import { exec as execCallback } from "child_process";
 import { watch } from "chokidar";
 import { resolve } from "path";
 import { promisify } from "util";
-import Log from "../../src/lib/logger.js";
-import { buildModule } from "./build.js";
-import { RootCmd } from "./root.js";
+
+import Log from "../lib/logger";
+import { buildModule } from "./build";
+import { RootCmd } from "./root";
 
 const exec = promisify(execCallback);
 

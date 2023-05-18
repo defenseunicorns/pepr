@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import test from "ava";
-import { LogLevel, Logger } from "./logger.js";
+import { LogLevel, Logger } from "./logger";
 
 test("Logger debug logs correctly", t => {
   const logger = new Logger(LogLevel.debug); // Create a logger with debug level

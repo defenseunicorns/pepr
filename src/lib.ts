@@ -1,12 +1,12 @@
 import k8s from "@kubernetes/client-node";
 import { StatusCodes as fetchStatus } from "http-status-codes";
 import * as utils from "ramda";
-import { Capability } from "./capability.js";
-import { fetch, fetchRaw } from "./fetch.js";
-import { RegisterKind, a } from "./k8s/index.js";
-import Log from "./logger.js";
-import { PeprModule } from "./module.js";
-import { PeprRequest } from "./request.js";
+import { Capability } from "./lib/capability";
+import { fetch, fetchRaw } from "./lib/fetch";
+import { RegisterKind, a } from "./lib/k8s/index";
+import Log from "./lib/logger";
+import { PeprModule } from "./lib/module";
+import { PeprRequest } from "./lib/request";
 
 // Import type information for external packages
 import type * as KubernetesClientNode from "@kubernetes/client-node";

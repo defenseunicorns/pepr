@@ -24,9 +24,9 @@ import {
 } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { gzipSync } from "zlib";
-import Log from "../logger.js";
-import { ModuleConfig } from "../types.js";
-import { TLSOut, genTLS } from "./tls.js";
+import Log from "../logger";
+import { ModuleConfig } from "../types";
+import { TLSOut, genTLS } from "./tls";
 
 const peprIgnore: V1LabelSelectorRequirement = {
   key: "pepr.dev",
@@ -227,7 +227,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
-                command: ["node", "/app/node_modules/pepr/dist/src/cli/run.js", hash],
+                command: ["node", "/app/node_modules/pepr/dist/controller.mjs", hash],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",

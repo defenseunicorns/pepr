@@ -3,15 +3,17 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
+    "emitDeclarationOnly": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "lib": ["ES2022", "DOM"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
+    "rootDir": "src",
     "strict": true,
     "target": "ES2022"
   },
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "fixtures", "src/cli/init/templates", "pepr-test-module"]
 }

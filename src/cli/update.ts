@@ -4,10 +4,11 @@
 import { execSync } from "child_process";
 import { resolve } from "path";
 import prompt from "prompts";
-import Log from "../../src/lib/logger.js";
-import { helloPeprTS, prettierRC, samplesYaml, snippet, tsConfig } from "./init/templates.js";
-import { write } from "./init/utils.js";
-import { RootCmd } from "./root.js";
+
+import Log from "../lib/logger";
+import { helloPepr, prettier, samplesYaml, snippet, tsConfig } from "./init/templates";
+import { write } from "./init/utils";
+import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
   program
@@ -33,11 +34,11 @@ export default function (program: RootCmd) {
       console.log("Updating the Pepr module...");
 
       try {
-        await write(resolve(prettierRC.path), prettierRC.data);
+        await write(resolve(prettier.path), prettier.data);
         await write(resolve(tsConfig.path), tsConfig.data);
         await write(resolve(".vscode", snippet.path), snippet.data);
         await write(resolve("capabilities", samplesYaml.path), samplesYaml.data);
-        await write(resolve("capabilities", helloPeprTS.path), helloPeprTS.data);
+        await write(resolve("capabilities", helloPepr.path), helloPepr.data);
 
         // Update Pepr for the module
         execSync("npm install pepr@latest", {

@@ -3,10 +3,11 @@
 
 import { promises as fs } from "fs";
 import prompt from "prompts";
-import { Webhook } from "../../src/lib/k8s/webhook.js";
-import Log from "../../src/lib/logger.js";
-import { buildModule } from "./build.js";
-import { RootCmd } from "./root.js";
+
+import { Webhook } from "../lib/k8s/webhook";
+import Log from "../lib/logger";
+import { buildModule } from "./build";
+import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
   program

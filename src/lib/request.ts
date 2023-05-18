@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { clone, mergeDeepRight } from "ramda";
-import { KubernetesObject, Request } from "./k8s/types.js";
-import { DeepPartial } from "./types.js";
+import { KubernetesObject, Request } from "./k8s/types";
+import { DeepPartial } from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context

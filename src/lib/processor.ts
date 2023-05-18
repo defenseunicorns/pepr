@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
-import { Capability } from "./capability.js";
-import { shouldSkipRequest } from "./filter.js";
-import { Request, Response } from "./k8s/types.js";
-import logger from "./logger.js";
-import { PeprRequest } from "./request.js";
-import { ModuleConfig } from "./types.js";
+import { Capability } from "./capability";
+import { shouldSkipRequest } from "./filter";
+import { Request, Response } from "./k8s/types";
+import logger from "./logger";
+import { PeprRequest } from "./request";
+import { ModuleConfig } from "./types";
 
 export async function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Promise<Response> {
   const wrapped = new PeprRequest(req);

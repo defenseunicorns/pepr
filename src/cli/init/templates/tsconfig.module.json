@@ -2,12 +2,11 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
     "rootDir": ".",
-    "sourceMap": true,
     "strict": false,
     "target": "ES2022"
   },

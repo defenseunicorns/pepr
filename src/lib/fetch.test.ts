@@ -6,7 +6,7 @@ import test from "ava";
 import { StatusCodes } from "http-status-codes";
 import nock from "nock";
 import { RequestInit } from "node-fetch";
-import { fetch } from "./fetch.js";
+import { fetch } from "./fetch";
 
 test.beforeEach(() => {
   nock("https://jsonplaceholder.typicode.com")

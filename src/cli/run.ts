@@ -7,8 +7,9 @@ import { fork } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
 import { gunzipSync } from "zlib";
-import packageJSON from "../../package.json" assert { type: "json" };
-import Log from "../lib/logger.js";
+
+import Log from "../lib/logger";
+import { packageJSON } from "./init/templates/data.json";
 
 const { version } = packageJSON;
 
@@ -22,7 +23,7 @@ function validateHash(expectedHash: string) {
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
-  const jsPath = `/app/module-${expectedHash}.js`;
+  const jsPath = `/app/module-${expectedHash}.mjs`;
 
   // Set the log level
   Log.SetLogLevel("debug");

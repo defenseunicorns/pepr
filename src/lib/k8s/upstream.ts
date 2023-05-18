@@ -46,4 +46,4 @@ export {
   V1VolumeAttachment as VolumeAttachment,
 } from "@kubernetes/client-node";
 
-export { GenericKind } from "./types.js";
+export { GenericKind } from "./types";

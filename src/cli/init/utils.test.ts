@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import test from "ava";
-import { sanitizeName } from "./utils.js";
+
+import { sanitizeName } from "./utils";
 
 test("sanitizeName() sanitizes names correctly", t => {
   const cases = [

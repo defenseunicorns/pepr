@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import jsonModule from "@rollup/plugin-json";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
-import typescriptModule from "@rollup/plugin-typescript";
+import { BuildOptions, build } from "esbuild";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import packageJSON from "../../package.json" assert { type: "json" };
-import { Webhook } from "../../src/lib/k8s/webhook.js";
-import Log from "../../src/lib/logger.js";
-import { RootCmd } from "./root.js";
 
-// Uhhh why is this soooo nasty? TS not respecting the ESM export?
-const json = jsonModule.default || jsonModule;
-const typescript = typescriptModule.default || typescriptModule;
+import { Webhook } from "../lib/k8s/webhook";
+import Log from "../lib/logger";
+import { dependencies } from "./init/templates";
+import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
   program
@@ -48,9 +42,7 @@ export default function (program: RootCmd) {
 }
 
 // Create a list of external libraries to exclude from the bundle, these are already stored in the container
-const externalLibs: ExternalOption = Object.keys(packageJSON.dependencies).map(
-  dep => new RegExp(`^${dep}.*`)
-);
+const externalLibs = Object.keys(dependencies);
 
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
@@ -75,7 +67,7 @@ export async function loadModule() {
   const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
   const cfg = JSON.parse(moduleText);
   const { uuid } = cfg.pepr;
-  const name = `pepr-${uuid}.js`;
+  const name = `pepr-${uuid}.mjs`;
 
   // Read the module's version from the package.json file
   if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
@@ -100,38 +92,22 @@ export async function loadModule() {
   };
 }
 
-export async function buildModule() {
+export async function buildModule(devMode = false) {
   try {
-    const { cfg, input, name, path, uuid } = await loadModule();
+    const { cfg, path, uuid } = await loadModule();
 
-    const plugins: InputPluginOption = [
-      nodeResolve({
-        preferBuiltins: true,
-      }),
-      json({
-        compact: true,
-      }),
-      typescript({
-        include: ["**/*.ts"],
-        removeComments: true,
-        sourceMap: false,
-        tsconfig: "./tsconfig.json",
-      }),
-    ];
-
-    // Build the module using Rollup
-    const bundle = await rollup({
+    const buildOpts: BuildOptions = {
+      bundle: true,
       external: externalLibs,
-      input,
-      plugins,
-      treeshake: true,
-    });
-
-    // Write the module to the dist directory
-    await bundle.write({
-      dir: "dist",
-      entryFileNames: name,
       format: "esm",
+      platform: "node",
+    };
+
+    await build({
+      ...buildOpts,
+      entryPoints: ["pepr.ts"],
+      outfile: path,
+      sourcemap: devMode,
     });
 
     return { path, cfg, uuid };

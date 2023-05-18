@@ -3,9 +3,9 @@
 
 import { StatusCodes } from "http-status-codes";
 import f, { FetchError, RequestInfo, RequestInit } from "node-fetch";
-import logger from "./logger.js";
+import logger from "./logger";
 
-export const fetchRaw = f.default;
+export const fetchRaw = f;
 
 export type FetchResponse<T> = {
   data: T;

@@ -4,10 +4,10 @@
 import express from "express";
 import fs from "fs";
 import https from "https";
-import { Capability } from "./capability.js";
-import { Request, Response } from "./k8s/types.js";
-import { processor } from "./processor.js";
-import { ModuleConfig } from "./types.js";
+import { Capability } from "./capability";
+import { Request, Response } from "./k8s/types";
+import { processor } from "./processor";
+import { ModuleConfig } from "./types";
 
 // Load SSL certificate and key
 const options = {

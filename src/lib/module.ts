@@ -3,15 +3,19 @@
 
 import { concat, mergeDeepWith } from "ramda";
 
-import { Capability } from "./capability.js";
-import { getPackageJson } from "./config.js";
-import { Controller } from "./controller.js";
-import { Request, Response } from "./k8s/types.js";
-import { ModuleConfig } from "./types.js";
+import { Capability } from "./capability";
+import { Controller } from "./controller";
+import { Request, Response } from "./k8s/types";
+import { ModuleConfig } from "./types";
 
 const alwaysIgnore = {
   namespaces: ["kube-system", "pepr-system"],
   labels: [{ "pepr.dev": "ignore" }],
+};
+
+export type PackageJSON = {
+  description: string;
+  pepr: ModuleConfig;
 };
 
 export type PeprModuleOptions = {
@@ -30,11 +34,11 @@ export class PeprModule {
   /**
    * Create a new Pepr runtime
    *
+   * @param config The configuration for the Pepr runtime
    * @param capabilities The capabilities to be loaded into the Pepr runtime
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
-  constructor(capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
-    const { description, pepr } = getPackageJson();
+  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = mergeDeepWith(concat, pepr, alwaysIgnore);
     config.description = description;
 

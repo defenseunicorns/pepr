@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import test from "ava";
-import { a, modelToGroupVersionKind } from "./index.js";
+import { a, modelToGroupVersionKind } from "./index";
 
 test("should return the correct GroupVersionKind for 'a.V1APIService'", t => {
   const { name } = a.APIService;

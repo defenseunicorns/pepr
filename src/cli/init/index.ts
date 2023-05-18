@@ -4,21 +4,22 @@
 import { execSync } from "child_process";
 import { resolve } from "path";
 import prompts from "prompts";
-import Log from "../../../src/lib/logger.js";
-import { RootCmd } from "../root.js";
+
+import Log from "../../lib/logger";
+import { RootCmd } from "../root";
 import {
   genPeprTS,
   genPkgJSON,
-  gitIgnore,
-  helloPeprTS,
-  prettierRC,
+  gitignore,
+  helloPepr,
+  prettier,
   readme,
   samplesYaml,
   snippet,
   tsConfig,
-} from "./templates.js";
-import { createDir, sanitizeName, write } from "./utils.js";
-import { confirm, walkthrough } from "./walkthrough.js";
+} from "./templates";
+import { createDir, sanitizeName, write } from "./utils";
+import { confirm, walkthrough } from "./walkthrough";
 
 export default function (program: RootCmd) {
   program
@@ -50,15 +51,15 @@ export default function (program: RootCmd) {
           await createDir(resolve(dirName, ".vscode"));
           await createDir(resolve(dirName, "capabilities"));
 
-          await write(resolve(dirName, gitIgnore.path), gitIgnore.data);
-          await write(resolve(dirName, prettierRC.path), prettierRC.data);
+          await write(resolve(dirName, gitignore.path), gitignore.data);
+          await write(resolve(dirName, prettier.path), prettier.data);
           await write(resolve(dirName, packageJSON.path), packageJSON.data);
           await write(resolve(dirName, readme.path), readme.data);
           await write(resolve(dirName, tsConfig.path), tsConfig.data);
           await write(resolve(dirName, peprTS.path), peprTS.data);
           await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
           await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
-          await write(resolve(dirName, "capabilities", helloPeprTS.path), helloPeprTS.data);
+          await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
 
           if (!opts.skipPostInit) {
             // run npm install from the new directory
