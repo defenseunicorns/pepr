@@ -103,6 +103,6 @@ See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Kubernetes Mutating Webhooks
 
-[Kubernetes mutating webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)are a powerful feature that allows users to intercept and modify Kubernetes API requests, such as resource creation or updates, before they are persisted to the cluster. They can be used to enforce security policies, default values, or perform custom transformations on resources.
+[Kubernetes mutating webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/) are a powerful feature that allows users to intercept and modify Kubernetes API requests, such as resource creation or updates, before they are persisted to the cluster. They can be used to enforce security policies, default values, or perform custom transformations on resources.
 
 Pepr uses Kubernetes mutating webhooks to react to cluster resource events and apply user-defined capabilities, which are sets of Kubernetes transformations/actions.
