@@ -227,7 +227,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
-                command: ["node", "/app/node_modules/pepr/dist/controller.mjs", hash],
+                command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",

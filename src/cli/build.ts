@@ -67,7 +67,7 @@ export async function loadModule() {
   const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
   const cfg = JSON.parse(moduleText);
   const { uuid } = cfg.pepr;
-  const name = `pepr-${uuid}.mjs`;
+  const name = `pepr-${uuid}.js`;
 
   // Read the module's version from the package.json file
   if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
@@ -99,7 +99,8 @@ export async function buildModule(devMode = false) {
     const buildOpts: BuildOptions = {
       bundle: true,
       external: externalLibs,
-      format: "esm",
+      format: "cjs",
+      minifyWhitespace: !devMode,
       platform: "node",
     };
 
@@ -108,6 +109,7 @@ export async function buildModule(devMode = false) {
       entryPoints: ["pepr.ts"],
       outfile: path,
       sourcemap: devMode,
+      treeShaking: true,
     });
 
     return { path, cfg, uuid };

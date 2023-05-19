@@ -4,16 +4,16 @@
   "author": "Defense Unicorns",
   "homepage": "https://github.com/defenseunicorns/pepr",
   "license": "Apache-2.0",
-  "bin": "dist/cli.mjs",
+  "bin": "dist/cli.js",
   "repository": "defenseunicorns/pepr",
   "engines": {
     "node": ">=18.0.0"
   },
   "version": "0.0.0-development",
-  "main": "dist/lib.mjs",
+  "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
-    "prebuild": "rm -fr dist/* && node hack/build-template-data.cjs",
+    "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
     "build": "tsc && node build.mjs",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "npm run build && tsc -p tsconfig.tests.json && ava dist/**/*.test.js",

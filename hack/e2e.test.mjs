@@ -20,8 +20,8 @@ let expectedLines = [
   "hello-pepr: V1ConfigMap Binding created",
   "hello-pepr: V1ConfigMap Binding action created",
   "Server listening on port 3000",
-  "Using beforeHook: (req) => Log.debug(`beforeHook: ${req.uid}`)",
-  "Using afterHook: (res) => Log.debug(`afterHook: ${res.uid}`)",
+  "Using beforeHook: (req) => import_pepr2.Log.debug(`beforeHook: ${req.uid}`)",
+  "Using afterHook: (res) => import_pepr2.Log.debug(`afterHook: ${res.uid}`)",
 ];
 
 function stripAnsiCodes(input) {

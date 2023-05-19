@@ -23,7 +23,7 @@ function validateHash(expectedHash: string) {
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
-  const jsPath = `/app/module-${expectedHash}.mjs`;
+  const jsPath = `/app/module-${expectedHash}.js`;
 
   // Set the log level
   Log.SetLogLevel("debug");
