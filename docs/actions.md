@@ -32,7 +32,7 @@ When(a.ConfigMap)
 
 ---
 
-This example is identical to the previous one, except we are acting on a different CongigMap name and using the `ThenSet()` shorthand to merge changes into the resource.
+This example is identical to the previous one, except we are acting on a different ConfigMap name and using the `ThenSet()` shorthand to merge changes into the resource.
 
 ```ts
 // Once again, we tell Pepr what K8s GVK this CapabilityAction should act on.

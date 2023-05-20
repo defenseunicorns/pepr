@@ -50,7 +50,7 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](./cli
 
 1. **Build and deploy the Pepr Module**
 
-   Most of the time, you'll likely be iterating on a module with `perp dev` for real-time feedback and validation Once you are ready to move beyond the local dev environment, Pepr provides deployment and build tools you can use.
+   Most of the time, you'll likely be iterating on a module with `pepr dev` for real-time feedback and validation Once you are ready to move beyond the local dev environment, Pepr provides deployment and build tools you can use.
 
    `pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`pepr deploy`](./cli.md#pepr-deploy) for more info.
 
