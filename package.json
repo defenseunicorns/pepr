@@ -48,7 +48,6 @@
     "prettier": "2.8.8"
   },
   "peerDependencies": {
-    "chokidar": "3.5.3",
     "commander": "10.0.1",
     "esbuild": "0.17.19",
     "node-forge": "1.3.1",
