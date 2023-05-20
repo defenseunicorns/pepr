@@ -52,11 +52,24 @@ export class Controller {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
 
-    // Create HTTPS server
-    const server = https.createServer(options, this.app).listen(port, () => {
+    const onListen = () => {
       console.log(`Server listening on port ${port}`);
       // Track that the server is running
       this.running = true;
+    };
+
+    // Create HTTPS server
+    const server = https.createServer(options, this.app).listen(port, onListen);
+
+    // Handle EADDRINUSE errors
+    server.on("error", (e: { code: string }) => {
+      if (e.code === "EADDRINUSE") {
+        console.log("Address in use, retrying...");
+        setTimeout(() => {
+          server.close();
+          server.listen(port, onListen);
+        }, 1000);
+      }
     });
 
     // Listen for the SIGTERM signal and gracefully close the server
