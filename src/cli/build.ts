@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { BuildOptions, build } from "esbuild";
+import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 
@@ -92,27 +92,55 @@ export async function loadModule() {
   };
 }
 
-export async function buildModule(devMode = false) {
+export async function buildModule(reloader?: (opts: BuildResult<BuildOptions>) => void) {
   try {
     const { cfg, path, uuid } = await loadModule();
 
-    const buildOpts: BuildOptions = {
+    const ctx = await context({
       bundle: true,
+      entryPoints: ["pepr.ts"],
       external: externalLibs,
       format: "cjs",
-      minifyWhitespace: !devMode,
-      platform: "node",
-    };
-
-    await build({
-      ...buildOpts,
-      entryPoints: ["pepr.ts"],
+      keepNames: true,
+      legalComments: "external",
+      metafile: true,
+      // Only minify the code if we're not in dev mode
+      minify: !reloader,
       outfile: path,
-      sourcemap: devMode,
+      plugins: [
+        {
+          name: "reload-server",
+          setup(build) {
+            build.onEnd(async r => {
+              // Print the build size analysis
+              if (r?.metafile) {
+                console.log(await analyzeMetafile(r.metafile));
+              }
+
+              // If we're in dev mode, call the reloader function
+              if (reloader) {
+                reloader(r);
+              }
+            });
+          },
+        },
+      ],
+      platform: "node",
+      // Only generate a sourcemap if we're in dev mode
+      sourcemap: !!reloader,
       treeShaking: true,
     });
 
-    return { path, cfg, uuid };
+    // If the reloader function is defined, watch the module for changes
+    if (reloader) {
+      await ctx.watch();
+    } else {
+      // Otherwise, just build the module once
+      await ctx.rebuild();
+      await ctx.dispose();
+    }
+
+    return { ctx, path, cfg, uuid };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.debug(e);

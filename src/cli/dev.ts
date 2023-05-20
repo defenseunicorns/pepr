@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { fork } from "child_process";
-import { watch } from "chokidar";
+import { ChildProcess, fork } from "child_process";
 import { promises as fs } from "fs";
-import { resolve } from "path";
 import prompt from "prompts";
 
 import { Webhook } from "../lib/k8s/webhook";
@@ -34,7 +32,7 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg } = await loadModule();
+      const { cfg, path } = await loadModule();
 
       // Generate a secret for the module
       const webhook = new Webhook(
@@ -53,74 +51,43 @@ export default function (program: RootCmd) {
         await webhook.deploy();
         Log.info(`Module deployed successfully`);
 
-        const moduleFiles = [
-          resolve(".", "pepr.ts"),
-          resolve(".", "capabilities", "*.ts"),
-          resolve(".", "capabilities", "**", "*.ts"),
-        ];
-        const watcher = watch(moduleFiles, {
-          awaitWriteFinish: {
-            stabilityThreshold: 3000,
-            pollInterval: 500,
-          },
-        });
+        let program: ChildProcess;
 
-        // Watch for changes
-        watcher.on("ready", async () => {
-          let building = false;
+        // Run the processed javascript file
+        const runFork = () => {
+          if (!path) {
+            Log.error("No output file found");
+            return;
+          }
 
-          // Run the module once to start the server
-          let program = await runDev();
-
-          Log.info(`Watching for changes in ${moduleFiles}`);
-
-          watcher.on("all", async (event, path) => {
-            Log.debug({ event, path }, "File changed");
-
-            // If we're already building, skip this event
-            if (building) {
-              return;
-            }
-
-            // Set building to true
-            building = true;
-
-            if (program) {
-              // Don't start a new process until the old one exits
-              program.once("exit", async () => {
-                program = await runDev();
-                building = false;
-              });
-
-              // Kill the running process
-              program.kill();
-            }
+          program = fork(path, {
+            env: {
+              ...process.env,
+              LOG_LEVEL: "debug",
+              SSL_KEY_PATH: "insecure-tls.key",
+              SSL_CERT_PATH: "insecure-tls.crt",
+            },
           });
+        };
+
+        await buildModule(r => {
+          if (r.errors.length > 0) {
+            Log.error(`Error compiling module: ${r.errors}`);
+            return;
+          }
+
+          Log.info(`Running module ${path}`);
+
+          if (program) {
+            program.once("exit", runFork);
+            program.kill();
+          } else {
+            runFork();
+          }
         });
       } catch (e) {
         Log.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });
-}
-
-async function runDev() {
-  try {
-    const { path } = await buildModule(true);
-
-    Log.info(`Running module ${path}`);
-
-    // Run the module
-    return fork(path, {
-      env: {
-        ...process.env,
-        LOG_LEVEL: "debug",
-        SSL_KEY_PATH: "insecure-tls.key",
-        SSL_CERT_PATH: "insecure-tls.crt",
-      },
-    });
-  } catch (e) {
-    Log.debug(e);
-    Log.error(`Error running module: ${e}`);
-  }
 }
