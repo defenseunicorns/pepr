@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s";
+import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s/types";
 import { PeprRequest } from "./request";
+
+export type PackageJSON = {
+  description: string;
+  pepr: ModuleConfig;
+};
 
 /**
  * The behavior of this module when an error occurs.

@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { version } from "../../package.json";
-import { banner } from "./banner";
-import build from "./build";
-import deploy from "./deploy";
-import dev from "./dev";
-import init from "./init";
-import { RootCmd } from "./root";
-import update from "./update";
+import { banner } from "./cli/banner";
+import build from "./cli/build";
+import deploy from "./cli/deploy";
+import dev from "./cli/dev";
+import init from "./cli/init/index";
+import { version } from "./cli/init/templates";
+import { RootCmd } from "./cli/root";
+import update from "./cli/update";
 
 const program = new RootCmd();
 

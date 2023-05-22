@@ -53,10 +53,24 @@ export class Controller {
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.app).listen(port, () => {
+    const server = https.createServer(options, this.app).listen(port);
+
+    // Handle server listening event
+    server.on("listening", () => {
       console.log(`Server listening on port ${port}`);
       // Track that the server is running
       this.running = true;
+    });
+
+    // Handle EADDRINUSE errors
+    server.on("error", (e: { code: string }) => {
+      if (e.code === "EADDRINUSE") {
+        console.log("Address in use, retrying...");
+        setTimeout(() => {
+          server.close();
+          server.listen(port);
+        }, 2000);
+      }
     });
 
     // Listen for the SIGTERM signal and gracefully close the server

@@ -1,10 +1,10 @@
-import { Request, a } from "../src/lib/k8s";
-import * as cm1 from "./data/cm1.json";
-import * as deployment1 from "./data/deployment1.json";
-import * as ns1 from "./data/ns1.json";
-import * as pod1 from "./data/pod1.json";
-import * as pod2 from "./data/pod2.json";
-import * as svc1 from "./data/svc1.json";
+import { Request, a } from "../lib/k8s";
+import cm1 from "./data/cm1.json";
+import deployment1 from "./data/deployment1.json";
+import ns1 from "./data/ns1.json";
+import pod1 from "./data/pod1.json";
+import pod2 from "./data/pod2.json";
+import svc1 from "./data/svc1.json";
 
 export function POD1() {
   return cloneObject<a.Pod>(pod1);

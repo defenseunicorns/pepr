@@ -2,7 +2,7 @@
   "extends": "./tsconfig.module.json",
   "compilerOptions": {
     "paths": {
-      "pepr": ["../../../../index"]
+      "pepr": ["../../../lib.ts"]
     },
     "rootDir": "../../../../"
   }

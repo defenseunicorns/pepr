@@ -4,14 +4,16 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
-import { devDependencies, peerDependencies, scripts, version } from "../../../package.json";
-import prettierRCJSON from "./templates/.prettierrc.json";
+
+import prettierJSON from "./templates/.prettierrc.json";
 import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
-import generatedJSON from "./templates/data.json";
+import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "./templates/data.json";
 import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
 import tsConfigJSON from "./templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
+
+export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
 export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   // Generate a random UUID for the module based on the module name
@@ -61,23 +63,23 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
 export function genPeprTS() {
   return {
     path: "pepr.ts",
-    data: generatedJSON.peprTS,
+    data: peprTS,
   };
 }
 
 export const readme = {
   path: "README.md",
-  data: generatedJSON.readme,
+  data: readmeMd,
 };
 
-export const helloPeprTS = {
+export const helloPepr = {
   path: "hello-pepr.ts",
-  data: generatedJSON.helloPeprTS,
+  data: helloPeprTS,
 };
 
-export const gitIgnore = {
+export const gitignore = {
   path: ".gitignore",
-  data: generatedJSON.gitignore,
+  data: gitIgnore,
 };
 
 export const samplesYaml = {
@@ -95,7 +97,7 @@ export const tsConfig = {
   data: tsConfigJSON,
 };
 
-export const prettierRC = {
+export const prettier = {
   path: ".prettierrc",
-  data: prettierRCJSON,
+  data: prettierJSON,
 };

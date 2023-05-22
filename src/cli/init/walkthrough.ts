@@ -3,8 +3,9 @@
 
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
-import { ErrorBehavior } from "../../../src/lib/types";
-import { gitIgnore, prettierRC, readme, tsConfig } from "./templates";
+
+import { ErrorBehavior } from "../../lib/types";
+import { gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
@@ -72,8 +73,8 @@ export async function confirm(
   To be generated:
 
     \x1b[1m${dirName}\x1b[0m
-    ├── \x1b[1m${gitIgnore.path}\x1b[0m
-    ├── \x1b[1m${prettierRC.path}\x1b[0m
+    ├── \x1b[1m${gitignore.path}\x1b[0m
+    ├── \x1b[1m${prettier.path}\x1b[0m
     ├── \x1b[1mcapabilties\x1b[0m
     |   └── \x1b[1mhello-pepr.ts\x1b[0m     
     ├── \x1b[1m${packageJSON.path}\x1b[0m
