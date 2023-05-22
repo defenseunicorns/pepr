@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import R from "ramda";
+import { concat, mergeDeepWith } from "ramda";
+
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { Request, Response } from "./k8s/types";
@@ -38,7 +39,7 @@ export class PeprModule {
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
-    const config: ModuleConfig = R.mergeDeepWith(R.concat, pepr, alwaysIgnore);
+    const config: ModuleConfig = mergeDeepWith(concat, pepr, alwaysIgnore);
     config.description = description;
 
     this._controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);

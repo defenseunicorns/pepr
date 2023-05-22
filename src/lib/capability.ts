@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind, modelToGroupVersionKind } from "./k8s";
+import { modelToGroupVersionKind } from "./k8s/index";
+import { GroupVersionKind } from "./k8s/types";
 import logger from "./logger";
 import {
   BindToAction,

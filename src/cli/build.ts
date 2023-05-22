@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import json from "@rollup/plugin-json";
-import nodeResolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { ExternalOption, InputPluginOption, rollup } from "rollup";
-import { dependencies } from "../../package.json";
-import { Webhook } from "../../src/lib/k8s/webhook";
-import Log from "../../src/lib/logger";
+
+import { Webhook } from "../lib/k8s/webhook";
+import Log from "../lib/logger";
+import { dependencies } from "./init/templates";
 import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
@@ -43,83 +41,106 @@ export default function (program: RootCmd) {
     });
 }
 
-// Create a list of external libraries to exclude from the bundle, these are already stored in the containe
-const externalLibs: ExternalOption = Object.keys(dependencies).map(dep => new RegExp(`^${dep}.*`));
+// Create a list of external libraries to exclude from the bundle, these are already stored in the container
+const externalLibs = Object.keys(dependencies);
 
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
 
-export async function buildModule() {
+export async function loadModule() {
+  // Resolve the path to the module's package.json file
+  const cfgPath = resolve(".", "package.json");
+  const input = resolve(".", "pepr.ts");
+
+  // Ensure the module's package.json and pepr.ts files exist
   try {
-    // Resolve the path to the module's package.json file
-    const cfgPath = resolve(".", "package.json");
-    const input = resolve(".", "pepr.ts");
+    await fs.access(cfgPath);
+    await fs.access(input);
+  } catch (e) {
+    Log.error(
+      `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
+    );
+    process.exit(1);
+  }
 
-    // Ensure the module's package.json and pepr.ts files exist
-    try {
-      await fs.access(cfgPath);
-      await fs.access(input);
-    } catch (e) {
-      Log.error(
-        `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
-      );
-      process.exit(1);
+  // Read the module's UUID from the package.json file
+  const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
+  const cfg = JSON.parse(moduleText);
+  const { uuid } = cfg.pepr;
+  const name = `pepr-${uuid}.js`;
+
+  // Read the module's version from the package.json file
+  if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
+    const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
+    if (!versionMatch || versionMatch.length < 2) {
+      throw new Error("Could not find the Pepr version in package.json");
     }
+    cfg.pepr.version = versionMatch[1];
+  }
 
-    // Read the module's UUID from the package.json file
-    const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
-    const cfg = JSON.parse(moduleText);
-    const { uuid } = cfg.pepr;
-    const name = `pepr-${uuid}.js`;
+  // Exit if the module's UUID could not be found
+  if (!uuid) {
+    throw new Error("Could not load the uuid in package.json");
+  }
 
-    // Read the module's version from the package.json file
-    if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
-      const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
-      if (!versionMatch || versionMatch.length < 2) {
-        throw new Error("Could not find the Pepr version in package.json");
-      }
-      cfg.pepr.version = versionMatch[1];
-    }
+  return {
+    cfg,
+    input,
+    name,
+    path: resolve("dist", name),
+    uuid,
+  };
+}
 
-    // Exit if the module's UUID could not be found
-    if (!uuid) {
-      throw new Error("Could not load the uuid in package.json");
-    }
+export async function buildModule(reloader?: (opts: BuildResult<BuildOptions>) => void) {
+  try {
+    const { cfg, path, uuid } = await loadModule();
 
-    const plugins: InputPluginOption = [
-      nodeResolve({
-        preferBuiltins: true,
-      }),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
-        removeComments: true,
-        sourceMap: false,
-        include: ["**/*.ts"],
-      }),
-    ];
-
-    // Build the module using Rollup
-    const bundle = await rollup({
-      plugins,
+    const ctx = await context({
+      bundle: true,
+      entryPoints: ["pepr.ts"],
       external: externalLibs,
-      treeshake: true,
-      input,
-    });
-
-    // Write the module to the dist directory
-    await bundle.write({
-      dir: "dist",
       format: "cjs",
-      entryFileNames: name,
+      keepNames: true,
+      legalComments: "external",
+      metafile: true,
+      // Only minify the code if we're not in dev mode
+      minify: !reloader,
+      outfile: path,
+      plugins: [
+        {
+          name: "reload-server",
+          setup(build) {
+            build.onEnd(async r => {
+              // Print the build size analysis
+              if (r?.metafile) {
+                console.log(await analyzeMetafile(r.metafile));
+              }
+
+              // If we're in dev mode, call the reloader function
+              if (reloader) {
+                reloader(r);
+              }
+            });
+          },
+        },
+      ],
+      platform: "node",
+      // Only generate a sourcemap if we're in dev mode
+      sourcemap: !!reloader,
+      treeShaking: true,
     });
 
-    return {
-      path: resolve("dist", name),
-      cfg,
-      uuid,
-    };
+    // If the reloader function is defined, watch the module for changes
+    if (reloader) {
+      await ctx.watch();
+    } else {
+      // Otherwise, just build the module once
+      await ctx.rebuild();
+      await ctx.dispose();
+    }
+
+    return { ctx, path, cfg, uuid };
   } catch (e) {
     // On any other error, exit with a non-zero exit code
     Log.debug(e);

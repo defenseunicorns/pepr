@@ -4,7 +4,8 @@
 import { StatusCodes } from "http-status-codes";
 import f, { FetchError, RequestInfo, RequestInit } from "node-fetch";
 import logger from "./logger";
-export { f as fetchRaw };
+
+export const fetchRaw = f;
 
 export type FetchResponse<T> = {
   data: T;
@@ -31,7 +32,7 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Prom
   try {
     logger.debug(`Fetching ${url}`);
 
-    const resp = await f(url, init);
+    const resp = await fetchRaw(url, init);
     const contentType = resp.headers.get("content-type") || "";
 
     if (resp.ok) {

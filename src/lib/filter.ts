@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request } from "./k8s";
+import { Request } from "./k8s/types";
 import logger from "./logger";
 import { Binding } from "./types";
 

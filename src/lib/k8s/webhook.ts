@@ -227,7 +227,7 @@ export class Webhook {
                 name: "server",
                 image: this.image,
                 imagePullPolicy: "IfNotPresent",
-                command: ["node", "/app/node_modules/pepr/dist/src/cli/run.js", hash],
+                command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
                 livenessProbe: {
                   httpGet: {
                     path: "/healthz",
@@ -411,11 +411,10 @@ export class Webhook {
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
   }
 
-  async deploy(code: Buffer) {
+  async deploy(code?: Buffer) {
     Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
-    const hash = crypto.createHash("sha256").update(code).digest("hex");
 
     // Deploy the resources using the k8s API
     const kubeConfig = new KubeConfig();
@@ -452,6 +451,12 @@ export class Webhook {
     if (this.host) {
       return;
     }
+
+    if (!code) {
+      throw new Error("No code provided");
+    }
+
+    const hash = crypto.createHash("sha256").update(code).digest("hex");
 
     const netpol = this.networkPolicy();
     try {
