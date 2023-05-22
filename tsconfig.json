@@ -12,7 +12,8 @@
     "resolveJsonModule": true,
     "rootDir": "src",
     "strict": true,
-    "target": "ES2022"
+    "target": "ES2022",
+    "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "fixtures", "src/cli/init/templates", "pepr-test-module"]
