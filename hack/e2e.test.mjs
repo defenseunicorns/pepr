@@ -100,6 +100,7 @@ test.serial("E2E: Pepr Deploy", async t => {
     const cm2 = await waitForConfigMap("pepr-demo", "example-2");
     const cm3 = await waitForConfigMap("pepr-demo", "example-3");
     const cm4 = await waitForConfigMap("pepr-demo", "example-4");
+    const cm4a = await waitForConfigMap("pepr-demo-2", "example-4a");
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
 
     t.log("ConfigMaps created");
@@ -128,6 +129,13 @@ test.serial("E2E: Pepr Deploy", async t => {
     t.is(cm4.metadata.labels["pepr.dev/second"], "true");
     t.is(cm4.metadata.labels["pepr.dev/third"], "true");
     t.log("Validated example-4 ConfigMap data");
+
+    // Validate the example-4a CM
+    t.is(cm4a.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm4a.metadata.labels["pepr.dev/first"], "true");
+    t.is(cm4a.metadata.labels["pepr.dev/second"], "true");
+    t.is(cm4a.metadata.labels["pepr.dev/third"], "true");
+    t.log("Validated example-4a ConfigMap data");
 
     // Validate the example-5 CM
     t.is(cm5.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
