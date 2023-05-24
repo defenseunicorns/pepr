@@ -180,7 +180,7 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the capability action if the resource is in one of the specified namespaces.*/
-  InNamespace: (...namespaces: string[]) => BindingFilter<T>;
+  InNamespace: (...namespaces: string[]) => BindingWithName<T>;
 };
 
 export type BindToAction<T extends GenericClass> = {
