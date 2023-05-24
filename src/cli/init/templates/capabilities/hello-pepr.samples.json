@@ -12,6 +12,13 @@
   },
   {
     "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+      "name": "pepr-demo-2"
+    }
+  },
+  {
+    "apiVersion": "v1",
     "kind": "ConfigMap",
     "metadata": {
       "name": "example-1",
@@ -52,6 +59,17 @@
     "metadata": {
       "name": "example-4",
       "namespace": "pepr-demo"
+    },
+    "data": {
+      "key": "ex-4-val"
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "ConfigMap",
+    "metadata": {
+      "name": "example-4a",
+      "namespace": "pepr-demo-2"
     },
     "data": {
       "key": "ex-4-val"

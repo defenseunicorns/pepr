@@ -15,7 +15,7 @@ import {
 export const HelloPepr = new Capability({
   name: "hello-pepr",
   description: "A simple example capability to show how things work.",
-  namespaces: ["pepr-demo"],
+  namespaces: ["pepr-demo", "pepr-demo-2"],
 });
 
 // Use the 'When' function to create a new Capability Action
@@ -135,6 +135,23 @@ function addSecond(cm: PeprRequest<a.ConfigMap>) {
 function addThird(cm) {
   cm.SetLabel("pepr.dev/third", "true");
 }
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION (CM Example 4a)                                *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This is the same as Example 4, except this only operates on a CM in the `pepr-demo-2` namespace.
+ * Note because the Capability defines namespaces, the namespace specified here must be one of those.
+ * Alternatively, you can remove the namespace from the Capability definition and specify it here.
+ */
+When(a.ConfigMap)
+  .IsCreated()
+  .InNamespace("pepr-demo-2")
+  .WithName("example-4a")
+  .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
+  .Then(addSecond)
+  .Then(addThird);
 
 /**
  * ---------------------------------------------------------------------------------------------------
