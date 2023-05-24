@@ -28,8 +28,8 @@ export class Controller {
     // Middleware for logging requests
     this.app.use(this.logger);
 
-    // Middleware for parsing JSON
-    this.app.use(express.json());
+    // Middleware for parsing JSON, limit to 2mb vs 100K for K8s compatibility
+    this.app.use(express.json({ limit: "2mb" }));
 
     // Health check endpoint
     this.app.get("/healthz", this.healthz);

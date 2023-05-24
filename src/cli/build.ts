@@ -4,6 +4,7 @@
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { resolve } from "path";
+import { execSync } from "child_process";
 
 import { Webhook } from "../lib/k8s/webhook";
 import Log from "../lib/logger";
@@ -95,6 +96,9 @@ export async function loadModule() {
 export async function buildModule(reloader?: (opts: BuildResult<BuildOptions>) => void) {
   try {
     const { cfg, path, uuid } = await loadModule();
+
+    // Run `tsc` to validate the module's types
+    execSync("./node_modules/.bin/tsc", { stdio: "inherit" });
 
     const ctx = await context({
       bundle: true,
