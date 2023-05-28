@@ -77,6 +77,7 @@ export async function confirm(
     ├── \x1b[1m${gitignore.path}\x1b[0m
     ├── \x1b[1m${prettier.path}\x1b[0m
     ├── \x1b[1mcapabilties\x1b[0m
+    |   ├── \x1b[1mhello-pepr.samples.yaml\x1b[0m     
     |   └── \x1b[1mhello-pepr.ts\x1b[0m     
     ├── \x1b[1m${packageJSON.path}\x1b[0m
 ${packageJSON.print.replace(/^/gm, "    │   ")}
