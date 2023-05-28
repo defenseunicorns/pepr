@@ -5,7 +5,7 @@ import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
 
 import { ErrorBehavior } from "../../lib/types";
-import { gitignore, prettier, readme, tsConfig } from "./templates";
+import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
@@ -73,6 +73,7 @@ export async function confirm(
   To be generated:
 
     \x1b[1m${dirName}\x1b[0m
+    ├── \x1b[1m${eslint.path}\x1b[0m
     ├── \x1b[1m${gitignore.path}\x1b[0m
     ├── \x1b[1m${prettier.path}\x1b[0m
     ├── \x1b[1mcapabilties\x1b[0m

@@ -9,5 +9,5 @@
     "ecmaVersion": 2022
   },
   "plugins": ["@typescript-eslint"],
-  "ignorePatterns": ["node_modules", "dist", "src/cli/init/templates/data.json", "hack"]
+  "ignorePatterns": ["node_modules", "dist", "hack"]
 }
