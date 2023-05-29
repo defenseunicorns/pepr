@@ -15,5 +15,6 @@
     "src/cli/init/templates/data.json",
     "hack",
     "pepr-test-module"
-  ]
+  ],
+  "root": true
 }
