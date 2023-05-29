@@ -40,7 +40,7 @@
     "@types/prompts": "2.4.4",
     "@types/ramda": "0.29.2",
     "@types/uuid": "9.0.1",
-    "@typescript-eslint/eslint-plugin": "5.59.7",
+    "@typescript-eslint/eslint-plugin": "5.59.8",
     "@typescript-eslint/parser": "5.59.7",
     "ava": "5.3.0",
     "eslint": "8.41.0",
