@@ -7,6 +7,7 @@ import { banner } from "./cli/banner";
 import build from "./cli/build";
 import deploy from "./cli/deploy";
 import dev from "./cli/dev";
+import format from "./cli/format";
 import init from "./cli/init/index";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
@@ -29,6 +30,7 @@ build(program);
 deploy(program);
 dev(program);
 update(program);
+format(program);
 
 // @todo: finish/re-evaluate these commands
 // test(program);

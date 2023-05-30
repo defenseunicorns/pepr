@@ -9,7 +9,7 @@ import fs from "fs";
 import { gunzipSync } from "zlib";
 
 import Log from "../lib/logger";
-import { packageJSON } from "./init/templates/data.json";
+import { packageJSON } from "../cli/init/templates/data.json";
 
 const { version } = packageJSON;
 

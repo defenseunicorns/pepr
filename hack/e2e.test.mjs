@@ -42,7 +42,7 @@ test.before(async t => {
   }
 });
 
-test.serial("E2E: Pepr Init", async t => {
+test.serial("E2E: `pepr init`", t => {
   try {
     execSync("TEST_MODE=true pepr init", { stdio: "inherit" });
     t.pass();
@@ -51,7 +51,16 @@ test.serial("E2E: Pepr Init", async t => {
   }
 });
 
-test.serial("E2E: Pepr Build", async t => {
+test.serial("E2E: `pepr format`", t => {
+  try {
+    execSync("pepr format", { cwd: testDir, stdio: "inherit" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+test.serial("E2E: `pepr build`", async t => {
   try {
     execSync("pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
@@ -64,7 +73,7 @@ test.serial("E2E: Pepr Build", async t => {
   }
 });
 
-test.serial("E2E: Pepr Deploy", async t => {
+test.serial("E2E: `pepr deploy`", async t => {
   try {
     // Deploy the module
     execSync("pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
@@ -154,7 +163,7 @@ test.serial("E2E: Pepr Deploy", async t => {
   }
 });
 
-test.serial("E2E: Pepr Dev", async t => {
+test.serial("E2E: `pepr dev`", async t => {
   await t.notThrowsAsync(new Promise(peprDev));
 });
 

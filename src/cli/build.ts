@@ -11,13 +11,20 @@ import Log from "../lib/logger";
 import { dependencies } from "./init/templates";
 import { RootCmd } from "./root";
 
+const peprTS = "pepr.ts";
+
 export default function (program: RootCmd) {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
-    .action(async () => {
+    .option(
+      "-e, --entry-point [file]",
+      "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
+      peprTS
+    )
+    .action(async opts => {
       // Build the module
-      const { cfg, path, uuid } = await buildModule();
+      const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
 
       // Read the compiled module code
       const code = await fs.readFile(path);
@@ -48,12 +55,12 @@ const externalLibs = Object.keys(dependencies);
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
 
-export async function loadModule() {
+export async function loadModule(entryPoint = peprTS) {
   // Resolve the path to the module's package.json file
   const cfgPath = resolve(".", "package.json");
-  const input = resolve(".", "pepr.ts");
+  const input = resolve(".", entryPoint);
 
-  // Ensure the module's package.json and pepr.ts files exist
+  // Ensure the module's package.json and entrypoint files exist
   try {
     await fs.access(cfgPath);
     await fs.access(input);
@@ -93,24 +100,31 @@ export async function loadModule() {
   };
 }
 
-export async function buildModule(reloader?: (opts: BuildResult<BuildOptions>) => void) {
+export async function buildModule(
+  reloader?: (opts: BuildResult<BuildOptions>) => void,
+  entryPoint = peprTS
+) {
   try {
-    const { cfg, path, uuid } = await loadModule();
+    const { cfg, path, uuid } = await loadModule(entryPoint);
 
     // Run `tsc` to validate the module's types
     execSync("./node_modules/.bin/tsc", { stdio: "inherit" });
 
+    const customEntryPoint = entryPoint !== peprTS;
+
     const ctx = await context({
       bundle: true,
-      entryPoints: ["pepr.ts"],
+      entryPoints: [entryPoint],
       external: externalLibs,
       format: "cjs",
       keepNames: true,
       legalComments: "external",
       metafile: true,
-      // Only minify the code if we're not in dev mode
-      minify: !reloader,
+      // Only minify the code if we're not in dev mode and we're not using a custom entry point
+      minify: !reloader && !customEntryPoint,
       outfile: path,
+      // Only bundle the NPM packages if we're not using a custom entry point
+      packages: customEntryPoint ? "external" : undefined,
       plugins: [
         {
           name: "reload-server",
@@ -132,7 +146,8 @@ export async function buildModule(reloader?: (opts: BuildResult<BuildOptions>) =
       platform: "node",
       // Only generate a sourcemap if we're in dev mode
       sourcemap: !!reloader,
-      treeShaking: true,
+      // Only tree shake the code if we're not using a custom entry point
+      treeShaking: !customEntryPoint,
     });
 
     // If the reloader function is defined, watch the module for changes
