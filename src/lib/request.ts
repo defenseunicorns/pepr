@@ -2,7 +2,9 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { clone, mergeDeepRight } from "ramda";
+
 import { KubernetesObject, Request } from "./k8s/types";
+import { Secret } from "./k8s/upstream";
 import { DeepPartial } from "./types";
 
 /**
@@ -10,8 +12,6 @@ import { DeepPartial } from "./types";
  * of a mutating webhook request.
  */
 export class PeprRequest<T extends KubernetesObject> {
-  private _input: Request<T>;
-
   public Raw: T;
 
   get PermitSideEffects() {
@@ -46,11 +46,14 @@ export class PeprRequest<T extends KubernetesObject> {
    * Creates a new instance of the Action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(input: Request<T>) {
+  constructor(private _input: Request<T>) {
     // Deep clone the object to prevent mutation of the original object
-    this.Raw = clone(input.object);
-    // Store the input
-    this._input = input;
+    this.Raw = clone(_input.object);
+
+    // If the resource is a secret, decode the data
+    if (_input.kind.version == "v1" && _input.kind.kind == "Secret") {
+      convertFromBase64Map(this.Raw as unknown as Secret);
+    }
   }
 
   /**
@@ -136,5 +139,19 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   HasAnnotation(key: string) {
     return this.Raw?.metadata?.annotations?.[key] !== undefined;
+  }
+}
+
+export function convertToBase64Map(obj: { data?: Record<string, string> }) {
+  obj.data = obj.data ?? {};
+  for (const key in obj.data) {
+    obj.data[key] = Buffer.from(obj.data[key]).toString("base64");
+  }
+}
+
+export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
+  obj.data = obj.data ?? {};
+  for (const key in obj.data) {
+    obj.data[key] = Buffer.from(obj.data[key], "base64").toString("utf-8");
   }
 }

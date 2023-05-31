@@ -111,8 +111,9 @@ test.serial("E2E: `pepr deploy`", async t => {
     const cm4 = await waitForConfigMap("pepr-demo", "example-4");
     const cm4a = await waitForConfigMap("pepr-demo-2", "example-4a");
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
+    const s1 = await waitForSecret("pepr-demo", "secret-1");
 
-    t.log("ConfigMaps created");
+    t.log("ConfigMaps and secret created");
 
     // Validate the example-1 CM
     t.is(cm1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
@@ -150,6 +151,12 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.is(cm5.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.truthy(cm5.data["chuck-says"]);
     t.log("Validated example-5 ConfigMap data");
+
+    // Validate the secret-1 Secret
+    t.is(s1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(s1.data["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
+    t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
+    t.log("Validated secret-1 Secret data");
 
     // Remove the sample yaml for the HelloPepr capability
     execSync("kubectl delete -f hello-pepr.samples.yaml", {
@@ -244,6 +251,16 @@ async function waitForConfigMap(namespace, name) {
   } catch (error) {
     await delay2Secs();
     return waitForConfigMap(namespace, name);
+  }
+}
+
+async function waitForSecret(namespace, name) {
+  try {
+    const resp = await k8sCoreApi.readNamespacedSecret(name, namespace);
+    return resp.body;
+  } catch (error) {
+    await delay2Secs();
+    return waitForSecret(namespace, name);
   }
 }
 

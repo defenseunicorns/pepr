@@ -19,6 +19,17 @@
   },
   {
     "apiVersion": "v1",
+    "kind": "Secret",
+    "metadata": {
+      "name": "secret-1",
+      "namespace": "pepr-demo"
+    },
+    "data": {
+      "example": "dW5pY29ybiBtYWdpYw=="
+    }
+  },
+  {
+    "apiVersion": "v1",
     "kind": "ConfigMap",
     "metadata": {
       "name": "example-1",
