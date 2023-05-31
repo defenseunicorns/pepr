@@ -132,7 +132,7 @@ export class Webhook {
     };
   }
 
-  mutatingWebhook(): V1MutatingWebhookConfiguration {
+  mutatingWebhook(timeoutSeconds = 10): V1MutatingWebhookConfiguration {
     const { name } = this;
     const ignore = [peprIgnore];
 
@@ -172,7 +172,7 @@ export class Webhook {
           clientConfig,
           failurePolicy: "Ignore",
           matchPolicy: "Equivalent",
-          timeoutSeconds: 15,
+          timeoutSeconds,
           namespaceSelector: {
             matchExpressions: ignore,
           },
@@ -411,7 +411,7 @@ export class Webhook {
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
   }
 
-  async deploy(code?: Buffer) {
+  async deploy(code?: Buffer, webhookTimeout?: number) {
     Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
@@ -436,7 +436,7 @@ export class Webhook {
       await coreV1Api.createNamespace(ns);
     }
 
-    const wh = this.mutatingWebhook();
+    const wh = this.mutatingWebhook(webhookTimeout);
     try {
       Log.info("Creating mutating webhook");
       await admissionApi.createMutatingWebhookConfiguration(wh);
