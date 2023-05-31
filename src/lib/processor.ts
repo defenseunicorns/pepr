@@ -2,11 +2,13 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
+
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, Response } from "./k8s/types";
+import { Secret } from "./k8s/upstream";
 import logger from "./logger";
-import { PeprRequest } from "./request";
+import { PeprRequest, convertToBase64Map } from "./request";
 import { ModuleConfig } from "./types";
 
 export async function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Promise<Response> {
@@ -76,8 +78,15 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
   // If we've made it this far, the request is allowed
   response.allowed = true;
 
+  const transformed = wrapped.Raw;
+
+  // Post-process the Secret requests to convert it back to the original format
+  if (req.kind.version == "v1" && req.kind.kind == "Secret") {
+    convertToBase64Map(transformed as unknown as Secret);
+  }
+
   // Compare the original request to the modified request to get the patches
-  const patches = jsonPatch.compare(req.object, wrapped.Raw);
+  const patches = jsonPatch.compare(req.object, transformed);
 
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {

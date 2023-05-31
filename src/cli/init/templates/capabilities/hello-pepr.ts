@@ -213,6 +213,28 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
+ *                                   CAPABILITY ACTION (Secret Base64 Handling)                      *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * The K8s JS client provides incomplete support for base64 encoding/decoding handling for secrets,
+ * unlike the GO client. To make this less painful, Pepr automatically handles base64 encoding/decoding
+ * secret data before and after the Capability Action is executed.
+ */
+When(a.Secret)
+  .IsCreated()
+  .WithName("secret-1")
+  .Then(request => {
+    const secret = request.Raw;
+
+    // This will be encoded at the end of all processing back to base64: "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc="
+    secret.data.magic = "change-without-encoding";
+
+    // You can modify the data directly, and it will be encoded at the end of all processing
+    secret.data.example += " - modified by Pepr";
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
  *                                   CAPABILITY ACTION (Untyped Custom Resource)                     *
  * ---------------------------------------------------------------------------------------------------
  *
