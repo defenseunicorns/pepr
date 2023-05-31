@@ -8,6 +8,7 @@ import prompts from "prompts";
 import Log from "../../lib/logger";
 import { RootCmd } from "../root";
 import {
+  eslint,
   genPeprTS,
   genPkgJSON,
   gitignore,
@@ -52,6 +53,7 @@ export default function (program: RootCmd) {
           await createDir(resolve(dirName, "capabilities"));
 
           await write(resolve(dirName, gitignore.path), gitignore.data);
+          await write(resolve(dirName, eslint.path), eslint.data);
           await write(resolve(dirName, prettier.path), prettier.data);
           await write(resolve(dirName, packageJSON.path), packageJSON.data);
           await write(resolve(dirName, readme.path), readme.data);

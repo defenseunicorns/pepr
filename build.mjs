@@ -30,7 +30,7 @@ async function builder() {
     // Build the controller runtime
     const controller = await build({
       ...buildOpts,
-      entryPoints: ["src/cli/run.ts"],
+      entryPoints: ["src/runtime/controller.ts"],
       outfile: "dist/controller.js",
     });
 

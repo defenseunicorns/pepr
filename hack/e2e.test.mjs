@@ -42,7 +42,7 @@ test.before(async t => {
   }
 });
 
-test.serial("E2E: Pepr Init", async t => {
+test.serial("E2E: `pepr init`", t => {
   try {
     execSync("TEST_MODE=true pepr init", { stdio: "inherit" });
     t.pass();
@@ -51,7 +51,16 @@ test.serial("E2E: Pepr Init", async t => {
   }
 });
 
-test.serial("E2E: Pepr Build", async t => {
+test.serial("E2E: `pepr format`", t => {
+  try {
+    execSync("pepr format", { cwd: testDir, stdio: "inherit" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+test.serial("E2E: `pepr build`", async t => {
   try {
     execSync("pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
@@ -64,7 +73,7 @@ test.serial("E2E: Pepr Build", async t => {
   }
 });
 
-test.serial("E2E: Pepr Deploy", async t => {
+test.serial("E2E: `pepr deploy`", async t => {
   try {
     // Deploy the module
     execSync("pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
@@ -100,6 +109,7 @@ test.serial("E2E: Pepr Deploy", async t => {
     const cm2 = await waitForConfigMap("pepr-demo", "example-2");
     const cm3 = await waitForConfigMap("pepr-demo", "example-3");
     const cm4 = await waitForConfigMap("pepr-demo", "example-4");
+    const cm4a = await waitForConfigMap("pepr-demo-2", "example-4a");
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
 
     t.log("ConfigMaps created");
@@ -129,6 +139,13 @@ test.serial("E2E: Pepr Deploy", async t => {
     t.is(cm4.metadata.labels["pepr.dev/third"], "true");
     t.log("Validated example-4 ConfigMap data");
 
+    // Validate the example-4a CM
+    t.is(cm4a.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm4a.metadata.labels["pepr.dev/first"], "true");
+    t.is(cm4a.metadata.labels["pepr.dev/second"], "true");
+    t.is(cm4a.metadata.labels["pepr.dev/third"], "true");
+    t.log("Validated example-4a ConfigMap data");
+
     // Validate the example-5 CM
     t.is(cm5.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.truthy(cm5.data["chuck-says"]);
@@ -146,7 +163,7 @@ test.serial("E2E: Pepr Deploy", async t => {
   }
 });
 
-test.serial("E2E: Pepr Dev", async t => {
+test.serial("E2E: `pepr dev`", async t => {
   await t.notThrowsAsync(new Promise(peprDev));
 });
 

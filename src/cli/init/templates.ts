@@ -5,6 +5,7 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 
+import eslintJSON from "./templates/.eslintrc.json";
 import prettierJSON from "./templates/.prettierrc.json";
 import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
 import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "./templates/data.json";
@@ -22,7 +23,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
-  const { prettier } = devDependencies;
 
   const data = {
     name,
@@ -48,7 +48,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       pepr: pgkVerOverride || `${version}`,
     },
     devDependencies: {
-      prettier,
       typescript,
     },
   };
@@ -100,4 +99,9 @@ export const tsConfig = {
 export const prettier = {
   path: ".prettierrc",
   data: prettierJSON,
+};
+
+export const eslint = {
+  path: ".eslintrc.json",
+  data: eslintJSON,
 };
