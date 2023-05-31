@@ -48,7 +48,8 @@ export default function (program: RootCmd) {
       await fs.writeFile("insecure-tls.key", webhook.tls.pem.key);
 
       try {
-        await webhook.deploy();
+        // Deploy the webhook with a 30 second timeout for debugging
+        await webhook.deploy(undefined, 30);
         Log.info(`Module deployed successfully`);
 
         let program: ChildProcess;

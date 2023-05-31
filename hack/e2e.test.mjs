@@ -42,7 +42,7 @@ test.before(async t => {
   }
 });
 
-test.serial("E2E: Pepr Init", async t => {
+test.serial("E2E: `pepr init`", t => {
   try {
     execSync("TEST_MODE=true pepr init", { stdio: "inherit" });
     t.pass();
@@ -51,7 +51,16 @@ test.serial("E2E: Pepr Init", async t => {
   }
 });
 
-test.serial("E2E: Pepr Build", async t => {
+test.serial("E2E: `pepr format`", t => {
+  try {
+    execSync("pepr format", { cwd: testDir, stdio: "inherit" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+test.serial("E2E: `pepr build`", async t => {
   try {
     execSync("pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
@@ -64,7 +73,7 @@ test.serial("E2E: Pepr Build", async t => {
   }
 });
 
-test.serial("E2E: Pepr Deploy", async t => {
+test.serial("E2E: `pepr deploy`", async t => {
   try {
     // Deploy the module
     execSync("pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
@@ -102,8 +111,9 @@ test.serial("E2E: Pepr Deploy", async t => {
     const cm4 = await waitForConfigMap("pepr-demo", "example-4");
     const cm4a = await waitForConfigMap("pepr-demo-2", "example-4a");
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
+    const s1 = await waitForSecret("pepr-demo", "secret-1");
 
-    t.log("ConfigMaps created");
+    t.log("ConfigMaps and secret created");
 
     // Validate the example-1 CM
     t.is(cm1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
@@ -142,6 +152,12 @@ test.serial("E2E: Pepr Deploy", async t => {
     t.truthy(cm5.data["chuck-says"]);
     t.log("Validated example-5 ConfigMap data");
 
+    // Validate the secret-1 Secret
+    t.is(s1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(s1.data["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
+    t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
+    t.log("Validated secret-1 Secret data");
+
     // Remove the sample yaml for the HelloPepr capability
     execSync("kubectl delete -f hello-pepr.samples.yaml", {
       cwd: resolve(testDir, "capabilities"),
@@ -154,7 +170,7 @@ test.serial("E2E: Pepr Deploy", async t => {
   }
 });
 
-test.serial("E2E: Pepr Dev", async t => {
+test.serial("E2E: `pepr dev`", async t => {
   await t.notThrowsAsync(new Promise(peprDev));
 });
 
@@ -235,6 +251,16 @@ async function waitForConfigMap(namespace, name) {
   } catch (error) {
     await delay2Secs();
     return waitForConfigMap(namespace, name);
+  }
+}
+
+async function waitForSecret(namespace, name) {
+  try {
+    const resp = await k8sCoreApi.readNamespacedSecret(name, namespace);
+    return resp.body;
+  } catch (error) {
+    await delay2Secs();
+    return waitForSecret(namespace, name);
   }
 }
 
