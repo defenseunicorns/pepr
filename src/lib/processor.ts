@@ -7,11 +7,16 @@ import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, Response } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
-import logger from "./logger";
+import Log from "./logger";
 import { PeprRequest, convertToBase64Map } from "./request";
 import { ModuleConfig } from "./types";
 
-export async function processor(config: ModuleConfig, capabilities: Capability[], req: Request): Promise<Response> {
+export async function processor(
+  config: ModuleConfig,
+  capabilities: Capability[],
+  req: Request,
+  parentPrefix: string
+): Promise<Response> {
   const wrapped = new PeprRequest(req);
   const response: Response = {
     uid: req.uid,
@@ -22,9 +27,10 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
   // Track whether any capability matched the request
   let matchedCapabilityAction = false;
 
+  Log.info(`Processing request`, parentPrefix);
+
   for (const { name, bindings } of capabilities) {
-    const prefix = `${req.uid} ${req.name}: ${name}`;
-    logger.info(`Processing capability ${name}`, prefix);
+    const prefix = `${parentPrefix} ${name}:`;
 
     for (const action of bindings) {
       // Continue to the next action without doing anything if this one should be skipped
@@ -32,7 +38,9 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
         continue;
       }
 
-      logger.info(`Processing matched action ${action.kind.kind}`, prefix);
+      const label = action.callback.name;
+      Log.info(`Processing matched action ${label}`, prefix);
+
       matchedCapabilityAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
@@ -55,7 +63,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
         // Run the action
         await action.callback(wrapped);
 
-        logger.info(`Action succeeded`, prefix);
+        Log.info(`Action succeeded`, prefix);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
@@ -66,11 +74,11 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
 
         // If errors are not allowed, note the failure in the Response
         if (config.onError) {
-          logger.error(`Action failed: ${e}`, prefix);
+          Log.error(`Action failed: ${e}`, prefix);
           response.result = "Pepr module configured to reject on error";
           return response;
         } else {
-          logger.warn(`Action failed: ${e}`, prefix);
+          Log.warn(`Action failed: ${e}`, prefix);
           updateStatus("warning");
         }
       }
@@ -109,7 +117,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
     delete response.warnings;
   }
 
-  logger.debug(patches);
+  Log.debug(patches, parentPrefix);
 
   return response;
 }
