@@ -6,6 +6,7 @@ import { clone, mergeDeepRight } from "ramda";
 import { KubernetesObject, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import { DeepPartial } from "./types";
+import { convertFromBase64Map } from "./utils";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -49,11 +50,6 @@ export class PeprRequest<T extends KubernetesObject> {
   constructor(private _input: Request<T>) {
     // Deep clone the object to prevent mutation of the original object
     this.Raw = clone(_input.object);
-
-    // If the resource is a secret, decode the data
-    if (_input.kind.version == "v1" && _input.kind.kind == "Secret") {
-      convertFromBase64Map(this.Raw as unknown as Secret);
-    }
   }
 
   /**
@@ -139,19 +135,5 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   HasAnnotation(key: string) {
     return this.Raw?.metadata?.annotations?.[key] !== undefined;
-  }
-}
-
-export function convertToBase64Map(obj: { data?: Record<string, string> }) {
-  obj.data = obj.data ?? {};
-  for (const key in obj.data) {
-    obj.data[key] = Buffer.from(obj.data[key]).toString("base64");
-  }
-}
-
-export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
-  obj.data = obj.data ?? {};
-  for (const key in obj.data) {
-    obj.data[key] = Buffer.from(obj.data[key], "base64").toString("utf-8");
   }
 }

@@ -8,8 +8,9 @@ import { shouldSkipRequest } from "./filter";
 import { Request, Response } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import Log from "./logger";
-import { PeprRequest, convertToBase64Map } from "./request";
+import { PeprRequest } from "./request";
 import { ModuleConfig } from "./types";
+import { convertFromBase64Map, convertToBase64Map } from "./utils";
 
 export async function processor(
   config: ModuleConfig,
@@ -26,6 +27,15 @@ export async function processor(
 
   // Track whether any capability matched the request
   let matchedCapabilityAction = false;
+
+  // Track data fields that should be skipped during decoding
+  let skipDecode: string[] = [];
+
+  // If the resource is a secret, decode the data
+  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  if (isSecret) {
+    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
+  }
 
   Log.info(`Processing request`, parentPrefix);
 
@@ -97,8 +107,8 @@ export async function processor(
   const transformed = wrapped.Raw;
 
   // Post-process the Secret requests to convert it back to the original format
-  if (req.kind.version == "v1" && req.kind.kind == "Secret") {
-    convertToBase64Map(transformed as unknown as Secret);
+  if (isSecret) {
+    convertToBase64Map(transformed as unknown as Secret, skipDecode);
   }
 
   // Compare the original request to the modified request to get the patches
