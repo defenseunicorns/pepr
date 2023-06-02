@@ -4,7 +4,7 @@
 import Log from "./logger";
 
 /** Test if a string is ascii or not */
-export const isAscii = /^[\x20-\x7E]*$/;
+export const isAscii = /^[\s\x20-\x7E]*$/;
 
 /**
  * Encode all ascii values in a map to base64
