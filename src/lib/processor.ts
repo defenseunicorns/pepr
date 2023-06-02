@@ -19,7 +19,8 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
     allowed: false,
   };
 
-  logger.info(`Processing '${req.uid}' for '${req.kind.kind}' '${req.name}'`);
+  // Track whether any capability matched the request
+  let matchedCapabilityAction = false;
 
   for (const { name, bindings } of capabilities) {
     const prefix = `${req.uid} ${req.name}: ${name}`;
@@ -32,6 +33,7 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
       }
 
       logger.info(`Processing matched action ${action.kind.kind}`, prefix);
+      matchedCapabilityAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
@@ -77,6 +79,12 @@ export async function processor(config: ModuleConfig, capabilities: Capability[]
 
   // If we've made it this far, the request is allowed
   response.allowed = true;
+
+  // If no capability matched the request, exit early
+  if (!matchedCapabilityAction) {
+    Log.info(`No matching capability action found`, parentPrefix);
+    return response;
+  }
 
   const transformed = wrapped.Raw;
 
