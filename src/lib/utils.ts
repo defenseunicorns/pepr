@@ -16,7 +16,7 @@ export function convertToBase64Map(obj: { data?: Record<string, string> }, skip:
   for (const key in obj.data) {
     const value = obj.data[key];
     // Only encode ascii values
-    obj.data[key] = skip.includes(key) ? value : Buffer.from(value).toString("base64");
+    obj.data[key] = skip.includes(key) ? value : base64Encode(value);
   }
 }
 
@@ -30,7 +30,7 @@ export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
 
   obj.data = obj.data ?? {};
   for (const key in obj.data) {
-    const decoded = Buffer.from(obj.data[key], "base64").toString("utf-8");
+    const decoded = base64Decode(obj.data[key]);
     if (isAscii.test(decoded)) {
       // Only decode ascii values
       obj.data[key] = decoded;
@@ -39,7 +39,17 @@ export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
     }
   }
 
-  Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic decoding`);
+  Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic base64 decoding`);
 
   return skip;
+}
+
+/** Decode a base64 string */
+export function base64Decode(data: string) {
+  return Buffer.from(data, "base64").toString("utf-8");
+}
+
+/** Encode a string to base64 */
+export function base64Encode(data: string) {
+  return Buffer.from(data).toString("base64");
 }
