@@ -75,7 +75,6 @@ export default function (program: RootCmd) {
           }
 
           if (program) {
-            Log.info("SCHEDULED RESTART");
             program.once("exit", runFork);
             program.kill();
           } else {
