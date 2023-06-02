@@ -154,6 +154,8 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.is(s1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(s1.data["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
     t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
+    t.is(s1.data["binary-data"], "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==");
+    t.is(s1.data["ascii-with-white-space"], "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==");
     t.log("Validated secret-1 Secret data");
 
     // Remove the sample yaml for the HelloPepr capability
