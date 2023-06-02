@@ -4,9 +4,7 @@
 import { clone, mergeDeepRight } from "ramda";
 
 import { KubernetesObject, Request } from "./k8s/types";
-import { Secret } from "./k8s/upstream";
 import { DeepPartial } from "./types";
-import { convertFromBase64Map } from "./utils";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
