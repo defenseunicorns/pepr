@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import {
-  AdmissionregistrationV1Api,
-  AdmissionregistrationV1WebhookClientConfig,
+  AdmissionregistrationV1Api as AdmissionRegV1API,
+  AdmissionregistrationV1WebhookClientConfig as AdmissionRegnV1WebhookClientCfg,
   AppsV1Api,
   CoreV1Api,
   HttpError,
@@ -17,15 +17,20 @@ import {
   V1MutatingWebhookConfiguration,
   V1Namespace,
   V1NetworkPolicy,
+  V1RuleWithOperations,
   V1Secret,
   V1Service,
   V1ServiceAccount,
   dumpYaml,
 } from "@kubernetes/client-node";
+import { fork } from "child_process";
 import crypto from "crypto";
+import { promises as fs } from "fs";
+import { equals, uniqWith } from "ramda";
 import { gzipSync } from "zlib";
+
 import Log from "../logger";
-import { ModuleConfig } from "../types";
+import { Binding, Event, HookPhase, ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "./tls";
 
 const peprIgnore: V1LabelSelectorRequirement = {
@@ -132,7 +137,87 @@ export class Webhook {
     };
   }
 
-  mutatingWebhook(timeoutSeconds = 10): V1MutatingWebhookConfiguration {
+  generateWebhookRules(path: string): Promise<V1RuleWithOperations[]> {
+    return new Promise((resolve, reject) => {
+      const rules: V1RuleWithOperations[] = [];
+
+      const defaultRule = {
+        apiGroups: ["*"],
+        apiVersions: ["*"],
+        operations: ["CREATE", "UPDATE", "DELETE"],
+        resources: ["*/*"],
+      };
+
+      const program = fork(path, {
+        env: {
+          ...process.env,
+          LOG_LEVEL: "warn",
+          PEPR_MODE: "build",
+        },
+      });
+
+      interface ModuleCapabilities {
+        capabilities: {
+          _name: string;
+          _description: string;
+          _namespaces: string[];
+          _mutateOrValidate: HookPhase;
+          _bindings: Binding[];
+        }[];
+      }
+
+      program.on("message", message => {
+        const { capabilities } = message.valueOf() as ModuleCapabilities;
+
+        for (const capability of capabilities) {
+          Log.info(`Module ${this.config.uuid} has capability: ${capability._name}`);
+
+          const { _bindings } = capability;
+
+          for (const binding of _bindings) {
+            const { event, kind } = binding;
+
+            const operations: string[] = [];
+
+            // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
+            if (event === Event.CreateOrUpdate) {
+              operations.push(Event.Create, Event.Update);
+            } else {
+              operations.push(event);
+            }
+
+            rules.push({
+              apiGroups: [kind.group],
+              apiVersions: [kind.version || "*"],
+              operations,
+              // @todo: make this dynamic
+              resources: ["*/*"],
+            });
+          }
+        }
+      });
+
+      program.on("exit", code => {
+        if (code !== 0) {
+          reject(new Error(`Child process exited with code ${code}`));
+        } else {
+          // If there are no rules, add a catch-all
+          if (rules.length < 1) {
+            resolve([defaultRule]);
+          } else {
+            const reducedRules = uniqWith(equals, rules);
+            resolve(reducedRules);
+          }
+        }
+      });
+
+      program.on("error", error => {
+        reject(error);
+      });
+    });
+  }
+
+  async mutatingWebhook(path: string, timeoutSeconds = 10): Promise<V1MutatingWebhookConfiguration> {
     const { name } = this;
     const ignore = [peprIgnore];
 
@@ -145,7 +230,7 @@ export class Webhook {
       });
     }
 
-    const clientConfig: AdmissionregistrationV1WebhookClientConfig = {
+    const clientConfig: AdmissionRegnV1WebhookClientCfg = {
       caBundle: this._tls.ca,
     };
 
@@ -160,6 +245,8 @@ export class Webhook {
         path: "/mutate",
       };
     }
+
+    const rules = await this.generateWebhookRules(path);
 
     return {
       apiVersion: "admissionregistration.k8s.io/v1",
@@ -179,15 +266,7 @@ export class Webhook {
           objectSelector: {
             matchExpressions: ignore,
           },
-          // @todo: make this configurable
-          rules: [
-            {
-              apiGroups: ["*"],
-              apiVersions: ["*"],
-              operations: ["CREATE", "UPDATE", "DELETE"],
-              resources: ["*/*"],
-            },
-          ],
+          rules,
           // @todo: track side effects state
           sideEffects: "None",
         },
@@ -390,9 +469,13 @@ export class Webhook {
     return dumpYaml(zarfCfg, { noRefs: true });
   }
 
-  allYaml(code: Buffer) {
+  async allYaml(path: string) {
+    const code = await fs.readFile(path);
+
     // Generate a hash of the code
     const hash = crypto.createHash("sha256").update(code).digest("hex");
+
+    const webhook = await this.mutatingWebhook(path);
 
     const resources = [
       this.namespace(),
@@ -401,7 +484,7 @@ export class Webhook {
       this.clusterRoleBinding(),
       this.serviceAccount(),
       this.tlsSecret(),
-      this.mutatingWebhook(),
+      webhook,
       this.deployment(hash),
       this.service(),
       this.moduleSecret(code, hash),
@@ -411,7 +494,7 @@ export class Webhook {
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
   }
 
-  async deploy(code?: Buffer, webhookTimeout?: number) {
+  async deploy(path: string, webhookTimeout?: number) {
     Log.info("Establishing connection to Kubernetes");
 
     const namespace = "pepr-system";
@@ -423,7 +506,7 @@ export class Webhook {
     const coreV1Api = kubeConfig.makeApiClient(CoreV1Api);
     const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
     const appsApi = kubeConfig.makeApiClient(AppsV1Api);
-    const admissionApi = kubeConfig.makeApiClient(AdmissionregistrationV1Api);
+    const admissionApi = kubeConfig.makeApiClient(AdmissionRegV1API);
     const networkApi = kubeConfig.makeApiClient(NetworkingV1Api);
 
     const ns = this.namespace();
@@ -436,7 +519,7 @@ export class Webhook {
       await coreV1Api.createNamespace(ns);
     }
 
-    const wh = this.mutatingWebhook(webhookTimeout);
+    const wh = await this.mutatingWebhook(path, webhookTimeout);
     try {
       Log.info("Creating mutating webhook");
       await admissionApi.createMutatingWebhookConfiguration(wh);
@@ -452,20 +535,22 @@ export class Webhook {
       return;
     }
 
-    if (!code) {
+    if (!path) {
       throw new Error("No code provided");
     }
 
+    const code = await fs.readFile(path);
+
     const hash = crypto.createHash("sha256").update(code).digest("hex");
 
-    const netpol = this.networkPolicy();
+    const networkPolicy = this.networkPolicy();
     try {
       Log.info("Checking for network policy");
-      await networkApi.readNamespacedNetworkPolicy(netpol.metadata?.name ?? "", namespace);
+      await networkApi.readNamespacedNetworkPolicy(networkPolicy.metadata?.name ?? "", namespace);
     } catch (e) {
       Log.debug(e instanceof HttpError ? e.body : e);
       Log.info("Creating network policy");
-      await networkApi.createNamespacedNetworkPolicy(namespace, netpol);
+      await networkApi.createNamespacedNetworkPolicy(namespace, networkPolicy);
     }
 
     const crb = this.clusterRoleBinding();

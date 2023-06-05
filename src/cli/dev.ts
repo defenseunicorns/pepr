@@ -49,7 +49,7 @@ export default function (program: RootCmd) {
 
       try {
         // Deploy the webhook with a 30 second timeout for debugging
-        await webhook.deploy(undefined, 30);
+        await webhook.deploy(path, 30);
         Log.info(`Module deployed successfully`);
 
         let program: ChildProcess;

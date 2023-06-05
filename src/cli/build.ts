@@ -26,9 +26,6 @@ export default function (program: RootCmd) {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
 
-      // Read the compiled module code
-      const code = await fs.readFile(path);
-
       // Generate a secret for the module
       const webhook = new Webhook({
         ...cfg.pepr,
@@ -36,7 +33,7 @@ export default function (program: RootCmd) {
       });
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = webhook.allYaml(code);
+      const yaml = await webhook.allYaml(path);
 
       const zarfPath = resolve("dist", "zarf.yaml");
       const zarf = webhook.zarfYaml(yamlFile);

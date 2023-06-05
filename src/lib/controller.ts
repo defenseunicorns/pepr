@@ -9,12 +9,6 @@ import { Request, Response } from "./k8s/types";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
 
-// Load SSL certificate and key
-const options = {
-  key: fs.readFileSync(process.env.SSL_KEY_PATH || "/etc/certs/tls.key"),
-  cert: fs.readFileSync(process.env.SSL_CERT_PATH || "/etc/certs/tls.crt"),
-};
-
 export class Controller {
   private readonly app = express();
   private running = false;
@@ -51,6 +45,12 @@ export class Controller {
     if (this.running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
+
+    // Load SSL certificate and key
+    const options = {
+      key: fs.readFileSync(process.env.SSL_KEY_PATH || "/etc/certs/tls.key"),
+      cert: fs.readFileSync(process.env.SSL_CERT_PATH || "/etc/certs/tls.crt"),
+    };
 
     // Create HTTPS server
     const server = https.createServer(options, this.app).listen(port);
