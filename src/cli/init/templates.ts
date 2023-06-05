@@ -40,12 +40,10 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     },
     scripts: {
       "k3d-setup": scripts["test:e2e:k3d"],
-      build: "pepr build",
-      deploy: "pepr deploy",
       start: "pepr dev",
     },
     dependencies: {
-      pepr: pgkVerOverride || `${version}`,
+      pepr: pgkVerOverride || version,
     },
     devDependencies: {
       typescript,

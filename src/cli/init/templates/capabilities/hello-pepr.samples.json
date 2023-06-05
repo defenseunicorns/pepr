@@ -25,7 +25,9 @@
       "namespace": "pepr-demo"
     },
     "data": {
-      "example": "dW5pY29ybiBtYWdpYw=="
+      "example": "dW5pY29ybiBtYWdpYw==",
+      "binary-data": "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==",
+      "ascii-with-white-space": "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw=="
     }
   },
   {
