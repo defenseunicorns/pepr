@@ -56,10 +56,7 @@ export default function (program: RootCmd) {
 
         // Run the processed javascript file
         const runFork = () => {
-          if (!path) {
-            Log.error("No output file found");
-            return;
-          }
+          Log.info(`Running module ${path}`);
 
           program = fork(path, {
             env: {
@@ -76,8 +73,6 @@ export default function (program: RootCmd) {
             Log.error(`Error compiling module: ${r.errors}`);
             return;
           }
-
-          Log.info(`Running module ${path}`);
 
           if (program) {
             program.once("exit", runFork);

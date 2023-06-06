@@ -8,6 +8,7 @@ import { Capability } from "./capability";
 import { Request, Response } from "./k8s/types";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
+import Log from "./logger";
 
 export class Controller {
   private readonly app = express();
@@ -89,7 +90,7 @@ export class Controller {
     res.on("finish", () => {
       const now = new Date().toISOString();
       const elapsedTime = Date.now() - startTime;
-      const message = `[${now}] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${elapsedTime} ms\n`;
+      const message = `[${now}] ${req.method} ${req.originalUrl} [${res.statusCode}] ${elapsedTime} ms\n`;
 
       res.statusCode >= 400 ? console.error(message) : console.info(message);
     });
@@ -108,24 +109,26 @@ export class Controller {
 
   private mutate = async (req: express.Request, res: express.Response) => {
     try {
+      const request: Request = req.body?.request || ({} as Request);
+
       // Run the before hook if it exists
-      this.beforeHook && this.beforeHook(req.body?.request || {});
+      this.beforeHook && this.beforeHook(request || {});
 
-      const name = req.body?.request?.name || "";
-      const namespace = req.body?.request?.namespace || "";
-      const gvk = req.body?.request?.kind || { group: "", version: "", kind: "" };
+      const name = request?.name ? `/${request.name}` : "";
+      const namespace = request?.namespace || "";
+      const gvk = request?.kind || { group: "", version: "", kind: "" };
+      const prefix = `${request.uid} ${namespace}${name}`;
 
-      console.log(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`);
-      name && console.log(`                ${namespace}/${name}\n`);
+      Log.info(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
 
       // Process the request
-      const response = await processor(this.config, this.capabilities, req.body.request);
+      const response = await processor(this.config, this.capabilities, request, prefix);
 
       // Run the after hook if it exists
       this.afterHook && this.afterHook(response);
 
       // Log the response
-      console.debug(response);
+      Log.debug(response, prefix);
 
       // Send a no prob bob response
       res.send({
