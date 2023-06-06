@@ -44,6 +44,8 @@ export interface GroupVersionKind {
   readonly kind: string;
   readonly group: string;
   readonly version?: string;
+  /** Optional, override the plural name for use in Webhook rules generation */
+  readonly plural?: string;
 }
 
 /**

@@ -141,6 +141,7 @@ export class Webhook {
     return new Promise((resolve, reject) => {
       const rules: V1RuleWithOperations[] = [];
 
+      // Add a default rule that allows all resources as a fallback
       const defaultRule = {
         apiGroups: ["*"],
         apiVersions: ["*"],
@@ -148,6 +149,7 @@ export class Webhook {
         resources: ["*/*"],
       };
 
+      // Fork is needed with the PEPR_MODE env var to ensure the module is loaded in build mode and will send back the capabilities
       const program = fork(path, {
         env: {
           ...process.env,
@@ -156,6 +158,7 @@ export class Webhook {
         },
       });
 
+      // We are receiving javscript so the private fields are now public
       interface ModuleCapabilities {
         capabilities: {
           _name: string;
@@ -166,7 +169,9 @@ export class Webhook {
         }[];
       }
 
+      // Wait for the module to send back the capabilities
       program.on("message", message => {
+        // Cast the message to the ModuleCapabilities type
         const { capabilities } = message.valueOf() as ModuleCapabilities;
 
         for (const capability of capabilities) {
@@ -174,6 +179,7 @@ export class Webhook {
 
           const { _bindings } = capability;
 
+          // Read the bindings and generate the rules
           for (const binding of _bindings) {
             const { event, kind } = binding;
 
@@ -186,12 +192,14 @@ export class Webhook {
               operations.push(event);
             }
 
+            // Use the plural property if it exists, otherwise use lowercase kind + s
+            const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
+
             rules.push({
               apiGroups: [kind.group],
               apiVersions: [kind.version || "*"],
               operations,
-              // @todo: make this dynamic
-              resources: ["*/*"],
+              resources: [resource],
             });
           }
         }

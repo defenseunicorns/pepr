@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { promises as fs } from "fs";
 import prompt from "prompts";
 
 import { Webhook } from "../lib/k8s/webhook";

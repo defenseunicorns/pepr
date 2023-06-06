@@ -25,6 +25,7 @@ export const gvkMap: Record<string, GroupVersionKind> = {
     kind: "Endpoints",
     version: "v1",
     group: "",
+    plural: "endpoints",
   },
 
   /**
@@ -386,6 +387,7 @@ export const gvkMap: Record<string, GroupVersionKind> = {
     kind: "Ingress",
     version: "v1",
     group: "networking.k8s.io",
+    plural: "ingresses",
   },
 
   /**
