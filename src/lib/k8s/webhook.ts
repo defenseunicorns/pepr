@@ -512,11 +512,8 @@ export class Webhook {
     kubeConfig.loadFromDefault();
 
     const coreV1Api = kubeConfig.makeApiClient(CoreV1Api);
-    const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
-    const appsApi = kubeConfig.makeApiClient(AppsV1Api);
     const admissionApi = kubeConfig.makeApiClient(AdmissionRegV1API);
-    const networkApi = kubeConfig.makeApiClient(NetworkingV1Api);
-
+    
     const ns = this.namespace();
     try {
       Log.info("Checking for namespace");
@@ -550,6 +547,10 @@ export class Webhook {
     const code = await fs.readFile(path);
 
     const hash = crypto.createHash("sha256").update(code).digest("hex");
+
+    const appsApi = kubeConfig.makeApiClient(AppsV1Api);
+    const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
+    const networkApi = kubeConfig.makeApiClient(NetworkingV1Api);
 
     const networkPolicy = this.networkPolicy();
     try {

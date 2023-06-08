@@ -13,6 +13,8 @@ import { RootCmd } from "./root";
 
 const peprTS = "pepr.ts";
 
+export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
+
 export default function (program: RootCmd) {
   program
     .command("build")
@@ -97,10 +99,7 @@ export async function loadModule(entryPoint = peprTS) {
   };
 }
 
-export async function buildModule(
-  reloader?: (opts: BuildResult<BuildOptions>) => void,
-  entryPoint = peprTS
-) {
+export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
   try {
     const { cfg, path, uuid } = await loadModule(entryPoint);
 
@@ -134,7 +133,7 @@ export async function buildModule(
 
               // If we're in dev mode, call the reloader function
               if (reloader) {
-                reloader(r);
+                await reloader(r);
               }
             });
           },

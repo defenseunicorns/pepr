@@ -48,15 +48,14 @@ export default function (program: RootCmd) {
       await fs.writeFile("insecure-tls.key", webhook.tls.pem.key);
 
       try {
-        // Deploy the webhook with a 30 second timeout for debugging
-        await webhook.deploy(path, 30);
-        Log.info(`Module deployed successfully`);
-
         let program: ChildProcess;
 
         // Run the processed javascript file
-        const runFork = () => {
+        const runFork = async () => {
           Log.info(`Running module ${path}`);
+
+          // Deploy the webhook with a 30 second timeout for debugging
+          await webhook.deploy(path, 30);
 
           program = fork(path, {
             env: {
@@ -68,7 +67,7 @@ export default function (program: RootCmd) {
           });
         };
 
-        await buildModule(r => {
+        await buildModule(async r => {
           if (r.errors.length > 0) {
             Log.error(`Error compiling module: ${r.errors}`);
             return;
@@ -76,9 +75,9 @@ export default function (program: RootCmd) {
 
           if (program) {
             program.once("exit", runFork);
-            program.kill();
+            program.kill("SIGKILL");
           } else {
-            runFork();
+            await runFork();
           }
         });
       } catch (e) {

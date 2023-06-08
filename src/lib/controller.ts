@@ -66,7 +66,9 @@ export class Controller {
     // Handle EADDRINUSE errors
     server.on("error", (e: { code: string }) => {
       if (e.code === "EADDRINUSE") {
-        console.log("Address in use, retrying...");
+        console.log(
+          `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`
+        );
         setTimeout(() => {
           server.close();
           server.listen(port);
