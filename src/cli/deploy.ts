@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { promises as fs } from "fs";
 import prompt from "prompts";
 
 import { Webhook } from "../lib/k8s/webhook";
@@ -33,9 +32,6 @@ export default function (program: RootCmd) {
       // Build the module
       const { cfg, path } = await buildModule();
 
-      // Read the compiled module code
-      const code = await fs.readFile(path);
-
       // Generate a secret for the module
       const webhook = new Webhook({
         ...cfg.pepr,
@@ -47,7 +43,7 @@ export default function (program: RootCmd) {
       }
 
       try {
-        await webhook.deploy(code);
+        await webhook.deploy(path);
         Log.info(`Module deployed successfully`);
       } catch (e) {
         Log.error(`Error deploying module: ${e}`);

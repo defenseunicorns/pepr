@@ -79,6 +79,7 @@ export class Capability implements CapabilityCfg {
     const binding: Binding = {
       // If the kind is not specified, use the matched kind from the model
       kind: kind || matchedKind,
+      event: Event.Any,
       filters: {
         name: "",
         namespaces: [],

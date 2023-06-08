@@ -44,6 +44,7 @@ export enum Event {
   Update = "UPDATE",
   Delete = "DELETE",
   CreateOrUpdate = "CREATEORUPDATE",
+  Any = "*",
 }
 
 export interface CapabilityCfg {
@@ -123,7 +124,7 @@ export type WhenSelector<T extends GenericClass> = {
 };
 
 export type Binding = {
-  event?: Event;
+  event: Event;
   readonly kind: GroupVersionKind;
   readonly filters: {
     name: string;
