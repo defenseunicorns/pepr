@@ -3,7 +3,7 @@
 
 import { Request } from "./k8s/types";
 import logger from "./logger";
-import { Binding } from "./types";
+import { Binding, Event } from "./types";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -18,7 +18,7 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   const { metadata } = req.object || {};
 
   // Test for matching operation
-  if (binding.event && !binding.event.includes(req.operation)) {
+  if (!binding.event.includes(req.operation) && !binding.event.includes(Event.Any)) {
     return true;
   }
 

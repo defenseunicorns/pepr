@@ -29,7 +29,7 @@ export type PeprModuleOptions = {
 };
 
 export class PeprModule {
-  private _controller: Controller;
+  private _controller!: Controller;
 
   /**
    * Create a new Pepr runtime
@@ -41,6 +41,12 @@ export class PeprModule {
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = mergeDeepWith(concat, pepr, alwaysIgnore);
     config.description = description;
+
+    // Handle build mode
+    if (process.env.PEPR_MODE === "build") {
+      process.send?.({ capabilities });
+      return;
+    }
 
     this._controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
 
