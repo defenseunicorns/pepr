@@ -513,7 +513,7 @@ export class Webhook {
 
     const coreV1Api = kubeConfig.makeApiClient(CoreV1Api);
     const admissionApi = kubeConfig.makeApiClient(AdmissionRegV1API);
-    
+
     const ns = this.namespace();
     try {
       Log.info("Checking for namespace");
