@@ -40,10 +40,20 @@ When(a.ConfigMap)
   });
 ```
 
+## Prerequisites
+
+- [Node.js](https://nodejs.org/en/) v18.0.0+.
+
+  > _Recommend installing with [NVM](https://github.com/nvm-sh/nvm) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) to avoid permission issues when installing the Pepr CLI globally._
+
+- Recommended (optional) tools:
+  - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
+  - A Kubernetes cluster for `pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
+
 ## Wow too many words! tl;dr;
 
 ```bash
-# Install Pepr (you can also use npx)
+# Install Pepr globally. If this command requires sudo, see the Prerequisites section to install Node.js with NVM or NVM for Windows.
 npm i -g pepr
 
 # Initialize a new Pepr Module
@@ -95,6 +105,7 @@ For example, a CapabilityAction could be responsible for adding a specific label
 See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
+
 ![Module Diagram](./.images/modules.svg)
 
 ## TypeScript
