@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { execSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
-import { resolve } from "path";
-import { execSync } from "child_process";
+import { basename, extname, resolve } from "path";
 
 import { Webhook } from "../lib/k8s/webhook";
 import Log from "../lib/logger";
@@ -27,6 +27,12 @@ export default function (program: RootCmd) {
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
+
+      // If building with a custom entry point, exit after building
+      if (opts.entryPoint !== peprTS) {
+        Log.info(`Module built successfully at ${path}`);
+        return;
+      }
 
       // Generate a secret for the module
       const webhook = new Webhook({
@@ -106,9 +112,8 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
     // Run `tsc` to validate the module's types
     execSync("./node_modules/.bin/tsc", { stdio: "inherit" });
 
-    const customEntryPoint = entryPoint !== peprTS;
-
-    const ctx = await context({
+    // Common build options for all builds
+    const ctxCfg: BuildOptions = {
       bundle: true,
       entryPoints: [entryPoint],
       external: externalLibs,
@@ -116,11 +121,8 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
       keepNames: true,
       legalComments: "external",
       metafile: true,
-      // Only minify the code if we're not in dev mode and we're not using a custom entry point
-      minify: !reloader && !customEntryPoint,
+      minify: true,
       outfile: path,
-      // Only bundle the NPM packages if we're not using a custom entry point
-      packages: customEntryPoint ? "external" : undefined,
       plugins: [
         {
           name: "reload-server",
@@ -140,11 +142,31 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
         },
       ],
       platform: "node",
-      // Only generate a sourcemap if we're in dev mode
-      sourcemap: !!reloader,
-      // Only tree shake the code if we're not using a custom entry point
-      treeShaking: !customEntryPoint,
-    });
+      sourcemap: true,
+      treeShaking: true,
+    };
+
+    if (reloader) {
+      // Only minify the code if we're not in dev mode
+      ctxCfg.minify = false;
+    }
+
+    // Handle custom entry points
+    if (entryPoint !== peprTS) {
+      // Don't minify if we're using a custom entry point
+      ctxCfg.minify = false;
+
+      // Preserve the original file name if we're using a custom entry point
+      ctxCfg.outfile = resolve("dist", basename(entryPoint, extname(entryPoint))) + ".js";
+
+      // Only bundle the NPM packages if we're not using a custom entry point
+      ctxCfg.packages = "external";
+
+      // Don't tree shake if we're using a custom entry point
+      ctxCfg.treeShaking = false;
+    }
+
+    const ctx = await context(ctxCfg);
 
     // If the reloader function is defined, watch the module for changes
     if (reloader) {
