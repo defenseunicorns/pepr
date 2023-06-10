@@ -9,7 +9,7 @@ import {
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
- *  To test this capability you can run `pepr dev` or `npm start` and then run the following command:
+ *  To test this capability you run `pepr dev`and then run the following command:
  *  `kubectl apply -f capabilities/hello-pepr.samples.yaml`
  */
 export const HelloPepr = new Capability({
