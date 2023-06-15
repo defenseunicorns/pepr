@@ -12,6 +12,7 @@ import init from "./cli/init/index";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
 import update from "./cli/update";
+import { Log } from "./lib";
 
 const program = new RootCmd();
 
@@ -22,6 +23,10 @@ program
     if (program.args.length < 1) {
       console.log(banner);
       program.help();
+    } else {
+      Log.error(`Invalid command '${program.args.join(" ")}'\n`);
+      program.outputHelp();
+      process.exitCode = 1;
     }
   });
 
