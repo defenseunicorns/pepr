@@ -8,7 +8,6 @@ import {
   CoreV1Api,
   HttpError,
   KubeConfig,
-  NetworkingV1Api,
   RbacAuthorizationV1Api,
   V1ClusterRole,
   V1ClusterRoleBinding,
@@ -16,7 +15,6 @@ import {
   V1LabelSelectorRequirement,
   V1MutatingWebhookConfiguration,
   V1Namespace,
-  V1NetworkPolicy,
   V1RuleWithOperations,
   V1Secret,
   V1Service,
@@ -42,11 +40,16 @@ const peprIgnore: V1LabelSelectorRequirement = {
 export class Webhook {
   private name: string;
   private _tls: TLSOut;
+  private _apiToken: string;
 
   public image: string;
 
   public get tls(): TLSOut {
     return this._tls;
+  }
+
+  public get apiToken(): string {
+    return this._apiToken;
   }
 
   constructor(private readonly config: ModuleConfig, private readonly host?: string) {
@@ -56,6 +59,9 @@ export class Webhook {
 
     // Generate the ephemeral tls things
     this._tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
+
+    // Generate the api token for the controller / webhook
+    this._apiToken = crypto.randomBytes(32).toString("hex");
   }
 
   /** Generate the pepr-system namespace */
@@ -121,6 +127,21 @@ export class Webhook {
     };
   }
 
+  apiTokenSecret(): V1Secret {
+    return {
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: `${this.name}-api-token`,
+        namespace: "pepr-system",
+      },
+      type: "Opaque",
+      data: {
+        value: Buffer.from(this._apiToken).toString("base64"),
+      },
+    };
+  }
+
   tlsSecret(): V1Secret {
     return {
       apiVersion: "v1",
@@ -158,7 +179,7 @@ export class Webhook {
         },
       });
 
-      // We are receiving javscript so the private fields are now public
+      // We are receiving javascript so the private fields are now public
       interface ModuleCapabilities {
         capabilities: {
           _name: string;
@@ -242,15 +263,18 @@ export class Webhook {
       caBundle: this._tls.ca,
     };
 
+    // The URL must include the API Token
+    const mutatePath = `/mutate/${this._apiToken}`;
+
     // If a host is specified, use that with a port of 3000
     if (this.host) {
-      clientConfig.url = `https://${this.host}:3000/mutate`;
+      clientConfig.url = `https://${this.host}:3000${mutatePath}`;
     } else {
       // Otherwise, use the service
       clientConfig.service = {
         name: this.name,
         namespace: "pepr-system",
-        path: "/mutate",
+        path: mutatePath,
       };
     }
 
@@ -344,6 +368,11 @@ export class Webhook {
                     readOnly: true,
                   },
                   {
+                    name: "api-token",
+                    mountPath: "/app/api-token",
+                    readOnly: true,
+                  },
+                  {
                     name: "module",
                     mountPath: `/app/load`,
                     readOnly: true,
@@ -359,6 +388,12 @@ export class Webhook {
                 },
               },
               {
+                name: "api-token",
+                secret: {
+                  secretName: `${this.name}-api-token`,
+                },
+              },
+              {
                 name: "module",
                 secret: {
                   secretName: `${this.name}-module`,
@@ -367,45 +402,6 @@ export class Webhook {
             ],
           },
         },
-      },
-    };
-  }
-
-  /** Only permit the kube-system ns ingress access to the controller */
-  networkPolicy(): V1NetworkPolicy {
-    return {
-      apiVersion: "networking.k8s.io/v1",
-      kind: "NetworkPolicy",
-      metadata: {
-        name: this.name,
-        namespace: "pepr-system",
-      },
-      spec: {
-        podSelector: {
-          matchLabels: {
-            app: this.name,
-          },
-        },
-        policyTypes: ["Ingress"],
-        ingress: [
-          {
-            from: [
-              {
-                namespaceSelector: {
-                  matchLabels: {
-                    "kubernetes.io/metadata.name": "kube-system",
-                  },
-                },
-              },
-            ],
-            ports: [
-              {
-                protocol: "TCP",
-                port: 443,
-              },
-            ],
-          },
-        ],
       },
     };
   }
@@ -487,10 +483,10 @@ export class Webhook {
 
     const resources = [
       this.namespace(),
-      this.networkPolicy(),
       this.clusterRole(),
       this.clusterRoleBinding(),
       this.serviceAccount(),
+      this.apiTokenSecret(),
       this.tlsSecret(),
       webhook,
       this.deployment(hash),
@@ -550,17 +546,6 @@ export class Webhook {
 
     const appsApi = kubeConfig.makeApiClient(AppsV1Api);
     const rbacApi = kubeConfig.makeApiClient(RbacAuthorizationV1Api);
-    const networkApi = kubeConfig.makeApiClient(NetworkingV1Api);
-
-    const networkPolicy = this.networkPolicy();
-    try {
-      Log.info("Checking for network policy");
-      await networkApi.readNamespacedNetworkPolicy(networkPolicy.metadata?.name ?? "", namespace);
-    } catch (e) {
-      Log.debug(e instanceof HttpError ? e.body : e);
-      Log.info("Creating network policy");
-      await networkApi.createNamespacedNetworkPolicy(namespace, networkPolicy);
-    }
 
     const crb = this.clusterRoleBinding();
     try {
@@ -630,6 +615,17 @@ export class Webhook {
       Log.info("Removing and re-creating TLS secret");
       await coreV1Api.deleteNamespacedSecret(tls.metadata?.name ?? "", namespace);
       await coreV1Api.createNamespacedSecret(namespace, tls);
+    }
+
+    const apiToken = this.apiTokenSecret();
+    try {
+      Log.info("Creating API token secret");
+      await coreV1Api.createNamespacedSecret(namespace, apiToken);
+    } catch (e) {
+      Log.debug(e instanceof HttpError ? e.body : e);
+      Log.info("Removing and re-creating API token secret");
+      await coreV1Api.deleteNamespacedSecret(apiToken.metadata?.name ?? "", namespace);
+      await coreV1Api.createNamespacedSecret(namespace, apiToken);
     }
 
     const dep = this.deployment(hash);

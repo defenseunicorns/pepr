@@ -4,15 +4,19 @@
 import express from "express";
 import fs from "fs";
 import https from "https";
+
 import { Capability } from "./capability";
 import { Request, Response } from "./k8s/types";
+import Log from "./logger";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
-import Log from "./logger";
 
 export class Controller {
   private readonly app = express();
   private running = false;
+
+  // The token used to authenticate requests
+  private token = "";
 
   constructor(
     private readonly config: ModuleConfig,
@@ -30,7 +34,7 @@ export class Controller {
     this.app.get("/healthz", this.healthz);
 
     // Mutate endpoint
-    this.app.post("/mutate", this.mutate);
+    this.app.post("/mutate/:token", this.mutate);
 
     if (beforeHook) {
       console.info(`Using beforeHook: ${beforeHook}`);
@@ -52,6 +56,14 @@ export class Controller {
       key: fs.readFileSync(process.env.SSL_KEY_PATH || "/etc/certs/tls.key"),
       cert: fs.readFileSync(process.env.SSL_CERT_PATH || "/etc/certs/tls.crt"),
     };
+
+    // Get the API token from the environment variable or the mounted secret
+    this.token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
+    console.info(`Using API token: ${this.token}`);
+
+    if (!this.token) {
+      throw new Error("API token not found");
+    }
 
     // Create HTTPS server
     const server = https.createServer(options, this.app).listen(port);
@@ -111,6 +123,15 @@ export class Controller {
 
   private mutate = async (req: express.Request, res: express.Response) => {
     try {
+      // Validate the token
+      const { token } = req.params;
+      if (token !== this.token) {
+        const err = `Unauthorized: invalid token '${token}'`;
+        console.warn(err);
+        res.status(401).send(err);
+        return;
+      }
+
       const request: Request = req.body?.request || ({} as Request);
 
       // Run the before hook if it exists
