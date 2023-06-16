@@ -126,7 +126,7 @@ export class Controller {
       // Validate the token
       const { token } = req.params;
       if (token !== this.token) {
-        const err = `Unauthorized: invalid token '${token}'`;
+        const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
         console.warn(err);
         res.status(401).send(err);
         return;
