@@ -154,8 +154,14 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.is(s1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
     t.is(s1.data["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
     t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
-    t.is(s1.data["binary-data"], "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==");
-    t.is(s1.data["ascii-with-white-space"], "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==");
+    t.is(
+      s1.data["binary-data"],
+      "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA=="
+    );
+    t.is(
+      s1.data["ascii-with-white-space"],
+      "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw=="
+    );
     t.log("Validated secret-1 Secret data");
 
     // Remove the sample yaml for the HelloPepr capability
@@ -171,9 +177,42 @@ test.serial("E2E: `pepr deploy`", async t => {
 });
 
 test.serial("E2E: `pepr dev`", async t => {
-  await t.notThrowsAsync(new Promise(peprDev));
+  try {
+    const cmd = await new Promise(peprDev);
+
+    await testAPIKey();
+
+    cmd.kill();
+
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
 });
 
+async function testAPIKey() {
+  // Ignore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  const base = "https://localhost:3000/mutate/";
+
+  // Test api token validation
+  const evilToken = await fetch(`${base}evil-token`, { method: "POST" });
+
+  // Test for empty api token
+  const emptyToken = await fetch(base, { method: "POST" });
+
+  if (evilToken.status !== 401) {
+    throw new Error("Expected evil token to return 401");
+  }
+
+  if (emptyToken.status !== 404) {
+    throw new Error("Expected empty token to return 404");
+  }
+
+  // Restore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+}
 function peprDev(resolve, reject) {
   const cmd = spawn("pepr", ["dev", "--confirm"], { cwd: testDir });
 
@@ -195,8 +234,7 @@ function peprDev(resolve, reject) {
 
     // If all expected lines are found, resolve the promise
     if (expectedLines.length < 1) {
-      cmd.kill();
-      resolve();
+      resolve(cmd);
     }
   });
 
