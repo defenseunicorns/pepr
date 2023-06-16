@@ -12,13 +12,20 @@ import { PeprRequest } from "./request";
 import { ModuleConfig } from "./types";
 import { convertFromBase64Map, convertToBase64Map } from "./utils";
 
+import { trace } from "@opentelemetry/api";
+import { Instrumentation } from "./instrumentation";
+
+// TODO: move elsewhere, this was just to try this out
+new Instrumentation().start();
+const tracer = trace.getTracer("pepr");
+
 export async function processor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
   parentPrefix: string
 ): Promise<Response> {
-  const wrapped = new PeprRequest(req);
+  const wrapped = new PeprRequest(req, tracer);
   const response: Response = {
     uid: req.uid,
     warnings: [],
@@ -71,7 +78,13 @@ export async function processor(
 
       try {
         // Run the action
-        await action.callback(wrapped);
+        var ns = req.namespace || "default";
+        var obj = req.name || "unknown";
+        var spanName = `pepr/${name}/${ns}/${obj}`;
+        tracer.startActiveSpan(spanName, async span => {
+          await action.callback(wrapped);
+          span.end();
+        });
 
         Log.info(`Action succeeded`, prefix);
 
