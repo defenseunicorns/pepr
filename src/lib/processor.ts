@@ -12,7 +12,6 @@ import { PeprRequest } from "./request";
 import { ModuleConfig } from "./types";
 import { convertFromBase64Map, convertToBase64Map } from "./utils";
 
-
 // TODO: find a better place to put this.
 import { trace } from "@opentelemetry/api";
 const tracer = trace.getTracer("pepr-core");
@@ -75,7 +74,7 @@ export async function processor(
       updateStatus("started");
 
       try {
-        var spanName = `pepr-webhook`
+        const spanName = `pepr-webhook`;
         tracer.startActiveSpan(spanName, async span => {
           span.setAttribute("name", wrapped.Request.name);
           span.setAttribute("kind", wrapped.Request.kind.kind);

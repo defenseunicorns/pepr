@@ -51,7 +51,7 @@ export class PeprRequest<T extends KubernetesObject> {
   constructor(private _input: Request<T>, tracer: Tracer) {
     // Deep clone the object to prevent mutation of the original object
     this.Raw = clone(_input.object);
-    this.tracer = tracer
+    this.tracer = tracer;
   }
 
   /**
