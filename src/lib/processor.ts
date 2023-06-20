@@ -12,12 +12,10 @@ import { PeprRequest } from "./request";
 import { ModuleConfig } from "./types";
 import { convertFromBase64Map, convertToBase64Map } from "./utils";
 
-import { trace } from "@opentelemetry/api";
-import { Instrumentation } from "./instrumentation";
 
-// TODO: move elsewhere, this was just to try this out
-new Instrumentation().start();
-const tracer = trace.getTracer("pepr");
+// TODO: find a better place to put this.
+import { trace } from "@opentelemetry/api";
+const tracer = trace.getTracer("pepr-core");
 
 export async function processor(
   config: ModuleConfig,
@@ -77,11 +75,12 @@ export async function processor(
       updateStatus("started");
 
       try {
-        // Run the action
-        var ns = req.namespace || "default";
-        var obj = req.name || "unknown";
-        var spanName = `pepr/${name}/${ns}/${obj}`;
+        var spanName = `pepr-webhook`
         tracer.startActiveSpan(spanName, async span => {
+          span.setAttribute("name", wrapped.Request.name);
+          span.setAttribute("kind", wrapped.Request.kind.kind);
+          span.setAttribute("group", wrapped.Request.kind.group);
+          span.setAttribute("namespace", wrapped.Request?.namespace || "default");
           await action.callback(wrapped);
           span.end();
         });
