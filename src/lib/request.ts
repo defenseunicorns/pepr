@@ -6,15 +6,12 @@ import { clone, mergeDeepRight } from "ramda";
 import { KubernetesObject, Request } from "./k8s/types";
 import { DeepPartial } from "./types";
 
-import { Tracer } from "@opentelemetry/api";
-
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
  * of a mutating webhook request.
  */
 export class PeprRequest<T extends KubernetesObject> {
   public Raw: T;
-  public tracer: Tracer;
 
   get PermitSideEffects() {
     return !this._input.dryRun;
@@ -48,10 +45,9 @@ export class PeprRequest<T extends KubernetesObject> {
    * Creates a new instance of the Action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(private _input: Request<T>, tracer: Tracer) {
+  constructor(private _input: Request<T>) {
     // Deep clone the object to prevent mutation of the original object
     this.Raw = clone(_input.object);
-    this.tracer = tracer;
   }
 
   /**

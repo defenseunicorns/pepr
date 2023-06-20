@@ -22,7 +22,7 @@ export async function processor(
   req: Request,
   parentPrefix: string
 ): Promise<Response> {
-  const wrapped = new PeprRequest(req, tracer);
+  const wrapped = new PeprRequest(req);
   const response: Response = {
     uid: req.uid,
     warnings: [],
