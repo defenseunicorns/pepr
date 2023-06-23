@@ -67,6 +67,7 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   SetLabel(key: string, value: string) {
     const ref = this.Raw;
+    if (!ref) return this;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.labels = ref.metadata.labels ?? {};
@@ -82,6 +83,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
+    if (!this.Raw) return this;
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -97,7 +99,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveLabel(key: string) {
-    if (this.Raw.metadata?.labels?.[key]) {
+    if (this.Raw?.metadata?.labels?.[key]) {
       delete this.Raw.metadata.labels[key];
     }
     return this;
@@ -109,7 +111,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveAnnotation(key: string) {
-    if (this.Raw.metadata?.annotations?.[key]) {
+    if (this.Raw?.metadata?.annotations?.[key]) {
       delete this.Raw.metadata.annotations[key];
     }
     return this;
@@ -122,7 +124,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns
    */
   HasLabel(key: string) {
-    return this.Raw?.metadata?.labels?.[key] !== undefined;
+    return this.Raw?.metadata?.labels?.[key] !== undefined || this.OldResource?.metadata?.labels?.[key] !== undefined;
   }
 
   /**
@@ -132,6 +134,9 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns
    */
   HasAnnotation(key: string) {
-    return this.Raw?.metadata?.annotations?.[key] !== undefined;
+    return (
+      this.Raw?.metadata?.annotations?.[key] !== undefined ||
+      this.OldResource?.metadata?.annotations?.[key] !== undefined
+    );
   }
 }

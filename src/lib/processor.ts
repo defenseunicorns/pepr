@@ -34,7 +34,8 @@ export async function processor(
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
   if (isSecret) {
-    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
+    const transformed = (wrapped.Raw || wrapped.OldResource) as unknown as Secret;
+    skipDecode = convertFromBase64Map(transformed);
   }
 
   Log.info(`Processing request`, parentPrefix);
@@ -101,6 +102,11 @@ export async function processor(
   // If no capability matched the request, exit early
   if (!matchedCapabilityAction) {
     Log.info(`No matching capability action found`, parentPrefix);
+    return response;
+  }
+
+  // delete operations can't be mutate, just return before the transformation
+  if (req.operation == "DELETE") {
     return response;
   }
 
