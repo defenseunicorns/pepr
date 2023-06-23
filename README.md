@@ -44,29 +44,22 @@ When(a.ConfigMap)
 
 - [Node.js](https://nodejs.org/en/) v18.0.0+.
 
-  > _Recommend installing with [NVM](https://github.com/nvm-sh/nvm) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) to avoid permission issues when installing the Pepr CLI globally._
-
 - Recommended (optional) tools:
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
-  - A Kubernetes cluster for `pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
+  - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
 ## Wow too many words! tl;dr;
 
 ```bash
-# Install Pepr globally. If this command requires sudo, see the Prerequisites section to install Node.js with NVM or NVM for Windows.
-npm i -g pepr
-
-# Initialize a new Pepr Module
-pepr init
-
-# Follow the prompts...
+# Initialize a new Pepr Module, you can also use `npx pepr@latest init` to make sure you have the latest version
+npx pepr init
 
 # If you already have a Kind or K3d cluster you want to use, skip this step
 npm run k3d-setup
 
 # Start playing with Pepr now
-# If using another local K8s distro instead of k3d, run `pepr dev --host host.docker.internal`
-pepr dev
+# If using another local K8s distro instead of k3d, run `npx pepr dev --host host.docker.internal`
+npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
 
 # Be amazed and ⭐️ this repo

@@ -42,7 +42,8 @@ test.before(async t => {
 
 test.serial("E2E: `pepr init`", t => {
   try {
-    execSync("TEST_MODE=true pepr init", { stdio: "inherit" });
+    const peprAlias = "file:pepr-0.0.0-development.tgz"
+    execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
     t.pass();
   } catch (e) {
     t.fail(e.message);
@@ -51,7 +52,7 @@ test.serial("E2E: `pepr init`", t => {
 
 test.serial("E2E: `pepr format`", t => {
   try {
-    execSync("pepr format", { cwd: testDir, stdio: "inherit" });
+    execSync("npx pepr format", { cwd: testDir, stdio: "inherit" });
     t.pass();
   } catch (e) {
     t.fail(e.message);
@@ -60,7 +61,7 @@ test.serial("E2E: `pepr format`", t => {
 
 test.serial("E2E: `pepr build`", async t => {
   try {
-    execSync("pepr build", { cwd: testDir, stdio: "inherit" });
+    execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
     await fs.access(resolve(testDir, "dist", "zarf.yaml"));
     await fs.access(resolve(testDir, "dist", "pepr-module-static-test.yaml"));
@@ -74,7 +75,7 @@ test.serial("E2E: `pepr build`", async t => {
 test.serial("E2E: `pepr deploy`", async t => {
   try {
     // Deploy the module
-    execSync("pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
+    execSync("npx pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
 
     // Wait for the deployment to be ready
     await waitForDeploymentReady("pepr-system", "pepr-static-test");
@@ -214,7 +215,7 @@ async function testAPIKey() {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 }
 function peprDev(resolve, reject) {
-  const cmd = spawn("pepr", ["dev", "--confirm"], { cwd: testDir });
+  const cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd: testDir });
 
   cmd.stdout.on("data", data => {
     // Convert buffer to string

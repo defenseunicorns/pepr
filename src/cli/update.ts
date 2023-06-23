@@ -48,11 +48,6 @@ export default function (program: RootCmd) {
           stdio: "inherit",
         });
 
-        // Update Pepr globally
-        execSync("npm install -g pepr@latest", {
-          stdio: "inherit",
-        });
-
         console.log(`Module updated!`);
       } catch (e) {
         Log.debug(e);
