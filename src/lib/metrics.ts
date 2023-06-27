@@ -4,47 +4,76 @@
 import promClient from "prom-client";
 import { performance } from "perf_hooks";
 
+/**
+ * MetricsCollector class handles metrics collection using prom-client and performance hooks.
+ */
 export class MetricsCollector {
-  private registery: promClient.Registry;
-  private errors: promClient.Counter<string>;
-  private alerts: promClient.Counter<string>;
-  private summary: promClient.Summary<string>;
+  private _registry: promClient.Registry;
+  private _errors: promClient.Counter<string>;
+  private _alerts: promClient.Counter<string>;
+  private _summary: promClient.Summary<string>;
 
+  /**
+   * Creates a MetricsCollector instance with prefixed metrics.
+   * @param {string} [prefix='pepr'] - The prefix for the metric names.
+   */
   constructor(prefix = "pepr") {
-    this.registery = new promClient.Registry();
+    this._registry = new promClient.Registry();
 
-    this.errors = new promClient.Counter({
+    this._errors = new promClient.Counter({
       name: `${prefix}_errors`,
       help: "error counter",
-      registers: [this.registery],
+      registers: [this._registry],
     });
 
-    this.alerts = new promClient.Counter({
+    this._alerts = new promClient.Counter({
       name: `${prefix}_alerts`,
       help: "alerts counter",
-      registers: [this.registery],
+      registers: [this._registry],
     });
 
-    this.summary = new promClient.Summary({
+    this._summary = new promClient.Summary({
       name: `${prefix}_summary`,
       help: "summary",
-      registers: [this.registery],
+      registers: [this._registry],
     });
   }
 
-  error(): void {
-    this.errors.inc();
+  /**
+   * Increments the error counter.
+   */
+  error() {
+    this._errors.inc();
   }
 
-  alert(): void {
-    this.alerts.inc();
+  /**
+   * Increments the alerts counter.
+   */
+  alert() {
+    this._alerts.inc();
   }
 
-  observe(startTime: number): void {
-    this.summary.observe(performance.now() - startTime);
+  /**
+   * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
+   * @returns {number} The timestamp.
+   */
+  observeStart() {
+    return performance.now();
   }
 
-  async getMetrics(): Promise<string> {
-    return this.registery.metrics();
+  /**
+   * Observes the duration since the provided start time and updates the summary.
+   * @param {number} startTime - The start time.
+   */
+  observeEnd(startTime: number) {
+    this._summary.observe(performance.now() - startTime);
+  }
+
+  /**
+   * Fetches the current metrics from the registry.
+   * @returns {Promise<string>} The metrics.
+   */
+  async getMetrics() {
+    return this._registry.metrics();
   }
 }

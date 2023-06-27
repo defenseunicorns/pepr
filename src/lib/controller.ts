@@ -10,7 +10,6 @@ import { Request, Response } from "./k8s/types";
 import Log from "./logger";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
-import { performance } from "perf_hooks";
 import { MetricsCollector } from "./metrics";
 
 export class Controller {
@@ -137,7 +136,7 @@ export class Controller {
   };
 
   private mutate = async (req: express.Request, res: express.Response) => {
-    const startTime = performance.now();
+    const startTime = this.metricsCollector.observeStart();
 
     try {
       // Validate the token
@@ -177,7 +176,7 @@ export class Controller {
         kind: "AdmissionReview",
         response,
       });
-      this.metricsCollector.observe(startTime);
+      this.metricsCollector.observeEnd(startTime);
     } catch (err) {
       console.error(err);
       res.status(500).send("Internal Server Error");
