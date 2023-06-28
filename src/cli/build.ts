@@ -37,6 +37,7 @@ export default function (program: RootCmd) {
       // Generate a secret for the module
       const webhook = new Webhook({
         ...cfg.pepr,
+        version: cfg.version,
         description: cfg.description,
       });
       const yamlFile = `pepr-module-${uuid}.yaml`;
