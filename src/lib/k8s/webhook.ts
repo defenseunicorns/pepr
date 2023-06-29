@@ -453,6 +453,7 @@ export class Webhook {
         name: this.name,
         description: `Pepr Module: ${this.config.description}`,
         url: "https://github.com/defenseunicorns/pepr",
+        version: `${this.config.version}`,
       },
       components: [
         {
