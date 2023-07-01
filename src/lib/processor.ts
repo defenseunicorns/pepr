@@ -104,6 +104,11 @@ export async function processor(
     return response;
   }
 
+  // delete operations can't be mutate, just return before the transformation
+  if (req.operation == "DELETE") {
+    return response;
+  }
+
   const transformed = wrapped.Raw;
 
   // Post-process the Secret requests to convert it back to the original format
