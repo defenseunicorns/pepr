@@ -184,7 +184,23 @@ test.serial("E2E: `pepr dev`", async t => {
     await testAPIKey();
 
     cmd.kill();
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
 
+test.serial("E2E: `pepr metrics`", async t => {
+  try {
+    const cmd = await new Promise(peprDev);
+
+    const metrics = await testMetrics()
+    t.is(metrics.includes("pepr_summary_count"), true);
+    t.is(metrics.includes("pepr_errors"), true);
+    t.is(metrics.includes("pepr_alerts"), true);
+    t.log("Validated metrics endpoint");
+
+    cmd.kill();
     t.pass();
   } catch (e) {
     t.fail(e.message);
@@ -214,6 +230,24 @@ async function testAPIKey() {
   // Restore TLS verification
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 }
+
+async function testMetrics() {
+  // Ignore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  const metricsEndpoint = "https://localhost:3000/metrics";
+
+  const metricsOk = await fetch(metricsEndpoint);
+
+  if (metricsOk.status !== 200) {
+    throw new Error("Expected metrics ok to return a 200");
+  }
+  // Restore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
+  return await metricsOk.text();
+}
+
 function peprDev(resolve, reject) {
   const cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd: testDir });
 
