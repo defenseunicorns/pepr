@@ -10,10 +10,12 @@ import { Request, Response } from "./k8s/types";
 import Log from "./logger";
 import { processor } from "./processor";
 import { ModuleConfig } from "./types";
+import { MetricsCollector } from "./metrics";
 
 export class Controller {
   private readonly app = express();
   private running = false;
+  private metricsCollector = new MetricsCollector("pepr");
 
   // The token used to authenticate requests
   private token = "";
@@ -32,6 +34,9 @@ export class Controller {
 
     // Health check endpoint
     this.app.get("/healthz", this.healthz);
+
+    // Metrics endpoint
+    this.app.get("/metrics", this.metrics);
 
     // Mutate endpoint
     this.app.post("/mutate/:token", this.mutate);
@@ -121,7 +126,18 @@ export class Controller {
     }
   };
 
+  private metrics = async (req: express.Request, res: express.Response) => {
+    try {
+      res.send(await this.metricsCollector.getMetrics());
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
+
   private mutate = async (req: express.Request, res: express.Response) => {
+    const startTime = this.metricsCollector.observeStart();
+
     try {
       // Validate the token
       const { token } = req.params;
@@ -129,6 +145,7 @@ export class Controller {
         const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
         console.warn(err);
         res.status(401).send(err);
+        this.metricsCollector.alert();
         return;
       }
 
@@ -159,9 +176,11 @@ export class Controller {
         kind: "AdmissionReview",
         response,
       });
+      this.metricsCollector.observeEnd(startTime);
     } catch (err) {
       console.error(err);
       res.status(500).send("Internal Server Error");
+      this.metricsCollector.error();
     }
   };
 }
