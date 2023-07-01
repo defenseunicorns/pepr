@@ -3,7 +3,7 @@
 
 import { clone, mergeDeepRight } from "ramda";
 
-import { KubernetesObject, Request } from "./k8s/types";
+import { KubernetesObject, Operation, Request } from "./k8s/types";
 import { DeepPartial } from "./types";
 
 /**
@@ -46,8 +46,17 @@ export class PeprRequest<T extends KubernetesObject> {
    * @param input - The request object containing the Kubernetes resource to modify.
    */
   constructor(private _input: Request<T>) {
-    // Deep clone the object to prevent mutation of the original object
-    this.Raw = clone(_input.object);
+    // If this is a DELETE operation, use the oldObject instead
+    if (_input.operation === Operation.DELETE) {
+      this.Raw = clone(_input.oldObject as T);
+    } else {
+      // Otherwise, use the incoming object
+      this.Raw = clone(_input.object);
+    }
+
+    if (!this.Raw) {
+      throw new Error("unable to load the request object into PeprRequest.RawP");
+    }
   }
 
   /**
@@ -67,7 +76,6 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   SetLabel(key: string, value: string) {
     const ref = this.Raw;
-    if (!ref) return this;
 
     ref.metadata = ref.metadata ?? {};
     ref.metadata.labels = ref.metadata.labels ?? {};
@@ -83,7 +91,6 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
-    if (!this.Raw) return this;
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -99,9 +106,10 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveLabel(key: string) {
-    if (this.Raw?.metadata?.labels?.[key]) {
+    if (this.Raw.metadata?.labels?.[key]) {
       delete this.Raw.metadata.labels[key];
     }
+
     return this;
   }
 
@@ -111,9 +119,10 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns The current Action instance for method chaining.
    */
   RemoveAnnotation(key: string) {
-    if (this.Raw?.metadata?.annotations?.[key]) {
+    if (this.Raw.metadata?.annotations?.[key]) {
       delete this.Raw.metadata.annotations[key];
     }
+
     return this;
   }
 
@@ -124,7 +133,7 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns
    */
   HasLabel(key: string) {
-    return this.Raw?.metadata?.labels?.[key] !== undefined || this.OldResource?.metadata?.labels?.[key] !== undefined;
+    return this.Raw.metadata?.labels?.[key] !== undefined;
   }
 
   /**
@@ -134,9 +143,6 @@ export class PeprRequest<T extends KubernetesObject> {
    * @returns
    */
   HasAnnotation(key: string) {
-    return (
-      this.Raw?.metadata?.annotations?.[key] !== undefined ||
-      this.OldResource?.metadata?.annotations?.[key] !== undefined
-    );
+    return this.Raw.metadata?.annotations?.[key] !== undefined;
   }
 }

@@ -34,8 +34,7 @@ export async function processor(
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
   if (isSecret) {
-    const transformed = (wrapped.Raw || wrapped.OldResource) as unknown as Secret;
-    skipDecode = convertFromBase64Map(transformed);
+    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
   }
 
   Log.info(`Processing request`, parentPrefix);
