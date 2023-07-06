@@ -1,5 +1,6 @@
 import {
   Capability,
+  Log,
   PeprRequest,
   RegisterKind,
   a,
@@ -104,6 +105,12 @@ When(a.ConfigMap)
     // You can still mix other ways of making changes too
     request.SetAnnotation("pepr.dev", "making-waves");
   });
+
+// This action will log an entry when a CM with the label `change=by-label` is deleted
+When(a.ConfigMap)
+  .IsDeleted()
+  .WithLabel("change", "by-label")
+  .Then(() => Log.info("CM with label 'change=by-label' was deleted."));
 
 /**
  * ---------------------------------------------------------------------------------------------------

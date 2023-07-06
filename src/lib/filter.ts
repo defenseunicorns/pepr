@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Request } from "./k8s/types";
+import { Operation, Request } from "./k8s/types";
 import logger from "./logger";
 import { Binding, Event } from "./types";
 
@@ -15,10 +15,15 @@ import { Binding, Event } from "./types";
 export function shouldSkipRequest(binding: Binding, req: Request) {
   const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations, name } = binding.filters || {};
-  const { metadata } = req.object || {};
+  const operation = req.operation.toUpperCase();
+  // Use the old object if the request is a DELETE operation
+  const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
+  const { metadata } = srcObject || {};
+
+  console.log(metadata);
 
   // Test for matching operation
-  if (!binding.event.includes(req.operation) && !binding.event.includes(Event.Any)) {
+  if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
     return true;
   }
 

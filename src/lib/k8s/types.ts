@@ -121,7 +121,7 @@ export interface Request<T = KubernetesObject> {
   /** Object is the object from the incoming request prior to default values being applied */
   readonly object: T;
 
-  /** OldObject is the existing object. Only populated for UPDATE requests. */
+  /** OldObject is the existing object. Only populated for UPDATE or DELETE requests. */
   readonly oldObject?: T;
 
   /** DryRun indicates that modifications will definitely not be persisted for this request. Defaults to false. */
