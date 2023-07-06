@@ -171,6 +171,14 @@ test.serial("E2E: `pepr deploy`", async t => {
       stdio: "inherit",
     });
 
+
+    // Check the controller logs
+    const logs = await getPodLogs("pepr-system", "app=pepr-static-test")
+    t.is(logs.includes("File hash matches, running module"), true);
+    t.is(logs.includes("Capability hello-pepr registered"), true);
+    t.is(logs.includes("CM with label 'change=by-label' was deleted."), true);
+    t.log("Validated controller logs");
+
     t.pass();
   } catch (e) {
     t.fail(e.message);
@@ -339,4 +347,24 @@ async function waitForSecret(namespace, name) {
 
 function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
+}
+
+
+async function getPodLogs(namespace, labelSelector) {
+  let allLogs = '';
+
+  try {
+    const res = await k8sCoreApi.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, labelSelector);
+    const pods = res.body.items;
+
+    for (const pod of pods) {
+      const podName = pod.metadata.name;
+      const log = await k8sCoreApi.readNamespacedPodLog(podName, namespace);
+      allLogs += log.body;
+    }
+  } catch (err) {
+    console.error('Error: ', err);
+  }
+
+  return allLogs;
 }
