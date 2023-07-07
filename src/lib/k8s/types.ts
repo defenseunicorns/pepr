@@ -138,7 +138,7 @@ export interface Request<T = KubernetesObject> {
   readonly options?: any;
 }
 
-export interface Response {
+export interface MutateResponse {
   /** UID is an identifier for the individual request/response. This must be copied over from the corresponding AdmissionRequest. */
   uid: string;
 
@@ -161,6 +161,18 @@ export interface Response {
 
   /** warnings is a list of warning messages to return to the requesting API client. */
   warnings?: string[];
+}
+
+export interface ValidateResponse extends MutateResponse {
+  /** Status contains extra details into why an admission request was denied. This field IS NOT consulted in any way if "Allowed" is "true". */
+  status?: {
+    /** A machine-readable description of why this operation is in the
+       "Failure" status. If this value is empty there is no information available. */
+    code: number;
+
+    /** A human-readable description of the status of this operation. */
+    message: string;
+  };
 }
 
 export type WebhookIgnore = {

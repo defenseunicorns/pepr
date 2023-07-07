@@ -1,7 +1,7 @@
 import {
   Capability,
   Log,
-  PeprRequest,
+  PeprMutateRequest,
   RegisterKind,
   a,
   fetch,
@@ -19,8 +19,29 @@ export const HelloPepr = new Capability({
   namespaces: ["pepr-demo", "pepr-demo-2"],
 });
 
-// Use the 'When' function to create a new Capability Action
-const { When } = HelloPepr;
+// Use the 'When' function to create a new Capability Action, 'Store' to persist data
+const { When, Store, After } = HelloPepr;
+
+// Save some data to the store
+Store.setItem("hello-pepr", "Hello Pepr!");
+
+// Add an item to the store
+Store.setItem("hello-pepr-2", "Hello Pepr! I'm a second item!");
+
+// Read the data back from the store
+console.log(Store.getItem("hello-pepr"));
+
+// Update the data in the store
+Store.setItem("hello-pepr", "Hello Pepr! I've been updated!");
+
+// Get the length of the store
+console.log(Store.length);
+
+// Delete an item from the store
+Store.removeItem("hello-pepr");
+
+// Clear the store
+Store.clear();
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -33,7 +54,7 @@ const { When } = HelloPepr;
  */
 When(a.Namespace)
   .IsCreated()
-  .Then(ns => ns.RemoveLabel("remove-me"));
+  .Mutate(ns => ns.RemoveLabel("remove-me"));
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -50,7 +71,7 @@ When(a.Namespace)
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
-  .Then(request =>
+  .Mutate(request =>
     request
       .SetLabel("pepr", "was-here")
       .SetAnnotation("pepr.dev", "annotations-work-too")
@@ -61,21 +82,41 @@ When(a.ConfigMap)
  *                                   CAPABILITY ACTION (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action does the exact same changes for example-2, except this time it uses
- * the `.ThenSet()` feature. You can stack multiple `.Then()` calls, but only a single `.ThenSet()`
+ * This combines 3 different types of Capability Actions: 'Observe', 'Mutate', and 'Validate'. The order
+ * of the actions is required, but each action is optional. In this example, when a ConfigMap is created
+ *
  */
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-2")
-  .ThenSet({
-    metadata: {
-      labels: {
-        pepr: "was-here",
+  .Mutate(request => {
+    // Use the `request.Merge()` feature
+    request.Merge({
+      metadata: {
+        labels: {
+          pepr: "was-here",
+        },
+        annotations: {
+          "pepr.dev": "annotations-work-too",
+        },
       },
-      annotations: {
-        "pepr.dev": "annotations-work-too",
-      },
-    },
+    });
+  })
+  .Validate(request => {
+    // Return 'true' if the request is valid
+    return request.HasLabel("pepr");
+  })
+  .Observe(request => {
+    Log.info(
+      `New ConfigMap being created with the name example-2: ${request.Request.userInfo}`
+    );
+  });
+
+After(a.ConfigMap)
+  .IsCreated()
+  .Observe(cm => {
+    Log.info(cm);
+    Store.setItem("cm", cm.metadata.name);
   });
 
 /**
@@ -91,7 +132,7 @@ When(a.ConfigMap)
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .WithLabel("change", "by-label")
-  .Then(request => {
+  .Mutate(request => {
     // The K8s object e are going to mutate
     const cm = request.Raw;
 
@@ -110,36 +151,23 @@ When(a.ConfigMap)
 When(a.ConfigMap)
   .IsDeleted()
   .WithLabel("change", "by-label")
-  .Then(() => Log.info("CM with label 'change=by-label' was deleted."));
+  .Observe(() => Log.info("CM with label 'change=by-label' was deleted."));
 
 /**
  * ---------------------------------------------------------------------------------------------------
  *                                   CAPABILITY ACTION (CM Example 4)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action show how you can use the `Then()` function to make multiple changes to the
- * same object from different functions. This is useful if you want to keep your Capability Actions
- * small and focused on a single task, or if you want to reuse the same function in multiple
- * Capability Actions.
- *
- * Note that the order of the `.Then()` calls matters. The first call will be executed first,
- * then the second, and so on. Also note the functions are not called until the Capability Action
- * is triggered.
+ * This Capability Action show how you can use the `Mutate()` function without an inline function.
+ * This is useful if you want to keep your Capability Actions  small and focused on a single task,
+ * or if you want to reuse the same function in multiple Capability Actions.
  */
-When(a.ConfigMap)
-  .IsCreated()
-  .WithName("example-4")
-  .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
-  .Then(addSecond)
-  .Then(addThird);
+When(a.ConfigMap).IsCreated().WithName("example-4").Mutate(example4Cb);
 
-//This function uses the complete type definition, but is not required.
-function addSecond(cm: PeprRequest<a.ConfigMap>) {
+// This function uses the complete type definition, but is not required.
+function example4Cb(cm: PeprMutateRequest<a.ConfigMap>) {
+  cm.SetLabel("pepr.dev/first", "true");
   cm.SetLabel("pepr.dev/second", "true");
-}
-
-// This function has no type definition, so you won't have intellisense in the function body.
-function addThird(cm) {
   cm.SetLabel("pepr.dev/third", "true");
 }
 
@@ -156,9 +184,7 @@ When(a.ConfigMap)
   .IsCreated()
   .InNamespace("pepr-demo-2")
   .WithName("example-4a")
-  .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
-  .Then(addSecond)
-  .Then(addThird);
+  .Mutate(example4Cb);
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -198,7 +224,7 @@ interface TheChuckNorrisJoke {
 When(a.ConfigMap)
   .IsCreated()
   .WithLabel("chuck-norris")
-  .Then(async change => {
+  .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
       "https://api.chucknorris.io/jokes/random?category=dev"
@@ -230,7 +256,7 @@ When(a.ConfigMap)
 When(a.Secret)
   .IsCreated()
   .WithName("secret-1")
-  .Then(request => {
+  .Mutate(request => {
     const secret = request.Raw;
 
     // This will be encoded at the end of all processing back to base64: "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc="
@@ -276,11 +302,13 @@ When(a.GenericKind, {
 })
   .IsCreated()
   .WithName("example-1")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr without type data!",
-      counter: Math.random(),
-    },
+  .Mutate(request => {
+    request.Merge({
+      spec: {
+        message: "Hello Pepr without type data!",
+        counter: Math.random(),
+      },
+    });
   });
 
 /**
@@ -334,9 +362,11 @@ RegisterKind(UnicornKind, {
 When(UnicornKind)
   .IsCreated()
   .WithName("example-2")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr now with type data!",
-      counter: Math.random(),
-    },
+  .Mutate(request => {
+    request.Merge({
+      spec: {
+        message: "Hello Pepr with type data!",
+        counter: Math.random(),
+      },
+    });
   });

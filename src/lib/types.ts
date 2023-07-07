@@ -2,7 +2,9 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s/types";
-import { PeprRequest } from "./request";
+import { PeprMutateRequest } from "./mutate-request";
+import { PeprObserveRequest } from "./observe-request";
+import { PeprValidateRequest } from "./validate-request";
 
 export type PackageJSON = {
   description: string;
@@ -38,13 +40,21 @@ export type DeepPartial<T> = {
 /**
  * The type of Kubernetes mutating webhook event that the capability action is registered for.
  */
-
 export enum Event {
   Create = "CREATE",
   Update = "UPDATE",
   Delete = "DELETE",
   CreateOrUpdate = "CREATEORUPDATE",
   Any = "*",
+}
+
+/**
+ * The Phase matched when using the K8s Watch API.
+ */
+export enum WatchPhase {
+  Added = "ADDED",
+  Modified = "MODIFIED",
+  Deleted = "DELETED",
 }
 
 export interface CapabilityCfg {
@@ -109,6 +119,10 @@ export type ModuleConfig = {
   signing?: ModuleSigning;
 };
 
+export type PeprState = {
+  [name: string]: Record<string, string>;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GenericClass = abstract new () => any;
 
@@ -132,10 +146,12 @@ export type Binding = {
     labels: Record<string, string>;
     annotations: Record<string, string>;
   };
-  readonly callback: CapabilityAction<GenericClass, InstanceType<GenericClass>>;
+  readonly mutateCallback: CapabilityMutateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly validateCallback: CapabilityValidateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly observeCallback: CapabilityObserveAction<GenericClass, InstanceType<GenericClass>>;
 };
 
-export type BindingFilter<T extends GenericClass> = BindToActionOrSet<T> & {
+export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
   /**
    * Only apply the capability action if the resource has the specified label. If no value is specified, the label must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
@@ -145,7 +161,7 @@ export type BindingFilter<T extends GenericClass> = BindToActionOrSet<T> & {
    *   .IsCreated()
    *   .WithLabel("foo", "bar")
    *   .WithLabel("baz", "qux")
-   *   .Then(...)
+   *   .Mutate(...)
    * ```
    *
    * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` labels.
@@ -163,7 +179,7 @@ export type BindingFilter<T extends GenericClass> = BindToActionOrSet<T> & {
    *   .IsCreated()
    *   .WithAnnotation("foo", "bar")
    *   .WithAnnotation("baz", "qux")
-   *   .Then(...)
+   *   .Mutate(...)
    * ```
    *
    * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` annotations.
@@ -184,34 +200,47 @@ export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
 };
 
-export type BindToAction<T extends GenericClass> = {
+export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**
-   * Create a new capability action with the specified callback function and previously specified
+   * Create a new MUTATE capability action with the specified callback function and previously specified
    * filters.
    * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
-  Then: (action: CapabilityAction<T, InstanceType<T>>) => BindToAction<T>;
+  Mutate: (action: CapabilityMutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
 };
 
-export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
+export type ValidateActionChain<T extends GenericClass> = {
   /**
-   * Merge the specified updates into the resource, this can only be used once per binding.
-   * Note this is just a convenience method for `request.Merge(values)`.
-   *
-   * Example change the `minReadySeconds` to 3 of a deployment when it is created:
-   *
-   * ```ts
-   * When(a.Deployment)
-   *  .IsCreated()
-   *  .ThenSet({ spec: { minReadySeconds: 3 } });
-   * ```
-   *
-   * @param merge
+   * Register a capability action to be executed when a Kubernetes resource is processed by the AdmissionController.
+   * This action has no mutation or validation capabilities.
+   * @param action
    * @returns
    */
-  ThenSet: (val: DeepPartial<InstanceType<T>>) => BindToAction<T>;
+  Observe: (action: CapabilityObserveAction<T, InstanceType<T>>) => void;
 };
 
-export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprRequest<K>
-) => Promise<void> | void | Promise<PeprRequest<K>> | PeprRequest<K>;
+export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
+  /**
+   * Create a new VALIDATE capability action with the specified callback function and previously specified
+   * filters.
+   * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
+   */
+  Validate: (action: CapabilityValidateAction<T, InstanceType<T>>) => ValidateActionChain<T>;
+};
+
+export type CapabilityMutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  req: PeprMutateRequest<K>
+) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
+
+export type CapabilityValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  req: PeprValidateRequest<K>
+) => Promise<boolean> | boolean;
+
+export type CapabilityObserveAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  req: PeprObserveRequest<K>
+) => Promise<void> | void;
+
+export type WatchAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  update: K,
+  phase: WatchPhase
+) => Promise<void> | void;

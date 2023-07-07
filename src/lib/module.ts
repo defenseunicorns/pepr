@@ -5,7 +5,7 @@ import { concat, mergeDeepWith } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
-import { Request, Response } from "./k8s/types";
+import { Request, MutateResponse } from "./k8s/types";
 import { ModuleConfig } from "./types";
 
 const alwaysIgnore = {
@@ -25,7 +25,7 @@ export type PeprModuleOptions = {
   beforeHook?: (req: Request) => void;
 
   /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
-  afterHook?: (res: Response) => void;
+  afterHook?: (res: MutateResponse) => void;
 };
 
 export class PeprModule {

@@ -6,53 +6,73 @@ import fs from "fs";
 import https from "https";
 
 import { Capability } from "./capability";
-import { Request, Response } from "./k8s/types";
+import { a } from "./k8s";
+import { Request, MutateResponse } from "./k8s/types";
 import Log from "./logger";
-import { processor } from "./processor";
-import { ModuleConfig } from "./types";
 import { MetricsCollector } from "./metrics";
+import { mutateProcessor } from "./mutate-processor";
+import { ModuleConfig, PeprState } from "./types";
+import { After } from "./watch";
 
 export class Controller {
-  private readonly app = express();
-  private running = false;
+  private readonly _app = express();
+  private _running = false;
   private metricsCollector = new MetricsCollector("pepr");
 
   // The token used to authenticate requests
-  private token = "";
+  private _token = "";
+
+  private _peprState: PeprState = {};
 
   constructor(
-    private readonly config: ModuleConfig,
-    private readonly capabilities: Capability[],
-    private readonly beforeHook?: (req: Request) => void,
-    private readonly afterHook?: (res: Response) => void
+    private readonly _config: ModuleConfig,
+    private readonly _capabilities: Capability[],
+    private readonly _beforeHook?: (req: Request) => void,
+    private readonly _afterHook?: (res: MutateResponse) => void
   ) {
     // Middleware for logging requests
-    this.app.use(this.logger);
+    this._app.use(this.logger);
 
     // Middleware for parsing JSON, limit to 2mb vs 100K for K8s compatibility
-    this.app.use(express.json({ limit: "2mb" }));
+    this._app.use(express.json({ limit: "2mb" }));
 
     // Health check endpoint
-    this.app.get("/healthz", this.healthz);
+    this._app.get("/healthz", this.healthz);
 
     // Metrics endpoint
-    this.app.get("/metrics", this.metrics);
+    this._app.get("/metrics", this.metrics);
 
     // Mutate endpoint
-    this.app.post("/mutate/:token", this.mutate);
+    this._app.post("/mutate/:token", this.mutate);
 
-    if (beforeHook) {
-      console.info(`Using beforeHook: ${beforeHook}`);
+    if (_beforeHook) {
+      console.info(`Using beforeHook: ${_beforeHook}`);
     }
 
-    if (afterHook) {
-      console.info(`Using afterHook: ${afterHook}`);
+    if (_afterHook) {
+      console.info(`Using afterHook: ${_afterHook}`);
     }
+
+    // Setup Pepr State bindings
+    After(a.ConfigMap)
+      .IsCreatedOrUpdated()
+      .InNamespace("pepr-system")
+      .Observe(cm => {
+        console.log(cm);
+
+        const name = cm.metadata?.name;
+
+        if (name && cm.data) {
+          this._peprState[name] = cm.data;
+        } else {
+          console.error(`Invalid pepr state cm`);
+        }
+      });
   }
 
   /** Start the webhook server */
   public startServer = (port: number) => {
-    if (this.running) {
+    if (this._running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
 
@@ -63,21 +83,21 @@ export class Controller {
     };
 
     // Get the API token from the environment variable or the mounted secret
-    this.token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
-    console.info(`Using API token: ${this.token}`);
+    this._token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
+    console.info(`Using API token: ${this._token}`);
 
-    if (!this.token) {
+    if (!this._token) {
       throw new Error("API token not found");
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.app).listen(port);
+    const server = https.createServer(options, this._app).listen(port);
 
     // Handle server listening event
     server.on("listening", () => {
       console.log(`Server listening on port ${port}`);
       // Track that the server is running
-      this.running = true;
+      this._running = true;
     });
 
     // Handle EADDRINUSE errors
@@ -141,7 +161,7 @@ export class Controller {
     try {
       // Validate the token
       const { token } = req.params;
-      if (token !== this.token) {
+      if (token !== this._token) {
         const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
         console.warn(err);
         res.status(401).send(err);
@@ -152,7 +172,7 @@ export class Controller {
       const request: Request = req.body?.request || ({} as Request);
 
       // Run the before hook if it exists
-      this.beforeHook && this.beforeHook(request || {});
+      this._beforeHook && this._beforeHook(request || {});
 
       const name = request?.name ? `/${request.name}` : "";
       const namespace = request?.namespace || "";
@@ -162,10 +182,10 @@ export class Controller {
       Log.info(`Mutate [${request.operation}] ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
 
       // Process the request
-      const response = await processor(this.config, this.capabilities, request, prefix);
+      const response = await mutateProcessor(this._config, this._capabilities, request, prefix);
 
       // Run the after hook if it exists
-      this.afterHook && this.afterHook(response);
+      this._afterHook && this._afterHook(response);
 
       // Log the response
       Log.debug(response, prefix);

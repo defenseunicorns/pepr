@@ -6,7 +6,7 @@ import { fetch, fetchRaw } from "./lib/fetch";
 import { RegisterKind, a } from "./lib/k8s/index";
 import Log from "./lib/logger";
 import { PeprModule } from "./lib/module";
-import { PeprRequest } from "./lib/request";
+import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 
 // Import type information for external packages
@@ -17,7 +17,7 @@ export {
   a,
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
-  PeprRequest,
+  PeprMutateRequest,
   PeprUtils,
   RegisterKind,
   Capability,

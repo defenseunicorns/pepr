@@ -5,21 +5,21 @@ import jsonPatch from "fast-json-patch";
 
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
-import { Request, Response } from "./k8s/types";
+import { MutateResponse, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import Log from "./logger";
-import { PeprRequest } from "./request";
+import { PeprMutateRequest } from "./mutate-request";
 import { ModuleConfig } from "./types";
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
+import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
-export async function processor(
+export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
   parentPrefix: string
-): Promise<Response> {
-  const wrapped = new PeprRequest(req);
-  const response: Response = {
+): Promise<MutateResponse> {
+  const wrapped = new PeprMutateRequest(req);
+  const response: MutateResponse = {
     uid: req.uid,
     warnings: [],
     allowed: false,
@@ -48,7 +48,7 @@ export async function processor(
         continue;
       }
 
-      const label = action.callback.name;
+      const label = action.mutateCallback.name;
       Log.info(`Processing matched action ${label}`, prefix);
 
       matchedCapabilityAction = true;
@@ -71,7 +71,7 @@ export async function processor(
 
       try {
         // Run the action
-        await action.callback(wrapped);
+        await action.mutateCallback(wrapped);
 
         Log.info(`Action succeeded`, prefix);
 
@@ -124,7 +124,7 @@ export async function processor(
     response.patchType = "JSONPatch";
     // Webhook must be base64-encoded
     // https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
-    response.patch = Buffer.from(JSON.stringify(patches)).toString("base64");
+    response.patch = base64Encode(JSON.stringify(patches));
   }
 
   // Remove the warnings array if it's empty
