@@ -159,7 +159,7 @@ export class Controller {
       const gvk = request?.kind || { group: "", version: "", kind: "" };
       const prefix = `${request.uid} ${namespace}${name}`;
 
-      Log.info(`Mutate request: ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
+      Log.info(`Mutate [${request.operation}] ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
 
       // Process the request
       const response = await processor(this.config, this.capabilities, request, prefix);

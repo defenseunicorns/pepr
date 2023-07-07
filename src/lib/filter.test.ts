@@ -1,5 +1,5 @@
 import test from "ava";
-import { POD1 } from "../fixtures/loader";
+import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 import { gvkMap } from "./k8s/kinds";
 import { Event } from "./types";
@@ -18,7 +18,7 @@ test("should reject when name does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -35,7 +35,7 @@ test("should reject when kind does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -52,7 +52,7 @@ test("should reject when group does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -73,7 +73,7 @@ test("should reject when version does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -90,7 +90,7 @@ test("should allow when group, version, and kind match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -111,7 +111,7 @@ test("should allow when kind match and others are empty", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -128,7 +128,7 @@ test("should reject when namespace does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -145,7 +145,7 @@ test("should allow when namespace is match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.false(shouldSkipRequest(binding, pod));
 });
@@ -164,7 +164,7 @@ test("should reject when label does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -186,7 +186,7 @@ test("should allow when label is match", t => {
     callback,
   };
 
-  const pod = POD1();
+  const pod = CreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.labels = {
     foo: "bar",
@@ -211,7 +211,7 @@ test("should reject when annotation does not match", t => {
     },
     callback,
   };
-  const pod = POD1();
+  const pod = CreatePod();
 
   t.true(shouldSkipRequest(binding, pod));
 });
@@ -232,13 +232,35 @@ test("should allow when annotation is match", t => {
     callback,
   };
 
-  const pod = POD1();
+  const pod = CreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.annotations = {
     foo: "bar",
     test: "test1",
     test2: "test2",
   };
+
+  t.false(shouldSkipRequest(binding, pod));
+});
+
+test("should use `oldObject` when the operation is `DELETE`", t => {
+  const binding = {
+    event: Event.Delete,
+    kind: gvkMap.V1Pod,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: {
+        "app.kubernetes.io/name": "cool-name-podinfo",
+      },
+      annotations: {
+        "prometheus.io/scrape": "true",
+      },
+    },
+    callback,
+  };
+
+  const pod = DeletePod();
 
   t.false(shouldSkipRequest(binding, pod));
 });

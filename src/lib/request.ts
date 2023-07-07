@@ -47,7 +47,7 @@ export class PeprRequest<T extends KubernetesObject> {
    */
   constructor(private _input: Request<T>) {
     // If this is a DELETE operation, use the oldObject instead
-    if (_input.operation === Operation.DELETE) {
+    if (_input.operation.toUpperCase() === Operation.DELETE) {
       this.Raw = clone(_input.oldObject as T);
     } else {
       // Otherwise, use the incoming object
