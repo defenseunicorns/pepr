@@ -37,7 +37,7 @@ export default function (program: RootCmd) {
       // Generate a secret for the module
       const webhook = new Webhook({
         ...cfg.pepr,
-        version: cfg.version,
+        appVersion: cfg.version,
         description: cfg.description,
       });
       const yamlFile = `pepr-module-${uuid}.yaml`;
@@ -89,7 +89,7 @@ export async function loadModule(entryPoint = peprTS) {
     if (!versionMatch || versionMatch.length < 2) {
       throw new Error("Could not find the Pepr version in package.json");
     }
-    cfg.pepr.version = versionMatch[1];
+    cfg.pepr.peprVersion = versionMatch[1];
   }
 
   // Exit if the module's UUID could not be found
