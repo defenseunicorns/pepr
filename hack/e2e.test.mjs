@@ -1,4 +1,4 @@
-import k8s from "../src/lib";
+import { k8s } from "../dist/lib.js";
 import test from "ava";
 import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
