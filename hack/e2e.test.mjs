@@ -1,8 +1,10 @@
-import { AppsV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import k8s from "../src/lib";
 import test from "ava";
 import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
+
+const { AppsV1Api, CoreV1Api, KubeConfig } = k8s;
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
@@ -42,7 +44,7 @@ test.before(async t => {
 
 test.serial("E2E: `pepr init`", t => {
   try {
-    const peprAlias = "file:pepr-0.0.0-development.tgz"
+    const peprAlias = "file:pepr-0.0.0-development.tgz";
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
     t.pass();
   } catch (e) {
@@ -171,9 +173,8 @@ test.serial("E2E: `pepr deploy`", async t => {
       stdio: "inherit",
     });
 
-
     // Check the controller logs
-    const logs = await getPodLogs("pepr-system", "app=pepr-static-test")
+    const logs = await getPodLogs("pepr-system", "app=pepr-static-test");
     t.is(logs.includes("File hash matches, running module"), true);
     t.is(logs.includes("Capability hello-pepr registered"), true);
     t.is(logs.includes("CM with label 'change=by-label' was deleted."), true);
@@ -202,7 +203,7 @@ test.serial("E2E: `pepr metrics`", async t => {
   try {
     const cmd = await new Promise(peprDev);
 
-    const metrics = await testMetrics()
+    const metrics = await testMetrics();
     t.is(metrics.includes("pepr_summary_count"), true);
     t.is(metrics.includes("pepr_errors"), true);
     t.is(metrics.includes("pepr_alerts"), true);
@@ -349,12 +350,18 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-
 async function getPodLogs(namespace, labelSelector) {
-  let allLogs = '';
+  let allLogs = "";
 
   try {
-    const res = await k8sCoreApi.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, labelSelector);
+    const res = await k8sCoreApi.listNamespacedPod(
+      namespace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      labelSelector
+    );
     const pods = res.body.items;
 
     for (const pod of pods) {
@@ -363,7 +370,7 @@ async function getPodLogs(namespace, labelSelector) {
       allLogs += log.body;
     }
   } catch (err) {
-    console.error('Error: ', err);
+    console.error("Error: ", err);
   }
 
   return allLogs;
