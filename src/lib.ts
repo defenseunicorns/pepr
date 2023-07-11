@@ -1,4 +1,4 @@
-import k8s from "@kubernetes/client-node";
+import * as k8s from "@kubernetes/client-node";
 import { StatusCodes as fetchStatus } from "http-status-codes";
 import * as utils from "ramda";
 import { Capability } from "./lib/capability";
