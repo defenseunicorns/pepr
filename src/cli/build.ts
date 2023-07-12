@@ -87,7 +87,9 @@ export async function loadModule(entryPoint = peprTS) {
   if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
     const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
     if (!versionMatch || versionMatch.length < 2) {
-      throw new Error("Could not find the Pepr version in package.json");
+      throw new Error(
+        `Could not find the Pepr version in package.json, found: ${cfg.dependencies.pepr}`
+      );
     }
     cfg.pepr.peprVersion = versionMatch[1];
   }
