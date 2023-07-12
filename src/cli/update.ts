@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execSync } from "child_process";
+import fs from "fs";
 import { resolve } from "path";
 import prompt from "prompts";
 
@@ -34,21 +35,54 @@ export default function (program: RootCmd) {
       console.log("Updating the Pepr module...");
 
       try {
-        // Don't update the template files if the user specified the --skip-template-update flag
-        if (!opts.skipTemplateUpdate) {
-          await write(resolve(prettier.path), prettier.data);
-          await write(resolve(tsConfig.path), tsConfig.data);
-          await write(resolve(".vscode", snippet.path), snippet.data);
-          await write(resolve("capabilities", samplesYaml.path), samplesYaml.data);
-          await write(resolve("capabilities", helloPepr.path), helloPepr.data);
-        }
-
         // Update Pepr for the module
         execSync("npm install pepr@latest", {
           stdio: "inherit",
         });
 
+        // Don't update the template files if the user specified the --skip-template-update flag
+        if (!opts.skipTemplateUpdate) {
+          execSync("npx pepr update-templates", {
+            stdio: "inherit",
+          });
+        }
+
         console.log(`Module updated!`);
+      } catch (e) {
+        Log.debug(e);
+        if (e instanceof Error) {
+          Log.error(e.message);
+        }
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("update-templates", { hidden: true })
+    .description("Perform template updates")
+    .action(async opts => {
+      console.log("Updating Pepr config and template tiles...");
+
+      try {
+        // Don't update the template files if the user specified the --skip-template-update flag
+        if (!opts.skipTemplateUpdate) {
+          await write(resolve(prettier.path), prettier.data);
+          await write(resolve(tsConfig.path), tsConfig.data);
+          await write(resolve(".vscode", snippet.path), snippet.data);
+
+          // Update the samples.yaml file if it exists
+          const samplePath = resolve("capabilities", samplesYaml.path);
+          if (fs.existsSync(samplePath)) {
+            fs.unlinkSync(samplePath);
+            await write(samplePath, samplesYaml.data);
+          }
+
+          // Update the HelloPepr.ts file if it exists
+          const tsPath = resolve("capabilities", helloPepr.path);
+          if (fs.existsSync(tsPath)) {
+            await write(tsPath, helloPepr.data);
+          }
+        }
       } catch (e) {
         Log.debug(e);
         if (e instanceof Error) {
