@@ -18,7 +18,7 @@ const program = new RootCmd();
 
 program
   .version(version)
-  .description(`Pepr Kubernetes Thingy (v${version})`)
+  .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);
