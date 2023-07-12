@@ -1,8 +1,11 @@
-import { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } from "@kubernetes/client-node";
 import test from "ava";
 import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
+
+import { k8s } from "../dist/lib.js";
+
+const { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } = k8s;
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
