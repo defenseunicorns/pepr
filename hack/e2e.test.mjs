@@ -1,4 +1,4 @@
-import { AppsV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } from "@kubernetes/client-node";
 import test from "ava";
 import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
@@ -42,7 +42,7 @@ test.before(async t => {
 
 test.serial("E2E: `pepr init`", t => {
   try {
-    const peprAlias = "file:pepr-0.0.0-development.tgz"
+    const peprAlias = "file:pepr-0.0.0-development.tgz";
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
     t.pass();
   } catch (e) {
@@ -53,6 +53,71 @@ test.serial("E2E: `pepr init`", t => {
 test.serial("E2E: `pepr format`", t => {
   try {
     execSync("npx pepr format", { cwd: testDir, stdio: "inherit" });
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+test.serial("E2E: zarf.yaml validation", async t => {
+  try {
+    const pgkJSONPath = resolve(testDir, "package.json");
+    const pkgJSON = await fs.readFile(pgkJSONPath, "utf8");
+    const random = () => Math.floor(Math.random() * 10);
+    const randomSemver = `${random()}.${random()}.${random()}`;
+
+    t.log(`Testing with random semver: ${randomSemver}`);
+
+    // Replace the exact text
+    const updatedPkgJSON = pkgJSON.replace("file:../pepr-0.0.0-development.tgz", randomSemver);
+
+    // Write the modified string back to the file
+    await fs.writeFile(pgkJSONPath, updatedPkgJSON);
+
+    // Build the image
+    execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
+
+    const k8sYaml = await fs.readFile(
+      resolve(testDir, "dist", "pepr-module-static-test.yaml"),
+      "utf8"
+    );
+    const zarfYAML = await fs.readFile(resolve(testDir, "dist", "zarf.yaml"), "utf8");
+
+    const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${randomSemver}`;
+
+    const expectedZarfYaml = {
+      kind: "ZarfPackageConfig",
+      metadata: {
+        name: "pepr-static-test",
+        description: "Pepr Module: A test module for Pepr",
+        url: "https://github.com/defenseunicorns/pepr",
+        version: "0.0.1",
+      },
+      components: [
+        {
+          name: "module",
+          required: true,
+          manifests: [
+            {
+              name: "module",
+              namespace: "pepr-system",
+              files: ["pepr-module-static-test.yaml"],
+            },
+          ],
+          images: [expectedImage],
+        },
+      ],
+    };
+
+    // Check the generated zarf yaml
+    t.deepEqual(loadYaml(zarfYAML), expectedZarfYaml);
+
+    // Check the generated k8s yaml
+    t.true(k8sYaml.includes(`image: ${expectedImage}`));
+
+    // Restore the original package.json
+    await fs.writeFile(pgkJSONPath, pkgJSON);
+
     t.pass();
   } catch (e) {
     t.fail(e.message);
@@ -171,9 +236,8 @@ test.serial("E2E: `pepr deploy`", async t => {
       stdio: "inherit",
     });
 
-
     // Check the controller logs
-    const logs = await getPodLogs("pepr-system", "app=pepr-static-test")
+    const logs = await getPodLogs("pepr-system", "app=pepr-static-test");
     t.is(logs.includes("File hash matches, running module"), true);
     t.is(logs.includes("Capability hello-pepr registered"), true);
     t.is(logs.includes("CM with label 'change=by-label' was deleted."), true);
@@ -202,7 +266,7 @@ test.serial("E2E: `pepr metrics`", async t => {
   try {
     const cmd = await new Promise(peprDev);
 
-    const metrics = await testMetrics()
+    const metrics = await testMetrics();
     t.is(metrics.includes("pepr_summary_count"), true);
     t.is(metrics.includes("pepr_errors"), true);
     t.is(metrics.includes("pepr_alerts"), true);
@@ -349,12 +413,18 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-
 async function getPodLogs(namespace, labelSelector) {
-  let allLogs = '';
+  let allLogs = "";
 
   try {
-    const res = await k8sCoreApi.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, labelSelector);
+    const res = await k8sCoreApi.listNamespacedPod(
+      namespace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      labelSelector
+    );
     const pods = res.body.items;
 
     for (const pod of pods) {
@@ -363,7 +433,7 @@ async function getPodLogs(namespace, labelSelector) {
       allLogs += log.body;
     }
   } catch (err) {
-    console.error('Error: ', err);
+    console.error("Error: ", err);
   }
 
   return allLogs;
