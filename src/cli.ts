@@ -14,6 +14,11 @@ import { RootCmd } from "./cli/root";
 import update from "./cli/update";
 import { Log } from "./lib";
 
+if (process.env.npm_lifecycle_event !== "npx") {
+  Log.error("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.", "npx required");
+  process.exit(1);
+}
+
 const program = new RootCmd();
 
 program
