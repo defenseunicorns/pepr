@@ -8,7 +8,7 @@ import { basename, extname, resolve } from "path";
 
 import { Webhook } from "../lib/k8s/webhook";
 import Log from "../lib/logger";
-import { dependencies } from "./init/templates";
+import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 
 const peprTS = "pepr.ts";
@@ -83,16 +83,8 @@ export async function loadModule(entryPoint = peprTS) {
   const { uuid } = cfg.pepr;
   const name = `pepr-${uuid}.js`;
 
-  // Read the module's version from the package.json file
-  if (cfg.dependencies.pepr && !cfg.dependencies.pepr.includes("file:")) {
-    const versionMatch = /(\d+\.\d+\.\d+)/.exec(cfg.dependencies.pepr);
-    if (!versionMatch || versionMatch.length < 2) {
-      throw new Error(
-        `Could not find the Pepr version in package.json, found: ${cfg.dependencies.pepr}`
-      );
-    }
-    cfg.pepr.peprVersion = versionMatch[1];
-  }
+  // Set the Pepr version from the current running version
+  cfg.pepr.peprVersion = version;
 
   // Exit if the module's UUID could not be found
   if (!uuid) {
@@ -113,7 +105,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
     const { cfg, path, uuid } = await loadModule(entryPoint);
 
     // Run `tsc` to validate the module's types
-    execSync("./node_modules/.bin/tsc", { stdio: "inherit" });
+    execSync("./node_modules/.bin/tsc", { stdio: "pipe" });
 
     // Common build options for all builds
     const ctxCfg: BuildOptions = {
@@ -182,11 +174,43 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 
     return { ctx, path, cfg, uuid };
   } catch (e) {
-    // On any other error, exit with a non-zero exit code
-    Log.debug(e);
-    if (e instanceof Error) {
-      Log.error(e.message);
+    Log.debug(e.message);
+
+    if (e.stdout) {
+      const out = e.stdout.toString() as string;
+      const err = e.stderr.toString();
+
+      Log.debug(out);
+      Log.debug(err);
+
+      // Check for version conflicts
+      if (out.includes("Types have separate declarations of a private property '_name'.")) {
+        // Try to find the conflicting package
+        const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
+        out.matchAll(pgkErrMatch);
+
+        // Look for package conflict errors
+        const conflicts = [...out.matchAll(pgkErrMatch)];
+
+        // If the regex didn't match, leave a generic error
+        if (conflicts.length < 1) {
+          Log.error(
+            `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
+            "Version Conflict"
+          );
+        }
+
+        // Otherwise, loop through each conflicting package and print an error
+        conflicts.forEach(match => {
+          Log.error(
+            `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
+            "Version Conflict"
+          );
+        });
+      }
     }
+
+    // On any other error, exit with a non-zero exit code
     process.exit(1);
   }
 }
