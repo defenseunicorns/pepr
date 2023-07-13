@@ -62,32 +62,36 @@ test.serial("E2E: `pepr format`", t => {
   }
 });
 
+test.serial("E2E: `pepr build`", async t => {
+  try {
+    execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
+    // check if the file exists
+    await fs.access(resolve(testDir, "dist", "zarf.yaml"));
+    await fs.access(resolve(testDir, "dist", "pepr-module-static-test.yaml"));
+
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+
 test.serial("E2E: zarf.yaml validation", async t => {
   try {
-    const pgkJSONPath = resolve(testDir, "package.json");
-    const pkgJSON = await fs.readFile(pgkJSONPath, "utf8");
-    const random = () => Math.floor(Math.random() * 10);
-    const randomSemver = `${random()}.${random()}.${random()}`;
+    // Get the version of the pepr binary
+    const peprVer = execSync("npx pepr --version", { cwd: testDir }).toString().trim();
 
-    t.log(`Testing with random semver: ${randomSemver}`);
-
-    // Replace the exact text
-    const updatedPkgJSON = pkgJSON.replace("file:../pepr-0.0.0-development.tgz", randomSemver);
-
-    // Write the modified string back to the file
-    await fs.writeFile(pgkJSONPath, updatedPkgJSON);
-
-    // Build the image
-    execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
-
+    // Read the generated yaml files
     const k8sYaml = await fs.readFile(
       resolve(testDir, "dist", "pepr-module-static-test.yaml"),
       "utf8"
     );
     const zarfYAML = await fs.readFile(resolve(testDir, "dist", "zarf.yaml"), "utf8");
 
-    const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${randomSemver}`;
+    // The expected image name
+    const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${peprVer}`;
 
+    // The expected zarf yaml contents
     const expectedZarfYaml = {
       kind: "ZarfPackageConfig",
       metadata: {
@@ -117,22 +121,6 @@ test.serial("E2E: zarf.yaml validation", async t => {
 
     // Check the generated k8s yaml
     t.true(k8sYaml.includes(`image: ${expectedImage}`));
-
-    // Restore the original package.json
-    await fs.writeFile(pgkJSONPath, pkgJSON);
-
-    t.pass();
-  } catch (e) {
-    t.fail(e.message);
-  }
-});
-
-test.serial("E2E: `pepr build`", async t => {
-  try {
-    execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
-    // check if the file exists
-    await fs.access(resolve(testDir, "dist", "zarf.yaml"));
-    await fs.access(resolve(testDir, "dist", "pepr-module-static-test.yaml"));
 
     t.pass();
   } catch (e) {
