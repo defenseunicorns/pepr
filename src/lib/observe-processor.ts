@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { clone } from "ramda";
+
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, ValidateResponse } from "./k8s/types";
 import Log from "./logger";
-import { PeprObserveRequest } from "./observe-request";
 
 export async function observeProcessor(
   capabilities: Capability[],
   req: Request,
   parentPrefix: string
 ): Promise<ValidateResponse> {
-  const wrapped = new PeprObserveRequest(req);
-
   Log.info(`Processing request observation`, parentPrefix);
 
   for (const { name, bindings } of capabilities) {
@@ -29,16 +28,17 @@ export async function observeProcessor(
       Log.info(`Processing matched action ${label}`, prefix);
 
       try {
-        // Run the validation callback, if it fails set allowed to false
-        const success = await action.validateCallback(wrapped);
-        Log.info(`Action completed: ${success ? "success" : "failure"}`, prefix);
+        // Run the observe callback
+        await action.observeCallback(clone(req.object), clone(req.oldObject));
+        Log.info(`Action succeeded`, prefix);
       } catch (e) {
-        // If any validation throws an error, note the failure in the Response
+        // If any observe throws an error, log the failure
         Log.error(`Action failed: ${e}`, prefix);
       }
     }
   }
 
+  // Always allow the request to continue as this is an observe action only
   return {
     uid: req.uid,
     allowed: true,

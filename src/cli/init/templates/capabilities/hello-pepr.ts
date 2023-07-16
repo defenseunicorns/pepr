@@ -82,9 +82,10 @@ When(a.ConfigMap)
  *                                   CAPABILITY ACTION (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This combines 3 different types of Capability Actions: 'Observe', 'Mutate', and 'Validate'. The order
+ * This combines 3 different types of Capability Actions: 'Mutate', 'Validate', and 'Observe'. The order
  * of the actions is required, but each action is optional. In this example, when a ConfigMap is created
- *
+ * with the name `example-2`, then add a label and annotation, validate that the ConfigMap has the label
+ * `pepr`, and log the request.
  */
 When(a.ConfigMap)
   .IsCreated()
@@ -103,12 +104,17 @@ When(a.ConfigMap)
     });
   })
   .Validate(request => {
-    // Return 'true' if the request is valid
-    return request.HasLabel("pepr");
+    // Approve the request if the ConfigMap has the label 'pepr'
+    if (request.HasLabel("pepr")) {
+      return request.Approve();
+    }
+
+    // Otherwise, deny the request with an error message (optional)
+    return request.Deny("ConfigMap must have label 'pepr'");
   })
-  .Observe(request => {
+  .Observe(cm => {
     Log.info(
-      `New ConfigMap being created with the name example-2: ${request.Request.userInfo}`
+      `New ConfigMap being created with the name example-2: ${cm.metadata.uid}`
     );
   });
 

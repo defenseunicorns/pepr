@@ -3,7 +3,6 @@
 
 import { GroupVersionKind, KubernetesObject, WebhookIgnore } from "./k8s/types";
 import { PeprMutateRequest } from "./mutate-request";
-import { PeprObserveRequest } from "./observe-request";
 import { PeprValidateRequest } from "./validate-request";
 
 export type PackageJSON = {
@@ -222,7 +221,21 @@ export type ValidateActionChain<T extends GenericClass> = {
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
   /**
    * Create a new VALIDATE capability action with the specified callback function and previously specified
-   * filters.
+   * filters. Return the `request.Approve()` or `Request.Deny()` methods to approve or deny the request:
+   *
+   * @example
+   * ```ts
+   * When(a.Deployment)
+   *  .IsCreated()
+   *  .Validate(request => {
+   *    if (request.HasLabel("foo")) {
+   *     return request.Approve();
+   *    }
+   *
+   *   return request.Deny("Deployment must have label foo");
+   * });
+   * ```
+   *
    * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
   Validate: (action: CapabilityValidateAction<T, InstanceType<T>>) => ValidateActionChain<T>;
@@ -234,13 +247,20 @@ export type CapabilityMutateAction<T extends GenericClass, K extends KubernetesO
 
 export type CapabilityValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprValidateRequest<K>
-) => Promise<boolean> | boolean;
+) => Promise<CapabilityValidateResponse> | CapabilityValidateResponse;
 
 export type CapabilityObserveAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprObserveRequest<K>
+  resource: K,
+  oldResource?: K
 ) => Promise<void> | void;
 
 export type WatchAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
   phase: WatchPhase
 ) => Promise<void> | void;
+
+export type CapabilityValidateResponse = {
+  allowed: boolean;
+  statusCode?: number;
+  statusMessage?: string;
+};

@@ -34,16 +34,18 @@ export async function validateProcessor(
 
       try {
         // Run the validation callback, if it fails set allowed to false
-        const isValid = await action.validateCallback(wrapped);
-        if (!isValid) {
-          response.allowed = false;
+        const resp = await action.validateCallback(wrapped);
+        response.allowed = resp.allowed;
+
+        // If the validation callback returned a status code or message, set it in the Response
+        if (resp.statusCode || resp.statusMessage) {
           response.status = {
-            code: 400,
-            message: `Validation failed in action ${label}`,
+            code: resp.statusCode || 400,
+            message: resp.statusMessage || `Validation failed for ${name}`,
           };
         }
 
-        Log.info(`Action succeeded`, prefix);
+        Log.info(`Validation Action completed: ${resp.allowed ? "allowed" : "denied"}`, prefix);
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
         Log.error(`Action failed: ${e}`, prefix);
