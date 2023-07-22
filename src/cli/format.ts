@@ -47,7 +47,7 @@ export default function (program: RootCmd) {
         for (const { filePath } of results) {
           const content = await fs.readFile(filePath, "utf8");
           const cfg = await resolveConfig(filePath);
-          const formatted = format(content, { filepath: filePath, ...cfg });
+          const formatted = await format(content, { filepath: filePath, ...cfg });
 
           // If in validate-only mode, check if the file is formatted correctly
           if (opts.validateOnly) {
