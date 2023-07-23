@@ -13,6 +13,7 @@ import { MetricsCollector } from "./metrics";
 import { mutateProcessor } from "./mutate-processor";
 import { ModuleConfig, PeprState } from "./types";
 import { validateProcessor } from "./validate-processor";
+import { SimpleWatch } from "./watch";
 
 export class Controller {
   private readonly _app = express();
@@ -60,20 +61,22 @@ export class Controller {
     }
 
     // Setup Pepr State bindings
-    After(a.ConfigMap)
-      .IsCreatedOrUpdated()
-      .InNamespace("pepr-system")
-      .Observe(cm => {
-        console.log(cm);
+    const watchOpts = {
+      namespace: "pepr-system",
+      name: `pepr-${_config.uuid}-store`,
+    };
 
-        const name = cm.metadata?.name;
+    SimpleWatch(a.ConfigMap, watchOpts).Start(cm => {
+      console.log(cm);
 
-        if (name && cm.data) {
-          this._peprState[name] = cm.data;
-        } else {
-          console.error(`Invalid pepr state cm`);
-        }
-      });
+      const name = cm.metadata?.name;
+
+      if (name && cm.data) {
+        this._peprState[name] = cm.data;
+      } else {
+        console.error(`Invalid pepr state cm`);
+      }
+    });
   }
 
   /** Start the webhook server */
