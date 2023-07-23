@@ -26,7 +26,7 @@ When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
   .WithLabel("unicorn", "rainbow")
-  .Then(request => {
+  .Mutate(request => {
     // Add a label and annotation to the ConfigMap
     request
       .SetLabel("pepr", "was-here")

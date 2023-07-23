@@ -20,7 +20,7 @@ export const HelloPepr = new Capability({
 });
 
 // Use the 'When' function to create a new Capability Action, 'Store' to persist data
-const { When, Store, After } = HelloPepr;
+const { When, Store } = HelloPepr;
 
 // Save some data to the store
 Store.setItem("hello-pepr", "Hello Pepr!");
@@ -71,18 +71,18 @@ When(a.Namespace)
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
-  .Mutate(request =>
+  .Mutate(request => {
     request
       .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too")
-  );
+      .SetAnnotation("pepr.dev", "annotations-work-too");
+  });
 
 /**
  * ---------------------------------------------------------------------------------------------------
  *                                   CAPABILITY ACTION (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This combines 3 different types of Capability Actions: 'Mutate', 'Validate', and 'Observe'. The order
+ * This combines 3 different types of Capability Actions: 'Mutate', 'Validate', and 'Watch'. The order
  * of the actions is required, but each action is optional. In this example, when a ConfigMap is created
  * with the name `example-2`, then add a label and annotation, validate that the ConfigMap has the label
  * `pepr`, and log the request.
@@ -91,7 +91,9 @@ When(a.ConfigMap)
   .IsCreated()
   .WithName("example-2")
   .Mutate(request => {
-    // Use the `request.Merge()` feature
+    // This Mutate CapabilityAction will mutate the request before it is persisted to the cluster
+
+    // Use `request.Merge()` to merge the new data with the existing data
     request.Merge({
       metadata: {
         labels: {
@@ -104,6 +106,8 @@ When(a.ConfigMap)
     });
   })
   .Validate(request => {
+    // This Validate CapabilityAction will validate the request before it is persisted to the cluster
+
     // Approve the request if the ConfigMap has the label 'pepr'
     if (request.HasLabel("pepr")) {
       return request.Approve();
@@ -112,17 +116,11 @@ When(a.ConfigMap)
     // Otherwise, deny the request with an error message (optional)
     return request.Deny("ConfigMap must have label 'pepr'");
   })
-  .Observe(cm => {
+  .Watch(cm => {
+    // This Watch CapabilityAction will watch the ConfigMap after it has been persisted to the cluster
     Log.info(
-      `New ConfigMap being created with the name example-2: ${cm.metadata.uid}`
+      `New ConfigMap was created with the name example-2: ${cm.metadata.uid}`,
     );
-  });
-
-After(a.ConfigMap)
-  .IsCreated()
-  .Observe(cm => {
-    Log.info(cm);
-    Store.setItem("cm", cm.metadata.name);
   });
 
 /**
@@ -153,11 +151,15 @@ When(a.ConfigMap)
     request.SetAnnotation("pepr.dev", "making-waves");
   });
 
-// This action will log an entry when a CM with the label `change=by-label` is deleted
+// This action validates the label `change=by-label` is deleted
 When(a.ConfigMap)
   .IsDeleted()
   .WithLabel("change", "by-label")
-  .Observe(() => Log.info("CM with label 'change=by-label' was deleted."));
+  .Validate(request => {
+    // Log and then always approve the request
+    Log.info("CM with label 'change=by-label' was deleted.");
+    return request.Approve();
+  });
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -233,7 +235,7 @@ When(a.ConfigMap)
   .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev"
+      "https://api.chucknorris.io/jokes/random?category=dev",
     );
 
     // Instead, check the `response.ok` field

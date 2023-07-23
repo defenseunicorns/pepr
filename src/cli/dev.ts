@@ -40,7 +40,7 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           description: cfg.description,
         },
-        opts.host
+        opts.host,
       );
 
       // Write the TLS cert and key to disk

@@ -20,16 +20,6 @@ export enum ErrorBehavior {
 }
 
 /**
- * The phase of the Kubernetes admission webhook that the capability is registered for.
- *
- * Currently only `mutate` is supported.
- */
-export enum HookPhase {
-  mutate = "mutate",
-  validate = "validate",
-}
-
-/**
  * Recursively make all properties in T optional.
  */
 export type DeepPartial<T> = {
@@ -70,14 +60,6 @@ export interface CapabilityCfg {
    * This does not supersede the `alwaysIgnore` global configuration.
    */
   namespaces?: string[];
-
-  /**
-   * FUTURE USE.
-   *
-   * Declare if this capability should be used for mutation or validation. Currently this is not used
-   * and everything is considered a mutation.
-   */
-  mutateOrValidate?: HookPhase;
 }
 
 export type ModuleSigning = {
@@ -138,6 +120,9 @@ export type WhenSelector<T extends GenericClass> = {
 
 export type Binding = {
   event: Event;
+  isMutate?: boolean;
+  isValidate?: boolean;
+  isWatch?: boolean;
   readonly kind: GroupVersionKind;
   readonly filters: {
     name: string;
@@ -145,9 +130,9 @@ export type Binding = {
     labels: Record<string, string>;
     annotations: Record<string, string>;
   };
-  readonly mutateCallback: CapabilityMutateAction<GenericClass, InstanceType<GenericClass>>;
-  readonly validateCallback: CapabilityValidateAction<GenericClass, InstanceType<GenericClass>>;
-  readonly observeCallback: CapabilityObserveAction<GenericClass, InstanceType<GenericClass>>;
+  readonly mutateCallback?: CapabilityMutateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly validateCallback?: CapabilityValidateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly watchCallback?: CapabilityWatchAction<GenericClass, InstanceType<GenericClass>>;
 };
 
 export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
@@ -210,12 +195,13 @@ export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
 
 export type ValidateActionChain<T extends GenericClass> = {
   /**
-   * Register a capability action to be executed when a Kubernetes resource is processed by the AdmissionController.
-   * This action has no mutation or validation capabilities.
+   * Establish a watcher for the specified resource. The callback function will be executed after the admission controller has
+   * processed the resource and the request has been persisted to the cluster.
+   *
    * @param action
    * @returns
    */
-  Observe: (action: CapabilityObserveAction<T, InstanceType<T>>) => void;
+  Watch: (action: CapabilityWatchAction<T, InstanceType<T>>) => void;
 };
 
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
@@ -242,21 +228,21 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 };
 
 export type CapabilityMutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprMutateRequest<K>
+  req: PeprMutateRequest<K>,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type CapabilityValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprValidateRequest<K>
+  req: PeprValidateRequest<K>,
 ) => Promise<CapabilityValidateResponse> | CapabilityValidateResponse;
 
-export type CapabilityObserveAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+export type CapabilityWatchAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   resource: K,
-  oldResource?: K
+  oldResource?: K,
 ) => Promise<void> | void;
 
 export type WatchAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
-  phase: WatchPhase
+  phase: WatchPhase,
 ) => Promise<void> | void;
 
 export type CapabilityValidateResponse = {

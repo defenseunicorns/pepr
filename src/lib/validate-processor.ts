@@ -10,7 +10,7 @@ import { PeprValidateRequest } from "./validate-request";
 export async function validateProcessor(
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string
+  parentPrefix: string,
 ): Promise<ValidateResponse> {
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse = {
@@ -24,6 +24,11 @@ export async function validateProcessor(
     const prefix = `${parentPrefix} ${name}:`;
 
     for (const action of bindings) {
+      // Skip this action if it's not a validation action
+      if (!action.validateCallback) {
+        continue;
+      }
+
       // Continue to the next action without doing anything if this one should be skipped
       if (shouldSkipRequest(action, req)) {
         continue;

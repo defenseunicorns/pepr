@@ -19,6 +19,7 @@ import {
   V1Secret,
   V1Service,
   V1ServiceAccount,
+  V1ValidatingWebhookConfiguration,
   dumpYaml,
 } from "@kubernetes/client-node";
 import { fork } from "child_process";
@@ -28,7 +29,7 @@ import { equals, uniqWith } from "ramda";
 import { gzipSync } from "zlib";
 
 import Log from "../logger";
-import { Binding, Event, HookPhase, ModuleConfig } from "../types";
+import { Binding, Event, ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "./tls";
 
 const peprIgnore: V1LabelSelectorRequirement = {
@@ -52,7 +53,10 @@ export class Webhook {
     return this._apiToken;
   }
 
-  constructor(private readonly config: ModuleConfig, private readonly host?: string) {
+  constructor(
+    private readonly config: ModuleConfig,
+    private readonly host?: string,
+  ) {
     this.name = `pepr-${config.uuid}`;
 
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.version}`;
@@ -158,17 +162,9 @@ export class Webhook {
     };
   }
 
-  generateWebhookRules(path: string): Promise<V1RuleWithOperations[]> {
+  generateWebhookRules(isMutateWebhook: boolean, path: string): Promise<V1RuleWithOperations[]> {
     return new Promise((resolve, reject) => {
       const rules: V1RuleWithOperations[] = [];
-
-      // Add a default rule that allows all resources as a fallback
-      const defaultRule = {
-        apiGroups: ["*"],
-        apiVersions: ["*"],
-        operations: ["CREATE", "UPDATE", "DELETE"],
-        resources: ["*/*"],
-      };
 
       // Fork is needed with the PEPR_MODE env var to ensure the module is loaded in build mode and will send back the capabilities
       const program = fork(path, {
@@ -181,28 +177,33 @@ export class Webhook {
 
       // We are receiving javascript so the private fields are now public
       interface ModuleCapabilities {
-        capabilities: {
-          _name: string;
-          _description: string;
-          _namespaces: string[];
-          _mutateOrValidate: HookPhase;
-          _bindings: Binding[];
-        }[];
+        _name: string;
+        _description: string;
+        _namespaces: string[];
+        _bindings: Binding[];
       }
 
       // Wait for the module to send back the capabilities
       program.on("message", message => {
         // Cast the message to the ModuleCapabilities type
-        const { capabilities } = message.valueOf() as ModuleCapabilities;
+        const capabilities = message.valueOf() as ModuleCapabilities[];
 
+        // Iterate through the capabilities and generate the rules
         for (const capability of capabilities) {
           Log.info(`Module ${this.config.uuid} has capability: ${capability._name}`);
 
-          const { _bindings } = capability;
-
           // Read the bindings and generate the rules
-          for (const binding of _bindings) {
-            const { event, kind } = binding;
+          for (const binding of capability._bindings) {
+            const { event, kind, isMutate, isValidate } = binding;
+
+            // If the module doesn't have a callback for the event, skip it
+            if (isMutateWebhook && !isMutate) {
+              continue;
+            }
+
+            if (!isMutateWebhook && !isValidate) {
+              continue;
+            }
 
             const operations: string[] = [];
 
@@ -232,7 +233,7 @@ export class Webhook {
         } else {
           // If there are no rules, add a catch-all
           if (rules.length < 1) {
-            resolve([defaultRule]);
+            resolve(rules);
           } else {
             const reducedRules = uniqWith(equals, rules);
             resolve(reducedRules);
@@ -246,8 +247,11 @@ export class Webhook {
     });
   }
 
-  async mutatingWebhook(path: string, timeoutSeconds = 10): Promise<V1MutatingWebhookConfiguration> {
-    const { name } = this;
+  async webhookConfig(
+    mutateOrValidate: "mutate" | "validate",
+    path: string,
+    timeoutSeconds = 10,
+  ): Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null> {
     const ignore = [peprIgnore];
 
     // Add any namespaces to ignore
@@ -264,29 +268,35 @@ export class Webhook {
     };
 
     // The URL must include the API Token
-    const mutatePath = `/mutate/${this._apiToken}`;
+    const apiPath = `/${mutateOrValidate}/${this._apiToken}`;
 
     // If a host is specified, use that with a port of 3000
     if (this.host) {
-      clientConfig.url = `https://${this.host}:3000${mutatePath}`;
+      clientConfig.url = `https://${this.host}:3000${apiPath}`;
     } else {
       // Otherwise, use the service
       clientConfig.service = {
         name: this.name,
         namespace: "pepr-system",
-        path: mutatePath,
+        path: apiPath,
       };
     }
 
-    const rules = await this.generateWebhookRules(path);
+    const isMutate = mutateOrValidate === "mutate";
+    const rules = await this.generateWebhookRules(isMutate, path);
+
+    // If there are no rules, return null
+    if (rules.length < 1) {
+      return null;
+    }
 
     return {
       apiVersion: "admissionregistration.k8s.io/v1",
-      kind: "MutatingWebhookConfiguration",
-      metadata: { name },
+      kind: isMutate ? "MutatingWebhookConfiguration" : "ValidatingWebhookConfiguration",
+      metadata: { name: this.name },
       webhooks: [
         {
-          name: `${name}.pepr.dev`,
+          name: `${this.name}.pepr.dev`,
           admissionReviewVersions: ["v1", "v1beta1"],
           clientConfig,
           failurePolicy: "Ignore",
@@ -480,7 +490,8 @@ export class Webhook {
     // Generate a hash of the code
     const hash = crypto.createHash("sha256").update(code).digest("hex");
 
-    const webhook = await this.mutatingWebhook(path);
+    const mutateWebhook = await this.webhookConfig("mutate", path);
+    const validateWebhook = await this.webhookConfig("validate", path);
 
     const resources = [
       this.namespace(),
@@ -489,11 +500,18 @@ export class Webhook {
       this.serviceAccount(),
       this.apiTokenSecret(),
       this.tlsSecret(),
-      webhook,
       this.deployment(hash),
       this.service(),
       this.moduleSecret(code, hash),
     ];
+
+    if (mutateWebhook) {
+      resources.push(mutateWebhook);
+    }
+
+    if (validateWebhook) {
+      resources.push(validateWebhook);
+    }
 
     // Convert the resources to a single YAML string
     return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
@@ -521,15 +539,32 @@ export class Webhook {
       await coreV1Api.createNamespace(ns);
     }
 
-    const wh = await this.mutatingWebhook(path, webhookTimeout);
-    try {
-      Log.info("Creating mutating webhook");
-      await admissionApi.createMutatingWebhookConfiguration(wh);
-    } catch (e) {
-      Log.debug(e instanceof HttpError ? e.body : e);
-      Log.info("Removing and re-creating mutating webhook");
-      await admissionApi.deleteMutatingWebhookConfiguration(wh.metadata?.name ?? "");
-      await admissionApi.createMutatingWebhookConfiguration(wh);
+    // Create the mutating webhook configuration if it is needed
+    const mutateWebhook = await this.webhookConfig("mutate", path, webhookTimeout);
+    if (mutateWebhook) {
+      try {
+        Log.info("Creating mutating webhook");
+        await admissionApi.createMutatingWebhookConfiguration(mutateWebhook);
+      } catch (e) {
+        Log.debug(e instanceof HttpError ? e.body : e);
+        Log.info("Removing and re-creating mutating webhook");
+        await admissionApi.deleteMutatingWebhookConfiguration(mutateWebhook.metadata?.name ?? "");
+        await admissionApi.createMutatingWebhookConfiguration(mutateWebhook);
+      }
+    }
+
+    // Create the validating webhook configuration if it is needed
+    const validateWebhook = await this.webhookConfig("validate", path, webhookTimeout);
+    if (validateWebhook) {
+      try {
+        Log.info("Creating validating webhook");
+        await admissionApi.createValidatingWebhookConfiguration(validateWebhook);
+      } catch (e) {
+        Log.debug(e instanceof HttpError ? e.body : e);
+        Log.info("Removing and re-creating validating webhook");
+        await admissionApi.deleteValidatingWebhookConfiguration(validateWebhook.metadata?.name ?? "");
+        await admissionApi.createValidatingWebhookConfiguration(validateWebhook);
+      }
     }
 
     // If a host is specified, we don't need to deploy the rest of the resources

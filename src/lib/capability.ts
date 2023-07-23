@@ -11,15 +11,14 @@ import {
   BindingWithName,
   CapabilityCfg,
   CapabilityMutateAction,
-  CapabilityObserveAction,
   CapabilityValidateAction,
+  CapabilityWatchAction,
   Event,
   GenericClass,
   MutateActionChain,
   ValidateActionChain,
   WhenSelector,
 } from "./types";
-import { After } from "./watch";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -63,8 +62,6 @@ export class Capability implements CapabilityCfg {
     logger.debug(cfg);
   }
 
-  After = After;
-
   /**
    * The When method is used to register a capability action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
@@ -92,9 +89,6 @@ export class Capability implements CapabilityCfg {
         labels: {},
         annotations: {},
       },
-      mutateCallback: () => undefined,
-      validateCallback: () => true,
-      observeCallback: () => undefined,
     };
 
     const prefix = `${this._name}: ${model.name}`;
@@ -104,8 +98,14 @@ export class Capability implements CapabilityCfg {
     const Validate = (cb: CapabilityValidateAction<T>): ValidateActionChain<T> => {
       logger.info(`Binding action created`, prefix);
       logger.debug(cb.toString(), prefix);
-      // @todo implement
-      return { Observe };
+      // Push the binding to the list of bindings for this capability as a new BindingAction
+      // with the callback function to preserve
+      this._bindings.push({
+        ...binding,
+        isValidate: true,
+        validateCallback: cb,
+      });
+      return { Watch };
     };
 
     const Mutate = (cb: CapabilityMutateAction<T>): MutateActionChain<T> => {
@@ -115,16 +115,23 @@ export class Capability implements CapabilityCfg {
       // with the callback function to preserve
       this._bindings.push({
         ...binding,
+        isMutate: true,
         mutateCallback: cb,
       });
 
       // Now only allow adding actions to the same binding
-      return { Observe, Validate };
+      return { Watch, Validate };
     };
 
-    const Observe = (cb: CapabilityObserveAction<T>): void => {
+    const Watch = (cb: CapabilityWatchAction<T>): void => {
       logger.info(`Binding action created`, prefix);
       logger.debug(cb.toString(), prefix);
+
+      this._bindings.push({
+        ...binding,
+        isWatch: true,
+        watchCallback: cb,
+      });
     };
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
@@ -151,7 +158,7 @@ export class Capability implements CapabilityCfg {
       return commonChain;
     };
 
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Observe, Validate };
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Watch, Validate };
 
     const bindEvent = (event: Event) => {
       binding.event = event;

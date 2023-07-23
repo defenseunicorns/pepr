@@ -16,7 +16,7 @@ export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string
+  parentPrefix: string,
 ): Promise<MutateResponse> {
   const wrapped = new PeprMutateRequest(req);
   const response: MutateResponse = {
@@ -43,6 +43,11 @@ export async function mutateProcessor(
     const prefix = `${parentPrefix} ${name}:`;
 
     for (const action of bindings) {
+      // Skip this action if it's not a mutate action
+      if (!action.mutateCallback) {
+        continue;
+      }
+
       // Continue to the next action without doing anything if this one should be skipped
       if (shouldSkipRequest(action, req)) {
         continue;

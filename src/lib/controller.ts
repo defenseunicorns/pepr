@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import express from "express";
+import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
 
 import { Capability } from "./capability";
 import { a } from "./k8s";
-import { Request, MutateResponse } from "./k8s/types";
+import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import Log from "./logger";
 import { MetricsCollector } from "./metrics";
 import { mutateProcessor } from "./mutate-processor";
 import { ModuleConfig, PeprState } from "./types";
-import { After } from "./watch";
+import { validateProcessor } from "./validate-processor";
 
 export class Controller {
   private readonly _app = express();
@@ -28,7 +28,7 @@ export class Controller {
     private readonly _config: ModuleConfig,
     private readonly _capabilities: Capability[],
     private readonly _beforeHook?: (req: Request) => void,
-    private readonly _afterHook?: (res: MutateResponse) => void
+    private readonly _afterHook?: (res: MutateResponse) => void,
   ) {
     // Middleware for logging requests
     this._app.use(this.logger);
@@ -42,8 +42,14 @@ export class Controller {
     // Metrics endpoint
     this._app.get("/metrics", this.metrics);
 
+    // Require auth for webhook endpoints
+    this._app.use(["/mutate/:token", "/validate/:token"], this.validateToken);
+
     // Mutate endpoint
-    this._app.post("/mutate/:token", this.mutate);
+    this._app.post("/mutate/:token", this.admissionReq("Mutate"));
+
+    // Validate endpoint
+    this._app.post("/validate/:token", this.admissionReq("Validate"));
 
     if (_beforeHook) {
       console.info(`Using beforeHook: ${_beforeHook}`);
@@ -104,7 +110,7 @@ export class Controller {
     server.on("error", (e: { code: string }) => {
       if (e.code === "EADDRINUSE") {
         console.log(
-          `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`
+          `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`,
         );
         setTimeout(() => {
           server.close();
@@ -155,52 +161,66 @@ export class Controller {
     }
   };
 
-  private mutate = async (req: express.Request, res: express.Response) => {
-    const startTime = this.metricsCollector.observeStart();
-
-    try {
-      // Validate the token
-      const { token } = req.params;
-      if (token !== this._token) {
-        const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
-        console.warn(err);
-        res.status(401).send(err);
-        this.metricsCollector.alert();
-        return;
-      }
-
-      const request: Request = req.body?.request || ({} as Request);
-
-      // Run the before hook if it exists
-      this._beforeHook && this._beforeHook(request || {});
-
-      const name = request?.name ? `/${request.name}` : "";
-      const namespace = request?.namespace || "";
-      const gvk = request?.kind || { group: "", version: "", kind: "" };
-      const prefix = `${request.uid} ${namespace}${name}`;
-
-      Log.info(`Mutate [${request.operation}] ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
-
-      // Process the request
-      const response = await mutateProcessor(this._config, this._capabilities, request, prefix);
-
-      // Run the after hook if it exists
-      this._afterHook && this._afterHook(response);
-
-      // Log the response
-      Log.debug(response, prefix);
-
-      // Send a no prob bob response
-      res.send({
-        apiVersion: "admission.k8s.io/v1",
-        kind: "AdmissionReview",
-        response,
-      });
-      this.metricsCollector.observeEnd(startTime);
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-      this.metricsCollector.error();
+  private validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
+    // Validate the token
+    const { token } = req.params;
+    if (token !== this._token) {
+      const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
+      console.warn(err);
+      res.status(401).send(err);
+      this.metricsCollector.alert();
+      return;
     }
+
+    // Token is valid, continue
+    next();
+  };
+
+  private admissionReq = (admissionKind: "Mutate" | "Validate") => {
+    // Create the admission request handler
+    return async (req: express.Request, res: express.Response) => {
+      const startTime = this.metricsCollector.observeStart();
+
+      try {
+        const request: Request = req.body?.request || ({} as Request);
+
+        // Run the before hook if it exists
+        this._beforeHook && this._beforeHook(request || {});
+
+        const name = request?.name ? `/${request.name}` : "";
+        const namespace = request?.namespace || "";
+        const gvk = request?.kind || { group: "", version: "", kind: "" };
+        const prefix = `${request.uid} ${namespace}${name}`;
+
+        Log.info(`${admissionKind} [${request.operation}] ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
+
+        // Process the request
+        let response: MutateResponse | ValidateResponse;
+
+        if (admissionKind === "Mutate") {
+          response = await mutateProcessor(this._config, this._capabilities, request, prefix);
+        } else {
+          response = await validateProcessor(this._capabilities, request, prefix);
+        }
+
+        // Run the after hook if it exists
+        this._afterHook && this._afterHook(response);
+
+        // Log the response
+        Log.debug(response, prefix);
+
+        // Send a no prob bob response
+        res.send({
+          apiVersion: "admission.k8s.io/v1",
+          kind: "AdmissionReview",
+          response,
+        });
+        this.metricsCollector.observeEnd(startTime);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+        this.metricsCollector.error();
+      }
+    };
   };
 }

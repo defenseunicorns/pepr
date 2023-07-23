@@ -5,7 +5,7 @@ import { concat, mergeDeepWith } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
-import { Request, MutateResponse } from "./k8s/types";
+import { MutateResponse, Request } from "./k8s/types";
 import { ModuleConfig } from "./types";
 
 const alwaysIgnore = {
@@ -43,8 +43,9 @@ export class PeprModule {
     config.description = description;
 
     // Handle build mode
-    if (process.env.PEPR_MODE === "build") {
-      process.send?.({ capabilities });
+    if (process.env.PEPR_MODE === "build" && process.send) {
+      // Send capability map to parent process
+      process.send(capabilities);
       return;
     }
 

@@ -22,7 +22,7 @@ export default function (program: RootCmd) {
     .option(
       "-e, --entry-point [file]",
       "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
-      peprTS
+      peprTS,
     )
     .action(async opts => {
       // Build the module
@@ -72,7 +72,7 @@ export async function loadModule(entryPoint = peprTS) {
     await fs.access(input);
   } catch (e) {
     Log.error(
-      `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`
+      `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`,
     );
     process.exit(1);
   }
