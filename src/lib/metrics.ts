@@ -15,7 +15,7 @@ export class MetricsCollector {
 
   /**
    * Creates a MetricsCollector instance with prefixed metrics.
-   * @param {string} [prefix='pepr'] - The prefix for the metric names.
+   * @param prefix - The prefix for the metric names.
    */
   constructor(prefix = "pepr") {
     this._registry = new promClient.Registry();

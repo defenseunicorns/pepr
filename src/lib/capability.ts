@@ -3,8 +3,8 @@
 
 import { modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
-import logger from "./logger";
-import { Storage } from "./storage";
+import Log from "./logger";
+import { Storage, PeprStore } from "./storage";
 import {
   Binding,
   BindingFilter,
@@ -30,12 +30,23 @@ export class Capability implements CapabilityCfg {
 
   private _bindings: Binding[] = [];
 
+  private _store = new Storage();
+
+  private _registered = false;
+
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
    * between requests. Each capability has its own store, and the data is persisted in Kubernetes
    * in the `pepr-system` namespace.
+   *
+   * Note: You should only access the store from within a capability action.
    */
-  Store: Storage;
+  Store: PeprStore = {
+    clear: this._store.clear,
+    getItem: this._store.getItem,
+    removeItem: this._store.removeItem,
+    setItem: this._store.setItem,
+  };
 
   get bindings(): Binding[] {
     return this._bindings;
@@ -53,13 +64,33 @@ export class Capability implements CapabilityCfg {
     return this._namespaces || [];
   }
 
+  /**
+   * Register the store with the capability. This is called automatically by the Pepr controller.
+   *
+   * @param store
+   */
+  _registerStore = () => {
+    Log.info(`Registering store for ${this._name}`);
+
+    if (this._registered) {
+      throw new Error(`Store already registered for ${this._name}`);
+    }
+
+    this._registered = true;
+
+    // Pass back any ready callback to the controller
+    return {
+      store: this._store,
+    };
+  };
+
   constructor(cfg: CapabilityCfg) {
     this._name = cfg.name;
     this._description = cfg.description;
     this._namespaces = cfg.namespaces;
-    this.Store = new Storage(this._name);
-    logger.info(`Capability ${this._name} registered`);
-    logger.debug(cfg);
+
+    Log.info(`Capability ${this._name} registered`);
+    Log.debug(cfg);
   }
 
   /**
@@ -93,11 +124,11 @@ export class Capability implements CapabilityCfg {
 
     const prefix = `${this._name}: ${model.name}`;
 
-    logger.info(`Binding created`, prefix);
+    Log.info(`Binding created`, prefix);
 
     const Validate = (cb: CapabilityValidateAction<T>): ValidateActionChain<T> => {
-      logger.info(`Binding action created`, prefix);
-      logger.debug(cb.toString(), prefix);
+      Log.info(`Binding action created`, prefix);
+      Log.debug(cb.toString(), prefix);
       // Push the binding to the list of bindings for this capability as a new BindingAction
       // with the callback function to preserve
       this._bindings.push({
@@ -109,8 +140,8 @@ export class Capability implements CapabilityCfg {
     };
 
     const Mutate = (cb: CapabilityMutateAction<T>): MutateActionChain<T> => {
-      logger.info(`Binding action created`, prefix);
-      logger.debug(cb.toString(), prefix);
+      Log.info(`Binding action created`, prefix);
+      Log.debug(cb.toString(), prefix);
       // Push the binding to the list of bindings for this capability as a new BindingAction
       // with the callback function to preserve
       this._bindings.push({
@@ -124,8 +155,8 @@ export class Capability implements CapabilityCfg {
     };
 
     const Watch = (cb: CapabilityWatchAction<T>): void => {
-      logger.info(`Binding action created`, prefix);
-      logger.debug(cb.toString(), prefix);
+      Log.info(`Binding action created`, prefix);
+      Log.debug(cb.toString(), prefix);
 
       this._bindings.push({
         ...binding,
@@ -135,25 +166,25 @@ export class Capability implements CapabilityCfg {
     };
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
-      logger.debug(`Add namespaces filter ${namespaces}`, prefix);
+      Log.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
       return { ...commonChain, WithName };
     }
 
     function WithName(name: string): BindingFilter<T> {
-      logger.debug(`Add name filter ${name}`, prefix);
+      Log.debug(`Add name filter ${name}`, prefix);
       binding.filters.name = name;
       return commonChain;
     }
 
     function WithLabel(key: string, value = ""): BindingFilter<T> {
-      logger.debug(`Add label filter ${key}=${value}`, prefix);
+      Log.debug(`Add label filter ${key}=${value}`, prefix);
       binding.filters.labels[key] = value;
       return commonChain;
     }
 
     const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
-      logger.debug(`Add annotation filter ${key}=${value}`, prefix);
+      Log.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
       return commonChain;
     };

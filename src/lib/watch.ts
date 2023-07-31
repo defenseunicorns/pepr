@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Watch as K8sWatch, KubeConfig } from "@kubernetes/client-node";
+import { HttpError, Watch as K8sWatch, KubeConfig } from "@kubernetes/client-node";
 import { clone } from "ramda";
 
 import { modelToGroupVersionKind } from "./k8s";
@@ -15,6 +15,7 @@ export interface WatchOptions {
   name?: string;
   namespace?: string;
   phases?: WatchPhase[];
+  onInitFailure?: (err: HttpError) => void;
 }
 
 /**
@@ -38,7 +39,7 @@ export const SimpleWatch = <T extends GenericClass>(model: T, opts: WatchOptions
     // Setup K8s client
     const kubeConfig = new KubeConfig();
     kubeConfig.loadFromDefault();
-    const { watch } = new K8sWatch(kubeConfig);
+    const k = new K8sWatch(kubeConfig);
 
     // Use the plural property if it exists, otherwise use lowercase kind + s
     const resource = matchedKind.plural || `${matchedKind.kind.toLowerCase()}s`;
@@ -51,16 +52,26 @@ export const SimpleWatch = <T extends GenericClass>(model: T, opts: WatchOptions
       base = `/apis/${matchedKind.group}/${matchedKind.version}`;
     }
 
+    // Namespaced paths require a namespace prefix
+    const namespace = opts.namespace ? `namespaces/${opts.namespace}` : "";
+
     // Build the complete path to the resource
-    const path = [base, opts.namespace, resource, opts.name].filter(Boolean).join("/");
+    const path = [base, namespace, resource].filter(Boolean).join("/");
 
     // If a label selector is specified, add it to the query params
     if (opts.labelSelector) {
       queryParams = { labelSelector: opts.labelSelector };
     }
 
+    // If a name is specified, add it to the query params
+    if (opts.name) {
+      queryParams = { ...queryParams, fieldSelector: `metadata.name=${opts.name}` };
+    }
+
+    Log.info(`Watching ${path}`, prefix);
+
     // Create the watcher
-    return watch(
+    return k.watch(
       path,
       queryParams,
       (phase, payload) => {
@@ -77,7 +88,11 @@ export const SimpleWatch = <T extends GenericClass>(model: T, opts: WatchOptions
         }
       },
       err => {
-        Log.error(err, prefix);
+        if (opts.onInitFailure) {
+          opts.onInitFailure(err);
+        } else {
+          Log.error(err, prefix);
+        }
       },
     );
   }

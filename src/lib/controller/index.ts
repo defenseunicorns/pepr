@@ -5,15 +5,14 @@ import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
 
-import { Capability } from "./capability";
-import { a } from "./k8s";
-import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
-import Log from "./logger";
-import { MetricsCollector } from "./metrics";
-import { mutateProcessor } from "./mutate-processor";
-import { ModuleConfig, PeprState } from "./types";
-import { validateProcessor } from "./validate-processor";
-import { SimpleWatch } from "./watch";
+import { Capability } from "../capability";
+import { MutateResponse, Request, ValidateResponse } from "../k8s/types";
+import Log from "../logger";
+import { MetricsCollector } from "../metrics";
+import { mutateProcessor } from "../mutate-processor";
+import { ModuleConfig } from "../types";
+import { validateProcessor } from "../validate-processor";
+import { PeprControllerStore } from "./store";
 
 export class Controller {
   private readonly _app = express();
@@ -22,8 +21,6 @@ export class Controller {
 
   // The token used to authenticate requests
   private _token = "";
-
-  private _peprState: PeprState = {};
 
   constructor(
     private readonly _config: ModuleConfig,
@@ -37,6 +34,22 @@ export class Controller {
     // Middleware for parsing JSON, limit to 2mb vs 100K for K8s compatibility
     this._app.use(express.json({ limit: "2mb" }));
 
+    // Initialize the Pepr store for each capability
+    new PeprControllerStore(_config, _capabilities, () => {
+      // Bind the endpoints after the store is ready
+      this.bindEndpoints();
+    });
+
+    if (_beforeHook) {
+      Log.info(`Using beforeHook: ${_beforeHook}`);
+    }
+
+    if (_afterHook) {
+      Log.info(`Using afterHook: ${_afterHook}`);
+    }
+  }
+
+  private bindEndpoints = () => {
     // Health check endpoint
     this._app.get("/healthz", this.healthz);
 
@@ -51,33 +64,7 @@ export class Controller {
 
     // Validate endpoint
     this._app.post("/validate/:token", this.admissionReq("Validate"));
-
-    if (_beforeHook) {
-      console.info(`Using beforeHook: ${_beforeHook}`);
-    }
-
-    if (_afterHook) {
-      console.info(`Using afterHook: ${_afterHook}`);
-    }
-
-    // Setup Pepr State bindings
-    const watchOpts = {
-      namespace: "pepr-system",
-      name: `pepr-${_config.uuid}-store`,
-    };
-
-    SimpleWatch(a.ConfigMap, watchOpts).Start(cm => {
-      console.log(cm);
-
-      const name = cm.metadata?.name;
-
-      if (name && cm.data) {
-        this._peprState[name] = cm.data;
-      } else {
-        console.error(`Invalid pepr state cm`);
-      }
-    });
-  }
+  };
 
   /** Start the webhook server */
   public startServer = (port: number) => {
@@ -93,7 +80,7 @@ export class Controller {
 
     // Get the API token from the environment variable or the mounted secret
     this._token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
-    console.info(`Using API token: ${this._token}`);
+    Log.info(`Using API token: ${this._token}`);
 
     if (!this._token) {
       throw new Error("API token not found");
@@ -104,7 +91,7 @@ export class Controller {
 
     // Handle server listening event
     server.on("listening", () => {
-      console.log(`Server listening on port ${port}`);
+      Log.info(`Server listening on port ${port}`);
       // Track that the server is running
       this._running = true;
     });
@@ -112,7 +99,7 @@ export class Controller {
     // Handle EADDRINUSE errors
     server.on("error", (e: { code: string }) => {
       if (e.code === "EADDRINUSE") {
-        console.log(
+        Log.warn(
           `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`,
         );
         setTimeout(() => {
@@ -124,14 +111,21 @@ export class Controller {
 
     // Listen for the SIGTERM signal and gracefully close the server
     process.on("SIGTERM", () => {
-      console.log("Received SIGTERM, closing server");
+      Log.info("Received SIGTERM, closing server");
       server.close(() => {
-        console.log("Server closed");
+        Log.info("Server closed");
         process.exit(0);
       });
     });
   };
 
+  /**
+   * Middleware for logging requests
+   *
+   * @param req the incoming request
+   * @param res the outgoing response
+   * @param next the next middleware function
+   */
   private logger = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const startTime = Date.now();
 
@@ -140,36 +134,26 @@ export class Controller {
       const elapsedTime = Date.now() - startTime;
       const message = `[${now}] ${req.method} ${req.originalUrl} [${res.statusCode}] ${elapsedTime} ms\n`;
 
-      res.statusCode >= 400 ? console.error(message) : console.info(message);
+      res.statusCode >= 400 ? Log.warn(message) : Log.info(message);
     });
 
     next();
   };
 
-  private healthz = (req: express.Request, res: express.Response) => {
-    try {
-      res.send("OK");
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-    }
-  };
-
-  private metrics = async (req: express.Request, res: express.Response) => {
-    try {
-      res.send(await this.metricsCollector.getMetrics());
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-    }
-  };
-
+  /**
+   * Validate the token in the request path
+   *
+   * @param req The incoming request
+   * @param res The outgoing response
+   * @param next The next middleware function
+   * @returns
+   */
   private validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
     // Validate the token
     const { token } = req.params;
     if (token !== this._token) {
       const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
-      console.warn(err);
+      Log.warn(err);
       res.status(401).send(err);
       this.metricsCollector.alert();
       return;
@@ -179,17 +163,56 @@ export class Controller {
     next();
   };
 
+  /**
+   * Health check endpoint handler
+   *
+   * @param req the incoming request
+   * @param res the outgoing response
+   */
+  private healthz = (req: express.Request, res: express.Response) => {
+    try {
+      res.send("OK");
+    } catch (err) {
+      Log.error(err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
+
+  /**
+   * Metrics endpoint handler
+   *
+   * @param req the incoming request
+   * @param res the outgoing response
+   */
+  private metrics = async (req: express.Request, res: express.Response) => {
+    try {
+      res.send(await this.metricsCollector.getMetrics());
+    } catch (err) {
+      Log.error(err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
+
+  /**
+   * Admission request handler for both mutate and validate requests
+   *
+   * @param admissionKind the type of admission request
+   * @returns the request handler
+   */
   private admissionReq = (admissionKind: "Mutate" | "Validate") => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
+      // Start the metrics timer
       const startTime = this.metricsCollector.observeStart();
 
       try {
+        // Get the request from the body or create an empty request
         const request: Request = req.body?.request || ({} as Request);
 
         // Run the before hook if it exists
         this._beforeHook && this._beforeHook(request || {});
 
+        // Setup identifiers for logging
         const name = request?.name ? `/${request.name}` : "";
         const namespace = request?.namespace || "";
         const gvk = request?.kind || { group: "", version: "", kind: "" };
@@ -200,6 +223,7 @@ export class Controller {
         // Process the request
         let response: MutateResponse | ValidateResponse;
 
+        // Call mutate or validate based on the admission kind
         if (admissionKind === "Mutate") {
           response = await mutateProcessor(this._config, this._capabilities, request, prefix);
         } else {
@@ -220,7 +244,7 @@ export class Controller {
         });
         this.metricsCollector.observeEnd(startTime);
       } catch (err) {
-        console.error(err);
+        Log.error(err);
         res.status(500).send("Internal Server Error");
         this.metricsCollector.error();
       }

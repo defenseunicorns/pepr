@@ -22,27 +22,6 @@ export const HelloPepr = new Capability({
 // Use the 'When' function to create a new Capability Action, 'Store' to persist data
 const { When, Store } = HelloPepr;
 
-// Save some data to the store
-Store.setItem("hello-pepr", "Hello Pepr!");
-
-// Add an item to the store
-Store.setItem("hello-pepr-2", "Hello Pepr! I'm a second item!");
-
-// Read the data back from the store
-console.log(Store.getItem("hello-pepr"));
-
-// Update the data in the store
-Store.setItem("hello-pepr", "Hello Pepr! I've been updated!");
-
-// Get the length of the store
-console.log(Store.length);
-
-// Delete an item from the store
-Store.removeItem("hello-pepr");
-
-// Clear the store
-Store.clear();
-
 /**
  * ---------------------------------------------------------------------------------------------------
  *                                   CAPABILITY ACTION (Namespace)                                   *
@@ -75,6 +54,9 @@ When(a.ConfigMap)
     request
       .SetLabel("pepr", "was-here")
       .SetAnnotation("pepr.dev", "annotations-work-too");
+
+    // Use the Store to persist data between requests and Pepr controller pods
+    Store.setItem("example-1", "was-here");
   });
 
 /**
@@ -92,6 +74,9 @@ When(a.ConfigMap)
   .WithName("example-2")
   .Mutate(request => {
     // This Mutate CapabilityAction will mutate the request before it is persisted to the cluster
+
+    // Read shared data from the store
+    Log.info(Store.getItem("example-1"), "Pepr Store Readout");
 
     // Use `request.Merge()` to merge the new data with the existing data
     request.Merge({
