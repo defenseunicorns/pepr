@@ -42,7 +42,7 @@ test.before(async t => {
 
 test.serial("E2E: `pepr init`", t => {
   try {
-    const peprAlias = "file:pepr-0.0.0-development.tgz"
+    const peprAlias = "file:pepr-0.0.0-development.tgz";
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
     t.pass();
   } catch (e) {
@@ -157,11 +157,11 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
     t.is(
       s1.data["binary-data"],
-      "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA=="
+      "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==",
     );
     t.is(
       s1.data["ascii-with-white-space"],
-      "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw=="
+      "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==",
     );
     t.log("Validated secret-1 Secret data");
 
@@ -171,9 +171,8 @@ test.serial("E2E: `pepr deploy`", async t => {
       stdio: "inherit",
     });
 
-
     // Check the controller logs
-    const logs = await getPodLogs("pepr-system", "app=pepr-static-test")
+    const logs = await getPodLogs("pepr-system", "app=pepr-static-test");
     t.is(logs.includes("File hash matches, running module"), true);
     t.is(logs.includes("Capability hello-pepr registered"), true);
     t.is(logs.includes("CM with label 'change=by-label' was deleted."), true);
@@ -189,6 +188,9 @@ test.serial("E2E: `pepr dev`", async t => {
   try {
     const cmd = await new Promise(peprDev);
 
+    const healthz = await testHealthz();
+    t.is(healthz, true);
+
     await testAPIKey();
 
     cmd.kill();
@@ -202,7 +204,7 @@ test.serial("E2E: `pepr metrics`", async t => {
   try {
     const cmd = await new Promise(peprDev);
 
-    const metrics = await testMetrics()
+    const metrics = await testMetrics();
     t.is(metrics.includes("pepr_summary_count"), true);
     t.is(metrics.includes("pepr_errors"), true);
     t.is(metrics.includes("pepr_alerts"), true);
@@ -214,6 +216,25 @@ test.serial("E2E: `pepr metrics`", async t => {
     t.fail(e.message);
   }
 });
+
+async function testHealthz() {
+  // Ignore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  const base = "https://localhost:3000/healthz";
+
+  const healthzOk = await fetch(base);
+
+  // Restore TLS verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
+  if (healthzOk.status !== 200) {
+    await delay2Secs();
+    return testHealthz();
+  }
+
+  return true;
+}
 
 async function testAPIKey() {
   // Ignore TLS verification
@@ -270,10 +291,12 @@ function peprDev(resolve, reject) {
       return !data.replace(/\s+/g, " ").includes(expectedLine);
     });
 
-    console.log(
-      "\x1b[36m%s\x1b[0m'",
-      "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2)
-    );
+    if (expectedLines.length > 0) {
+      console.log(
+        "\x1b[36m%s\x1b[0m'",
+        "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2),
+      );
+    }
 
     // If all expected lines are found, resolve the promise
     if (expectedLines.length < 1) {
@@ -349,12 +372,18 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-
 async function getPodLogs(namespace, labelSelector) {
-  let allLogs = '';
+  let allLogs = "";
 
   try {
-    const res = await k8sCoreApi.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, labelSelector);
+    const res = await k8sCoreApi.listNamespacedPod(
+      namespace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      labelSelector,
+    );
     const pods = res.body.items;
 
     for (const pod of pods) {
@@ -363,7 +392,7 @@ async function getPodLogs(namespace, labelSelector) {
       allLogs += log.body;
     }
   } catch (err) {
-    console.error('Error: ', err);
+    console.error("Error: ", err);
   }
 
   return allLogs;
