@@ -196,7 +196,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
         if (conflicts.length < 1) {
           Log.error(
             `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
-            "Version Conflict"
+            "Version Conflict",
           );
         }
 
@@ -204,7 +204,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
         conflicts.forEach(match => {
           Log.error(
             `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
-            "Version Conflict"
+            "Version Conflict",
           );
         });
       }
