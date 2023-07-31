@@ -1,8 +1,11 @@
-import { AppsV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import test from "ava";
 import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
+
+import { k8s } from "../dist/lib.js";
+
+const { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } = k8s;
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
@@ -65,6 +68,59 @@ test.serial("E2E: `pepr build`", async t => {
     // check if the file exists
     await fs.access(resolve(testDir, "dist", "zarf.yaml"));
     await fs.access(resolve(testDir, "dist", "pepr-module-static-test.yaml"));
+
+    t.pass();
+  } catch (e) {
+    t.fail(e.message);
+  }
+});
+
+
+test.serial("E2E: zarf.yaml validation", async t => {
+  try {
+    // Get the version of the pepr binary
+    const peprVer = execSync("npx pepr --version", { cwd: testDir }).toString().trim();
+
+    // Read the generated yaml files
+    const k8sYaml = await fs.readFile(
+      resolve(testDir, "dist", "pepr-module-static-test.yaml"),
+      "utf8"
+    );
+    const zarfYAML = await fs.readFile(resolve(testDir, "dist", "zarf.yaml"), "utf8");
+
+    // The expected image name
+    const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${peprVer}`;
+
+    // The expected zarf yaml contents
+    const expectedZarfYaml = {
+      kind: "ZarfPackageConfig",
+      metadata: {
+        name: "pepr-static-test",
+        description: "Pepr Module: A test module for Pepr",
+        url: "https://github.com/defenseunicorns/pepr",
+        version: "0.0.1",
+      },
+      components: [
+        {
+          name: "module",
+          required: true,
+          manifests: [
+            {
+              name: "module",
+              namespace: "pepr-system",
+              files: ["pepr-module-static-test.yaml"],
+            },
+          ],
+          images: [expectedImage],
+        },
+      ],
+    };
+
+    // Check the generated zarf yaml
+    t.deepEqual(loadYaml(zarfYAML), expectedZarfYaml);
+
+    // Check the generated k8s yaml
+    t.true(k8sYaml.includes(`image: ${expectedImage}`));
 
     t.pass();
   } catch (e) {

@@ -15,9 +15,6 @@ export default function (program: RootCmd) {
     .option("-v, --validate-only", "Do not modify files, only validate formatting")
     .action(async opts => {
       try {
-        // "format:check": "eslint src && prettier src --check",
-        // "format:fix": "eslint src --fix && prettier src --write"
-
         const eslint = new ESLint();
         const results = await eslint.lintFiles(["./**/*.ts"]);
 
