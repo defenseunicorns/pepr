@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { concat, mergeDeepWith } from "ramda";
+import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { MutateResponse, Request } from "./k8s/types";
 import { ModuleConfig } from "./types";
-
-const alwaysIgnore = {
-  namespaces: ["kube-system", "pepr-system"],
-  labels: [{ "pepr.dev": "ignore" }],
-};
 
 export type PackageJSON = {
   description: string;
@@ -39,7 +34,7 @@ export class PeprModule {
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
-    const config: ModuleConfig = mergeDeepWith(concat, pepr, alwaysIgnore);
+    const config: ModuleConfig = clone(pepr);
     config.description = description;
 
     // Handle build mode

@@ -25,18 +25,20 @@ import {
 import { fork } from "child_process";
 import crypto from "crypto";
 import { promises as fs } from "fs";
-import { equals, uniqWith } from "ramda";
+import { concat, equals, uniqWith } from "ramda";
 import { gzipSync } from "zlib";
 
 import Log from "../logger";
 import { Binding, Event, ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "./tls";
 
-const peprIgnore: V1LabelSelectorRequirement = {
+const peprIgnoreLabel: V1LabelSelectorRequirement = {
   key: "pepr.dev",
   operator: "NotIn",
   values: ["ignore"],
 };
+
+const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
 export class Webhook {
   private name: string;
@@ -252,14 +254,16 @@ export class Webhook {
     path: string,
     timeoutSeconds = 10,
   ): Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null> {
-    const ignore = [peprIgnore];
+    const ignore = [peprIgnoreLabel];
+
+    const ignoreNS = concat(peprIgnoreNamespaces, this.config.alwaysIgnore.namespaces || []);
 
     // Add any namespaces to ignore
-    if (this.config.alwaysIgnore.namespaces && this.config.alwaysIgnore.namespaces.length > 0) {
+    if (ignoreNS) {
       ignore.push({
         key: "kubernetes.io/metadata.name",
         operator: "NotIn",
-        values: this.config.alwaysIgnore.namespaces,
+        values: ignoreNS,
       });
     }
 
