@@ -3,7 +3,7 @@
 
 import prompt from "prompts";
 
-import { Webhook } from "../lib/k8s/webhook";
+import { Assets } from "../lib/assets";
 import Log from "../lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
@@ -33,7 +33,7 @@ export default function (program: RootCmd) {
       const { cfg, path } = await buildModule();
 
       // Generate a secret for the module
-      const webhook = new Webhook({
+      const webhook = new Assets({
         ...cfg.pepr,
         description: cfg.description,
       });

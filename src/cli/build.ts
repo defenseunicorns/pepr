@@ -6,7 +6,7 @@ import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, extname, resolve } from "path";
 
-import { Webhook } from "../lib/k8s/webhook";
+import { Assets } from "../lib/assets";
 import Log from "../lib/logger";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
@@ -35,17 +35,17 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      const webhook = new Webhook({
+      const assets = new Assets({
         ...cfg.pepr,
         appVersion: cfg.version,
         description: cfg.description,
       });
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await webhook.allYaml(path);
+      const yaml = await assets.allYaml(path);
 
       const zarfPath = resolve("dist", "zarf.yaml");
-      const zarf = webhook.zarfYaml(yamlFile);
+      const zarf = assets.zarfYaml(yamlFile);
 
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);

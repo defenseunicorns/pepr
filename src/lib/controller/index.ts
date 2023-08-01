@@ -14,6 +14,9 @@ import { ModuleConfig } from "../types";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 
+// If the hostname is pepr-static-test-watcher-0, then we are running in watch mode
+const isWatchMode = process.env.PEPR_WATCH_MODE === "true";
+
 export class Controller {
   private readonly _app = express();
   private _running = false;
@@ -56,6 +59,10 @@ export class Controller {
     // Metrics endpoint
     this._app.get("/metrics", this.metrics);
 
+    if (isWatchMode) {
+      return;
+    }
+
     // Require auth for webhook endpoints
     this._app.use(["/mutate/:token", "/validate/:token"], this.validateToken);
 
@@ -78,12 +85,15 @@ export class Controller {
       cert: fs.readFileSync(process.env.SSL_CERT_PATH || "/etc/certs/tls.crt"),
     };
 
-    // Get the API token from the environment variable or the mounted secret
-    this._token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
-    Log.info(`Using API token: ${this._token}`);
+    // Get the API token if not in watch mode
+    if (!isWatchMode) {
+      // Get the API token from the environment variable or the mounted secret
+      this._token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
+      Log.info(`Using API token: ${this._token}`);
 
-    if (!this._token) {
-      throw new Error("API token not found");
+      if (!this._token) {
+        throw new Error("API token not found");
+      }
     }
 
     // Create HTTPS server
