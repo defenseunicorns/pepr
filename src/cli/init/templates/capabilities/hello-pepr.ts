@@ -256,7 +256,7 @@ When(a.Secret)
  * Pepr will not be able to provide any intellisense for the object, so you will need to refer to the
  * Kubernetes API documentation for the object you are working with.
  *
- * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ * You will need to wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
  *
  * ```yaml
  * apiVersion: pepr.dev/v1
@@ -297,7 +297,7 @@ When(a.GenericKind, {
  * you should register custom Kinds at the top of your Capability file or Pepr Module so they are available
  * to all Capability Actions, but we are putting it here for demonstration purposes.
  *
- * You will need ot wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
+ * You will need to wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
  *
  * ```yaml
  * apiVersion: pepr.dev/v1
