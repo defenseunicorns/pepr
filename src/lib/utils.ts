@@ -41,10 +41,8 @@ export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
         skip.push(key);
       }
     }
-
-    Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic base64 decoding`);
   }
-
+  Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic base64 decoding`);
   return skip;
 }
 
