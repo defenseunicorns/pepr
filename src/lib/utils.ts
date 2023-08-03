@@ -30,16 +30,20 @@ export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
 
   obj.data = obj.data ?? {};
   for (const key in obj.data) {
-    const decoded = base64Decode(obj.data[key]);
-    if (isAscii.test(decoded)) {
-      // Only decode ascii values
-      obj.data[key] = decoded;
+    if (obj.data[key] == undefined) {
+      obj.data[key] = ""
     } else {
-      skip.push(key);
+      const decoded = base64Decode(obj.data[key]);
+      if (isAscii.test(decoded)) {
+        // Only decode ascii values
+        obj.data[key] = decoded;
+      } else {
+        skip.push(key);
+      }
     }
-  }
 
-  Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic base64 decoding`);
+    Log.debug(`Non-ascii data detected in keys: ${skip}, skipping automatic base64 decoding`);
+  }
 
   return skip;
 }
