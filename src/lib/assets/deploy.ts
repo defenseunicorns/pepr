@@ -15,15 +15,15 @@ import { promises as fs } from "fs";
 import { Assets } from ".";
 import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, statefulset } from "./pods";
+import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
-export async function deploy(assets: Assets, path: string, webhookTimeout?: number) {
+export async function deploy(assets: Assets, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
 
   const peprNS = "pepr-system";
-  const { name, host, image } = assets;
+  const { name, host, image, path } = assets;
 
   // Deploy the resources using the k8s API
   const kubeConfig = new KubeConfig();
@@ -43,7 +43,7 @@ export async function deploy(assets: Assets, path: string, webhookTimeout?: numb
   }
 
   // Create the mutating webhook configuration if it is needed
-  const mutateWebhook = await webhookConfig(assets, "mutate", path, webhookTimeout);
+  const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
   if (mutateWebhook) {
     try {
       Log.info("Creating mutating webhook");
@@ -57,7 +57,7 @@ export async function deploy(assets: Assets, path: string, webhookTimeout?: numb
   }
 
   // Create the validating webhook configuration if it is needed
-  const validateWebhook = await webhookConfig(assets, "validate", path, webhookTimeout);
+  const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
   if (validateWebhook) {
     try {
       Log.info("Creating validating webhook");
@@ -189,14 +189,14 @@ export async function deploy(assets: Assets, path: string, webhookTimeout?: numb
     await appsApi.createNamespacedDeployment(peprNS, dep);
   }
 
-  const watchStatefulset = statefulset(name, hash, image);
+  const watchDeployment = watcher(name, hash, image);
   try {
     Log.info("Creating watcher statefulset");
-    await appsApi.createNamespacedStatefulSet(peprNS, watchStatefulset);
+    await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
   } catch (e) {
     Log.debug(e instanceof HttpError ? e.body : e);
     Log.info("Removing and re-creating watcher statefulset");
-    await appsApi.deleteNamespacedStatefulSet(watchStatefulset.metadata?.name ?? "", peprNS);
-    await appsApi.createNamespacedStatefulSet(peprNS, watchStatefulset);
+    await appsApi.deleteNamespacedDeployment(watchDeployment.metadata?.name ?? "", peprNS);
+    await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
   }
 }

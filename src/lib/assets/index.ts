@@ -5,17 +5,20 @@ import crypto from "crypto";
 
 import { TLSOut, genTLS } from "../k8s/tls";
 import { ModuleConfig } from "../types";
-import { allYaml, zarfYaml } from "./yaml";
 import { deploy } from "./deploy";
+import { ModuleCapabilities, loadCapabilities } from "./loader";
+import { allYaml, zarfYaml } from "./yaml";
 
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
+  capabilities!: ModuleCapabilities[];
   image: string;
 
   constructor(
     readonly config: ModuleConfig,
+    readonly path: string,
     readonly host?: string,
   ) {
     this.name = `pepr-${config.uuid}`;
@@ -29,9 +32,15 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
-  deploy = async (path: string, webhookTimeout?: number) => deploy(this, path, webhookTimeout);
+  deploy = async (webhookTimeout?: number) => {
+    this.capabilities = await loadCapabilities(this.path);
+    await deploy(this, webhookTimeout);
+  };
 
   zarfYaml = (path: string) => zarfYaml(this, path);
 
-  allYaml = async (path: string) => allYaml(this, path);
+  allYaml = async () => {
+    this.capabilities = await loadCapabilities(this.path);
+    return allYaml(this);
+  };
 }

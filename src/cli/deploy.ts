@@ -33,17 +33,20 @@ export default function (program: RootCmd) {
       const { cfg, path } = await buildModule();
 
       // Generate a secret for the module
-      const webhook = new Assets({
-        ...cfg.pepr,
-        description: cfg.description,
-      });
+      const webhook = new Assets(
+        {
+          ...cfg.pepr,
+          description: cfg.description,
+        },
+        path,
+      );
 
       if (opts.image) {
         webhook.image = opts.image;
       }
 
       try {
-        await webhook.deploy(path);
+        await webhook.deploy();
         Log.info(`Module deployed successfully`);
       } catch (e) {
         Log.error(`Error deploying module: ${e}`);

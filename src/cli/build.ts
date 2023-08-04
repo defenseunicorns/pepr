@@ -35,14 +35,17 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      const assets = new Assets({
-        ...cfg.pepr,
-        appVersion: cfg.version,
-        description: cfg.description,
-      });
+      const assets = new Assets(
+        {
+          ...cfg.pepr,
+          appVersion: cfg.version,
+          description: cfg.description,
+        },
+        path,
+      );
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await assets.allYaml(path);
+      const yaml = await assets.allYaml();
 
       const zarfPath = resolve("dist", "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);

@@ -40,6 +40,7 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           description: cfg.description,
         },
+        path,
         opts.host,
       );
 
@@ -55,7 +56,7 @@ export default function (program: RootCmd) {
           Log.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging
-          await webhook.deploy(path, 30);
+          await webhook.deploy(30);
 
           program = fork(path, {
             env: {

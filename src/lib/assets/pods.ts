@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1Deployment, V1Namespace, V1Secret, V1StatefulSet } from "@kubernetes/client-node";
+import { V1Deployment, V1Namespace, V1Secret } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
 
 /** Generate the pepr-system namespace */
@@ -13,13 +13,13 @@ export function namespace(): V1Namespace {
   };
 }
 
-export function statefulset(name: string, hash: string, image: string): V1StatefulSet {
+export function watcher(name: string, hash: string, image: string): V1Deployment {
   // Append the watcher suffix
   const app = `${name}-watcher`;
 
   return {
     apiVersion: "apps/v1",
-    kind: "StatefulSet",
+    kind: "Deployment",
     metadata: {
       name: app,
       namespace: "pepr-system",
@@ -29,7 +29,9 @@ export function statefulset(name: string, hash: string, image: string): V1Statef
     },
     spec: {
       replicas: 1,
-      serviceName: app,
+      strategy: {
+        type: "Recreate",
+      },
       selector: {
         matchLabels: {
           app,

@@ -8,12 +8,11 @@ import {
   V1RuleWithOperations,
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node";
-import { fork } from "child_process";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
 import Log from "../logger";
-import { Binding, Event } from "../types";
+import { Event } from "../types";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
   key: "pepr.dev",
@@ -23,99 +22,55 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
 
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export function generateWebhookRules(
-  assets: Assets,
-  isMutateWebhook: boolean,
-  path: string,
-): Promise<V1RuleWithOperations[]> {
-  return new Promise((resolve, reject) => {
-    const rules: V1RuleWithOperations[] = [];
+export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean) {
+  const { config, capabilities } = assets;
+  const rules: V1RuleWithOperations[] = [];
 
-    // Fork is needed with the PEPR_MODE env var to ensure the module is loaded in build mode and will send back the capabilities
-    const program = fork(path, {
-      env: {
-        ...process.env,
-        LOG_LEVEL: "warn",
-        PEPR_MODE: "build",
-      },
-    });
+  // Iterate through the capabilities and generate the rules
+  for (const capability of capabilities) {
+    Log.info(`Module ${config.uuid} has capability: ${capability._name}`);
 
-    // We are receiving javascript so the private fields are now public
-    interface ModuleCapabilities {
-      _name: string;
-      _description: string;
-      _namespaces: string[];
-      _bindings: Binding[];
-    }
+    // Read the bindings and generate the rules
+    for (const binding of capability._bindings) {
+      const { event, kind, isMutate, isValidate } = binding;
 
-    // Wait for the module to send back the capabilities
-    program.on("message", message => {
-      // Cast the message to the ModuleCapabilities type
-      const capabilities = message.valueOf() as ModuleCapabilities[];
-
-      // Iterate through the capabilities and generate the rules
-      for (const capability of capabilities) {
-        Log.info(`Module ${assets.config.uuid} has capability: ${capability._name}`);
-
-        // Read the bindings and generate the rules
-        for (const binding of capability._bindings) {
-          const { event, kind, isMutate, isValidate } = binding;
-
-          // If the module doesn't have a callback for the event, skip it
-          if (isMutateWebhook && !isMutate) {
-            continue;
-          }
-
-          if (!isMutateWebhook && !isValidate) {
-            continue;
-          }
-
-          const operations: string[] = [];
-
-          // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
-          if (event === Event.CreateOrUpdate) {
-            operations.push(Event.Create, Event.Update);
-          } else {
-            operations.push(event);
-          }
-
-          // Use the plural property if it exists, otherwise use lowercase kind + s
-          const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
-
-          rules.push({
-            apiGroups: [kind.group],
-            apiVersions: [kind.version || "*"],
-            operations,
-            resources: [resource],
-          });
-        }
+      // If the module doesn't have a callback for the event, skip it
+      if (isMutateWebhook && !isMutate) {
+        continue;
       }
-    });
 
-    program.on("exit", code => {
-      if (code !== 0) {
-        reject(new Error(`Child process exited with code ${code}`));
+      if (!isMutateWebhook && !isValidate) {
+        continue;
+      }
+
+      const operations: string[] = [];
+
+      // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
+      if (event === Event.CreateOrUpdate) {
+        operations.push(Event.Create, Event.Update);
       } else {
-        // If there are no rules, add a catch-all
-        if (rules.length < 1) {
-          resolve(rules);
-        } else {
-          const reducedRules = uniqWith(equals, rules);
-          resolve(reducedRules);
-        }
+        operations.push(event);
       }
-    });
 
-    program.on("error", error => {
-      reject(error);
-    });
-  });
+      // Use the plural property if it exists, otherwise use lowercase kind + s
+      const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
+
+      rules.push({
+        apiGroups: [kind.group],
+        apiVersions: [kind.version || "*"],
+        operations,
+        resources: [resource],
+      });
+    }
+  }
+
+  // Return the rules with duplicates removed
+  return uniqWith(equals, rules);
 }
 
 export async function webhookConfig(
   assets: Assets,
   mutateOrValidate: "mutate" | "validate",
-  path: string,
   timeoutSeconds = 10,
 ): Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null> {
   const ignore = [peprIgnoreLabel];
@@ -152,7 +107,7 @@ export async function webhookConfig(
   }
 
   const isMutate = mutateOrValidate === "mutate";
-  const rules = await generateWebhookRules(assets, isMutate, path);
+  const rules = await generateWebhookRules(assets, isMutate);
 
   // If there are no rules, return null
   if (rules.length < 1) {

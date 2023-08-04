@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, statefulset } from "./pods";
+import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
@@ -39,15 +39,16 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, path: string) {
+export async function allYaml(assets: Assets) {
+  const { name, tls, image, apiToken, path } = assets;
+
   const code = await fs.readFile(path);
-  const { name, tls, image, apiToken } = assets;
 
   // Generate a hash of the code
   const hash = crypto.createHash("sha256").update(code).digest("hex");
 
-  const mutateWebhook = await webhookConfig(assets, "mutate", path);
-  const validateWebhook = await webhookConfig(assets, "validate", path);
+  const mutateWebhook = await webhookConfig(assets, "mutate");
+  const validateWebhook = await webhookConfig(assets, "validate");
 
   const resources = [
     namespace(),
@@ -59,7 +60,7 @@ export async function allYaml(assets: Assets, path: string) {
     deployment(name, hash, image),
     service(name),
     watcherService(name),
-    statefulset(name, hash, image),
+    watcher(name, hash, image),
     moduleSecret(name, code, hash),
   ];
 
