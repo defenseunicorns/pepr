@@ -213,8 +213,8 @@ export class Webhook {
               operations.push(event);
             }
 
-            // Use the plural property if it exists, otherwise use lowercase kind + s
-            const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
+            // Use the plural property if it exists, otherwise use lowercase kind + s or -y + ies if it ends in y
+            const resource = kind.plural || createPluralFromKind(kind.kind.toLowerCase());
 
             rules.push({
               apiGroups: [kind.group],
@@ -639,5 +639,13 @@ export class Webhook {
       await appsApi.deleteNamespacedDeployment(dep.metadata?.name ?? "", namespace);
       await appsApi.createNamespacedDeployment(namespace, dep);
     }
+  }
+}
+
+function createPluralFromKind(kind: string): string {
+  if (kind.endsWith("y")) {
+    return kind.slice(0, 1) + "ies";
+  } else {
+    return kind + "s";
   }
 }
