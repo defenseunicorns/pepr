@@ -4,7 +4,7 @@
 import { modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
-import { Storage, PeprStore } from "./storage";
+import { PeprStore, Storage } from "./storage";
 import {
   Binding,
   BindingFilter,
@@ -46,6 +46,7 @@ export class Capability implements CapabilityCfg {
     getItem: this._store.getItem,
     removeItem: this._store.removeItem,
     setItem: this._store.setItem,
+    subscribe: this._store.subscribe,
   };
 
   get bindings(): Binding[] {
