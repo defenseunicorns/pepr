@@ -644,7 +644,7 @@ export class Webhook {
 
 function createPluralFromKind(kind: string): string {
   if (kind.endsWith("y")) {
-    return kind.slice(0, 1) + "ies";
+    return kind.slice(0, -1) + "ies";
   } else {
     return kind + "s";
   }
