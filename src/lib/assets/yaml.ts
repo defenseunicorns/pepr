@@ -40,7 +40,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
 }
 
 export async function allYaml(assets: Assets) {
-  const { name, tls, image, apiToken, path } = assets;
+  const { name, tls, apiToken, path } = assets;
 
   const code = await fs.readFile(path);
 
@@ -49,6 +49,7 @@ export async function allYaml(assets: Assets) {
 
   const mutateWebhook = await webhookConfig(assets, "mutate");
   const validateWebhook = await webhookConfig(assets, "validate");
+  const watchDeployment = watcher(assets, hash);
 
   const resources = [
     namespace(),
@@ -57,10 +58,9 @@ export async function allYaml(assets: Assets) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(name, hash, image),
+    deployment(assets, hash),
     service(name),
     watcherService(name),
-    watcher(name, hash, image),
     moduleSecret(name, code, hash),
   ];
 
@@ -70,6 +70,10 @@ export async function allYaml(assets: Assets) {
 
   if (validateWebhook) {
     resources.push(validateWebhook);
+  }
+
+  if (watchDeployment) {
+    resources.push(watchDeployment);
   }
 
   // Convert the resources to a single YAML string

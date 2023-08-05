@@ -23,7 +23,7 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
 
   const peprNS = "pepr-system";
-  const { name, host, image, path } = assets;
+  const { name, host, path } = assets;
 
   // Deploy the resources using the k8s API
   const kubeConfig = new KubeConfig();
@@ -145,17 +145,6 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
     await coreV1Api.createNamespacedService(peprNS, svc);
   }
 
-  const watchSvc = watcherService(name);
-  try {
-    Log.info("Creating watcher service");
-    await coreV1Api.createNamespacedService(peprNS, watchSvc);
-  } catch (e) {
-    Log.debug(e instanceof HttpError ? e.body : e);
-    Log.info("Removing and re-creating watcher service");
-    await coreV1Api.deleteNamespacedService(watchSvc.metadata?.name ?? "", peprNS);
-    await coreV1Api.createNamespacedService(peprNS, watchSvc);
-  }
-
   const tls = tlsSecret(name, assets.tls);
   try {
     Log.info("Creating TLS secret");
@@ -178,7 +167,7 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
     await coreV1Api.createNamespacedSecret(peprNS, apiToken);
   }
 
-  const dep = deployment(name, hash, image);
+  const dep = deployment(assets, hash);
   try {
     Log.info("Creating deployment");
     await appsApi.createNamespacedDeployment(peprNS, dep);
@@ -189,14 +178,28 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
     await appsApi.createNamespacedDeployment(peprNS, dep);
   }
 
-  const watchDeployment = watcher(name, hash, image);
-  try {
-    Log.info("Creating watcher statefulset");
-    await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
-  } catch (e) {
-    Log.debug(e instanceof HttpError ? e.body : e);
-    Log.info("Removing and re-creating watcher statefulset");
-    await appsApi.deleteNamespacedDeployment(watchDeployment.metadata?.name ?? "", peprNS);
-    await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
+  // If the module has a watcher, deploy it
+  const watchDeployment = watcher(assets, hash);
+  if (watchDeployment) {
+    try {
+      Log.info("Creating watcher statefulset");
+      await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
+    } catch (e) {
+      Log.debug(e instanceof HttpError ? e.body : e);
+      Log.info("Removing and re-creating watcher statefulset");
+      await appsApi.deleteNamespacedDeployment(watchDeployment.metadata?.name ?? "", peprNS);
+      await appsApi.createNamespacedDeployment(peprNS, watchDeployment);
+    }
+
+    const watchSvc = watcherService(name);
+    try {
+      Log.info("Creating watcher service");
+      await coreV1Api.createNamespacedService(peprNS, watchSvc);
+    } catch (e) {
+      Log.debug(e instanceof HttpError ? e.body : e);
+      Log.info("Removing and re-creating watcher service");
+      await coreV1Api.deleteNamespacedService(watchSvc.metadata?.name ?? "", peprNS);
+      await coreV1Api.createNamespacedService(peprNS, watchSvc);
+    }
   }
 }

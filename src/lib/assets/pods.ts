@@ -3,6 +3,8 @@
 
 import { V1Deployment, V1Namespace, V1Secret } from "@kubernetes/client-node";
 import { gzipSync } from "zlib";
+import { Assets } from ".";
+import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
 export function namespace(): V1Namespace {
@@ -13,9 +15,23 @@ export function namespace(): V1Namespace {
   };
 }
 
-export function watcher(name: string, hash: string, image: string): V1Deployment {
+export function watcher(assets: Assets, hash: string) {
+  const { name, image, capabilities } = assets;
+
   // Append the watcher suffix
   const app = `${name}-watcher`;
+  const bindings: Binding[] = [];
+
+  // Loop through the capabilities and find any Watch CapabilityActions
+  for (const capability of capabilities) {
+    const watchers = capability._bindings.filter(binding => binding.isWatch);
+    bindings.push(...watchers);
+  }
+
+  // If there are no watchers, don't deploy the watcher
+  if (bindings.length < 1) {
+    return null;
+  }
 
   return {
     apiVersion: "apps/v1",
@@ -108,7 +124,8 @@ export function watcher(name: string, hash: string, image: string): V1Deployment
   };
 }
 
-export function deployment(name: string, hash: string, image: string): V1Deployment {
+export function deployment(assets: Assets, hash: string): V1Deployment {
+  const { name, image } = assets;
   const app = name;
 
   return {
