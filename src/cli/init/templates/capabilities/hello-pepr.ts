@@ -50,13 +50,15 @@ When(a.Namespace)
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
-  .Mutate(request => {
+  .Mutate(async request => {
     request
       .SetLabel("pepr", "was-here")
       .SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Use the Store to persist data between requests and Pepr controller pods
-    Store.setItem("example-1", "was-here");
+    await Store.setItem("example-1", "was-here");
+
+    Store.setItem("example-1-data", JSON.stringify(request.Raw.data));
   });
 
 /**

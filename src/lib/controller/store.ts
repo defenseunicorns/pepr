@@ -98,50 +98,49 @@ export class PeprControllerStore {
   };
 
   private sendData = (capabilityName: string) => {
+    // Create a sender function for the capability
     const sender: DataSender = async (op: DataOp, key: string[], value?: string) => {
-      try {
-        const options = { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } };
-        const patches: Operation[] = [];
+      // Note we don't handle the error here so it can be handled by the caller
 
-        switch (op) {
-          case "add":
+      const options = { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } };
+      const patches: Operation[] = [];
+
+      switch (op) {
+        case "add":
+          patches.push({
+            op,
+            path: `/data/${capabilityName}-${key}`,
+            value: base64Encode(value || ""),
+          });
+          break;
+
+        case "remove":
+          if (key.length < 1) {
+            throw new Error(`Key is required for REMOVE operation`);
+          }
+
+          for (const k of key) {
             patches.push({
               op,
-              path: `/data/${capabilityName}-${key}`,
-              value: base64Encode(value || ""),
+              path: `/data/${capabilityName}-${k}`,
             });
-            break;
-
-          case "remove":
-            if (key.length < 1) {
-              throw new Error(`Key is required for REMOVE operation`);
-            }
-
-            for (const k of key) {
-              patches.push({
-                op,
-                path: `/data/${capabilityName}-${k}`,
-              });
-            }
-            break;
-        }
-
-        const result = await this._coreV1API.patchNamespacedSecret(
-          this._name,
-          namespace,
-          patches,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          options,
-        );
-
-        this.handleSecret(result.body);
-      } catch (e) {
-        console.error(e, `Pepr store update failure for ${capabilityName}`);
+          }
+          break;
       }
+
+      const result = await this._coreV1API.patchNamespacedSecret(
+        this._name,
+        namespace,
+        patches,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        options,
+      );
+
+      this.handleSecret(result.body);
     };
 
     return sender;
