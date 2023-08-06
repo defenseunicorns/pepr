@@ -8,18 +8,20 @@ import { map, startsWith } from "ramda";
 import { Operation } from "fast-json-patch";
 import { Capability } from "../capability";
 import { a } from "../k8s";
+import { SimpleWatch, WatchOptions } from "../k8s/watch";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { ModuleConfig } from "../types";
 import { base64Decode, base64Encode } from "../utils";
-import { SimpleWatch, WatchOptions } from "../watch";
 
 const namespace = "pepr-system";
+const debounceBackoff = 5000;
 
 export class PeprControllerStore {
   private _name: string;
   private _coreV1API: CoreV1Api;
   private _stores: Record<string, Storage> = {};
+  private _sendDebounce: NodeJS.Timeout | undefined;
 
   constructor(
     config: ModuleConfig,
@@ -66,82 +68,125 @@ export class PeprControllerStore {
   private handleSecret = (secret: V1Secret) => {
     Log.debug(secret, "Pepr Store update");
 
-    // Base64 decode the data
-    const data: DataStore = map(base64Decode, secret.data || {});
+    // Wrap the update in a debounced function
+    const debounced = () => {
+      // Base64 decode the data
+      const data: DataStore = map(base64Decode, secret.data || {});
 
-    // Loop over each stored capability
-    for (const name of Object.keys(this._stores)) {
-      // Get the prefix offset for the keys
-      const offset = `${name}-`.length;
+      // Loop over each stored capability
+      for (const name of Object.keys(this._stores)) {
+        // Get the prefix offset for the keys
+        const offset = `${name}-`.length;
 
-      // Get any keys that match the capability name prefix
-      const filtered: DataStore = {};
+        // Get any keys that match the capability name prefix
+        const filtered: DataStore = {};
 
-      // Loop over each key in the secret
-      for (const key of Object.keys(data)) {
-        // Match on the capability name as a prefix
-        if (startsWith(name, key)) {
-          // Strip the prefix and store the value
-          filtered[key.slice(offset)] = data[key];
+        // Loop over each key in the secret
+        for (const key of Object.keys(data)) {
+          // Match on the capability name as a prefix
+          if (startsWith(name, key)) {
+            // Strip the prefix and store the value
+            filtered[key.slice(offset)] = data[key];
+          }
         }
+
+        // Send the data to the receiver callback
+        this._stores[name].receive(filtered);
       }
 
-      // Send the data to the receiver callback
-      this._stores[name].receive(filtered);
-    }
+      // Call the onReady callback if this is the first time the secret has been read
+      if (this._onReady) {
+        this._onReady();
+        this._onReady = undefined;
+      }
+    };
 
-    // Call the onReady callback if this is the first time the secret has been read
-    if (this._onReady) {
-      this._onReady();
-      this._onReady = undefined;
-    }
+    // Debounce the update to 1 second to avoid multiple rapid calls
+    clearTimeout(this._sendDebounce);
+    this._sendDebounce = setTimeout(debounced, debounceBackoff);
   };
 
   private sendData = (capabilityName: string) => {
-    // Create a sender function for the capability
-    const sender: DataSender = async (op: DataOp, key: string[], value?: string) => {
-      // Note we don't handle the error here so it can be handled by the caller
+    const sendCache: Record<string, Operation> = {};
 
-      const options = { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } };
-      const patches: Operation[] = [];
+    // Load the sendCache with patch operations
+    const fillCache = (op: DataOp, key: string[], val?: string) => {
+      if (op === "add") {
+        const path = `/data/${capabilityName}-${key}`;
+        const value = base64Encode(val || "");
+        const cacheIdx = [op, path, value].join(":");
 
-      switch (op) {
-        case "add":
-          patches.push({
-            op,
-            path: `/data/${capabilityName}-${key}`,
-            value: base64Encode(value || ""),
-          });
-          break;
+        // Add the operation to the cache
+        sendCache[cacheIdx] = { op, path, value };
 
-        case "remove":
-          if (key.length < 1) {
-            throw new Error(`Key is required for REMOVE operation`);
-          }
-
-          for (const k of key) {
-            patches.push({
-              op,
-              path: `/data/${capabilityName}-${k}`,
-            });
-          }
-          break;
+        return;
       }
 
-      const result = await this._coreV1API.patchNamespacedSecret(
-        this._name,
-        namespace,
-        patches,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        options,
-      );
+      if (op === "remove") {
+        if (key.length < 1) {
+          throw new Error(`Key is required for REMOVE operation`);
+        }
 
-      this.handleSecret(result.body);
+        for (const k of key) {
+          const path = `/data/${capabilityName}-${k}`;
+          const cacheIdx = [op, path].join(":");
+
+          // Add the operation to the cache
+          sendCache[cacheIdx] = { op, path };
+        }
+
+        return;
+      }
+
+      // If we get here, the operation is not supported
+      throw new Error(`Unsupported operation: ${op}`);
     };
+
+    // Send the cached updates to the cluster
+    const flushCache = async () => {
+      const options = { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } };
+      const indexes = Object.keys(sendCache);
+      const payload = Object.values(sendCache);
+
+      // Loop over each key in the cache and delete it to avoid collisions with other sender calls
+      for (const idx of indexes) {
+        delete sendCache[idx];
+      }
+
+      try {
+        await this._coreV1API.patchNamespacedSecret(
+          this._name,
+          namespace,
+          payload,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          options,
+        );
+      } catch (err) {
+        Log.error(err, "Pepr store update failure");
+
+        // On failure to update, re-add the operations to the cache to be retried
+        for (const idx of indexes) {
+          sendCache[idx] = payload[Number(idx)];
+        }
+      }
+    };
+
+    // Create a sender function for the capability to add/remove data from the store
+    const sender: DataSender = async (op: DataOp, key: string[], val?: string) => {
+      fillCache(op, key, val);
+    };
+
+    // Send any cached updates every debounceBackoff milliseconds
+    setInterval(() => {
+      if (Object.keys(sendCache).length > 0) {
+        Log.debug(sendCache, "Sending updates to Pepr store");
+        flushCache();
+      }
+    }, debounceBackoff);
 
     return sender;
   };

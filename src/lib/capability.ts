@@ -47,6 +47,7 @@ export class Capability implements CapabilityCfg {
     removeItem: this._store.removeItem,
     setItem: this._store.setItem,
     subscribe: this._store.subscribe,
+    onReady: this._store.onReady,
   };
 
   get bindings(): Binding[] {

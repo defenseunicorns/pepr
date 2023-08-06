@@ -6,7 +6,7 @@ import Log from "./logger";
 
 export type DataOp = "add" | "remove";
 export type DataStore = Record<string, string>;
-export type DataSender = (op: DataOp, keys: string[], value?: string) => Promise<void>;
+export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
 export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
@@ -18,15 +18,15 @@ export interface PeprStore {
   /**
    * Removes all key/value pairs, if there are any.
    */
-  clear(): Promise<void>;
+  clear(): void;
   /**
    * Removes the key/value pair with the given key, if a key/value pair with the given key exists.
    */
-  removeItem(key: string): Promise<void>;
+  removeItem(key: string): void;
   /**
    * Sets the value of the pair identified by key to value, creating a new key/value pair if none existed for key previously.
    */
-  setItem(key: string, value: string): Promise<void>;
+  setItem(key: string, value: string): void;
 
   /**
    * Subscribe to changes in the store. This API behaves similarly to the [Svelte Store API](https://vercel.com/docs/beginner-sveltekit/svelte-stores#using-the-store).
@@ -35,6 +35,11 @@ export interface PeprStore {
    * @returns A function to unsubscribe from the listener.
    */
   subscribe(listener: DataReceiver): Unsubscribe;
+
+  /**
+   * Register a function to be called when the store is ready.
+   */
+  onReady(callback: DataReceiver): void;
 }
 
 /**
@@ -51,6 +56,8 @@ export class Storage implements PeprStore {
 
   private _subscriberId = 0;
 
+  private _readyHandlers: DataReceiver[] = [];
+
   constructor() {}
 
   registerSender = (send: DataSender) => {
@@ -60,6 +67,8 @@ export class Storage implements PeprStore {
   receive: DataReceiver = (data: DataStore) => {
     Log.debug(data, `Pepr store data received`);
     this._store = data || {};
+
+    this._onReady();
 
     // Notify all subscribers
     for (const idx in this._subscribers) {
@@ -73,22 +82,26 @@ export class Storage implements PeprStore {
     return this._store[key] || null;
   };
 
-  clear = async () => {
-    await this._dispatchUpdate("remove", Object.keys(this._store));
+  clear = () => {
+    this._dispatchUpdate("remove", Object.keys(this._store));
   };
 
-  removeItem = async (key: string) => {
-    await this._dispatchUpdate("remove", [key]);
+  removeItem = (key: string) => {
+    this._dispatchUpdate("remove", [key]);
   };
 
-  setItem = async (key: string, value: string) => {
-    await this._dispatchUpdate("add", [key], value);
+  setItem = (key: string, value: string) => {
+    this._dispatchUpdate("add", [key], value);
   };
 
   subscribe = (subscriber: DataReceiver) => {
     const idx = this._subscriberId++;
     this._subscribers[idx] = subscriber;
     return () => this.unsubscribe(idx);
+  };
+
+  onReady = (callback: DataReceiver) => {
+    this._readyHandlers.push(callback);
   };
 
   /**
@@ -99,13 +112,23 @@ export class Storage implements PeprStore {
     delete this._subscribers[idx];
   };
 
+  private _onReady = () => {
+    // Notify all ready handlers with a clone of the store
+    for (const handler of this._readyHandlers) {
+      handler(clone(this._store));
+    }
+
+    // Make this a noop so that it can't be called again
+    this._onReady = () => {};
+  };
+
   /**
    * Dispatch an update to the store and notify all subscribers.
    * @param  op - The type of operation to perform.
    * @param  keys - The keys to update.
    * @param  [value] - The new value.
    */
-  private async _dispatchUpdate(op: DataOp, keys: string[], value?: string) {
-    await this._send(op, keys, value);
+  private _dispatchUpdate(op: DataOp, keys: string[], value?: string) {
+    this._send(op, keys, value);
   }
 }

@@ -22,6 +22,21 @@ export const HelloPepr = new Capability({
 // Use the 'When' function to create a new Capability Action, 'Store' to persist data
 const { When, Store } = HelloPepr;
 
+// // This would run exactly one time once the store is ready
+// Store.onReady(data => {
+//   Log.info(data, "Pepr Store Ready");
+// });
+
+// Store.subscribe(data => {
+//   Log.info(data, "Pepr Store Update");
+//   // wait a random amount of time and then generate a random string key and value
+//   setTimeout(() => {
+//     const key = Math.random().toString(36).substring(7);
+//     const value = Math.random().toString(36).substring(7);
+//     Store.setItem(key, value);
+//   }, Math.random() * 1000);
+// });
+
 /**
  * ---------------------------------------------------------------------------------------------------
  *                                   CAPABILITY ACTION (Namespace)                                   *
@@ -50,13 +65,13 @@ When(a.Namespace)
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
-  .Mutate(async request => {
+  .Mutate(request => {
     request
       .SetLabel("pepr", "was-here")
       .SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Use the Store to persist data between requests and Pepr controller pods
-    await Store.setItem("example-1", "was-here");
+    Store.setItem("example-1", "was-here");
 
     Store.setItem("example-1-data", JSON.stringify(request.Raw.data));
   });
