@@ -6,6 +6,14 @@ import { GroupVersionKind } from "./types";
 
 export const gvkMap: Record<string, GroupVersionKind> = {
   /**
+   * The Pepr Store is a key-value data store that can be used to persist data that should be shared
+   */
+  PeprStore: {
+    kind: "PeprStore",
+    version: "v1",
+    group: "pepr.dev",
+  },
+  /**
    * Represents a K8s ConfigMap resource.
    * ConfigMap holds configuration data for pods to consume.
    * @see {@link https://kubernetes.io/docs/concepts/configuration/configmap/}

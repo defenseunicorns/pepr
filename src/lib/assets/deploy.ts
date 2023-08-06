@@ -13,10 +13,12 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 
 import { Assets } from ".";
+import { fetch } from "../fetch";
 import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
+import { peprStoreCRD, name as peprStoreName } from "./store";
 import { webhookConfig } from "./webhooks";
 
 export async function deploy(assets: Assets, webhookTimeout?: number) {
@@ -67,6 +69,53 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
       Log.info("Removing and re-creating validating webhook");
       await admissionApi.deleteValidatingWebhookConfiguration(validateWebhook.metadata?.name ?? "");
       await admissionApi.createValidatingWebhookConfiguration(validateWebhook);
+    }
+  }
+
+  const storeCRD = peprStoreCRD();
+
+  Log.info("Creating store CRD");
+
+  const headers = { "Content-Type": "application/json" };
+  const server = kubeConfig.getCurrentCluster()?.server ?? "";
+
+  const baseURL = `${server}/apis/apiextensions.k8s.io/v1/customresourcedefinitions`;
+  const crdURL = `${baseURL}/${peprStoreName}`;
+
+  const opts = {
+    url: baseURL,
+    headers,
+  };
+  kubeConfig.applyToRequest(opts);
+
+  // Attempt to create the CRD
+  const createResponse = await fetch(baseURL, {
+    method: "POST",
+    body: JSON.stringify(storeCRD),
+    headers,
+  });
+
+  if (!createResponse.ok) {
+    Log.debug(createResponse);
+    Log.info("Removing and re-creating the Pepr Store CRD");
+
+    const deleteResponse = await fetch(crdURL, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!deleteResponse.ok) {
+      Log.debug(deleteResponse);
+    }
+
+    const secondCreate = await fetch(baseURL, {
+      method: "POST",
+      body: JSON.stringify(storeCRD),
+      headers,
+    });
+
+    if (!secondCreate.ok) {
+      Log.error(secondCreate, "Failed to create the Pepr Store CRD");
     }
   }
 
