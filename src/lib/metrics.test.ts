@@ -47,7 +47,14 @@ test("observeEnd updates summary", async t => {
   await new Promise(resolve => setTimeout(resolve, 100)); // Delay to simulate operation
   collector.observeEnd(startTime);
 
+  await new Promise(resolve => setTimeout(resolve, 100)); // Delay to simulate operation
+  collector.observeEnd(startTime, "Validate");
+  collector.observeEnd(startTime, "Validate");
+
   const metrics = await collector.getMetrics();
-  t.regex(metrics, /testPrefix_summary_count 1/);
-  t.regex(metrics, /testPrefix_summary_sum \d+\.\d+/);
+  t.regex(metrics, /testPrefix_Mutate_count 1/);
+  t.regex(metrics, /testPrefix_Mutate_sum \d+\.\d+/);
+
+  t.regex(metrics, /testPrefix_Validate_count 2/);
+  t.regex(metrics, /testPrefix_Validate_sum \d+\.\d+/);
 });
