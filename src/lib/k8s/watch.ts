@@ -6,7 +6,7 @@ import { clone } from "ramda";
 
 import Log from "../logger";
 import { GenericClass, WatchAction, WatchPhase } from "../types";
-import { Filters, QueryParams, pathBuilder } from "./raw";
+import { Filters, pathBuilder, queryBuilder } from "./raw";
 
 export interface WatchOptions extends Filters {
   phases?: WatchPhase[];
@@ -35,22 +35,17 @@ export const SimpleWatch = <T extends GenericClass>(model: T, opts: WatchOptions
     // Remove the name from the options so it doesn't get added to the path
     delete opts.name;
 
-    const queryParams: QueryParams = {
-      allowWatchBookmarks: true,
-    };
+    // Build the path and query params for the resource
+    const path = pathBuilder(model, opts);
+    const queryParams = queryBuilder(opts);
 
-    // If a label selector is specified, add it to the query params
-    if (opts.labelSelector) {
-      queryParams.labelSelector = opts.labelSelector;
-    }
+    // Allow bookmarks to be used for the watch
+    queryParams.allowWatchBookmarks = true;
 
     // If a name is specified, add it to the query params
     if (name) {
       queryParams.fieldSelector = `metadata.name=${name}`;
     }
-
-    // Build the path to the resource
-    const path = pathBuilder(model, opts);
 
     Log.info(`Watching ${path}`, prefix);
 

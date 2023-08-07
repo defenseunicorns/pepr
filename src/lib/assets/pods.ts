@@ -7,13 +7,11 @@ import { Assets } from ".";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
-export function namespace(): V1Namespace {
-  return {
-    apiVersion: "v1",
-    kind: "Namespace",
-    metadata: { name: "pepr-system" },
-  };
-}
+export const namespace: V1Namespace = {
+  apiVersion: "v1",
+  kind: "Namespace",
+  metadata: { name: "pepr-system" },
+};
 
 export function watcher(assets: Assets, hash: string) {
   const { name, image, capabilities } = assets;

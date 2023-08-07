@@ -10,6 +10,7 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
 import { webhookConfig } from "./webhooks";
+import { peprStoreCRD } from "./store";
 
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
@@ -52,7 +53,7 @@ export async function allYaml(assets: Assets) {
   const watchDeployment = watcher(assets, hash);
 
   const resources = [
-    namespace(),
+    namespace,
     clusterRole(name),
     clusterRoleBinding(name),
     serviceAccount(name),
@@ -62,6 +63,7 @@ export async function allYaml(assets: Assets) {
     service(name),
     watcherService(name),
     moduleSecret(name, code, hash),
+    peprStoreCRD,
   ];
 
   if (mutateWebhook) {

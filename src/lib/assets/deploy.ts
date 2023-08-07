@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import {
-  AdmissionregistrationV1Api as AdmissionRegV1API,
-  AppsV1Api,
-  CoreV1Api,
-  HttpError,
-  KubeConfig,
-  RbacAuthorizationV1Api,
-} from "@kubernetes/client-node";
+import { AppsV1Api, CoreV1Api, HttpError, KubeConfig, RbacAuthorizationV1Api } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 
 import { Assets } from ".";
-import { fetch } from "../fetch";
+import { Kube } from "../k8s/raw";
+import {
+  CustomResourceDefinition,
+  MutatingWebhookConfiguration,
+  Namespace,
+  ValidatingWebhookConfiguration,
+} from "../k8s/upstream";
 import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
-import { peprStoreCRD, name as peprStoreName } from "./store";
+import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
 
 export async function deploy(assets: Assets, webhookTimeout?: number) {
@@ -32,92 +31,32 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
   kubeConfig.loadFromDefault();
 
   const coreV1Api = kubeConfig.makeApiClient(CoreV1Api);
-  const admissionApi = kubeConfig.makeApiClient(AdmissionRegV1API);
 
-  const ns = namespace();
+  Log.SetLogLevel("debug");
+  Log.info("Creating namespace");
   try {
-    Log.info("Checking for namespace");
-    await coreV1Api.readNamespace(peprNS);
+    await Kube(Namespace).Create(namespace);
   } catch (e) {
-    Log.debug(e instanceof HttpError ? e.body : e);
-    Log.info("Creating namespace");
-    await coreV1Api.createNamespace(ns);
+    // Silently ignore the error if the namespace already exists so we don't have to destroy the whole namespace
+    Log.debug(e, "Failed to create namespace");
   }
 
   // Create the mutating webhook configuration if it is needed
   const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
   if (mutateWebhook) {
-    try {
-      Log.info("Creating mutating webhook");
-      await admissionApi.createMutatingWebhookConfiguration(mutateWebhook);
-    } catch (e) {
-      Log.debug(e instanceof HttpError ? e.body : e);
-      Log.info("Removing and re-creating mutating webhook");
-      await admissionApi.deleteMutatingWebhookConfiguration(mutateWebhook.metadata?.name ?? "");
-      await admissionApi.createMutatingWebhookConfiguration(mutateWebhook);
-    }
+    Log.info("Creating or replacing mutating webhook");
+    await Kube(MutatingWebhookConfiguration).CreateOrReplace(mutateWebhook);
   }
 
   // Create the validating webhook configuration if it is needed
   const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
   if (validateWebhook) {
-    try {
-      Log.info("Creating validating webhook");
-      await admissionApi.createValidatingWebhookConfiguration(validateWebhook);
-    } catch (e) {
-      Log.debug(e instanceof HttpError ? e.body : e);
-      Log.info("Removing and re-creating validating webhook");
-      await admissionApi.deleteValidatingWebhookConfiguration(validateWebhook.metadata?.name ?? "");
-      await admissionApi.createValidatingWebhookConfiguration(validateWebhook);
-    }
+    Log.info("Creating or replacing validating webhook");
+    await Kube(ValidatingWebhookConfiguration).CreateOrReplace(validateWebhook);
   }
 
-  const storeCRD = peprStoreCRD();
-
-  Log.info("Creating store CRD");
-
-  const headers = { "Content-Type": "application/json" };
-  const server = kubeConfig.getCurrentCluster()?.server ?? "";
-
-  const baseURL = `${server}/apis/apiextensions.k8s.io/v1/customresourcedefinitions`;
-  const crdURL = `${baseURL}/${peprStoreName}`;
-
-  const opts = {
-    url: baseURL,
-    headers,
-  };
-  kubeConfig.applyToRequest(opts);
-
-  // Attempt to create the CRD
-  const createResponse = await fetch(baseURL, {
-    method: "POST",
-    body: JSON.stringify(storeCRD),
-    headers,
-  });
-
-  if (!createResponse.ok) {
-    Log.debug(createResponse);
-    Log.info("Removing and re-creating the Pepr Store CRD");
-
-    const deleteResponse = await fetch(crdURL, {
-      method: "DELETE",
-      headers,
-    });
-
-    if (!deleteResponse.ok) {
-      Log.debug(deleteResponse);
-    }
-
-    const secondCreate = await fetch(baseURL, {
-      method: "POST",
-      body: JSON.stringify(storeCRD),
-      headers,
-    });
-
-    if (!secondCreate.ok) {
-      Log.error(secondCreate, "Failed to create the Pepr Store CRD");
-    }
-  }
+  Log.info("Creating or replacing Pepr Store CRD");
+  await Kube(CustomResourceDefinition).CreateOrReplace(peprStoreCRD);
 
   // If a host is specified, we don't need to deploy the rest of the resources
   if (host) {

@@ -1,25 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { CoreV1Api, HttpError, KubeConfig, PatchUtils, V1Secret } from "@kubernetes/client-node";
-import { StatusCodes } from "http-status-codes";
-import { map, startsWith } from "ramda";
+import { startsWith } from "ramda";
 
 import { Operation } from "fast-json-patch";
 import { Capability } from "../capability";
-import { a } from "../k8s";
+import { PeprStore } from "../k8s";
+import { Kube } from "../k8s/raw";
 import { SimpleWatch, WatchOptions } from "../k8s/watch";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { ModuleConfig } from "../types";
-import { base64Decode, base64Encode } from "../utils";
 
 const namespace = "pepr-system";
 const debounceBackoff = 5000;
 
 export class PeprControllerStore {
   private _name: string;
-  private _coreV1API: CoreV1Api;
   private _stores: Record<string, Storage> = {};
   private _sendDebounce: NodeJS.Timeout | undefined;
 
@@ -31,29 +28,27 @@ export class PeprControllerStore {
     // Setup Pepr State bindings
     this._name = `pepr-${config.uuid}-store`;
 
-    // Deploy the resources using the k8s API
-    const kubeConfig = new KubeConfig();
-    kubeConfig.loadFromDefault();
-
-    this._coreV1API = kubeConfig.makeApiClient(CoreV1Api);
-
-    // Ensure the secret exists
-    this._coreV1API.readNamespacedSecret(this._name, namespace).catch(this.handleMissingSecret);
-
     // Establish the store for each capability
     for (const { name, _registerStore } of capabilities) {
       // Register the store with the capability
       const { store } = _registerStore();
 
       // Bind the store sender to the capability
-      store.registerSender(this.sendData(name));
+      store.registerSender(this.send(name));
 
       // Store the storage instance
       this._stores[name] = store;
     }
 
-    // Setup the watch
-    this.setupWatch();
+    // Ensure the resource exists
+    Kube(PeprStore)
+      .InNamespace(namespace)
+      .WithName(this._name)
+      .Get()
+      // If the get succeeds, setup the watch
+      .then(this.setupWatch)
+      // Otherwise, create the resource
+      .catch(this.createStoreResource);
   }
 
   private setupWatch = () => {
@@ -62,16 +57,16 @@ export class PeprControllerStore {
       name: this._name,
     };
 
-    SimpleWatch(a.Secret, watchOpts).Start(this.handleSecret);
+    SimpleWatch(PeprStore, watchOpts).Start(this.receive);
   };
 
-  private handleSecret = (secret: V1Secret) => {
-    Log.debug(secret, "Pepr Store update");
+  private receive = (store: PeprStore) => {
+    Log.debug(store, "Pepr Store update");
 
     // Wrap the update in a debounced function
     const debounced = () => {
       // Base64 decode the data
-      const data: DataStore = map(base64Decode, secret.data || {});
+      const data: DataStore = store.data || {};
 
       // Loop over each stored capability
       for (const name of Object.keys(this._stores)) {
@@ -106,14 +101,14 @@ export class PeprControllerStore {
     this._sendDebounce = setTimeout(debounced, debounceBackoff);
   };
 
-  private sendData = (capabilityName: string) => {
+  private send = (capabilityName: string) => {
     const sendCache: Record<string, Operation> = {};
 
     // Load the sendCache with patch operations
     const fillCache = (op: DataOp, key: string[], val?: string) => {
       if (op === "add") {
         const path = `/data/${capabilityName}-${key}`;
-        const value = base64Encode(val || "");
+        const value = val || "";
         const cacheIdx = [op, path, value].join(":");
 
         // Add the operation to the cache
@@ -144,7 +139,6 @@ export class PeprControllerStore {
 
     // Send the cached updates to the cluster
     const flushCache = async () => {
-      const options = { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } };
       const indexes = Object.keys(sendCache);
       const payload = Object.values(sendCache);
 
@@ -154,17 +148,7 @@ export class PeprControllerStore {
       }
 
       try {
-        await this._coreV1API.patchNamespacedSecret(
-          this._name,
-          namespace,
-          payload,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          options,
-        );
+        await Kube(PeprStore).InNamespace(namespace).WithName(this._name).Patch(payload);
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
@@ -191,27 +175,27 @@ export class PeprControllerStore {
     return sender;
   };
 
-  private handleMissingSecret = async (err: HttpError) => {
-    // If the secret is not found, create it
-    if (err.statusCode === StatusCodes.NOT_FOUND) {
-      Log.info(`Pepr store secret not found, creating...`);
+  private createStoreResource = async () => {
+    Log.info(`Pepr store not found, creating...`);
 
-      const secret: V1Secret = {
-        apiVersion: "v1",
-        kind: "Secret",
+    try {
+      await Kube(PeprStore).Create({
+        apiVersion: "pepr.dev/v1",
+        kind: "PeprStore",
         metadata: {
           name: this._name,
           namespace,
         },
         data: {
           // JSON Patch will die if the data is empty, so we need to add a placeholder
-          __pepr_do_not_delete__: "cGxhY2Vob2xkZXI=",
+          __pepr_do_not_delete__: "k-thx-bye",
         },
-      };
+      });
 
-      await this._coreV1API.createNamespacedSecret(namespace, secret);
-    } else {
-      Log.error(err, "Pepr store init failure");
+      // Now that the resource exists, setup the watch
+      this.setupWatch();
+    } catch (err) {
+      Log.error(err, "Failed to create Pepr store");
     }
   };
 }
