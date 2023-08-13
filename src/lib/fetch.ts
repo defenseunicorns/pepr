@@ -30,7 +30,7 @@ export type FetchResponse<T> = {
 export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Promise<FetchResponse<T>> {
   let data = undefined as unknown as T;
   try {
-    logger.debug(`Fetching ${url}`);
+    logger.debug(init, `Fetching ${url}`);
 
     const resp = await fetchRaw(url, init);
     const contentType = resp.headers.get("content-type") || "";

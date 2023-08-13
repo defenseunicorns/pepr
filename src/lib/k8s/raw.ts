@@ -3,14 +3,24 @@
 
 import { KubeConfig, PatchUtils } from "@kubernetes/client-node";
 import { Operation } from "fast-json-patch";
+import type request from "request";
 
 import { StatusCodes } from "http-status-codes";
-import { Agent, AgentOptions } from "https";
+import { Agent } from "https";
 import { fetch } from "../fetch";
 import Log from "../logger";
 import { GenericClass } from "../types";
 import { modelToGroupVersionKind } from "./kinds";
 import { GroupVersionKind, KubernetesObject } from "./types";
+
+type FetchMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+
+interface FetchOpts {
+  agent: Agent;
+  headers?: Record<string, string>;
+  method?: FetchMethods;
+  body?: string;
+}
 
 export interface Filters {
   kindOverride?: GroupVersionKind;
@@ -147,7 +157,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     }
   }
 
-  async function kubeExec<R = K>(model: T, filters: Filters, method: "GET" | "POST" | "PUT" | "DELETE", payload?: K) {
+  async function kubeExec<R = K>(model: T, filters: Filters, method: FetchMethods, payload?: K) {
     const path = pathBuilder(model, filters, method === "POST");
     const { url, opts } = await kubeCfg(path);
 
@@ -176,11 +186,26 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     return kubeExec(model, filters, "POST", payload);
   }
 
+  /**
+   * Delete the resource if it exists.
+   * @param payload
+   */
   async function Delete(payload?: K): Promise<void> {
     if (payload) {
       syncFilters(payload);
     }
-    return kubeExec<void>(model, filters, "DELETE");
+
+    try {
+      // Try to delete the resource
+      await kubeExec<void>(model, filters, "DELETE");
+    } catch (e) {
+      // If the resource doesn't exist, ignore the error
+      if (e.status === StatusCodes.NOT_FOUND) {
+        return;
+      }
+
+      throw e;
+    }
   }
 
   async function Replace(payload: K): Promise<K> {
@@ -192,6 +217,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     const path = pathBuilder(model, filters);
     const { url, opts } = await kubeCfg(path);
 
+    opts.headers = opts.headers || {};
     opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_JSON_PATCH;
     opts.method = "PATCH";
 
@@ -237,6 +263,17 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   return { InNamespace, ...withFilters };
 }
 
+/**
+ * Sets up the kubeconfig and https agent for a request
+ *
+ * A few notes:
+ * - The kubeconfig is loaded from the default location, and can check for in-cluster config
+ * - We have to create an agent to handle the TLS connection (for the custom CA + mTLS in some cases)
+ * - The K8s lib uses request instead of node-fetch today so the object is slightly different
+ *
+ * @param path
+ * @returns
+ */
 async function kubeCfg(path: string) {
   const kubeConfig = new KubeConfig();
   kubeConfig.loadFromDefault();
@@ -246,14 +283,23 @@ async function kubeCfg(path: string) {
     throw new Error("No currently active cluster");
   }
 
-  const agentOpts: AgentOptions = {};
-  await kubeConfig.applyToRequest(agentOpts as { url: string });
+  // Create the empty options object for the k8s lib
+  const k8sOpts: request.Options = {
+    headers: {
+      // Set the default content type to JSON
+      "Content-Type": "application/json",
+    },
+    url: cluster.server + path,
+  };
 
-  const agent = new Agent(agentOpts);
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const url = cluster.server + path;
-  const method = "GET";
-  const body = "";
+  // Setup the TLS options & auth headers, as needed
+  await kubeConfig.applyToRequest(k8sOpts);
 
-  return { url, opts: { agent, headers, method, body } };
+  // Create the tlS agent for the request
+  const agent = new Agent(k8sOpts);
+
+  const { headers, url } = k8sOpts;
+  const opts: FetchOpts = { agent, headers };
+
+  return { url, opts };
 }
