@@ -67,7 +67,7 @@ export function walkthrough(): Promise<InitOptions> {
 export async function confirm(
   dirName: string,
   packageJSON: { path: string; print: string },
-  peprTSPath: string
+  peprTSPath: string,
 ) {
   console.log(`
   To be generated:

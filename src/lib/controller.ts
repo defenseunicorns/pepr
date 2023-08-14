@@ -24,7 +24,7 @@ export class Controller {
     private readonly config: ModuleConfig,
     private readonly capabilities: Capability[],
     private readonly beforeHook?: (req: Request) => void,
-    private readonly afterHook?: (res: Response) => void
+    private readonly afterHook?: (res: Response) => void,
   ) {
     // Middleware for logging requests
     this.app.use(this.logger);
@@ -84,7 +84,7 @@ export class Controller {
     server.on("error", (e: { code: string }) => {
       if (e.code === "EADDRINUSE") {
         console.log(
-          `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`
+          `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`,
         );
         setTimeout(() => {
           server.close();

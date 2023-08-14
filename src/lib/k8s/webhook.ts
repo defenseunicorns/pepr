@@ -52,7 +52,10 @@ export class Webhook {
     return this._apiToken;
   }
 
-  constructor(private readonly config: ModuleConfig, private readonly host?: string) {
+  constructor(
+    private readonly config: ModuleConfig,
+    private readonly host?: string,
+  ) {
     this.name = `pepr-${config.uuid}`;
 
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;

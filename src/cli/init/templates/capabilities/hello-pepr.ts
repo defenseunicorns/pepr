@@ -53,7 +53,7 @@ When(a.ConfigMap)
   .Then(request =>
     request
       .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too")
+      .SetAnnotation("pepr.dev", "annotations-work-too"),
   );
 
 /**
@@ -201,7 +201,7 @@ When(a.ConfigMap)
   .Then(async change => {
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev"
+      "https://api.chucknorris.io/jokes/random?category=dev",
     );
 
     // Instead, check the `response.ok` field
