@@ -40,15 +40,19 @@ export class PeprControllerStore {
       this._stores[name] = store;
     }
 
-    // Ensure the resource exists
-    Kube(PeprStore)
-      .InNamespace(namespace)
-      .WithName(this._name)
-      .Get()
-      // If the get succeeds, setup the watch
-      .then(this.setupWatch)
-      // Otherwise, create the resource
-      .catch(this.createStoreResource);
+    // Add a jitter to the Store creation to avoid collisions
+    setTimeout(
+      () =>
+        Kube(PeprStore)
+          .InNamespace(namespace)
+          .WithName(this._name)
+          .Get()
+          // If the get succeeds, setup the watch
+          .then(this.setupWatch)
+          // Otherwise, create the resource
+          .catch(this.createStoreResource),
+      Math.random() * 3000,
+    );
   }
 
   private setupWatch = () => {
@@ -175,8 +179,9 @@ export class PeprControllerStore {
     return sender;
   };
 
-  private createStoreResource = async () => {
+  private createStoreResource = async (e: unknown) => {
     Log.info(`Pepr store not found, creating...`);
+    Log.debug(e);
 
     try {
       await Kube(PeprStore).Create({

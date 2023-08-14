@@ -65,6 +65,13 @@ export function watcher(assets: Assets, hash: string) {
               image,
               imagePullPolicy: "IfNotPresent",
               command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
+              readinessProbe: {
+                httpGet: {
+                  path: "/healthz",
+                  port: 3000,
+                  scheme: "HTTPS",
+                },
+              },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
@@ -158,6 +165,13 @@ export function deployment(assets: Assets, hash: string): V1Deployment {
               image,
               imagePullPolicy: "IfNotPresent",
               command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
+              readinessProbe: {
+                httpGet: {
+                  path: "/healthz",
+                  port: 3000,
+                  scheme: "HTTPS",
+                },
+              },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",

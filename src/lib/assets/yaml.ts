@@ -8,7 +8,7 @@ import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
-import { clusterRole, clusterRoleBinding, serviceAccount } from "./rbac";
+import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { peprStoreCRD } from "./store";
 
@@ -64,6 +64,8 @@ export async function allYaml(assets: Assets) {
     watcherService(name),
     moduleSecret(name, code, hash),
     peprStoreCRD,
+    storeRole(name),
+    storeRoleBinding(name),
   ];
 
   if (mutateWebhook) {

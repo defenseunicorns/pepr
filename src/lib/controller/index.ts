@@ -13,9 +13,7 @@ import { mutateProcessor } from "../mutate-processor";
 import { ModuleConfig } from "../types";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
-
-// If the hostname is pepr-static-test-watcher-0, then we are running in watch mode
-const isWatchMode = process.env.PEPR_WATCH_MODE === "true";
+import { isWatchMode } from "../k8s";
 
 export class Controller {
   private readonly _app = express();

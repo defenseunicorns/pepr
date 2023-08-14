@@ -20,8 +20,8 @@ const testDir = "pepr-test-module";
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
-  "hello-pepr: V1ConfigMap Binding created",
-  "hello-pepr: V1ConfigMap Binding action created",
+  "hello-pepr: V1ConfigMap Mutate CapabilityAction Created",
+  "hello-pepr: V1ConfigMap Validate CapabilityAction Created",
   "Server listening on port 3000",
 ];
 

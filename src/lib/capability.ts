@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { modelToGroupVersionKind } from "./k8s/index";
+import { pickBy } from "ramda";
+
+import { isWatchMode, modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
 import { PeprStore, Storage } from "./storage";
@@ -126,45 +128,58 @@ export class Capability implements CapabilityCfg {
 
     const prefix = `${this._name}: ${model.name}`;
 
-    Log.info(`Binding created`, prefix);
+    const isNotEmpty = (value: object) => Object.keys(value).length > 0;
+    const log = (message: string, cbString: string) => {
+      const filteredObj = pickBy(isNotEmpty, binding.filters);
 
-    const Validate = (cb: CapabilityValidateAction<T>): ValidateActionChain<T> => {
-      Log.info(`Binding action created`, prefix);
-      Log.debug(cb.toString(), prefix);
-      // Push the binding to the list of bindings for this capability as a new BindingAction
-      // with the callback function to preserve
-      this._bindings.push({
-        ...binding,
-        isValidate: true,
-        validateCallback: cb,
-      });
+      Log.info(`${message} Created: [${binding.event}]`, prefix);
+      Log.info(filteredObj, prefix);
+      Log.debug(cbString, prefix);
+    };
+
+    const Validate = (validateCallback: CapabilityValidateAction<T>): ValidateActionChain<T> => {
+      if (!isWatchMode) {
+        log("Validate CapabilityAction", validateCallback.toString());
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        this._bindings.push({
+          ...binding,
+          isValidate: true,
+          validateCallback,
+        });
+      }
+
       return { Watch };
     };
 
-    const Mutate = (cb: CapabilityMutateAction<T>): MutateActionChain<T> => {
-      Log.info(`Binding action created`, prefix);
-      Log.debug(cb.toString(), prefix);
-      // Push the binding to the list of bindings for this capability as a new BindingAction
-      // with the callback function to preserve
-      this._bindings.push({
-        ...binding,
-        isMutate: true,
-        mutateCallback: cb,
-      });
+    const Mutate = (mutateCallback: CapabilityMutateAction<T>): MutateActionChain<T> => {
+      if (!isWatchMode) {
+        log("Mutate CapabilityAction", mutateCallback.toString());
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        this._bindings.push({
+          ...binding,
+          isMutate: true,
+          mutateCallback,
+        });
+      }
 
       // Now only allow adding actions to the same binding
       return { Watch, Validate };
     };
 
-    const Watch = (cb: CapabilityWatchAction<T>): void => {
-      Log.info(`Binding action created`, prefix);
-      Log.debug(cb.toString(), prefix);
+    const Watch = (watchCallback: CapabilityWatchAction<T>): void => {
+      if (isWatchMode) {
+        log("Watch CapabilityAction", watchCallback.toString());
 
-      this._bindings.push({
-        ...binding,
-        isWatch: true,
-        watchCallback: cb,
-      });
+        this._bindings.push({
+          ...binding,
+          isWatch: true,
+          watchCallback,
+        });
+      }
     };
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
