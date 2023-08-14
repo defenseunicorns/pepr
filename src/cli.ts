@@ -17,7 +17,7 @@ import { Log } from "./lib";
 if (process.env.npm_lifecycle_event !== "npx") {
   Log.error(
     "Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.",
-    "npx required"
+    "npx required",
   );
   process.exit(1);
 }

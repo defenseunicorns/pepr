@@ -16,7 +16,7 @@ export async function processor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string
+  parentPrefix: string,
 ): Promise<Response> {
   const wrapped = new PeprRequest(req);
   const response: Response = {

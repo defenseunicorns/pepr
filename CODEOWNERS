@@ -1,6 +1,6 @@
-* @jeff-mccoy @bdw617 @rjferguson21
+* @jeff-mccoy @bdw617 @rjferguson21 @cmwylie19
 
 # Additional privileged files
-/CODEOWNERS @jeff-mccoy @runyontr
-/cosign.pub @jeff-mccoy @runyontr
-/LICENSE @jeff-mccoy @runyontr
+/CODEOWNERS @jeff-mccoy @runyontr @austenbryan
+/cosign.pub @jeff-mccoy @runyontr @austenbryan
+/LICENSE @jeff-mccoy @runyontr @austenbryan
