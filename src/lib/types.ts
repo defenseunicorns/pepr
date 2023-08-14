@@ -215,5 +215,5 @@ export type BindToActionOrSet<T extends GenericClass> = BindToAction<T> & {
 };
 
 export type CapabilityAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprRequest<K>
+  req: PeprRequest<K>,
 ) => Promise<void> | void | Promise<PeprRequest<K>> | PeprRequest<K>;
