@@ -6,7 +6,7 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 
 import { Assets } from ".";
-import { Kube } from "../k8s/raw";
+import { Kube } from "../k8s/fluent";
 import {
   CustomResourceDefinition,
   Deployment,
@@ -41,7 +41,7 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
 
   // Create the mutating webhook configuration if it is needed
   const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
-  await Kube(MutatingWebhookConfiguration).WithName(name).Delete();
+  await Kube(MutatingWebhookConfiguration).Delete(name);
   if (mutateWebhook) {
     Log.info("Creating or replacing mutating webhook");
     await Kube(MutatingWebhookConfiguration).CreateOrReplace(mutateWebhook);
@@ -51,7 +51,7 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
 
   // Create the validating webhook configuration if it is needed
   const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
-  await Kube(ValidatingWebhookConfiguration).WithName(name).Delete();
+  await Kube(ValidatingWebhookConfiguration).Delete(name);
   if (validateWebhook) {
     Log.info("Creating or replacing validating webhook");
     await Kube(ValidatingWebhookConfiguration).CreateOrReplace(validateWebhook);

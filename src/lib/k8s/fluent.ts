@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { KubeConfig, PatchUtils } from "@kubernetes/client-node";
-import { Operation } from "fast-json-patch";
+import { Operation, compare } from "fast-json-patch";
 import type request from "request";
 
 import { StatusCodes } from "http-status-codes";
@@ -11,7 +11,7 @@ import { fetch } from "../fetch";
 import Log from "../logger";
 import { GenericClass } from "../types";
 import { modelToGroupVersionKind } from "./kinds";
-import { GroupVersionKind, KubernetesObject } from "./types";
+import { GroupVersionKind, KubernetesListObject, KubernetesObject } from "./types";
 
 type FetchMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -70,7 +70,7 @@ export function queryBuilder(filters: Filters): QueryParams {
  * @param opts
  * @returns
  */
-export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, isCreate = false) {
+export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, excludeName = false) {
   const matchedKind = opts.kindOverride || modelToGroupVersionKind(model.name);
 
   // If the kind is not specified and the model is not a KubernetesObject, throw an error
@@ -95,8 +95,8 @@ export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, isC
   // Namespaced paths require a namespace prefix
   const namespace = opts.namespace ? `namespaces/${opts.namespace}` : "";
 
-  // Create operations don't have a name in the path
-  const name = isCreate ? "" : opts.name;
+  // Name should not be included in some paths
+  const name = excludeName ? "" : opts.name;
 
   // Build the complete path to the resource
   const path = [base, namespace, plural, name].filter(Boolean).join("/");
@@ -108,8 +108,9 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   model: T,
   filters: Filters = {},
 ) {
-  const actions = { Get, Create, Delete, Replace, CreateOrReplace, Patch };
-  const withFilters = { WithAnnotation, WithField, WithLabel, WithName, ...actions };
+  const filterActions = { Get, Delete };
+  const unfilteredActions = { Create, CreateOrReplace, Patch, Replace };
+  const withFilters = { WithAnnotation, WithField, WithLabel, ...filterActions };
 
   function InNamespace(namespaces: string) {
     if (filters.namespace) {
@@ -136,15 +137,6 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     filters.labels = filters.labels || {};
     filters.labels[key] = value;
     return withFilters;
-  }
-
-  function WithName(name: string) {
-    if (filters.name) {
-      throw new Error(`Name already specified: ${filters.name}`);
-    }
-
-    filters.name = name;
-    return actions;
   }
 
   function syncFilters(payload: K) {
@@ -177,22 +169,40 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     throw resp;
   }
 
-  async function Get(): Promise<K | K[]> {
-    return kubeExec<K | K[]>(model, filters, "GET");
+  async function Get(): Promise<KubernetesListObject<K>>;
+  async function Get(name: string): Promise<K>;
+  async function Get(name?: string) {
+    if (name) {
+      if (filters.name) {
+        throw new Error(`Name already specified: ${filters.name}`);
+      }
+      filters.name = name;
+    }
+
+    return kubeExec<K | KubernetesListObject<K>>(model, filters, "GET");
   }
 
-  async function Create(payload: K): Promise<K> {
-    syncFilters(payload);
-    return kubeExec(model, filters, "POST", payload);
+  /**
+   * Create the provided K8s resource or throw an error if it already exists.
+   *
+   * @param resource
+   * @returns
+   */
+  async function Create(resource: K): Promise<K> {
+    syncFilters(resource);
+    return kubeExec(model, filters, "POST", resource);
   }
 
   /**
    * Delete the resource if it exists.
-   * @param payload
+   *
+   * @param filter - the resource or resource name to delete
    */
-  async function Delete(payload?: K): Promise<void> {
-    if (payload) {
-      syncFilters(payload);
+  async function Delete(filter: K | string): Promise<void> {
+    if (typeof filter === "string") {
+      filters.name = filter;
+    } else {
+      syncFilters(filter);
     }
 
     try {
@@ -208,12 +218,31 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     }
   }
 
-  async function Replace(payload: K): Promise<K> {
-    syncFilters(payload);
-    return kubeExec(model, filters, "PUT", payload);
+  /**
+   * Replace the provided K8s resource or throw an error if it doesn't exist.
+   *
+   * @param resource
+   * @returns
+   */
+  async function Replace(resource: K): Promise<K> {
+    syncFilters(resource);
+    return kubeExec(model, filters, "PUT", resource);
   }
 
-  async function Patch(payload: Operation[]): Promise<K> {
+  /**
+   * Patch the provided K8s resource or throw an error if it doesn't exist.
+   *
+   * @param payload The patch operations or the original and updated resources
+   * @returns The patched resource
+   */
+  async function Patch(payload: Operation[] | { original: K; updated: K }): Promise<K> {
+    const isPatchOps = Array.isArray(payload);
+
+    // If this is not a patch operation, sync the filters from the original resource
+    if (!isPatchOps) {
+      syncFilters(payload.original);
+    }
+
     const path = pathBuilder(model, filters);
     const { url, opts } = await kubeCfg(path);
 
@@ -221,9 +250,23 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_JSON_PATCH;
     opts.method = "PATCH";
 
-    if (payload) {
-      opts.body = JSON.stringify(payload);
+    let operations: Operation[];
+
+    // If the payload is an array, assume it's a list of operations
+    if (Array.isArray(payload)) {
+      operations = payload;
+    } else {
+      // Otherwise, generate the operations from the original and updated resources
+      operations = compare(payload.original, payload.updated);
     }
+
+    // If there are no operations, throw an error
+    if (operations.length < 1) {
+      throw new Error("No operations specified");
+    }
+
+    // Add the operations to the request body
+    opts.body = JSON.stringify(payload);
 
     const resp = await fetch<K>(url, opts);
 
@@ -239,20 +282,20 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
    *
    * Note this will delete the resource if it exists and then create it.
    *
-   * @param payload
-   * @returns
+   * @param resource The resource to create or replace
+   * @returns The created or replaced resource
    */
-  async function CreateOrReplace(payload: K): Promise<K> {
+  async function CreateOrReplace(resource: K): Promise<K> {
     try {
       // First try to create the resource
-      const resp = await Create(payload);
+      const resp = await Create(resource);
       return resp;
     } catch (e) {
       // If the resource already exists, delete it and try again
       if (e.status === StatusCodes.CONFLICT) {
         Log.info("Resource already exists, deleting and re-creating");
-        await Delete(payload);
-        return Create(payload);
+        await Delete(resource);
+        return Create(resource);
       }
 
       // Otherwise, something else went wrong, re-throw the error
@@ -260,7 +303,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     }
   }
 
-  return { InNamespace, ...withFilters };
+  return { InNamespace, ...withFilters, ...unfilteredActions };
 }
 
 /**

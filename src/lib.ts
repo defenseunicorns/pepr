@@ -8,6 +8,7 @@ import Log from "./lib/logger";
 import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
+import { Kube } from "./lib/k8s/fluent";
 
 // Import type information for external packages
 import type * as K8sTypes from "@kubernetes/client-node";
@@ -20,6 +21,7 @@ export {
   PeprMutateRequest,
   PeprUtils,
   RegisterKind,
+  Kube,
   Capability,
   Log,
   R,

@@ -6,8 +6,8 @@ import { startsWith } from "ramda";
 import { Operation } from "fast-json-patch";
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
-import { Kube } from "../k8s/raw";
-import { SimpleWatch, WatchOptions } from "../k8s/watch";
+import { Kube } from "../k8s/fluent";
+import { ParallelWatch } from "../k8s/watch";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { ModuleConfig } from "../types";
@@ -45,8 +45,7 @@ export class PeprControllerStore {
       () =>
         Kube(PeprStore)
           .InNamespace(namespace)
-          .WithName(this._name)
-          .Get()
+          .Get(this._name)
           // If the get succeeds, setup the watch
           .then(this.setupWatch)
           // Otherwise, create the resource
@@ -55,14 +54,7 @@ export class PeprControllerStore {
     );
   }
 
-  private setupWatch = () => {
-    const watchOpts: WatchOptions = {
-      namespace,
-      name: this._name,
-    };
-
-    SimpleWatch(PeprStore, watchOpts).Start(this.receive);
-  };
+  private setupWatch = () => ParallelWatch(PeprStore, { namespace, name: this._name }).subscribe(this.receive);
 
   private receive = (store: PeprStore) => {
     Log.debug(store, "Pepr Store update");
@@ -152,7 +144,8 @@ export class PeprControllerStore {
       }
 
       try {
-        await Kube(PeprStore).InNamespace(namespace).WithName(this._name).Patch(payload);
+        // Send the patch to the cluster
+        await Kube(PeprStore, { namespace, name: this._name }).Patch(payload);
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
