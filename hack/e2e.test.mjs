@@ -3,14 +3,13 @@ import { execSync, spawn } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 
-import { k8s } from "../dist/lib.js";
+import { Kube, Log, a, k8s } from "../dist/lib.js";
 
-const { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } = k8s;
+const { CoreV1Api, KubeConfig, loadYaml } = k8s;
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
 
-const k8sApi = kc.makeApiClient(AppsV1Api);
 const k8sCoreApi = kc.makeApiClient(CoreV1Api);
 
 // Timeout in milliseconds
@@ -75,7 +74,6 @@ test.serial("E2E: `pepr build`", async t => {
   }
 });
 
-
 test.serial("E2E: zarf.yaml validation", async t => {
   try {
     // Get the version of the pepr binary
@@ -84,7 +82,7 @@ test.serial("E2E: zarf.yaml validation", async t => {
     // Read the generated yaml files
     const k8sYaml = await fs.readFile(
       resolve(testDir, "dist", "pepr-module-static-test.yaml"),
-      "utf8"
+      "utf8",
     );
     const zarfYAML = await fs.readFile(resolve(testDir, "dist", "zarf.yaml"), "utf8");
 
@@ -228,7 +226,7 @@ test.serial("E2E: `pepr deploy`", async t => {
     });
 
     // Check the controller logs
-    const logs = await getPodLogs("pepr-system", "app=pepr-static-test");
+    const logs = await getPodLogs("pepr-system", "app=pepr", "static-test");
     t.is(logs.includes("File hash matches, running module"), true);
     t.is(logs.includes("Capability hello-pepr registered"), true);
     t.is(logs.includes("CM with label 'change=by-label' was deleted."), true);
@@ -384,9 +382,9 @@ function peprDev(resolve, reject) {
 }
 
 async function waitForDeploymentReady(namespace, name) {
-  const deployment = await k8sApi.readNamespacedDeployment(name, namespace);
-  const replicas = deployment.body.spec.replicas || 1;
-  const readyReplicas = deployment.body.status.readyReplicas || 0;
+  const deployment = await Kube(a.Deployment).InNamespace(namespace).Get(name);
+  const replicas = deployment.spec.replicas || 1;
+  const readyReplicas = deployment.status.readyReplicas || 0;
 
   if (replicas !== readyReplicas) {
     await delay2Secs();
@@ -396,8 +394,7 @@ async function waitForDeploymentReady(namespace, name) {
 
 async function waitForNamespace(namespace) {
   try {
-    const resp = await k8sCoreApi.readNamespace(namespace);
-    return resp.body;
+    return await Kube(a.Namespace).Get(namespace);
   } catch (error) {
     await delay2Secs();
     return waitForNamespace(namespace);
@@ -406,8 +403,7 @@ async function waitForNamespace(namespace) {
 
 async function waitForConfigMap(namespace, name) {
   try {
-    const resp = await k8sCoreApi.readNamespacedConfigMap(name, namespace);
-    return resp.body;
+    return await Kube(a.ConfigMap).InNamespace(namespace).Get(name);
   } catch (error) {
     await delay2Secs();
     return waitForConfigMap(namespace, name);
@@ -416,8 +412,7 @@ async function waitForConfigMap(namespace, name) {
 
 async function waitForSecret(namespace, name) {
   try {
-    const resp = await k8sCoreApi.readNamespacedSecret(name, namespace);
-    return resp.body;
+    return await Kube(a.Secret).InNamespace(namespace).Get(name);
   } catch (error) {
     await delay2Secs();
     return waitForSecret(namespace, name);
@@ -428,21 +423,12 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-async function getPodLogs(namespace, labelSelector) {
+async function getPodLogs(namespace, labelKey, labelValue) {
   let allLogs = "";
 
   try {
-    const res = await k8sCoreApi.listNamespacedPod(
-      namespace,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      labelSelector,
-    );
-    const pods = res.body.items;
-
-    for (const pod of pods) {
+    const pods = await Kube(a.Pod).InNamespace(namespace).WithLabel(labelKey, labelValue).Get();
+    for (const pod of pods.items) {
       const podName = pod.metadata.name;
       const log = await k8sCoreApi.readNamespacedPodLog(podName, namespace);
       allLogs += log.body;
