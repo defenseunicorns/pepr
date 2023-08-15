@@ -4,13 +4,12 @@
 import {
   AdmissionregistrationV1WebhookClientConfig as AdmissionRegnV1WebhookClientCfg,
   V1LabelSelectorRequirement,
-  V1MutatingWebhookConfiguration,
   V1RuleWithOperations,
-  V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
+import { MutatingWebhookConfiguration, ValidatingWebhookConfiguration } from "../k8s/upstream";
 import Log from "../logger";
 import { Event } from "../types";
 
@@ -72,7 +71,7 @@ export async function webhookConfig(
   assets: Assets,
   mutateOrValidate: "mutate" | "validate",
   timeoutSeconds = 10,
-): Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null> {
+): Promise<MutatingWebhookConfiguration | ValidatingWebhookConfiguration | null> {
   const ignore = [peprIgnoreLabel];
 
   const { name, tls, config, apiToken, host } = assets;

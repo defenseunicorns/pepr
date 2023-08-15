@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1ClusterRole, V1ClusterRoleBinding, V1Role, V1RoleBinding, V1ServiceAccount } from "@kubernetes/client-node";
+import { ClusterRole, ClusterRoleBinding, Role, RoleBinding, ServiceAccount } from "../k8s/upstream";
 
 /**
  * Grants the controller access to cluster resources beyond the mutating webhook.
@@ -9,7 +9,7 @@ import { V1ClusterRole, V1ClusterRoleBinding, V1Role, V1RoleBinding, V1ServiceAc
  * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns
  */
-export function clusterRole(name: string): V1ClusterRole {
+export function clusterRole(name: string): ClusterRole {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
@@ -25,7 +25,7 @@ export function clusterRole(name: string): V1ClusterRole {
   };
 }
 
-export function clusterRoleBinding(name: string): V1ClusterRoleBinding {
+export function clusterRoleBinding(name: string): ClusterRoleBinding {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRoleBinding",
@@ -45,7 +45,7 @@ export function clusterRoleBinding(name: string): V1ClusterRoleBinding {
   };
 }
 
-export function serviceAccount(name: string): V1ServiceAccount {
+export function serviceAccount(name: string): ServiceAccount {
   return {
     apiVersion: "v1",
     kind: "ServiceAccount",
@@ -56,7 +56,7 @@ export function serviceAccount(name: string): V1ServiceAccount {
   };
 }
 
-export function storeRole(name: string): V1Role {
+export function storeRole(name: string): Role {
   name = `${name}-store`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
@@ -73,7 +73,7 @@ export function storeRole(name: string): V1Role {
   };
 }
 
-export function storeRoleBinding(name: string): V1RoleBinding {
+export function storeRoleBinding(name: string): RoleBinding {
   name = `${name}-store`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",

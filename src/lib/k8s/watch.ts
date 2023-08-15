@@ -8,10 +8,6 @@ import Log from "../logger";
 import { GenericClass, WatchAction, WatchPhase } from "../types";
 import { Filters, pathBuilder, queryBuilder } from "./fluent";
 
-export interface WatchOptions extends Filters {
-  phases?: WatchPhase[];
-}
-
 /**
  * Watch Kubernetes resources from every Pepr Controller pod simultaneously.
  *
@@ -22,7 +18,7 @@ export interface WatchOptions extends Filters {
  * you should typically use the Pepr Watch CapabilityAction instead unless you
  * really need the watch to run on every controller pod simultaneously.
  */
-export const ParallelWatch = <T extends GenericClass>(model: T, opts: WatchOptions) => {
+export const ParallelWatch = <T extends GenericClass>(model: T, filters: Filters) => {
   const prefix = `watch: ${model.name}`;
 
   // Nothing happens until the OnChange function is called
@@ -36,15 +32,15 @@ export const ParallelWatch = <T extends GenericClass>(model: T, opts: WatchOptio
     const k = new Watch(kubeConfig);
 
     // Build the path and query params for the resource, excluding the name
-    const path = pathBuilder(model, opts, true);
-    const queryParams = queryBuilder(opts);
+    const path = pathBuilder(model, filters, true);
+    const queryParams = queryBuilder(filters);
 
     // Allow bookmarks to be used for the watch
     queryParams.allowWatchBookmarks = true;
 
     // If a name is specified, add it to the query params
-    if (opts.name) {
-      queryParams.fieldSelector = `metadata.name=${opts.name}`;
+    if (filters.name) {
+      queryParams.fieldSelector = `metadata.name=${filters.name}`;
     }
 
     Log.info(`Watching ${path}`, prefix);

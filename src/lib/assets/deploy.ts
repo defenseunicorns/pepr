@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1ClusterRole, V1ClusterRoleBinding } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 
 import { Assets } from ".";
 import { Kube } from "../k8s/fluent";
 import {
+  ClusterRole,
+  ClusterRoleBinding,
   CustomResourceDefinition,
   Deployment,
   MutatingWebhookConfiguration,
@@ -86,11 +87,11 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
 async function setupRBAC(name: string) {
   Log.info("Creating or replacing cluster role binding");
   const crb = clusterRoleBinding(name);
-  await Kube(V1ClusterRoleBinding).CreateOrReplace(crb);
+  await Kube(ClusterRoleBinding).CreateOrReplace(crb);
 
   Log.info("Creating or replacing cluster role");
   const cr = clusterRole(name);
-  await Kube(V1ClusterRole).CreateOrReplace(cr);
+  await Kube(ClusterRole).CreateOrReplace(cr);
 
   Log.info("Creating or replacing service account");
   const sa = serviceAccount(name);

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1Secret, V1Service } from "@kubernetes/client-node";
 import { TLSOut } from "../k8s/tls";
+import { Secret, Service } from "../k8s/upstream";
 
-export function apiTokenSecret(name: string, apiToken: string): V1Secret {
+export function apiTokenSecret(name: string, apiToken: string): Secret {
   return {
     apiVersion: "v1",
     kind: "Secret",
@@ -19,7 +19,7 @@ export function apiTokenSecret(name: string, apiToken: string): V1Secret {
   };
 }
 
-export function tlsSecret(name: string, tls: TLSOut): V1Secret {
+export function tlsSecret(name: string, tls: TLSOut): Secret {
   return {
     apiVersion: "v1",
     kind: "Secret",
@@ -35,7 +35,7 @@ export function tlsSecret(name: string, tls: TLSOut): V1Secret {
   };
 }
 
-export function service(name: string): V1Service {
+export function service(name: string): Service {
   return {
     apiVersion: "v1",
     kind: "Service",
@@ -57,7 +57,7 @@ export function service(name: string): V1Service {
   };
 }
 
-export function watcherService(name: string): V1Service {
+export function watcherService(name: string): Service {
   return {
     apiVersion: "v1",
     kind: "Service",
