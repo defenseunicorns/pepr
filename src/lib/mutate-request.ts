@@ -10,7 +10,7 @@ import { DeepPartial } from "./types";
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
  * of a mutating webhook request.
  */
-export class PeprRequest<T extends KubernetesObject> {
+export class PeprMutateRequest<T extends KubernetesObject> {
   public Raw: T;
 
   get PermitSideEffects() {

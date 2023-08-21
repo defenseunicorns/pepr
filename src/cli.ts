@@ -45,8 +45,4 @@ dev(program);
 update(program);
 format(program);
 
-// @todo: finish/re-evaluate these commands
-// test(program);
-// capability(program);
-
 program.parse();

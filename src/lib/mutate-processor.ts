@@ -5,21 +5,21 @@ import jsonPatch from "fast-json-patch";
 
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
-import { Request, Response } from "./k8s/types";
+import { MutateResponse, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import Log from "./logger";
-import { PeprRequest } from "./request";
+import { PeprMutateRequest } from "./mutate-request";
 import { ModuleConfig } from "./types";
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
+import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
-export async function processor(
+export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string,
-): Promise<Response> {
-  const wrapped = new PeprRequest(req);
-  const response: Response = {
+  reqMetadata: Record<string, string>,
+): Promise<MutateResponse> {
+  const wrapped = new PeprMutateRequest(req);
+  const response: MutateResponse = {
     uid: req.uid,
     warnings: [],
     allowed: false,
@@ -37,19 +37,24 @@ export async function processor(
     skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
   }
 
-  Log.info(`Processing request`, parentPrefix);
+  Log.info(reqMetadata, `Processing request`);
 
   for (const { name, bindings } of capabilities) {
-    const prefix = `${parentPrefix} ${name}:`;
+    const actionMetadata = { ...reqMetadata, name };
 
     for (const action of bindings) {
+      // Skip this action if it's not a mutate action
+      if (!action.mutateCallback) {
+        continue;
+      }
+
       // Continue to the next action without doing anything if this one should be skipped
       if (shouldSkipRequest(action, req)) {
         continue;
       }
 
-      const label = action.callback.name;
-      Log.info(`Processing matched action ${label}`, prefix);
+      const label = action.mutateCallback.name;
+      Log.info(actionMetadata, `Processing matched action ${label}`);
 
       matchedCapabilityAction = true;
 
@@ -71,9 +76,9 @@ export async function processor(
 
       try {
         // Run the action
-        await action.callback(wrapped);
+        await action.mutateCallback(wrapped);
 
-        Log.info(`Action succeeded`, prefix);
+        Log.info(actionMetadata, `Ac3tion succeeded`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
@@ -84,11 +89,11 @@ export async function processor(
 
         // If errors are not allowed, note the failure in the Response
         if (config.onError) {
-          Log.error(`Action failed: ${e}`, prefix);
+          Log.error(actionMetadata, `Action failed: ${e}`);
           response.result = "Pepr module configured to reject on error";
           return response;
         } else {
-          Log.warn(`Action failed: ${e}`, prefix);
+          Log.warn(actionMetadata, `Action failed: ${e}`);
           updateStatus("warning");
         }
       }
@@ -100,7 +105,7 @@ export async function processor(
 
   // If no capability matched the request, exit early
   if (!matchedCapabilityAction) {
-    Log.info(`No matching capability action found`, parentPrefix);
+    Log.info(reqMetadata, `No matching capability action found`);
     return response;
   }
 
@@ -124,7 +129,7 @@ export async function processor(
     response.patchType = "JSONPatch";
     // Webhook must be base64-encoded
     // https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
-    response.patch = Buffer.from(JSON.stringify(patches)).toString("base64");
+    response.patch = base64Encode(JSON.stringify(patches));
   }
 
   // Remove the warnings array if it's empty
@@ -132,7 +137,7 @@ export async function processor(
     delete response.warnings;
   }
 
-  Log.debug(patches, parentPrefix);
+  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
 
   return response;
 }

@@ -8,4 +8,7 @@ export { kind as a };
 
 export { modelToGroupVersionKind, gvkMap, RegisterKind } from "./kinds";
 
+// If the hostname is pepr-static-test-watcher-0, then we are running in watch mode
+export const isWatchMode = process.env.PEPR_WATCH_MODE === "true";
+
 export * from "./types";

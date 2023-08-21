@@ -26,7 +26,7 @@ function runModule(expectedHash: string) {
   const jsPath = `/app/module-${expectedHash}.js`;
 
   // Set the log level
-  Log.SetLogLevel("debug");
+  Log.level = "info";
 
   // Check if the path is a valid file
   if (!fs.existsSync(gzPath)) {

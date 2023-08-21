@@ -5,7 +5,7 @@ import { ChildProcess, fork } from "child_process";
 import { promises as fs } from "fs";
 import prompt from "prompts";
 
-import { Webhook } from "../lib/k8s/webhook";
+import { Assets } from "../lib/assets";
 import Log from "../lib/logger";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
@@ -35,11 +35,12 @@ export default function (program: RootCmd) {
       const { cfg, path } = await loadModule();
 
       // Generate a secret for the module
-      const webhook = new Webhook(
+      const webhook = new Assets(
         {
           ...cfg.pepr,
           description: cfg.description,
         },
+        path,
         opts.host,
       );
 
@@ -55,13 +56,14 @@ export default function (program: RootCmd) {
           Log.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging
-          await webhook.deploy(path, 30);
+          await webhook.deploy(30);
 
           program = fork(path, {
             env: {
               ...process.env,
               LOG_LEVEL: "debug",
               PEPR_API_TOKEN: webhook.apiToken,
+              PEPR_PRETTY_LOGS: "true",
               SSL_KEY_PATH: "insecure-tls.key",
               SSL_CERT_PATH: "insecure-tls.crt",
             },

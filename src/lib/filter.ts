@@ -20,8 +20,6 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
   const { metadata } = srcObject || {};
 
-  console.log(metadata);
-
   // Test for matching operation
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
     return true;

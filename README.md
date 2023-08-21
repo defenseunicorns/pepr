@@ -6,8 +6,7 @@
 [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
 [![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr)
 
-
-#### __*Type safe Kubernetes middleware for humans*__
+#### **_Type safe Kubernetes middleware for humans_**
 
 <img align="right" width="40%" src=".images/pepr.png" />
 
@@ -37,9 +36,7 @@ When(a.ConfigMap)
   .WithLabel("unicorn", "rainbow")
   .Then(request => {
     // Add a label and annotation to the ConfigMap
-    request
-      .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too");
+    request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Add some data to the ConfigMap
     request.Raw.data["doug-says"] = "Pepr is awesome!";
@@ -108,10 +105,10 @@ See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
 
-![Module Diagram](./.images/modules.svg)
+![Arch Diagram](./.images/pepr-arch.svg)
 
 ## TypeScript
-
+  
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
 
 ## Kubernetes Mutating Webhooks

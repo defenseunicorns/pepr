@@ -6,6 +6,46 @@ import { GroupVersionKind } from "./types";
 
 export const gvkMap: Record<string, GroupVersionKind> = {
   /**
+   * Represents a K8s ClusterRole resource.
+   * ClusterRole is a set of permissions that can be bound to a user or group in a cluster-wide scope.
+   * @see {@link https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole}
+   */
+  V1ClusterRole: {
+    kind: "ClusterRole",
+    version: "v1",
+    group: "rbac.authorization.k8s.io",
+  },
+  /**
+   * Represents a K8s ClusterRoleBinding resource.
+   * ClusterRoleBinding binds a ClusterRole to a user or group in a cluster-wide scope.
+   * @see {@link https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding}
+   */
+  V1ClusterRoleBinding: {
+    kind: "ClusterRoleBinding",
+    version: "v1",
+    group: "rbac.authorization.k8s.io",
+  },
+  /**
+   * Represents a K8s Role resource.
+   * Role is a set of permissions that can be bound to a user or group in a namespace scope.
+   * @see {@link https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole}
+   */
+  V1Role: {
+    kind: "Role",
+    version: "v1",
+    group: "rbac.authorization.k8s.io",
+  },
+  /**
+   * Represents a K8s RoleBinding resource.
+   * RoleBinding binds a Role to a user or group in a namespace scope.
+   * @see {@link https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding}
+   */
+  V1RoleBinding: {
+    kind: "RoleBinding",
+    version: "v1",
+    group: "rbac.authorization.k8s.io",
+  },
+  /**
    * Represents a K8s ConfigMap resource.
    * ConfigMap holds configuration data for pods to consume.
    * @see {@link https://kubernetes.io/docs/concepts/configuration/configmap/}
