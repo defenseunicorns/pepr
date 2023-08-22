@@ -6,7 +6,7 @@ For example, an action could be responsible for adding a specific label to a Kub
 
 Actions are either `Mutate()` or `Validate()` actions. Mutate actions are used to modify Kubernetes resources, while Validate actions are used to validate Kubernetes resources.
 
-Let's look at some example Actions that are included in the `HelloPepr` capability that is created for you when you [`pepr init`](./cli.md#pepr-init):
+Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`pepr init`](./cli.md#pepr-init):
 
 ---
 
@@ -19,7 +19,7 @@ When(a.ConfigMap)
   .IsCreated()
   // This limits the action to only act on resources with the name "example-1".
   .WithName("example-1")
-  // Mutate() is where we define the actual behavior of this Action.
+  // Mutate() is where we define the actual behavior of this action.
   .Mutate(request => {
     // The request object is a wrapper around the K8s resource that Pepr is acting on.
     request
@@ -28,7 +28,7 @@ When(a.ConfigMap)
       // And here we are adding an annotation.
       .SetAnnotation("pepr.dev", "annotations-work-too");
 
-    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each Action automatically.
+    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each action automatically.
   });
 ```
 
@@ -40,7 +40,7 @@ In this example, a Validate action rejects any ConfigMap in the `pepr-demo` name
 When(a.ConfigMap)
   .IsCreated()
   .InNamespace("pepr-demo")
-  // Validate() is where we define the actual behavior of this Action.
+  // Validate() is where we define the actual behavior of this action.
   .Validate(request => {
     // If data exists, approve the request.
     if (request.Raw.data) {

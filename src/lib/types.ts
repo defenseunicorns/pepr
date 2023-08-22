@@ -91,7 +91,7 @@ export type ModuleConfig = {
   /** A description of the Pepr module and what it does. */
   description?: string;
   /** Reject K8s resource AdmissionRequests on error. */
-  onError: ErrorBehavior | string;
+  onError: ErrorBehavior;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
   /**
