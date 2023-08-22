@@ -10,7 +10,7 @@
       "\tnamespaces: [${2:}],",
       "});",
       "",
-      "// Use the 'When' function to create a new Action",
+      "// Use the 'When' function to create a new action",
       "const { When } = ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/};",
       "",
       "// When(a.<Kind>).Is<Event>().Then(change => change.<changes>",

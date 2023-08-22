@@ -42,7 +42,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
   }
 
   /**
-   * Creates a new instance of the Action class.
+   * Creates a new instance of the action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
   constructor(private _input: Request<T>) {
@@ -72,7 +72,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * Updates a label on the Kubernetes resource.
    * @param key - The key of the label to update.
    * @param value - The value of the label.
-   * @returns The current Action instance for method chaining.
+   * @returns The current action instance for method chaining.
    */
   SetLabel(key: string, value: string) {
     const ref = this.Raw;
@@ -88,7 +88,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * Updates an annotation on the Kubernetes resource.
    * @param key - The key of the annotation to update.
    * @param value - The value of the annotation.
-   * @returns The current Action instance for method chaining.
+   * @returns The current action instance for method chaining.
    */
   SetAnnotation(key: string, value: string) {
     const ref = this.Raw;
