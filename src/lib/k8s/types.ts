@@ -26,14 +26,6 @@ export class GenericKind {
 }
 
 /**
- * PeprStore for internal use by Pepr. This is used to store arbitrary data in the cluster.
- */
-export class PeprStore extends GenericKind {
-  declare data: {
-    [key: string]: string;
-  };
-}
-/**
  * GroupVersionKind unambiguously identifies a kind. It doesn't anonymously include GroupVersion
  * to avoid automatic coercion. It doesn't use a GroupVersion to avoid custom marshalling
  **/
