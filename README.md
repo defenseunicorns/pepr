@@ -34,7 +34,7 @@ When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
   .WithLabel("unicorn", "rainbow")
-  .Then(request => {
+  .Mutate(request => {
     // Add a label and annotation to the ConfigMap
     request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
 
@@ -43,6 +43,15 @@ When(a.ConfigMap)
 
     // Log a message to the Pepr controller logs
     Log.info("A 🦄 ConfigMap was created or updated:");
+  })
+  .Validate(request => {
+    // Validate the ConfigMap has a specific label
+    if (request.HasLabel("pepr")) {
+      return request.Approve();
+    }
+
+    // Reject the ConfigMap if it doesn't have the label
+    return request.Reject("ConfigMap must have a unicorn label");
   });
 ```
 
@@ -101,14 +110,17 @@ CapabilityAction is a discrete set of behaviors defined in a single function tha
 
 For example, a CapabilityAction could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. CapabilityActions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
+There are both `Mutate()` and `Validate()` CapabilityActions that can be used to modify or validate Kubernetes resources.
+
 See [CapabilityActions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
 
 ![Arch Diagram](./.images/pepr-arch.svg)
+[Source Diagram](./.images/pepr-arch.svg)
 
 ## TypeScript
-  
+
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
 
 ## Kubernetes Mutating Webhooks
