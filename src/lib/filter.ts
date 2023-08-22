@@ -8,7 +8,7 @@ import { Binding, Event } from "./types";
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
- * @param binding the capability action binding
+ * @param binding the action binding
  * @param req the incoming request
  * @returns
  */

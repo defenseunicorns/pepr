@@ -26,7 +26,7 @@ export async function mutateProcessor(
   };
 
   // Track whether any capability matched the request
-  let matchedCapabilityAction = false;
+  let matchedAction = false;
 
   // Track data fields that should be skipped during decoding
   let skipDecode: string[] = [];
@@ -56,7 +56,7 @@ export async function mutateProcessor(
       const label = action.mutateCallback.name;
       Log.info(actionMetadata, `Processing matched action ${label}`);
 
-      matchedCapabilityAction = true;
+      matchedAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
@@ -104,8 +104,8 @@ export async function mutateProcessor(
   response.allowed = true;
 
   // If no capability matched the request, exit early
-  if (!matchedCapabilityAction) {
-    Log.info(reqMetadata, `No matching capability action found`);
+  if (!matchedAction) {
+    Log.info(reqMetadata, `No matching actions found`);
     return response;
   }
 

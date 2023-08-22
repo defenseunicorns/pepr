@@ -14,7 +14,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Features
 
-- Zero-config K8s webhook mutations and [validations soon](https://github.com/defenseunicorns/pepr/issues/73).
+- Zero-config K8s webhook mutations and validations.
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
 - Generate new K8s resources based off of cluster resource changes
 - Perform other exec/API calls based off of cluster resources changes or any other arbitrary schedule
@@ -25,15 +25,16 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Automatic least-privilege RBAC generation [soon](https://github.com/defenseunicorns/pepr/issues/31)
 - AMD64 and ARM64 support
 
-## Example Pepr CapabilityAction
+## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. Finally, it logs a message to the Pepr controller logs. For more see [CapabilityActions](./docs/actions.md).
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. Finally, it logs a message to the Pepr controller logs. For more see [Actions](./docs/actions.md).
 
 ```ts
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
   .WithLabel("unicorn", "rainbow")
+  // Create a Mutate Action for the ConfigMap
   .Mutate(request => {
     // Add a label and annotation to the ConfigMap
     request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
@@ -44,6 +45,7 @@ When(a.ConfigMap)
     // Log a message to the Pepr controller logs
     Log.info("A 🦄 ConfigMap was created or updated:");
   })
+  // Create a Validate Action for the ConfigMap
   .Validate(request => {
     // Validate the ConfigMap has a specific label
     if (request.HasLabel("pepr")) {
@@ -51,7 +53,7 @@ When(a.ConfigMap)
     }
 
     // Reject the ConfigMap if it doesn't have the label
-    return request.Reject("ConfigMap must have a unicorn label");
+    return request.Deny("ConfigMap must have a unicorn label");
   });
 ```
 
@@ -66,7 +68,7 @@ When(a.ConfigMap)
 ## Wow too many words! tl;dr;
 
 ```bash
-# Initialize a new Pepr Module, you can also use `npx pepr@latest init` to make sure you have the latest version
+# Create a new Pepr Module
 npx pepr init
 
 # If you already have a Kind or K3d cluster you want to use, skip this step
@@ -94,25 +96,25 @@ https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb
 
 ### Module
 
-A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their CapabilityActions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
+A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their Actions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
 
 See [Module](./docs/module.md) for more details.
 
 ### Capability
 
-A capability is set of related CapabilityActions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more CapabilityActions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
+A capability is set of related Actions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more Actions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
 See [Capabilities](./docs/capabilities.md) for more details.
 
-### CapabilityAction
+### Action
 
-CapabilityAction is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in from Kubernetes. CapabilityActions are the atomic operations that are performed on Kubernetes resources by Pepr.
+Action is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in from Kubernetes. Actions are the atomic operations that are performed on Kubernetes resources by Pepr.
 
-For example, a CapabilityAction could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. CapabilityActions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
+For example, a Action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-There are both `Mutate()` and `Validate()` CapabilityActions that can be used to modify or validate Kubernetes resources.
+There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources.
 
-See [CapabilityActions](./docs/actions.md) for more details.
+See [Actions](./docs/actions.md) for more details.
 
 ## Logical Pepr Flow
 

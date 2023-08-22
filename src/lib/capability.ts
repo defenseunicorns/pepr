@@ -11,11 +11,11 @@ import {
   BindingFilter,
   BindingWithName,
   CapabilityCfg,
-  CapabilityMutateAction,
-  CapabilityValidateAction,
   Event,
   GenericClass,
+  MutateAction,
   MutateActionChain,
+  ValidateAction,
   WhenSelector,
 } from "./types";
 
@@ -94,9 +94,9 @@ export class Capability implements CapabilityCfg {
       Log.debug(cbString, prefix);
     };
 
-    const Validate = (validateCallback: CapabilityValidateAction<T>): void => {
+    const Validate = (validateCallback: ValidateAction<T>): void => {
       if (!isWatchMode) {
-        log("Validate CapabilityAction", validateCallback.toString());
+        log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
@@ -108,9 +108,9 @@ export class Capability implements CapabilityCfg {
       }
     };
 
-    const Mutate = (mutateCallback: CapabilityMutateAction<T>): MutateActionChain<T> => {
+    const Mutate = (mutateCallback: MutateAction<T>): MutateActionChain<T> => {
       if (!isWatchMode) {
-        log("Mutate CapabilityAction", mutateCallback.toString());
+        log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve

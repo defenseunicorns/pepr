@@ -37,7 +37,7 @@ export type DeepPartial<T> = {
 };
 
 /**
- * The type of Kubernetes mutating webhook event that the capability action is registered for.
+ * The type of Kubernetes mutating webhook event that the action is registered for.
  */
 export enum Event {
   Create = "CREATE",
@@ -107,13 +107,13 @@ export type ModuleConfig = {
 export type GenericClass = abstract new () => any;
 
 export type WhenSelector<T extends GenericClass> = {
-  /** Register a capability action to be executed when a Kubernetes resource is created or updated. */
+  /** Register an action to be executed when a Kubernetes resource is created or updated. */
   IsCreatedOrUpdated: () => BindingAll<T>;
-  /** Register a capability action to be executed when a Kubernetes resource is created. */
+  /** Register an action to be executed when a Kubernetes resource is created. */
   IsCreated: () => BindingAll<T>;
-  /** Register a capability action to be executed when a Kubernetes resource is updated. */
+  /** Register ann action to be executed when a Kubernetes resource is updated. */
   IsUpdated: () => BindingAll<T>;
-  /** Register a capability action to be executed when a Kubernetes resource is deleted. */
+  /** Register an action to be executed when a Kubernetes resource is deleted. */
   IsDeleted: () => BindingAll<T>;
 };
 
@@ -128,13 +128,13 @@ export type Binding = {
     labels: Record<string, string>;
     annotations: Record<string, string>;
   };
-  readonly mutateCallback?: CapabilityMutateAction<GenericClass, InstanceType<GenericClass>>;
-  readonly validateCallback?: CapabilityValidateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
+  readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
 };
 
 export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
   /**
-   * Only apply the capability action if the resource has the specified label. If no value is specified, the label must exist.
+   * Only apply the action if the resource has the specified label. If no value is specified, the label must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
    *
    * ```ts
@@ -145,14 +145,14 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
    *   .Mutate(...)
    * ```
    *
-   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` labels.
+   * Will only apply the action if the resource has both the `foo=bar` and `baz=qux` labels.
    *
    * @param key
    * @param value
    */
   WithLabel: (key: string, value?: string) => BindingFilter<T>;
   /**
-   * Only apply the capability action if the resource has the specified annotation. If no value is specified, the annotation must exist.
+   * Only apply the action if the resource has the specified annotation. If no value is specified, the annotation must exist.
    * Note multiple calls to this method will result in an AND condition. e.g.
    *
    * ```ts
@@ -163,7 +163,7 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
    *   .Mutate(...)
    * ```
    *
-   * Will only apply the capability action if the resource has both the `foo=bar` and `baz=qux` annotations.
+   * Will only apply the action if the resource has both the `foo=bar` and `baz=qux` annotations.
    *
    * @param key
    * @param value
@@ -172,27 +172,27 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
 };
 
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
-  /** Only apply the capability action if the resource name matches the specified name. */
+  /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
 };
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
-  /** Only apply the capability action if the resource is in one of the specified namespaces.*/
+  /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
 };
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**
-   * Create a new MUTATE capability action with the specified callback function and previously specified
+   * Create a new MUTATE action with the specified callback function and previously specified
    * filters.
-   * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
+   * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
-  Mutate: (action: CapabilityMutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
+  Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
 };
 
 export type MutateActionChain<T extends GenericClass> = {
   /**
-   * Create a new VALIDATE capability action with the specified callback function and previously specified
+   * Create a new VALIDATE action with the specified callback function and previously specified
    * filters. Return the `request.Approve()` or `Request.Deny()` methods to approve or deny the request:
    *
    * @example
@@ -208,20 +208,20 @@ export type MutateActionChain<T extends GenericClass> = {
    * });
    * ```
    *
-   * @param action The capability action to be executed when the Kubernetes resource is processed by the AdmissionController.
+   * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
-  Validate: (action: CapabilityValidateAction<T, InstanceType<T>>) => void;
+  Validate: (action: ValidateAction<T, InstanceType<T>>) => void;
 };
 
-export type CapabilityMutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprMutateRequest<K>,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
-export type CapabilityValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprValidateRequest<K>,
-) => Promise<CapabilityValidateResponse> | CapabilityValidateResponse;
+) => Promise<ValidateResponse> | ValidateResponse;
 
-export type CapabilityValidateResponse = {
+export type ValidateResponse = {
   allowed: boolean;
   statusCode?: number;
   statusMessage?: string;
