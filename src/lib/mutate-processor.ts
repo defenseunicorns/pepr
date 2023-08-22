@@ -9,7 +9,7 @@ import { MutateResponse, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import Log from "./logger";
 import { PeprMutateRequest } from "./mutate-request";
-import { ModuleConfig } from "./types";
+import { ErrorBehavior, ModuleConfig } from "./types";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
 export async function mutateProcessor(
@@ -78,23 +78,27 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
-        Log.info(actionMetadata, `Ac3tion succeeded`);
+        Log.info(actionMetadata, `Action succeeded`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
+        Log.warn(actionMetadata, `Action failed: ${e}`);
+        updateStatus("warning");
+
         // Annoying ts false positive
         response.warnings = response.warnings || [];
         response.warnings.push(`Action failed: ${e}`);
 
-        // If errors are not allowed, note the failure in the Response
-        if (config.onError) {
-          Log.error(actionMetadata, `Action failed: ${e}`);
-          response.result = "Pepr module configured to reject on error";
-          return response;
-        } else {
-          Log.warn(actionMetadata, `Action failed: ${e}`);
-          updateStatus("warning");
+        switch (config.onError) {
+          case ErrorBehavior.reject:
+            Log.error(actionMetadata, `Action failed: ${e}`);
+            response.result = "Pepr module configured to reject on error";
+            return response;
+
+          case ErrorBehavior.audit:
+            // @todo: implement audit logging
+            break;
         }
       }
     }
