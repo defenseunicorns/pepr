@@ -9,7 +9,7 @@ import { MutateResponse, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
 import Log from "./logger";
 import { PeprMutateRequest } from "./mutate-request";
-import { ErrorBehavior, ModuleConfig } from "./types";
+import { ModuleConfig } from "./types";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
 export async function mutateProcessor(
@@ -91,12 +91,12 @@ export async function mutateProcessor(
         response.warnings.push(`Action failed: ${e}`);
 
         switch (config.onError) {
-          case ErrorBehavior.reject:
+          case "reject":
             Log.error(actionMetadata, `Action failed: ${e}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
-          case ErrorBehavior.audit:
+          case "audit":
             // @todo: implement audit logging
             break;
         }

@@ -37,6 +37,12 @@ export class PeprModule {
     const config: ModuleConfig = clone(pepr);
     config.description = description;
 
+    // Need to validate at runtime since TS gets sad about parsing the package.json
+    const validOnErrors = ["ignore", "warn", "fail"];
+    if (!validOnErrors.includes(config.onError || "")) {
+      throw new Error(`Invalid onErrors value: ${config.onError}`);
+    }
+
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {
       // Send capability map to parent process

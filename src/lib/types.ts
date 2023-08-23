@@ -11,15 +11,6 @@ export type PackageJSON = {
 };
 
 /**
- * The behavior of this module when an error occurs.
- */
-export enum ErrorBehavior {
-  ignore = "ignore",
-  audit = "audit",
-  reject = "reject",
-}
-
-/**
  * The phase of the Kubernetes admission webhook that the capability is registered for.
  *
  * Currently only `mutate` is supported.
@@ -91,7 +82,7 @@ export type ModuleConfig = {
   /** A description of the Pepr module and what it does. */
   description?: string;
   /** Reject K8s resource AdmissionRequests on error. */
-  onError: ErrorBehavior;
+  onError?: string;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
   /**
