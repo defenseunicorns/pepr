@@ -1,25 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1ListMeta, V1ObjectMeta } from "@kubernetes/client-node";
+import { KubernetesListObject, KubernetesObject, V1ObjectMeta } from "@kubernetes/client-node";
+
+export { KubernetesListObject, KubernetesObject };
 
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
   DELETE = "DELETE",
   CONNECT = "CONNECT",
-}
-
-export interface KubernetesObject {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: V1ObjectMeta;
-}
-export interface KubernetesListObject<T extends KubernetesObject> {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: V1ListMeta;
-  items: T[];
 }
 
 /**
@@ -138,7 +128,7 @@ export interface Request<T = KubernetesObject> {
   readonly options?: any;
 }
 
-export interface Response {
+export interface MutateResponse {
   /** UID is an identifier for the individual request/response. This must be copied over from the corresponding AdmissionRequest. */
   uid: string;
 
@@ -161,6 +151,18 @@ export interface Response {
 
   /** warnings is a list of warning messages to return to the requesting API client. */
   warnings?: string[];
+}
+
+export interface ValidateResponse extends MutateResponse {
+  /** Status contains extra details into why an admission request was denied. This field IS NOT consulted in any way if "Allowed" is "true". */
+  status?: {
+    /** A machine-readable description of why this operation is in the
+       "Failure" status. If this value is empty there is no information available. */
+    code: number;
+
+    /** A human-readable description of the status of this operation. */
+    message: string;
+  };
 }
 
 export type WebhookIgnore = {

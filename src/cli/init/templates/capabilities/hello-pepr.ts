@@ -1,7 +1,7 @@
 import {
   Capability,
   Log,
-  PeprRequest,
+  PeprMutateRequest,
   RegisterKind,
   a,
   fetch,
@@ -19,28 +19,28 @@ export const HelloPepr = new Capability({
   namespaces: ["pepr-demo", "pepr-demo-2"],
 });
 
-// Use the 'When' function to create a new Capability Action
+// Use the 'When' function to create a new Action
 const { When } = HelloPepr;
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Namespace)                                   *
+ *                                   Mutate Action (Namespace)                                   *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action removes the label `remove-me` when a Namespace is created.
+ * This action removes the label `remove-me` when a Namespace is created.
  * Note we don't need to specify the namespace here, because we've already specified
  * it in the Capability definition above.
  */
 When(a.Namespace)
   .IsCreated()
-  .Then(ns => ns.RemoveLabel("remove-me"));
+  .Mutate(ns => ns.RemoveLabel("remove-me"));
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 1)                                *
+ *                                   Mutate Action (CM Example 1)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This is a single Capability Action. They can be in the same file or put imported from other files.
+ * This is a single action. They can be in the same file or put imported from other files.
  * In this example, when a ConfigMap is created with the name `example-1`, then add a label and annotation.
  *
  * Equivalent to manually running:
@@ -50,40 +50,77 @@ When(a.Namespace)
 When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
-  .Then(request =>
+  .Mutate(request => {
     request
       .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too"),
-  );
-
-/**
- * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 2)                                *
- * ---------------------------------------------------------------------------------------------------
- *
- * This Capability Action does the exact same changes for example-2, except this time it uses
- * the `.ThenSet()` feature. You can stack multiple `.Then()` calls, but only a single `.ThenSet()`
- */
-When(a.ConfigMap)
-  .IsCreated()
-  .WithName("example-2")
-  .ThenSet({
-    metadata: {
-      labels: {
-        pepr: "was-here",
-      },
-      annotations: {
-        "pepr.dev": "annotations-work-too",
-      },
-    },
+      .SetAnnotation("pepr.dev", "annotations-work-too");
   });
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 3)                                *
+ *                                   Mutate & Validate Actions (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action combines different styles. Unlike the previous actions, this one will look
+ * This combines 2 different types of actions: 'Mutate', and 'Validate'. The order
+ * of the actions is required, but each action is optional. In this example, when a ConfigMap is created
+ * with the name `example-2`, then add a label and annotation and finally validate that the ConfigMap has the label
+ * `pepr`.
+ */
+When(a.ConfigMap)
+  .IsCreated()
+  .WithName("example-2")
+  .Mutate(request => {
+    // This Mutate Action will mutate the request before it is persisted to the cluster
+
+    // Use `request.Merge()` to merge the new data with the existing data
+    request.Merge({
+      metadata: {
+        labels: {
+          pepr: "was-here",
+        },
+        annotations: {
+          "pepr.dev": "annotations-work-too",
+        },
+      },
+    });
+  })
+  .Validate(request => {
+    // This Validate Action will validate the request before it is persisted to the cluster
+
+    // Approve the request if the ConfigMap has the label 'pepr'
+    if (request.HasLabel("pepr")) {
+      return request.Approve();
+    }
+
+    // Otherwise, deny the request with an error message (optional)
+    return request.Deny("ConfigMap must have label 'pepr'");
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   Mutate Action (CM Example 2a)                               *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This action shows a simple validation that will deny any ConfigMap that has the
+ * annotation `evil`. Note that the `Deny()` function takes an optional second parameter that is a
+ * user-defined status code to return.
+ */
+When(a.ConfigMap)
+  .IsCreated()
+  .Validate(request => {
+    if (request.HasAnnotation("evil")) {
+      return request.Deny("No evil CM annotations allowed.", 400);
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   Mutate Action (CM Example 3)                                *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This action combines different styles. Unlike the previous actions, this one will look
  * for any ConfigMap in the `pepr-demo` namespace that has the label `change=by-label` during either
  * CREATE or UPDATE. Note that all conditions added such as `WithName()`, `WithLabel()`, `InNamespace()`,
  * are ANDs so all conditions must be true for the request to be processed.
@@ -91,7 +128,7 @@ When(a.ConfigMap)
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .WithLabel("change", "by-label")
-  .Then(request => {
+  .Mutate(request => {
     // The K8s object e are going to mutate
     const cm = request.Raw;
 
@@ -106,46 +143,37 @@ When(a.ConfigMap)
     request.SetAnnotation("pepr.dev", "making-waves");
   });
 
-// This action will log an entry when a CM with the label `change=by-label` is deleted
+// This action validates the label `change=by-label` is deleted
 When(a.ConfigMap)
   .IsDeleted()
   .WithLabel("change", "by-label")
-  .Then(() => Log.info("CM with label 'change=by-label' was deleted."));
+  .Validate(request => {
+    // Log and then always approve the request
+    Log.info("CM with label 'change=by-label' was deleted.");
+    return request.Approve();
+  });
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 4)                                *
+ *                                   Mutate Action (CM Example 4)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action show how you can use the `Then()` function to make multiple changes to the
- * same object from different functions. This is useful if you want to keep your Capability Actions
- * small and focused on a single task, or if you want to reuse the same function in multiple
- * Capability Actions.
- *
- * Note that the order of the `.Then()` calls matters. The first call will be executed first,
- * then the second, and so on. Also note the functions are not called until the Capability Action
- * is triggered.
+ * This action show how you can use the `Mutate()` function without an inline function.
+ * This is useful if you want to keep your actions small and focused on a single task,
+ * or if you want to reuse the same function in multiple actions.
  */
-When(a.ConfigMap)
-  .IsCreated()
-  .WithName("example-4")
-  .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
-  .Then(addSecond)
-  .Then(addThird);
+When(a.ConfigMap).IsCreated().WithName("example-4").Mutate(example4Cb);
 
-//This function uses the complete type definition, but is not required.
-function addSecond(cm: PeprRequest<a.ConfigMap>) {
+// This function uses the complete type definition, but is not required.
+function example4Cb(cm: PeprMutateRequest<a.ConfigMap>) {
+  cm.SetLabel("pepr.dev/first", "true");
   cm.SetLabel("pepr.dev/second", "true");
-}
-
-// This function has no type definition, so you won't have intellisense in the function body.
-function addThird(cm) {
   cm.SetLabel("pepr.dev/third", "true");
 }
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 4a)                                *
+ *                                   Mutate Action (CM Example 4a)                                *
  * ---------------------------------------------------------------------------------------------------
  *
  * This is the same as Example 4, except this only operates on a CM in the `pepr-demo-2` namespace.
@@ -156,21 +184,19 @@ When(a.ConfigMap)
   .IsCreated()
   .InNamespace("pepr-demo-2")
   .WithName("example-4a")
-  .Then(cm => cm.SetLabel("pepr.dev/first", "true"))
-  .Then(addSecond)
-  .Then(addThird);
+  .Mutate(example4Cb);
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (CM Example 5)                                *
+ *                                   Mutate Action (CM Example 5)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This Capability Action is a bit more complex. It will look for any ConfigMap in the `pepr-demo`
+ * This action is a bit more complex. It will look for any ConfigMap in the `pepr-demo`
  * namespace that has the label `chuck-norris` during CREATE. When it finds one, it will fetch a
  * random Chuck Norris joke from the API and add it to the ConfigMap. This is a great example of how
  * you can use Pepr to make changes to your K8s objects based on external data.
  *
- * Note the use of the `async` keyword. This is required for any Capability Action that uses `await` or `fetch()`.
+ * Note the use of the `async` keyword. This is required for any action that uses `await` or `fetch()`.
  *
  * Also note we are passing a type to the `fetch()` function. This is optional, but it will help you
  * avoid mistakes when working with the data returned from the API. You can also use the `as` keyword to
@@ -198,7 +224,7 @@ interface TheChuckNorrisJoke {
 When(a.ConfigMap)
   .IsCreated()
   .WithLabel("chuck-norris")
-  .Then(async change => {
+  .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
       "https://api.chucknorris.io/jokes/random?category=dev",
@@ -220,17 +246,17 @@ When(a.ConfigMap)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Secret Base64 Handling)                      *
+ *                                   Mutate Action (Secret Base64 Handling)                      *
  * ---------------------------------------------------------------------------------------------------
  *
  * The K8s JS client provides incomplete support for base64 encoding/decoding handling for secrets,
  * unlike the GO client. To make this less painful, Pepr automatically handles base64 encoding/decoding
- * secret data before and after the Capability Action is executed.
+ * secret data before and after the action is executed.
  */
 When(a.Secret)
   .IsCreated()
   .WithName("secret-1")
-  .Then(request => {
+  .Mutate(request => {
     const secret = request.Raw;
 
     // This will be encoded at the end of all processing back to base64: "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc="
@@ -242,7 +268,7 @@ When(a.Secret)
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Untyped Custom Resource)                     *
+ *                                   Mutate Action (Untyped Custom Resource)                     *
  * ---------------------------------------------------------------------------------------------------
  *
  * Out of the box, Pepr supports all the standard Kubernetes objects. However, you can also create
@@ -252,7 +278,7 @@ When(a.Secret)
  *
  * This example shows how to use the `When()` function with a `GenericKind`. Note that you
  * must specify the `group`, `version`, and `kind` of the object (if applicable). This is how Pepr knows
- * if the Capability Action should be triggered or not. Since we are using a `GenericKind`,
+ * if the action should be triggered or not. Since we are using a `GenericKind`,
  * Pepr will not be able to provide any intellisense for the object, so you will need to refer to the
  * Kubernetes API documentation for the object you are working with.
  *
@@ -276,26 +302,28 @@ When(a.GenericKind, {
 })
   .IsCreated()
   .WithName("example-1")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr without type data!",
-      counter: Math.random(),
-    },
+  .Mutate(request => {
+    request.Merge({
+      spec: {
+        message: "Hello Pepr without type data!",
+        counter: Math.random(),
+      },
+    });
   });
 
 /**
  * ---------------------------------------------------------------------------------------------------
- *                                   CAPABILITY ACTION (Typed Custom Resource)                       *
+ *                                   Mutate Action (Typed Custom Resource)                       *
  * ---------------------------------------------------------------------------------------------------
  *
  * This example shows how to use the `RegisterKind()` function to create a new type. This is useful
  * if you are working with an Operator that creates custom resources and you want to have intellisense
  * for the object. Note that you must specify the `group`, `version`, and `kind` of the object (if applicable)
- * as this is how Pepr knows if the Capability Action should be triggered or not.
+ * as this is how Pepr knows if the action should be triggered or not.
  *
  * Once you register a new Kind with Pepr, you can use the `When()` function with the new Kind. Ideally,
  * you should register custom Kinds at the top of your Capability file or Pepr Module so they are available
- * to all Capability Actions, but we are putting it here for demonstration purposes.
+ * to all actions, but we are putting it here for demonstration purposes.
  *
  * You will need to wait for the CRD in `hello-pepr.samples.yaml` to be created, then you can apply
  *
@@ -334,9 +362,11 @@ RegisterKind(UnicornKind, {
 When(UnicornKind)
   .IsCreated()
   .WithName("example-2")
-  .ThenSet({
-    spec: {
-      message: "Hello Pepr now with type data!",
-      counter: Math.random(),
-    },
+  .Mutate(request => {
+    request.Merge({
+      spec: {
+        message: "Hello Pepr with type data!",
+        counter: Math.random(),
+      },
+    });
   });

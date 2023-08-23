@@ -10,12 +10,12 @@
       "\tnamespaces: [${2:}],",
       "});",
       "",
-      "// Use the 'When' function to create a new Capability Action",
+      "// Use the 'When' function to create a new action",
       "const { When } = ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/};",
       "",
       "// When(a.<Kind>).Is<Event>().Then(change => change.<changes>",
       "When(${3:})"
     ],
-    "description": "Creates a new Pepr capability with a specified description, and optional namespaces, and adds a When statement for the specified value."
+    "description": "Creates a new Pepr capability with a specified description, optional namespaces, and adds a When statement for the specified value."
   }
 }

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-/** a is a collection of K8s types to be used within a CapabilityAction: `When(a.Configmap)` */
+/** a is a collection of K8s types to be used within an action: `When(a.Configmap)` */
 export {
   V1APIService as APIService,
   V1CertificateSigningRequest as CertificateSigningRequest,
+  V1ClusterRole as ClusterRole,
+  V1ClusterRoleBinding as ClusterRoleBinding,
   V1ConfigMap as ConfigMap,
   V1ControllerRevision as ControllerRevision,
   V1CronJob as CronJob,
@@ -32,6 +34,8 @@ export {
   V1ReplicaSet as ReplicaSet,
   V1ReplicationController as ReplicationController,
   V1ResourceQuota as ResourceQuota,
+  V1Role as Role,
+  V1RoleBinding as RoleBinding,
   V1RuntimeClass as RuntimeClass,
   V1Secret as Secret,
   V1SelfSubjectAccessReview as SelfSubjectAccessReview,

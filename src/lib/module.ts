@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { concat, mergeDeepWith } from "ramda";
+import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
-import { Request, Response } from "./k8s/types";
+import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { ModuleConfig } from "./types";
-
-const alwaysIgnore = {
-  namespaces: ["kube-system", "pepr-system"],
-  labels: [{ "pepr.dev": "ignore" }],
-};
 
 export type PackageJSON = {
   description: string;
@@ -25,7 +20,7 @@ export type PeprModuleOptions = {
   beforeHook?: (req: Request) => void;
 
   /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
-  afterHook?: (res: Response) => void;
+  afterHook?: (res: MutateResponse | ValidateResponse) => void;
 };
 
 export class PeprModule {
@@ -39,12 +34,19 @@ export class PeprModule {
    * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
-    const config: ModuleConfig = mergeDeepWith(concat, pepr, alwaysIgnore);
+    const config: ModuleConfig = clone(pepr);
     config.description = description;
 
+    // Need to validate at runtime since TS gets sad about parsing the package.json
+    const validOnErrors = ["ignore", "warn", "fail"];
+    if (!validOnErrors.includes(config.onError || "")) {
+      throw new Error(`Invalid onErrors value: ${config.onError}`);
+    }
+
     // Handle build mode
-    if (process.env.PEPR_MODE === "build") {
-      process.send?.({ capabilities });
+    if (process.env.PEPR_MODE === "build" && process.send) {
+      // Send capability map to parent process
+      process.send(capabilities);
       return;
     }
 

@@ -8,7 +8,7 @@ import { Binding, Event } from "./types";
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
- * @param binding the capability action binding
+ * @param binding the action binding
  * @param req the incoming request
  * @returns
  */
@@ -19,8 +19,6 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   // Use the old object if the request is a DELETE operation
   const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
   const { metadata } = srcObject || {};
-
-  console.log(metadata);
 
   // Test for matching operation
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {

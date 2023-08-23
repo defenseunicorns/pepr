@@ -6,7 +6,7 @@ import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, extname, resolve } from "path";
 
-import { Webhook } from "../lib/k8s/webhook";
+import { Assets } from "../lib/assets";
 import Log from "../lib/logger";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
@@ -30,28 +30,31 @@ export default function (program: RootCmd) {
 
       // If building with a custom entry point, exit after building
       if (opts.entryPoint !== peprTS) {
-        Log.info(`Module built successfully at ${path}`);
+        console.info(`✅ Module built successfully at ${path}`);
         return;
       }
 
       // Generate a secret for the module
-      const webhook = new Webhook({
-        ...cfg.pepr,
-        appVersion: cfg.version,
-        description: cfg.description,
-      });
+      const assets = new Assets(
+        {
+          ...cfg.pepr,
+          appVersion: cfg.version,
+          description: cfg.description,
+        },
+        path,
+      );
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await webhook.allYaml(path);
+      const yaml = await assets.allYaml();
 
       const zarfPath = resolve("dist", "zarf.yaml");
-      const zarf = webhook.zarfYaml(yamlFile);
+      const zarf = assets.zarfYaml(yamlFile);
 
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
       Log.debug(`Module compiled successfully at ${path}`);
-      Log.info(`K8s resource for the module saved to ${yamlPath}`);
+      console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }
 
@@ -71,7 +74,7 @@ export async function loadModule(entryPoint = peprTS) {
     await fs.access(cfgPath);
     await fs.access(input);
   } catch (e) {
-    Log.error(
+    console.error(
       `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`,
     );
     process.exit(1);
@@ -194,7 +197,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 
         // If the regex didn't match, leave a generic error
         if (conflicts.length < 1) {
-          Log.error(
+          console.warn(
             `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
             "Version Conflict",
           );
@@ -202,7 +205,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 
         // Otherwise, loop through each conflicting package and print an error
         conflicts.forEach(match => {
-          Log.error(
+          console.warn(
             `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
             "Version Conflict",
           );

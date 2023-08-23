@@ -4,6 +4,38 @@
 import test from "ava";
 import { a, modelToGroupVersionKind } from "./index";
 
+test("should return the correct GroupVersionKind for 'a.ClusterRole'", t => {
+  const { name } = a.ClusterRole;
+  const gvk = modelToGroupVersionKind(name);
+  t.is(gvk.group, "rbac.authorization.k8s.io");
+  t.is(gvk.version, "v1");
+  t.is(gvk.kind, "ClusterRole");
+});
+
+test("should return the correct GroupVersionKind for 'a.ClusterRoleBinding'", t => {
+  const { name } = a.ClusterRoleBinding;
+  const gvk = modelToGroupVersionKind(name);
+  t.is(gvk.group, "rbac.authorization.k8s.io");
+  t.is(gvk.version, "v1");
+  t.is(gvk.kind, "ClusterRoleBinding");
+});
+
+test("should return the correct GroupVersionKind for 'a.Role'", t => {
+  const { name } = a.Role;
+  const gvk = modelToGroupVersionKind(name);
+  t.is(gvk.group, "rbac.authorization.k8s.io");
+  t.is(gvk.version, "v1");
+  t.is(gvk.kind, "Role");
+});
+
+test("should return the correct GroupVersionKind for 'a.RoleBinding'", t => {
+  const { name } = a.RoleBinding;
+  const gvk = modelToGroupVersionKind(name);
+  t.is(gvk.group, "rbac.authorization.k8s.io");
+  t.is(gvk.version, "v1");
+  t.is(gvk.kind, "RoleBinding");
+});
+
 test("should return the correct GroupVersionKind for 'a.V1APIService'", t => {
   const { name } = a.APIService;
   const gvk = modelToGroupVersionKind(name);

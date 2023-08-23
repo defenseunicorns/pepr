@@ -3,8 +3,7 @@
 
 import prompt from "prompts";
 
-import { Webhook } from "../lib/k8s/webhook";
-import Log from "../lib/logger";
+import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 
@@ -33,20 +32,23 @@ export default function (program: RootCmd) {
       const { cfg, path } = await buildModule();
 
       // Generate a secret for the module
-      const webhook = new Webhook({
-        ...cfg.pepr,
-        description: cfg.description,
-      });
+      const webhook = new Assets(
+        {
+          ...cfg.pepr,
+          description: cfg.description,
+        },
+        path,
+      );
 
       if (opts.image) {
         webhook.image = opts.image;
       }
 
       try {
-        await webhook.deploy(path);
-        Log.info(`Module deployed successfully`);
+        await webhook.deploy();
+        console.info(`✅ Module deployed successfully`);
       } catch (e) {
-        Log.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });

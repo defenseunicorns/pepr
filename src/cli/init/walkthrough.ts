@@ -4,7 +4,6 @@
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
 
-import { ErrorBehavior } from "../../lib/types";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
@@ -37,25 +36,24 @@ export function walkthrough(): Promise<InitOptions> {
   const askErrorBehavior: PromptObject = {
     type: "select",
     name: "errorBehavior",
-    validate: (val: ErrorBehavior) => ErrorBehavior[val],
     message: "How do you want Pepr to handle errors encountered during K8s operations?",
     choices: [
       {
         title: "Ignore",
-        value: ErrorBehavior.ignore,
+        value: "ignore",
         description:
           "Pepr will continue processing and generate an entry in the Pepr Controller log.",
         selected: true,
       },
       {
         title: "Log an audit event",
-        value: ErrorBehavior.audit,
+        value: "audit",
         description:
           "Pepr will continue processing and generate an entry in the Pepr Controller log as well as an audit event in the cluster.",
       },
       {
         title: "Reject the operation",
-        value: ErrorBehavior.reject,
+        value: "reject",
         description: "Pepr will reject the operation and return an error to the client.",
       },
     ],

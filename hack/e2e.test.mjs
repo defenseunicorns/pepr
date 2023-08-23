@@ -1,5 +1,5 @@
 import test from "ava";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 
@@ -20,8 +20,8 @@ const testDir = "pepr-test-module";
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
-  "hello-pepr: V1ConfigMap Binding created",
-  "hello-pepr: V1ConfigMap Binding action created",
+  "Mutate Action configured for CREATE",
+  "Validate Action configured for CREATE",
   "Server listening on port 3000",
 ];
 
@@ -75,7 +75,6 @@ test.serial("E2E: `pepr build`", async t => {
   }
 });
 
-
 test.serial("E2E: zarf.yaml validation", async t => {
   try {
     // Get the version of the pepr binary
@@ -84,7 +83,7 @@ test.serial("E2E: zarf.yaml validation", async t => {
     // Read the generated yaml files
     const k8sYaml = await fs.readFile(
       resolve(testDir, "dist", "pepr-module-static-test.yaml"),
-      "utf8"
+      "utf8",
     );
     const zarfYAML = await fs.readFile(resolve(testDir, "dist", "zarf.yaml"), "utf8");
 
@@ -137,13 +136,40 @@ test.serial("E2E: `pepr deploy`", async t => {
     await waitForDeploymentReady("pepr-system", "pepr-static-test");
 
     t.log("Deployment ready");
+  } catch (e) {
+    t.fail(e.message);
+    return;
+  }
 
-    // Apply the sample yaml for the HelloPepr capability
-    execSync("kubectl apply -f hello-pepr.samples.yaml", {
-      cwd: resolve(testDir, "capabilities"),
-      stdio: "inherit",
-    });
+  // Cleanup existing resources from previous runs, if any
+  execSync("kubectl delete -f hello-pepr.samples.yaml --ignore-not-found=true", {
+    cwd: resolve(testDir, "capabilities"),
+    stdio: "inherit",
+  });
 
+  // Apply the sample yaml for the HelloPepr capability
+  const applyOut = spawnSync("kubectl apply -f hello-pepr.samples.yaml", {
+    shell: true, // Run command in a shell
+    encoding: "utf-8", // Encode result as string
+    cwd: resolve(testDir, "capabilities"),
+  });
+
+  const { stderr, status } = applyOut;
+
+  if (status === 0) {
+    t.fail("Kubectl apply was not rejected by the admission controller");
+    return;
+  }
+
+  // Check if the expected lines are in the output
+  const expected = [
+    `Error from server: error when creating "hello-pepr.samples.yaml": `,
+    `admission webhook "pepr-static-test.pepr.dev" denied the request: `,
+    `No evil CM annotations allowed.\n`
+  ].join("");
+  t.is(stderr, expected, "Kubectl apply was not rejected by the admission controller");
+
+  try {
     t.log("Sample yaml applied");
 
     // Wait for the namespace to be created
@@ -213,16 +239,16 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
     t.is(
       s1.data["binary-data"],
-      "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA=="
+      "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==",
     );
     t.is(
       s1.data["ascii-with-white-space"],
-      "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw=="
+      "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==",
     );
     t.log("Validated secret-1 Secret data");
 
     // Remove the sample yaml for the HelloPepr capability
-    execSync("kubectl delete -f hello-pepr.samples.yaml", {
+    execSync("kubectl delete -f hello-pepr.samples.yaml --ignore-not-found", {
       cwd: resolve(testDir, "capabilities"),
       stdio: "inherit",
     });
@@ -327,7 +353,7 @@ function peprDev(resolve, reject) {
 
     console.log(
       "\x1b[36m%s\x1b[0m'",
-      "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2)
+      "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2),
     );
 
     // If all expected lines are found, resolve the promise
@@ -414,7 +440,7 @@ async function getPodLogs(namespace, labelSelector) {
       undefined,
       undefined,
       undefined,
-      labelSelector
+      labelSelector,
     );
     const pods = res.body.items;
 

@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { modelToGroupVersionKind } from "./k8s/index";
+import { pickBy } from "ramda";
+
+import { isWatchMode, modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
-import logger from "./logger";
+import Log from "./logger";
 import {
-  BindToAction,
   Binding,
   BindingFilter,
   BindingWithName,
-  CapabilityAction,
   CapabilityCfg,
-  DeepPartial,
   Event,
   GenericClass,
-  HookPhase,
+  MutateAction,
+  MutateActionChain,
+  ValidateAction,
   WhenSelector,
 } from "./types";
 
@@ -25,9 +26,6 @@ export class Capability implements CapabilityCfg {
   private _name: string;
   private _description: string;
   private _namespaces?: string[] | undefined;
-
-  // Currently everything is considered a mutation
-  private _mutateOrValidate = HookPhase.mutate;
 
   private _bindings: Binding[] = [];
 
@@ -47,16 +45,13 @@ export class Capability implements CapabilityCfg {
     return this._namespaces || [];
   }
 
-  get mutateOrValidate() {
-    return this._mutateOrValidate;
-  }
-
   constructor(cfg: CapabilityCfg) {
     this._name = cfg.name;
     this._description = cfg.description;
     this._namespaces = cfg.namespaces;
-    logger.info(`Capability ${this._name} registered`);
-    logger.debug(cfg);
+
+    Log.info(`Capability ${this._name} registered`);
+    Log.debug(cfg);
   }
 
   /**
@@ -86,66 +81,81 @@ export class Capability implements CapabilityCfg {
         labels: {},
         annotations: {},
       },
-      callback: () => undefined,
     };
 
     const prefix = `${this._name}: ${model.name}`;
 
-    logger.info(`Binding created`, prefix);
+    const isNotEmpty = (value: object) => Object.keys(value).length > 0;
+    const log = (message: string, cbString: string) => {
+      const filteredObj = pickBy(isNotEmpty, binding.filters);
 
-    const Then = (cb: CapabilityAction<T>): BindToAction<T> => {
-      logger.info(`Binding action created`, prefix);
-      logger.debug(cb.toString(), prefix);
-      // Push the binding to the list of bindings for this capability as a new BindingAction
-      // with the callback function to preserve
-      this._bindings.push({
-        ...binding,
-        callback: cb,
-      });
-
-      // Now only allow adding actions to the same binding
-      return { Then };
+      Log.info(`${message} configured for ${binding.event}`, prefix);
+      Log.info(filteredObj, prefix);
+      Log.debug(cbString, prefix);
     };
 
-    const ThenSet = (merge: DeepPartial<InstanceType<T>>): BindToAction<T> => {
-      // Add the new action to the binding
-      Then(req => req.Merge(merge));
+    const Validate = (validateCallback: ValidateAction<T>): void => {
+      if (!isWatchMode) {
+        log("Validate Action", validateCallback.toString());
 
-      return { Then };
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        this._bindings.push({
+          ...binding,
+          isValidate: true,
+          validateCallback,
+        });
+      }
+    };
+
+    const Mutate = (mutateCallback: MutateAction<T>): MutateActionChain<T> => {
+      if (!isWatchMode) {
+        log("Mutate Action", mutateCallback.toString());
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        this._bindings.push({
+          ...binding,
+          isMutate: true,
+          mutateCallback,
+        });
+      }
+
+      // Now only allow adding actions to the same binding
+      return { Validate };
     };
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
-      logger.debug(`Add namespaces filter ${namespaces}`, prefix);
+      Log.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
-      return { WithLabel, WithAnnotation, WithName, Then, ThenSet };
+      return { ...commonChain, WithName };
     }
 
     function WithName(name: string): BindingFilter<T> {
-      logger.debug(`Add name filter ${name}`, prefix);
+      Log.debug(`Add name filter ${name}`, prefix);
       binding.filters.name = name;
-      return { WithLabel, WithAnnotation, Then, ThenSet };
+      return commonChain;
     }
 
     function WithLabel(key: string, value = ""): BindingFilter<T> {
-      logger.debug(`Add label filter ${key}=${value}`, prefix);
+      Log.debug(`Add label filter ${key}=${value}`, prefix);
       binding.filters.labels[key] = value;
-      return { WithLabel, WithAnnotation, Then, ThenSet };
+      return commonChain;
     }
 
     const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
-      logger.debug(`Add annotation filter ${key}=${value}`, prefix);
+      Log.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
-      return { WithLabel, WithAnnotation, Then, ThenSet };
+      return commonChain;
     };
+
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate };
 
     const bindEvent = (event: Event) => {
       binding.event = event;
       return {
+        ...commonChain,
         InNamespace,
-        Then,
-        ThenSet,
-        WithAnnotation,
-        WithLabel,
         WithName,
       };
     };
