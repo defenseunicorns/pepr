@@ -6,7 +6,6 @@ import { promises as fs } from "fs";
 import prompt from "prompts";
 
 import { Assets } from "../lib/assets";
-import Log from "../lib/logger";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 
@@ -53,7 +52,7 @@ export default function (program: RootCmd) {
 
         // Run the processed javascript file
         const runFork = async () => {
-          Log.info(`Running module ${path}`);
+          console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging
           await webhook.deploy(30);
@@ -72,7 +71,7 @@ export default function (program: RootCmd) {
 
         await buildModule(async r => {
           if (r.errors.length > 0) {
-            Log.error(`Error compiling module: ${r.errors}`);
+            console.error(`Error compiling module: ${r.errors}`);
             return;
           }
 
@@ -84,7 +83,7 @@ export default function (program: RootCmd) {
           }
         });
       } catch (e) {
-        Log.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });

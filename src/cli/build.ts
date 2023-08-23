@@ -30,7 +30,7 @@ export default function (program: RootCmd) {
 
       // If building with a custom entry point, exit after building
       if (opts.entryPoint !== peprTS) {
-        Log.info(`Module built successfully at ${path}`);
+        console.info(`✅ Module built successfully at ${path}`);
         return;
       }
 
@@ -54,7 +54,7 @@ export default function (program: RootCmd) {
       await fs.writeFile(zarfPath, zarf);
 
       Log.debug(`Module compiled successfully at ${path}`);
-      Log.info(`K8s resource for the module saved to ${yamlPath}`);
+      console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }
 
@@ -74,7 +74,7 @@ export async function loadModule(entryPoint = peprTS) {
     await fs.access(cfgPath);
     await fs.access(input);
   } catch (e) {
-    Log.error(
+    console.error(
       `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`,
     );
     process.exit(1);

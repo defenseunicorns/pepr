@@ -4,7 +4,6 @@
 import prompt from "prompts";
 
 import { Assets } from "../lib/assets";
-import Log from "../lib/logger";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 
@@ -47,9 +46,9 @@ export default function (program: RootCmd) {
 
       try {
         await webhook.deploy();
-        Log.info(`Module deployed successfully`);
+        console.info(`✅ Module deployed successfully`);
       } catch (e) {
-        Log.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });

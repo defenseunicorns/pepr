@@ -47,11 +47,11 @@ export default function (program: RootCmd) {
           });
         }
 
-        console.log(`Module updated!`);
+        console.log(`✅ Module updated successfully`);
       } catch (e) {
         Log.debug(e);
         if (e instanceof Error) {
-          Log.error(e.message);
+          console.error(e.message);
         }
         process.exit(1);
       }
@@ -86,7 +86,7 @@ export default function (program: RootCmd) {
       } catch (e) {
         Log.debug(e);
         if (e instanceof Error) {
-          Log.error(e.message);
+          console.error(e.message);
         }
         process.exit(1);
       }

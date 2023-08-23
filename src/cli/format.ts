@@ -50,7 +50,7 @@ export default function (program: RootCmd) {
           if (opts.validateOnly) {
             if (formatted !== content) {
               hasFailure = true;
-              Log.error(`File ${filePath} is not formatted correctly`);
+              console.error(`File ${filePath} is not formatted correctly`);
             }
           } else {
             // Otherwise, write the formatted file
@@ -62,10 +62,10 @@ export default function (program: RootCmd) {
           process.exit(1);
         }
 
-        Log.info("Module formatted");
+        console.info("✅ Module formatted");
       } catch (e) {
         Log.debug(e);
-        Log.error(e.message);
+        console.error(e.message);
         process.exit(1);
       }
     });
