@@ -7,6 +7,7 @@ import { RegisterKind, a } from "./lib/k8s/index";
 import Log from "./lib/logger";
 import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
+import { PeprValidateRequest } from "./lib/validate-request";
 import * as PeprUtils from "./lib/utils";
 import { Kube } from "./lib/k8s/fluent";
 
@@ -19,6 +20,7 @@ export {
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
   PeprMutateRequest,
+  PeprValidateRequest,
   PeprUtils,
   RegisterKind,
   Kube,

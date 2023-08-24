@@ -3,7 +3,6 @@
 
 import { fork } from "child_process";
 
-import Log from "../logger";
 import { Binding } from "../types";
 
 // We are receiving javascript so the private fields are now public
@@ -37,7 +36,7 @@ export function loadCapabilities(path: string): Promise<ModuleCapabilities[]> {
 
       // Iterate through the capabilities and generate the rules
       for (const capability of capabilities) {
-        Log.info(`Registered Pepr Capability "${capability._name}"`);
+        console.info(`Registered Pepr Capability "${capability._name}"`);
       }
 
       resolve(capabilities);

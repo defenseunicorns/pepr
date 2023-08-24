@@ -3,7 +3,8 @@
 
 import { StatusCodes } from "http-status-codes";
 import f, { FetchError, RequestInfo, RequestInit } from "node-fetch";
-import logger from "./logger";
+
+import Log from "./logger";
 
 export const fetchRaw = f;
 
@@ -30,7 +31,7 @@ export type FetchResponse<T> = {
 export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Promise<FetchResponse<T>> {
   let data = undefined as unknown as T;
   try {
-    logger.debug(init, `Fetching ${url}`);
+    Log.debug(`Fetching ${url}`);
 
     const resp = await fetchRaw(url, init);
     const contentType = resp.headers.get("content-type") || "";
@@ -53,7 +54,7 @@ export async function fetch<T>(url: URL | RequestInfo, init?: RequestInit): Prom
     };
   } catch (e) {
     if (e instanceof FetchError) {
-      logger.debug(`Fetch failed: ${e instanceof Error ? e.message : e}`);
+      Log.debug(`Fetch failed: ${e instanceof Error ? e.message : e}`);
 
       // Parse the error code from the FetchError or default to 400 (Bad Request)
       const status = parseInt(e.code || "400");

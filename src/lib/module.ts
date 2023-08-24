@@ -5,7 +5,7 @@ import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
-import { MutateResponse, Request } from "./k8s/types";
+import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { ModuleConfig } from "./types";
 
 export type PackageJSON = {
@@ -20,7 +20,7 @@ export type PeprModuleOptions = {
   beforeHook?: (req: Request) => void;
 
   /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
-  afterHook?: (res: MutateResponse) => void;
+  afterHook?: (res: MutateResponse | ValidateResponse) => void;
 };
 
 export class PeprModule {
@@ -36,6 +36,12 @@ export class PeprModule {
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = clone(pepr);
     config.description = description;
+
+    // Need to validate at runtime since TS gets sad about parsing the package.json
+    const validOnErrors = ["ignore", "warn", "fail"];
+    if (!validOnErrors.includes(config.onError || "")) {
+      throw new Error(`Invalid onErrors value: ${config.onError}`);
+    }
 
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {

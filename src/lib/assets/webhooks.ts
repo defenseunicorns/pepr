@@ -10,7 +10,6 @@ import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
 import { MutatingWebhookConfiguration, ValidatingWebhookConfiguration } from "../k8s/upstream";
-import Log from "../logger";
 import { Event } from "../types";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
@@ -27,7 +26,7 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
 
   // Iterate through the capabilities and generate the rules
   for (const capability of capabilities) {
-    Log.info(`Module ${config.uuid} has capability: ${capability._name}`);
+    console.info(`Module ${config.uuid} has capability: ${capability._name}`);
 
     // Read the bindings and generate the rules
     for (const binding of capability._bindings) {

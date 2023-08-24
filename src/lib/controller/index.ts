@@ -138,11 +138,16 @@ export class Controller {
     const startTime = Date.now();
 
     res.on("finish", () => {
-      const now = new Date().toISOString();
       const elapsedTime = Date.now() - startTime;
-      const message = `[${now}] ${req.method} ${req.originalUrl} [${res.statusCode}] ${elapsedTime} ms\n`;
+      const message = {
+        uid: req.body?.request?.uid,
+        method: req.method,
+        url: req.originalUrl,
+        status: res.statusCode,
+        duration: `${elapsedTime} ms`,
+      };
 
-      res.statusCode >= 400 ? Log.warn(message) : Log.info(message);
+      res.statusCode >= 300 ? Log.warn(message) : Log.info(message);
     });
 
     next();
@@ -224,25 +229,31 @@ export class Controller {
         const name = request?.name ? `/${request.name}` : "";
         const namespace = request?.namespace || "";
         const gvk = request?.kind || { group: "", version: "", kind: "" };
-        const prefix = `${request.uid} ${namespace}${name}`;
 
-        Log.info(`${admissionKind} [${request.operation}] ${gvk.group}/${gvk.version}/${gvk.kind}`, prefix);
+        const reqMetadata = {
+          uid: request.uid,
+          namespace,
+          name,
+        };
+
+        Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
+        Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Process the request
         let response: MutateResponse | ValidateResponse;
 
         // Call mutate or validate based on the admission kind
         if (admissionKind === "Mutate") {
-          response = await mutateProcessor(this._config, this._capabilities, request, prefix);
+          response = await mutateProcessor(this._config, this._capabilities, request, reqMetadata);
         } else {
-          response = await validateProcessor(this._capabilities, request, prefix);
+          response = await validateProcessor(this._capabilities, request, reqMetadata);
         }
 
         // Run the after hook if it exists
         this._afterHook && this._afterHook(response);
 
         // Log the response
-        Log.debug(response, prefix);
+        Log.debug({ ...reqMetadata, response }, "Outgoing response");
 
         // Send a no prob bob response
         res.send({

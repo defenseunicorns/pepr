@@ -5,7 +5,6 @@ import { execSync } from "child_process";
 import { resolve } from "path";
 import prompts from "prompts";
 
-import Log from "../../lib/logger";
 import { RootCmd } from "../root";
 import {
   eslint,
@@ -88,9 +87,8 @@ export default function (program: RootCmd) {
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (e) {
-          Log.debug(e);
           if (e instanceof Error) {
-            Log.error(e.message);
+            console.error(e.message);
           }
           process.exit(1);
         }

@@ -3,7 +3,7 @@
 
 import { clone } from "ramda";
 import { KubernetesObject, Operation, Request } from "./k8s/types";
-import { CapabilityValidateResponse } from "./types";
+import { ValidateResponse } from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -71,7 +71,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    *
    * @returns The validation response.
    */
-  Approve(): CapabilityValidateResponse {
+  Approve(): ValidateResponse {
     return {
       allowed: true,
     };
@@ -84,7 +84,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny(statusMessage?: string, statusCode?: number): CapabilityValidateResponse {
+  Deny(statusMessage?: string, statusCode?: number): ValidateResponse {
     return {
       allowed: false,
       statusCode,

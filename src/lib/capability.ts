@@ -12,9 +12,9 @@ import {
   BindingFilter,
   BindingWithName,
   CapabilityCfg,
-  CapabilityMutateAction,
-  CapabilityValidateAction,
-  CapabilityWatchAction,
+  MutateAction,
+  ValidateAction,
+  WatchAction,
   Event,
   GenericClass,
   MutateActionChain,
@@ -41,7 +41,7 @@ export class Capability implements CapabilityCfg {
    * between requests. Each capability has its own store, and the data is persisted in Kubernetes
    * in the `pepr-system` namespace.
    *
-   * Note: You should only access the store from within a capability action.
+   * Note: You should only access the store from within an action.
    */
   Store: PeprStore = {
     clear: this._store.clear,
@@ -98,7 +98,7 @@ export class Capability implements CapabilityCfg {
   }
 
   /**
-   * The When method is used to register a capability action to be executed when a Kubernetes resource is
+   * The When method is used to register a action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
    * filters that are applied.
    *
@@ -132,14 +132,14 @@ export class Capability implements CapabilityCfg {
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
 
-      Log.info(`${message} Created: [${binding.event}]`, prefix);
+      Log.info(`${message} configured for ${binding.event}`, prefix);
       Log.info(filteredObj, prefix);
       Log.debug(cbString, prefix);
     };
 
-    const Validate = (validateCallback: CapabilityValidateAction<T>): ValidateActionChain<T> => {
+    const Validate = (validateCallback: ValidateAction<T>): ValidateActionChain<T> => {
       if (!isWatchMode) {
-        log("Validate CapabilityAction", validateCallback.toString());
+        log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
@@ -153,9 +153,9 @@ export class Capability implements CapabilityCfg {
       return { Watch };
     };
 
-    const Mutate = (mutateCallback: CapabilityMutateAction<T>): MutateActionChain<T> => {
+    const Mutate = (mutateCallback: MutateAction<T>): MutateActionChain<T> => {
       if (!isWatchMode) {
-        log("Mutate CapabilityAction", mutateCallback.toString());
+        log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
@@ -170,9 +170,9 @@ export class Capability implements CapabilityCfg {
       return { Watch, Validate };
     };
 
-    const Watch = (watchCallback: CapabilityWatchAction<T>): void => {
+    const Watch = (watchCallback: WatchAction<T>): void => {
       if (isWatchMode) {
-        log("Watch CapabilityAction", watchCallback.toString());
+        log("Watch Action", watchCallback.toString());
 
         this._bindings.push({
           ...binding,

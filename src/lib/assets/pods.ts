@@ -21,7 +21,7 @@ export function watcher(assets: Assets, hash: string) {
   const app = `${name}-watcher`;
   const bindings: Binding[] = [];
 
-  // Loop through the capabilities and find any Watch CapabilityActions
+  // Loop through the capabilities and find any Watch Actions
   for (const capability of capabilities) {
     const watchers = capability._bindings.filter(binding => binding.isWatch);
     bindings.push(...watchers);
@@ -107,7 +107,10 @@ export function watcher(assets: Assets, hash: string) {
                   readOnly: true,
                 },
               ],
-              env: [{ name: "PEPR_WATCH_MODE", value: "true" }],
+              env: [
+                { name: "PEPR_WATCH_MODE", value: "true" },
+                { name: "PEPR_PRETTY_LOG", value: "false" },
+              ],
             },
           ],
           volumes: [
@@ -195,6 +198,12 @@ export function deployment(assets: Assets, hash: string): Deployment {
                   cpu: "500m",
                 },
               },
+              env: [
+                {
+                  name: "PEPR_PRETTY_LOG",
+                  value: "false",
+                },
+              ],
               volumeMounts: [
                 {
                   name: "tls-certs",

@@ -16,7 +16,7 @@ export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string,
+  reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
   const wrapped = new PeprMutateRequest(req);
   const response: MutateResponse = {
@@ -26,7 +26,7 @@ export async function mutateProcessor(
   };
 
   // Track whether any capability matched the request
-  let matchedCapabilityAction = false;
+  let matchedAction = false;
 
   // Track data fields that should be skipped during decoding
   let skipDecode: string[] = [];
@@ -37,10 +37,10 @@ export async function mutateProcessor(
     skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
   }
 
-  Log.info(`Processing request`, parentPrefix);
+  Log.info(reqMetadata, `Processing request`);
 
   for (const { name, bindings } of capabilities) {
-    const prefix = `${parentPrefix} ${name}:`;
+    const actionMetadata = { ...reqMetadata, name };
 
     for (const action of bindings) {
       // Skip this action if it's not a mutate action
@@ -54,9 +54,9 @@ export async function mutateProcessor(
       }
 
       const label = action.mutateCallback.name;
-      Log.info(`Processing matched action ${label}`, prefix);
+      Log.info(actionMetadata, `Processing matched action ${label}`);
 
-      matchedCapabilityAction = true;
+      matchedAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
@@ -78,23 +78,27 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
-        Log.info(`Action succeeded`, prefix);
+        Log.info(actionMetadata, `Action succeeded`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
+        Log.warn(actionMetadata, `Action failed: ${e}`);
+        updateStatus("warning");
+
         // Annoying ts false positive
         response.warnings = response.warnings || [];
         response.warnings.push(`Action failed: ${e}`);
 
-        // If errors are not allowed, note the failure in the Response
-        if (config.onError) {
-          Log.error(`Action failed: ${e}`, prefix);
-          response.result = "Pepr module configured to reject on error";
-          return response;
-        } else {
-          Log.warn(`Action failed: ${e}`, prefix);
-          updateStatus("warning");
+        switch (config.onError) {
+          case "reject":
+            Log.error(actionMetadata, `Action failed: ${e}`);
+            response.result = "Pepr module configured to reject on error";
+            return response;
+
+          case "audit":
+            // @todo: implement audit logging
+            break;
         }
       }
     }
@@ -104,8 +108,8 @@ export async function mutateProcessor(
   response.allowed = true;
 
   // If no capability matched the request, exit early
-  if (!matchedCapabilityAction) {
-    Log.info(`No matching capability action found`, parentPrefix);
+  if (!matchedAction) {
+    Log.info(reqMetadata, `No matching actions found`);
     return response;
   }
 
@@ -137,7 +141,7 @@ export async function mutateProcessor(
     delete response.warnings;
   }
 
-  Log.debug(patches, parentPrefix);
+  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
 
   return response;
 }

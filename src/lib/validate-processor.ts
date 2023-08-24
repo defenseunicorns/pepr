@@ -10,7 +10,7 @@ import { PeprValidateRequest } from "./validate-request";
 export async function validateProcessor(
   capabilities: Capability[],
   req: Request,
-  parentPrefix: string,
+  reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse> {
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse = {
@@ -18,10 +18,10 @@ export async function validateProcessor(
     allowed: true, // Assume it's allowed until a validation check fails
   };
 
-  Log.info(`Processing validation request`, parentPrefix);
+  Log.info(reqMetadata, `Processing validation request`);
 
   for (const { name, bindings } of capabilities) {
-    const prefix = `${parentPrefix} ${name}:`;
+    const actionMetadata = { ...reqMetadata, name };
 
     for (const action of bindings) {
       // Skip this action if it's not a validation action
@@ -35,7 +35,7 @@ export async function validateProcessor(
       }
 
       const label = action.validateCallback.name;
-      Log.info(`Processing matched action ${label}`, prefix);
+      Log.info(actionMetadata, `Processing matched action ${label}`);
 
       try {
         // Run the validation callback, if it fails set allowed to false
@@ -50,10 +50,10 @@ export async function validateProcessor(
           };
         }
 
-        Log.info(`Validation Action completed: ${resp.allowed ? "allowed" : "denied"}`, prefix);
+        Log.info(actionMetadata, `Validation Action completed: ${resp.allowed ? "allowed" : "denied"}`);
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
-        Log.error(`Action failed: ${e}`, prefix);
+        Log.error(actionMetadata, `Action failed: ${e}`);
         response.allowed = false;
         response.status = {
           code: 500,

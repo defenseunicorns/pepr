@@ -15,7 +15,7 @@ import { Filters, pathBuilder, queryBuilder } from "./fluent";
  * ⚠️ WARNING ⚠️
  *
  * This watch will run on every Pepr Controller pod at the same time and
- * you should typically use the Pepr Watch CapabilityAction instead unless you
+ * you should typically use the Pepr Watch Action instead unless you
  * really need the watch to run on every controller pod simultaneously.
  */
 export const ParallelWatch = <T extends GenericClass>(model: T, filters: Filters) => {

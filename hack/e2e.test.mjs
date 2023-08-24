@@ -1,5 +1,5 @@
 import test from "ava";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 
@@ -19,8 +19,8 @@ const testDir = "pepr-test-module";
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
-  "hello-pepr: V1ConfigMap Mutate CapabilityAction Created",
-  "hello-pepr: V1ConfigMap Validate CapabilityAction Created",
+  "Mutate Action configured for CREATE",
+  "Validate Action configured for CREATE",
   "Server listening on port 3000",
 ];
 
@@ -135,13 +135,40 @@ test.serial("E2E: `pepr deploy`", async t => {
     await waitForDeploymentReady("pepr-system", "pepr-static-test");
 
     t.log("Deployment ready");
+  } catch (e) {
+    t.fail(e.message);
+    return;
+  }
 
-    // Apply the sample yaml for the HelloPepr capability
-    execSync("kubectl apply -f hello-pepr.samples.yaml", {
-      cwd: resolve(testDir, "capabilities"),
-      stdio: "inherit",
-    });
+  // Cleanup existing resources from previous runs, if any
+  execSync("kubectl delete -f hello-pepr.samples.yaml --ignore-not-found=true", {
+    cwd: resolve(testDir, "capabilities"),
+    stdio: "inherit",
+  });
 
+  // Apply the sample yaml for the HelloPepr capability
+  const applyOut = spawnSync("kubectl apply -f hello-pepr.samples.yaml", {
+    shell: true, // Run command in a shell
+    encoding: "utf-8", // Encode result as string
+    cwd: resolve(testDir, "capabilities"),
+  });
+
+  const { stderr, status } = applyOut;
+
+  if (status === 0) {
+    t.fail("Kubectl apply was not rejected by the admission controller");
+    return;
+  }
+
+  // Check if the expected lines are in the output
+  const expected = [
+    `Error from server: error when creating "hello-pepr.samples.yaml": `,
+    `admission webhook "pepr-static-test.pepr.dev" denied the request: `,
+    `No evil CM annotations allowed.\n`
+  ].join("");
+  t.is(stderr, expected, "Kubectl apply was not rejected by the admission controller");
+
+  try {
     t.log("Sample yaml applied");
 
     // Wait for the namespace to be created
@@ -220,7 +247,7 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.log("Validated secret-1 Secret data");
 
     // Remove the sample yaml for the HelloPepr capability
-    execSync("kubectl delete -f hello-pepr.samples.yaml", {
+    execSync("kubectl delete -f hello-pepr.samples.yaml --ignore-not-found", {
       cwd: resolve(testDir, "capabilities"),
       stdio: "inherit",
     });
