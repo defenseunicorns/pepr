@@ -28,13 +28,10 @@ export async function mutateProcessor(
   // Track whether any capability matched the request
   let matchedAction = false;
 
-  // Track data fields that should be skipped during decoding
-  let skipDecode: string[] = [];
-
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
   if (isSecret) {
-    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
+    convertFromBase64Map(wrapped.Raw as unknown as Secret);
   }
 
   Log.info(reqMetadata, `Processing request`);
@@ -122,7 +119,7 @@ export async function mutateProcessor(
 
   // Post-process the Secret requests to convert it back to the original format
   if (isSecret) {
-    convertToBase64Map(transformed as unknown as Secret, skipDecode);
+    convertToBase64Map(transformed as unknown as Secret);
   }
 
   // Compare the original request to the modified request to get the patches
