@@ -42,6 +42,7 @@ test("convertToBase64Map", t => {
       key1: "value1",
       key2: "hello",
       key3: "",
+      key4: nonAsciiText,
     },
   };
 
@@ -50,6 +51,7 @@ test("convertToBase64Map", t => {
   t.is(obj.data.key1, base64Encode("value1"));
   t.is(obj.data.key2, base64Encode("hello"));
   t.is(obj.data.key3, base64Encode(""));
+  t.is(obj.data.key4, base64Encode(nonAsciiText));
 });
 
 test("convertFromBase64Map", t => {
@@ -58,6 +60,7 @@ test("convertFromBase64Map", t => {
       key1: "aGVsbG8=",
       key2: "d29ybGQ=",
       key3: "",
+      key4: "8J+mhPCfmoDwn4yN8J+Mnw==",
     },
   };
 
@@ -66,4 +69,5 @@ test("convertFromBase64Map", t => {
   t.is(obj.data.key1, "hello");
   t.is(obj.data.key2, "world");
   t.is(obj.data.key3, "");
+  t.is(obj.data.key4, nonAsciiText);
 });
