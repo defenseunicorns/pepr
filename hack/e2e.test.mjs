@@ -284,7 +284,8 @@ test.serial("E2E: `pepr metrics`", async t => {
     const cmd = await new Promise(peprDev);
 
     const metrics = await testMetrics();
-    t.is(metrics.includes("pepr_summary_count"), true);
+    t.is(metrics.includes("pepr_Validate"), true);
+    t.is(metrics.includes("pepr_Mutate"), true);
     t.is(metrics.includes("pepr_errors"), true);
     t.is(metrics.includes("pepr_alerts"), true);
     t.log("Validated metrics endpoint");
