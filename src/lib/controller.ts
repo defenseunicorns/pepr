@@ -257,7 +257,7 @@ export class Controller {
           kind: "AdmissionReview",
           response,
         });
-        this.metricsCollector.observeEnd(startTime);
+        this.metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
         Log.error(err);
         res.status(500).send("Internal Server Error");
