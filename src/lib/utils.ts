@@ -3,9 +3,15 @@
 
 import Log from "./logger";
 
+type Base64ConvertibleValue = string | Buffer;
+
+interface Base64Map {
+  data?: Record<string, Base64ConvertibleValue>;
+}
+
 /** Base64 encode all values in a map */
-export function convertToBase64Map(obj: { data?: Record<string, string> }): { data?: Record<string, string> } {
-  const newObj = { ...obj };
+export function convertToBase64Map(obj: Base64Map): Base64Map {
+  const newObj: Base64Map = { ...obj };
   newObj.data = newObj.data ?? {};
 
   for (const key in newObj.data) {
@@ -17,8 +23,8 @@ export function convertToBase64Map(obj: { data?: Record<string, string> }): { da
 }
 
 /** Base64 decode all values in a map */
-export function convertFromBase64Map(obj: { data?: Record<string, string | Buffer> }): { data?: Record<string, string | Buffer> } {
-  const newObj = { ...obj };
+export function convertFromBase64Map(obj: Base64Map): Base64Map {
+  const newObj: Base64Map = { ...obj };
   newObj.data = newObj.data ?? {};
 
   for (const key in newObj.data) {
@@ -35,7 +41,7 @@ export function convertFromBase64Map(obj: { data?: Record<string, string | Buffe
  * @param data The base64 encoded string or Buffer containing binary data
  * @returns A Buffer containing the decoded data, or an empty Buffer in case of errors
  */
-export function base64Decode(data: string | Buffer): Buffer {
+export function base64Decode(data: Base64ConvertibleValue): Buffer {
   try {
     if (typeof data === "string") {
       return Buffer.from(data, "base64");
@@ -45,7 +51,7 @@ export function base64Decode(data: string | Buffer): Buffer {
   } catch (error) {
     Log.error(`Error decoding base64 data: ${error}`);
   }
-  
+
   return Buffer.from([]);
 }
 
@@ -54,6 +60,6 @@ export function base64Decode(data: string | Buffer): Buffer {
  * @param data The input string or Buffer to be encoded
  * @returns A base64 encoded string
  */
-export function base64Encode(data: string | Buffer): string {
+export function base64Encode(data: Base64ConvertibleValue): string {
   return Buffer.from(data).toString("base64");
 }
