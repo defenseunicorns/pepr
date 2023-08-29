@@ -22,17 +22,17 @@ test("base64Encode", t => {
 });
 
 test("base64Decode", t => {
-  const testCases: Array<[string, string]> = [
-    ["aGVsbG8=", "hello"],
-    ["d29ybGQ=", "world"],
-    ["MTIzNDU=", "12345"],
-    ["", ""],
-    ["8J+mhPCfmoDwn4yN8J+Mnw==", nonAsciiText],
+  const testCases: Array<[string, Buffer]> = [
+    ["", Buffer.from("", "utf-8")],
+    ["aGVsbG8=", Buffer.from("hello", "utf-8")],
+    ["d29ybGQ=", Buffer.from("world", "utf-8")],
+    ["MTIzNDU=", Buffer.from("12345", "utf-8")],
+    ["8J+mhPCfmoDwn4yN8J+Mnw==", Buffer.from(nonAsciiText, "utf-8")],
   ];
 
   for (const [input, expected] of testCases) {
     const decoded = base64Decode(input);
-    t.is(decoded, expected);
+    t.deepEqual(decoded, expected);
   }
 });
 
@@ -66,8 +66,18 @@ test("convertFromBase64Map", t => {
 
   convertFromBase64Map(obj);
 
-  t.is(obj.data.key1, "hello");
-  t.is(obj.data.key2, "world");
-  t.is(obj.data.key3, "");
-  t.is(obj.data.key4, nonAsciiText);
+  t.deepEqual(obj.data.key1, Buffer.from("hello", "utf-8"));
+  t.deepEqual(obj.data.key2, Buffer.from("world", "utf-8"));
+  t.deepEqual(obj.data.key3, Buffer.from("", "utf-8"));
+  t.deepEqual(obj.data.key4, Buffer.from(nonAsciiText, "utf-8"));
+});
+
+test("should return identical encoded binary data after base64 decoding and re-encoding", t => {
+  const encodedBinaryData =
+    "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==";
+
+  const decoded = base64Decode(encodedBinaryData);
+  const encoded = base64Encode(decoded);
+
+  t.is(encoded, encodedBinaryData);
 });
