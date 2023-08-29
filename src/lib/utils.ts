@@ -4,45 +4,48 @@
 import Log from "./logger";
 
 /** Base64 encode all values in a map */
-export function convertToBase64Map(obj: { data?: Record<string, string> }) {
-  obj.data = obj.data ?? {};
+export function convertToBase64Map(obj: { data?: Record<string, string> }): { data?: Record<string, string> } {
+  const newObj = { ...obj };
+  newObj.data = newObj.data ?? {};
 
-  for (const key in obj.data) {
-    const value = obj.data[key];
-    obj.data[key] = base64Encode(value);
+  for (const key in newObj.data) {
+    const value = newObj.data[key];
+    newObj.data[key] = base64Encode(value);
   }
+
+  return newObj;
 }
 
 /** Base64 decode all values in a map */
-export function convertFromBase64Map(obj: { data?: Record<string, string | Buffer> }) {
-  obj.data = obj.data ?? {};
+export function convertFromBase64Map(obj: { data?: Record<string, string | Buffer> }): { data?: Record<string, string | Buffer> } {
+  const newObj = { ...obj };
+  newObj.data = newObj.data ?? {};
 
-  for (const key in obj.data) {
-    const value = obj.data[key];
-    obj.data[key] = base64Decode(value);
+  for (const key in newObj.data) {
+    const value = newObj.data[key];
+    newObj.data[key] = base64Decode(value);
   }
+
+  return newObj;
 }
 
 /**
  * Decode a base64 string to a Buffer.
  * A Buffer is used to handle binary data accurately without unintended character encoding conversions.
  * @param data The base64 encoded string or Buffer containing binary data
- * @returns A Buffer containing the decoded data
+ * @returns A Buffer containing the decoded data, or an empty Buffer in case of errors
  */
 export function base64Decode(data: string | Buffer): Buffer {
-  switch (typeof data) {
-    case "string":
+  try {
+    if (typeof data === "string") {
       return Buffer.from(data, "base64");
-    case "object":
-      if (Buffer.isBuffer(data)) {
-        return data;
-      }
-      break;
-    default:
-      Log.debug(`Invalid input type for base64Decode: value=${data} type=${typeof data}`);
-      return Buffer.from([]);
+    } else if (Buffer.isBuffer(data)) {
+      return data;
+    }
+  } catch (error) {
+    Log.error(`Error decoding base64 data: ${error}`);
   }
-
+  
   return Buffer.from([]);
 }
 
