@@ -6,6 +6,8 @@ import { shouldSkipRequest } from "./filter";
 import { Request, ValidateResponse } from "./k8s/types";
 import Log from "./logger";
 import { PeprValidateRequest } from "./validate-request";
+import { convertFromBase64Map } from "./utils";
+import { Secret } from "./k8s/upstream";
 
 export async function validateProcessor(
   capabilities: Capability[],
@@ -17,6 +19,12 @@ export async function validateProcessor(
     uid: req.uid,
     allowed: true, // Assume it's allowed until a validation check fails
   };
+
+  // If the resource is a secret, decode the data
+  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  if (isSecret) {
+    convertFromBase64Map(wrapped.Raw as unknown as Secret);
+  }
 
   Log.info(reqMetadata, `Processing validation request`);
 
