@@ -46,12 +46,12 @@ test("convertToBase64Map", t => {
     },
   };
 
-  convertToBase64Map(obj);
+  const newObj = convertToBase64Map(obj);
 
-  t.is(obj.data.key1, base64Encode("value1"));
-  t.is(obj.data.key2, base64Encode("hello"));
-  t.is(obj.data.key3, base64Encode(""));
-  t.is(obj.data.key4, base64Encode(nonAsciiText));
+  t.is(newObj.data?.key1, base64Encode("value1"));
+  t.is(newObj.data?.key2, base64Encode("hello"));
+  t.is(newObj.data?.key3, base64Encode(""));
+  t.is(newObj.data?.key4, base64Encode(nonAsciiText));
 });
 
 test("convertFromBase64Map", t => {
@@ -64,12 +64,12 @@ test("convertFromBase64Map", t => {
     },
   };
 
-  convertFromBase64Map(obj);
+  const newObj = convertFromBase64Map(obj);
 
-  t.deepEqual(obj.data.key1, Buffer.from("hello", "utf-8"));
-  t.deepEqual(obj.data.key2, Buffer.from("world", "utf-8"));
-  t.deepEqual(obj.data.key3, Buffer.from("", "utf-8"));
-  t.deepEqual(obj.data.key4, Buffer.from(nonAsciiText, "utf-8"));
+  t.deepEqual(newObj.data?.key1, Buffer.from("hello", "utf-8"));
+  t.deepEqual(newObj.data?.key2, Buffer.from("world", "utf-8"));
+  t.deepEqual(newObj.data?.key3, Buffer.from("", "utf-8"));
+  t.deepEqual(newObj.data?.key4, Buffer.from(nonAsciiText, "utf-8"));
 });
 
 test("should return identical encoded binary data after base64 decoding and re-encoding", t => {
