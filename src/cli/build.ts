@@ -177,14 +177,14 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 
     return { ctx, path, cfg, uuid };
   } catch (e) {
-    Log.debug(e.message);
+    Log.error(e.message);
 
     if (e.stdout) {
       const out = e.stdout.toString() as string;
       const err = e.stderr.toString();
 
-      Log.debug(out);
-      Log.debug(err);
+      Log.error(out);
+      Log.error(err);
 
       // Check for version conflicts
       if (out.includes("Types have separate declarations of a private property '_name'.")) {
