@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-// fetch.test.ts
 
 import test from "ava";
 import { StatusCodes } from "http-status-codes";

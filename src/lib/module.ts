@@ -5,6 +5,7 @@ import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
+import { ValidateError } from "./errors";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { ModuleConfig } from "./types";
 
@@ -24,7 +25,7 @@ export type PeprModuleOptions = {
 };
 
 export class PeprModule {
-  private _controller!: Controller;
+  #controller!: Controller;
 
   /**
    * Create a new Pepr runtime
@@ -38,10 +39,7 @@ export class PeprModule {
     config.description = description;
 
     // Need to validate at runtime since TS gets sad about parsing the package.json
-    const validOnErrors = ["ignore", "warn", "fail"];
-    if (!validOnErrors.includes(config.onError || "")) {
-      throw new Error(`Invalid onErrors value: ${config.onError}`);
-    }
+    ValidateError(config.onError);
 
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {
@@ -50,7 +48,7 @@ export class PeprModule {
       return;
     }
 
-    this._controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
+    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
 
     // Stop processing if deferStart is set to true
     if (opts.deferStart) {
@@ -66,7 +64,7 @@ export class PeprModule {
    *
    * @param port
    */
-  start(port = 3000) {
-    this._controller.startServer(port);
+  public start(port = 3000) {
+    this.#controller.startServer(port);
   }
 }

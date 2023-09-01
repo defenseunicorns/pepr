@@ -23,34 +23,33 @@ import {
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
  */
 export class Capability implements CapabilityCfg {
-  private _name: string;
-  private _description: string;
-  private _namespaces?: string[] | undefined;
+  #name: string;
+  #description: string;
+  #namespaces?: string[] | undefined;
+  #bindings: Binding[] = [];
 
-  private _bindings: Binding[] = [];
-
-  get bindings(): Binding[] {
-    return this._bindings;
+  get bindings() {
+    return this.#bindings;
   }
 
   get name() {
-    return this._name;
+    return this.#name;
   }
 
   get description() {
-    return this._description;
+    return this.#description;
   }
 
   get namespaces() {
-    return this._namespaces || [];
+    return this.#namespaces || [];
   }
 
   constructor(cfg: CapabilityCfg) {
-    this._name = cfg.name;
-    this._description = cfg.description;
-    this._namespaces = cfg.namespaces;
+    this.#name = cfg.name;
+    this.#description = cfg.description;
+    this.#namespaces = cfg.namespaces;
 
-    Log.info(`Capability ${this._name} registered`);
+    Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);
   }
 
@@ -63,7 +62,7 @@ export class Capability implements CapabilityCfg {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
+  public When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
@@ -83,8 +82,9 @@ export class Capability implements CapabilityCfg {
       },
     };
 
-    const prefix = `${this._name}: ${model.name}`;
-
+    const bindings = this.#bindings;
+    const prefix = `${this.#name}: ${model.name}`;
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -94,27 +94,27 @@ export class Capability implements CapabilityCfg {
       Log.debug(cbString, prefix);
     };
 
-    const Validate = (validateCallback: ValidateAction<T>): void => {
+    function Validate(validateCallback: ValidateAction<T>): void {
       if (!isWatchMode) {
         log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
-        this._bindings.push({
+        bindings.push({
           ...binding,
           isValidate: true,
           validateCallback,
         });
       }
-    };
+    }
 
-    const Mutate = (mutateCallback: MutateAction<T>): MutateActionChain<T> => {
+    function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
       if (!isWatchMode) {
         log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
-        this._bindings.push({
+        bindings.push({
           ...binding,
           isMutate: true,
           mutateCallback,
@@ -123,7 +123,7 @@ export class Capability implements CapabilityCfg {
 
       // Now only allow adding actions to the same binding
       return { Validate };
-    };
+    }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);
@@ -143,22 +143,20 @@ export class Capability implements CapabilityCfg {
       return commonChain;
     }
 
-    const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
+    function WithAnnotation(key: string, value = ""): BindingFilter<T> {
       Log.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
       return commonChain;
-    };
+    }
 
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate };
-
-    const bindEvent = (event: Event) => {
+    function bindEvent(event: Event) {
       binding.event = event;
       return {
         ...commonChain,
         InNamespace,
         WithName,
       };
-    };
+    }
 
     return {
       IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
@@ -166,5 +164,5 @@ export class Capability implements CapabilityCfg {
       IsUpdated: () => bindEvent(Event.Update),
       IsDeleted: () => bindEvent(Event.Delete),
     };
-  };
+  }
 }
