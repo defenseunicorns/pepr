@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+/* eslint-disable class-methods-use-this */
+
 import { clone } from "ramda";
 import { KubernetesObject, Operation, Request } from "./k8s/types";
 import { ValidateResponse } from "./types";
@@ -36,6 +38,12 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    */
   constructor(input: Request<T>) {
     this.#input = input;
+
+    // Bind public methods to this instance
+    this.HasLabel = this.HasLabel.bind(this);
+    this.HasAnnotation = this.HasAnnotation.bind(this);
+    this.Approve = this.Approve.bind(this);
+    this.Deny = this.Deny.bind(this);
 
     // If this is a DELETE operation, use the oldObject instead
     if (input.operation.toUpperCase() === Operation.DELETE) {

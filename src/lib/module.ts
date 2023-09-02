@@ -7,7 +7,7 @@ import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
-import { ModuleConfig } from "./types";
+import { CapabilityExport, ModuleConfig } from "./types";
 
 export type PackageJSON = {
   description: string;
@@ -41,10 +41,26 @@ export class PeprModule {
     // Need to validate at runtime since TS gets sad about parsing the package.json
     ValidateError(config.onError);
 
+    // Bind public methods
+    this.start = this.start.bind(this);
+
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {
+      const exportedCapabilities: CapabilityExport[] = [];
+
       // Send capability map to parent process
-      process.send(capabilities);
+      for (const capability of capabilities) {
+        // Convert the capability to a capability config
+        exportedCapabilities.push({
+          name: capability.name,
+          description: capability.description,
+          namespaces: capability.namespaces,
+          bindings: capability.bindings,
+        });
+      }
+
+      process.send(exportedCapabilities);
+
       return;
     }
 

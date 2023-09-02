@@ -26,10 +26,10 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
 
   // Iterate through the capabilities and generate the rules
   for (const capability of capabilities) {
-    console.info(`Module ${config.uuid} has capability: ${capability._name}`);
+    console.info(`Module ${config.uuid} has capability: ${capability.name}`);
 
     // Read the bindings and generate the rules
-    for (const binding of capability._bindings) {
+    for (const binding of capability.bindings) {
       const { event, kind, isMutate, isValidate } = binding;
 
       // If the module doesn't have a callback for the event, skip it

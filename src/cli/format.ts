@@ -5,7 +5,6 @@ import { ESLint } from "eslint";
 import { promises as fs } from "fs";
 import { format, resolveConfig } from "prettier";
 
-import Log from "../lib/logger";
 import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
@@ -64,7 +63,6 @@ export default function (program: RootCmd) {
 
         console.info("✅ Module formatted");
       } catch (e) {
-        Log.debug(e);
         console.error(e.message);
         process.exit(1);
       }

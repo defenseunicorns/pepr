@@ -9,6 +9,7 @@ import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { Errors } from "./errors";
 import { PackageJSON, PeprModule } from "./module";
+import { CapabilityExport } from "./types";
 
 // Mocks rely on the test being serial
 const test = anyTest.serial;
@@ -103,8 +104,15 @@ test("should send the capabilities to the parent process if PEPR_MODE is set to 
     description: "test",
   });
 
+  const expected: CapabilityExport = {
+    name: capability.name,
+    description: capability.description,
+    namespaces: capability.namespaces,
+    bindings: capability.bindings,
+  };
+
   new PeprModule(packageJSON, [capability]);
 
   // Verify that the capabilities were sent back to the parent process
-  t.deepEqual(sendStub.firstCall.args[0], [capability]);
+  t.deepEqual(sendStub.firstCall.args[0], [expected]);
 });

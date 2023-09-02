@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+/* eslint-disable class-methods-use-this */
+
 import { performance } from "perf_hooks";
 import promClient, { Counter, Registry, Summary } from "prom-client";
-
 import Log from "./logger";
 
 const loggingPrefix = "MetricsCollector";
@@ -64,6 +65,14 @@ export class MetricsCollector {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
       return;
     }
+
+    // Bind public methods
+    this.incCounter = this.incCounter.bind(this);
+    this.error = this.error.bind(this);
+    this.alert = this.alert.bind(this);
+    this.observeStart = this.observeStart.bind(this);
+    this.observeEnd = this.observeEnd.bind(this);
+    this.getMetrics = this.getMetrics.bind(this);
 
     const metric = new MetricType({
       name: this.getMetricName(name),

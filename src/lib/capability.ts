@@ -11,6 +11,7 @@ import {
   BindingFilter,
   BindingWithName,
   CapabilityCfg,
+  CapabilityExport,
   Event,
   GenericClass,
   MutateAction,
@@ -22,7 +23,7 @@ import {
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
  */
-export class Capability implements CapabilityCfg {
+export class Capability implements CapabilityExport {
   #name: string;
   #description: string;
   #namespaces?: string[] | undefined;
@@ -48,6 +49,9 @@ export class Capability implements CapabilityCfg {
     this.#name = cfg.name;
     this.#description = cfg.description;
     this.#namespaces = cfg.namespaces;
+
+    // Bind When() to this instance
+    this.When = this.When.bind(this);
 
     Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);

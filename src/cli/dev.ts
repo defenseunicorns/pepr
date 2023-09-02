@@ -66,6 +66,7 @@ export default function (program: RootCmd) {
               SSL_KEY_PATH: "insecure-tls.key",
               SSL_CERT_PATH: "insecure-tls.crt",
             },
+            stdio: "inherit",
           });
         };
 

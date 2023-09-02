@@ -4,16 +4,16 @@
 import crypto from "crypto";
 
 import { TLSOut, genTLS } from "../k8s/tls";
-import { ModuleConfig } from "../types";
+import { CapabilityExport, ModuleConfig } from "../types";
 import { deploy } from "./deploy";
-import { ModuleCapabilities, loadCapabilities } from "./loader";
+import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml } from "./yaml";
 
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
-  capabilities!: ModuleCapabilities[];
+  capabilities!: CapabilityExport[];
   image: string;
 
   constructor(
@@ -21,6 +21,11 @@ export class Assets {
     readonly path: string,
     readonly host?: string,
   ) {
+    // Bind public methods
+    this.deploy = this.deploy.bind(this);
+    this.zarfYaml = this.zarfYaml.bind(this);
+    this.allYaml = this.allYaml.bind(this);
+
     this.name = `pepr-${config.uuid}`;
 
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
@@ -32,15 +37,17 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
-  deploy = async (webhookTimeout?: number) => {
+  public async deploy(webhookTimeout?: number) {
     this.capabilities = await loadCapabilities(this.path);
     await deploy(this, webhookTimeout);
-  };
+  }
 
-  zarfYaml = (path: string) => zarfYaml(this, path);
+  public zarfYaml(path: string) {
+    return zarfYaml(this, path);
+  }
 
-  allYaml = async () => {
+  public async allYaml() {
     this.capabilities = await loadCapabilities(this.path);
     return allYaml(this);
-  };
+  }
 }

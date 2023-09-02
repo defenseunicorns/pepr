@@ -1,11 +1,11 @@
-import test from "ava";
-import { execSync, spawn, spawnSync } from "child_process";
+import { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } from "@kubernetes/client-node";
+import anyTest from "ava";
+import { ChildProcessWithoutNullStreams, execSync, spawn, spawnSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 
-import { k8s } from "../dist/lib.js";
-
-const { AppsV1Api, CoreV1Api, KubeConfig, loadYaml } = k8s;
+// Journey tests must be run serially
+const test = anyTest.serial;
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
@@ -25,11 +25,7 @@ let expectedLines = [
   "Server listening on port 3000",
 ];
 
-function stripAnsiCodes(input) {
-  return input.replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "");
-}
-
-test.before(async t => {
+test.before(async () => {
   const dir = resolve(testDir);
 
   try {
@@ -43,7 +39,7 @@ test.before(async t => {
   }
 });
 
-test.serial("E2E: `pepr init`", t => {
+test("Journey: `pepr init`", t => {
   try {
     const peprAlias = "file:pepr-0.0.0-development.tgz";
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
@@ -53,7 +49,7 @@ test.serial("E2E: `pepr init`", t => {
   }
 });
 
-test.serial("E2E: `pepr format`", t => {
+test("Journey: `pepr format`", t => {
   try {
     execSync("npx pepr format", { cwd: testDir, stdio: "inherit" });
     t.pass();
@@ -62,7 +58,7 @@ test.serial("E2E: `pepr format`", t => {
   }
 });
 
-test.serial("E2E: `pepr build`", async t => {
+test("Journey: `pepr build`", async t => {
   try {
     execSync("npx pepr build", { cwd: testDir, stdio: "inherit" });
     // check if the file exists
@@ -75,7 +71,7 @@ test.serial("E2E: `pepr build`", async t => {
   }
 });
 
-test.serial("E2E: zarf.yaml validation", async t => {
+test("Journey: zarf.yaml validation", async t => {
   try {
     // Get the version of the pepr binary
     const peprVer = execSync("npx pepr --version", { cwd: testDir }).toString().trim();
@@ -127,7 +123,7 @@ test.serial("E2E: zarf.yaml validation", async t => {
   }
 });
 
-test.serial("E2E: `pepr deploy`", async t => {
+test("Journey: `pepr deploy`", async t => {
   try {
     // Deploy the module
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd: testDir, stdio: "inherit" });
@@ -165,7 +161,7 @@ test.serial("E2E: `pepr deploy`", async t => {
   const expected = [
     `Error from server: error when creating "hello-pepr.samples.yaml": `,
     `admission webhook "pepr-static-test.pepr.dev" denied the request: `,
-    `No evil CM annotations allowed.\n`
+    `No evil CM annotations allowed.\n`,
   ].join("");
   t.is(stderr, expected, "Kubectl apply was not rejected by the admission controller");
 
@@ -178,11 +174,11 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.log("Namespace created");
 
     // Check if the namespace has the correct labels and annotations
-    t.deepEqual(ns.metadata.labels, {
+    t.deepEqual(ns.metadata?.labels, {
       "keep-me": "please",
       "kubernetes.io/metadata.name": "pepr-demo",
     });
-    t.is(ns.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(ns.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
 
     t.log("Namespace validated");
 
@@ -197,52 +193,52 @@ test.serial("E2E: `pepr deploy`", async t => {
     t.log("ConfigMaps and secret created");
 
     // Validate the example-1 CM
-    t.is(cm1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(cm1.metadata.annotations["pepr.dev"], "annotations-work-too");
-    t.is(cm1.metadata.labels["pepr"], "was-here");
+    t.is(cm1.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm1.metadata?.annotations?.["pepr.dev"], "annotations-work-too");
+    t.is(cm1.metadata?.labels?.["pepr"], "was-here");
     t.log("Validated example-1 ConfigMap data");
 
     // Validate the example-2 CM
-    t.is(cm2.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(cm2.metadata.annotations["pepr.dev"], "annotations-work-too");
-    t.is(cm2.metadata.labels["pepr"], "was-here");
+    t.is(cm2.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm2.metadata?.annotations?.["pepr.dev"], "annotations-work-too");
+    t.is(cm2.metadata?.labels?.["pepr"], "was-here");
     t.log("Validated example-2 ConfigMap data");
 
     // Validate the example-3 CM
-    t.is(cm3.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(cm3.metadata.annotations["pepr.dev"], "making-waves");
+    t.is(cm3.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm3.metadata?.annotations?.["pepr.dev"], "making-waves");
     t.deepEqual(cm3.data, { key: "ex-3-val", username: "system:admin" });
     t.log("Validated example-3 ConfigMap data");
 
     // Validate the example-4 CM
-    t.is(cm4.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(cm4.metadata.labels["pepr.dev/first"], "true");
-    t.is(cm4.metadata.labels["pepr.dev/second"], "true");
-    t.is(cm4.metadata.labels["pepr.dev/third"], "true");
+    t.is(cm4.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm4.metadata?.labels?.["pepr.dev/first"], "true");
+    t.is(cm4.metadata?.labels?.["pepr.dev/second"], "true");
+    t.is(cm4.metadata?.labels?.["pepr.dev/third"], "true");
     t.log("Validated example-4 ConfigMap data");
 
     // Validate the example-4a CM
-    t.is(cm4a.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(cm4a.metadata.labels["pepr.dev/first"], "true");
-    t.is(cm4a.metadata.labels["pepr.dev/second"], "true");
-    t.is(cm4a.metadata.labels["pepr.dev/third"], "true");
+    t.is(cm4a.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(cm4a.metadata?.labels?.["pepr.dev/first"], "true");
+    t.is(cm4a.metadata?.labels?.["pepr.dev/second"], "true");
+    t.is(cm4a.metadata?.labels?.["pepr.dev/third"], "true");
     t.log("Validated example-4a ConfigMap data");
 
     // Validate the example-5 CM
-    t.is(cm5.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.truthy(cm5.data["chuck-says"]);
+    t.is(cm5.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.truthy(cm5.data?.["chuck-says"]);
     t.log("Validated example-5 ConfigMap data");
 
     // Validate the secret-1 Secret
-    t.is(s1.metadata.annotations["static-test.pepr.dev/hello-pepr"], "succeeded");
-    t.is(s1.data["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
-    t.is(s1.data["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
+    t.is(s1.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"], "succeeded");
+    t.is(s1.data?.["example"], "dW5pY29ybiBtYWdpYyAtIG1vZGlmaWVkIGJ5IFBlcHI=");
+    t.is(s1.data?.["magic"], "Y2hhbmdlLXdpdGhvdXQtZW5jb2Rpbmc=");
     t.is(
-      s1.data["binary-data"],
+      s1.data?.["binary-data"],
       "iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==",
     );
     t.is(
-      s1.data["ascii-with-white-space"],
+      s1.data?.["ascii-with-white-space"],
       "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==",
     );
     t.log("Validated secret-1 Secret data");
@@ -266,9 +262,9 @@ test.serial("E2E: `pepr deploy`", async t => {
   }
 });
 
-test.serial("E2E: `pepr dev`", async t => {
+test("Journey: `pepr dev`", async t => {
   try {
-    const cmd = await new Promise(peprDev);
+    const cmd = await new Promise<ChildProcessWithoutNullStreams>(peprDev);
 
     await testAPIKey();
 
@@ -279,9 +275,9 @@ test.serial("E2E: `pepr dev`", async t => {
   }
 });
 
-test.serial("E2E: `pepr metrics`", async t => {
+test("Journey: `pepr metrics`", async t => {
   try {
-    const cmd = await new Promise(peprDev);
+    const cmd = await new Promise<ChildProcessWithoutNullStreams>(peprDev);
 
     const metrics = await testMetrics();
     t.is(metrics.includes("pepr_Validate"), true);
@@ -338,12 +334,11 @@ async function testMetrics() {
   return await metricsOk.text();
 }
 
-function peprDev(resolve, reject) {
+function peprDev(resolve, reject): ChildProcessWithoutNullStreams {
   const cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd: testDir });
 
   cmd.stdout.on("data", data => {
     // Convert buffer to string
-    data = stripAnsiCodes(data.toString());
     console.log(data);
 
     // Check if any expected lines are found
@@ -384,12 +379,14 @@ function peprDev(resolve, reject) {
     cmd.kill();
     reject(new Error("Timeout: Expected lines not found"));
   }, TIMEOUT);
+
+  return cmd;
 }
 
 async function waitForDeploymentReady(namespace, name) {
   const deployment = await k8sApi.readNamespacedDeployment(name, namespace);
-  const replicas = deployment.body.spec.replicas || 1;
-  const readyReplicas = deployment.body.status.readyReplicas || 0;
+  const replicas = deployment.body.spec?.replicas || 1;
+  const readyReplicas = deployment.body.status?.readyReplicas || 0;
 
   if (replicas !== readyReplicas) {
     await delay2Secs();
@@ -397,7 +394,7 @@ async function waitForDeploymentReady(namespace, name) {
   }
 }
 
-async function waitForNamespace(namespace) {
+async function waitForNamespace(namespace: string) {
   try {
     const resp = await k8sCoreApi.readNamespace(namespace);
     return resp.body;
@@ -407,7 +404,7 @@ async function waitForNamespace(namespace) {
   }
 }
 
-async function waitForConfigMap(namespace, name) {
+async function waitForConfigMap(namespace: string, name: string) {
   try {
     const resp = await k8sCoreApi.readNamespacedConfigMap(name, namespace);
     return resp.body;
@@ -417,7 +414,7 @@ async function waitForConfigMap(namespace, name) {
   }
 }
 
-async function waitForSecret(namespace, name) {
+async function waitForSecret(namespace: string, name: string) {
   try {
     const resp = await k8sCoreApi.readNamespacedSecret(name, namespace);
     return resp.body;
@@ -431,7 +428,7 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-async function getPodLogs(namespace, labelSelector) {
+async function getPodLogs(namespace: string, labelSelector: string) {
   let allLogs = "";
 
   try {
@@ -446,7 +443,7 @@ async function getPodLogs(namespace, labelSelector) {
     const pods = res.body.items;
 
     for (const pod of pods) {
-      const podName = pod.metadata.name;
+      const podName = pod.metadata?.name || "unknown";
       const log = await k8sCoreApi.readNamespacedPodLog(podName, namespace);
       allLogs += log.body;
     }

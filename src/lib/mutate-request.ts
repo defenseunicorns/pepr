@@ -50,6 +50,15 @@ export class PeprMutateRequest<T extends KubernetesObject> {
   constructor(input: Request<T>) {
     this.#input = input;
 
+    // Bind public methods
+    this.Merge = this.Merge.bind(this);
+    this.SetLabel = this.SetLabel.bind(this);
+    this.SetAnnotation = this.SetAnnotation.bind(this);
+    this.RemoveLabel = this.RemoveLabel.bind(this);
+    this.RemoveAnnotation = this.RemoveAnnotation.bind(this);
+    this.HasLabel = this.HasLabel.bind(this);
+    this.HasAnnotation = this.HasAnnotation.bind(this);
+
     // If this is a DELETE operation, use the oldObject instead
     if (input.operation.toUpperCase() === Operation.DELETE) {
       this.Raw = clone(input.oldObject as T);
