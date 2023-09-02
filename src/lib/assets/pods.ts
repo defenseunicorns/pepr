@@ -5,6 +5,7 @@ import { gzipSync } from "zlib";
 
 import { Assets } from ".";
 import { Deployment, Namespace, Secret } from "../k8s/upstream";
+import { extractLabelsFromCapabilities } from "./helpers";
 
 /** Generate the pepr-system namespace */
 export const namespace: Namespace = {
@@ -14,7 +15,7 @@ export const namespace: Namespace = {
 };
 
 export function deployment(assets: Assets, hash: string): Deployment {
-  const { name, image } = assets;
+  const { name, image, capabilities } = assets;
   const app = name;
 
   return {
@@ -25,6 +26,7 @@ export function deployment(assets: Assets, hash: string): Deployment {
       namespace: "pepr-system",
       labels: {
         app,
+        ...extractLabelsFromCapabilities(capabilities, hash),
       },
     },
     spec: {
@@ -38,6 +40,7 @@ export function deployment(assets: Assets, hash: string): Deployment {
         metadata: {
           labels: {
             app,
+            ...extractLabelsFromCapabilities(capabilities, hash),
           },
         },
         spec: {
