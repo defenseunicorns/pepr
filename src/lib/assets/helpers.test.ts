@@ -8,7 +8,7 @@ import { ModuleCapabilities } from "./loader";
 import { Binding } from "../types";
 
 test("extractLabelsFromAssets", t => {
-  const hash = "1234567890";
+  const hash = "12345";
   const blankBinding: Binding[] = [];
   const testCases: Array<[ModuleCapabilities[], { [key: string]: string }]> = [
     [
@@ -117,6 +117,6 @@ test("extractLabelsFromAssets", t => {
 
   for (const [input, expected] of testCases) {
     const labels = extractLabelsFromCapabilities(input, hash);
-    t.is(labels, expected);
+    t.deepEqual(labels, expected);
   }
 });
