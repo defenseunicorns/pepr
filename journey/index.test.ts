@@ -337,14 +337,15 @@ async function testMetrics() {
 function peprDev(resolve, reject): ChildProcessWithoutNullStreams {
   const cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd: testDir });
 
-  cmd.stdout.on("data", data => {
+  cmd.stdout.on("data", (data: Buffer) => {
     // Convert buffer to string
-    console.log(data);
+    const strData = data.toString();
+    console.log(strData);
 
     // Check if any expected lines are found
     expectedLines = expectedLines.filter(expectedLine => {
       // Check if the expected line is found in the output, ignoring whitespace
-      return !data.replace(/\s+/g, " ").includes(expectedLine);
+      return !strData.replace(/\s+/g, " ").includes(expectedLine);
     });
 
     console.log(
