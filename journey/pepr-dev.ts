@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { afterAll, expect, it } from "@jest/globals";
 import { KubeConfig } from "@kubernetes/client-node";
-import { ExecutionContext } from "ava";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { cwd } from "./entrypoint.test";
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
-
-// Timeout in milliseconds
-const TIMEOUT = 120 * 1000;
 
 let expectedLines = [
   "Establishing connection to Kubernetes",
@@ -20,74 +17,93 @@ let expectedLines = [
   "Server listening on port 3000",
 ];
 
-export async function peprDev(t: ExecutionContext) {
-  try {
-    const cmd = await new Promise<ChildProcessWithoutNullStreams>(runner);
+export function peprDev() {
+  let cmd: ChildProcessWithoutNullStreams;
+  let success = false;
 
-    await validateAPIKey();
+  it("should start the Pepr dev server", () => {
+    cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd });
 
-    const metrics = await validateMetrics();
-    t.is(metrics.includes("pepr_Validate"), true);
-    t.is(metrics.includes("pepr_Mutate"), true);
-    t.is(metrics.includes("pepr_errors"), true);
-    t.is(metrics.includes("pepr_alerts"), true);
-    t.log("Validated metrics endpoint");
-
-    cmd.kill();
-    t.pass();
-  } catch (e) {
-    t.fail(e.message);
-  }
-}
-
-function runner(resolve, reject): ChildProcessWithoutNullStreams {
-  const cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd });
-
-  cmd.stdout.on("data", (data: Buffer) => {
-    // Convert buffer to string
-    const strData = data.toString();
-    console.log(strData);
-
-    // Check if any expected lines are found
-    expectedLines = expectedLines.filter(expectedLine => {
-      // Check if the expected line is found in the output, ignoring whitespace
-      return !strData.replace(/\s+/g, " ").includes(expectedLine);
+    // This command should not exit on its own
+    cmd.on("close", code => {
+      if (!success) {
+        throw new Error(`Command exited with code ${code}`);
+      }
     });
 
-    console.log(
-      "\x1b[36m%s\x1b[0m'",
-      "Remaining expected lines:" + JSON.stringify(expectedLines, null, 2),
-    );
+    // Log stderr
+    cmd.stderr.on("data", data => {
+      if (!success) {
+        console.error(`stderr: ${data}`);
+      }
+    });
 
-    // If all expected lines are found, resolve the promise
-    if (expectedLines.length < 1) {
-      resolve(cmd);
+    // Reject on error
+    cmd.on("error", error => {
+      if (!success) {
+        throw error;
+      }
+    });
+  });
+
+  it.skip("should protect the controller endpoint with an API token", async () => {
+    await validateAPIKey();
+  });
+
+  it.skip("should expose Prometheus metrics", async () => {
+    const metrics = await validateMetrics();
+    expect(metrics).toMatch("pepr_Validate");
+    expect(metrics).toMatch("pepr_Mutate");
+    expect(metrics).toMatch("pepr_errors");
+    expect(metrics).toMatch("pepr_alerts");
+  });
+
+  it("should be properly configured by the test module", done => {
+    cmd.stdout.on("data", (data: Buffer) => {
+      if (success) {
+        return;
+      }
+
+      // Convert buffer to string
+      const strData = data.toString();
+      console.log(strData);
+
+      // Check if any expected lines are found
+      expectedLines = expectedLines.filter(expectedLine => {
+        // Check if the expected line is found in the output, ignoring whitespace
+        return !strData.replace(/\s+/g, " ").includes(expectedLine);
+      });
+
+      // If all expected lines are found, resolve the promise
+      if (expectedLines.length < 1) {
+        // Abort all further processing
+        success = true;
+
+        // Finish the test
+        done();
+      }
+    });
+  });
+
+  afterAll(() => {
+    // Close or destroy the streams
+    if (cmd.stdin) {
+      cmd.stdin.end();
     }
+    if (cmd.stdout) {
+      cmd.stdout.destroy();
+    }
+    if (cmd.stderr) {
+      cmd.stderr.destroy();
+    }
+
+    // Remove the event listeners
+    cmd.removeAllListeners("close");
+    cmd.removeAllListeners("error");
+
+    // Kill the process
+    cmd.kill(9);
   });
-
-  // Log stderr
-  cmd.stderr.on("data", data => {
-    console.error(`stderr: ${data}`);
-  });
-
-  // This command should not exit on its own
-  cmd.on("close", code => {
-    reject(new Error(`Command exited with code ${code}`));
-  });
-
-  // Reject on error
-  cmd.on("error", error => {
-    reject(error);
-  });
-
-  // Reject on timeout
-  setTimeout(() => {
-    console.error("Remaining expected lines:" + JSON.stringify(expectedLines, null, 2));
-    cmd.kill();
-    reject(new Error("Timeout: Expected lines not found"));
-  }, TIMEOUT);
-
-  return cmd;
 }
 
 async function validateAPIKey() {

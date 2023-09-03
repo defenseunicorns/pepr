@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { ExecutionContext } from "ava";
+import { it } from "@jest/globals";
 import { execSync } from "child_process";
 
-export function peprInit(t: ExecutionContext) {
-  try {
+export function peprInit() {
+  it("should create a new Pepr project", () => {
     const peprAlias = "file:pepr-0.0.0-development.tgz";
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
-    t.pass();
-  } catch (e) {
-    t.fail(e.message);
-  }
+  });
 }

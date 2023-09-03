@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import anyTest from "ava";
+import { beforeAll, describe, jest } from "@jest/globals";
 
 import { before } from "./before";
 import { peprBuild } from "./pepr-build";
@@ -13,18 +13,18 @@ import { peprInit } from "./pepr-init";
 // The working directory for the tests after `npx pepr init` is run
 export const cwd = "pepr-test-module";
 
-// Journey tests must be run serially
-const test = anyTest.serial;
+// Allow 5 minutes for the tests to run
+jest.setTimeout(1000 * 60 * 5);
 
 // Configure the test environment before running the tests
-test.before(before);
+beforeAll(before);
 
-test("Journey: `npx pepr init`", peprInit);
+describe("Journey: `npx pepr init`", peprInit);
 
-test("Journey: `npx pepr format`", peprFormat);
+describe("Journey: `npx pepr format`", peprFormat);
 
-test("Journey: `npx pepr build`", peprBuild);
+describe("Journey: `npx pepr build`", peprBuild);
 
-test("Journey: `pepr deploy`", peprDeploy);
+describe("Journey: `pepr deploy`", peprDeploy);
 
-test("Journey: `pepr dev`", peprDev);
+describe("Journey: `pepr dev`", peprDev);

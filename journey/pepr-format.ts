@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { ExecutionContext } from "ava";
+import { it } from "@jest/globals";
 import { execSync } from "child_process";
 
 import { cwd } from "./entrypoint.test";
 
-export function peprFormat(t: ExecutionContext) {
-  try {
+export function peprFormat() {
+  it("should format the Pepr project", () => {
     execSync("npx pepr format", { cwd, stdio: "inherit" });
-    t.pass();
-  } catch (e) {
-    t.fail(e.message);
-  }
+  });
 }

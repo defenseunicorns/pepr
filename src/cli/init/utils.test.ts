@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import test from "ava";
+import { expect, test } from "@jest/globals";
 
 import { sanitizeName } from "./utils";
 
-test("sanitizeName() sanitizes names correctly", t => {
+test("sanitizeName() sanitizes names correctly", () => {
   const cases = [
     {
       input: "My Test Module",
@@ -23,6 +23,6 @@ test("sanitizeName() sanitizes names correctly", t => {
 
   for (const { input, expected } of cases) {
     const result = sanitizeName(input);
-    t.is(result, expected, `sanitizeName(${input}) should be ${expected}`);
+    expect(result).toBe(expected);
   }
 });

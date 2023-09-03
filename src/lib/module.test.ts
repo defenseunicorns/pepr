@@ -1,23 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import anyTest from "ava";
+import { beforeEach, expect, jest, test } from "@jest/globals";
 import { clone } from "ramda";
-import sinon from "sinon";
-
 import { Capability } from "./capability";
-import { Controller } from "./controller";
+
 import { Errors } from "./errors";
 import { PackageJSON, PeprModule } from "./module";
 import { CapabilityExport } from "./types";
 
-// Mocks rely on the test being serial
-const test = anyTest.serial;
-const controllerMock = sinon.stub(Controller.prototype);
+// Mock Controller
+const startServerMock = jest.fn();
+jest.mock("./controller", () => {
+  return {
+    Controller: jest.fn().mockImplementation(() => {
+      return { startServer: startServerMock };
+    }),
+  };
+});
 
 // Reset the mocks before each test
-test.beforeEach(() => {
-  sinon.reset();
+beforeEach(() => {
+  jest.clearAllMocks();
 });
 
 // Mock PackageJSON
@@ -35,68 +39,49 @@ const packageJSON: PackageJSON = {
   },
 };
 
-test("should instantiate Controller and start it with the default port", t => {
+test("should instantiate Controller and start it with the default port", () => {
   new PeprModule(packageJSON);
-
-  // Verify that startServer was called with default port 3000
-  t.deepEqual(controllerMock.startServer.firstCall.args[0], 3000);
+  expect(startServerMock).toHaveBeenCalledWith(3000);
 });
 
-test("should instantiate Controller and start it with the specified port", t => {
+test("should instantiate Controller and start it with the specified port", () => {
   const module = new PeprModule(packageJSON, [], { deferStart: true });
-
-  // Start the module with port a random port
   const port = Math.floor(Math.random() * 10000) + 1000;
   module.start(port);
-
-  // Verify that startServer was called with the specified port
-  t.deepEqual(controllerMock.startServer.firstCall.args[0], port);
+  expect(startServerMock).toHaveBeenCalledWith(port);
 });
 
-test("should not start if deferStart is true", t => {
+test("should not start if deferStart is true", () => {
   new PeprModule(packageJSON, [], { deferStart: true });
-
-  // Verify that startServer was never called
-  t.false(controllerMock.startServer.called);
+  expect(startServerMock).not.toHaveBeenCalled();
 });
 
-test("should reject invalid pepr onError conditions", t => {
-  t.throws(() => {
-    const cfg = clone(packageJSON);
-    cfg.pepr.onError = "invalidError";
-    new PeprModule(cfg);
-  });
-});
-
-test("should allow valid pepr onError conditions", t => {
+test("should reject invalid pepr onError conditions", () => {
   const cfg = clone(packageJSON);
-  t.notThrows(() => {
-    cfg.pepr.onError = Errors.audit;
-    new PeprModule(cfg);
-
-    cfg.pepr.onError = Errors.ignore;
-    new PeprModule(cfg);
-
-    cfg.pepr.onError = Errors.reject;
-    new PeprModule(cfg);
-  });
+  cfg.pepr.onError = "invalidError";
+  expect(() => new PeprModule(cfg)).toThrow();
 });
 
-test("should not create a controller if PEPR_MODE is set to build", t => {
-  // Mock process.send
-  process.send = () => true;
+test("should allow valid pepr onError conditions", () => {
+  const cfg = clone(packageJSON);
+  cfg.pepr.onError = Errors.audit;
+  expect(() => new PeprModule(cfg)).not.toThrow();
+
+  cfg.pepr.onError = Errors.ignore;
+  expect(() => new PeprModule(cfg)).not.toThrow();
+
+  cfg.pepr.onError = Errors.reject;
+  expect(() => new PeprModule(cfg)).not.toThrow();
+});
+
+test("should not create a controller if PEPR_MODE is set to build", () => {
   process.env.PEPR_MODE = "build";
-
   new PeprModule(packageJSON);
-
-  // Verify that startServer was never called
-  t.false(controllerMock.startServer.called);
+  expect(startServerMock).not.toHaveBeenCalled();
 });
 
-test("should send the capabilities to the parent process if PEPR_MODE is set to build", t => {
-  // Mock process.send
-  process.send = () => true;
-  const sendStub = sinon.stub(process, "send").returns(true);
+test("should send the capabilities to the parent process if PEPR_MODE is set to build", () => {
+  const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
   process.env.PEPR_MODE = "build";
 
   const capability = new Capability({
@@ -112,7 +97,5 @@ test("should send the capabilities to the parent process if PEPR_MODE is set to 
   };
 
   new PeprModule(packageJSON, [capability]);
-
-  // Verify that the capabilities were sent back to the parent process
-  t.deepEqual(sendStub.firstCall.args[0], [expected]);
+  expect(sendMock).toHaveBeenCalledWith([expected]);
 });

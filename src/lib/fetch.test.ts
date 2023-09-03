@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import test from "ava";
+import { expect, test, beforeEach } from "@jest/globals";
+
 import { StatusCodes } from "http-status-codes";
 import nock from "nock";
 import { RequestInit } from "node-fetch";
 import { fetch } from "./fetch";
 
-test.beforeEach(() => {
+beforeEach(() => {
   nock("https://jsonplaceholder.typicode.com")
     .get("/todos/1")
     .reply(200, {
@@ -32,14 +33,14 @@ test.beforeEach(() => {
     .replyWithError("Something bad happened");
 });
 
-test("fetch: should return without type data", async t => {
+test("fetch: should return without type data", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos/1";
   const { data, ok } = await fetch<{ title: string }>(url);
-  t.is(ok, true);
-  t.is(data["title"], "Example title");
+  expect(ok).toBe(true);
+  expect(data["title"]).toBe("Example title");
 });
 
-test("fetch: should return parsed JSON response as a specific type", async t => {
+test("fetch: should return parsed JSON response as a specific type", async () => {
   interface Todo {
     userId: number;
     id: number;
@@ -49,13 +50,13 @@ test("fetch: should return parsed JSON response as a specific type", async t => 
 
   const url = "https://jsonplaceholder.typicode.com/todos/1";
   const { data, ok } = await fetch<Todo>(url);
-  t.is(ok, true);
-  t.is(data.id, 1);
-  t.is(typeof data.title, "string");
-  t.is(typeof data.completed, "boolean");
+  expect(ok).toBe(true);
+  expect(data.id).toBe(1);
+  expect(typeof data.title).toBe("string");
+  expect(typeof data.completed).toBe("boolean");
 });
 
-test("fetch: should handle additional request options", async t => {
+test("fetch: should handle additional request options", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos";
   const requestOptions: RequestInit = {
     method: "POST",
@@ -71,44 +72,44 @@ test("fetch: should handle additional request options", async t => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, ok } = await fetch<any>(url, requestOptions);
-  t.is(ok, true);
-  t.is(data["title"], "test todo");
-  t.is(data["userId"], 1);
-  t.is(data["completed"], false);
+  expect(ok).toBe(true);
+  expect(data["title"]).toBe("test todo");
+  expect(data["userId"]).toBe(1);
+  expect(data["completed"]).toBe(false);
 });
 
-test("fetch: should handle empty (null) responses", async t => {
+test("fetch: should handle empty (null) responses", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos/empty-null";
   const resp = await fetch(url);
 
-  t.is(resp.data, "");
-  t.is(resp.ok, true);
-  t.is(resp.status, StatusCodes.OK);
+  expect(resp.data).toBe("");
+  expect(resp.ok).toBe(true);
+  expect(resp.status).toBe(StatusCodes.OK);
 });
 
-test("fetch: should handle empty (string) responses", async t => {
+test("fetch: should handle empty (string) responses", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos/empty-string";
   const resp = await fetch(url);
 
-  t.is(resp.data, "");
-  t.is(resp.ok, true);
-  t.is(resp.status, StatusCodes.OK);
+  expect(resp.data).toBe("");
+  expect(resp.ok).toBe(true);
+  expect(resp.status).toBe(StatusCodes.OK);
 });
 
-test("fetch: should handle empty (object) responses", async t => {
+test("fetch: should handle empty (object) responses", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos/empty-object";
   const resp = await fetch(url);
 
-  t.deepEqual(resp.data, {});
-  t.is(resp.ok, true);
-  t.is(resp.status, StatusCodes.OK);
+  expect(resp.data).toEqual({});
+  expect(resp.ok).toBe(true);
+  expect(resp.status).toBe(StatusCodes.OK);
 });
 
-test("fetch: should handle failed requests without throwing an error", async t => {
+test("fetch: should handle failed requests without throwing an error", async () => {
   const url = "https://jsonplaceholder.typicode.com/todos/invalid";
   const resp = await fetch(url);
 
-  t.is(resp.data, undefined);
-  t.is(resp.ok, false);
-  t.is(resp.status, StatusCodes.BAD_REQUEST);
+  expect(resp.data).toBe(undefined);
+  expect(resp.ok).toBe(false);
+  expect(resp.status).toBe(StatusCodes.BAD_REQUEST);
 });

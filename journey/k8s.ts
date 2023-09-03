@@ -13,7 +13,7 @@ function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
-export async function waitForDeploymentReady(namespace, name) {
+export async function waitForDeploymentReady(namespace: string, name: string) {
   const deployment = await k8sApi.readNamespacedDeployment(name, namespace);
   const replicas = deployment.body.spec?.replicas || 1;
   const readyReplicas = deployment.body.status?.readyReplicas || 0;
