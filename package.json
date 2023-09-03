@@ -13,10 +13,11 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
-    "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
+    "gen-data-json": "node hack/build-template-data.js",
+    "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
     "test": "npm run test:unit && npm run test:journey",
-    "test:unit": "jest src --coverage",
+    "test:unit": "npm run gen-data-json && jest src --coverage",
     "test:journey": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run",
     "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "test:journey:build": "npm run build && npm pack",
