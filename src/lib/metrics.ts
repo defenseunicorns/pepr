@@ -51,17 +51,17 @@ export class MetricsCollector {
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
   }
 
-  private getMetricName(name: string) {
+  #getMetricName(name: string) {
     return `${this.#prefix}_${name}`;
   }
 
-  private addMetric<T extends Counter<string> | Summary<string>>(
+  #addMetric<T extends Counter<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
     name: string,
     help: string,
   ) {
-    if (collection.has(this.getMetricName(name))) {
+    if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
       return;
     }
@@ -75,37 +75,37 @@ export class MetricsCollector {
     this.getMetrics = this.getMetrics.bind(this);
 
     const metric = new MetricType({
-      name: this.getMetricName(name),
+      name: this.#getMetricName(name),
       help,
       registers: [this.#registry],
     });
 
-    collection.set(this.getMetricName(name), metric);
+    collection.set(this.#getMetricName(name), metric);
   }
 
-  public addCounter(name: string, help: string) {
-    this.addMetric(this.#counters, promClient.Counter, name, help);
+  addCounter(name: string, help: string) {
+    this.#addMetric(this.#counters, promClient.Counter, name, help);
   }
 
-  public addSummary(name: string, help: string) {
-    this.addMetric(this.#summaries, promClient.Summary, name, help);
+  addSummary(name: string, help: string) {
+    this.#addMetric(this.#summaries, promClient.Summary, name, help);
   }
 
-  public incCounter(name: string) {
-    this.#counters.get(this.getMetricName(name))?.inc();
+  incCounter(name: string) {
+    this.#counters.get(this.#getMetricName(name))?.inc();
   }
 
   /**
    * Increments the error counter.
    */
-  public error() {
+  error() {
     this.incCounter(this.#metricNames.errors);
   }
 
   /**
    * Increments the alerts counter.
    */
-  public alert() {
+  alert() {
     this.incCounter(this.#metricNames.alerts);
   }
 
@@ -113,7 +113,7 @@ export class MetricsCollector {
    * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
    * @returns The timestamp.
    */
-  public observeStart() {
+  observeStart() {
     return performance.now();
   }
 
@@ -122,15 +122,15 @@ export class MetricsCollector {
    * @param startTime - The start time.
    * @param name - The metrics summary to increment.
    */
-  public observeEnd(startTime: number, name: string = this.#metricNames.mutate) {
-    this.#summaries.get(this.getMetricName(name))?.observe(performance.now() - startTime);
+  observeEnd(startTime: number, name: string = this.#metricNames.mutate) {
+    this.#summaries.get(this.#getMetricName(name))?.observe(performance.now() - startTime);
   }
 
   /**
    * Fetches the current metrics from the registry.
    * @returns The metrics.
    */
-  public async getMetrics() {
+  async getMetrics() {
     return this.#registry.metrics();
   }
 }

@@ -37,16 +37,16 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
-  public async deploy(webhookTimeout?: number) {
+  async deploy(webhookTimeout?: number) {
     this.capabilities = await loadCapabilities(this.path);
     await deploy(this, webhookTimeout);
   }
 
-  public zarfYaml(path: string) {
+  zarfYaml(path: string) {
     return zarfYaml(this, path);
   }
 
-  public async allYaml() {
+  async allYaml() {
     this.capabilities = await loadCapabilities(this.path);
     return allYaml(this);
   }

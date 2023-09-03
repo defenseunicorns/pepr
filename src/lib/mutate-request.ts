@@ -11,7 +11,7 @@ import { DeepPartial } from "./types";
  * of a mutating webhook request.
  */
 export class PeprMutateRequest<T extends KubernetesObject> {
-  public Raw: T;
+  Raw: T;
 
   #input: Request<T>;
 
@@ -77,7 +77,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    *
    * @param obj - The object to merge with the current resource.
    */
-  public Merge(obj: DeepPartial<T>) {
+  Merge(obj: DeepPartial<T>) {
     this.Raw = mergeDeepRight(this.Raw, obj) as unknown as T;
   }
 
@@ -87,7 +87,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param value - The value of the label.
    * @returns The current action instance for method chaining.
    */
-  public SetLabel(key: string, value: string) {
+  SetLabel(key: string, value: string) {
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -103,7 +103,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param value - The value of the annotation.
    * @returns The current action instance for method chaining.
    */
-  public SetAnnotation(key: string, value: string) {
+  SetAnnotation(key: string, value: string) {
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -118,7 +118,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key - The key of the label to remove.
    * @returns The current Action instance for method chaining.
    */
-  public RemoveLabel(key: string) {
+  RemoveLabel(key: string) {
     if (this.Raw.metadata?.labels?.[key]) {
       delete this.Raw.metadata.labels[key];
     }
@@ -131,7 +131,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key - The key of the annotation to remove.
    * @returns The current Action instance for method chaining.
    */
-  public RemoveAnnotation(key: string) {
+  RemoveAnnotation(key: string) {
     if (this.Raw.metadata?.annotations?.[key]) {
       delete this.Raw.metadata.annotations[key];
     }
@@ -145,7 +145,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key the label key to check
    * @returns
    */
-  public HasLabel(key: string) {
+  HasLabel(key: string) {
     return this.Raw.metadata?.labels?.[key] !== undefined;
   }
 
@@ -155,7 +155,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key the annotation key to check
    * @returns
    */
-  public HasAnnotation(key: string) {
+  HasAnnotation(key: string) {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
   }
 }

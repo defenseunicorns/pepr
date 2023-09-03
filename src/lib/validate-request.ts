@@ -12,7 +12,7 @@ import { ValidateResponse } from "./types";
  * of a mutating webhook request.
  */
 export class PeprValidateRequest<T extends KubernetesObject> {
-  public Raw: T;
+  Raw: T;
 
   #input: Request<T>;
 

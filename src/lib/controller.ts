@@ -48,7 +48,7 @@ export class Controller {
     this.startServer = this.startServer.bind(this);
 
     // Middleware for logging requests
-    this.#app.use(Controller.logger);
+    this.#app.use(Controller.#logger);
 
     // Middleware for parsing JSON, limit to 2mb vs 100K for K8s compatibility
     this.#app.use(express.json({ limit: "2mb" }));
@@ -66,7 +66,7 @@ export class Controller {
   }
 
   /** Start the webhook server */
-  public startServer(port: number) {
+  startServer(port: number) {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
@@ -123,7 +123,7 @@ export class Controller {
 
   #bindEndpoints = () => {
     // Health check endpoint
-    this.#app.get("/healthz", Controller.healthz);
+    this.#app.get("/healthz", Controller.#healthz);
 
     // Metrics endpoint
     this.#app.get("/metrics", this.#metrics);
@@ -251,7 +251,7 @@ export class Controller {
    * @param res the outgoing response
    * @param next the next middleware function
    */
-  private static logger(req: express.Request, res: express.Response, next: express.NextFunction) {
+  static #logger(req: express.Request, res: express.Response, next: express.NextFunction) {
     const startTime = Date.now();
 
     res.on("finish", () => {
@@ -275,7 +275,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  private static healthz(req: express.Request, res: express.Response) {
+  static #healthz(req: express.Request, res: express.Response) {
     try {
       res.send("OK");
     } catch (err) {

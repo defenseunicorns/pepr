@@ -32,7 +32,7 @@ export class PeprModule {
    *
    * @param config The configuration for the Pepr runtime
    * @param capabilities The capabilities to be loaded into the Pepr runtime
-   * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
+   * @param opts Options for the Pepr runtime
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = clone(pepr);
@@ -80,7 +80,7 @@ export class PeprModule {
    *
    * @param port
    */
-  public start(port = 3000) {
+  start(port = 3000) {
     this.#controller.startServer(port);
   }
 }

@@ -66,7 +66,7 @@ export class Capability implements CapabilityExport {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  public When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
+  When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
