@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import promClient, { Counter, Summary, Registry } from "prom-client";
+/* eslint-disable class-methods-use-this */
+
 import { performance } from "perf_hooks";
+import promClient, { Counter, Registry, Summary } from "prom-client";
 import Log from "./logger";
 
 const loggingPrefix = "MetricsCollector";
@@ -24,12 +26,12 @@ interface MetricArgs {
  * MetricsCollector class handles metrics collection using prom-client and performance hooks.
  */
 export class MetricsCollector {
-  private _registry: Registry;
-  private _counters: Map<string, Counter<string>> = new Map();
-  private _summaries: Map<string, Summary<string>> = new Map();
-  private _prefix: string;
+  #registry: Registry;
+  #counters: Map<string, Counter<string>> = new Map();
+  #summaries: Map<string, Summary<string>> = new Map();
+  #prefix: string;
 
-  private _metricNames: MetricNames = {
+  #metricNames: MetricNames = {
     errors: "errors",
     alerts: "alerts",
     mutate: "Mutate",
@@ -38,67 +40,78 @@ export class MetricsCollector {
 
   /**
    * Creates a MetricsCollector instance with prefixed metrics.
-   * @param {string} [prefix='pepr'] - The prefix for the metric names.
+   * @param [prefix='pepr'] - The prefix for the metric names.
    */
   constructor(prefix = "pepr") {
-    this._registry = new Registry();
-    this._prefix = prefix;
-    this.addCounter(this._metricNames.errors, "Mutation/Validate errors encountered");
-    this.addCounter(this._metricNames.alerts, "Mutation/Validate bad api token received");
-    this.addSummary(this._metricNames.mutate, "Mutation operation summary");
-    this.addSummary(this._metricNames.validate, "Validation operation summary");
-  }
-  private getMetricName(name: string) {
-    return `${this._prefix}_${name}`;
+    this.#registry = new Registry();
+    this.#prefix = prefix;
+    this.addCounter(this.#metricNames.errors, "Mutation/Validate errors encountered");
+    this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api token received");
+    this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
+    this.addSummary(this.#metricNames.validate, "Validation operation summary");
   }
 
-  private addMetric<T extends Counter<string> | Summary<string>>(
+  #getMetricName(name: string) {
+    return `${this.#prefix}_${name}`;
+  }
+
+  #addMetric<T extends Counter<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
     name: string,
     help: string,
   ) {
-    if (collection.has(this.getMetricName(name))) {
+    if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
       return;
     }
+
+    // Bind public methods
+    this.incCounter = this.incCounter.bind(this);
+    this.error = this.error.bind(this);
+    this.alert = this.alert.bind(this);
+    this.observeStart = this.observeStart.bind(this);
+    this.observeEnd = this.observeEnd.bind(this);
+    this.getMetrics = this.getMetrics.bind(this);
+
     const metric = new MetricType({
-      name: this.getMetricName(name),
+      name: this.#getMetricName(name),
       help,
-      registers: [this._registry],
+      registers: [this.#registry],
     });
-    collection.set(this.getMetricName(name), metric);
+
+    collection.set(this.#getMetricName(name), metric);
   }
 
   addCounter(name: string, help: string) {
-    this.addMetric(this._counters, promClient.Counter, name, help);
+    this.#addMetric(this.#counters, promClient.Counter, name, help);
   }
 
   addSummary(name: string, help: string) {
-    this.addMetric(this._summaries, promClient.Summary, name, help);
+    this.#addMetric(this.#summaries, promClient.Summary, name, help);
   }
 
   incCounter(name: string) {
-    this._counters.get(this.getMetricName(name))?.inc();
+    this.#counters.get(this.#getMetricName(name))?.inc();
   }
 
   /**
    * Increments the error counter.
    */
   error() {
-    this.incCounter(this._metricNames.errors);
+    this.incCounter(this.#metricNames.errors);
   }
 
   /**
    * Increments the alerts counter.
    */
   alert() {
-    this.incCounter(this._metricNames.alerts);
+    this.incCounter(this.#metricNames.alerts);
   }
 
   /**
    * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
-   * @returns {number} The timestamp.
+   * @returns The timestamp.
    */
   observeStart() {
     return performance.now();
@@ -106,18 +119,18 @@ export class MetricsCollector {
 
   /**
    * Observes the duration since the provided start time and updates the summary.
-   * @param {number} startTime - The start time.
-   * @param {string} name - The metrics summary to increment.
+   * @param startTime - The start time.
+   * @param name - The metrics summary to increment.
    */
-  observeEnd(startTime: number, name: string = this._metricNames.mutate) {
-    this._summaries.get(this.getMetricName(name))?.observe(performance.now() - startTime);
+  observeEnd(startTime: number, name: string = this.#metricNames.mutate) {
+    this.#summaries.get(this.#getMetricName(name))?.observe(performance.now() - startTime);
   }
 
   /**
    * Fetches the current metrics from the registry.
-   * @returns {Promise<string>} The metrics.
+   * @returns The metrics.
    */
   async getMetrics() {
-    return this._registry.metrics();
+    return this.#registry.metrics();
   }
 }

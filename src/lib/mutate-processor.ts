@@ -4,6 +4,7 @@
 import jsonPatch from "fast-json-patch";
 
 import { Capability } from "./capability";
+import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter";
 import { MutateResponse, Request } from "./k8s/types";
 import { Secret } from "./k8s/upstream";
@@ -88,13 +89,14 @@ export async function mutateProcessor(
         response.warnings.push(`Action failed: ${e}`);
 
         switch (config.onError) {
-          case "reject":
+          case Errors.reject:
             Log.error(actionMetadata, `Action failed: ${e}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
-          case "audit":
-            // @todo: implement audit logging
+          case Errors.audit:
+            response.auditAnnotations = response.auditAnnotations || {};
+            response.auditAnnotations[Date.now()] = e;
             break;
         }
       }

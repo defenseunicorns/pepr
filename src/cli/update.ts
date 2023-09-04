@@ -6,7 +6,6 @@ import fs from "fs";
 import { resolve } from "path";
 import prompt from "prompts";
 
-import Log from "../lib/logger";
 import { helloPepr, prettier, samplesYaml, snippet, tsConfig } from "./init/templates";
 import { write } from "./init/utils";
 import { RootCmd } from "./root";
@@ -49,10 +48,7 @@ export default function (program: RootCmd) {
 
         console.log(`✅ Module updated successfully`);
       } catch (e) {
-        Log.debug(e);
-        if (e instanceof Error) {
-          console.error(e.message);
-        }
+        console.error(e.message);
         process.exit(1);
       }
     });
@@ -84,10 +80,7 @@ export default function (program: RootCmd) {
           }
         }
       } catch (e) {
-        Log.debug(e);
-        if (e instanceof Error) {
-          console.error(e.message);
-        }
+        console.error(e.message);
         process.exit(1);
       }
     });

@@ -11,16 +11,6 @@ export type PackageJSON = {
 };
 
 /**
- * The phase of the Kubernetes admission webhook that the capability is registered for.
- *
- * Currently only `mutate` is supported.
- */
-export enum HookPhase {
-  mutate = "mutate",
-  validate = "validate",
-}
-
-/**
  * Recursively make all properties in T optional.
  */
 export type DeepPartial<T> = {
@@ -52,6 +42,10 @@ export interface CapabilityCfg {
    * This does not supersede the `alwaysIgnore` global configuration.
    */
   namespaces?: string[];
+}
+
+export interface CapabilityExport extends CapabilityCfg {
+  bindings: Binding[];
 }
 
 export type ModuleSigning = {

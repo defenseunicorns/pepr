@@ -13,15 +13,16 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
-    "prebuild": "rm -fr dist/* && node hack/build-template-data.js",
+    "gen-data-json": "node hack/build-template-data.js",
+    "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
-    "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "npm run build && tsc -p tsconfig.tests.json && ava dist/**/*.test.js",
-    "test:e2e": "npm run test:e2e:k3d && npm run test:e2e:build && npm run test:e2e:image && npm run test:e2e:run",
-    "test:e2e:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
-    "test:e2e:build": "npm run build && npm pack",
-    "test:e2e:image": "docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
-    "test:e2e:run": "ava hack/e2e.test.mjs --sequential --timeout=2m",
+    "test": "npm run test:unit && npm run test:journey",
+    "test:unit": "npm run gen-data-json && jest src --coverage",
+    "test:journey": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run",
+    "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
+    "test:journey:build": "npm run build && npm pack",
+    "test:journey:image": "docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
+    "test:journey:run": "jest journey/entrypoint.test.ts",
     "format:check": "eslint src && prettier src --check",
     "format:fix": "eslint src --fix && prettier src --write"
   },
@@ -37,6 +38,7 @@
     "ramda": "0.29.0"
   },
   "devDependencies": {
+    "@jest/globals": "29.6.4",
     "@types/eslint": "8.44.2",
     "@types/express": "4.17.17",
     "@types/node": "18.x.x",
@@ -46,23 +48,20 @@
     "@types/prompts": "2.4.4",
     "@types/ramda": "0.29.3",
     "@types/uuid": "9.0.3",
-    "ava": "5.3.1",
-    "nock": "13.3.3"
+    "jest": "29.6.4",
+    "nock": "13.3.3",
+    "ts-jest": "29.1.1"
   },
   "peerDependencies": {
-    "@typescript-eslint/eslint-plugin": "6.4.0",
-    "@typescript-eslint/parser": "6.4.0",
+    "@typescript-eslint/eslint-plugin": "6.5.0",
+    "@typescript-eslint/parser": "6.5.0",
     "commander": "11.0.0",
     "esbuild": "0.19.2",
-    "eslint": "8.47.0",
+    "eslint": "8.48.0",
     "node-forge": "1.3.1",
-    "prettier": "3.0.1",
+    "prettier": "3.0.3",
     "prompts": "2.4.2",
-    "typescript": "5.1.6",
+    "typescript": "5.2.2",
     "uuid": "9.0.0"
-  },
-  "ava": {
-    "failFast": true,
-    "verbose": true
   }
 }
