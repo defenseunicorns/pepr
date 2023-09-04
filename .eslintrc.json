@@ -8,6 +8,11 @@
   "parserOptions": {
     "ecmaVersion": 2022
   },
+  "rules": {
+    "class-methods-use-this": "warn",
+    "consistent-this":"warn",
+    "no-invalid-this": "warn"
+  },
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
     "node_modules",

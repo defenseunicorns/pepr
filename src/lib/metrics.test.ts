@@ -1,46 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import test from "ava";
+import { expect, test } from "@jest/globals";
+
 import { performance } from "perf_hooks";
 import { MetricsCollector } from "./metrics";
 
-test("constructor initializes counters correctly", t => {
+test("constructor initializes counters correctly", () => {
   const collector = new MetricsCollector("testPrefix");
 
-  t.truthy(collector);
+  expect(collector).toBeTruthy();
 });
 
-test("error method increments error counter", async t => {
+test("error method increments error counter", async () => {
   const collector = new MetricsCollector("testPrefix");
 
   collector.error();
 
   const metrics = await collector.getMetrics();
-  t.regex(metrics, /testPrefix_errors 1/);
+  expect(metrics).toMatch(/testPrefix_errors 1/);
 });
 
-test("alert method increments alerts counter", async t => {
+test("alert method increments alerts counter", async () => {
   const collector = new MetricsCollector("testPrefix");
 
   collector.alert();
 
   const metrics = await collector.getMetrics();
-  t.regex(metrics, /testPrefix_alerts 1/);
+  expect(metrics).toMatch(/testPrefix_alerts 1/);
 });
 
-test("observeStart returns current timestamp", t => {
+test("observeStart returns current timestamp", () => {
   const collector = new MetricsCollector("testPrefix");
 
   const timeBefore = performance.now();
   const startTime = collector.observeStart();
   const timeAfter = performance.now();
 
-  t.true(timeBefore <= startTime);
-  t.true(timeAfter >= startTime);
+  expect(timeBefore <= startTime).toBe(true);
+  expect(timeAfter >= startTime).toBe(true);
 });
 
-test("observeEnd updates summary", async t => {
+test("observeEnd updates summary", async () => {
   const collector = new MetricsCollector("testPrefix");
 
   const startTime = collector.observeStart();
@@ -52,9 +53,9 @@ test("observeEnd updates summary", async t => {
   collector.observeEnd(startTime, "Validate");
 
   const metrics = await collector.getMetrics();
-  t.regex(metrics, /testPrefix_Mutate_count 1/);
-  t.regex(metrics, /testPrefix_Mutate_sum \d+\.\d+/);
+  expect(metrics).toMatch(/testPrefix_Mutate_count 1/);
+  expect(metrics).toMatch(/testPrefix_Mutate_sum \d+\.\d+/);
 
-  t.regex(metrics, /testPrefix_Validate_count 2/);
-  t.regex(metrics, /testPrefix_Validate_sum \d+\.\d+/);
+  expect(metrics).toMatch(/testPrefix_Validate_count 2/);
+  expect(metrics).toMatch(/testPrefix_Validate_sum \d+\.\d+/);
 });

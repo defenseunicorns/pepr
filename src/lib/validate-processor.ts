@@ -4,10 +4,10 @@
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { Request, ValidateResponse } from "./k8s/types";
-import Log from "./logger";
-import { PeprValidateRequest } from "./validate-request";
-import { convertFromBase64Map } from "./utils";
 import { Secret } from "./k8s/upstream";
+import Log from "./logger";
+import { convertFromBase64Map } from "./utils";
+import { PeprValidateRequest } from "./validate-request";
 
 export async function validateProcessor(
   capabilities: Capability[],

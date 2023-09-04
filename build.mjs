@@ -23,6 +23,9 @@ async function builder() {
       ...buildOpts,
       entryPoints: ["src/cli.ts"],
       outfile: "dist/cli.js",
+      define: {
+        'process.env.PEPR_PRETTY_LOGS': '"true"',
+      },
     });
 
     console.log(await analyzeMetafile(cli.metafile));

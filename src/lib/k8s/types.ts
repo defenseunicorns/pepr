@@ -144,7 +144,11 @@ export interface MutateResponse {
   /** The type of Patch. Currently we only allow "JSONPatch". */
   patchType?: "JSONPatch";
 
-  /** AuditAnnotations is an unstructured key value map set by remote admission controller (e.g. error=image-blacklisted). */
+  /**
+   * AuditAnnotations is an unstructured key value map set by remote admission controller (e.g. error=image-blacklisted).
+   *
+   * See https://kubernetes.io/docs/reference/labels-annotations-taints/audit-annotations/ for more information
+   */
   auditAnnotations?: {
     [key: string]: string;
   };
