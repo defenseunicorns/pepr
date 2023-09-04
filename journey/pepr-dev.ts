@@ -4,6 +4,10 @@
 import { afterAll, expect, it } from "@jest/globals";
 import { KubeConfig } from "@kubernetes/client-node";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
+import { Agent } from "https";
+import { RequestInit } from "node-fetch";
+
+import { fetch } from "../src/lib/fetch";
 import { cwd } from "./entrypoint.test";
 
 const kc = new KubeConfig();
@@ -46,18 +50,6 @@ export function peprDev() {
     });
   });
 
-  it.skip("should protect the controller endpoint with an API token", async () => {
-    await validateAPIKey();
-  });
-
-  it.skip("should expose Prometheus metrics", async () => {
-    const metrics = await validateMetrics();
-    expect(metrics).toMatch("pepr_Validate");
-    expect(metrics).toMatch("pepr_Mutate");
-    expect(metrics).toMatch("pepr_errors");
-    expect(metrics).toMatch("pepr_alerts");
-  });
-
   it("should be properly configured by the test module", done => {
     cmd.stdout.on("data", (data: Buffer) => {
       if (success) {
@@ -85,6 +77,18 @@ export function peprDev() {
     });
   });
 
+  it("should protect the controller endpoint with an API token", async () => {
+    await validateAPIKey();
+  });
+
+  it("should expose Prometheus metrics", async () => {
+    const metrics = await validateMetrics();
+    expect(metrics).toMatch("pepr_Validate");
+    expect(metrics).toMatch("pepr_Mutate");
+    expect(metrics).toMatch("pepr_errors");
+    expect(metrics).toMatch("pepr_alerts");
+  });
+
   afterAll(() => {
     // Close or destroy the streams
     if (cmd.stdin) {
@@ -107,16 +111,21 @@ export function peprDev() {
 }
 
 async function validateAPIKey() {
-  // Ignore TLS verification
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
   const base = "https://localhost:3000/mutate/";
 
+  const fetchOpts: RequestInit = {
+    agent: new Agent({
+      // Avoid tls issues for self-signed certs
+      rejectUnauthorized: false,
+    }),
+    method: "POST",
+  };
+
   // Test api token validation
-  const evilToken = await fetch(`${base}evil-token`, { method: "POST" });
+  const evilToken = await fetch(`${base}evil-token`, fetchOpts);
 
   // Test for empty api token
-  const emptyToken = await fetch(base, { method: "POST" });
+  const emptyToken = await fetch(base, fetchOpts);
 
   if (evilToken.status !== 401) {
     throw new Error("Expected evil token to return 401");
@@ -125,24 +134,22 @@ async function validateAPIKey() {
   if (emptyToken.status !== 404) {
     throw new Error("Expected empty token to return 404");
   }
-
-  // Restore TLS verification
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 }
 
 async function validateMetrics() {
-  // Ignore TLS verification
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
   const metricsEndpoint = "https://localhost:3000/metrics";
 
-  const metricsOk = await fetch(metricsEndpoint);
+  const fetchOpts: RequestInit = {
+    agent: new Agent({
+      // Avoid tls issues for self-signed certs
+      rejectUnauthorized: false,
+    }),
+  };
+  const metricsOk = await fetch<string>(metricsEndpoint, fetchOpts);
 
   if (metricsOk.status !== 200) {
     throw new Error("Expected metrics ok to return a 200");
   }
-  // Restore TLS verification
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 
-  return await metricsOk.text();
+  return metricsOk.data;
 }

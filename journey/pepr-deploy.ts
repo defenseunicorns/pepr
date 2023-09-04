@@ -34,7 +34,6 @@ function cleanupSamples() {
     });
   } catch (e) {
     // Ignore errors
-    console.log(e);
   }
 }
 
