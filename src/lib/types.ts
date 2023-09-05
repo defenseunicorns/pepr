@@ -53,6 +53,10 @@ export interface CapabilityCfg {
   namespaces?: string[];
 }
 
+export interface CapabilityExport extends CapabilityCfg {
+  bindings: Binding[];
+}
+
 export type ModuleSigning = {
   /**
    * Specifies the signing policy.

@@ -16,17 +16,16 @@ const namespace = "pepr-system";
 const debounceBackoff = 5000;
 
 export class PeprControllerStore {
-  private _name: string;
-  private _stores: Record<string, Storage> = {};
-  private _sendDebounce: NodeJS.Timeout | undefined;
+  #name: string;
+  #stores: Record<string, Storage> = {};
+  #sendDebounce: NodeJS.Timeout | undefined;
+  #onReady?: () => void;
 
-  constructor(
-    config: ModuleConfig,
-    capabilities: Capability[],
-    private _onReady?: () => void,
-  ) {
+  constructor(config: ModuleConfig, capabilities: Capability[], onReady?: () => void) {
+    this.#onReady = onReady;
+
     // Setup Pepr State bindings
-    this._name = `pepr-${config.uuid}-store`;
+    this.#name = `pepr-${config.uuid}-store`;
 
     // Establish the store for each capability
     for (const { name, _registerStore } of capabilities) {
@@ -34,10 +33,10 @@ export class PeprControllerStore {
       const { store } = _registerStore();
 
       // Bind the store sender to the capability
-      store.registerSender(this.send(name));
+      store.registerSender(this.#send(name));
 
       // Store the storage instance
-      this._stores[name] = store;
+      this.#stores[name] = store;
     }
 
     // Add a jitter to the Store creation to avoid collisions
@@ -45,18 +44,20 @@ export class PeprControllerStore {
       () =>
         Kube(PeprStore)
           .InNamespace(namespace)
-          .Get(this._name)
+          .Get(this.#name)
           // If the get succeeds, setup the watch
-          .then(this.setupWatch)
+          .then(this.#setupWatch)
           // Otherwise, create the resource
-          .catch(this.createStoreResource),
+          .catch(this.#createStoreResource),
       Math.random() * 3000,
     );
   }
 
-  private setupWatch = () => ParallelWatch(PeprStore, { namespace, name: this._name }).subscribe(this.receive);
+  #setupWatch() {
+    ParallelWatch(PeprStore, { namespace, name: this.#name }).subscribe(this.#receive);
+  }
 
-  private receive = (store: PeprStore) => {
+  #receive(store: PeprStore) {
     Log.debug(store, "Pepr Store update");
 
     // Wrap the update in a debounced function
@@ -65,7 +66,7 @@ export class PeprControllerStore {
       const data: DataStore = store.data || {};
 
       // Loop over each stored capability
-      for (const name of Object.keys(this._stores)) {
+      for (const name of Object.keys(this.#stores)) {
         // Get the prefix offset for the keys
         const offset = `${name}-`.length;
 
@@ -82,22 +83,22 @@ export class PeprControllerStore {
         }
 
         // Send the data to the receiver callback
-        this._stores[name].receive(filtered);
+        this.#stores[name].receive(filtered);
       }
 
       // Call the onReady callback if this is the first time the secret has been read
-      if (this._onReady) {
-        this._onReady();
-        this._onReady = undefined;
+      if (this.#onReady) {
+        this.#onReady();
+        this.#onReady = undefined;
       }
     };
 
     // Debounce the update to 1 second to avoid multiple rapid calls
-    clearTimeout(this._sendDebounce);
-    this._sendDebounce = setTimeout(debounced, debounceBackoff);
-  };
+    clearTimeout(this.#sendDebounce);
+    this.#sendDebounce = setTimeout(debounced, debounceBackoff);
+  }
 
-  private send = (capabilityName: string) => {
+  #send(capabilityName: string) {
     const sendCache: Record<string, Operation> = {};
 
     // Load the sendCache with patch operations
@@ -145,7 +146,7 @@ export class PeprControllerStore {
 
       try {
         // Send the patch to the cluster
-        await Kube(PeprStore, { namespace, name: this._name }).Patch(payload);
+        await Kube(PeprStore, { namespace, name: this.#name }).Patch(payload);
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
@@ -170,9 +171,9 @@ export class PeprControllerStore {
     }, debounceBackoff);
 
     return sender;
-  };
+  }
 
-  private createStoreResource = async (e: unknown) => {
+  async #createStoreResource(e: unknown) {
     Log.info(`Pepr store not found, creating...`);
     Log.debug(e);
 
@@ -181,7 +182,7 @@ export class PeprControllerStore {
         apiVersion: "pepr.dev/v1",
         kind: "PeprStore",
         metadata: {
-          name: this._name,
+          name: this.#name,
           namespace,
         },
         data: {
@@ -191,9 +192,9 @@ export class PeprControllerStore {
       });
 
       // Now that the resource exists, setup the watch
-      this.setupWatch();
+      this.#setupWatch();
     } catch (err) {
       Log.error(err, "Failed to create Pepr store");
     }
-  };
+  }
 }

@@ -9,6 +9,7 @@ adr
 /docs/
 /hack
 build.mjs
+/journey
 
 /dist/cli/**/*.d.*
 /dist/fixtures

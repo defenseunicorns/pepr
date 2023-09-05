@@ -5,14 +5,14 @@ import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
 
-import { Capability } from "../capability";
-import { MutateResponse, Request, ValidateResponse, isWatchMode } from "../k8s";
-import Log from "../logger";
-import { MetricsCollector } from "../metrics";
-import { mutateProcessor } from "../mutate-processor";
-import { ModuleConfig } from "../types";
-import { validateProcessor } from "../validate-processor";
-import { PeprControllerStore } from "./store";
+import { Capability } from "./capability";
+import { isWatchMode } from "./k8s";
+import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
+import Log from "./logger";
+import { MetricsCollector } from "./metrics";
+import { mutateProcessor } from "./mutate-processor";
+import { ModuleConfig } from "./types";
+import { validateProcessor } from "./validate-processor";
 
 export class Controller {
   // Track whether the server is running
@@ -47,12 +47,6 @@ export class Controller {
     // Bind public methods
     this.startServer = this.startServer.bind(this);
 
-    // Initialize the Pepr store for each capability
-    new PeprControllerStore(config, capabilities, () => {
-      // Bind the endpoints after the store is ready
-      this.#bindEndpoints();
-    });
-
     // Middleware for logging requests
     this.#app.use(Controller.#logger);
 
@@ -66,6 +60,9 @@ export class Controller {
     if (afterHook) {
       Log.info(`Using afterHook: ${afterHook}`);
     }
+
+    // Bind endpoints
+    this.#bindEndpoints();
   }
 
   /** Start the webhook server */

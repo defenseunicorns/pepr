@@ -5,8 +5,9 @@ import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Controller } from "./controller";
+import { ValidateError } from "./errors";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
-import { ModuleConfig } from "./types";
+import { CapabilityExport, ModuleConfig } from "./types";
 
 export type PackageJSON = {
   description: string;
@@ -24,33 +25,46 @@ export type PeprModuleOptions = {
 };
 
 export class PeprModule {
-  private _controller!: Controller;
+  #controller!: Controller;
 
   /**
    * Create a new Pepr runtime
    *
    * @param config The configuration for the Pepr runtime
    * @param capabilities The capabilities to be loaded into the Pepr runtime
-   * @param _deferStart (optional) If set to `true`, the Pepr runtime will not be started automatically. This can be used to start the Pepr runtime manually with `start()`.
+   * @param opts Options for the Pepr runtime
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
     const config: ModuleConfig = clone(pepr);
     config.description = description;
 
     // Need to validate at runtime since TS gets sad about parsing the package.json
-    const validOnErrors = ["ignore", "warn", "fail"];
-    if (!validOnErrors.includes(config.onError || "")) {
-      throw new Error(`Invalid onErrors value: ${config.onError}`);
-    }
+    ValidateError(config.onError);
+
+    // Bind public methods
+    this.start = this.start.bind(this);
 
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {
+      const exportedCapabilities: CapabilityExport[] = [];
+
       // Send capability map to parent process
-      process.send(capabilities);
+      for (const capability of capabilities) {
+        // Convert the capability to a capability config
+        exportedCapabilities.push({
+          name: capability.name,
+          description: capability.description,
+          namespaces: capability.namespaces,
+          bindings: capability.bindings,
+        });
+      }
+
+      process.send(exportedCapabilities);
+
       return;
     }
 
-    this._controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
+    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
 
     // Stop processing if deferStart is set to true
     if (opts.deferStart) {
@@ -67,6 +81,6 @@ export class PeprModule {
    * @param port
    */
   start(port = 3000) {
-    this._controller.startServer(port);
+    this.#controller.startServer(port);
   }
 }

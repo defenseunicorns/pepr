@@ -7,7 +7,6 @@ import { promises as fs } from "fs";
 import { basename, extname, resolve } from "path";
 
 import { Assets } from "../lib/assets";
-import Log from "../lib/logger";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 
@@ -53,7 +52,6 @@ export default function (program: RootCmd) {
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
-      Log.debug(`Module compiled successfully at ${path}`);
       console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }
@@ -177,14 +175,14 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 
     return { ctx, path, cfg, uuid };
   } catch (e) {
-    Log.debug(e.message);
+    console.error(e.message);
 
     if (e.stdout) {
       const out = e.stdout.toString() as string;
       const err = e.stderr.toString();
 
-      Log.debug(out);
-      Log.debug(err);
+      console.log(out);
+      console.error(err);
 
       // Check for version conflicts
       if (out.includes("Types have separate declarations of a private property '_name'.")) {

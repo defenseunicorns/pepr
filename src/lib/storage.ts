@@ -48,78 +48,82 @@ export interface PeprStore {
  * The API is similar to the [Storage API](https://developer.mozilla.org/docs/Web/API/Storage)
  */
 export class Storage implements PeprStore {
-  private _store: DataStore = {};
+  #store: DataStore = {};
+  #send!: DataSender;
+  #subscribers: Record<number, DataReceiver> = {};
+  #subscriberId = 0;
+  #readyHandlers: DataReceiver[] = [];
 
-  private _send!: DataSender;
+  constructor() {
+    // Bind public methods
+    this.getItem = this.getItem.bind(this);
+    this.clear = this.clear.bind(this);
+    this.removeItem = this.removeItem.bind(this);
+    this.setItem = this.setItem.bind(this);
+    this.subscribe = this.subscribe.bind(this);
+    this.onReady = this.onReady.bind(this);
+  }
 
-  private _subscribers: Record<number, DataReceiver> = {};
+  registerSender(send: DataSender) {
+    this.#send = send;
+  }
 
-  private _subscriberId = 0;
-
-  private _readyHandlers: DataReceiver[] = [];
-
-  constructor() {}
-
-  registerSender = (send: DataSender) => {
-    this._send = send;
-  };
-
-  receive: DataReceiver = (data: DataStore) => {
+  receive(data: DataStore) {
     Log.debug(data, `Pepr store data received`);
-    this._store = data || {};
+    this.#store = data || {};
 
-    this._onReady();
+    this.#onReady();
 
     // Notify all subscribers
-    for (const idx in this._subscribers) {
+    for (const idx in this.#subscribers) {
       // Send a unique clone of the store to each subscriber
-      this._subscribers[idx](clone(this._store));
+      this.#subscribers[idx](clone(this.#store));
     }
-  };
+  }
 
-  getItem = (key: string) => {
+  getItem(key: string) {
     // Return null if the value is the empty string
-    return this._store[key] || null;
-  };
+    return this.#store[key] || null;
+  }
 
-  clear = () => {
-    this._dispatchUpdate("remove", Object.keys(this._store));
-  };
+  clear() {
+    this.#dispatchUpdate("remove", Object.keys(this.#store));
+  }
 
-  removeItem = (key: string) => {
-    this._dispatchUpdate("remove", [key]);
-  };
+  removeItem(key: string) {
+    this.#dispatchUpdate("remove", [key]);
+  }
 
-  setItem = (key: string, value: string) => {
-    this._dispatchUpdate("add", [key], value);
-  };
+  setItem(key: string, value: string) {
+    this.#dispatchUpdate("add", [key], value);
+  }
 
-  subscribe = (subscriber: DataReceiver) => {
-    const idx = this._subscriberId++;
-    this._subscribers[idx] = subscriber;
+  subscribe(subscriber: DataReceiver) {
+    const idx = this.#subscriberId++;
+    this.#subscribers[idx] = subscriber;
     return () => this.unsubscribe(idx);
-  };
+  }
 
-  onReady = (callback: DataReceiver) => {
-    this._readyHandlers.push(callback);
-  };
+  onReady(callback: DataReceiver) {
+    this.#readyHandlers.push(callback);
+  }
 
   /**
    * Remove a subscriber from the list of subscribers.
    * @param idx - The index of the subscriber to remove.
    */
-  unsubscribe = (idx: number) => {
-    delete this._subscribers[idx];
-  };
+  unsubscribe(idx: number) {
+    delete this.#subscribers[idx];
+  }
 
-  private _onReady = () => {
+  #onReady = () => {
     // Notify all ready handlers with a clone of the store
-    for (const handler of this._readyHandlers) {
-      handler(clone(this._store));
+    for (const handler of this.#readyHandlers) {
+      handler(clone(this.#store));
     }
 
     // Make this a noop so that it can't be called again
-    this._onReady = () => {};
+    this.#onReady = () => {};
   };
 
   /**
@@ -128,7 +132,7 @@ export class Storage implements PeprStore {
    * @param  keys - The keys to update.
    * @param  [value] - The new value.
    */
-  private _dispatchUpdate(op: DataOp, keys: string[], value?: string) {
-    this._send(op, keys, value);
+  #dispatchUpdate(op: DataOp, keys: string[], value?: string) {
+    this.#send(op, keys, value);
   }
 }

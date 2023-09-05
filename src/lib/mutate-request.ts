@@ -11,10 +11,12 @@ import { DeepPartial } from "./types";
  * of a mutating webhook request.
  */
 export class PeprMutateRequest<T extends KubernetesObject> {
-  public Raw: T;
+  Raw: T;
+
+  #input: Request<T>;
 
   get PermitSideEffects() {
-    return !this._input.dryRun;
+    return !this.#input.dryRun;
   }
 
   /**
@@ -22,7 +24,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @returns true if the request is a dry run, false otherwise.
    */
   get IsDryRun() {
-    return this._input.dryRun;
+    return this.#input.dryRun;
   }
 
   /**
@@ -30,7 +32,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @returns The old Kubernetes resource object or null if not available.
    */
   get OldResource() {
-    return this._input.oldObject;
+    return this.#input.oldObject;
   }
 
   /**
@@ -38,20 +40,31 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @returns The request object containing the Kubernetes resource.
    */
   get Request() {
-    return this._input;
+    return this.#input;
   }
 
   /**
    * Creates a new instance of the action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(private _input: Request<T>) {
+  constructor(input: Request<T>) {
+    this.#input = input;
+
+    // Bind public methods
+    this.Merge = this.Merge.bind(this);
+    this.SetLabel = this.SetLabel.bind(this);
+    this.SetAnnotation = this.SetAnnotation.bind(this);
+    this.RemoveLabel = this.RemoveLabel.bind(this);
+    this.RemoveAnnotation = this.RemoveAnnotation.bind(this);
+    this.HasLabel = this.HasLabel.bind(this);
+    this.HasAnnotation = this.HasAnnotation.bind(this);
+
     // If this is a DELETE operation, use the oldObject instead
-    if (_input.operation.toUpperCase() === Operation.DELETE) {
-      this.Raw = clone(_input.oldObject as T);
+    if (input.operation.toUpperCase() === Operation.DELETE) {
+      this.Raw = clone(input.oldObject as T);
     } else {
       // Otherwise, use the incoming object
-      this.Raw = clone(_input.object);
+      this.Raw = clone(input.object);
     }
 
     if (!this.Raw) {

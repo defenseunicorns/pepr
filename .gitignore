@@ -20,6 +20,8 @@ stats.html
 insecure-tls*
 pepr-test-module
 *.tgz
+coverage/
+.nyc_output/
 
 # Test binary, build with `go test -c`
 *.test

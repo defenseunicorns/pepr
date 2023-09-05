@@ -23,7 +23,7 @@ export function watcher(assets: Assets, hash: string) {
 
   // Loop through the capabilities and find any Watch Actions
   for (const capability of capabilities) {
-    const watchers = capability._bindings.filter(binding => binding.isWatch);
+    const watchers = capability.bindings.filter(binding => binding.isWatch);
     bindings.push(...watchers);
   }
 

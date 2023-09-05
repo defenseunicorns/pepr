@@ -12,29 +12,27 @@ import {
   BindingFilter,
   BindingWithName,
   CapabilityCfg,
-  MutateAction,
-  ValidateAction,
-  WatchAction,
+  CapabilityExport,
   Event,
   GenericClass,
+  MutateAction,
   MutateActionChain,
+  ValidateAction,
   ValidateActionChain,
+  WatchAction,
   WhenSelector,
 } from "./types";
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
  */
-export class Capability implements CapabilityCfg {
-  private _name: string;
-  private _description: string;
-  private _namespaces?: string[] | undefined;
-
-  private _bindings: Binding[] = [];
-
-  private _store = new Storage();
-
-  private _registered = false;
+export class Capability implements CapabilityExport {
+  #name: string;
+  #description: string;
+  #namespaces?: string[] | undefined;
+  #bindings: Binding[] = [];
+  #store = new Storage();
+  #registered = false;
 
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
@@ -44,28 +42,28 @@ export class Capability implements CapabilityCfg {
    * Note: You should only access the store from within an action.
    */
   Store: PeprStore = {
-    clear: this._store.clear,
-    getItem: this._store.getItem,
-    removeItem: this._store.removeItem,
-    setItem: this._store.setItem,
-    subscribe: this._store.subscribe,
-    onReady: this._store.onReady,
+    clear: this.#store.clear,
+    getItem: this.#store.getItem,
+    removeItem: this.#store.removeItem,
+    setItem: this.#store.setItem,
+    subscribe: this.#store.subscribe,
+    onReady: this.#store.onReady,
   };
 
-  get bindings(): Binding[] {
-    return this._bindings;
+  get bindings() {
+    return this.#bindings;
   }
 
   get name() {
-    return this._name;
+    return this.#name;
   }
 
   get description() {
-    return this._description;
+    return this.#description;
   }
 
   get namespaces() {
-    return this._namespaces || [];
+    return this.#namespaces || [];
   }
 
   /**
@@ -74,26 +72,29 @@ export class Capability implements CapabilityCfg {
    * @param store
    */
   _registerStore = () => {
-    Log.info(`Registering store for ${this._name}`);
+    Log.info(`Registering store for ${this.#name}`);
 
-    if (this._registered) {
-      throw new Error(`Store already registered for ${this._name}`);
+    if (this.#registered) {
+      throw new Error(`Store already registered for ${this.#name}`);
     }
 
-    this._registered = true;
+    this.#registered = true;
 
     // Pass back any ready callback to the controller
     return {
-      store: this._store,
+      store: this.#store,
     };
   };
 
   constructor(cfg: CapabilityCfg) {
-    this._name = cfg.name;
-    this._description = cfg.description;
-    this._namespaces = cfg.namespaces;
+    this.#name = cfg.name;
+    this.#description = cfg.description;
+    this.#namespaces = cfg.namespaces;
 
-    Log.info(`Capability ${this._name} registered`);
+    // Bind When() to this instance
+    this.When = this.When.bind(this);
+
+    Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);
   }
 
@@ -106,7 +107,7 @@ export class Capability implements CapabilityCfg {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
+  When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
@@ -126,8 +127,9 @@ export class Capability implements CapabilityCfg {
       },
     };
 
-    const prefix = `${this._name}: ${model.name}`;
-
+    const bindings = this.#bindings;
+    const prefix = `${this.#name}: ${model.name}`;
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -137,13 +139,13 @@ export class Capability implements CapabilityCfg {
       Log.debug(cbString, prefix);
     };
 
-    const Validate = (validateCallback: ValidateAction<T>): ValidateActionChain<T> => {
+    function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
       if (!isWatchMode) {
         log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
-        this._bindings.push({
+        bindings.push({
           ...binding,
           isValidate: true,
           validateCallback,
@@ -151,15 +153,15 @@ export class Capability implements CapabilityCfg {
       }
 
       return { Watch };
-    };
+    }
 
-    const Mutate = (mutateCallback: MutateAction<T>): MutateActionChain<T> => {
+    function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
       if (!isWatchMode) {
         log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
-        this._bindings.push({
+        bindings.push({
           ...binding,
           isMutate: true,
           mutateCallback,
@@ -168,19 +170,19 @@ export class Capability implements CapabilityCfg {
 
       // Now only allow adding actions to the same binding
       return { Watch, Validate };
-    };
+    }
 
-    const Watch = (watchCallback: WatchAction<T>): void => {
+    function Watch(watchCallback: WatchAction<T>) {
       if (isWatchMode) {
         log("Watch Action", watchCallback.toString());
 
-        this._bindings.push({
+        bindings.push({
           ...binding,
           isWatch: true,
           watchCallback,
         });
       }
-    };
+    }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);
@@ -200,22 +202,20 @@ export class Capability implements CapabilityCfg {
       return commonChain;
     }
 
-    const WithAnnotation = (key: string, value = ""): BindingFilter<T> => {
+    function WithAnnotation(key: string, value = ""): BindingFilter<T> {
       Log.debug(`Add annotation filter ${key}=${value}`, prefix);
       binding.filters.annotations[key] = value;
       return commonChain;
-    };
+    }
 
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Watch, Validate };
-
-    const bindEvent = (event: Event) => {
+    function bindEvent(event: Event) {
       binding.event = event;
       return {
         ...commonChain,
         InNamespace,
         WithName,
       };
-    };
+    }
 
     return {
       IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
@@ -223,5 +223,5 @@ export class Capability implements CapabilityCfg {
       IsUpdated: () => bindEvent(Event.Update),
       IsDeleted: () => bindEvent(Event.Delete),
     };
-  };
+  }
 }
