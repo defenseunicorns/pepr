@@ -43,7 +43,10 @@ export class Controller {
     this.#capabilities = capabilities;
 
     // Initialize the Pepr store for each capability
-    new PeprControllerStore(config, capabilities, this.#bindEndpoints);
+    new PeprControllerStore(config, capabilities, () => {
+      this.#bindEndpoints();
+      Log.info("✅ Controller startup complete");
+    });
 
     // Middleware for logging requests
     this.#app.use(Controller.#logger);

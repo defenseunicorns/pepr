@@ -9,7 +9,7 @@ kc.loadFromDefault();
 const k8sApi = kc.makeApiClient(AppsV1Api);
 const k8sCoreApi = kc.makeApiClient(CoreV1Api);
 
-function delay2Secs() {
+export function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
