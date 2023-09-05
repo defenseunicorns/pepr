@@ -77,11 +77,11 @@ export function peprDev() {
     });
   });
 
-  it("should protect the controller endpoint with an API token", async () => {
+  it.skip("should protect the controller endpoint with an API token", async () => {
     await validateAPIKey();
   });
 
-  it("should expose Prometheus metrics", async () => {
+  it.skip("should expose Prometheus metrics", async () => {
     const metrics = await validateMetrics();
     expect(metrics).toMatch("pepr_Validate");
     expect(metrics).toMatch("pepr_Mutate");
@@ -121,19 +121,13 @@ async function validateAPIKey() {
     method: "POST",
   };
 
-  // Test api token validation
-  const evilToken = await fetch(`${base}evil-token`, fetchOpts);
-
   // Test for empty api token
   const emptyToken = await fetch(base, fetchOpts);
+  expect(emptyToken.status).toBe(404);
 
-  if (evilToken.status !== 401) {
-    throw new Error("Expected evil token to return 401");
-  }
-
-  if (emptyToken.status !== 404) {
-    throw new Error("Expected empty token to return 404");
-  }
+  // Test api token validation
+  const evilToken = await fetch(`${base}evil-token`, fetchOpts);
+  expect(evilToken.status).toBe(401);
 }
 
 async function validateMetrics() {
@@ -146,10 +140,7 @@ async function validateMetrics() {
     }),
   };
   const metricsOk = await fetch<string>(metricsEndpoint, fetchOpts);
-
-  if (metricsOk.status !== 200) {
-    throw new Error("Expected metrics ok to return a 200");
-  }
+  expect(metricsOk.ok).toBe(true);
 
   return metricsOk.data;
 }

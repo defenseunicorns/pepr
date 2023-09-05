@@ -66,12 +66,21 @@ export class Capability implements CapabilityExport {
     return this.#namespaces || [];
   }
 
+  constructor(cfg: CapabilityCfg) {
+    this.#name = cfg.name;
+    this.#description = cfg.description;
+    this.#namespaces = cfg.namespaces;
+
+    Log.info(`Capability ${this.#name} registered`);
+    Log.debug(cfg);
+  }
+
   /**
    * Register the store with the capability. This is called automatically by the Pepr controller.
    *
    * @param store
    */
-  _registerStore = () => {
+  registerStore = () => {
     Log.info(`Registering store for ${this.#name}`);
 
     if (this.#registered) {
@@ -86,18 +95,6 @@ export class Capability implements CapabilityExport {
     };
   };
 
-  constructor(cfg: CapabilityCfg) {
-    this.#name = cfg.name;
-    this.#description = cfg.description;
-    this.#namespaces = cfg.namespaces;
-
-    // Bind When() to this instance
-    this.When = this.When.bind(this);
-
-    Log.info(`Capability ${this.#name} registered`);
-    Log.debug(cfg);
-  }
-
   /**
    * The When method is used to register a action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
@@ -107,7 +104,7 @@ export class Capability implements CapabilityExport {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
+  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
@@ -223,5 +220,5 @@ export class Capability implements CapabilityExport {
       IsUpdated: () => bindEvent(Event.Update),
       IsDeleted: () => bindEvent(Event.Delete),
     };
-  }
+  };
 }

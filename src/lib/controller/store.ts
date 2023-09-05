@@ -28,9 +28,9 @@ export class PeprControllerStore {
     this.#name = `pepr-${config.uuid}-store`;
 
     // Establish the store for each capability
-    for (const { name, _registerStore } of capabilities) {
+    for (const { name, registerStore } of capabilities) {
       // Register the store with the capability
-      const { store } = _registerStore();
+      const { store } = registerStore();
 
       // Bind the store sender to the capability
       store.registerSender(this.#send(name));
@@ -53,11 +53,11 @@ export class PeprControllerStore {
     );
   }
 
-  #setupWatch() {
+  #setupWatch = () => {
     ParallelWatch(PeprStore, { namespace, name: this.#name }).subscribe(this.#receive);
-  }
+  };
 
-  #receive(store: PeprStore) {
+  #receive = (store: PeprStore) => {
     Log.debug(store, "Pepr Store update");
 
     // Wrap the update in a debounced function
@@ -96,9 +96,9 @@ export class PeprControllerStore {
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
     this.#sendDebounce = setTimeout(debounced, debounceBackoff);
-  }
+  };
 
-  #send(capabilityName: string) {
+  #send = (capabilityName: string) => {
     const sendCache: Record<string, Operation> = {};
 
     // Load the sendCache with patch operations
@@ -171,9 +171,9 @@ export class PeprControllerStore {
     }, debounceBackoff);
 
     return sender;
-  }
+  };
 
-  async #createStoreResource(e: unknown) {
+  #createStoreResource = async (e: unknown) => {
     Log.info(`Pepr store not found, creating...`);
     Log.debug(e);
 
@@ -196,5 +196,5 @@ export class PeprControllerStore {
     } catch (err) {
       Log.error(err, "Failed to create Pepr store");
     }
-  }
+  };
 }

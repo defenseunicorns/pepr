@@ -41,17 +41,9 @@ export class Controller {
   ) {
     this.#config = config;
     this.#capabilities = capabilities;
-    this.#beforeHook = beforeHook;
-    this.#afterHook = afterHook;
-
-    // Bind public methods
-    this.startServer = this.startServer.bind(this);
 
     // Initialize the Pepr store for each capability
-    new PeprControllerStore(config, capabilities, () => {
-      // Bind the endpoints after the store is ready
-      this.#bindEndpoints();
-    });
+    new PeprControllerStore(config, capabilities, this.#bindEndpoints);
 
     // Middleware for logging requests
     this.#app.use(Controller.#logger);
@@ -61,15 +53,17 @@ export class Controller {
 
     if (beforeHook) {
       Log.info(`Using beforeHook: ${beforeHook}`);
+      this.#beforeHook = beforeHook;
     }
 
     if (afterHook) {
       Log.info(`Using afterHook: ${afterHook}`);
+      this.#afterHook = afterHook;
     }
   }
 
   /** Start the webhook server */
-  startServer(port: number) {
+  startServer = (port: number) => {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
@@ -122,7 +116,7 @@ export class Controller {
         process.exit(0);
       });
     });
-  }
+  };
 
   #bindEndpoints = () => {
     // Health check endpoint
@@ -193,7 +187,7 @@ export class Controller {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
       // Start the metrics timer
-      const startTime = this.#metricsCollector.observeStart();
+      const startTime = MetricsCollector.observeStart();
 
       try {
         // Get the request from the body or create an empty request

@@ -41,9 +41,6 @@ export class PeprModule {
     // Need to validate at runtime since TS gets sad about parsing the package.json
     ValidateError(config.onError);
 
-    // Bind public methods
-    this.start = this.start.bind(this);
-
     // Handle build mode
     if (process.env.PEPR_MODE === "build" && process.send) {
       const exportedCapabilities: CapabilityExport[] = [];
@@ -80,7 +77,7 @@ export class PeprModule {
    *
    * @param port
    */
-  start(port = 3000) {
+  start = (port = 3000) => {
     this.#controller.startServer(port);
-  }
+  };
 }

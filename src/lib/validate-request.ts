@@ -39,12 +39,6 @@ export class PeprValidateRequest<T extends KubernetesObject> {
   constructor(input: Request<T>) {
     this.#input = input;
 
-    // Bind public methods to this instance
-    this.HasLabel = this.HasLabel.bind(this);
-    this.HasAnnotation = this.HasAnnotation.bind(this);
-    this.Approve = this.Approve.bind(this);
-    this.Deny = this.Deny.bind(this);
-
     // If this is a DELETE operation, use the oldObject instead
     if (input.operation.toUpperCase() === Operation.DELETE) {
       this.Raw = clone(input.oldObject as T);
@@ -64,9 +58,9 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the label key to check
    * @returns
    */
-  HasLabel(key: string) {
+  HasLabel = (key: string) => {
     return this.Raw.metadata?.labels?.[key] !== undefined;
-  }
+  };
 
   /**
    * Check if an annotation exists on the Kubernetes resource.
@@ -74,20 +68,20 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the annotation key to check
    * @returns
    */
-  HasAnnotation(key: string) {
+  HasAnnotation = (key: string) => {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
-  }
+  };
 
   /**
    * Create a validation response that allows the request.
    *
    * @returns The validation response.
    */
-  Approve(): ValidateResponse {
+  Approve = (): ValidateResponse => {
     return {
       allowed: true,
     };
-  }
+  };
 
   /**
    * Create a validation response that denies the request.
@@ -96,11 +90,11 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny(statusMessage?: string, statusCode?: number): ValidateResponse {
+  Deny = (statusMessage?: string, statusCode?: number): ValidateResponse => {
     return {
       allowed: false,
       statusCode,
       statusMessage,
     };
-  }
+  };
 }
