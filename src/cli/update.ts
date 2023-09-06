@@ -6,7 +6,14 @@ import fs from "fs";
 import { resolve } from "path";
 import prompt from "prompts";
 
-import { helloPepr, prettier, samplesYaml, snippet, tsConfig } from "./init/templates";
+import {
+  codeSettings,
+  helloPepr,
+  prettier,
+  samplesYaml,
+  snippet,
+  tsConfig,
+} from "./init/templates";
 import { write } from "./init/utils";
 import { RootCmd } from "./root";
 
@@ -65,6 +72,7 @@ export default function (program: RootCmd) {
           await write(resolve(prettier.path), prettier.data);
           await write(resolve(tsConfig.path), tsConfig.data);
           await write(resolve(".vscode", snippet.path), snippet.data);
+          await write(resolve(".vscode", codeSettings.path), codeSettings.data);
 
           // Update the samples.yaml file if it exists
           const samplePath = resolve("capabilities", samplesYaml.path);

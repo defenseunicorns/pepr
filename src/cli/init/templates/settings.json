@@ -1,0 +1,9 @@
+{
+  "debug.javascript.terminalOptions": {
+    "enableTurboSourcemaps": true,
+    "resolveSourceMapLocations": [
+      "${workspaceFolder}/**",
+      "node_modules/pepr/**"
+    ]
+  }
+}
