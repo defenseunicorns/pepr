@@ -7,6 +7,7 @@ import prompts from "prompts";
 
 import { RootCmd } from "../root";
 import {
+  codeSettings,
   eslint,
   genPeprTS,
   genPkgJSON,
@@ -59,6 +60,7 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, tsConfig.path), tsConfig.data);
           await write(resolve(dirName, peprTS.path), peprTS.data);
           await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
+          await write(resolve(dirName, ".vscode", codeSettings.path), codeSettings.data);
           await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
           await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
 

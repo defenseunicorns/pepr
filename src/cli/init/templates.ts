@@ -10,6 +10,7 @@ import prettierJSON from "./templates/.prettierrc.json";
 import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
 import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "./templates/data.json";
 import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
+import settingsJSON from "./templates/settings.json";
 import tsConfigJSON from "./templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
@@ -89,6 +90,11 @@ export const samplesYaml = {
 export const snippet = {
   path: "pepr.code-snippets",
   data: peprSnippetsJSON,
+};
+
+export const codeSettings = {
+  path: "settings.json",
+  data: settingsJSON,
 };
 
 export const tsConfig = {
