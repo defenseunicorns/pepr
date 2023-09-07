@@ -24,7 +24,7 @@ test("should reject when name does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should reject when kind does not match", () => {
@@ -41,7 +41,7 @@ test("should reject when kind does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should reject when group does not match", () => {
@@ -58,7 +58,7 @@ test("should reject when group does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should reject when version does not match", () => {
@@ -79,7 +79,7 @@ test("should reject when version does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when group, version, and kind match", () => {
@@ -96,7 +96,7 @@ test("should allow when group, version, and kind match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should allow when kind match and others are empty", () => {
@@ -117,7 +117,24 @@ test("should allow when kind match and others are empty", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
+});
+
+test("should reject when teh capability namespace does not match", () => {
+  const binding = {
+    event: Event.Any,
+    kind: gvkMap.V1Pod,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: {},
+      annotations: {},
+    },
+    callback,
+  };
+  const pod = CreatePod();
+
+  expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toBe(true);
 });
 
 test("should reject when namespace does not match", () => {
@@ -134,7 +151,7 @@ test("should reject when namespace does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when namespace is match", () => {
@@ -151,7 +168,7 @@ test("should allow when namespace is match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should reject when label does not match", () => {
@@ -170,7 +187,7 @@ test("should reject when label does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when label is match", () => {
@@ -198,7 +215,7 @@ test("should allow when label is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should reject when annotation does not match", () => {
@@ -217,7 +234,7 @@ test("should reject when annotation does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when annotation is match", () => {
@@ -244,7 +261,7 @@ test("should allow when annotation is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should use `oldObject` when the operation is `DELETE`", () => {
@@ -266,5 +283,5 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
 
   const pod = DeletePod();
 
-  expect(shouldSkipRequest(binding, pod)).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });

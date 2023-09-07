@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AppsV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import { AppsV1Api, CoreV1Api, KubeConfig, V1ConfigMap } from "@kubernetes/client-node";
 
 const kc = new KubeConfig();
 kc.loadFromDefault();
@@ -11,6 +11,25 @@ const k8sCoreApi = kc.makeApiClient(CoreV1Api);
 
 function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
+}
+
+export async function createOrReplaceConfigMap(cm: V1ConfigMap) {
+  const ns = cm.metadata?.namespace || "default";
+  try {
+    const resp = await k8sCoreApi.createNamespacedConfigMap(ns, cm);
+    return resp.body;
+  } catch (error) {
+    const resp = await k8sCoreApi.replaceNamespacedConfigMap(cm.metadata?.name || "", ns, cm);
+    return resp.body;
+  }
+}
+
+export async function deleteConfigMap(namespace: string, name: string) {
+  try {
+    await k8sCoreApi.deleteNamespacedConfigMap(name, namespace);
+  } catch (error) {
+    // Do nothing
+  }
 }
 
 export async function waitForDeploymentReady(namespace: string, name: string) {
