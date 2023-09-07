@@ -40,7 +40,7 @@ export async function mutateProcessor(
 
   Log.info(reqMetadata, `Processing request`);
 
-  for (const { name, bindings } of capabilities) {
+  for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
 
     for (const action of bindings) {
@@ -50,7 +50,7 @@ export async function mutateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequest(action, req)) {
+      if (shouldSkipRequest(action, req, namespaces)) {
         continue;
       }
 
