@@ -57,5 +57,13 @@ describe("utils", () => {
     convertToBase64Map(obj, []);
     expect(obj).toStrictEqual(objOut);
   });
+
+  test("convertFromBase64Map empty object", () => {
+    const obj = {};
+    const objOut = { data: {} };
+    const skip = convertFromBase64Map(obj);
+    expect(obj).toStrictEqual(objOut);
+    expect(skip).toEqual([]);
+  });
 });
 // Path: src/lib/utils.ts
