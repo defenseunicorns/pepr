@@ -12,13 +12,14 @@ import { Binding, Event } from "./types";
  * @param req the incoming request
  * @returns
  */
-export function shouldSkipRequest(binding: Binding, req: Request) {
+export function shouldSkipRequest(binding: Binding, req: Request, capabilityNamespaces: string[]) {
   const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations, name } = binding.filters || {};
   const operation = req.operation.toUpperCase();
   // Use the old object if the request is a DELETE operation
   const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
   const { metadata } = srcObject || {};
+  const combinedNamespaces = [...namespaces, ...capabilityNamespaces];
 
   // Test for matching operation
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
@@ -46,7 +47,7 @@ export function shouldSkipRequest(binding: Binding, req: Request) {
   }
 
   // Test for matching namespaces
-  if (namespaces.length && !namespaces.includes(req.namespace || "")) {
+  if (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) {
     logger.debug("Namespace does not match");
     return true;
   }
