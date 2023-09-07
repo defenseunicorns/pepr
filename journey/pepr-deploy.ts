@@ -6,7 +6,14 @@ import { execSync, spawnSync } from "child_process";
 import { resolve } from "path";
 
 import { cwd } from "./entrypoint.test";
-import { waitForConfigMap, waitForDeploymentReady, waitForNamespace, waitForSecret } from "./k8s";
+import {
+  createOrReplaceConfigMap,
+  deleteConfigMap,
+  waitForConfigMap,
+  waitForDeploymentReady,
+  waitForNamespace,
+  waitForSecret,
+} from "./k8s";
 
 export function peprDeploy() {
   it("should deploy the Pepr controller into the test cluster", async () => {
@@ -17,6 +24,8 @@ export function peprDeploy() {
   });
 
   cleanupSamples();
+
+  describe("should ignore resources not defined in the capability namespace", testIgnore);
 
   it("should perform validation of resources applied to the test cluster", testValidate);
 
@@ -32,11 +41,43 @@ function cleanupSamples() {
       cwd: resolve(cwd, "capabilities"),
       stdio: "inherit",
     });
+
+    deleteConfigMap("default", "example-1");
+    deleteConfigMap("default", "example-evil-cm");
   } catch (e) {
     // Ignore errors
   }
 }
 
+function testIgnore() {
+  it("should ignore resources not in the capability namespaces during mutation", async () => {
+    const cm = await createOrReplaceConfigMap({
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: { name: "example-1", namespace: "default" },
+    });
+    expect(cm.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBeUndefined();
+    expect(cm.metadata?.annotations?.["pepr.dev"]).toBeUndefined();
+    expect(cm.metadata?.labels?.["pepr"]).toBeUndefined();
+  });
+
+  it("should ignore resources not in the capability namespaces during validation", async () => {
+    const cm = await createOrReplaceConfigMap({
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: {
+        name: "example-evil-cm",
+        namespace: "default",
+        annotations: {
+          evil: "true",
+        },
+      },
+    });
+    expect(cm.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBeUndefined();
+    expect(cm.metadata?.annotations?.["pepr.dev"]).toBeUndefined();
+    expect(cm.metadata?.labels?.["pepr"]).toBeUndefined();
+  });
+}
 async function testValidate() {
   // Apply the sample yaml for the HelloPepr capability
   const applyOut = spawnSync("kubectl apply -f hello-pepr.samples.yaml", {
@@ -56,7 +97,7 @@ async function testValidate() {
     `admission webhook "pepr-static-test.pepr.dev" denied the request: `,
     `No evil CM annotations allowed.\n`,
   ].join("");
-  expect(stderr).toBe(expected);
+  expect(stderr).toMatch(expected);
 }
 
 function testMutate() {

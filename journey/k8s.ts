@@ -7,6 +7,18 @@ export function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
 }
 
+export async function createOrReplaceConfigMap(cm: a.ConfigMap) {
+  return Kube(a.ConfigMap).CreateOrReplace(cm);
+}
+
+export async function deleteConfigMap(namespace: string, name: string) {
+  try {
+    await Kube(a.ConfigMap).InNamespace(namespace).Delete(name);
+  } catch (error) {
+    // Do nothing
+  }
+}
+
 export async function waitForDeploymentReady(namespace: string, name: string) {
   const deployment = await Kube(a.Deployment).InNamespace(namespace).Get(name);
   const replicas = deployment.spec?.replicas || 1;
