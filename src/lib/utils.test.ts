@@ -29,6 +29,7 @@ describe("utils", () => {
         test2: "test2",
         test3: base64Encode("test3"),
         test4: "test4",
+        test5: undefined as unknown as string,
       },
     };
     const skip = convertFromBase64Map(obj);
@@ -37,6 +38,7 @@ describe("utils", () => {
     expect(obj.data["test3"]).toBe("test3");
     expect(obj.data["test4"]).toBe("test4");
     expect(skip).toEqual(["test2", "test4"]);
+    expect(obj.data["test5"]).toBe("");
   });
 
   test("base64Decode should decode a base64 string", () => {
@@ -47,6 +49,13 @@ describe("utils", () => {
   test("base64Encode should encode a string to base64", () => {
     const data = "test1";
     expect(base64Encode(data)).toBe("dGVzdDE=");
+  });
+
+  test("convertToBase64Map empty object", () => {
+    const obj = {};
+    const objOut = { data: {} };
+    convertToBase64Map(obj, []);
+    expect(obj).toStrictEqual(objOut);
   });
 });
 // Path: src/lib/utils.ts
