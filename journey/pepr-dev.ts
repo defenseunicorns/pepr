@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { afterAll, expect, it } from "@jest/globals";
-import { KubeConfig } from "@kubernetes/client-node";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Agent } from "https";
 import { RequestInit } from "node-fetch";
@@ -10,9 +9,6 @@ import { RequestInit } from "node-fetch";
 import { fetch } from "../src/lib/fetch";
 import { cwd } from "./entrypoint.test";
 import { delay2Secs } from "./k8s";
-
-const kc = new KubeConfig();
-kc.loadFromDefault();
 
 const fetchBaseUrl = "https://localhost:3000";
 const fetchOpts: RequestInit = {
