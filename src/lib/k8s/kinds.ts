@@ -79,7 +79,11 @@ test.each(testCases)("should return the correct GroupVersionKind for '%s'", ({ n
     expect(gvk.version).toBe(expected.version);
     expect(gvk.kind).toBe(expected.kind);
   } catch (error) {
-    console.error(`Failed for model ${modelName}: Expected GroupVersionKind to be ${JSON.stringify(expected)}, but got ${JSON.stringify(gvk)}`);
+    console.error(
+      `Failed for model ${modelName}: Expected GroupVersionKind to be ${JSON.stringify(
+        expected,
+      )}, but got ${JSON.stringify(gvk)}`,
+    );
     throw error;
   }
 });
