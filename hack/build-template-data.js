@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const baseDir = path.join(__dirname, "..", "src", "cli", "init", "templates");
+const baseDir = path.join(__dirname, "..", "src", "templates");
 
 // Read the text file
 const gitIgnore = fs.readFileSync(path.join(baseDir, "gitignore"), "utf8");

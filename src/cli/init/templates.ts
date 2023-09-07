@@ -5,13 +5,13 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 
-import eslintJSON from "./templates/.eslintrc.json";
-import prettierJSON from "./templates/.prettierrc.json";
-import samplesJSON from "./templates/capabilities/hello-pepr.samples.json";
-import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "./templates/data.json";
-import peprSnippetsJSON from "./templates/pepr.code-snippets.json";
-import settingsJSON from "./templates/settings.json";
-import tsConfigJSON from "./templates/tsconfig.module.json";
+import eslintJSON from "../../templates/.eslintrc.json";
+import prettierJSON from "../../templates/.prettierrc.json";
+import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
+import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../templates/data.json";
+import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
+import settingsJSON from "../../templates/settings.json";
+import tsConfigJSON from "../../templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
