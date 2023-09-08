@@ -1,4 +1,7 @@
 
+# pepr-test-module should be ignored
+pepr-test-module/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
