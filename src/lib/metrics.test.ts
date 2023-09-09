@@ -59,3 +59,26 @@ test("observeEnd updates summary", async () => {
   expect(metrics).toMatch(/testPrefix_Validate_count 2/);
   expect(metrics).toMatch(/testPrefix_Validate_sum \d+\.\d+/);
 });
+
+test("coverage tests, with duplicate counters, default prefix (pepr) and still works properly", async () => {
+  const collector = new MetricsCollector();
+  collector.addCounter("testCounter", "testHelp");
+  // second one should log, but still work fine TODO: validate log
+  collector.addCounter("testCounter", "testHelp");
+  let metrics = await collector.getMetrics();
+  expect(metrics).toMatch(/pepr_testCounter 0/);
+  collector.incCounter("testCounter");
+  metrics = await collector.getMetrics();
+  expect(metrics).toMatch(/pepr_testCounter 1/);
+  collector.addSummary("testSummary", "testHelp");
+  // second one should log, but still work fine TODO: validate log
+  collector.addSummary("testSummary", "testHelp");
+  const startTime = collector.observeStart();
+
+  await new Promise(resolve => setTimeout(resolve, 100)); // Delay to simulate operation
+  collector.observeEnd(startTime, "testSummary");
+  collector.observeEnd(startTime, "testSummary");
+  metrics = await collector.getMetrics();
+  expect(metrics).toMatch(/pepr_testSummary_count 2/);
+  expect(metrics).toMatch(/pepr_testSummary_sum \d+\.\d+/);
+});
