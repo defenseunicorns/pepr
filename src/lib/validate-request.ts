@@ -48,7 +48,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
     }
 
     if (!this.Raw) {
-      throw new Error("unable to load the request object into PeprRequest.RawP");
+      throw new Error("unable to load the request object into PeprRequest.Raw");
     }
   }
 
