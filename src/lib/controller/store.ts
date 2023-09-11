@@ -6,7 +6,7 @@ import { startsWith } from "ramda";
 import { Operation } from "fast-json-patch";
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
-import { Kube } from "../k8s/fluent";
+import { Kube } from "../k8s/fluent/kube";
 import { ParallelWatch } from "../k8s/watch";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";

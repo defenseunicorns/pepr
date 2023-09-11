@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 
 import { Assets } from ".";
-import { Kube } from "../k8s/fluent";
+import { Kube } from "../k8s/fluent/kube";
 import {
   ClusterRole,
   ClusterRoleBinding,

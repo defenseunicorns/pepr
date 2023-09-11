@@ -6,7 +6,7 @@ import * as kind from "./upstream";
 /** a is a collection of K8s types to be used within a action: `When(a.Configmap)` */
 export { kind as a };
 
-export { Kube } from "./fluent";
+export { Kube } from "./fluent/kube";
 
 export { modelToGroupVersionKind, gvkMap, RegisterKind } from "./kinds";
 

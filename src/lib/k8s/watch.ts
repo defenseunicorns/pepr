@@ -6,7 +6,8 @@ import { clone } from "ramda";
 
 import Log from "../logger";
 import { GenericClass, WatchAction, WatchPhase } from "../types";
-import { Filters, pathBuilder, queryBuilder } from "./fluent";
+import { Filters } from "./fluent/types";
+import { pathBuilder, queryBuilder } from "./fluent/utils";
 
 /**
  * Watch Kubernetes resources from every Pepr Controller pod simultaneously.
