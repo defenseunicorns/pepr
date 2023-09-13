@@ -100,8 +100,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   async function CreateOrReplace(resource: K): Promise<K> {
     try {
       // First try to create the resource
-      const resp = await Create(resource);
-      return resp;
+      return await Create(resource);
     } catch (e) {
       // If the resource already exists, delete it and try again
       if (e.status === StatusCodes.CONFLICT) {

@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
-
 import { performance } from "perf_hooks";
+
 import { MetricsCollector } from "./metrics";
 
 test("constructor initializes counters correctly", () => {
