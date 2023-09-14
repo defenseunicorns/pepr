@@ -64,12 +64,14 @@ export type KubeUnfilteredActions<K extends KubernetesObject> = {
   Create: (resource: K) => Promise<K>;
 
   /**
-   * Patch the provided K8s resource or throw an error if it doesn't exist.
+   * Advanced JSON Patch operations for when Server Side Apply, Kube().Apply(), is insufficient.
    *
-   * @param payload The patch operations or the original and updated resources
+   * Note: Throws an error on an empty list of patch operations.
+   *
+   * @param payload The patch operations to run
    * @returns The patched resource
    */
-  Patch: (payload: Operation[] | { original: K; updated: K }) => Promise<K>;
+  Patch: (payload: Operation[]) => Promise<K>;
 };
 
 export type KubeWithFilters<K extends KubernetesObject> = KubeFilteredActions<K> & {

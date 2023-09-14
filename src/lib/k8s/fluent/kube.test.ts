@@ -130,22 +130,6 @@ describe("Kube", () => {
     await expect(kube.Get("fakeResource")).rejects.toThrow("Name already specified: fake");
   });
 
-  it("should handle Patch with two objects", async () => {
-    const original = { metadata: { name: "old-fake", namespace: "default" } };
-    const updated = { metadata: { name: "new-fake", namespace: "default" } };
-
-    const kube = Kube(Pod);
-    await kube.Patch({ original, updated });
-
-    // Assuming that the patch operation would be a 'replace' on '/metadata/name'
-    expect(mockedKubeExec).toHaveBeenCalledWith(
-      Pod,
-      expect.objectContaining({}),
-      "PATCH",
-      expect.arrayContaining([{ op: "replace", path: "/metadata/name", value: "new-fake" }]),
-    );
-  });
-
   it("should throw an error if no patch operations provided", async () => {
     const kube = Kube(Pod);
     await expect(kube.Patch([])).rejects.toThrow("No operations specified");

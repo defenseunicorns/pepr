@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Operation, compare } from "fast-json-patch";
+import { Operation } from "fast-json-patch";
 import { StatusCodes } from "http-status-codes";
 
 import { GenericClass } from "../../types";
@@ -103,28 +103,13 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     return kubeExec(model, filters, "POST", resource);
   }
 
-  async function Patch(payload: Operation[] | { original: K; updated: K }): Promise<K> {
-    const isPatchOps = Array.isArray(payload);
-
-    let operations: Operation[];
-
-    // If the payload is an array, assume it's a list of operations
-    if (isPatchOps) {
-      operations = payload;
-    } else {
-      // Otherwise, generate the operations from the original and updated resources
-      operations = compare(payload.original, payload.updated);
-
-      // Also sync the filters from the original resource
-      syncFilters(payload.original);
-    }
-
+  async function Patch(payload: Operation[]): Promise<K> {
     // If there are no operations, throw an error
-    if (operations.length < 1) {
+    if (payload.length < 1) {
       throw new Error("No operations specified");
     }
 
-    return kubeExec<T, K>(model, filters, "PATCH", operations);
+    return kubeExec<T, K>(model, filters, "PATCH", payload);
   }
 
   return { InNamespace, Apply, Create, Patch, ...withFilters };

@@ -178,9 +178,7 @@ export class PeprControllerStore {
     Log.debug(e);
 
     try {
-      await Kube(PeprStore).Create({
-        apiVersion: "pepr.dev/v1",
-        kind: "PeprStore",
+      await Kube(PeprStore).Apply({
         metadata: {
           name: this.#name,
           namespace,
