@@ -56,8 +56,13 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
       filters.name = payload.metadata.name;
     }
 
-    payload.apiVersion = payload.apiVersion || matchedKind.version;
-    payload.kind = payload.kind || matchedKind.kind;
+    if (!payload.apiVersion) {
+      payload.apiVersion = [matchedKind.group, matchedKind.version].filter(Boolean).join("/");
+    }
+
+    if (!payload.kind) {
+      payload.kind = matchedKind.kind;
+    }
   }
 
   async function Get(): Promise<KubernetesListObject<K>>;
