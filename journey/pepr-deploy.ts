@@ -5,7 +5,7 @@ import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync } from "child_process";
 import { resolve } from "path";
 
-import { Kube, a } from "../src/lib";
+import { Kube, given } from "../src/lib";
 import { cwd } from "./entrypoint.test";
 import {
   deleteConfigMap,
@@ -51,7 +51,7 @@ function cleanupSamples() {
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
-    const cm = await Kube(a.ConfigMap).Apply({
+    const cm = await Kube(given.ConfigMap).Apply({
       metadata: {
         name: "example-1",
         namespace: "default",
@@ -63,7 +63,7 @@ function testIgnore() {
   });
 
   it("should ignore resources not in the capability namespaces during validation", async () => {
-    const cm = await Kube(a.ConfigMap).Apply({
+    const cm = await Kube(given.ConfigMap).Apply({
       metadata: {
         name: "example-evil-cm",
         namespace: "default",

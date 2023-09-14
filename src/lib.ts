@@ -1,9 +1,10 @@
 import * as k8s from "@kubernetes/client-node";
 import { StatusCodes as fetchStatus } from "http-status-codes";
 import * as R from "ramda";
+
 import { Capability } from "./lib/capability";
 import { fetch, fetchRaw } from "./lib/fetch";
-import { RegisterKind, a } from "./lib/k8s/index";
+import { RegisterKind, a, given } from "./lib/k8s/index";
 import Log from "./lib/logger";
 import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
@@ -17,6 +18,7 @@ import type * as RTypes from "ramda";
 
 export {
   a,
+  given,
   /** PeprModule is used to setup a complete Pepr Module: `new PeprModule(cfg, {...capabilities})` */
   PeprModule,
   PeprMutateRequest,

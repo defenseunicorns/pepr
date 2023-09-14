@@ -80,7 +80,7 @@ export type KubeWithFilters<K extends KubernetesObject> = KubeFilteredActions<K>
    * Note multiple calls to this method will result in an AND condition. e.g.
    *
    * ```ts
-   * Kube(a.Deployment)
+   * Kube(given.Deployment)
    *  .WithField("metadata.name", "bar")
    *  .WithField("metadata.namespace", "qux")
    *  .Delete(...)
@@ -99,7 +99,7 @@ export type KubeWithFilters<K extends KubernetesObject> = KubeFilteredActions<K>
    * Note multiple calls to this method will result in an AND condition. e.g.
    *
    * ```ts
-   * Kube(a.Deployment)
+   * Kube(given.Deployment)
    *   .WithLabel("foo", "bar")
    *   .WithLabel("baz", "qux")
    *   .Delete(...)

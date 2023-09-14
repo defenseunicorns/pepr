@@ -17,7 +17,7 @@ export enum Operation {
  * that is not explicitly supported by Pepr. This can be used on its own or as a base class for
  * other types. See the examples in `HelloPepr.ts` for more information.
  */
-export class GenericKind {
+export class GenericKind implements KubernetesObject {
   apiVersion?: string;
   kind?: string;
   metadata?: V1ObjectMeta;

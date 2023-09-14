@@ -3,8 +3,12 @@
 
 // Export kinds as a single object
 import * as kind from "./upstream";
-/** a is a collection of K8s types to be used within a action: `When(a.Configmap)` */
+
+/** a is a collection of K8s types to be used within an action: `When(a.Configmap)` */
 export { kind as a };
+
+/** given is a collection of K8s types to be used within a Kube call: `Kube(given.Secret).Apply({})`. `a` may also be used in it's place */
+export { kind as given };
 
 export { Kube } from "./fluent/kube";
 
