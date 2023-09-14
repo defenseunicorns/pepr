@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
+import { fetch } from "../../fetch";
+import Log from "../../logger";
 import { GenericClass } from "../../types";
 import { ClusterRole, Ingress, Pod } from "../upstream";
 import { Filters, QueryParams } from "./types";
-import { pathBuilder, queryBuilder } from "./utils";
+import { kubeExec, pathBuilder, queryBuilder } from "./utils";
 
-jest.mock("@kubernetes/client-node");
 jest.mock("https");
+jest.mock("../../fetch");
 
 describe("queryBuilder Function", () => {
   it("should return an empty object if no filters are provided", () => {
@@ -93,5 +95,56 @@ describe("pathBuilder Function", () => {
     const filters: Filters = { namespace: "default", name: "mypod" };
     const result = pathBuilder(Pod, filters, true);
     expect(result).toEqual("/api/v1/namespaces/default/pods");
+  });
+});
+
+describe("kubeExec Function", () => {
+  const mockedFetch = jest.mocked(fetch);
+  const mockedLogInfo = jest.mocked(Log.info);
+
+  const fakeFilters: Filters = { name: "fake", namespace: "default" };
+  const fakeMethod = "GET";
+  const fakePayload = { metadata: { name: "fake", namespace: "default" } };
+  const fakeUrl = "http://jest-test:8080/api/v1/namespaces/default/pods/fake";
+  const fakeOpts = {
+    method: fakeMethod,
+  };
+
+  beforeEach(() => {
+    mockedFetch.mockClear();
+    mockedLogInfo.mockClear();
+  });
+
+  it("should make a successful fetch call", async () => {
+    mockedFetch.mockResolvedValueOnce({
+      ok: true,
+      data: fakePayload,
+      status: 200,
+      statusText: "OK",
+    });
+
+    const result = await kubeExec(Pod, fakeFilters, fakeMethod, fakePayload);
+
+    expect(result).toEqual(fakePayload);
+    expect(mockedFetch).toHaveBeenCalledWith(fakeUrl, expect.objectContaining(fakeOpts));
+  });
+
+  it("should handle fetch call failure", async () => {
+    const fakeStatus = 404;
+    const fakeStatusText = "Not Found";
+
+    mockedFetch.mockResolvedValueOnce({
+      ok: false,
+      data: null,
+      status: fakeStatus,
+      statusText: fakeStatusText,
+    });
+
+    await expect(kubeExec(Pod, fakeFilters, fakeMethod, fakePayload)).rejects.toEqual(
+      expect.objectContaining({
+        status: fakeStatus,
+        statusText: fakeStatusText,
+      }),
+    );
   });
 });

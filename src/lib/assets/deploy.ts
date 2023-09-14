@@ -32,40 +32,31 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
 
   const { name, host, path } = assets;
 
-  Log.info("Creating namespace if it doesn't exist");
-  try {
-    await Kube(Namespace).Create(namespace);
-  } catch (e) {
-    // Silently ignore the error if the namespace already exists so we don't have to destroy the whole namespace
-    Log.debug(e, "Namespace already exists");
-  }
+  Log.info("Applying pepr-system namespace");
+  await Kube(Namespace).Apply(namespace);
 
   // Create the mutating webhook configuration if it is needed
   const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
-  await Kube(MutatingWebhookConfiguration).Delete(name);
   if (mutateWebhook) {
-    Log.info("Creating or replacing mutating webhook");
-    await Kube(MutatingWebhookConfiguration).CreateOrReplace(mutateWebhook);
+    Log.info("Applying mutating webhook");
+    await Kube(MutatingWebhookConfiguration).Apply(mutateWebhook);
   } else {
-    Log.info("Mutating webhook not needed");
+    Log.info("Mutating webhook not needed, removing if it exists");
+    await Kube(MutatingWebhookConfiguration).Delete(name);
   }
 
   // Create the validating webhook configuration if it is needed
   const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
-  await Kube(ValidatingWebhookConfiguration).Delete(name);
   if (validateWebhook) {
-    Log.info("Creating or replacing validating webhook");
-    await Kube(ValidatingWebhookConfiguration).CreateOrReplace(validateWebhook);
+    Log.info("Applying validating webhook");
+    await Kube(ValidatingWebhookConfiguration).Apply(validateWebhook);
   } else {
-    Log.info("Validating webhook not needed");
+    Log.info("Validating webhook not needed, removing if it exists");
+    await Kube(ValidatingWebhookConfiguration).Delete(name);
   }
 
-  Log.info("Creating or the Pepr Store CRD if it doesn't exist");
-  try {
-    await Kube(CustomResourceDefinition).Create(peprStoreCRD);
-  } catch (e) {
-    // Silently ignore the error if the CRD already exists so we don't have to destroy the data
-  }
+  Log.info("Applying the Pepr Store CRD if it doesn't exist");
+  await Kube(CustomResourceDefinition).Apply(peprStoreCRD);
 
   // If a host is specified, we don't need to deploy the rest of the resources
   if (host) {
@@ -85,60 +76,60 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
 }
 
 async function setupRBAC(name: string) {
-  Log.info("Creating or replacing cluster role binding");
+  Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
-  await Kube(ClusterRoleBinding).CreateOrReplace(crb);
+  await Kube(ClusterRoleBinding).Apply(crb);
 
-  Log.info("Creating or replacing cluster role");
+  Log.info("Applying cluster role");
   const cr = clusterRole(name);
-  await Kube(ClusterRole).CreateOrReplace(cr);
+  await Kube(ClusterRole).Apply(cr);
 
-  Log.info("Creating or replacing service account");
+  Log.info("Applying service account");
   const sa = serviceAccount(name);
-  await Kube(ServiceAccount).CreateOrReplace(sa);
+  await Kube(ServiceAccount).Apply(sa);
 
-  Log.info("Creating or replacing store role");
+  Log.info("Applying store role");
   const role = storeRole(name);
-  await Kube(Role).CreateOrReplace(role);
+  await Kube(Role).Apply(role);
 
-  Log.info("Creating or replacing store role binding");
+  Log.info("Applying store role binding");
   const roleBinding = storeRoleBinding(name);
-  await Kube(RoleBinding).CreateOrReplace(roleBinding);
+  await Kube(RoleBinding).Apply(roleBinding);
 }
 
 async function setupController(assets: Assets, code: Buffer, hash: string) {
   const { name } = assets;
 
-  Log.info("Creating or replacing module secret");
+  Log.info("Applying module secret");
   const mod = moduleSecret(name, code, hash);
-  await Kube(Secret).CreateOrReplace(mod);
+  await Kube(Secret).Apply(mod);
 
-  Log.info("Creating service");
+  Log.info("Applying controller service");
   const svc = service(name);
-  await Kube(Service).CreateOrReplace(svc);
+  await Kube(Service).Apply(svc);
 
-  Log.info("Creating or replacing TLS secret");
+  Log.info("Applying TLS secret");
   const tls = tlsSecret(name, assets.tls);
-  await Kube(Secret).CreateOrReplace(tls);
+  await Kube(Secret).Apply(tls);
 
-  Log.info("Creating or replacing API token secret");
+  Log.info("Applying API token secret");
   const apiToken = apiTokenSecret(name, assets.apiToken);
-  await Kube(Secret).CreateOrReplace(apiToken);
+  await Kube(Secret).Apply(apiToken);
 
-  Log.info("Creating or replacing deployment");
+  Log.info("Applying deployment");
   const dep = deployment(assets, hash);
-  await Kube(Deployment).CreateOrReplace(dep);
+  await Kube(Deployment).Apply(dep);
 }
 
 async function setupWatcher(assets: Assets, hash: string) {
   // If the module has a watcher, deploy it
   const watchDeployment = watcher(assets, hash);
   if (watchDeployment) {
-    Log.info("Creating or replacing watcher deployment");
-    await Kube(Deployment).CreateOrReplace(watchDeployment);
+    Log.info("Applying watcher deployment");
+    await Kube(Deployment).Apply(watchDeployment);
 
-    Log.info("Creating or replacing watcher service");
+    Log.info("Applying watcher service");
     const watchSvc = watcherService(assets.name);
-    await Kube(Service).CreateOrReplace(watchSvc);
+    await Kube(Service).Apply(watchSvc);
   }
 }

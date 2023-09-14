@@ -50,22 +50,6 @@ describe("Kube", () => {
     );
   });
 
-  it("should replace a resource", async () => {
-    const kube = Kube(Pod);
-    const result = await kube.Replace(fakeResource);
-
-    expect(result).toEqual(fakeResource);
-    expect(mockedKubeExec).toHaveBeenCalledWith(
-      Pod,
-      expect.objectContaining({
-        name: "fake",
-        namespace: "default",
-      }),
-      "PUT",
-      fakeResource,
-    );
-  });
-
   it("should patch a resource", async () => {
     const patchOperations: Operation[] = [{ op: "replace", path: "/metadata/name", value: "new-fake" }];
 
@@ -74,19 +58,6 @@ describe("Kube", () => {
 
     expect(result).toEqual(fakeResource);
     expect(mockedKubeExec).toHaveBeenCalledWith(Pod, {}, "PATCH", patchOperations);
-  });
-
-  it("should create or replace a resource", async () => {
-    mockedKubeExec
-      .mockRejectedValueOnce({ status: 409 }) // Conflict on first call
-      .mockResolvedValue(fakeResource); // Successful creation on second call
-
-    const kube = Kube(Pod);
-    const result = await kube.CreateOrReplace(fakeResource);
-
-    expect(result).toEqual(fakeResource);
-    expect(kubeExec).toHaveBeenCalledTimes(3);
-    expect(Log.info).toHaveBeenCalledWith("Resource already exists, deleting and re-creating");
   });
 
   it("should filter with WithField", async () => {

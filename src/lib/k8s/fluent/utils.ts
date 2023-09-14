@@ -5,6 +5,7 @@ import { KubeConfig, PatchUtils } from "@kubernetes/client-node";
 import { Agent } from "https";
 import type request from "request";
 
+import { packageJSON } from "../../../templates/data.json";
 import { fetch } from "../../fetch";
 import Log from "../../logger";
 import { GenericClass } from "../../types";
@@ -126,22 +127,35 @@ export async function kubeExec<T extends GenericClass, K>(
   const path = pathBuilder(model, filters, method === "POST");
   const { url, opts } = await kubeCfg(path);
 
+  let queryString = "";
+
   opts.method = method;
 
-  if (method === "PATCH") {
-    opts.headers = { ...opts.headers, "Content-Type": PatchUtils.PATCH_FORMAT_JSON_PATCH };
+  // Add user agent to the request header like kubectl does
+  opts.headers = { ...opts.headers, "User-Agent": `pepr.dev/${packageJSON.version}` };
+
+  switch (opts.method) {
+    case "PATCH":
+      opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_JSON_PATCH;
+      break;
+
+    case "APPLY":
+      opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_APPLY_YAML;
+      opts.method = "PATCH";
+      queryString = `?fieldManager=pepr&fieldValidation=Strict&force=false`;
+      break;
   }
 
   if (payload) {
     opts.body = JSON.stringify(payload);
   }
 
-  const resp = await fetch<K>(url, opts);
+  const resp = await fetch<K>(url + queryString, opts);
 
   if (resp.ok) {
     return resp.data;
   }
 
-  Log.debug(`Failed to ${method} ${url}: ${resp.status} ${resp.statusText}`);
+  Log.debug(`Failed to ${opts.method} ${url + queryString}: ${resp.status} ${resp.statusText}`);
   throw resp;
 }

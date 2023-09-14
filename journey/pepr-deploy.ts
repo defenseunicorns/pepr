@@ -5,9 +5,9 @@ import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync } from "child_process";
 import { resolve } from "path";
 
+import { Kube, a } from "../src/lib";
 import { cwd } from "./entrypoint.test";
 import {
-  createOrReplaceConfigMap,
   deleteConfigMap,
   waitForConfigMap,
   waitForDeploymentReady,
@@ -51,10 +51,11 @@ function cleanupSamples() {
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
-    const cm = await createOrReplaceConfigMap({
-      apiVersion: "v1",
-      kind: "ConfigMap",
-      metadata: { name: "example-1", namespace: "default" },
+    const cm = await Kube(a.ConfigMap).Apply({
+      metadata: {
+        name: "example-1",
+        namespace: "default",
+      },
     });
     expect(cm.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBeUndefined();
     expect(cm.metadata?.annotations?.["pepr.dev"]).toBeUndefined();
@@ -62,9 +63,7 @@ function testIgnore() {
   });
 
   it("should ignore resources not in the capability namespaces during validation", async () => {
-    const cm = await createOrReplaceConfigMap({
-      apiVersion: "v1",
-      kind: "ConfigMap",
+    const cm = await Kube(a.ConfigMap).Apply({
       metadata: {
         name: "example-evil-cm",
         namespace: "default",

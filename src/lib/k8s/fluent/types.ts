@@ -6,7 +6,7 @@ import { Agent } from "http";
 
 import { GroupVersionKind, KubernetesListObject, KubernetesObject, Paths } from "../types";
 
-export type FetchMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type FetchMethods = "GET" | "APPLY" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface FetchOpts {
   agent: Agent;
@@ -48,6 +48,14 @@ export type KubeFilteredActions<K extends KubernetesObject> = {
 
 export type KubeUnfilteredActions<K extends KubernetesObject> = {
   /**
+   * Perform a server-side apply of the provided K8s resource.
+   *
+   * @param resource
+   * @returns
+   */
+  Apply: (resource: K) => Promise<K>;
+
+  /**
    * Create the provided K8s resource or throw an error if it already exists.
    *
    * @param resource
@@ -56,30 +64,12 @@ export type KubeUnfilteredActions<K extends KubernetesObject> = {
   Create: (resource: K) => Promise<K>;
 
   /**
-   * Replace the provided K8s resource or throw an error if it doesn't exist.
-   *
-   * @param resource
-   * @returns
-   */
-  Replace: (resource: K) => Promise<K>;
-
-  /**
    * Patch the provided K8s resource or throw an error if it doesn't exist.
    *
    * @param payload The patch operations or the original and updated resources
    * @returns The patched resource
    */
   Patch: (payload: Operation[] | { original: K; updated: K }) => Promise<K>;
-
-  /**
-   * Completely override the resource if it exists, otherwise create it.
-   *
-   * Note this will delete the resource if it exists and then create it.
-   *
-   * @param resource The resource to create or replace
-   * @returns The created or replaced resource
-   */
-  CreateOrReplace: (resource: K) => Promise<K>;
 };
 
 export type KubeWithFilters<K extends KubernetesObject> = KubeFilteredActions<K> & {

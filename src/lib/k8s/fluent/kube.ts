@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesListObject, KubernetesObject } from "@kubernetes/client-node";
 import { Operation, compare } from "fast-json-patch";
 import { StatusCodes } from "http-status-codes";
 
-import Log from "../../logger";
 import { GenericClass } from "../../types";
-import { Paths } from "../types";
+import { modelToGroupVersionKind } from "../kinds";
+import { KubernetesListObject, KubernetesObject, Paths } from "../types";
 import { Filters, KubeInit } from "./types";
 import { kubeExec } from "./utils";
 
@@ -22,6 +21,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   filters: Filters = {},
 ): KubeInit<K> {
   const withFilters = { WithField, WithLabel, Get, Delete };
+  const matchedKind = filters.kindOverride || modelToGroupVersionKind(model.name);
 
   function InNamespace(namespaces: string) {
     if (filters.namespace) {
@@ -45,13 +45,19 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   }
 
   function syncFilters(payload: K) {
+    // Ensure the payload has metadata
+    payload.metadata = payload.metadata || {};
+
     if (!filters.namespace) {
-      filters.namespace = payload.metadata?.namespace;
+      filters.namespace = payload.metadata.namespace;
     }
 
     if (!filters.name) {
-      filters.name = payload.metadata?.name;
+      filters.name = payload.metadata.name;
     }
+
+    payload.apiVersion = payload.apiVersion || matchedKind.version;
+    payload.kind = payload.kind || matchedKind.kind;
   }
 
   async function Get(): Promise<KubernetesListObject<K>>;
@@ -87,31 +93,14 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     }
   }
 
+  async function Apply(resource: K): Promise<K> {
+    syncFilters(resource);
+    return kubeExec(model, filters, "APPLY", resource);
+  }
+
   async function Create(resource: K): Promise<K> {
     syncFilters(resource);
     return kubeExec(model, filters, "POST", resource);
-  }
-
-  async function Replace(resource: K): Promise<K> {
-    syncFilters(resource);
-    return kubeExec(model, filters, "PUT", resource);
-  }
-
-  async function CreateOrReplace(resource: K): Promise<K> {
-    try {
-      // First try to create the resource
-      return await Create(resource);
-    } catch (e) {
-      // If the resource already exists, delete it and try again
-      if (e.status === StatusCodes.CONFLICT) {
-        Log.info("Resource already exists, deleting and re-creating");
-        await Delete(resource);
-        return Create(resource);
-      }
-
-      // Otherwise, something else went wrong, re-throw the error
-      throw e;
-    }
   }
 
   async function Patch(payload: Operation[] | { original: K; updated: K }): Promise<K> {
@@ -138,5 +127,5 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     return kubeExec<T, K>(model, filters, "PATCH", operations);
   }
 
-  return { InNamespace, Create, CreateOrReplace, Patch, Replace, ...withFilters };
+  return { InNamespace, Apply, Create, Patch, ...withFilters };
 }
