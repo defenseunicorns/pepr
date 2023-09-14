@@ -1,5 +1,5 @@
 # Copy the built files and node_modules into a new image
-FROM cgr.dev/chainguard/node:18@sha256:1503cb6568807812370f77f0f2dbe416291c1f6e24eff555c1fb92165899bb86
+FROM cgr.dev/chainguard/node:20@sha256:f30d39c6980f0a50119f2aa269498307a80c2654928d8e23bb25431b9cbbdc4f
 
 WORKDIR /app
 
