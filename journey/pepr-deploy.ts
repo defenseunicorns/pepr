@@ -12,6 +12,7 @@ import {
   waitForConfigMap,
   waitForDeploymentReady,
   waitForNamespace,
+  waitForPeprStoreKey,
   waitForSecret,
 } from "./k8s";
 
@@ -30,6 +31,8 @@ export function peprDeploy() {
   it("should perform validation of resources applied to the test cluster", testValidate);
 
   describe("should perform mutation of resources applied to the test cluster", testMutate);
+
+  describe("should store data in the PeprStore", testStore);
 
   cleanupSamples();
 }
@@ -169,5 +172,20 @@ function testMutate() {
     expect(s1.data?.["ascii-with-white-space"]).toBe(
       "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==",
     );
+  });
+}
+
+function testStore() {
+  it("should create the PeprStore", async () => {
+    const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
+    expect(resp).toBe("k-thx-bye");
+  });
+
+  it("should write the correct data to the PeprStore", async () => {
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1");
+    expect(key1).toBe("was-here");
+
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1-data");
+    expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
   });
 }

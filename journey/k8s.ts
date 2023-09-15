@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Kube, given } from "../src/lib";
+import { PeprStore } from "../src/lib/k8s";
 
 export function delay2Secs() {
   return new Promise(resolve => setTimeout(resolve, 2000));
@@ -23,6 +24,20 @@ export async function waitForDeploymentReady(namespace: string, name: string) {
   if (replicas !== readyReplicas) {
     await delay2Secs();
     return waitForDeploymentReady(namespace, name);
+  }
+}
+
+export async function waitForPeprStoreKey(name: string, matchKey: string) {
+  try {
+    const store = await Kube(PeprStore).InNamespace("pepr-system").Get(name);
+    if (store.data[matchKey]) {
+      return store.data[matchKey];
+    }
+
+    throw new Error("Key not found");
+  } catch (error) {
+    await delay2Secs();
+    return waitForPeprStoreKey(name, matchKey);
   }
 }
 
