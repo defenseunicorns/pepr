@@ -22,11 +22,6 @@ export const HelloPepr = new Capability({
 // Use the 'When' function to create a new action, use 'Store' to persist data
 const { When, Store } = HelloPepr;
 
-// This would run exactly one time once the store is ready
-Store.onReady(data => {
-  Log.info(data, "Pepr Store Ready");
-});
-
 /**
  * ---------------------------------------------------------------------------------------------------
  *                                   Mutate Action (Namespace)                                   *
@@ -63,6 +58,7 @@ When(a.ConfigMap)
     // Use the Store to persist data between requests and Pepr controller pods
     Store.setItem("example-1", "was-here");
 
+    // This data is written asynchronously and can be read back via `Store.getItem()` or `Store.subscribe()`
     Store.setItem("example-1-data", JSON.stringify(request.Raw.data));
   });
 
@@ -81,9 +77,6 @@ When(a.ConfigMap)
   .WithName("example-2")
   .Mutate(request => {
     // This Mutate Action will mutate the request before it is persisted to the cluster
-
-    // Read shared data from the store
-    Log.info(Store.getItem("example-1"), "Pepr Store Readout");
 
     // Use `request.Merge()` to merge the new data with the existing data
     request.Merge({
@@ -389,3 +382,10 @@ When(UnicornKind)
       },
     });
   });
+
+/**
+ * A callback function that is called once the Pepr Store is fully loaded.
+ */
+Store.onReady(data => {
+  Log.info(data, "Pepr Store Ready");
+});
