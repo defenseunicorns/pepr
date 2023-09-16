@@ -6,9 +6,10 @@ import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
-import { isBuildMode } from "./k8s";
+import { isBuildMode, isDevMode, isWatchMode } from "./k8s";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { CapabilityExport, ModuleConfig } from "./types";
+import { ParallelWatch } from "./k8s/watch";
 
 export type PackageJSON = {
   description: string;
@@ -70,6 +71,11 @@ export class PeprModule {
 
     this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
 
+    // Setup watch mode if enabled
+    if (isWatchMode() || isDevMode()) {
+      PeprModule.setupWatch(capabilities);
+    }
+
     // Stop processing if deferStart is set to true
     if (opts.deferStart) {
       return;
@@ -87,4 +93,13 @@ export class PeprModule {
   start = (port = 3000) => {
     this.#controller.startServer(port);
   };
+
+  static setupWatch(capabilities: Capability[]) {
+    capabilities
+      .flatMap(c => c.bindings)
+      .filter(binding => binding.isWatch)
+      .forEach(binding => {
+        ParallelWatch(binding.model, binding.filters).subscribe(binding.watchCallback!);
+      });
+  }
 }

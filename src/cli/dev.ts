@@ -61,6 +61,7 @@ export default function (program: RootCmd) {
             env: {
               ...process.env,
               LOG_LEVEL: "debug",
+              PEPR_MODE: "dev",
               PEPR_API_TOKEN: webhook.apiToken,
               PEPR_PRETTY_LOGS: "true",
               SSL_KEY_PATH: "insecure-tls.key",

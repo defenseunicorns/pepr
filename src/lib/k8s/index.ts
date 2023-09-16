@@ -20,4 +20,6 @@ export const isWatchMode = () => process.env.PEPR_WATCH_MODE === "true";
 // Track if Pepr is running in build mode
 export const isBuildMode = () => process.env.PEPR_MODE === "build";
 
+export const isDevMode = () => process.env.PEPR_MODE === "dev";
+
 export * from "./types";

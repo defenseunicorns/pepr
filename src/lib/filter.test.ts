@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
+import { V1Pod } from "@kubernetes/client-node";
 
 import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
@@ -12,6 +13,7 @@ const callback = () => undefined;
 
 test("should reject when name does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -29,6 +31,7 @@ test("should reject when name does not match", () => {
 
 test("should reject when kind does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1ConfigMap,
     filters: {
@@ -46,6 +49,7 @@ test("should reject when kind does not match", () => {
 
 test("should reject when group does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1CronJob,
     filters: {
@@ -63,6 +67,7 @@ test("should reject when group does not match", () => {
 
 test("should reject when version does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: {
       group: "",
@@ -84,6 +89,7 @@ test("should reject when version does not match", () => {
 
 test("should allow when group, version, and kind match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -101,6 +107,7 @@ test("should allow when group, version, and kind match", () => {
 
 test("should allow when kind match and others are empty", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: {
       group: "",
@@ -122,6 +129,7 @@ test("should allow when kind match and others are empty", () => {
 
 test("should reject when teh capability namespace does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -139,6 +147,7 @@ test("should reject when teh capability namespace does not match", () => {
 
 test("should reject when namespace does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -156,6 +165,7 @@ test("should reject when namespace does not match", () => {
 
 test("should allow when namespace is match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -173,6 +183,7 @@ test("should allow when namespace is match", () => {
 
 test("should reject when label does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -192,6 +203,7 @@ test("should reject when label does not match", () => {
 
 test("should allow when label is match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -220,6 +232,7 @@ test("should allow when label is match", () => {
 
 test("should reject when annotation does not match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -239,6 +252,7 @@ test("should reject when annotation does not match", () => {
 
 test("should allow when annotation is match", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Any,
     kind: gvkMap.V1Pod,
     filters: {
@@ -266,6 +280,7 @@ test("should allow when annotation is match", () => {
 
 test("should use `oldObject` when the operation is `DELETE`", () => {
   const binding = {
+    model: V1Pod,
     event: Event.Delete,
     kind: gvkMap.V1Pod,
     filters: {

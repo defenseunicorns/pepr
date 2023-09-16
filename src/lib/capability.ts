@@ -3,7 +3,7 @@
 
 import { pickBy } from "ramda";
 
-import { isBuildMode, isWatchMode, modelToGroupVersionKind } from "./k8s/index";
+import { isBuildMode, isDevMode, isWatchMode, modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
 import { PeprStore, Storage } from "./storage";
@@ -24,7 +24,7 @@ import {
 } from "./types";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
-const registerWatch = isBuildMode() || isWatchMode();
+const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -116,6 +116,7 @@ export class Capability implements CapabilityExport {
     }
 
     const binding: Binding = {
+      model,
       // If the kind is not specified, use the matched kind from the model
       kind: kind || matchedKind,
       event: Event.Any,

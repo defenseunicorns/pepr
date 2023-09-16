@@ -118,6 +118,7 @@ export type Binding = {
   isMutate?: boolean;
   isValidate?: boolean;
   isWatch?: boolean;
+  readonly model: GenericClass;
   readonly kind: GroupVersionKind;
   readonly filters: {
     name: string;
