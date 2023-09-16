@@ -3,7 +3,7 @@
 
 import { pickBy } from "ramda";
 
-import { isWatchMode, modelToGroupVersionKind } from "./k8s/index";
+import { isBuildMode, isWatchMode, modelToGroupVersionKind } from "./k8s/index";
 import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
 import { PeprStore, Storage } from "./storage";
@@ -22,6 +22,9 @@ import {
   WatchAction,
   WhenSelector,
 } from "./types";
+
+const registerAdmission = isBuildMode() || !isWatchMode();
+const registerWatch = isBuildMode() || isWatchMode();
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -137,7 +140,7 @@ export class Capability implements CapabilityExport {
     };
 
     function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
-      if (!isWatchMode) {
+      if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
@@ -153,7 +156,7 @@ export class Capability implements CapabilityExport {
     }
 
     function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
-      if (!isWatchMode) {
+      if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
@@ -170,7 +173,7 @@ export class Capability implements CapabilityExport {
     }
 
     function Watch(watchCallback: WatchAction<T>) {
-      if (isWatchMode) {
+      if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
         bindings.push({

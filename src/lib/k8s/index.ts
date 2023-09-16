@@ -14,7 +14,10 @@ export { Kube } from "./fluent/kube";
 
 export { modelToGroupVersionKind, gvkMap, RegisterKind } from "./kinds";
 
-// If the hostname is pepr-static-test-watcher-0, then we are running in watch mode
-export const isWatchMode = process.env.PEPR_WATCH_MODE === "true";
+// Track if this is a watch mode controller
+export const isWatchMode = () => process.env.PEPR_WATCH_MODE === "true";
+
+// Track if Pepr is running in build mode
+export const isBuildMode = () => process.env.PEPR_MODE === "build";
 
 export * from "./types";

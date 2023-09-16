@@ -6,6 +6,7 @@ import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
+import { isBuildMode } from "./k8s";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { CapabilityExport, ModuleConfig } from "./types";
 
@@ -42,7 +43,12 @@ export class PeprModule {
     ValidateError(config.onError);
 
     // Handle build mode
-    if (process.env.PEPR_MODE === "build" && process.send) {
+    if (isBuildMode()) {
+      // Fail if process.send is not defined
+      if (!process.send) {
+        throw new Error("process.send is not defined");
+      }
+
       const exportedCapabilities: CapabilityExport[] = [];
 
       // Send capability map to parent process
@@ -56,6 +62,7 @@ export class PeprModule {
         });
       }
 
+      // Send the capabilities back to the parent process
       process.send(exportedCapabilities);
 
       return;

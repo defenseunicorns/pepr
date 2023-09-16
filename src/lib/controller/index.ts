@@ -78,7 +78,7 @@ export class Controller {
     };
 
     // Get the API token if not in watch mode
-    if (!isWatchMode) {
+    if (!isWatchMode()) {
       // Get the API token from the environment variable or the mounted secret
       this.#token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
       Log.info(`Using API token: ${this.#token}`);
@@ -128,7 +128,7 @@ export class Controller {
     // Metrics endpoint
     this.#app.get("/metrics", this.#metrics);
 
-    if (isWatchMode) {
+    if (isWatchMode()) {
       return;
     }
 
