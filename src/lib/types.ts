@@ -88,6 +88,8 @@ export type ModuleConfig = {
   onError?: string;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
+  /** Define the log level for the in-cluster controllers */
+  logLevel?: string;
   /**
    * FUTURE USE.
    *

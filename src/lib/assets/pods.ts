@@ -15,7 +15,7 @@ export const namespace: Namespace = {
 };
 
 export function watcher(assets: Assets, hash: string) {
-  const { name, image, capabilities } = assets;
+  const { name, image, capabilities, config } = assets;
 
   // Append the watcher suffix
   const app = `${name}-watcher`;
@@ -110,6 +110,7 @@ export function watcher(assets: Assets, hash: string) {
               env: [
                 { name: "PEPR_WATCH_MODE", value: "true" },
                 { name: "PEPR_PRETTY_LOG", value: "false" },
+                { name: "LOG_LEVEL", value: config.logLevel || "debug" },
               ],
             },
           ],
@@ -134,7 +135,7 @@ export function watcher(assets: Assets, hash: string) {
 }
 
 export function deployment(assets: Assets, hash: string): Deployment {
-  const { name, image } = assets;
+  const { name, image, config } = assets;
   const app = name;
 
   return {
@@ -199,10 +200,8 @@ export function deployment(assets: Assets, hash: string): Deployment {
                 },
               },
               env: [
-                {
-                  name: "PEPR_PRETTY_LOG",
-                  value: "false",
-                },
+                { name: "PEPR_PRETTY_LOG", value: "false" },
+                { name: "LOG_LEVEL", value: config.logLevel || "debug" },
               ],
               volumeMounts: [
                 {
