@@ -6,6 +6,7 @@ import { execSync, spawnSync } from "child_process";
 import { resolve } from "path";
 
 import { Kube, given } from "../src/lib";
+import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
   deleteConfigMap,
@@ -17,6 +18,9 @@ import {
 } from "./k8s";
 
 export function peprDeploy() {
+  // Purge the Pepr module from the cluster before running the tests
+  destroyModule("pepr-static-test");
+
   it("should deploy the Pepr controller into the test cluster", async () => {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
