@@ -101,11 +101,9 @@ When(a.ConfigMap)
     // Otherwise, deny the request with an error message (optional)
     return request.Deny("ConfigMap must have label 'pepr'");
   })
-  .Watch(cm => {
+  .Watch((cm, phase) => {
     // This Watch Action will watch the ConfigMap after it has been persisted to the cluster
-    Log.info(
-      `New ConfigMap was created with the name example-2: ${cm.metadata.uid}`,
-    );
+    Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
   });
 
 /**
