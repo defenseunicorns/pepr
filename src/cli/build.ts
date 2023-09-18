@@ -9,6 +9,7 @@ import { basename, extname, resolve } from "path";
 import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
+import { peprFormat } from "./format";
 
 const peprTS = "pepr.ts";
 
@@ -104,6 +105,15 @@ export async function loadModule(entryPoint = peprTS) {
 export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
   try {
     const { cfg, path, uuid } = await loadModule(entryPoint);
+
+    const validFormat = await peprFormat(true);
+
+    if (!validFormat) {
+      console.log(
+        "\x1b[33m%s\x1b[0m",
+        "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
+      );
+    }
 
     // Run `tsc` to validate the module's types
     execSync("./node_modules/.bin/tsc", { stdio: "pipe" });
