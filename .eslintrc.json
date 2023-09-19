@@ -6,18 +6,21 @@
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
+    "project": ["tsconfig.json"],
     "ecmaVersion": 2022
   },
   "rules": {
     "class-methods-use-this": "warn",
     "consistent-this":"warn",
-    "no-invalid-this": "warn"
+    "no-invalid-this": "warn",
+    "@typescript-eslint/no-floating-promises": ["warn"]
   },
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
+    "src/templates",
+    "journey",
     "node_modules",
     "dist",
-    "src/cli/init/templates/data.json",
     "hack",
     "pepr-test-module"
   ],

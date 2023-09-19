@@ -5,7 +5,7 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 
-import eslintJSON from "../../templates/.eslintrc.json";
+import eslintJSON from "../../templates/.eslintrc.template.json";
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
 import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../templates/data.json";

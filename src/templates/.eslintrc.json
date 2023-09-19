@@ -1,14 +1,6 @@
 {
-  "env": {
-    "browser": false,
-    "es2021": true
-  },
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
-  "parser": "@typescript-eslint/parser",
+  "extends": [".eslintrc.template.json"],
   "parserOptions": {
-    "ecmaVersion": 2022
-  },
-  "plugins": ["@typescript-eslint"],
-  "ignorePatterns": ["node_modules", "dist", "hack"],
-  "root": true
+    "project": ["src/templates/tsconfig.json"]
+  }
 }
