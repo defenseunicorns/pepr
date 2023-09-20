@@ -12,9 +12,12 @@
 
 Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops tribal knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
 
+#### _Note: Pepr is still in active development so breaking changes may occur, but will be document in release notes._
+
 ## Features
 
-- Zero-config K8s webhook mutations and validations.
+- Zero-config K8s webhook mutations and validations
+- Automatic leader-elected K8s resource watching
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
 - Generate new K8s resources based off of cluster resource changes
 - Perform other exec/API calls based off of cluster resources changes or any other arbitrary schedule
@@ -54,6 +57,10 @@ When(a.ConfigMap)
 
     // Reject the ConfigMap if it doesn't have the label
     return request.Deny("ConfigMap must have a unicorn label");
+  })
+  // Watch behaves like controller-runtime's Manager.Watch()
+  .Watch((cm, phase) => {
+    Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
   });
 ```
 
@@ -116,4 +123,3 @@ See [actions](./docs/actions.md) for more details.
 ## TypeScript
 
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
-
