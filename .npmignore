@@ -10,7 +10,10 @@ adr
 /hack
 build.mjs
 /journey
-
+/__mocks__
+/coverage
+jest.config.json
+/prettierignore
 /dist/cli/**/*.d.*
 /dist/fixtures
 /dist/test

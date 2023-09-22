@@ -9,7 +9,7 @@ const cloned = { ...actual };
 cloned.KubeConfig = class MockedKubeConfig {
   loadFromDefault = jest.fn();
 
-  applyToRequest = jest.fn();
+  applyToFetchOptions = jest.fn(data => data);
 
   getCurrentCluster() {
     return {
