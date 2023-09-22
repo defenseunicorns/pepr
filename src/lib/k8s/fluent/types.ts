@@ -4,15 +4,17 @@
 import { Operation } from "fast-json-patch";
 import { Agent } from "http";
 
+import { WatchPhase } from "../../types";
 import { GroupVersionKind, KubernetesListObject, KubernetesObject, Paths } from "../types";
 
-export type FetchMethods = "GET" | "APPLY" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type FetchMethods = "GET" | "APPLY" | "POST" | "PUT" | "DELETE" | "PATCH" | "WATCH";
 
 export interface FetchOpts {
   agent: Agent;
   headers?: Record<string, string>;
   method?: FetchMethods;
   body?: string;
+  signal?: AbortSignal | null | undefined;
 }
 
 export interface Filters {
@@ -22,8 +24,6 @@ export interface Filters {
   name?: string;
   namespace?: string;
 }
-
-export type QueryParams = Record<string, string | number | boolean>;
 
 export type GetFunction<K extends KubernetesObject> = {
   (): Promise<KubernetesListObject<K>>;
@@ -44,6 +44,13 @@ export type KubeFilteredActions<K extends KubernetesObject> = {
    * @param filter - the resource or resource name to delete
    */
   Delete: (filter?: K | string) => Promise<void>;
+
+  /**
+   *
+   * @param callback
+   * @returns
+   */
+  Watch: (callback: (payload: K, phase: WatchPhase) => void) => Promise<void>;
 };
 
 export type KubeUnfilteredActions<K extends KubernetesObject> = {

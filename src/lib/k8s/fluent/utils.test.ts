@@ -3,77 +3,30 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
+import { packageJSON } from "../../../templates/data.json";
 import { fetch } from "../../fetch";
 import Log from "../../logger";
 import { GenericClass } from "../../types";
 import { ClusterRole, Ingress, Pod } from "../upstream";
-import { Filters, QueryParams } from "./types";
-import { kubeExec, pathBuilder, queryBuilder } from "./utils";
+import { Filters } from "./types";
+import { kubeExec, pathBuilder } from "./utils";
 
 jest.mock("https");
 jest.mock("../../fetch");
 
-describe("queryBuilder Function", () => {
-  it("should return an empty object if no filters are provided", () => {
-    const filters: Filters = {};
-    const result: QueryParams = queryBuilder(filters);
-    expect(result).toEqual({});
-  });
-
-  it("should correctly build query parameters for fields", () => {
-    const filters: Filters = {
-      fields: {
-        field1: "value1",
-        field2: "value2",
-      },
-    };
-    const result: QueryParams = queryBuilder(filters);
-    expect(result).toEqual({
-      fieldSelector: "field1=value1,field2=value2",
-    });
-  });
-
-  it("should correctly build query parameters for labels", () => {
-    const filters: Filters = {
-      labels: {
-        label1: "value1",
-        label2: "value2",
-      },
-    };
-    const result: QueryParams = queryBuilder(filters);
-    expect(result).toEqual({
-      labelSelector: "label1=value1,label2=value2",
-    });
-  });
-
-  it("should correctly build query parameters for multiple filter types", () => {
-    const filters: Filters = {
-      fields: {
-        field1: "value1",
-      },
-      labels: {
-        label1: "value1",
-      },
-    };
-    const result: QueryParams = queryBuilder(filters);
-    expect(result).toEqual({
-      fieldSelector: "field1=value1",
-      labelSelector: "label1=value1",
-    });
-  });
-});
-
 describe("pathBuilder Function", () => {
+  const serverUrl = "https://jest-test:8080";
   it("should throw an error if the kind is not specified and the model is not a KubernetesObject", () => {
     const model = { name: "Unknown" } as unknown as GenericClass;
     const filters: Filters = {};
-    expect(() => pathBuilder(model, filters)).toThrow("Kind not specified for Unknown");
+    expect(() => pathBuilder("", model, filters)).toThrow("Kind not specified for Unknown");
   });
 
   it("should generate a path for core group kinds", () => {
     const filters: Filters = { namespace: "default", name: "mypod" };
-    const result = pathBuilder(Pod, filters);
-    expect(result).toEqual("/api/v1/namespaces/default/pods/mypod");
+    const result = pathBuilder(serverUrl, Pod, filters);
+    const expected = new URL("/api/v1/namespaces/default/pods/mypod", serverUrl);
+    expect(result).toEqual(expected);
   });
 
   it("should generate a path for non-core group kinds", () => {
@@ -81,20 +34,23 @@ describe("pathBuilder Function", () => {
       namespace: "default",
       name: "myingress",
     };
-    const result = pathBuilder(Ingress, filters);
-    expect(result).toEqual("/apis/networking.k8s.io/v1/namespaces/default/ingresses/myingress");
+    const result = pathBuilder(serverUrl, Ingress, filters);
+    const expected = new URL("/apis/networking.k8s.io/v1/namespaces/default/ingresses/myingress", serverUrl);
+    expect(result).toEqual(expected);
   });
 
   it("should generate a path without a namespace if not provided", () => {
     const filters: Filters = { name: "tester" };
-    const result = pathBuilder(ClusterRole, filters);
-    expect(result).toEqual("/apis/rbac.authorization.k8s.io/v1/clusterroles/tester");
+    const result = pathBuilder(serverUrl, ClusterRole, filters);
+    const expected = new URL("/apis/rbac.authorization.k8s.io/v1/clusterroles/tester", serverUrl);
+    expect(result).toEqual(expected);
   });
 
   it("should generate a path without a name if excludeName is true", () => {
     const filters: Filters = { namespace: "default", name: "mypod" };
-    const result = pathBuilder(Pod, filters, true);
-    expect(result).toEqual("/api/v1/namespaces/default/pods");
+    const result = pathBuilder(serverUrl, Pod, filters, true);
+    const expected = new URL("/api/v1/namespaces/default/pods", serverUrl);
+    expect(result).toEqual(expected);
   });
 });
 
@@ -105,8 +61,13 @@ describe("kubeExec Function", () => {
   const fakeFilters: Filters = { name: "fake", namespace: "default" };
   const fakeMethod = "GET";
   const fakePayload = { metadata: { name: "fake", namespace: "default" } };
-  const fakeUrl = "http://jest-test:8080/api/v1/namespaces/default/pods/fake";
+  const fakeUrl = new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake");
   const fakeOpts = {
+    body: JSON.stringify(fakePayload),
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": `pepr.dev/${packageJSON.version}`,
+    },
     method: fakeMethod,
   };
 

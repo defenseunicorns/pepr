@@ -6,10 +6,9 @@ import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
-import { isBuildMode, isDevMode, isWatchMode } from "./k8s";
+import { Kube, isBuildMode, isDevMode, isWatchMode } from "./k8s";
 import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
 import { CapabilityExport, ModuleConfig } from "./types";
-import { ParallelWatch } from "./k8s/watch";
 
 export type PackageJSON = {
   description: string;
@@ -99,7 +98,7 @@ export class PeprModule {
       .flatMap(c => c.bindings)
       .filter(binding => binding.isWatch)
       .forEach(binding => {
-        ParallelWatch(binding.model, binding.filters).subscribe(binding.watchCallback!);
+        void Kube(binding.model, binding.filters).Watch(binding.watchCallback!);
       });
   }
 }

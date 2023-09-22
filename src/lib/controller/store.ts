@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { Operation } from "fast-json-patch";
 import { startsWith } from "ramda";
 
-import { Operation } from "fast-json-patch";
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
 import { Kube } from "../k8s/fluent/kube";
-import { ParallelWatch } from "../k8s/watch";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { ModuleConfig } from "../types";
@@ -54,7 +53,7 @@ export class PeprControllerStore {
   }
 
   #setupWatch = () => {
-    ParallelWatch(PeprStore, { namespace, name: this.#name }).subscribe(this.#receive);
+    void Kube(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
   };
 
   #receive = (store: PeprStore) => {
@@ -166,7 +165,7 @@ export class PeprControllerStore {
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
         Log.debug(sendCache, "Sending updates to Pepr store");
-        flushCache();
+        void flushCache();
       }
     }, debounceBackoff);
 

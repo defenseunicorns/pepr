@@ -4,11 +4,12 @@
 import { Operation } from "fast-json-patch";
 import { StatusCodes } from "http-status-codes";
 
-import { GenericClass } from "../../types";
+import { GenericClass, WatchAction } from "../../types";
 import { modelToGroupVersionKind } from "../kinds";
 import { KubernetesListObject, KubernetesObject, Paths } from "../types";
 import { Filters, KubeInit } from "./types";
 import { kubeExec } from "./utils";
+import { ExecWatch } from "./watch";
 
 /**
  * Kubernetes fluent API inspired by Kubectl. Pass in a model, then call filters and actions on it.
@@ -20,7 +21,7 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
   model: T,
   filters: Filters = {},
 ): KubeInit<K> {
-  const withFilters = { WithField, WithLabel, Get, Delete };
+  const withFilters = { WithField, WithLabel, Get, Delete, Watch };
   const matchedKind = filters.kindOverride || modelToGroupVersionKind(model.name);
 
   function InNamespace(namespaces: string) {
@@ -115,6 +116,10 @@ export function Kube<T extends GenericClass, K extends KubernetesObject = Instan
     }
 
     return kubeExec<T, K>(model, filters, "PATCH", payload);
+  }
+
+  async function Watch(callback: WatchAction<T>): Promise<void> {
+    await ExecWatch(model, filters, callback);
   }
 
   return { InNamespace, Apply, Create, Patch, ...withFilters };

@@ -1,50 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubeConfig, PatchUtils } from "@kubernetes/client-node";
-import { Agent } from "https";
-import type request from "request";
+import { KubeConfig, PatchStrategy } from "@kubernetes/client-node";
 
+import { Headers } from "node-fetch";
+import { URL } from "url";
 import { packageJSON } from "../../../templates/data.json";
 import { fetch } from "../../fetch";
 import Log from "../../logger";
 import { GenericClass } from "../../types";
 import { modelToGroupVersionKind } from "../kinds";
-import { FetchMethods, FetchOpts, Filters, QueryParams } from "./types";
+import { FetchMethods, Filters } from "./types";
 
-/**
- * Build the query parameters for a Kubernetes API request
- *
- * @param filters
- * @returns
- */
-export function queryBuilder(filters: Filters): QueryParams {
-  const params: QueryParams = {};
-
-  if (filters.fields) {
-    params.fieldSelector = Object.entries(filters.fields)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(",");
-  }
-
-  if (filters.labels) {
-    params.labelSelector = Object.entries(filters.labels)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(",");
-  }
-
-  return params;
-}
+const SSA_CONTENT_TYPE = "application/apply-patch+yaml";
 
 /**
  * Generate a path to a Kubernetes resource
  *
+ * @param serverUrl
  * @param model
- * @param opts
+ * @param filters
+ * @param excludeName
  * @returns
  */
-export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, excludeName = false) {
-  const matchedKind = opts.kindOverride || modelToGroupVersionKind(model.name);
+export function pathBuilder<T extends GenericClass>(
+  serverUrl: string,
+  model: T,
+  filters: Filters,
+  excludeName = false,
+) {
+  const matchedKind = filters.kindOverride || modelToGroupVersionKind(model.name);
 
   // If the kind is not specified and the model is not a KubernetesObject, throw an error
   if (!matchedKind) {
@@ -66,15 +51,36 @@ export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, exc
   }
 
   // Namespaced paths require a namespace prefix
-  const namespace = opts.namespace ? `namespaces/${opts.namespace}` : "";
+  const namespace = filters.namespace ? `namespaces/${filters.namespace}` : "";
 
   // Name should not be included in some paths
-  const name = excludeName ? "" : opts.name;
+  const name = excludeName ? "" : filters.name;
 
   // Build the complete path to the resource
   const path = [base, namespace, plural, name].filter(Boolean).join("/");
 
-  return path;
+  // Generate the URL object
+  const url = new URL(path, serverUrl);
+
+  // Add field selectors to the query params
+  if (filters.fields) {
+    const fieldSelector = Object.entries(filters.fields)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(",");
+
+    url.searchParams.set("fieldSelector", fieldSelector);
+  }
+
+  // Add label selectors to the query params
+  if (filters.labels) {
+    const labelSelector = Object.entries(filters.labels)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(",");
+
+    url.searchParams.set("labelSelector", labelSelector);
+  }
+
+  return url;
 }
 
 /**
@@ -85,10 +91,10 @@ export function pathBuilder<T extends GenericClass>(model: T, opts: Filters, exc
  * - We have to create an agent to handle the TLS connection (for the custom CA + mTLS in some cases)
  * - The K8s lib uses request instead of node-fetch today so the object is slightly different
  *
- * @param path
+ * @param method
  * @returns
  */
-export async function kubeCfg(path: string) {
+export async function kubeCfg(method: FetchMethods) {
   const kubeConfig = new KubeConfig();
   kubeConfig.loadFromDefault();
 
@@ -97,25 +103,18 @@ export async function kubeCfg(path: string) {
     throw new Error("No currently active cluster");
   }
 
-  // Create the empty options object for the k8s lib
-  const k8sOpts: request.Options = {
+  // Setup the TLS options & auth headers, as needed
+  const opts = await kubeConfig.applyToFetchOptions({
+    method,
     headers: {
       // Set the default content type to JSON
       "Content-Type": "application/json",
+      // Set the user agent to pepr.dev/version like kubectl does
+      "User-Agent": `pepr.dev/${packageJSON.version}`,
     },
-    url: cluster.server + path,
-  };
+  });
 
-  // Setup the TLS options & auth headers, as needed
-  await kubeConfig.applyToRequest(k8sOpts);
-
-  // Create the tlS agent for the request
-  const agent = new Agent(k8sOpts);
-
-  const { headers, url } = k8sOpts;
-  const opts: FetchOpts = { agent, headers };
-
-  return { url, opts };
+  return { opts, serverUrl: cluster.server };
 }
 
 export async function kubeExec<T extends GenericClass, K>(
@@ -124,25 +123,20 @@ export async function kubeExec<T extends GenericClass, K>(
   method: FetchMethods,
   payload?: K | unknown,
 ) {
-  const path = pathBuilder(model, filters, method === "POST");
-  const { url, opts } = await kubeCfg(path);
-
-  let queryString = "";
-
-  opts.method = method;
-
-  // Add user agent to the request header like kubectl does
-  opts.headers = { ...opts.headers, "User-Agent": `pepr.dev/${packageJSON.version}` };
+  const { opts, serverUrl } = await kubeCfg(method);
+  const url = pathBuilder(serverUrl, model, filters, method === "POST");
 
   switch (opts.method) {
     case "PATCH":
-      opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_JSON_PATCH;
+      (opts.headers as Headers).set("Content-Type", PatchStrategy.JsonPatch);
       break;
 
     case "APPLY":
-      opts.headers["Content-Type"] = PatchUtils.PATCH_FORMAT_APPLY_YAML;
+      (opts.headers as Headers).set("Content-Type", SSA_CONTENT_TYPE);
       opts.method = "PATCH";
-      queryString = `?fieldManager=pepr&fieldValidation=Strict&force=false`;
+      url.searchParams.set("fieldManager", "pepr");
+      url.searchParams.set("fieldValidation", "Strict");
+      url.searchParams.set("force", "false");
       break;
   }
 
@@ -150,12 +144,12 @@ export async function kubeExec<T extends GenericClass, K>(
     opts.body = JSON.stringify(payload);
   }
 
-  const resp = await fetch<K>(url + queryString, opts);
+  const resp = await fetch<K>(url, opts);
 
   if (resp.ok) {
     return resp.data;
   }
 
-  Log.debug(`Failed to ${opts.method} ${url + queryString}: ${resp.status} ${resp.statusText}`);
+  Log.debug(`Failed to ${opts.method} ${url}: ${resp.status} ${resp.statusText}`);
   throw resp;
 }
