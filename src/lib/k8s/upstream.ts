@@ -3,6 +3,7 @@
 
 /** a is a collection of K8s types to be used within an action: `When(a.Configmap)` */
 export {
+  CoreV1Event as Event,
   V1APIService as APIService,
   V1CertificateSigningRequest as CertificateSigningRequest,
   V1ClusterRole as ClusterRole,
@@ -11,7 +12,6 @@ export {
   V1ControllerRevision as ControllerRevision,
   V1CronJob as CronJob,
   V1CSIDriver as CSIDriver,
-  V1CSIStorageCapacity as CSIStorageCapacity,
   V1CustomResourceDefinition as CustomResourceDefinition,
   V1DaemonSet as DaemonSet,
   V1Deployment as Deployment,

@@ -3,7 +3,7 @@
 
 import crypto from "crypto";
 
-import { TLSOut, genTLS } from "../k8s/tls";
+import { TLSOut, genTLS } from "../tls";
 import { CapabilityExport, ModuleConfig } from "../types";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";

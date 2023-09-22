@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { TLSOut } from "../k8s/tls";
+import { TLSOut } from "../tls";
 import { Secret, Service } from "../k8s/upstream";
 
 export function apiTokenSecret(name: string, apiToken: string): Secret {
