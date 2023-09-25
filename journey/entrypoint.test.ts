@@ -11,7 +11,6 @@ import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
 
 // Unmock unit test things
-jest.deepUnmock("@kubernetes/client-node");
 jest.deepUnmock("pino");
 
 // The working directory for the tests after `npx pepr init` is run
