@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 
-import { KubernetesObject, Operation, Request } from "./k8s/types";
+import { AdmissionRequest, Operation } from "./k8s";
 import { DeepPartial } from "./types";
 
 /**
@@ -13,7 +14,7 @@ import { DeepPartial } from "./types";
 export class PeprMutateRequest<T extends KubernetesObject> {
   Raw: T;
 
-  #input: Request<T>;
+  #input: AdmissionRequest<T>;
 
   get PermitSideEffects() {
     return !this.#input.dryRun;
@@ -47,7 +48,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * Creates a new instance of the action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(input: Request<T>) {
+  constructor(input: AdmissionRequest<T>) {
     this.#input = input;
 
     // If this is a DELETE operation, use the oldObject instead

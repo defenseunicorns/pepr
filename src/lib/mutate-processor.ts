@@ -2,21 +2,21 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
+import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter";
-import { MutateResponse, Request } from "./k8s/types";
-import { Secret } from "./k8s/upstream";
+import { MutateResponse, AdmissionRequest } from "./k8s";
 import Log from "./logger";
+import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
-import { ModuleConfig } from "./types";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
-  req: Request,
+  req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
   const wrapped = new PeprMutateRequest(req);
@@ -35,7 +35,7 @@ export async function mutateProcessor(
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
   if (isSecret) {
-    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as Secret);
+    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
   Log.info(reqMetadata, `Processing request`);
@@ -124,7 +124,7 @@ export async function mutateProcessor(
 
   // Post-process the Secret requests to convert it back to the original format
   if (isSecret) {
-    convertToBase64Map(transformed as unknown as Secret, skipDecode);
+    convertToBase64Map(transformed as unknown as kind.Secret, skipDecode);
   }
 
   // Compare the original request to the modified request to get the patches

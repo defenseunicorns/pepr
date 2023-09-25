@@ -2,14 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Operation } from "fast-json-patch";
+import { K8s } from "kubernetes-fluent-client";
 import { startsWith } from "ramda";
 
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
-import { Kube } from "../k8s/fluent/kube";
 import Log from "../logger";
+import { ModuleConfig } from "../module";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
-import { ModuleConfig } from "../types";
 
 const namespace = "pepr-system";
 const debounceBackoff = 5000;
@@ -41,7 +41,7 @@ export class PeprControllerStore {
     // Add a jitter to the Store creation to avoid collisions
     setTimeout(
       () =>
-        Kube(PeprStore)
+        K8s(PeprStore)
           .InNamespace(namespace)
           .Get(this.#name)
           // If the get succeeds, setup the watch
@@ -53,7 +53,7 @@ export class PeprControllerStore {
   }
 
   #setupWatch = () => {
-    void Kube(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
+    void K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
   };
 
   #receive = (store: PeprStore) => {
@@ -145,7 +145,7 @@ export class PeprControllerStore {
 
       try {
         // Send the patch to the cluster
-        await Kube(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
@@ -177,7 +177,7 @@ export class PeprControllerStore {
     Log.debug(e);
 
     try {
-      await Kube(PeprStore).Apply({
+      await K8s(PeprStore).Apply({
         metadata: {
           name: this.#name,
           namespace,

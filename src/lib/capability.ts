@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
+import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
 
-import { isBuildMode, isDevMode, isWatchMode, modelToGroupVersionKind } from "./k8s/index";
-import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
+import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import {
   Binding,
@@ -14,12 +15,10 @@ import {
   CapabilityCfg,
   CapabilityExport,
   Event,
-  GenericClass,
   MutateAction,
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
-  WatchAction,
   WhenSelector,
 } from "./types";
 

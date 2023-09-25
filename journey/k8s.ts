@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Kube, given } from "../src/lib";
+import { K8s, kind } from "kubernetes-fluent-client";
+
 import { PeprStore } from "../src/lib/k8s";
 
 export function delay2Secs() {
@@ -10,14 +11,14 @@ export function delay2Secs() {
 
 export async function deleteConfigMap(namespace: string, name: string) {
   try {
-    await Kube(given.ConfigMap).InNamespace(namespace).Delete(name);
+    await K8s(kind.ConfigMap).InNamespace(namespace).Delete(name);
   } catch (error) {
     // Do nothing
   }
 }
 
 export async function waitForDeploymentReady(namespace: string, name: string) {
-  const deployment = await Kube(given.Deployment).InNamespace(namespace).Get(name);
+  const deployment = await K8s(kind.Deployment).InNamespace(namespace).Get(name);
   const replicas = deployment.spec?.replicas || 1;
   const readyReplicas = deployment.status?.readyReplicas || 0;
 
@@ -29,7 +30,7 @@ export async function waitForDeploymentReady(namespace: string, name: string) {
 
 export async function waitForPeprStoreKey(name: string, matchKey: string) {
   try {
-    const store = await Kube(PeprStore).InNamespace("pepr-system").Get(name);
+    const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);
     if (store.data[matchKey]) {
       return store.data[matchKey];
     }
@@ -43,7 +44,7 @@ export async function waitForPeprStoreKey(name: string, matchKey: string) {
 
 export async function waitForNamespace(namespace: string) {
   try {
-    return await Kube(given.Namespace).Get(namespace);
+    return await K8s(kind.Namespace).Get(namespace);
   } catch (error) {
     await delay2Secs();
     return waitForNamespace(namespace);
@@ -52,7 +53,7 @@ export async function waitForNamespace(namespace: string) {
 
 export async function waitForConfigMap(namespace: string, name: string) {
   try {
-    return await Kube(given.ConfigMap).InNamespace(namespace).Get(name);
+    return await K8s(kind.ConfigMap).InNamespace(namespace).Get(name);
   } catch (error) {
     await delay2Secs();
     return waitForConfigMap(namespace, name);
@@ -61,7 +62,7 @@ export async function waitForConfigMap(namespace: string, name: string) {
 
 export async function waitForSecret(namespace: string, name: string) {
   try {
-    return await Kube(given.Secret).InNamespace(namespace).Get(name);
+    return await K8s(kind.Secret).InNamespace(namespace).Get(name);
   } catch (error) {
     await delay2Secs();
     return waitForSecret(namespace, name);

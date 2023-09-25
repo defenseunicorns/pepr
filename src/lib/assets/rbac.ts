@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { ClusterRole, ClusterRoleBinding, Role, RoleBinding, ServiceAccount } from "../k8s/upstream";
+import { kind } from "kubernetes-fluent-client";
 
 /**
  * Grants the controller access to cluster resources beyond the mutating webhook.
@@ -9,7 +9,7 @@ import { ClusterRole, ClusterRoleBinding, Role, RoleBinding, ServiceAccount } fr
  * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns
  */
-export function clusterRole(name: string): ClusterRole {
+export function clusterRole(name: string): kind.ClusterRole {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
@@ -25,7 +25,7 @@ export function clusterRole(name: string): ClusterRole {
   };
 }
 
-export function clusterRoleBinding(name: string): ClusterRoleBinding {
+export function clusterRoleBinding(name: string): kind.ClusterRoleBinding {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRoleBinding",
@@ -45,7 +45,7 @@ export function clusterRoleBinding(name: string): ClusterRoleBinding {
   };
 }
 
-export function serviceAccount(name: string): ServiceAccount {
+export function serviceAccount(name: string): kind.ServiceAccount {
   return {
     apiVersion: "v1",
     kind: "ServiceAccount",
@@ -56,7 +56,7 @@ export function serviceAccount(name: string): ServiceAccount {
   };
 }
 
-export function storeRole(name: string): Role {
+export function storeRole(name: string): kind.Role {
   name = `${name}-store`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
@@ -73,7 +73,7 @@ export function storeRole(name: string): Role {
   };
 }
 
-export function storeRoleBinding(name: string): RoleBinding {
+export function storeRoleBinding(name: string): kind.RoleBinding {
   name = `${name}-store`;
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",

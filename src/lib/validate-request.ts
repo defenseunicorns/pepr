@@ -3,9 +3,11 @@
 
 /* eslint-disable class-methods-use-this */
 
+import { KubernetesObject } from "kubernetes-fluent-client";
+
 import { clone } from "ramda";
-import { KubernetesObject, Operation, Request } from "./k8s/types";
-import { ValidateResponse } from "./types";
+import { Operation, AdmissionRequest } from "./k8s";
+import { ValidateActionResponse } from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -14,7 +16,7 @@ import { ValidateResponse } from "./types";
 export class PeprValidateRequest<T extends KubernetesObject> {
   Raw: T;
 
-  #input: Request<T>;
+  #input: AdmissionRequest<T>;
 
   /**
    * Provides access to the old resource in the request if available.
@@ -36,7 +38,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Creates a new instance of the Action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(input: Request<T>) {
+  constructor(input: AdmissionRequest<T>) {
     this.#input = input;
 
     // If this is a DELETE operation, use the oldObject instead
@@ -77,7 +79,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    *
    * @returns The validation response.
    */
-  Approve = (): ValidateResponse => {
+  Approve = (): ValidateActionResponse => {
     return {
       allowed: true,
     };
@@ -90,7 +92,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny = (statusMessage?: string, statusCode?: number): ValidateResponse => {
+  Deny = (statusMessage?: string, statusCode?: number): ValidateActionResponse => {
     return {
       allowed: false,
       statusCode,

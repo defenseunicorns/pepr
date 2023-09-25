@@ -63,6 +63,9 @@ const externalLibs = Object.keys(dependencies);
 // Add the pepr library to the list of external libraries
 externalLibs.push("pepr");
 
+// Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
+externalLibs.push("@kubernetes/client-node");
+
 export async function loadModule(entryPoint = peprTS) {
   // Resolve the path to the module's package.json file
   const cfgPath = resolve(".", "package.json");

@@ -1,28 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesListObject, KubernetesObject, V1ObjectMeta } from "@kubernetes/client-node";
-
-export { KubernetesListObject, KubernetesObject };
+import { GenericKind, GroupVersionKind, KubernetesObject, RegisterKind } from "kubernetes-fluent-client";
 
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
   DELETE = "DELETE",
   CONNECT = "CONNECT",
-}
-
-/**
- * GenericKind is a generic Kubernetes object that can be used to represent any Kubernetes object
- * that is not explicitly supported by Pepr. This can be used on its own or as a base class for
- * other types. See the examples in `HelloPepr.ts` for more information.
- */
-export class GenericKind implements KubernetesObject {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: V1ObjectMeta;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
 }
 
 /**
@@ -33,18 +18,14 @@ export class PeprStore extends GenericKind {
     [key: string]: string;
   };
 }
-/**
- * GroupVersionKind unambiguously identifies a kind. It doesn't anonymously include GroupVersion
- * to avoid automatic coercion. It doesn't use a GroupVersion to avoid custom marshalling
- **/
-export interface GroupVersionKind {
-  /** The K8s resource kind, e..g "Pod". */
-  readonly kind: string;
-  readonly group: string;
-  readonly version?: string;
-  /** Optional, override the plural name for use in Webhook rules generation */
-  readonly plural?: string;
-}
+
+export const peprStoreGVK = {
+  kind: "PeprStore",
+  version: "v1",
+  group: "pepr.dev",
+};
+
+RegisterKind(PeprStore, peprStoreGVK);
 
 /**
  * GroupVersionResource unambiguously identifies a resource. It doesn't anonymously include GroupVersion
@@ -59,7 +40,7 @@ export interface GroupVersionResource {
 /**
  * A Kubernetes admission request to be processed by a capability.
  */
-export interface Request<T = KubernetesObject> {
+export interface AdmissionRequest<T = KubernetesObject> {
   /** UID is an identifier for the individual request/response. */
   readonly uid: string;
 
@@ -169,7 +150,7 @@ export interface ValidateResponse extends MutateResponse {
   /** Status contains extra details into why an admission request was denied. This field IS NOT consulted in any way if "Allowed" is "true". */
   status?: {
     /** A machine-readable description of why this operation is in the
-       "Failure" status. If this value is empty there is no information available. */
+         "Failure" status. If this value is empty there is no information available. */
     code: number;
 
     /** A human-readable description of the status of this operation. */
@@ -197,16 +178,3 @@ export type WebhookIgnore = {
    */
   labels?: Record<string, string>[];
 };
-
-// Special types to handle the recursive keyof typescript lookup
-type Join<K, P> = K extends string | number
-  ? P extends string | number
-    ? `${K}${"" extends P ? "" : "."}${P}`
-    : never
-  : never;
-
-export type Paths<T, D extends number = 10> = [D] extends [never]
-  ? never
-  : T extends object
-  ? { [K in keyof T]-?: K extends string | number ? `${K}` | Join<K, Paths<T[K]>> : never }[keyof T]
-  : "";

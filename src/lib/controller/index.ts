@@ -6,11 +6,11 @@ import fs from "fs";
 import https from "https";
 
 import { Capability } from "../capability";
-import { MutateResponse, Request, ValidateResponse, isWatchMode } from "../k8s";
+import { MutateResponse, AdmissionRequest, ValidateResponse } from "../k8s";
 import Log from "../logger";
 import { MetricsCollector } from "../metrics";
+import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
-import { ModuleConfig } from "../types";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 
@@ -30,13 +30,13 @@ export class Controller {
   // Initialized with the constructor
   readonly #config: ModuleConfig;
   readonly #capabilities: Capability[];
-  readonly #beforeHook?: (req: Request) => void;
+  readonly #beforeHook?: (req: AdmissionRequest) => void;
   readonly #afterHook?: (res: MutateResponse) => void;
 
   constructor(
     config: ModuleConfig,
     capabilities: Capability[],
-    beforeHook?: (req: Request) => void,
+    beforeHook?: (req: AdmissionRequest) => void,
     afterHook?: (res: MutateResponse) => void,
   ) {
     this.#config = config;
@@ -194,7 +194,7 @@ export class Controller {
 
       try {
         // Get the request from the body or create an empty request
-        const request: Request = req.body?.request || ({} as Request);
+        const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
 
         // Run the before hook if it exists
         this.#beforeHook && this.#beforeHook(request || {});

@@ -4,9 +4,9 @@
 import { afterAll, expect, it } from "@jest/globals";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Agent } from "https";
+import { fetch } from "kubernetes-fluent-client";
 import { RequestInit } from "node-fetch";
 
-import { fetch } from "../src/lib/fetch";
 import { cwd } from "./entrypoint.test";
 import { delay2Secs } from "./k8s";
 

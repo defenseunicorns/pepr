@@ -2,13 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
+import { KubernetesObject } from "kubernetes-fluent-client";
 
-import { KubernetesObject, Operation, Request } from "./k8s/types";
-import { ValidateResponse } from "./types";
+import { Operation, AdmissionRequest } from "./k8s";
+import { ValidateActionResponse } from "./types";
 import { PeprValidateRequest } from "./validate-request";
 
 describe("PeprValidateRequest", () => {
-  let mockRequest: Request<KubernetesObject>;
+  let mockRequest: AdmissionRequest<KubernetesObject>;
 
   beforeEach(() => {
     mockRequest = {
@@ -101,13 +102,13 @@ describe("PeprValidateRequest", () => {
 
   it("should create an approval response", () => {
     const wrapper = new PeprValidateRequest(mockRequest);
-    const response: ValidateResponse = wrapper.Approve();
+    const response: ValidateActionResponse = wrapper.Approve();
     expect(response).toEqual({ allowed: true });
   });
 
   it("should create a denial response", () => {
     const wrapper = new PeprValidateRequest(mockRequest);
-    const response: ValidateResponse = wrapper.Deny("Not allowed", 403);
+    const response: ValidateActionResponse = wrapper.Deny("Not allowed", 403);
     expect(response).toEqual({ allowed: false, statusMessage: "Not allowed", statusCode: 403 });
   });
 

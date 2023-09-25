@@ -2,12 +2,13 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
+import { KubernetesObject } from "kubernetes-fluent-client";
 
-import { KubernetesObject, Operation, Request } from "./k8s/types";
+import { Operation, AdmissionRequest } from "./k8s";
 import { PeprMutateRequest } from "./mutate-request";
 
 describe("PeprMutateRequest", () => {
-  let mockRequest: Request<KubernetesObject>;
+  let mockRequest: AdmissionRequest<KubernetesObject>;
 
   beforeEach(() => {
     mockRequest = {

@@ -3,9 +3,9 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync } from "child_process";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
 
-import { Kube, given } from "../src/lib";
 import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
@@ -58,7 +58,7 @@ function cleanupSamples() {
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
-    const cm = await Kube(given.ConfigMap).Apply({
+    const cm = await K8s(kind.ConfigMap).Apply({
       metadata: {
         name: "example-1",
         namespace: "default",
@@ -70,7 +70,7 @@ function testIgnore() {
   });
 
   it("should ignore resources not in the capability namespaces during validation", async () => {
-    const cm = await Kube(given.ConfigMap).Apply({
+    const cm = await K8s(kind.ConfigMap).Apply({
       metadata: {
         name: "example-evil-cm",
         namespace: "default",

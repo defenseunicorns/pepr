@@ -6,10 +6,10 @@ import {
   V1LabelSelectorRequirement,
   V1RuleWithOperations,
 } from "@kubernetes/client-node";
+import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
-import { MutatingWebhookConfiguration, ValidatingWebhookConfiguration } from "../k8s/upstream";
 import { Event } from "../types";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
@@ -70,7 +70,7 @@ export async function webhookConfig(
   assets: Assets,
   mutateOrValidate: "mutate" | "validate",
   timeoutSeconds = 10,
-): Promise<MutatingWebhookConfiguration | ValidatingWebhookConfiguration | null> {
+): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
   const ignore = [peprIgnoreLabel];
 
   const { name, tls, config, apiToken, host } = assets;

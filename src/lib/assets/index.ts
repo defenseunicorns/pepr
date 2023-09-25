@@ -3,8 +3,9 @@
 
 import crypto from "crypto";
 
+import { ModuleConfig } from "../module";
 import { TLSOut, genTLS } from "../tls";
-import { CapabilityExport, ModuleConfig } from "../types";
+import { CapabilityExport } from "../types";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml } from "./yaml";

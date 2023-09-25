@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 
 import { Assets } from ".";
-import { Deployment, Namespace, Secret } from "../k8s/upstream";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
-export const namespace: Namespace = {
+export const namespace: kind.Namespace = {
   apiVersion: "v1",
   kind: "Namespace",
   metadata: { name: "pepr-system" },
@@ -134,7 +134,7 @@ export function watcher(assets: Assets, hash: string) {
   };
 }
 
-export function deployment(assets: Assets, hash: string): Deployment {
+export function deployment(assets: Assets, hash: string): kind.Deployment {
   const { name, image, config } = assets;
   const app = name;
 
@@ -248,7 +248,7 @@ export function deployment(assets: Assets, hash: string): Deployment {
   };
 }
 
-export function moduleSecret(name: string, data: Buffer, hash: string): Secret {
+export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {
   // Compress the data
   const compressed = gzipSync(data);
   const path = `module-${hash}.js.gz`;

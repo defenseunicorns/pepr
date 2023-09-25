@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { PeprStore, modelToGroupVersionKind } from "../k8s";
-import { CustomResourceDefinition } from "../k8s/upstream";
+import { kind as k } from "kubernetes-fluent-client";
 
-export const { group, version, kind } = modelToGroupVersionKind(PeprStore.name);
+import { peprStoreGVK } from "../k8s";
+
+export const { group, version, kind } = peprStoreGVK;
 export const singular = kind.toLocaleLowerCase();
 export const plural = `${singular}s`;
 export const name = `${plural}.${group}`;
 
-export const peprStoreCRD: CustomResourceDefinition = {
+export const peprStoreCRD: k.CustomResourceDefinition = {
   apiVersion: "apiextensions.k8s.io/v1",
   kind: "CustomResourceDefinition",
   metadata: {
