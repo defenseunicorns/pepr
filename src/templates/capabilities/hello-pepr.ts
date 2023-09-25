@@ -1,11 +1,13 @@
 import {
   Capability,
+  K8s,
   Log,
   PeprMutateRequest,
   RegisterKind,
   a,
   fetch,
   fetchStatus,
+  kind,
 } from "pepr";
 
 /**
@@ -34,6 +36,33 @@ const { When, Store } = HelloPepr;
 When(a.Namespace)
   .IsCreated()
   .Mutate(ns => ns.RemoveLabel("remove-me"));
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   Watch Action with K8s SSA (Namespace)                           *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This action watches for the `pepr-demo-2` namespace to be created, then creates a ConfigMap with
+ * the name `pepr-ssa-demo` and adds the namespace UID to the ConfigMap data. Because Pepr uses
+ * server-side apply for this operation, the ConfigMap will be created or updated if it already exists.
+ */
+When(a.Namespace)
+  .IsCreated()
+  .WithName("pepr-demo-2")
+  .Watch(async ns => {
+    Log.info("Namespace pepr-demo-2 was created.");
+
+    // Apply the ConfigMap using K8s server-side apply
+    await K8s(kind.ConfigMap).Apply({
+      metadata: {
+        name: "pepr-ssa-demo",
+        namespace: "pepr-demo-2",
+      },
+      data: {
+        "ns-uid": ns.metadata.uid,
+      },
+    });
+  });
 
 /**
  * ---------------------------------------------------------------------------------------------------

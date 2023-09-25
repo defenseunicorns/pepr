@@ -20,6 +20,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Automatic leader-elected K8s resource watching
 - Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](./docs/store.md)
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
+- A fluent API for creating/modifying/watching and server-side applying K8s resources via [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client)
 - Generate new K8s resources based off of cluster resource changes
 - Perform other exec/API calls based off of cluster resources changes or any other arbitrary schedule
 - Out of the box airgap support with [Zarf](https://zarf.dev)
@@ -62,6 +63,8 @@ When(a.ConfigMap)
   // Watch behaves like controller-runtime's Manager.Watch()
   .Watch((cm, phase) => {
     Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
+
+    K8s(kind.)
   });
 ```
 
