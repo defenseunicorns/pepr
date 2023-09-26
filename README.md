@@ -32,7 +32,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. Finally, it logs a message to the Pepr controller logs. For more see [actions](./docs/actions.md).
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller logs and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/actions.md) section.
 
 ```ts
 When(a.ConfigMap)
@@ -61,10 +61,19 @@ When(a.ConfigMap)
     return request.Deny("ConfigMap must have a unicorn label");
   })
   // Watch behaves like controller-runtime's Manager.Watch()
-  .Watch((cm, phase) => {
-    Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
+  .Watch(async (cm, phase) => {
+    Log.info(cm, `ConfigMap was ${phase}.`);
 
-    K8s(kind.)
+    // Apply the ConfigMap using K8s server-side apply
+    await K8s(kind.ConfigMap).Apply({
+      metadata: {
+        name: "pepr-ssa-demo",
+        namespace: "pepr-demo-2",
+      },
+      data: {
+        "ns-uid": ns.metadata.uid,
+      },
+    });
   });
 ```
 
