@@ -127,6 +127,9 @@ export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**
    * Create a new MUTATE action with the specified callback function and previously specified
    * filters.
+   * 
+   * @since 0.13.0
+   * 
    * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
   Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
@@ -136,6 +139,10 @@ export type ValidateActionChain<T extends GenericClass> = {
   /**
    * Establish a watcher for the specified resource. The callback function will be executed after the admission controller has
    * processed the resource and the request has been persisted to the cluster.
+   * 
+   * **Beta Function**: This method is still in early testing and edge cases may still exist.
+   *
+   * @since 0.14.0
    *
    * @param action
    * @returns
@@ -147,6 +154,8 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
   /**
    * Create a new VALIDATE action with the specified callback function and previously specified
    * filters. Return the `request.Approve()` or `Request.Deny()` methods to approve or deny the request:
+   *
+   * @since 0.13.0
    *
    * @example
    * ```ts

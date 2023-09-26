@@ -4,11 +4,13 @@
 import { K8s } from "kubernetes-fluent-client";
 import { clone } from "ramda";
 
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
-import { MutateResponse, AdmissionRequest, ValidateResponse, WebhookIgnore } from "./k8s";
-import { CapabilityExport } from "./types";
+import { AdmissionRequest, MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
+import Log from "./logger";
+import { CapabilityExport, Event } from "./types";
 
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
@@ -126,7 +128,31 @@ export class PeprModule {
       .flatMap(c => c.bindings)
       .filter(binding => binding.isWatch)
       .forEach(binding => {
-        void K8s(binding.model, binding.filters).Watch(binding.watchCallback!);
+        // Map the event to the watch phase
+        const eventToPhaseMap = {
+          [Event.Create]: [WatchPhase.Added],
+          [Event.Update]: [WatchPhase.Modified],
+          [Event.CreateOrUpdate]: [WatchPhase.Added, WatchPhase.Modified],
+          [Event.Delete]: [WatchPhase.Deleted],
+          [Event.Any]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
+        };
+
+        // Get the phases to match, default to any
+        const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
+
+        // Watch the resource
+        void K8s(binding.model, binding.filters).Watch((obj, type) => {
+          // If the type matches the phase, call the watch callback
+          if (phaseMatch.includes(type)) {
+            try {
+              // This may be a promise, but we don't need to wait for it
+              void binding.watchCallback?.(obj, type);
+            } catch (e) {
+              // Errors in the watch callback should not crash the controller
+              Log.error(e, "Error executing watch callback");
+            }
+          }
+        });
       });
   }
 }
