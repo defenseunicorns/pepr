@@ -42,7 +42,9 @@ When(a.ConfigMap)
   // Create a Mutate Action for the ConfigMap
   .Mutate(request => {
     // Add a label and annotation to the ConfigMap
-    request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
+    request
+      .SetLabel("pepr", "was-here")
+      .SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Add some data to the ConfigMap
     request.Raw.data["doug-says"] = "Pepr is awesome!";
@@ -71,7 +73,7 @@ When(a.ConfigMap)
         namespace: "pepr-demo-2",
       },
       data: {
-        "ns-uid": ns.metadata.uid,
+        uid: cm.metadata.uid,
       },
     });
   });
