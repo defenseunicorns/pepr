@@ -4,7 +4,7 @@ An action is a discrete set of behaviors defined in a single function that acts 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-Actions are either `Mutate()` or `Validate()` actions. Mutate actions are used to modify Kubernetes resources, while Validate actions are used to validate Kubernetes resources.
+Actions are `Mutate()`, `Validate()`, or `Watch()` actions. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch actions run in a separate controller that watches for changes to resources, including existing resources.
 
 Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`pepr init`](./cli.md#pepr-init):
 
@@ -49,6 +49,18 @@ When(a.ConfigMap)
 
     // Otherwise, reject the request with a message and optional code.
     return request.Deny("ConfigMap must have data");
+  });
+```
+
+---
+
+In this example, a Watch action the name and phase of any ConfigMap.
+
+```ts
+When(a.ConfigMap)
+  // Watch() is where we define the actual behavior of this action.
+  .Watch((cm, phase) => {
+    Log.info(cm, `ConfigMap ${cm.metadata.name} was ${phase}`);
   });
 ```
 

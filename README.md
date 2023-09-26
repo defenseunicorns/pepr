@@ -115,7 +115,7 @@ Action is a discrete set of behaviors defined in a single function that acts on 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources.
+There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There is also a `Watch()` Action that can be used to watch for changes to Kubernetes resources that already exist.
 
 See [actions](./docs/actions.md) for more details.
 
