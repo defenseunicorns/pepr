@@ -4,7 +4,7 @@ The nature of admission controllers and general watch operations (the `Mutate`, 
 
 The Pepr Store solves this by exposing a simple API compatible with the standard [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage) for use within capabilities that abstracts away the complexity of managing the data in K8s. Additionally, as Pepr runs multiple replicas of the admission controller and a single watch controller, the Pepr Store provides a unique way to share data between these different instances automatically.
 
-Each Pepr Capability has a `Store` instance that can be used to get, set and delete data as well as subsribe to any changes to the Store. Behind the scenes, all capability stores instances in a single Pepr Module are stored within a single CRD in the cluster. This CRD is automatically created when the Pepr Module is deployed. Care is taken to make the read and write operations as efficient as possible by using K8s watches, batch processing and patch operations for writes.
+Each Pepr Capability has a `Store` instance that can be used to get, set and delete data as well as subscribe to any changes to the Store. Behind the scenes, all capability store instances in a single Pepr Module are stored within a single CRD in the cluster. This CRD is automatically created when the Pepr Module is deployed. Care is taken to make the read and write operations as efficient as possible by using K8s watches, batch processing and patch operations for writes.
 
 ## Key Features
 
