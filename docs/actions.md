@@ -54,7 +54,7 @@ When(a.ConfigMap)
 
 ---
 
-In this example, a Watch action the name and phase of any ConfigMap.
+In this example, a Watch action on the name and phase of any ConfigMap.
 
 ```ts
 When(a.ConfigMap)

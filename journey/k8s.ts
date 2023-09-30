@@ -5,8 +5,8 @@ import { K8s, kind } from "kubernetes-fluent-client";
 
 import { PeprStore } from "../src/lib/k8s";
 
-export function delay2Secs() {
-  return new Promise(resolve => setTimeout(resolve, 2000));
+export function sleep(seconds: number) {
+  return new Promise(resolve => setTimeout(resolve, seconds*1000));
 }
 
 export async function deleteConfigMap(namespace: string, name: string) {
