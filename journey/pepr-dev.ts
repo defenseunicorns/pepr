@@ -8,7 +8,7 @@ import { fetch } from "kubernetes-fluent-client";
 import { RequestInit } from "node-fetch";
 
 import { cwd } from "./entrypoint.test";
-import { delay2Secs } from "./k8s";
+import { sleep } from "./k8s";
 
 const fetchBaseUrl = "https://localhost:3000";
 const fetchOpts: RequestInit = {
@@ -124,7 +124,7 @@ export function peprDev() {
 async function waitForServer() {
   const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
   if (!resp.ok) {
-    await delay2Secs();
+    await sleep(2);
     return waitForServer();
   }
 }
