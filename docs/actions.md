@@ -54,7 +54,7 @@ When(a.ConfigMap)
 
 ---
 
-In this example, a Watch action on the name and phase of any ConfigMap.
+In this example, a Watch action on the name and phase of any ConfigMap.Watch actions run in a separate controller that tracks changes to resources, including existing resources so that you can react to changes in real-time. It is important to note that Watch actions are not run during the admission controller lifecycle, so they cannot be used to modify or validate resources. They also may run multiple times for the same resource, so it is important to make sure that your Watch actions are idempotent. In a future release, Pepr will provide a better way to control when a Watch action is run to avoid this issue.
 
 ```ts
 When(a.ConfigMap)

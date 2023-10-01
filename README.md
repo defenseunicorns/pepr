@@ -42,9 +42,7 @@ When(a.ConfigMap)
   // Create a Mutate Action for the ConfigMap
   .Mutate(request => {
     // Add a label and annotation to the ConfigMap
-    request
-      .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too");
+    request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Add some data to the ConfigMap
     request.Raw.data["doug-says"] = "Pepr is awesome!";
@@ -66,7 +64,7 @@ When(a.ConfigMap)
   .Watch(async (cm, phase) => {
     Log.info(cm, `ConfigMap was ${phase}.`);
 
-    // Apply the ConfigMap using K8s server-side apply
+    // Apply a ConfigMap using K8s server-side apply (will create or update)
     await K8s(kind.ConfigMap).Apply({
       metadata: {
         name: "pepr-ssa-demo",
