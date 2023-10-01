@@ -96,12 +96,12 @@ export class PeprModule {
       return;
     }
 
-    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook);
-
-    // Setup watch mode if enabled
-    if (isWatchMode() || isDevMode()) {
-      setupWatch(capabilities);
-    }
+    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
+      // Wait for the controller to be ready before setting up watches
+      if (isWatchMode() || isDevMode()) {
+        setupWatch(capabilities);
+      }
+    });
 
     // Stop processing if deferStart is set to true
     if (opts.deferStart) {

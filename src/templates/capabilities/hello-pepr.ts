@@ -52,6 +52,9 @@ When(a.Namespace)
   .Watch(async ns => {
     Log.info("Namespace pepr-demo-2 was created.");
 
+    // You can share data between actions using the Store, including between different types of actions
+    Store.setItem("watch-data", "This data was stored by a Watch Action.");
+
     // Apply the ConfigMap using K8s server-side apply
     await K8s(kind.ConfigMap).Apply({
       metadata: {

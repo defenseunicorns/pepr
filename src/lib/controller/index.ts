@@ -38,6 +38,7 @@ export class Controller {
     capabilities: Capability[],
     beforeHook?: (req: AdmissionRequest) => void,
     afterHook?: (res: MutateResponse) => void,
+    onReady?: () => void,
   ) {
     this.#config = config;
     this.#capabilities = capabilities;
@@ -45,6 +46,7 @@ export class Controller {
     // Initialize the Pepr store for each capability
     new PeprControllerStore(config, capabilities, () => {
       this.#bindEndpoints();
+      onReady && onReady();
       Log.info("✅ Controller startup complete");
     });
 
