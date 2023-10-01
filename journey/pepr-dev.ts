@@ -25,7 +25,7 @@ let expectedLines = [
   "Validate Action configured for CREATE",
   "Server listening on port 3000",
   "Controller startup complete",
-  `"hello-pepr-example-1-data": "{\"key\":\"ex-1-val\"}"`,
+  `"hello-pepr-example-1-data": "{\\"key\\":\\"ex-1-val\\"}"`,
   `"hello-pepr-watch-data": "This data was stored by a Watch Action."`,
 ];
 
@@ -73,6 +73,9 @@ export function peprDev() {
         // Check if the expected line is found in the output, ignoring whitespace
         return !strData.replace(/\s+/g, " ").includes(expectedLine);
       });
+
+      console.info(`Expected lines remaining: ${expectedLines.length}`);
+      console.debug(`Remaining expected lines: ${expectedLines}`);
 
       // If all expected lines are found, resolve the promise
       if (expectedLines.length < 1) {
