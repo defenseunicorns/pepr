@@ -25,6 +25,8 @@ let expectedLines = [
   "Validate Action configured for CREATE",
   "Server listening on port 3000",
   "Controller startup complete",
+  `"hello-pepr-example-1-data": "{\"key\":\"ex-1-val\"}"`,
+  `"hello-pepr-watch-data": "This data was stored by a Watch Action."`,
 ];
 
 export function peprDev() {

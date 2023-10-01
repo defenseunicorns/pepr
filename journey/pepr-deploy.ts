@@ -192,4 +192,9 @@ function testStore() {
     const key2 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1-data");
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
   });
+
+  it("should write the correct data to the PeprStore from a Watch Action", async () => {
+    const key = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-watch-data");
+    expect(key).toBe("This data was stored by a Watch Action.");
+  });
 }
