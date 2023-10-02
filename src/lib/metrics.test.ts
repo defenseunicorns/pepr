@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
-
 import { performance } from "perf_hooks";
+
 import { MetricsCollector } from "./metrics";
 
 test("constructor initializes counters correctly", () => {
@@ -31,10 +31,8 @@ test("alert method increments alerts counter", async () => {
 });
 
 test("observeStart returns current timestamp", () => {
-  const collector = new MetricsCollector("testPrefix");
-
   const timeBefore = performance.now();
-  const startTime = collector.observeStart();
+  const startTime = MetricsCollector.observeStart();
   const timeAfter = performance.now();
 
   expect(timeBefore <= startTime).toBe(true);
@@ -44,7 +42,7 @@ test("observeStart returns current timestamp", () => {
 test("observeEnd updates summary", async () => {
   const collector = new MetricsCollector("testPrefix");
 
-  const startTime = collector.observeStart();
+  const startTime = MetricsCollector.observeStart();
   await new Promise(resolve => setTimeout(resolve, 100)); // Delay to simulate operation
   collector.observeEnd(startTime);
 
@@ -73,7 +71,7 @@ test("coverage tests, with duplicate counters, default prefix (pepr) and still w
   collector.addSummary("testSummary", "testHelp");
   // second one should log, but still work fine TODO: validate log
   collector.addSummary("testSummary", "testHelp");
-  const startTime = collector.observeStart();
+  const startTime = MetricsCollector.observeStart();
 
   await new Promise(resolve => setTimeout(resolve, 100)); // Delay to simulate operation
   collector.observeEnd(startTime, "testSummary");

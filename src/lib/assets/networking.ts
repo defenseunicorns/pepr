@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { TLSOut } from "../k8s/tls";
-import { Secret, Service } from "../k8s/upstream";
+import { kind } from "kubernetes-fluent-client";
 
-export function apiTokenSecret(name: string, apiToken: string): Secret {
+import { TLSOut } from "../tls";
+
+export function apiTokenSecret(name: string, apiToken: string): kind.Secret {
   return {
     apiVersion: "v1",
     kind: "Secret",
@@ -19,7 +20,7 @@ export function apiTokenSecret(name: string, apiToken: string): Secret {
   };
 }
 
-export function tlsSecret(name: string, tls: TLSOut): Secret {
+export function tlsSecret(name: string, tls: TLSOut): kind.Secret {
   return {
     apiVersion: "v1",
     kind: "Secret",
@@ -35,7 +36,7 @@ export function tlsSecret(name: string, tls: TLSOut): Secret {
   };
 }
 
-export function service(name: string): Service {
+export function service(name: string): kind.Service {
   return {
     apiVersion: "v1",
     kind: "Service",
@@ -46,6 +47,28 @@ export function service(name: string): Service {
     spec: {
       selector: {
         app: name,
+      },
+      ports: [
+        {
+          port: 443,
+          targetPort: 3000,
+        },
+      ],
+    },
+  };
+}
+
+export function watcherService(name: string): kind.Service {
+  return {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name: `${name}-watcher`,
+      namespace: "pepr-system",
+    },
+    spec: {
+      selector: {
+        app: `${name}-watcher`,
       },
       ports: [
         {

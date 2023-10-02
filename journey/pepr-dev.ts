@@ -2,16 +2,21 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { afterAll, expect, it } from "@jest/globals";
-import { KubeConfig } from "@kubernetes/client-node";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Agent } from "https";
+import { fetch } from "kubernetes-fluent-client";
 import { RequestInit } from "node-fetch";
 
-import { fetch } from "../src/lib/fetch";
 import { cwd } from "./entrypoint.test";
+import { sleep } from "./k8s";
 
-const kc = new KubeConfig();
-kc.loadFromDefault();
+const fetchBaseUrl = "https://localhost:3000";
+const fetchOpts: RequestInit = {
+  agent: new Agent({
+    // Avoid tls issues for self-signed certs
+    rejectUnauthorized: false,
+  }),
+};
 
 let expectedLines = [
   "Establishing connection to Kubernetes",
@@ -19,6 +24,9 @@ let expectedLines = [
   "Mutate Action configured for CREATE",
   "Validate Action configured for CREATE",
   "Server listening on port 3000",
+  "Controller startup complete",
+  `"hello-pepr-example-1-data": "{\\"key\\":\\"ex-1-val\\"}"`,
+  `"hello-pepr-watch-data": "This data was stored by a Watch Action."`,
 ];
 
 export function peprDev() {
@@ -26,7 +34,7 @@ export function peprDev() {
   let success = false;
 
   it("should start the Pepr dev server", () => {
-    cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd });
+    cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd, stdio: "pipe" });
 
     // This command should not exit on its own
     cmd.on("close", code => {
@@ -66,6 +74,9 @@ export function peprDev() {
         return !strData.replace(/\s+/g, " ").includes(expectedLine);
       });
 
+      console.info(`Expected lines remaining: ${expectedLines.length}`);
+      console.debug(`Remaining expected lines: ${expectedLines}`);
+
       // If all expected lines are found, resolve the promise
       if (expectedLines.length < 1) {
         // Abort all further processing
@@ -77,7 +88,11 @@ export function peprDev() {
     });
   });
 
-  it("should protect the controller endpoint with an API token", async () => {
+  it("should be ready to accept requests", async () => {
+    await waitForServer();
+  });
+
+  it("should protect the controller mutate & validate endpoint with an API token", async () => {
     await validateAPIKey();
   });
 
@@ -110,46 +125,36 @@ export function peprDev() {
   });
 }
 
-async function validateAPIKey() {
-  const base = "https://localhost:3000/mutate/";
-
-  const fetchOpts: RequestInit = {
-    agent: new Agent({
-      // Avoid tls issues for self-signed certs
-      rejectUnauthorized: false,
-    }),
-    method: "POST",
-  };
-
-  // Test api token validation
-  const evilToken = await fetch(`${base}evil-token`, fetchOpts);
-
-  // Test for empty api token
-  const emptyToken = await fetch(base, fetchOpts);
-
-  if (evilToken.status !== 401) {
-    throw new Error("Expected evil token to return 401");
-  }
-
-  if (emptyToken.status !== 404) {
-    throw new Error("Expected empty token to return 404");
+// Wait for the server to start and report healthy
+async function waitForServer() {
+  const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
+  if (!resp.ok) {
+    await sleep(2);
+    return waitForServer();
   }
 }
 
+async function validateAPIKey() {
+  const mutateUrl = `${fetchBaseUrl}/mutate/`;
+  const validateUrl = `${fetchBaseUrl}/validate/`;
+  const fetchPushOpts = { ...fetchOpts, method: "POST" };
+
+  // Test for empty api token
+  const emptyMutateToken = await fetch(mutateUrl, fetchPushOpts);
+  expect(emptyMutateToken.status).toBe(404);
+  const emptyValidateToken = await fetch(validateUrl, fetchPushOpts);
+  expect(emptyValidateToken.status).toBe(404);
+
+  // Test api token validation
+  const evilMutateToken = await fetch(`${mutateUrl}evil-token`, fetchPushOpts);
+  expect(evilMutateToken.status).toBe(401);
+  const evilValidateToken = await fetch(`${validateUrl}evil-token`, fetchPushOpts);
+  expect(evilValidateToken.status).toBe(401);
+}
+
 async function validateMetrics() {
-  const metricsEndpoint = "https://localhost:3000/metrics";
-
-  const fetchOpts: RequestInit = {
-    agent: new Agent({
-      // Avoid tls issues for self-signed certs
-      rejectUnauthorized: false,
-    }),
-  };
-  const metricsOk = await fetch<string>(metricsEndpoint, fetchOpts);
-
-  if (metricsOk.status !== 200) {
-    throw new Error("Expected metrics ok to return a 200");
-  }
+  const metricsOk = await fetch<string>(`${fetchBaseUrl}/metrics`, fetchOpts);
+  expect(metricsOk.ok).toBe(true);
 
   return metricsOk.data;
 }

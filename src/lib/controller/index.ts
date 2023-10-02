@@ -5,14 +5,14 @@ import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
 
-import { Capability } from "./capability";
-import { isWatchMode } from "./k8s";
-import { MutateResponse, Request, ValidateResponse } from "./k8s/types";
-import Log from "./logger";
-import { MetricsCollector } from "./metrics";
-import { mutateProcessor } from "./mutate-processor";
-import { ModuleConfig } from "./types";
-import { validateProcessor } from "./validate-processor";
+import { Capability } from "../capability";
+import { MutateResponse, AdmissionRequest, ValidateResponse } from "../k8s";
+import Log from "../logger";
+import { MetricsCollector } from "../metrics";
+import { ModuleConfig, isWatchMode } from "../module";
+import { mutateProcessor } from "../mutate-processor";
+import { validateProcessor } from "../validate-processor";
+import { PeprControllerStore } from "./store";
 
 export class Controller {
   // Track whether the server is running
@@ -30,22 +30,25 @@ export class Controller {
   // Initialized with the constructor
   readonly #config: ModuleConfig;
   readonly #capabilities: Capability[];
-  readonly #beforeHook?: (req: Request) => void;
+  readonly #beforeHook?: (req: AdmissionRequest) => void;
   readonly #afterHook?: (res: MutateResponse) => void;
 
   constructor(
     config: ModuleConfig,
     capabilities: Capability[],
-    beforeHook?: (req: Request) => void,
+    beforeHook?: (req: AdmissionRequest) => void,
     afterHook?: (res: MutateResponse) => void,
+    onReady?: () => void,
   ) {
     this.#config = config;
     this.#capabilities = capabilities;
-    this.#beforeHook = beforeHook;
-    this.#afterHook = afterHook;
 
-    // Bind public methods
-    this.startServer = this.startServer.bind(this);
+    // Initialize the Pepr store for each capability
+    new PeprControllerStore(config, capabilities, () => {
+      this.#bindEndpoints();
+      onReady && onReady();
+      Log.info("✅ Controller startup complete");
+    });
 
     // Middleware for logging requests
     this.#app.use(Controller.#logger);
@@ -55,18 +58,17 @@ export class Controller {
 
     if (beforeHook) {
       Log.info(`Using beforeHook: ${beforeHook}`);
+      this.#beforeHook = beforeHook;
     }
 
     if (afterHook) {
       Log.info(`Using afterHook: ${afterHook}`);
+      this.#afterHook = afterHook;
     }
-
-    // Bind endpoints
-    this.#bindEndpoints();
   }
 
   /** Start the webhook server */
-  startServer(port: number) {
+  startServer = (port: number) => {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
@@ -78,7 +80,7 @@ export class Controller {
     };
 
     // Get the API token if not in watch mode
-    if (!isWatchMode) {
+    if (!isWatchMode()) {
       // Get the API token from the environment variable or the mounted secret
       this.#token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
       Log.info(`Using API token: ${this.#token}`);
@@ -119,7 +121,7 @@ export class Controller {
         process.exit(0);
       });
     });
-  }
+  };
 
   #bindEndpoints = () => {
     // Health check endpoint
@@ -128,7 +130,7 @@ export class Controller {
     // Metrics endpoint
     this.#app.get("/metrics", this.#metrics);
 
-    if (isWatchMode) {
+    if (isWatchMode()) {
       return;
     }
 
@@ -190,11 +192,11 @@ export class Controller {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
       // Start the metrics timer
-      const startTime = this.#metricsCollector.observeStart();
+      const startTime = MetricsCollector.observeStart();
 
       try {
         // Get the request from the body or create an empty request
-        const request: Request = req.body?.request || ({} as Request);
+        const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
 
         // Run the before hook if it exists
         this.#beforeHook && this.#beforeHook(request || {});

@@ -3,19 +3,24 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync } from "child_process";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
 
+import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
-  createOrReplaceConfigMap,
   deleteConfigMap,
   waitForConfigMap,
   waitForDeploymentReady,
   waitForNamespace,
+  waitForPeprStoreKey,
   waitForSecret,
 } from "./k8s";
 
 export function peprDeploy() {
+  // Purge the Pepr module from the cluster before running the tests
+  destroyModule("pepr-static-test");
+
   it("should deploy the Pepr controller into the test cluster", async () => {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
@@ -30,6 +35,8 @@ export function peprDeploy() {
   it("should perform validation of resources applied to the test cluster", testValidate);
 
   describe("should perform mutation of resources applied to the test cluster", testMutate);
+
+  describe("should store data in the PeprStore", testStore);
 
   cleanupSamples();
 }
@@ -51,10 +58,11 @@ function cleanupSamples() {
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
-    const cm = await createOrReplaceConfigMap({
-      apiVersion: "v1",
-      kind: "ConfigMap",
-      metadata: { name: "example-1", namespace: "default" },
+    const cm = await K8s(kind.ConfigMap).Apply({
+      metadata: {
+        name: "example-1",
+        namespace: "default",
+      },
     });
     expect(cm.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBeUndefined();
     expect(cm.metadata?.annotations?.["pepr.dev"]).toBeUndefined();
@@ -62,9 +70,7 @@ function testIgnore() {
   });
 
   it("should ignore resources not in the capability namespaces during validation", async () => {
-    const cm = await createOrReplaceConfigMap({
-      apiVersion: "v1",
-      kind: "ConfigMap",
+    const cm = await K8s(kind.ConfigMap).Apply({
       metadata: {
         name: "example-evil-cm",
         namespace: "default",
@@ -170,5 +176,25 @@ function testMutate() {
     expect(s1.data?.["ascii-with-white-space"]).toBe(
       "VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==",
     );
+  });
+}
+
+function testStore() {
+  it("should create the PeprStore", async () => {
+    const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
+    expect(resp).toBe("k-thx-bye");
+  });
+
+  it("should write the correct data to the PeprStore", async () => {
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1");
+    expect(key1).toBe("was-here");
+
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1-data");
+    expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
+  });
+
+  it("should write the correct data to the PeprStore from a Watch Action", async () => {
+    const key = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-watch-data");
+    expect(key).toBe("This data was stored by a Watch Action.");
   });
 }

@@ -3,9 +3,11 @@
 
 /* eslint-disable class-methods-use-this */
 
+import { KubernetesObject } from "kubernetes-fluent-client";
+
 import { clone } from "ramda";
-import { KubernetesObject, Operation, Request } from "./k8s/types";
-import { ValidateResponse } from "./types";
+import { Operation, AdmissionRequest } from "./k8s";
+import { ValidateActionResponse } from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -14,7 +16,7 @@ import { ValidateResponse } from "./types";
 export class PeprValidateRequest<T extends KubernetesObject> {
   Raw: T;
 
-  #input: Request<T>;
+  #input: AdmissionRequest<T>;
 
   /**
    * Provides access to the old resource in the request if available.
@@ -36,14 +38,8 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Creates a new instance of the Action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(input: Request<T>) {
+  constructor(input: AdmissionRequest<T>) {
     this.#input = input;
-
-    // Bind public methods to this instance
-    this.HasLabel = this.HasLabel.bind(this);
-    this.HasAnnotation = this.HasAnnotation.bind(this);
-    this.Approve = this.Approve.bind(this);
-    this.Deny = this.Deny.bind(this);
 
     // If this is a DELETE operation, use the oldObject instead
     if (input.operation.toUpperCase() === Operation.DELETE) {
@@ -54,7 +50,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
     }
 
     if (!this.Raw) {
-      throw new Error("unable to load the request object into PeprRequest.RawP");
+      throw new Error("unable to load the request object into PeprRequest.Raw");
     }
   }
 
@@ -64,9 +60,9 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the label key to check
    * @returns
    */
-  HasLabel(key: string) {
+  HasLabel = (key: string) => {
     return this.Raw.metadata?.labels?.[key] !== undefined;
-  }
+  };
 
   /**
    * Check if an annotation exists on the Kubernetes resource.
@@ -74,20 +70,20 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the annotation key to check
    * @returns
    */
-  HasAnnotation(key: string) {
+  HasAnnotation = (key: string) => {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
-  }
+  };
 
   /**
    * Create a validation response that allows the request.
    *
    * @returns The validation response.
    */
-  Approve(): ValidateResponse {
+  Approve = (): ValidateActionResponse => {
     return {
       allowed: true,
     };
-  }
+  };
 
   /**
    * Create a validation response that denies the request.
@@ -96,11 +92,11 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny(statusMessage?: string, statusCode?: number): ValidateResponse {
+  Deny = (statusMessage?: string, statusCode?: number): ValidateActionResponse => {
     return {
       allowed: false,
       statusCode,
       statusMessage,
     };
-  }
+  };
 }

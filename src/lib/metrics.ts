@@ -51,28 +51,18 @@ export class MetricsCollector {
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
   }
 
-  #getMetricName(name: string) {
-    return `${this.#prefix}_${name}`;
-  }
+  #getMetricName = (name: string) => `${this.#prefix}_${name}`;
 
-  #addMetric<T extends Counter<string> | Summary<string>>(
+  #addMetric = <T extends Counter<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
     name: string,
     help: string,
-  ) {
+  ) => {
     if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
       return;
     }
-
-    // Bind public methods
-    this.incCounter = this.incCounter.bind(this);
-    this.error = this.error.bind(this);
-    this.alert = this.alert.bind(this);
-    this.observeStart = this.observeStart.bind(this);
-    this.observeEnd = this.observeEnd.bind(this);
-    this.getMetrics = this.getMetrics.bind(this);
 
     const metric = new MetricType({
       name: this.#getMetricName(name),
@@ -81,56 +71,50 @@ export class MetricsCollector {
     });
 
     collection.set(this.#getMetricName(name), metric);
-  }
+  };
 
-  addCounter(name: string, help: string) {
+  addCounter = (name: string, help: string) => {
     this.#addMetric(this.#counters, promClient.Counter, name, help);
-  }
+  };
 
-  addSummary(name: string, help: string) {
+  addSummary = (name: string, help: string) => {
     this.#addMetric(this.#summaries, promClient.Summary, name, help);
-  }
+  };
 
-  incCounter(name: string) {
+  incCounter = (name: string) => {
     this.#counters.get(this.#getMetricName(name))?.inc();
-  }
+  };
 
   /**
    * Increments the error counter.
    */
-  error() {
-    this.incCounter(this.#metricNames.errors);
-  }
+  error = () => this.incCounter(this.#metricNames.errors);
 
   /**
    * Increments the alerts counter.
    */
-  alert() {
-    this.incCounter(this.#metricNames.alerts);
-  }
-
-  /**
-   * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
-   * @returns The timestamp.
-   */
-  observeStart() {
-    return performance.now();
-  }
+  alert = () => this.incCounter(this.#metricNames.alerts);
 
   /**
    * Observes the duration since the provided start time and updates the summary.
    * @param startTime - The start time.
    * @param name - The metrics summary to increment.
    */
-  observeEnd(startTime: number, name: string = this.#metricNames.mutate) {
+  observeEnd = (startTime: number, name: string = this.#metricNames.mutate) => {
     this.#summaries.get(this.#getMetricName(name))?.observe(performance.now() - startTime);
-  }
+  };
 
   /**
    * Fetches the current metrics from the registry.
    * @returns The metrics.
    */
-  async getMetrics() {
-    return this.#registry.metrics();
+  getMetrics = () => this.#registry.metrics();
+
+  /**
+   * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
+   * @returns The timestamp.
+   */
+  static observeStart() {
+    return performance.now();
   }
 }

@@ -11,7 +11,7 @@
   },
   "rules": {
     "class-methods-use-this": "warn",
-    "consistent-this":"warn",
+    "consistent-this": "warn",
     "no-invalid-this": "warn",
     "@typescript-eslint/no-floating-promises": ["warn"]
   },
@@ -22,7 +22,10 @@
     "node_modules",
     "dist",
     "hack",
-    "pepr-test-module"
+    "pepr-test-module",
+    "build.mjs",
+    "journey",
+    "__mocks__"
   ],
   "root": true
 }

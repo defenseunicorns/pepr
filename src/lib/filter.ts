@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Operation, Request } from "./k8s/types";
+import { AdmissionRequest, Operation } from "./k8s";
 import logger from "./logger";
 import { Binding, Event } from "./types";
 
@@ -12,7 +12,7 @@ import { Binding, Event } from "./types";
  * @param req the incoming request
  * @returns
  */
-export function shouldSkipRequest(binding: Binding, req: Request, capabilityNamespaces: string[]) {
+export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
   const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations, name } = binding.filters || {};
   const operation = req.operation.toUpperCase();

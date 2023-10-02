@@ -12,10 +12,15 @@
 
 Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops tribal knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
 
+#### _Note: Pepr is still in active development so breaking changes may occur, but will be documented in release notes._
+
 ## Features
 
-- Zero-config K8s webhook mutations and validations.
+- Zero-config K8s webhook mutations and validations
+- Automatic leader-elected K8s resource watching
+- Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](./docs/store.md)
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
+- A fluent API for creating/modifying/watching and server-side applying K8s resources via [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client)
 - Generate new K8s resources based off of cluster resource changes
 - Perform other exec/API calls based off of cluster resources changes or any other arbitrary schedule
 - Out of the box airgap support with [Zarf](https://zarf.dev)
@@ -27,7 +32,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. Finally, it logs a message to the Pepr controller logs. For more see [actions](./docs/actions.md).
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/actions.md) section.
 
 ```ts
 When(a.ConfigMap)
@@ -54,6 +59,21 @@ When(a.ConfigMap)
 
     // Reject the ConfigMap if it doesn't have the label
     return request.Deny("ConfigMap must have a unicorn label");
+  })
+  // Watch behaves like controller-runtime's Manager.Watch()
+  .Watch(async (cm, phase) => {
+    Log.info(cm, `ConfigMap was ${phase}.`);
+
+    // Apply a ConfigMap using K8s server-side apply (will create or update)
+    await K8s(kind.ConfigMap).Apply({
+      metadata: {
+        name: "pepr-ssa-demo",
+        namespace: "pepr-demo-2",
+      },
+      data: {
+        uid: cm.metadata.uid,
+      },
+    });
   });
 ```
 
@@ -104,7 +124,7 @@ Action is a discrete set of behaviors defined in a single function that acts on 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources.
+There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There is also a `Watch()` Action that can be used to watch for changes to Kubernetes resources that already exist.
 
 See [actions](./docs/actions.md) for more details.
 
@@ -116,4 +136,3 @@ See [actions](./docs/actions.md) for more details.
 ## TypeScript
 
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
-

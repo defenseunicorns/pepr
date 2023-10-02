@@ -1,11 +1,13 @@
 import {
   Capability,
+  K8s,
   Log,
   PeprMutateRequest,
   RegisterKind,
   a,
   fetch,
   fetchStatus,
+  kind,
 } from "pepr";
 
 /**
@@ -19,8 +21,8 @@ export const HelloPepr = new Capability({
   namespaces: ["pepr-demo", "pepr-demo-2"],
 });
 
-// Use the 'When' function to create a new Action
-const { When } = HelloPepr;
+// Use the 'When' function to create a new action, use 'Store' to persist data
+const { When, Store } = HelloPepr;
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -34,6 +36,36 @@ const { When } = HelloPepr;
 When(a.Namespace)
   .IsCreated()
   .Mutate(ns => ns.RemoveLabel("remove-me"));
+
+/**
+ * ---------------------------------------------------------------------------------------------------
+ *                                   Watch Action with K8s SSA (Namespace)                           *
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * This action watches for the `pepr-demo-2` namespace to be created, then creates a ConfigMap with
+ * the name `pepr-ssa-demo` and adds the namespace UID to the ConfigMap data. Because Pepr uses
+ * server-side apply for this operation, the ConfigMap will be created or updated if it already exists.
+ */
+When(a.Namespace)
+  .IsCreated()
+  .WithName("pepr-demo-2")
+  .Watch(async ns => {
+    Log.info("Namespace pepr-demo-2 was created.");
+
+    // You can share data between actions using the Store, including between different types of actions
+    Store.setItem("watch-data", "This data was stored by a Watch Action.");
+
+    // Apply the ConfigMap using K8s server-side apply
+    await K8s(kind.ConfigMap).Apply({
+      metadata: {
+        name: "pepr-ssa-demo",
+        namespace: "pepr-demo-2",
+      },
+      data: {
+        "ns-uid": ns.metadata.uid,
+      },
+    });
+  });
 
 /**
  * ---------------------------------------------------------------------------------------------------
@@ -54,6 +86,12 @@ When(a.ConfigMap)
     request
       .SetLabel("pepr", "was-here")
       .SetAnnotation("pepr.dev", "annotations-work-too");
+
+    // Use the Store to persist data between requests and Pepr controller pods
+    Store.setItem("example-1", "was-here");
+
+    // This data is written asynchronously and can be read back via `Store.getItem()` or `Store.subscribe()`
+    Store.setItem("example-1-data", JSON.stringify(request.Raw.data));
   });
 
 /**
@@ -61,10 +99,10 @@ When(a.ConfigMap)
  *                                   Mutate & Validate Actions (CM Example 2)                                *
  * ---------------------------------------------------------------------------------------------------
  *
- * This combines 2 different types of actions: 'Mutate', and 'Validate'. The order
+ * This combines 3 different types of actions: 'Mutate', 'Validate', and 'Watch'. The order
  * of the actions is required, but each action is optional. In this example, when a ConfigMap is created
- * with the name `example-2`, then add a label and annotation and finally validate that the ConfigMap has the label
- * `pepr`.
+ * with the name `example-2`, then add a label and annotation, validate that the ConfigMap has the label
+ * `pepr`, and log the request.
  */
 When(a.ConfigMap)
   .IsCreated()
@@ -94,6 +132,10 @@ When(a.ConfigMap)
 
     // Otherwise, deny the request with an error message (optional)
     return request.Deny("ConfigMap must have label 'pepr'");
+  })
+  .Watch((cm, phase) => {
+    // This Watch Action will watch the ConfigMap after it has been persisted to the cluster
+    Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
   });
 
 /**
@@ -370,3 +412,10 @@ When(UnicornKind)
       },
     });
   });
+
+/**
+ * A callback function that is called once the Pepr Store is fully loaded.
+ */
+Store.onReady(data => {
+  Log.info(data, "Pepr Store Ready");
+});

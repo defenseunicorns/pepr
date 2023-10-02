@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 
-import { KubernetesObject, Operation, Request } from "./k8s/types";
+import { AdmissionRequest, Operation } from "./k8s";
 import { DeepPartial } from "./types";
 
 /**
@@ -13,7 +14,7 @@ import { DeepPartial } from "./types";
 export class PeprMutateRequest<T extends KubernetesObject> {
   Raw: T;
 
-  #input: Request<T>;
+  #input: AdmissionRequest<T>;
 
   get PermitSideEffects() {
     return !this.#input.dryRun;
@@ -47,17 +48,8 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * Creates a new instance of the action class.
    * @param input - The request object containing the Kubernetes resource to modify.
    */
-  constructor(input: Request<T>) {
+  constructor(input: AdmissionRequest<T>) {
     this.#input = input;
-
-    // Bind public methods
-    this.Merge = this.Merge.bind(this);
-    this.SetLabel = this.SetLabel.bind(this);
-    this.SetAnnotation = this.SetAnnotation.bind(this);
-    this.RemoveLabel = this.RemoveLabel.bind(this);
-    this.RemoveAnnotation = this.RemoveAnnotation.bind(this);
-    this.HasLabel = this.HasLabel.bind(this);
-    this.HasAnnotation = this.HasAnnotation.bind(this);
 
     // If this is a DELETE operation, use the oldObject instead
     if (input.operation.toUpperCase() === Operation.DELETE) {
@@ -77,9 +69,9 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    *
    * @param obj - The object to merge with the current resource.
    */
-  Merge(obj: DeepPartial<T>) {
+  Merge = (obj: DeepPartial<T>) => {
     this.Raw = mergeDeepRight(this.Raw, obj) as unknown as T;
-  }
+  };
 
   /**
    * Updates a label on the Kubernetes resource.
@@ -87,7 +79,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param value - The value of the label.
    * @returns The current action instance for method chaining.
    */
-  SetLabel(key: string, value: string) {
+  SetLabel = (key: string, value: string) => {
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -95,7 +87,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     ref.metadata.labels[key] = value;
 
     return this;
-  }
+  };
 
   /**
    * Updates an annotation on the Kubernetes resource.
@@ -103,7 +95,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param value - The value of the annotation.
    * @returns The current action instance for method chaining.
    */
-  SetAnnotation(key: string, value: string) {
+  SetAnnotation = (key: string, value: string) => {
     const ref = this.Raw;
 
     ref.metadata = ref.metadata ?? {};
@@ -111,33 +103,33 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     ref.metadata.annotations[key] = value;
 
     return this;
-  }
+  };
 
   /**
    * Removes a label from the Kubernetes resource.
    * @param key - The key of the label to remove.
    * @returns The current Action instance for method chaining.
    */
-  RemoveLabel(key: string) {
+  RemoveLabel = (key: string) => {
     if (this.Raw.metadata?.labels?.[key]) {
       delete this.Raw.metadata.labels[key];
     }
 
     return this;
-  }
+  };
 
   /**
    * Removes an annotation from the Kubernetes resource.
    * @param key - The key of the annotation to remove.
    * @returns The current Action instance for method chaining.
    */
-  RemoveAnnotation(key: string) {
+  RemoveAnnotation = (key: string) => {
     if (this.Raw.metadata?.annotations?.[key]) {
       delete this.Raw.metadata.annotations[key];
     }
 
     return this;
-  }
+  };
 
   /**
    * Check if a label exists on the Kubernetes resource.
@@ -145,9 +137,9 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key the label key to check
    * @returns
    */
-  HasLabel(key: string) {
+  HasLabel = (key: string) => {
     return this.Raw.metadata?.labels?.[key] !== undefined;
-  }
+  };
 
   /**
    * Check if an annotation exists on the Kubernetes resource.
@@ -155,7 +147,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
    * @param key the annotation key to check
    * @returns
    */
-  HasAnnotation(key: string) {
+  HasAnnotation = (key: string) => {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
-  }
+  };
 }

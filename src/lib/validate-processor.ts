@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { kind } from "kubernetes-fluent-client";
+
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
-import { Request, ValidateResponse } from "./k8s/types";
-import { Secret } from "./k8s/upstream";
+import { AdmissionRequest, ValidateResponse } from "./k8s";
 import Log from "./logger";
 import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
 
 export async function validateProcessor(
   capabilities: Capability[],
-  req: Request,
+  req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse> {
   const wrapped = new PeprValidateRequest(req);
@@ -23,7 +24,7 @@ export async function validateProcessor(
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
   if (isSecret) {
-    convertFromBase64Map(wrapped.Raw as unknown as Secret);
+    convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
   Log.info(reqMetadata, `Processing validation request`);
