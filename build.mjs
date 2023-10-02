@@ -5,7 +5,7 @@ import { analyzeMetafile, build } from "esbuild";
 import packageJSON from "./package.json" assert { type: "json" };
 
 const { dependencies, peerDependencies } = packageJSON;
-const external = Object.keys(dependencies).concat(Object.keys(peerDependencies));
+const external = Object.keys(dependencies).concat(Object.keys(peerDependencies), "@kubernetes/client-node");
 
 const buildOpts = {
   bundle: true,

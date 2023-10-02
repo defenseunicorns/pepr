@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
+import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
 
-import { isWatchMode, modelToGroupVersionKind } from "./k8s/index";
-import { GroupVersionKind } from "./k8s/types";
 import Log from "./logger";
+import { isBuildMode, isDevMode, isWatchMode } from "./module";
+import { PeprStore, Storage } from "./storage";
 import {
   Binding,
   BindingFilter,
@@ -13,12 +15,15 @@ import {
   CapabilityCfg,
   CapabilityExport,
   Event,
-  GenericClass,
   MutateAction,
   MutateActionChain,
   ValidateAction,
+  ValidateActionChain,
   WhenSelector,
 } from "./types";
+
+const registerAdmission = isBuildMode() || !isWatchMode();
+const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -28,6 +33,24 @@ export class Capability implements CapabilityExport {
   #description: string;
   #namespaces?: string[] | undefined;
   #bindings: Binding[] = [];
+  #store = new Storage();
+  #registered = false;
+
+  /**
+   * Store is a key-value data store that can be used to persist data that should be shared
+   * between requests. Each capability has its own store, and the data is persisted in Kubernetes
+   * in the `pepr-system` namespace.
+   *
+   * Note: You should only access the store from within an action.
+   */
+  Store: PeprStore = {
+    clear: this.#store.clear,
+    getItem: this.#store.getItem,
+    removeItem: this.#store.removeItem,
+    setItem: this.#store.setItem,
+    subscribe: this.#store.subscribe,
+    onReady: this.#store.onReady,
+  };
 
   get bindings() {
     return this.#bindings;
@@ -50,15 +73,32 @@ export class Capability implements CapabilityExport {
     this.#description = cfg.description;
     this.#namespaces = cfg.namespaces;
 
-    // Bind When() to this instance
-    this.When = this.When.bind(this);
-
     Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);
   }
 
   /**
-   * The When method is used to register a capability action to be executed when a Kubernetes resource is
+   * Register the store with the capability. This is called automatically by the Pepr controller.
+   *
+   * @param store
+   */
+  registerStore = () => {
+    Log.info(`Registering store for ${this.#name}`);
+
+    if (this.#registered) {
+      throw new Error(`Store already registered for ${this.#name}`);
+    }
+
+    this.#registered = true;
+
+    // Pass back any ready callback to the controller
+    return {
+      store: this.#store,
+    };
+  };
+
+  /**
+   * The When method is used to register a action to be executed when a Kubernetes resource is
    * processed by Pepr. The action will be executed if the resource matches the specified kind and any
    * filters that are applied.
    *
@@ -66,7 +106,7 @@ export class Capability implements CapabilityExport {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When<T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> {
+  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
@@ -75,6 +115,7 @@ export class Capability implements CapabilityExport {
     }
 
     const binding: Binding = {
+      model,
       // If the kind is not specified, use the matched kind from the model
       kind: kind || matchedKind,
       event: Event.Any,
@@ -88,7 +129,7 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate };
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -98,8 +139,8 @@ export class Capability implements CapabilityExport {
       Log.debug(cbString, prefix);
     };
 
-    function Validate(validateCallback: ValidateAction<T>): void {
-      if (!isWatchMode) {
+    function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
+      if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
@@ -110,10 +151,12 @@ export class Capability implements CapabilityExport {
           validateCallback,
         });
       }
+
+      return { Watch };
     }
 
     function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
-      if (!isWatchMode) {
+      if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
@@ -126,7 +169,19 @@ export class Capability implements CapabilityExport {
       }
 
       // Now only allow adding actions to the same binding
-      return { Validate };
+      return { Watch, Validate };
+    }
+
+    function Watch(watchCallback: WatchAction<T>) {
+      if (registerWatch) {
+        log("Watch Action", watchCallback.toString());
+
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          watchCallback,
+        });
+      }
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
@@ -168,5 +223,5 @@ export class Capability implements CapabilityExport {
       IsUpdated: () => bindEvent(Event.Update),
       IsDeleted: () => bindEvent(Event.Delete),
     };
-  }
+  };
 }

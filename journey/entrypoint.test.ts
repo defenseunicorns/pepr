@@ -10,6 +10,9 @@ import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
 
+// Unmock unit test things
+jest.deepUnmock("pino");
+
 // The working directory for the tests after `npx pepr init` is run
 export const cwd = "pepr-test-module";
 

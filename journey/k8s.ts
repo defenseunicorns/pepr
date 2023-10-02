@@ -1,100 +1,70 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AppsV1Api, CoreV1Api, KubeConfig, V1ConfigMap } from "@kubernetes/client-node";
+import { K8s, kind } from "kubernetes-fluent-client";
 
-const kc = new KubeConfig();
-kc.loadFromDefault();
+import { PeprStore } from "../src/lib/k8s";
 
-const k8sApi = kc.makeApiClient(AppsV1Api);
-const k8sCoreApi = kc.makeApiClient(CoreV1Api);
-
-function delay2Secs() {
-  return new Promise(resolve => setTimeout(resolve, 2000));
-}
-
-export async function createOrReplaceConfigMap(cm: V1ConfigMap) {
-  const ns = cm.metadata?.namespace || "default";
-  try {
-    const resp = await k8sCoreApi.createNamespacedConfigMap(ns, cm);
-    return resp.body;
-  } catch (error) {
-    const resp = await k8sCoreApi.replaceNamespacedConfigMap(cm.metadata?.name || "", ns, cm);
-    return resp.body;
-  }
+export function sleep(seconds: number) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
 export async function deleteConfigMap(namespace: string, name: string) {
   try {
-    await k8sCoreApi.deleteNamespacedConfigMap(name, namespace);
+    await K8s(kind.ConfigMap).InNamespace(namespace).Delete(name);
   } catch (error) {
     // Do nothing
   }
 }
 
 export async function waitForDeploymentReady(namespace: string, name: string) {
-  const deployment = await k8sApi.readNamespacedDeployment(name, namespace);
-  const replicas = deployment.body.spec?.replicas || 1;
-  const readyReplicas = deployment.body.status?.readyReplicas || 0;
+  const deployment = await K8s(kind.Deployment).InNamespace(namespace).Get(name);
+  const replicas = deployment.spec?.replicas || 1;
+  const readyReplicas = deployment.status?.readyReplicas || 0;
 
   if (replicas !== readyReplicas) {
-    await delay2Secs();
+    await sleep(2);
     return waitForDeploymentReady(namespace, name);
+  }
+}
+
+export async function waitForPeprStoreKey(name: string, matchKey: string) {
+  try {
+    const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);
+    if (store.data[matchKey]) {
+      return store.data[matchKey];
+    }
+
+    throw new Error("Key not found");
+  } catch (error) {
+    await sleep(2);
+    return waitForPeprStoreKey(name, matchKey);
   }
 }
 
 export async function waitForNamespace(namespace: string) {
   try {
-    const resp = await k8sCoreApi.readNamespace(namespace);
-    return resp.body;
+    return await K8s(kind.Namespace).Get(namespace);
   } catch (error) {
-    await delay2Secs();
+    await sleep(2);
     return waitForNamespace(namespace);
   }
 }
 
 export async function waitForConfigMap(namespace: string, name: string) {
   try {
-    const resp = await k8sCoreApi.readNamespacedConfigMap(name, namespace);
-    return resp.body;
+    return await K8s(kind.ConfigMap).InNamespace(namespace).Get(name);
   } catch (error) {
-    await delay2Secs();
+    await sleep(2);
     return waitForConfigMap(namespace, name);
   }
 }
 
 export async function waitForSecret(namespace: string, name: string) {
   try {
-    const resp = await k8sCoreApi.readNamespacedSecret(name, namespace);
-    return resp.body;
+    return await K8s(kind.Secret).InNamespace(namespace).Get(name);
   } catch (error) {
-    await delay2Secs();
+    await sleep(2);
     return waitForSecret(namespace, name);
   }
-}
-
-export async function getPodLogs(namespace: string, labelSelector: string) {
-  let allLogs = "";
-
-  try {
-    const res = await k8sCoreApi.listNamespacedPod(
-      namespace,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      labelSelector,
-    );
-    const pods = res.body.items;
-
-    for (const pod of pods) {
-      const podName = pod.metadata?.name || "unknown";
-      const log = await k8sCoreApi.readNamespacedPodLog(podName, namespace);
-      allLogs += log.body;
-    }
-  } catch (err) {
-    console.error("Error: ", err);
-  }
-
-  return allLogs;
 }
