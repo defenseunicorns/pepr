@@ -79,7 +79,7 @@ When(a.ConfigMap)
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/en/) v18.x.x+ or v20.x.x+ (recommended).
+- [Node.js](https://nodejs.org/en/) v18.0.0+ (even-numbered releases recommended).
 - - To ensure compatability and optimal performance, it is recommended to use even-numbered releases of Node.js as they are stable releases and receive long-term support for three years. Odd-numbered releases are experimental and may not be supported by certain libraries utilized in Pepr.
 
 - Recommended (optional) tools:
