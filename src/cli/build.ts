@@ -24,9 +24,31 @@ export default function (program: RootCmd) {
       "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
       peprTS,
     )
+    .option("-r, --registry-info [<registry>/<username>]", 
+    "Where to upload the image.",
+    "Note: You must be signed into the registry")
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
+
+      // Files to include in controller image for WASM support
+      const { includedFiles } = cfg.pepr;
+
+      let image: string = "";
+      let assets: Assets;
+
+      if(includedFiles.length > 0) {
+        
+        console.info(`\nℹ️  Including ${includedFiles.length} files in controller image.`)
+        // build/push controller image
+        if (opts.registryInfo !== undefined) {
+          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.version}`;
+          await createDockerfile(cfg.version, cfg.description, includedFiles);
+          execSync(`docker buildx --push --platform linux/arm64/v8,linux/amd64 build --tag ${image} -f Dockerfile.controller .`, { stdio: "pipe" });
+        } else {
+          console.info(`\n⚠️  No registry info provided. Skipping controller image build.`)
+        }
+      }
 
       // If building with a custom entry point, exit after building
       if (opts.entryPoint !== peprTS) {
@@ -35,14 +57,27 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      const assets = new Assets(
+      if(image !== "") {
+      assets = new Assets(
         {
           ...cfg.pepr,
           appVersion: cfg.version,
           description: cfg.description,
+          image: image,
         },
         path,
       );
+      } else {
+        assets = new Assets(
+          {
+            ...cfg.pepr,
+            appVersion: cfg.version,
+            description: cfg.description,
+          },
+          path,
+        );
+      }
+
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
       const yaml = await assets.allYaml();
@@ -227,4 +262,21 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
     // On any other error, exit with a non-zero exit code
     process.exit(1);
   }
+}
+
+// createDockerfile adds a layer to the the controller image with the includedFiles
+export async function createDockerfile(version: string, description: string, includedFiles: string[]) {
+
+  const file = `
+  # Use an official Node.js runtime as the base image
+  FROM ghcr.io/defenseunicorns/pepr/controller:v${version}
+
+  LABEL description="${description}"
+  
+  # Add the included files to the image
+  ${includedFiles.map((f) => `ADD ${f} /app/node_modules/pepr/dist/${f}`).join("\n")}
+
+  `;
+
+  await fs.writeFile('Dockerfile.controller', file, { encoding: 'utf-8' });
 }
