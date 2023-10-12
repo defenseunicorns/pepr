@@ -1,5 +1,8 @@
 name: PR Title Check
 
+# Declare default permissions as read only.
+permissions: read-all
+
 on:
   pull_request:
     branches: [main]
@@ -8,8 +11,6 @@ on:
 jobs:
   title_check:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
 
     steps:
       - name: Checkout
