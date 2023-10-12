@@ -1,7 +1,7 @@
 name: PR Title Check
 
-permissions:
-  pull-requests: read
+# Declare default permissions as read only.
+permissions: read-all
 
 on:
   pull_request:
