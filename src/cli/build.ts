@@ -24,9 +24,11 @@ export default function (program: RootCmd) {
       "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
       peprTS,
     )
-    .option("-r, --registry-info [<registry>/<username>]", 
-    "Where to upload the image.",
-    "Note: You must be signed into the registry")
+    .option(
+      "-r, --registry-info [<registry>/<username>]",
+      "Where to upload the image.",
+      "Note: You must be signed into the registry",
+    )
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
@@ -37,16 +39,18 @@ export default function (program: RootCmd) {
       let image: string = "";
       let assets: Assets;
 
-      if(includedFiles.length > 0) {
-        
-        console.info(`\nℹ️  Including ${includedFiles.length} files in controller image.`)
+      if (includedFiles.length > 0) {
+        console.info(`\nℹ️  Including ${includedFiles.length} files in controller image.`);
         // build/push controller image
         if (opts.registryInfo !== undefined) {
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.version}`;
           await createDockerfile(cfg.version, cfg.description, includedFiles);
-          execSync(`docker buildx --push --platform linux/arm64/v8,linux/amd64 build --tag ${image} -f Dockerfile.controller .`, { stdio: "pipe" });
+          execSync(
+            `docker buildx --push --platform linux/arm64/v8,linux/amd64 build --tag ${image} -f Dockerfile.controller .`,
+            { stdio: "pipe" },
+          );
         } else {
-          console.info(`\n⚠️  No registry info provided. Skipping controller image build.`)
+          console.info(`\n⚠️  No registry info provided. Skipping controller image build.`);
         }
       }
 
@@ -57,16 +61,16 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      if(image !== "") {
-      assets = new Assets(
-        {
-          ...cfg.pepr,
-          appVersion: cfg.version,
-          description: cfg.description,
-          image: image,
-        },
-        path,
-      );
+      if (image !== "") {
+        assets = new Assets(
+          {
+            ...cfg.pepr,
+            appVersion: cfg.version,
+            description: cfg.description,
+            image: image,
+          },
+          path,
+        );
       } else {
         assets = new Assets(
           {
@@ -265,8 +269,11 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
 }
 
 // createDockerfile adds a layer to the the controller image with the includedFiles
-export async function createDockerfile(version: string, description: string, includedFiles: string[]) {
-
+export async function createDockerfile(
+  version: string,
+  description: string,
+  includedFiles: string[],
+) {
   const file = `
   # Use an official Node.js runtime as the base image
   FROM ghcr.io/defenseunicorns/pepr/controller:v${version}
@@ -274,9 +281,9 @@ export async function createDockerfile(version: string, description: string, inc
   LABEL description="${description}"
   
   # Add the included files to the image
-  ${includedFiles.map((f) => `ADD ${f} /app/node_modules/pepr/dist/${f}`).join("\n")}
+  ${includedFiles.map(f => `ADD ${f} /app/node_modules/pepr/dist/${f}`).join("\n")}
 
   `;
 
-  await fs.writeFile('Dockerfile.controller', file, { encoding: 'utf-8' });
+  await fs.writeFile("Dockerfile.controller", file, { encoding: "utf-8" });
 }
