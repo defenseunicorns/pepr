@@ -14,17 +14,17 @@ export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
-  capabilities!: CapabilityExport[];
   image: string;
+  capabilities!: CapabilityExport[];
 
   constructor(
     readonly config: ModuleConfig,
     readonly path: string,
     readonly host?: string,
+    image: string = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`,
   ) {
     this.name = `pepr-${config.uuid}`;
-
-    this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
+    this.image = image;
 
     // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
