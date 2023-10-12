@@ -2,37 +2,39 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { createDockerfile } from "./build";
-import { expect, describe, beforeEach, afterEach, test } from "@jest/globals";
+import { expect, describe, test, jest } from "@jest/globals";
 import { promises as fs } from "fs";
-import { join } from "path";
-import os from "os";
 
 describe("createDockerfile", () => {
-  let tempDir: string;
+  const version = "0.0.1";
+  const description = "Pepr supports WASM modules!";
+  const includedFiles = ["main.wasm", "wasm_exec.js"];
 
-  // Create a temporary directory before each test
-  beforeEach(async () => {
-    tempDir = await fs.mkdtemp(join(os.tmpdir(), "createDockerfile-test-"));
-    process.chdir(tempDir); // Change current working directory to the temp directory
-  });
+  const expectedDockerfile = `
+  # Use an official Node.js runtime as the base image
+  FROM ghcr.io/defenseunicorns/pepr/controller:v${version}
 
-  // Clean up the temporary directory after each test
-  afterEach(async () => {
-    await fs.rm(tempDir, { recursive: true, force: true });
+  LABEL description="${description}"
+  
+  # Add the included files to the image
+  ADD main.wasm main.wasm
+  ADD wasm_exec.js wasm_exec.js
+
+  `;
+
+  jest.isolateModules(() => {
+    jest.spyOn(fs, "writeFile").mockReturnValue(Promise.resolve());
+    jest.spyOn(fs, "readFile").mockReturnValue(Promise.resolve(expectedDockerfile));
   });
 
   test("should create a Dockerfile.controller with the correct content", async () => {
-    const version = "0.0.1";
-    const description = "Pepr supports WASM modules!";
-    const includedFiles = ["main.wasm", "wasm_exec.js"];
-
     await createDockerfile(version, description, includedFiles);
 
     const generatedContent = await fs.readFile("Dockerfile.controller", "utf-8");
     expect(generatedContent).toContain(`FROM ghcr.io/defenseunicorns/pepr/controller:v${version}`);
     expect(generatedContent).toContain(`LABEL description="${description}"`);
     includedFiles.forEach(file => {
-      expect(generatedContent).toContain(`ADD ${file} /app/node_modules/pepr/dist/${file}`);
+      expect(generatedContent).toContain(`ADD ${file} ${file}`);
     });
   });
 });

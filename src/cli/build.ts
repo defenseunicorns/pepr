@@ -44,6 +44,7 @@ export default function (program: RootCmd) {
         // build/push controller image
         if (opts.registryInfo !== undefined) {
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.version}`;
+
           await createDockerfile(cfg.version, cfg.description, includedFiles);
           execSync(
             `docker buildx --push --platform linux/arm64/v8,linux/amd64 build --tag ${image} -f Dockerfile.controller .`,
@@ -268,7 +269,6 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
   }
 }
 
-// createDockerfile adds a layer to the the controller image with the includedFiles
 export async function createDockerfile(
   version: string,
   description: string,
@@ -281,7 +281,7 @@ export async function createDockerfile(
   LABEL description="${description}"
   
   # Add the included files to the image
-  ${includedFiles.map(f => `ADD ${f} /app/node_modules/pepr/dist/${f}`).join("\n")}
+  ${includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
 
   `;
 
