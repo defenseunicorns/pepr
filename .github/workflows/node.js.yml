@@ -49,7 +49,7 @@ jobs:
           cache: "npm"
       - name: "Install K3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
-        shell: bash
+        shell: bash@3.2.57
 
       - run: npm ci
       - run: npm run test:journey
