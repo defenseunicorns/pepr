@@ -144,7 +144,7 @@ After adding the files to the root (adjacent to `pepr.ts`) of the Pepr module, r
 
 ### Run Pepr Build 
 
-Build your Pepr module with registry into specified.
+Build your Pepr module with the registry specified.
 
 ```bash
 npx pepr build -r docker.io/defenseunicorns
