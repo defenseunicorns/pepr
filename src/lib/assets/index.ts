@@ -14,8 +14,8 @@ export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
-  image: string;
   capabilities!: CapabilityExport[];
+  image: string;
 
   constructor(
     readonly config: ModuleConfig,
@@ -23,6 +23,7 @@ export class Assets {
     readonly host?: string,
   ) {
     this.name = `pepr-${config.uuid}`;
+
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
 
     // Generate the ephemeral tls things

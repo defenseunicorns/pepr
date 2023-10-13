@@ -46,12 +46,11 @@ export default function (program: RootCmd) {
         image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
 
         // only actually build/push if there are files to include
-        if(includedFiles.length > 0) {
+        if (includedFiles.length > 0) {
           await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
           execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
           execSync(`docker push ${image}`, { stdio: "inherit" });
         }
-
       }
 
       // If building with a custom entry point, exit after building
