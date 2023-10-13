@@ -33,7 +33,7 @@ async function validateZarfYaml() {
   const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
 
   // The expected image name
-  const expectedImage = `ghcr.io/defenseunicorns/custom-pepr-controller:${peprVer}`;
+  const expectedImage = `ghcr.io/defenseunicorns/custom-pepr-controller:file:../pepr-${peprVer}.tgz`;
 
   // The expected zarf yaml contents
   const expectedZarfYaml = {
