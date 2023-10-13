@@ -35,8 +35,6 @@ export default function (program: RootCmd) {
       // Files to include in controller image for WASM support
       const { includedFiles } = cfg.pepr;
 
-      console.info(`Including ${JSON.stringify(includedFiles)} files in controller image.`);
-
       let image: string = "";
 
       if (opts.registryInfo !== undefined) {
@@ -272,7 +270,7 @@ export async function createDockerfile(
   LABEL description="${description}"
   
   # Add the included files to the image
-  ${includedFiles.length > 0 && includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
+  ${includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
 
   `;
 
