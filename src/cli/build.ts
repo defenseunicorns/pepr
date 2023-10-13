@@ -40,18 +40,14 @@ export default function (program: RootCmd) {
 
       let image: string = "";
 
-      if (includedFiles.length > 0) {
+      if (opts.registryInfo !== undefined) {
         console.info(`Including ${includedFiles.length} files in controller image.`);
         // build/push controller image
-        if (opts.registryInfo !== undefined) {
-          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
+        image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
 
-          await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
-          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
-          execSync(`docker push ${image}`, { stdio: "inherit" });
-        } else {
-          console.info(` No registry info provided. Skipping controller image build.`);
-        }
+        await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
+        execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
+        execSync(`docker push ${image}`, { stdio: "inherit" });
       }
 
       // If building with a custom entry point, exit after building
@@ -273,7 +269,7 @@ export async function createDockerfile(
   LABEL description="${description}"
   
   # Add the included files to the image
-  ${includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
+  ${includedFiles.length > 0 && includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
 
   `;
 
