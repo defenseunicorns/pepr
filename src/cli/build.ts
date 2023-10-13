@@ -39,23 +39,16 @@ export default function (program: RootCmd) {
       console.info(`Including ${JSON.stringify(includedFiles)} files in controller image.`);
 
       let image: string = "";
-      let assets: Assets;
 
       if (includedFiles.length > 0) {
         console.info(`Including ${includedFiles.length} files in controller image.`);
         // build/push controller image
         if (opts.registryInfo !== undefined) {
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
-   
+
           await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
-          execSync(
-            `docker build --tag ${image} -f Dockerfile.controller .`,
-            { stdio: "inherit" },
-          );
-          execSync(
-            `docker push ${image}`,
-            { stdio: "inherit" },
-          );
+          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
+          execSync(`docker push ${image}`, { stdio: "inherit" });
         } else {
           console.info(` No registry info provided. Skipping controller image build.`);
         }
@@ -68,7 +61,7 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      assets = new Assets(
+      const assets = new Assets(
         {
           ...cfg.pepr,
           appVersion: cfg.version,
