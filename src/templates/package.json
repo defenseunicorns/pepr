@@ -10,6 +10,7 @@
     "alwaysIgnore": {
       "namespaces": [],
       "labels": []
-    }
+    },
+    "includedFiles": []
   }
 }

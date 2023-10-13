@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, extname, resolve } from "path";
-
+import { createDockerfile } from "../lib/included-files";
 import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
@@ -24,9 +24,32 @@ export default function (program: RootCmd) {
       "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
       peprTS,
     )
+    .option(
+      "-r, --registry-info [<registry>/<username>]",
+      "Where to upload the image. Note: You must be signed into the registry",
+    )
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
+
+      // Files to include in controller image for WASM support
+      const { includedFiles } = cfg.pepr;
+
+      let image: string = "";
+
+      if (opts.registryInfo !== undefined) {
+        console.info(`Including ${includedFiles.length} files in controller image.`);
+
+        // for journey test to make sure the image is built
+        image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
+
+        // only actually build/push if there are files to include
+        if (includedFiles.length > 0) {
+          await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
+          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
+          execSync(`docker push ${image}`, { stdio: "inherit" });
+        }
+      }
 
       // If building with a custom entry point, exit after building
       if (opts.entryPoint !== peprTS) {
@@ -43,6 +66,12 @@ export default function (program: RootCmd) {
         },
         path,
       );
+
+      // if image is a custom image, use that instead of the default
+      if (image !== "") {
+        assets.image = image;
+      }
+
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
       const yaml = await assets.allYaml();

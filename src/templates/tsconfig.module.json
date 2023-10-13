@@ -5,7 +5,7 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "dist",
