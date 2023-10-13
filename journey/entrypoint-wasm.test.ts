@@ -3,7 +3,7 @@
 
 import { beforeAll, describe, jest } from "@jest/globals";
 
-import { before } from "./before";
+import { before } from "./before-wasm";
 import { peprBuild } from "./pepr-build-wasm";
 import { peprInit } from "./pepr-init";
 
