@@ -41,12 +41,17 @@ export default function (program: RootCmd) {
 
       if (opts.registryInfo !== undefined) {
         console.info(`Including ${includedFiles.length} files in controller image.`);
-        // build/push controller image
+
+        // for journey test to make sure the image is built
         image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
 
-        await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
-        execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
-        execSync(`docker push ${image}`, { stdio: "inherit" });
+        // only actually build/push if there are files to include
+        if(includedFiles.length > 0) {
+          await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
+          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
+          execSync(`docker push ${image}`, { stdio: "inherit" });
+        }
+
       }
 
       // If building with a custom entry point, exit after building
