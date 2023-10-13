@@ -88,7 +88,7 @@ async function callWASM(a,b) {
   await WebAssembly.instantiate(wasmData, go.importObject).then(wasmModule => {
     go.run(wasmModule.instance);
   
-    concated = global.peprWasm(a,b);
+    concated = global.concats(a,b);
   });
   return concated;
 }
