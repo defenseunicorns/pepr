@@ -36,22 +36,28 @@ export default function (program: RootCmd) {
       // Files to include in controller image for WASM support
       const { includedFiles } = cfg.pepr;
 
+      console.info(`Including ${JSON.stringify(includedFiles)} files in controller image.`);
+
       let image: string = "";
       let assets: Assets;
 
       if (includedFiles.length > 0) {
-        console.info(`\nℹ️  Including ${includedFiles.length} files in controller image.`);
+        console.info(`Including ${includedFiles.length} files in controller image.`);
         // build/push controller image
         if (opts.registryInfo !== undefined) {
-          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.version}`;
-
-          await createDockerfile(cfg.version, cfg.description, includedFiles);
+          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
+   
+          await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
           execSync(
-            `docker buildx --push --platform linux/arm64/v8,linux/amd64 build --tag ${image} -f Dockerfile.controller .`,
-            { stdio: "pipe" },
+            `docker build --tag ${image} -f Dockerfile.controller .`,
+            { stdio: "inherit" },
+          );
+          execSync(
+            `docker push ${image}`,
+            { stdio: "inherit" },
           );
         } else {
-          console.info(`\n⚠️  No registry info provided. Skipping controller image build.`);
+          console.info(` No registry info provided. Skipping controller image build.`);
         }
       }
 
@@ -62,25 +68,18 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
+      assets = new Assets(
+        {
+          ...cfg.pepr,
+          appVersion: cfg.version,
+          description: cfg.description,
+        },
+        path,
+      );
+
+      // if image is a custom image, use that instead of the default
       if (image !== "") {
-        assets = new Assets(
-          {
-            ...cfg.pepr,
-            appVersion: cfg.version,
-            description: cfg.description,
-            image: image,
-          },
-          path,
-        );
-      } else {
-        assets = new Assets(
-          {
-            ...cfg.pepr,
-            appVersion: cfg.version,
-            description: cfg.description,
-          },
-          path,
-        );
+        assets.image = image;
       }
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
