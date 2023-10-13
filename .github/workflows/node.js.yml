@@ -54,5 +54,5 @@ jobs:
       - run: npm ci
       - run: npm run test:journey
 
-      - run: test:journey:k3d
+      - run: npm run test:journey:k3d
       - run: npm run test:journey-wasm
