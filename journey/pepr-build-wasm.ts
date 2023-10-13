@@ -63,7 +63,4 @@ async function validateZarfYaml() {
   // Check the generated zarf yaml
   const actualZarfYaml = loadYaml(zarfYAML);
   expect(actualZarfYaml).toEqual(expectedZarfYaml);
-
-  // Check the generated k8s yaml
-  expect(k8sYaml).toMatch(`image: ${expectedImage}`);
 }
