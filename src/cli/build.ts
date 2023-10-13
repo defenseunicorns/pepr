@@ -26,8 +26,7 @@ export default function (program: RootCmd) {
     )
     .option(
       "-r, --registry-info [<registry>/<username>]",
-      "Where to upload the image.",
-      "Note: You must be signed into the registry",
+      "Where to upload the image. Note: You must be signed into the registry",
     )
     .action(async opts => {
       // Build the module
