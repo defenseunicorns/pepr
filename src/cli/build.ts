@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, extname, resolve } from "path";
-
+import { createDockerfile } from "../lib/included-files";
 import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
@@ -256,23 +256,4 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
     // On any other error, exit with a non-zero exit code
     process.exit(1);
   }
-}
-
-export async function createDockerfile(
-  version: string,
-  description: string,
-  includedFiles: string[],
-) {
-  const file = `
-  # Use an official Node.js runtime as the base image
-  FROM ghcr.io/defenseunicorns/pepr/controller:v${version}
-
-  LABEL description="${description}"
-  
-  # Add the included files to the image
-  ${includedFiles.map(f => `ADD ${f} ${f}`).join("\n")}
-
-  `;
-
-  await fs.writeFile("Dockerfile.controller", file, { encoding: "utf-8" });
 }
