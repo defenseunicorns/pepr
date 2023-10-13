@@ -27,9 +27,9 @@ import (
 
 func concats(this js.Value, args []js.Value) interface{} {
     fmt.Println("PeprWASM!")
-	strongOne := args[0].String()
+	stringOne := args[0].String()
 	stringTwo := args[1].String()
-	return fmt.Sprintf("%s%s", strongOne, stringTwo)
+	return fmt.Sprintf("%s%s", stringOne, stringTwo)
 }
 
 func main() {
@@ -68,7 +68,7 @@ if (typeof globalThis.crypto === 'undefined') {
 }
 ```
 
-### Calling WASM from the Capability\
+### Calling WASM from the Capability
 
 Import the `wasm_exec.js` in the `pepr.ts`
 
@@ -108,7 +108,7 @@ When(a.Pod)
 
 ### Updating the package.json
 
-After adding the files to the root (adjacent to `pepr.ts`) of the Pepr module, refernce those files in the package.json:
+After adding the files to the root (adjacent to `pepr.ts`) of the Pepr module, reference those files in the package.json:
 
 ```json
 {
