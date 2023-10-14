@@ -68,7 +68,54 @@ if (typeof globalThis.crypto === 'undefined') {
 }
 ```
 
-### Calling WASM from the Capability
+
+### Configure Pepr to use WASM
+
+After adding the files to the root of the Pepr module, reference those files in the package.json:
+
+```json
+{
+  "name": "pepr-test-module",
+  "version": "0.0.1",
+  "description": "A test module for Pepr",
+  "keywords": [
+    "pepr",
+    "k8s",
+    "policy-engine",
+    "pepr-module",
+    "security"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "pepr": {
+    "name": "pepr-test-module",
+    "uuid": "static-test",
+    "onError": "ignore",
+    "alwaysIgnore": {
+      "namespaces": [],
+      "labels": []
+    },
+    "includedFiles":[
+      "main.wasm",
+      "wasm_exec.js"
+    ]
+  },
+  ...
+}
+```
+
+
+### Run Pepr Build 
+
+Build your Pepr module with the registry specified.
+
+```bash
+npx pepr build -r docker.io/defenseunicorns
+```
+
+
+### Call WASM functions from TypeScript
 
 Import the `wasm_exec.js` in the `pepr.ts`
 
@@ -106,47 +153,4 @@ When(a.Pod)
 });
 ```
 
-### Updating the package.json
-
-After adding the files to the root (adjacent to `pepr.ts`) of the Pepr module, reference those files in the package.json:
-
-```json
-{
-  "name": "pepr-test-module",
-  "version": "0.0.1",
-  "description": "A test module for Pepr",
-  "keywords": [
-    "pepr",
-    "k8s",
-    "policy-engine",
-    "pepr-module",
-    "security"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "pepr": {
-    "name": "pepr-test-module",
-    "uuid": "static-test",
-    "onError": "ignore",
-    "alwaysIgnore": {
-      "namespaces": [],
-      "labels": []
-    },
-    "includedFiles":[
-      "main.wasm",
-      "wasm_exec.js"
-    ]
-  },
-  ...
-}
-```
-
-### Run Pepr Build 
-
-Build your Pepr module with the registry specified.
-
-```bash
-npx pepr build -r docker.io/defenseunicorns
-```
 
