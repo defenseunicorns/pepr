@@ -31,7 +31,7 @@
   "dependencies": {
     "express": "4.18.2",
     "fast-json-patch": "3.1.1",
-    "kubernetes-fluent-client": "1.6.0",
+    "kubernetes-fluent-client": "1.6.1",
     "pino": "8.16.0",
     "pino-pretty": "10.2.3",
     "prom-client": "15.0.0",
