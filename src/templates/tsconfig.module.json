@@ -18,7 +18,6 @@
     "useUnknownInCatchVariables": false
   },
   "include": [
-    "**/*.ts",
-    "node_modules/pepr/src/lib/webassembly.d.ts"
+    "**/*.ts"
   ]
 }

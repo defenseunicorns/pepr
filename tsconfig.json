@@ -16,5 +16,5 @@
     "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "fixtures", "src/templates", "pepr-test-module","src/lib/webassembly.d.ts"]
+  "exclude": ["node_modules", "dist", "fixtures", "src/templates", "pepr-test-module"]
 }
