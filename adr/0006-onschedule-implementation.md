@@ -8,7 +8,7 @@ Under Review
 
 ## Context
 
-Zarf wrote a Pepr module to facilitate the development in [using ECR as an external registry during 'Zarf Init'](https://github.com/defenseunicorns/zarf/issues/1594). They are running into a challenge where the ECR Registry token is expiring every ~12 hours. Currently, they are having to maintain two completely different codebases, one being the Pepr module that communicates with AWS, and another being a go binary that they run as a CronJob to refresh the token. They are interested in consolidating the two codebases, and would like to see if there is a way to implement this functionality in Pepr.
+Zarf wrote a Pepr module to facilitate the development in [using ECR as an external registry during 'Zarf Init'](https://github.com/defenseunicorns/zarf/issues/1594). They are running into a challenge where the ECR Registry token is expiring every ~12 hours. Currently, they are having to maintain two completely different codebases, one being the Pepr module that communicates with AWS, and another being a go app that they run as a CronJob to refresh the token. They are interested in consolidating the two codebases, and would like to see if there is a way to implement this functionality in Pepr.
 
 We considered a few options:
 - setTimeout - Pepr is created with devex being a first class citizen and using a setTimeout violates the devex principle and fluent api.
