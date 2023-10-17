@@ -54,7 +54,7 @@ export async function allYaml(assets: Assets) {
 
   const resources = [
     namespace,
-    clusterRole(name),
+    clusterRole(name, assets.capabilities),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
