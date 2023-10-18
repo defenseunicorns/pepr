@@ -21,16 +21,7 @@ export function clusterRole(name: string, capabilities: CapabilityExport[]): kin
       ...Object.keys(rbacMap).map(key => {
         // let group:string, version:string, kind:string;
         let group: string;
-
-        if (key.split("/").length < 3) {
-          group = "";
-          // version = key.split("/")[0]
-          // kind = key.split("/")[1]
-        } else {
-          group = key.split("/")[0];
-          // version = key.split("/")[1]
-          // kind = key.split("/")[2]
-        }
+        key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
 
         return {
           apiGroups: [group],

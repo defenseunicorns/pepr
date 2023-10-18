@@ -10,10 +10,15 @@ type RBACMap = {
   };
 };
 
+export const addVerbIfNotExists = (verbs: string[], verb: string) => {
+  if (!verbs.includes(verb)) {
+    verbs.push(verb);
+  }
+};
+
 export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
     capability.bindings.forEach(binding => {
-      // Create a unique key for the rule
       const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
 
       if (!acc[key]) {
@@ -22,24 +27,19 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
           plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
         };
       }
-      if (binding.isWatch === true) {
-        if (!acc[key].verbs.includes("watch")) {
-          acc[key].verbs.push("watch");
-        }
+
+      if (binding.isWatch) {
+        addVerbIfNotExists(acc[key].verbs, "watch");
       }
+
       if (binding.event === "CREATEORUPDATE") {
-        if (!acc[key].verbs.includes("create")) {
-          acc[key].verbs.push("create");
-        }
-        if (!acc[key].verbs.includes("update")) {
-          acc[key].verbs.push("update");
-        }
+        addVerbIfNotExists(acc[key].verbs, "create");
+        addVerbIfNotExists(acc[key].verbs, "update");
       } else {
-        if (!acc[key].verbs.includes(binding.event.toLowerCase())) {
-          acc[key].verbs.push(binding.event.toLowerCase());
-        }
+        addVerbIfNotExists(acc[key].verbs, binding.event.toLowerCase());
       }
     });
+
     return acc;
   }, {});
 };

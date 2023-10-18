@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { CapabilityExport } from "./types";
-import { createRBACMap } from "./helpers";
+import { createRBACMap, addVerbIfNotExists } from "./helpers";
 import { expect, describe, test } from "@jest/globals";
 
 const capabilities: CapabilityExport[] = JSON.parse(`[
@@ -270,5 +270,19 @@ describe("createRBACMap", () => {
     };
 
     expect(result).toEqual(expected);
+  });
+});
+
+describe("addVerbIfNotExists", () => {
+  test("should add a verb if it does not exist in the array", () => {
+    const verbs = ["get", "list"];
+    addVerbIfNotExists(verbs, "watch");
+    expect(verbs).toEqual(["get", "list", "watch"]);
+  });
+
+  test("should not add a verb if it already exists in the array", () => {
+    const verbs = ["get", "list", "watch"];
+    addVerbIfNotExists(verbs, "get");
+    expect(verbs).toEqual(["get", "list", "watch"]); // The array remains unchanged
   });
 });
