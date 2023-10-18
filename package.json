@@ -1,32 +1,32 @@
 {
   "name": "pepr",
-  "description": "Kubernetes application engine",
-  "author": "Defense Unicorns",
-  "homepage": "https://github.com/defenseunicorns/pepr",
-  "license": "Apache-2.0",
-  "bin": "dist/cli.js",
-  "repository": "defenseunicorns/pepr",
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "version": "0.0.0-development",
+  "description": "Kubernetes application engine",
+  "homepage": "https://github.com/defenseunicorns/pepr",
+  "repository": "defenseunicorns/pepr",
+  "license": "Apache-2.0",
+  "author": "Defense Unicorns",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
+  "bin": "dist/cli.js",
   "scripts": {
-    "gen-data-json": "node hack/build-template-data.js",
+    "_cd:docs": "cd website &&",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
+    "docs-install": "npm run _cd:docs -- npm install",
+    "format:check": "eslint src && prettier src --check",
+    "format:fix": "eslint src --fix && prettier src --write",
+    "gen-data-json": "node hack/build-template-data.js",
+    "postinstall": "npm run docs-install",
     "test": "npm run test:unit && npm run test:journey",
-    "test:unit": "npm run gen-data-json && jest src --coverage",
     "test:journey": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run",
     "test:journey-wasm": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run-wasm",
-    "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "test:journey:build": "npm run build && npm pack",
     "test:journey:image": "docker buildx build --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
+    "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
     "test:journey:run": "jest journey/entrypoint.test.ts",
     "test:journey:run-wasm": "jest journey/entrypoint-wasm.test.ts",
-    "format:check": "eslint src && prettier src --check",
-    "format:fix": "eslint src --fix && prettier src --write"
+    "test:unit": "npm run gen-data-json && jest src --coverage"
   },
   "dependencies": {
     "express": "4.18.2",
@@ -63,5 +63,8 @@
     "prompts": "2.4.2",
     "typescript": "5.2.2",
     "uuid": "9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
