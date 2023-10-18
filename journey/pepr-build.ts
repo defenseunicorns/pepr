@@ -23,12 +23,7 @@ export function peprBuild() {
     await validateZarfYaml();
   });
 }
-async function validateClusterRole() {
-  // Read the generated yaml file
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
 
-  const expectedK8sManifests = [
-}
 async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
