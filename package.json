@@ -13,7 +13,6 @@
     "_cd:docs": "cd website &&",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
-    "docs-install": "npm run _cd:docs -- npm install",
     "format:check": "eslint src && prettier src --check",
     "format:fix": "eslint src --fix && prettier src --write",
     "gen-data-json": "node hack/build-template-data.js",
