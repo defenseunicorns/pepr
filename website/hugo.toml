@@ -1,12 +1,12 @@
-baseURL         = "https://example.com/"
+baseURL         = "https://pepr.dev/"
 enableGitInfo   = true
 enableRobotsTXT = true
 
 # Set uglyURLs & relativeURLs for hugo to build local offline pages in public/
 # When these are set `npm start` will no longer host functioning webpages. Instead
 #   use `npm run build` to construct the offline public/ directory 
-uglyURLs = false
 relativeURLs = false
+uglyURLs     = false
 
 # Mount any external directories for use by hugo
 # 
@@ -28,7 +28,7 @@ relativeURLs = false
   target = "content"
 
 [module]
-  proxy = "direct"
+proxy = "direct"
 
   [[module.imports]]
     path = "github.com/defenseunicorns/defense-unicorns-hugo-theme"
@@ -40,8 +40,8 @@ relativeURLs = false
   languageName = "English"
 
   [languages.en.params]
-    description = "Docs Template"
-    title       = "Docs Template"
+    description = "Pepr"
+    title       = "Pepr"
 
 [params]
   # this merge bring is the theme defaults and allows overriding them if needed.
@@ -49,8 +49,8 @@ relativeURLs = false
 
   archived_version    = false
   copyright           = "Defense Unicorns"
-  github_project_repo = "https://github.com/defenseunicorns/doc-template-site"
-  github_repo         = "https://github.com/defenseunicorns/doc-template-site"
+  github_project_repo = "https://github.com/defenseunicorns/pepr"
+  github_repo         = "https://github.com/defenseunicorns/pepr"
   github_subdir       = "content/en"
   version             = "v1.0.0"
 
@@ -64,28 +64,28 @@ relativeURLs = false
   # version = "v0.2"
   # url = "https://v02-version"
   [params.ui]
-    navbar_logo = "img/doug.svg" # The product logo on the navbar
+    navbar_logo = "img/pepr.svg" # The product logo on the navbar
 
   [[params.socialLinks]]
     desc = ""
     icon = "fa-brands fa-github"
     name = "GitHub"
-    url  = "https://github.com/defenseunicorns/doc-site-template"
+    url  = "https://github.com/defenseunicorns/pepr"
 
-### Other social links
-# [[params.socialLinks]]
-# name = "Community Slack"
-# url = "https://communityinviter.com/apps/kubernetes/community"
-# icon = "fa-brands fa-slack"
-# desc = "Discussion and help from your fellow users"
-# [[params.socialLinks]]
-# name = "Twitter"
-# url = "https://twitter.com/DefenseUnicorns"
-# icon = "fa-brands fa-twitter"
-# desc = "Defense Unicorns Twitter"
-### Mermaid theme choices
-#[params.mermaid]
-# theme = "neutral" # You can override this default dark theme with other Mermaid themes
+    ### Other social links
+    # [[params.socialLinks]]
+    # name = "Community Slack"
+    # url = "https://communityinviter.com/apps/kubernetes/community"
+    # icon = "fa-brands fa-slack"
+    # desc = "Discussion and help from your fellow users"
+    # [[params.socialLinks]]
+    # name = "Twitter"
+    # url = "https://twitter.com/DefenseUnicorns"
+    # icon = "fa-brands fa-twitter"
+    # desc = "Defense Unicorns Twitter"
+    ### Mermaid theme choices
+    #[params.mermaid]
+    # theme = "neutral" # You can override this default dark theme with other Mermaid themes
 
 ## The following merge in theme defaults from: https://github.com/defenseunicorns/defense-unicorns-hugo-theme/tree/main/config/_default
 [markup]
