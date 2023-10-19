@@ -64,7 +64,8 @@ proxy = "direct"
   # version = "v0.2"
   # url = "https://v02-version"
   [params.ui]
-    navbar_logo = "img/pepr.svg" # The product logo on the navbar
+    navbar_logo    = "img/pepr.svg" # The product logo on the navbar
+    show_nav_title = true           # Remove if the logo includes a title
 
   [[params.socialLinks]]
     desc = ""
