@@ -1,6 +1,6 @@
 # Importing Custom Resources
 
-Pepr and the [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client) allow us to generate TypeScript typings from Kubernetes Custom Resource Definitions (CRDs). This enables us to interact with custom resources as if they were native Kubernetes resources, empowering users to go beyond standard Kubernetes resources, enabling them to interact with custom entities such as Istio's Gateways and VirtualServices.
+Pepr and the [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client) allow us to generate TypeScript typings from Kubernetes Custom Resource Definitions (CRDs). This enables Pepr to interact with custom resources as if they were native Kubernetes resources, empowering users to go beyond standard Kubernetes resources, enabling them to interact with custom entities such as Istio's Gateways and VirtualServices.
 
 
 ## Generating TypeScript Types from CRDs
@@ -50,7 +50,7 @@ Attempting to load https://raw.githubusercontent.com/istio/istio/master/manifest
 ✅ Generated 23 files in the istio directory
 ```
 
-We observe that the `kubernetes-fluent-client` has produced the TypeScript types for us within the `crds` directory. These types can now be utilized in our Pepr module.
+We observe that the `kubernetes-fluent-client` has produced the TypeScript types within the `crds` directory. These types can now be utilized in the Pepr module.
 
 ```typescript
 ┌─[cmwylie19@Cases-MacBook-Pro] - [/custom_istio_operator] - [2023-10-16 05:46:38]
@@ -119,9 +119,9 @@ RegisterKind(ProxyConfig, {
 });
 ```
 
-## Registering new types
+## Using new types
 
-After generating the types, it's essential to register them with Pepr. This can be achieved by incorporating the generated files into the capability. For instance, to integrate Istio's `ProxyConfig` type into the `hello-pepr` capability, you should include the pertinent sections of the generated file. Specifically, Pepr requires the `class`, its associated types, and registry details. Once set up, you can manage the `ProxyConfig` as seamlessly as any other resource.
+The generated types can be imported into Pepr. This can be achieved by incorporating the generated files into the capability. For instance, to integrate Istio's `ProxyConfig` type into the `hello-pepr` capability, you should include the pertinent sections of the generated file. Specifically, Pepr requires the `class`, its associated types, and registry details. Once set up, you can manage the `ProxyConfig` as seamlessly as any other resource.
 
 ```typescript
 import {
