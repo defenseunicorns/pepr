@@ -4,6 +4,6 @@ linkTitle: Documentation
 menu: {main: {weight: 1}}
 ---
 
-## What is Peper?
+## What is Pepr?
 
 Let us know...
