@@ -254,13 +254,15 @@ const capabilities: CapabilityExport[] = JSON.parse(`[
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
     const result = createRBACMap(capabilities);
-    console.log(result);
 
-    const expected =  {
-        'pepr.dev/v1/peprstore': { verbs: [ '*' ], plural: 'peprstores' },
-        '/v1/Namespace': { verbs: [ 'watch' ], plural: 'namespaces' },
-        '/v1/ConfigMap': { verbs: [ 'watch' ], plural: 'configmaps' }
-      };
+    const expected = {
+      "pepr.dev/v1/peprstore": {
+        verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+        plural: "peprstores",
+      },
+      "/v1/Namespace": { verbs: ["watch"], plural: "namespaces" },
+      "/v1/ConfigMap": { verbs: ["watch"], plural: "configmaps" },
+    };
 
     expect(result).toEqual(expected);
   });

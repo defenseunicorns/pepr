@@ -40,7 +40,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets) {
+export async function allYaml(assets: Assets, rbacMode: string = "") {
   const { name, tls, apiToken, path } = assets;
 
   const code = await fs.readFile(path);
@@ -54,7 +54,7 @@ export async function allYaml(assets: Assets) {
 
   const resources = [
     namespace,
-    clusterRole(name, assets.capabilities),
+    clusterRole(name, assets.capabilities, rbacMode),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),

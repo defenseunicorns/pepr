@@ -40,8 +40,8 @@ export class Assets {
 
   zarfYaml = (path: string) => zarfYaml(this, path);
 
-  allYaml = async () => {
+  allYaml = async (rbacMode: string = "") => {
     this.capabilities = await loadCapabilities(this.path);
-    return allYaml(this);
+    return allYaml(this, rbacMode);
   };
 }

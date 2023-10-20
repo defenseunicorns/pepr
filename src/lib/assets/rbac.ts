@@ -10,32 +10,34 @@ import { createRBACMap } from "../helpers";
  * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns
  */
-export function clusterRole(name: string, capabilities: CapabilityExport[]): kind.ClusterRole {
-
+export function clusterRole(name: string, capabilities: CapabilityExport[], rbacMode: string = ""): kind.ClusterRole {
   const rbacMap = createRBACMap(capabilities);
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
     metadata: { name },
-    rules: [
-      ...Object.keys(rbacMap).map(key => {
-        // let group:string, version:string, kind:string;
-        let group: string;
-        key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
+    rules:
+      rbacMode === "scoped"
+        ? [
+            ...Object.keys(rbacMap).map(key => {
+              // let group:string, version:string, kind:string;
+              let group: string;
+              key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
 
-        return {
-          apiGroups: [group],
-          resources: [rbacMap[key].plural],
-          verbs: rbacMap[key].verbs,
-        };
-      }),
-      // {
-      //   // @todo: make this configurable
-      //   apiGroups: ["*"],
-      //   resources: ["*"],
-      //   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
-      // },
-    ],
+              return {
+                apiGroups: [group],
+                resources: [rbacMap[key].plural],
+                verbs: rbacMap[key].verbs,
+              };
+            }),
+          ]
+        : [
+            {
+              apiGroups: ["*"],
+              resources: ["*"],
+              verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+            },
+          ],
   };
 }
 

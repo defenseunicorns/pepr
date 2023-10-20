@@ -28,11 +28,7 @@ export default function (program: RootCmd) {
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
-    .option(
-      "-rm, --rbac-mode [admin|scoped]",
-      "Rbac Mode: admin, scoped (default: admin)",
-
-    )
+    .option("-rm, --rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
@@ -41,6 +37,14 @@ export default function (program: RootCmd) {
       const { includedFiles } = cfg.pepr;
 
       let image: string = "";
+
+      // check rbacMode
+      if (opts.rbacMode !== undefined) {
+        if (opts.rbacMode !== "admin" && opts.rbacMode !== "scoped") {
+          console.error(`Invalid rbacMode: ${opts.rbacMode}, defaulting to admin`);
+          opts.rbacMode = "";
+        }
+      }
 
       if (opts.registryInfo !== undefined) {
         console.info(`Including ${includedFiles.length} files in controller image.`);
@@ -79,7 +83,9 @@ export default function (program: RootCmd) {
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await assets.allYaml();
+      const yaml = await assets.allYaml(
+        opts.rbacMode === undefined ? "" : opts.rbacMode.toString(),
+      );
 
       const zarfPath = resolve("dist", "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);

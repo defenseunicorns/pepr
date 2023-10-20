@@ -22,7 +22,7 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
       const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
 
       acc["pepr.dev/v1/peprstore"] = {
-        verbs: ["*"],
+        verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
         plural: "peprstores",
       };
 
@@ -31,7 +31,7 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
           verbs: ["watch"],
           plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
         };
-      }     
+      }
     });
 
     return acc;
