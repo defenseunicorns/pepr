@@ -11,7 +11,7 @@ import { createRBACMap } from "../helpers";
  * @returns
  */
 export function clusterRole(name: string, capabilities: CapabilityExport[]): kind.ClusterRole {
-  console.log(`Let's give this SA the least privileges possible.\n${JSON.stringify(capabilities, null, 2)}`);
+
   const rbacMap = createRBACMap(capabilities);
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",

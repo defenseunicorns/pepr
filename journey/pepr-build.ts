@@ -22,6 +22,50 @@ export function peprBuild() {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
   });
+
+  it('should generate correct ClusterRole yaml', async () => {
+    await validateClusterRoleYaml()
+  });
+}
+
+async function validateClusterRoleYaml() {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+
+  // The expected ClusterRole
+  const expectedClusterRoleYaml = {
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    kind: "ClusterRole",
+    metadata: {
+      name: "pepr-module-static-test",
+    },
+    rules: [
+      {
+        apiGroups: [""],
+        resources: ["namespaces"],
+        verbs: ["get", "list", "create","watch"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["configmaps"],
+        verbs: ["get", "list", "create","watch","update","delete"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["secrets"],
+        verbs: ["get", "list", "create"],
+      },
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["unicorns"],
+        verbs: ["get", "list", "create"],
+      },
+    ],
+  };
+
+  // Check the generated cluster role yaml
+  const actualClusterRoleYaml = loadYaml(k8sYaml);
+  expect(actualClusterRoleYaml).toEqual(expectedClusterRoleYaml);
 }
 
 async function validateZarfYaml() {

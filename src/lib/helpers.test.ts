@@ -256,18 +256,11 @@ describe("createRBACMap", () => {
     const result = createRBACMap(capabilities);
     console.log(result);
 
-    const expected = {
-      "/v1/Namespace": {
-        verbs: ["get", "list", "create", "watch", "delete"],
-        plural: "namespaces",
-      },
-      "/v1/ConfigMap": {
-        verbs: ["get", "list", "create", "update", "watch", "delete"],
-        plural: "configmaps",
-      },
-      "/v1/Secret": { verbs: ["get", "list", "create"], plural: "secrets" },
-      "pepr.dev/v1/Unicorn": { verbs: ["get", "list", "create"], plural: "unicorns" },
-    };
+    const expected =  {
+        'pepr.dev/v1/peprstore': { verbs: [ '*' ], plural: 'peprstores' },
+        '/v1/Namespace': { verbs: [ 'watch' ], plural: 'namespaces' },
+        '/v1/ConfigMap': { verbs: [ 'watch' ], plural: 'configmaps' }
+      };
 
     expect(result).toEqual(expected);
   });

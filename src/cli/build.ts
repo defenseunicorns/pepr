@@ -26,7 +26,12 @@ export default function (program: RootCmd) {
     )
     .option(
       "-r, --registry-info [<registry>/<username>]",
-      "Where to upload the image. Note: You must be signed into the registry",
+      "Registry Info: Image registry and username. Note: You must be signed into the registry",
+    )
+    .option(
+      "-rm, --rbac-mode [admin|scoped]",
+      "Rbac Mode: admin, scoped (default: admin)",
+
     )
     .action(async opts => {
       // Build the module
