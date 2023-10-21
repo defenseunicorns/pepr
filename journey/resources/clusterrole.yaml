@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pepr-static-test
+rules:
+  - apiGroups:
+      - pepr.dev
+    resources:
+      - peprstores
+    verbs:
+      - '*'
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+    verbs:
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - watch

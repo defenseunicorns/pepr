@@ -10,7 +10,7 @@ import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
-  it("should successfully build the Pepr project", async () => {
+  it("should successfully build the Pepr project with arguments", async () => {
     execSync("npx pepr build -r gchr.io/defenseunicorns -rm scoped", { cwd: cwd, stdio: "inherit" });
   });
 
@@ -27,45 +27,15 @@ export function peprBuild() {
     await validateClusterRoleYaml();
   });
 }
-function containsSubstring(fullString: string, substring: string): boolean {
-  const cleanString = (s: string) => s.replace(/\s+/g, '').toLowerCase();
-  const cleanedFullString = cleanString(fullString);
-  const cleanedSubstring = cleanString(substring);
-  return cleanedFullString.includes(cleanedSubstring);
-}
+
 async function validateClusterRoleYaml() {
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
 
-  const expectedClusterRoleYaml = `
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      name: pepr-static-test
-    rules:
-      - apiGroups:
-          - pepr.dev
-        resources:
-          - peprstores
-        verbs:
-          - '*'
-      - apiGroups:
-          - ''
-        resources:
-          - namespaces
-        verbs:
-          - watch
-      - apiGroups:
-          - ''
-        resources:
-          - configmaps
-        verbs:
-          - watch
-      `
-
-  expect(containsSubstring(k8sYaml,expectedClusterRoleYaml)).toEqual(true)
-
+  expect(k8sYaml.includes(cr)).toEqual(true)
 }
+
 async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
