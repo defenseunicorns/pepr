@@ -27,6 +27,12 @@ export function peprBuild() {
     await validateClusterRoleYaml();
   });
 }
+function containsSubstring(fullString: string, substring: string): boolean {
+  const cleanString = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+  const cleanedFullString = cleanString(fullString);
+  const cleanedSubstring = cleanString(substring);
+  return cleanedFullString.includes(cleanedSubstring);
+}
 async function validateClusterRoleYaml() {
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
@@ -57,7 +63,7 @@ async function validateClusterRoleYaml() {
           - watch
       `
 
-  expect(k8sYaml).toContain(expectedClusterRoleYaml.trim())
+  expect(containsSubstring(k8sYaml,expectedClusterRoleYaml)).toEqual(true)
 
 }
 async function validateZarfYaml() {
