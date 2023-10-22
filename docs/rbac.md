@@ -60,13 +60,8 @@ kubectl logs -n pepr-system  -l app | jq
 ```bash
 SA=$(kubectl get deploy -n pepr-system -o=jsonpath='{range .items[0]}{.spec.template.spec.serviceAccountName}{"\n"}{end}')
 
-# Can i create configmaps as the service account?
-kubectl auth can-i create cm --as=system:serviceaccount:pepr-system:$SA
-
-# example output: yes
-
-# Can i create configmaps as the service account in kube-system?
-kubectl auth can-i create cm --as=system:serviceaccount:pepr-system:$SA -n kube-system
+# Can i create configmaps as the service account in pepr-demo-2?
+kubectl auth can-i create cm --as=system:serviceaccount:pepr-system:$SA -n pepr-demo-2
 
 # example output: no
 ```
@@ -79,11 +74,13 @@ SA=$(kubectl get deploy -n pepr-system -o=jsonpath='{range .items[0]}{.spec.temp
 kubectl describe clusterrole $SA
 
 # example output:
-Name:         pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10
+Name:         pepr-static-test
 Labels:       <none>
 Annotations:  <none>
 PolicyRule:
-  Resources  Non-Resource URLs  Resource Names  Verbs
-  ---------  -----------------  --------------  -----
-  *.*        []                 []              [create delete get list patch update watch]
+  Resources            Non-Resource URLs  Resource Names  Verbs
+  ---------            -----------------  --------------  -----
+  peprstores.pepr.dev  []                 []              [create delete get list patch update watch]
+  configmaps           []                 []              [watch]
+  namespaces           []                 []              [watch]
 ```
