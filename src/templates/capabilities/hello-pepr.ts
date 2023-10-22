@@ -52,19 +52,27 @@ When(a.Namespace)
   .Watch(async ns => {
     Log.info("Namespace pepr-demo-2 was created.");
 
+    try {
+      // Apply the ConfigMap using K8s server-side apply
+      await K8s(kind.ConfigMap).Apply({
+        metadata: {
+          name: "pepr-ssa-demo",
+          namespace: "pepr-demo-2",
+        },
+        data: {
+          "ns-uid": ns.metadata.uid,
+        },
+      });
+    } catch (error) {
+      // You can use the Log object to log messages to the Pepr controller pod
+      Log.error(
+        error,
+        "Does the ServiceAccount permissions to CREATE and PATCH this ConfigMap?",
+      );
+    }
+
     // You can share data between actions using the Store, including between different types of actions
     Store.setItem("watch-data", "This data was stored by a Watch Action.");
-
-    // Apply the ConfigMap using K8s server-side apply
-    await K8s(kind.ConfigMap).Apply({
-      metadata: {
-        name: "pepr-ssa-demo",
-        namespace: "pepr-demo-2",
-      },
-      data: {
-        "ns-uid": ns.metadata.uid,
-      },
-    });
   });
 
 /**

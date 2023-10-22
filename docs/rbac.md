@@ -27,54 +27,31 @@ If encountering unexpected behaviors in Pepr while running in scoped mode, check
 1. Check Deployment logs for RBAC errors:
 
 ```bash
-kubectl logs -n pepr-system  -l app | jq 'select(.data.reason == "Forbidden")' | grep -A9 -B9 "Forbidden"
+kubectl logs -n pepr-system  -l app | jq
 
 # example output
-dden")' | grep -A9 -B9 "Forbidden"
-  "time": 1697814589833,
-  "pid": 16,
-  "hostname": "pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-watcher-6f44f996pmhhb",
-  "data": {
-    "kind": "Status",
-    "apiVersion": "v1",
-    "metadata": {},
-    "status": "Failure",
-    "message": "peprstores.pepr.dev \"pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-store\" is forbidden: User \"system:serviceaccount:pepr-system:pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10\" cannot get resource \"peprstores\" in API group \"pepr.dev\" in the namespace \"pepr-system\": RBAC: clusterrole.rbac.authorization.k8s.io \"pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10\" not found",
-    "reason": "Forbidden",
-    "details": {
-      "name": "pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-store",
-      "group": "pepr.dev",
-      "kind": "peprstores"
-    },
-    "code": 403
-  },
-  "ok": false,
-  "status": 403,
-  "statusText": "Forbidden"
-}
 {
   "level": 50,
-  "time": 1697814589840,
+  "time": 1697983053758,
   "pid": 16,
-  "hostname": "pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-watcher-6f44f996pmhhb",
+  "hostname": "pepr-static-test-watcher-745d65857d-pndg7",
   "data": {
     "kind": "Status",
     "apiVersion": "v1",
     "metadata": {},
     "status": "Failure",
-    "message": "peprstores.pepr.dev \"pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-store\" is forbidden: User \"system:serviceaccount:pepr-system:pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10\" cannot patch resource \"peprstores\" in API group \"pepr.dev\" in the namespace \"pepr-system\": RBAC: clusterrole.rbac.authorization.k8s.io \"pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10\" not found",
+    "message": "configmaps \"pepr-ssa-demo\" is forbidden: User \"system:serviceaccount:pepr-system:pepr-static-test\" cannot patch resource \"configmaps\" in API group \"\" in the namespace \"pepr-demo-2\"",
     "reason": "Forbidden",
     "details": {
-      "name": "pepr-e868e97f-0512-5a48-92c3-96a2e3b6da10-store",
-      "group": "pepr.dev",
-      "kind": "peprstores"
+      "name": "pepr-ssa-demo",
+      "kind": "configmaps"
     },
     "code": 403
   },
   "ok": false,
   "status": 403,
   "statusText": "Forbidden",
-  "msg": "Failed to create Pepr store"
+  "msg": "Dooes the ServiceAccount permissions to CREATE and PATCH this ConfigMap?"
 }
 ```
 
