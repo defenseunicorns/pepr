@@ -80,9 +80,7 @@ export default function (program: RootCmd) {
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await assets.allYaml(
-        opts.rbacMode
-      );
+      const yaml = await assets.allYaml(opts.rbacMode);
 
       const zarfPath = resolve("dist", "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);
