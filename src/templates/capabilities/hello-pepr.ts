@@ -65,10 +65,7 @@ When(a.Namespace)
       });
     } catch (error) {
       // You can use the Log object to log messages to the Pepr controller pod
-      Log.error(
-        error,
-        "Does the ServiceAccount permissions to CREATE and PATCH this ConfigMap?",
-      );
+      Log.error(error, "Failed to apply ConfigMap using server-side apply.");
     }
 
     // You can share data between actions using the Store, including between different types of actions

@@ -10,6 +10,7 @@ import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
+import { Option } from "commander";
 
 const peprTS = "pepr.ts";
 
@@ -28,7 +29,11 @@ export default function (program: RootCmd) {
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
-    .option("-rm, --rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
+    .addOption(
+      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
+        .choices(["admin", "scoped"])
+        .default("admin"),
+    )
     .action(async opts => {
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
@@ -37,14 +42,6 @@ export default function (program: RootCmd) {
       const { includedFiles } = cfg.pepr;
 
       let image: string = "";
-
-      // check rbacMode
-      if (opts.rbacMode !== undefined) {
-        if (opts.rbacMode !== "admin" && opts.rbacMode !== "scoped") {
-          console.error(`Invalid rbacMode: ${opts.rbacMode}, defaulting to admin`);
-          opts.rbacMode = "";
-        }
-      }
 
       if (opts.registryInfo !== undefined) {
         console.info(`Including ${includedFiles.length} files in controller image.`);

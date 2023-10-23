@@ -18,7 +18,7 @@ npx pepr build --rbac-mode admin
 npx pepr build --rbac-mode scoped
 ```
 
-**Description:** The service account is provided just enough permissions to perform its required tasks, and no more. This mode is recommended for most use cases as it limits potential attack vectors and aligns with best practices in security. _The admission controller's primary mutating or validating action doesn't require a ClusterRole (as the request is not persisted or executed while passing through admission control), if you have a use case where the admission controller's logic involves reading other Kubernetes resources or taking additional actions beyond just validating, mutating, or watching the incoming request, appropriate RBAC settings should be reflected in the ClusterRole._
+**Description:** The service account is provided just enough permissions to perform its required tasks, and no more. This mode is recommended for most use cases as it limits potential attack vectors and aligns with best practices in security. _The admission controller's primary mutating or validating action doesn't require a ClusterRole (as the request is not persisted or executed while passing through admission control), if you have a use case where the admission controller's logic involves reading other Kubernetes resources or taking additional actions beyond just validating, mutating, or watching the incoming request, appropriate RBAC settings should be reflected in the ClusterRole. See how in [Updating the ClusterRole](#updating-the-clusterrole)._
 
 ## Debugging RBAC Issues
 
@@ -66,7 +66,7 @@ kubectl auth can-i create cm --as=system:serviceaccount:pepr-system:$SA -n pepr-
 # example output: no
 ```
 
-3. Describe the ServiceAccount
+3. Describe the ClusterRole
 
 ```bash
 SA=$(kubectl get deploy -n pepr-system -o=jsonpath='{range .items[0]}{.spec.template.spec.serviceAccountName}{"\n"}{end}')
@@ -84,3 +84,65 @@ PolicyRule:
   configmaps           []                 []              [watch]
   namespaces           []                 []              [watch]
 ```
+
+## Updating the ClusterRole
+
+As discussed in the [Modes](#modes) section, the admission controller's primary mutating or validating action doesn't require a ClusterRole (as the request is not persisted or executed while passing through admission control), if you have a use case where the admission controller's logic involves reading other Kubernetes resources or taking additional actions beyond just validating, mutating, or watching the incoming request, appropriate RBAC settings should be reflected in the ClusterRole.
+
+Step 1: Figure out the desired permissions. (`kubectl create clusterrole --help` is a good place to start figuring out the syntax)
+
+```bash
+ kubectl create clusterrole configMapApplier --verb=create,patch --resource=configmap --dry-run=client -oyaml
+
+ # example output
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: configMapApplier
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - patch
+```
+
+Step 2: Update the ClusterRole in the `dist` folder.
+
+```yaml
+...
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pepr-static-test
+rules:
+  - apiGroups:
+      - pepr.dev
+    resources:
+      - peprstores
+    verbs:
+      - create
+      - get
+      - patch
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+    verbs:
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - watch
+      - create # New
+      - patch  # New
+...
+```
+
+Step 3: Apply the updated configuration

@@ -257,7 +257,7 @@ describe("createRBACMap", () => {
 
     const expected = {
       "pepr.dev/v1/peprstore": {
-        verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+        verbs: ["create", "get", "patch", "watch"],
         plural: "peprstores",
       },
       "/v1/Namespace": { verbs: ["watch"], plural: "namespaces" },

@@ -80,7 +80,7 @@ export function storeRole(name: string): kind.Role {
     metadata: { name, namespace: "pepr-system" },
     rules: [
       {
-        apiGroups: ["pepr.dev/*"],
+        apiGroups: ["pepr.dev"],
         resources: ["peprstores"],
         resourceNames: [""],
         verbs: ["create", "get", "patch", "watch"],
