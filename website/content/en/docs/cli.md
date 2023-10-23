@@ -2,7 +2,6 @@
 title: CLI
 linkTitle: CLI
 ---
-
 # Pepr CLI
 
 ## `pepr init`
@@ -61,5 +60,5 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 **Options:**
 
 - `-r, --registry-info [<registry>/<username>]` - Registry Info: Image registry and username. Note: You must be signed into the registry
-- `-rm, --rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin)
+- `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin)
 - `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
