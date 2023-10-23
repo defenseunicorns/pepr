@@ -11,7 +11,7 @@ import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
   it("should successfully build the Pepr project with arguments", async () => {
-    execSync("npx pepr build -r gchr.io/defenseunicorns -rm scoped", { cwd: cwd, stdio: "inherit" });
+    execSync("npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped", { cwd: cwd, stdio: "inherit" });
   });
 
   it("should generate produce the K8s yaml file", async () => {
