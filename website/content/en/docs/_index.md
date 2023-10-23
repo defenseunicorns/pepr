@@ -6,4 +6,4 @@ menu: {main: {weight: 1}}
 
 ## What is Pepr?
 
-Pepr serves as both a Mutating and Validating Admission Webhook, providing a fluent API that enables on-the-fly resource mutation, as well as the definition and enforcement of policies on Kubernetes resources. It boasts a lightweight design and user-friendly fluent-api for seamless integration and operation.
+Pepr functions as both a Mutating and Validating Admission Webhook, offering a fluent API that facilitates real-time resource alterations and the establishment and enforcement of policies on Kubernetes resources. Its design is not only lightweight but also includes an integrated Kubernetes client, ensuring a straightforward and effective user experience for additional interactions with Kubernetes.
