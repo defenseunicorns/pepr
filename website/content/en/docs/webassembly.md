@@ -1,3 +1,8 @@
+---
+title: WebAssembly
+linkTitle: WebAssembly
+---
+
 # WASM Support: Running WebAssembly in Pepr Guide
 
 Pepr fully supports WebAssembly. Depending on the language used to generate the WASM, certain files can be too large to fit into a `Secret` or `ConfigMap`. Due to this limitation, users have the ability to incorporate `*.wasm` and any other essential files during the build phase, which are then embedded into the Pepr Controller container. This is achieved through adding an array of files to the `includedFiles` section under `pepr` in the `package.json`.
