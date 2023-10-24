@@ -1,3 +1,9 @@
+---
+title: Custom Resources
+linkTitle: Custom Resources
+---
+
+
 # Importing Custom Resources
 
 
