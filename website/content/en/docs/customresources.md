@@ -126,7 +126,7 @@ RegisterKind(ProxyConfig, {
 
 ## Using new types
 
-The generated types can be imported into Pepr, _there is no additional logic added for this to work_. 
+The generated types can be imported into Pepr directly, _there is no additional logic needed to make them to work_. 
 
 ```typescript
 import { Capability, K8s, Log, a, kind } from "pepr";
