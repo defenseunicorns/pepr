@@ -56,7 +56,7 @@ Attempting to load https://raw.githubusercontent.com/istio/istio/master/manifest
 ✅ Generated 23 files in the istio directory
 ```
 
-We observe that the `kubernetes-fluent-client` has produced the TypeScript types within the `crds` directory. These types can now be utilized in the Pepr module.
+Observe that the `kubernetes-fluent-client` has produced the TypeScript types within the `crds` directory. These types can now be utilized in the Pepr module.
 
 ```typescript
 user@workstation$  cat crds/proxyconfig-v1beta1.ts
