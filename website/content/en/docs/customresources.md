@@ -23,8 +23,7 @@ The `crd` commands expects a `[source]`, which can be a URL or local file contai
 The following example creates types for the Istio CRDs:
 
 ```bash
-┌─[cmwylie19@Cases-MacBook-Pro] - [/istio-integration] - [2023-10-16 05:46:24]
-└─[0] <> npx kubernetes-fluent-client crd https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml crds
+user@workstation$  npx kubernetes-fluent-client crd https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml crds
 
 Attempting to load https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml as a URL
 
