@@ -8,6 +8,7 @@ import { pickBy } from "ramda";
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
+import { OnSchedule, ISchedule } from "./schedule";
 import {
   Binding,
   BindingFilter,
@@ -35,6 +36,31 @@ export class Capability implements CapabilityExport {
   #bindings: Binding[] = [];
   #store = new Storage();
   #registered = false;
+
+  /**
+   * Run code on a schedule with the capability.
+   *
+   * @param schedule The schedule to run the code on
+   * @returns
+   */
+  OnSchedule: (schedule: ISchedule) => void = (schedule: ISchedule) => {
+    const { every, unit, run, startTime, stopTime, completions } = schedule;
+
+    // Create a new schedule
+    const newSchedule: ISchedule = {
+      every,
+      unit,
+      run,
+      startTime,
+      stopTime,
+      completions,
+      store: this.#store,
+    };
+    // only run in WatchController
+    if (process.env.PEPR_WATCH_MODE === "true") {
+      new OnSchedule(newSchedule);
+    }
+  };
 
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
