@@ -20,7 +20,7 @@ To produce a new type, employ the kubernetes-fluent-client CLI.
 npx kubernetes-fluent-client crd [source] [directory]
 ```
 
-The `crd` commands expects a `[source]`, which can be a URL or local file containing the `CustomResourceDefinition(s)`, and a `[directory]` where the generated code will live.
+The `crd` command expects a `[source]`, which can be a URL or local file containing the `CustomResourceDefinition(s)`, and a `[directory]` where the generated code will live.
 
 The following example creates types for the Istio CRDs:
 
