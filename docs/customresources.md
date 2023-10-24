@@ -1,7 +1,9 @@
 # Importing Custom Resources
 
 
-The [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client), empowers us to create TypeScript typings directly from Kubernetes Custom Resource Definitions (CRDs), resulting in file outputs. These generated files can be seamlessly incorporated into our Pepr capabilities, providing us with the ability to work with types derived from the CRDs. For instance, we can import Istio CRDs and manipulate them as though they were intrinsic Kubernetes resources.
+The [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client) supports the creation of TypeScript typings directly from Kubernetes Custom Resource Definitions (CRDs).  The files it generates can be directly incorporated into Pepr capabilities and provide a way to work with strongly-typed CRDs.
+
+For example (below), Istio CRDs can be imported and used as though they were intrinsic Kubernetes resources.
 
 
 ## Generating TypeScript Types from CRDs
