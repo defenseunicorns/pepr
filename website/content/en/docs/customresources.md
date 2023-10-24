@@ -14,7 +14,7 @@ For example (below), Istio CRDs can be imported and used as though they were int
 
 ## Generating TypeScript Types from CRDs
 
-To produce a new type, employ the kubernetes-fluent-client CLI.
+Using the kubernetes-fluent-client to produce a new type looks like this:
 
 ```bash
 npx kubernetes-fluent-client crd [source] [directory]
