@@ -29,15 +29,12 @@ export interface ISchedule {
   /**
    * The start time of the schedule
    */
-  startTime?: Date;
-  /**
-   * The start time of the schedule
-   */
-  stopTime?: Date;
+  startTime?: Date | undefined;
+
   /**
    * The number of times the schedule has run
    */
-  completions?: number;
+  completions?: number | undefined;
   /**
    * Tje intervalID to clear the interval
    */
@@ -52,26 +49,21 @@ export class OnSchedule implements ISchedule {
   unit: Unit;
   run: () => void;
   startTime?: Date;
-  stopTime?: Date;
   duration: number = 0;
 
   constructor(schedule: ISchedule) {
-    // only run in WatchController
-    // if (process.env.PEPR_WATCH_MODE === "true") {
     this.store = schedule.store;
     this.run = schedule.run;
 
     this.every = schedule.every;
     this.unit = schedule.unit;
     this.startTime = schedule?.startTime;
-    this.stopTime = schedule?.stopTime;
-    this.completions = schedule?.completions ?? 0;
+    this.completions = schedule?.completions;
 
-    // check store for existing schedule with same name
+    // Run the schedule 
     this.checkStore();
     this.getDuration();
     this.setupInterval();
-    // }
   }
 
   /**
@@ -79,22 +71,30 @@ export class OnSchedule implements ISchedule {
    * @returns
    */
   private checkStore() {
-    const result = this.store.getItem(this.run.toString());
+    const result = this.store.getItem(this.run.toString().slice(0,20));
     if (result !== null) {
-      const parsedResult = JSON.parse(result);
-      this.completions = parsedResult.completions;
-      this.startTime = parsedResult.startTime;
-      this.stopTime = parsedResult.stopTime;
-      this.every = parsedResult.every;
-      this.run = parsedResult.run;
-      this.unit = parsedResult.unit;
+        // careful not to override the values if they are already set and store is null
+      const storedSchedule = JSON.parse(result);
+      this.completions = storedSchedule?.completions || undefined;
+      this.startTime = storedSchedule?.startTime || undefined;
+      this.every = storedSchedule?.every;
+      this.run = storedSchedule?.run;
+      this.unit = storedSchedule?.unit;
     }
   }
 
-  private saveToStore() {}
-  private getDuration() {
-    // find milliseconds for the unit
+  private saveToStore() {
+    const schedule = {
+      completions: this.completions,
+      startTime: this.startTime,
+      every: this.every,
+      run: this.run,
+      unit: this.unit,
+    };
+    this.store.setItem(this.run.toString().slice(0,20), JSON.stringify(schedule));
+  }
 
+  private getDuration() {
     switch (this.unit) {
       case "seconds":
         this.duration = 1000;
@@ -109,6 +109,7 @@ export class OnSchedule implements ISchedule {
         throw new Error("Invalid time unit");
     }
   }
+
   private setupInterval() {
     // set timeout to run Interval is startTime is > now
     if (this.startTime !== undefined) {
@@ -121,26 +122,25 @@ export class OnSchedule implements ISchedule {
         this.start();
       }
     }
-
-    // store schedule info in store
   }
 
   private recordInterval() {
-    if (this.completions !== -1) {
-      this.getDuration();
-    }
-    if (this.stopTime !== undefined) {
-      const now = new Date();
-      const stopTime = new Date(this.stopTime);
-      if (now.getTime() >= stopTime.getTime()) {
-        this.stop();
-      }
-    }
+    this.store.setItem(this.run.toString().slice(0,20), JSON.stringify(this));
   }
 
   private start() {
     this.intervalId = setInterval(() => {
       this.run();
+      if(this.completions !== undefined && this.completions !== 0) {
+        this.completions -= 1;
+      }
+
+      this.recordInterval();
+
+      if (this.completions === 0) {
+        this.stop();
+      }
+      
     }, this.duration);
   }
 
@@ -148,7 +148,7 @@ export class OnSchedule implements ISchedule {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      this.store.removeItem(this.run.toString());
+      this.store.removeItem(this.run.toString().slice(0,20));
     }
   }
 }
