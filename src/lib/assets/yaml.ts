@@ -40,7 +40,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string = "") {
+export async function allYaml(assets: Assets, rbacMode: string) {
   const { name, tls, apiToken, path } = assets;
 
   const code = await fs.readFile(path);
