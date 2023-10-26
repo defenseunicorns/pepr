@@ -2,8 +2,10 @@
 # (https://gohugo.io/hosting-and-deployment/hosting-on-netlify/#configure-hugo-version-in-netlify)
 
 [build]
-  command = "cd website && npm ci && hugo --gc --minify"
-  publish = "website/public"
+
+  base    = "website"
+  command = "npm ci && hugo --gc --minify"
+  publish = "public"
 
   [build.environment]
     HUGO_VERSION = "0.119.0"
