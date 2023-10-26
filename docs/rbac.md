@@ -1,8 +1,3 @@
----
-title: RBAC
-linkTitle: RBAC
----
-
 # RBAC Modes
 
 During the build phase of Pepr (`npx pepr build --rbac-mode [admin|scoped]`), you have the option to specify the desired RBAC mode through specific flags. This allows fine-tuning the level of access granted based on requirements and preferences.

@@ -10,8 +10,8 @@ import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
-  it("should successfully build the Pepr project", async () => {
-    execSync("npx pepr build -r gchr.io/defenseunicorns", { cwd: cwd, stdio: "inherit" });
+  it("should successfully build the Pepr project with arguments", async () => {
+    execSync("npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped", { cwd: cwd, stdio: "inherit" });
   });
 
   it("should generate produce the K8s yaml file", async () => {
@@ -22,6 +22,18 @@ export function peprBuild() {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
   });
+
+  it("should generate a scoped ClusterRole", async () => {
+    await validateClusterRoleYaml();
+  });
+}
+
+async function validateClusterRoleYaml() {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+
+  expect(k8sYaml.includes(cr)).toEqual(true)
 }
 
 async function validateZarfYaml() {

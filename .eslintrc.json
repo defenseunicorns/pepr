@@ -18,7 +18,6 @@
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
     "src/templates",
-    "journey",
     "node_modules",
     "dist",
     "hack",
