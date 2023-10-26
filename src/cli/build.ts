@@ -10,6 +10,7 @@ import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
+import { Option } from "commander";
 
 const peprTS = "pepr.ts";
 
@@ -26,7 +27,12 @@ export default function (program: RootCmd) {
     )
     .option(
       "-r, --registry-info [<registry>/<username>]",
-      "Where to upload the image. Note: You must be signed into the registry",
+      "Registry Info: Image registry and username. Note: You must be signed into the registry",
+    )
+    .addOption(
+      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
+        .choices(["admin", "scoped"])
+        .default("admin"),
     )
     .action(async opts => {
       // Build the module
@@ -74,7 +80,7 @@ export default function (program: RootCmd) {
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const yamlPath = resolve("dist", yamlFile);
-      const yaml = await assets.allYaml();
+      const yaml = await assets.allYaml(opts.rbacMode);
 
       const zarfPath = resolve("dist", "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);
