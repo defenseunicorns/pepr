@@ -44,7 +44,7 @@ export class Capability implements CapabilityExport {
    * @returns
    */
   OnSchedule: (schedule: ISchedule) => void = (schedule: ISchedule) => {
-    const { every, unit, run, startTime, stopTime, completions } = schedule;
+    const { every, unit, run, startTime, completions } = schedule;
 
     // Create a new schedule
     const newSchedule: ISchedule = {
@@ -52,7 +52,6 @@ export class Capability implements CapabilityExport {
       unit,
       run,
       startTime,
-      stopTime,
       completions,
       store: this.#store,
     };
