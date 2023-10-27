@@ -1,6 +1,6 @@
 ### BUILD ###
 
-FROM docker.io/library/node:20-alpine as with-git
+FROM docker.io/library/node:21-alpine as with-git
 
 WORKDIR /app
 
