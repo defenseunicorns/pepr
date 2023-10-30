@@ -22,6 +22,7 @@ import {
   ValidateActionChain,
   WhenSelector,
 } from "./types";
+import { check } from "prettier";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -36,6 +37,7 @@ export class Capability implements CapabilityExport {
   #bindings: Binding[] = [];
   #store = new Storage();
   #registered = false;
+  #storeReady = false
 
   /**
    * Run code on a schedule with the capability.
@@ -44,7 +46,7 @@ export class Capability implements CapabilityExport {
    * @returns
    */
   OnSchedule: (schedule: ISchedule) => void = (schedule: ISchedule) => {
-    const { every, unit, run, startTime, completions } = schedule;
+    let { every, unit, run, store, startTime, completions } = schedule;
 
     // Create a new schedule
     const newSchedule: ISchedule = {
@@ -55,10 +57,13 @@ export class Capability implements CapabilityExport {
       completions,
       store: this.#store,
     };
-    // only run in WatchController
-    if (process.env.PEPR_WATCH_MODE === "true") {
-      new OnSchedule(newSchedule);
-    }
+
+    this.#store.onReady(() => {
+      if (process.env.PEPR_WATCH_MODE === "true") {
+        new OnSchedule(newSchedule);
+      }
+    })
+
   };
 
   /**

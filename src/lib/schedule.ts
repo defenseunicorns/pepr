@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Storage } from "./storage";
+import { check } from "prettier";
+import { PeprStore } from "./storage";
+import { K8s, kind } from "kubernetes-fluent-client";
 
-export enum Unit {
-  Second = "seconds",
-  Minute = "minutes",
-  Hour = "hours",
-}
-
+type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
+const STORE = 'schedule-secret'
 export interface ISchedule {
   /**
    * Storage for tracking schedule operations
    */
-  store: Storage;
+  store: PeprStore;
   /**
    * The value associated with a unit of time
    */
@@ -25,7 +23,7 @@ export interface ISchedule {
   /**
    * The code to run
    */
-  run: () => void;
+  run: (() => void);
   /**
    * The start time of the schedule
    */
@@ -43,43 +41,44 @@ export interface ISchedule {
 
 export class OnSchedule implements ISchedule {
   private intervalId: NodeJS.Timeout | null = null;
-  store: Storage;
-  completions?: number;
+  store: PeprStore;
+  completions?: number | undefined;
   every: number;
   unit: Unit;
-  run: () => void;
-  startTime?: Date;
-  duration: number = 0;
+  run!: (() => void);
+  startTime?: Date | undefined;
+  duration: number | undefined;
+  key: string;
 
   constructor(schedule: ISchedule) {
     this.store = schedule.store;
     this.run = schedule.run;
-
+    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, ' ').replace(/\s/g, '').trim()
     this.every = schedule.every;
     this.unit = schedule.unit;
     this.startTime = schedule?.startTime;
     this.completions = schedule?.completions;
 
-    // Run the schedule 
-    this.checkStore();
+    this.startInterval();
+  }
+
+  startInterval() {
+    this.checkStore()
     this.getDuration();
     this.setupInterval();
   }
-
   /**
    * checks the store for this schedule and sets the values if it exists
    * @returns
    */
-  private checkStore() {
-    const result = this.store.getItem(this.run.toString().slice(0,20));
-    if (result !== null) {
-        // careful not to override the values if they are already set and store is null
+  checkStore() {
+    const result = this.store.getItem(this.key);
+    if (result) {
       const storedSchedule = JSON.parse(result);
       this.completions = storedSchedule?.completions || undefined;
       this.startTime = storedSchedule?.startTime || undefined;
-      this.every = storedSchedule?.every;
-      this.run = storedSchedule?.run;
-      this.unit = storedSchedule?.unit;
+      this.duration = storedSchedule?.duration;
+      this.run = () => new Function(storedSchedule?.run);
     }
   }
 
@@ -87,23 +86,24 @@ export class OnSchedule implements ISchedule {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
-      every: this.every,
-      run: this.run,
-      unit: this.unit,
+      run: this.run.toString(),
+      duration: this.duration,
+      intervalID: this.intervalId
     };
-    this.store.setItem(this.run.toString().slice(0,20), JSON.stringify(schedule));
+    this.store.setItem(this.key, JSON.stringify(schedule))
   }
 
   private getDuration() {
     switch (this.unit) {
       case "seconds":
-        this.duration = 1000;
+        if(this.every < 10) throw new Error("10 Seconds in the smallest interval allowed")
+        this.duration = 1000 * this.every;
         break;
-      case "minutes":
-        this.duration = 1000 * 60;
+      case "minutes" || "minute":
+        this.duration = 1000 * 60 * this.every;
         break;
-      case "hours":
-        this.duration = 1000 * 60 * 60;
+      case "hours" || "hour":
+        this.duration = 1000 * 60 * 60 * this.every;
         break;
       default:
         throw new Error("Invalid time unit");
@@ -111,8 +111,7 @@ export class OnSchedule implements ISchedule {
   }
 
   private setupInterval() {
-    // set timeout to run Interval is startTime is > now
-    if (this.startTime !== undefined) {
+    if (this.startTime) {
       const now = new Date();
       const startTime = new Date(this.startTime);
       const delay = startTime.getTime() - now.getTime();
@@ -121,34 +120,39 @@ export class OnSchedule implements ISchedule {
       } else {
         this.start();
       }
+    } else {
+      this.start();
     }
   }
 
-  private recordInterval() {
-    this.store.setItem(this.run.toString().slice(0,20), JSON.stringify(this));
-  }
+
 
   private start() {
     this.intervalId = setInterval(() => {
-      this.run();
-      if(this.completions !== undefined && this.completions !== 0) {
-        this.completions -= 1;
-      }
-
-      this.recordInterval();
 
       if (this.completions === 0) {
         this.stop();
       }
-      
+
+      try {
+        this.run ? this.run() : undefined;
+      } catch(err){
+        console.error(err)
+      }
+
+
+      if (this.completions && this.completions !== 0) {
+        this.completions -= 1;
+      }
+      this.saveToStore();
     }, this.duration);
   }
 
   private stop() {
-    if (this.intervalId !== null) {
+    if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      this.store.removeItem(this.run.toString().slice(0,20));
     }
+    this.store.removeItem(this.key) 
   }
 }
