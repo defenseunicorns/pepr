@@ -3,7 +3,6 @@
 
 import { PeprStore } from "./storage";
 
-
 type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
 
 export interface ISchedule {
@@ -22,7 +21,7 @@ export interface ISchedule {
   /**
    * The code to run
    */
-  run: (() => void);
+  run: () => void;
   /**
    * The start time of the schedule
    */
@@ -44,7 +43,7 @@ export class OnSchedule implements ISchedule {
   completions?: number | undefined;
   every: number;
   unit: Unit;
-  run!: (() => void);
+  run!: () => void;
   startTime?: Date | undefined;
   duration: number | undefined;
   key: string;
@@ -53,7 +52,7 @@ export class OnSchedule implements ISchedule {
   constructor(schedule: ISchedule) {
     this.store = schedule.store;
     this.run = schedule.run;
-    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, ' ').replace(/\s/g, '').trim()
+    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, " ").replace(/\s/g, "").trim();
     this.every = schedule.every;
     this.unit = schedule.unit;
     this.startTime = schedule?.startTime;
@@ -63,7 +62,7 @@ export class OnSchedule implements ISchedule {
   }
 
   startInterval() {
-    this.checkStore()
+    this.checkStore();
     this.getDuration();
     this.setupInterval();
   }
@@ -91,17 +90,17 @@ export class OnSchedule implements ISchedule {
       startTime: this.startTime,
       lastTimestamp: new Date(),
     };
-    this.store.setItem(this.key, JSON.stringify(schedule))
+    this.store.setItem(this.key, JSON.stringify(schedule));
   }
 
-    /**
+  /**
    * Gets the durations in milliseconds
    * @returns
    */
   private getDuration() {
     switch (this.unit) {
       case "seconds":
-        if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed")
+        if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed");
         this.duration = 1000 * this.every;
         break;
       case "minutes" || "minute":
@@ -123,8 +122,8 @@ export class OnSchedule implements ISchedule {
     const now = new Date();
     let delay: number | undefined;
 
-    if(this.lastTimestamp && this.startTime) {
-      this.startTime=undefined;
+    if (this.lastTimestamp && this.startTime) {
+      this.startTime = undefined;
     }
 
     if (this.startTime) {
@@ -132,7 +131,7 @@ export class OnSchedule implements ISchedule {
       delay = startTime.getTime() - now.getTime();
     } else if (this.lastTimestamp && this.duration) {
       const lastTimestamp = new Date(this.lastTimestamp);
-      delay = this.duration - (now.getTime() - lastTimestamp.getTime())
+      delay = this.duration - (now.getTime() - lastTimestamp.getTime());
     }
 
     if (delay === undefined || delay <= 0) {
@@ -144,14 +143,12 @@ export class OnSchedule implements ISchedule {
     }
   }
 
-
   /**
    * Starts the interval
    * @returns
    */
   private start() {
     this.intervalId = setInterval(() => {
-
       if (this.completions === 0) {
         this.stop();
       }
@@ -159,9 +156,8 @@ export class OnSchedule implements ISchedule {
       try {
         this.run ? this.run() : undefined;
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
-
 
       if (this.completions && this.completions !== 0) {
         this.completions -= 1;
@@ -178,6 +174,6 @@ export class OnSchedule implements ISchedule {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.store.removeItem(this.key)
+    this.store.removeItem(this.key);
   }
 }

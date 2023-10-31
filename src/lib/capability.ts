@@ -53,15 +53,14 @@ export class Capability implements CapabilityExport {
       run,
       startTime,
       completions,
-      store
+      store,
     };
 
     this.#store.onReady(() => {
       if (process.env.PEPR_WATCH_MODE === "true") {
         new OnSchedule(newSchedule);
       }
-    })
-
+    });
   };
 
   /**
