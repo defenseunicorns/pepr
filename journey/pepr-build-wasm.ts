@@ -14,7 +14,7 @@ const outputDir = "dst";
 export function peprBuild() {
 
   it("should build artifacts in the dst folder", async () => {
-    execSync(`mkdir ${outputDir}`, { cwd, stdio: "inherit" });
+    await fs.mkdir(outputDir, { recursive: true })
   });
 
   it("should successfully build the Pepr project with arguments", async () => {
