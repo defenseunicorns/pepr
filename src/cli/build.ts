@@ -13,7 +13,7 @@ import { peprFormat } from "./format";
 import { Option } from "commander";
 
 const peprTS = "pepr.ts";
-
+let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 
 export default function (program: RootCmd) {
@@ -28,6 +28,10 @@ export default function (program: RootCmd) {
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
+    )
+    .option(
+      "-o, --output-dir [output directory]",
+      "Define where the contents of the dist folder go",
     )
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
@@ -79,10 +83,13 @@ export default function (program: RootCmd) {
       }
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
-      const yamlPath = resolve("dist", yamlFile);
+      if (opts.outputDir) {
+        outputDir = opts.outputDir;
+      }
+      const yamlPath = resolve(outputDir, yamlFile);
       const yaml = await assets.allYaml(opts.rbacMode);
 
-      const zarfPath = resolve("dist", "zarf.yaml");
+      const zarfPath = resolve(outputDir, "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);
 
       await fs.writeFile(yamlPath, yaml);
@@ -135,7 +142,7 @@ export async function loadModule(entryPoint = peprTS) {
     cfg,
     input,
     name,
-    path: resolve("dist", name),
+    path: resolve(outputDir, name),
     uuid,
   };
 }
@@ -201,7 +208,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
       ctxCfg.minify = false;
 
       // Preserve the original file name if we're using a custom entry point
-      ctxCfg.outfile = resolve("dist", basename(entryPoint, extname(entryPoint))) + ".js";
+      ctxCfg.outfile = resolve(outputDir, basename(entryPoint, extname(entryPoint))) + ".js";
 
       // Only bundle the NPM packages if we're not using a custom entry point
       ctxCfg.packages = "external";

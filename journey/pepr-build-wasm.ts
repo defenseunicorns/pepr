@@ -9,17 +9,22 @@ import { resolve } from "path";
 
 import { cwd } from "./entrypoint.test";
 
+// test npx pepr build -o dst
+const outputDir = "dst";
 export function peprBuild() {
+
+  execSync(`mkdir ${outputDir}`);
+
   it("should successfully build the Pepr project with arguments", async () => {
-    execSync("npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped", { cwd: cwd, stdio: "inherit" });
+    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, { cwd: cwd, stdio: "inherit" });
   });
 
   it("should generate produce the K8s yaml file", async () => {
-    await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
+    await fs.access(resolve(cwd, outputDir, "pepr-module-static-test.yaml"));
   });
 
   it("should generate a custom image in zarf.yaml", async () => {
-    await fs.access(resolve(cwd, "dist", "zarf.yaml"));
+    await fs.access(resolve(cwd, outputDir, "zarf.yaml"));
     await validateZarfYaml();
   });
 
@@ -30,7 +35,7 @@ export function peprBuild() {
 
 async function validateClusterRoleYaml() {
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const k8sYaml = await fs.readFile(resolve(cwd, outputDir, "pepr-module-static-test.yaml"), "utf8");
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
 
   expect(k8sYaml.includes(cr)).toEqual(true)
@@ -41,8 +46,8 @@ async function validateZarfYaml() {
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
 
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
-  const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
+  const k8sYaml = await fs.readFile(resolve(cwd, outputDir, "pepr-module-static-test.yaml"), "utf8");
+  const zarfYAML = await fs.readFile(resolve(cwd, outputDir, "zarf.yaml"), "utf8");
 
   // The expected image name
   const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:file:../pepr-${peprVer}.tgz`;
