@@ -78,7 +78,7 @@ export class OnSchedule implements ISchedule {
       this.completions = storedSchedule?.completions || undefined;
       this.startTime = storedSchedule?.startTime || undefined;
       this.duration = storedSchedule?.duration;
-      this.run = () => new Function(storedSchedule?.run);
+      this.run = eval(`(${storedSchedule?.run})`);
     }
   }
 
@@ -86,7 +86,7 @@ export class OnSchedule implements ISchedule {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
-      run: this.run.toString(),
+      run: this.run.toString().replace("import_pepr.",""),
       duration: this.duration,
       intervalID: this.intervalId
     };
