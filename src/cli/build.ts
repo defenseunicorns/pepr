@@ -11,6 +11,7 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
+import { createDirectoryIfNotExists } from "../lib/helpers";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -39,6 +40,15 @@ export default function (program: RootCmd) {
         .default("admin"),
     )
     .action(async opts => {
+      // assign custom output directory if provided
+      if (opts.outputDir) {
+        outputDir = opts.outputDir;
+        createDirectoryIfNotExists(outputDir).catch(error => {
+          console.error("Could not create output directory. ", error, " Using dist folder.");
+          outputDir = "dist";
+        });
+      }
+
       // Build the module
       const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
 
@@ -83,9 +93,7 @@ export default function (program: RootCmd) {
       }
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
-      if (opts.outputDir) {
-        outputDir = opts.outputDir;
-      }
+
       const yamlPath = resolve(outputDir, yamlFile);
       const yaml = await assets.allYaml(opts.rbacMode);
 

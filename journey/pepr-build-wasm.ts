@@ -10,7 +10,7 @@ import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
 
 // test npx pepr build -o dst
-const outputDir = "dst";
+const outputDir = "dist/pepr-test-module/child/folder";
 export function peprBuild() {
 
   it("should build artifacts in the dst folder", async () => {
