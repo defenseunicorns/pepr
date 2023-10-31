@@ -12,6 +12,7 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
+import { CapabilityExport } from "../types";
 
 export async function deploy(assets: Assets, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
@@ -56,18 +57,18 @@ export async function deploy(assets: Assets, webhookTimeout?: number) {
     throw new Error("No code provided");
   }
 
-  await setupRBAC(name);
+  await setupRBAC(name, assets.capabilities);
   await setupController(assets, code, hash);
   await setupWatcher(assets, hash);
 }
 
-async function setupRBAC(name: string) {
+async function setupRBAC(name: string, capabilities: CapabilityExport[]) {
   Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
   await K8s(kind.ClusterRoleBinding).Apply(crb);
 
   Log.info("Applying cluster role");
-  const cr = clusterRole(name);
+  const cr = clusterRole(name, capabilities);
   await K8s(kind.ClusterRole).Apply(cr);
 
   Log.info("Applying service account");

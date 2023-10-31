@@ -7,3 +7,5 @@
 ## Additional Docs
 ### [Pepr Cli](cli.md)
 ### [Metrics](metrics.md)
+### [RBAC](rbac.md)
+### [WebAssembly](webassembly.md)
