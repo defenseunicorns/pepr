@@ -32,7 +32,7 @@ export default function (program: RootCmd) {
     )
     .option(
       "-o, --output-dir [output directory]",
-      "Define where the contents of the dist folder go",
+      "Define where to place build output",
     )
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
