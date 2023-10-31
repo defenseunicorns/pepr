@@ -95,7 +95,6 @@ export class OnSchedule implements ISchedule {
 
   /**
    * Gets the durations in milliseconds
-   * @returns
    */
   private getDuration() {
     switch (this.unit) {
@@ -116,7 +115,6 @@ export class OnSchedule implements ISchedule {
 
   /**
    * Sets up the interval
-   * @returns
    */
   private setupInterval() {
     const now = new Date();
@@ -145,7 +143,6 @@ export class OnSchedule implements ISchedule {
 
   /**
    * Starts the interval
-   * @returns
    */
   private start() {
     this.intervalId = setInterval(() => {
