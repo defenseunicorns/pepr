@@ -49,6 +49,7 @@ export class OnSchedule implements ISchedule {
   startTime?: Date | undefined;
   duration: number | undefined;
   key: string;
+  lastTimestamp: Date | undefined;
 
   constructor(schedule: ISchedule) {
     this.store = schedule.store;
@@ -77,8 +78,7 @@ export class OnSchedule implements ISchedule {
       const storedSchedule = JSON.parse(result);
       this.completions = storedSchedule?.completions || undefined;
       this.startTime = storedSchedule?.startTime || undefined;
-      this.duration = storedSchedule?.duration;
-      this.run = eval(`(${storedSchedule?.run})`);
+      this.lastTimestamp = storedSchedule?.lastTimestamp || undefined;
     }
   }
 
@@ -86,9 +86,6 @@ export class OnSchedule implements ISchedule {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
-      run: this.run.toString().replace("import_pepr.",""),
-      duration: this.duration,
-      intervalID: this.intervalId
     };
     this.store.setItem(this.key, JSON.stringify(schedule))
   }
