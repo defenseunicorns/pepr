@@ -13,7 +13,7 @@ import { cwd } from "./entrypoint.test";
 const outputDir = "dst";
 export function peprBuild() {
 
-  execSync(`mkdir ${outputDir}`);
+  execSync(`mkdir ${outputDir}`,{ cwd });
 
   it("should successfully build the Pepr project with arguments", async () => {
     execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, { cwd: cwd, stdio: "inherit" });
