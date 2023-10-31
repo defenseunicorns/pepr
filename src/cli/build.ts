@@ -44,7 +44,7 @@ export default function (program: RootCmd) {
       if (opts.outputDir) {
         outputDir = opts.outputDir;
         createDirectoryIfNotExists(outputDir).catch(error => {
-          console.error("Could not create output directory. ", error, " Using dist folder.");
+          console.error("Could not create output directory. ", error, " Defaulting to dist folder.");
           outputDir = "dist";
         });
       }
