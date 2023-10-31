@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { check } from "prettier";
 import { PeprStore } from "./storage";
-import { K8s, kind } from "kubernetes-fluent-client";
+
 
 type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
-const STORE = 'schedule-secret'
+
 export interface ISchedule {
   /**
    * Storage for tracking schedule operations
@@ -69,7 +68,7 @@ export class OnSchedule implements ISchedule {
     this.setupInterval();
   }
   /**
-   * checks the store for this schedule and sets the values if it exists
+   * Checks the store for this schedule and sets the values if it exists
    * @returns
    */
   checkStore() {
@@ -82,18 +81,27 @@ export class OnSchedule implements ISchedule {
     }
   }
 
+  /**
+   * Saves the schedule to the store
+   * @returns
+   */
   private saveToStore() {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
+      lastTimestamp: new Date(),
     };
     this.store.setItem(this.key, JSON.stringify(schedule))
   }
 
+    /**
+   * Gets the durations in milliseconds
+   * @returns
+   */
   private getDuration() {
     switch (this.unit) {
       case "seconds":
-        if(this.every < 10) throw new Error("10 Seconds in the smallest interval allowed")
+        if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed")
         this.duration = 1000 * this.every;
         break;
       case "minutes" || "minute":
@@ -107,23 +115,40 @@ export class OnSchedule implements ISchedule {
     }
   }
 
+  /**
+   * Sets up the interval
+   * @returns
+   */
   private setupInterval() {
+    const now = new Date();
+    let delay: number | undefined;
+
+    if(this.lastTimestamp && this.startTime) {
+      this.startTime=undefined;
+    }
+
     if (this.startTime) {
-      const now = new Date();
       const startTime = new Date(this.startTime);
-      const delay = startTime.getTime() - now.getTime();
-      if (delay > 0) {
-        setTimeout(() => this.start(), delay);
-      } else {
-        this.start();
-      }
-    } else {
+      delay = startTime.getTime() - now.getTime();
+    } else if (this.lastTimestamp && this.duration) {
+      const lastTimestamp = new Date(this.lastTimestamp);
+      delay = this.duration - (now.getTime() - lastTimestamp.getTime())
+    }
+
+    if (delay === undefined || delay <= 0) {
       this.start();
+    } else {
+      setTimeout(() => {
+        this.start();
+      }, delay);
     }
   }
 
 
-
+  /**
+   * Starts the interval
+   * @returns
+   */
   private start() {
     this.intervalId = setInterval(() => {
 
@@ -133,7 +158,7 @@ export class OnSchedule implements ISchedule {
 
       try {
         this.run ? this.run() : undefined;
-      } catch(err){
+      } catch (err) {
         console.error(err)
       }
 
@@ -145,11 +170,14 @@ export class OnSchedule implements ISchedule {
     }, this.duration);
   }
 
+  /**
+   * Stops the interval
+   */
   private stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.store.removeItem(this.key) 
+    this.store.removeItem(this.key)
   }
 }

@@ -22,7 +22,6 @@ import {
   ValidateActionChain,
   WhenSelector,
 } from "./types";
-import { check } from "prettier";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -37,7 +36,6 @@ export class Capability implements CapabilityExport {
   #bindings: Binding[] = [];
   #store = new Storage();
   #registered = false;
-  #storeReady = false
 
   /**
    * Run code on a schedule with the capability.
@@ -46,7 +44,7 @@ export class Capability implements CapabilityExport {
    * @returns
    */
   OnSchedule: (schedule: ISchedule) => void = (schedule: ISchedule) => {
-    let { every, unit, run, store, startTime, completions } = schedule;
+    const { every, unit, run, store, startTime, completions } = schedule;
 
     // Create a new schedule
     const newSchedule: ISchedule = {
@@ -55,7 +53,7 @@ export class Capability implements CapabilityExport {
       run,
       startTime,
       completions,
-      store: this.#store,
+      store
     };
 
     this.#store.onReady(() => {
