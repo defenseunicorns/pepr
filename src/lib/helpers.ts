@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { CapabilityExport } from "./types";
+import { promises as fs } from "fs";
 
 type RBACMap = {
   [key: string]: {
@@ -37,3 +38,15 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
     return acc;
   }, {});
 };
+
+export async function createDirectoryIfNotExists(path: string) {
+  try {
+    await fs.access(path);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      await fs.mkdir(path, { recursive: true });
+    } else {
+      throw error;
+    }
+  }
+}
