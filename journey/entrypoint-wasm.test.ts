@@ -15,4 +15,4 @@ export const cwd = "pepr-test-module";
 // Allow 5 minutes for the tests to run
 jest.setTimeout(1000 * 60 * 5);
 
-describe("Journey: `npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o dst`", peprBuild);
+describe("Journey: `npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o dist/pepr-test-module/child/folder`", peprBuild);
