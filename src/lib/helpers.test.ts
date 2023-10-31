@@ -324,7 +324,6 @@ describe("createDirectoryIfNotExists function", () => {
 
     const directoryPath = "/pepr/pepr-test-module/asdf";
 
-    // Ensure the function throws an error with the expected code
     try {
       await createDirectoryIfNotExists(directoryPath);
     } catch (error) {
