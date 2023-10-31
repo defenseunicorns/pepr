@@ -30,10 +30,7 @@ export default function (program: RootCmd) {
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
-    .option(
-      "-o, --output-dir [output directory]",
-      "Define where to place build output",
-    )
+    .option("-o, --output-dir [output directory]", "Define where to place build output")
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
         .choices(["admin", "scoped"])
@@ -44,7 +41,11 @@ export default function (program: RootCmd) {
       if (opts.outputDir) {
         outputDir = opts.outputDir;
         createDirectoryIfNotExists(outputDir).catch(error => {
-          console.error("Could not create output directory. ", error, " Defaulting to dist folder.");
+          console.error(
+            "Could not create output directory. ",
+            error,
+            " Defaulting to dist folder.",
+          );
           outputDir = "dist";
         });
       }
