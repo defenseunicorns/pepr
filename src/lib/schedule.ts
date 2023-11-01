@@ -38,7 +38,7 @@ export interface ISchedule {
 }
 
 export class OnSchedule implements ISchedule {
-  private intervalId: NodeJS.Timeout | null = null;
+  intervalId: NodeJS.Timeout | null = null;
   store: PeprStore;
   completions?: number | undefined;
   every: number;
@@ -96,7 +96,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Gets the durations in milliseconds
    */
-  private getDuration() {
+  getDuration() {
     switch (this.unit) {
       case "seconds":
         if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed");
@@ -116,7 +116,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Sets up the interval
    */
-  private setupInterval() {
+  setupInterval() {
     const now = new Date();
     let delay: number | undefined;
 
@@ -125,8 +125,7 @@ export class OnSchedule implements ISchedule {
     }
 
     if (this.startTime) {
-      const startTime = new Date(this.startTime);
-      delay = startTime.getTime() - now.getTime();
+      delay = this.startTime.getTime() - now.getTime();
     } else if (this.lastTimestamp && this.duration) {
       const lastTimestamp = new Date(this.lastTimestamp);
       delay = this.duration - (now.getTime() - lastTimestamp.getTime());
@@ -144,7 +143,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Starts the interval
    */
-  private start() {
+  start() {
     this.intervalId = setInterval(() => {
       if (this.completions === 0) {
         this.stop();
@@ -166,7 +165,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Stops the interval
    */
-  private stop() {
+  stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
