@@ -34,7 +34,6 @@ export class MockStorage {
 }
 
 describe("OnSchedule", () => {
-  const cb = jest.fn();
   const mockSchedule: ISchedule = {
     store: new MockStorage(),
     every: 1,
@@ -67,18 +66,16 @@ describe("OnSchedule", () => {
     
 
 
-    onSchedule.startTime = new Date(new Date().getTime() + 1000000);
+    onSchedule.startTime = new Date(new Date().getTime() + 100000);
 
     onSchedule.setupInterval();
-    jest.advanceTimersByTime(6000000);
-
-    // expect(cb).toHaveBeenCalled();
+    jest.advanceTimersByTime(100000);
 
     const secondSchedule = new OnSchedule(mockSchedule);
     secondSchedule.completions = 9;
     secondSchedule.duration = 1;
     secondSchedule.start();
-    jest.advanceTimersByTime(6000000);
+    jest.advanceTimersByTime(100000);
     expect(secondSchedule.completions).toBe(0);
   });
 
