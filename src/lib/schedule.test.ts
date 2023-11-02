@@ -44,8 +44,8 @@ describe("OnSchedule", () => {
   afterEach(() => {
     jest.clearAllMocks();
     jest.useRealTimers();
-    jest.clearAllTimers()
-    jest.resetModules()
+    jest.clearAllTimers();
+    jest.resetModules();
   });
 
   beforeEach(() => {
@@ -61,10 +61,7 @@ describe("OnSchedule", () => {
     const onSchedule = new OnSchedule(mockSchedule);
     onSchedule.completions = 0;
 
-    
     onSchedule.start();
-    
-
 
     onSchedule.startTime = new Date(new Date().getTime() + 100000);
 
