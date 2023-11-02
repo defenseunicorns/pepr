@@ -77,7 +77,6 @@ describe("OnSchedule", () => {
     secondSchedule.start();
     jest.advanceTimersByTime(6000000);
     expect(secondSchedule.completions).toBe(0);
-
   });
 
   it("should stop, removeItem, and removeItem", () => {
@@ -96,8 +95,7 @@ describe("OnSchedule", () => {
   });
 
   it("should getDuration", () => {
-
-    // test second 
+    // test second
     mockSchedule.every = 10;
     mockSchedule.unit = "seconds";
     const onSchedule = new OnSchedule(mockSchedule);
@@ -120,7 +118,6 @@ describe("OnSchedule", () => {
     onSchedule.getDuration();
     expect(onSchedule.duration).toBe(600000);
 
-
     // test hour(s)
     onSchedule.unit = "hours";
     onSchedule.getDuration();
@@ -128,7 +125,6 @@ describe("OnSchedule", () => {
     onSchedule.unit = "hour";
     onSchedule.getDuration();
     expect(onSchedule.duration).toBe(36000000);
-
 
     // test invalid unit
     onSchedule.unit = "second";
@@ -179,12 +175,12 @@ describe("OnSchedule", () => {
     expect(onSchedule.lastTimestamp).toEqual(lastTimestamp);
 
     getItemSpy.mockReturnValue(
-        JSON.stringify({
-          lastTimestamp: undefined,
-        }),
-      );
-      onSchedule.checkStore();
-  
-      expect(onSchedule.lastTimestamp).toEqual(undefined);
+      JSON.stringify({
+        lastTimestamp: undefined,
+      }),
+    );
+    onSchedule.checkStore();
+
+    expect(onSchedule.lastTimestamp).toEqual(undefined);
   });
 });
