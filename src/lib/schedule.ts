@@ -58,13 +58,13 @@ export class OnSchedule implements ISchedule {
     this.startTime = schedule?.startTime;
     this.completions = schedule?.completions;
 
-    this.startInterval();
+    this.startInterval(this.run);
   }
 
-  startInterval() {
+  startInterval(cb: ()=>void) {
     this.checkStore();
     this.getDuration();
-    this.setupInterval();
+    this.setupInterval(cb);
   }
   /**
    * Checks the store for this schedule and sets the values if it exists
@@ -84,7 +84,7 @@ export class OnSchedule implements ISchedule {
    * Saves the schedule to the store
    * @returns
    */
-  private saveToStore() {
+  saveToStore() {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
@@ -116,7 +116,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Sets up the interval
    */
-  setupInterval() {
+  setupInterval(cb :()=> void) {
     const now = new Date();
     let delay: number | undefined;
 
@@ -132,10 +132,10 @@ export class OnSchedule implements ISchedule {
     }
 
     if (delay === undefined || delay <= 0) {
-      this.start();
+      cb();
     } else {
       setTimeout(() => {
-        this.start();
+        cb();
       }, delay);
     }
   }

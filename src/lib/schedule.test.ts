@@ -37,7 +37,7 @@ export class MockStorage {
 
 
 describe('OnSchedule', () => {
-
+    const cb = jest.fn()
     const mockSchedule: ISchedule = {
         store: new MockStorage(),
         every: 1,
@@ -47,6 +47,11 @@ describe('OnSchedule', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        jest.useRealTimers();
+    });
+
+    beforeEach(()=> {
+        jest.useFakeTimers()
     });
 
     it('should create an instance of OnSchedule', () => {
@@ -54,39 +59,46 @@ describe('OnSchedule', () => {
         expect(onSchedule).toBeInstanceOf(OnSchedule);
     });
 
-    it('should start the interval and call the run method', () => {
+    it('should startInterval, run, and start', () => {
         const onSchedule = new OnSchedule(mockSchedule);
-        jest.useFakeTimers();
 
-        onSchedule.startInterval();
+        onSchedule.startInterval(cb);
 
         jest.advanceTimersByTime(60000);
 
         expect(mockSchedule.run).toHaveBeenCalled();
-        jest.useRealTimers(); // Restore real timers
+
+        jest.spyOn(global, 'setTimeout');
+        onSchedule.startTime = new Date(new Date().getTime() + 1000000)
+     
+        onSchedule.startInterval(cb);
+        jest.advanceTimersByTime(10000);
+        expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(cb).toHaveBeenCalled()
     });
 
-    it('should stop the interval', () => {
+    it('should stop, removeItem, and removeItem', () => {
         const onSchedule = new OnSchedule(mockSchedule);
-        jest.useFakeTimers();
         const removeItemSpy = jest.spyOn(mockSchedule.store, 'removeItem');
-        onSchedule.startInterval();
+
+        onSchedule.startInterval(cb);
         onSchedule.stop();
 
         expect(onSchedule.intervalId).toBeNull();
         expect(removeItemSpy).toHaveBeenCalled();
-        jest.useRealTimers();
+
+        onSchedule.intervalId = 9 as unknown as NodeJS.Timeout
+        onSchedule.stop();
+        expect(onSchedule.intervalId).toBeNull();
     });
 
     it('should getDuration for seconds', () => {
-        // test seconds
         mockSchedule.every = 10;
         mockSchedule.unit = 'seconds';
         const onSchedule = new OnSchedule(mockSchedule);
         onSchedule.getDuration();
         expect(onSchedule.duration).toBe(10000);
 
-        // test error less than 10 seconds
         mockSchedule.every = 1;
         try {
             onSchedule.getDuration();
@@ -121,30 +133,32 @@ describe('OnSchedule', () => {
         mockSchedule.every = 10;
         const onSchedule = new OnSchedule(mockSchedule);
         onSchedule.lastTimestamp = new Date();
-        onSchedule.setupInterval();
+        onSchedule.setupInterval(()=>true);
         expect(onSchedule.startTime).toBeUndefined();
     });
 
-    it('should call setTimeout when delay is greater than 0', () => {
-
+    it('checkStore retrieves values from the store', () => {
+        mockSchedule.run = () => console.log("ran")
         const onSchedule = new OnSchedule(mockSchedule);
-        onSchedule.startTime = new Date(new Date().getTime() + 10000)
-        onSchedule.completions = 0;
-        
-            // Mock setTimeout to capture the callback function
-            const setTimeoutMock = jest.spyOn(global, 'setTimeout');
-        
+        const getItemSpy = jest.spyOn(mockSchedule.store, 'getItem')
+        let startTime = "doesn't"
+        let lastTimestamp = "matter"
+        getItemSpy.mockReturnValue(JSON.stringify({
+            completions: 1,
+            startTime,
+            lastTimestamp
+        }))
+        onSchedule.checkStore();
 
-            onSchedule.setupInterval();
-
-        
-            // Ensure that setTimeout was called with the correct parameters
-            expect(setTimeoutMock).toHaveBeenCalled();
-            expect(setTimeoutMock).toHaveBeenCalledWith(expect.any(Function), 10000);
-  
-        
-
-
+        expect(getItemSpy).toHaveBeenCalledTimes(1);
+      
+    
+        // // Verify that the values were correctly retrieved and assigned
+        expect(onSchedule.completions).toBe(1);
+        expect(onSchedule.startTime).toEqual(startTime);
+        expect(onSchedule.lastTimestamp).toEqual(lastTimestamp);
       });
+
+  
 
 });
