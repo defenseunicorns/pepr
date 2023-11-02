@@ -61,7 +61,7 @@ export class OnSchedule implements ISchedule {
     this.startInterval(this.run);
   }
 
-  startInterval(cb: ()=>void) {
+  startInterval(cb: () => void) {
     this.checkStore();
     this.getDuration();
     this.setupInterval(cb);
@@ -116,7 +116,7 @@ export class OnSchedule implements ISchedule {
   /**
    * Sets up the interval
    */
-  setupInterval(cb :()=> void) {
+  setupInterval(cb: () => void) {
     const now = new Date();
     let delay: number | undefined;
 
@@ -149,11 +149,7 @@ export class OnSchedule implements ISchedule {
         this.stop();
       }
 
-      try {
-        this.run ? this.run() : undefined;
-      } catch (err) {
-        console.error(err);
-      }
+      this.run();
 
       if (this.completions && this.completions !== 0) {
         this.completions -= 1;

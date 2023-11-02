@@ -2,163 +2,181 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest, afterEach } from "@jest/globals";
-import { OnSchedule, ISchedule } from './schedule';
-import { PeprStore, Storage, DataReceiver, Unsubscribe } from "./storage";
-import { on } from "events";
+import { OnSchedule, ISchedule } from "./schedule";
+import { Unsubscribe } from "./storage";
 
 export class MockStorage {
-    private storage: Record<string, string> = {};
+  private storage: Record<string, string> = {};
 
-    getItem(key: string): string | null {
-        return this.storage[key] || null;
-    }
+  getItem(key: string): string | null {
+    return this.storage[key] || null;
+  }
 
-    setItem(key: string, value: string): void {
-        this.storage[key] = value;
-    }
+  setItem(key: string, value: string): void {
+    this.storage[key] = value;
+  }
 
-    removeItem(key: string): void {
-        delete this.storage[key];
-    }
+  removeItem(key: string): void {
+    delete this.storage[key];
+  }
 
-    clear(): void {
-        this.storage = {};
-    }
+  clear(): void {
+    this.storage = {};
+  }
 
-    subscribe(): Unsubscribe {
-        return true as unknown as Unsubscribe;
-    }
+  subscribe(): Unsubscribe {
+    return true as unknown as Unsubscribe;
+  }
 
-    onReady(): void {
-        return;
-    }
+  onReady(): void {
+    return;
+  }
 }
 
+describe("OnSchedule", () => {
+  const cb = jest.fn();
+  const mockSchedule: ISchedule = {
+    store: new MockStorage(),
+    every: 1,
+    unit: "minutes",
+    run: jest.fn(),
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  it("should create an instance of OnSchedule", () => {
+    const onSchedule = new OnSchedule(mockSchedule);
+    expect(onSchedule).toBeInstanceOf(OnSchedule);
+  });
+
+  it("should startInterval, run, and start", () => {
+    const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.completions = 0;
+    onSchedule.start();
+
+    expect(mockSchedule.run).toHaveBeenCalled();
+
+    jest.spyOn(global, "setTimeout");
+    onSchedule.startTime = new Date(new Date().getTime() + 1000000);
+
+    onSchedule.setupInterval(cb);
+    jest.advanceTimersByTime(6000000);
+    expect(setTimeout).toHaveBeenCalledTimes(1);
+    expect(cb).toHaveBeenCalled();
+
+    const secondSchedule = new OnSchedule(mockSchedule);
+    secondSchedule.completions = 9;
+    secondSchedule.duration = 1;
+    secondSchedule.start();
+    jest.advanceTimersByTime(6000000);
+    expect(secondSchedule.completions).toBe(0);
+
+  });
+
+  it("should stop, removeItem, and removeItem", () => {
+    const onSchedule = new OnSchedule(mockSchedule);
+    const removeItemSpy = jest.spyOn(mockSchedule.store, "removeItem");
+
+    onSchedule.startInterval(cb);
+    onSchedule.stop();
+
+    expect(onSchedule.intervalId).toBeNull();
+    expect(removeItemSpy).toHaveBeenCalled();
+
+    onSchedule.intervalId = 9 as unknown as NodeJS.Timeout;
+    onSchedule.stop();
+    expect(onSchedule.intervalId).toBeNull();
+  });
+
+  it("should getDuration", () => {
+    mockSchedule.every = 10;
+    mockSchedule.unit = "seconds";
+    const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.getDuration();
+    expect(onSchedule.duration).toBe(10000);
+
+    // less than 10 seconds
+    mockSchedule.every = 1;
+    try {
+      onSchedule.getDuration();
+    } catch (e) {
+      expect(e).toEqual(new Error("10 Seconds in the smallest interval allowed"));
+    }
+
+    // test minutes
+    onSchedule.unit = "minutes";
+    onSchedule.getDuration();
+    expect(onSchedule.duration).toBe(600000);
 
 
-describe('OnSchedule', () => {
-    const cb = jest.fn()
-    const mockSchedule: ISchedule = {
-        store: new MockStorage(),
-        every: 1,
-        unit: 'minutes',
-        run: jest.fn(),
-    };
+    // test hours
+    onSchedule.unit = "hours";
+    onSchedule.getDuration();
+    expect(onSchedule.duration).toBe(36000000);
 
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.useRealTimers();
-    });
 
-    beforeEach(()=> {
-        jest.useFakeTimers()
-    });
+    // test invalid unit
+    onSchedule.unit = "second";
+    try {
+      onSchedule.getDuration();
+    } catch (e) {
+      expect(e).toEqual(new Error("Invalid time unit"));
+    }
+  });
 
-    it('should create an instance of OnSchedule', () => {
-        const onSchedule = new OnSchedule(mockSchedule);
-        expect(onSchedule).toBeInstanceOf(OnSchedule);
-    });
+  it("should setupInterval", () => {
+    // startTime and lastTimestamp should set startTime to undefined
+    mockSchedule.startTime = new Date();
+    mockSchedule.unit = "seconds";
+    mockSchedule.every = 10;
+    const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.lastTimestamp = new Date();
+    onSchedule.setupInterval(cb);
+    expect(onSchedule.startTime).toBeUndefined();
+  });
 
-    it('should startInterval, run, and start', () => {
-        const onSchedule = new OnSchedule(mockSchedule);
+  it("should call setItem during saveToStore", () => {
+    const setItemSpy = jest.spyOn(mockSchedule.store, "setItem");
+    const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.saveToStore();
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+  });
+  it("checkStore retrieves values from the store", () => {
+    mockSchedule.run = () => {};
+    const onSchedule = new OnSchedule(mockSchedule);
+    const getItemSpy = jest.spyOn(mockSchedule.store, "getItem");
+    const startTime = "doesn't";
+    const lastTimestamp = "matter";
+    getItemSpy.mockReturnValue(
+      JSON.stringify({
+        completions: 1,
+        startTime,
+        lastTimestamp,
+      }),
+    );
+    onSchedule.checkStore();
 
-        onSchedule.startInterval(cb);
+    expect(getItemSpy).toHaveBeenCalledTimes(1);
 
-        jest.advanceTimersByTime(60000);
+    // // Verify that the values were correctly retrieved and assigned
+    expect(onSchedule.completions).toBe(1);
+    expect(onSchedule.startTime).toEqual(startTime);
+    expect(onSchedule.lastTimestamp).toEqual(lastTimestamp);
 
-        expect(mockSchedule.run).toHaveBeenCalled();
-
-        jest.spyOn(global, 'setTimeout');
-        onSchedule.startTime = new Date(new Date().getTime() + 1000000)
-     
-        onSchedule.startInterval(cb);
-        jest.advanceTimersByTime(10000);
-        expect(setTimeout).toHaveBeenCalledTimes(1);
-        expect(cb).toHaveBeenCalled()
-    });
-
-    it('should stop, removeItem, and removeItem', () => {
-        const onSchedule = new OnSchedule(mockSchedule);
-        const removeItemSpy = jest.spyOn(mockSchedule.store, 'removeItem');
-
-        onSchedule.startInterval(cb);
-        onSchedule.stop();
-
-        expect(onSchedule.intervalId).toBeNull();
-        expect(removeItemSpy).toHaveBeenCalled();
-
-        onSchedule.intervalId = 9 as unknown as NodeJS.Timeout
-        onSchedule.stop();
-        expect(onSchedule.intervalId).toBeNull();
-    });
-
-    it('should getDuration for seconds', () => {
-        mockSchedule.every = 10;
-        mockSchedule.unit = 'seconds';
-        const onSchedule = new OnSchedule(mockSchedule);
-        onSchedule.getDuration();
-        expect(onSchedule.duration).toBe(10000);
-
-        mockSchedule.every = 1;
-        try {
-            onSchedule.getDuration();
-        } catch (e) {
-            expect(e).toEqual(new Error("10 Seconds in the smallest interval allowed"));
-        }
-
-        // test minutes
-        onSchedule.unit = 'minutes';
-        onSchedule.getDuration();
-        expect(onSchedule.duration).toBe(600000);
-
-        // test hours
-        onSchedule.unit = 'hours';
-        onSchedule.getDuration();
-        expect(onSchedule.duration).toBe(36000000);
-
-        // test invalid unit
-        onSchedule.unit = 'second';
-        try {
-            onSchedule.getDuration();
-        } catch (e) {
-            expect(e).toEqual(new Error("Invalid time unit"));
-        }
-
-    });
-
-    it('should setupInterval', () => {
-        // startTime and lastTimestamp should set startTime to undefined
-        mockSchedule.startTime = new Date();
-        mockSchedule.unit = 'seconds';
-        mockSchedule.every = 10;
-        const onSchedule = new OnSchedule(mockSchedule);
-        onSchedule.lastTimestamp = new Date();
-        onSchedule.setupInterval(()=>true);
-        expect(onSchedule.startTime).toBeUndefined();
-    });
-
-    it('checkStore retrieves values from the store', () => {
-        mockSchedule.run = () => console.log("ran")
-        const onSchedule = new OnSchedule(mockSchedule);
-        const getItemSpy = jest.spyOn(mockSchedule.store, 'getItem')
-        let startTime = "doesn't"
-        let lastTimestamp = "matter"
-        getItemSpy.mockReturnValue(JSON.stringify({
-            completions: 1,
-            startTime,
-            lastTimestamp
-        }))
-        onSchedule.checkStore();
-
-        expect(getItemSpy).toHaveBeenCalledTimes(1);
-      
-    
-        // // Verify that the values were correctly retrieved and assigned
-        expect(onSchedule.completions).toBe(1);
-        expect(onSchedule.startTime).toEqual(startTime);
-        expect(onSchedule.lastTimestamp).toEqual(lastTimestamp);
-      });
-
+    getItemSpy.mockReturnValue(
+        JSON.stringify({
+          lastTimestamp: undefined,
+        }),
+      );
+      onSchedule.checkStore();
   
-
+      expect(onSchedule.lastTimestamp).toEqual(undefined);
+  });
 });
