@@ -102,10 +102,12 @@ export class OnSchedule implements ISchedule {
         if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed");
         this.duration = 1000 * this.every;
         break;
-      case "minutes" || "minute":
+      case "minutes":
+      case "minute":
         this.duration = 1000 * 60 * this.every;
         break;
-      case "hours" || "hour":
+      case "hours":
+      case "hour":
         this.duration = 1000 * 60 * 60 * this.every;
         break;
       default:

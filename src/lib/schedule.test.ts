@@ -96,28 +96,36 @@ describe("OnSchedule", () => {
   });
 
   it("should getDuration", () => {
+
+    // test second 
     mockSchedule.every = 10;
     mockSchedule.unit = "seconds";
     const onSchedule = new OnSchedule(mockSchedule);
     onSchedule.getDuration();
     expect(onSchedule.duration).toBe(10000);
 
-    // less than 10 seconds
-    mockSchedule.every = 1;
+    // test second error
+    mockSchedule.every = 8;
     try {
       onSchedule.getDuration();
     } catch (e) {
       expect(e).toEqual(new Error("10 Seconds in the smallest interval allowed"));
     }
 
-    // test minutes
+    // test minute(s)
     onSchedule.unit = "minutes";
+    onSchedule.getDuration();
+    expect(onSchedule.duration).toBe(600000);
+    onSchedule.unit = "minute";
     onSchedule.getDuration();
     expect(onSchedule.duration).toBe(600000);
 
 
-    // test hours
+    // test hour(s)
     onSchedule.unit = "hours";
+    onSchedule.getDuration();
+    expect(onSchedule.duration).toBe(36000000);
+    onSchedule.unit = "hour";
     onSchedule.getDuration();
     expect(onSchedule.duration).toBe(36000000);
 
