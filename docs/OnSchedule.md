@@ -2,7 +2,7 @@
 
 The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`.  
 
-**NOTE -** To use this feature in dev node `npx pepr dev`, you MUST set `PEPR_WATCH_MODE="true"`. This is because the scheduler only runs in the watch controller not started in dev mode by default. `PEPR_WATCH_MODE="true" npx pepr dev`
+**Note -** To use this feature in dev node `npx pepr dev`, you MUST set `PEPR_WATCH_MODE="true"`. This is because the scheduler only runs in the watch controller not started in dev mode by default. `PEPR_WATCH_MODE="true" npx pepr dev`
 
 
 ## Usage
