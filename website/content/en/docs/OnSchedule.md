@@ -25,34 +25,48 @@ Create a schedule by calling the OnSchedule function with the following paramete
 
 ## Examples
 
-Run something once tomorrow at this time:
+Update the current-iteration ConfigMap every 10 seconds and use the store to track the current count:
 
 ```typescript
-const currentDate = new Date();
-
-const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
-const tomorrowAtThisTime = new Date(currentDate.getTime() + oneDayInMilliseconds);
-
-console.log(futureDate);
-
 OnSchedule({
-  startTime: tomorrowAtThisTime,
-  run: () => {
-     console.log("I created this yesterday")
+  store: Store,
+  every: 10,
+  unit: "seconds",
+  run: async () => {
+    Log.info("Wait 30 seconds and create/update a secret");
+    const count = Store.getItem("currentCount") || "0";
+    const countInt = parseInt(count) + 1;
+
+    try {
+      await K8s(kind.ConfigMap).Apply({
+        metadata: {
+          name: "current-interation",
+          namespace: "pepr-demo",
+        },
+        data: {
+          count: countInt.toString(),
+        },
+      });
+      Store.setItem("currentCount", countInt.toString());
+    } catch (error) {
+      Log.error(error, "Failed to apply ConfigMap using server-side apply.");
+    }
   },
-  completions: 1,
 });
 ```
 
-Update Token every 20 hours:
+Every 24 hours refresh the AWSToken, start in 30 seconds, and only run 3 times:
 
 ```typescript
+
 OnSchedule({
-  every: 20,
+  every: 24,
   unit: "hours",
-  run: () => {
-     UpdateAWSToken();
+  startTime: new Date(new Date().getTime() + 1000 * 30),
+  run: async () => {
+    await RefreshAWSToken();
   },
+  completions: 3,
 });
 ```
 
