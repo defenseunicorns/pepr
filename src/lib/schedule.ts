@@ -52,7 +52,7 @@ export class OnSchedule implements ISchedule {
   constructor(schedule: ISchedule) {
     this.store = schedule.store;
     this.run = schedule.run;
-    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, " ").replace(/\s/g, "").trim();
+    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, " ").replace(/\s/g, "").replace("()=>", "").trim();
     this.every = schedule.every;
     this.unit = schedule.unit;
     this.startTime = schedule?.startTime;
