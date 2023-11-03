@@ -65,8 +65,7 @@ export default function (program: RootCmd) {
               PEPR_API_TOKEN: webhook.apiToken,
               PEPR_PRETTY_LOGS: "true",
               SSL_KEY_PATH: "insecure-tls.key",
-              SSL_CERT_PATH: "insecure-tls.crt",
-              PEPR_WATCH_MODE: "true",
+              SSL_CERT_PATH: "insecure-tls.crt"
             },
             stdio: "inherit",
           });
