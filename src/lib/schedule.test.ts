@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest, afterEach } from "@jest/globals";
-import { OnSchedule, ISchedule } from "./schedule";
+import { OnSchedule, Schedule } from "./schedule";
 import { Unsubscribe } from "./storage";
 
 export class MockStorage {
@@ -34,8 +34,8 @@ export class MockStorage {
 }
 
 describe("OnSchedule", () => {
-  const mockSchedule: ISchedule = {
-    store: new MockStorage(),
+  const mockSchedule: Schedule = {
+    name: "test",
     every: 1,
     unit: "minutes",
     run: jest.fn(),
@@ -54,11 +54,13 @@ describe("OnSchedule", () => {
 
   it("should create an instance of OnSchedule", () => {
     const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.setStore(new MockStorage());
     expect(onSchedule).toBeInstanceOf(OnSchedule);
   });
 
   it("should startInterval, run, and start", () => {
     const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.setStore(new MockStorage());
     onSchedule.completions = 0;
 
     onSchedule.start();
@@ -69,6 +71,7 @@ describe("OnSchedule", () => {
     jest.advanceTimersByTime(100000);
 
     const secondSchedule = new OnSchedule(mockSchedule);
+    onSchedule.setStore(new MockStorage());
     secondSchedule.completions = 9;
     secondSchedule.duration = 1;
     secondSchedule.start();
@@ -78,7 +81,8 @@ describe("OnSchedule", () => {
 
   it("should stop, removeItem, and removeItem", () => {
     const onSchedule = new OnSchedule(mockSchedule);
-    const removeItemSpy = jest.spyOn(mockSchedule.store, "removeItem");
+    onSchedule.setStore(new MockStorage());
+    const removeItemSpy = jest.spyOn(onSchedule.store as MockStorage, "removeItem");
 
     onSchedule.startInterval();
     onSchedule.stop();
@@ -138,21 +142,25 @@ describe("OnSchedule", () => {
     mockSchedule.unit = "seconds";
     mockSchedule.every = 10;
     const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.setStore(new MockStorage());
     onSchedule.lastTimestamp = new Date();
     onSchedule.setupInterval();
     expect(onSchedule.startTime).toBeUndefined();
   });
 
   it("should call setItem during saveToStore", () => {
-    const setItemSpy = jest.spyOn(mockSchedule.store, "setItem");
     const onSchedule = new OnSchedule(mockSchedule);
+    onSchedule.setStore(new MockStorage());
+
+    const setItemSpy = jest.spyOn(onSchedule.store as MockStorage, "setItem");
     onSchedule.saveToStore();
     expect(setItemSpy).toHaveBeenCalledTimes(1);
   });
   it("checkStore retrieves values from the store", () => {
     mockSchedule.run = () => {};
     const onSchedule = new OnSchedule(mockSchedule);
-    const getItemSpy = jest.spyOn(mockSchedule.store, "getItem");
+    onSchedule.setStore(new MockStorage());
+    const getItemSpy = jest.spyOn(onSchedule.store as MockStorage, "getItem");
     const startTime = "doesn't";
     const lastTimestamp = "matter";
     getItemSpy.mockReturnValue(

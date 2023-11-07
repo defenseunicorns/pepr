@@ -5,11 +5,15 @@ import { PeprStore } from "./storage";
 
 type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
 
-export interface ISchedule {
+export interface Schedule {
   /**
-   * Storage for tracking schedule operations
+   * * The name of the store
    */
-  store: PeprStore;
+  name: string;
+  // /**
+  //  * Storage for tracking schedule operations
+  //  */
+  // store: PeprStore;
   /**
    * The value associated with a unit of time
    */
@@ -37,30 +41,32 @@ export interface ISchedule {
   intervalID?: NodeJS.Timeout;
 }
 
-export class OnSchedule implements ISchedule {
+export class OnSchedule implements Schedule {
   intervalId: NodeJS.Timeout | null = null;
-  store: PeprStore;
+  store: PeprStore | undefined;
+  name: string;
   completions?: number | undefined;
   every: number;
   unit: Unit;
   run!: () => void;
   startTime?: Date | undefined;
   duration: number | undefined;
-  key: string;
   lastTimestamp: Date | undefined;
 
-  constructor(schedule: ISchedule) {
-    this.store = schedule.store;
+  constructor(schedule: Schedule) {
+    // this.store = schedule.store;
+    this.name = schedule.name;
     this.run = schedule.run;
-    this.key = this.run.toString().slice(0, 20).replace(/\s+/g, " ").replace(/\s/g, "").replace("()=>", "").trim();
     this.every = schedule.every;
     this.unit = schedule.unit;
     this.startTime = schedule?.startTime;
     this.completions = schedule?.completions;
+  }
+  setStore(store: PeprStore) {
+    this.store = store;
 
     this.startInterval();
   }
-
   startInterval() {
     this.checkStore();
     this.getDuration();
@@ -71,7 +77,7 @@ export class OnSchedule implements ISchedule {
    * @returns
    */
   checkStore() {
-    const result = this.store.getItem(this.key);
+    const result = this.store && this.store.getItem(this.name);
     if (result) {
       const storedSchedule = JSON.parse(result);
       this.completions = storedSchedule?.completions || undefined;
@@ -90,7 +96,7 @@ export class OnSchedule implements ISchedule {
       startTime: this.startTime,
       lastTimestamp: new Date(),
     };
-    this.store.setItem(this.key, JSON.stringify(schedule));
+    this.store && this.store.setItem(this.name, JSON.stringify(schedule));
   }
 
   /**
@@ -168,6 +174,6 @@ export class OnSchedule implements ISchedule {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.store.removeItem(this.key);
+    this.store && this.store.removeItem(this.name);
   }
 }

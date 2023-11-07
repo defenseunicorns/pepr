@@ -16,6 +16,7 @@ const debounceBackoff = 5000;
 
 export class PeprControllerStore {
   #name: string;
+  #scheduleName: string;
   #stores: Record<string, Storage> = {};
   #sendDebounce: NodeJS.Timeout | undefined;
   #onReady?: () => void;
@@ -25,35 +26,48 @@ export class PeprControllerStore {
 
     // Setup Pepr State bindings
     this.#name = `pepr-${config.uuid}-store`;
+    this.#scheduleName = `pepr-${config.uuid}-schedule`;
 
     // Establish the store for each capability
-    for (const { name, registerStore } of capabilities) {
+    for (const { name, registerStore, registerScheduleStore } of capabilities) {
       // Register the store with the capability
       const { store } = registerStore();
+      const { scheduleStore } = registerScheduleStore();
 
       // Bind the store sender to the capability
-      store.registerSender(this.#send(name));
+      store.registerSender(this.#send(name,this.#name));
+      scheduleStore.registerSender(this.#send(name,this.#scheduleName));
 
       // Store the storage instance
       this.#stores[name] = store;
+      this.#stores[this.#scheduleName] = scheduleStore;
     }
 
     // Add a jitter to the Store creation to avoid collisions
     setTimeout(
       () =>
-        K8s(PeprStore)
-          .InNamespace(namespace)
-          .Get(this.#name)
-          // If the get succeeds, setup the watch
-          .then(this.#setupWatch)
-          // Otherwise, create the resource
-          .catch(this.#createStoreResource),
+        Promise.all([
+          K8s(PeprStore)
+            .InNamespace(namespace)
+            .Get(this.#name)
+            // If the get succeeds, setup the watch
+            .then(() => this.#setupWatch(this.#name))
+            // Otherwise, create the resource
+            .catch(e => this.#createStoreResource(this.#name, e)),
+          K8s(PeprStore)
+            .InNamespace(namespace)
+            .Get(this.#scheduleName)
+            // If the get succeeds, setup the watch
+            .then(() => this.#setupWatch(this.#scheduleName))
+            // Otherwise, create the resource
+            .catch(e => this.#createStoreResource(this.#scheduleName, e)),
+        ]),
       Math.random() * 3000,
     );
   }
 
-  #setupWatch = () => {
-    void K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
+  #setupWatch = (name: string) => {
+    void K8s(PeprStore, { name, namespace }).Watch(this.#receive);
   };
 
   #receive = (store: PeprStore) => {
@@ -97,7 +111,8 @@ export class PeprControllerStore {
     this.#sendDebounce = setTimeout(debounced, debounceBackoff);
   };
 
-  #send = (capabilityName: string) => {
+  // DEBUG HERE ----> updates are not being registered in the pepr store 
+  #send = (capabilityName: string, storeName: string) => {
     const sendCache: Record<string, Operation> = {};
 
     // Load the sendCache with patch operations
@@ -144,8 +159,11 @@ export class PeprControllerStore {
       }
 
       try {
+        // DEBUG HERE ----> 
+        // Update are not getting sent to the Store *****
+
         // Send the patch to the cluster
-        await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        await K8s(PeprStore, { namespace, name: storeName }).Patch(payload);
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
@@ -172,14 +190,14 @@ export class PeprControllerStore {
     return sender;
   };
 
-  #createStoreResource = async (e: unknown) => {
+  #createStoreResource = async (name: string, e: unknown) => {
     Log.info(`Pepr store not found, creating...`);
     Log.debug(e);
 
     try {
       await K8s(PeprStore).Apply({
         metadata: {
-          name: this.#name,
+          name,
           namespace,
         },
         data: {
@@ -189,7 +207,7 @@ export class PeprControllerStore {
       });
 
       // Now that the resource exists, setup the watch
-      this.#setupWatch();
+      this.#setupWatch(name);
     } catch (err) {
       Log.error(err, "Failed to create Pepr store");
     }
