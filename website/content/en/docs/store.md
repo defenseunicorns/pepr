@@ -1,3 +1,8 @@
+---
+title: Store
+linkTitle: Store
+---
+
 # Pepr Store: A Lightweight Key-Value Store for Pepr Modules
 
 The nature of admission controllers and general watch operations (the `Mutate`, `Validate` and `Watch` actions in Pepr) make some types of complex and long-running operations difficult. There are also times when you need to share data between different actions. While you could manually create your own K8s resources and manage their cleanup, this can be very hard to track and keep performant at scale. 
