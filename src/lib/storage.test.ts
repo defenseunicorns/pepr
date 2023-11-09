@@ -21,11 +21,11 @@ describe("Storage", () => {
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
   });
 
-  it("should set an item and wait", async () => {
+  it("should set an item and wait", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
 
-    await storage.setItemAndWait("key1", "value1");
+    storage.setItemAndWait("key1", "value1");
 
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
   });
