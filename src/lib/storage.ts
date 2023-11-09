@@ -97,6 +97,8 @@ export class Storage implements PeprStore {
    * @returns 
    */
   setItemAndWait = (key: string, value: string) => {
+    Log.warn(`setItemAndWait should only be used on a Watch`);
+    this.#dispatchUpdate("add", [key], value);
     return new Promise<void>(resolve => {
       const unsubscribe = this.subscribe(data =>{
         if(data[key] === value) {
