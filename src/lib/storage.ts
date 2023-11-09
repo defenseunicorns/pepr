@@ -89,25 +89,25 @@ export class Storage implements PeprStore {
   };
 
   /**
-   * Creates a promise and subscribes to the store, the promise resolves when 
+   * Creates a promise and subscribes to the store, the promise resolves when
    * the key and value are seen in the store.
-   * 
+   *
    * @param key - The key to add into the store
    * @param value - The value of the key
-   * @returns 
+   * @returns
    */
   setItemAndWait = (key: string, value: string) => {
     Log.warn(`setItemAndWait should only be used on a Watch`);
     this.#dispatchUpdate("add", [key], value);
     return new Promise<void>(resolve => {
-      const unsubscribe = this.subscribe(data =>{
-        if(data[key] === value) {
+      const unsubscribe = this.subscribe(data => {
+        if (data[key] === value) {
           unsubscribe();
           resolve();
         }
-      })
-    })
-  }
+      });
+    });
+  };
 
   subscribe = (subscriber: DataReceiver) => {
     const idx = this.#subscriberId++;
