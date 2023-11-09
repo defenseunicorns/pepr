@@ -21,6 +21,15 @@ describe("Storage", () => {
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
   });
 
+  it("should set an item and wait", async () => {
+    const mockSender = jest.fn();
+    storage.registerSender(mockSender);
+
+    await storage.setItemAndWait("key1", "value1");
+
+    expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
+  });
+
   it("should remove an item", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
