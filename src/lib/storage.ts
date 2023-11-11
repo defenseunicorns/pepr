@@ -40,6 +40,12 @@ export interface PeprStore {
    * Register a function to be called when the store is ready.
    */
   onReady(callback: DataReceiver): void;
+
+  /**
+   * Sets the value of the pair identified by key to value, creating a new key/value pair if none existed for key previously.
+   * Resolves when the key/value show up in the store.
+   */
+  setItemAndWait(key: string, value: string): Promise<void>;
 }
 
 /**
