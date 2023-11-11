@@ -69,10 +69,7 @@ When(a.Namespace)
     }
 
     // You can share data between actions using the Store, including between different types of actions
-    Store.setItemAndWait(
-      "watch-data",
-      "This data was stored by a Watch Action.",
-    );
+    Store.setItem("watch-data", "This data was stored by a Watch Action.");
   });
 
 /**
