@@ -36,7 +36,7 @@ const unsubscribe = Store.subscribe(data => {
 
 - `getItem(key: string)`: Retrieves a value by its key. Returns `null` if the key doesn't exist.
 - `setItem(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist.
-- `setItemAndWait(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist. Returns a promise when the new key and value show up in the store.
+- `setItemAndWait(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist. Returns a promise when the new key and value show up in the store. Should only be used on a `Watch` to avoid [timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
 - `removeItem(key: string)`: Deletes a key-value pair by its key.
 - `clear()`: Clears all key-value pairs from the store.
 - `subscribe(listener: DataReceiver)`: Subscribes to store updates.
