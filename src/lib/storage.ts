@@ -10,6 +10,7 @@ export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
 export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
+const MAX_WAIT_TIME = 15000;
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
@@ -103,14 +104,18 @@ export class Storage implements PeprStore {
    * @returns
    */
   setItemAndWait = (key: string, value: string) => {
-    Log.warn(`setItemAndWait should only be used on a Watch`);
     this.#dispatchUpdate("add", [key], value);
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
         if (data[key] === value) {
           unsubscribe();
           resolve();
         }
+        // If promise has not resolved before MAX_WAIT_TIME reject
+        setTimeout(() => {
+          unsubscribe();
+          reject();
+        }, MAX_WAIT_TIME);
       });
     });
   };
