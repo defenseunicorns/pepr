@@ -23,18 +23,17 @@ Create a schedule by calling the OnSchedule function with the following paramete
 
 ## Examples
 
-Update the current-iteration ConfigMap every 10 seconds and use the store to track the current count:
+Update the curr ConfigMap every 10 seconds and use the store to track the current count:
 
 ```typescript
-let curr = 0;
+let curr = 0 
 OnSchedule({
     name: "hello-pepr",
-    every: 10,
+    every: 15,
     unit: "seconds",
     run: async () => {
       Log.info("Wait 15 seconds and create/update a cm");
-      const count = Store.getItem("currentCount") || "0";
-      curr ++
+      curr++;
   
       try {
         await K8s(kind.ConfigMap).Apply({
