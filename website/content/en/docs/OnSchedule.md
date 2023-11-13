@@ -27,7 +27,7 @@ Create a schedule by calling the OnSchedule function with the following paramete
 
 ## Examples
 
-Update the current-iteration ConfigMap every 15 seconds and use the store to track the current count:
+Update the curr ConfigMap every 15 seconds and use the store to track the current count:
 
 ```typescript
 let curr = 0 
