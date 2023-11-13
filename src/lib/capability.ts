@@ -133,10 +133,10 @@ export class Capability implements CapabilityExport {
    * @param store
    */
   registerScheduleStore = () => {
-    Log.info(`Registering schedule store for sch-${this.#name}`);
+    Log.info(`Registering schedule store for ${this.#name}`);
 
     if (this.#scheduleRegistered) {
-      throw new Error(`Store already registered for sch-${this.#name}`);
+      throw new Error(`Schedule store already registered for ${this.#name}`);
     }
 
     this.#scheduleRegistered = true;

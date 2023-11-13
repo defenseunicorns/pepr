@@ -74,9 +74,9 @@ export class OnSchedule implements Schedule {
     const result = this.store && this.store.getItem(this.name);
     if (result) {
       const storedSchedule = JSON.parse(result);
-      this.completions = storedSchedule?.completions || undefined;
-      this.startTime = storedSchedule?.startTime || undefined;
-      this.lastTimestamp = storedSchedule?.lastTimestamp || undefined;
+      this.completions = storedSchedule?.completions;
+      this.startTime = storedSchedule?.startTime;
+      this.lastTimestamp = storedSchedule?.lastTimestamp;
     }
   }
 

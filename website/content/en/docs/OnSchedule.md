@@ -34,10 +34,10 @@ Update the current-iteration ConfigMap every 10 seconds and use the store to tra
 OnSchedule({
   name: "counter-demo",
   store: Store,
-  every: 10,
+  every: 20,
   unit: "seconds",
   run: async () => {
-    Log.info("Every 10 seconds create/update a ConfigMap");
+    Log.info("Every 20 seconds create/update a ConfigMap");
     const count = Store.getItem("currentCount") || "0";
     const countInt = parseInt(count) + 1;
 

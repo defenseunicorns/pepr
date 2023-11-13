@@ -26,32 +26,33 @@ Create a schedule by calling the OnSchedule function with the following paramete
 Update the current-iteration ConfigMap every 10 seconds and use the store to track the current count:
 
 ```typescript
+let curr = 0;
 OnSchedule({
-  name: "counter-demo",
-  store: Store,
-  every: 10,
-  unit: "seconds",
-  run: async () => {
-    Log.info("Every 10 seconds create/update a ConfigMap");
-    const count = Store.getItem("currentCount") || "0";
-    const countInt = parseInt(count) + 1;
-
-    try {
-      await K8s(kind.ConfigMap).Apply({
-        metadata: {
-          name: "current-interation",
-          namespace: "pepr-demo",
-        },
-        data: {
-          count: countInt.toString(),
-        },
-      });
-      Store.setItem("currentCount", countInt.toString());
-    } catch (error) {
-      Log.error(error, "Failed to apply ConfigMap using server-side apply.");
-    }
-  },
-});
+    name: "hello-pepr",
+    every: 10,
+    unit: "seconds",
+    run: async () => {
+      Log.info("Wait 15 seconds and create/update a cm");
+      const count = Store.getItem("currentCount") || "0";
+      curr ++
+  
+      try {
+        await K8s(kind.ConfigMap).Apply({
+          metadata: {
+            name: "current-interation",
+            namespace: "default",
+          },
+          data: {
+            count: `${curr}`,
+          },
+        });
+        Store.setItem("currentCount", `${curr}`);
+      } catch (error) {
+        // You can use the Log object to log messages to the Pepr controller pod
+        Log.error(error, "Failed to apply ConfigMap using server-side apply.");
+      }
+    },
+  });
 ```
 
 Every 24 hours refresh the AWSToken, start in 30 seconds, and only run 3 times:
