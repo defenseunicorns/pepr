@@ -13,6 +13,8 @@ The `OnSchedule` feature allows you to schedule and automate the execution of sp
 
 Create a schedule by calling the OnSchedule function with the following parameters:
 
+**name** - The unique name of the schedule.
+
 **every** - (Optional) An integer that represents the frequency of the schedule.
 
 **unit** - (Optional) A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`).  
