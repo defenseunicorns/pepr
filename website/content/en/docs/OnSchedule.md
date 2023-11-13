@@ -30,11 +30,12 @@ Update the current-iteration ConfigMap every 10 seconds and use the store to tra
 
 ```typescript
 OnSchedule({
+  name: "counter-demo",
   store: Store,
   every: 10,
   unit: "seconds",
   run: async () => {
-    Log.info("Wait 30 seconds and create/update a secret");
+    Log.info("Every 10 seconds create/update a ConfigMap");
     const count = Store.getItem("currentCount") || "0";
     const countInt = parseInt(count) + 1;
 
@@ -61,6 +62,7 @@ Every 24 hours refresh the AWSToken, start in 30 seconds, and only run 3 times:
 ```typescript
 
 OnSchedule({
+  name: "refresh-aws-token",
   every: 24,
   unit: "hours",
   startTime: new Date(new Date().getTime() + 1000 * 30),

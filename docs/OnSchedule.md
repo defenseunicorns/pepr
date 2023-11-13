@@ -1,10 +1,9 @@
 # OnSchedule
 
-The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`.  
-
+The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`.
+  
 > **Note -** To use this feature in dev node `npx pepr dev`, you MUST set `PEPR_WATCH_MODE="true"`. This is because the scheduler only runs in the watch controller not started in dev mode by default. `PEPR_WATCH_MODE="true" npx pepr dev`
-
-
+  
 ## Usage
 
 Create a schedule by calling the OnSchedule function with the following parameters:
@@ -26,11 +25,12 @@ Update the current-iteration ConfigMap every 10 seconds and use the store to tra
 
 ```typescript
 OnSchedule({
+  name: "counter-demo",
   store: Store,
   every: 10,
   unit: "seconds",
   run: async () => {
-    Log.info("Wait 30 seconds and create/update a secret");
+    Log.info("Every 10 seconds create/update a ConfigMap");
     const count = Store.getItem("currentCount") || "0";
     const countInt = parseInt(count) + 1;
 
@@ -57,6 +57,7 @@ Every 24 hours refresh the AWSToken, start in 30 seconds, and only run 3 times:
 ```typescript
 
 OnSchedule({
+  name: "refresh-aws-token",
   every: 24,
   unit: "hours",
   startTime: new Date(new Date().getTime() + 1000 * 30),
