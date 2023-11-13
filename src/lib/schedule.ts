@@ -10,10 +10,6 @@ export interface Schedule {
    * * The name of the store
    */
   name: string;
-  // /**
-  //  * Storage for tracking schedule operations
-  //  */
-  // store: PeprStore;
   /**
    * The value associated with a unit of time
    */
@@ -44,7 +40,7 @@ export interface Schedule {
 export class OnSchedule implements Schedule {
   intervalId: NodeJS.Timeout | null = null;
   store: PeprStore | undefined;
-  name: string;
+  name!: string;
   completions?: number | undefined;
   every: number;
   unit: Unit;
@@ -54,7 +50,6 @@ export class OnSchedule implements Schedule {
   lastTimestamp: Date | undefined;
 
   constructor(schedule: Schedule) {
-    // this.store = schedule.store;
     this.name = schedule.name;
     this.run = schedule.run;
     this.every = schedule.every;
@@ -64,7 +59,6 @@ export class OnSchedule implements Schedule {
   }
   setStore(store: PeprStore) {
     this.store = store;
-
     this.startInterval();
   }
   startInterval() {
@@ -95,6 +89,7 @@ export class OnSchedule implements Schedule {
       completions: this.completions,
       startTime: this.startTime,
       lastTimestamp: new Date(),
+      name: this.name
     };
     this.store && this.store.setItem(this.name, JSON.stringify(schedule));
   }

@@ -57,7 +57,6 @@ export class Capability implements CapabilityExport {
       run,
       startTime,
       completions,
-      // store: store || this.#store,
     };
 
     this.#scheduleStore.onReady(() => {

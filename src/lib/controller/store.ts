@@ -30,17 +30,18 @@ export class PeprControllerStore {
 
     // Establish the store for each capability
     for (const { name, registerStore, registerScheduleStore } of capabilities) {
+      const scheduleName = `${name}-schedule`;
       // Register the store with the capability
       const { store } = registerStore();
       const { scheduleStore } = registerScheduleStore();
 
       // Bind the store sender to the capability
-      store.registerSender(this.#send(name,this.#name));
-      scheduleStore.registerSender(this.#send(name,this.#scheduleName));
+      store.registerSender(this.#send(name, this.#name));
+      scheduleStore.registerSender(this.#send(scheduleName, this.#scheduleName));
 
       // Store the storage instance
       this.#stores[name] = store;
-      this.#stores[this.#scheduleName] = scheduleStore;
+      this.#stores[scheduleName] = scheduleStore;
     }
 
     // Add a jitter to the Store creation to avoid collisions
@@ -111,7 +112,6 @@ export class PeprControllerStore {
     this.#sendDebounce = setTimeout(debounced, debounceBackoff);
   };
 
-  // DEBUG HERE ----> updates are not being registered in the pepr store 
   #send = (capabilityName: string, storeName: string) => {
     const sendCache: Record<string, Operation> = {};
 
@@ -159,7 +159,7 @@ export class PeprControllerStore {
       }
 
       try {
-        // DEBUG HERE ----> 
+        // DEBUG HERE ---->
         // Update are not getting sent to the Store *****
 
         // Send the patch to the cluster
