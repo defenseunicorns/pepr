@@ -38,6 +38,7 @@ export class Capability implements CapabilityExport {
   #scheduleStore = new Storage();
   #registered = false;
   #scheduleRegistered = false;
+  hasSchedule: boolean;
 
   /**
    * Run code on a schedule with the capability.
@@ -46,24 +47,26 @@ export class Capability implements CapabilityExport {
    * @returns
    */
   OnSchedule: (schedule: Schedule) => void = (schedule: Schedule) => {
-    // const { every, unit, run, store, startTime, completions } = schedule;
     const { name, every, unit, run, startTime, completions } = schedule;
 
-    // Create a new schedule
-    const newSchedule: Schedule = {
-      name,
-      every,
-      unit,
-      run,
-      startTime,
-      completions,
-    };
+    if (process.env.PEPR_WATCH_MODE === "true") {
+      // Only create/watch schedule store if necessary
+      this.hasSchedule = true;
 
-    this.#scheduleStore.onReady(() => {
-      if (process.env.PEPR_WATCH_MODE === "true") {
+      // Create a new schedule
+      const newSchedule: Schedule = {
+        name,
+        every,
+        unit,
+        run,
+        startTime,
+        completions,
+      };
+
+      this.#scheduleStore.onReady(() => {
         new OnSchedule(newSchedule).setStore(this.#scheduleStore);
-      }
-    });
+      });
+    }
   };
 
   /**
@@ -118,6 +121,7 @@ export class Capability implements CapabilityExport {
     this.#name = cfg.name;
     this.#description = cfg.description;
     this.#namespaces = cfg.namespaces;
+    this.hasSchedule = false;
 
     Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);

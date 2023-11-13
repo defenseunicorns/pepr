@@ -89,7 +89,7 @@ export class OnSchedule implements Schedule {
       completions: this.completions,
       startTime: this.startTime,
       lastTimestamp: new Date(),
-      name: this.name
+      name: this.name,
     };
     this.store && this.store.setItem(this.name, JSON.stringify(schedule));
   }
