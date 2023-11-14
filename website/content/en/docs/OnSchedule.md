@@ -2,6 +2,7 @@
 title: OnSchedule
 linkTitle: OnSchedule
 ---
+
 # OnSchedule
 
 The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`. 
@@ -36,33 +37,31 @@ Update the curr ConfigMap every 15 seconds and use the store to track the curren
 ```typescript
 let curr = 0 
 OnSchedule({
-    name: "hello-pepr",
-    every: 15,
+    name: "hello-interval",
+    every: 30,
     unit: "seconds",
     run: async () => {
-      Log.info("Wait 15 seconds and create/update a cm");
-      curr++;
-  
+      Log.info("Wait 30 seconds and create/update a ConfigMap");
+
       try {
         await K8s(kind.ConfigMap).Apply({
           metadata: {
-            name: "current-interation",
+            name: "last-updated",
             namespace: "default",
           },
           data: {
-            count: `${curr}`,
+            count: `${new Date()}`,
           },
         });
-        Store.setItem("currentCount", `${curr}`);
+
       } catch (error) {
-        // You can use the Log object to log messages to the Pepr controller pod
         Log.error(error, "Failed to apply ConfigMap using server-side apply.");
       }
     },
   });
 ```
 
-Every 24 hours refresh the AWSToken, start in 30 seconds, and only run 3 times:
+Every 24 hours refresh the AWSToken, delays the start for 30 seconds, and only run 3 times:
 
 ```typescript
 
