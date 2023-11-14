@@ -93,6 +93,7 @@ describe("OnSchedule", () => {
 
     onSchedule.startInterval();
     onSchedule.stop();
+    jest.advanceTimersByTime(6000);
 
     expect(onSchedule.intervalId).toBeNull();
     expect(removeItemSpy).toHaveBeenCalled();

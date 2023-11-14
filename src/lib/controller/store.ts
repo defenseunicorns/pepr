@@ -12,7 +12,7 @@ import { ModuleConfig } from "../module";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 
 const namespace = "pepr-system";
-const debounceBackoff = 5000;
+export const debounceBackoff = 5000;
 
 export class PeprControllerStore {
   #name: string;
