@@ -16,7 +16,7 @@
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
-    "test": "npm run test:unit && npm run test:journey",
+    "test": "npm run test:unit && npm run test:journey --runInBand",
     "test:unit": "npm run gen-data-json && jest src --coverage --detectOpenHandles",
     "test:journey": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run",
     "test:journey-wasm": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run-wasm",
