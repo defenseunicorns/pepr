@@ -84,7 +84,7 @@ describe("OnSchedule", () => {
     secondSchedule.start();
     jest.advanceTimersByTime(100000);
     expect(secondSchedule.completions).toBe(0);
-    jest.runOnlyPendingTimers()
+    jest.runOnlyPendingTimers();
     jest.clearAllTimers();
   });
 
@@ -103,7 +103,7 @@ describe("OnSchedule", () => {
     onSchedule.intervalId = 9 as unknown as NodeJS.Timeout;
     onSchedule.stop();
     expect(onSchedule.intervalId).toBeNull();
-    jest.runOnlyPendingTimers()
+    jest.runOnlyPendingTimers();
     jest.clearAllTimers();
   });
 
