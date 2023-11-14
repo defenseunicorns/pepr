@@ -16,6 +16,13 @@ export class MockStorage {
     this.storage[key] = value;
   }
 
+  setItemAndWait(key: string, value: string): Promise<void> {
+    return new Promise(resolve => {
+      this.storage[key] = value;
+      resolve();
+    })
+  }
+
   removeItem(key: string): void {
     delete this.storage[key];
   }

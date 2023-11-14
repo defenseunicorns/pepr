@@ -97,6 +97,7 @@ export class Capability implements CapabilityExport {
     clear: this.#scheduleStore.clear,
     getItem: this.#scheduleStore.getItem,
     removeItem: this.#scheduleStore.removeItem,
+    setItemAndWait: this.#scheduleStore.setItemAndWait,
     setItem: this.#scheduleStore.setItem,
     subscribe: this.#scheduleStore.subscribe,
     onReady: this.#scheduleStore.onReady,
