@@ -180,8 +180,6 @@ function testMutate() {
 }
 
 function testStore() {
-  jest.clearAllTimers();
-  jest.useRealTimers();
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
     expect(resp).toBe("k-thx-bye");
