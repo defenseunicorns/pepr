@@ -15,7 +15,10 @@ jest.deepUnmock("pino");
 
 // The working directory for the tests after `npx pepr init` is run
 export const cwd = "pepr-test-module";
-
+// use real timers after mocking timers in unit tests
+jest.useRealTimers();
+// Removes any pending timers from the timer system. If any timers have been scheduled, they will be cleared and will never have the opportunity to execute in the future.
+jest.clearAllTimers()
 // Allow 5 minutes for the tests to run
 jest.setTimeout(1000 * 60 * 5);
 
