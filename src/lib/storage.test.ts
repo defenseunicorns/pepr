@@ -30,6 +30,7 @@ describe("Storage", () => {
 
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
     jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   it("should remove an item", () => {
