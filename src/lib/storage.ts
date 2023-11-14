@@ -10,6 +10,7 @@ export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
 export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
+const MAX_WAIT_TIME = 15000;
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
@@ -40,6 +41,12 @@ export interface PeprStore {
    * Register a function to be called when the store is ready.
    */
   onReady(callback: DataReceiver): void;
+
+  /**
+   * Sets the value of the pair identified by key to value, creating a new key/value pair if none existed for key previously.
+   * Resolves when the key/value show up in the store.
+   */
+  setItemAndWait(key: string, value: string): Promise<void>;
 }
 
 /**
@@ -86,6 +93,32 @@ export class Storage implements PeprStore {
 
   setItem = (key: string, value: string) => {
     this.#dispatchUpdate("add", [key], value);
+  };
+
+  /**
+   * Creates a promise and subscribes to the store, the promise resolves when
+   * the key and value are seen in the store.
+   *
+   * @param key - The key to add into the store
+   * @param value - The value of the key
+   * @returns
+   */
+  setItemAndWait = (key: string, value: string) => {
+    this.#dispatchUpdate("add", [key], value);
+    return new Promise<void>((resolve, reject) => {
+      const unsubscribe = this.subscribe(data => {
+        if (data[key] === value) {
+          unsubscribe();
+          resolve();
+        }
+      });
+
+      // If promise has not resolved before MAX_WAIT_TIME reject
+      setTimeout(() => {
+        unsubscribe();
+        return reject();
+      }, MAX_WAIT_TIME);
+    });
   };
 
   subscribe = (subscriber: DataReceiver) => {
