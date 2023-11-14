@@ -21,6 +21,9 @@ export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
 
+  jest.clearAllTimers();
+  jest.useRealTimers();
+
   it("should deploy the Pepr controller into the test cluster", async () => {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
