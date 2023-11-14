@@ -83,6 +83,7 @@ export class Capability implements CapabilityExport {
     setItem: this.#store.setItem,
     subscribe: this.#store.subscribe,
     onReady: this.#store.onReady,
+    setItemAndWait: this.#store.setItemAndWait,
   };
 
   /**
