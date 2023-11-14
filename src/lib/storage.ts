@@ -116,7 +116,7 @@ export class Storage implements PeprStore {
       // If promise has not resolved before MAX_WAIT_TIME reject
       setTimeout(() => {
         unsubscribe();
-        reject();
+        return reject();
       }, MAX_WAIT_TIME);
     });
   };
