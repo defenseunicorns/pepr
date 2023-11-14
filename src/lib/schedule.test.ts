@@ -20,7 +20,7 @@ export class MockStorage {
     return new Promise(resolve => {
       this.storage[key] = value;
       resolve();
-    })
+    });
   }
 
   removeItem(key: string): void {
