@@ -3,10 +3,15 @@
 
 import { promises as fs } from "fs";
 import { resolve } from "path";
+import { jest } from "@jest/globals";
 
 import { cwd } from "./entrypoint.test";
 
 export async function before() {
+
+  jest.clearAllTimers();
+  jest.useRealTimers();
+  
   const dir = resolve(cwd);
 
   try {
