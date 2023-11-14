@@ -29,7 +29,6 @@ describe("Storage", () => {
     storage.setItemAndWait("key1", "value1");
 
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
-    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
