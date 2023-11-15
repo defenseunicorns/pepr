@@ -24,7 +24,7 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 
 **run** - A function that contains the code you want to execute on the defined schedule.  
 
-**completions** - (Optional) An integer indicating the maximum number of times the schedule should run.
+**completions** - (Optional) An integer indicating the maximum number of times the schedule should run to completion.
 
 
 ## Examples
