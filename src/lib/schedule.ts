@@ -151,14 +151,17 @@ export class OnSchedule implements Schedule {
       if (this.completions === 0) {
         this.stop();
         return;
+      } else {
+
+        this.run();
+
+        if (this.completions && this.completions !== 0) {
+          this.completions -= 1;
+        }
+        this.saveToStore();
       }
 
-      this.run();
 
-      if (this.completions && this.completions !== 0) {
-        this.completions -= 1;
-      }
-      this.saveToStore();
     }, this.duration);
   }
 
