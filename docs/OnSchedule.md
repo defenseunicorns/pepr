@@ -32,7 +32,6 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 Update the curr ConfigMap every 15 seconds and use the store to track the current count:
 
 ```typescript
-let curr = 0 
 OnSchedule({
     name: "hello-interval",
     every: 30,
@@ -80,9 +79,3 @@ OnSchedule({
 - Provides flexibility to define schedules in a human-readable format.
 - Allows you to execute code with precision at specified intervals.
 - Supports limiting the number of schedule completions for finite tasks.
-
-## Considerations
-
-- Ensure that all date times are provided in GMT to maintain consistent scheduling.
-- Review your scheduling needs to determine if OnSchedule is suitable for your use case compared to traditional CronJobs.
-- OnSchedule is backed by the Pepr Store so it has to wait for the store to be ready before executing.  This means that there will be a (slight) delay between the time Pepr starts up and the time OnSchedule can begin executing scheduled tasks.
