@@ -16,7 +16,7 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 
 **name** - The unique name of the schedule.
 
-**every** - (Optional) An integer that represents the frequency of the schedule.
+**every** - (Optional) An integer that represents the frequency of the schedule in number of _units_.
 
 **unit** - (Optional) A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`).  
 
