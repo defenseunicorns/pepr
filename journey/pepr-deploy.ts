@@ -5,7 +5,6 @@ import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
-import { jest } from "@jest/globals";
 
 import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
@@ -182,29 +181,20 @@ function testMutate() {
 
 function testStore() {
   it("should create the PeprStore", async () => {
-    jest.useFakeTimers();
-
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
     expect(resp).toBe("k-thx-bye");
-    jest.useRealTimers();
   });
 
   it("should write the correct data to the PeprStore", async () => {
-    jest.useFakeTimers();
-
     const key1 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1");
     expect(key1).toBe("was-here");
 
     const key2 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1-data");
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
-    jest.useRealTimers();
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
-    jest.useFakeTimers();
-
     const key = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-watch-data");
     expect(key).toBe("This data was stored by a Watch Action.");
-    jest.useRealTimers();
   });
 }
