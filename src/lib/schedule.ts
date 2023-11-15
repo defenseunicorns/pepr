@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { PeprStore } from "./storage";
-import { debounceBackoff } from "./controller/store";
 
 type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
 
@@ -151,6 +150,7 @@ export class OnSchedule implements Schedule {
     this.intervalId = setInterval(() => {
       if (this.completions === 0) {
         this.stop();
+        return;
       }
 
       this.run();
@@ -170,9 +170,6 @@ export class OnSchedule implements Schedule {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    // avoid collision when adding last timeStamp
-    setTimeout(() => {
-      this.store && this.store.removeItem(this.name);
-    }, debounceBackoff);
+    this.store && this.store.removeItem(this.name);
   }
 }
