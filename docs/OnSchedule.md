@@ -12,7 +12,7 @@ For example: `PEPR_WATCH_MODE="true" npx pepr dev`
   
 ## Usage
 
-Create a schedule by calling the OnSchedule function with the following parameters:
+Create a recurring task execution by calling the OnSchedule function with the following parameters:
 
 **name** - The unique name of the schedule.
 
