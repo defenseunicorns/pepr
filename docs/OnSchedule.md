@@ -58,7 +58,7 @@ OnSchedule({
   });
 ```
 
-Every 24 hours refresh the AWSToken, delays the start for 30 seconds, and only run 3 times:
+Refresh an AWSToken every 24 hours, with a delayed start of 30 seconds, running a total of 3 times:
 
 ```typescript
 
