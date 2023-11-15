@@ -85,4 +85,4 @@ OnSchedule({
 
 - Ensure that all date times are provided in GMT to maintain consistent scheduling.
 - Review your scheduling needs to determine if OnSchedule is suitable for your use case compared to traditional CronJobs.
-- OnSchedule waits for the store to be ready before executing because the schedule is stored in etcd. This means that if the store is not ready, the schedule will not run.
+- OnSchedule is backed by the Pepr Store so it has to wait for the store to be ready before executing.  This means that there will be a (slight) delay between the time Pepr starts up and the time OnSchedule can begin executing scheduled tasks.
