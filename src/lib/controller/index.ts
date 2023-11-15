@@ -46,11 +46,11 @@ export class Controller {
     // Initialize the Pepr store for each capability
     new PeprControllerStore(config, capabilities, `pepr-${config.uuid}-store`, () => {
       this.#bindEndpoints();
-
+      onReady && onReady();
+      Log.info("✅ Controller startup complete");
       // Initialize the schedule store for each capability
       new PeprControllerStore(config, capabilities, `pepr-${config.uuid}-schedule`, () => {
-        onReady && onReady();
-        Log.info("✅ Controller startup complete");
+        Log.info("✅ Scheduling processed");
       });
     });
 
