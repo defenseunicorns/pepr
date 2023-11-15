@@ -29,7 +29,7 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 
 ## Examples
 
-Update the curr ConfigMap every 15 seconds and use the store to track the current count:
+Update a ConfigMap every 30 seconds:
 
 ```typescript
 OnSchedule({
