@@ -8,7 +8,7 @@ For example: `PEPR_WATCH_MODE="true" npx pepr dev`
 
 ## Best Practices
 
-`OnSchedule` is designed for targeting intervals equal to or larger than 30 seconds due to the storage mechanism used to archive schedule info, anything less than that is _use at your own risk_.
+`OnSchedule` is designed for targeting intervals equal to or larger than 30 seconds due to the storage mechanism used to archive schedule info.
   
 ## Usage
 
