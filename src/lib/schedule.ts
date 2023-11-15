@@ -152,7 +152,6 @@ export class OnSchedule implements Schedule {
         this.stop();
         return;
       } else {
-
         this.run();
 
         if (this.completions && this.completions !== 0) {
@@ -160,8 +159,6 @@ export class OnSchedule implements Schedule {
         }
         this.saveToStore();
       }
-
-
     }, this.duration);
   }
 
