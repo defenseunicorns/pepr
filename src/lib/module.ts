@@ -87,6 +87,7 @@ export class PeprModule {
           description: capability.description,
           namespaces: capability.namespaces,
           bindings: capability.bindings,
+          hasSchedule: capability.hasSchedule,
         });
       }
 

@@ -9,8 +9,6 @@ import { peprBuild } from "./pepr-build-wasm";
 // Unmock unit test things
 jest.deepUnmock("pino");
 
-// The working directory for the tests after `npx pepr init` is run
-export const cwd = "pepr-test-module";
 
 // Allow 5 minutes for the tests to run
 jest.setTimeout(1000 * 60 * 5);

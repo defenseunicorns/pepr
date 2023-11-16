@@ -8,6 +8,7 @@ import { pickBy } from "ramda";
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
+import { OnSchedule, Schedule } from "./schedule";
 import {
   Binding,
   BindingFilter,
@@ -34,7 +35,39 @@ export class Capability implements CapabilityExport {
   #namespaces?: string[] | undefined;
   #bindings: Binding[] = [];
   #store = new Storage();
+  #scheduleStore = new Storage();
   #registered = false;
+  #scheduleRegistered = false;
+  hasSchedule: boolean;
+
+  /**
+   * Run code on a schedule with the capability.
+   *
+   * @param schedule The schedule to run the code on
+   * @returns
+   */
+  OnSchedule: (schedule: Schedule) => void = (schedule: Schedule) => {
+    const { name, every, unit, run, startTime, completions } = schedule;
+
+    if (process.env.PEPR_WATCH_MODE === "true") {
+      // Only create/watch schedule store if necessary
+      this.hasSchedule = true;
+
+      // Create a new schedule
+      const newSchedule: Schedule = {
+        name,
+        every,
+        unit,
+        run,
+        startTime,
+        completions,
+      };
+
+      this.#scheduleStore.onReady(() => {
+        new OnSchedule(newSchedule).setStore(this.#scheduleStore);
+      });
+    }
+  };
 
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
@@ -51,6 +84,23 @@ export class Capability implements CapabilityExport {
     subscribe: this.#store.subscribe,
     onReady: this.#store.onReady,
     setItemAndWait: this.#store.setItemAndWait,
+  };
+
+  /**
+   * ScheduleStore is a key-value data store used to persist schedule data that should be shared
+   * between intervals. Each Schedule shares store, and the data is persisted in Kubernetes
+   * in the `pepr-system` namespace.
+   *
+   * Note: There is no direct access to schedule store
+   */
+  ScheduleStore: PeprStore = {
+    clear: this.#scheduleStore.clear,
+    getItem: this.#scheduleStore.getItem,
+    removeItem: this.#scheduleStore.removeItem,
+    setItemAndWait: this.#scheduleStore.setItemAndWait,
+    setItem: this.#scheduleStore.setItem,
+    subscribe: this.#scheduleStore.subscribe,
+    onReady: this.#scheduleStore.onReady,
   };
 
   get bindings() {
@@ -73,10 +123,31 @@ export class Capability implements CapabilityExport {
     this.#name = cfg.name;
     this.#description = cfg.description;
     this.#namespaces = cfg.namespaces;
+    this.hasSchedule = false;
 
     Log.info(`Capability ${this.#name} registered`);
     Log.debug(cfg);
   }
+
+  /**
+   * Register the store with the capability. This is called automatically by the Pepr controller.
+   *
+   * @param store
+   */
+  registerScheduleStore = () => {
+    Log.info(`Registering schedule store for ${this.#name}`);
+
+    if (this.#scheduleRegistered) {
+      throw new Error(`Schedule store already registered for ${this.#name}`);
+    }
+
+    this.#scheduleRegistered = true;
+
+    // Pass back any ready callback to the controller
+    return {
+      scheduleStore: this.#scheduleStore,
+    };
+  };
 
   /**
    * Register the store with the capability. This is called automatically by the Pepr controller.

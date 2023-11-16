@@ -12,7 +12,7 @@ import { ModuleConfig } from "../module";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 
 const namespace = "pepr-system";
-const debounceBackoff = 5000;
+export const debounceBackoff = 5000;
 
 export class PeprControllerStore {
   #name: string;
@@ -20,22 +20,40 @@ export class PeprControllerStore {
   #sendDebounce: NodeJS.Timeout | undefined;
   #onReady?: () => void;
 
-  constructor(config: ModuleConfig, capabilities: Capability[], onReady?: () => void) {
+  constructor(config: ModuleConfig, capabilities: Capability[], name: string, onReady?: () => void) {
     this.#onReady = onReady;
 
     // Setup Pepr State bindings
-    this.#name = `pepr-${config.uuid}-store`;
+    this.#name = name;
 
-    // Establish the store for each capability
-    for (const { name, registerStore } of capabilities) {
-      // Register the store with the capability
-      const { store } = registerStore();
+    if (name.includes("schedule")) {
+      // Establish the store for each capability
+      for (const { name, registerScheduleStore, hasSchedule } of capabilities) {
+        // Guard Clause to exit  early
+        if (hasSchedule !== true) {
+          return;
+        }
+        // Register the scheduleStore with the capability
+        const { scheduleStore } = registerScheduleStore();
 
-      // Bind the store sender to the capability
-      store.registerSender(this.#send(name));
+        // Bind the store sender to the capability
+        scheduleStore.registerSender(this.#send(name));
 
-      // Store the storage instance
-      this.#stores[name] = store;
+        // Store the storage instance
+        this.#stores[name] = scheduleStore;
+      }
+    } else {
+      // Establish the store for each capability
+      for (const { name, registerStore } of capabilities) {
+        // Register the store with the capability
+        const { store } = registerStore();
+
+        // Bind the store sender to the capability
+        store.registerSender(this.#send(name));
+
+        // Store the storage instance
+        this.#stores[name] = store;
+      }
     }
 
     // Add a jitter to the Store creation to avoid collisions
