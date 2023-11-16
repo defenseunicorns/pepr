@@ -94,6 +94,7 @@ test("should send the capabilities to the parent process if PEPR_MODE is set to 
     description: capability.description,
     namespaces: capability.namespaces,
     bindings: capability.bindings,
+    hasSchedule: capability.hasSchedule,
   };
 
   new PeprModule(packageJSON, [capability]);

@@ -7,6 +7,7 @@ import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
 
 export async function before() {
+  
   const dir = resolve(cwd);
 
   try {
