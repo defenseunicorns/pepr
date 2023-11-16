@@ -2,6 +2,7 @@
 title: OnSchedule
 linkTitle: OnSchedule
 ---
+
 # OnSchedule
 
 The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`. 
@@ -20,15 +21,15 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 
 **name** - The unique name of the schedule.
 
-**every** - (Optional) An integer that represents the frequency of the schedule in number of _units_.
+**every** - An integer that represents the frequency of the schedule in number of _units_.
 
-**unit** - (Optional) A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`).  
+**unit** - A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`). 
 
-**startTime** - (Optional) A UTC timestamp indicating when the schedule should start. All date times must be provided in GMT.  
+**startTime** - (Optional) A UTC timestamp indicating when the schedule should start. All date times must be provided in GMT. If not specified the schedule will start when the schedule store reports ready.
 
 **run** - A function that contains the code you want to execute on the defined schedule.  
 
-**completions** - (Optional) An integer indicating the maximum number of times the schedule should run to completion.
+**completions** - (Optional) An integer indicating the maximum number of times the schedule should run to completion. If not specified the schedule will run indefinitely.
 
 
 ## Examples

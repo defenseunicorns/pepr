@@ -16,15 +16,15 @@ Create a recurring task execution by calling the OnSchedule function with the fo
 
 **name** - The unique name of the schedule.
 
-**every** - (Optional) An integer that represents the frequency of the schedule in number of _units_.
+**every** - An integer that represents the frequency of the schedule in number of _units_.
 
-**unit** - (Optional) A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`).  
+**unit** - A string specifying the time unit for the schedule (e.g., `seconds`, `minute`, `minutes`, `hour`, `hours`). 
 
-**startTime** - (Optional) A UTC timestamp indicating when the schedule should start. All date times must be provided in GMT.  
+**startTime** - (Optional) A UTC timestamp indicating when the schedule should start. All date times must be provided in GMT. If not specified the schedule will start when the schedule store reports ready.
 
 **run** - A function that contains the code you want to execute on the defined schedule.  
 
-**completions** - (Optional) An integer indicating the maximum number of times the schedule should run to completion.
+**completions** - (Optional) An integer indicating the maximum number of times the schedule should run to completion. If not specified the schedule will run indefinitely.
 
 
 ## Examples
