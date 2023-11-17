@@ -18,7 +18,7 @@ The store is backed by ETCD in a `PeprStore` resource, and updates happen at 5-s
 
 ## Watch
 
-Pepr facilitates efficient change notifications on resources through `Watch`. It is recommended to use `Watch` instead of `Mutate` or `Validate` when longer running operations are needed, as there is no [timeout limitation](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts). An instance where `Watch` is beneficial is when API calls need to be chained together. `Watch` operations can be sequentially executed after `Mutate` and `Validate`.
+Pepr streamlines the process of receiving timely change notifications on resources by employing the `Watch` mechanism. It is advisable to opt for `Watch` over `Mutate` or `Validate` when dealing with more extended operations, as `Watch` does not face any [timeout limitations](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts). Additionally, `Watch` proves particularly advantageous for monitoring previously existing resources within a cluster. One compelling scenario for leveraging `Watch` is when there is a need to chain API calls together, allowing `Watch` operations to be sequentially executed following `Mutate` and `Validate` actions.
 
 ```typescript
 When(a.Pod)
