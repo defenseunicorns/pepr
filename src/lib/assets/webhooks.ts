@@ -53,12 +53,20 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
       // Use the plural property if it exists, otherwise use lowercase kind + s
       const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
 
-      rules.push({
+      const ruleObject = {
         apiGroups: [kind.group],
         apiVersions: [kind.version || "*"],
         operations,
         resources: [resource],
-      });
+      };
+
+      // If the resource is pods, add ephemeralcontainers as well
+      if (resource === "pods") {
+        ruleObject.resources.push("pods/ephemeralcontainers");
+      }
+
+      // Add the rule to the rules array
+      rules.push(ruleObject);
     }
   }
 
