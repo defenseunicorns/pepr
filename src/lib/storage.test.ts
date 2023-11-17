@@ -25,14 +25,9 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     jest.useFakeTimers();
-    // needed for lint
-    (async () => {
-      try {
-        await storage.setItemAndWait("key1", "value1");
-      } catch (err) {
-        console.log(err);
-      }
-    })();
+
+    storage.setItemAndWait("key1", "value1");
+
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
     jest.useRealTimers();
   });
