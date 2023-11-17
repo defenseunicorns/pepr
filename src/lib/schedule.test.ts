@@ -7,6 +7,10 @@ import { Unsubscribe } from "./storage";
 
 export class MockStorage {
   private storage: Record<string, string> = {};
+  subscription: string;
+  constructor() {
+    this.subscription = "";
+  }
 
   getItem(key: string): string | null {
     return this.storage[key] || null;
@@ -32,10 +36,14 @@ export class MockStorage {
   }
 
   subscribe(): Unsubscribe {
+    // Expected 'this' to be used by class method 'subscribe'
+    this.subscription = "";
     return true as unknown as Unsubscribe;
   }
 
   onReady(): void {
+    // Expected 'this' to be used by class method 'onReady'
+    this.subscription = "";
     return;
   }
 }
