@@ -222,7 +222,7 @@ export class Capability implements CapabilityExport {
     }
 
     // Helper function to check if an object is empty
-    function isEmpty(obj: Record<string, any>): boolean {
+    function isEmpty(obj: Record<string, string>): boolean {
       return Object.keys(obj).length === 0;
     }
 
