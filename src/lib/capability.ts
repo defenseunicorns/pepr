@@ -211,10 +211,62 @@ export class Capability implements CapabilityExport {
       Log.debug(cbString, prefix);
     };
 
+    // Check if there is any overlap or if one array is empty
+    function hasOverlapOrEmpty(a: string[], b: string[]): boolean {
+      return a.length === 0 || b.length === 0 || a.some(x => b.includes(x));
+    }
+
+    // Check if there is any key-value overlap or if one object is empty
+    function hasKeyValueOverlapOrEmpty(a: Record<string, string>, b: Record<string, string>): boolean {
+      return isEmpty(a) || isEmpty(b) || Object.keys(a).some(key => b[key] === a[key]);
+    }
+
+    // Helper function to check if an object is empty
+    function isEmpty(obj: Record<string, any>): boolean {
+      return Object.keys(obj).length === 0;
+    }
+
+    // Check if two events overlap
+    function doEventsOverlap(a: Event, b: Event): boolean {
+      return a === b || a === Event.CreateOrUpdate || b === Event.CreateOrUpdate;
+    }
+
+    function isMatchOrEmpty(a: string, b: string): boolean {
+      return a.length === 0 || b.length === 0 || a === b;
+    }
+
+    // Helper function to check if bindings overlap
+    function isBindingOverlap(b: Binding, binding: Binding, isValidate: boolean) {
+      return (
+        b.model.name === binding.model.name &&
+        b.kind === binding.kind &&
+        doEventsOverlap(b.event, binding.event) &&
+        isMatchOrEmpty(b.filters.name, binding.filters.name) &&
+        hasOverlapOrEmpty(b.filters.namespaces, binding.filters.namespaces) &&
+        hasKeyValueOverlapOrEmpty(b.filters.labels, binding.filters.labels) &&
+        hasKeyValueOverlapOrEmpty(b.filters.annotations, binding.filters.annotations) &&
+        ((isValidate === false && b.isValidate === undefined) || b.isValidate === isValidate)
+      );
+    }
+
+    function doBindingsOverlap(bindings: Binding[], thisBinding: Binding, isValidate: boolean) {
+      bindings.forEach(b => {
+        if (isBindingOverlap(b, thisBinding, isValidate)) {
+          Log.warn(
+            `${isValidate ? "Validate" : "Mutate"} action already registered for ${JSON.stringify(
+              b,
+              null,
+              2,
+            )}\nconflicts with\n ${JSON.stringify(thisBinding, null, 2)} on ${thisBinding.event} event`,
+          );
+        }
+      });
+    }
+
     function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
       if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
-
+        doBindingsOverlap(bindings, binding, true);
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
@@ -230,7 +282,7 @@ export class Capability implements CapabilityExport {
     function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
       if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
-
+        doBindingsOverlap(bindings, binding, false);
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
