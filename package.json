@@ -39,7 +39,7 @@
     "ramda": "0.29.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "18.4.2",
+    "@commitlint/cli": "18.4.3",
     "@commitlint/config-conventional": "18.4.2",
     "@jest/globals": "29.7.0",
     "@types/eslint": "8.44.7",
