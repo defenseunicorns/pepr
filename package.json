@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "18.4.2",
-    "@commitlint/config-conventional": "18.4.2",
+    "@commitlint/config-conventional": "18.4.3",
     "@jest/globals": "29.7.0",
     "@types/eslint": "8.44.7",
     "@types/express": "4.17.21",
