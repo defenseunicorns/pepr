@@ -22,7 +22,7 @@ export default function (program: RootCmd) {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
-    .option("-n, --no-embed", "Disables embedding of NPM packages into output module.")
+    .option("-n, --no-embed", "Disables embedding of deployable files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.")
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
@@ -65,7 +65,7 @@ export default function (program: RootCmd) {
         }
       }
 
-      // If building without embedding NPM packages, exit after building
+      // If building without embedding, exit after building
       if (!opts.embed) {
         console.info(`✅ Module built successfully at ${path}`);
         return;
@@ -206,7 +206,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
       ctxCfg.minify = false;
     }
 
-    // If not embedding NPM modules
+    // If not embedding (i.e. making a library module to be distro'd via NPM)
     if (!embed) {
       // Don't minify
       ctxCfg.minify = false;
