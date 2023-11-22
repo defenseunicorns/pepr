@@ -22,7 +22,10 @@ export default function (program: RootCmd) {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
-    .option("-n, --no-embed", "Disables embedding of deployable files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.")
+    .option(
+      "-n, --no-embed",
+      "Disables embedding of deployable files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
+    )
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
