@@ -4,7 +4,7 @@
 import { execSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
-import { basename, extname, resolve } from "path";
+import { basename, dirname, extname, resolve } from "path";
 import { createDockerfile } from "../lib/included-files";
 import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
@@ -21,11 +21,8 @@ export default function (program: RootCmd) {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
-    .option(
-      "-e, --entry-point [file]",
-      "Specify the entry point file to build with. Note that changing this disables embedding of NPM packages.",
-      peprTS,
-    )
+    .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
+    .option("-n, --no-embed", "Disables embedding of NPM packages into output module.")
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
@@ -47,7 +44,7 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint);
+      const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint, opts.embed);
 
       // Files to include in controller image for WASM support
       const { includedFiles } = cfg.pepr;
@@ -68,8 +65,8 @@ export default function (program: RootCmd) {
         }
       }
 
-      // If building with a custom entry point, exit after building
-      if (opts.entryPoint !== peprTS) {
+      // If building without embedding NPM packages, exit after building
+      if (!opts.embed) {
         console.info(`✅ Module built successfully at ${path}`);
         return;
       }
@@ -114,17 +111,18 @@ externalLibs.push("pepr");
 externalLibs.push("@kubernetes/client-node");
 
 export async function loadModule(entryPoint = peprTS) {
-  // Resolve the path to the module's package.json file
-  const cfgPath = resolve(".", "package.json");
-  const input = resolve(".", entryPoint);
+  // Resolve path to the module / files
+  const entryPointPath = resolve(".", entryPoint);
+  const modulePath = dirname(entryPointPath);
+  const cfgPath = resolve(modulePath, "package.json");
 
   // Ensure the module's package.json and entrypoint files exist
   try {
     await fs.access(cfgPath);
-    await fs.access(input);
+    await fs.access(entryPointPath);
   } catch (e) {
     console.error(
-      `Could not find ${cfgPath} or ${input} in the current directory. Please run this command from the root of your module's directory.`,
+      `Could not find ${cfgPath} or ${entryPointPath} in the current directory. Please run this command from the root of your module's directory.`,
     );
     process.exit(1);
   }
@@ -145,16 +143,17 @@ export async function loadModule(entryPoint = peprTS) {
 
   return {
     cfg,
-    input,
+    entryPointPath,
+    modulePath,
     name,
     path: resolve(outputDir, name),
     uuid,
   };
 }
 
-export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
+export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
   try {
-    const { cfg, path, uuid } = await loadModule(entryPoint);
+    const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
     const validFormat = await peprFormat(true);
 
@@ -165,8 +164,8 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
       );
     }
 
-    // Run `tsc` to validate the module's types
-    execSync("./node_modules/.bin/tsc", { stdio: "pipe" });
+    // Run `tsc` to validate the module's types & output sourcemaps
+    execSync(`./node_modules/.bin/tsc --project ${modulePath}/tsconfig.json --outdir ${outputDir}`);
 
     // Common build options for all builds
     const ctxCfg: BuildOptions = {
@@ -207,18 +206,18 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS) {
       ctxCfg.minify = false;
     }
 
-    // Handle custom entry points
-    if (entryPoint !== peprTS) {
-      // Don't minify if we're using a custom entry point
+    // If not embedding NPM modules
+    if (!embed) {
+      // Don't minify
       ctxCfg.minify = false;
 
-      // Preserve the original file name if we're using a custom entry point
+      // Preserve the original file name
       ctxCfg.outfile = resolve(outputDir, basename(entryPoint, extname(entryPoint))) + ".js";
 
-      // Only bundle the NPM packages if we're not using a custom entry point
+      // Don't bundle
       ctxCfg.packages = "external";
 
-      // Don't tree shake if we're using a custom entry point
+      // Don't tree shake
       ctxCfg.treeShaking = false;
     }
 

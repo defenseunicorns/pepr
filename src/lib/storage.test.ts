@@ -26,7 +26,8 @@ describe("Storage", () => {
     storage.registerSender(mockSender);
     jest.useFakeTimers();
 
-    storage.setItemAndWait("key1", "value1");
+    // asserting on sender invocation rather than Promise so no need to wait
+    void storage.setItemAndWait("key1", "value1");
 
     expect(mockSender).toHaveBeenCalledWith("add", ["key1"], "value1");
     jest.useRealTimers();
