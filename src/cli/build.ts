@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { execSync } from "child_process";
+import { execSync, execFileSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
@@ -168,7 +168,8 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
     }
 
     // Run `tsc` to validate the module's types & output sourcemaps
-    execSync(`./node_modules/.bin/tsc --project ${modulePath}/tsconfig.json --outdir ${outputDir}`);
+    const args = ["--project", `${modulePath}/tsconfig.json`, "--outdir", outputDir];
+    execFileSync("./node_modules/.bin/tsc", args);
 
     // Common build options for all builds
     const ctxCfg: BuildOptions = {
