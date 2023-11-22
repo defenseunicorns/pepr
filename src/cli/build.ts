@@ -24,7 +24,7 @@ export default function (program: RootCmd) {
     .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
     .option(
       "-n, --no-embed",
-      "Disables embedding of deployable files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
+      "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .option(
       "-r, --registry-info [<registry>/<username>]",
