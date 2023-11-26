@@ -55,6 +55,9 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 
 **Options:**
 
-- `-r, --registry-info [<registry>/<username>]` - Registry Info: Image registry and username. Note: You must be signed into the registry
-- `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin)
 - `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
+- `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
+- `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM
+- `-r, --registry-info [<registry>/<username>]` - Registry Info: Image registry and username. Note: You must be signed into the registry
+- `-o, --output-dir [output directory]` - Define where to place build output
+- `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
