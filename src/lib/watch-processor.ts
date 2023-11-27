@@ -7,16 +7,33 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
 import Log from "./logger";
+import { ignoreNSBreach, bindingAndCapabilityNSOverlap } from "./helpers"
 import { Binding, Event } from "./types";
 
-export function setupWatch(capabilities: Capability[]) {
-  capabilities
-    .flatMap(c => c.bindings)
-    .filter(binding => binding.isWatch)
-    .forEach(runBinding);
+
+export function setupWatch(capabilities: Capability[], ignoreNamespaces: string[]) {
+  // capabilities
+  //   .flatMap(c => c.bindings)
+  //   .filter(binding => binding.isWatch)
+  //   .forEach(runBinding);
+
+    capabilities.forEach(capability => {
+      capability.bindings.forEach(binding => {
+        if (binding.isWatch) {
+          runBinding(binding, ignoreNamespaces, capability.namespaces);
+        }
+      });
+    });
+
 }
 
-async function runBinding(binding: Binding) {
+async function runBinding(binding: Binding, ignoreNamespaces: string[] = [], capabilityNamespaces: string[]) {
+
+  // check that binding is allowed to watch based on namespace criteria 
+  let namespaceError = generateWatchNamespaceError(ignoreNamespaces, capabilityNamespaces, binding.filters.namespaces)
+  
+  if(namespaceError === "") {
+      // check if binding.filters.namespaces are in capabilityNamespaces
   // Map the event to the watch phase
   const eventToPhaseMap = {
     [Event.Create]: [WatchPhase.Added],
@@ -52,4 +69,24 @@ async function runBinding(binding: Binding) {
       }
     }
   }, watchCfg);
+  } else {
+    Log.error(new Error('Refusing to watch resource'), namespaceError)
+  }
+
+}
+
+function generateWatchNamespaceError(ignoredNamespaces: string[], bindingNamespaces: string[], capabilityNamespaces: string[]){
+  let err = ""
+
+  // check if binding uses an ignored namespace
+  if(ignoreNSBreach(ignoredNamespaces, bindingNamespaces)) {
+    err += "Binding uses an ignored namespace."
+  }
+
+  // ensure filter namespaces are part of capability namespaces
+  if(bindingAndCapabilityNSOverlap(bindingNamespaces, capabilityNamespaces)) {
+    err += "Binding uses namespace not governed by capability."
+  }
+
+  return err 
 }
