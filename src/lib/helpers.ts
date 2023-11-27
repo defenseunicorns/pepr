@@ -51,14 +51,29 @@ export async function createDirectoryIfNotExists(path: string) {
   }
 }
 
-function hasOverlap<T>(array1: T[], array2: T[]): boolean {
+export function hasEveryOverlap<T>(array1: T[], array2: T[]): boolean {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    return false;
+  }
+
+  return array1.every(element => array2.includes(element));
+}
+
+export function hasAnyOverlap<T>(array1: T[], array2: T[]): boolean {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    return false;
+  }
+
   return array1.some(element => array2.includes(element));
 }
 
-export function ignoreNSBreach(ignoreNamespaces: string[], bindingNamespaces: string[]) {
-  return ignoreNamespaces.length !== 0 && !hasOverlap(bindingNamespaces, ignoreNamespaces)
+export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]) {
+  return hasAnyOverlap(bindingNamespaces, ignoreNamespaces);
 }
 
-export function bindingAndCapabilityNSOverlap(bindingNamespaces: string[], capabilityNamespaces: string[]) {
-  return hasOverlap(bindingNamespaces, capabilityNamespaces)
+export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]) {
+  if (!capabilityNamespaces) {
+    return false;
+  }
+  return capabilityNamespaces.length !== 0 && !hasEveryOverlap(bindingNamespaces, capabilityNamespaces);
 }

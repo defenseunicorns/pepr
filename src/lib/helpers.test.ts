@@ -5,7 +5,13 @@ import { CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists } from "./helpers";
 import { expect, describe, test, jest } from "@jest/globals";
 import { promises as fs } from "fs";
-import { createDirectoryIfNotExists } from "./helpers";
+import {
+  createDirectoryIfNotExists,
+  hasAnyOverlap,
+  hasEveryOverlap,
+  ignoredNamespaceConflict,
+  bindingAndCapabilityNSConflict,
+} from "./helpers";
 
 const capabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -329,5 +335,83 @@ describe("createDirectoryIfNotExists function", () => {
     } catch (error) {
       expect(error.code).toEqual("ERROR");
     }
+  });
+});
+
+describe("hasAnyOverlap", () => {
+  test("returns true for overlapping arrays", () => {
+    expect(hasAnyOverlap([1, 2, 3], [3, 4, 5])).toBe(true);
+  });
+
+  test("returns false for non-overlapping arrays", () => {
+    expect(hasAnyOverlap([1, 2, 3], [4, 5, 6])).toBe(false);
+  });
+
+  test("returns false for empty arrays", () => {
+    expect(hasAnyOverlap([], [1, 2, 3])).toBe(false);
+    expect(hasAnyOverlap([1, 2, 3], [])).toBe(false);
+  });
+
+  test("returns false for two empty arrays", () => {
+    expect(hasAnyOverlap([], [])).toBe(false);
+  });
+});
+
+describe("hasEveryOverlap", () => {
+  test("returns true if all elements in array1 are in array2", () => {
+    expect(hasEveryOverlap([1, 2], [1, 2, 3])).toBe(true);
+  });
+
+  test("returns false if any element in array1 is not in array2", () => {
+    expect(hasEveryOverlap([1, 2, 4], [1, 2, 3])).toBe(false);
+  });
+
+  test("returns true if array1 is empty", () => {
+    expect(hasEveryOverlap([], [1, 2, 3])).toBe(true);
+  });
+
+  test("returns false if array2 is empty", () => {
+    expect(hasEveryOverlap([1, 2], [])).toBe(false);
+  });
+
+  test("returns true if both arrays are empty", () => {
+    expect(hasEveryOverlap([], [])).toBe(true);
+  });
+});
+
+describe("ignoredNamespaceConflict", () => {
+  test("returns true if there is an overlap", () => {
+    expect(ignoredNamespaceConflict(["ns1", "ns2"], ["ns2", "ns3"])).toBe(true);
+  });
+
+  test("returns false if there is no overlap", () => {
+    expect(ignoredNamespaceConflict(["ns1", "ns2"], ["ns3", "ns4"])).toBe(false);
+  });
+
+  test("returns false if either array is empty", () => {
+    expect(ignoredNamespaceConflict([], ["ns1", "ns2"])).toBe(false);
+    expect(ignoredNamespaceConflict(["ns1", "ns2"], [])).toBe(false);
+  });
+
+  test("returns false if both arrays are empty", () => {
+    expect(ignoredNamespaceConflict([], [])).toBe(false);
+  });
+});
+
+describe("bindingAndCapabilityNSConflict", () => {
+  test("returns false if capabilityNamespaces is empty", () => {
+    expect(bindingAndCapabilityNSConflict(["ns1", "ns2"], [])).toBe(false);
+  });
+
+  test("returns true if capability namespaces are not empty and there is no overlap with binding namespaces", () => {
+    expect(bindingAndCapabilityNSConflict(["ns1", "ns2"], ["ns3", "ns4"])).toBe(true);
+  });
+
+  test("returns true if capability namespaces are not empty and there is an overlap", () => {
+    expect(bindingAndCapabilityNSConflict(["ns1", "ns2"], ["ns2", "ns3"])).toBe(true);
+  });
+
+  test("returns false if both arrays are empty", () => {
+    expect(bindingAndCapabilityNSConflict([], [])).toBe(false);
   });
 });
