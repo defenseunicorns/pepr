@@ -8,7 +8,7 @@ import { pickBy } from "ramda";
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
-import { OnSchedule, Schedule } from "./schedule";
+import { OnSchedule, Schedule, generateScheduleBinding } from "./schedule";
 import {
   Binding,
   BindingFilter,
@@ -49,24 +49,22 @@ export class Capability implements CapabilityExport {
   OnSchedule: (schedule: Schedule) => void = (schedule: Schedule) => {
     const { name, every, unit, run, startTime, completions } = schedule;
 
-    if (process.env.PEPR_WATCH_MODE === "true") {
-      // Only create/watch schedule store if necessary
-      this.hasSchedule = true;
+    // creates isWatch binding so it runs in the watch controller
+    this.#bindings.push(generateScheduleBinding(name));
 
-      // Create a new schedule
-      const newSchedule: Schedule = {
-        name,
-        every,
-        unit,
-        run,
-        startTime,
-        completions,
-      };
+    // Create a new schedule
+    const newSchedule: Schedule = {
+      name,
+      every,
+      unit,
+      run,
+      startTime,
+      completions,
+    };
 
-      this.#scheduleStore.onReady(() => {
-        new OnSchedule(newSchedule).setStore(this.#scheduleStore);
-      });
-    }
+    this.#scheduleStore.onReady(() => {
+      new OnSchedule(newSchedule).setStore(this.#scheduleStore);
+    });
   };
 
   /**

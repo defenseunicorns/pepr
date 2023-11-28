@@ -2,9 +2,32 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { PeprStore } from "./storage";
+import { Binding, Event } from "./types";
+import { GroupVersionKind } from "kubernetes-fluent-client";
 
 type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
 
+abstract class GenericSchedule {}
+
+// Example GroupVersionKind
+const scheduleGVK: GroupVersionKind = {
+  kind: "OnSchedule",
+  group: "pepr.dev",
+  version: "v1alpha1",
+};
+
+export const generateScheduleBinding = (name: string): Binding => ({
+  event: Event.Any,
+  isWatch: true,
+  model: GenericSchedule,
+  kind: scheduleGVK,
+  filters: {
+    name: name,
+    namespaces: [],
+    labels: { schedule: name },
+    annotations: { schedule: name },
+  },
+});
 export interface Schedule {
   /**
    * * The name of the store

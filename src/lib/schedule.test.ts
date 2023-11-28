@@ -2,8 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest, afterEach } from "@jest/globals";
-import { OnSchedule, Schedule } from "./schedule";
+import { OnSchedule, Schedule, generateScheduleBinding } from "./schedule";
 import { Unsubscribe } from "./storage";
+import { Binding } from "./types";
+import { GroupVersionKind } from "kubernetes-fluent-client";
 
 export class MockStorage {
   private storage: Record<string, string> = {};
@@ -47,6 +49,30 @@ export class MockStorage {
     return;
   }
 }
+
+describe("generateScheduleBinding", () => {
+  it("generates a Binding for OnSchedule", () => {
+    const testName = "testOnSchedule";
+    const expectedGVK: GroupVersionKind = {
+      kind: "OnSchedule",
+      group: "pepr.dev",
+      version: "v1alpha1",
+    };
+
+    const binding: Binding = generateScheduleBinding(testName);
+
+    expect(binding.event).toBeDefined();
+    expect(binding.isWatch).toBe(true);
+    expect(binding.model).toBeDefined();
+    expect(binding.kind).toEqual(expectedGVK);
+    expect(binding.filters).toEqual({
+      name: testName,
+      namespaces: [],
+      labels: { schedule: testName },
+      annotations: { schedule: testName },
+    });
+  });
+});
 
 describe("OnSchedule", () => {
   const mockSchedule: Schedule = {
