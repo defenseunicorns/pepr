@@ -11,13 +11,25 @@ import { ignoredNamespaceConflict, bindingAndCapabilityNSConflict } from "./help
 import { Binding, Event } from "./types";
 
 export async function setupWatch(capabilities: Capability[], ignoreNamespaces: string[]) {
+  // for (const capability of capabilities) {
+  //   for (const binding of capability.bindings) {
+  //     if (binding.isWatch) {
+  //       await runBinding(binding, ignoreNamespaces, capability.namespaces);
+  //     }
+  //   }
+  // }
+
+  const watchPromises = [];
+
   for (const capability of capabilities) {
     for (const binding of capability.bindings) {
       if (binding.isWatch) {
-        await runBinding(binding, ignoreNamespaces, capability.namespaces);
+        watchPromises.push(runBinding(binding, ignoreNamespaces, capability.namespaces));
       }
     }
   }
+
+  await Promise.all(watchPromises);
 }
 
 async function runBinding(binding: Binding, ignoreNamespaces: string[] = [], capabilityNamespaces: string[]) {
