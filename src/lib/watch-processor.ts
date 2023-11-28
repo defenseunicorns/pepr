@@ -10,14 +10,14 @@ import Log from "./logger";
 import { ignoredNamespaceConflict, bindingAndCapabilityNSConflict } from "./helpers";
 import { Binding, Event } from "./types";
 
-export function setupWatch(capabilities: Capability[], ignoreNamespaces: string[]) {
-  capabilities.forEach(capability => {
-    capability.bindings.forEach(binding => {
+export async function setupWatch(capabilities: Capability[], ignoreNamespaces: string[]) {
+  for (const capability of capabilities) {
+    for (const binding of capability.bindings) {
       if (binding.isWatch) {
-        runBinding(binding, ignoreNamespaces, capability.namespaces);
+        await runBinding(binding, ignoreNamespaces, capability.namespaces);
       }
-    });
-  });
+    }
+  }
 }
 
 async function runBinding(binding: Binding, ignoreNamespaces: string[] = [], capabilityNamespaces: string[]) {
