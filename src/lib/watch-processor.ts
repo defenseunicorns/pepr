@@ -12,7 +12,7 @@ import { Binding, Event } from "./types";
 export function setupWatch(capabilities: Capability[]) {
   capabilities
     .flatMap(c => c.bindings)
-    .filter(binding => binding.isWatch)
+    .filter(binding => binding.isWatch && binding.kind.kind !== "OnSchedule")
     .forEach(runBinding);
 }
 

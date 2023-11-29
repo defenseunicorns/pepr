@@ -51,7 +51,7 @@ export class Capability implements CapabilityExport {
 
     // creates isWatch binding so it runs in the watch controller
     this.#bindings.push(generateScheduleBinding(name));
-
+    this.hasSchedule = true;
     // Create a new schedule
     const newSchedule: Schedule = {
       name,

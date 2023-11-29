@@ -28,12 +28,12 @@ describe("WatchProcessor", () => {
     const capabilities = [
       {
         bindings: [
-          { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create" },
-          { isWatch: false, model: "someModel", filters: {}, event: "Create" },
+          { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", kind: { kind: "someKind" } },
+          { isWatch: false, model: "someModel", filters: {}, event: "Create", kind: { kind: "someKind" } },
         ],
       },
       {
-        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }],
+        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create", kind: { kind: "someKind" } }],
       },
     ] as unknown as Capability[];
 
@@ -73,9 +73,30 @@ describe("WatchProcessor", () => {
     const capabilities = [
       {
         bindings: [
-          { isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallbackCreate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Update", watchCallback: watchCallbackUpdate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Delete", watchCallback: watchCallbackDelete },
+          {
+            kind: { kind: "someKind" },
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: watchCallbackCreate,
+          },
+          {
+            kind: { kind: "someKind" },
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Update",
+            watchCallback: watchCallbackUpdate,
+          },
+          {
+            kind: { kind: "someKind" },
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Delete",
+            watchCallback: watchCallbackDelete,
+          },
           // Add more events here
         ],
       },
