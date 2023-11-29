@@ -6,7 +6,7 @@ When you [`pepr init`](./cli.md#pepr-init), a `capabilities` directory is create
 
 ## Creating a Capability
 
-Define a new capability can be done via a [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets) generated during [`pepr init`](./cli.md#pepr-init).
+Defining a new capability can be done via a [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets) generated during [`pepr init`](./cli.md#pepr-init).
 
 1. Create a new file in the `capabilities` directory with the name of your capability. For example, `capabilities/my-capability.ts`.
 
@@ -19,10 +19,12 @@ _If you prefer not to use VSCode, you can also modify or copy the `HelloPepr` ca
 
 ## Reusable Capabilities
 
-Pepr has an NPM org managed by Defense Unicorns, `@pepr`, where capabilities are published for reuse in other Pepr Modules. You can find a list of published capabilities [here](https://www.npmjs.com/search?q=@pepr). You can also publish your own Pepr capabilities to NPM and import them.  A couple of things you'll want to be aware of:
+Pepr has an NPM org managed by Defense Unicorns, `@pepr`, where capabilities are published for reuse in other Pepr Modules. You can find a list of published capabilities [here](https://www.npmjs.com/search?q=@pepr).
+
+You also can publish your own Pepr capabilities to NPM and import them.  A couple of things you'll want to be aware of when publishing your own capabilities:
 
 - Reuseable capability versions should use the format `0.x.x` or `0.12.x` as examples to determine compatibility with other reusable capabilities. Before `1.x.x`, we recommend binding to `0.x.x` if you can for maximum compatibility.
 
-- `pepr.ts` will still be used for local development, but you'll need to also publish an `index.ts` that exports your capabilities. When you build & publish the capability to NPM, you can use `npx pepr build -e index.ts` to generate the code needed for reuse by other Pepr modules.
+- `pepr.ts` will still be used for local development, but you'll also need to publish an `index.ts` that exports your capabilities. When you build & publish the capability to NPM, you can use `npx pepr build -e index.ts` to generate the code needed for reuse by other Pepr modules.
 
 - See [Pepr Istio](https://github.com/defenseunicorns/pepr-istio) for an example of a reusable capability.
