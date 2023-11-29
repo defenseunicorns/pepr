@@ -220,7 +220,7 @@ export class Controller {
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Process the request
-        let response: MutateResponse | ValidateResponse;
+        let response: MutateResponse | ValidateResponse[];
 
         // Call mutate or validate based on the admission kind
         if (admissionKind === "Mutate") {
@@ -230,17 +230,37 @@ export class Controller {
         }
 
         // Run the after hook if it exists
-        this.#afterHook && this.#afterHook(response);
+        const responseList: ValidateResponse[] | MutateResponse[] = Array.isArray(response) ? response : [response];
+        responseList.map(res => {
+          this.#afterHook && this.#afterHook(res);
+        });
 
         // Log the response
         Log.debug({ ...reqMetadata, response }, "Outgoing response");
 
-        // Send a no prob bob response
-        res.send({
-          apiVersion: "admission.k8s.io/v1",
-          kind: "AdmissionReview",
-          response,
-        });
+        if (admissionKind === "Mutate") {
+          res.send({
+            apiVersion: "admission.k8s.io/v1",
+            kind: "AdmissionReview",
+            response,
+          });
+        } else {
+          res.send({
+            apiVersion: "admission.k8s.io/v1",
+            kind: "AdmissionReview",
+            response: {
+              uid: responseList[0].uid,
+              allowed: responseList.filter(r => !r.allowed).length === 0,
+              status: {
+                message: (responseList as ValidateResponse[])
+                  .filter(rl => !rl.allowed)
+                  .map(curr => curr.status?.message)
+                  .join("; "),
+              },
+            },
+          });
+        }
+
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
         Log.error(err);
