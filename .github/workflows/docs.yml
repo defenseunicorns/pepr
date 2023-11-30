@@ -14,9 +14,10 @@ jobs:
     steps:
       - name: Trigger build & deploy workflow in defenseunicorns/pepr-docs
         run: |
-          curl \
-            --header "Accept: application/vnd.github.everest-preview+json" \
-            --header "Authorization: Bearer ${{ secrets.PEPR_DOCS_WORKFLOW_TRIGGER_TOKEN }}" \
+          curl --location \
             --request POST \
-            --data '{"event_type": "update-docs"}' \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{ secrets.PEPR_DOCS_WORKFLOW_TRIGGER_TOKEN }}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data '{"event_type":"update-docs","client_payload":{"to":"do"}}' \
             https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches
