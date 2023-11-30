@@ -100,7 +100,7 @@ export class PeprModule {
     this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
-        setupWatch(capabilities, config.alwaysIgnore.namespaces === undefined ? [] : config.alwaysIgnore.namespaces);
+        setupWatch(capabilities);
       }
     });
 

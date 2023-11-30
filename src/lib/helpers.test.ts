@@ -11,6 +11,8 @@ import {
   hasEveryOverlap,
   ignoredNamespaceConflict,
   bindingAndCapabilityNSConflict,
+  generateWatchNamespaceError,
+  namespaceComplianceValidator
 } from "./helpers";
 
 const capabilities: CapabilityExport[] = JSON.parse(`[
@@ -415,3 +417,26 @@ describe("bindingAndCapabilityNSConflict", () => {
     expect(bindingAndCapabilityNSConflict([], [])).toBe(false);
   });
 });
+
+describe("generateWatchNamespaceError", () => {
+  test("returns error for ignored namespace conflict", () => {
+    const error = generateWatchNamespaceError(["ns1"], ["ns1"], []);
+    expect(error).toBe("Binding uses a Pepr ignored namespace.");
+  });
+
+  test("returns error for binding and capability namespace conflict", () => {
+    const error = generateWatchNamespaceError([""], ["ns2"], ["ns3"]);
+    expect(error).toBe("Binding uses namespace not governed by capability.");
+  });
+
+  test("returns combined error for both conflicts", () => {
+    const error = generateWatchNamespaceError(["ns1"], ["ns1"], ["ns3", "ns4"]);
+    expect(error).toBe("Binding uses a Pepr ignored namespace. Binding uses namespace not governed by capability.");
+  });
+
+  test("returns empty string when there are no conflicts", () => {
+    const error = generateWatchNamespaceError([], ["ns2"], []);
+    expect(error).toBe("");
+  });
+});
+

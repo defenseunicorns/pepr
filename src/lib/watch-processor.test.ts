@@ -7,13 +7,12 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { setupWatch, generateWatchNamespaceError } from "./watch-processor";
+import { setupWatch } from "./watch-processor";
 
 // Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
 describe("WatchProcessor", () => {
-  const ignoredNamespaces: string[] = [];
   it("should setup watches for all bindings with isWatch=true", () => {
     const mockK8s = jest.mocked(K8s);
     const mockWatch = jest.fn();
@@ -38,7 +37,7 @@ describe("WatchProcessor", () => {
       },
     ] as unknown as Capability[];
 
-    setupWatch(capabilities, ignoredNamespaces);
+    setupWatch(capabilities);
 
     expect(mockK8s).toHaveBeenCalledTimes(2);
     expect(mockK8s).toHaveBeenNthCalledWith(1, "someModel", { name: "bleh" });
@@ -50,14 +49,14 @@ describe("WatchProcessor", () => {
 
   it("should not setup watches if capabilities array is empty", () => {
     const mockWatch = jest.fn();
-    setupWatch([], ignoredNamespaces);
+    setupWatch([]);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
   it("should not setup watches if no bindings are present", () => {
     const mockWatch = jest.fn();
     const capabilities = [{ bindings: [] }, { bindings: [] }] as unknown as Capability[];
-    setupWatch(capabilities, ignoredNamespaces);
+    setupWatch(capabilities);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
@@ -82,7 +81,7 @@ describe("WatchProcessor", () => {
       },
     ] as unknown as Capability[];
 
-    setupWatch(capabilities, ignoredNamespaces);
+    setupWatch(capabilities);
 
     type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
 
@@ -128,27 +127,5 @@ describe("WatchProcessor", () => {
     thirdCall[0]({} as kind.Pod, WatchPhase.Modified);
     expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
     expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
-  });
-});
-
-describe("generateWatchNamespaceError", () => {
-  it("returns error for ignored namespace conflict", () => {
-    const error = generateWatchNamespaceError(["ns1"], ["ns1"], []);
-    expect(error).toBe("Binding uses a Pepr ignored namespace.");
-  });
-
-  it("returns error for binding and capability namespace conflict", () => {
-    const error = generateWatchNamespaceError([""], ["ns2"], ["ns3"]);
-    expect(error).toBe("Binding uses namespace not governed by capability.");
-  });
-
-  it("returns combined error for both conflicts", () => {
-    const error = generateWatchNamespaceError(["ns1"], ["ns1"], ["ns3", "ns4"]);
-    expect(error).toBe("Binding uses a Pepr ignored namespace. Binding uses namespace not governed by capability.");
-  });
-
-  it("returns empty string when there are no conflicts", () => {
-    const error = generateWatchNamespaceError([], ["ns2"], []);
-    expect(error).toBe("");
   });
 });
