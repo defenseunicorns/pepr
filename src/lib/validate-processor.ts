@@ -14,12 +14,9 @@ export async function validateProcessor(
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
-): Promise<ValidateResponse> {
+): Promise<ValidateResponse[]> {
   const wrapped = new PeprValidateRequest(req);
-  const response: ValidateResponse = {
-    uid: req.uid,
-    allowed: true, // Assume it's allowed until a validation check fails
-  };
+  const response: ValidateResponse[] = [];
 
   // If the resource is a secret, decode the data
   const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
@@ -38,6 +35,11 @@ export async function validateProcessor(
         continue;
       }
 
+      const localResponse: ValidateResponse = {
+        uid: req.uid,
+        allowed: true, // Assume it's allowed until a validation check fails
+      };
+
       // Continue to the next action without doing anything if this one should be skipped
       if (shouldSkipRequest(action, req, namespaces)) {
         continue;
@@ -49,11 +51,11 @@ export async function validateProcessor(
       try {
         // Run the validation callback, if it fails set allowed to false
         const resp = await action.validateCallback(wrapped);
-        response.allowed = resp.allowed;
+        localResponse.allowed = resp.allowed;
 
         // If the validation callback returned a status code or message, set it in the Response
         if (resp.statusCode || resp.statusMessage) {
-          response.status = {
+          localResponse.status = {
             code: resp.statusCode || 400,
             message: resp.statusMessage || `Validation failed for ${name}`,
           };
@@ -63,13 +65,14 @@ export async function validateProcessor(
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
         Log.error(actionMetadata, `Action failed: ${e}`);
-        response.allowed = false;
-        response.status = {
+        localResponse.allowed = false;
+        localResponse.status = {
           code: 500,
           message: `Action failed with error: ${e}`,
         };
-        return response;
+        return [localResponse];
       }
+      response.push(localResponse);
     }
   }
 
