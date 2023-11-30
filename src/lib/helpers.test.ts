@@ -12,7 +12,6 @@ import {
   ignoredNamespaceConflict,
   bindingAndCapabilityNSConflict,
   generateWatchNamespaceError,
-  namespaceComplianceValidator
 } from "./helpers";
 
 const capabilities: CapabilityExport[] = JSON.parse(`[
@@ -439,4 +438,3 @@ describe("generateWatchNamespaceError", () => {
     expect(error).toBe("");
   });
 });
-
