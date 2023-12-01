@@ -29,6 +29,7 @@ jobs:
         with:
           application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
           application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
+          organization: defenseunicorns
 
       - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
         run: |
