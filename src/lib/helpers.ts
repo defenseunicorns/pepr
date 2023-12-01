@@ -101,13 +101,13 @@ export function generateWatchNamespaceError(
 
 // namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
-  const { namespaces, bindings, name } = capability;
+  const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces = bindings.flatMap(binding => binding.filters.namespaces);
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
-    namespaces ? namespaces : [],
     bindingNamespaces,
+    capabilityNamespaces ? capabilityNamespaces : [],
   );
   if (namespaceError !== "") {
     console.error(

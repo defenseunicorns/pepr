@@ -3,7 +3,7 @@
 
 import { CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists } from "./helpers";
-import { expect, describe, test, jest } from "@jest/globals";
+import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { promises as fs } from "fs";
 import {
   createDirectoryIfNotExists,
@@ -12,9 +12,11 @@ import {
   ignoredNamespaceConflict,
   bindingAndCapabilityNSConflict,
   generateWatchNamespaceError,
+  namespaceComplianceValidator,
 } from "./helpers";
+import { SpiedFunction } from "jest-mock";
 
-const capabilities: CapabilityExport[] = JSON.parse(`[
+const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
         "name": "hello-pepr",
         "description": "A simple example capability to show how things work.",
@@ -262,7 +264,7 @@ const capabilities: CapabilityExport[] = JSON.parse(`[
 
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
-    const result = createRBACMap(capabilities);
+    const result = createRBACMap(mockCapabilities);
 
     const expected = {
       "pepr.dev/v1/peprstore": {
@@ -436,5 +438,134 @@ describe("generateWatchNamespaceError", () => {
   test("returns empty string when there are no conflicts", () => {
     const error = generateWatchNamespaceError([], ["ns2"], []);
     expect(error).toBe("");
+  });
+});
+
+const nsViolation: CapabilityExport[] = JSON.parse(`[
+  {
+      "name": "test-capability-namespaces",
+      "description": "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
+      "namespaces": [
+          "miami",
+          "dallas",
+          "milwaukee"
+      ],
+      "bindings": [
+          {
+              "kind": {
+                  "kind": "Namespace",
+                  "version": "v1",
+                  "group": ""
+              },
+              "event": "CREATE",
+              "filters": {
+                  "name": "",
+                  "namespaces": ["new york"],
+                  "labels": {},
+                  "annotations": {}
+              },
+              "isMutate": true
+          }
+      ]
+  }
+]`);
+
+const allNSCapabilities: CapabilityExport[] = JSON.parse(`[
+  {
+      "name": "test-capability-namespaces",
+      "description": "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
+      "namespaces": [],
+      "bindings": [
+          {
+              "kind": {
+                  "kind": "Namespace",
+                  "version": "v1",
+                  "group": ""
+              },
+              "event": "CREATE",
+              "filters": {
+                  "name": "",
+                  "namespaces": ["new york"],
+                  "labels": {},
+                  "annotations": {}
+              },
+              "isMutate": true
+          }
+      ]
+  }
+]`);
+
+const nonNsViolation: CapabilityExport[] = JSON.parse(`[
+  {
+      "name": "test-capability-namespaces",
+      "description": "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
+      "namespaces": [
+          "miami",
+          "dallas",
+          "milwaukee"
+      ],
+      "bindings": [
+          {
+              "kind": {
+                  "kind": "Namespace",
+                  "version": "v1",
+                  "group": ""
+              },
+              "event": "CREATE",
+              "filters": {
+                  "name": "",
+                  "namespaces": ["miami"],
+                  "labels": {},
+                  "annotations": {}
+              },
+              "isMutate": true
+          }
+      ]
+  }
+]`);
+
+describe("namespaceComplianceValidator", () => {
+  let exitSpy: SpiedFunction<(code?: number | undefined) => never>;
+  let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
+  beforeEach(() => {
+    exitSpy = jest.spyOn(process, "exit").mockImplementation(() => 1 as never);
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Restore the original function after each test
+    exitSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  test("should not throw an error for invalid namespaces", () => {
+    expect(() => {
+      namespaceComplianceValidator(nonNsViolation[0]);
+    }).not.toThrow();
+  });
+
+  test("should throw an error for binding namespace using a non capability namespace", () => {
+    namespaceComplianceValidator(nsViolation[0]);
+    expect(exitSpy).toHaveBeenCalled();
+  });
+
+  test("should throw an error for binding namespace using an ignored namespace: Part 1", () => {
+    /*
+     * this test case lists miami as a capability namespace, but also as an ignored namespace
+     * in this case, there should be an error since ignoredNamespaces have precedence
+     */
+
+    namespaceComplianceValidator(nonNsViolation[0], ["miami"]);
+    expect(exitSpy).toHaveBeenCalled();
+  });
+
+  test("should throw an error for binding namespace using an ignored namespace: Part 2", () => {
+    /*
+     * This capability uses all namespaces but new york should be ignored
+     * the binding uses new york so it should fail
+     */
+
+    namespaceComplianceValidator(allNSCapabilities[0], ["new york"]);
+    expect(exitSpy).toHaveBeenCalled();
   });
 });
