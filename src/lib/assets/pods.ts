@@ -17,18 +17,23 @@ export const namespace: kind.Namespace = {
 export function watcher(assets: Assets, hash: string) {
   const { name, image, capabilities, config } = assets;
 
+  let hasSchedule = false;
+
   // Append the watcher suffix
   const app = `${name}-watcher`;
   const bindings: Binding[] = [];
 
   // Loop through the capabilities and find any Watch Actions
   for (const capability of capabilities) {
+    if (capability.hasSchedule) {
+      hasSchedule = true;
+    }
     const watchers = capability.bindings.filter(binding => binding.isWatch);
     bindings.push(...watchers);
   }
 
   // If there are no watchers, don't deploy the watcher
-  if (bindings.length < 1) {
+  if (bindings.length < 1 && !hasSchedule) {
     return null;
   }
 

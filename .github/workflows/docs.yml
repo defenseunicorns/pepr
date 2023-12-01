@@ -1,0 +1,23 @@
+name: docs
+
+on:
+  # enable manual run via GitHub UI
+  workflow_dispatch:
+  
+  # enable trigger via change to <root>/docs/*.md
+  # ???
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Trigger build & deploy workflow in defenseunicorns/pepr-docs
+        run: |
+          curl --location \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{ secrets.PEPR_DOCS_WORKFLOW_TRIGGER_TOKEN }}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data '{"event_type":"update-docs","client_payload":{"to":"do"}}' \
+            https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches
