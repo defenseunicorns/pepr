@@ -1,23 +1,41 @@
 name: docs
 
+# declare default permissions
+permissions: read-all
+
 on:
   # enable manual run via GitHub UI
   workflow_dispatch:
   
-  # enable trigger via change to <root>/docs/*.md
-  # ???
+  # enable triggering on docs file changes
+  # https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#using-filters-to-target-specific-paths-for-pull-request-or-push-events
+  push:
+    branches: ["main"]
+    paths: ["docs/**.md"]
+
+  pull_request:
+    branches: ["main"]
+    paths: ["docs/**.md"]
 
 jobs:
   
   build:
     runs-on: ubuntu-latest 
+    environment: prod   # makes environment secrets available to the job
     steps:
-      - name: Trigger build & deploy workflow in defenseunicorns/pepr-docs
+      - name: Get token to trigger defenseunicorns/pepr-docs workflow
+        id: get_workflow_trigger_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
+          application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
+
+      - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
         run: |
           curl --location \
             --request POST \
             --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${{ secrets.PEPR_DOCS_WORKFLOW_TRIGGER_TOKEN }}" \
+            --header "Authorization: Bearer ${{ steps.get_workflow_trigger_token.outputs.token }}" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
             --data '{"event_type":"update-docs","client_payload":{"to":"do"}}' \
             https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches
