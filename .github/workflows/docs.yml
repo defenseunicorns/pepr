@@ -24,8 +24,11 @@ on:
 jobs:
   
   build:
-    runs-on: ubuntu-latest 
-    environment: prod   # makes environment secrets available to the job
+    runs-on: ubuntu-latest
+
+    # makes environment secrets available to job steps
+    environment: prod
+
     steps:
       - name: Get token to trigger defenseunicorns/pepr-docs workflow
         id: get_workflow_trigger_token
@@ -34,16 +37,6 @@ jobs:
           application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
           application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
           organization: defenseunicorns
-
-      # - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
-      #   run: |
-      #     curl --location \
-      #       --request POST \
-      #       --header "Accept: application/vnd.github+json" \
-      #       --header "Authorization: Bearer ${{ steps.get_workflow_trigger_token.outputs.token }}" \
-      #       --header "X-GitHub-Api-Version: 2022-11-28" \
-      #       --data '{"event_type":"update-docs"}' \
-      #       https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches
 
       - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
         env:
