@@ -1,0 +1,46 @@
+name: docs
+
+# declare default permissions
+permissions: read-all
+
+on:
+  # enable manual run via GitHub UI
+  workflow_dispatch:
+  
+  # enable triggering on docs file changes
+  # https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#using-filters-to-target-specific-paths-for-pull-request-or-push-events
+  push:
+    branches: ["main"]
+    paths: ["docs/**.md"]
+
+  pull_request:
+    branches: ["main"]
+    paths: ["docs/**.md"]
+
+  # enable triggering when releases are pub'd
+  # release:
+  #   types: [published]
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest
+
+    # makes environment secrets available to job steps
+    environment: prod
+
+    steps:
+      - name: Get token to trigger defenseunicorns/pepr-docs workflow
+        id: get_workflow_trigger_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
+          application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
+          organization: defenseunicorns
+
+      - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
+        env:
+          GH_TOKEN: ${{ steps.get_workflow_trigger_token.outputs.token }}
+        run: |
+          gh api https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches \
+            --input - <<< '{"event_type":"update-docs"}'
