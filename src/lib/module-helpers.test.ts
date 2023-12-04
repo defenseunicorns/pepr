@@ -33,7 +33,19 @@ test("should return a list of containers in the pod", async () => {
     },
   } as PeprValidateRequest<a.Pod>;
 
-  const result = containers(peprValidationRequest);
+  let result = containers(peprValidationRequest);
   expect(result).toEqual(expect.arrayContaining(allContainers));
   expect(result).toHaveLength(allContainers.length);
+
+  result = containers(peprValidationRequest, "containers");
+  expect(result).toEqual(expect.arrayContaining(standardContainers));
+  expect(result).toHaveLength(standardContainers.length);
+
+  result = containers(peprValidationRequest, "initContainers");
+  expect(result).toEqual(expect.arrayContaining(initContainers));
+  expect(result).toHaveLength(initContainers.length);
+
+  result = containers(peprValidationRequest, "ephemeralContainers");
+  expect(result).toEqual(expect.arrayContaining(ephemeralContainers));
+  expect(result).toHaveLength(ephemeralContainers.length);
 });
