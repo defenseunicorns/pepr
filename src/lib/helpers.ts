@@ -87,12 +87,16 @@ export function generateWatchNamespaceError(
 
   // check if binding uses an ignored namespace
   if (ignoredNamespaceConflict(ignoredNamespaces, bindingNamespaces)) {
-    err += "Binding uses a Pepr ignored namespace.";
+    err += `Binding uses a Pepr ignored namespace: ignoredNamespaces: [${ignoredNamespaces.join(
+      ", ",
+    )}] bindingNamespaces: [${bindingNamespaces.join(", ")}].`;
   }
 
   // ensure filter namespaces are part of capability namespaces
   if (bindingAndCapabilityNSConflict(bindingNamespaces, capabilityNamespaces)) {
-    err += "Binding uses namespace not governed by capability.";
+    err += `Binding uses namespace not governed by capability: bindingNamespaces: [${bindingNamespaces.join(
+      ", ",
+    )}] capabilityNamespaces:$[${capabilityNamespaces.join(", ")}].`;
   }
 
   // add a space if there is a period in the middle of the string

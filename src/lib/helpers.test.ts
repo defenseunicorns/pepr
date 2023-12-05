@@ -422,17 +422,21 @@ describe("bindingAndCapabilityNSConflict", () => {
 describe("generateWatchNamespaceError", () => {
   test("returns error for ignored namespace conflict", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], []);
-    expect(error).toBe("Binding uses a Pepr ignored namespace.");
+    expect(error).toBe("Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1].");
   });
 
   test("returns error for binding and capability namespace conflict", () => {
     const error = generateWatchNamespaceError([""], ["ns2"], ["ns3"]);
-    expect(error).toBe("Binding uses namespace not governed by capability.");
+    expect(error).toBe(
+      "Binding uses namespace not governed by capability: bindingNamespaces: [ns2] capabilityNamespaces:$[ns3].",
+    );
   });
 
   test("returns combined error for both conflicts", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], ["ns3", "ns4"]);
-    expect(error).toBe("Binding uses a Pepr ignored namespace. Binding uses namespace not governed by capability.");
+    expect(error).toBe(
+      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1]. Binding uses namespace not governed by capability: bindingNamespaces: [ns1] capabilityNamespaces:$[ns3, ns4].",
+    );
   });
 
   test("returns empty string when there are no conflicts", () => {
