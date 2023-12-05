@@ -4,7 +4,7 @@
 import { Log as K8sLog, KubeConfig } from "@kubernetes/client-node";
 import { K8s, kind } from "kubernetes-fluent-client";
 import stream from "stream";
-
+import { ResponseItem } from "../lib/types";
 import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
@@ -47,24 +47,16 @@ export default function (program: RootCmd) {
           if (line.includes(respMsg)) {
             try {
               const payload = JSON.parse(line);
-              const isMutate = payload.response.patchType;
+              const isMutate = payload.res.patchType || payload.res.warnings;
 
               const name = `${payload.namespace}${payload.name}`;
               const uid = payload.uid;
 
               if (isMutate) {
-                const allowOrDeny = payload.response.allowed ? "✅" : "❌";
+                const allowOrDeny = payload.res.allowed ? "✅" : "❌";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
               } else {
-                interface ResponseItem {
-                  allowed: boolean;
-                  status: {
-                    message: string;
-                  };
-                }
-                const failures = Array.isArray(payload.response)
-                  ? payload.response
-                  : [payload.response];
+                const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
 
                 const filteredFailures = failures
                   .filter((r: ResponseItem) => !r.allowed)
@@ -78,7 +70,7 @@ export default function (program: RootCmd) {
                 }
               }
             } catch {
-              console.warn(`\n⚠️ Malformed line ${line}`);
+              console.warn(`\nIGNORED - Unable to parse line: ${line}.`);
             }
           }
         }
