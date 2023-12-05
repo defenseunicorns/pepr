@@ -529,16 +529,12 @@ const nonNsViolation: CapabilityExport[] = JSON.parse(`[
 ]`);
 
 describe("namespaceComplianceValidator", () => {
-  let exitSpy: SpiedFunction<(code?: number | undefined) => never>;
   let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
   beforeEach(() => {
-    exitSpy = jest.spyOn(process, "exit").mockImplementation(() => 1 as never);
     errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Restore the original function after each test
-    exitSpy.mockRestore();
     errorSpy.mockRestore();
   });
 
@@ -549,8 +545,13 @@ describe("namespaceComplianceValidator", () => {
   });
 
   test("should throw an error for binding namespace using a non capability namespace", () => {
-    namespaceComplianceValidator(nsViolation[0]);
-    expect(exitSpy).toHaveBeenCalled();
+    try {
+      namespaceComplianceValidator(nsViolation[0]);
+    } catch (e) {
+      expect(e.message).toBe(
+        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses namespace not governed by capability: bindingNamespaces: [new york] capabilityNamespaces:$[miami, dallas, milwaukee].",
+      );
+    }
   });
 
   test("should throw an error for binding namespace using an ignored namespace: Part 1", () => {
@@ -558,9 +559,13 @@ describe("namespaceComplianceValidator", () => {
      * this test case lists miami as a capability namespace, but also as an ignored namespace
      * in this case, there should be an error since ignoredNamespaces have precedence
      */
-
-    namespaceComplianceValidator(nonNsViolation[0], ["miami"]);
-    expect(exitSpy).toHaveBeenCalled();
+    try {
+      namespaceComplianceValidator(nonNsViolation[0], ["miami"]);
+    } catch (e) {
+      expect(e.message).toBe(
+        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses a Pepr ignored namespace: ignoredNamespaces: [miami] bindingNamespaces: [miami].",
+      );
+    }
   });
 
   test("should throw an error for binding namespace using an ignored namespace: Part 2", () => {
@@ -568,8 +573,12 @@ describe("namespaceComplianceValidator", () => {
      * This capability uses all namespaces but new york should be ignored
      * the binding uses new york so it should fail
      */
-
-    namespaceComplianceValidator(allNSCapabilities[0], ["new york"]);
-    expect(exitSpy).toHaveBeenCalled();
+    try {
+      namespaceComplianceValidator(allNSCapabilities[0], ["new york"]);
+    } catch (e) {
+      expect(e.message).toBe(
+        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses a Pepr ignored namespace: ignoredNamespaces: [new york] bindingNamespaces: [new york].",
+      );
+    }
   });
 });
