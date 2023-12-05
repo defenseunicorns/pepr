@@ -5,7 +5,10 @@ import { PeprValidateRequest } from "./validate-request";
 import { a } from "../lib";
 
 // Returns all containers in the pod
-export function containers(request: PeprValidateRequest<a.Pod>, containerTypes?: "containers" | "initContainers" | "ephemeralContainers") {
+export function containers(
+  request: PeprValidateRequest<a.Pod>,
+  containerTypes?: "containers" | "initContainers" | "ephemeralContainers",
+) {
   const containers = request.Raw.spec?.containers || [];
   const initContainers = request.Raw.spec?.initContainers || [];
   const ephemeralContainers = request.Raw.spec?.ephemeralContainers || [];
@@ -19,5 +22,5 @@ export function containers(request: PeprValidateRequest<a.Pod>, containerTypes?:
   if (containerTypes === "ephemeralContainers") {
     return ephemeralContainers;
   }
-  return [...containers, ...initContainers, ...ephemeralContainers]
+  return [...containers, ...initContainers, ...ephemeralContainers];
 }
