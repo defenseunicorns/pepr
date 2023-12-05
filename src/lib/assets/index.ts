@@ -6,15 +6,19 @@ import crypto from "crypto";
 import { ModuleConfig } from "../module";
 import { TLSOut, genTLS } from "../tls";
 import { CapabilityExport } from "../types";
+import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml } from "./yaml";
+import { namespaceComplianceValidator } from "../helpers";
 
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
+  readonly alwaysIgnore!: WebhookIgnore;
   capabilities!: CapabilityExport[];
+
   image: string;
 
   constructor(
@@ -23,7 +27,7 @@ export class Assets {
     readonly host?: string,
   ) {
     this.name = `pepr-${config.uuid}`;
-
+    this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
 
     // Generate the ephemeral tls things
@@ -42,6 +46,11 @@ export class Assets {
 
   allYaml = async (rbacMode: string) => {
     this.capabilities = await loadCapabilities(this.path);
+    // give error if namespaces are not respected
+    for (const capability of this.capabilities) {
+      namespaceComplianceValidator(capability, this.alwaysIgnore.namespaces);
+    }
+
     return allYaml(this, rbacMode);
   };
 }
