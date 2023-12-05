@@ -17,11 +17,18 @@ on:
     branches: ["main"]
     paths: ["docs/**.md"]
 
+  # enable triggering when releases are pub'd
+  # release:
+  #   types: [published]
+
 jobs:
   
   build:
-    runs-on: ubuntu-latest 
-    environment: prod   # makes environment secrets available to the job
+    runs-on: ubuntu-latest
+
+    # makes environment secrets available to job steps
+    environment: prod
+
     steps:
       - name: Get token to trigger defenseunicorns/pepr-docs workflow
         id: get_workflow_trigger_token
@@ -32,11 +39,8 @@ jobs:
           organization: defenseunicorns
 
       - name: Trigger defenseunicorns/pepr-docs build & deploy workflow
+        env:
+          GH_TOKEN: ${{ steps.get_workflow_trigger_token.outputs.token }}
         run: |
-          curl --location \
-            --request POST \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${{ steps.get_workflow_trigger_token.outputs.token }}" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            --data '{"event_type":"update-docs","client_payload":{"to":"do"}}' \
-            https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches
+          gh api https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches \
+            --input - <<< '{"event_type":"update-docs"}'
