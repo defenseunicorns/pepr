@@ -62,7 +62,9 @@ export default function (program: RootCmd) {
                     message: string;
                   };
                 }
-                const failures = Array.isArray(payload.response) ? payload.response : [payload.response]
+                const failures = Array.isArray(payload.response)
+                  ? payload.response
+                  : [payload.response];
 
                 const filteredFailures = failures
                   .filter((r: ResponseItem) => !r.allowed)
@@ -76,7 +78,7 @@ export default function (program: RootCmd) {
                 }
               }
             } catch {
-              console.warn(`\n⚠️ Malformed line ${line}`)
+              console.warn(`\n⚠️ Malformed line ${line}`);
             }
           }
         }
