@@ -114,9 +114,8 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     capabilityNamespaces ? capabilityNamespaces : [],
   );
   if (namespaceError !== "") {
-    console.error(
+    throw new Error(
       `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,
     );
-    process.exit(1);
   }
 }
