@@ -4,19 +4,19 @@ enableRobotsTXT = true
 
 # Set uglyURLs & relativeURLs for hugo to build local offline pages in public/
 # When these are set `npm start` will no longer host functioning webpages. Instead
-#   use `npm run build` to construct the offline public/ directory 
+#   use `npm run build` to construct the offline public/ directory
 relativeURLs = false
 uglyURLs     = false
 
 # Mount any external directories for use by hugo
-# 
-# source: 
-#   The source directory of the mount. For the main project, this can be either 
-#   project-relative or absolute and even a symbolic link. For other modules it must be 
+#
+# source:
+#   The source directory of the mount. For the main project, this can be either
+#   project-relative or absolute and even a symbolic link. For other modules it must be
 #   project-relative.
 # target
-#   Where it should be mounted into Hugo’s virtual filesystem. It must start with one of 
-#   Hugo’s component folders: static, content, layouts, data, assets, i18n, or archetypes. 
+#   Where it should be mounted into Hugo’s virtual filesystem. It must start with one of
+#   Hugo’s component folders: static, content, layouts, data, assets, i18n, or archetypes.
 #   E.g. content/blog.
 
 # [[module.mounts]]
@@ -64,8 +64,8 @@ proxy = "direct"
   # version = "v0.2"
   # url = "https://v02-version"
   [params.ui]
-    navbar_logo    = "img/pepr.svg" # The product logo on the navbar
-    show_nav_title = true           # Remove if the logo includes a title
+    navbar_logo    = "img/pepr-dark.svg" # The product logo on the navbar
+    show_nav_title = false           # Remove if the logo includes a title
 
   [[params.socialLinks]]
     desc = ""
