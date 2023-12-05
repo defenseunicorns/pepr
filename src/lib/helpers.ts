@@ -50,3 +50,72 @@ export async function createDirectoryIfNotExists(path: string) {
     }
   }
 }
+
+export function hasEveryOverlap<T>(array1: T[], array2: T[]): boolean {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    return false;
+  }
+
+  return array1.every(element => array2.includes(element));
+}
+
+export function hasAnyOverlap<T>(array1: T[], array2: T[]): boolean {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    return false;
+  }
+
+  return array1.some(element => array2.includes(element));
+}
+
+export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]) {
+  return hasAnyOverlap(bindingNamespaces, ignoreNamespaces);
+}
+
+export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]) {
+  if (!capabilityNamespaces) {
+    return false;
+  }
+  return capabilityNamespaces.length !== 0 && !hasEveryOverlap(bindingNamespaces, capabilityNamespaces);
+}
+
+export function generateWatchNamespaceError(
+  ignoredNamespaces: string[],
+  bindingNamespaces: string[],
+  capabilityNamespaces: string[],
+) {
+  let err = "";
+
+  // check if binding uses an ignored namespace
+  if (ignoredNamespaceConflict(ignoredNamespaces, bindingNamespaces)) {
+    err += `Binding uses a Pepr ignored namespace: ignoredNamespaces: [${ignoredNamespaces.join(
+      ", ",
+    )}] bindingNamespaces: [${bindingNamespaces.join(", ")}].`;
+  }
+
+  // ensure filter namespaces are part of capability namespaces
+  if (bindingAndCapabilityNSConflict(bindingNamespaces, capabilityNamespaces)) {
+    err += `Binding uses namespace not governed by capability: bindingNamespaces: [${bindingNamespaces.join(
+      ", ",
+    )}] capabilityNamespaces:$[${capabilityNamespaces.join(", ")}].`;
+  }
+
+  // add a space if there is a period in the middle of the string
+  return err.replace(/\.([^ ])/g, ". $1");
+}
+
+// namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
+export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
+  const { namespaces: capabilityNamespaces, bindings, name } = capability;
+  const bindingNamespaces = bindings.flatMap(binding => binding.filters.namespaces);
+
+  const namespaceError = generateWatchNamespaceError(
+    ignoredNamespaces ? ignoredNamespaces : [],
+    bindingNamespaces,
+    capabilityNamespaces ? capabilityNamespaces : [],
+  );
+  if (namespaceError !== "") {
+    throw new Error(
+      `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,
+    );
+  }
+}
