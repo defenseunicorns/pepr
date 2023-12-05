@@ -234,7 +234,7 @@ export class Controller {
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
           // Log the response
-          Log.debug({ ...reqMetadata, res }, "Outgoing response", admissionKind);
+          Log.debug({ ...reqMetadata, res }, "Outgoing response");
         });
 
         if (admissionKind === "Mutate") {
