@@ -233,10 +233,9 @@ export class Controller {
         const responseList: ValidateResponse[] | MutateResponse[] = Array.isArray(response) ? response : [response];
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
+          // Log the response
+          Log.debug({ ...reqMetadata, res }, "Outgoing response");
         });
-
-        // Log the response
-        Log.debug({ ...reqMetadata, response }, "Outgoing response");
 
         if (admissionKind === "Mutate") {
           res.send({

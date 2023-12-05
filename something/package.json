@@ -1,0 +1,34 @@
+{
+  "name": "something",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [
+    "pepr",
+    "k8s",
+    "policy-engine",
+    "pepr-module",
+    "security"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "pepr": {
+    "name": "something",
+    "uuid": "4656394a-4711-50b3-8c23-a4a084ccd672",
+    "onError": "ignore",
+    "alwaysIgnore": {
+      "namespaces": [],
+      "labels": []
+    },
+    "includedFiles": []
+  },
+  "scripts": {
+    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system"
+  },
+  "dependencies": {
+    "pepr": "0.18.1"
+  },
+  "devDependencies": {
+    "typescript": "5.2.2"
+  }
+}

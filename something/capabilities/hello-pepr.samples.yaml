@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-demo
+  labels:
+    keep-me: please
+    remove-me: please
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-demo-2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-1
+  namespace: pepr-demo
+data:
+  example: dW5pY29ybiBtYWdpYw==
+  binary-data: >-
+    iCZQUg8xYucNUqD+8lyl2YcKjYYygvTtiDSEV9b9WKUkxSSLFJTgIWMJ9GcFFYs4T9JCdda51u74jfq8yHzRuEASl60EdTS/NfWgIIFTGqcNRfqMw+vgpyTMmCyJVaJEDFq6AA==
+  ascii-with-white-space: >-
+    VGhpcyBpcyBzb21lIHJhbmRvbSB0ZXh0OgoKICAgIC0gd2l0aCBsaW5lIGJyZWFrcwogICAgLSBhbmQgdGFicw==
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-1
+  namespace: pepr-demo
+data:
+  key: ex-1-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-2
+  namespace: pepr-demo
+data:
+  key: ex-2-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-evil-cm
+  namespace: pepr-demo
+  annotations:
+    evil: 'true'
+data:
+  key: ex-evil-cm-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-3
+  namespace: pepr-demo
+  labels:
+    change: by-label
+data:
+  key: ex-3-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-4
+  namespace: pepr-demo
+data:
+  key: ex-4-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-4a
+  namespace: pepr-demo-2
+data:
+  key: ex-4-val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-5
+  namespace: pepr-demo
+  labels:
+    chuck-norris: test
+data:
+  key: ex-5-val
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: unicorns.pepr.dev
+spec:
+  group: pepr.dev
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                message:
+                  type: string
+                counter:
+                  type: number
+  scope: Namespaced
+  names:
+    plural: unicorns
+    singular: unicorn
+    kind: Unicorn

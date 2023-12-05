@@ -56,19 +56,27 @@ export default function (program: RootCmd) {
                 const allowOrDeny = payload.response.allowed ? "✅" : "❌";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
               } else {
-                const failures = payload.response
-                  .filter(r => !r.allowed)
-                  .map(r => r.status.message);
+                interface ResponseItem {
+                  allowed: boolean;
+                  status: {
+                    message: string;
+                  };
+                }
+                const failures = Array.isArray(payload.response) ? payload.response : [payload.response]
+
+                const filteredFailures = failures
+                  .filter((r: ResponseItem) => !r.allowed)
+                  .map((r: ResponseItem) => r.status.message);
                 // console.log(`${name} (${uid}) | VALIDATE | ${allow ? "ALLOW" : "DENY"}`);
-                if (failures.length > 0) {
+                if (filteredFailures.length > 0) {
                   console.log(`\n❌  VALIDATE   ${name} (${uid})`);
-                  console.debug(failures);
+                  console.debug(filteredFailures);
                 } else {
                   console.log(`\n✅  VALIDATE   ${name} (${uid})`);
                 }
               }
-            } catch (e) {
-              console.error(e);
+            } catch {
+              console.warn(`\n⚠️ Malformed line ${line}`)
             }
           }
         }
