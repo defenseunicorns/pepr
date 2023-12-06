@@ -1,4 +1,4 @@
-name: Version Releaes
+name: Version Release
 
 on:
   release:

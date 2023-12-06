@@ -8,6 +8,16 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
 /**
+ * Specifically for parsing logs in monitor mode
+ */
+export interface ResponseItem {
+  uid?: string;
+  allowed: boolean;
+  status: {
+    message: string;
+  };
+}
+/**
  * Recursively make all properties in T optional.
  */
 export type DeepPartial<T> = {

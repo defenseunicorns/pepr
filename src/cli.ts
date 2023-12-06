@@ -8,6 +8,7 @@ import build from "./cli/build";
 import deploy from "./cli/deploy";
 import dev from "./cli/dev";
 import format from "./cli/format";
+import monitor from "./cli/monitor";
 import init from "./cli/init/index";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
@@ -39,5 +40,6 @@ deploy(program);
 dev(program);
 update(program);
 format(program);
+monitor(program);
 
 program.parse();

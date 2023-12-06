@@ -53,9 +53,25 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 ---
 
+## pepr monitor
+
+Monitor Validations for a given Pepr Module.
+
+Usage: 
+```bash
+npx pepr monitor [options] <module-uuid>
+```
+
+**Options:**
+- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
+- `-h, --help` - Display help for command
+
+---
+
 ## pepr build
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
+
 
 **Options:**
 
