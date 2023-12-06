@@ -246,23 +246,23 @@ export class Controller {
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
-            response,
+            response: kubeAdmissionResponse,
           });
         } else {
-          kubeAdmissionResponse = response;
+          kubeAdmissionResponse = {
+            uid: responseList[0].uid,
+            allowed: responseList.filter(r => !r.allowed).length === 0,
+            status: {
+              message: (responseList as ValidateResponse[])
+                .filter(rl => !rl.allowed)
+                .map(curr => curr.status?.message)
+                .join("; "),
+            },
+          };
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
-            response: {
-              uid: responseList[0].uid,
-              allowed: responseList.filter(r => !r.allowed).length === 0,
-              status: {
-                message: (responseList as ValidateResponse[])
-                  .filter(rl => !rl.allowed)
-                  .map(curr => curr.status?.message)
-                  .join("; "),
-              },
-            },
+            response: kubeAdmissionResponse,
           });
         }
 
