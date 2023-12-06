@@ -31,7 +31,7 @@ export class PeprControllerStore {
       for (const { name, registerScheduleStore, hasSchedule } of capabilities) {
         // Guard Clause to exit  early
         if (hasSchedule !== true) {
-          return;
+          continue;
         }
         // Register the scheduleStore with the capability
         const { scheduleStore } = registerScheduleStore();
