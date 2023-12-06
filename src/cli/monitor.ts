@@ -38,7 +38,7 @@ export default function (program: RootCmd) {
       const logStream = new stream.PassThrough();
 
       logStream.on("data", chunk => {
-        const respMsg = `"msg":"Outgoing response"`;
+        const respMsg = `"msg":"Check response"`;
         // Split the chunk into lines
         const lines = chunk.toString().split("\n");
 

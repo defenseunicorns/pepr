@@ -11,6 +11,7 @@ import { PeprValidateRequest } from "./validate-request";
  * Specifically for parsing logs in monitor mode
  */
 export interface ResponseItem {
+  uid?: string;
   allowed: boolean;
   status: {
     message: string;

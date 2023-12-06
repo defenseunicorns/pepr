@@ -13,6 +13,7 @@ import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
+import { ResponseItem } from "../types";
 
 export class Controller {
   // Track whether the server is running
@@ -234,16 +235,21 @@ export class Controller {
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
           // Log the response
-          Log.debug({ ...reqMetadata, res }, "Outgoing response");
+          Log.debug({ ...reqMetadata, res }, "Check response");
         });
 
+        let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;
+
         if (admissionKind === "Mutate") {
+          kubeAdmissionResponse = response;
+          Log.debug({ ...reqMetadata, response }, "Outgoing response");
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
             response,
           });
         } else {
+          kubeAdmissionResponse = response;
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
@@ -259,6 +265,8 @@ export class Controller {
             },
           });
         }
+
+        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
