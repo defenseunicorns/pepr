@@ -41,3 +41,4 @@ jobs:
         run: |
           gh api https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches \
             --input - <<< '{"event_type":"update-docs"}'
+
