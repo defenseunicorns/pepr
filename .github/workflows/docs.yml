@@ -13,9 +13,6 @@ on:
     branches: ["main"]
     paths: ["docs/**.md"]
 
-  pull_request:
-    branches: ["main"]
-    paths: ["docs/**.md"]
 
   # enable triggering when releases are pub'd
   # release:
@@ -44,3 +41,4 @@ jobs:
         run: |
           gh api https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches \
             --input - <<< '{"event_type":"update-docs"}'
+
