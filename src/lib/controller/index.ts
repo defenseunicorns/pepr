@@ -13,6 +13,7 @@ import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
+import { ResponseItem } from "../types";
 
 export class Controller {
   // Track whether the server is running
@@ -233,33 +234,39 @@ export class Controller {
         const responseList: ValidateResponse[] | MutateResponse[] = Array.isArray(response) ? response : [response];
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
+          // Log the response
+          Log.debug({ ...reqMetadata, res }, "Check response");
         });
 
-        // Log the response
-        Log.debug({ ...reqMetadata, response }, "Outgoing response");
+        let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;
 
         if (admissionKind === "Mutate") {
+          kubeAdmissionResponse = response;
+          Log.debug({ ...reqMetadata, response }, "Outgoing response");
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
-            response,
+            response: kubeAdmissionResponse,
           });
         } else {
+          kubeAdmissionResponse = {
+            uid: responseList[0].uid,
+            allowed: responseList.filter(r => !r.allowed).length === 0,
+            status: {
+              message: (responseList as ValidateResponse[])
+                .filter(rl => !rl.allowed)
+                .map(curr => curr.status?.message)
+                .join("; "),
+            },
+          };
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
-            response: {
-              uid: responseList[0].uid,
-              allowed: responseList.filter(r => !r.allowed).length === 0,
-              status: {
-                message: (responseList as ValidateResponse[])
-                  .filter(rl => !rl.allowed)
-                  .map(curr => curr.status?.message)
-                  .join("; "),
-              },
-            },
+            response: kubeAdmissionResponse,
           });
         }
+
+        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
