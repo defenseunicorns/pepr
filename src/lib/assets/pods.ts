@@ -45,6 +45,7 @@ export function watcher(assets: Assets, hash: string) {
       namespace: "pepr-system",
       labels: {
         app,
+        "pepr.dev/controller": "watcher",
       },
     },
     spec: {
@@ -55,12 +56,14 @@ export function watcher(assets: Assets, hash: string) {
       selector: {
         matchLabels: {
           app,
+          "pepr.dev/controller": "watcher",
         },
       },
       template: {
         metadata: {
           labels: {
             app,
+            "pepr.dev/controller": "watcher",
           },
         },
         spec: {
@@ -151,6 +154,7 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
       namespace: "pepr-system",
       labels: {
         app,
+        "pepr.dev/controller": "admission",
       },
     },
     spec: {
@@ -158,12 +162,14 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
       selector: {
         matchLabels: {
           app,
+          "pepr.dev/controller": "admission",
         },
       },
       template: {
         metadata: {
           labels: {
             app,
+            "pepr.dev/controller": "admission",
           },
         },
         spec: {
