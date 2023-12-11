@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { KubernetesListObject, kind } from "kubernetes-fluent-client";
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { waitForAllDeploymentReplicas } from "./deploy-helpers";
 
 const mockReadyDeployments = {
@@ -103,7 +103,6 @@ describe("deploy-helpers", () => {
   });
 
   describe("waitForAllDeploymentReplicas", () => {
-
     it("should return true when all replicas are ready", async () => {
       const status = await waitForAllDeploymentReplicas(mockReadyDeployments);
 
@@ -119,6 +118,5 @@ describe("deploy-helpers", () => {
 
       expect(status).toEqual(false);
     });
-
   });
 });
