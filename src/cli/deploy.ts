@@ -6,7 +6,7 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { checkAllDeploymentReplicas } from "../lib/helpers";
+import { checkAllDeploymentReplicas } from "../lib/deploy-helpers";
 import Log from "../lib/logger";
 
 export default async function (program: RootCmd) {

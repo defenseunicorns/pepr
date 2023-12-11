@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists, waitForAllDeploymentReplicas } from "./helpers";
-import { expect, describe, test, jest, beforeEach, afterEach, it } from "@jest/globals";
+import { createRBACMap, addVerbIfNotExists } from "./helpers";
+import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { promises as fs } from "fs";
 import {
   createDirectoryIfNotExists,
@@ -15,7 +15,6 @@ import {
   namespaceComplianceValidator,
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
-import { KubernetesListObject, kind } from "kubernetes-fluent-client";
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -262,82 +261,6 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
-
-const mockReadyDeployments = {
-  items: [
-    {
-      metadata: {
-        name: "test-deployment1",
-      },
-      status: {
-        readyReplicas: 1,
-      },
-      spec: {
-        replicas: 1,
-      },
-    },
-    {
-      metadata: {
-        name: "test-deployment2",
-      },
-      status: {
-        readyReplicas: 2,
-      },
-      spec: {
-        replicas: 2,
-      },
-    },
-    {
-      metadata: {
-        name: "test-deployment3",
-      },
-      status: {
-        readyReplicas: 3,
-      },
-      spec: {
-        replicas: 3,
-      },
-    },
-  ],
-} as KubernetesListObject<kind.Deployment>;
-
-const mockNotReadyDeployments = {
-  items: [
-    {
-      metadata: {
-        name: "test-deployment1",
-      },
-      status: {
-        readyReplicas: 1,
-      },
-      spec: {
-        replicas: 1,
-      },
-    },
-    {
-      metadata: {
-        name: "test-deployment2",
-      },
-      status: {
-        readyReplicas: 2,
-      },
-      spec: {
-        replicas: 2,
-      },
-    },
-    {
-      metadata: {
-        name: "test-deployment3",
-      },
-      status: {
-        readyReplicas: 2,
-      },
-      spec: {
-        replicas: 3,
-      },
-    },
-  ],
-} as KubernetesListObject<kind.Deployment>;
 
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
@@ -657,48 +580,5 @@ describe("namespaceComplianceValidator", () => {
         "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses a Pepr ignored namespace: ignoredNamespaces: [new york] bindingNamespaces: [new york].",
       );
     }
-  });
-});
-
-
-describe("deploy-helpers", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe("getDeployments", () => {
-    it("should get all deployments when all replicas are ready", async () => {
-      const mockGetDeployments = jest.fn().mockReturnValue(mockReadyDeployments);
-      const deployments = await mockGetDeployments();
-
-      expect(deployments).toEqual(mockReadyDeployments);
-    });
-
-    it("should get all deployments when some replicas are not ready", async () => {
-      const mockGetDeployments = jest.fn().mockReturnValue(mockNotReadyDeployments);
-      const deployments = await mockGetDeployments();
-
-      expect(deployments).toEqual(mockNotReadyDeployments);
-    });
-  });
-
-  describe("waitForAllDeploymentReplicas", () => {
-
-    it("should return true when all replicas are ready", async () => {
-      const status = await waitForAllDeploymentReplicas(mockReadyDeployments);
-
-      expect(status).toEqual(true);
-    });
-
-    it("should return false when there are no deployments", async () => {
-      const mockNoDeployments = {
-        items: [],
-      } as KubernetesListObject<kind.Deployment>;
-
-      const status = await waitForAllDeploymentReplicas(mockNoDeployments);
-
-      expect(status).toEqual(false);
-    });
-
   });
 });
