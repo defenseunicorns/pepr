@@ -55,7 +55,7 @@ export default async function (program: RootCmd) {
       }
     });
 
-    // Wait for the resources to be fully up
-    const replicasReady = await checkAllDeploymentReplicas();
-    Log.info(`All replicas ready: ${replicasReady}`);
+  // Wait for the resources to be fully up
+  const replicasReady = await checkAllDeploymentReplicas();
+  Log.info(`All replicas ready: ${replicasReady}`);
 }
