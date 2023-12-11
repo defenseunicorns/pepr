@@ -6,8 +6,10 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
+import { checkAllDeploymentReplicas } from "../lib/helpers";
+import Log from "../lib/logger";
 
-export default function (program: RootCmd) {
+export default async function (program: RootCmd) {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
@@ -52,4 +54,8 @@ export default function (program: RootCmd) {
         process.exit(1);
       }
     });
+
+    // Wait for the resources to be fully up
+    const replicasReady = await checkAllDeploymentReplicas();
+    Log.info(`All replicas ready: ${replicasReady}`);
 }
