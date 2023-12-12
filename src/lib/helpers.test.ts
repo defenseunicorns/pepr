@@ -16,6 +16,22 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
+jest.mock("kubernetes-fluent-client", () => {
+  return {
+    K8s: jest.fn(),
+    kind: jest.fn(),
+  };
+});
+
+jest.mock("fs", () => {
+  return {
+    promises: {
+      access: jest.fn(),
+      mkdir: jest.fn(),
+    },
+  };
+});
+
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
         "name": "hello-pepr",
@@ -291,15 +307,6 @@ describe("addVerbIfNotExists", () => {
     addVerbIfNotExists(verbs, "get");
     expect(verbs).toEqual(["get", "list", "watch"]); // The array remains unchanged
   });
-});
-
-jest.mock("fs", () => {
-  return {
-    promises: {
-      access: jest.fn(),
-      mkdir: jest.fn(),
-    },
-  };
 });
 
 describe("createDirectoryIfNotExists function", () => {
