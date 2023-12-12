@@ -72,3 +72,42 @@ GET /metrics
   pepr_Validate_sum 402.4275380000472
   pepr_Validate_count 2
 ```
+## Prometheus Operator
+
+If using the Prometheus Operator, the following `ServiceMonitor` example manifests can be used to scrape the `/metrics` endpoint for the `admission` and `watcher` controllers.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: admission
+spec:
+  selector:
+    matchLabels:
+      pepr.dev/controller: admission
+  namespaceSelector:
+    matchNames:
+    - pepr-system
+  endpoints:
+  - targetPort: 3000
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: watcher
+spec:
+  selector:
+    matchLabels:
+      pepr.dev/controller: watcher
+  namespaceSelector:
+    matchNames:
+    - pepr-system 
+  endpoints:
+  - targetPort: 3000
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+```
