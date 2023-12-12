@@ -55,6 +55,6 @@ export default async function (program: RootCmd) {
         process.exit(1);
       }
     });
-    // Wait for the resources to be fully up
-    await peprDeploymentsReady();
+  // Wait for the resources to be fully up
+  await peprDeploymentsReady();
 }
