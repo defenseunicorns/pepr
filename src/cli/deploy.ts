@@ -6,7 +6,7 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { peprDeploymentsReady } from "../lib/deploy-helpers";
+import { peprDeploymentsReady } from "../lib/helpers";
 
 export default function (program: RootCmd) {
   program
