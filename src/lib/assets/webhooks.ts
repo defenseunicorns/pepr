@@ -129,7 +129,7 @@ export async function webhookConfig(
         name: `${name}.pepr.dev`,
         admissionReviewVersions: ["v1", "v1beta1"],
         clientConfig,
-        failurePolicy: config.onError === "reject" ? "Fail" : "Ignore" ,
+        failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
         matchPolicy: "Equivalent",
         timeoutSeconds,
         namespaceSelector: {
