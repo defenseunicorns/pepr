@@ -8,7 +8,7 @@ import { buildModule } from "./build";
 import { RootCmd } from "./root";
 import { peprDeploymentsReady } from "../lib/deploy-helpers";
 
-export default async function (program: RootCmd) {
+export default function (program: RootCmd) {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
@@ -47,14 +47,11 @@ export default async function (program: RootCmd) {
 
       try {
         await webhook.deploy();
-        // Wait for the resources to be fully up
-        //await peprDeploymentsReady();
-        console.info(`✅ Module deployed successfully`);
+        // Wait for the pepr-system resources to be fully up
+        await peprDeploymentsReady();
       } catch (e) {
         console.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });
-  // Wait for the resources to be fully up
-  await peprDeploymentsReady();
 }
