@@ -134,11 +134,11 @@ export async function checkDeploymentStatus(namespace: string) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
       Log.info(
-        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`
+        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
       );
     } else {
       Log.info(
-        `Deployment ${deployment.metadata?.name} rolled out: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`
+        `Deployment ${deployment.metadata?.name} rolled out: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
       );
       readyCount++;
     }
