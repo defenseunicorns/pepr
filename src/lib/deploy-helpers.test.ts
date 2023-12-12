@@ -3,7 +3,7 @@
 
 //import { KubernetesListObject, kind } from "kubernetes-fluent-client";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { peprDeploymentsReady } from "./deploy-helpers";
+//import { peprDeploymentsReady } from "./deploy-helpers";
 
 /* const mockReadyDeployments = {
   items: [
