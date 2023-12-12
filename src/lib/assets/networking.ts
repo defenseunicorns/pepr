@@ -43,10 +43,14 @@ export function service(name: string): kind.Service {
     metadata: {
       name,
       namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "admission",
+      },
     },
     spec: {
       selector: {
         app: name,
+        "pepr.dev/controller": "admission",
       },
       ports: [
         {
@@ -65,10 +69,14 @@ export function watcherService(name: string): kind.Service {
     metadata: {
       name: `${name}-watcher`,
       namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "watcher",
+      },
     },
     spec: {
       selector: {
         app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
       },
       ports: [
         {
