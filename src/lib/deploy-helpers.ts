@@ -19,9 +19,7 @@ export async function peprDeploymentsReady() {
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
-    Log.info(
-      `Deployment ${deployment.metadata?.name} is sucessfully rolled out`,
-    );
+    Log.info(`Deployment ${deployment.metadata?.name} is sucessfully rolled out`);
     readyCount++;
     Log.info(`${readyCount} deployments ready out of ${deployments.items.length} deployments`);
   }

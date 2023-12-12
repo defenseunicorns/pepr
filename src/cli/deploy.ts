@@ -47,13 +47,14 @@ export default async function (program: RootCmd) {
 
       try {
         await webhook.deploy();
+        // Wait for the resources to be fully up
+        //await peprDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
       } catch (e) {
         console.error(`Error deploying module: ${e}`);
         process.exit(1);
       }
     });
-
-  // Wait for the resources to be fully up
-  await peprDeploymentsReady();
+    // Wait for the resources to be fully up
+    await peprDeploymentsReady();
 }
