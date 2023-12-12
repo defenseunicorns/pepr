@@ -6,7 +6,7 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { checkAllDeploymentReplicas } from "../lib/deploy-helpers";
+import { peprDeploymentsReady } from "../lib/deploy-helpers";
 
 export default async function (program: RootCmd) {
   program
@@ -55,5 +55,5 @@ export default async function (program: RootCmd) {
     });
 
   // Wait for the resources to be fully up
-  await checkAllDeploymentReplicas();
+  await peprDeploymentsReady();
 }
