@@ -6,7 +6,7 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { peprDeploymentsReady } from "../lib/helpers";
+import { namespaceDeploymentsReady } from "../lib/helpers";
 
 export default function (program: RootCmd) {
   program
@@ -48,9 +48,10 @@ export default function (program: RootCmd) {
       try {
         await webhook.deploy();
         // Wait for the pepr-system resources to be fully up
-        await peprDeploymentsReady();
+        await namespaceDeploymentsReady();
+        console.info(`✅ Module deployed successfully`);
       } catch (e) {
-        console.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e.data.message}`);
         process.exit(1);
       }
     });
