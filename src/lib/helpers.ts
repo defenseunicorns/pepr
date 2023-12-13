@@ -131,7 +131,6 @@ export async function checkDeploymentStatus(namespace: string) {
 
   for (const deployment of deployments.items) {
     const readyReplicas = deployment.status?.readyReplicas ? deployment.status?.readyReplicas : 0;
-    await new Promise(resolve => setTimeout(resolve, 1000));
     if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
       Log.info(
         `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
@@ -150,12 +149,15 @@ export async function checkDeploymentStatus(namespace: string) {
 }
 
 // wait for all deployments in the pepr-system namespace to be ready
-export async function peprDeploymentsReady(namespace: string = "pepr-system") {
-  Log.info(`🔍 Checking ${namespace} deployments status...`);
-  let ready = await checkDeploymentStatus(namespace);
+export async function namespaceDeploymentsReady(namespace: string = "pepr-system") {
+  Log.info(`Checking ${namespace} deployments status...`);
+  let ready = false;
   while (!ready) {
-    Log.info(`❌ Not all ${namespace} deployments are ready`);
     ready = await checkDeploymentStatus(namespace);
+    if (ready) {
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
-  Log.info(`✅ All ${namespace} deployments are ready`);
+  Log.info(`All ${namespace} deployments are ready`);
 }
