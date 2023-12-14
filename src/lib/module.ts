@@ -28,6 +28,8 @@ export type ModuleConfig = {
   alwaysIgnore: WebhookIgnore;
   /** Define the log level for the in-cluster controllers */
   logLevel?: string;
+  /** Propagate env variables to in-cluster controllers */
+  env?: Record<string, string>;
 };
 
 export type PackageJSON = {

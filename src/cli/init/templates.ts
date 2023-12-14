@@ -42,6 +42,9 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
         labels: [],
       },
       includedFiles: [],
+      env: {
+        MY_CUSTOM_VAR: "example-value",
+      },
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],

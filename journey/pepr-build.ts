@@ -66,4 +66,6 @@ async function validateZarfYaml() {
 
   // Check the generated k8s yaml
   expect(k8sYaml).toMatch(`image: ${expectedImage}`);
+  expect(k8sYaml).toMatch(`name: MY_CUSTOM_VAR`);
+  expect(k8sYaml).toMatch(`value: example-value`);
 }
