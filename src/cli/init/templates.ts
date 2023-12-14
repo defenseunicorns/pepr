@@ -25,6 +25,11 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
 
+  const testEnv = {
+    MY_CUSTOM_VAR: "example-value",
+    ZARF_VAR: "###ZARF_VAR_THING###",
+  };
+
   const data = {
     name,
     version: "0.0.1",
@@ -42,9 +47,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
         labels: [],
       },
       includedFiles: [],
-      env: {
-        MY_CUSTOM_VAR: "example-value",
-      },
+      env: pgkVerOverride ? testEnv : {},
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],
