@@ -69,6 +69,7 @@ export function serviceAccount(name: string): kind.ServiceAccount {
       name,
       namespace: "pepr-system",
     },
+    automountServiceAccountToken: false,
   };
 }
 

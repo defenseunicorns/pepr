@@ -69,6 +69,7 @@ export function watcher(assets: Assets, hash: string) {
           },
         },
         spec: {
+          automountServiceAccountToken: false,
           serviceAccountName: name,
           securityContext: {
             runAsUser: 65532,
@@ -186,6 +187,7 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
           },
         },
         spec: {
+          automountServiceAccountToken: false,
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
           securityContext: {
