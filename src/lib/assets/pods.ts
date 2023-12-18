@@ -116,7 +116,7 @@ export function watcher(assets: Assets, hash: string) {
                 runAsGroup: 1000,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
-                capabilities: { 
+                capabilities: {
                   drop: ["ALL"],
                 },
               },
@@ -235,7 +235,7 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
                 runAsGroup: 1000,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
-                capabilities: { 
+                capabilities: {
                   drop: ["ALL"],
                 },
               },
