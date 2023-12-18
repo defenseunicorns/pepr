@@ -71,10 +71,10 @@ export function watcher(assets: Assets, hash: string) {
         spec: {
           serviceAccountName: name,
           securityContext: {
-            runAsUser: 1000,
-            runAsGroup: 1000,
+            runAsUser: 65532,
+            runAsGroup: 65532,
             runAsNonRoot: true,
-            fsGroup: 1000,
+            fsGroup: 65532,
           },
           containers: [
             {
@@ -112,8 +112,8 @@ export function watcher(assets: Assets, hash: string) {
                 },
               },
               securityContext: {
-                runAsUser: 1000,
-                runAsGroup: 1000,
+                runAsUser: 65532,
+                runAsGroup: 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
                 capabilities: {
@@ -189,10 +189,10 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
           securityContext: {
-            runAsUser: 1000,
-            runAsGroup: 1000,
+            runAsUser: 65532,
+            runAsGroup: 65532,
             runAsNonRoot: true,
-            fsGroup: 1000,
+            fsGroup: 65532,
           },
           containers: [
             {
@@ -231,8 +231,8 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
               },
               env: genEnv(config),
               securityContext: {
-                runAsUser: 1000,
-                runAsGroup: 1000,
+                runAsUser: 65532,
+                runAsGroup: 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
                 capabilities: {
