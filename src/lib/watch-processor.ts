@@ -3,8 +3,8 @@
 
 import { K8s } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-
 import { WatchCfg } from "kubernetes-fluent-client/dist/fluent/watch";
+
 import { Capability } from "./capability";
 import Log from "./logger";
 import { Binding, Event } from "./types";
@@ -37,15 +37,19 @@ async function runBinding(binding: Binding) {
       Log.error(e, "Watch failed after 3 attempts, giving up");
       process.exit(1);
     },
+    // pino binding explodes unless we wrap it
+    logFn: (obj: unknown, msg?: string, ...args: unknown[]) => Log.debug(obj, msg, ...args),
   };
 
   // Watch the resource
-  await K8s(binding.model, binding.filters).Watch((obj, type) => {
+  await K8s(binding.model, binding.filters).Watch(async (obj, type) => {
+    Log.debug(obj, `Watch event ${type} received`);
+
     // If the type matches the phase, call the watch callback
     if (phaseMatch.includes(type)) {
       try {
-        // This may be a promise, but we don't need to wait for it
-        void binding.watchCallback?.(obj, type);
+        // Perform the watch callback
+        await binding.watchCallback?.(obj, type);
       } catch (e) {
         // Errors in the watch callback should not crash the controller
         Log.error(e, "Error executing watch callback");
