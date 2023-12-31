@@ -20,9 +20,26 @@ jest.mock("kubernetes-fluent-client");
 describe("WatchProcessor", () => {
   const mockStart = jest.fn();
   const mockK8s = jest.mocked(K8s);
+  const mockApply = jest.fn();
   const mockGet = jest.fn();
   const mockWatch = jest.fn();
   const mockEvents = jest.fn() as jest.MockedFunction<onCallback>;
+
+  const capabilities = [
+    {
+      bindings: [
+        {
+          isWatch: true,
+          model: "someModel",
+          filters: {},
+          event: "Create",
+          watchCallback: () => {
+            console.log("words");
+          },
+        },
+      ],
+    },
+  ] as unknown as Capability[];
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -30,6 +47,7 @@ describe("WatchProcessor", () => {
 
     mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
+        Apply: mockApply,
         InNamespace: jest.fn().mockReturnThis(),
         Watch: mockWatch,
         Get: mockGet,
@@ -39,7 +57,7 @@ describe("WatchProcessor", () => {
     mockWatch.mockImplementation(() => {
       return {
         start: mockStart,
-        getCacheID: jest.fn(),
+        getCacheID: jest.fn().mockReturnValue("57332a1dee"),
         events: {
           on: mockEvents,
         },
@@ -48,10 +66,12 @@ describe("WatchProcessor", () => {
 
     mockGet.mockImplementation(() => ({
       data: {
-        "42dae115ed": "756",
-        "8aa1fde099": "750",
+        "42dae115ed-8aa1f3": "756",
+        "8aa1fde099-32a12": "750",
       },
     }));
+
+    mockApply.mockImplementation(() => Promise.resolve());
   });
 
   it("should setup watches for all bindings with isWatch=true", async () => {
@@ -60,24 +80,19 @@ describe("WatchProcessor", () => {
       retryDelaySec: 5,
     };
 
-    const capabilities = [
-      {
-        bindings: [
-          { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create" },
-          { isWatch: false, model: "someModel", filters: {}, event: "Create" },
-        ],
-      },
-      {
-        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }],
-      },
-    ] as unknown as Capability[];
+    capabilities.push({
+      bindings: [
+        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
+        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+      ],
+    } as unknown as Capability);
 
     await setupWatch(uuid, capabilities);
 
     expect(mockK8s).toHaveBeenCalledTimes(3);
     expect(mockK8s).toHaveBeenNthCalledWith(1, PeprStore);
-    expect(mockK8s).toHaveBeenNthCalledWith(2, "someModel", { name: "bleh" });
-    expect(mockK8s).toHaveBeenNthCalledWith(3, "someModel", {});
+    expect(mockK8s).toHaveBeenNthCalledWith(2, "someModel", {});
+    expect(mockK8s).toHaveBeenNthCalledWith(3, "someModel", { name: "bleh" });
 
     expect(mockWatch).toHaveBeenCalledTimes(2);
     expect(mockWatch).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining(watchCfg));
@@ -95,10 +110,6 @@ describe("WatchProcessor", () => {
   });
 
   it("should exit if the watch fails to start", async () => {
-    const capabilities = [
-      { bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }] },
-    ] as unknown as Capability[];
-
     const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
       return undefined as never;
     });
@@ -111,19 +122,11 @@ describe("WatchProcessor", () => {
   });
 
   it("should load the store before setting up watches", async () => {
-    const capabilities = [
-      { bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }] },
-    ] as unknown as Capability[];
-
     await setupWatch(uuid, capabilities);
     expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
   it("should set an interval to update the store every 10 seconds", async () => {
-    const capabilities = [
-      { bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }] },
-    ] as unknown as Capability[];
-
     const setIntervalSpy = jest.spyOn(global, "setInterval");
 
     await setupWatch(uuid, capabilities);
@@ -132,11 +135,34 @@ describe("WatchProcessor", () => {
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10 * 1000);
   });
 
-  it("should watch for the resource_update event", async () => {
-    const capabilities = [
-      { bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }] },
-    ] as unknown as Capability[];
+  it("should update the store if there are changes every 10 seconds", async () => {
+    const setIntervalSpy = jest.spyOn(global, "setInterval");
 
+    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
+      if (eventName === WatchEvent.RESOURCE_VERSION) {
+        expect(listener).toBeInstanceOf(Function);
+        listener("45");
+      }
+    });
+
+    await setupWatch(uuid, capabilities);
+
+    const flushCache = setIntervalSpy.mock.calls[0][0] as () => void;
+    flushCache();
+
+    expect(mockApply).toHaveBeenCalledTimes(1);
+    expect(mockApply).toHaveBeenNthCalledWith(1, {
+      data: {
+        "42dae115ed-8aa1f3": "756",
+        "8aa1fde099-32a12": "750",
+        "57332a1dee-73560": "45",
+        "57332a1dee-57332": "45",
+      },
+      metadata: { name: "pepr-static-test-watch", namespace: "pepr-system" },
+    });
+  });
+
+  it("should watch for the resource_update event", async () => {
     mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
       if (eventName === WatchEvent.RESOURCE_VERSION) {
         expect(listener).toBeInstanceOf(Function);
@@ -148,10 +174,6 @@ describe("WatchProcessor", () => {
   });
 
   it("should watch for the give_up event", async () => {
-    const capabilities = [
-      { bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create" }] },
-    ] as unknown as Capability[];
-
     const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
       return undefined as never;
     });

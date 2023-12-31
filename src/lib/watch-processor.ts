@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { createHash } from "crypto";
 import { K8s, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
@@ -95,12 +96,15 @@ async function runBinding(binding: Binding) {
     }
   }, watchCfg);
 
-  const cacheID = watcher.getCacheID();
+  // Create a unique cache ID for this watch binding in case multiple bindings are watching the same resource
+  const cacheSuffix = createHash("sha224").update(binding.watchCallback!.toString()).digest("hex").substring(0, 5);
+  const cacheID = [watcher.getCacheID(), cacheSuffix].join("-");
 
   // Track the resource version in the local store
   watcher.events.on(WatchEvent.RESOURCE_VERSION, version => {
+    Log.debug(`Received watch cache: ${cacheID}:${version}`);
     if (store[cacheID] !== version) {
-      Log.debug(`Updating watch cache: ${cacheID}:${version}`);
+      Log.debug(`Updating watch cache: ${cacheID}: ${store[cacheID]} => ${version}`);
       store[cacheID] = version;
       storeUpdates = true;
     }
