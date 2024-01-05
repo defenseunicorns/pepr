@@ -2,7 +2,7 @@
 .dockerignore
 .eslintrc.json
 .github
-.images
+_images
 .prettierrc
 .vscode
 adr
