@@ -70,6 +70,12 @@ export function watcher(assets: Assets, hash: string) {
         },
         spec: {
           serviceAccountName: name,
+          securityContext: {
+            runAsUser: 65532,
+            runAsGroup: 65532,
+            runAsNonRoot: true,
+            fsGroup: 65532,
+          },
           containers: [
             {
               name: "watcher",
@@ -103,6 +109,15 @@ export function watcher(assets: Assets, hash: string) {
                 limits: {
                   memory: "256Mi",
                   cpu: "500m",
+                },
+              },
+              securityContext: {
+                runAsUser: 65532,
+                runAsGroup: 65532,
+                runAsNonRoot: true,
+                allowPrivilegeEscalation: false,
+                capabilities: {
+                  drop: ["ALL"],
                 },
               },
               volumeMounts: [
@@ -173,6 +188,12 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
         spec: {
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
+          securityContext: {
+            runAsUser: 65532,
+            runAsGroup: 65532,
+            runAsNonRoot: true,
+            fsGroup: 65532,
+          },
           containers: [
             {
               name: "server",
@@ -209,6 +230,15 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
                 },
               },
               env: genEnv(config),
+              securityContext: {
+                runAsUser: 65532,
+                runAsGroup: 65532,
+                runAsNonRoot: true,
+                allowPrivilegeEscalation: false,
+                capabilities: {
+                  drop: ["ALL"],
+                },
+              },
               volumeMounts: [
                 {
                   name: "tls-certs",
