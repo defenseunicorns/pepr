@@ -69,7 +69,6 @@ export function watcher(assets: Assets, hash: string) {
           },
         },
         spec: {
-          automountServiceAccountToken: false,
           serviceAccountName: name,
           securityContext: {
             runAsUser: 65532,
@@ -123,11 +122,6 @@ export function watcher(assets: Assets, hash: string) {
               },
               volumeMounts: [
                 {
-                  mountPath: "/var/run/secrets/kubernetes.io/serviceaccount",
-                  name: "service-account-token",
-                  readOnly: true,
-                },
-                {
                   name: "tls-certs",
                   mountPath: "/etc/certs",
                   readOnly: true,
@@ -142,44 +136,6 @@ export function watcher(assets: Assets, hash: string) {
             },
           ],
           volumes: [
-            {
-              name: "service-account-token",
-              projected: {
-                defaultMode: 420,
-                sources: [
-                  {
-                    serviceAccountToken: {
-                      expirationSeconds: 3607,
-                      path: "token",
-                    },
-                  },
-                  {
-                    configMap: {
-                      items: [
-                        {
-                          key: "ca.crt",
-                          path: "ca.crt",
-                        },
-                      ],
-                      name: "kube-root-ca.crt",
-                    },
-                  },
-                  {
-                    downwardAPI: {
-                      items: [
-                        {
-                          fieldRef: {
-                            apiVersion: "v1",
-                            fieldPath: "metadata.namespace",
-                          },
-                          path: "namespace",
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
             {
               name: "tls-certs",
               secret: {
@@ -230,7 +186,6 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
           },
         },
         spec: {
-          automountServiceAccountToken: false,
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
           securityContext: {
@@ -286,11 +241,6 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
               },
               volumeMounts: [
                 {
-                  mountPath: "/var/run/secrets/kubernetes.io/serviceaccount",
-                  name: "service-account-token",
-                  readOnly: true,
-                },
-                {
                   name: "tls-certs",
                   mountPath: "/etc/certs",
                   readOnly: true,
@@ -309,44 +259,6 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
             },
           ],
           volumes: [
-            {
-              name: "service-account-token",
-              projected: {
-                defaultMode: 420,
-                sources: [
-                  {
-                    serviceAccountToken: {
-                      expirationSeconds: 3607,
-                      path: "token",
-                    },
-                  },
-                  {
-                    configMap: {
-                      items: [
-                        {
-                          key: "ca.crt",
-                          path: "ca.crt",
-                        },
-                      ],
-                      name: "kube-root-ca.crt",
-                    },
-                  },
-                  {
-                    downwardAPI: {
-                      items: [
-                        {
-                          fieldRef: {
-                            apiVersion: "v1",
-                            fieldPath: "metadata.namespace",
-                          },
-                          path: "namespace",
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
             {
               name: "tls-certs",
               secret: {
