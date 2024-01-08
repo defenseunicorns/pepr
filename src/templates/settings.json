@@ -3,6 +3,7 @@
     "enableTurboSourcemaps": true,
     "resolveSourceMapLocations": [
       "${workspaceFolder}/**",
+      "node_modules/kubernetes-fluent-client/**",
       "node_modules/pepr/**"
     ]
   }

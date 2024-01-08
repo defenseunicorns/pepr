@@ -8,7 +8,6 @@ import { startsWith } from "ramda";
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
 import Log from "../logger";
-import { ModuleConfig } from "../module";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 
 const namespace = "pepr-system";
@@ -20,7 +19,7 @@ export class PeprControllerStore {
   #sendDebounce: NodeJS.Timeout | undefined;
   #onReady?: () => void;
 
-  constructor(config: ModuleConfig, capabilities: Capability[], name: string, onReady?: () => void) {
+  constructor(capabilities: Capability[], name: string, onReady?: () => void) {
     this.#onReady = onReady;
 
     // Setup Pepr State bindings
@@ -71,7 +70,8 @@ export class PeprControllerStore {
   }
 
   #setupWatch = () => {
-    void K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
+    const watcher = K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
+    watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
   };
 
   #receive = (store: PeprStore) => {
