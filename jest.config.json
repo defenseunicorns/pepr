@@ -1,4 +1,6 @@
 {
   "preset": "ts-jest",
-  "testEnvironment": "node"
+  "testEnvironment": "node",
+  "collectCoverage": true,
+  "coverageReporters": ["json", "lcov", "text", "clover"]
 }
