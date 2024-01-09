@@ -9,6 +9,7 @@ import { ValidateError } from "./errors";
 import { AdmissionRequest, MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
 import { CapabilityExport } from "./types";
 import { setupWatch } from "./watch-processor";
+import { Log } from "../lib";
 
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
@@ -28,6 +29,8 @@ export type ModuleConfig = {
   alwaysIgnore: WebhookIgnore;
   /** Define the log level for the in-cluster controllers */
   logLevel?: string;
+  /** Propagate env variables to in-cluster controllers */
+  env?: Record<string, string>;
 };
 
 export type PackageJSON = {
@@ -100,7 +103,10 @@ export class PeprModule {
     this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
-        setupWatch(capabilities);
+        setupWatch(config.uuid, capabilities).catch(e => {
+          Log.error(e, "Error setting up watch");
+          process.exit(1);
+        });
       }
     });
 

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 
 import { Assets } from ".";
+import { ModuleConfig } from "../module";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
@@ -68,6 +70,12 @@ export function watcher(assets: Assets, hash: string) {
         },
         spec: {
           serviceAccountName: name,
+          securityContext: {
+            runAsUser: 65532,
+            runAsGroup: 65532,
+            runAsNonRoot: true,
+            fsGroup: 65532,
+          },
           containers: [
             {
               name: "watcher",
@@ -103,6 +111,15 @@ export function watcher(assets: Assets, hash: string) {
                   cpu: "500m",
                 },
               },
+              securityContext: {
+                runAsUser: 65532,
+                runAsGroup: 65532,
+                runAsNonRoot: true,
+                allowPrivilegeEscalation: false,
+                capabilities: {
+                  drop: ["ALL"],
+                },
+              },
               volumeMounts: [
                 {
                   name: "tls-certs",
@@ -115,11 +132,7 @@ export function watcher(assets: Assets, hash: string) {
                   readOnly: true,
                 },
               ],
-              env: [
-                { name: "PEPR_WATCH_MODE", value: "true" },
-                { name: "PEPR_PRETTY_LOG", value: "false" },
-                { name: "LOG_LEVEL", value: config.logLevel || "debug" },
-              ],
+              env: genEnv(config, true),
             },
           ],
           volumes: [
@@ -175,6 +188,12 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
         spec: {
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
+          securityContext: {
+            runAsUser: 65532,
+            runAsGroup: 65532,
+            runAsNonRoot: true,
+            fsGroup: 65532,
+          },
           containers: [
             {
               name: "server",
@@ -210,10 +229,16 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
                   cpu: "500m",
                 },
               },
-              env: [
-                { name: "PEPR_PRETTY_LOG", value: "false" },
-                { name: "LOG_LEVEL", value: config.logLevel || "debug" },
-              ],
+              env: genEnv(config),
+              securityContext: {
+                runAsUser: 65532,
+                runAsGroup: 65532,
+                runAsNonRoot: true,
+                allowPrivilegeEscalation: false,
+                capabilities: {
+                  drop: ["ALL"],
+                },
+              },
               volumeMounts: [
                 {
                   name: "tls-certs",
@@ -275,4 +300,20 @@ export function moduleSecret(name: string, data: Buffer, hash: string): kind.Sec
       [path]: compressed.toString("base64"),
     },
   };
+}
+
+function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
+  const env = [
+    { name: "PEPR_WATCH_MODE", value: watchMode ? "true" : "false" },
+    { name: "PEPR_PRETTY_LOG", value: "false" },
+    { name: "LOG_LEVEL", value: config.logLevel || "debug" },
+  ];
+
+  if (config.env) {
+    for (const [name, value] of Object.entries(config.env)) {
+      env.push({ name, value });
+    }
+  }
+
+  return env;
 }
