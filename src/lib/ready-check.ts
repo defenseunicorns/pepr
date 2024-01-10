@@ -37,7 +37,7 @@ export async function namespaceDeploymentsReady(namespace: string = "pepr-system
   while (!ready) {
     ready = await checkDeploymentStatus(namespace);
     if (ready) {
-      return ready
+      return ready;
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
