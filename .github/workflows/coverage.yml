@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
 
@@ -28,7 +28,7 @@ jobs:
       run: npm run test:unit --watchAll=false
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         directory: ./coverage
         fail_ci_if_error: true
