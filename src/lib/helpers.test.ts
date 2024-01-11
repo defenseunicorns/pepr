@@ -703,8 +703,7 @@ describe("namespaceDeploymentsReady", () => {
   });
 
   test("should return true if all deployments are ready", async () => {
-
-     const deployments = {
+    const deployments = {
       items: [
         {
           metadata: {
@@ -733,7 +732,7 @@ describe("namespaceDeploymentsReady", () => {
       ],
     };
 
-     mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
       return {
         InNamespace: jest.fn().mockReturnThis(),
         Get: () => deployments,
