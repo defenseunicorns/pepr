@@ -16,7 +16,7 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
-import { K8s, KubernetesObject } from "kubernetes-fluent-client";
+import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
 
@@ -635,11 +635,11 @@ describe("checkDeploymentStatus", () => {
       ],
     };
 
-    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
         InNamespace: jest.fn().mockReturnThis(),
         Get: () => deployments,
-      } as unknown as K8sInit<T>;
+      } as unknown as K8sInit<T, K>;
     });
 
     const expected = true;
@@ -677,11 +677,11 @@ describe("checkDeploymentStatus", () => {
       ],
     };
 
-    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
         InNamespace: jest.fn().mockReturnThis(),
         Get: () => deployments,
-      } as unknown as K8sInit<T>;
+      } as unknown as K8sInit<T, K>;
     });
 
     const expected = false;
@@ -732,11 +732,11 @@ describe("namespaceDeploymentsReady", () => {
       ],
     };
 
-    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
         InNamespace: jest.fn().mockReturnThis(),
         Get: () => deployments,
-      } as unknown as K8sInit<T>;
+      } as unknown as K8sInit<T, K>;
     });
 
     const expected = true;
@@ -804,17 +804,17 @@ describe("namespaceDeploymentsReady", () => {
     };
 
     mockK8s
-      .mockImplementation(<T extends KubernetesObject>() => {
+      .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
           InNamespace: jest.fn().mockReturnThis(),
           Get: () => deployments,
-        } as unknown as K8sInit<T>;
+        } as unknown as K8sInit<T, K>;
       })
-      .mockImplementation(<T extends KubernetesObject>() => {
+      .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
           InNamespace: jest.fn().mockReturnThis(),
           Get: () => deployments2,
-        } as unknown as K8sInit<T>;
+        } as unknown as K8sInit<T, K>;
       });
 
     const expected = true;
