@@ -16,6 +16,10 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
+import { K8s, KubernetesObject } from "kubernetes-fluent-client";
+import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
+
 jest.mock("kubernetes-fluent-client", () => {
   return {
     K8s: jest.fn(),
@@ -587,5 +591,238 @@ describe("namespaceComplianceValidator", () => {
         "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses a Pepr ignored namespace: ignoredNamespaces: [new york] bindingNamespaces: [new york].",
       );
     }
+  });
+});
+
+describe("checkDeploymentStatus", () => {
+  const mockK8s = jest.mocked(K8s);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  });
+  test("should return true if all deployments are ready", async () => {
+    const deployments = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 2,
+          },
+        },
+      ],
+    };
+
+    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+      return {
+        InNamespace: jest.fn().mockReturnThis(),
+        Get: () => deployments,
+      } as unknown as K8sInit<T>;
+    });
+
+    const expected = true;
+    const result = await checkDeploymentStatus("pepr-system");
+    expect(result).toBe(expected);
+  });
+
+  test("should return false if any deployments are not ready", async () => {
+    const deployments = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+      ],
+    };
+
+    mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+      return {
+        InNamespace: jest.fn().mockReturnThis(),
+        Get: () => deployments,
+      } as unknown as K8sInit<T>;
+    });
+
+    const expected = false;
+    const result = await checkDeploymentStatus("pepr-system");
+    expect(result).toBe(expected);
+  });
+});
+
+describe("namespaceDeploymentsReady", () => {
+  const mockK8s = jest.mocked(K8s);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  });
+
+  test("should return true if all deployments are ready", async () => {
+
+     const deployments = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 2,
+          },
+        },
+      ],
+    };
+
+     mockK8s.mockImplementation(<T extends KubernetesObject>() => {
+      return {
+        InNamespace: jest.fn().mockReturnThis(),
+        Get: () => deployments,
+      } as unknown as K8sInit<T>;
+    });
+
+    const expected = true;
+    const result = await namespaceDeploymentsReady();
+    expect(result).toBe(expected);
+  });
+
+  test("should call checkDeploymentStatus if any deployments are not ready", async () => {
+    const deployments = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+      ],
+    };
+
+    const deployments2 = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 2,
+          },
+        },
+      ],
+    };
+
+    mockK8s
+      .mockImplementation(<T extends KubernetesObject>() => {
+        return {
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: () => deployments,
+        } as unknown as K8sInit<T>;
+      })
+      .mockImplementation(<T extends KubernetesObject>() => {
+        return {
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: () => deployments2,
+        } as unknown as K8sInit<T>;
+      });
+
+    const expected = true;
+    const result = await namespaceDeploymentsReady();
+
+    expect(result).toBe(expected);
+
+    expect(mockK8s).toHaveBeenCalledTimes(1);
   });
 });
