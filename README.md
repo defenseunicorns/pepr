@@ -139,3 +139,13 @@ See [actions](./docs/actions.md) for more details.
 ## TypeScript
 
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
+
+## Community
+
+To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) and join the `#pepr` channel.
+
+<a href="https://github.com/defenseunicorns/pepr/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=defenseunicorns/pepr" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
