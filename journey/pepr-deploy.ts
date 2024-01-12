@@ -24,8 +24,8 @@ export function peprDeploy() {
   it("should deploy the Pepr controller into the test cluster", async () => {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
-    // Wait for the deployment to be ready
-    await waitForDeploymentReady("pepr-system", "pepr-static-test");
+    // Wait for the deployments to be ready
+    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"),waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
   });
 
   cleanupSamples();
