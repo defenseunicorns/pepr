@@ -17,7 +17,7 @@ export function peprUpgrade() {
     it("should prepare, build, and deploy hello-pepr with pepr@latest", async () => {
         try {
             // Clone the pepr-upgrade-test repo
-            execSync("git clone git@github.com:defenseunicorns/pepr-upgrade-test.git", { stdio: "inherit" });
+            execSync("git clone https://github.com/defenseunicorns/pepr-upgrade-test.git", { stdio: "inherit" });
 
             // Install pepr@latest
             execSync("npm i pepr@latest", { cwd: "pepr-upgrade-test", stdio: "inherit" })
