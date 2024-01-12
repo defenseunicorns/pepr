@@ -55,7 +55,7 @@ export default function (program: RootCmd) {
           console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging
-          await webhook.deploy(30);
+          await webhook.deploy(false, 30);
 
           program = fork(path, {
             env: {
@@ -85,7 +85,7 @@ export default function (program: RootCmd) {
           }
         });
       } catch (e) {
-        console.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e.data.message}`);
         process.exit(1);
       }
     });

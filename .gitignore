@@ -19,6 +19,7 @@ stats.html
 .vscode
 insecure-tls*
 pepr-test-module
+pepr-upgrade-test
 *.tgz
 coverage/
 src/.DS_Store
