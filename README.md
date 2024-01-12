@@ -142,9 +142,9 @@ See [actions](./docs/actions.md) for more details.
 
 ## Community
 
-Become a part of our vibrant community by connecting with developers on the [#Pepr](https://pepr.dev/slack) channel, hosted on the K8s Slack platform. Our dynamic group of developers, users, and contributors is always ready to help with queries, exchange examples, and explore innovative uses of Pepr together!
+Become a part of our community by connecting with developers on the [#Pepr](https://pepr.dev/slack) channel, hosted on the K8s Slack platform. Our growing group of developers, users, and contributors is always ready to help with queries, exchange examples, and explore innovative uses of Pepr together!
 
-We deeply appreciate the contributions of our Pepr community, from fixing bugs to collaborating on the development of new features.
+To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) and join the `#pepr` channel.
 
 <a href="https://github.com/defenseunicorns/pepr/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=defenseunicorns/pepr" />
