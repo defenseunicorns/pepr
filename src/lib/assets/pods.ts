@@ -63,6 +63,9 @@ export function watcher(assets: Assets, hash: string) {
       },
       template: {
         metadata: {
+          annotations: {
+            buildTimestamp: `${Date.now()}`,
+          },
           labels: {
             app,
             "pepr.dev/controller": "watcher",
@@ -180,6 +183,9 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
       },
       template: {
         metadata: {
+          annotations: {
+            buildTimestamp: `${Date.now()}`,
+          },
           labels: {
             app,
             "pepr.dev/controller": "admission",
