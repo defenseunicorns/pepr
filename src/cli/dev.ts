@@ -85,7 +85,7 @@ export default function (program: RootCmd) {
           }
         });
       } catch (e) {
-        console.error(`Error deploying module: ${e}`);
+        console.error(`Error deploying module: ${e.data.message}`);
         process.exit(1);
       }
     });
