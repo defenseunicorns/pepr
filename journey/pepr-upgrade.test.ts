@@ -64,15 +64,6 @@ export function peprUpgrade() {
             expect(error).toBeNull();
         }
     });
-
-    it("should cleanup", async () => {
-        try {
-            removeDir("pepr-upgrade-test");
-        }
-        catch (error) {
-            expect(error).toBeNull();
-        }
-    })
 }
 
 describe("Should test Pepr upgrade", peprUpgrade)
@@ -88,20 +79,6 @@ async function replaceString(filePath: string, originalString: string, newString
         let fileContent = await fs.readFile(filePath, 'utf8');
         const modifiedContent = fileContent.split(originalString).join(newString);
         await fs.writeFile(filePath, modifiedContent, 'utf8');
-    } catch (error) {
-        throw error
-    }
-}
-
-
-/**
- * Removes a directory and on error throws
- *
- * @param dir - The directory to remove
- */
-async function removeDir(dir: string): Promise<void> {
-    try {
-        await fs.rm(dir, { recursive: true, force: true });
     } catch (error) {
         throw error
     }
