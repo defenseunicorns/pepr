@@ -14,7 +14,7 @@ import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
 import { CapabilityExport } from "../types";
 
-export async function deploy(assets: Assets, force: boolean = false, webhookTimeout?: number) {
+export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
 
   const { name, host, path } = assets;
@@ -62,7 +62,7 @@ export async function deploy(assets: Assets, force: boolean = false, webhookTime
   await setupWatcher(assets, hash, force);
 }
 
-async function setupRBAC(name: string, capabilities: CapabilityExport[], force: boolean = false) {
+async function setupRBAC(name: string, capabilities: CapabilityExport[], force: boolean) {
   Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
   await K8s(kind.ClusterRoleBinding).Apply(crb, { force });
@@ -84,7 +84,7 @@ async function setupRBAC(name: string, capabilities: CapabilityExport[], force: 
   await K8s(kind.RoleBinding).Apply(roleBinding, { force });
 }
 
-async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean = false) {
+async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean) {
   const { name } = assets;
 
   Log.info("Applying module secret");
@@ -108,7 +108,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   await K8s(kind.Deployment).Apply(dep, { force });
 }
 
-async function setupWatcher(assets: Assets, hash: string, force: boolean = false) {
+async function setupWatcher(assets: Assets, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
   const watchDeployment = watcher(assets, hash);
   if (watchDeployment) {
