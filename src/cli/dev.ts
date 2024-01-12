@@ -54,8 +54,8 @@ export default function (program: RootCmd) {
         const runFork = async () => {
           console.info(`Running module ${path}`);
 
-          // Deploy the webhook with a 30 second timeout for debugging
-          await webhook.deploy(30);
+          // Deploy the webhook with a 30 second timeout for debugging, don't force
+          await webhook.deploy(false, 30);
 
           program = fork(path, {
             env: {
