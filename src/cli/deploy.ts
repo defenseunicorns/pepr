@@ -16,6 +16,10 @@ export default function (program: RootCmd) {
     .option("--confirm", "Skip confirmation prompt")
     .option("--force", "Force deploy the module, override manager field")
     .action(async opts => {
+      let force = false;
+      if (opts.force) {
+        force = true;
+      }
       if (!opts.confirm) {
         // Prompt the user to confirm
         const confirm = await prompt({
@@ -47,7 +51,7 @@ export default function (program: RootCmd) {
       }
 
       try {
-        await webhook.deploy(opts.force);
+        await webhook.deploy(force);
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
