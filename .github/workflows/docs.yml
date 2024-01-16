@@ -13,8 +13,14 @@ on:
     branches: ["main"]
     paths: ["docs/**.md"]
 
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Version Release"]
+    types:
+      - completed
+
+  # Runs on on tags and does not get the secret   
+  # release:
+  #   types: [published]
 
 jobs:
   
