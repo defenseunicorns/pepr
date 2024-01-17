@@ -1,4 +1,4 @@
-# Capabilities
+# Pepr Capabilities
 
 A capability is set of related [actions](./actions.md) that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more actions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
@@ -12,10 +12,9 @@ Defining a new capability can be done via a [VSCode Snippet](https://code.visual
 
 1. Open the new file in VSCode and type `create` in the file. A suggestion should prompt you to generate the content from there.
 
-https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4
+[https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4](https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4)
 
 _If you prefer not to use VSCode, you can also modify or copy the `HelloPepr` capability to meet your needs instead._
-
 
 ## Reusable Capabilities
 

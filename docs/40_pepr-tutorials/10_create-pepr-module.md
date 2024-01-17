@@ -1,8 +1,14 @@
-# Pepr Module
+# Tutorial - Create a Pepr Module
+
+## Introduction
+
+This tutorial will walk you through the process of creating a Pepr module.
 
 Each Pepr Module is it's own Typescript project, produced by [`pepr init`](./cli.md#pepr-init). Typically a module is maintained by a unique group or system. For example, a module for internal [Zarf](https://zarf.dev/) mutations would be different from a module for [Big Bang](https://p1.dso.mil/products/big-bang). An important idea with modules is that they are _wholly independent of one another_. This means that 2 different modules can be on completely different versions of Pepr and any other dependencies; their only interaction is through the standard K8s interfaces like any other webhook or controller.
 
-## Module development lifecycle
+## Prerequisites
+
+## Steps
 
 1. **Create the module**:
 
@@ -54,7 +60,7 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](./cli
 
    `pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`pepr deploy`](./cli.md#pepr-deploy) for more info.
 
-## Advanced Module Configuration
+## Additional Information
 
 By default, when you run `pepr init`, the module is not configured with any additional options. Currently, there are 3 options you can configure:
 
@@ -88,3 +94,7 @@ const module = new PeprModule(
 // Do any additional setup before starting the controller
 module.start();
 ```
+
+## Summary
+
+## What's next?

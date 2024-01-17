@@ -1,4 +1,4 @@
-# `/metrics` Endpoint Documentation
+# Metrics Endpoints
 
 The `/metrics` endpoint provides metrics for the application that are collected via the `MetricsCollector` class. It uses the `prom-client` library and performance hooks from Node.js to gather and expose the metrics data in a format that can be scraped by Prometheus.
 
@@ -20,6 +20,7 @@ The `MetricsCollector` exposes the following metrics:
 **Response Type:** text/plain
 
 **Status Codes:**
+
 - 200 OK: On success, returns the current metrics from the application.
 
 **Response Body:**
@@ -34,15 +35,16 @@ GET /metrics
 ```
 
 ### Response
+
 ```plaintext
   `# HELP pepr_errors Mutation/Validate errors encountered
   # TYPE pepr_errors counter
   pepr_errors 5
-  
+
   # HELP pepr_alerts Mutation/Validate bad api token received
   # TYPE pepr_alerts counter
   pepr_alerts 10
-  
+
   # HELP pepr_Mutate Mutation operation summary
   # TYPE pepr_Mutate summary
   pepr_Mutate{quantile="0.01"} 100.60707900021225
@@ -54,7 +56,7 @@ GET /metrics
   pepr_Mutate{quantile="0.999"} 100.60707900021225
   pepr_Mutate_sum 100.60707900021225
   pepr_Mutate_count 1
-  
+
   # HELP pepr_Validate Validation operation summary
   # TYPE pepr_Validate summary
   pepr_Validate{quantile="0.01"} 201.19413900002837
@@ -100,7 +102,7 @@ spec:
       pepr.dev/controller: watcher
   namespaceSelector:
     matchNames:
-    - pepr-system 
+    - pepr-system
   endpoints:
   - targetPort: 3000
     scheme: https
