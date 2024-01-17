@@ -22,7 +22,7 @@
   - **Competitive Analysis**: 
     Understand the competitive landscape and how/where Pepr can/does differentiate itself. Have it in the docs.
 
-## Phase 3: Donation, Transition, and Stabilization/Improvement of new features
+## Phase 3: Donation, Transition, and Stabilization/Improvement of New Features
 
 - **Q3**:
   - **Community Building**: 
@@ -32,3 +32,8 @@
   - **Project Advocation**: 
     Publicly advocate for the project and encourage adoption.
 
+## Phase 4: Donation, Transition, and Stabilization/Improvement of New Features
+
+- **Q4**:
+  - **Road to GA**: 
+    Right now, Pepr itself is still in its 'development' phase. We are working on some final things before we release the official 1.0 General Availability (GA) release
