@@ -1,1 +1,0 @@
-# Documentation Style Guide
