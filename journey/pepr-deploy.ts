@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
-import { execSync, spawnSync } from "child_process";
+import { expect, it } from "@jest/globals";
+import { execSync, spawnSync, spawn } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
 
@@ -16,6 +16,8 @@ import {
   waitForPeprStoreKey,
   waitForSecret,
 } from "./k8s";
+import { describe } from "node:test";
+
 
 export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
@@ -25,7 +27,7 @@ export function peprDeploy() {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
-    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"),waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
+    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
   });
 
   cleanupSamples();
@@ -35,6 +37,21 @@ export function peprDeploy() {
   it("should perform validation of resources applied to the test cluster", testValidate);
 
   describe("should perform mutation of resources applied to the test cluster", testMutate);
+
+  describe("should monitor the cluster for admission changes", () => {
+    it("npx pepr monitor should display results to console", async () => {
+
+      let output = await getMonitorData();
+
+      expect(output).toContain("✅")
+      expect(output).toContain("❌")
+      expect(output).toContain("VALIDATE")
+      expect(output).toContain("MUTATE")
+      expect(output).toContain("No evil CM annotations allowed.")
+
+    });
+  });
+
 
   describe("should store data in the PeprStore", testStore);
 
@@ -104,6 +121,7 @@ async function testValidate() {
     `No evil CM annotations allowed.\n`,
   ].join("");
   expect(stderr).toMatch(expected);
+
 }
 
 function testMutate() {
@@ -198,3 +216,32 @@ function testStore() {
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
+
+// Get the output from the monitor command
+async function getMonitorData() {
+  return new Promise((resolve, reject) => {
+    const command = 'npx';
+    const args = ['pepr', 'monitor', 'static-test'];
+
+    const childProcess = spawn(command, args, {
+      shell: true,
+    });
+
+    let outputData = '';
+    childProcess.stdout.on('data', (data) => {
+      outputData += data.toString();
+
+      if (data.toString().includes("VALIDATE") || data.toString().includes("MUTATE")) {
+        childProcess.kill("SIGKILL");
+      }
+    });
+    childProcess.on('error', (err) => {
+      reject(err);
+    });
+
+    childProcess.on('exit', () => {
+      resolve(outputData)
+    });
+  });
+}
+
