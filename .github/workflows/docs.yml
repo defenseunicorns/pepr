@@ -13,8 +13,12 @@ on:
     branches: ["main"]
     paths: ["docs/**.md"]
 
+  workflow_run:
+    workflows: ["Version Release"]
+    types:
+      - completed
 
-  # enable triggering when releases are pub'd
+  # Runs on on tags and does not get the secret   
   # release:
   #   types: [published]
 

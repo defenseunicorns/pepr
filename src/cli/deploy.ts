@@ -14,6 +14,7 @@ export default function (program: RootCmd) {
     .description("Deploy a Pepr Module")
     .option("-i, --image [image]", "Override the image tag")
     .option("--confirm", "Skip confirmation prompt")
+    .option("--force", "Force deploy the module, override manager field")
     .action(async opts => {
       if (!opts.confirm) {
         // Prompt the user to confirm
@@ -46,7 +47,7 @@ export default function (program: RootCmd) {
       }
 
       try {
-        await webhook.deploy();
+        await webhook.deploy(opts.force);
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);

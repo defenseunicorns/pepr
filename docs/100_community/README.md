@@ -1,4 +1,4 @@
-# Pepr Community
+# Community and Support
 
 ## Introduction
 
@@ -6,9 +6,18 @@ Pepr is a community-driven project. We welcome contributions of all kinds, from 
 
 ## Contributing
 
+You can find all the details on contributing to Pepr at:
+
+* [Contributing to Pepr](./120_contribute)
+
 ### Reporting Bugs
 
-If you find a bug in Pepr, please report it by opening an issue in the [Pepr GitHub repository](https://github.com/defenseunicorns/pepr/issues). Please include as much information as possible in your bug report, including:
+Information on reporting bugs can be found at:
 
-* The version of Pepr you are using
-* The version of Kubernetes you are using
+* [Reporting Bugs](./100_community/10_support.md#reporting-bugs)
+
+### Reporting Security Issues
+
+Information on reporting security issues can be found at:
+
+* [Reporting Security Issues](./120_contribute/40_report-security-issue)

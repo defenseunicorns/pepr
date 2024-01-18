@@ -6,26 +6,22 @@ In this section you can find detailed information about Pepr and how to use it.
 
 You can find the following information in this section:
 
-### [Pepr CLI](pepr-cli.md)
+### [Pepr CLI](./30_user-guide/10_pepr-cli.md)
 
-### [Create a Pepr Module](create-pepr-module.md)
+### [Pepr Modules](./30_user-guide/20_pepr-modules.md)
 
-### [Deploy a Pepr Module](deploy-pepr-module.md)
+### [Pepr Actions](./30_user-guide/30_actions.md)
 
-### [Build an Operator](build-operator.md)
+### [Pepr Capabilities](./30_user-guide/capabilities.md)
 
-### [Custom Resources](custom-resources.md)
+### [Pepr Store](./30_user-guide/store.md)
 
-### [Pepr Package Schema](pepr-package-schema.md)
+### [Custom Resources](./30_user-guide/custom-resources.md)
 
-### [Testing Modules](testing-modules.md)
+### [OnSchedule](./30_user-guide/onschedule.md)
 
-### [Metrics](metrics.md)
+### [RBAC](./30_user-guide/rbac.md)
 
-### [OnSchedule](onschedule.md)
+### [Metrics](./30_user-guide/metrics.md)
 
-### [RBAC](rbac.md)
-
-### [Store](store.md)
-
-### [Webassembly](webassembly.md)
+### [Webassembly](./30_user-guide/webassembly.md)

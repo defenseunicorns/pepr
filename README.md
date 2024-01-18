@@ -18,7 +18,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 - Zero-config K8s webhook mutations and validations
 - Automatic leader-elected K8s resource watching
-- Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](./docs/store.md)
+- Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](./docs/30_user-guide/50_store.md)
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
 - A fluent API for creating/modifying/watching and server-side applying K8s resources via [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client)
 - Generate new K8s resources based off of cluster resource changes
@@ -27,12 +27,12 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
 - Controller network isolation and tamper-resistent module execution
-- Least-privilege [RBAC](https://github.com/defenseunicorns/pepr/blob/main/docs/rbac.md) generation
+- Least-privilege [RBAC](./docs/30_user-guide/90_rbac.md) generation
 - AMD64 and ARM64 support
 
 ## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/actions.md) section.
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/30_user-guide/30_actions.md) section.
 
 ```ts
 When(a.ConfigMap)
@@ -80,9 +80,9 @@ When(a.ConfigMap)
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/en/) v18.0.0+ (even-numbered releases only)
-  - To ensure compatability and optimal performance, it is recommended to use even-numbered releases of Node.js as they are stable releases and receive long-term support for three years. Odd-numbered releases are experimental and may not be supported by certain libraries utilized in Pepr.  
+  - To ensure compatability and optimal performance, it is recommended to use even-numbered releases of Node.js as they are stable releases and receive long-term support for three years. Odd-numbered releases are experimental and may not be supported by certain libraries utilized in Pepr.
 
-- [npm](https://www.npmjs.com/) v10.1.0+  
+- [npm](https://www.npmjs.com/) v10.1.0+
 
 - Recommended (optional) tools:
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
@@ -113,13 +113,13 @@ https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb
 
 A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their actions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
 
-See [Module](./docs/module.md) for more details.
+See [Module](./docs/30_user-guide/20_pepr-modules.md) for more details.
 
 ### Capability
 
 A capability is set of related actions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more actions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
-See [Capabilities](./docs/capabilities.md) for more details.
+See [Capabilities](./docs/30_user-guide/40_capabilities.md) for more details.
 
 ### Action
 
@@ -129,7 +129,7 @@ For example, an action could be responsible for adding a specific label to a Kub
 
 There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There is also a `Watch()` Action that can be used to watch for changes to Kubernetes resources that already exist.
 
-See [actions](./docs/actions.md) for more details.
+See [actions](./docs/30_user-guide/30_actions.md) for more details.
 
 ## Logical Pepr Flow
 
@@ -139,3 +139,13 @@ See [actions](./docs/actions.md) for more details.
 ## TypeScript
 
 [TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system. You can learn more about TypeScript [here](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html).
+
+## Community
+
+To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) and join the `#pepr` channel.
+
+<a href="https://github.com/defenseunicorns/pepr/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=defenseunicorns/pepr" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).

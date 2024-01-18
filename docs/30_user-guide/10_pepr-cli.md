@@ -46,7 +46,7 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 ---
 
-## pepr monitor
+## `pepr monitor`
 
 Monitor Validations for a given Pepr Module.
 
