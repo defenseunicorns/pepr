@@ -13,7 +13,6 @@ Each Pepr Capability has a `Store` instance that can be used to get, set and del
 - **Asynchronous Key-Value Store**: Provides an asynchronous interface for storing small amounts of data, making it ideal for sharing information between various actions and capabilities.
 - **Web Storage API Compatibility**: The store's API is aligned with the standard [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage), simplifying the learning curve.
 - **Real-time Updates**: The `.subscribe()` and `onReady()` methods enable real-time updates, allowing you to react to changes in the data store instantaneously.
-
 - **Automatic CRD Management**: Each Pepr Module has its data stored within a single Custom Resource Definition (CRD) that is automatically created upon deployment.
 - **Efficient Operations**: Pepr Store uses Kubernetes watches, batch processing, and patch operations to make read and write operations as efficient as possible.
 

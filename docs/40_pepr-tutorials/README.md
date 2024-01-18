@@ -2,4 +2,4 @@
 
 In this section, we provide tutorials for using Pepr. These tutorials are:
 
-- [Creating a Pepr Module](create-pepr-module.md)
+- [Create a Pepr Module](./40_pepr-tutorials/10_create-pepr-module.md)
