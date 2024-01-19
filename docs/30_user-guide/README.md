@@ -12,16 +12,16 @@ You can find the following information in this section:
 
 ### [Pepr Actions](./30_actions.md)
 
-### [Pepr Capabilities](./capabilities.md)
+### [Pepr Capabilities](./40_capabilities.md)
 
-### [Pepr Store](./store.md)
+### [Pepr Store](./50_store.md)
 
-### [Custom Resources](./custom-resources.md)
+### [Custom Resources](./70_custom-resources.md)
 
-### [OnSchedule](./onschedule.md)
+### [OnSchedule](./80_onschedule.md)
 
-### [RBAC](./rbac.md)
+### [RBAC](./90_rbac.md)
 
-### [Metrics](./metrics.md)
+### [Metrics](./100_metrics.md)
 
-### [Webassembly](./webassembly.md)
+### [Webassembly](./110_webassembly.md)
