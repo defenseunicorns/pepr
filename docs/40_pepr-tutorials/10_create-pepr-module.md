@@ -1,4 +1,8 @@
-# Tutorial - Create a Pepr Module
+# Tutorial - Create a Tutorial - Create a Pepr Module
+
+## Introduction
+
+This tutorial will walk you through the process of creating a Pepr module.
 
 ## Introduction
 

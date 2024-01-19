@@ -20,4 +20,4 @@ Information on reporting bugs can be found at:
 
 Information on reporting security issues can be found at:
 
-* [Reporting Security Issues](../120_contribute/40_report-security-issue)
+* [Reporting Security Issues](../120_contribute/40_report-security-issue.md)
