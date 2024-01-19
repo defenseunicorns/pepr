@@ -16,7 +16,7 @@
   - **Community Engagement**: 
     Begin engaging with potential contributors and users through social media, Kubernetes/Cloud Native Computing Foundation (CNCF) meetups, and other channels. Monitor and participate in our Slack channel.
   - **Feature Development**: 
-    Based on company feedback, continuously improve and add features. Add feature parody with other tools in the Kubernetes ecosystem where it makes sense. Chip away at the backlog.
+    Based on company feedback, continuously improve and add features. Add feature parity with other tools in the Kubernetes ecosystem where it makes sense. Chip away at the backlog.
   - **Documentation Improvements**: 
     Continue to improve documentation and add more examples like Doom, find scaling limitations
   - **Competitive Analysis**: 
