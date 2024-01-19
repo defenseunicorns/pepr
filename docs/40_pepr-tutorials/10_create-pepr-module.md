@@ -4,10 +4,6 @@
 
 This tutorial will walk you through the process of creating a Pepr module.
 
-## Introduction
-
-This tutorial will walk you through the process of creating a Pepr module.
-
 Each Pepr Module is it's own Typescript project, produced by [`pepr init`](../30_user-guide/10_pepr-cli.md#pepr-init). Typically a module is maintained by a unique group or system. For example, a module for internal [Zarf](https://zarf.dev/) mutations would be different from a module for [Big Bang](https://p1.dso.mil/products/big-bang). An important idea with modules is that they are _wholly independent of one another_. This means that 2 different modules can be on completely different versions of Pepr and any other dependencies; their only interaction is through the standard K8s interfaces like any other webhook or controller.
 
 ## Prerequisites

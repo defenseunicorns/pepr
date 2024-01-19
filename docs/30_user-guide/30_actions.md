@@ -64,6 +64,4 @@ When(a.ConfigMap)
   });
 ```
 
-```
-There are many more examples in the `HelloPepr` capability that you can use as a reference when creating your own actions. Note that each time you run [`pepr update`](./cli.md#pepr-update), Pepr will automatically update the `HelloPepr` capability with the latest examples and best practices for you to reference and test directly in your Pepr Module.
-```
+There are many more examples in the `HelloPepr` capability that you can use as a reference when creating your own actions. Note that each time you run [`pepr update`](./pepr-cli.md#pepr-update), Pepr will automatically update the `HelloPepr` capability with the latest examples and best practices for you to reference and test directly in your Pepr Module.
