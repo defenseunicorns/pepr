@@ -17,7 +17,7 @@
 
 ## Core Development
 
-When developing new features in Pepr Core, it is recommended to to use `npx pepr deploy -i pepr:dev`, which will deploy Pepr's Kubernetes manifests to the cluster with the development image. This will allow you to test your changes without having to build a new image and push it to a registry. 
+When developing new features in Pepr Core, it is recommended to use `npx pepr deploy -i pepr:dev`, which will deploy Pepr's Kubernetes manifests to the cluster with the development image. This will allow you to test your changes without having to build a new image and push it to a registry. 
 
 The workflow for developing features in Pepr is:
 1. Run `npm test` which will create a k3d cluster and build a development image called `pepr:dev`
@@ -25,7 +25,7 @@ The workflow for developing features in Pepr is:
 
 ## Debugging
 
-Pepr can be broken down into two parts: Admission and Watches. If the focus of the debug is on a Mutation or Validation, then only pay attention to pods with labels `pepr.dev/controller: admission`, else, you can focused on `pepr.dev/controller: watch`.
+Pepr can be broken down into two parts: Admission and Watches. If the focus of the debug is on a Mutation or Validation, then only pay attention to pods with labels `pepr.dev/controller: admission`, else, you can focus on `pepr.dev/controller: watch`.
 
 ## Deployment
 
@@ -37,7 +37,7 @@ Development environment deployments can use `npx pepr deploy` to deploy Pepr's K
 
 Modules are minified and built JavaScript files that are stored in a Kubernetes Secret in the cluster. The Secret is mounted in the Pepr Pod and is processed by Pepr Core. Due to the nature of the module being packaged in a Secret, it is recommended to keep the modules as small as possible to avoid hitting the [1MB limit](https://kubernetes.io/docs/concepts/configuration/secret/#restriction-data-size) of secrets.
 
-Recommendations for keeping models small are:
+Recommendations for keeping modules small are:
 - Don't repeat yourself 
 - Only import the part of the library modules that you need
 
@@ -62,7 +62,7 @@ Pepr can monitor Mutations and Validations from Admission Controller the through
 
 Each module has it's own Mutating, Validating webhook configurations, Admission and Watch Controllers and Stores. This allows for each module to be deployed independently of each other. However, creating multiple modules creates overhead on the kube-apiserver, and the cluster.
 
-Due to the overhead costs, it is recommended to deploy multiple capabilies that share the the same resources (when possible). This will simplify analysis of which capabilities are responsible for changes on resources.
+Due to the overhead costs, it is recommended to deploy multiple capabilities that share the same resources (when possible). This will simplify analysis of which capabilities are responsible for changes on resources.
 
 However, there are some cases where multiple modules makes sense. For instance different teams owning separate modules, or one module for Validations and another for Mutations. If you have a use-case where you need to deploy multiple modules it is recommended to separate concerns by operator in different namespaces and try to avoid operating on the same resources.
 
@@ -76,9 +76,9 @@ In terms of Pepr security, it is recommended to generate a Pepr Module's Kuberne
 
 Note: If you are manipulating additional resources in the `Validate`, `Mutate`, or `Watch` callbacks, then you will need to account for them in the `ClusterRole`.
 
-When using Pepr as a `Validating` Webhook, it is recommended set the Webhook's `failurePolicy` to `Fail`. In your Pepr module, this is handled in the `package.json` under `pepr` by setting the `onError` flag to `reject`, then running `npx pepr build` again. When creating a Pepr module for the first time the user is prompted how to handle errors and this is where the flag is initially set.
+When using Pepr as a `Validating` Webhook, it is recommended to set the Webhook's `failurePolicy` to `Fail`. In your Pepr module, this is handled in the `package.json` under `pepr` by setting the `onError` flag to `reject`, then running `npx pepr build` again. When creating a Pepr module for the first time the user is prompted how to handle errors and this is where the flag is initially set.
 
-In terms of building Pepr modules for security, a good place to start is by assigning sane defaults to Pod's and Container's `securityContext`. Below would be an extremely simplified version of assinging `runAsNonRoot` and the `runAsUser` on the Pod.
+In terms of building Pepr modules for security, a good place to start is by assigning sane defaults to Pod's and Container's `securityContext`. Below would be an extremely simplified version of assigning `runAsNonRoot` and the `runAsUser` on the Pod.
 
 
 ```typescript
