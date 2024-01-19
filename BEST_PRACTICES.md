@@ -29,7 +29,7 @@ Pepr can be broken down into two parts: Admission and Watches. If the focus of t
 
 ## Deployment
 
-Production environment deployments should be `declarative` and `imperative` in order to avoid mistakes. The Pepr modules should be generated with `npx pepr build` and moved into the appropriate location.
+Production environment deployments should be `declarative` in order to avoid mistakes. The Pepr modules should be generated with `npx pepr build` and moved into the appropriate location.
 
 Development environment deployments can use `npx pepr deploy` to deploy Pepr's Kubernetes manifests into the cluster or `npx pepr dev` to active debug the Pepr module with breakpoints in the code editor.
 
