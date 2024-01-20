@@ -39,29 +39,41 @@ export function peprDeploy() {
   describe("should perform mutation of resources applied to the test cluster", testMutate);
 
   describe("should monitor the cluster for admission changes", () => {
-    const command = 'npx';
-    const args = ['pepr', 'monitor', 'static-test'];
-    let childProcess: ChildProcess;
 
-    beforeAll(() => {
-      jest.setTimeout(5000);
-      childProcess = spawn(command, args, {
-        shell: true,
-      });
-    });
+    const until = (predicate: () => boolean ) : Promise<void> => {
+      const poll = (resolve: () => void) => {
+        if ( predicate() ) { resolve() }
+        else { setTimeout(_ => poll(resolve), 250) }
+      }
+      return new Promise(poll);
+    }
 
-    afterAll((done) => {
-      childProcess.kill("SIGKILL");
-      childProcess.removeAllListeners();
-      done()
-    });
+    it("npx pepr monitor should display validation results to console", async () => {
+      const cmd = [ 'pepr', 'monitor', 'static-test' ]
 
-    it("npx pepr monitor should display results to console", async () => {
-      const output: string = await getMonitorData(childProcess)
-      const shouldPass = output.includes("✅") || output.includes("❌");
-      expect(shouldPass).toBe(true);
-    });
+      const proc = spawn('npx', cmd, { shell: true })
+
+      const state = { accept: false, reject: false, done: false}
+      proc.stdout.on('data', (data) => {
+        const stdout: String = data.toString()
+        state.accept = stdout.includes("✅") ? true : state.accept
+        state.reject = stdout.includes("❌") ? true : state.reject
+
+        if (state.accept && state.reject) {
+          proc.kill()
+          proc.stdin.destroy()
+          proc.stdout.destroy()
+          proc.stderr.destroy()
+        }
+      })
+      proc.on('exit', () => state.done = true );
+
+      await until(() => state.done)
+
+      // completes only if conditions are met, so... getting here means success!
+    }, 5000);
   });
+
 
 
   describe("should store data in the PeprStore", testStore);
