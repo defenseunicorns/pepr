@@ -239,33 +239,3 @@ function testStore() {
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
-
-// Get the output from the monitor command
-async function getMonitorData(childProcess: ChildProcess): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let outputData = '';
-    if (childProcess.stdout) {
-      childProcess.stdout.on('data', (data) => {
-        outputData += data.toString();
-        childProcess.kill("SIGKILL");
-      });
-    }
-    childProcess.on('error', (err) => {
-      reject(err);
-    });
-
-    childProcess.on('exit', () => {
-      resolve(outputData)
-    });
-
-    childProcess.on('end', () => {
-      resolve(outputData)
-    });
-
-    childProcess.on('close', () => {
-      resolve(outputData)
-    });
-
-  });
-}
-
