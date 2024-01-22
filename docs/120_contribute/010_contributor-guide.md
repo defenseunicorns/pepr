@@ -19,7 +19,7 @@ Thank you for your interest in contributing to Pepr! We welcome all contribution
 
 ## Code of Conduct
 
-Please follow our [Code of Conduct](./20_code-of-conduct.md) to maintain a respectful and collaborative environment.
+Please follow our [Code of Conduct](./020_code-of-conduct.md) to maintain a respectful and collaborative environment.
 
 ## Getting Started
 

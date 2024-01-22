@@ -2,7 +2,9 @@
 
 ## What is Pepr?
 
-> **Type safe Kubernetes middleware for humans**
+#### **_Type safe Kubernetes middleware for humans_**
+
+<img align="right" width="40%" src="../_images/pepr.png" />
 
 Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops tribal knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
 
@@ -10,11 +12,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## How Pepr Works
 
-## Target Use Cases
-
-## How to Use Pepr
-
-## Why Use Pepr?
+Pepr is a Kubernetes controller that watches for changes to the cluster and executes Pepr Modules in response to those changes. Pepr Modules are written in TypeScript and are compiled to WebAssembly (WASM) for execution in the Pepr Controller. Pepr Modules are written using the Pepr SDK which provides a fluent API for interacting with the Kubernetes API and other Pepr Modules. Pepr Modules are deployed to the Pepr Controller as Docker images and are executed in a sandboxed environment. Pepr Modules can be deployed to the Pepr Controller using the Pepr CLI or any other tool that can build and push Docker images.
 
 ## Features
 
