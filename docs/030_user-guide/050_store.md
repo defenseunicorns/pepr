@@ -1,6 +1,8 @@
-# Pepr Store: A Lightweight Key-Value Store for Pepr Modules
+# Pepr Store
 
-The nature of admission controllers and general watch operations (the `Mutate`, `Validate` and `Watch` actions in Pepr) make some types of complex and long-running operations difficult. There are also times when you need to share data between different actions. While you could manually create your own K8s resources and manage their cleanup, this can be very hard to track and keep performant at scale. 
+## A Lightweight Key-Value Store for Pepr Modules
+
+The nature of admission controllers and general watch operations (the `Mutate`, `Validate` and `Watch` actions in Pepr) make some types of complex and long-running operations difficult. There are also times when you need to share data between different actions. While you could manually create your own K8s resources and manage their cleanup, this can be very hard to track and keep performant at scale.
 
 The Pepr Store solves this by exposing a simple, [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage)-compatible mechanism for use within capabilities. Additionally, as Pepr runs multiple replicas of the admission controller along with a watch controller, the Pepr Store provides a unique way to share data between these different instances automatically.
 
@@ -11,7 +13,6 @@ Each Pepr Capability has a `Store` instance that can be used to get, set and del
 - **Asynchronous Key-Value Store**: Provides an asynchronous interface for storing small amounts of data, making it ideal for sharing information between various actions and capabilities.
 - **Web Storage API Compatibility**: The store's API is aligned with the standard [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage), simplifying the learning curve.
 - **Real-time Updates**: The `.subscribe()` and `onReady()` methods enable real-time updates, allowing you to react to changes in the data store instantaneously.
-
 - **Automatic CRD Management**: Each Pepr Module has its data stored within a single Custom Resource Definition (CRD) that is automatically created upon deployment.
 - **Efficient Operations**: Pepr Store uses Kubernetes watches, batch processing, and patch operations to make read and write operations as efficient as possible.
 
