@@ -64,7 +64,7 @@ Each module has it's own Mutating, Validating webhook configurations, Admission 
 
 Due to the overhead costs, it is recommended to deploy multiple capabilities that share the same resources (when possible). This will simplify analysis of which capabilities are responsible for changes on resources.
 
-However, there are some cases where multiple modules makes sense. For instance different teams owning separate modules, or one module for Validations and another for Mutations. If you have a use-case where you need to deploy multiple modules it is recommended to separate concerns by operator in different namespaces and try to avoid operating on the same resources.
+However, there are some cases where multiple modules makes sense. For instance different teams owning separate modules, or one module for Validations and another for Mutations. If you have a use-case where you need to deploy multiple modules it is recommended to separate concerns by operating in different namespaces.
 
 ## OnSchedule
 
