@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
-import { execSync, spawnSync } from "child_process";
+import { beforeAll, jest, afterAll, describe, expect, it } from "@jest/globals";
+import { execSync, spawnSync, spawn, ChildProcess } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
 
@@ -17,6 +17,8 @@ import {
   waitForSecret,
 } from "./k8s";
 
+
+
 export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
@@ -25,7 +27,7 @@ export function peprDeploy() {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
-    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"),waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
+    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
   });
 
   cleanupSamples();
@@ -35,6 +37,44 @@ export function peprDeploy() {
   it("should perform validation of resources applied to the test cluster", testValidate);
 
   describe("should perform mutation of resources applied to the test cluster", testMutate);
+
+  describe("should monitor the cluster for admission changes", () => {
+
+    const until = (predicate: () => boolean ) : Promise<void> => {
+      const poll = (resolve: () => void) => {
+        if ( predicate() ) { resolve() }
+        else { setTimeout(_ => poll(resolve), 250) }
+      }
+      return new Promise(poll);
+    }
+
+    it("npx pepr monitor should display validation results to console", async () => {
+      const cmd = [ 'pepr', 'monitor', 'static-test' ]
+
+      const proc = spawn('npx', cmd, { shell: true })
+
+      const state = { accept: false, reject: false, done: false}
+      proc.stdout.on('data', (data) => {
+        const stdout: String = data.toString()
+        state.accept = stdout.includes("✅") ? true : state.accept
+        state.reject = stdout.includes("❌") ? true : state.reject
+
+        if (state.accept && state.reject) {
+          proc.kill()
+          proc.stdin.destroy()
+          proc.stdout.destroy()
+          proc.stderr.destroy()
+        }
+      })
+      proc.on('exit', () => state.done = true );
+
+      await until(() => state.done)
+
+      // completes only if conditions are met, so... getting here means success!
+    }, 5000);
+  });
+
+
 
   describe("should store data in the PeprStore", testStore);
 
@@ -104,6 +144,7 @@ async function testValidate() {
     `No evil CM annotations allowed.\n`,
   ].join("");
   expect(stderr).toMatch(expected);
+
 }
 
 function testMutate() {

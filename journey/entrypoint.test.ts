@@ -27,6 +27,6 @@ describe("Journey: `npx pepr format`", peprFormat);
 
 describe("Journey: `npx pepr build`", peprBuild);
 
-describe("Journey: `pepr deploy`", peprDeploy);
+describe("Journey: `npx pepr deploy`", peprDeploy);
 
-describe("Journey: `pepr dev`", peprDev);
+describe("Journey: `npx pepr dev`", peprDev);
