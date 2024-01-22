@@ -6,7 +6,7 @@ In this section you can find detailed information about Pepr and how to use it.
 
 You can find the following information in this section:
 
-### [Pepr CLI](./30_user-guide/10_pepr-cli.md)
+### [Pepr CLI](10_pepr-cli.md)
 
 ### [Pepr Modules](20_pepr-modules.md)
 
@@ -14,14 +14,14 @@ You can find the following information in this section:
 
 ### [Pepr Capabilities](40_capabilities.md)
 
-### [Pepr Store](../30_user-guide/50_store.md)
+### [Pepr Store](50_store.md)
 
-### [Custom Resources](../30_user-guide/70_custom-resources.md)
+### [Custom Resources](70_custom-resources.md)
 
-### [OnSchedule](../30_user-guide/80_onschedule.md)
+### [OnSchedule](80_onschedule.md)
 
-### [RBAC](../30_user-guide/90_rbac.md)
+### [RBAC](90_rbac.md)
 
-### [Metrics](../30_user-guide/100_metrics.md)
+### [Metrics](100_metrics.md)
 
-### [Webassembly](../30_user-guide/110_webassembly.md)
+### [Webassembly](110_webassembly.md)
