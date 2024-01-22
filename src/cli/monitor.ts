@@ -9,24 +9,30 @@ import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
   program
-    .command("monitor <module-uuid>")
+    .command("monitor [module-uuid]")
     .description("Monitor a Pepr Module")
     .action(async uuid => {
+      let labels: string[];
+      let errorMessage: string;
+
       if (!uuid) {
-        console.error("Module UUID is required");
-        process.exit(1);
+        labels = ["pepr.dev/controller", "admission"];
+        errorMessage = `No pods found with admission labels`;
+      } else {
+        labels = ["app", `pepr-${uuid}`];
+        errorMessage = `No pods found for module ${uuid}`;
       }
 
-      // Get the logs for the `app=pepr-${module}` pod selector
+      // Get the logs for the `app=pepr-${module}` or `pepr.dev/controller=admission` pod selector
       const pods = await K8s(kind.Pod)
         .InNamespace("pepr-system")
-        .WithLabel("app", `pepr-${uuid}`)
+        .WithLabel(labels[0], labels[1])
         .Get();
 
       const podNames = pods.items.flatMap(pod => pod.metadata!.name) as string[];
 
       if (podNames.length < 1) {
-        console.error(`No pods found for module ${uuid}`);
+        console.error(errorMessage);
         process.exit(1);
       }
 
