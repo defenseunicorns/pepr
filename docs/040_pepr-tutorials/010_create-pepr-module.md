@@ -4,7 +4,7 @@
 
 This tutorial will walk you through the process of creating a Pepr module.
 
-Each Pepr Module is it's own Typescript project, produced by [`pepr init`](../030_user-guide/010_pepr-cli.md#pepr-init). Typically a module is maintained by a unique group or system. For example, a module for internal [Zarf](https://zarf.dev/) mutations would be different from a module for [Big Bang](https://p1.dso.mil/products/big-bang). An important idea with modules is that they are _wholly independent of one another_. This means that 2 different modules can be on completely different versions of Pepr and any other dependencies; their only interaction is through the standard K8s interfaces like any other webhook or controller.
+Each Pepr Module is it's own Typescript project, produced by [`npx pepr init`](../030_user-guide/010_pepr-cli.md#pepr-init). Typically a module is maintained by a unique group or system. For example, a module for internal [Zarf](https://zarf.dev/) mutations would be different from a module for [Big Bang](https://p1.dso.mil/products/big-bang). An important idea with modules is that they are _wholly independent of one another_. This means that 2 different modules can be on completely different versions of Pepr and any other dependencies; their only interaction is through the standard K8s interfaces like any other webhook or controller.
 
 ## Prerequisites
 
@@ -12,14 +12,14 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](../03
 
 1. **Create the module**:
 
-   Use [`pepr init`](../030_user-guide/010_pepr-cli.md#pepr-init) to generate a new module.
+   Use [`npx pepr init`](../030_user-guide/010_pepr-cli.md#pepr-init) to generate a new module.
 
 1. **Quickly validate system setup**:
 
    Every new module includes a sample Pepr Capability called `HelloPepr`. By default,
    this capability is deployed and monitoring the `pepr-demo` namespace. There is a sample
    yaml also included you can use to see Pepr in your cluster. Here's the quick steps to do
-   that after `pepr init`:
+   that after `npx pepr init`:
 
    ```bash
    # cd to the newly-created Pepr module folder
@@ -29,7 +29,7 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](../03
    npm run k3d-setup
 
    # Launch pepr dev mode
-   # If using another local K8s distro instead of k3d, use `pepr dev --host host.docker.internal`
+   # If using another local K8s distro instead of k3d, use `npx pepr dev --host host.docker.internal`
    pepr dev
 
    # From another terminal, apply the sample yaml
@@ -51,18 +51,18 @@ Each Pepr Module is it's own Typescript project, produced by [`pepr init`](../03
    ]);
    ```
 
-   _Note: if you also delete the `capabilities/hello-pepr.ts` file, it will be added again on the next [`pepr update`](../030_user-guide/010_pepr-cli.md#pepr-update) so you have the latest examples usages from the Pepr SDK. Therefore, it is sufficient to remove the entry from your `pepr.ts` module
+   _Note: if you also delete the `capabilities/hello-pepr.ts` file, it will be added again on the next [`npx pepr update`](../030_user-guide/010_pepr-cli.md#pepr-update) so you have the latest examples usages from the Pepr SDK. Therefore, it is sufficient to remove the entry from your `pepr.ts` module
    config._
 
 1. **Build and deploy the Pepr Module**
 
-   Most of the time, you'll likely be iterating on a module with `pepr dev` for real-time feedback and validation Once you are ready to move beyond the local dev environment, Pepr provides deployment and build tools you can use.
+   Most of the time, you'll likely be iterating on a module with `npx pepr dev` for real-time feedback and validation Once you are ready to move beyond the local dev environment, Pepr provides deployment and build tools you can use.
 
-   `pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`pepr deploy`](../030_user-guide/010_pepr-cli.md#pepr-deploy) for more info.
+   `npx pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`npx pepr deploy`](../030_user-guide/010_pepr-cli.md#pepr-deploy) for more info.
 
 ## Additional Information
 
-By default, when you run `pepr init`, the module is not configured with any additional options. Currently, there are 3 options you can configure:
+By default, when you run `npx pepr init`, the module is not configured with any additional options. Currently, there are 3 options you can configure:
 
 - `deferStart` - if set to `true`, the module will not start automatically. You will need to call `start()` manually. This is useful if you want to do some additional setup before the module controller starts. You can also use this to change the default port that the controller listens on.
 
@@ -97,4 +97,5 @@ module.start();
 
 ## Summary
 
-## What's next?
+Checkout some examples of Pepr modules in the [excellent examples repo](https://github.com/defenseunicorns/pepr-excellent-examples). If you have questions after that, please reach out to us on [Slack](https://kubernetes.slack.com/archives/C06DGH40UCB) or [GitHub Issues](https://github.com/defenseunicorns/pepr/issues)
+
