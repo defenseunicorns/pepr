@@ -31,7 +31,7 @@
     "format:fix": "eslint src --fix && prettier src --write"
   },
   "dependencies": {
-    "@types/ramda": "0.29.9",
+    "@types/ramda": "0.29.10",
     "express": "4.18.2",
     "fast-json-patch": "3.1.1",
     "kubernetes-fluent-client": "2.1.0",
