@@ -9,7 +9,7 @@ Please report it by opening an issue in the [Pepr GitHub repository](https://git
 
 ## I've found a security issue, what should I do?
 
-Security issues should be reported privately, via [email](mailto:case@defenseunicorns.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+Security issues should be reported privately, via [email](mailto:pepr@defenseunicorns.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
 ## I have a feature request, what should I do?
 
