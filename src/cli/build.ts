@@ -168,7 +168,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
     }
 
     // Resolve node_modules folder (in support of npm workspaces!)
-    const npmRoot = execFileSync("npm", [ "root" ]).toString().trim();
+    const npmRoot = execFileSync("npm", ["root"]).toString().trim();
 
     // Run `tsc` to validate the module's types & output sourcemaps
     const args = ["--project", `${modulePath}/tsconfig.json`, "--outdir", outputDir];
