@@ -21,164 +21,82 @@ An example of what the dashboard will look like is shown below:
 
 1. **Create a Prometheus deployment**:
 
-    **Option 1**:
-
-    To create a Prometheus deployment, run the following command:
+    - Apply the CRDs to your cluster:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/master/dashboards/prometheus.yaml
-    ```
-
-    This will create a Prometheus deployment in the `pepr-dashboard` namespace using the deployment in the [prometheus.yaml](../../dashboards/prometheus.yaml) file. This deployment will create a Prometheus pod, a Prometheus service, and a Prometheus configmap. The Prometheus pod will be exposed on port 9090.
-
-    **Option 2**:
-
-    1. Deploy Prometheus operator controller manager
-
-    ```plaintext
     kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml
     ```
 
-    2. Create an instance of Prometheus
+    This command creates the necessary Custom Resource Definitions that the Prometheus Operator will use.
 
-    ```yaml
-    kubectl create -f -<<EOF
-    kind: Prometheus
-    apiVersion: monitoring.coreos.com/v1
-    metadata:
-    name: k8s
-    namespace: default
-    spec:
-    serviceMonitorSelector: {}
-    serviceMonitorNamespaceSelector: {}
-    logLevel: debug
-    logFormat: json
-    replicas: 1
-    image: quay.io/prometheus/prometheus:v2.35.0
-    serviceAccountName: prometheus-operator
-    EOF
+    - Apply the [RBAC configuration](../../dashboards/rbac.yaml) to your cluster:
+
+    ```bash
+    kubectl apply -f rbac.yaml
     ```
 
-    3. By default, the prometheus service account does not have sufficient permissions to `get/list/watch` the necessary Kubernetes resources. Create a clusterRole to allow scraping:
+    This sets up the necessary roles and permissions for the Prometheus Operator to function correctly.
 
-    ```yaml
-    kubectl apply -f -<<EOF
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-    creationTimestamp: null
-    name: scrape-resources
-    rules:
-    - apiGroups:
-    - ""
-    resources:
-    - pods
-    - pods/status
-    - endpoints
-    - services
-    verbs:
-    - list
-    - get
-    - watch
-    EOF
+    - Apply the [Prometheus Operator deployment](../../dashboards/prometheus-operator.yaml) to your cluster:
+
+    ```bash
+    kubectl apply -f prometheus-operator.yaml
     ```
 
-    4. Assign the clusterRole to the Prometheus `serviceAccount`:
+    This deploys the Prometheus Operator in your Kubernetes cluster.
 
-    ```plaintext
-    kubectl create clusterrolebinding scrape-binding --clusterrole=scrape-resources --serviceaccount=default:prometheus-operator
+    - Wait for the Prometheus Operator to be deployed:
+
+    ```bash
+    kubectl get pods -n monitoring
     ```
 
-    5. Create a ServiceMonitor to scrape the `admission` and `watcher` controller services:
+    You should see something similar to:
 
-    ```yaml
-    kubectl create -f -<<EOF
-    apiVersion: monitoring.coreos.com/v1
-    kind: ServiceMonitor
-    metadata:
-    name: admission
-    spec:
-    selector:
-        matchLabels:
-        pepr.dev/controller: admission
-    namespaceSelector:
-        matchNames:
-        - pepr-system
-    endpoints:
-    - targetPort: 3000
-        scheme: https
-        tlsConfig:
-        insecureSkipVerify: true
-    ---
-    apiVersion: monitoring.coreos.com/v1
-    kind: ServiceMonitor
-    metadata:
-    name: watcher
-    namespace: default
-    spec:
-    selector:
-        matchLabels:
-        pepr.dev/controller: watcher
-    namespaceSelector:
-        matchNames:
-        - pepr-system
-    endpoints:
-    - targetPort: 3000
-        scheme: https
-        tlsConfig:
-        insecureSkipVerify: true
-    EOF
+    ```bash
+    NAME                                   READY   STATUS    RESTARTS   AGE
+    prometheus-operator-7f5f6f7f5f-4q9q4   1/1     Running   0          2m
     ```
 
-    6. Port-forward to the Prometheus service and check out [targets](http://127.0.0.1:9090/targets).
+    - Deploy the Prometheus Custom Resource:
 
-    ```plaintext
-    kubectl port-forward svc/prometheus-operated 9090
+    ```bash
+    kubectl apply -f prometheus-cr.yaml
     ```
+
+    This tells the Prometheus Operator to create a Prometheus instance according to the specified configuration.
+
+    - Deploy the ServiceMonitor Custom Resource:
+
+    ```bash
+    kubectl apply -f servicemonitor-cr.yaml
+    ```
+
+    ServiceMonitors define how Prometheus instances should discover and scrape targets.
+
+    - Deploy the AlertManager Custom Resource:
+
+    ```bash
+    kubectl apply -f alertmanager-cr.yaml
+    ```
+
+    This tells the Prometheus Operator to create an AlertManager instance according to the specified configuration.
 
 2. **Create a Grafana deployment**:
 
-    **Option 1**:
-
-    To create a Grafana deployment, run the following command:
+    Download and apply the [grafana-deployment.yaml](../../dashboards/grafana-deployment.yaml) file:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/grafana.yaml
+    kubectl apply -f grafana-deployment.yaml
     ```
 
-    This will create a Grafana deployment in the `pepr-dashboard` namespace using the deployment in the [grafana.yaml](../../dashboards/grafana.yaml) file. This deployment will create a Grafana pod, a Grafana service, and a Grafana configmap. The Grafana pod will be exposed on port 3000.
-
-    **Option 2**:
-
-    1. Deploy the Grafana helm chart
+    Alternatively, to create a Grafana dashboard, you can run the following command:
 
     ```bash
-    kubectl create ns grafana
-    helm install grafana -n grafana oci://registry-1.docker.io/bitnamicharts/grafana-operator
+    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/pepr-dashboard.yaml
     ```
 
-    2. Create an instance of `Grafana`
-
-    ```yaml
-    kubectl create -f -<<EOF
-    apiVersion: grafana.integreatly.org/v1beta1
-    kind: Grafana
-    metadata:
-    name: grafana
-    namespace: grafana
-    labels:
-        dashboards: "grafana"
-    spec:
-    config:
-        log:
-            mode: "console"
-        security:
-            admin_user: root
-            admin_password: secret
-    EOF
-    ```
-
-    3. Setup Port Forwarding
+    - Setup Port Forwarding
 
     First, confirm that your grafana-service is running on port 3000:
 
@@ -203,7 +121,13 @@ An example of what the dashboard will look like is shown below:
 
     **Option 1**:
 
-    To create a Grafana dashboard, run the following command:
+    Download and apply the [pepr-dashboard.yaml](../../dashboards/pepr-dashboard.yaml) file:
+
+    ```bash
+    kubectl apply -f pepr-dashboard.yaml
+    ```
+
+    Alternatively, to create the Pepr Grafana dashboard, you can run the following command:
 
     ```bash
     kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/pepr-dashboard.yaml

@@ -1,0 +1,7 @@
+apiVersion: monitoring.coreos.com/v1
+kind: AlertManager
+metadata:
+  name: example-alertmanager
+  namespace: monitoring
+spec:
+  replicas: 1

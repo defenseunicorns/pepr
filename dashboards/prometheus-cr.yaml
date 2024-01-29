@@ -1,0 +1,9 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: example-prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  serviceAccountName: prometheus
+  serviceMonitorSelector: {}

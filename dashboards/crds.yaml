@@ -1,0 +1,18 @@
+# Prometheus Operator CRD
+
+
+---
+
+# ServiceMonitor CRD
+
+---
+
+# PodMonitor CRD
+
+---
+
+# PrometheusRule CRD
+
+---
+
+# Alertmanager CRD
