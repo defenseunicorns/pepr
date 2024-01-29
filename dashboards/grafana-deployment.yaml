@@ -39,6 +39,9 @@ spec:
       containers:
       - name: grafana
         image: grafana/grafana:latest
+        volumeMounts:
+        - name: dashboard-volume
+          mountPath: /etc/grafana/provisioning/dashboards
         resources:
           limits:
             memory: "512Mi"
@@ -53,3 +56,7 @@ spec:
           value: "secret"  # Change this to a secure password
         - name: GF_SECURITY_ADMIN_USER
           value: "admin"
+      volumes:
+      - name: dashboard-volume
+        configMap:
+          name: my-grafana-dashboards

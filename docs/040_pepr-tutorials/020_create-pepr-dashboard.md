@@ -27,15 +27,7 @@ An example of what the dashboard will look like is shown below:
     kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml
     ```
 
-    This command creates the necessary Custom Resource Definitions that the Prometheus Operator will use.
-
-#### Apply the [RBAC configuration](../../dashboards/rbac.yaml) to your cluster
-
-    ```bash
-    kubectl apply -f rbac.yaml
-    ```
-
-    This sets up the necessary roles and permissions for the Prometheus Operator to function correctly.
+    This command creates in the `default` namespace the necessary Custom Resource Definitions that the Prometheus Operator will use.
 
 #### Apply the [Prometheus Operator deployment](../../dashboards/prometheus-operator.yaml) to your cluster
 
@@ -48,7 +40,7 @@ An example of what the dashboard will look like is shown below:
 #### Wait for the Prometheus Operator to be deployed
 
     ```bash
-    kubectl get pods -n monitoring
+    kubectl get pods
     ```
 
     You should see something similar to:
@@ -66,21 +58,25 @@ An example of what the dashboard will look like is shown below:
 
     This tells the Prometheus Operator to create a Prometheus instance according to the specified configuration.
 
-#### Deploy the [ServiceMonitor Custom Resource](../../dashboards/servicemonitor-cr.yaml)
+##### Setup Port Forwarding
 
-    ```bash
-    kubectl apply -f servicemonitor-cr.yaml
+    First, confirm that your prometheus-operator service is running on port 9090:
+
+    ```
+    k get svc
     ```
 
-    ServiceMonitors define how Prometheus instances should discover and scrape targets.
+    You should see something similar to:
 
-#### Deploy the AlertManager Custom Resource
-
-    ```bash
-    kubectl apply -f alertmanager-cr.yaml
+    ```
+    prometheus-operator                            ClusterIP   10.43.219.108   <none>        9090/TCP   11m
     ```
 
-    This tells the Prometheus Operator to create an AlertManager instance according to the specified configuration.
+    You can now set up the port-forwarding so that you can view your Prometheus at `http://localhost:9090`:
+
+    ```
+    k port-forward svc/prometheus-operator 9090
+    ```
 
 ### **Create a Grafana deployment**
 
@@ -121,16 +117,16 @@ An example of what the dashboard will look like is shown below:
 
 #### **Option 1**
 
-    Download and apply the [pepr-dashboard.yaml](../../dashboards/pepr-dashboard.yaml) file:
+    Download and apply the [dashboard-configmap.yaml](../../dashboards/dashboard-configmap.yaml) file:
 
     ```bash
-    kubectl apply -f pepr-dashboard.yaml
+    kubectl apply -f dashboard-configmap.yaml
     ```
 
     Alternatively, to create the Pepr Grafana dashboard, you can run the following command:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/pepr-dashboard.yaml
+    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/dashboard-configmap.yaml
     ```
 
     This will create a Grafana dashboard in the `pepr-dashboard` namespace. This dashboard will be named `Pepr Dashboard`. This dashboard will display data from Prometheus. The dashboard will display data such as the number of validation requests processed, the number of mutation requests that were allowed, the number of errors that were processed, the number of alerts that were processed, the status of the Pepr pods, and the scrape duration of the Pepr pods.

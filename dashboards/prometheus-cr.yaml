@@ -1,9 +1,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
-  name: example-prometheus
-  namespace: monitoring
+  name: prometheus-operator
+  namespace: default
 spec:
   replicas: 1
-  serviceAccountName: prometheus
+  serviceAccountName: prometheus-operator
   serviceMonitorSelector: {}
+  serviceMonitorNamespaceSelector: {}
+  logLevel: debug
+  logFormat: json
+  image: quay.io/prometheus/prometheus:v2.35.0

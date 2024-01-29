@@ -1,11 +1,12 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: example-service-monitor
-  namespace: monitoring
+  name: prometheus-operator
+  namespace: prometheus
 spec:
   selector:
     matchLabels:
-      app: example-app
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: prometheus-operator
   endpoints:
   - port: http
