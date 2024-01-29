@@ -213,7 +213,7 @@ An example of what the dashboard will look like is shown below:
 
     **Option 2**:
 
-    Import the dashboard from the [pepr-dashboard.json](../../dashboards/pepr-dashboard.json) file.
+    Import the dashboard from the [pepr-dashboard.json](../../dashboards/pepr-dashbord.json) file.
 
     To import the dashboard, follow the steps below:
 
