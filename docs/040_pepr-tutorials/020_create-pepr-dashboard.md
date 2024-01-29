@@ -19,9 +19,9 @@ An example of what the dashboard will look like is shown below:
 
 ## Steps
 
-1. **Create a Prometheus deployment**:
+### **Create a Prometheus deployment**
 
-    - Apply the CRDs to your cluster:
+#### Apply the CRDs to your cluster
 
     ```bash
     kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml
@@ -29,7 +29,7 @@ An example of what the dashboard will look like is shown below:
 
     This command creates the necessary Custom Resource Definitions that the Prometheus Operator will use.
 
-    - Apply the [RBAC configuration](../../dashboards/rbac.yaml) to your cluster:
+#### Apply the [RBAC configuration](../../dashboards/rbac.yaml) to your cluster
 
     ```bash
     kubectl apply -f rbac.yaml
@@ -37,7 +37,7 @@ An example of what the dashboard will look like is shown below:
 
     This sets up the necessary roles and permissions for the Prometheus Operator to function correctly.
 
-    - Apply the [Prometheus Operator deployment](../../dashboards/prometheus-operator.yaml) to your cluster:
+#### Apply the [Prometheus Operator deployment](../../dashboards/prometheus-operator.yaml) to your cluster
 
     ```bash
     kubectl apply -f prometheus-operator.yaml
@@ -45,7 +45,7 @@ An example of what the dashboard will look like is shown below:
 
     This deploys the Prometheus Operator in your Kubernetes cluster.
 
-    - Wait for the Prometheus Operator to be deployed:
+#### Wait for the Prometheus Operator to be deployed
 
     ```bash
     kubectl get pods -n monitoring
@@ -58,7 +58,7 @@ An example of what the dashboard will look like is shown below:
     prometheus-operator-7f5f6f7f5f-4q9q4   1/1     Running   0          2m
     ```
 
-    - Deploy the Prometheus Custom Resource:
+#### Deploy the [Prometheus Custom Resource](../../dashboards/prometheus-cr.yaml)
 
     ```bash
     kubectl apply -f prometheus-cr.yaml
@@ -66,7 +66,7 @@ An example of what the dashboard will look like is shown below:
 
     This tells the Prometheus Operator to create a Prometheus instance according to the specified configuration.
 
-    - Deploy the ServiceMonitor Custom Resource:
+#### Deploy the [ServiceMonitor Custom Resource](../../dashboards/servicemonitor-cr.yaml)
 
     ```bash
     kubectl apply -f servicemonitor-cr.yaml
@@ -74,7 +74,7 @@ An example of what the dashboard will look like is shown below:
 
     ServiceMonitors define how Prometheus instances should discover and scrape targets.
 
-    - Deploy the AlertManager Custom Resource:
+#### Deploy the AlertManager Custom Resource
 
     ```bash
     kubectl apply -f alertmanager-cr.yaml
@@ -82,9 +82,9 @@ An example of what the dashboard will look like is shown below:
 
     This tells the Prometheus Operator to create an AlertManager instance according to the specified configuration.
 
-2. **Create a Grafana deployment**:
+### **Create a Grafana deployment**
 
-    Download and apply the [grafana-deployment.yaml](../../dashboards/grafana-deployment.yaml) file:
+#### Download and apply the [grafana-deployment.yaml](../../dashboards/grafana-deployment.yaml) file
 
     ```bash
     kubectl apply -f grafana-deployment.yaml
@@ -93,10 +93,10 @@ An example of what the dashboard will look like is shown below:
     Alternatively, to create a Grafana dashboard, you can run the following command:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/pepr-dashboard.yaml
+    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/grafana-deployment.yaml
     ```
 
-    - Setup Port Forwarding
+##### Setup Port Forwarding
 
     First, confirm that your grafana-service is running on port 3000:
 
@@ -117,9 +117,9 @@ An example of what the dashboard will look like is shown below:
     k port-forward svc/grafana-service 3000 --namespace grafana
     ```
 
-3. **Create a Grafana dashboard**:
+### **Create a Grafana dashboard**
 
-    **Option 1**:
+#### **Option 1**
 
     Download and apply the [pepr-dashboard.yaml](../../dashboards/pepr-dashboard.yaml) file:
 
@@ -135,7 +135,7 @@ An example of what the dashboard will look like is shown below:
 
     This will create a Grafana dashboard in the `pepr-dashboard` namespace. This dashboard will be named `Pepr Dashboard`. This dashboard will display data from Prometheus. The dashboard will display data such as the number of validation requests processed, the number of mutation requests that were allowed, the number of errors that were processed, the number of alerts that were processed, the status of the Pepr pods, and the scrape duration of the Pepr pods.
 
-    **Option 2**:
+#### **Option 2**
 
     Import the dashboard from the [pepr-dashboard.json](../../dashboards/pepr-dashbord.json) file.
 
