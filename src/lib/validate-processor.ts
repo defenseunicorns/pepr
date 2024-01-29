@@ -64,11 +64,11 @@ export async function validateProcessor(
         Log.info(actionMetadata, `Validation Action completed: ${resp.allowed ? "allowed" : "denied"}`);
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
-        Log.error(actionMetadata, `Action failed: ${e}`);
+        Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
         localResponse.allowed = false;
         localResponse.status = {
           code: 500,
-          message: `Action failed with error: ${e}`,
+          message: `Action failed with error: ${JSON.stringify(e)}`,
         };
         return [localResponse];
       }
