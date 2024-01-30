@@ -9,7 +9,7 @@ This tutorial will walk you through the process of building a Kubernetes Operato
 
 The WebApp Operator deploys the `CustomResourceDefinition` for WebApp, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
 
-The WebApp instance represents a `Deployment` object with confirgurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
+The WebApp instance represents a `Deployment` object with configurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
 
 If any object deployed by the Operator is deleted for any reason, the Operator will abruptly redeploy the object. 
 
@@ -108,7 +108,7 @@ spec:
     - wa
 ```
 
-Make sure the `CRD` has a `status` listed under `subresources` and it is a good idea to provide descriptions under the properties to help users understand what the property is used for. Enums are useful to limit the values that can be used for a property.
+Make sure the CRD has a `status` listed under `subresources` and it is a good idea to provide descriptions under the properties to help users understand what the property is used for. Enums are useful to limit the values that can be used for a property.
 
 
 
@@ -1020,6 +1020,6 @@ When the WebApp is deleted, all of the resources that it created are also delete
 
 ## Conclusion
 
-In this tutorial we created a Kubernetes Operator using Pepr. We created a CRD, created helper functions to help with the reconciliation process, and created a queue and reconciler to reconcile the state of the instance with the cluster. We also built and deployed the Operator and created an instance of the WebApp resource and watched the Operator reconcile the state of the instance with the cluster. Finally, we updated the instance and watched the Operator reconcile the state of the instance with the cluster and deleted the instance and watched the Operator delete the resources that it created.
+In this tutorial we created a Kubernetes Operator using Pepr. We created a CRD, created helper functions to help with the reconciliation process, and created a queue and reconciler to reconcile the state of the instance with the cluster. We also built and deployed the Operator and created an instance of the WebApp resource and watched the Operator reconcile the state of the instance with the cluster. Finally, we updated and deleted the instance and watched the Operator reconcile the manifests based in the updated instance and delete the resources when the instance was deleted.
 
 If you have questions, reach out in the [Slack channel](https://kubernetes.slack.com/archives/C06DGH40UCB) or [GitHub](https://github.com/defenseunicorns/pepr). Also, checkout the finished example in [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator)
