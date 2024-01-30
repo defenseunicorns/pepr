@@ -1,13 +1,17 @@
-apiVersion: monitoring.coreos.com/v1
-kind: Prometheus
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: prometheus-operator
-  namespace: default
-spec:
-  replicas: 1
-  serviceAccountName: prometheus-operator
-  serviceMonitorSelector: {}
-  serviceMonitorNamespaceSelector: {}
-  logLevel: debug
-  logFormat: json
-  image: quay.io/prometheus/prometheus:v2.35.0
+  name: scrape-resources
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+      - pods/status
+    verbs:
+      - get
+      - list
+      - watch

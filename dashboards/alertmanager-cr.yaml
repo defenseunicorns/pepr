@@ -1,7 +1,0 @@
-apiVersion: monitoring.coreos.com/v1
-kind: Alertmanager
-metadata:
-  name: prometheus-alertmanager
-  namespace: prometheus
-spec:
-  replicas: 1

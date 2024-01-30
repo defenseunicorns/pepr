@@ -1,0 +1,14 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+spec:
+  config:
+    log:
+      mode: "console"
+    security:
+      admin_user: admin
+      admin_password: secret

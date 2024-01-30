@@ -1,14 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: monitoring
-
+  name: grafana
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana
-  namespace: monitoring
+  name: grafana-service
+  namespace: grafana
   labels:
     app: grafana
 spec:
@@ -23,7 +22,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: monitoring
+  namespace: grafana
   labels:
     app: grafana
 spec:
@@ -39,9 +38,6 @@ spec:
       containers:
       - name: grafana
         image: grafana/grafana:latest
-        volumeMounts:
-        - name: dashboard-volume
-          mountPath: /etc/grafana/provisioning/dashboards
         resources:
           limits:
             memory: "512Mi"
@@ -56,7 +52,25 @@ spec:
           value: "secret"  # Change this to a secure password
         - name: GF_SECURITY_ADMIN_USER
           value: "admin"
+        - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+          value: "/var/lib/grafana/dashboards/pepr-dashboard.json"
+        - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_NAME
+          value: "pepr-dashboard"
+        - name: GF_PROVIDERS_FILE_PATH
+          value: "/etc/grafana/provisioning/datasources/datasources.yaml"
+        - name: GF_PATHS_DATA
+          value: "/var/lib/grafana"
+        - name: GF_PATHS_PROVISIONING
+          value: "/etc/grafana/provisioning"
+        volumeMounts:
+        - name: dashboard-volume
+          mountPath: /var/lib/grafana/dashboards
+        - name: provisioning-config-volume
+          mountPath: /etc/grafana/provisioning
       volumes:
       - name: dashboard-volume
         configMap:
-          name: my-grafana-dashboards
+          name: pepr-dashboards
+      - name: provisioning-config-volume
+        configMap:
+          name: grafana-provisioning-config

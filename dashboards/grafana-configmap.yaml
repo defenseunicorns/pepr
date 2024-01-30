@@ -1,21 +1,66 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: my-grafana-dashboards
-  namespace: monitoring
+  name: grafana-datasources
+  namespace: grafana
+  labels:
+    grafana_datasource: "1"
 data:
-  my-dashboard.json: |
+  prometheus-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://localhost:9090
+        isDefault: true
+        uid: prometheus
+        orgId: 1
+        jsonData:
+          httpMethod: POST
+          manageAlerts: true
+          prometheusType: Prometheus
+          prometheusVersion: latest
+          cacheLevel: 'High'
+          disableRecordingRules: false
+          incrementalQueryOverlapWindow: 10m
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning-config
+  namespace: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+    - name: 'Prometheus'
+      orgId: 1
+      uid: pepr-dashboard
+      folder: 'Pepr'
+      folderUid: pepr
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 10
+      allowUiUpdates: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards
+        foldersFromFilesStructure: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pepr-dashboards
+  namespace: grafana
+data:
+  pepr-dashboard.json: |
     {
-    "__inputs": [
-      {
-        "name": "DS_PROMETHEUS",
-        "label": "Prometheus",
-        "description": "",
-        "type": "datasource",
-        "pluginId": "prometheus",
-        "pluginName": "Prometheus"
-      }
-    ],
     "__elements": {},
     "__requires": [
       {
@@ -68,7 +113,7 @@ data:
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": null,
+    "id": 1,
     "links": [],
     "liveNow": false,
     "panels": [
@@ -88,7 +133,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "description": "Pepr pod status by pod",
         "fieldConfig": {
@@ -171,7 +216,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "up{container=\"server\"}",
@@ -182,7 +227,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "up{container=\"watcher\"}",
@@ -198,7 +243,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "fieldConfig": {
           "defaults": {
@@ -275,7 +320,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "scrape_duration_seconds{container=\"server\"}",
@@ -286,7 +331,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "scrape_duration_seconds{container=\"watcher\"}",
@@ -315,7 +360,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "fieldConfig": {
           "defaults": {
@@ -371,7 +416,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "count by(instance) (rate(pepr_errors{container=\"server\"}[$__rate_interval]))",
@@ -382,7 +427,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "count by(instance) (rate(pepr_errors{container=\"watcher\"}[$__rate_interval]))",
@@ -398,7 +443,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "description": "Count of Pepr Alerts by pod",
         "fieldConfig": {
@@ -455,7 +500,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "pepr_alerts{container=\"server\"}",
@@ -466,7 +511,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "pepr_alerts{container=\"watcher\"}",
@@ -482,7 +527,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "description": "Count of Pepr Validate actions by pod",
         "fieldConfig": {
@@ -539,7 +584,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "exemplar": false,
@@ -552,7 +597,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "pepr_Validate_sum{container=\"watcher\"}",
@@ -568,7 +613,7 @@ data:
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "prometheus"
         },
         "description": "Count of Pepr mutate actions applied by pod.",
         "fieldConfig": {
@@ -625,7 +670,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "pepr_Mutate_count{container=\"server\"}",
@@ -636,7 +681,7 @@ data:
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "${DS_PROMETHEUS}"
+              "uid": "prometheus"
             },
             "editorMode": "builder",
             "expr": "rate(pepr_Mutate_count{container=\"watcher\"}[24h])",
@@ -663,26 +708,7 @@ data:
     "timepicker": {},
     "timezone": "",
     "title": "Pepr Dashboard",
-    "uid": "j7BjgMpIk",
+    "uid": "j7BjgMpIa",
     "version": 17,
     "weekStart": ""
     }
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-provisioning-config
-  namespace: monitoring
-data:
-  dashboards.yaml: |
-    apiVersion: 1
-
-    providers:
-    - name: 'default'
-      orgId: 1
-      folder: ''
-      type: file
-      disableDeletion: false
-      editable: true
-      options:
-        path: /etc/grafana/provisioning/dashboards
