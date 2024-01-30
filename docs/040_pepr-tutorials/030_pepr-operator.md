@@ -125,14 +125,10 @@ npm ci
 ```
 
 
-Generate a typescript class from the using `kubernetes-fluent-client` in the generated folder.
+Generate a typescript class from the using `kubernetes-fluent-client` in the `generated` directory.
 
 ```bash
-pushd capabilities/crd/generated;
-
 npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml . 
-
-popd
 ```
 
 Change the first lines of the generated file to the following:
