@@ -32,31 +32,25 @@ An example of what the dashboard will look like is shown below:
 #### Apply the [Prometheus Operator deployment](../../dashboards/prometheus-operator.yaml) to your cluster
 
     ```bash
-    kubectl apply -f prometheus-operator.yaml
+    kubectl create -f prometheus-deployment.yaml
     ```
 
-    This deploys the Prometheus Operator in your Kubernetes cluster.
+    This creates an instance of Prometheus in your Kubernetes cluster.
 
-#### Wait for the Prometheus Operator to be deployed
-
-    ```bash
-    kubectl get pods
-    ```
-
-    You should see something similar to:
-
-    ```bash
-    NAME                                   READY   STATUS    RESTARTS   AGE
-    prometheus-operator-7f5f6f7f5f-4q9q4   1/1     Running   0          2m
-    ```
-
-#### Deploy the [Prometheus Custom Resource](../../dashboards/prometheus-cr.yaml)
+#### Create a ClusterRole to allow for scraping
 
     ```bash
     kubectl apply -f prometheus-cr.yaml
     ```
+    This creates a ClusterRole that allows for scraping.
 
-    This tells the Prometheus Operator to create a Prometheus instance according to the specified configuration.
+#### Create the [cluster role binding and ServiceMonitors](../../dashboards/prometheus-operator.yaml) to your cluster
+
+    ```bash
+    kubectl create -f prometheus-operator.yaml
+    ```
+
+    This creates a Prometheus Operator in your Kubernetes cluster.
 
 ##### Setup Port Forwarding
 
@@ -69,16 +63,26 @@ An example of what the dashboard will look like is shown below:
     You should see something similar to:
 
     ```
-    prometheus-operator                            ClusterIP   10.43.219.108   <none>        9090/TCP   11m
+    NAME                  TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
+    kubernetes            ClusterIP   10.43.0.1    <none>        443/TCP    18m
+    prometheus-operator   ClusterIP   None         <none>        8080/TCP   100s
+    prometheus-operated   ClusterIP   None         <none>        9090/TCP   62s
     ```
 
-    You can now set up the port-forwarding so that you can view your Prometheus at `http://localhost:9090`:
+    You can now set up the port-forwarding so that you can view your Prometheus instance at `http://localhost:9090`:
 
     ```
-    k port-forward svc/prometheus-operator 9090
+    k port-forward svc/prometheus-operated 9090
     ```
 
 ### **Create a Grafana deployment**
+
+#### Deploy the Grafana helm chart
+
+    ```bash
+    kubectl create ns grafana
+    helm install grafana -n grafana oci://registry-1.docker.io/bitnamicharts/grafana-operator
+    ```
 
 #### Download and apply the [grafana-deployment.yaml](../../dashboards/grafana-deployment.yaml) file
 
@@ -86,10 +90,22 @@ An example of what the dashboard will look like is shown below:
     kubectl apply -f grafana-deployment.yaml
     ```
 
-    Alternatively, to create a Grafana dashboard, you can run the following command:
+    Alternatively, to create a Grafana deployment, you can run the following command:
 
     ```bash
     kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/grafana-deployment.yaml
+    ```
+
+#### Deploy the ConfigMap with the Pepr dashboard json
+
+    ```bash
+    kubectl apply -f grafana-configmap.yaml
+    ```
+
+    Alternatively, to create a ConfigMap with the Pepr dashboard json, you can run the following command:
+
+    ```bash
+    kubectl apply -f https://raw.githubusercontent.com/defenseunicorns/pepr/main/dashboards/grafana-configmap.yaml
     ```
 
 ##### Setup Port Forwarding
