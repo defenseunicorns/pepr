@@ -797,6 +797,7 @@ import { WebAppCRD } from "./crd/source/webapp.crd";
 import { RegisterCRD } from "./crd/register";
 import "./crd/register";
 import Deploy from "./controller/generators";
+
 export const WebAppController = new Capability({
   name: "webapp-controller",
   description: "A Kubernetes Operator that manages WebApps",
@@ -806,6 +807,31 @@ export const WebAppController = new Capability({
 const { When, Store } = WebAppController;
 
 const queue = new Queue();
+
+const RECONCILE_SECONDS = 5;
+
+/*
+ * Description:
+ * This function is a higher order function that takes a number of seconds and returns a function that takes a function and a set of arguments.
+ * The returned function will wait for the number of seconds before calling the function with the provided arguments.
+ *
+ * Reason:
+ * When you delete the instance of WebApp, the operator removes the instance of the WebApp from the store.
+ * Kubernetes then does a cascade deletion on the resources that the WebApp instance created by the ownerReference.
+ * Upon Deletion of the resources, the operator will then reconcile to bring those resources back into the cluster if the instace of WebApp is still in the store.
+ * The delay gives the instance time to be deleted from the store operator will have time to process the deletion of the resources before they are deleted.
+ */
+function reconcileWithDelay(seconds: number) {
+  return async function <T, A extends unknown[]>(
+    fn: (...args: A) => Promise<T>,
+    ...args: A
+  ): Promise<T> {
+    await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    return fn(...args);
+  };
+}
+
+const handleReconcile = reconcileWithDelay(RECONCILE_SECONDS);
 
 // When instance is created or updated, validate it and enqueue it for processing
 When(WebApp)
@@ -820,39 +846,54 @@ When(WebApp)
     }
   });
 
+When(WebApp)
+  .IsDeleted()
+  .Mutate(instance => {
+    Store.removeItem(instance.Raw.metadata.name);
+    instance.SetAnnotation("deletionTimestamp", new Date().toISOString());
+  });
+
 // Don't let the CRD get deleted
 When(a.CustomResourceDefinition)
   .IsDeleted()
   .WithName(WebAppCRD.metadata.name)
-  .Watch(() => RegisterCRD());
+  .Watch(() => {
+    RegisterCRD();
+  });
 
 // // Don't let them be deleted
 When(a.Deployment)
   .IsDeleted()
   .WithLabel("pepr.dev/operator")
   .Watch(async deploy => {
-    const instance = JSON.parse(
-      Store.getItem(deploy.metadata!.labels["pepr.dev/operator"]),
-    ) as a.GenericKind;
-    await Deploy(instance);
+    await handleReconcile(async (): Promise<void> => {
+      const instance = JSON.parse(
+        Store.getItem(deploy.metadata!.labels["pepr.dev/operator"]),
+      ) as a.GenericKind;
+      await Deploy(instance);
+    });
   });
 When(a.Service)
   .IsDeleted()
   .WithLabel("pepr.dev/operator")
   .Watch(async svc => {
-    const instance = JSON.parse(
-      Store.getItem(svc.metadata!.labels["pepr.dev/operator"]),
-    ) as a.GenericKind;
-    await Deploy(instance);
+    await handleReconcile(async (): Promise<void> => {
+      const instance = JSON.parse(
+        Store.getItem(svc.metadata!.labels["pepr.dev/operator"]),
+      ) as a.GenericKind;
+      await Deploy(instance);
+    });
   });
 When(a.ConfigMap)
   .IsDeleted()
   .WithLabel("pepr.dev/operator")
   .Watch(async cm => {
-    const instance = JSON.parse(
-      Store.getItem(cm.metadata!.labels["pepr.dev/operator"]),
-    ) as a.GenericKind;
-    await Deploy(instance);
+    await handleReconcile(async (): Promise<void> => {
+      const instance = JSON.parse(
+        Store.getItem(cm.metadata!.labels["pepr.dev/operator"]),
+      ) as a.GenericKind;
+      await Deploy(instance);
+    });
   });
 ```
 
@@ -861,8 +902,23 @@ In this section we created a `reconciler.ts` file that contains the reconciler f
 
 ## Build and Deploy
 
-_Create an ephemeral cluster. (Kind of k3d will work)_
+# WebApp Operator
 
+The WebApp Operator deploys the `CustomResourceDefinition` for WebApp, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
+
+The WebApp instance represents a `Deployment` object with confirgurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
+
+If any object deployed by the Operator is deleted for any reason, other than through the `ownerReference` mechanism, the Operator will abruptly redeploy the object. 
+
+## Demo
+
+_Create an ephemeral cluster. (Kind or k3d will work)_
+
+Make sure Pepr is update to date
+
+```bash
+npx pepr update
+```
 
 Build the Pepr manifests
 
@@ -873,7 +929,7 @@ npx pepr build
 Deploy the Operator 
 
 ```bash
-kubectl apply -f dist/*.yaml
+kubectl apply -f dist/pepr-module-774fab07-77fa-517c-b5f8-c682c96c20c0.yaml
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
@@ -967,7 +1023,7 @@ Delete the `ConfigMap` on the WebApp to watch it the operator reconcile it back
 
 ```bash
 kubectl delete cm -n webapps --all 
-# wait a second
+# wait 5 seconds
 kubectl get cm -n webapps 
 
 # output
@@ -1010,9 +1066,13 @@ Delete the WebApp and check the namespace
 ```bash
 kubectl delete wa -n webapps --all
 kubectl get cm,deploy,svc -n webapps
+# output
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      40s
 ```
 
 When the WebApp is deleted, all of the resources that it created are also deleted.
+
 
 ## Conclusion
 
