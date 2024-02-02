@@ -30,7 +30,7 @@ Each Pepr Module is it's own Typescript project, produced by [`npx pepr init`](.
 
    # Launch pepr dev mode
    # If using another local K8s distro instead of k3d, use `npx pepr dev --host host.docker.internal`
-   pepr dev
+   npx pepr dev
 
    # From another terminal, apply the sample yaml
    kubectl apply -f capabilities/hello-pepr.samples.yaml
