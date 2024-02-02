@@ -43,13 +43,13 @@ export function walkthrough(): Promise<InitOptions> {
         title: "Reject the operation",
         value: Errors.reject,
         description:
-          "In the event that Pepr is down or other module errors occur, the operation will not be allowed to continue. (Recommended for production.)
+          "In the event that Pepr is down or other module errors occur, the operation will not be allowed to continue. (Recommended for production.)",
       },
       {
         title: "Ignore",
         value: Errors.ignore,
         description:
-          "Pepr will continue processing and generate an entry in the Pepr Controller log.",
+          "In the event that Pepr is down or other module errors occur, an entry will be generated in the Pepr Controller Log and the operation will be allowed to continue. (Recommended development, not for production.)",
         selected: true,
       },
       {
