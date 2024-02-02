@@ -7,7 +7,7 @@ If you notice your Pepr version does not correspond to the latest release in Git
 Run the cache clearing command
 
 ```bash
-npx cache clean
+npx clear-npx-cache
 ```
 
 If you want to ensure the cache has been cleared, you can check the cache directory. The location of this directory varies based on your operating system and configuration. However, you can generally find it in your system's home directory under `.npm`.
