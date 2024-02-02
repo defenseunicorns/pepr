@@ -41,7 +41,7 @@ describe("Storage", () => {
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.removeItemAndWait("key1");
 
-    expect(mockSender).toHaveBeenCalledWith("remove", ["key1"]);
+    expect(mockSender).toHaveBeenCalledWith("remove", ["key1"], undefined);
     jest.useRealTimers();
   });
 
