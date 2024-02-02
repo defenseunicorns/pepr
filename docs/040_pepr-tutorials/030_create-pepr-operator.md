@@ -824,8 +824,7 @@ When(WebApp)
 When(WebApp)
   .IsDeleted()
   .Mutate(instance => {
-    Store.removeItem(instance.Raw.metadata.name);
-    instance.SetAnnotation("deletionTimestamp", new Date().toISOString());
+    Store.removeItemAndWait(instance.Raw.metadata.name);
   });
 
 // Don't let the CRD get deleted
