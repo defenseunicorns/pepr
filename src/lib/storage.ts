@@ -138,7 +138,7 @@ export class Storage implements PeprStore {
     this.#dispatchUpdate("remove", [key]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!data.hasOwnProperty(key)) {
+        if (!Object.hasOwn(data, key)) {
           unsubscribe();
           resolve();
         }
