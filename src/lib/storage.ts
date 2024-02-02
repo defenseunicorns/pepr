@@ -47,6 +47,12 @@ export interface PeprStore {
    * Resolves when the key/value show up in the store.
    */
   setItemAndWait(key: string, value: string): Promise<void>;
+
+  /**
+   * Remove the value of the key.
+   * Resolves when the key does not show up in the store.
+   */
+  removeItemAndWait(key: string): Promise<void>;
 }
 
 /**
@@ -108,6 +114,31 @@ export class Storage implements PeprStore {
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
         if (data[key] === value) {
+          unsubscribe();
+          resolve();
+        }
+      });
+
+      // If promise has not resolved before MAX_WAIT_TIME reject
+      setTimeout(() => {
+        unsubscribe();
+        return reject();
+      }, MAX_WAIT_TIME);
+    });
+  };
+
+  /**
+   * Creates a promise and subscribes to the store, the promise resolves when
+   * the key is removed from the store.
+   *
+   * @param key - The key to add into the store
+   * @returns
+   */
+  removeItemAndWait = (key: string) => {
+    this.#dispatchUpdate("remove", [key]);
+    return new Promise<void>((resolve, reject) => {
+      const unsubscribe = this.subscribe(data => {
+        if (!Object.hasOwn(data, key)) {
           unsubscribe();
           resolve();
         }

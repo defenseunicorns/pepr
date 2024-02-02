@@ -31,6 +31,13 @@ export class MockStorage {
     delete this.storage[key];
   }
 
+  removeItemAndWait(key: string): Promise<void> {
+    return new Promise(resolve => {
+      delete this.storage[key];
+      resolve();
+    });
+  }
+
   clear(): void {
     this.storage = {};
   }

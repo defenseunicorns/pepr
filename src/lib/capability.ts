@@ -80,6 +80,7 @@ export class Capability implements CapabilityExport {
     clear: this.#store.clear,
     getItem: this.#store.getItem,
     removeItem: this.#store.removeItem,
+    removeItemAndWait: this.#store.removeItemAndWait,
     setItem: this.#store.setItem,
     subscribe: this.#store.subscribe,
     onReady: this.#store.onReady,
@@ -96,6 +97,7 @@ export class Capability implements CapabilityExport {
   ScheduleStore: PeprStore = {
     clear: this.#scheduleStore.clear,
     getItem: this.#scheduleStore.getItem,
+    removeItemAndWait: this.#scheduleStore.removeItemAndWait,
     removeItem: this.#scheduleStore.removeItem,
     setItemAndWait: this.#scheduleStore.setItemAndWait,
     setItem: this.#scheduleStore.setItem,

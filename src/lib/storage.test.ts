@@ -33,6 +33,18 @@ describe("Storage", () => {
     jest.useRealTimers();
   });
 
+  it("should remove an item and wait", () => {
+    const mockSender = jest.fn();
+    storage.registerSender(mockSender);
+    jest.useFakeTimers();
+
+    // asserting on sender invocation rather than Promise so no need to wait
+    void storage.removeItemAndWait("key1");
+
+    expect(mockSender).toHaveBeenCalledWith("remove", ["key1"], undefined);
+    jest.useRealTimers();
+  });
+
   it("should remove an item", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
