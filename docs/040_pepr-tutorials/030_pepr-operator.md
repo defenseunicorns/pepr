@@ -1017,7 +1017,7 @@ Port-forward and look at the WebApp in the browser
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
 [WebApp](http://localhost:3000)
-![WebApp](light.png)
+![WebApp](../../_images/light.png)
 
 Delete the `ConfigMap` on the WebApp to watch it the operator reconcile it back
 
@@ -1059,7 +1059,7 @@ kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
 [WebApp](http://localhost:3000)
 
-![WebApp](dark.png)
+![WebApp](../../_images/dark.png)
 
 Delete the WebApp and check the namespace
 
