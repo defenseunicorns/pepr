@@ -1,5 +1,19 @@
 # Frequently Asked Questions
 
+## My Pepr version is not latest
+
+If you notice your Pepr version does not correspond to the latest release in GitHub after doing `npx pepr -V`, clearing the NPX cache can often resolve the issue.
+
+Run the cache clearing command
+
+```bash
+npx clear-npx-cache
+```
+
+If you want to ensure the cache has been cleared, you can check the cache directory. The location of this directory varies based on your operating system and configuration. However, you can generally find it in your system's home directory under `.npm`.
+
+**Note** - If you are inside of the Pepr Core repo (https://github.com/defenseunicorns/pepr), then it is normal for `npx pepr -V` to return `0.0.0-development`.  
+
 ## I've found a bug, what should I do?
 
 Please report it by opening an issue in the [Pepr GitHub repository](https://github.com/defenseunicorns/pepr/issues). Please include as much information as possible in your bug report, including:
