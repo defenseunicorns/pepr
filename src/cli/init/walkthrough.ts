@@ -43,7 +43,7 @@ export function walkthrough(): Promise<InitOptions> {
         title: "Reject the operation",
         value: Errors.reject,
         description:
-          "Pepr will reject the operation and return an error to the client. (Default: recommended. Sets failurePolicy to Fail).",
+          "In the event that Pepr is down or other module errors occur, the operation will not be allowed to continue. (Recommended for production.)
       },
       {
         title: "Ignore",
