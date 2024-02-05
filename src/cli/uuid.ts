@@ -25,7 +25,7 @@ export default function (program: RootCmd) {
           .Get();
       }
 
-      // Get the logs for the `app=pepr-${module}` or `pepr.dev/controller=admission` pod selector
+      // Populate the uuidTable with the UUID and description
       deployments.items.map(deploy => {
         const uuid = deploy.metadata?.labels?.["pepr.dev/uuid"] || "";
         const description = deploy.metadata?.annotations?.["pepr.dev/description"] || "";
