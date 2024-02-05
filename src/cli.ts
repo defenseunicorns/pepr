@@ -10,6 +10,7 @@ import dev from "./cli/dev";
 import format from "./cli/format";
 import monitor from "./cli/monitor";
 import init from "./cli/init/index";
+import uuid from "./cli/uuid";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
 import update from "./cli/update";
@@ -41,5 +42,5 @@ dev(program);
 update(program);
 format(program);
 monitor(program);
-
+uuid(program);
 program.parse();
