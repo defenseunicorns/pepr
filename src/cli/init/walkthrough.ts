@@ -40,10 +40,16 @@ export function walkthrough(): Promise<InitOptions> {
     message: "How do you want Pepr to handle errors encountered during K8s operations?",
     choices: [
       {
+        title: "Reject the operation",
+        value: Errors.reject,
+        description:
+          "In the event that Pepr is down or other module errors occur, the operation will not be allowed to continue. (Recommended for production.)",
+      },
+      {
         title: "Ignore",
         value: Errors.ignore,
         description:
-          "Pepr will continue processing and generate an entry in the Pepr Controller log.",
+          "In the event that Pepr is down or other module errors occur, an entry will be generated in the Pepr Controller Log and the operation will be allowed to continue. (Recommended for development, not for production.)",
         selected: true,
       },
       {
@@ -51,11 +57,6 @@ export function walkthrough(): Promise<InitOptions> {
         value: Errors.audit,
         description:
           "Pepr will continue processing and generate an entry in the Pepr Controller log as well as an audit event in the cluster.",
-      },
-      {
-        title: "Reject the operation",
-        value: Errors.reject,
-        description: "Pepr will reject the operation and return an error to the client.",
       },
     ],
   };
