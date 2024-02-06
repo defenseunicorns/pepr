@@ -203,7 +203,7 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch };
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -226,7 +226,7 @@ export class Capability implements CapabilityExport {
         });
       }
 
-      return { Watch };
+      return { Watch, Reconcile };
     }
 
     function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
@@ -243,7 +243,7 @@ export class Capability implements CapabilityExport {
       }
 
       // Now only allow adding actions to the same binding
-      return { Watch, Validate };
+      return { Watch, Validate, Reconcile };
     }
 
     function Watch(watchCallback: WatchAction<T>) {
@@ -253,6 +253,19 @@ export class Capability implements CapabilityExport {
         bindings.push({
           ...binding,
           isWatch: true,
+          watchCallback,
+        });
+      }
+    }
+
+    function Reconcile(watchCallback: WatchAction<T>) {
+      if (registerWatch) {
+        log("Reconcile Action", watchCallback.toString());
+
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          isQueue: true,
           watchCallback,
         });
       }

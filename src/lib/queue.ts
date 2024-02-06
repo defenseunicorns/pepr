@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+import { KubernetesObject } from "@kubernetes/client-node";
+import Log from "./logger";
+
+type QueueItem<K extends KubernetesObject> = {
+  item: K;
+  resolve: (value: void | PromiseLike<void>) => void;
+  reject: (reason?: string) => void;
+};
+
+/**
+ * Queue is a FIFO queue for reconciling
+ */
+export class Queue<K extends KubernetesObject> {
+  #queue: QueueItem<K>[] = [];
+  #pendingPromise = false;
+  #reconcile?: (...args: unknown[]) => Promise<void>;
+
+  constructor() {
+    this.#reconcile = async () => await new Promise(resolve => resolve());
+  }
+
+  setReconcile(reconcile: (...args: unknown[]) => Promise<void>) {
+    this.#reconcile = reconcile;
+  }
+  /**
+   * Enqueue adds an item to the queue and returns a promise that resolves when the item is
+   * reconciled.
+   *
+   * @param item The object to reconcile
+   * @returns A promise that resolves when the object is reconciled
+   */
+  enqueue(item: K) {
+    Log.debug(`Enqueueing ${item.metadata!.namespace}/${item.metadata!.name}`);
+    return new Promise<void>((resolve, reject) => {
+      this.#queue.push({ item, resolve, reject });
+      return this.#dequeue();
+    });
+  }
+
+  /**
+   * Dequeue reconciles the next item in the queue
+   *
+   * @returns A promise that resolves when the webapp is reconciled
+   */
+  async #dequeue() {
+    // If there is a pending promise, do nothing
+    if (this.#pendingPromise) return false;
+
+    // Take the next element from the queue
+    const element = this.#queue.shift();
+
+    // If there is no element, do nothing
+    if (!element) return false;
+
+    try {
+      // Set the pending promise flag to avoid concurrent reconciliations
+      this.#pendingPromise = true;
+
+      // Reconcile the webapp
+      if (this.#reconcile) {
+        await this.#reconcile(element.item);
+      }
+
+      element.resolve();
+    } catch (e) {
+      element.reject(e);
+    } finally {
+      // Reset the pending promise flag
+      this.#pendingPromise = false;
+
+      // After the element is reconciled, dequeue the next element
+      await this.#dequeue();
+    }
+  }
+}

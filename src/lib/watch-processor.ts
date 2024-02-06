@@ -4,11 +4,13 @@
 import { createHash } from "crypto";
 import { K8s, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-
+import { Queue } from "./queue";
 import { Capability } from "./capability";
 import { PeprStore } from "./k8s";
 import Log from "./logger";
 import { Binding, Event } from "./types";
+import { Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
+import { GenericClass } from "kubernetes-fluent-client";
 
 // Track if the store has been updated
 let storeUpdates = false;
@@ -80,21 +82,42 @@ async function runBinding(binding: Binding) {
     retryDelaySec: 5,
   };
 
-  // Watch the resource
-  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
-    Log.debug(obj, `Watch event ${type} received`);
+  let watcher: Watcher<GenericClass>;
+  if (binding.isQueue) {
+    const queue = new Queue();
+    // Watch the resource
+    watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
+      Log.debug(obj, `Watch event ${type} received`);
 
-    // If the type matches the phase, call the watch callback
-    if (phaseMatch.includes(type)) {
-      try {
-        // Perform the watch callback
-        await binding.watchCallback?.(obj, type);
-      } catch (e) {
-        // Errors in the watch callback should not crash the controller
-        Log.error(e, "Error executing watch callback");
+      // If the type matches the phase, call the watch callback
+      if (phaseMatch.includes(type)) {
+        try {
+          queue.setReconcile(async () => await binding.watchCallback?.(obj, type));
+          // Enqueue the object for reconciliation through callback
+          await queue.enqueue(obj);
+        } catch (e) {
+          // Errors in the watch callback should not crash the controller
+          Log.error(e, "Error executing watch callback");
+        }
       }
-    }
-  }, watchCfg);
+    }, watchCfg);
+  } else {
+    // Watch the resource
+    watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
+      Log.debug(obj, `Watch event ${type} received`);
+
+      // If the type matches the phase, call the watch callback
+      if (phaseMatch.includes(type)) {
+        try {
+          // Perform the watch callback
+          await binding.watchCallback?.(obj, type);
+        } catch (e) {
+          // Errors in the watch callback should not crash the controller
+          Log.error(e, "Error executing watch callback");
+        }
+      }
+    }, watchCfg);
+  }
 
   // Create a unique cache ID for this watch binding in case multiple bindings are watching the same resource
   const cacheSuffix = createHash("sha224").update(binding.watchCallback!.toString()).digest("hex").substring(0, 5);
