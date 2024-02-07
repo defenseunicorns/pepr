@@ -45,9 +45,13 @@ export function watcher(assets: Assets, hash: string) {
     metadata: {
       name: app,
       namespace: "pepr-system",
+      annotations: {
+        "pepr.dev/description": config.description || "",
+      },
       labels: {
         app,
         "pepr.dev/controller": "watcher",
+        "pepr.dev/uuid": config.uuid,
       },
     },
     spec: {
@@ -168,9 +172,13 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
     metadata: {
       name,
       namespace: "pepr-system",
+      annotations: {
+        "pepr.dev/description": config.description || "",
+      },
       labels: {
         app,
         "pepr.dev/controller": "admission",
+        "pepr.dev/uuid": config.uuid,
       },
     },
     spec: {

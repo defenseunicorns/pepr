@@ -40,20 +40,20 @@ export function peprDeploy() {
 
   describe("should monitor the cluster for admission changes", () => {
 
-    const until = (predicate: () => boolean ) : Promise<void> => {
+    const until = (predicate: () => boolean): Promise<void> => {
       const poll = (resolve: () => void) => {
-        if ( predicate() ) { resolve() }
+        if (predicate()) { resolve() }
         else { setTimeout(_ => poll(resolve), 250) }
       }
       return new Promise(poll);
     }
 
     it("npx pepr monitor should display validation results to console", async () => {
-      const cmd = [ 'pepr', 'monitor', 'static-test' ]
+      const cmd = ['pepr', 'monitor', 'static-test']
 
       const proc = spawn('npx', cmd, { shell: true })
 
-      const state = { accept: false, reject: false, done: false}
+      const state = { accept: false, reject: false, done: false }
       proc.stdout.on('data', (data) => {
         const stdout: String = data.toString()
         state.accept = stdout.includes("✅") ? true : state.accept
@@ -66,7 +66,7 @@ export function peprDeploy() {
           proc.stderr.destroy()
         }
       })
-      proc.on('exit', () => state.done = true );
+      proc.on('exit', () => state.done = true);
 
       await until(() => state.done)
 
@@ -74,7 +74,7 @@ export function peprDeploy() {
     }, 5000);
   });
 
-
+  describe("should display the UUIDs of the deployed modules", testUUID);
 
   describe("should store data in the PeprStore", testStore);
 
@@ -95,6 +95,43 @@ function cleanupSamples() {
     // Ignore errors
   }
 }
+
+function testUUID() {
+
+  it("should display the UUIDs of the deployed modules", async () => {
+    const uuidOut = spawnSync("npx pepr uuid", {
+      shell: true, // Run command in a shell
+      encoding: "utf-8", // Encode result as string
+    });
+
+    const { stdout } = uuidOut;
+
+    // Check if the expected lines are in the output
+    const expected = [
+      "UUID\t\tDescription",
+      "--------------------------------------------",
+      "static-test\t",
+    ].join("\n");
+    expect(stdout).toMatch(expected);
+  });
+
+  it("should display the UUIDs of the deployed modules with a specific UUID", async () => {
+    const uuidOut = spawnSync("npx pepr uuid static-test", {
+      shell: true, // Run command in a shell
+      encoding: "utf-8", // Encode result as string
+    });
+
+    const { stdout } = uuidOut;
+
+    // Check if the expected lines are in the output
+    const expected = [
+      "UUID\t\tDescription",
+      "--------------------------------------------",
+      "static-test\t",
+    ].join("\n");
+    expect(stdout).toMatch(expected);
+  });
+};
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
