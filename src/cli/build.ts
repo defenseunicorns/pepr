@@ -31,7 +31,11 @@ export default function (program: RootCmd) {
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
     .option("-o, --output-dir [output directory]", "Define where to place build output")
-    .option("--timeout [timeout]", "How long the API server should wait for a webhook to respond before treating the call as a failure", parseTimeout)
+    .option(
+      "--timeout [timeout]",
+      "How long the API server should wait for a webhook to respond before treating the call as a failure",
+      parseTimeout,
+    )
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
         .choices(["admin", "scoped"])
@@ -288,12 +292,13 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
   }
 }
 
-export const parseTimeout = (value: string,previous: any):number => {
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export const parseTimeout = (value: string, previous: unknown): number => {
   const parsedValue = parseInt(value, 10);
   if (isNaN(parsedValue)) {
-    throw new commander.InvalidArgumentError('Not a number.');
-  } else if(parsedValue < 1 || parsedValue > 30) {
-    throw new commander.InvalidArgumentError('Number must be between 1 and 30.');
+    throw new commander.InvalidArgumentError("Not a number.");
+  } else if (parsedValue < 1 || parsedValue > 30) {
+    throw new commander.InvalidArgumentError("Number must be between 1 and 30.");
   }
   return parsedValue;
-}
+};
