@@ -5,6 +5,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { CapabilityExport } from "./types";
 import { promises as fs } from "fs";
+import commander from "commander";
 
 type RBACMap = {
   [key: string]: {
@@ -161,3 +162,14 @@ export async function namespaceDeploymentsReady(namespace: string = "pepr-system
   }
   Log.info(`All ${namespace} deployments are ready`);
 }
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export const parseTimeout = (value: string, previous: unknown): number => {
+  const parsedValue = parseInt(value, 10);
+  if (isNaN(parsedValue)) {
+    throw new commander.InvalidArgumentError("Not a number.");
+  } else if (parsedValue < 1 || parsedValue > 30) {
+    throw new commander.InvalidArgumentError("Number must be between 1 and 30.");
+  }
+  return parsedValue;
+};

@@ -10,8 +10,9 @@ import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
-import commander, { Option } from "commander";
+import { Option } from "commander";
 import { createDirectoryIfNotExists } from "../lib/helpers";
+import { parseTimeout } from "../lib/helpers";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -291,14 +292,3 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
     process.exit(1);
   }
 }
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export const parseTimeout = (value: string, previous: unknown): number => {
-  const parsedValue = parseInt(value, 10);
-  if (isNaN(parsedValue)) {
-    throw new commander.InvalidArgumentError("Not a number.");
-  } else if (parsedValue < 1 || parsedValue > 30) {
-    throw new commander.InvalidArgumentError("Number must be between 1 and 30.");
-  }
-  return parsedValue;
-};
