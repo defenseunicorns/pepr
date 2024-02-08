@@ -4,7 +4,7 @@
 import { CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
-import { parseTimeout } from "./helpers";
+import { parseTimeout, secretOverLimit } from "./helpers";
 import * as commander from "commander";
 import { promises as fs } from "fs";
 import {
@@ -849,5 +849,18 @@ describe("parseTimeout", () => {
   test("should throw an InvalidArgumentError for numeric strings that represent floating point numbers", () => {
     expect(() => parseTimeout("5.5", PREV)).toThrow(commander.InvalidArgumentError);
     expect(() => parseTimeout("20.1", PREV)).toThrow(commander.InvalidArgumentError);
+  });
+});
+
+
+describe('secretOverLimit', () => {
+  test('should return true for a string larger than 1MB', () => {
+    const largeString = 'a'.repeat(1048577); 
+    expect(secretOverLimit(largeString)).toBe(true);
+  });
+
+  test('should return false for a string smaller than 1MB', () => {
+    const smallString = 'a'.repeat(1048575);
+    expect(secretOverLimit(smallString)).toBe(false);
   });
 });

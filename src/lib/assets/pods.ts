@@ -4,7 +4,7 @@
 import { V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
-
+import { secretOverLimit } from "../helpers";
 import { Assets } from ".";
 import { ModuleConfig } from "../module";
 import { Binding } from "../types";
@@ -298,22 +298,30 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
   };
 }
 
+
 export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {
   // Compress the data
   const compressed = gzipSync(data);
   const path = `module-${hash}.js.gz`;
-  return {
-    apiVersion: "v1",
-    kind: "Secret",
-    metadata: {
-      name: `${name}-module`,
-      namespace: "pepr-system",
-    },
-    type: "Opaque",
-    data: {
-      [path]: compressed.toString("base64"),
-    },
-  };
+  const compressedData = compressed.toString("base64");
+  if (secretOverLimit(compressedData)) {
+    let error = new Error(`Module secret for ${name} is over the 1MB limit`);
+    console.error('Uncaught Exception:', error)
+    process.exit(1);
+  } else {
+    return {
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: `${name}-module`,
+        namespace: "pepr-system",
+      },
+      type: "Opaque",
+      data: {
+        [path]: compressed.toString("base64"),
+      },
+    };
+  }
 }
 
 function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {

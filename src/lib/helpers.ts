@@ -163,6 +163,12 @@ export async function namespaceDeploymentsReady(namespace: string = "pepr-system
   Log.info(`All ${namespace} deployments are ready`);
 }
 
+// check is secret of over the limit in Kubernetes
+export function secretOverLimit(str: string): boolean {
+  const sizeInBytes = Buffer.byteLength(str, "base64");
+  return sizeInBytes > 1048576;
+}
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const parseTimeout = (value: string, previous: unknown): number => {
   const parsedValue = parseInt(value, 10);
