@@ -96,7 +96,7 @@ When(a.Pod)
 ```
 ## Reconcile 
 
-Reconcile runs in the Watch Controller and employs a Queue to sequentially handle events once they are returned by the Kubernetes API. This allows the operator to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource. For example, creating and then deleting a resource should be processed in that exact order to avoid state inconsistencies.
+Fills a similar niche to .Watch() -- and runs in the Watch Controller -- but it employs a Queue to force sequential processing of resource states once they are returned by the Kubernetes API. This allows things like operators to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource. For example, creating and then deleting a resource should be processed in that exact order to avoid state inconsistencies.
 
 ```typescript
 When(WebApp)
