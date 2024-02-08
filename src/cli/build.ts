@@ -12,6 +12,7 @@ import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
 import { createDirectoryIfNotExists } from "../lib/helpers";
+import { parseTimeout } from "../lib/helpers";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -31,6 +32,11 @@ export default function (program: RootCmd) {
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
     .option("-o, --output-dir [output directory]", "Define where to place build output")
+    .option(
+      "--timeout [timeout]",
+      "How long the API server should wait for a webhook to respond before treating the call as a failure",
+      parseTimeout,
+    )
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
         .choices(["admin", "scoped"])
@@ -53,6 +59,11 @@ export default function (program: RootCmd) {
       const { includedFiles } = cfg.pepr;
 
       let image: string = "";
+
+      // Check if there is a custom timeout defined
+      if (opts.timeout !== undefined) {
+        cfg.pepr.webhookTimeout = opts.timeout;
+      }
 
       if (opts.registryInfo !== undefined) {
         console.info(`Including ${includedFiles.length} files in controller image.`);

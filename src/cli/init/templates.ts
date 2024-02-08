@@ -42,6 +42,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       name: opts.name.trim(),
       uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
+      webhookTimeout: 10,
       alwaysIgnore: {
         namespaces: [],
         labels: [],
