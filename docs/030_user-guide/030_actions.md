@@ -4,7 +4,7 @@ An action is a discrete set of behaviors defined in a single function that acts 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-Actions are `Mutate()`, `Validate()`, or `Watch()`. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch actions run in a separate controller that tracks changes to resources, including existing resources.
+Actions are `Mutate()`, `Validate()`, `Watch()`, or `Reconcile()`. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch and Reconcile actions run in a separate controller that tracks changes to resources, including existing resources.
 
 Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`npx pepr init`](./010_pepr-cli.md#pepr-init):
 
@@ -61,6 +61,60 @@ When(a.ConfigMap)
   // Watch() is where we define the actual behavior of this action.
   .Watch((cm, phase) => {
     Log.info(cm, `ConfigMap ${cm.metadata.name} was ${phase}`);
+  });
+```
+
+There are many more examples in the `HelloPepr` capability that you can use as a reference when creating your own actions. Note that each time you run [`npx pepr update`](./010_pepr-cli.md#pepr-update), Pepr will automatically update the `HelloPepr` capability with the latest examples and best practices for you to reference and test directly in your Pepr Module.
+
+---
+
+In some scenarios involving Kubernetes Resource Controllers or Operator patterns, opting for a Reconcile action could be more fitting. Comparable to the Watch functionality, Reconcile is responsible for monitoring the name and phase of any Kubernetes Object. It operates within the Watch controller dedicated to observing modifications to resources, including those already existing, enabling responses to alterations as they occur. Unlike Watch, however, Reconcile employs a Queue to sequentially handle events once they are returned by the Kubernetes API. This allows the operator to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource.
+
+```ts
+When(WebApp)
+  .IsCreatedOrUpdated()
+  .Validate(validator)
+  .Reconcile(async instance => {
+      
+    const { namespace, name, generation } = instance.metadata;
+    
+    if (!instance.metadata?.namespace) {
+      Log.error(instance, `Invalid WebApp definition`);
+      return;
+    }
+  
+    const isPending = instance.status?.phase === Phase.Pending;
+    const isCurrentGeneration = generation === instance.status?.observedGeneration;
+  
+    if (isPending || isCurrentGeneration) {
+      Log.debug(instance, `Skipping pending or completed instance`);
+      return;
+    }
+  
+    Log.debug(instance, `Processing instance ${namespace}/${name}`);
+  
+
+    try {
+      // Set Status to pending
+      await updateStatus(instance, { phase: Phase.Pending });
+
+      // Deploy Deployment, ConfigMap, Service, ServiceAccount, and RBAC based on instance
+      await Deploy(instance);
+  
+      // Set Status to ready
+      await updateStatus(instance, {
+        phase: Phase.Ready,
+        observedGeneration: instance.metadata.generation,
+      });
+    } catch (e) {
+      Log.error(e, `Error configuring for ${namespace}/${name}`);
+      
+      // Set Status to failed
+      void updateStatus(instance, {
+        phase: Phase.Failed,
+        observedGeneration: instance.metadata.generation,
+      });
+    }
   });
 ```
 

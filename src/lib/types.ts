@@ -72,6 +72,7 @@ export type Binding = {
   isMutate?: boolean;
   isValidate?: boolean;
   isWatch?: boolean;
+  isQueue?: boolean;
   readonly model: GenericClass;
   readonly kind: GroupVersionKind;
   readonly filters: {
@@ -159,6 +160,19 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @returns
    */
   Watch: (action: WatchAction<T, InstanceType<T>>) => void;
+
+  /**
+   * Establish a reconcile for the specified resource. The callback function will be executed after the admission controller has
+   * processed the resource and the request has been persisted to the cluster.
+   *
+   * **Beta Function**: This method is still in early testing and edge cases may still exist.
+   *
+   * @since 0.14.0
+   *
+   * @param action
+   * @returns
+   */
+  Reconcile: (action: WatchAction<T, InstanceType<T>>) => void;
 };
 
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
