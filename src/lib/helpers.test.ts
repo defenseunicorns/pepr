@@ -852,15 +852,14 @@ describe("parseTimeout", () => {
   });
 });
 
-
-describe('secretOverLimit', () => {
-  test('should return true for a string larger than 1MB', () => {
-    const largeString = 'a'.repeat(1048577); 
+describe("secretOverLimit", () => {
+  test("should return true for a string larger than 1MB", () => {
+    const largeString = "a".repeat(1048577);
     expect(secretOverLimit(largeString)).toBe(true);
   });
 
-  test('should return false for a string smaller than 1MB', () => {
-    const smallString = 'a'.repeat(1048575);
+  test("should return false for a string smaller than 1MB", () => {
+    const smallString = "a".repeat(1048575);
     expect(secretOverLimit(smallString)).toBe(false);
   });
 });

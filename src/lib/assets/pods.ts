@@ -298,15 +298,14 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
   };
 }
 
-
 export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {
   // Compress the data
   const compressed = gzipSync(data);
   const path = `module-${hash}.js.gz`;
   const compressedData = compressed.toString("base64");
   if (secretOverLimit(compressedData)) {
-    let error = new Error(`Module secret for ${name} is over the 1MB limit`);
-    console.error('Uncaught Exception:', error)
+    const error = new Error(`Module secret for ${name} is over the 1MB limit`);
+    console.error("Uncaught Exception:", error);
     process.exit(1);
   } else {
     return {
