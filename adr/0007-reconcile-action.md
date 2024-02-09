@@ -13,7 +13,7 @@ As our `Watch` processor was enhanced to become more reliable, Pepr became a str
 
 ## Decision
 
-Add a `Queue` to the Watch controller as a new action called `Reoncile`. In some scenarios involving Kubernetes Resource Controllers or Operator patterns, utilizing a queue makes sense to sequentially handle events once they are returned by the Kubernetes API. This allows the queue to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource.
+Add a `Queue` to the Watch controller and expose it as a new action called `Reconcile`. In many scenarios involving Kubernetes Resource Controller or Operator patterns, utilizing a queue makes sense to sequentially handle events as they are returned by the Kubernetes API.  It also allows handling of bursts of activity without overwhelming the system or the Kubernetes API. In addition, it provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as there are many cases in which the order of operations can impact the final state of a resource.
 
 ```typescript
 When(WebApp)
