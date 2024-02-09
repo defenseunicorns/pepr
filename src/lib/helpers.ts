@@ -163,6 +163,15 @@ export async function namespaceDeploymentsReady(namespace: string = "pepr-system
   Log.info(`All ${namespace} deployments are ready`);
 }
 
+// check if secret is over the size limit
+export function secretOverLimit(str: string): boolean {
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(str);
+  const sizeInBytes = encoded.length;
+  const oneMiBInBytes = 1048576;
+  return sizeInBytes > oneMiBInBytes;
+}
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const parseTimeout = (value: string, previous: unknown): number => {
   const parsedValue = parseInt(value, 10);
