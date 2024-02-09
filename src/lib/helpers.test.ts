@@ -853,7 +853,7 @@ describe("parseTimeout", () => {
 });
 
 describe("secretOverLimit", () => {
-  test("should return true for a string larger than 1MB", () => {
+  test("should return true for a string larger than 1MiB", () => {
     const largeString = "a".repeat(1048577);
     expect(secretOverLimit(largeString)).toBe(true);
   });
