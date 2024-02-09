@@ -168,8 +168,8 @@ export function secretOverLimit(str: string): boolean {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(str);
   const sizeInBytes = encoded.length;
-  const oneMBInBytes = 1048576;
-  return sizeInBytes > oneMBInBytes;
+  const oneMiBInBytes = 1048576;
+  return sizeInBytes > oneMiBInBytes;
 }
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
