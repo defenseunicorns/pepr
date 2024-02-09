@@ -858,7 +858,7 @@ describe("secretOverLimit", () => {
     expect(secretOverLimit(largeString)).toBe(true);
   });
 
-  test("should return false for a string smaller than 1MB", () => {
+  test("should return false for a string smaller than 1MiB", () => {
     const smallString = "a".repeat(1048575);
     expect(secretOverLimit(smallString)).toBe(false);
   });
