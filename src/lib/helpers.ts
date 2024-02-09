@@ -165,8 +165,11 @@ export async function namespaceDeploymentsReady(namespace: string = "pepr-system
 
 // check if secret is over the size limit
 export function secretOverLimit(str: string): boolean {
-  const sizeInBytes = Buffer.byteLength(str, "base64");
-  return sizeInBytes > 1048576;
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(str);
+  const sizeInBytes = encoded.length;
+  const oneMBInBytes = 1048576;
+  return sizeInBytes > oneMBInBytes;
 }
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
