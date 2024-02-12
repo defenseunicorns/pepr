@@ -69,7 +69,7 @@ Module UUID(s) currently deployed in the cluster with their descriptions.
 
 **Options:**
 
-- `[uuid]` - Description of a specific module UUID
+- `[uuid]` - Specific module UUID
 
 ---
 
