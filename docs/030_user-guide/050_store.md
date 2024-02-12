@@ -37,7 +37,7 @@ const unsubscribe = Store.subscribe(data => {
 
 - `getItem(key: string)`: Retrieves a value by its key. Returns `null` if the key doesn't exist.
 - `setItem(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist.
-- `setItemAndWait(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist. Returns a promise when the new key and value show up in the store. Note - Async operations in Mutate and Validate are susceptible to [timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
+- `setItemAndWait(key: string, value: string)`: Sets a value for a given key. Creates a new key-value pair if the key doesn't exist. Resolves a promise when the new key and value show up in the store. Note - Async operations in Mutate and Validate are susceptible to [timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
 - `removeItem(key: string)`: Deletes a key-value pair by its key.
 - `removeItemAndWait(key: string)`: Deletes a key-value pair by its key and returns a promise when the key and value do not show up in the store. Note - Async operations in Mutate and Validate are susceptible to [timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
 - `clear()`: Clears all key-value pairs from the store.
