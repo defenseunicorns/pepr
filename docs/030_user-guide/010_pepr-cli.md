@@ -63,6 +63,16 @@ npx pepr monitor [options] [module-uuid]
 
 ---
 
+## `npx pepr uuid`
+
+Module UUID(s) currently deployed in the cluster with their descriptions.
+
+**Options:**
+
+- `[uuid]` - Specific module UUID
+
+---
+
 ## `npx pepr build`
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
@@ -76,3 +86,4 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `-o, --output-dir [output directory]` - Define where to place build output
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
+
