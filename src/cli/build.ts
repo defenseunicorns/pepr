@@ -27,6 +27,8 @@ export default function (program: RootCmd) {
       "-n, --no-embed",
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
+    .option("-ci, --custom-image [custom-image]", "Custom Image: Use custom image for Admission and Watch Deployments.")
+    .option("--registry [GitHub, Iron Bank]", "Container registry: Choose container registry for deployment manifests.")
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
@@ -59,6 +61,11 @@ export default function (program: RootCmd) {
       const { includedFiles } = cfg.pepr;
 
       let image: string = "";
+
+      // Build Kubernetes manifests with custom image
+      if (opts.customImage) {
+        image = opts.customImage
+      }
 
       // Check if there is a custom timeout defined
       if (opts.timeout !== undefined) {
@@ -98,6 +105,21 @@ export default function (program: RootCmd) {
       // if image is a custom image, use that instead of the default
       if (image !== "") {
         assets.image = image;
+      }
+
+      // If registry is set to Iron Bank, use Iron Bank image
+      if(opts.registry) {
+        if (opts.registry !== "Iron Bank" || opts.registry !== "GitHub") {
+          console.error(
+            `GitHub and Iron Bank are the only currently supported registries. As an alternative you may consider custom --customImage to target a specific image and version.`,
+          );
+          process.exit(1);
+        } else if(opts.registry == "Iron Bank") {
+          console.warn(
+            `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --customImage to target a specific image and version.`
+          );
+          assets.image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:${cfg.dependencies.pepr}`;
+        }
       }
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
