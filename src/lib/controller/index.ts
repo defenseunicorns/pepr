@@ -249,22 +249,23 @@ export class Controller {
             response: kubeAdmissionResponse,
           });
         } else {
-          kubeAdmissionResponse = responseList.length === 0
-            ? {
-                uid: request.uid,
-                allowed: true,
-                status: { message: "no in-scope validations -- allowed!" }
-              }
-            : {
-                uid: responseList[0].uid,
-                allowed: responseList.filter(r => !r.allowed).length === 0,
-                status: {
-                  message: (responseList as ValidateResponse[])
-                    .filter(rl => !rl.allowed)
-                    .map(curr => curr.status?.message)
-                    .join("; "),
-              },
-          };
+          kubeAdmissionResponse =
+            responseList.length === 0
+              ? {
+                  uid: request.uid,
+                  allowed: true,
+                  status: { message: "no in-scope validations -- allowed!" },
+                }
+              : {
+                  uid: responseList[0].uid,
+                  allowed: responseList.filter(r => !r.allowed).length === 0,
+                  status: {
+                    message: (responseList as ValidateResponse[])
+                      .filter(rl => !rl.allowed)
+                      .map(curr => curr.status?.message)
+                      .join("; "),
+                  },
+                };
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
