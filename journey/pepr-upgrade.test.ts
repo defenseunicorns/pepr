@@ -40,7 +40,7 @@ export function peprUpgrade() {
 
         try {
             // Re-generate manifests with pepr@pr-candidate
-            execSync("npx ts-node ../src/cli.ts build", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+            execSync("npm run _ts-node -- ../src/cli.ts build", { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
             // // Replace pepr@latest with pepr@pr-candidate image pepr:dev
             await replaceString("pepr-upgrade-test/dist/pepr-module-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456.yaml", "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development", "pepr:dev");
