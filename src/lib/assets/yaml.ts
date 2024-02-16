@@ -52,7 +52,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
   const watchDeployment = watcher(assets, hash);
 
   const resources = [
-    namespace,
+    namespace(assets.config.customLabels?.namespace),
     clusterRole(name, assets.capabilities, rbacMode),
     clusterRoleBinding(name),
     serviceAccount(name),

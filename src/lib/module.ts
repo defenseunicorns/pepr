@@ -9,6 +9,10 @@ import { CapabilityExport } from "./types";
 import { setupWatch } from "./watch-processor";
 import { Log } from "../lib";
 
+/** Custom Labels Type for package.json */
+export interface CustomLabels {
+  namespace?: Record<string, string>;
+}
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
   /** The user-defined name for the module */
@@ -31,6 +35,8 @@ export type ModuleConfig = {
   logLevel?: string;
   /** Propagate env variables to in-cluster controllers */
   env?: Record<string, string>;
+  /** Custom Labels for Kubernetes Objects */
+  customLabels?: CustomLabels;
 };
 
 export type PackageJSON = {
