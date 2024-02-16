@@ -116,7 +116,7 @@ export default function (program: RootCmd) {
       );
 
       // If registry is set to Iron Bank, use Iron Bank image
-      if (opts.registry && opts.registry == "Iron Bank") {
+      if (opts?.registry == "Iron Bank") {
         console.warn(
           `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
         );
