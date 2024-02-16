@@ -8,7 +8,7 @@
     "onError": "reject",
     "logLevel": "debug",
     "customLabels": {
-      "namespace": []
+      "namespace": {}
     },
     "alwaysIgnore": {
       "namespaces": [],
