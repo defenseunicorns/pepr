@@ -68,9 +68,13 @@ Log.info(`Pepr Controller (v${version})`);
 
 const hash = process.argv[2];
 
-(async (): Promise<void> => {
+(async () => {
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
-  await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
+  try {
+    await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
+  } catch (err) {
+    Log.error(err);
+  }
   validateHash(hash);
   runModule(hash);
 })();
