@@ -20,7 +20,7 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
   const { name, host, path } = assets;
 
   Log.info("Applying pepr-system namespace");
-  await K8s(kind.Namespace).Apply(namespace);
+  await K8s(kind.Namespace).Apply(namespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
   const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
