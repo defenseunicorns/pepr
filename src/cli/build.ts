@@ -28,7 +28,7 @@ export default function (program: RootCmd) {
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .option(
-      "--custom-image [custom-image]",
+      "-i, --custom-image [custom-image]",
       "Custom Image: Use custom image for Admission and Watch Deployments.",
     )
     .option(
