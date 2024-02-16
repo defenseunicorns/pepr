@@ -43,6 +43,9 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       webhookTimeout: 10,
+      customLabels: {
+        namespace: {},
+      },
       alwaysIgnore: {
         namespaces: [],
         labels: [],
