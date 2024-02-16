@@ -28,10 +28,6 @@ export default function (program: RootCmd) {
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .option(
-      "--custom-image [custom-image]",
-      "Custom Image: Use custom image for Admission and Watch Deployments.",
-    )
-    .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
@@ -41,13 +37,6 @@ export default function (program: RootCmd) {
       "How long the API server should wait for a webhook to respond before treating the call as a failure",
       parseTimeout,
     )
-    .addOption(
-      new Option(
-        "--registry <GitHub|Iron Bank>",
-        "Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image.",
-      ).choices(["GitHub", "Iron Bank"]),
-    )
-
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
         .choices(["admin", "scoped"])
@@ -70,15 +59,6 @@ export default function (program: RootCmd) {
       const { includedFiles } = cfg.pepr;
 
       let image: string = "";
-
-      // Build Kubernetes manifests with custom image
-      if (opts.customImage) {
-        if (opts.registry) {
-          console.error(`Custom Image and registry cannot be used together.`);
-          process.exit(1);
-        }
-        image = opts.customImage;
-      }
 
       // Check if there is a custom timeout defined
       if (opts.timeout !== undefined) {
@@ -114,14 +94,6 @@ export default function (program: RootCmd) {
         },
         path,
       );
-
-      // If registry is set to Iron Bank, use Iron Bank image
-      if (opts.registry && opts.registry == "Iron Bank") {
-        console.warn(
-          `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
-        );
-        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:${cfg.dependencies.pepr}`;
-      }
 
       // if image is a custom image, use that instead of the default
       if (image !== "") {
