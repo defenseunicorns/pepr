@@ -44,7 +44,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       onError: opts.errorBehavior,
       webhookTimeout: 10,
       customLabels: {
-        namespace: {}
+        namespace: {},
       },
       alwaysIgnore: {
         namespaces: [],
