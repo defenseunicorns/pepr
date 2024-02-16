@@ -7,9 +7,10 @@ import { fork } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
 import { gunzipSync } from "zlib";
-
+import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
 import { packageJSON } from "../templates/data.json";
+import { peprStoreCRD } from "../lib/assets/store";
 
 const { version } = packageJSON;
 
@@ -67,5 +68,9 @@ Log.info(`Pepr Controller (v${version})`);
 
 const hash = process.argv[2];
 
-validateHash(hash);
-runModule(hash);
+(async () => {
+  Log.info("Applying the Pepr Store CRD if it doesn't exist");
+  await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
+  validateHash(hash);
+  runModule(hash);
+})();
