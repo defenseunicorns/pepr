@@ -10,7 +10,6 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
-import { peprStoreCRD } from "./store";
 
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
@@ -63,7 +62,6 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     service(name),
     watcherService(name),
     moduleSecret(name, code, hash),
-    peprStoreCRD,
     storeRole(name),
     storeRoleBinding(name),
   ];

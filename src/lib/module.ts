@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
+import { peprStoreCRD } from "./assets/store";
 import { clone } from "ramda";
-
+import { K8s, kind } from "kubernetes-fluent-client";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
@@ -102,7 +102,11 @@ export class PeprModule {
       return;
     }
 
-    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
+    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, async () => {
+
+      Log.info("Applying the Pepr Store CRD if it doesn't exist");
+      await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
+    
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
         setupWatch(config.uuid, capabilities).catch(e => {

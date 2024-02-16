@@ -10,7 +10,6 @@ import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
-import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
 import { CapabilityExport } from "../types";
 
@@ -41,9 +40,6 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
     Log.info("Validating webhook not needed, removing if it exists");
     await K8s(kind.ValidatingWebhookConfiguration).Delete(name);
   }
-
-  Log.info("Applying the Pepr Store CRD if it doesn't exist");
-  await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
 
   // If a host is specified, we don't need to deploy the rest of the resources
   if (host) {
