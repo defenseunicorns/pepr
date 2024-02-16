@@ -86,4 +86,5 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `-o, --output-dir [output directory]` - Define where to place build output
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
-
+- `-i, --custom-image [custom-image]` - Custom Image: Use custom image for Admission and Watcher Deployments.
+- `--registry [GitHub, Iron Bank]`, - Container registry: Choose container registry for deployment manifests.
