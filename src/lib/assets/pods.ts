@@ -10,11 +10,16 @@ import { ModuleConfig } from "../module";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
-export const namespace: kind.Namespace = {
-  apiVersion: "v1",
-  kind: "Namespace",
-  metadata: { name: "pepr-system" },
-};
+export function namespace(namespaceLabels?: Record<string, string>) {
+  return {
+    apiVersion: "v1",
+    kind: "Namespace",
+    metadata: {
+      name: "pepr-system",
+      labels: namespaceLabels ?? {},
+    },
+  };
+}
 
 export function watcher(assets: Assets, hash: string) {
   const { name, image, capabilities, config } = assets;
