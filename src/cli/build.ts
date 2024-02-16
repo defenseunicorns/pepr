@@ -89,11 +89,11 @@ export default function (program: RootCmd) {
         console.info(`Including ${includedFiles.length} files in controller image.`);
 
         // for journey test to make sure the image is built
-        image = `${opts.registryInfo}/custom-pepr-controller:${cfg.dependencies.pepr}`;
+        image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
         // only actually build/push if there are files to include
         if (includedFiles.length > 0) {
-          await createDockerfile(cfg.dependencies.pepr, cfg.description, includedFiles);
+          await createDockerfile(cfg.pepr.peprVersion, cfg.description, includedFiles);
           execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
           execSync(`docker push ${image}`, { stdio: "inherit" });
         }
@@ -120,7 +120,7 @@ export default function (program: RootCmd) {
         console.warn(
           `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
         );
-        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:${cfg.dependencies.pepr}`;
+        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:${cfg.pepr.peprVersion}`;
       }
 
       // if image is a custom image, use that instead of the default
