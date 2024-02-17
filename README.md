@@ -5,6 +5,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/npm/pepr/badge.svg)](https://snyk.io/advisor/npm-package/pepr)
 [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
 [![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr)
 
 #### **_Type safe Kubernetes middleware for humans_**
 
