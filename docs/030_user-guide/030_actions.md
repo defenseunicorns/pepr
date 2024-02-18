@@ -1,5 +1,11 @@
 # Actions
 
+- [Overview](#overview)
+- [Mutate](#mutate)
+- [Validate](#validate)
+- [Watch](#watch)
+- [Reconcile](#reconcile)
+
 An action is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in during the admission controller lifecycle. Actions are the atomic operations that are performed on Kubernetes resources by Pepr.
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
@@ -117,3 +123,23 @@ When(WebApp)
     }
   });
 ```
+
+## Mutate
+
+Mutating admission webhooks are invoked first and can modify objects sent to the API server to enforce custom defaults. After an object is sent to Pepr's Mutating Admission Webhook, Pepr will [annotate the object](https://github.com/defenseunicorns/pepr/blob/f01f5eeda16c13ecd0d51b26b8a16ed7e4c1b080/src/lib/mutate-processor.ts#L64) to indicate the status.
+
+After a successful mutation of an object in a module with UUID static-test, and capability name hello-pepr, expect to see this annotation: `static-test.pepr.dev/hello-pepr: succeeded`.
+
+## Validate
+
+After the Mutation phase, after all object modifications are complete, and after the incoming object is validated by the API server, validating admission webhooks are invoked and can reject requests to enforce custom policies.
+
+Validate does not annotate the objects that are allowed into the cluster, but the validation webhook can be audited with `npx pepr monitor`. Read the [monitoring docs](https://docs.pepr.dev/main/best-practices/#monitoring) for more information.
+
+## Watch
+
+[Kubernetes](https://kubernetes.io/docs/reference/using-api/api-concepts) supports efficient change notifications on resources via watches. Pepr uses the Watch action for monitoring resources that previously existed in the cluster and for performing long-running asynchronous events upon receiving change notifications on resources, as watches are not limited by [timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
+
+## Reconcile
+
+Reconcile functions the same as Watch but is tailored for building Kubernetes Controllers and Operators because it processes callback operations in a [Queue](https://github.com/defenseunicorns/pepr/blob/f01f5eeda16c13ecd0d51b26b8a16ed7e4c1b080/src/lib/watch-processor.ts#L86), guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
