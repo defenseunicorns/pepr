@@ -18,7 +18,7 @@ Let's look at some example actions that are included in the `HelloPepr` capabili
 
 ---
 
-In this first example, Pepr is adding a label and annotation to a ConfigMap with tne name `example-1` when it is created. Comments are added to each line to explain in more detail what is happening.
+In this first example, Pepr is adding a label and annotation to a ConfigMap with the name `example-1` when it is created. Comments are added to each line to explain in more detail what is happening.
 
 ```ts
 // When(a.<Kind>) filters which GroupVersionKind (GVK) this action should act on.
