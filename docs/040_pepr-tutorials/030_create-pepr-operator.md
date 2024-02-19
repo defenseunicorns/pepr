@@ -18,7 +18,7 @@ If any object deployed by the Operator is deleted for any reason, the Operator w
 - [Create a new Pepr Module](#create-a-new-pepr-module)
 - [Create CRD](#create-crd)
 - [Create Helpers](#create-helpers)
-- [Create Queue and Reconciler](#create-queue-and-reconciler) 
+- [Create Reconciler](#create-reconciler) 
 - [Build and Deploy](#build-and-deploy)
  
 ## Create a new Pepr Module
