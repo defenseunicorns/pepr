@@ -1,6 +1,39 @@
 # Frequently Asked Questions
 
-## My Pepr version is not latest
+
+## How do I add custom labels to Pepr's Kubernetes manifests?
+
+During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.  
+
+The following example shows how to add custom namespace labels.  
+
+```json
+  "pepr": {
+    "name": "new-release",
+    ...
+    "customLabels": {
+      "namespace": {
+        "istio-injection": "enabled",
+        "app.kubernetes.io/name": "new-release"
+      }
+    },
+    ...
+  }
+```
+
+The resulting namespace will be generated after `npx pepr build`.  
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-system
+  labels:
+    istio-injection: enabled
+    app.kubernetes.io/name: new-release
+```
+
+## My Pepr version is not the latest
 
 If you notice your Pepr version does not correspond to the latest release in GitHub after doing `npx pepr -V`, clearing the NPX cache can often resolve the issue.
 
