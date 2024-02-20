@@ -7,7 +7,7 @@ This tutorial will walk you through the process of building a Kubernetes Operato
 ## Background
 
 
-The WebApp Operator deploys the `CustomResourceDefinition` for WebApp, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
+The WebApp Operator deploys the WebApp `CustomResourceDefinition`, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
 
 The WebApp instance represents a `Deployment` object with configurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
 
@@ -18,7 +18,7 @@ If any object deployed by the Operator is deleted for any reason, the Operator w
 - [Create a new Pepr Module](#create-a-new-pepr-module)
 - [Create CRD](#create-crd)
 - [Create Helpers](#create-helpers)
-- [Create Queue and Reconciler](#create-queue-and-reconciler) 
+- [Create Reconciler](#create-reconciler) 
 - [Build and Deploy](#build-and-deploy)
  
 ## Create a new Pepr Module
@@ -39,9 +39,7 @@ npx pepr init
 
 ## Create CRD
 
-Now, it is time to structure the CRD. The CRD is the definition of the WebApp resource. It is a Kubernetes object that defines the WebApp resource and its schema.
-
-A CRD is created and has the following attributes: `theme`, `language`, and `replicas`. The `status` is also defined in the CRD, which is used to track the status of the WebApp resource.
+The WebApp CRD has the following properties: `theme`, `language`, and `replicas` with a `status` section used to track the status of the WebApp resource.
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -108,9 +106,7 @@ spec:
     - wa
 ```
 
-Make sure the CRD has a `status` listed under `subresources` and it is a good idea to provide descriptions under the properties to help users understand what the property is used for. Enums are useful to limit the values that can be used for a property.
-
-
+Status should also be listed under `subresources` to make it writable. We provide descriptions under the properties for clarity around what the property is used for. Enums are useful to limit the values that can be used for a property.
 
 Go to the `capabilities` directory, create a new directory called `crd` with two child folders, generated and source.
 
@@ -118,14 +114,7 @@ Go to the `capabilities` directory, create a new directory called `crd` with two
 mkdir -p capabilities/crd/generated capabilities/crd/source  
 ```
 
-Lets go ahead and install the node modules for the project.
-
-```bash
-npm ci 
-```
-
-
-Generate a typescript class from the using `kubernetes-fluent-client` in the `generated` directory.
+Generate a class based on the WebApp CRD using `kubernetes-fluent-client` and store it in the generated directory.
 
 ```bash
 npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml . 
@@ -296,7 +285,7 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
 }
 ```
 
-In this section we generated scaffolded the CRD class, created a function to add ownerReferences to the manifests that will be deployed by the Operator, registered the CRD, and added a validator to the CRD.
+In this section we generated the CRD class for WebApp, created a function to add `ownerReferences` to the manifests that will be deployed by the Operator to handle deletion of Kubernetes objects, registered the CRD, and added a validator to validate that instances of WebApp are in valid namespaces.
 
 ## Create Helpers
 
@@ -639,9 +628,9 @@ function configmap(instance: WebApp) {
 }
 ```
 
-In this section we created a `generators.ts` file that contains functions that generate the manifests that will be deployed by the Operator with the ownerReferences added to them. We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
+We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
 
-## Create Queue and Reconciler
+## Create Reconciler
 
 In the base of the `capabilities` folder, create a `reconciler.ts` file and add the following:
 
@@ -712,89 +701,15 @@ async function updateStatus(instance: WebApp, status: Status) {
 }
 ```
 
-Create another file in the `capabilities` folder called `enqueue.ts` and add the following:
-
-```typescript
-import { Log } from "pepr";
-
-import { WebApp } from "./crd";
-import { reconciler } from "./reconciler";
-
-type QueueItem = {
-  instance: WebApp;
-  resolve: (value: void | PromiseLike<void>) => void;
-  reject: (reason?: string) => void;
-};
-
-/**
- * Queue is a FIFO queue for reconciling webapps
- */
-export class Queue {
-  #queue: QueueItem[] = [];
-  #pendingPromise = false;
-
-  /**
-   * Enqueue adds a webapp to the queue and returns a promise that resolves when the webapp is
-   * reconciled.
-   *
-   * @param pkg The webapp to reconcile
-   * @returns A promise that resolves when the instance is reconciled
-   */
-  enqueue(instance: WebApp) {
-    Log.debug(
-      `Enqueueing ${instance.metadata!.namespace}/${instance.metadata!.name}`,
-    );
-    return new Promise<void>((resolve, reject) => {
-      this.#queue.push({ instance, resolve, reject });
-      return this.#dequeue();
-    });
-  }
-
-  /**
-   * Dequeue reconciles the next webapp in the queue
-   *
-   * @returns A promise that resolves when the webapp is reconciled
-   */
-  async #dequeue() {
-    // If there is a pending promise, do nothing
-    if (this.#pendingPromise) return false;
-
-    // Take the next item from the queue
-    const item = this.#queue.shift();
-
-    // If there is no item, do nothing
-    if (!item) return false;
-
-    try {
-      // Set the pending promise flag to avoid concurrent reconciliations
-      this.#pendingPromise = true;
-
-      // Reconcile the webapp
-      await reconciler(item.instance);
-
-      item.resolve();
-    } catch (e) {
-      item.reject(e);
-    } finally {
-      // Reset the pending promise flag
-      this.#pendingPromise = false;
-
-      // After the webapp is reconciled, dequeue the next webapp
-      await this.#dequeue();
-    }
-  }
-}
-```
-
 Finally create the `index.ts` file in the `capabilities` folder and add the following:
 
 ```typescript
 import { Capability, a, Log } from "pepr";
 import { WebApp } from "./crd";
 import { validator } from "./crd/validator";
-import { Queue } from "./enqueue";
 import { WebAppCRD } from "./crd/source/webapp.crd";
 import { RegisterCRD } from "./crd/register";
+import { reconciler } from "./reconciler";
 import "./crd/register";
 import Deploy from "./controller/generators";
 
@@ -806,18 +721,16 @@ export const WebAppController = new Capability({
 
 const { When, Store } = WebAppController;
 
-const queue = new Queue();
-
 // When instance is created or updated, validate it and enqueue it for processing
 When(WebApp)
   .IsCreatedOrUpdated()
   .Validate(validator)
-  .Watch(async instance => {
+  .Reconcile(async instance => {
     try {
       Store.setItem(instance.metadata.name, JSON.stringify(instance));
-      await queue.enqueue(instance);
+      await reconciler(instance);
     } catch (error) {
-      Log.info(`Error enqueing instance of WebApp`);
+      Log.info(`Error reconciling instance of WebApp`);
     }
   });
 
@@ -866,32 +779,18 @@ When(a.ConfigMap)
 
 ```
 
-In this section we created a `reconciler.ts` file that contains the reconciler function that is called from the queue and is responsible for reconciling the state of the instance with the cluster and updating the status of the instance. We also created a `enqueue.ts` file that contains the queue class that is used to enqueue instances of the WebApp resource. Finally, we created the `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and the resources that are deployed by the Operator.
-
-
-## Build and Deploy
-
-# WebApp Operator
-
-The WebApp Operator deploys the `CustomResourceDefinition` for WebApp, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
-
-The WebApp instance represents a `Deployment` object with confirgurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
-
-If any object deployed by the Operator is deleted for any reason, other than through the `ownerReference` mechanism, the Operator will abruptly redeploy the object. 
-
-## Demo
-
-# WebApp Operator
-
-The WebApp Operator deploys the `CustomResourceDefinition` for WebApp, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
-
-The WebApp instance represents a `Deployment` object with confirgurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
-
-If any object deployed by the Operator is deleted for any reason, other than through the `ownerReference` mechanism, the Operator will abruptly redeploy the object. 
+In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
 
 ## Demo
 
 _Create an ephemeral cluster. (Kind or k3d will work)_
+
+Clone the Operator
+
+```bash
+git clone https://github.com/defenseunicorns/pepr-excellent-examples.git
+cd pepr-operator
+```
 
 Make sure Pepr is update to date
 
