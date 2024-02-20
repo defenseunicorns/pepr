@@ -1,6 +1,6 @@
 # Pepr
 
-[![Pepr Documentation](https://img.shields.io/badge/docs--d25ba1)](./docs/README.md)
+[![Pepr Documentation](https://img.shields.io/badge/docs--d25ba1)](https://docs.pepr.dev)
 [![Npm package license](https://badgen.net/npm/license/pepr)](https://npmjs.com/package/pepr)
 [![Known Vulnerabilities](https://snyk.io/test/npm/pepr/badge.svg)](https://snyk.io/advisor/npm-package/pepr)
 [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
