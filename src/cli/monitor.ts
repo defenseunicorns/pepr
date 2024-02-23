@@ -59,7 +59,7 @@ export default function (program: RootCmd) {
               const uid = payload.uid;
 
               if (isMutate) {
-                const allowOrDeny = payload.res.allowed ? "✅" : "❌";
+                const allowOrDeny = payload.res.allowed ? "🔀" : "❌";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
               } else {
                 const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
