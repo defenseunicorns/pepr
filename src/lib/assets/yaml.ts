@@ -11,6 +11,112 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
+// Overrides file generated from assets
+export function overridesFile(assets: Assets, hash: string) {
+  const { name, image, config } = assets;
+
+  const overrides = {
+    hash,
+    uuid: name,
+    image: {
+      repository: "",
+      tag: "",
+      pullPolicy: "IfNotPresent"
+    },
+    admission: {
+      env: [
+        { name: "PEPR_WATCH_MODE", value: "false" },
+        {name: "PEPR_PRETTY_LOG", value: "false"},
+        { name: "LOG_LEVEL", value: "debug"}
+      ],
+      image,
+      annotations: {
+        "pepr.dev/description": config.description || ""
+      },
+      labels: {
+        app: name,
+        "pepr.dev/controller": "admission",
+        "pepr.dev/uuid": config.uuid,
+      },
+      securityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        fsGroup: 65532,
+      },
+      resources: {
+        requests: {
+          memory: "64Mi",
+          cpu: "100m",
+        },
+        limits: {
+          memory: "256Mi",
+          cpu: "500m",
+        },
+      },
+      containerSecurityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ["ALL"],
+        },
+      },
+      nodeSelector: {},
+      tolerations: [],
+      affinity: {}
+    },
+    watcher: {
+      env: [
+        { name: "PEPR_WATCH_MODE", value: "true" },
+        {name: "PEPR_PRETTY_LOG", value: "false"},
+        { name: "LOG_LEVEL", value: "debug"}
+      ],
+      image,
+      annotations: {
+        "pepr.dev/description": config.description || ""
+      },
+      labels: {
+        app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
+        "pepr.dev/uuid": config.uuid,
+      },
+      securityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        fsGroup: 65532,
+      },
+      resources: {
+        requests: {
+          memory: "64Mi",
+          cpu: "100m",
+        },
+        limits: {
+          memory: "256Mi",
+          cpu: "500m",
+        },
+      },
+      containerSecurityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ["ALL"],
+        },
+      },
+      nodeSelector: {},
+      tolerations: [],
+      affinity: {}
+    },
+    service: {
+      type: "ClusterIP",
+    }
+  }
+  return overrides
+}
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
     kind: "ZarfPackageConfig",

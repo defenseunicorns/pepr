@@ -139,6 +139,26 @@ export default function (program: RootCmd) {
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
+      // generate helm-chart
+      try {
+        const CHART_DIR = `${outputDir}/helm-chart`
+        // create chart dir
+        await createDirectoryIfNotExists(CHART_DIR)
+
+        // create charts dir
+        await createDirectoryIfNotExists(`${CHART_DIR}/charts`)
+
+        // create templates dir
+        await createDirectoryIfNotExists(`${CHART_DIR}/templates`)
+
+        // create values file
+        //await createDirectoryIfNotExists(`${CHART_DIR}/values.yaml`)
+      } catch(err) {
+        console.error(`Error generating helm chart: ${err.message}`);
+        process.exit(1);
+      }
+
+
       console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }
