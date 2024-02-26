@@ -19,12 +19,13 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       apiToken: Buffer.from(apiToken).toString("base64"),
     },
     hash,
-    uuid: name,
-    image: {
-      repository: "",
-      tag: "",
-      pullPolicy: "IfNotPresent",
+    namespace: {
+      annotations: {
+      },
+      labels: {
+      },
     },
+    uuid: name,
     admission: {
       env: [
         { name: "PEPR_WATCH_MODE", value: "false" },
@@ -112,9 +113,6 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       nodeSelector: {},
       tolerations: [],
       affinity: {},
-    },
-    service: {
-      type: "ClusterIP",
     },
   };
 

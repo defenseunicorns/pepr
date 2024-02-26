@@ -1,7 +1,7 @@
 Progress
-
+========
 **Files to generate**
-- [x] chart.yaml
+- [x] chart.yaml ✅
 - [x] Watcher Deployment
 - [x] Admission Deployment
 - [x] service (admission)
@@ -17,8 +17,7 @@ Progress
 - [x] rolebinding 
 - [ ] tlssecret
 - [x] apitokensecret 
-- [ ] FileWriter ??? (Do i need this? )
-- [x] values.yaml
+- [x] values.yaml ✅
 
 **Tests**
 - [ ] Unit

@@ -13,6 +13,8 @@ import { allYaml, zarfYaml, overridesFile } from "./yaml";
 import { namespaceComplianceValidator } from "../helpers";
 import { createDirectoryIfNotExists } from "../helpers";
 import { resolve } from "path";
+import { chartYaml } from "./helm";
+import { promises as fs } from "fs";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -68,6 +70,7 @@ export class Assets {
     const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
     const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
     const valuesPath = resolve(CHART_DIR,`values.yaml`);
+    const chartPath = resolve(CHART_DIR,`Chart.yaml`);
     // create helm chart
     try {
 
@@ -86,6 +89,11 @@ export class Assets {
 
       // create values file
       await overridesFile(this, valuesPath)
+
+
+      // create the chart.yaml
+      await fs.writeFile(chartPath, chartYaml(this.config.uuid, this.config.description || ""));
+
       // await overridesFile(valuesPath, this.config);
       //await createDirectoryIfNotExists(`${CHART_DIR}/values.yaml`)
     } catch (err) {

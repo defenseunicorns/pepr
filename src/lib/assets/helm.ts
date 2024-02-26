@@ -7,6 +7,10 @@ export function nsTemplate() {
         kind: Namespace
         metadata:
             name: pepr-system
+            annotations:
+                {{- toYaml .Values.naespace.annotations | nindent 4 }}
+            labels:
+                {{- toYaml .Values.namespace.labels | nindent 4 }}
     `;
 }
 export function admissionServiceTemplate() {
@@ -193,11 +197,11 @@ export function helmServiceAccount() {
         namespace: pepr-system
     `;
 }
-export function chartYaml(name: string, description: string) {
+export function chartYaml(name: string, description?: string) {
   return `
       apiVersion: v2
       name: ${name}
-      description: ${description}
+      description: ${description || ""}
   
       # A chart can be either an 'application' or a 'library' chart.
       #
