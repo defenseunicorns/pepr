@@ -12,26 +12,28 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { webhookConfig } from "./webhooks";
 
 // Overrides file generated from assets
-export function overridesFile(assets: Assets, hash: string) {
-  const { name, image, config } = assets;
+export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
 
   const overrides = {
+    secrets: {
+      apiToken: Buffer.from(apiToken).toString("base64"),
+    },
     hash,
     uuid: name,
     image: {
       repository: "",
       tag: "",
-      pullPolicy: "IfNotPresent"
+      pullPolicy: "IfNotPresent",
     },
     admission: {
       env: [
         { name: "PEPR_WATCH_MODE", value: "false" },
-        {name: "PEPR_PRETTY_LOG", value: "false"},
-        { name: "LOG_LEVEL", value: "debug"}
+        { name: "PEPR_PRETTY_LOG", value: "false" },
+        { name: "LOG_LEVEL", value: "debug" },
       ],
       image,
       annotations: {
-        "pepr.dev/description": config.description || ""
+        "pepr.dev/description": config.description || "",
       },
       labels: {
         app: name,
@@ -65,17 +67,17 @@ export function overridesFile(assets: Assets, hash: string) {
       },
       nodeSelector: {},
       tolerations: [],
-      affinity: {}
+      affinity: {},
     },
     watcher: {
       env: [
         { name: "PEPR_WATCH_MODE", value: "true" },
-        {name: "PEPR_PRETTY_LOG", value: "false"},
-        { name: "LOG_LEVEL", value: "debug"}
+        { name: "PEPR_PRETTY_LOG", value: "false" },
+        { name: "LOG_LEVEL", value: "debug" },
       ],
       image,
       annotations: {
-        "pepr.dev/description": config.description || ""
+        "pepr.dev/description": config.description || "",
       },
       labels: {
         app: `${name}-watcher`,
@@ -109,13 +111,14 @@ export function overridesFile(assets: Assets, hash: string) {
       },
       nodeSelector: {},
       tolerations: [],
-      affinity: {}
+      affinity: {},
     },
     service: {
       type: "ClusterIP",
-    }
-  }
-  return overrides
+    },
+  };
+
+  await fs.writeFile(path, dumpYaml(overrides, { noRefs: true }));
 }
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
@@ -151,11 +154,12 @@ export async function allYaml(assets: Assets, rbacMode: string) {
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
-  const hash = crypto.createHash("sha256").update(code).digest("hex");
+  assets.hash = crypto.createHash("sha256").update(code).digest("hex");
+
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, hash);
+  const watchDeployment = watcher(assets, assets.hash);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -164,10 +168,10 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, hash),
+    deployment(assets, assets.hash),
     service(name),
     watcherService(name),
-    moduleSecret(name, code, hash),
+    moduleSecret(name, code, assets.hash),
     storeRole(name),
     storeRoleBinding(name),
   ];

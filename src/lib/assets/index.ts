@@ -9,9 +9,10 @@ import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, zarfYaml } from "./yaml";
+import { allYaml, zarfYaml, overridesFile } from "./yaml";
 import { namespaceComplianceValidator } from "../helpers";
-
+import { createDirectoryIfNotExists } from "../helpers";
+import { resolve } from "path";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -21,6 +22,8 @@ export class Assets {
 
   image: string;
 
+  hash: string;
+
   constructor(
     readonly config: ModuleConfig,
     readonly path: string,
@@ -29,7 +32,7 @@ export class Assets {
     this.name = `pepr-${config.uuid}`;
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
-
+    this.hash = "";
     // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
 
@@ -37,12 +40,18 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
+  setHash = (hash: string) => {
+    this.hash = hash;
+  };
+  
   deploy = async (force: boolean, webhookTimeout?: number) => {
     this.capabilities = await loadCapabilities(this.path);
     await deploy(this, force, webhookTimeout);
   };
 
   zarfYaml = (path: string) => zarfYaml(this, path);
+
+
 
   allYaml = async (rbacMode: string) => {
     this.capabilities = await loadCapabilities(this.path);
@@ -52,5 +61,36 @@ export class Assets {
     }
 
     return allYaml(this, rbacMode);
+  };
+
+
+  generateHelmChart = async (basePath: string) => {
+    const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
+    const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
+    const valuesPath = resolve(CHART_DIR,`values.yaml`);
+    // create helm chart
+    try {
+
+
+
+      // create chart dir
+      await createDirectoryIfNotExists(CHART_DIR);
+
+      // create charts dir
+      await createDirectoryIfNotExists(`${CHART_DIR}/charts`);
+
+      // create templates dir
+      await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
+
+      // create values file
+
+      // create values file
+      await overridesFile(this, valuesPath)
+      // await overridesFile(valuesPath, this.config);
+      //await createDirectoryIfNotExists(`${CHART_DIR}/values.yaml`)
+    } catch (err) {
+      console.error(`Error generating helm chart: ${err.message}`);
+      process.exit(1);
+    }
   };
 }
