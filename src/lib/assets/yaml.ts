@@ -13,17 +13,14 @@ import { webhookConfig } from "./webhooks";
 
 // Overrides file generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-
   const overrides = {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
     },
     hash,
     namespace: {
-      annotations: {
-      },
-      labels: {
-      },
+      annotations: {},
+      labels: {},
     },
     uuid: name,
     admission: {
@@ -153,7 +150,6 @@ export async function allYaml(assets: Assets, rbacMode: string) {
 
   // Generate a hash of the code
   assets.hash = crypto.createHash("sha256").update(code).digest("hex");
-
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);

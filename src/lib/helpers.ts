@@ -185,3 +185,14 @@ export const parseTimeout = (value: string, previous: unknown): number => {
   }
   return parsedValue;
 };
+
+// Remove leading whitespace while keeping format of file
+export function dedent(file: string) {
+  const match = file.match(/^[ \t]*(?=\S)/gm);
+  const indent = match && Math.min(...match.map(el => el.length));
+  if (indent && indent > 0) {
+      const re = new RegExp(`^[ \\t]{${indent}}`, 'gm');
+      return file.replace(re, '');
+  }
+  return file; 
+}

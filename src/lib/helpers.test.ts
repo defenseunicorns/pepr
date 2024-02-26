@@ -7,6 +7,7 @@ import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globa
 import { parseTimeout, secretOverLimit } from "./helpers";
 import * as commander from "commander";
 import { promises as fs } from "fs";
+
 import {
   createDirectoryIfNotExists,
   hasAnyOverlap,
@@ -15,6 +16,7 @@ import {
   bindingAndCapabilityNSConflict,
   generateWatchNamespaceError,
   namespaceComplianceValidator,
+  dedent
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
@@ -544,7 +546,7 @@ const nonNsViolation: CapabilityExport[] = JSON.parse(`[
 describe("namespaceComplianceValidator", () => {
   let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -861,5 +863,45 @@ describe("secretOverLimit", () => {
   test("should return false for a string smaller than 1MiB", () => {
     const smallString = "a".repeat(1048575);
     expect(secretOverLimit(smallString)).toBe(false);
+  });
+});
+
+
+describe('dedent', () => {
+  test('removes leading spaces based on the smallest indentation', () => {
+    const input = `
+      kind: Namespace
+      metadata:
+        name: pepr-system
+      `;
+    var inputArray = dedent(input).split(/\r?\n/);
+
+    expect(inputArray[1]).toBe("kind: Namespace");
+    expect(inputArray[2]).toBe("metadata:");
+    expect(inputArray[3]).toBe("  name: pepr-system");
+  });
+
+
+  test('does not remove internal spacing of lines', () => {
+    const input = `
+      kind: ->>>      Namespace
+      `;
+
+    expect(dedent(input)).toBe("\nkind: ->>>      Namespace\n");
+  });
+
+  test('handles strings without leading whitespace consistently', () => {
+    const input = `kind: Namespace
+metadata:`;
+    ;
+    var inputArray = dedent(input).split(/\r?\n/);
+    expect(inputArray[0]).toBe("kind: Namespace");
+    expect(inputArray[1]).toBe("metadata:");
+  });
+
+  test('handles empty strings without crashing', () => {
+    const input = ``;
+    const expected = ``;
+    expect(dedent(input)).toBe(expected);
   });
 });

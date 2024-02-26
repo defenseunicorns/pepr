@@ -141,7 +141,6 @@ export default function (program: RootCmd) {
 
       await assets.generateHelmChart(outputDir);
 
-
       console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }

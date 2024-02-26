@@ -3,14 +3,18 @@
 
 export function nsTemplate() {
   return `
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-            name: pepr-system
-            annotations:
-                {{- toYaml .Values.naespace.annotations | nindent 4 }}
-            labels:
-                {{- toYaml .Values.namespace.labels | nindent 4 }}
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+        name: pepr-system
+        {{- if .Values.namespace.annotations }}
+        annotations:
+            {{- toYaml .Values.namespace.annotations | nindent 6 }}
+        {{- end }}
+        {{- if .Values.namespace.labels }}
+        labels:
+            {{- toYaml .Values.namespace.labels | nindent 6 }}
+        {{- end }}
     `;
 }
 export function admissionServiceTemplate() {
