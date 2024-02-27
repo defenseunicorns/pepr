@@ -9,7 +9,17 @@ describe("namespace function", () => {
       kind: "Namespace",
       metadata: {
         name: "pepr-system",
-        labels: {},
+      },
+    });
+    const result1 = namespace({ one: "two" });
+    expect(result1).toEqual({
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name: "pepr-system",
+        labels: {
+          one: "two",
+        },
       },
     });
   });

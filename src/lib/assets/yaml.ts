@@ -20,7 +20,9 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     hash,
     namespace: {
       annotations: {},
-      labels: {},
+      labels: {
+        "pepr.dev": "",
+      },
     },
     uuid: name,
     admission: {
@@ -30,6 +32,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         { name: "PEPR_WATCH_MODE", value: "false" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
+        { name: "MY_CUSTOM_VAR", value: "example-value" },
+        { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
@@ -74,6 +78,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         { name: "PEPR_WATCH_MODE", value: "true" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
+        { name: "MY_CUSTOM_VAR", value: "example-value" },
+        { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
@@ -155,7 +161,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, assets.hash);
+  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -164,7 +170,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, assets.hash),
+    deployment(assets, assets.hash, assets.buildTimestamp),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),

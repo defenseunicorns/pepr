@@ -26,7 +26,7 @@ describe("Kubernetes Template Generators", () => {
 
   describe("watcherDeployTemplate", () => {
     test("should generate a Deployment template for the watcher correctly", () => {
-      const result = watcherDeployTemplate();
+      const result = watcherDeployTemplate(`${Date.now()}`);
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}-watcher");
@@ -35,7 +35,7 @@ describe("Kubernetes Template Generators", () => {
 
   describe("admissionDeployTemplate", () => {
     test("should generate a Deployment template for the admission controller correctly", () => {
-      const result = admissionDeployTemplate();
+      const result = admissionDeployTemplate(`${Date.now()}`);
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}");

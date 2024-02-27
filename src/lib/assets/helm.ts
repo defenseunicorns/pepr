@@ -48,7 +48,7 @@ export function chartYaml(name: string, description?: string) {
     `;
 }
 
-export function watcherDeployTemplate() {
+export function watcherDeployTemplate(buildTimestamp: string) {
   return `
       apiVersion: apps/v1
       kind: Deployment
@@ -70,7 +70,7 @@ export function watcherDeployTemplate() {
         template:
           metadata:
             annotations: 
-              buildTimestamp: "${Date.now()}"
+              buildTimestamp: "${buildTimestamp}"
             labels:
               app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
@@ -121,7 +121,7 @@ export function watcherDeployTemplate() {
     `;
 }
 
-export function admissionDeployTemplate() {
+export function admissionDeployTemplate(buildTimestamp: string) {
   return `
       apiVersion: apps/v1
       kind: Deployment
@@ -141,7 +141,7 @@ export function admissionDeployTemplate() {
         template:
           metadata:
             annotations:
-              buildTimestamp: "${Date.now()}"
+              buildTimestamp: "${buildTimestamp}"
             labels:
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission

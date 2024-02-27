@@ -24,6 +24,7 @@ export function peprBuild() {
     await validateZarfYaml();
   });
 }
+
 async function validateHelmChart() {
 
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
@@ -39,8 +40,7 @@ async function validateHelmChart() {
     const helmJSON = sortKubernetesObjects(helmParsed);
     const expectedJSON = sortKubernetesObjects(k8sParsed);
 
-    // Compare the sorted JSON outputs
-    expect(helmJSON).toEqual(expectedJSON);
+    expect(helmJSON.toString()).toBe(expectedJSON.toString());
   }
 }
 async function validateZarfYaml() {

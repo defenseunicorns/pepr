@@ -28,7 +28,7 @@ export class Assets {
   capabilities!: CapabilityExport[];
 
   image: string;
-
+  buildTimestamp: string;
   hash: string;
 
   constructor(
@@ -37,6 +37,7 @@ export class Assets {
     readonly host?: string,
   ) {
     this.name = `pepr-${config.uuid}`;
+    this.buildTimestamp = `${Date.now()}`;
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
     this.hash = "";
@@ -127,10 +128,10 @@ export class Assets {
 
       const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
       const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
-      const watchDeployment = watcher(this, this.hash);
+      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
 
       if (validateWebhook || mutateWebhook) {
-        await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate()));
+        await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
       }
 
       if (mutateWebhook) {
@@ -162,7 +163,7 @@ export class Assets {
       }
 
       if (watchDeployment) {
-        await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate()));
+        await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
       }
 
       //fs.writeFile(_)
