@@ -7,18 +7,18 @@ Progress
 - [x] service (admission)
 - [x] service (watcher)
 - [x] serviceAccount
-- [ ] secret module
+- [x] secret module
 - [x] namespace
 - [x] mutatingwebhookconfig
 - [x] validatingwebhookconfiguration 
-- [ ] role (not configurable)
-- [ ] clusterrole
+- [x] role (not configurable)
+- [x] clusterrole
 - [x] clusterrolebinding
 - [x] rolebinding 
-- [ ] tlssecret
+- [x] tlssecret
 - [x] apitokensecret 
 - [x] values.yaml ✅
 
 **Tests**
-- [ ] Unit
+- [x] Unit
 - [ ] Integration
