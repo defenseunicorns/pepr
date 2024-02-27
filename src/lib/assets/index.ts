@@ -135,13 +135,13 @@ export class Assets {
 
       if (mutateWebhook) {
         const yamlMutateWebhook = dumpYaml(mutateWebhook, { noRefs: true });
-        const mutateWebhookTemplate = replaceString(yamlMutateWebhook, this.config.uuid, "{{ .Values.uuid }}");
+        const mutateWebhookTemplate = replaceString(replaceString(replaceString(yamlMutateWebhook, this.config.uuid, "{{ .Values.uuid }}"), this.config.onError === "reject" ? "Fail" : "Ignore", "{{ .Values.admission.failurePolicy }}"), `${this.config.webhookTimeout}` || "10", "{{ .Values.admission.webhookTimeout }}")
         await fs.writeFile(mutationWebhookPath, mutateWebhookTemplate);
       }
 
       if (validateWebhook) {
         const yamlValidateWebhook = dumpYaml(validateWebhook, { noRefs: true });
-        const validateWebhookTemplate = replaceString(yamlValidateWebhook, this.config.uuid, "{{ .Values.uuid }}");
+        const validateWebhookTemplate = replaceString(replaceString(replaceString(yamlValidateWebhook, this.config.uuid, "{{ .Values.uuid }}"), this.config.onError === "reject" ? "Fail" : "Ignore", "{{ .Values.admission.failurePolicy }}"), `${this.config.webhookTimeout}` || "10", "{{ .Values.admission.webhookTimeout }}")
         await fs.writeFile(validationWebhookPath, validateWebhookTemplate);
       }
 

@@ -24,6 +24,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     },
     uuid: name,
     admission: {
+      failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
+      webhookTimeout: config.webhookTimeout,
       env: [
         { name: "PEPR_WATCH_MODE", value: "false" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
