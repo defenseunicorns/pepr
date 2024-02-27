@@ -189,23 +189,24 @@ export const parseTimeout = (value: string, previous: unknown): number => {
 // Remove leading whitespace while keeping format of file
 export function dedent(file: string) {
   // Check if the first line is empty and remove it
-  const lines = file.split('\n');
-  if (lines[0].trim() === '') {
+  const lines = file.split("\n");
+  if (lines[0].trim() === "") {
     lines.shift(); // Remove the first line if it's empty
-    file = lines.join('\n'); // Rejoin the remaining lines back into a single string
+    file = lines.join("\n"); // Rejoin the remaining lines back into a single string
   }
 
   const match = file.match(/^[ \t]*(?=\S)/gm);
   const indent = match && Math.min(...match.map(el => el.length));
   if (indent && indent > 0) {
-      const re = new RegExp(`^[ \\t]{${indent}}`, 'gm');
-      return file.replace(re, '');
+    const re = new RegExp(`^[ \\t]{${indent}}`, "gm");
+    return file.replace(re, "");
   }
   return file;
 }
 
 export function replaceString(str: string, stringA: string, stringB: string) {
-  const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  const regExp = new RegExp(escapedStringA, 'g');
+  //eslint-disable-next-line
+  const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+  const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
 }

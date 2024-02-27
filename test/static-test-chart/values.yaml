@@ -1,0 +1,83 @@
+secrets:
+  apiToken: 'Yzg5OTZjOTliNjRhMGYwYThhN2ZiMjI0ZDA0NmM4NGE3MjJlZmMzMDFmZjUwMWZkNmU0MzM5YzEzOThiNzUxYw=='
+hash: '19c83d7c37ede24f1c06bb20bb1acc5848fe31f13850247ed5c11913b591e09b'
+namespace:
+  annotations: {}
+  labels: {}
+uuid: 'pepr-static-test'
+admission:
+  env:
+    - name: 'PEPR_WATCH_MODE'
+      value: 'false'
+    - name: 'PEPR_PRETTY_LOG'
+      value: 'false'
+    - name: 'LOG_LEVEL'
+      value: 'debug'
+  image: 'ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development'
+  annotations:
+    pepr.dev/description: 'A test module for Pepr'
+  labels:
+    app: 'pepr-static-test'
+    pepr.dev/controller: 'admission'
+    pepr.dev/uuid: 'static-test'
+  securityContext:
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    fsGroup: 65532
+  resources:
+    requests:
+      memory: '64Mi'
+      cpu: '100m'
+    limits:
+      memory: '256Mi'
+      cpu: '500m'
+  containerSecurityContext:
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - 'ALL'
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+watcher:
+  env:
+    - name: 'PEPR_WATCH_MODE'
+      value: 'true'
+    - name: 'PEPR_PRETTY_LOG'
+      value: 'false'
+    - name: 'LOG_LEVEL'
+      value: 'debug'
+  image: 'ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development'
+  annotations:
+    pepr.dev/description: 'A test module for Pepr'
+  labels:
+    app: 'pepr-static-test-watcher'
+    pepr.dev/controller: 'watcher'
+    pepr.dev/uuid: 'static-test'
+  securityContext:
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    fsGroup: 65532
+  resources:
+    requests:
+      memory: '64Mi'
+      cpu: '100m'
+    limits:
+      memory: '256Mi'
+      cpu: '500m'
+  containerSecurityContext:
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - 'ALL'
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

@@ -16,7 +16,7 @@ import {
   bindingAndCapabilityNSConflict,
   generateWatchNamespaceError,
   namespaceComplianceValidator,
-  dedent
+  dedent,
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
@@ -546,7 +546,7 @@ const nonNsViolation: CapabilityExport[] = JSON.parse(`[
 describe("namespaceComplianceValidator", () => {
   let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => { });
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -866,82 +866,80 @@ describe("secretOverLimit", () => {
   });
 });
 
-
-describe('dedent', () => {
-  test('removes leading spaces based on the smallest indentation', () => {
+describe("dedent", () => {
+  test("removes leading spaces based on the smallest indentation", () => {
     const input = `
       kind: Namespace
       metadata:
         name: pepr-system
       `;
-    var inputArray = dedent(input).split(/\r?\n/);
+    const inputArray = dedent(input).split(/\r?\n/);
 
     expect(inputArray[0]).toBe("kind: Namespace");
     expect(inputArray[1]).toBe("metadata:");
     expect(inputArray[2]).toBe("  name: pepr-system");
   });
 
-
-  test('does not remove internal spacing of lines', () => {
+  test("does not remove internal spacing of lines", () => {
     const input = `kind: ->>>      Namespace`;
 
     expect(dedent(input)).toBe("kind: ->>>      Namespace");
   });
 
-  test('handles strings without leading whitespace consistently', () => {
+  test("handles strings without leading whitespace consistently", () => {
     const input = `kind: Namespace
 metadata:`;
-    ;
-    var inputArray = dedent(input).split(/\r?\n/);
+
+    const inputArray = dedent(input).split(/\r?\n/);
     expect(inputArray[0]).toBe("kind: Namespace");
     expect(inputArray[1]).toBe("metadata:");
   });
 
-  test('handles empty strings without crashing', () => {
+  test("handles empty strings without crashing", () => {
     const input = ``;
     const expected = ``;
     expect(dedent(input)).toBe(expected);
   });
 });
 
-describe('replaceString', () => {
-  test('replaces single instance of a string', () => {
-    const original = 'Hello, world!';
-    const stringA = 'world';
-    const stringB = 'Jest';
-    const expected = 'Hello, Jest!';
+describe("replaceString", () => {
+  test("replaces single instance of a string", () => {
+    const original = "Hello, world!";
+    const stringA = "world";
+    const stringB = "Jest";
+    const expected = "Hello, Jest!";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 
-  test('replaces multiple instances of a string', () => {
-    const original = 'Repeat, repeat, repeat';
-    const stringA = 'repeat';
-    const stringB = 'done';
-    const expected = 'Repeat, done, done';
+  test("replaces multiple instances of a string", () => {
+    const original = "Repeat, repeat, repeat";
+    const stringA = "repeat";
+    const stringB = "done";
+    const expected = "Repeat, done, done";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 
-  test('does nothing if string to replace is not found', () => {
-    const original = 'Nothing changes here';
-    const stringA = 'absent';
-    const stringB = 'present';
-    const expected = 'Nothing changes here';
+  test("does nothing if string to replace is not found", () => {
+    const original = "Nothing changes here";
+    const stringA = "absent";
+    const stringB = "present";
+    const expected = "Nothing changes here";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 
-  test('escapes special regex characters in string to be replaced', () => {
-    const original = 'Find the period.';
-    const stringA = '.';
-    const stringB = '!';
-    const expected = 'Find the period!';
+  test("escapes special regex characters in string to be replaced", () => {
+    const original = "Find the period.";
+    const stringA = ".";
+    const stringB = "!";
+    const expected = "Find the period!";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 
-  test('replaces string with empty string if stringB is empty', () => {
-    const original = 'Remove this part.';
-    const stringA = ' this part';
-    const stringB = '';
-    const expected = 'Remove.';
+  test("replaces string with empty string if stringB is empty", () => {
+    const original = "Remove this part.";
+    const stringA = " this part";
+    const stringB = "";
+    const expected = "Remove.";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 });

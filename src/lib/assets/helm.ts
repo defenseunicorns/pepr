@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 export function nsTemplate() {
-    return `
+  return `
     apiVersion: v1
     kind: Namespace
     metadata:
@@ -17,103 +17,9 @@ export function nsTemplate() {
         {{- end }}
     `;
 }
-export function admissionSVCTemplate() {
-    return `
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: pepr-{{ .Values.uuid }}
-        namespace: pepr-system
-        labels:
-          pepr.dev/controller: admission
-      spec:
-        selector:
-          app: pepr-{{ .Values.uuid }}
-          pepr.dev/controller: admission
-        ports:
-          - port: 443
-            targetPort: 3000
-    `;
-}
-export function watcherSVCTemplate() {
-    return `
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: pepr-{{ .Values.uuid }}-watcher
-        namespace: pepr-system
-        labels:
-          pepr.dev/controller: watcher
-      spec:
-        selector:
-          app: pepr-{{ .Values.uuid }}-watcher
-          pepr.dev/controller: watcher
-        ports:
-          - port: 443
-            targetPort: 3000  
-    `;
-}
 
-
-export function apiTokenSecret() {
-    return `
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: pepr-{{ .Values.uuid }}-api-token
-        namespace: pepr-system
-      type: Opaque
-      data:
-        value: >-
-        {{ .Values.admission.annotations | nindent 4 }}
-    `;
-}
-
-export function helmRoleBinding() {
-    return `
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: RoleBinding
-      metadata:
-        name: pepr-{{ .Values.uuid }}-store
-        namespace: pepr-system
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: Role
-        name: pepr-{{ .Values.uuid }}-store
-      subjects:
-        - kind: ServiceAccount
-          name: pepr-{{ .Values.uuid }}-store
-          namespace: pepr-system
-    `;
-}
-
-export function helmClusterRoleBinding() {
-    return `
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRoleBinding
-      metadata:
-        name: pepr-{{ .Values.uuid }}
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-        name: pepr-{{ .Values.uuid }}
-      subjects:
-        - kind: ServiceAccount
-          name: pepr-{{ .Values.uuid }}
-          namespace: pepr-system
-    `;
-}
-export function helmServiceAccount() {
-    return `
-      apiVersion: v1
-      kind: ServiceAccount
-      metadata:
-        name: pepr-{{ .Values.uuid }}
-        namespace: pepr-system
-    `;
-}
 export function chartYaml(name: string, description?: string) {
-    return `
+  return `
       apiVersion: v2
       name: ${name}
       description: ${description || ""}
@@ -143,7 +49,7 @@ export function chartYaml(name: string, description?: string) {
 }
 
 export function watcherDeployTemplate() {
-    return `
+  return `
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -164,12 +70,12 @@ export function watcherDeployTemplate() {
         template:
           metadata:
             annotations: 
-              buildTimestamp: ${Date.now()}
+              buildTimestamp: "${Date.now()}"
             labels:
               app: pepr-{{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
           spec:
-            serviceAccountName: pepr-{{ .Values.uuid }}
+            serviceAccountName: {{ .Values.uuid }}
             securityContext:
               {{- toYaml .Values.admission.securityContext | nindent 8 }}
             containers:
@@ -208,15 +114,15 @@ export function watcherDeployTemplate() {
             volumes:
               - name: tls-certs
                 secret:
-                  secretName: pepr-{{ .Values.uuid }}-tls
+                  secretName: {{ .Values.uuid }}-tls
               - name: module
                 secret:
-                  secretName: pepr-{{ .Values.uuid }}-module
+                  secretName: {{ .Values.uuid }}-module
     `;
 }
 
 export function admissionDeployTemplate() {
-    return `
+  return `
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -235,13 +141,13 @@ export function admissionDeployTemplate() {
         template:
           metadata:
             annotations:
-              buildTimestamp: ${Date.now()}
+              buildTimestamp: "${Date.now()}"
             labels:
               app: pepr-{{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
             priorityClassName: system-node-critical
-            serviceAccountName: pepr-{{ .Values.uuid }}
+            serviceAccountName: {{ .Values.uuid }}
             securityContext:
               {{- toYaml .Values.admission.securityContext | nindent 8 }}
             containers:
@@ -283,12 +189,12 @@ export function admissionDeployTemplate() {
             volumes:
               - name: tls-certs
                 secret:
-                  secretName: pepr-{{ .Values.uuid }}-tls
+                  secretName: {{ .Values.uuid }}-tls
               - name: api-token
                 secret:
-                  secretName: pepr-{{ .Values.uuid }}-api-token
+                  secretName: {{ .Values.uuid }}-api-token
               - name: module
                 secret:
-                  secretName: pepr-{{ .Values.uuid }}-module  
+                  secretName: {{ .Values.uuid }}-module  
     `;
 }
