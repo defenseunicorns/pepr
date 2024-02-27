@@ -32,8 +32,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         { name: "PEPR_WATCH_MODE", value: "false" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
-        { name: "MY_CUSTOM_VAR", value: "example-value" },
-        { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
+        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
+        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
@@ -78,8 +78,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         { name: "PEPR_WATCH_MODE", value: "true" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
-        { name: "MY_CUSTOM_VAR", value: "example-value" },
-        { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
+        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
+        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
