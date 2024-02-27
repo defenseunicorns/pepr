@@ -59,13 +59,15 @@ export default function (program: RootCmd) {
               const uid = payload.uid;
 
               if (isMutate) {
-                const patch = atob(payload.res.patch) || "";
+                const plainPatch = atob(payload.res.patch) || "";
+                const patch = JSON.stringify(JSON.parse(plainPatch), null, 2);
+
                 const patchType = payload.res.patchType || payload.res.warnings || "";
 
                 const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
                 if (patchType.length > 0) {
-                  console.log(`\n               \u001b[1;34m${patchType} ${patch}\u001b[0m`);
+                  console.log(`\n\u001b[1;34m${patchType}\n${patch}\u001b[0m`);
                 }
               } else {
                 const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
@@ -76,7 +78,7 @@ export default function (program: RootCmd) {
                 // console.log(`${name} (${uid}) | VALIDATE | ${allow ? "ALLOW" : "DENY"}`);
                 if (filteredFailures.length > 0) {
                   console.log(`\n❌  VALIDATE   ${name} (${uid})`);
-                  console.debug(`               \u001b[1;31m${filteredFailures}\u001b[0m`);
+                  console.debug(`\u001b[1;31m${filteredFailures}\u001b[0m`);
                 } else {
                   console.log(`\n✅  VALIDATE   ${name} (${uid})`);
                 }
