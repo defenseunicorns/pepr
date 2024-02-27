@@ -1,0 +1,58 @@
+# Customization
+
+This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
+
+## Customizing with Helm
+
+Below are the available Helm override configurations.
+
+### Helm Overrides Table
+
+| Parameter                       | Description                                | Example Values                                 |
+|---------------------------------|--------------------------------------------|------------------------------------------------|
+| `secrets.apiToken`              | Kube API-Server Token.                     | `Buffer.from(apiToken).toString("base64")`     |
+| `hash`                          | Unique hash for deployment. Don't change.  | `<your_hash>`                                  |
+| `namespace.annotations`         | Namespace annotations                      | `{}`                                           |
+| `namespace.labels`              | Namespace labels                           | `{"pepr.dev": ""}`                             |
+| `uuid`                          | Unique identifier for the module           | `hub-operator`                                 |
+| `admission.*`                   | Admission controller configurations        | Various, see subparameters below               |
+| `watcher.*`                     | Watcher configurations                     | Various, see subparameters below               |
+
+### Admission and Watcher Subparameters
+
+| Subparameter                                 | Description                               |
+|----------------------------------------------|-------------------------------------------|
+| `failurePolicy`                              | Wehook failurePolicy [ Ignore | Fail ]    |
+| `webhookTimeout`                             | timeoutSeconds for webhooks [1 - 30]      |
+| `env`                                        | Container Environment Variables           |
+| `image`                                      | Container image                           |
+| `annotations`                                | Deployment Annotations                    |
+| `labels`                                     | Deployment labels                         |
+| `securityContext`, `resources`               | Pod Security context                      |
+| `resources`                                  | Resource limits                           |
+| `containerSecurityContext`                   | Container's securityContent               |
+| `nodeSelector`                               | Node selection constraint                 |
+| `tolerations`                                | Tolerations to taints                     |
+| `affinity`                                   | Node scheduling options                   |
+
+Note: Replace `*` with `admission` or `watcher` as needed to apply settings specifically for each part.
+
+## Customizing with package.json
+
+Below are the available configurations through `package.json`.
+
+### package.json Configurations Table
+
+| Field            | Description                           | Example Values                  |
+|------------------|---------------------------------------|---------------------------------|
+| `name`           | User defined name of module           | `pepr-test-module`              |
+| `uuid`           | Unique identifier for the module      | `hub-operator`                  |
+| `onError`        | Behavior of webhook failurePolicy     | `reject` | `ignore`             |
+| `webhookTimeout` | Webhook timeout in seconds            | `1` - `30`                      |
+| `customLabels`   | Custom labels for namespaces          | `{namespace: {}}`               |
+| `alwaysIgnore`   | Conditions to always ignore           | `{namespaces: [], labels: []}`  |
+| `includedFiles`  | For working with WebAssembly          | ["main.wasm","wasm_exec.js"]    |
+| `env`            | Environment variables container       | `{LOG_LEVEL: "warn",}`          |
+
+These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
+
