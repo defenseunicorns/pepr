@@ -29,7 +29,7 @@ describe("Kubernetes Template Generators", () => {
       const result = watcherDeployTemplate();
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
-      expect(result).toContain("name: pepr-{{ .Values.uuid }}-watcher");
+      expect(result).toContain("name: {{ .Values.uuid }}-watcher");
     });
   });
 
@@ -38,7 +38,7 @@ describe("Kubernetes Template Generators", () => {
       const result = admissionDeployTemplate();
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
-      expect(result).toContain("name: pepr-{{ .Values.uuid }}");
+      expect(result).toContain("name: {{ .Values.uuid }}");
     });
   });
 });

@@ -53,7 +53,7 @@ export function watcherDeployTemplate() {
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: pepr-{{ .Values.uuid }}-watcher
+        name: {{ .Values.uuid }}-watcher
         namespace: pepr-system
         annotations:
           {{- toYaml .Values.watcher.annotations | nindent 4 }}
@@ -65,14 +65,14 @@ export function watcherDeployTemplate() {
           type: Recreate
         selector:
           matchLabels:
-            app: pepr-{{ .Values.uuid }}-watcher
+            app: {{ .Values.uuid }}-watcher
             pepr.dev/controller: watcher
         template:
           metadata:
             annotations: 
               buildTimestamp: "${Date.now()}"
             labels:
-              app: pepr-{{ .Values.uuid }}-watcher
+              app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
           spec:
             serviceAccountName: {{ .Values.uuid }}
@@ -126,7 +126,7 @@ export function admissionDeployTemplate() {
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: pepr-{{ .Values.uuid }}
+        name: {{ .Values.uuid }}
         namespace: pepr-system
         annotations:
           {{- toYaml .Values.admission.annotations | nindent 4 }}
@@ -136,14 +136,14 @@ export function admissionDeployTemplate() {
         replicas: 2
         selector:
           matchLabels:
-            app: pepr-{{ .Values.uuid }}
+            app: {{ .Values.uuid }}
             pepr.dev/controller: admission
         template:
           metadata:
             annotations:
               buildTimestamp: "${Date.now()}"
             labels:
-              app: pepr-{{ .Values.uuid }}
+              app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
             priorityClassName: system-node-critical
