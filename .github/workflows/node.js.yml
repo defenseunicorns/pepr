@@ -47,6 +47,10 @@ jobs:
         with:
           node-version: latest
           cache: "npm"
+      - name: Set up Helm
+        uses: helm/setup-helm@v3
+        with:
+          version: '3.x' 
       - name: "Install K3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
