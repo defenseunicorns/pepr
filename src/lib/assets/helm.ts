@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 export function nsTemplate() {
-  return `
+    return `
     apiVersion: v1
     kind: Namespace
     metadata:
@@ -17,8 +17,8 @@ export function nsTemplate() {
         {{- end }}
     `;
 }
-export function admissionServiceTemplate() {
-  return `
+export function admissionSVCTemplate() {
+    return `
       apiVersion: v1
       kind: Service
       metadata:
@@ -35,8 +35,8 @@ export function admissionServiceTemplate() {
             targetPort: 3000
     `;
 }
-export function helmWatcherService() {
-  return `
+export function watcherSVCTemplate() {
+    return `
       apiVersion: v1
       kind: Service
       metadata:
@@ -54,98 +54,9 @@ export function helmWatcherService() {
     `;
 }
 
-export function mutatingWebhookConfiguration() {
-  return `
-    apiVersion: admissionregistration.k8s.io/v1
-    kind: MutatingWebhookConfiguration
-    metadata:
-        name: pepr-e64f19bc-52ce-5472-9add-4a0b6080c360
-    webhooks:
-        - name: pepr-e64f19bc-52ce-5472-9add-4a0b6080c360.pepr.dev
-        admissionReviewVersions:
-            - v1
-            - v1beta1
-        clientConfig:
-            caBundle: >-
-            LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDdERDQ0FaeWdBd0lCQWdJQkFUQU5CZ2txaGtpRzl3MEJBUXNGQURBY01Sb3dHQVlEVlFRREV4RlFaWEJ5DQpJRVZ3YUdWdFpYSmhiQ0JEUVRBZUZ3MHlOREF5TWpReE5ESTNNVE5hRncweU5UQXlNalF4TkRJM01UTmFNQUF3DQpnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDS2MvQTRJTXo2Qk1xc29oNUxOcFFpDQpKUjlnMkQ5Rk9CME5oNGV2ajdyMDBFYjBvby9oRFpXRS9RbHNlVzRUWGdxY2ZMWTRKVU5HQUtLbndRVG5MMzdyDQp1VDlpRm9xSlBUY0V3dGxFQnlZOVpRRzJqM2x4TE5hV1lEaDY1YThwU09TSE5XTXZOOFVyS29Fb0pEc0o1S0dEDQpvZC9icC9LQjVZTFk1SFlqd1BKUDVoYkR6SnBzNlgzMkxON3dzck9BSVA2dEt2VmtRTExRVFhPNFdFVWhONTR6DQpydlB6WUFrNEtwLy95OGdrN0xyTU5JT3VCVG9XaGttQVJCMjJUemI1SStHbUZ4MGYzdlRRTFg4MVFnaDZPbDgzDQpnV2E5THpCeEI4QU1sTk5UR2RyNzQ3YWFpamFBcWQrSFJjcDRJMnFhUUJ6REpPaHRoaEQ5NXh6WFJ3NWNsTFdkDQpBZ01CQUFHakhUQWJNQXdHQTFVZEV3UUZNQU1CQWY4d0N3WURWUjBQQkFRREFnTDBNQTBHQ1NxR1NJYjNEUUVCDQpDd1VBQTRJQkFRQTV5MUdVbDVWNVRrRTdXSk51UTZDZDJ6WnVUWlFCbHRnaytZTnZsN0dibjZmWlhML1lSTjEwDQp4a0V3aytKR3QyN05EeHA0ZFZBYzluU3BwYXc2blU2a2o3c0tYc0s0MWNreGJSOU5nSGgrUVR3MEhIcUFNbEtBDQpFUldHUWg1N1paVlEwbWFTTFk1ZUdEMXQ5VVJYc0RRTzFrZmtBQXhqSUppWGZiamVpQVVsZDBETVk5MnY1SmtBDQpVT3p4VWhpeGZqRFpyOTdkOG1rb1JwQ1J0TTZOREtGaHdHdTVKK0U1VVlvdHVQRzd1K0puUE9ZMHhFaTlIVXExDQpXb3Fkam9rdlNmUHlRTkxHL0hVWnVDOW5IWjBqMTRLeDhQRDUyVHFFckEvWHpJSlh1OWFKVWpNOGhYMkdGcHZ2DQpBRzVpQjdZRWhxaXpSZnM4VGNmc1BIeU81RVpTOFREVA0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ0K
-            service:
-            name: pepr-e64f19bc-52ce-5472-9add-4a0b6080c360
-            namespace: pepr-system
-            path: >-
-                /mutate/9cbbce8b676103fe4539a320e328a3ebad4aff662b058a0ae2090217f1ce57f8
-        failurePolicy: Fail
-        matchPolicy: Equivalent
-        timeoutSeconds: 10
-        namespaceSelector:
-            matchExpressions:
-            - key: pepr.dev
-                operator: NotIn
-                values:
-                - ignore
-            - key: kubernetes.io/metadata.name
-                operator: NotIn
-                values:
-                - kube-system
-                - pepr-system
-        objectSelector:
-            matchExpressions:
-            - key: pepr.dev
-                operator: NotIn
-                values:
-                - ignore
-            - key: kubernetes.io/metadata.name
-                operator: NotIn
-                values:
-                - kube-system
-                - pepr-system
-        rules:
-            - apiGroups:
-                - ''
-            apiVersions:
-                - v1
-            operations:
-                - CREATE
-            resources:
-                - namespaces
-            - apiGroups:
-                - ''
-            apiVersions:
-                - v1
-            operations:
-                - CREATE
-            resources:
-                - configmaps
-            - apiGroups:
-                - ''
-            apiVersions:
-                - v1
-            operations:
-                - CREATE
-                - UPDATE
-            resources:
-                - configmaps
-            - apiGroups:
-                - ''
-            apiVersions:
-                - v1
-            operations:
-                - CREATE
-            resources:
-                - secrets
-            - apiGroups:
-                - pepr.dev
-            apiVersions:
-                - v1
-            operations:
-                - CREATE
-            resources:
-                - unicorns
-        sideEffects: None
-    `;
-}
 
 export function apiTokenSecret() {
-  return `
+    return `
       apiVersion: v1
       kind: Secret
       metadata:
@@ -159,7 +70,7 @@ export function apiTokenSecret() {
 }
 
 export function helmRoleBinding() {
-  return `
+    return `
       apiVersion: rbac.authorization.k8s.io/v1
       kind: RoleBinding
       metadata:
@@ -177,7 +88,7 @@ export function helmRoleBinding() {
 }
 
 export function helmClusterRoleBinding() {
-  return `
+    return `
       apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRoleBinding
       metadata:
@@ -193,7 +104,7 @@ export function helmClusterRoleBinding() {
     `;
 }
 export function helmServiceAccount() {
-  return `
+    return `
       apiVersion: v1
       kind: ServiceAccount
       metadata:
@@ -202,7 +113,7 @@ export function helmServiceAccount() {
     `;
 }
 export function chartYaml(name: string, description?: string) {
-  return `
+    return `
       apiVersion: v2
       name: ${name}
       description: ${description || ""}
@@ -231,17 +142,17 @@ export function chartYaml(name: string, description?: string) {
     `;
 }
 
-export function helmWatcherDeployment() {
-  return `
+export function watcherDeployTemplate() {
+    return `
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: pepr-{{ .Values.uuid }}-watcher
         namespace: pepr-system
         annotations:
-          {{- toYaml .Values.admission.annotations | nindent 4 }}
+          {{- toYaml .Values.watcher.annotations | nindent 4 }}
         labels:
-          {{- toYaml .Values.admission.labels | nindent 4 }}
+          {{- toYaml .Values.watcher.labels | nindent 4 }}
       spec:
         replicas: 1
         strategy:
@@ -252,6 +163,8 @@ export function helmWatcherDeployment() {
             pepr.dev/controller: watcher
         template:
           metadata:
+            annotations: 
+              buildTimestamp: ${Date.now()}
             labels:
               app: pepr-{{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
@@ -266,7 +179,7 @@ export function helmWatcherDeployment() {
                 command:
                   - node
                   - /app/node_modules/pepr/dist/controller.js
-                  - {{ .Values.watcher.image }}
+                  - {{ .Values.hash }}
                 readinessProbe:
                   httpGet:
                     path: /healthz
@@ -279,12 +192,12 @@ export function helmWatcherDeployment() {
                     scheme: HTTPS
                 ports:
                   - containerPort: 3000
-                  resources:
-                  {{- toYaml .Values.admission.resources | nindent 10 }}
+                resources:
+                  {{- toYaml .Values.watcher.resources | nindent 12 }}
                 env:
-                  {{- toYaml .Values.admission.env | nindent 10 }}
+                  {{- toYaml .Values.watcher.env | nindent 12 }}
                 securityContext:
-                  {{- toYaml .Values.admission.containerSecurityContext | nindent 10 }}
+                  {{- toYaml .Values.watcher.containerSecurityContext | nindent 12 }}
                 volumeMounts:
                   - name: tls-certs
                     mountPath: /etc/certs
@@ -302,8 +215,8 @@ export function helmWatcherDeployment() {
     `;
 }
 
-export function helmAdmissionDeployment() {
-  return `
+export function admissionDeployTemplate() {
+    return `
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -322,7 +235,7 @@ export function helmAdmissionDeployment() {
         template:
           metadata:
             annotations:
-              
+              buildTimestamp: ${Date.now()}
             labels:
               app: pepr-{{ .Values.uuid }}
               pepr.dev/controller: admission
@@ -352,11 +265,11 @@ export function helmAdmissionDeployment() {
                 ports:
                   - containerPort: 3000
                 resources:
-                  {{- toYaml .Values.admission.resources | nindent 10 }}
+                  {{- toYaml .Values.admission.resources | nindent 12 }}
                 env:
-                  {{- toYaml .Values.admission.env | nindent 10 }}
+                  {{- toYaml .Values.admission.env | nindent 12 }}
                 securityContext:
-                  {{- toYaml .Values.admission.containerSecurityContext | nindent 10 }}
+                  {{- toYaml .Values.admission.containerSecurityContext | nindent 12 }}
                 volumeMounts:
                   - name: tls-certs
                     mountPath: /etc/certs

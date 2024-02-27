@@ -4,7 +4,7 @@
 import { CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
-import { parseTimeout, secretOverLimit } from "./helpers";
+import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import * as commander from "commander";
 import { promises as fs } from "fs";
 
@@ -876,18 +876,16 @@ describe('dedent', () => {
       `;
     var inputArray = dedent(input).split(/\r?\n/);
 
-    expect(inputArray[1]).toBe("kind: Namespace");
-    expect(inputArray[2]).toBe("metadata:");
-    expect(inputArray[3]).toBe("  name: pepr-system");
+    expect(inputArray[0]).toBe("kind: Namespace");
+    expect(inputArray[1]).toBe("metadata:");
+    expect(inputArray[2]).toBe("  name: pepr-system");
   });
 
 
   test('does not remove internal spacing of lines', () => {
-    const input = `
-      kind: ->>>      Namespace
-      `;
+    const input = `kind: ->>>      Namespace`;
 
-    expect(dedent(input)).toBe("\nkind: ->>>      Namespace\n");
+    expect(dedent(input)).toBe("kind: ->>>      Namespace");
   });
 
   test('handles strings without leading whitespace consistently', () => {
@@ -903,5 +901,47 @@ metadata:`;
     const input = ``;
     const expected = ``;
     expect(dedent(input)).toBe(expected);
+  });
+});
+
+describe('replaceString', () => {
+  test('replaces single instance of a string', () => {
+    const original = 'Hello, world!';
+    const stringA = 'world';
+    const stringB = 'Jest';
+    const expected = 'Hello, Jest!';
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test('replaces multiple instances of a string', () => {
+    const original = 'Repeat, repeat, repeat';
+    const stringA = 'repeat';
+    const stringB = 'done';
+    const expected = 'Repeat, done, done';
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test('does nothing if string to replace is not found', () => {
+    const original = 'Nothing changes here';
+    const stringA = 'absent';
+    const stringB = 'present';
+    const expected = 'Nothing changes here';
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test('escapes special regex characters in string to be replaced', () => {
+    const original = 'Find the period.';
+    const stringA = '.';
+    const stringB = '!';
+    const expected = 'Find the period!';
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test('replaces string with empty string if stringB is empty', () => {
+    const original = 'Remove this part.';
+    const stringA = ' this part';
+    const stringB = '';
+    const expected = 'Remove.';
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 });

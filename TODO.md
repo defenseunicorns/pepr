@@ -5,12 +5,12 @@ Progress
 - [x] Watcher Deployment
 - [x] Admission Deployment
 - [x] service (admission)
-- [ ] service (watcher)
+- [x] service (watcher)
 - [x] serviceAccount
 - [ ] secret module
 - [x] namespace
-- [ ] mutatingwebhookconfig
-- [ ] validatingwebhookconfiguration 
+- [x] mutatingwebhookconfig
+- [x] validatingwebhookconfiguration 
 - [ ] role (not configurable)
 - [ ] clusterrole
 - [x] clusterrolebinding

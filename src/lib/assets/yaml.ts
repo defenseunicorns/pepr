@@ -31,7 +31,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       ],
       image,
       annotations: {
-        "pepr.dev/description": config.description || "",
+        "pepr.dev/description": `"${config.description}"` || "",
       },
       labels: {
         app: name,
@@ -75,7 +75,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       ],
       image,
       annotations: {
-        "pepr.dev/description": config.description || "",
+        "pepr.dev/description": `"${config.description}"` || "",
       },
       labels: {
         app: `${name}-watcher`,
