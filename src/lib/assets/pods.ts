@@ -11,17 +11,27 @@ import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
 export function namespace(namespaceLabels?: Record<string, string>) {
-  return {
-    apiVersion: "v1",
-    kind: "Namespace",
-    metadata: {
-      name: "pepr-system",
-      labels: namespaceLabels ?? {},
-    },
-  };
+  if (namespaceLabels) {
+    return {
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name: "pepr-system",
+        labels: namespaceLabels ?? {},
+      },
+    };
+  } else {
+    return {
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name: "pepr-system",
+      },
+    };
+  }
 }
 
-export function watcher(assets: Assets, hash: string) {
+export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
   const { name, image, capabilities, config } = assets;
 
   let hasSchedule = false;
@@ -73,7 +83,7 @@ export function watcher(assets: Assets, hash: string) {
       template: {
         metadata: {
           annotations: {
-            buildTimestamp: `${Date.now()}`,
+            buildTimestamp: `${buildTimestamp}`,
           },
           labels: {
             app,
@@ -167,7 +177,7 @@ export function watcher(assets: Assets, hash: string) {
   };
 }
 
-export function deployment(assets: Assets, hash: string): kind.Deployment {
+export function deployment(assets: Assets, hash: string, buildTimestamp: string): kind.Deployment {
   const { name, image, config } = assets;
   const app = name;
 
@@ -197,7 +207,7 @@ export function deployment(assets: Assets, hash: string): kind.Deployment {
       template: {
         metadata: {
           annotations: {
-            buildTimestamp: `${Date.now()}`,
+            buildTimestamp: `${buildTimestamp}`,
           },
           labels: {
             app,
