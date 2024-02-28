@@ -28,7 +28,7 @@ Below are the available Helm override configurations.
 | `image`                                      | Container image                              |
 | `annotations`                                | Deployment annotations                       |
 | `labels`                                     | Deployment labels                            |
-| `securityContext`, `resources`               | Pod security context                         |
+| `securityContext`                            | Pod security context                         |
 | `resources`                                  | Resource limits                              |
 | `containerSecurityContext`                   | Container's security context                 |
 | `nodeSelector`                               | Node selection constraints                   |
