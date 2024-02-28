@@ -4,7 +4,7 @@ This document outlines how to customize the build output through Helm overrides 
 
 ## Customizing with Helm
 
-Below are the available Helm override configurations.
+Below are the available Helm override configurations after you have built your Pepr module that you can put in the `values.yaml`.
 
 ### Helm Overrides Table
 
