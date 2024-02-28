@@ -8,7 +8,9 @@
     "onError": "reject",
     "logLevel": "debug",
     "customLabels": {
-      "namespace": {}
+      "namespace": {
+        "pepr.dev": ""
+      }
     },
     "alwaysIgnore": {
       "namespaces": [],

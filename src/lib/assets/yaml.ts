@@ -11,6 +11,118 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
+// Helm Chart overrides file (values.yaml) generated from assets
+export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+  const overrides = {
+    secrets: {
+      apiToken: Buffer.from(apiToken).toString("base64"),
+    },
+    hash,
+    namespace: {
+      annotations: {},
+      labels: {
+        "pepr.dev": "",
+      },
+    },
+    uuid: name,
+    admission: {
+      failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
+      webhookTimeout: config.webhookTimeout,
+      env: [
+        { name: "PEPR_WATCH_MODE", value: "false" },
+        { name: "PEPR_PRETTY_LOG", value: "false" },
+        { name: "LOG_LEVEL", value: "debug" },
+        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
+        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
+      ],
+      image,
+      annotations: {
+        "pepr.dev/description": `${config.description}` || "",
+      },
+      labels: {
+        app: name,
+        "pepr.dev/controller": "admission",
+        "pepr.dev/uuid": config.uuid,
+      },
+      securityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        fsGroup: 65532,
+      },
+      resources: {
+        requests: {
+          memory: "64Mi",
+          cpu: "100m",
+        },
+        limits: {
+          memory: "256Mi",
+          cpu: "500m",
+        },
+      },
+      containerSecurityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ["ALL"],
+        },
+      },
+      nodeSelector: {},
+      tolerations: [],
+      affinity: {},
+    },
+    watcher: {
+      env: [
+        { name: "PEPR_WATCH_MODE", value: "true" },
+        { name: "PEPR_PRETTY_LOG", value: "false" },
+        { name: "LOG_LEVEL", value: "debug" },
+        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
+        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
+      ],
+      image,
+      annotations: {
+        "pepr.dev/description": `${config.description}` || "",
+      },
+      labels: {
+        app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
+        "pepr.dev/uuid": config.uuid,
+      },
+      securityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        fsGroup: 65532,
+      },
+      resources: {
+        requests: {
+          memory: "64Mi",
+          cpu: "100m",
+        },
+        limits: {
+          memory: "256Mi",
+          cpu: "500m",
+        },
+      },
+      containerSecurityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ["ALL"],
+        },
+      },
+      nodeSelector: {},
+      tolerations: [],
+      affinity: {},
+    },
+  };
+
+  await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
+}
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
@@ -45,11 +157,11 @@ export async function allYaml(assets: Assets, rbacMode: string) {
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
-  const hash = crypto.createHash("sha256").update(code).digest("hex");
+  assets.hash = crypto.createHash("sha256").update(code).digest("hex");
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, hash);
+  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -58,10 +170,10 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, hash),
+    deployment(assets, assets.hash, assets.buildTimestamp),
     service(name),
     watcherService(name),
-    moduleSecret(name, code, hash),
+    moduleSecret(name, code, assets.hash),
     storeRole(name),
     storeRoleBinding(name),
   ];
