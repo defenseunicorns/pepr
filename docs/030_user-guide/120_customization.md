@@ -15,8 +15,8 @@ Below are the available Helm override configurations after you have built your P
 | `namespace.annotations`         | Namespace annotations                     | `{}`                                           |
 | `namespace.labels`              | Namespace labels                          | `{"pepr.dev": ""}`                             |
 | `uuid`                          | Unique identifier for the module          | `hub-operator`                                 |
-| `admission.*`                   | Admission controller configurations       | Various, see subparameters below              |
-| `watcher.*`                     | Watcher configurations                    | Various, see subparameters below              |
+| `admission.*`                   | Admission controller configurations       | Various, see subparameters below               |
+| `watcher.*`                     | Watcher configurations                    | Various, see subparameters below               |
 
 ### Admission and Watcher Subparameters
 
