@@ -105,7 +105,7 @@ export class Assets {
       await overridesFile(this, valuesPath);
 
       // create the chart.yaml
-      await fs.writeFile(chartPath, chartYaml(this.config.uuid, this.config.description || ""));
+      await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
 
       // create the namespace.yaml in templates
       await fs.writeFile(nsPath, dedent(nsTemplate()));
