@@ -47,7 +47,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   }
 
   // Test for matching namespaces
-  if (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) {
+  if (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "") || !namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0) {
     logger.debug("Namespace does not match");
     return true;
   }
