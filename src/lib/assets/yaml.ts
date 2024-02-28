@@ -11,7 +11,7 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
-// Overrides file generated from assets
+// Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
   const overrides = {
     secrets: {
