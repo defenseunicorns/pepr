@@ -165,8 +165,6 @@ export class Assets {
       if (watchDeployment) {
         await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
       }
-
-      //fs.writeFile(_)
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);
       process.exit(1);
