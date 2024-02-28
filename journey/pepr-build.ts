@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
+import { loadAllYaml } from "@kubernetes/client-node";
 import { expect, it } from "@jest/globals";
 import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-
+import { V1ObjectMeta, KubernetesObject } from '@kubernetes/client-node';
 import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
   it("should successfully build the Pepr project", async () => {
     execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
+    validateHelmChart();
   });
 
   it("should generate produce the K8s yaml file", async () => {
@@ -24,6 +25,24 @@ export function peprBuild() {
   });
 }
 
+async function validateHelmChart() {
+
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const helmOutput = execSync('helm template .', { cwd: `${cwd}/dist/static-test-chart` }).toString();
+
+  const helmParsed = parseYAMLToJSON(helmOutput);
+  const k8sParsed = parseYAMLToJSON(k8sYaml);
+
+  expect(helmParsed).not.toBeNull();
+  expect(k8sParsed).not.toBeNull();
+
+  if (helmParsed && k8sParsed) {
+    const helmJSON = sortKubernetesObjects(helmParsed);
+    const expectedJSON = sortKubernetesObjects(k8sParsed);
+
+    expect(helmJSON.toString()).toBe(expectedJSON.toString());
+  }
+}
 async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
@@ -70,4 +89,22 @@ async function validateZarfYaml() {
   expect(k8sYaml).toMatch(`value: example-value`);
   expect(k8sYaml).toMatch(`name: ZARF_VAR`);
   expect(k8sYaml).toMatch(`value: '###ZARF_VAR_THING###'`);
+}
+
+function parseYAMLToJSON(yamlContent: string): KubernetesObject[] | null {
+  try {
+    return loadAllYaml(yamlContent);
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+function sortKubernetesObjects(objects: KubernetesObject[]): KubernetesObject[] {
+  return objects.sort((a, b) => {
+      if (a?.kind !== b?.kind) {
+          return (a?.kind ?? '').localeCompare(b?.kind ?? '');
+      }
+      return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? '').localeCompare((b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? '');
+  });
 }

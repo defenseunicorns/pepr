@@ -104,13 +104,13 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   await K8s(kind.Secret).Apply(apiToken, { force });
 
   Log.info("Applying deployment");
-  const dep = deployment(assets, hash);
+  const dep = deployment(assets, hash, assets.buildTimestamp);
   await K8s(kind.Deployment).Apply(dep, { force });
 }
 
 async function setupWatcher(assets: Assets, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
-  const watchDeployment = watcher(assets, hash);
+  const watchDeployment = watcher(assets, hash, assets.buildTimestamp);
   if (watchDeployment) {
     Log.info("Applying watcher deployment");
     await K8s(kind.Deployment).Apply(watchDeployment, { force });
