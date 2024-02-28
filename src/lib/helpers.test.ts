@@ -4,9 +4,10 @@
 import { CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
-import { parseTimeout, secretOverLimit } from "./helpers";
+import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import * as commander from "commander";
 import { promises as fs } from "fs";
+
 import {
   createDirectoryIfNotExists,
   hasAnyOverlap,
@@ -15,6 +16,7 @@ import {
   bindingAndCapabilityNSConflict,
   generateWatchNamespaceError,
   namespaceComplianceValidator,
+  dedent,
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
@@ -861,5 +863,83 @@ describe("secretOverLimit", () => {
   test("should return false for a string smaller than 1MiB", () => {
     const smallString = "a".repeat(1048575);
     expect(secretOverLimit(smallString)).toBe(false);
+  });
+});
+
+describe("dedent", () => {
+  test("removes leading spaces based on the smallest indentation", () => {
+    const input = `
+      kind: Namespace
+      metadata:
+        name: pepr-system
+      `;
+    const inputArray = dedent(input).split(/\r?\n/);
+
+    expect(inputArray[0]).toBe("kind: Namespace");
+    expect(inputArray[1]).toBe("metadata:");
+    expect(inputArray[2]).toBe("  name: pepr-system");
+  });
+
+  test("does not remove internal spacing of lines", () => {
+    const input = `kind: ->>>      Namespace`;
+
+    expect(dedent(input)).toBe("kind: ->>>      Namespace");
+  });
+
+  test("handles strings without leading whitespace consistently", () => {
+    const input = `kind: Namespace
+metadata:`;
+
+    const inputArray = dedent(input).split(/\r?\n/);
+    expect(inputArray[0]).toBe("kind: Namespace");
+    expect(inputArray[1]).toBe("metadata:");
+  });
+
+  test("handles empty strings without crashing", () => {
+    const input = ``;
+    const expected = ``;
+    expect(dedent(input)).toBe(expected);
+  });
+});
+
+describe("replaceString", () => {
+  test("replaces single instance of a string", () => {
+    const original = "Hello, world!";
+    const stringA = "world";
+    const stringB = "Jest";
+    const expected = "Hello, Jest!";
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test("replaces multiple instances of a string", () => {
+    const original = "Repeat, repeat, repeat";
+    const stringA = "repeat";
+    const stringB = "done";
+    const expected = "Repeat, done, done";
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test("does nothing if string to replace is not found", () => {
+    const original = "Nothing changes here";
+    const stringA = "absent";
+    const stringB = "present";
+    const expected = "Nothing changes here";
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test("escapes special regex characters in string to be replaced", () => {
+    const original = "Find the period.";
+    const stringA = ".";
+    const stringB = "!";
+    const expected = "Find the period!";
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+
+  test("replaces string with empty string if stringB is empty", () => {
+    const original = "Remove this part.";
+    const stringA = " this part";
+    const stringB = "";
+    const expected = "Remove.";
+    expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 });
