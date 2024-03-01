@@ -46,8 +46,11 @@ export default function (program: RootCmd) {
         webhook.image = opts.image;
       }
 
+      // Identify conf'd webhookTimeout to give to deploy call
+      const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10
+
       try {
-        await webhook.deploy(opts.force);
+        await webhook.deploy(opts.force, timeout);
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
