@@ -92,9 +92,14 @@ async function runBinding(binding: Binding) {
       // If the type matches the phase, call the watch callback
       if (phaseMatch.includes(type)) {
         try {
-          queue.setReconcile(async () => await binding.watchCallback?.(obj, type));
-          // Enqueue the object for reconciliation through callback
-          await queue.enqueue(obj);
+          if (
+            !binding.filters.namespaces ||
+            (binding.filters.namespaces && binding.filters.namespaces.includes(obj.metadata.namespace))
+          ) {
+            queue.setReconcile(async () => await binding.watchCallback?.(obj, type));
+            // Enqueue the object for reconciliation through callback
+            await queue.enqueue(obj);
+          }
         } catch (e) {
           // Errors in the watch callback should not crash the controller
           Log.error(e, "Error executing watch callback");
@@ -109,8 +114,13 @@ async function runBinding(binding: Binding) {
       // If the type matches the phase, call the watch callback
       if (phaseMatch.includes(type)) {
         try {
-          // Perform the watch callback
-          await binding.watchCallback?.(obj, type);
+          if (
+            !binding.filters.namespaces ||
+            (binding.filters.namespaces && binding.filters.namespaces.includes(obj.metadata.namespace))
+          ) {
+            // Perform the watch callback
+            await binding.watchCallback?.(obj, type);
+          }
         } catch (e) {
           // Errors in the watch callback should not crash the controller
           Log.error(e, "Error executing watch callback");
