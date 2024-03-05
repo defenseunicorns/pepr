@@ -60,6 +60,7 @@ export const filterMatcher = (
 
   // obj is in the capability namespaces
   if (
+    Array.isArray(capabilityNamespaces) &&
     capabilityNamespaces.length > 0 &&
     obj.metadata &&
     obj.metadata.namespace &&
@@ -70,8 +71,10 @@ export const filterMatcher = (
 
   // every filter namespace is a capability namespace
   if (
+    Array.isArray(capabilityNamespaces) &&
     capabilityNamespaces.length > 0 &&
     binding.filters &&
+    Array.isArray(binding.filters.namespaces) &&
     binding.filters.namespaces.length > 0 &&
     !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
   ) {
@@ -81,6 +84,7 @@ export const filterMatcher = (
   // filter namespace is not the same of object namespace
   if (
     binding.filters &&
+    Array.isArray(binding.filters.namespaces) &&
     binding.filters.namespaces.length > 0 &&
     obj.metadata &&
     obj.metadata.namespace &&
