@@ -15,8 +15,6 @@ export interface CustomLabels {
 }
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
-  /** The user-defined name for the module */
-  name: string;
   /** The Pepr version this module uses */
   peprVersion?: string;
   /** The user-defined version of the module */
