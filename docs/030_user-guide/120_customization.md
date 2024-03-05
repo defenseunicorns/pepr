@@ -45,7 +45,6 @@ Below are the available configurations through `package.json`.
 
 | Field            | Description                            | Example Values                  |
 |------------------|----------------------------------------|---------------------------------|
-| `name`           | User-defined name of the module        | `pepr-test-module`              |
 | `uuid`           | Unique identifier for the module       | `hub-operator`                  |
 | `onError`        | Behavior of the webhook failure policy | `reject`, `ignore`              |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
