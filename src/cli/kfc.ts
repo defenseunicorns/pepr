@@ -11,7 +11,6 @@ export default function (program: RootCmd) {
     .command("kfc crd [source] [dest]")
     .description("Generate class to handle CRD")
     .action(async (source, dest) => {
-
       const { confirm } = await prompt({
         type: "confirm",
         name: "confirm",
@@ -39,4 +38,4 @@ export default function (program: RootCmd) {
         process.exit(1);
       }
     });
-  }
+}
