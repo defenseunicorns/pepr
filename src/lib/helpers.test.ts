@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists } from "./helpers";
+import { Binding, CapabilityExport } from "./types";
+import { createRBACMap, addVerbIfNotExists, checkOverlap, filterMatcher } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import * as commander from "commander";
@@ -941,5 +941,136 @@ describe("replaceString", () => {
     const stringB = "";
     const expected = "Remove.";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
+  });
+});
+
+describe("checkOverlap", () => {
+  test("returns true if first record is empty", () => {
+    expect(checkOverlap({}, { key1: "value1" })).toBe(true);
+  });
+
+  test("returns false if there is no overlap", () => {
+    expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
+  });
+
+  test("returns true if there is an overlap", () => {
+    expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
+  });
+
+  test("returns false if keys match but values do not", () => {
+    expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
+  });
+
+  test("returns true if first record is empty and second record is also empty", () => {
+    expect(checkOverlap({}, {})).toBe(true);
+  });
+});
+
+describe("filterMatcher", () => {
+  test("returns namespace filter error for namespace objects with namespace filters", () => {
+    const binding = {
+      kind: { kind: "Namespace" },
+      filters: { namespaces: ["ns1"] },
+    };
+    const obj = {};
+    const capabilityNamespaces: string[] = [];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("Cannot use a namespace filter in a namespace object");
+  });
+
+  test("returns label overlap error when there is no overlap between binding and object labels", () => {
+    const binding = {
+      filters: { labels: { key: "value" } },
+    };
+    const obj = {
+      metadata: { labels: { anotherKey: "anotherValue" } },
+    };
+    const capabilityNamespaces: string[] = [];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("No overlap between binding and object labels");
+  });
+
+  test("returns annotation overlap error when there is no overlap between binding and object annotations", () => {
+    const binding = {
+      filters: { annotations: { key: "value" } },
+    };
+    const obj = {
+      metadata: { annotations: { anotherKey: "anotherValue" } },
+    };
+    const capabilityNamespaces: string[] = [];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("No overlap between binding and object annotations");
+  });
+
+  test("returns capability namespace error when object is not in capability namespaces", () => {
+    const binding = {};
+    const obj = {
+      metadata: { namespace: "ns2" },
+    };
+    const capabilityNamespaces = ["ns1"];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("No overlap between capability namespace and object");
+  });
+
+  test("returns binding namespace error when filter namespace is not part of capability namespaces", () => {
+    const binding = {
+      filters: { namespaces: ["ns3"] },
+    };
+    const obj = {};
+    const capabilityNamespaces = ["ns1", "ns2"];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("Binding namespace is not part of capability namespaces");
+  });
+
+  test("returns binding and object namespace error when they do not overlap", () => {
+    const binding = {
+      filters: { namespaces: ["ns1"] },
+    };
+    const obj = {
+      metadata: { namespace: "ns2" },
+    };
+    const capabilityNamespaces = ["ns1", "ns2"];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("No overlap between binding namespace and object");
+  });
+
+  test("returns empty string when all checks pass", () => {
+    const binding = {
+      filters: { namespaces: ["ns1"], labels: { key: "value" }, annotations: { key: "value" } },
+    };
+    const obj = {
+      metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
+    };
+    const capabilityNamespaces = ["ns1"];
+    const result = filterMatcher(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("");
   });
 });

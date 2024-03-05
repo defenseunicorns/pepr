@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { K8s, kind } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { CapabilityExport } from "./types";
 import { promises as fs } from "fs";
 import commander from "commander";
+import { Binding } from "./types";
 
 type RBACMap = {
   [key: string]: {
@@ -14,6 +15,83 @@ type RBACMap = {
   };
 };
 
+// check for overlap with labels and annotations between bindings and kubernetes objects
+export function checkOverlap(record1: Record<string, string>, record2: Record<string, string>) {
+  if (Object.keys(record1).length === 0) {
+    return true;
+  }
+  for (const key in record1) {
+    if (
+      Object.prototype.hasOwnProperty.call(record1, key) &&
+      Object.prototype.hasOwnProperty.call(record2, key) &&
+      record1[key] === record2[key]
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Decide to run callback after the event comes back from API Server
+ **/
+export const filterMatcher = (
+  binding: Partial<Binding>,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[],
+): string => {
+  // binding is a namespace with a namespace filter
+  if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
+    return `Cannot use a namespace filter in a namespace object`;
+  }
+
+  // Check if obj is an object and has metadata property before accessing labels and annotations
+  if (typeof obj === "object" && obj !== null && "metadata" in obj && obj.metadata !== undefined && binding.filters) {
+    // binding labels and dont match object labels
+    if (obj.metadata.labels && !checkOverlap(binding.filters.labels, obj.metadata.labels)) {
+      return `No overlap between binding and object labels`;
+    }
+
+    // binding annotations and dont match object annotations
+    if (obj.metadata.annotations && !checkOverlap(binding.filters.annotations, obj.metadata.annotations)) {
+      return `No overlap between binding and object annotations`;
+    }
+  }
+
+  // obj is in the capability namespaces
+  if (
+    capabilityNamespaces.length > 0 &&
+    obj.metadata &&
+    obj.metadata.namespace &&
+    !capabilityNamespaces.includes(obj.metadata.namespace)
+  ) {
+    return `No overlap between capability namespace and object`;
+  }
+
+  // every filter namespace is a capability namespace
+  if (
+    capabilityNamespaces.length > 0 &&
+    binding.filters &&
+    binding.filters.namespaces.length > 0 &&
+    !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
+  ) {
+    return `Binding namespace is not part of capability namespaces`;
+  }
+
+  // filter namespace is not the same of object namespace
+  if (
+    binding.filters &&
+    binding.filters.namespaces.length > 0 &&
+    obj.metadata &&
+    obj.metadata.namespace &&
+    !binding.filters.namespaces.includes(obj.metadata.namespace)
+  ) {
+    return `No overlap between binding namespace and object`;
+  }
+
+  // no problems
+  return "";
+};
 export const addVerbIfNotExists = (verbs: string[], verb: string) => {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
