@@ -14,6 +14,7 @@ import uuid from "./cli/uuid";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
 import update from "./cli/update";
+import kfc from "./cli/kfc";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.warn("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -43,4 +44,5 @@ update(program);
 format(program);
 monitor(program);
 uuid(program);
+kfc(program);
 program.parse();

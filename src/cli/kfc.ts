@@ -28,7 +28,7 @@ export default function (program: RootCmd) {
 
       try {
         // Create the CRD generated class
-        execSync(`npx kfc crd ${source} ${dest}`, {
+        execSync(`kubernetes-fluent-client crd ${source} ${dest}`, {
           stdio: "inherit",
         });
 
