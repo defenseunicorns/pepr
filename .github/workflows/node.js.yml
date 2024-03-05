@@ -48,7 +48,7 @@ jobs:
           node-version: latest
           cache: "npm"
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v4
         with:
           version: v3.3.4
       - name: "Install K3d"
