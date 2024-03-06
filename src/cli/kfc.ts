@@ -24,9 +24,15 @@ export default function (program: RootCmd) {
         return;
       }
 
-      console.log("Preparing the executed the requested KFC command...");
+      console.log("Preparing to execute the requested KFC command...");
 
       try {
+        // If the user doesn't provide any kfc arguments, show the kfc help
+        if (args.length === 0) {
+          console.log("No kubernetes-fluent-client arguments provided. Showing kubernetes-fluent-client help...");
+          args.push("--help");
+        }
+
         // Join the args array into a space-separated string
         const argsString = args.join(" ");
 
