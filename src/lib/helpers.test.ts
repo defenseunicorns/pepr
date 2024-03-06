@@ -978,7 +978,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Cannot use a namespace filter in a namespace object");
+    expect(result).toEqual("Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.");
   });
 
   test("returns label overlap error when there is no overlap between binding and object labels", () => {
@@ -994,7 +994,9 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("No overlap between binding and object labels");
+    expect(result).toEqual(
+      'Ignoring Watch Callback: No overlap between binding and object labels. Binding labels {"key":"value"}, Object Labels {"anotherKey":"anotherValue"}.',
+    );
   });
 
   test("returns annotation overlap error when there is no overlap between binding and object annotations", () => {
@@ -1010,7 +1012,9 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("No overlap between binding and object annotations");
+    expect(result).toEqual(
+      'Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations {"key":"value"}, Object annotations {"anotherKey":"anotherValue"}.',
+    );
   });
 
   test("returns capability namespace error when object is not in capability namespaces", () => {
@@ -1024,7 +1028,9 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("No overlap between capability namespace and object");
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ns1, Object namespace: ns2.",
+    );
   });
 
   test("returns binding namespace error when filter namespace is not part of capability namespaces", () => {
@@ -1038,7 +1044,9 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Binding namespace is not part of capability namespaces");
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ns1, ns2, Binding namespaces: ns3.",
+    );
   });
 
   test("returns binding and object namespace error when they do not overlap", () => {
@@ -1054,7 +1062,9 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("No overlap between binding namespace and object");
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2.",
+    );
   });
 
   test("returns empty string when all checks pass", () => {

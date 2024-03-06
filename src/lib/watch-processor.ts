@@ -100,7 +100,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
             // Enqueue the object for reconciliation through callback
             await queue.enqueue(obj);
           } else {
-            throw new Error(filterMatch);
+            Log.debug(filterMatch);
           }
         } catch (e) {
           // Errors in the watch callback should not crash the controller
@@ -120,7 +120,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
           if (filterMatch === "") {
             await binding.watchCallback?.(obj, type);
           } else {
-            throw new Error(filterMatch);
+            Log.debug(filterMatch);
           }
         } catch (e) {
           // Errors in the watch callback should not crash the controller

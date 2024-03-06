@@ -39,25 +39,28 @@ export const filterMatcher = (
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
 ): string => {
-  // binding is a namespace with a namespace filter
+  // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
-    return `Cannot use a namespace filter in a namespace object`;
+    return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
   }
 
-  // Check if obj is an object and has metadata property before accessing labels and annotations
   if (typeof obj === "object" && obj !== null && "metadata" in obj && obj.metadata !== undefined && binding.filters) {
-    // binding labels and dont match object labels
+    // binding labels and object labels dont match
     if (obj.metadata.labels && !checkOverlap(binding.filters.labels, obj.metadata.labels)) {
-      return `No overlap between binding and object labels`;
+      return `Ignoring Watch Callback: No overlap between binding and object labels. Binding labels ${JSON.stringify(
+        binding.filters.labels,
+      )}, Object Labels ${JSON.stringify(obj.metadata.labels)}.`;
     }
 
-    // binding annotations and dont match object annotations
+    // binding annotations and object annotations dont match
     if (obj.metadata.annotations && !checkOverlap(binding.filters.annotations, obj.metadata.annotations)) {
-      return `No overlap between binding and object annotations`;
+      return `Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations ${JSON.stringify(
+        binding.filters.annotations,
+      )}, Object annotations ${JSON.stringify(obj.metadata.annotations)}.`;
     }
   }
 
-  // obj is in the capability namespaces
+  // Check object is in the capability namespace
   if (
     Array.isArray(capabilityNamespaces) &&
     capabilityNamespaces.length > 0 &&
@@ -65,10 +68,12 @@ export const filterMatcher = (
     obj.metadata.namespace &&
     !capabilityNamespaces.includes(obj.metadata.namespace)
   ) {
-    return `No overlap between capability namespace and object`;
+    return `Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ${capabilityNamespaces.join(
+      ", ",
+    )}, Object namespace: ${obj.metadata.namespace}.`;
   }
 
-  // every filter namespace is a capability namespace
+  // chceck every filter namespace is a capability namespace
   if (
     Array.isArray(capabilityNamespaces) &&
     capabilityNamespaces.length > 0 &&
@@ -77,7 +82,9 @@ export const filterMatcher = (
     binding.filters.namespaces.length > 0 &&
     !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
   ) {
-    return `Binding namespace is not part of capability namespaces`;
+    return `Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ${capabilityNamespaces.join(
+      ", ",
+    )}, Binding namespaces: ${binding.filters.namespaces.join(", ")}.`;
   }
 
   // filter namespace is not the same of object namespace
@@ -89,7 +96,9 @@ export const filterMatcher = (
     obj.metadata.namespace &&
     !binding.filters.namespaces.includes(obj.metadata.namespace)
   ) {
-    return `No overlap between binding namespace and object`;
+    return `Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ${binding.filters.namespaces.join(
+      ", ",
+    )}, Object namespace: ${obj.metadata.namespace}.`;
   }
 
   // no problems
