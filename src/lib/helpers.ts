@@ -5,7 +5,6 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { CapabilityExport } from "./types";
 import { promises as fs } from "fs";
-import commander from "commander";
 import { Binding } from "./types";
 
 type RBACMap = {
@@ -259,11 +258,11 @@ export const parseTimeout = (value: string, previous: unknown): number => {
   const parsedValue = parseInt(value, 10);
   const floatValue = parseFloat(value);
   if (isNaN(parsedValue)) {
-    throw new commander.InvalidArgumentError("Not a number.");
+    throw new Error("Not a number.");
   } else if (parsedValue !== floatValue) {
-    throw new commander.InvalidArgumentError("Value must be an integer.");
+    throw new Error("Value must be an integer.");
   } else if (parsedValue < 1 || parsedValue > 30) {
-    throw new commander.InvalidArgumentError("Number must be between 1 and 30.");
+    throw new Error("Number must be between 1 and 30.");
   }
   return parsedValue;
 };

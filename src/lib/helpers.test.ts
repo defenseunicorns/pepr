@@ -5,7 +5,6 @@ import { Binding, CapabilityExport } from "./types";
 import { createRBACMap, addVerbIfNotExists, checkOverlap, filterMatcher } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
-import * as commander from "commander";
 import { promises as fs } from "fs";
 
 import {
@@ -839,18 +838,18 @@ describe("parseTimeout", () => {
   });
 
   test("should throw an InvalidArgumentError for non-numeric strings", () => {
-    expect(() => parseTimeout("abc", PREV)).toThrow(commander.InvalidArgumentError);
-    expect(() => parseTimeout("", PREV)).toThrow(commander.InvalidArgumentError);
+    expect(() => parseTimeout("abc", PREV)).toThrow(Error);
+    expect(() => parseTimeout("", PREV)).toThrow(Error);
   });
 
   test("should throw an InvalidArgumentError for numbers outside the 1-30 range", () => {
-    expect(() => parseTimeout("0", PREV)).toThrow(commander.InvalidArgumentError);
-    expect(() => parseTimeout("31", PREV)).toThrow(commander.InvalidArgumentError);
+    expect(() => parseTimeout("0", PREV)).toThrow(Error);
+    expect(() => parseTimeout("31", PREV)).toThrow(Error);
   });
 
   test("should throw an InvalidArgumentError for numeric strings that represent floating point numbers", () => {
-    expect(() => parseTimeout("5.5", PREV)).toThrow(commander.InvalidArgumentError);
-    expect(() => parseTimeout("20.1", PREV)).toThrow(commander.InvalidArgumentError);
+    expect(() => parseTimeout("5.5", PREV)).toThrow(Error);
+    expect(() => parseTimeout("20.1", PREV)).toThrow(Error);
   });
 });
 
