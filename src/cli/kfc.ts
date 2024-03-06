@@ -8,14 +8,14 @@ import { RootCmd } from "./root";
 
 export default function (program: RootCmd) {
   program
-    .command("kfc crd [source] [dest]")
-    .description("Generate class to handle CRD")
-    .action(async (source, dest) => {
+    .command("kfc [args...]")
+    .description("Execute Kubernetes Fluent Client commands")
+    .action(async (args: string[]) => {
       const { confirm } = await prompt({
         type: "confirm",
         name: "confirm",
         message:
-          "This will overwrite previously generated files in the destination folder.\n" +
+          "For commands that generate files, this may overwrite any previously generated files.\n" +
           "Are you sure you want to continue?",
       });
 
@@ -24,15 +24,18 @@ export default function (program: RootCmd) {
         return;
       }
 
-      console.log("Creating the CRD generated class...");
+      console.log("Preparing the executed the requested KFC command...");
 
       try {
+        // Join the args array into a space-separated string
+        const argsString = args.join(" ");
+
         // Create the CRD generated class
-        execSync(`kubernetes-fluent-client crd ${source} ${dest}`, {
+        execSync(`kubernetes-fluent-client ${argsString}`, {
           stdio: "inherit",
         });
 
-        console.log(`✅ CRD generated class created successfully`);
+        console.log(`✅ KFC command executed successfully`);
       } catch (e) {
         console.error(e.message);
         process.exit(1);
