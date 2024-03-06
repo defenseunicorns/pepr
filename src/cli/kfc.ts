@@ -29,7 +29,9 @@ export default function (program: RootCmd) {
       try {
         // If the user doesn't provide any kfc arguments, show the kfc help
         if (args.length === 0) {
-          console.log("No kubernetes-fluent-client arguments provided. Showing kubernetes-fluent-client help...");
+          console.log(
+            "No kubernetes-fluent-client arguments provided. Showing kubernetes-fluent-client help...",
+          );
           args.push("--help");
         }
 
