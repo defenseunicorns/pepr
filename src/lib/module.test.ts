@@ -28,7 +28,6 @@ beforeEach(() => {
 const packageJSON: PackageJSON = {
   description: "Test Description",
   pepr: {
-    name: "Development Module",
     uuid: "20e17cf6-a2e4-46b2-b626-75d88d96c88b",
     description: "Development module for pepr",
     onError: "ignore",
