@@ -49,7 +49,7 @@ Below are the available configurations through `package.json`.
 | `onError`        | Behavior of the webhook failure policy | `reject`, `ignore`              |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
-| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: [], labels: []}`  |
+| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`  |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]   |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`           |
 

@@ -49,7 +49,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       },
       alwaysIgnore: {
         namespaces: [],
-        labels: [],
       },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},
