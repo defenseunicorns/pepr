@@ -166,15 +166,4 @@ export type WebhookIgnore = {
    * Note: `kube-system` and `pepr-system` are always ignored.
    */
   namespaces?: string[];
-  /**
-   * List of Kubernetes labels to always ignore.
-   * Any resources with these labels will be ignored by Pepr.
-   *
-   * The example below will ignore any resources with the label `my-label=ulta-secret`:
-   * ```
-   * alwaysIgnore:
-   *   labels: [{ "my-label": "ultra-secret" }]
-   * ```
-   */
-  labels?: Record<string, string>[];
 };

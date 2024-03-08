@@ -33,7 +33,6 @@ const packageJSON: PackageJSON = {
     onError: "ignore",
     alwaysIgnore: {
       namespaces: [],
-      labels: [],
     },
   },
 };
