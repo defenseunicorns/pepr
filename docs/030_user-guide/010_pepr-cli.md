@@ -97,7 +97,8 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
 - `-i, --custom-image [custom-image]` - Custom Image: Use custom image for Admission and Watcher Deployments.
-- `--registry [GitHub, Iron Bank]`, - Container registry: Choose container registry for deployment manifests.
+- `--registry [GitHub, Iron Bank]` - Container registry: Choose container registry for deployment manifests.
+- `-v, --version <version>. Example: '0.27.3'` - The version of the Pepr image to use in the deployment manifests.
 
 ## `npx pepr kfc`
 Execute a `kubernetes-fluent-client` command. This command is a wrapper around `kubernetes-fluent-client`.

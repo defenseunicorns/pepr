@@ -28,18 +28,22 @@ export default function (program: RootCmd) {
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .option(
-      "-i, --custom-image [custom-image]",
+      "-i, --custom-image <custom-image>",
       "Custom Image: Use custom image for Admission and Watch Deployments.",
     )
     .option(
       "-r, --registry-info [<registry>/<username>]",
       "Registry Info: Image registry and username. Note: You must be signed into the registry",
     )
-    .option("-o, --output-dir [output directory]", "Define where to place build output")
+    .option("-o, --output-dir <output directory>", "Define where to place build output")
     .option(
-      "--timeout [timeout]",
+      "--timeout <timeout>",
       "How long the API server should wait for a webhook to respond before treating the call as a failure",
       parseTimeout,
+    )
+    .option(
+      "-v, --version <version>. Example: '0.27.3'",
+      "The version of the Pepr image to use in the deployment manifests.",
     )
     .addOption(
       new Option(
@@ -103,6 +107,11 @@ export default function (program: RootCmd) {
       if (!opts.embed) {
         console.info(`✅ Module built successfully at ${path}`);
         return;
+      }
+
+      // set the image version if provided
+      if (opts.version) {
+        cfg.pepr.peprVersion = opts.version;
       }
 
       // Generate a secret for the module
