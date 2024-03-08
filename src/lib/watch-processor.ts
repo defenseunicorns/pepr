@@ -11,6 +11,7 @@ import Log from "./logger";
 import { Binding, Event } from "./types";
 import { Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { GenericClass } from "kubernetes-fluent-client";
+import { filterMatcher } from "./helpers";
 
 // Track if the store has been updated
 let storeUpdates = false;
@@ -58,13 +59,14 @@ export async function setupStore(uuid: string) {
 export async function setupWatch(uuid: string, capabilities: Capability[]) {
   await setupStore(uuid);
 
-  capabilities
-    .flatMap(c => c.bindings)
-    .filter(binding => binding.isWatch)
-    .forEach(runBinding);
+  capabilities.map(capability =>
+    capability.bindings
+      .filter(binding => binding.isWatch)
+      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces)),
+  );
 }
 
-async function runBinding(binding: Binding) {
+async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   // Map the event to the watch phase
   const eventToPhaseMap = {
     [Event.Create]: [WatchPhase.Added],
@@ -92,9 +94,14 @@ async function runBinding(binding: Binding) {
       // If the type matches the phase, call the watch callback
       if (phaseMatch.includes(type)) {
         try {
-          queue.setReconcile(async () => await binding.watchCallback?.(obj, type));
-          // Enqueue the object for reconciliation through callback
-          await queue.enqueue(obj);
+          const filterMatch = filterMatcher(binding, obj, capabilityNamespaces);
+          if (filterMatch === "") {
+            queue.setReconcile(async () => await binding.watchCallback?.(obj, type));
+            // Enqueue the object for reconciliation through callback
+            await queue.enqueue(obj);
+          } else {
+            Log.debug(filterMatch);
+          }
         } catch (e) {
           // Errors in the watch callback should not crash the controller
           Log.error(e, "Error executing watch callback");
@@ -109,8 +116,12 @@ async function runBinding(binding: Binding) {
       // If the type matches the phase, call the watch callback
       if (phaseMatch.includes(type)) {
         try {
-          // Perform the watch callback
-          await binding.watchCallback?.(obj, type);
+          const filterMatch = filterMatcher(binding, obj, capabilityNamespaces);
+          if (filterMatch === "") {
+            await binding.watchCallback?.(obj, type);
+          } else {
+            Log.debug(filterMatch);
+          }
         } catch (e) {
           // Errors in the watch callback should not crash the controller
           Log.error(e, "Error executing watch callback");
