@@ -110,7 +110,7 @@ export default function (program: RootCmd) {
       }
 
       // set the image version if provided
-      if (opts.version !== undefined) {
+      if (opts.version) {
         cfg.pepr.peprVersion = opts.version;
       }
 
