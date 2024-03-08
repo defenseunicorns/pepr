@@ -100,7 +100,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `--registry [GitHub, Iron Bank]`, - Container registry: Choose container registry for deployment manifests.
 
 ## `npx pepr kfc`
-Execute a `kubernetes-fluent-client` command. This command is a wrapper around `kfc` and is useful for debugging and working with the cluster.
+Execute a `kubernetes-fluent-client` command. This command is a wrapper around `kubernetes-fluent-client`.
 
 Usage:
 
