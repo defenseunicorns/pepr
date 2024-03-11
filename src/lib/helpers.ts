@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { K8s, kind } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { CapabilityExport } from "./types";
 import { promises as fs } from "fs";
-import commander from "commander";
+import { Binding } from "./types";
 
 type RBACMap = {
   [key: string]: {
@@ -14,6 +14,96 @@ type RBACMap = {
   };
 };
 
+// check for overlap with labels and annotations between bindings and kubernetes objects
+export function checkOverlap(record1: Record<string, string>, record2: Record<string, string>) {
+  if (Object.keys(record1).length === 0) {
+    return true;
+  }
+  for (const key in record1) {
+    if (
+      Object.prototype.hasOwnProperty.call(record1, key) &&
+      Object.prototype.hasOwnProperty.call(record2, key) &&
+      record1[key] === record2[key]
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Decide to run callback after the event comes back from API Server
+ **/
+export const filterMatcher = (
+  binding: Partial<Binding>,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[],
+): string => {
+  // binding kind is namespace with a InNamespace filter
+  if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
+    return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
+  }
+
+  if (typeof obj === "object" && obj !== null && "metadata" in obj && obj.metadata !== undefined && binding.filters) {
+    // binding labels and object labels dont match
+    if (obj.metadata.labels && !checkOverlap(binding.filters.labels, obj.metadata.labels)) {
+      return `Ignoring Watch Callback: No overlap between binding and object labels. Binding labels ${JSON.stringify(
+        binding.filters.labels,
+      )}, Object Labels ${JSON.stringify(obj.metadata.labels)}.`;
+    }
+
+    // binding annotations and object annotations dont match
+    if (obj.metadata.annotations && !checkOverlap(binding.filters.annotations, obj.metadata.annotations)) {
+      return `Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations ${JSON.stringify(
+        binding.filters.annotations,
+      )}, Object annotations ${JSON.stringify(obj.metadata.annotations)}.`;
+    }
+  }
+
+  // Check object is in the capability namespace
+  if (
+    Array.isArray(capabilityNamespaces) &&
+    capabilityNamespaces.length > 0 &&
+    obj.metadata &&
+    obj.metadata.namespace &&
+    !capabilityNamespaces.includes(obj.metadata.namespace)
+  ) {
+    return `Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ${capabilityNamespaces.join(
+      ", ",
+    )}, Object namespace: ${obj.metadata.namespace}.`;
+  }
+
+  // chceck every filter namespace is a capability namespace
+  if (
+    Array.isArray(capabilityNamespaces) &&
+    capabilityNamespaces.length > 0 &&
+    binding.filters &&
+    Array.isArray(binding.filters.namespaces) &&
+    binding.filters.namespaces.length > 0 &&
+    !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
+  ) {
+    return `Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ${capabilityNamespaces.join(
+      ", ",
+    )}, Binding namespaces: ${binding.filters.namespaces.join(", ")}.`;
+  }
+
+  // filter namespace is not the same of object namespace
+  if (
+    binding.filters &&
+    Array.isArray(binding.filters.namespaces) &&
+    binding.filters.namespaces.length > 0 &&
+    obj.metadata &&
+    obj.metadata.namespace &&
+    !binding.filters.namespaces.includes(obj.metadata.namespace)
+  ) {
+    return `Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ${binding.filters.namespaces.join(
+      ", ",
+    )}, Object namespace: ${obj.metadata.namespace}.`;
+  }
+
+  // no problems
+  return "";
+};
 export const addVerbIfNotExists = (verbs: string[], verb: string) => {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
@@ -99,7 +189,7 @@ export function generateWatchNamespaceError(
   if (bindingAndCapabilityNSConflict(bindingNamespaces, capabilityNamespaces)) {
     err += `Binding uses namespace not governed by capability: bindingNamespaces: [${bindingNamespaces.join(
       ", ",
-    )}] capabilityNamespaces:$[${capabilityNamespaces.join(", ")}].`;
+    )}] capabilityNamespaces: [${capabilityNamespaces.join(", ")}].`;
   }
 
   // add a space if there is a period in the middle of the string
@@ -177,11 +267,11 @@ export const parseTimeout = (value: string, previous: unknown): number => {
   const parsedValue = parseInt(value, 10);
   const floatValue = parseFloat(value);
   if (isNaN(parsedValue)) {
-    throw new commander.InvalidArgumentError("Not a number.");
+    throw new Error("Not a number.");
   } else if (parsedValue !== floatValue) {
-    throw new commander.InvalidArgumentError("Value must be an integer.");
+    throw new Error("Value must be an integer.");
   } else if (parsedValue < 1 || parsedValue > 30) {
-    throw new commander.InvalidArgumentError("Number must be between 1 and 30.");
+    throw new Error("Number must be between 1 and 30.");
   }
   return parsedValue;
 };
