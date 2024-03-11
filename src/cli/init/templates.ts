@@ -39,7 +39,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       node: ">=18.0.0",
     },
     pepr: {
-      name: opts.name.trim(),
       uuid: pgkVerOverride ? "static-test" : uuid,
       onError: opts.errorBehavior,
       webhookTimeout: 10,
@@ -50,7 +49,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
       },
       alwaysIgnore: {
         namespaces: [],
-        labels: [],
       },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},
