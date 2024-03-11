@@ -32,13 +32,13 @@ export class Controller {
   readonly #config: ModuleConfig;
   readonly #capabilities: Capability[];
   readonly #beforeHook?: (req: AdmissionRequest) => void;
-  readonly #afterHook?: (res: MutateResponse) => void;
+  readonly #afterHook?: (res: MutateResponse | ValidateResponse) => void;
 
   constructor(
     config: ModuleConfig,
     capabilities: Capability[],
     beforeHook?: (req: AdmissionRequest) => void,
-    afterHook?: (res: MutateResponse) => void,
+    afterHook?: (res: MutateResponse | ValidateResponse) => void,
     onReady?: () => void,
   ) {
     this.#config = config;
