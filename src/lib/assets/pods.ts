@@ -342,7 +342,7 @@ function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
   const env = [
     { name: "PEPR_WATCH_MODE", value: watchMode ? "true" : "false" },
     { name: "PEPR_PRETTY_LOG", value: "false" },
-    { name: "LOG_LEVEL", value: config.logLevel || "debug" },
+    { name: "LOG_LEVEL", value: config.logLevel || "info" },
   ];
 
   if (config.env) {
