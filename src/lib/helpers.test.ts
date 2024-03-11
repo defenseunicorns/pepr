@@ -442,14 +442,14 @@ describe("generateWatchNamespaceError", () => {
   test("returns error for binding and capability namespace conflict", () => {
     const error = generateWatchNamespaceError([""], ["ns2"], ["ns3"]);
     expect(error).toBe(
-      "Binding uses namespace not governed by capability: bindingNamespaces: [ns2] capabilityNamespaces:$[ns3].",
+      "Binding uses namespace not governed by capability: bindingNamespaces: [ns2] capabilityNamespaces: [ns3].",
     );
   });
 
   test("returns combined error for both conflicts", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], ["ns3", "ns4"]);
     expect(error).toBe(
-      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1]. Binding uses namespace not governed by capability: bindingNamespaces: [ns1] capabilityNamespaces:$[ns3, ns4].",
+      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1]. Binding uses namespace not governed by capability: bindingNamespaces: [ns1] capabilityNamespaces: [ns3, ns4].",
     );
   });
 
@@ -563,7 +563,7 @@ describe("namespaceComplianceValidator", () => {
       namespaceComplianceValidator(nsViolation[0]);
     } catch (e) {
       expect(e.message).toBe(
-        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses namespace not governed by capability: bindingNamespaces: [new york] capabilityNamespaces:$[miami, dallas, milwaukee].",
+        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses namespace not governed by capability: bindingNamespaces: [new york] capabilityNamespaces: [miami, dallas, milwaukee].",
       );
     }
   });
