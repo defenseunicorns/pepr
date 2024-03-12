@@ -107,10 +107,12 @@ export class PeprModule {
     this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
-        setupWatch(config.uuid, capabilities).catch(e => {
+        try {
+          setupWatch(capabilities)
+        } catch (e) {
           Log.error(e, "Error setting up watch");
           process.exit(1);
-        });
+        }
       }
     });
 
