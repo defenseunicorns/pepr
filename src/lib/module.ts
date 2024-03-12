@@ -108,7 +108,7 @@ export class PeprModule {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
         try {
-          setupWatch(capabilities)
+          setupWatch(capabilities);
         } catch (e) {
           Log.error(e, "Error setting up watch");
           process.exit(1);

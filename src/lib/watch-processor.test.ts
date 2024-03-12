@@ -3,14 +3,10 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { PeprStore } from "./k8s";
 import { setupWatch } from "./watch-processor";
-
-const uuid = "static-test";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
