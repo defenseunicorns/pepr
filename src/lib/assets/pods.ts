@@ -91,6 +91,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
           },
         },
         spec: {
+          terminationGracePeriodSeconds: 5,
           serviceAccountName: name,
           securityContext: {
             runAsUser: 65532,
@@ -215,6 +216,7 @@ export function deployment(assets: Assets, hash: string, buildTimestamp: string)
           },
         },
         spec: {
+          terminationGracePeriodSeconds: 5,
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
           securityContext: {
