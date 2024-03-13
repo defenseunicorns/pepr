@@ -49,6 +49,8 @@ export function peprDeploy() {
     }
 
     it("npx pepr monitor should display validation results to console", async () => {
+      await testValidate();
+      
       const cmd = ['pepr', 'monitor', 'static-test']
 
       const proc = spawn('npx', cmd, { shell: true })
