@@ -105,8 +105,10 @@ export class PeprControllerStore {
 
       // Call the onReady callback if this is the first time the secret has been read
       if (this.#onReady) {
+        debounced
         this.#onReady();
         this.#onReady = undefined;
+        return;
       }
     };
 
