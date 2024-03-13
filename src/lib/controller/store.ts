@@ -65,7 +65,7 @@ export class PeprControllerStore {
           .then(this.#setupWatch)
           // Otherwise, create the resource
           .catch(this.#createStoreResource),
-      Math.random() * 3000,
+      Math.random() * 1000,
     );
   }
 
