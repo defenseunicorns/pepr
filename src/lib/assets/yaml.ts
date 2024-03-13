@@ -26,14 +26,13 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     },
     uuid: name,
     admission: {
+      terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
       env: [
         { name: "PEPR_WATCH_MODE", value: "false" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
-        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
-        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
@@ -74,12 +73,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       affinity: {},
     },
     watcher: {
+      terminationGracePeriodSeconds: 5,
       env: [
         { name: "PEPR_WATCH_MODE", value: "true" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
         { name: "LOG_LEVEL", value: "debug" },
-        process.env.PEPR_MODE === "dev" && { name: "MY_CUSTOM_VAR", value: "example-value" },
-        process.env.PEPR_MODE === "dev" && { name: "ZARF_VAR", value: "###ZARF_VAR_THING###" },
       ],
       image,
       annotations: {
@@ -120,6 +118,12 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       affinity: {},
     },
   };
+  if (process.env.PEPR_MODE === "dev") {
+    overrides.admission.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
+    overrides.watcher.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
+    overrides.admission.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
+    overrides.watcher.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
+  }
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
