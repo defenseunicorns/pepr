@@ -51,23 +51,21 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
     (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
     (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
   ) {
-
-    let type = "", label = ""
+    let type = "";
+    let label = "";
 
     if (binding.isMutate) {
-      type = "Mutate"
-      label = binding.mutateCallback!.name
-    }
-    else if (binding.isValidate) {
-      type = "Validate"
-      label = binding.validateCallback!.name
-    }
-    else if (binding.isWatch) {
-      type = "Watch"
-      label = binding.watchCallback!.name
+      type = "Mutate";
+      label = binding.mutateCallback!.name;
+    } else if (binding.isValidate) {
+      type = "Validate";
+      label = binding.validateCallback!.name;
+    } else if (binding.isWatch) {
+      type = "Watch";
+      label = binding.watchCallback!.name;
     }
 
-    logger.debug(`${type} binding (${label}) does not match request namespace "${req.namespace}"`)
+    logger.debug(`${type} binding (${label}) does not match request namespace "${req.namespace}"`);
 
     return true;
   }
