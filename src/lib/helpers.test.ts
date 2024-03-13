@@ -944,6 +944,9 @@ describe("replaceString", () => {
 });
 
 describe("checkOverlap", () => {
+  test("returns true if binding annotation/label does not have value and object value is different", () => {
+    expect(checkOverlap({ key1: "" }, { key1: "value1" })).toBe(true);
+  });
   test("returns true if first record is empty", () => {
     expect(checkOverlap({}, { key1: "value1" })).toBe(true);
   });

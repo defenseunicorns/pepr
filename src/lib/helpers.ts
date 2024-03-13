@@ -19,7 +19,18 @@ export function checkOverlap(record1: Record<string, string>, record2: Record<st
   if (Object.keys(record1).length === 0) {
     return true;
   }
+
   for (const key in record1) {
+    // if the binding label/annnotation has key but no value
+    if (
+      Object.prototype.hasOwnProperty.call(record1, key) &&
+      record1[key] === "" &&
+      Object.prototype.hasOwnProperty.call(record2, key)
+    ) {
+      return true;
+    }
+
+    // if the binding label/annoation has key and value
     if (
       Object.prototype.hasOwnProperty.call(record1, key) &&
       Object.prototype.hasOwnProperty.call(record2, key) &&
