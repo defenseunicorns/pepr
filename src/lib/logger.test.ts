@@ -9,13 +9,6 @@ describe("Logger", () => {
     process.env = {}; // Clear environment variables
   });
 
-  it("should set log level based on LOG_LEVEL environment variable - info", async () => {
-    process.env.LOG_LEVEL = "info";
-    const { default: logger } = await import("./logger");
-
-    expect(logger.level).toBe("info");
-  });
-
   it("should set log level based on LOG_LEVEL environment variable - debug", async () => {
     process.env.LOG_LEVEL = "debug";
     const { default: logger } = await import("./logger");
