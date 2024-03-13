@@ -20,20 +20,21 @@ Below are the available Helm override configurations after you have built your P
 
 ### Admission and Watcher Subparameters
 
-| Subparameter                                 | Description                                  |
-|----------------------------------------------|----------------------------------------------|
-| `failurePolicy`                              | Webhook failure policy [Ignore, Fail]        |
-| `webhookTimeout`                             | Timeout seconds for webhooks [1 - 30]        |
-| `env`                                        | Container environment variables              |
-| `image`                                      | Container image                              |
-| `annotations`                                | Deployment annotations                       |
-| `labels`                                     | Deployment labels                            |
-| `securityContext`                            | Pod security context                         |
-| `resources`                                  | Resource limits                              |
-| `containerSecurityContext`                   | Container's security context                 |
-| `nodeSelector`                               | Node selection constraints                   |
-| `tolerations`                                | Tolerations to taints                        |
-| `affinity`                                   | Node scheduling options                      |
+| Subparameter                                 | Description                                                         |
+|----------------------------------------------|---------------------------------------------------------------------|
+| `failurePolicy`                              | Webhook failure policy [Ignore, Fail]                               |
+| `webhookTimeout`                             | Timeout seconds for webhooks [1 - 30]                               |
+| `env`                                        | Container environment variables                                     |
+| `image`                                      | Container image                                                     |
+| `annotations`                                | Deployment annotations                                              |
+| `labels`                                     | Deployment labels                                                   |
+| `securityContext`                            | Pod security context                                                |
+| `resources`                                  | Resource limits                                                     |
+| `containerSecurityContext`                   | Container's security context                                        |
+| `nodeSelector`                               | Node selection constraints                                          |
+| `tolerations`                                | Tolerations to taints                                               |
+| `affinity`                                   | Node scheduling options                                             |
+| `terminationGracePeriodSeconds`              | Optional duration in seconds the pod needs to terminate gracefully  |
 
 Note: Replace `*` with `admission` or `watcher` as needed to apply settings specifically for each part.
 

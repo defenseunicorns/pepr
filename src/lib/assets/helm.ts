@@ -74,6 +74,7 @@ export function watcherDeployTemplate(buildTimestamp: string) {
               app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
           spec:
+            terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
             serviceAccountName: {{ .Values.uuid }}
             securityContext:
               {{- toYaml .Values.admission.securityContext | nindent 8 }}
@@ -145,6 +146,7 @@ export function admissionDeployTemplate(buildTimestamp: string) {
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
+            terminationGracePeriodSeconds: {{ .Values.admission.terminationGracePeriodSeconds }}
             priorityClassName: system-node-critical
             serviceAccountName: {{ .Values.uuid }}
             securityContext:
