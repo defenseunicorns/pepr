@@ -110,13 +110,9 @@ export class PeprControllerStore {
       }
     };
 
-    if (this.#onReady) {
-      debounced();
-    }
-
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
-    this.#sendDebounce = setTimeout(debounced, debounceBackoff);
+    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
   };
 
   #send = (capabilityName: string) => {
