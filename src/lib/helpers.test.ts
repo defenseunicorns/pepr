@@ -294,8 +294,8 @@ describe("createRBACMap", () => {
         verbs: ["create", "get", "patch", "watch"],
         plural: "peprstores",
       },
-      "apiextensions.k8s.io/v1/customresourcedefinition":{
-        verbs: ["patch","create"],
+      "apiextensions.k8s.io/v1/customresourcedefinition": {
+        verbs: ["patch", "create"],
         plural: "customresourcedefinitions",
       },
       "/v1/Namespace": { verbs: ["watch"], plural: "namespaces" },
