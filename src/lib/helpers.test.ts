@@ -961,7 +961,7 @@ describe("checkOverlap", () => {
   test("(Mixed) should return true since key and key value match on object", () => {
     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
   });
-  test("(Mixed) should return false since key1 value is differnet on object", () => {
+  test("(Mixed) should return false since key1 value is different on object", () => {
     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
   });
   test("should return true if binding has no labels or annotations", () => {
