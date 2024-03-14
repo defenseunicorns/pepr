@@ -34,3 +34,4 @@ FROM cgr.dev/chainguard/node:20@sha256:f30d39c6980f0a50119f2aa269498307a80c26549
 WORKDIR /app
 
 COPY --from=with-git --chown=node:node /app/ /app/
+
