@@ -3,14 +3,10 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { PeprStore } from "./k8s";
 import { setupWatch } from "./watch-processor";
-
-const uuid = "static-test";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
@@ -87,25 +83,24 @@ describe("WatchProcessor", () => {
       ],
     } as unknown as Capability);
 
-    await setupWatch(uuid, capabilities);
+    setupWatch(capabilities);
 
-    expect(mockK8s).toHaveBeenCalledTimes(3);
-    expect(mockK8s).toHaveBeenNthCalledWith(1, PeprStore);
-    expect(mockK8s).toHaveBeenNthCalledWith(2, "someModel", {});
-    expect(mockK8s).toHaveBeenNthCalledWith(3, "someModel", { name: "bleh" });
+    expect(mockK8s).toHaveBeenCalledTimes(2);
+    expect(mockK8s).toHaveBeenNthCalledWith(1, "someModel", {});
+    expect(mockK8s).toHaveBeenNthCalledWith(2, "someModel", { name: "bleh" });
 
     expect(mockWatch).toHaveBeenCalledTimes(2);
     expect(mockWatch).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining(watchCfg));
   });
 
   it("should not setup watches if capabilities array is empty", async () => {
-    await setupWatch(uuid, []);
+    await setupWatch([]);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
   it("should not setup watches if no bindings are present", async () => {
     const capabilities = [{ bindings: [] }, { bindings: [] }] as unknown as Capability[];
-    await setupWatch(uuid, capabilities);
+    await setupWatch(capabilities);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
@@ -116,50 +111,9 @@ describe("WatchProcessor", () => {
 
     mockStart.mockRejectedValue(new Error("err") as never);
 
-    await setupWatch(uuid, capabilities);
+    await setupWatch(capabilities);
 
     expect(exitSpy).toHaveBeenCalledWith(1);
-  });
-
-  it("should load the store before setting up watches", async () => {
-    await setupWatch(uuid, capabilities);
-    expect(mockGet).toHaveBeenCalledTimes(1);
-  });
-
-  it("should set an interval to update the store every 10 seconds", async () => {
-    const setIntervalSpy = jest.spyOn(global, "setInterval");
-
-    await setupWatch(uuid, capabilities);
-
-    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10 * 1000);
-  });
-
-  it("should update the store if there are changes every 10 seconds", async () => {
-    const setIntervalSpy = jest.spyOn(global, "setInterval");
-
-    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
-      if (eventName === WatchEvent.RESOURCE_VERSION) {
-        expect(listener).toBeInstanceOf(Function);
-        listener("45");
-      }
-    });
-
-    await setupWatch(uuid, capabilities);
-
-    const flushCache = setIntervalSpy.mock.calls[0][0] as () => void;
-    flushCache();
-
-    expect(mockApply).toHaveBeenCalledTimes(1);
-    expect(mockApply).toHaveBeenNthCalledWith(1, {
-      data: {
-        "42dae115ed-8aa1f3": "756",
-        "8aa1fde099-32a12": "750",
-        "57332a1dee-73560": "45",
-        "57332a1dee-57332": "45",
-      },
-      metadata: { name: "pepr-static-test-watch", namespace: "pepr-system" },
-    });
   });
 
   it("should watch for the resource_update event", async () => {
@@ -170,7 +124,7 @@ describe("WatchProcessor", () => {
       }
     });
 
-    await setupWatch(uuid, capabilities);
+    setupWatch(capabilities);
   });
 
   it("should watch for the give_up event", async () => {
@@ -186,7 +140,7 @@ describe("WatchProcessor", () => {
       }
     });
 
-    await setupWatch(uuid, capabilities);
+    setupWatch(capabilities);
   });
 
   it("should setup watches with correct phases for different events", async () => {
@@ -205,7 +159,7 @@ describe("WatchProcessor", () => {
       },
     ] as unknown as Capability[];
 
-    await setupWatch(uuid, capabilities);
+    setupWatch(capabilities);
 
     type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
 

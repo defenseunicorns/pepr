@@ -75,7 +75,6 @@ export default function (program: RootCmd) {
                 const filteredFailures = failures
                   .filter((r: ResponseItem) => !r.allowed)
                   .map((r: ResponseItem) => r.status.message);
-                // console.log(`${name} (${uid}) | VALIDATE | ${allow ? "ALLOW" : "DENY"}`);
                 if (filteredFailures.length > 0) {
                   console.log(`\n❌  VALIDATE   ${name} (${uid})`);
                   console.debug(`\u001b[1;31m${filteredFailures}\u001b[0m`);

@@ -189,7 +189,7 @@ export function generateWatchNamespaceError(
   if (bindingAndCapabilityNSConflict(bindingNamespaces, capabilityNamespaces)) {
     err += `Binding uses namespace not governed by capability: bindingNamespaces: [${bindingNamespaces.join(
       ", ",
-    )}] capabilityNamespaces:$[${capabilityNamespaces.join(", ")}].`;
+    )}] capabilityNamespaces: [${capabilityNamespaces.join(", ")}].`;
   }
 
   // add a space if there is a period in the middle of the string
