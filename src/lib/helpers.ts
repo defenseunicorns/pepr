@@ -133,6 +133,11 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
         plural: "peprstores",
       };
 
+      acc["apiextensions.k8s.io/v1/customresourcedefinition"] = {
+        verbs: ["patch", "create"],
+        plural: "customresourcedefinitions",
+      };
+
       if (!acc[key] && binding.isWatch) {
         acc[key] = {
           verbs: ["watch"],
