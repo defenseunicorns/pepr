@@ -1,6 +1,6 @@
 ### BUILD ###
 
-FROM docker.io/library/node:20-alpine as with-git
+FROM docker.io/library/node:20-alpine@sha256:c0a3badbd8a0a760de903e00cedbca94588e609299820557e72cba2a53dbaa2c as with-git
 
 WORKDIR /app
 
@@ -34,3 +34,4 @@ FROM cgr.dev/chainguard/node:20@sha256:f30d39c6980f0a50119f2aa269498307a80c26549
 WORKDIR /app
 
 COPY --from=with-git --chown=node:node /app/ /app/
+
