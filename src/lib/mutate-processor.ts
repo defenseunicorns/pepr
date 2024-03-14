@@ -55,7 +55,7 @@ export async function mutateProcessor(
       }
 
       const label = action.mutateCallback.name;
-      Log.info(actionMetadata, `Processing matched action ${label}`);
+      Log.info(actionMetadata, `Processing mutation action (${label})`);
 
       matchedAction = true;
 
@@ -79,7 +79,7 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
-        Log.info(actionMetadata, `Action succeeded`);
+        Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");

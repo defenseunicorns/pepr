@@ -46,7 +46,7 @@ export async function validateProcessor(
       }
 
       const label = action.validateCallback.name;
-      Log.info(actionMetadata, `Processing matched action ${label}`);
+      Log.info(actionMetadata, `Processing validation action (${label})`);
 
       try {
         // Run the validation callback, if it fails set allowed to false
@@ -61,7 +61,7 @@ export async function validateProcessor(
           };
         }
 
-        Log.info(actionMetadata, `Validation Action completed: ${resp.allowed ? "allowed" : "denied"}`);
+        Log.info(actionMetadata, `Validation action complete (${label}): ${resp.allowed ? "allowed" : "denied"}`);
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
         Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
