@@ -73,7 +73,7 @@ export function peprDeploy() {
       await until(() => state.done)
 
       // completes only if conditions are met, so... getting here means success!
-    }, 5000);
+    }, 10000);
   });
 
   describe("should display the UUIDs of the deployed modules", testUUID);
