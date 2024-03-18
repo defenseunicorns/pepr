@@ -70,30 +70,23 @@ However, there are some cases where multiple modules makes sense. For instance d
 
 ## OnSchedule
 
-`OnSchedule` is supported by a `PeprStore` to safeguard against schedule loss following a pod restart. It is utilized at the top level, distinct from being within a `Validate`, `Mutate`, or `Watch`. Recommended intervals are 30 seconds or longer, and jobs are advised to be idempotent, meaning that if the code is applied or executed multiple times, the outcome should be the same as if it had been executed only once. A major use-case for `OnSchedule` is day 2 operations.
+`OnSchedule` is supported by a `PeprStore` to safeguard against schedule loss following a pod restart. It is utilized at the top level, distinct from being within a `Validate`, `Mutate`, `Reconcile` or `Watch`. Recommended intervals are 30 seconds or longer, and jobs are advised to be idempotent, meaning that if the code is applied or executed multiple times, the outcome should be the same as if it had been executed only once. A major use-case for `OnSchedule` is day 2 operations.
 
 ## Security
 
-In terms of Pepr security, it is recommended to generate a Pepr Module's Kubernetes manifests using `scoped` rbac mode: `npx pepr build --rbac-mode=scoped`. This will give the `ServiceAccount` just enough permissions to do the Watch on the given Kubernetes resources.
+To enhance the security of your Pepr Controller, we recommend following these best practices:
 
-Note: If you are manipulating additional resources in the `Validate`, `Mutate`, or `Watch` callbacks, then you will need to account for them in the `ClusterRole`.
+- Regularly update Pepr to the latest stable release.
+- Secure Pepr through RBAC building in [scoped mode](https://docs.pepr.dev/main/user-guide/rbac/#scoped) taking into account access to the Kubernetes API server needed in the callbacks.
+- Practice the principle of least privilege when assigning roles and permissions and avoid giving the service account more permissions than necessary.
+- Use NetworkPolicy to restrict traffic from Pepr Controllers to the minimum required.
+- Limit calls from Pepr to the Kubernetes API server to the minimum required.
+- Set webhook failure policies to `Fail` to ensure that the request is rejected if the webhook fails. More Below..
 
-When using Pepr as a `Validating` Webhook, it is recommended to set the Webhook's `failurePolicy` to `Fail`. In your Pepr module, this is handled in the `package.json` under `pepr` by setting the `onError` flag to `reject`, then running `npx pepr build` again. When creating a Pepr module for the first time the user is prompted how to handle errors and this is where the flag is initially set.
+When using Pepr as a `Validating` Webhook, it is recommended to set the Webhook's `failurePolicy` to `Fail`. In your Pepr module, `values.yaml` file of the helm chart by setting `admission.failurePolicy` to `Fail` or in the `package.json` under `pepr` by setting the `onError` flag to `reject`, then running `npx pepr build` again. When creating a Pepr module for the first time the user is prompted how to handle errors and this is where the flag is initially set.
 
-In terms of building Pepr modules for security, a good place to start is by assigning sane defaults to Pod's and Container's `securityContext`. Below would be an extremely simplified version of assigning `runAsNonRoot` and the `runAsUser` on the Pod.
+By following these best practices, you can help protect your Pepr Controller from potential security threats.
 
-```typescript
-When(a.Pod)
-  .IsCreated()
-  .InNamespace("my-app")
-  .WithName("database")
-  .Mutate(pod => {
-    pod.spec.securityContext = {
-      runAsNonRoot: true,
-      runAsUser: 1000
-    }
-  })
-```
 ## Reconcile 
 
 Fills a similar niche to .Watch() -- and runs in the Watch Controller -- but it employs a Queue to force sequential processing of resource states once they are returned by the Kubernetes API. This allows things like operators to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource. For example, creating and then deleting a resource should be processed in that exact order to avoid state inconsistencies.
