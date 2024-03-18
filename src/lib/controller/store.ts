@@ -182,7 +182,7 @@ export class PeprControllerStore {
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
-        Log.info(sendCache, "Sending updates to Pepr store");
+        Log.debug(sendCache, "Sending updates to Pepr store");
         void flushCache();
       }
     }, debounceBackoff);
@@ -192,7 +192,7 @@ export class PeprControllerStore {
 
   #createStoreResource = async (e: unknown) => {
     Log.info(`Pepr store not found, creating...`);
-    Log.info(e);
+    Log.debug(e);
 
     try {
       await K8s(PeprStore).Apply({

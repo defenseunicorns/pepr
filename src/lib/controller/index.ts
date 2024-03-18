@@ -242,7 +242,7 @@ export class Controller {
 
         if (admissionKind === "Mutate") {
           kubeAdmissionResponse = response;
-          Log.info({ ...reqMetadata, response }, "Outgoing response");
+          Log.debug({ ...reqMetadata, response }, "Outgoing response");
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
@@ -273,7 +273,7 @@ export class Controller {
           });
         }
 
-        Log.info({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
+        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
