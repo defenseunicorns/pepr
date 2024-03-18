@@ -218,7 +218,7 @@ export class Controller {
         };
 
         Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
-        Log.debug({ ...reqMetadata, request }, "Incoming request body");
+        Log.info({ ...reqMetadata, request }, "Incoming request body");
 
         // Process the request
         let response: MutateResponse | ValidateResponse[];
@@ -235,14 +235,14 @@ export class Controller {
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
           // Log the response
-          Log.debug({ ...reqMetadata, res }, "Check response");
+          Log.info({ ...reqMetadata, res }, "Check response");
         });
 
         let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;
 
         if (admissionKind === "Mutate") {
           kubeAdmissionResponse = response;
-          Log.debug({ ...reqMetadata, response }, "Outgoing response");
+          Log.info({ ...reqMetadata, response }, "Outgoing response");
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
@@ -273,7 +273,7 @@ export class Controller {
           });
         }
 
-        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
+        Log.info({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
