@@ -65,7 +65,7 @@ export class PeprControllerStore {
           .then(this.#setupWatch)
           // Otherwise, create the resource
           .catch(this.#createStoreResource),
-      Math.random() * 1000,
+      Math.random() * 3000,
     );
   }
 
@@ -112,7 +112,7 @@ export class PeprControllerStore {
 
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
-    this.#sendDebounce = setTimeout(debounced, debounceBackoff);
+    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
   };
 
   #send = (capabilityName: string) => {
