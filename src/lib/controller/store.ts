@@ -75,7 +75,7 @@ export class PeprControllerStore {
   };
 
   #receive = (store: PeprStore) => {
-    Log.debug(store, "Pepr Store update");
+    Log.info(store, "Pepr Store update");
 
     // Wrap the update in a debounced function
     const debounced = () => {
@@ -182,7 +182,7 @@ export class PeprControllerStore {
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
-        Log.debug(sendCache, "Sending updates to Pepr store");
+        Log.info(sendCache, "Sending updates to Pepr store");
         void flushCache();
       }
     }, debounceBackoff);
@@ -192,7 +192,7 @@ export class PeprControllerStore {
 
   #createStoreResource = async (e: unknown) => {
     Log.info(`Pepr store not found, creating...`);
-    Log.debug(e);
+    Log.info(e);
 
     try {
       await K8s(PeprStore).Apply({
