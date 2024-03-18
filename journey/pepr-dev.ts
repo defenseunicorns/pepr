@@ -59,7 +59,6 @@ export function peprDev() {
   });
 
   it("should be properly configured by the test module", done => {
-
     cmd.stdout.on("data", (data: Buffer) => {
       if (success) {
         return;
