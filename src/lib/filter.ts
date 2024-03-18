@@ -16,6 +16,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations, name } = binding.filters || {};
   const operation = req.operation.toUpperCase();
+  const uid = req.uid;
   // Use the old object if the request is a DELETE operation
   const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
   const { metadata } = srcObject || {};
@@ -51,7 +52,22 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
     (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
     (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
   ) {
-    logger.debug("Namespace does not match");
+    let type = "";
+    let label = "";
+
+    if (binding.isMutate) {
+      type = "Mutate";
+      label = binding.mutateCallback!.name;
+    } else if (binding.isValidate) {
+      type = "Validate";
+      label = binding.validateCallback!.name;
+    } else if (binding.isWatch) {
+      type = "Watch";
+      label = binding.watchCallback!.name;
+    }
+
+    logger.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
+
     return true;
   }
 
@@ -61,13 +77,13 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
 
     // First check if the label exists
     if (!testKey) {
-      logger.debug(`Label ${key} does not exist`);
+      logger.debug({ uid }, `Label ${key} does not exist`);
       return true;
     }
 
     // Then check if the value matches, if specified
     if (value && testKey !== value) {
-      logger.debug(`${testKey} does not match ${value}`);
+      logger.debug({ uid }, `${testKey} does not match ${value}`);
       return true;
     }
   }
@@ -78,13 +94,13 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
 
     // First check if the annotation exists
     if (!testKey) {
-      logger.debug(`Annotation ${key} does not exist`);
+      logger.debug({ uid }, `Annotation ${key} does not exist`);
       return true;
     }
 
     // Then check if the value matches, if specified
     if (value && testKey !== value) {
-      logger.debug(`${testKey} does not match ${value}`);
+      logger.debug({ uid }, `${testKey} does not match ${value}`);
       return true;
     }
   }

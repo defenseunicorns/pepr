@@ -15,20 +15,33 @@ type RBACMap = {
 };
 
 // check for overlap with labels and annotations between bindings and kubernetes objects
-export function checkOverlap(record1: Record<string, string>, record2: Record<string, string>) {
-  if (Object.keys(record1).length === 0) {
+export function checkOverlap(bindingFilters: Record<string, string>, objectFilters: Record<string, string>): boolean {
+  // True if labels/annotations are empty
+  if (Object.keys(bindingFilters).length === 0) {
     return true;
   }
-  for (const key in record1) {
-    if (
-      Object.prototype.hasOwnProperty.call(record1, key) &&
-      Object.prototype.hasOwnProperty.call(record2, key) &&
-      record1[key] === record2[key]
-    ) {
-      return true;
+
+  let matchCount = 0;
+
+  for (const key in bindingFilters) {
+    // object must have label/annotation
+    if (Object.prototype.hasOwnProperty.call(objectFilters, key)) {
+      const val1 = bindingFilters[key];
+      const val2 = objectFilters[key];
+
+      // If bindingFilter has empty value for this key, only need to ensure objectFilter has this key
+      if (val1 === "" && key in objectFilters) {
+        matchCount++;
+      }
+      // If bindingFilter has a value, it must match the value in objectFilter
+      else if (val1 !== "" && val1 === val2) {
+        matchCount++;
+      }
     }
   }
-  return false;
+
+  // For single-key objects in bindingFilter or matching all keys in multiple-keys scenario
+  return matchCount === Object.keys(bindingFilters).length;
 }
 
 /**
@@ -118,6 +131,11 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
       acc["pepr.dev/v1/peprstore"] = {
         verbs: ["create", "get", "patch", "watch"],
         plural: "peprstores",
+      };
+
+      acc["apiextensions.k8s.io/v1/customresourcedefinition"] = {
+        verbs: ["patch", "create"],
+        plural: "customresourcedefinitions",
       };
 
       if (!acc[key] && binding.isWatch) {
