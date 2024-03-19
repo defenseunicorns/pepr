@@ -67,7 +67,7 @@ export default function (program: RootCmd) {
                 const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
                 if (patchType.length > 0) {
-                  console.info(`\n\u001b[1;34m${patch}\u001b[0m`);
+                  console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
                 }
               } else {
                 const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
