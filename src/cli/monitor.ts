@@ -77,7 +77,7 @@ export default function (program: RootCmd) {
                   .map((r: ResponseItem) => r.status.message);
                 if (filteredFailures.length > 0) {
                   console.log(`\n❌  VALIDATE   ${name} (${uid})`);
-                  console.debug(`\u001b[1;31m${filteredFailures}\u001b[0m`);
+                  console.log(`\u001b[1;31m${filteredFailures}\u001b[0m`);
                 } else {
                   console.log(`\n✅  VALIDATE   ${name} (${uid})`);
                 }

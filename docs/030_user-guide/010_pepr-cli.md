@@ -16,7 +16,7 @@ Initialize a new Pepr Module.
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
+
 - `--skip-post-init` - Skip npm install, git init and VSCode launch
 
 ---
@@ -27,7 +27,7 @@ Update the current Pepr Module to the latest SDK version and update the global P
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
+
 - `--skip-template-update` - Skip updating the template files
 
 ---
@@ -38,7 +38,6 @@ Connect a local cluster to a local version of the Pepr Controller to do real-tim
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
 - `-h, --host [host]` - Host to listen on (default: "host.k3d.internal")
 - `--confirm` - Skip confirmation prompt
 
@@ -50,7 +49,6 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
 - `-i, --image [image]` - Override the image tag
 - `--confirm` - Skip confirmation prompt
 
@@ -68,7 +66,6 @@ npx pepr monitor [options] [module-uuid]
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
 - `-h, --help` - Display help for command
 
 ---
@@ -89,7 +86,6 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 
 **Options:**
 
-- `-l, --log-level [level]` - Log level: debug, info, warn, error (default: "info")
 - `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM
 - `-r, --registry-info [<registry>/<username>]` - Registry Info: Image registry and username. Note: You must be signed into the registry
