@@ -341,17 +341,13 @@ export function moduleSecret(name: string, data: Buffer, hash: string): kind.Sec
 }
 
 function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
-  const env = [
-    { name: "PEPR_WATCH_MODE", value: watchMode ? "true" : "false" },
-    { name: "PEPR_PRETTY_LOG", value: "false" },
-    { name: "LOG_LEVEL", value: config.logLevel || "debug" },
-  ];
-
-  if (config.env) {
-    for (const [name, value] of Object.entries(config.env)) {
-      env.push({ name, value });
-    }
-  }
+  const def = {
+    PEPR_WATCH_MODE: watchMode ? "true" : "false",
+    PEPR_PRETTY_LOG: "false",
+    LOG_LEVEL: config.logLevel || "debug",
+  };
+  const cfg = config.env || {};
+  const env = Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 
   return env;
 }
