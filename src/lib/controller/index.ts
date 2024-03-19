@@ -218,7 +218,7 @@ export class Controller {
         };
 
         Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
-        Log.info({ ...reqMetadata, request }, "Incoming request body");
+        Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Process the request
         let response: MutateResponse | ValidateResponse[];
