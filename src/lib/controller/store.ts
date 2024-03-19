@@ -75,7 +75,7 @@ export class PeprControllerStore {
   };
 
   #receive = (store: PeprStore) => {
-    Log.info(store, "Pepr Store update");
+    Log.debug(store, "Pepr Store update");
 
     // Wrap the update in a debounced function
     const debounced = () => {
