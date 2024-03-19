@@ -62,7 +62,7 @@ export default function (program: RootCmd) {
       if (opts.outputDir) {
         outputDir = opts.outputDir;
         createDirectoryIfNotExists(outputDir).catch(error => {
-          console.error(`Error creating output directory: ${error}`);
+          console.error(`Error creating output directory: ${error.message}`);
           process.exit(1);
         });
       }
