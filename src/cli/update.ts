@@ -20,7 +20,7 @@ import { RootCmd } from "./root";
 export default function (program: RootCmd) {
   program
     .command("update")
-    .description("Update this Pepr module")
+    .description("Update this Pepr module. Not recommended for prod as it may change files.")
     .option("--skip-template-update", "Skip updating the template files")
     .action(async opts => {
       if (!opts.skipTemplateUpdate) {

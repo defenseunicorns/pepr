@@ -23,7 +23,7 @@ Initialize a new Pepr Module.
 
 ## `npx pepr update`
 
-Update the current Pepr Module to the latest SDK version and update the global Pepr CLI to the same version.
+Update the current Pepr Module to the latest SDK version. This command is not recommended for production use, instead, we recommend Renovate or Dependabot for automated updates.
 
 **Options:**
 
