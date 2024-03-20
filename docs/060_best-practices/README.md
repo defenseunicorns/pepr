@@ -77,7 +77,7 @@ However, there are some cases where multiple modules makes sense. For instance d
 To enhance the security of your Pepr Controller, we recommend following these best practices:
 
 - Regularly update Pepr to the latest stable release.
-- Secure Pepr through RBAC building in [scoped mode](https://docs.pepr.dev/main/user-guide/rbac/#scoped) taking into account access to the Kubernetes API server needed in the callbacks.
+- Secure Pepr through RBAC using [scoped mode](https://docs.pepr.dev/main/user-guide/rbac/#scoped) taking into account access to the Kubernetes API server needed in the callbacks.
 - Practice the principle of least privilege when assigning roles and permissions and avoid giving the service account more permissions than necessary.
 - Use NetworkPolicy to restrict traffic from Pepr Controllers to the minimum required.
 - Limit calls from Pepr to the Kubernetes API server to the minimum required.
