@@ -32,7 +32,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       env: [
         { name: "PEPR_WATCH_MODE", value: "false" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "debug" },
+        { name: "LOG_LEVEL", value: "info" },
       ],
       image,
       annotations: {
@@ -77,7 +77,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       env: [
         { name: "PEPR_WATCH_MODE", value: "true" },
         { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "debug" },
+        { name: "LOG_LEVEL", value: "info" },
       ],
       image,
       annotations: {

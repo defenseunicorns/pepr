@@ -235,7 +235,7 @@ export class Controller {
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
           // Log the response
-          Log.debug({ ...reqMetadata, res }, "Check response");
+          Log.info({ ...reqMetadata, res }, "Check response");
         });
 
         let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;

@@ -344,7 +344,7 @@ function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
   const def = {
     PEPR_WATCH_MODE: watchMode ? "true" : "false",
     PEPR_PRETTY_LOG: "false",
-    LOG_LEVEL: config.logLevel || "debug",
+    LOG_LEVEL: config.logLevel || "info",
   };
   const cfg = config.env || {};
   const env = Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
