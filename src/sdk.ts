@@ -26,10 +26,14 @@ export function containers(
   return [...containers, ...initContainers, ...ephemeralContainers];
 }
 
-export function createEvent(): PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod> {
+export function writeEvent(): PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod> {
   throw new Error("Not implemented");
 }
 
 export function getOwnerRef(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
   return request.Raw.metadata?.ownerReferences || [];
+}
+
+export function sanitizeResourceName(name: string) {
+  return name;
 }
