@@ -66,13 +66,13 @@ export class Queue<K extends KubernetesObject> {
 
       // Reconcile the element
       if (this.#reconcile) {
-        Log.debug(`Reconciling ${element.item.metadata!.namespace}/${element.item.metadata!.name}`);
+        Log.debug(`Reconciling ${element.item.metadata!.name}`);
         await this.#reconcile(element.item);
       }
 
       element.resolve();
     } catch (e) {
-      Log.debug(`Error reconciling ${element.item.metadata!.namespace}/${element.item.metadata!.name}`);
+      Log.debug(`Error reconciling ${element.item.metadata!.name}`);
       element.reject(e);
     } finally {
       // Reset the pending promise flag
