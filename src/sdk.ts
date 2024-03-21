@@ -6,6 +6,8 @@ import { PeprMutateRequest } from "./lib/mutate-request";
 import { a } from "./lib";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericKind } from "kubernetes-fluent-client";
+import { K8s, kind } from "kubernetes-fluent-client";
+import Log from "./lib/logger";
 
 /**
  * Returns all containers in a pod
@@ -33,8 +35,36 @@ export function containers(
   return [...containers, ...initContainers, ...ephemeralContainers];
 }
 
-export function writeEvent(): PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod> {
-  throw new Error("Not implemented");
+/**
+ * Write a K8s event for the CRD
+ *
+ * @param cr The custom resource to write the event for
+ * @param message A human-readable message for the event
+ * @param type The type of event to write
+ */
+export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>) {
+  Log.debug(cr.metadata, `Writing event: ${event.message}`);
+
+  await K8s(kind.CoreEvent).Create({
+    type: "Warning",
+    reason: "ReconciliationFailed",
+    ...event,
+    // Fixed values
+    metadata: {
+      namespace: cr.metadata!.namespace,
+      generateName: cr.metadata!.name,
+    },
+    involvedObject: {
+      apiVersion: cr.apiVersion,
+      kind: cr.kind,
+      name: cr.metadata!.name,
+      namespace: cr.metadata!.namespace,
+      uid: cr.metadata!.uid,
+    },
+    firstTimestamp: new Date(),
+    reportingComponent: "uds.dev/operator",
+    reportingInstance: process.env.HOSTNAME,
+  });
 }
 
 /**
