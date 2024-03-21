@@ -46,28 +46,37 @@ export class Queue<K extends KubernetesObject> {
    */
   async #dequeue() {
     // If there is a pending promise, do nothing
-    if (this.#pendingPromise) return false;
+    if (this.#pendingPromise) {
+      Log.debug("Pending promise, not dequeuing");
+      return false;
+    }
 
     // Take the next element from the queue
     const element = this.#queue.shift();
 
     // If there is no element, do nothing
-    if (!element) return false;
+    if (!element) {
+      Log.debug("No element, not dequeuing");
+      return false;
+    }
 
     try {
       // Set the pending promise flag to avoid concurrent reconciliations
       this.#pendingPromise = true;
 
-      // Reconcile the webapp
+      // Reconcile the element
       if (this.#reconcile) {
+        Log.debug(`Reconciling ${element.item.metadata!.name}`);
         await this.#reconcile(element.item);
       }
 
       element.resolve();
     } catch (e) {
+      Log.debug(`Error reconciling ${element.item.metadata!.name}`, { error: e });
       element.reject(e);
     } finally {
       // Reset the pending promise flag
+      Log.debug("Resetting pending promise and dequeuing");
       this.#pendingPromise = false;
 
       // After the element is reconciled, dequeue the next element
