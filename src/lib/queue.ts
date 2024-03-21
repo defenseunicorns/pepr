@@ -72,7 +72,7 @@ export class Queue<K extends KubernetesObject> {
 
       element.resolve();
     } catch (e) {
-      Log.debug(`Error reconciling ${element.item.metadata!.name}`);
+      Log.debug(`Error reconciling ${element.item.metadata!.name}`,{error: e});
       element.reject(e);
     } finally {
       // Reset the pending promise flag
