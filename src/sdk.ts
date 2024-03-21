@@ -7,7 +7,12 @@ import { a } from "./lib";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericKind } from "kubernetes-fluent-client";
 
-// Returns all containers in the pod
+/**
+ * Returns all containers in a pod
+ * @param request the request/pod to get the containers from
+ * @param containerType the type of container to get
+ * @returns the list of containers in the pod
+ */
 export function containers(
   request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>,
   containerType?: "containers" | "initContainers" | "ephemeralContainers",
