@@ -36,18 +36,21 @@ export function containers(
 }
 
 /**
- * Write a K8s event for the CRD
+ * Write a K8s event for a CRD
  *
  * @param cr The custom resource to write the event for
- * @param message A human-readable message for the event
- * @param type The type of event to write
+ * @param event The event to write, should contain a human-readable message for the event
+ * @param eventType The type of event to write, for example "Warning"
+ * @param eventReason The reason for the event, for example "ReconciliationFailed"
+ * @param reportingComponent The component that is reporting the event, for example "uds.dev/operator"
+ * @param reportingInstance The instance of the component that is reporting the event, for example process.env.HOSTNAME
  */
-export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>) {
+export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>, eventType: string, eventReason: string, reportingComponent: string, reportingInstance: string) {
   Log.debug(cr.metadata, `Writing event: ${event.message}`);
 
   await K8s(kind.CoreEvent).Create({
-    type: "Warning",
-    reason: "ReconciliationFailed",
+    type: eventType,
+    reason: eventReason,
     ...event,
     // Fixed values
     metadata: {
@@ -62,8 +65,8 @@ export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>
       uid: cr.metadata!.uid,
     },
     firstTimestamp: new Date(),
-    reportingComponent: "uds.dev/operator",
-    reportingInstance: process.env.HOSTNAME,
+    reportingComponent: reportingComponent,
+    reportingInstance: reportingInstance,
   });
 }
 
