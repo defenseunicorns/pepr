@@ -31,6 +31,18 @@ The key drivers for this decision include:
 
 Chosen option: "Named Callbacks", because it provides a clear and consistent way to identify the source of logs and makes the code easier to understand, debug, and test with an easy developer experience.
 
+```ts
+// Watch for changes to the UDSPackage CRD to enqueue a package for processing
+When(UDSPackage)
+  .IsCreatedOrUpdated()
+  // Advanced CR Validation
+  .Validate(validator)
+  // Enqueue the package for processing
+  .Reconcile(reconciler)
+  .LogAs("UDS Operator Reconciler")
+```
+
+
 ## Benefits
 
 - Simpler developer experience by reducing workload on the module author.
