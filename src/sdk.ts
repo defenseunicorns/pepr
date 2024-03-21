@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { PeprValidateRequest } from "./validate-request";
-import { PeprMutateRequest } from "./mutate-request";
-import { a } from "../lib";
+import { PeprValidateRequest } from "./lib/validate-request";
+import { PeprMutateRequest } from "./lib/mutate-request";
+import { a } from "./lib";
 
 // Returns all containers in the pod
 export function containers(
@@ -24,4 +24,12 @@ export function containers(
     return ephemeralContainers;
   }
   return [...containers, ...initContainers, ...ephemeralContainers];
+}
+
+export function createEvent(): PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod> {
+  throw new Error("Not implemented");
+}
+
+export function getOwnerRef(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
+  return request.Raw.metadata?.ownerReferences || [];
 }

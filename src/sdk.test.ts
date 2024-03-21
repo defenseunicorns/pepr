@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
-import { PeprValidateRequest } from "./validate-request";
-import { PeprMutateRequest } from "./mutate-request";
-import { a } from "../lib";
-import { containers } from "./module-helpers";
+import { PeprValidateRequest } from "./lib/validate-request";
+import { PeprMutateRequest } from "./lib/mutate-request";
+import { a } from "./lib";
+import { containers } from "./sdk";
 
 test("should return a list of containers in the pod when in a validate block", async () => {
   const standardContainers = [
