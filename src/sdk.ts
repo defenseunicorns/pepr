@@ -4,6 +4,8 @@
 import { PeprValidateRequest } from "./lib/validate-request";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import { a } from "./lib";
+import { V1OwnerReference } from "@kubernetes/client-node";
+import { GenericKind } from "kubernetes-fluent-client";
 
 // Returns all containers in the pod
 export function containers(
@@ -30,8 +32,22 @@ export function writeEvent(): PeprValidateRequest<a.Pod> | PeprMutateRequest<a.P
   throw new Error("Not implemented");
 }
 
-export function getOwnerRef(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
-  return request.Raw.metadata?.ownerReferences || [];
+/**
+ * Get the owner reference for a custom resource
+ * @param cr the custom resource to get the owner reference for
+ * @returns the owner reference for the custom resource
+ */
+export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
+  const { name, uid } = cr.metadata!;
+
+  return [
+    {
+      apiVersion: cr.apiVersion!,
+      kind: cr.kind!,
+      uid: uid!,
+      name: name!,
+    },
+  ];
 }
 
 /**
