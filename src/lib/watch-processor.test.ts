@@ -53,7 +53,6 @@ describe("WatchProcessor", () => {
     mockWatch.mockImplementation(() => {
       return {
         start: mockStart,
-        getCacheID: jest.fn().mockReturnValue("57332a1dee"),
         events: {
           on: mockEvents,
         },
