@@ -69,10 +69,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   queue.setReconcile(watchCallback);
 
   // Setup the resource watch
-  const watcher = K8s(binding.model, binding.filters).Watch(() => {}, watchCfg);
-
-  // Bind watch to the data event
-  watcher.events.on(WatchEvent.DATA, async (obj, type) => {
+  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
     Log.debug(obj, `Watch event ${type} received`);
 
     // If the binding is a queue, enqueue the object
@@ -82,7 +79,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
       // Otherwise, run the watch callback directly
       await watchCallback(obj, type);
     }
-  });
+  }, watchCfg);
 
   // If failure continues, log and exit
   watcher.events.on(WatchEvent.GIVE_UP, err => {
