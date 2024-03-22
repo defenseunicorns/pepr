@@ -15,7 +15,7 @@ Currently, Pepr utilizes function callback names to produce logs during executio
 
 The key drivers for this decision include:
 
-- **Devex**: Instead of manual declaration of `const name = "my-action";` in each callback and each log (which is easy to forget and tedious to do), we can add a name to the callback to make it easier to identify the source of logs. `LogAs("my-action")`
+- **Devex**: Instead of manual declaration of `const name = "my-action";` in each callback and each log (which is easy to forget and tedious to do), we can add a name to the callback to make it easier to identify the source of logs. `Alias("my-action")`
 - **Debugging Efficiency**: The debugging process in the current system is time-consuming and error-prone due to the anonymous nature of callbacks.  
 - **Code Readability**: Anonymous callbacks can make the code harder to understand, especially for new developers or when returning to old code that has a different form of naming.
 - **Maintenance and Scalability**: As the system grows, the manageability of anonymous callbacks becomes increasingly burdensome to maintain a consistent state of naming across actions.
