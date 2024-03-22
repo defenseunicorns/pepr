@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { KubernetesObject } from "@kubernetes/client-node";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import Log from "./logger";
 
 type QueueItem<K extends KubernetesObject> = {
   item: K;
+  type: WatchPhase;
   resolve: (value: void | PromiseLike<void>) => void;
   reject: (reason?: string) => void;
 };
@@ -15,15 +17,16 @@ type QueueItem<K extends KubernetesObject> = {
 export class Queue<K extends KubernetesObject> {
   #queue: QueueItem<K>[] = [];
   #pendingPromise = false;
-  #reconcile?: (...args: unknown[]) => Promise<void>;
+  #reconcile?: (obj: KubernetesObject, type: WatchPhase) => Promise<void>;
 
   constructor() {
     this.#reconcile = async () => await new Promise(resolve => resolve());
   }
 
-  setReconcile(reconcile: (...args: unknown[]) => Promise<void>) {
+  setReconcile(reconcile: (obj: KubernetesObject, type: WatchPhase) => Promise<void>) {
     this.#reconcile = reconcile;
   }
+
   /**
    * Enqueue adds an item to the queue and returns a promise that resolves when the item is
    * reconciled.
@@ -31,10 +34,10 @@ export class Queue<K extends KubernetesObject> {
    * @param item The object to reconcile
    * @returns A promise that resolves when the object is reconciled
    */
-  enqueue(item: K) {
+  enqueue(item: K, type: WatchPhase) {
     Log.debug(`Enqueueing ${item.metadata!.namespace}/${item.metadata!.name}`);
     return new Promise<void>((resolve, reject) => {
-      this.#queue.push({ item, resolve, reject });
+      this.#queue.push({ item, type, resolve, reject });
       return this.#dequeue();
     });
   }
@@ -67,7 +70,7 @@ export class Queue<K extends KubernetesObject> {
       // Reconcile the element
       if (this.#reconcile) {
         Log.debug(`Reconciling ${element.item.metadata!.name}`);
-        await this.#reconcile(element.item);
+        await this.#reconcile(element.item, element.type);
       }
 
       element.resolve();
