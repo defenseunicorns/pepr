@@ -1,4 +1,4 @@
-# 7: LogAs Function in Capability Class "Named Callbacks"
+# 7: Alias Function in Capability Class "Named Callbacks"
 
 Date: 2024-03-21
 
