@@ -24,7 +24,7 @@ The key drivers for this decision include:
 
 ## Considered Options
 
-1. **Named Callbacks**: Add an optional name to the callback to make it easier to identify the source of logs. `LogAs("my-action")`.
+1. **Named Callbacks**: Add an optional name to the callback to make it easier to identify the source of logs. `Alias("my-action")`.
 2. **Maintain Anonymous Callbacks**: Continue using anonymous callbacks without any changes and move this responsibility to the module author. 
 
 ## Decision Outcome 
