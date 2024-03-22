@@ -1,6 +1,8 @@
-import { beforeEach, expect, jest, describe, test } from "@jest/globals";
-import { Queue } from "./queue";
+import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 import { KubernetesObject } from "@kubernetes/client-node";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { Queue } from "./queue";
+
 describe("Queue", () => {
   let queue: Queue<KubernetesObject>;
 
@@ -12,7 +14,7 @@ describe("Queue", () => {
     const pod = {
       metadata: { name: "test-pod", namespace: "test-pod" },
     };
-    const promise = queue.enqueue(pod);
+    const promise = queue.enqueue(pod, WatchPhase.Added);
     expect(promise).toBeInstanceOf(Promise);
     await promise;
   });
@@ -26,8 +28,8 @@ describe("Queue", () => {
     };
 
     // Enqueue two packages
-    const promise1 = queue.enqueue(mockPod);
-    const promise2 = queue.enqueue(mockPod2);
+    const promise1 = queue.enqueue(mockPod, WatchPhase.Added);
+    const promise2 = queue.enqueue(mockPod2, WatchPhase.Modified);
 
     // Wait for both promises to resolve
     await promise1;
@@ -42,7 +44,7 @@ describe("Queue", () => {
     jest.spyOn(queue, "setReconcile").mockRejectedValueOnce(error as never);
 
     try {
-      await queue.enqueue(mockPod);
+      await queue.enqueue(mockPod, WatchPhase.Added);
     } catch (e) {
       expect(e).toBe(error);
     }
@@ -51,6 +53,6 @@ describe("Queue", () => {
     const mockPod2 = {
       metadata: { name: "test-pod-2", namespace: "test-namespace-2" },
     };
-    await queue.enqueue(mockPod2);
+    await queue.enqueue(mockPod2, WatchPhase.Modified);
   });
 });
