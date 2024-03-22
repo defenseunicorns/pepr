@@ -39,7 +39,7 @@ When(UDSPackage)
   .Validate(validator)
   // Enqueue the package for processing
   .Reconcile(reconciler)
-  .LogAs("UDS Operator Reconciler")
+  .Alias("UDS Operator Reconciler")
 ```
 
 
