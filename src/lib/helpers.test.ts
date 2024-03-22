@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding, CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists, checkOverlap, filterMatcher } from "./helpers";
+import { createRBACMap, addVerbIfNotExists, checkOverlap, filterNoMatchReason } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
@@ -997,7 +997,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1013,7 +1013,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1031,7 +1031,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1047,7 +1047,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1063,7 +1063,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1081,7 +1081,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1099,7 +1099,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,

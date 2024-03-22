@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { CapabilityExport } from "./types";
-import { promises as fs } from "fs";
-import { Binding } from "./types";
+import { Binding, CapabilityExport } from "./types";
 
 type RBACMap = {
   [key: string]: {
@@ -47,11 +46,11 @@ export function checkOverlap(bindingFilters: Record<string, string>, objectFilte
 /**
  * Decide to run callback after the event comes back from API Server
  **/
-export const filterMatcher = (
+export function filterNoMatchReason(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
-): string => {
+): string {
   // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
     return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
@@ -116,14 +115,15 @@ export const filterMatcher = (
 
   // no problems
   return "";
-};
-export const addVerbIfNotExists = (verbs: string[], verb: string) => {
+}
+
+export function addVerbIfNotExists(verbs: string[], verb: string) {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
   }
-};
+}
 
-export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
+export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
     capability.bindings.forEach(binding => {
       const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
@@ -148,7 +148,7 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
 
     return acc;
   }, {});
-};
+}
 
 export async function createDirectoryIfNotExists(path: string) {
   try {
