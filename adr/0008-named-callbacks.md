@@ -50,6 +50,6 @@ When(UDSPackage)
 
 ## Consequences
 
-1. Add another optional function to the Capability class, `LogAs`, to add a name to the callback.
+1. Add another optional function to the Capability class, `Alias`, to add a name to the callback (and add a default, generated name for Pepr to use when a dev forgets to set one).
 2. Add Unit and Integration tests to ensure the new functionality works as expected.
 3. Add documentation for the new functionality.
