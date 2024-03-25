@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { CapabilityExport } from "./types";
-import { promises as fs } from "fs";
-import { Binding } from "./types";
+import { Binding, CapabilityExport } from "./types";
 
 type RBACMap = {
   [key: string]: {
@@ -15,30 +14,43 @@ type RBACMap = {
 };
 
 // check for overlap with labels and annotations between bindings and kubernetes objects
-export function checkOverlap(record1: Record<string, string>, record2: Record<string, string>) {
-  if (Object.keys(record1).length === 0) {
+export function checkOverlap(bindingFilters: Record<string, string>, objectFilters: Record<string, string>): boolean {
+  // True if labels/annotations are empty
+  if (Object.keys(bindingFilters).length === 0) {
     return true;
   }
-  for (const key in record1) {
-    if (
-      Object.prototype.hasOwnProperty.call(record1, key) &&
-      Object.prototype.hasOwnProperty.call(record2, key) &&
-      record1[key] === record2[key]
-    ) {
-      return true;
+
+  let matchCount = 0;
+
+  for (const key in bindingFilters) {
+    // object must have label/annotation
+    if (Object.prototype.hasOwnProperty.call(objectFilters, key)) {
+      const val1 = bindingFilters[key];
+      const val2 = objectFilters[key];
+
+      // If bindingFilter has empty value for this key, only need to ensure objectFilter has this key
+      if (val1 === "" && key in objectFilters) {
+        matchCount++;
+      }
+      // If bindingFilter has a value, it must match the value in objectFilter
+      else if (val1 !== "" && val1 === val2) {
+        matchCount++;
+      }
     }
   }
-  return false;
+
+  // For single-key objects in bindingFilter or matching all keys in multiple-keys scenario
+  return matchCount === Object.keys(bindingFilters).length;
 }
 
 /**
  * Decide to run callback after the event comes back from API Server
  **/
-export const filterMatcher = (
+export function filterNoMatchReason(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
-): string => {
+): string {
   // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
     return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
@@ -103,14 +115,15 @@ export const filterMatcher = (
 
   // no problems
   return "";
-};
-export const addVerbIfNotExists = (verbs: string[], verb: string) => {
+}
+
+export function addVerbIfNotExists(verbs: string[], verb: string) {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
   }
-};
+}
 
-export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
+export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
     capability.bindings.forEach(binding => {
       const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
@@ -118,6 +131,11 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
       acc["pepr.dev/v1/peprstore"] = {
         verbs: ["create", "get", "patch", "watch"],
         plural: "peprstores",
+      };
+
+      acc["apiextensions.k8s.io/v1/customresourcedefinition"] = {
+        verbs: ["patch", "create"],
+        plural: "customresourcedefinitions",
       };
 
       if (!acc[key] && binding.isWatch) {
@@ -130,7 +148,7 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
 
     return acc;
   }, {});
-};
+}
 
 export async function createDirectoryIfNotExists(path: string) {
   try {
@@ -189,7 +207,7 @@ export function generateWatchNamespaceError(
   if (bindingAndCapabilityNSConflict(bindingNamespaces, capabilityNamespaces)) {
     err += `Binding uses namespace not governed by capability: bindingNamespaces: [${bindingNamespaces.join(
       ", ",
-    )}] capabilityNamespaces:$[${capabilityNamespaces.join(", ")}].`;
+    )}] capabilityNamespaces: [${capabilityNamespaces.join(", ")}].`;
   }
 
   // add a space if there is a period in the middle of the string

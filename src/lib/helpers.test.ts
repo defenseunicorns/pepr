@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding, CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists, checkOverlap, filterMatcher } from "./helpers";
+import { createRBACMap, addVerbIfNotExists, checkOverlap, filterNoMatchReason } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
@@ -294,6 +294,10 @@ describe("createRBACMap", () => {
         verbs: ["create", "get", "patch", "watch"],
         plural: "peprstores",
       },
+      "apiextensions.k8s.io/v1/customresourcedefinition": {
+        verbs: ["patch", "create"],
+        plural: "customresourcedefinitions",
+      },
       "/v1/Namespace": { verbs: ["watch"], plural: "namespaces" },
       "/v1/ConfigMap": { verbs: ["watch"], plural: "configmaps" },
     };
@@ -442,14 +446,14 @@ describe("generateWatchNamespaceError", () => {
   test("returns error for binding and capability namespace conflict", () => {
     const error = generateWatchNamespaceError([""], ["ns2"], ["ns3"]);
     expect(error).toBe(
-      "Binding uses namespace not governed by capability: bindingNamespaces: [ns2] capabilityNamespaces:$[ns3].",
+      "Binding uses namespace not governed by capability: bindingNamespaces: [ns2] capabilityNamespaces: [ns3].",
     );
   });
 
   test("returns combined error for both conflicts", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], ["ns3", "ns4"]);
     expect(error).toBe(
-      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1]. Binding uses namespace not governed by capability: bindingNamespaces: [ns1] capabilityNamespaces:$[ns3, ns4].",
+      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1]. Binding uses namespace not governed by capability: bindingNamespaces: [ns1] capabilityNamespaces: [ns3, ns4].",
     );
   });
 
@@ -563,7 +567,7 @@ describe("namespaceComplianceValidator", () => {
       namespaceComplianceValidator(nsViolation[0]);
     } catch (e) {
       expect(e.message).toBe(
-        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses namespace not governed by capability: bindingNamespaces: [new york] capabilityNamespaces:$[miami, dallas, milwaukee].",
+        "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses namespace not governed by capability: bindingNamespaces: [new york] capabilityNamespaces: [miami, dallas, milwaukee].",
       );
     }
   });
@@ -944,23 +948,43 @@ describe("replaceString", () => {
 });
 
 describe("checkOverlap", () => {
-  test("returns true if first record is empty", () => {
+  test("should return false since all binding annotations/labels do not exist on the object", () => {
+    expect(checkOverlap({ key1: "", key2: "" }, { key1: "something" })).toBe(false);
+  });
+  test("should return false since all binding annotations/labels values do not match on the object values", () => {
+    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "value1", key2: "key2" })).toBe(false);
+  });
+  test("should return true since all binding annotations/labels keys and values match the object keys and values", () => {
+    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "key1", key2: "key2" })).toBe(true);
+  });
+
+  test("should return true since all binding annotations/labels keys exist on the object", () => {
+    expect(checkOverlap({ key1: "", key2: "" }, { key1: "key1", key2: "key2" })).toBe(true);
+  });
+
+  test("(Mixed) should return true since key and key value match on object", () => {
+    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
+  });
+  test("(Mixed) should return false since key1 value is different on object", () => {
+    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
+  });
+  test("should return true if binding has no labels or annotations", () => {
     expect(checkOverlap({}, { key1: "value1" })).toBe(true);
   });
 
-  test("returns false if there is no overlap", () => {
+  test("should return false if there is no overlap", () => {
     expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
   });
 
-  test("returns true if there is an overlap", () => {
+  test("should return true since object has key1 and value1", () => {
     expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
   });
 
-  test("returns false if keys match but values do not", () => {
+  test("should return false since object value does not match binding value", () => {
     expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
   });
 
-  test("returns true if first record is empty and second record is also empty", () => {
+  test("should return true if the object has no labels and neither does the binding", () => {
     expect(checkOverlap({}, {})).toBe(true);
   });
 });
@@ -973,7 +997,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -989,7 +1013,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1007,7 +1031,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1023,7 +1047,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1039,7 +1063,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1057,7 +1081,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1075,7 +1099,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,

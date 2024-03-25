@@ -32,13 +32,13 @@ export class Controller {
   readonly #config: ModuleConfig;
   readonly #capabilities: Capability[];
   readonly #beforeHook?: (req: AdmissionRequest) => void;
-  readonly #afterHook?: (res: MutateResponse) => void;
+  readonly #afterHook?: (res: MutateResponse | ValidateResponse) => void;
 
   constructor(
     config: ModuleConfig,
     capabilities: Capability[],
     beforeHook?: (req: AdmissionRequest) => void,
-    afterHook?: (res: MutateResponse) => void,
+    afterHook?: (res: MutateResponse | ValidateResponse) => void,
     onReady?: () => void,
   ) {
     this.#config = config;
@@ -235,7 +235,7 @@ export class Controller {
         responseList.map(res => {
           this.#afterHook && this.#afterHook(res);
           // Log the response
-          Log.debug({ ...reqMetadata, res }, "Check response");
+          Log.info({ ...reqMetadata, res }, "Check response");
         });
 
         let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;

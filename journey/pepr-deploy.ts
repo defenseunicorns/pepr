@@ -49,6 +49,8 @@ export function peprDeploy() {
     }
 
     it("npx pepr monitor should display validation results to console", async () => {
+      await testValidate();
+      
       const cmd = ['pepr', 'monitor', 'static-test']
 
       const proc = spawn('npx', cmd, { shell: true })
@@ -71,7 +73,7 @@ export function peprDeploy() {
       await until(() => state.done)
 
       // completes only if conditions are met, so... getting here means success!
-    }, 5000);
+    }, 10000);
   });
 
   describe("should display the UUIDs of the deployed modules", testUUID);
