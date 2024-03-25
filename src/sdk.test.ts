@@ -183,8 +183,32 @@ describe("getOwnerRef", () => {
 );
 
 describe("sanitizeResourceName", () => {
-  it("should return a sanitized resource name", () => {
+  it("should return same resource name if no sanitization needed", () => {
     const resourceName = "test-resource";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("test-resource");
+  });
+
+  it("should replace capital letters with lowercase letters", () => {
+    const resourceName = "Test-ResourCe";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("test-resource");
+  });
+
+  it("should replace sequences of non-alphanumeric characters with a single -", () => {
+    const resourceName = "test-*^%- -!=!resource";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("test-resource");
+  });
+
+  it("should truncate name to 250 characters", () => {
+    const resourceName = "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresource";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresou");
+  });
+
+  it("should remove leading and trailing non-letter characters", () => {
+    const resourceName = " 1=-test-resource *2 ";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
     expect(sanitizedResourceName).toEqual("test-resource");
   });
