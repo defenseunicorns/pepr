@@ -134,7 +134,14 @@ describe("writeEvent", () => {
       metadata: { name: "test", namespace: "default", uid: "1" },
     };
     const event = { message: "Test event" };
-    await writeEvent(cr as GenericKind, event, "Warning", "ReconciliationFailed", "uds.dev/operator", process.env.HOSTNAME as string);
+    await writeEvent(
+      cr as GenericKind,
+      event,
+      "Warning",
+      "ReconciliationFailed",
+      "uds.dev/operator",
+      process.env.HOSTNAME as string,
+    );
     expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
     expect(Create).toHaveBeenCalledWith({
       ...event,
@@ -172,8 +179,7 @@ describe("getOwnerRef", () => {
       },
     ]);
   });
-}
-);
+});
 
 describe("sanitizeResourceName", () => {
   it("should return same resource name if no sanitization needed", () => {
@@ -195,9 +201,12 @@ describe("sanitizeResourceName", () => {
   });
 
   it("should truncate name to 250 characters", () => {
-    const resourceName = "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresource";
+    const resourceName =
+      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresource";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
-    expect(sanitizedResourceName).toEqual("test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresou");
+    expect(sanitizedResourceName).toEqual(
+      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresou",
+    );
   });
 
   it("should remove leading and trailing non-letter characters", () => {

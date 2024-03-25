@@ -26,5 +26,5 @@ export {
   containers,
   writeEvent,
   getOwnerRef,
-  sanitizeResourceName
+  sanitizeResourceName,
 };

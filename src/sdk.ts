@@ -45,7 +45,14 @@ export function containers(
  * @param reportingComponent The component that is reporting the event, for example "uds.dev/operator"
  * @param reportingInstance The instance of the component that is reporting the event, for example process.env.HOSTNAME
  */
-export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>, eventType: string, eventReason: string, reportingComponent: string, reportingInstance: string) {
+export async function writeEvent(
+  cr: GenericKind,
+  event: Partial<kind.CoreEvent>,
+  eventType: string,
+  eventReason: string,
+  reportingComponent: string,
+  reportingInstance: string,
+) {
   Log.debug(cr.metadata, `Writing event: ${event.message}`);
 
   await K8s(kind.CoreEvent).Create({
