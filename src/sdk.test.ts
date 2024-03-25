@@ -8,12 +8,12 @@ import { a } from "./lib";
 import { containers, writeEvent, getOwnerRef, sanitizeResourceName } from "./sdk";
 
 import { beforeEach, describe, it, jest } from "@jest/globals";
-import { GenericKind, K8s, kind } from "kubernetes-fluent-client";
-
+import { GenericKind } from "kubernetes-fluent-client";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { Mock } from "jest-mock";
 
-jest.mock("pepr", () => ({
-  mockK8s: jest.mocked(K8s),
+jest.mock("kubernetes-fluent-client", () => ({
+  K8s: jest.fn(),
   Log: {
     debug: jest.fn(),
     warn: jest.fn(),
@@ -114,7 +114,7 @@ describe("containers", () => {
   });
 });
 
-/* describe("writeEvent", () => {
+describe("writeEvent", () => {
   let Create: Mock;
   beforeEach(() => {
     jest.clearAllMocks();
@@ -134,14 +134,7 @@ describe("containers", () => {
       metadata: { name: "test", namespace: "default", uid: "1" },
     };
     const event = { message: "Test event" };
-    await writeEvent(
-      cr as GenericKind,
-      event,
-      "Warning",
-      "ReconciliationFailed",
-      "uds.dev/operator",
-      process.env.HOSTNAME as string,
-    );
+    await writeEvent(cr as GenericKind, event, "Warning", "ReconciliationFailed", "uds.dev/operator", process.env.HOSTNAME as string);
     expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
     expect(Create).toHaveBeenCalledWith({
       ...event,
@@ -160,7 +153,7 @@ describe("containers", () => {
       reportingInstance: process.env.HOSTNAME,
     });
   });
-}); */
+});
 
 describe("getOwnerRef", () => {
   it("should return the owner reference for the CRD", () => {
