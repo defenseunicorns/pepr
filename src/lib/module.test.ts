@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, expect, jest, test } from "@jest/globals";
+import { beforeEach, expect, jest, test,describe } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
-
+import { Schedule } from "./schedule";
 import { Errors } from "./errors";
 import { PackageJSON, PeprModule } from "./module";
 import { CapabilityExport } from "./types";
+import { on } from "events";
 
 // Mock Controller
 const startServerMock = jest.fn();
@@ -97,4 +98,32 @@ test("should send the capabilities to the parent process if PEPR_MODE is set to 
 
   new PeprModule(packageJSON, [capability]);
   expect(sendMock).toHaveBeenCalledWith([expected]);
+});
+
+describe('Capability', () => {
+  let capability: Capability;
+  let schedule: Schedule;
+
+  beforeEach(() => {
+    capability = new Capability({
+      name: "test",
+      description: "test",
+    });
+    schedule = {
+      name: 'test-name',
+      every: 1,
+      unit: 'seconds',
+      run: jest.fn(),
+      startTime: new Date(),
+      completions: 1,
+    };
+
+  
+  });
+
+  test('should handle OnSchedule', () => {
+    let { OnSchedule } = capability;
+    OnSchedule(schedule);
+    expect(capability.hasSchedule).toBe(true);
+  });
 });
