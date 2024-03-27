@@ -7,7 +7,7 @@ import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
-import { containers } from "./lib/module-helpers";
+import { containers, writeEvent, getOwnerRef, sanitizeResourceName } from "./sdk";
 
 export {
   Capability,
@@ -24,4 +24,7 @@ export {
   fetchStatus,
   kind,
   containers,
+  writeEvent,
+  getOwnerRef,
+  sanitizeResourceName,
 };
