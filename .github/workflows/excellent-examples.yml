@@ -1,0 +1,42 @@
+name: E2E Test on Excellent Examples
+
+
+permissions: read-all
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 12AM EST/9PM PST
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout External Repository
+      uses: actions/checkout@v2
+      with:
+        repository: defenseunicorns/pepr-excellent-examples
+        path: 'pepr-excellent-examples' 
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20' 
+
+    - name: Install Excellent Example Dependencies
+      run: npm ci
+      working-directory: ./pepr-excellent-examples 
+
+    - name: "Install K3d"
+      run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+      shell: bash
+
+    - name: Install Pepr Dependencies
+      run: npm ci
+
+    - name: Build Dev Image for Pepr Core
+      run: npm run test:journey:image
+
+    - name: Run E2E Tests
+      run: npm run test:e2e -- -i pepr:dev
+      working-directory: ./pepr-excellent-examples
