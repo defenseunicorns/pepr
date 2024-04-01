@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
-import { PeprValidateRequest } from "../lib/validate-request";
-import { PeprMutateRequest } from "../lib/mutate-request";
-import { a } from "../lib";
+import { PeprValidateRequest } from "../src/lib/validate-request";
+import { PeprMutateRequest } from "../src/lib/mutate-request";
+import { a } from "../src/lib";
 import { containers, writeEvent, getOwnerRef, sanitizeResourceName } from "./sdk";
 
 import { beforeEach, describe, it, jest } from "@jest/globals";
