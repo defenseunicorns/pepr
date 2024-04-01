@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Checkout External Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: defenseunicorns/pepr-excellent-examples
         path: 'pepr-excellent-examples' 
