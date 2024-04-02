@@ -6,6 +6,17 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 
+export class ValidationError extends Error {}
+
+export function validateHash(expectedHash: string): void {
+  // Require the hash to be a valid SHA-256 hash (64 characters, hexadecimal)
+  const sha256Regex = /^[a-f0-9]{64}$/i;
+  if (!expectedHash || !sha256Regex.test(expectedHash)) {
+    Log.error("Invalid hash. Expected a valid SHA-256 hash.");
+    throw new ValidationError("Invalid hash");
+  }
+}
+
 type RBACMap = {
   [key: string]: {
     verbs: string[];

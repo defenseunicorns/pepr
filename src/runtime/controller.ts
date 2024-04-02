@@ -11,19 +11,8 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
 import { packageJSON } from "../templates/data.json";
 import { peprStoreCRD } from "../lib/assets/store";
-
+import { validateHash } from "../lib/helpers";
 const { version } = packageJSON;
-
-export class ValidationError extends Error {}
-
-export function validateHash(expectedHash: string): void {
-  // Require the hash to be a valid SHA-256 hash (64 characters, hexadecimal)
-  const sha256Regex = /^[a-f0-9]{64}$/i;
-  if (!expectedHash || !sha256Regex.test(expectedHash)) {
-    Log.error("Invalid hash. Expected a valid SHA-256 hash.");
-    throw new ValidationError("Invalid hash");
-  }
-}
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
