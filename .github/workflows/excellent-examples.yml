@@ -32,7 +32,7 @@ jobs:
       shell: bash
 
     - name: Install Pepr Dependencies
-      run: npm ci
+      run: npm i
 
     - name: Build Dev Image for Pepr Core
       run: npm run test:journey:image
