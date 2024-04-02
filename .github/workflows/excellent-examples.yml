@@ -25,18 +25,19 @@ jobs:
 
     - name: Install Excellent Example Dependencies
       run: npm ci
-      working-directory: ./pepr-excellent-examples 
+      working-directory: ./pepr-excellent-examples/pepr-excellent-examples 
 
     - name: "Install K3d"
       run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
       shell: bash
 
     - name: Install Pepr Dependencies
-      run: npm i
+      run: npm ci
+      working-directory: ./pepr-excellent-examples/pepr-excellent-examples 
 
     - name: Build Dev Image for Pepr Core
       run: npm run test:journey:image
 
     - name: Run E2E Tests
       run: npm run test:e2e -- -i pepr:dev
-      working-directory: ./pepr-excellent-examples
+      working-directory: ./pepr-excellent-examples/pepr-excellent-examples 
