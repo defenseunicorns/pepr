@@ -25,7 +25,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Out of the box airgap support with [Zarf](https://zarf.dev)
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
-- Controller network isolation and tamper-resistent module execution
+- Controller network isolation and tamper-resistant module execution
 - Least-privilege [RBAC](./docs/030_user-guide/090_rbac.md) generation
 - AMD64 and ARM64 support
 
@@ -87,7 +87,7 @@ When(a.ConfigMap)
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
   - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
-## Wow too many words! tl;dr;
+## Wow, too many words! tl;dr;
 
 ```bash
 # Create a new Pepr Module
