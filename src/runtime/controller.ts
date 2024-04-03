@@ -11,16 +11,8 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
 import { packageJSON } from "../templates/data.json";
 import { peprStoreCRD } from "../lib/assets/store";
-
+import { validateHash } from "../lib/helpers";
 const { version } = packageJSON;
-
-function validateHash(expectedHash: string) {
-  // Require the hash to be 64 characters long
-  if (!expectedHash || expectedHash.length !== 64) {
-    Log.error("Invalid hash");
-    process.exit(1);
-  }
-}
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
@@ -31,8 +23,7 @@ function runModule(expectedHash: string) {
 
   // Check if the path is a valid file
   if (!fs.existsSync(gzPath)) {
-    Log.error(`File not found: ${gzPath}`);
-    process.exit(1);
+    throw new Error(`File not found: ${gzPath}`);
   }
 
   try {
@@ -46,9 +37,10 @@ function runModule(expectedHash: string) {
     const actualHash = crypto.createHash("sha256").update(code).digest("hex");
 
     // If the hash doesn't match, exit
-    if (expectedHash !== actualHash) {
-      Log.error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
-      process.exit(1);
+    // This is a timing safe comparison to prevent timing attacks
+    // https://en.wikipedia.org/wiki/Timing_attack
+    if (!crypto.timingSafeEqual(Buffer.from(expectedHash, "hex"), Buffer.from(actualHash, "hex"))) {
+      throw new Error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
     }
 
     Log.info(`File hash matches, running module`);
@@ -59,8 +51,7 @@ function runModule(expectedHash: string) {
     // Run the module
     fork(jsPath);
   } catch (e) {
-    Log.error(`Failed to decompress module: ${e}`);
-    process.exit(1);
+    throw new Error(`Failed to decompress module: ${e}`);
   }
 }
 
@@ -69,11 +60,16 @@ Log.info(`Pepr Controller (v${version})`);
 const hash = process.argv[2];
 
 const startup = async () => {
-  Log.info("Applying the Pepr Store CRD if it doesn't exist");
-  await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
+  try {
+    Log.info("Applying the Pepr Store CRD if it doesn't exist");
+    await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
-  validateHash(hash);
-  runModule(hash);
+    validateHash(hash);
+    runModule(hash);
+  } catch (err) {
+    Log.error(err);
+    process.exit(1);
+  }
 };
 
 startup().catch(err => Log.error(err));
