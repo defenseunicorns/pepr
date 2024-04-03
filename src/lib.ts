@@ -7,6 +7,7 @@ import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
+import * as sdk from "./sdk/sdk"
 
 export {
   Capability,
@@ -22,4 +23,5 @@ export {
   fetch,
   fetchStatus,
   kind,
+  sdk,
 };
