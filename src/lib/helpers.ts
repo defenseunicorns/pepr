@@ -12,7 +12,7 @@ export function validateHash(expectedHash: string): void {
   // Require the hash to be a valid SHA-256 hash (64 characters, hexadecimal)
   const sha256Regex = /^[a-f0-9]{64}$/i;
   if (!expectedHash || !sha256Regex.test(expectedHash)) {
-    Log.error("Invalid hash. Expected a valid SHA-256 hash.");
+    Log.error(`Invalid hash. Expected a valid SHA-256 hash, got ${expectedHash}`);
     throw new ValidationError("Invalid hash");
   }
 }
