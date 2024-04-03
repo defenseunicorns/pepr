@@ -25,6 +25,9 @@ jobs:
       - name: Install Pepr Dependencies
         run: npm ci
 
+      - name: Create the Pepr dist Folder
+        run: npm run test:journey:build
+
       - name: Create K3d Cluster
         run: npm run test:journey:k3d
 
