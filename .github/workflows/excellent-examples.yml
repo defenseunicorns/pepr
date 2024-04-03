@@ -34,6 +34,11 @@ jobs:
     - name: Install Pepr Dependencies
       run: npm ci
       working-directory: ./pepr-excellent-examples/pepr-excellent-examples 
+      
+    - name: List dir contents
+      run: "ls -l"
+      shell: bash
+      working-directory: ./pepr-excellent-examples/pepr-excellent-examples 
 
     - name: Build Dev Image for Pepr Core
       run: npm run test:journey:image
