@@ -2,7 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding, CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists, checkOverlap, filterNoMatchReason } from "./helpers";
+import {
+  createRBACMap,
+  addVerbIfNotExists,
+  checkOverlap,
+  filterNoMatchReason,
+  validateHash,
+  ValidationError,
+} from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
@@ -1105,5 +1112,37 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual("");
+  });
+});
+
+describe("validateHash", () => {
+  let originalExit: (code?: number) => never;
+
+  beforeEach(() => {
+    originalExit = process.exit;
+    process.exit = jest.fn() as unknown as (code?: number) => never;
+  });
+
+  afterEach(() => {
+    process.exit = originalExit;
+  });
+  test("should throw ValidationError for invalid hash values", () => {
+    // Examples of invalid hashes
+    const invalidHashes = [
+      "", // Empty string
+      "12345", // Too short
+      "zxcvbnmasdfghjklqwertyuiop1234567890zxcvbnmasdfghjklqwertyuio", // Contains invalid character 'z'
+      "123456789012345678901234567890123456789012345678901234567890123", // 63 characters, one short
+    ];
+
+    invalidHashes.forEach(hash => {
+      expect(() => validateHash(hash)).toThrow(ValidationError);
+    });
+  });
+
+  test("should not throw ValidationError for valid SHA-256 hash", () => {
+    // Example of a valid SHA-256 hash
+    const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
+    expect(() => validateHash(validHash)).not.toThrow();
   });
 });
