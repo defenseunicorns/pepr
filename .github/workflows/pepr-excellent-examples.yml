@@ -14,45 +14,79 @@ on:
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
 
 jobs:
-  whereami:
-    name: tbd
-    runs-on: ubuntu-latest
-    steps:
-      - name: env-workspace-root
-        run: |
-          REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
-
-
-      - name: get-workspace
-        run: |
-          echo "$GITHUB_WORKSPACE"
-          echo "$ROOT"
-          pwd
-          cd "$ROOT"
-          pwd
-          ls -la pepr/pepr
-
-
-  # examples-matrix:
-  #   name: Generate Example Matrix
+  # whereami:
+  #   name: tbd
   #   runs-on: ubuntu-latest
-  #   outputs:
-  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
   #   steps:
-  #     - name: env-runner-root
+  #     - name: env-root
   #       run: |
   #         REPO_NAME="${GITHUB_REPOSITORY##*/}"
-  #         echo "RUNNER_ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
+  #         echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
 
-  #     - name: pepr-excellent-examples
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: defenseunicorns/pepr-excellent-examples
-  #         path: 'pepr-excellent-examples'
+
+  #     - name: get-root
+  #       run: |
+  #         echo "$GITHUB_WORKSPACE"
+  #         echo "$ROOT"
+  #         pwd
+  #         cd "$ROOT"
+  #         pwd
+  #         ls -la pepr/pepr
+
+
+  generate-matrix:
+    name: Gen Excellent Examples Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+    steps:
+      - name: clone pepr
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR="${GITHUB_WORKSPACE}/pepr}" >> "$GITHUB_ENV"
+
+      - name: clone pepr-excellent-examples
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          repository: defenseunicorns/pepr-excellent-examples
+          path: pepr-excellent-examples
+
+      - name: "set env: PEXEX"
+        run: echo "PEXEX="${GITHUB_WORKSPACE}/pepr-excellent-examples}" >> "$GITHUB_ENV"
+
+      - name: setup node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: create matrix
+        run: node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
+        id: create-matrix
+
+  act-matrix:
+    name: Run Excellent Example (${{ matrix.nickname }})
+    runs-on: ubuntu-latest
+    if: needs.generate-matrix.outputs.matrix != ''
+    needs:
+      - generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{fromJSON(needs.generate-matrix.outputs.matrix)}}
+    steps:
+      - name: print matrix
+        run: |
+          echo "${{ matrix.package }}"
+
+
 
   #     - uses: actions/github-script@v7
-  #       id: set-matrix
+  #       id: create-matrix
   #       with:
   #         result-encoding: string
   #         script: |
@@ -65,7 +99,7 @@ jobs:
       # - uses: actions/checkout@v3
       # - run: yarn
       # - run: node ./matrix-script.js
-      #   id: set-matrix
+      #   id: create-matrix
 
 # jobs:
 #   e2e-pepr-excellent-examples:
