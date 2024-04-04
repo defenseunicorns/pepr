@@ -64,7 +64,7 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
-        working-directory: pepr
+          cache-dependency-path: pepr
 
       - name: node version
         run: node --version
