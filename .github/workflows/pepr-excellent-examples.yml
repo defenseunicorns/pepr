@@ -2,9 +2,13 @@ name: E2E - Pepr Excellent Examples
 
 permissions: read-all
 on:
+  # workflow_dispatch:
+  # schedule:
+  #   - cron: '0 4 * * *' # 12AM EST/9PM PST
+
   workflow_dispatch:
-  schedule:
-    - cron: '0 4 * * *' # 12AM EST/9PM PST
+  push:
+    branches: ["main"]
 
 # ref: Dynamic Actions
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
@@ -16,6 +20,8 @@ jobs:
     steps:
       - name: set-root
         run: |
+          echo "ws = $GITHUB_WORKSPACE"
+          echo "rp = $GITHUB_REPOSITORY"
           echo "ROOT=${$GITHUB_WORKSPACE%%/$GITHUB_REPOSITORY}" >> "$GITHUB_ENV"
 
       - name: get-root
