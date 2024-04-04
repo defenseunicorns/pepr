@@ -1,9 +1,15 @@
-// const matrixList = ['package-a', 'package-b', 'package-c'].map((pkg) => ({
-//   package: pkg,
-// }));
+// const examples = {
+//   include: [{
+//     nickname: "nick-example-a",
+//     package: "pack-example-a"
+//   },{
+//     nickname: "nick-example-b",
+//     package: "pack-example-b"
+//   }]
+// }
 
-// const includeStatement = { include: matrixList };
-// console.log(`::set-output name=matrix::${JSON.stringify(includeStatement)}`);
+// console.log(`::set-output name=matrix::${JSON.stringify(examples)}`);
+
 
 const examples = {
   include: [{
@@ -15,4 +21,4 @@ const examples = {
   }]
 }
 
-console.log(`::set-output name=matrix::${JSON.stringify(examples)}`);
+console.log( JSON.stringify(examples) );
