@@ -88,7 +88,7 @@ jobs:
       - generate-matrix
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 2
       matrix: ${{fromJSON(needs.generate-matrix.outputs.matrix)}}
     steps:
       - name: print matrix
