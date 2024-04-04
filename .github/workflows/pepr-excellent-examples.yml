@@ -18,14 +18,16 @@ jobs:
     name: tbd
     runs-on: ubuntu-latest
     steps:
-      - name: set-root
+      - name: workspace-root
         run: |
+          WORKSPACE="${GITHUB_WORKSPACE}"
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
+          echo "GITHUB_WORKSPACE=${WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
 
-      - name: get-root
-        run: |
-          echo "$ROOT"
+      - name: get-workspace
+        run:
+          echo "$GITHUB_WORKSPACE"
+          pwd
 
 
   # examples-matrix:
@@ -34,11 +36,17 @@ jobs:
   #   outputs:
   #     matrix: ${{ steps.set-matrix.outputs.matrix }}
   #   steps:
+  #     - name: env-runner-root
+  #       run: |
+  #         REPO_NAME="${GITHUB_REPOSITORY##*/}"
+  #         echo "RUNNER_ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
+
   #     - name: pepr-excellent-examples
   #       uses: actions/checkout@v4
   #       with:
   #         repository: defenseunicorns/pepr-excellent-examples
   #         path: 'pepr-excellent-examples'
+
   #     - uses: actions/github-script@v7
   #       id: set-matrix
   #       with:
