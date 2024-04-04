@@ -18,7 +18,7 @@ jobs:
     name: tbd
     runs-on: ubuntu-latest
     steps:
-      - name: workspace-root
+      - name: env-workspace-root
         run: |
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
           echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
@@ -31,7 +31,7 @@ jobs:
           pwd
           cd "$ROOT"
           pwd
-          ls -la
+          ls -la pepr/pepr
 
 
   # examples-matrix:
