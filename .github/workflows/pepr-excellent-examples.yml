@@ -20,16 +20,16 @@ jobs:
     steps:
       - name: workspace-root
         run: |
-          WORKSPACE="${GITHUB_WORKSPACE}"
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          echo "GITHUB_WORKSPACE=${WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
-          echo "ASDF=${WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
+          echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
 
 
       - name: get-workspace
         run: |
           echo "$GITHUB_WORKSPACE"
-          echo "$ASDF"
+          echo "$ROOT"
+          pwd
+          cd "$ROOT"
           pwd
 
 
