@@ -59,18 +59,15 @@ jobs:
       - name: "set env: PEXEX"
         run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
-      # - name: setup node
-      #   uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-      #   with:
-      #     node-version: 20
-      #     cache: "npm"
+      - name: setup node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20
+          cache: "npm"
+        working-directory: pepr
 
       - name: node version
         run: node --version
-
-      # - name: create matrix
-        # run: node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
-        # id: create-matrix
 
       - name: create matrix
         run: |
