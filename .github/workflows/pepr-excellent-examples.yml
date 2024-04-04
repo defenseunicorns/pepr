@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: pathplz
-        run: pwd
+        run: echo "$(pwd)"
 
 
   # examples-matrix:
