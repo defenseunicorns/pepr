@@ -82,7 +82,7 @@ export async function writeEvent(
  * @param cr the custom resource to get the owner reference for
  * @returns the owner reference for the custom resource
  */
-export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
+export function ownerRefFor(cr: GenericKind): V1OwnerReference[] {
   const { name, uid } = cr.metadata!;
 
   return [
