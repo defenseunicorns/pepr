@@ -1,0 +1,87 @@
+name: E2E - Pepr Excellent Examples
+
+permissions: read-all
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 12AM EST/9PM PST
+
+# ref: Dynamic Actions
+# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
+
+jobs:
+  whereami:
+    name: tbd
+    runs-on: ubuntu-latest
+    steps:
+      - name: pathplz
+        run: pwd
+
+
+  # examples-matrix:
+  #   name: Generate Example Matrix
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #   steps:
+  #     - name: pepr-excellent-examples
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: defenseunicorns/pepr-excellent-examples
+  #         path: 'pepr-excellent-examples'
+  #     - uses: actions/github-script@v7
+  #       id: set-matrix
+  #       with:
+  #         result-encoding: string
+  #         script: |
+  #           return "Hello!"
+
+
+      # - name: Get result
+      #   run: echo "${{steps.set-result.outputs.result}}"
+
+      # - uses: actions/checkout@v3
+      # - run: yarn
+      # - run: node ./matrix-script.js
+      #   id: set-matrix
+
+# jobs:
+#   e2e-pepr-excellent-examples:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+#       - name: Use Node.js latest
+#         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+#         with:
+#           node-version: 20
+#           cache: "npm"
+
+#       - name: "Install K3d"
+#         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+#         shell: bash
+
+#       - name: Install Pepr Dependencies
+#         run: npm ci
+
+#       - name: Create the Pepr dist Folder
+#         run: npm run test:journey:build
+
+#       - name: Create K3d Cluster
+#         run: npm run test:journey:k3d
+
+#       - name: Build Dev Image and Inject into Cluster
+#         run: npm run test:journey:image
+
+#       - name: Checkout Excellent Examples
+#         uses: actions/checkout@v4
+#         with:
+#           repository: defenseunicorns/pepr-excellent-examples
+#           path: 'pepr-excellent-examples' 
+
+#       - name: Install Excellent Example Dependencies
+#         run: npm ci
+#         working-directory: pepr-excellent-examples
+
+#       - name: Run E2E Tests
+#         run: npm run test:e2e -- -i pepr:dev
+#         working-directory: pepr-excellent-examples
