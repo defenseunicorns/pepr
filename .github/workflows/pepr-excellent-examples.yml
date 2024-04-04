@@ -68,7 +68,7 @@ jobs:
         run: node --version
 
       - name: debug
-        run: ls -la "$GITHUB_WORKSPACE"
+        run: ls -la "$GITHUB_WORKSPACE/pepr"
 
       - name: create matrix
         run: node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
