@@ -21,7 +21,7 @@ jobs:
       - name: set-root
         run: |
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          echo "ROOT=${$GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
+          echo "ROOT=${GITHUB_WORKSPACE%%/$REPO_NAME/$REPO_NAME}" >> "$GITHUB_ENV"
 
       - name: get-root
         run: |
