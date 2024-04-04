@@ -14,8 +14,13 @@ jobs:
     name: tbd
     runs-on: ubuntu-latest
     steps:
-      - name: pathplz
-        run: echo "$(pwd)"
+      - name: set-root
+        run: |
+          echo "ROOT=${$GITHUB_WORKSPACE%%/$GITHUB_REPOSITORY}" >> "$GITHUB_ENV"
+
+      - name: get-root
+        run: |
+          echo "$ROOT"
 
 
   # examples-matrix:
