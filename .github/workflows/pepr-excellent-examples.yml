@@ -35,7 +35,7 @@ jobs:
 
 
   generate-matrix:
-    name: Gen Excellent Examples Matrix
+    name: Generate Excellent Examples Matrix
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
@@ -68,7 +68,7 @@ jobs:
         run: node --version
 
       - name: debug
-        run: ls -la "$PEPR"
+        run: ls -la "$GITHUB_WORKSPACE"
 
       - name: create matrix
         run: node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
