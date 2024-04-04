@@ -36,7 +36,7 @@ jobs:
 
 
   generate-matrix:
-    name: Find Excellent Examples
+    name: Excellent Examples Matrix
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
@@ -75,25 +75,25 @@ jobs:
       - name: create matrix
         run: |
           matrix=$(
-            node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
+            node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js" "$PEXEX"
           )
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
         id: create-matrix
 
   excellent-examples:
-    name: ${{ matrix.nickname }}
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     if: needs.generate-matrix.outputs.matrix != ''
     needs:
       - generate-matrix
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 1
       matrix: ${{fromJSON(needs.generate-matrix.outputs.matrix)}}
     steps:
       - name: print matrix
         run: |
-          echo "${{ matrix.package }}"
+          echo "${{ matrix.path }}"
 
 
   #     - uses: actions/github-script@v7
