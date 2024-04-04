@@ -67,6 +67,9 @@ jobs:
       - name: node version
         run: node --version
 
+      - name: debug
+        run: ls -la "$PEPR"
+
       - name: create matrix
         run: node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js"
         id: create-matrix
