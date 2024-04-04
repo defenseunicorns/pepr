@@ -149,7 +149,7 @@ jobs:
       - name: run e2e tests
         run: |
           cd "$PEXEX"
-          npm run --workspace=${{ martrix.name }} test:e2e -- -i pepr:dev
+          npm run --workspace=${{ matrix.name }} test:e2e -- -i pepr:dev
 
 
 # jobs:
