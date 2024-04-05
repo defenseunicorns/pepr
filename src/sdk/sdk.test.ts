@@ -5,7 +5,7 @@ import { expect, test } from "@jest/globals";
 import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
-import { containers, writeEvent, ownerRefFor, sanitizeResourceName } from "./sdk";
+import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 
 import { beforeEach, describe, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
@@ -162,14 +162,14 @@ describe("writeEvent", () => {
   });
 });
 
-describe("ownerRefFor", () => {
+describe("getOwnerRefFrom", () => {
   it("should return the owner reference for the CRD", () => {
     const cr = {
       apiVersion: "v1",
       kind: "Package",
       metadata: { name: "test", namespace: "default", uid: "1" },
     };
-    const ownerRef = ownerRefFor(cr as GenericKind);
+    const ownerRef = getOwnerRefFrom(cr as GenericKind);
     expect(ownerRef).toEqual([
       {
         apiVersion: "v1",
