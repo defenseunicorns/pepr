@@ -130,7 +130,9 @@ export class WebApp extends a.GenericKind {
 }
 ```
 
-in the `source` folder, create a file called `webapp.crd.ts` and add the following:
+Move the updated file to `capabilities/crd/generated/webapp-v1alpha1.ts`.
+
+in the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following:
 
 ```typescript
 export const WebAppCRD = {
@@ -212,28 +214,7 @@ export const WebAppCRD = {
 };
 ```
 
-In the root of the crd folder, create an `index.ts` file and add the following:
-
-```typescript
-import { V1OwnerReference } from "@kubernetes/client-node";
-export { WebApp, Phase, Status } from "./generated/webapp-v1alpha1";
-import { WebApp } from "./generated/webapp-v1alpha1";
-
-export function getOwnerRef(instance: WebApp): V1OwnerReference[] {
-  const { name, uid } = instance.metadata!;
-
-  return [
-    {
-      apiVersion: instance.apiVersion!,
-      kind: instance.kind!,
-      uid: uid!,
-      name: name!,
-    },
-  ];
-}
-```
-
-Add a `register.ts` file to the `crd` folder and add the following:
+Add a `register.ts` file to the `capabilities/crd/` folder and add the following:
 
 ```typescript
 import { K8s, Log, kind } from "pepr";
@@ -250,7 +231,6 @@ export const RegisterCRD = () => {
     });
 };
 (() => RegisterCRD())();
-
 ```
 
 Finally add a `validate.ts` file to the `crd` folder and add the following:
@@ -258,7 +238,7 @@ Finally add a `validate.ts` file to the `crd` folder and add the following:
 ```typescript
 import { PeprValidateRequest } from "pepr";
 
-import { WebApp } from ".";
+import { WebApp } from "./generated/webapp-v1alpha1";
 
 const invalidNamespaces = [
   "kube-system",
@@ -285,7 +265,7 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
 }
 ```
 
-In this section we generated the CRD class for WebApp, created a function to add `ownerReferences` to the manifests that will be deployed by the Operator to handle deletion of Kubernetes objects, registered the CRD, and added a validator to validate that instances of WebApp are in valid namespaces.
+In this section we generated the CRD class for WebApp and created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
 
 ## Create Helpers
 
@@ -294,9 +274,10 @@ In this section we will create helper functions to help with the reconciliation 
 Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file in the `capabilities` folder. This file will contain the functions that will generate the manifests that will be deployed by the Operator with the ownerReferences added to them.
 
 ```typescript
-import { kind, K8s, Log } from "pepr";
-import { getOwnerRef } from "../crd";
+import { kind, K8s, Log, sdk } from "pepr";
 import { WebApp } from "../crd/generated/webapp-v1alpha1";
+
+const { getOwnerRefFrom } = sdk;
 
 export default async function Deploy(instance: WebApp) {
   try {
@@ -322,7 +303,7 @@ function deployment(instance: WebApp) {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name,
       namespace,
       labels: {
@@ -338,7 +319,7 @@ function deployment(instance: WebApp) {
       },
       template: {
         metadata: {
-          ownerReferences: getOwnerRef(instance),
+          ownerReferences: getOwnerRefFrom(instance),
           annotations: {
             buildTimestamp: `${Date.now()}`,
           },
@@ -384,7 +365,7 @@ function service(instance: WebApp) {
     apiVersion: "v1",
     kind: "Service",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name,
       namespace,
       labels: {
@@ -614,7 +595,7 @@ function configmap(instance: WebApp) {
     apiVersion: "v1",
     kind: "ConfigMap",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name: `web-content-${name}`,
       namespace,
       labels: {
@@ -691,6 +672,7 @@ export async function reconciler(instance: WebApp) {
  * @param status The new status
  */
 async function updateStatus(instance: WebApp, status: Status) {
+  await writeEvent(instance, {phase: status}, "Normal", "StatusUpdated", instance.metadata.name, instance.metadata.name);
   await K8s(WebApp).PatchStatus({
     metadata: {
       name: instance.metadata!.name,
