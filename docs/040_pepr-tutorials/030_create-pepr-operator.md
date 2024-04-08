@@ -769,7 +769,7 @@ When(a.ConfigMap)
 
 ```
 - When a WebApp is created or updated, validate it, store the name of the instance and enqueue it for processing.
-- If an "owned" resources (ConfigMap, Service, or Deployment) is deleted, redeploy it, check and see if it was owned by a WebApp instance and redeploy it if it was.
+- If an "owned" resource (ConfigMap, Service, or Deployment) is deleted, redeploy it, check and see if it was owned by a WebApp instance, and redeploy it if it was.
 - Always redeploy the WebApp CRD if it was deleted as the controller depends on it
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
