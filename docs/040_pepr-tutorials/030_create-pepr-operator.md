@@ -214,7 +214,7 @@ export const WebAppCRD = {
 };
 ```
 
-Add a `register.ts` file to the `capabilities/crd/` folder and add the following, this will auto register the CRD on startup.
+Add a `register.ts` file to the `capabilities/crd/` folder and add the following. This will auto register the CRD on startup.
 
 ```typescript
 import { K8s, Log, kind } from "pepr";
