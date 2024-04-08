@@ -132,7 +132,7 @@ export class WebApp extends a.GenericKind {
 
 Move the updated file to `capabilities/crd/generated/webapp-v1alpha1.ts`.
 
-in the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following, we want the controller to automatically create the CRD when it starts.
+In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
 
 ```typescript
 export const WebAppCRD = {
