@@ -233,7 +233,7 @@ export const RegisterCRD = () => {
 (() => RegisterCRD())();
 ```
 
-Finally add a `validate.ts` file to the `crd` folder and add the following, this will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
+Finally add a `validate.ts` file to the `crd` folder and add the following. This will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
 
 ```typescript
 import { PeprValidateRequest } from "pepr";
