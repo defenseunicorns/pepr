@@ -615,7 +615,7 @@ We decide which `ConfigMap` to deploy based on the language and theme specified 
 
 ## Create Reconciler
 
-Now, create the function that reacts to changes across WebApp instances. This function will be called and put into a Queue, guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
+Now, create the function that reacts to changes across WebApp instances. This function will be called and put into a queue, guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
 
 In the base of the `capabilities` folder, create a `reconciler.ts` file and add the following:
 
