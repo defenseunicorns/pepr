@@ -50,7 +50,7 @@ export class Capability implements CapabilityExport {
     const { name, every, unit, run, startTime, completions } = schedule;
     this.hasSchedule = true;
 
-    if (process.env.PEPR_WATCH_MODE === "true") {
+    if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
       // Only create/watch schedule store if necessary
 
       // Create a new schedule
