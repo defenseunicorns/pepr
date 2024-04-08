@@ -114,7 +114,7 @@ Go to the `capabilities` directory, create a new directory called `crd` with two
 mkdir -p capabilities/crd/generated capabilities/crd/source  
 ```
 
-Generate a class based on the WebApp CRD using `kubernetes-fluent-client`, this way we can react to the fields of the CRD in a type-safe way.
+Generate a class based on the WebApp CRD using `kubernetes-fluent-client`. This way we can react to the fields of the CRD in a type-safe way.
 
 ```bash
 npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml . 
