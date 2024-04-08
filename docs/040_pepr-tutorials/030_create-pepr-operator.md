@@ -271,7 +271,7 @@ In this section we generated the CRD class for WebApp, created a function to aut
 
 In this section we will create helper functions to help with the reconciliation process. The idea is that this operator will "remedy" any accidental deletions of the resources it creates. If any object deployed by the Operator is deleted for any reason, the Operator will abruptly redeploy the object.
 
-Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain the functions that will generate the manifests that will be deployed by the Operator with the ownerReferences added to them. Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
+Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain the functions that will generate the Kubernetes Objects that will be deployed by the Operator with the ownerReferences added to them. Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
 ```typescript
 import { kind, K8s, Log, sdk } from "pepr";
