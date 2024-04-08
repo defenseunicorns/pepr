@@ -265,7 +265,7 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
 }
 ```
 
-In this section we generated the CRD class for WebApp and created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
+In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
 
 ## Create Helpers
 
