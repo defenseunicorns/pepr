@@ -12,7 +12,6 @@ import Log from "./logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
-import { sanitizeResourceName } from "../sdk/sdk";
 
 export async function mutateProcessor(
   config: ModuleConfig,
@@ -68,7 +67,7 @@ export async function mutateProcessor(
           return;
         }
 
-        const identifier = `${config.uuid}.pepr.dev/${sanitizeResourceName(name)}`;
+        const identifier = `${config.uuid}.pepr.dev/${name}`;
         wrapped.Raw.metadata = wrapped.Raw.metadata || {};
         wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
         wrapped.Raw.metadata.annotations[identifier] = status;

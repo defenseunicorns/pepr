@@ -5,8 +5,19 @@ import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
+import { sanitizeResourceName } from "../sdk/sdk";
 
 export class ValidationError extends Error {}
+
+export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
+  if (capabilities && capabilities.length > 0) {
+    for (let i = 0; i < capabilities.length; i++) {
+      if (capabilities[i].name !== sanitizeResourceName(capabilities[i].name)) {
+        throw new ValidationError(`Capability name is not a valid Kubernetes resource name: ${capabilities[i].name}`);
+      }
+    }
+  }
+}
 
 export function validateHash(expectedHash: string): void {
   // Require the hash to be a valid SHA-256 hash (64 characters, hexadecimal)
