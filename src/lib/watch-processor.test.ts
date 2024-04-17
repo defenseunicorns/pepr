@@ -14,6 +14,11 @@ type onCallback = (eventName: string | symbol, listener: (msg: string) => void) 
 // Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
+jest.mock("./logger", () => ({
+  debug: jest.fn(),
+  error: jest.fn(),
+}));
+
 describe("WatchProcessor", () => {
   const mockStart = jest.fn();
   const mockK8s = jest.mocked(K8s);
@@ -207,11 +212,6 @@ describe("WatchProcessor", () => {
     expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
   });
 });
-
-// Mock the Log module
-jest.mock("./logger", () => ({
-  debug: jest.fn(),
-}));
 
 describe("logEvent function", () => {
   it("should handle data events", () => {
