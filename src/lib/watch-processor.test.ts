@@ -6,12 +6,18 @@ import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-cli
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { setupWatch } from "./watch-processor";
+import { setupWatch, logEvent } from "./watch-processor";
+import Log from "./logger";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
 // Mock the dependencies
 jest.mock("kubernetes-fluent-client");
+
+jest.mock("./logger", () => ({
+  debug: jest.fn(),
+  error: jest.fn(),
+}));
 
 describe("WatchProcessor", () => {
   const mockStart = jest.fn();
@@ -204,5 +210,32 @@ describe("WatchProcessor", () => {
     thirdCall[0]({} as kind.Pod, WatchPhase.Modified);
     expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
     expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe("logEvent function", () => {
+  it("should handle data events", () => {
+    const mockObj = { id: "123", type: "Pod" } as KubernetesObject;
+    const message = "Test message";
+    logEvent(WatchEvent.DATA, message, mockObj);
+    expect(Log.debug).toHaveBeenCalledWith(mockObj, `Watch event ${WatchEvent.DATA} received`, message);
+  });
+
+  it("should handle CONNECT events", () => {
+    logEvent(WatchEvent.CONNECT);
+    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.CONNECT} received`, "");
+  });
+
+  it("should handle BOOKMARK events", () => {
+    const mockObj = { id: "123", type: "Pod" } as KubernetesObject;
+    const message = "Changes up to the given resourceVersion have been sent.";
+    logEvent(WatchEvent.BOOKMARK, message, mockObj);
+    expect(Log.debug).toHaveBeenCalledWith(mockObj, `Watch event ${WatchEvent.BOOKMARK} received`, message);
+  });
+
+  it("should handle DATA_ERROR events", () => {
+    const message = "Test message";
+    logEvent(WatchEvent.DATA_ERROR, message);
+    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.DATA_ERROR} received`, message);
   });
 });

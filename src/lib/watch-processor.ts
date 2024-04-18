@@ -87,11 +87,39 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     process.exit(1);
   });
 
+  watcher.events.on(WatchEvent.CONNECT, () => logEvent(WatchEvent.CONNECT));
+
+  watcher.events.on(WatchEvent.BOOKMARK, obj =>
+    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent.", obj),
+  );
+
+  watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
+  watcher.events.on(WatchEvent.RESOURCE_VERSION, resourceVersion =>
+    logEvent(WatchEvent.RESOURCE_VERSION, `Resource version: ${resourceVersion}`),
+  );
+  watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
+    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempts`, err),
+  );
+  watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
+  watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
+  watcher.events.on(WatchEvent.ABORT, err => logEvent(WatchEvent.ABORT, err.message));
+  watcher.events.on(WatchEvent.OLD_RESOURCE_VERSION, err => logEvent(WatchEvent.OLD_RESOURCE_VERSION, err));
+  watcher.events.on(WatchEvent.RESYNC, err => logEvent(WatchEvent.RESYNC, err.message));
+  watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
+
   // Start the watch
   try {
     await watcher.start();
   } catch (err) {
     Log.error(err, "Error starting watch");
     process.exit(1);
+  }
+}
+
+export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  if (obj) {
+    Log.debug(obj, `Watch event ${type} received`, message);
+  } else {
+    Log.debug(`Watch event ${type} received`, message);
   }
 }
