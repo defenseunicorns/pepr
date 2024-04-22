@@ -11,8 +11,7 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
-import { createDirectoryIfNotExists } from "../lib/helpers";
-import { parseTimeout } from "../lib/helpers";
+import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -141,6 +140,14 @@ export default function (program: RootCmd) {
 
       const yamlPath = resolve(outputDir, yamlFile);
       const yaml = await assets.allYaml(opts.rbacMode);
+
+      try {
+        // wait for capabilities to be loaded and test names
+        validateCapabilityNames(assets.capabilities);
+      } catch (e) {
+        console.error(e.message);
+        process.exit(1);
+      }
 
       const zarfPath = resolve(outputDir, "zarf.yaml");
       const zarf = assets.zarfYaml(yamlFile);
