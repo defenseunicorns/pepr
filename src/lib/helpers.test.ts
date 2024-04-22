@@ -9,6 +9,7 @@ import {
   filterNoMatchReason,
   validateHash,
   ValidationError,
+  validateCapabilityNames,
 } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
@@ -291,7 +292,22 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
+describe("validateCapabilityNames", () => {
+  test("should return true if all capability names are valid", () => {
+    const capabilities = mockCapabilities;
+    expect(() => validateCapabilityNames(capabilities)).not.toThrow();
+  });
 
+  test("should throw an error if a capability name is invalid", () => {
+    const capabilities = mockCapabilities;
+    capabilities[0].name = "invalid name";
+    expect(() => validateCapabilityNames(capabilities)).toThrowError(ValidationError);
+  });
+
+  test("should ignore when capabilities are not loaded", () => {
+    expect(validateCapabilityNames(undefined)).toBe(undefined);
+  });
+});
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
     const result = createRBACMap(mockCapabilities);
