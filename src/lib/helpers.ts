@@ -342,7 +342,6 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   return str.replace(regExp, stringB);
 }
 
-
 export function sleep(seconds: number) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }

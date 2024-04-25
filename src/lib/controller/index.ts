@@ -15,7 +15,6 @@ import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 import { ResponseItem } from "../types";
-import { promises as f } from 'fs';
 
 export class Controller {
   // Track whether the server is running
@@ -254,20 +253,20 @@ export class Controller {
           kubeAdmissionResponse =
             responseList.length === 0
               ? {
-                uid: request.uid,
-                allowed: true,
-                status: { message: "no in-scope validations -- allowed!" },
-              }
+                  uid: request.uid,
+                  allowed: true,
+                  status: { message: "no in-scope validations -- allowed!" },
+                }
               : {
-                uid: responseList[0].uid,
-                allowed: responseList.filter(r => !r.allowed).length === 0,
-                status: {
-                  message: (responseList as ValidateResponse[])
-                    .filter(rl => !rl.allowed)
-                    .map(curr => curr.status?.message)
-                    .join("; "),
-                },
-              };
+                  uid: responseList[0].uid,
+                  allowed: responseList.filter(r => !r.allowed).length === 0,
+                  status: {
+                    message: (responseList as ValidateResponse[])
+                      .filter(rl => !rl.allowed)
+                      .map(curr => curr.status?.message)
+                      .join("; "),
+                  },
+                };
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
@@ -321,11 +320,11 @@ export class Controller {
     const serverError: string = "Internal Server Error";
     let contact: boolean = false;
 
-    const watcher = K8s(PeprStore, { namespace: "pepr-system" }).Watch((ps,phase) => {
+    const watcher = K8s(PeprStore, { namespace: "pepr-system" }).Watch((ps, phase) => {
       Log.debug(`Watch API: ${ps.metadata?.name} was ${phase}`);
       contact = true;
     });
-    
+
     try {
       if (process.env.PEPR_WATCH_MODE === "true") {
         let count = 0;
@@ -338,9 +337,9 @@ export class Controller {
             break;
           }
           count++;
-          await sleep(.1);
+          await sleep(0.1);
         }
-        watcher.close()
+        watcher.close();
 
         if (!contact) {
           throw new AvailabilityError(serverError);
