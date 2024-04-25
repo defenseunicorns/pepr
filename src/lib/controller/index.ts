@@ -3,10 +3,11 @@
 
 import express, { NextFunction } from "express";
 import fs from "fs";
+import { AvailabilityError, sleep } from "../helpers";
 import https from "https";
-
+import { K8s } from "kubernetes-fluent-client";
 import { Capability } from "../capability";
-import { MutateResponse, AdmissionRequest, ValidateResponse } from "../k8s";
+import { MutateResponse, PeprStore, AdmissionRequest, ValidateResponse } from "../k8s";
 import Log from "../logger";
 import { MetricsCollector } from "../metrics";
 import { ModuleConfig, isWatchMode } from "../module";
@@ -14,6 +15,7 @@ import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 import { ResponseItem } from "../types";
+import { promises as f } from 'fs';
 
 export class Controller {
   // Track whether the server is running
@@ -252,20 +254,20 @@ export class Controller {
           kubeAdmissionResponse =
             responseList.length === 0
               ? {
-                  uid: request.uid,
-                  allowed: true,
-                  status: { message: "no in-scope validations -- allowed!" },
-                }
+                uid: request.uid,
+                allowed: true,
+                status: { message: "no in-scope validations -- allowed!" },
+              }
               : {
-                  uid: responseList[0].uid,
-                  allowed: responseList.filter(r => !r.allowed).length === 0,
-                  status: {
-                    message: (responseList as ValidateResponse[])
-                      .filter(rl => !rl.allowed)
-                      .map(curr => curr.status?.message)
-                      .join("; "),
-                  },
-                };
+                uid: responseList[0].uid,
+                allowed: responseList.filter(r => !r.allowed).length === 0,
+                status: {
+                  message: (responseList as ValidateResponse[])
+                    .filter(rl => !rl.allowed)
+                    .map(curr => curr.status?.message)
+                    .join("; "),
+                },
+              };
           res.send({
             apiVersion: "admission.k8s.io/v1",
             kind: "AdmissionReview",
@@ -315,12 +317,38 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  static #healthz(req: express.Request, res: express.Response) {
+  static async #healthz(req: express.Request, res: express.Response) {
+    const serverError: string = "Internal Server Error";
+    let count = 0;
+    let contact: boolean = false;
+    const watcher = K8s(PeprStore, { namespace: "pepr-system" }).Watch(() => {
+      contact = true;
+    });
     try {
+      if (process.env.PEPR_WATCH_MODE === "true") {
+        await watcher.start().catch(e => {
+          throw new AvailabilityError(e.message);
+        });
+
+        while (!contact) {
+          if (count >= 10) {
+            break;
+          }
+          count++;
+          await sleep(.1);
+        }
+        watcher.close()
+
+        if (!contact) {
+          throw new AvailabilityError(serverError);
+        }
+      }
+
       res.send("OK");
     } catch (err) {
+      watcher.close();
       Log.error(err);
-      res.status(500).send("Internal Server Error");
+      res.status(500).send(err);
     }
   }
 }

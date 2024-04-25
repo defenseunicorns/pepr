@@ -7,6 +7,7 @@ import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 
+export class AvailabilityError extends Error {}
 export class ValidationError extends Error {}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
@@ -339,4 +340,9 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
+}
+
+
+export function sleep(seconds: number) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
