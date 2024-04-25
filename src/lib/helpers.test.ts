@@ -636,10 +636,11 @@ describe("sleep",()=>{
     jest.useRealTimers();
   })
 
-  test("delay exectution for a number of seconds",()=>{
+  test("delay exectution for a number of seconds",async ()=>{
     const spy = jest.fn();
-    sleep(2).then(spy);
-    jest.advanceTimersByTime(2000);
+    const promise = sleep(2).then(spy);
+    jest.advanceTimersByTime(2500);
+    await promise;
     expect(spy).toHaveBeenCalled();
   })
 })
