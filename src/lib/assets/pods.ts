@@ -106,6 +106,8 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
               imagePullPolicy: "IfNotPresent",
               command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
               readinessProbe: {
+                timeoutSeconds: 3,
+                failureThreshold: 2,
                 httpGet: {
                   path: "/healthz",
                   port: 3000,
@@ -113,8 +115,6 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
                 },
               },
               livenessProbe: {
-                timeoutSeconds: 3,
-                failureThreshold: 2,
                 httpGet: {
                   path: "/healthz",
                   port: 3000,

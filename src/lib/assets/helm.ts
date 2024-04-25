@@ -87,13 +87,13 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
                 readinessProbe:
+                  timeoutSeconds: 3,
+                  failureThreshold: 2,
                   httpGet:
                     path: /healthz
                     port: 3000
                     scheme: HTTPS
                 livenessProbe:
-                  timeoutSeconds: 3,
-                  failureThreshold: 2,
                   httpGet:
                     path: /healthz
                     port: 3000
