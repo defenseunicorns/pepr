@@ -319,19 +319,22 @@ export class Controller {
    */
   static async #healthz(req: express.Request, res: express.Response) {
     const serverError: string = "Internal Server Error";
-    let count = 0;
     let contact: boolean = false;
-    const watcher = K8s(PeprStore, { namespace: "pepr-system" }).Watch(() => {
+
+    const watcher = K8s(PeprStore, { namespace: "pepr-system" }).Watch((ps,phase) => {
+      Log.debug(`Watch API: ${ps.metadata?.name} was ${phase}`);
       contact = true;
     });
+    
     try {
       if (process.env.PEPR_WATCH_MODE === "true") {
+        let count = 0;
         await watcher.start().catch(e => {
           throw new AvailabilityError(e.message);
         });
 
         while (!contact) {
-          if (count >= 10) {
+          if (count >= 30) {
             break;
           }
           count++;
