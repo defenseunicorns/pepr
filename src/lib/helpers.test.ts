@@ -10,6 +10,7 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  sleep
 } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
@@ -624,6 +625,24 @@ describe("namespaceComplianceValidator", () => {
   });
 });
 
+describe("sleep",()=>{
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  })
+
+  test("delay exectution for a number of seconds",()=>{
+    const spy = jest.fn();
+    sleep(2).then(spy);
+    jest.advanceTimersByTime(2000);
+    expect(spy).toHaveBeenCalled();
+  })
+})
 describe("checkDeploymentStatus", () => {
   const mockK8s = jest.mocked(K8s);
 
