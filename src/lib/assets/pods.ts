@@ -113,6 +113,8 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
                 },
               },
               livenessProbe: {
+                timeoutSeconds: 3,
+                failureThreshold: 2,
                 httpGet: {
                   path: "/healthz",
                   port: 3000,

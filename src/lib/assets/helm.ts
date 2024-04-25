@@ -92,6 +92,8 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                     port: 3000
                     scheme: HTTPS
                 livenessProbe:
+                  timeoutSeconds: 3,
+                  failureThreshold: 2,
                   httpGet:
                     path: /healthz
                     port: 3000
