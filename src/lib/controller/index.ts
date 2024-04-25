@@ -351,7 +351,7 @@ export class Controller {
     } catch (err) {
       watcher.close();
       Log.error(err);
-      res.status(500).send(err);
+      res.status(500).send(serverError);
     }
   }
 }
