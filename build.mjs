@@ -1,10 +1,11 @@
 /* eslint-disable no-undef */
 
 import { analyzeMetafile, build } from "esbuild";
+import { readFile } from 'fs/promises';
 
-import packageJSON from "./package.json" assert { type: "json" };
+const { dependencies, peerDependencies } = await loadPackageJSON();
 
-const { dependencies, peerDependencies } = packageJSON;
+
 const external = Object.keys(dependencies).concat(Object.keys(peerDependencies), "@kubernetes/client-node");
 
 const buildOpts = {
@@ -54,4 +55,16 @@ async function builder() {
   }
 }
 
+async function loadPackageJSON() {
+  try {
+    const data = await readFile('./package.json', { encoding: 'utf8' });
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading package.json', error);
+    process.exit(1);
+  }
+}
+
 builder();
+
+
