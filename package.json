@@ -35,7 +35,7 @@
     "@types/ramda": "0.29.12",
     "express": "4.19.2",
     "fast-json-patch": "3.1.1",
-    "kubernetes-fluent-client": "2.3.1",
+    "kubernetes-fluent-client": "github:defenseunicorns/kubernetes-fluent-client#765",
     "pino": "9.0.0",
     "pino-pretty": "11.0.0",
     "prom-client": "15.1.2",
