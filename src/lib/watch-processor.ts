@@ -49,6 +49,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
   // The watch callback is run when an object is received or dequeued
+
+  Log.debug(`WatchConfig is ${JSON.stringify(watchCfg, null, 2)}`)
   const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(type)) {
