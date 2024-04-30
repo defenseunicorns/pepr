@@ -1,6 +1,6 @@
 ### BUILD ###
 
-FROM docker.io/library/node:20-alpine@sha256:ef3f47741e161900ddd07addcaca7e76534a9205e4cd73b2ed091ba339004a75 as with-git
+FROM docker.io/library/node:22-alpine@sha256:9459e243f620fff19380c51497493e91db1454f5a30847efe5bc5e50920748d5 as with-git
 
 WORKDIR /app
 
