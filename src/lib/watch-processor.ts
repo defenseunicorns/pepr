@@ -50,7 +50,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
   // The watch callback is run when an object is received or dequeued
 
-  Log.debug(`WatchConfig is ${JSON.stringify(watchCfg, null, 2)}`)
+  Log.debug({watchCfg}, "Effective WatchConfig")
   const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(type)) {
