@@ -1,15 +1,5 @@
 # Pepr CLI
 
-- [Pepr CLI](#pepr-cli)
-  - [`npx pepr init`](#npx-pepr-init)
-  - [`npx pepr update`](#npx-pepr-update)
-  - [`npx pepr dev`](#npx-pepr-dev)
-  - [`npx pepr deploy`](#npx-pepr-deploy)
-  - [`npx pepr monitor`](#npx-pepr-monitor)
-  - [`npx pepr uuid`](#npx-pepr-uuid)
-  - [`npx pepr build`](#npx-pepr-build)
-  - [`npx pepr kfc`](#npx-pepr-kfc)
-
 ## `npx pepr init`
 
 Initialize a new Pepr Module.
