@@ -4,8 +4,6 @@ Mutating admission webhooks are invoked first and can modify objects sent to the
 
 After a successful mutation of an object in a module with UUID static-test, and capability name hello-pepr, expect to see this annotation: `static-test.pepr.dev/hello-pepr: succeeded`.
 
-See also [SDK](../130_sdk.md) for information on the Pepr SDK.
-
 ## Mutate Helpers
 
 ### SetLabel
@@ -15,3 +13,7 @@ See also [SDK](../130_sdk.md) for information on the Pepr SDK.
 ### RemoveAnnotation
 
 ### RemoveLabel
+
+## See Also
+
+See also [SDK](../130_sdk.md) for information on the Pepr SDK.
