@@ -6,13 +6,77 @@ After a successful mutation of an object in a module with UUID static-test, and 
 
 ## Mutate Helpers
 
-### SetLabel
+### `SetLabel`
 
-### SetAnnotation
+`SetLabel` is used to set a lable on a Kubernetes object as part of a Pepr Mutate action.
 
-### RemoveAnnotation
+For example, to add a label when a ConfigMap is created:
 
-### RemoveLabel
+```typescript
+When(a.ConfigMap)
+  .IsCreated()
+  .Mutate(request => {
+    request
+      // Here we are adding a label to the ConfigMap.
+      .SetLabel("pepr", "was-here")
+
+    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each action automatically.
+  });
+```
+
+### `RemoveLabel`
+
+`RemoveLabel` is used to remove a label on a Kubernetes object as part of a Pepr Mutate action.
+
+For example, to remove a label when a ConfigMap is updated:
+
+```typescript
+When(a.ConfigMap)
+  .IsCreated()
+  .Mutate(request => {
+    request
+      // Here we are removing a label from the ConfigMap.
+      .RemoveLabel("remove-me")
+
+    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each action automatically.
+  });
+```
+
+### `SetAnnotation`
+
+`SetAnnotation` is used to set an annotation on a Kubernetes object as part of a Pepr Mutate action.
+
+For example, to add an annotation when a ConfigMap is created:
+
+```typescript
+When(a.ConfigMap)
+  .IsCreated()
+  .Mutate(request => {
+    request
+      // Here we are adding an annotation to the ConfigMap.
+      .SetAnnotation("pepr.dev", "annotations-work-too");
+
+    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each action automatically.
+  });
+```
+
+### `RemoveAnnotation`
+
+`RemoveAnnotation` is used to remove an annotation on a Kubernetes object as part of a Pepr Mutate action.
+
+For example, to remove an annotation when a ConfigMap is updated:
+
+```typescript
+When(a.ConfigMap)
+  .IsUpdated()
+  .Mutate(request => {
+    request
+      // Here we are removing an annotation from the ConfigMap.
+      .RemoveAnnotation("remove-me");
+
+    // Note that we are not returning anything here. This is because Pepr is tracking the changes in each action automatically.
+  });
+```
 
 ## See Also
 
