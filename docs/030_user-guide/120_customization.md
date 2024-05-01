@@ -2,6 +2,18 @@
 
 This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
 
+## Customizing Watch Configuration 
+
+The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific enviroment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
+
+| Field                        | Description                                                                                                      | Example Values                  |
+|------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------|
+| `PEPR_RETRYMAX`              | The maximum number of times to retry the watch, the retry count is reset on success.                             | default: `"5"`                  |
+| `PEPR_RETRYDELAYSECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
+| `PEPR_RESYNCINTERVALSECONDS` | Amount of seconds to wait before a forced-resyncing of the watch list                                            | default: `"300"` (5 mins)       |
+| `PEPR_ALLOWWATCHBOOKMARKS`   | Whether to allow [watch bookmarks](https://kubernetes.io/docs/reference/using-api/api-concepts/#watch-bookmarks).| default: `"true"`  or `"false"` |
+
+
 ## Customizing with Helm
 
 Below are the available Helm override configurations after you have built your Pepr module that you can put in the `values.yaml`.

@@ -10,8 +10,12 @@ import { Binding, Event } from "./types";
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  retryMax: 5,
-  retryDelaySec: 5,
+  retryMax: process.env.PEPR_RETRYMAX ? parseInt(process.env.PEPR_RETRYMAX, 10) : 5,
+  retryDelaySec: process.env.PEPR_RETRYDELAYSECONDS ? parseInt(process.env.PEPR_RETRYDELAYSECONDS, 10) : 5,
+  resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
+    ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
+    : 300,
+  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false,
 };
 
 // Map the event to the watch phase
@@ -47,6 +51,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
   // The watch callback is run when an object is received or dequeued
+
+  Log.debug({ watchCfg }, "Effective WatchConfig");
   const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(type)) {
