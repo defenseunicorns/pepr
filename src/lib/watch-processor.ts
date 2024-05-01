@@ -13,7 +13,7 @@ const watchCfg: WatchCfg = {
   retryMax: process.env.PEPR_RETRYMAX ? parseInt(process.env.PEPR_RETRYMAX, 10) : 5,
   retryDelaySec: process.env.PEPR_RETRYDELAYSECONDS ? parseInt(process.env.PEPR_RETRYDELAYSECONDS, 10) : 5,
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10) : 300,
-  allowWatchBookMarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false
+  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false
 };
 
 // Map the event to the watch phase
