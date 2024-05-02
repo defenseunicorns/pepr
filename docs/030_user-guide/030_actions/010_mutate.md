@@ -80,4 +80,4 @@ When(a.ConfigMap)
 
 ## See Also
 
-See also [SDK](../130_sdk.md) for information on the Pepr SDK.
+Looking for some more generic helpers? Check out the [Module Author SDK](../130_sdk.md) for information on other things that Pepr can help with.
