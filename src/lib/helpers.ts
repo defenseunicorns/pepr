@@ -1,11 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { CapabilityExport } from "./types";
-import { promises as fs } from "fs";
-import { Binding } from "./types";
+import { Binding, CapabilityExport } from "./types";
+import { sanitizeResourceName } from "../sdk/sdk";
+
+export class ValidationError extends Error {}
+
+export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
+  if (capabilities && capabilities.length > 0) {
+    for (let i = 0; i < capabilities.length; i++) {
+      if (capabilities[i].name !== sanitizeResourceName(capabilities[i].name)) {
+        throw new ValidationError(`Capability name is not a valid Kubernetes resource name: ${capabilities[i].name}`);
+      }
+    }
+  }
+}
+
+export function validateHash(expectedHash: string): void {
+  // Require the hash to be a valid SHA-256 hash (64 characters, hexadecimal)
+  const sha256Regex = /^[a-f0-9]{64}$/i;
+  if (!expectedHash || !sha256Regex.test(expectedHash)) {
+    Log.error(`Invalid hash. Expected a valid SHA-256 hash, got ${expectedHash}`);
+    throw new ValidationError("Invalid hash");
+  }
+}
 
 type RBACMap = {
   [key: string]: {
@@ -47,11 +68,11 @@ export function checkOverlap(bindingFilters: Record<string, string>, objectFilte
 /**
  * Decide to run callback after the event comes back from API Server
  **/
-export const filterMatcher = (
+export function filterNoMatchReason(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
-): string => {
+): string {
   // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
     return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
@@ -116,14 +137,15 @@ export const filterMatcher = (
 
   // no problems
   return "";
-};
-export const addVerbIfNotExists = (verbs: string[], verb: string) => {
+}
+
+export function addVerbIfNotExists(verbs: string[], verb: string) {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
   }
-};
+}
 
-export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
+export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
     capability.bindings.forEach(binding => {
       const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
@@ -148,7 +170,7 @@ export const createRBACMap = (capabilities: CapabilityExport[]): RBACMap => {
 
     return acc;
   }, {});
-};
+}
 
 export async function createDirectoryIfNotExists(path: string) {
   try {

@@ -2,7 +2,15 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding, CapabilityExport } from "./types";
-import { createRBACMap, addVerbIfNotExists, checkOverlap, filterMatcher } from "./helpers";
+import {
+  createRBACMap,
+  addVerbIfNotExists,
+  checkOverlap,
+  filterNoMatchReason,
+  validateHash,
+  ValidationError,
+  validateCapabilityNames,
+} from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
@@ -284,7 +292,22 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
+describe("validateCapabilityNames", () => {
+  test("should return true if all capability names are valid", () => {
+    const capabilities = mockCapabilities;
+    expect(() => validateCapabilityNames(capabilities)).not.toThrow();
+  });
 
+  test("should throw an error if a capability name is invalid", () => {
+    const capabilities = mockCapabilities;
+    capabilities[0].name = "invalid name";
+    expect(() => validateCapabilityNames(capabilities)).toThrowError(ValidationError);
+  });
+
+  test("should ignore when capabilities are not loaded", () => {
+    expect(validateCapabilityNames(undefined)).toBe(undefined);
+  });
+});
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
     const result = createRBACMap(mockCapabilities);
@@ -997,7 +1020,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1013,7 +1036,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1031,7 +1054,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1047,7 +1070,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1063,7 +1086,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1081,7 +1104,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1099,11 +1122,43 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterMatcher(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
     expect(result).toEqual("");
+  });
+});
+
+describe("validateHash", () => {
+  let originalExit: (code?: number) => never;
+
+  beforeEach(() => {
+    originalExit = process.exit;
+    process.exit = jest.fn() as unknown as (code?: number) => never;
+  });
+
+  afterEach(() => {
+    process.exit = originalExit;
+  });
+  test("should throw ValidationError for invalid hash values", () => {
+    // Examples of invalid hashes
+    const invalidHashes = [
+      "", // Empty string
+      "12345", // Too short
+      "zxcvbnmasdfghjklqwertyuiop1234567890zxcvbnmasdfghjklqwertyuio", // Contains invalid character 'z'
+      "123456789012345678901234567890123456789012345678901234567890123", // 63 characters, one short
+    ];
+
+    invalidHashes.forEach(hash => {
+      expect(() => validateHash(hash)).toThrow(ValidationError);
+    });
+  });
+
+  test("should not throw ValidationError for valid SHA-256 hash", () => {
+    // Example of a valid SHA-256 hash
+    const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
+    expect(() => validateHash(validHash)).not.toThrow();
   });
 });

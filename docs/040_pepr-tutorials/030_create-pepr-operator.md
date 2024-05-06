@@ -114,7 +114,7 @@ Go to the `capabilities` directory, create a new directory called `crd` with two
 mkdir -p capabilities/crd/generated capabilities/crd/source  
 ```
 
-Generate a class based on the WebApp CRD using `kubernetes-fluent-client` and store it in the generated directory.
+Generate a class based on the WebApp CRD using `kubernetes-fluent-client`. This way we can react to the fields of the CRD in a type-safe way.
 
 ```bash
 npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml . 
@@ -130,7 +130,9 @@ export class WebApp extends a.GenericKind {
 }
 ```
 
-in the `source` folder, create a file called `webapp.crd.ts` and add the following:
+Move the updated file to `capabilities/crd/generated/webapp-v1alpha1.ts`.
+
+In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
 
 ```typescript
 export const WebAppCRD = {
@@ -212,28 +214,7 @@ export const WebAppCRD = {
 };
 ```
 
-In the root of the crd folder, create an `index.ts` file and add the following:
-
-```typescript
-import { V1OwnerReference } from "@kubernetes/client-node";
-export { WebApp, Phase, Status } from "./generated/webapp-v1alpha1";
-import { WebApp } from "./generated/webapp-v1alpha1";
-
-export function getOwnerRef(instance: WebApp): V1OwnerReference[] {
-  const { name, uid } = instance.metadata!;
-
-  return [
-    {
-      apiVersion: instance.apiVersion!,
-      kind: instance.kind!,
-      uid: uid!,
-      name: name!,
-    },
-  ];
-}
-```
-
-Add a `register.ts` file to the `crd` folder and add the following:
+Add a `register.ts` file to the `capabilities/crd/` folder and add the following. This will auto register the CRD on startup.
 
 ```typescript
 import { K8s, Log, kind } from "pepr";
@@ -250,15 +231,14 @@ export const RegisterCRD = () => {
     });
 };
 (() => RegisterCRD())();
-
 ```
 
-Finally add a `validate.ts` file to the `crd` folder and add the following:
+Finally add a `validate.ts` file to the `crd` folder and add the following. This will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
 
 ```typescript
 import { PeprValidateRequest } from "pepr";
 
-import { WebApp } from ".";
+import { WebApp } from "./generated/webapp-v1alpha1";
 
 const invalidNamespaces = [
   "kube-system",
@@ -285,18 +265,19 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
 }
 ```
 
-In this section we generated the CRD class for WebApp, created a function to add `ownerReferences` to the manifests that will be deployed by the Operator to handle deletion of Kubernetes objects, registered the CRD, and added a validator to validate that instances of WebApp are in valid namespaces.
+In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
 
 ## Create Helpers
 
-In this section we will create helper functions to help with the reconciliation process.
+In this section we will create helper functions to help with the reconciliation process. The idea is that this operator will "remedy" any accidental deletions of the resources it creates. If any object deployed by the Operator is deleted for any reason, the Operator will automatically redeploy the object.
 
-Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file in the `capabilities` folder. This file will contain the functions that will generate the manifests that will be deployed by the Operator with the ownerReferences added to them.
+Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes Objects for the Operator to deploy (with the ownerReferences auto-included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
 ```typescript
-import { kind, K8s, Log } from "pepr";
-import { getOwnerRef } from "../crd";
+import { kind, K8s, Log, sdk } from "pepr";
 import { WebApp } from "../crd/generated/webapp-v1alpha1";
+
+const { getOwnerRefFrom } = sdk;
 
 export default async function Deploy(instance: WebApp) {
   try {
@@ -322,7 +303,7 @@ function deployment(instance: WebApp) {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name,
       namespace,
       labels: {
@@ -338,7 +319,7 @@ function deployment(instance: WebApp) {
       },
       template: {
         metadata: {
-          ownerReferences: getOwnerRef(instance),
+          ownerReferences: getOwnerRefFrom(instance),
           annotations: {
             buildTimestamp: `${Date.now()}`,
           },
@@ -384,7 +365,7 @@ function service(instance: WebApp) {
     apiVersion: "v1",
     kind: "Service",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name,
       namespace,
       labels: {
@@ -614,7 +595,7 @@ function configmap(instance: WebApp) {
     apiVersion: "v1",
     kind: "ConfigMap",
     metadata: {
-      ownerReferences: getOwnerRef(instance),
+      ownerReferences: getOwnerRefFrom(instance),
       name: `web-content-${name}`,
       namespace,
       labels: {
@@ -628,17 +609,22 @@ function configmap(instance: WebApp) {
 }
 ```
 
+Our job is to make the deployment of the WebApp simple. Instead of having to keep track of the versions and revisions of all of the Kubernetes Objects required for the WebApp, rolling pods and updating configMaps, the deployer now only needs to focus on the `WebApp` instance. The controller will reconcile instances of the operand (WebApp) against the actual cluster state to reach the desired state.
+
 We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
 
 ## Create Reconciler
 
+Now, create the function that reacts to changes across WebApp instances. This function will be called and put into a queue, guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
+
 In the base of the `capabilities` folder, create a `reconciler.ts` file and add the following:
 
 ```typescript
-import { K8s, Log } from "pepr";
-
+import { K8s, Log, sdk } from "pepr";
 import Deploy from "./controller/generators";
 import { Phase, Status, WebApp } from "./crd";
+
+const { writeEvent } = sdk;
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the instance
@@ -691,6 +677,7 @@ export async function reconciler(instance: WebApp) {
  * @param status The new status
  */
 async function updateStatus(instance: WebApp, status: Status) {
+  await writeEvent(instance, {phase: status}, "Normal", "CreatedOrUpdate", instance.metadata.name, instance.metadata.name);
   await K8s(WebApp).PatchStatus({
     metadata: {
       name: instance.metadata!.name,
@@ -734,10 +721,13 @@ When(WebApp)
     }
   });
 
+// Remove the instance from the store BEFORE it is deleted so reconcile stops 
+// and a cascading deletion occurs for all owned resources.
+// To make this work, we extended the timeout on the WebHook Configuration
 When(WebApp)
   .IsDeleted()
-  .Mutate(instance => {
-    Store.removeItemAndWait(instance.Raw.metadata.name);
+  .Mutate(async instance => {
+    await Store.removeItemAndWait(instance.Raw.metadata.name);
   });
 
 // Don't let the CRD get deleted
@@ -778,6 +768,9 @@ When(a.ConfigMap)
   });
 
 ```
+- When a WebApp is created or updated, validate it, store the name of the instance and enqueue it for processing.
+- If an "owned" resource (ConfigMap, Service, or Deployment) is deleted, redeploy it.
+- Always redeploy the WebApp CRD if it was deleted as the controller depends on it
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
 
@@ -798,7 +791,7 @@ Make sure Pepr is update to date
 npx pepr update
 ```
 
-Build the Pepr manifests
+Build the Pepr manifests (Already built with appropriate RBAC)
 
 ```bash
 npx pepr build
@@ -887,6 +880,31 @@ kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq
   "observedGeneration": 1,
   "phase": "Ready"
 }
+```
+
+Describe the WebApp to look at events
+
+```bash
+kubectl describe wa webapp-light-en -n webapps
+# output
+Name:         webapp-light-en
+Namespace:    webapps
+API Version:  pepr.io/v1alpha1
+Kind:         WebApp
+Metadata: ...
+Spec:
+  Language:  en
+  Replicas:  1
+  Theme:     light
+Status:
+  Observed Generation:  1
+  Phase:                Ready
+Events:
+  Type    Reason                    Age   From             Message
+  ----    ------                    ----  ----             -------
+  Normal  InstanceCreatedOrUpdated  36s   webapp-light-en  Pending
+  Normal  InstanceCreatedOrUpdated  36s   webapp-light-en  Ready
+
 ```
 
 Port-forward and look at the WebApp in the browser

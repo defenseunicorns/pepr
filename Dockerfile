@@ -1,6 +1,6 @@
 ### BUILD ###
 
-FROM docker.io/library/node:20-alpine@sha256:c0a3badbd8a0a760de903e00cedbca94588e609299820557e72cba2a53dbaa2c as with-git
+FROM docker.io/library/node:22-alpine@sha256:487dc5d5122d578e13f2231aa4ac0f63068becd921099c4c677c850df93bede8 as with-git
 
 WORKDIR /app
 
@@ -26,12 +26,10 @@ RUN npm ci --omit=dev --omit=peer && \
 COPY --chown=node:node ./dist/  ./node_modules/pepr/dist/
 COPY --chown=node:node ./package.json  ./node_modules/pepr/package.json
 
-
 ##### DELIVER #####
 
-FROM cgr.dev/chainguard/node:20@sha256:f30d39c6980f0a50119f2aa269498307a80c2654928d8e23bb25431b9cbbdc4f
+FROM cgr.dev/chainguard/node-lts@sha256:a0b51fe161184c9dffcf57b9f5b0ec4c7d58f7ba2c2445a4828ebd104928af2d
 
 WORKDIR /app
 
 COPY --from=with-git --chown=node:node /app/ /app/
-

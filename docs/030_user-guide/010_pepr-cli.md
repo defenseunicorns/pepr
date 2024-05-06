@@ -1,21 +1,10 @@
 # Pepr CLI
 
-- [Pepr CLI](#pepr-cli)
-  - [`npx pepr init`](#npx-pepr-init)
-  - [`npx pepr update`](#npx-pepr-update)
-  - [`npx pepr dev`](#npx-pepr-dev)
-  - [`npx pepr deploy`](#npx-pepr-deploy)
-  - [`npx pepr monitor`](#npx-pepr-monitor)
-  - [`npx pepr uuid`](#npx-pepr-uuid)
-  - [`npx pepr build`](#npx-pepr-build)
-  - [`npx pepr kfc`](#npx-pepr-kfc)
-
 ## `npx pepr init`
 
 Initialize a new Pepr Module.
 
 **Options:**
-
 
 - `--skip-post-init` - Skip npm install, git init and VSCode launch
 
@@ -26,7 +15,6 @@ Initialize a new Pepr Module.
 Update the current Pepr Module to the latest SDK version. This command is not recommended for production use, instead, we recommend Renovate or Dependabot for automated updates.
 
 **Options:**
-
 
 - `--skip-template-update` - Skip updating the template files
 
@@ -97,6 +85,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `-v, --version <version>. Example: '0.27.3'` - The version of the Pepr image to use in the deployment manifests.
 
 ## `npx pepr kfc`
+
 Execute a `kubernetes-fluent-client` command. This command is a wrapper around `kubernetes-fluent-client`.
 
 Usage:

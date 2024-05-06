@@ -6,7 +6,7 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { namespaceDeploymentsReady } from "../lib/helpers";
+import { validateCapabilityNames, namespaceDeploymentsReady } from "../lib/helpers";
 
 export default function (program: RootCmd) {
   program
@@ -51,11 +51,13 @@ export default function (program: RootCmd) {
 
       try {
         await webhook.deploy(opts.force, timeout);
+        // wait for capabilities to be loaded and test names
+        validateCapabilityNames(webhook.capabilities);
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
       } catch (e) {
-        console.error(`Error deploying module: ${e.data.message}`);
+        console.error(`Error deploying module: ${e.message}`);
         process.exit(1);
       }
     });

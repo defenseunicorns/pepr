@@ -12,8 +12,9 @@ pepr
 dist/
 *.js
 *.js.amp
-# Permit this single file to be checked in
+# Permit these few files to be checked in
 !hack/*.js
+!.github/workflows/*.js
 node_modules/
 stats.html
 .vscode

@@ -6,12 +6,13 @@
 [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
 [![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
 #### **_Type safe Kubernetes middleware for humans_**
 
 <img align="right" width="40%" src="_images/pepr.png" />
 
-Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops tribal knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
+Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops organizational knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
 
 ## Features
 
@@ -25,7 +26,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Out of the box airgap support with [Zarf](https://zarf.dev)
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
-- Controller network isolation and tamper-resistent module execution
+- Controller network isolation and tamper-resistant module execution
 - Least-privilege [RBAC](./docs/030_user-guide/090_rbac.md) generation
 - AMD64 and ARM64 support
 
@@ -87,7 +88,7 @@ When(a.ConfigMap)
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
   - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
-## Wow too many words! tl;dr;
+## Wow, too many words! tl;dr;
 
 ```bash
 # Create a new Pepr Module

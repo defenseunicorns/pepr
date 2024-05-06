@@ -4,7 +4,7 @@
 import { ChildProcess, fork } from "child_process";
 import { promises as fs } from "fs";
 import prompt from "prompts";
-
+import { validateCapabilityNames } from "../lib/helpers";
 import { Assets } from "../lib/assets";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
@@ -57,6 +57,14 @@ export default function (program: RootCmd) {
           // Deploy the webhook with a 30 second timeout for debugging, don't force
           await webhook.deploy(false, 30);
 
+          try {
+            // wait for capabilities to be loaded and test names
+            validateCapabilityNames(webhook.capabilities);
+          } catch (e) {
+            console.error(e.message);
+            process.exit(1);
+          }
+
           program = fork(path, {
             env: {
               ...process.env,
@@ -85,7 +93,7 @@ export default function (program: RootCmd) {
           }
         });
       } catch (e) {
-        console.error(`Error deploying module: ${e.data.message}`);
+        console.error(`Error deploying module: ${e.message}`);
         process.exit(1);
       }
     });
