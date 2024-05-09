@@ -15,7 +15,7 @@ const watchCfg: WatchCfg = {
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
     ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
     : 300,
-  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS === "false" ? false : true
+  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS === "false" ? false : true,
 };
 
 // Map the event to the watch phase
@@ -80,12 +80,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
     // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
-      try {
-        await queue.enqueue(obj, type);
-      }catch (e) {
-        console.log(e, "ERRRORRRRR!!!!")
-      }
-
+      await queue.enqueue(obj, type);
     } else {
       // Otherwise, run the watch callback directly
       await watchCallback(obj, type);
@@ -101,7 +96,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.CONNECT, () => logEvent(WatchEvent.CONNECT));
 
   watcher.events.on(WatchEvent.BOOKMARK, obj =>
-    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent.", obj),
+    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent", obj),
   );
 
   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
@@ -128,9 +123,10 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 }
 
 export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  const logMessage = `Watch event ${type} received${message ? `. ${message}.` : "."}`;
   if (obj) {
-    Log.debug(obj, `Watch event ${type} received: %s`, message);
+    Log.debug(obj, logMessage);
   } else {
-    Log.debug(`Watch event ${type} received: %s`, message);
+    Log.debug(logMessage);
   }
 }
