@@ -28,7 +28,7 @@ COPY --chown=node:node ./package.json  ./node_modules/pepr/package.json
 
 ##### DELIVER #####
 
-FROM cgr.dev/chainguard/node-lts@sha256:a0b51fe161184c9dffcf57b9f5b0ec4c7d58f7ba2c2445a4828ebd104928af2d
+FROM cgr.dev/chainguard/node-lts@sha256:db5a181ac100627b091402709cb50722edb8185e59aded263bedfab4e379bca3
 
 WORKDIR /app
 
