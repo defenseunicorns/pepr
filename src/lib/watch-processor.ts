@@ -15,7 +15,7 @@ const watchCfg: WatchCfg = {
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
     ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
     : 300,
-  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false,
+  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS === "false" ? false : true
 };
 
 // Map the event to the watch phase
@@ -80,7 +80,12 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
     // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
-      await queue.enqueue(obj, type);
+      try {
+        await queue.enqueue(obj, type);
+      }catch (e) {
+        console.log(e, "ERRRORRRRR!!!!")
+      }
+
     } else {
       // Otherwise, run the watch callback directly
       await watchCallback(obj, type);
@@ -124,8 +129,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
 export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
   if (obj) {
-    Log.debug(obj, `Watch event ${type} received`, message);
+    Log.debug(obj, `Watch event ${type} received: %s`, message);
   } else {
-    Log.debug(`Watch event ${type} received`, message);
+    Log.debug(`Watch event ${type} received: %s`, message);
   }
 }
