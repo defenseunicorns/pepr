@@ -93,7 +93,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     process.exit(1);
   });
 
-  watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT,url));
+  watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
 
   watcher.events.on(WatchEvent.BOOKMARK, obj =>
     logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent", obj),
@@ -104,7 +104,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     logEvent(WatchEvent.RESOURCE_VERSION, `${resourceVersion}`),
   );
   watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
-    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts`: ""),
+    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts` : ""),
   );
   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
