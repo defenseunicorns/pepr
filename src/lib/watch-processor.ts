@@ -15,7 +15,7 @@ const watchCfg: WatchCfg = {
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
     ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
     : 300,
-  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false,
+  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS === "false" ? false : true,
 };
 
 // Map the event to the watch phase
@@ -93,18 +93,18 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     process.exit(1);
   });
 
-  watcher.events.on(WatchEvent.CONNECT, () => logEvent(WatchEvent.CONNECT));
+  watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
 
   watcher.events.on(WatchEvent.BOOKMARK, obj =>
-    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent.", obj),
+    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent", obj),
   );
 
   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
   watcher.events.on(WatchEvent.RESOURCE_VERSION, resourceVersion =>
-    logEvent(WatchEvent.RESOURCE_VERSION, `Resource version: ${resourceVersion}`),
+    logEvent(WatchEvent.RESOURCE_VERSION, `${resourceVersion}`),
   );
   watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
-    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempts`, err),
+    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts` : ""),
   );
   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
@@ -123,9 +123,10 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 }
 
 export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  const logMessage = `Watch event ${type} received${message ? `. ${message}.` : "."}`;
   if (obj) {
-    Log.debug(obj, `Watch event ${type} received`, message);
+    Log.debug(obj, logMessage);
   } else {
-    Log.debug(`Watch event ${type} received`, message);
+    Log.debug(logMessage);
   }
 }
