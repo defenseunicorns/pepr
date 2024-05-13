@@ -222,8 +222,9 @@ describe("logEvent function", () => {
   });
 
   it("should handle CONNECT events", () => {
-    logEvent(WatchEvent.CONNECT);
-    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.CONNECT} received.`);
+    const url = "/api/v1/namespaces/default/pods?watch=true&resourceVersion=0";
+    logEvent(WatchEvent.CONNECT, url);
+    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.CONNECT} received. ${url}.`);
   });
 
   it("should handle BOOKMARK events", () => {
