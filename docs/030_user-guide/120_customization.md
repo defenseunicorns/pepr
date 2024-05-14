@@ -6,6 +6,8 @@ This document outlines how to customize the build output through Helm overrides 
 
 The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format. 
 
+**Caution**: attempting to format time in-process will significantly impact logging performance.  
+
 ```json
 {
   "env": {
@@ -20,7 +22,7 @@ With ISO:
 {"level":30,"time":"2024-05-14T14:26:03.788Z","pid":16,"hostname":"pepr-static-test-7f4d54b6cc-9lxm6","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
 ```
 
-Default: 
+Default (without): 
 
 ```json
 {"level":30,"time":"1715696764106","pid":16,"hostname":"pepr-static-test-watcher-559d94447f-xkq2h","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
