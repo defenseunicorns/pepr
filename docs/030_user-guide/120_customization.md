@@ -2,6 +2,32 @@
 
 This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
 
+## Customizing Log Format
+
+The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format. 
+
+**Caution**: attempting to format time in-process will significantly impact logging performance.  
+
+```json
+{
+  "env": {
+    "PINO_TIME_STAMP": "iso"
+  }
+}
+```
+
+With ISO:
+
+```json
+{"level":30,"time":"2024-05-14T14:26:03.788Z","pid":16,"hostname":"pepr-static-test-7f4d54b6cc-9lxm6","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
+```
+
+Default (without): 
+
+```json
+{"level":30,"time":"1715696764106","pid":16,"hostname":"pepr-static-test-watcher-559d94447f-xkq2h","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
+```
+
 ## Customizing Watch Configuration 
 
 The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific enviroment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
