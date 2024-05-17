@@ -84,7 +84,7 @@ export async function mutateProcessor(
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
-        Log.warn(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+        Log.warn(actionMetadata, `Action failed: ${e}`);
         updateStatus("warning");
 
         // Annoying ts false positive
