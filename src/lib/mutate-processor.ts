@@ -89,7 +89,7 @@ export async function mutateProcessor(
 
         // Annoying ts false positive
         response.warnings = response.warnings || [];
-        response.warnings.push(`Action failed: ${JSON.stringify(e)}`);
+        response.warnings.push(`Action failed: ${e}`);
 
         switch (config.onError) {
           case Errors.reject:
