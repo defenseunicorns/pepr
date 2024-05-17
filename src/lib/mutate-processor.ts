@@ -93,7 +93,7 @@ export async function mutateProcessor(
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+            Log.error(actionMetadata, `Action failed: ${e}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
