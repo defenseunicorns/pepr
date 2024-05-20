@@ -9,7 +9,7 @@ import { Assets } from "../lib/assets";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 import { K8s, kind } from "kubernetes-fluent-client";
-
+import { PeprStore } from "../lib/k8s";
 export default function (program: RootCmd) {
   program
     .command("dev")
@@ -51,6 +51,8 @@ export default function (program: RootCmd) {
       try {
         let program: ChildProcess;
         const name = `pepr-${cfg.pepr.uuid}`;
+        const scheduleStore = `pepr-${cfg.pepr.uuid}-schedule`;
+        const store = `pepr-${cfg.pepr.uuid}-store`;
 
         // Run the processed javascript file
         const runFork = async () => {
@@ -84,6 +86,8 @@ export default function (program: RootCmd) {
             await Promise.all([
               K8s(kind.MutatingWebhookConfiguration).Delete(name),
               K8s(kind.ValidatingWebhookConfiguration).Delete(name),
+              K8s(PeprStore).InNamespace("pepr-system").Delete(scheduleStore),
+              K8s(PeprStore).InNamespace("pepr-system").Delete(store),
             ]);
           });
 
