@@ -121,17 +121,6 @@ describe("WatchProcessor", () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  it("should watch for the resource_update event", async () => {
-    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
-      if (eventName === WatchEvent.RESOURCE_VERSION) {
-        expect(listener).toBeInstanceOf(Function);
-        listener("45");
-      }
-    });
-
-    setupWatch(capabilities);
-  });
-
   it("should watch for the give_up event", async () => {
     const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
       return undefined as never;
@@ -227,11 +216,21 @@ describe("logEvent function", () => {
     expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.CONNECT} received. ${url}.`);
   });
 
-  it("should handle BOOKMARK events", () => {
-    const mockObj = { id: "123", type: "Pod" } as KubernetesObject;
-    const message = "Changes up to the given resourceVersion have been sent";
-    logEvent(WatchEvent.BOOKMARK, message, mockObj);
-    expect(Log.debug).toHaveBeenCalledWith(mockObj, `Watch event ${WatchEvent.BOOKMARK} received. ${message}.`);
+  it("should handle LIST_ERROR events", () => {
+    const message = "LIST_ERROR";
+    logEvent(WatchEvent.LIST_ERROR, message);
+    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.LIST_ERROR} received. ${message}.`);
+  });
+  it("should handle LIST events", () => {
+    const podList = {
+      kind: "PodList",
+      apiVersion: "v1",
+      metadata: { resourceVersion: "10245" },
+      items: [],
+    };
+    const message = JSON.stringify(podList, undefined, 2);
+    logEvent(WatchEvent.LIST, message);
+    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.LIST} received. ${message}.`);
   });
 
   it("should handle DATA_ERROR events", () => {
