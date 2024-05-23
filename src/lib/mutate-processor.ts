@@ -84,16 +84,16 @@ export async function mutateProcessor(
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
-        Log.warn(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+        Log.warn(actionMetadata, `Action failed: ${e}`);
         updateStatus("warning");
 
         // Annoying ts false positive
         response.warnings = response.warnings || [];
-        response.warnings.push(`Action failed: ${JSON.stringify(e)}`);
+        response.warnings.push(`Action failed: ${e}`);
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+            Log.error(actionMetadata, `Action failed: ${e}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
