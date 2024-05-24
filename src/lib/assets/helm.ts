@@ -70,6 +70,7 @@ export function watcherDeployTemplate(buildTimestamp: string) {
           metadata:
             annotations: 
               buildTimestamp: "${buildTimestamp}"
+              {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
             labels:
               app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
@@ -111,6 +112,9 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                   - name: module
                     mountPath: /app/load
                     readOnly: true
+                  {{- if .Values.watcher.extraVolumeMounts }}
+                  {{- toYaml .Values.watcher.extraVolumeMounts | nindent 12 }}
+                  {{- end }}
             volumes:
               - name: tls-certs
                 secret:
@@ -118,6 +122,9 @@ export function watcherDeployTemplate(buildTimestamp: string) {
               - name: module
                 secret:
                   secretName: {{ .Values.uuid }}-module
+              {{- if .Values.watcher.extraVolumes }}
+              {{- toYaml .Values.watcher.extraVolumes | nindent 8 }}
+              {{- end }}
     `;
 }
 
@@ -142,6 +149,7 @@ export function admissionDeployTemplate(buildTimestamp: string) {
           metadata:
             annotations:
               buildTimestamp: "${buildTimestamp}"
+              {{- toYaml .Values.admission.podAnnotations | nindent 8 }}
             labels:
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
@@ -187,6 +195,9 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   - name: module
                     mountPath: /app/load
                     readOnly: true
+                  {{- if .Values.admission.extraVolumeMounts }}
+                  {{- toYaml .Values.admission.extraVolumeMounts | nindent 12 }}
+                  {{- end }}
             volumes:
               - name: tls-certs
                 secret:
@@ -197,5 +208,8 @@ export function admissionDeployTemplate(buildTimestamp: string) {
               - name: module
                 secret:
                   secretName: {{ .Values.uuid }}-module  
+              {{- if .Values.admission.extraVolumes }}
+              {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
+              {{- end }}
     `;
 }

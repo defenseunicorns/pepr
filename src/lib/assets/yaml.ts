@@ -68,8 +68,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
           drop: ["ALL"],
         },
       },
+      podAnnotations: {},
       nodeSelector: {},
       tolerations: [],
+      extraVolumeMounts: [],
+      extraVolumes: [],
       affinity: {},
     },
     watcher: {
@@ -115,7 +118,10 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       },
       nodeSelector: {},
       tolerations: [],
+      extraVolumeMounts: [],
+      extraVolumes: [],
       affinity: {},
+      podAnnotations: {},
     },
   };
   if (process.env.PEPR_MODE === "dev") {
@@ -145,6 +151,35 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
             name: "module",
             namespace: "pepr-system",
             files: [path],
+          },
+        ],
+        images: [image],
+      },
+    ],
+  };
+
+  return dumpYaml(zarfCfg, { noRefs: true });
+}
+
+export function zarfYamlChart({ name, image, config }: Assets, path: string) {
+  const zarfCfg = {
+    kind: "ZarfPackageConfig",
+    metadata: {
+      name,
+      description: `Pepr Module: ${config.description}`,
+      url: "https://github.com/defenseunicorns/pepr",
+      version: `${config.appVersion || "0.0.1"}`,
+    },
+    components: [
+      {
+        name: "module",
+        required: true,
+        charts: [
+          {
+            name: "module",
+            namespace: "pepr-system",
+            version: `${config.appVersion || "0.0.1"}`,
+            localPath: path,
           },
         ],
         images: [image],
