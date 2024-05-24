@@ -70,7 +70,9 @@ export function watcherDeployTemplate(buildTimestamp: string) {
           metadata:
             annotations: 
               buildTimestamp: "${buildTimestamp}"
+              {{- if .Values.watcher.podAnnotations }}
               {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
+              {{- end }}
             labels:
               app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
@@ -149,7 +151,9 @@ export function admissionDeployTemplate(buildTimestamp: string) {
           metadata:
             annotations:
               buildTimestamp: "${buildTimestamp}"
+              {{- if .Values.admission.podAnnotations }}
               {{- toYaml .Values.admission.podAnnotations | nindent 8 }}
+              {{- end }}
             labels:
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
