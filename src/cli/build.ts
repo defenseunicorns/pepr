@@ -50,7 +50,14 @@ export default function (program: RootCmd) {
         "Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image.",
       ).choices(["GitHub", "Iron Bank"]),
     )
-
+    .addOption(
+      new Option(
+        "-z, --zarf [manifest|chart]",
+        "Zarf package type: manifest, chart (default: manifest)",
+      )
+        .choices(["manifest", "chart"])
+        .default("manifest"),
+    )
     .addOption(
       new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
         .choices(["admin", "scoped"])
@@ -137,7 +144,7 @@ export default function (program: RootCmd) {
       }
 
       const yamlFile = `pepr-module-${uuid}.yaml`;
-
+      const chartPath = `${uuid}-chart`;
       const yamlPath = resolve(outputDir, yamlFile);
       const yaml = await assets.allYaml(opts.rbacMode);
 
@@ -150,8 +157,13 @@ export default function (program: RootCmd) {
       }
 
       const zarfPath = resolve(outputDir, "zarf.yaml");
-      const zarf = assets.zarfYaml(yamlFile);
 
+      let zarf = "";
+      if (opts.zarf === "chart") {
+        zarf = assets.zarfYamlChart(chartPath);
+      } else {
+        zarf = assets.zarfYaml(yamlFile);
+      }
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
