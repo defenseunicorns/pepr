@@ -21,10 +21,10 @@ jobs:
 
       - uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
-      - name: Use Node.js 18
+      - name: Use Node.js 20
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: 18
+          node-version: 20
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
@@ -43,10 +43,6 @@ jobs:
 
           npm install -g npm
 
-          npm ci
-          npm --no-git-tag-version version ${{ github.ref_name }}
-          npm run build
-
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg VER=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
+          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg PEPR_BUILD_VERSION=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 
           PEPR_VERSION=${{ github.ref_name }} npm publish --provenance --access public
