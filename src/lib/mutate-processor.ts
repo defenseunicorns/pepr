@@ -87,9 +87,19 @@ export async function mutateProcessor(
         Log.warn(actionMetadata, `Action failed: ${e}`);
         updateStatus("warning");
 
-        // Annoying ts false positive
+        let errorMessage = "";
+        try {
+          if (e.message && e.message.length > 0) {
+            errorMessage = e.message;
+          } else {
+            throw new Error("An error occurred in the mutate action.");
+          }
+        } catch (e) {
+          errorMessage = e.message;
+        }
+
         response.warnings = response.warnings || [];
-        response.warnings.push(`Action failed: ${e}`);
+        response.warnings.push(`Action failed: ${errorMessage}`);
 
         switch (config.onError) {
           case Errors.reject:
