@@ -37,7 +37,7 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | `PEPR_RETRYMAX`              | The maximum number of times to retry the watch, the retry count is reset on success.                             | default: `"5"`                  |
 | `PEPR_RETRYDELAYSECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
 | `PEPR_RESYNCINTERVALSECONDS` | Amount of seconds to wait before a forced-resyncing of the watch list                                            | default: `"300"` (5 mins)       |
-| `PEPR_ALLOWWATCHBOOKMARKS`   | Whether to allow [watch bookmarks](https://kubernetes.io/docs/reference/using-api/api-concepts/#watch-bookmarks).| default: `"true"`  or `"false"` |
+
 
 
 ## Customizing with Helm
