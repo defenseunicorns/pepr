@@ -39,7 +39,8 @@
     "pino": "9.1.0",
     "pino-pretty": "11.1.0",
     "prom-client": "15.1.2",
-    "ramda": "0.30.0"
+    "ramda": "0.30.0",
+    "npm":"10.8.1"
   },
   "devDependencies": {
     "@commitlint/cli": "19.3.0",

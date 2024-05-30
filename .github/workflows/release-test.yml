@@ -34,4 +34,4 @@ jobs:
         run: |
           #!/bin/bash
 
-          npm install -g npm@6109960355420a4fbe024a109e873698a6c4c19a
+          npm install -g npm@sha512-Dp1C6SvSMYQI7YHq/y2l94uvI+59Eqbu1EpuKQHQ8p16txXRuRit5gH3Lnaagk2aXDIjg/Iru9pd05bnneKgdw==
