@@ -55,7 +55,7 @@ export function service(name: string): kind.Service {
       ports: [
         {
           port: 443,
-          targetPort: 3000,
+          targetPort: process.env.PEPR_DEBUG ? 9229 : 3000,
         },
       ],
     },
@@ -81,7 +81,7 @@ export function watcherService(name: string): kind.Service {
       ports: [
         {
           port: 443,
-          targetPort: 3000,
+          targetPort: process.env.PEPR_DEBUG ? 9229 : 3000,
         },
       ],
     },

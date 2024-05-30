@@ -63,6 +63,7 @@ export default function (program: RootCmd) {
         .choices(["admin", "scoped"])
         .default("admin"),
     )
+    .addOption(new Option("--debug", "Debug mode: Enable debug mode for the build").default(false))
     .action(async opts => {
       // assign custom output directory if provided
       if (opts.outputDir) {
@@ -71,6 +72,10 @@ export default function (program: RootCmd) {
           console.error(`Error creating output directory: ${error.message}`);
           process.exit(1);
         });
+      }
+
+      if (opts.debug) {
+        process.env.PEPR_DEBUG = "true";
       }
 
       // Build the module

@@ -120,8 +120,11 @@ export class PeprModule {
     if (opts.deferStart) {
       return;
     }
-
-    this.start();
+    if (process.env.PEPR_DEBUG) {
+      this.start(9229);
+    } else {
+      this.start();
+    }
   }
 
   /**

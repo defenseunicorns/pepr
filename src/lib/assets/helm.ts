@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+const appPort = process.env.PEPR_DEBUG ? 9229 : 3000;
+
 export function nsTemplate() {
   return `
     apiVersion: v1
@@ -92,15 +94,15 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                 readinessProbe:
                   httpGet:
                     path: /healthz
-                    port: 3000
+                    port: "${appPort}"
                     scheme: HTTPS
                 livenessProbe:
                   httpGet:
                     path: /healthz
-                    port: 3000
+                    port: "${appPort}"
                     scheme: HTTPS
                 ports:
-                  - containerPort: 3000
+                  - containerPort: "${appPort}"
                 resources:
                   {{- toYaml .Values.watcher.resources | nindent 12 }}
                 env:
@@ -174,15 +176,15 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                 readinessProbe:
                   httpGet:
                     path: /healthz
-                    port: 3000
+                    port: "${appPort}"
                     scheme: HTTPS
                 livenessProbe:
                   httpGet:
                     path: /healthz
-                    port: 3000
+                    port: "${appPort}"
                     scheme: HTTPS
                 ports:
-                  - containerPort: 3000
+                  - containerPort: "${appPort}"
                 resources:
                   {{- toYaml .Values.admission.resources | nindent 12 }}
                 env:

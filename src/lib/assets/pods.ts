@@ -108,20 +108,20 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: 3000,
+                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
                   scheme: "HTTPS",
                 },
               },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: 3000,
+                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
                   scheme: "HTTPS",
                 },
               },
               ports: [
                 {
-                  containerPort: 3000,
+                  containerPort: process.env.PEPR_DEBUG ? 9229 : 3000,
                 },
               ],
               resources: {
@@ -234,20 +234,20 @@ export function deployment(assets: Assets, hash: string, buildTimestamp: string)
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: 3000,
+                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
                   scheme: "HTTPS",
                 },
               },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: 3000,
+                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
                   scheme: "HTTPS",
                 },
               },
               ports: [
                 {
-                  containerPort: 3000,
+                  containerPort: process.env.PEPR_DEBUG ? 9229 : 3000,
                 },
               ],
               resources: {
