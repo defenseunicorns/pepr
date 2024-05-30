@@ -90,7 +90,7 @@ export async function mutateProcessor(
         let errorMessage = "";
 
         try {
-          if (e.message && e.message.length > 0) {
+          if (e.message && e.message !== "[object Object]") {
             errorMessage = e.message;
           } else {
             throw new Error("An error occurred in the mutate action.");
