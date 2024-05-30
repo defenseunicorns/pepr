@@ -105,6 +105,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
+  watcher.events.on(WatchEvent.DEBUG, message => logEvent(WatchEvent.DEBUG, message));
+  
   // Start the watch
   try {
     await watcher.start();
