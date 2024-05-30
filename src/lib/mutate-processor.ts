@@ -84,10 +84,11 @@ export async function mutateProcessor(
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
-        Log.warn(actionMetadata, `Action failed: ${e}`);
         updateStatus("warning");
+        response.warnings = response.warnings || [];
 
         let errorMessage = "";
+
         try {
           if (e.message && e.message.length > 0) {
             errorMessage = e.message;
@@ -95,21 +96,21 @@ export async function mutateProcessor(
             throw new Error("An error occurred in the mutate action.");
           }
         } catch (e) {
-          errorMessage = e.message;
+          errorMessage = "An error occurred with the mutate action.";
         }
 
-        response.warnings = response.warnings || [];
+        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${e}`);
+            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
           case Errors.audit:
             response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = e;
+            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
             break;
         }
       }
