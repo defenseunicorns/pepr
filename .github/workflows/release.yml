@@ -41,7 +41,7 @@ jobs:
         run: |
           #!/bin/bash
 
-          npm install -g npm@6109960355420a4fbe024a109e873698a6c4c19a
+          npm install -g npm
 
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg PEPR_BUILD_VERSION=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 

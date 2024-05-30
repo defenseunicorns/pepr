@@ -1,0 +1,37 @@
+name: Release Test
+
+on:
+  push:
+    branches: ["835-pinned-dep-in-release-action"]
+  pull_request:
+    branches: ["835-pinned-dep-in-release-action"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
+      - name: Publish to GHCR & NPM
+        run: |
+          #!/bin/bash
+
+          npm install -g npm@6109960355420a4fbe024a109e873698a6c4c19a
