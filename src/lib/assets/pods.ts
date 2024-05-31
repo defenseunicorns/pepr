@@ -121,7 +121,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
               },
               ports: [
                 {
-                  containerPort: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  containerPort: 3000,
                 },
               ],
               resources: {
