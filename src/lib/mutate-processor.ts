@@ -84,22 +84,33 @@ export async function mutateProcessor(
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
       } catch (e) {
-        Log.warn(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
         updateStatus("warning");
-
-        // Annoying ts false positive
         response.warnings = response.warnings || [];
-        response.warnings.push(`Action failed: ${JSON.stringify(e)}`);
+
+        let errorMessage = "";
+
+        try {
+          if (e.message && e.message !== "[object Object]") {
+            errorMessage = e.message;
+          } else {
+            throw new Error("An error occurred in the mutate action.");
+          }
+        } catch (e) {
+          errorMessage = "An error occurred with the mutate action.";
+        }
+
+        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+        response.warnings.push(`Action failed: ${errorMessage}`);
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
           case Errors.audit:
             response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = e;
+            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
             break;
         }
       }
