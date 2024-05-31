@@ -67,9 +67,9 @@ const startup = async () => {
     validateHash(hash);
     runModule(hash);
   } catch (err) {
-    Log.error(err);
+    Log.error(err, `Error starting Pepr Store CRD: ${err.message}`);
     process.exit(1);
   }
 };
 
-startup().catch(err => Log.error(err));
+startup().catch(err => Log.error(err, `Error starting Pepr Controller: ${err.message}`));

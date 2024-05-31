@@ -90,7 +90,7 @@ export default function (program: RootCmd) {
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (e) {
           if (e instanceof Error) {
-            console.error(e.message);
+            console.error(`Error creating Pepr module: ${e.message}`);
           }
           process.exit(1);
         }

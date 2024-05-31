@@ -65,7 +65,7 @@ export default function (program: RootCmd) {
             // wait for capabilities to be loaded and test names
             validateCapabilityNames(webhook.capabilities);
           } catch (e) {
-            console.error(e.message);
+            console.error(`Error validating capability names: ${e.message}`);
             process.exit(1);
           }
 

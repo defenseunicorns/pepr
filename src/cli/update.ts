@@ -55,7 +55,7 @@ export default function (program: RootCmd) {
 
         console.log(`✅ Module updated successfully`);
       } catch (e) {
-        console.error(e.message);
+        console.error(`Error updating Pepr module: ${e.message}`);
         process.exit(1);
       }
     });
@@ -88,7 +88,7 @@ export default function (program: RootCmd) {
           }
         }
       } catch (e) {
-        console.error(e.message);
+        console.error(`Error updating template files: ${e.message}`);
         process.exit(1);
       }
     });
