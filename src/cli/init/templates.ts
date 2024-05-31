@@ -12,6 +12,7 @@ import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../tem
 import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
+import launchJSON from "../../templates/launch.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "./walkthrough";
 
@@ -121,4 +122,9 @@ export const prettier = {
 export const eslint = {
   path: ".eslintrc.json",
   data: eslintJSON,
+};
+
+export const launch = {
+  path: "launch.json",
+  data: launchJSON,
 };

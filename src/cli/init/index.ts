@@ -18,6 +18,7 @@ import {
   samplesYaml,
   snippet,
   tsConfig,
+  launch,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, walkthrough } from "./walkthrough";
@@ -61,6 +62,8 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, peprTS.path), peprTS.data);
           await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
           await write(resolve(dirName, ".vscode", codeSettings.path), codeSettings.data);
+          // here write the launch.json
+          await write(resolve(dirName, ".vscode", launch.path), launch.data);
           await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
           await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
 

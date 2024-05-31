@@ -37,7 +37,8 @@ export function tlsSecret(name: string, tls: TLSOut): kind.Secret {
 }
 
 export function service(name: string): kind.Service {
-  return {
+  let svc: kind.Service = {};
+  svc = {
     apiVersion: "v1",
     kind: "Service",
     metadata: {
@@ -55,15 +56,23 @@ export function service(name: string): kind.Service {
       ports: [
         {
           port: 443,
-          targetPort: process.env.PEPR_DEBUG ? 9229 : 3000,
+          targetPort: 3000,
         },
       ],
     },
   };
+  if (process.env.PEPR_DEBUG === "true") {
+    svc.spec!.ports!.push({
+      port: 9229,
+      targetPort: 9229,
+    });
+  }
+  return svc;
 }
 
 export function watcherService(name: string): kind.Service {
-  return {
+  let svc: kind.Service = {};
+  svc = {
     apiVersion: "v1",
     kind: "Service",
     metadata: {
@@ -81,9 +90,16 @@ export function watcherService(name: string): kind.Service {
       ports: [
         {
           port: 443,
-          targetPort: process.env.PEPR_DEBUG ? 9229 : 3000,
+          targetPort: 3000,
         },
       ],
     },
   };
+  if (process.env.PEPR_DEBUG === "true") {
+    svc.spec!.ports!.push({
+      port: 9229,
+      targetPort: 9229,
+    });
+  }
+  return svc;
 }

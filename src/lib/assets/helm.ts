@@ -1,7 +1,38 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+let str = "";
+export function generateContainerPorts() {
+  if (process.env.PEPR_DEBUG === "true") {
+    str = `
+                  - containerPort: 3000
+                  - containerPort: 9229
+      `;
+  } else {
+    str = `
+                  - containerPort: 3000
+      `;
+  }
+  return str;
+}
 
-const appPort = process.env.PEPR_DEBUG ? 9229 : 3000;
+export function generateCommand() {
+  if (process.env.PEPR_DEBUG === "true") {
+    str = `
+                - node
+                - inspect=0.0.0.0:9229
+                - /app/node_modules/pepr/dist/controller.js
+                - {{ .Values.hash }}
+      `;
+  } else {
+    str = `
+                - node
+                - /app/node_modules/pepr/dist/controller.js
+                - {{ .Values.hash }}
+        `;
+  }
+
+  return str;
+}
 
 export function nsTemplate() {
   return `
@@ -88,21 +119,19 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                 image: {{ .Values.watcher.image }}
                 imagePullPolicy: IfNotPresent
                 command:
-                  - node
-                  - /app/node_modules/pepr/dist/controller.js
-                  - {{ .Values.hash }}
+                ${generateCommand()}
                 readinessProbe:
                   httpGet:
                     path: /healthz
-                    port: "${appPort}"
+                    port: 3000
                     scheme: HTTPS
                 livenessProbe:
                   httpGet:
                     path: /healthz
-                    port: "${appPort}"
+                    port: 3000
                     scheme: HTTPS
                 ports:
-                  - containerPort: "${appPort}"
+                ${generateContainerPorts()}
                 resources:
                   {{- toYaml .Values.watcher.resources | nindent 12 }}
                 env:
@@ -170,21 +199,19 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                 image: {{ .Values.admission.image }}
                 imagePullPolicy: IfNotPresent
                 command:
-                  - node
-                  - /app/node_modules/pepr/dist/controller.js
-                  - {{ .Values.hash }}
+                ${generateCommand()}
                 readinessProbe:
                   httpGet:
                     path: /healthz
-                    port: "${appPort}"
+                    port: 3000
                     scheme: HTTPS
                 livenessProbe:
                   httpGet:
                     path: /healthz
-                    port: "${appPort}"
+                    port: 3000
                     scheme: HTTPS
                 ports:
-                  - containerPort: "${appPort}"
+                ${generateContainerPorts()}
                 resources:
                   {{- toYaml .Values.admission.resources | nindent 12 }}
                 env:

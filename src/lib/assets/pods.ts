@@ -53,8 +53,8 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
   if (bindings.length < 1 && !hasSchedule) {
     return null;
   }
-
-  return {
+  let deploy: kind.Deployment = {};
+  deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -108,14 +108,14 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  port: 3000,
                   scheme: "HTTPS",
                 },
               },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  port: 3000,
                   scheme: "HTTPS",
                 },
               },
@@ -176,13 +176,24 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
       },
     },
   };
+
+  if (process.env.PEPR_DEBUG === "true") {
+    // insert inspect after the first element at index 0
+    deploy.spec!.template!.spec!.containers![0].command?.splice(1, 0, "--inspect=0.0.0.0:9229");
+
+    deploy.spec!.template!.spec!.containers![0].ports?.push({
+      containerPort: 9229,
+    });
+  }
+
+  return deploy;
 }
 
 export function deployment(assets: Assets, hash: string, buildTimestamp: string): kind.Deployment {
   const { name, image, config } = assets;
   const app = name;
-
-  return {
+  let deploy: kind.Deployment = {};
+  deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -234,20 +245,20 @@ export function deployment(assets: Assets, hash: string, buildTimestamp: string)
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  port: 3000,
                   scheme: "HTTPS",
                 },
               },
               livenessProbe: {
                 httpGet: {
                   path: "/healthz",
-                  port: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  port: 3000,
                   scheme: "HTTPS",
                 },
               },
               ports: [
                 {
-                  containerPort: process.env.PEPR_DEBUG ? 9229 : 3000,
+                  containerPort: 3000,
                 },
               ],
               resources: {
@@ -313,6 +324,17 @@ export function deployment(assets: Assets, hash: string, buildTimestamp: string)
       },
     },
   };
+
+  if (process.env.PEPR_DEBUG === "true") {
+    // insert inspect after the first element at index 0
+    deploy.spec!.template!.spec!.containers![0].command?.splice(1, 0, "--inspect=0.0.0.0:9229");
+
+    deploy.spec!.template!.spec!.containers![0].ports?.push({
+      containerPort: 9229,
+    });
+  }
+
+  return deploy;
 }
 
 export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {

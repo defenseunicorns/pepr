@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
+import { generateContainerPorts, generateCommand } from "./helm";
 import { nsTemplate, chartYaml, watcherDeployTemplate, admissionDeployTemplate } from "./helm";
 import { expect, describe, test } from "@jest/globals";
 describe("Kubernetes Template Generators", () => {
@@ -39,6 +39,58 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}");
+    });
+  });
+});
+
+describe("Testing environment based configurations", () => {
+  describe("generateContainerPorts", () => {
+    test("should return debug ports when PEPR_DEBUG is true", () => {
+      process.env.PEPR_DEBUG = "true";
+      const result = generateContainerPorts();
+      expect(result.trim()).toBe(
+        `
+                  - containerPort: 3000
+                  - containerPort: 9229
+      `.trim(),
+      );
+    });
+
+    test("should return non-debug ports when PEPR_DEBUG is not true", () => {
+      process.env.PEPR_DEBUG = "false";
+      const result = generateContainerPorts();
+      expect(result.trim()).toBe(
+        `
+                  - containerPort: 3000
+      `.trim(),
+      );
+    });
+  });
+
+  describe("generateCommand", () => {
+    test("should return debug command when PEPR_DEBUG is true", () => {
+      process.env.PEPR_DEBUG = "true";
+      const result = generateCommand();
+      expect(result.trim()).toBe(
+        `
+                - node
+                - inspect=0.0.0.0:9229
+                - /app/node_modules/pepr/dist/controller.js
+                - {{ .Values.hash }}
+      `.trim(),
+      );
+    });
+
+    test("should return non-debug command when PEPR_DEBUG is not true", () => {
+      process.env.PEPR_DEBUG = "false";
+      const result = generateCommand();
+      expect(result.trim()).toBe(
+        `
+                - node
+                - /app/node_modules/pepr/dist/controller.js
+                - {{ .Values.hash }}
+        `.trim(),
+      );
     });
   });
 });
