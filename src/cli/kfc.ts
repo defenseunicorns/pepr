@@ -38,7 +38,7 @@ export default function (program: RootCmd) {
           stdio: "inherit",
         });
       } catch (e) {
-        console.error(e.message);
+        console.error(`Error creating CRD generated class:`, e);
         process.exit(1);
       }
     });
