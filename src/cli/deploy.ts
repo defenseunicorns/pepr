@@ -57,7 +57,7 @@ export default function (program: RootCmd) {
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
       } catch (e) {
-        console.error(`Error deploying module: ${e.message}`);
+        console.error(`Error deploying module:`, e);
         process.exit(1);
       }
     });

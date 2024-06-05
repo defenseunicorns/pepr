@@ -76,7 +76,7 @@ export async function peprFormat(validateOnly: boolean) {
 
       return !hasFailure;
     } catch (e) {
-      console.error(`Error formatting module: ${e.message}`);
+      console.error(`Error formatting module:`, e);
       return false;
     }
   }

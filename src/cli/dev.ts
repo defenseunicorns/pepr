@@ -65,7 +65,7 @@ export default function (program: RootCmd) {
             // wait for capabilities to be loaded and test names
             validateCapabilityNames(webhook.capabilities);
           } catch (e) {
-            console.error(`Error validating capability names: ${e.message}`);
+            console.error(`Error validating capability names:`, e);
             process.exit(1);
           }
 
@@ -111,7 +111,7 @@ export default function (program: RootCmd) {
           }
         });
       } catch (e) {
-        console.error(`Error deploying module: ${e.message}`);
+        console.error(`Error deploying module:`, e);
         process.exit(1);
       }
     });

@@ -152,7 +152,7 @@ export default function (program: RootCmd) {
         // wait for capabilities to be loaded and test names
         validateCapabilityNames(assets.capabilities);
       } catch (e) {
-        console.error(`Error loading capability: ${e.message}`);
+        console.error(`Error loading capability:`, e);
         process.exit(1);
       }
 
@@ -310,7 +310,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
 
     return { ctx, path, cfg, uuid };
   } catch (e) {
-    console.error(`Error building module: ${e.message}`);
+    console.error(`Error building module:`, e);
 
     if (e.stdout) {
       const out = e.stdout.toString() as string;
