@@ -182,7 +182,7 @@ export class Controller {
     try {
       res.send(await this.#metricsCollector.getMetrics());
     } catch (err) {
-      Log.error(err, `Error getting metrics: ${err}`);
+      Log.error(err, `Error getting metrics`);
       res.status(500).send("Internal Server Error");
     }
   };
@@ -277,7 +277,7 @@ export class Controller {
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
-        Log.error(err, `Error processing ${admissionKind} request: ${err}`);
+        Log.error(err, `Error processing ${admissionKind} request`);
         res.status(500).send("Internal Server Error");
         this.#metricsCollector.error();
       }
@@ -319,7 +319,7 @@ export class Controller {
     try {
       res.send("OK");
     } catch (err) {
-      Log.error(err, `Error processing health check: ${err}`);
+      Log.error(err, `Error processing health check`);
       res.status(500).send("Internal Server Error");
     }
   }
