@@ -15,7 +15,6 @@ const watchCfg: WatchCfg = {
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
     ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
     : 300,
-  allowWatchBookmarks: process.env.PEPR_ALLOWWATCHBOOKMARKS ? process.env.PEPR_ALLOWWATCHBOOKMARKS === "true" : false,
 };
 
 // Map the event to the watch phase
@@ -93,26 +92,19 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     process.exit(1);
   });
 
-  watcher.events.on(WatchEvent.CONNECT, () => logEvent(WatchEvent.CONNECT));
-
-  watcher.events.on(WatchEvent.BOOKMARK, obj =>
-    logEvent(WatchEvent.BOOKMARK, "Changes up to the given resourceVersion have been sent.", obj),
-  );
+  watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
 
   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
-  watcher.events.on(WatchEvent.RESOURCE_VERSION, resourceVersion =>
-    logEvent(WatchEvent.RESOURCE_VERSION, `Resource version: ${resourceVersion}`),
-  );
   watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
-    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempts`, err),
+    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts` : ""),
   );
   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
   watcher.events.on(WatchEvent.ABORT, err => logEvent(WatchEvent.ABORT, err.message));
   watcher.events.on(WatchEvent.OLD_RESOURCE_VERSION, err => logEvent(WatchEvent.OLD_RESOURCE_VERSION, err));
-  watcher.events.on(WatchEvent.RESYNC, err => logEvent(WatchEvent.RESYNC, err.message));
   watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
-
+  watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
+  watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
   // Start the watch
   try {
     await watcher.start();
@@ -123,9 +115,10 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 }
 
 export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  const logMessage = `Watch event ${type} received${message ? `. ${message}.` : "."}`;
   if (obj) {
-    Log.debug(obj, `Watch event ${type} received`, message);
+    Log.debug(obj, logMessage);
   } else {
-    Log.debug(`Watch event ${type} received`, message);
+    Log.debug(logMessage);
   }
 }
