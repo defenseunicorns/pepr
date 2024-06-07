@@ -341,11 +341,26 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   return str.replace(regExp, stringB);
 }
 
-// getSubstringAfterLastColon for getting the controller image
-export function getSubstringAfterLastColon(input: string) {
-  const lastColonIndex = input.lastIndexOf(":");
-  if (lastColonIndex === -1) {
-    return "latest";
+// Based on distrubtion/reference implementation in Go
+export function ParseAnyReference(imageString: string) {
+  const pattern = /^(?:([^/]+)\/)?([^:@]+)(?::([^@]+))?(?:@(.+))?$/;
+  const matches = imageString.match(pattern);
+  if (!matches) {
+    throw new Error("Invalid image string");
   }
-  return input.substring(lastColonIndex + 1);
+
+  let [, host, path] = matches;
+  const tag = matches[3] || "";
+  const digest = matches[4] || "";
+
+  if (imageString.split("/").length == 2) {
+    path = host + "/" + path;
+    host = "";
+  }
+  return {
+    host: host || "",
+    path,
+    tag,
+    digest,
+  };
 }

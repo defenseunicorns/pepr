@@ -10,7 +10,7 @@ import { gunzipSync } from "zlib";
 import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
 import { peprStoreCRD } from "../lib/assets/store";
-import { validateHash, getSubstringAfterLastColon } from "../lib/helpers";
+import { validateHash, ParseAnyReference } from "../lib/helpers";
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
@@ -53,17 +53,22 @@ function runModule(expectedHash: string) {
   }
 }
 
-(() =>
+void (() =>
   K8s(kind.Deployment)
     .InNamespace("pepr-system")
     .Get()
-    .then(deploymentList =>
-      Log.info(
-        `Pepr Controller (${getSubstringAfterLastColon(
-          deploymentList.items[0]!["spec"]!["template"]!["spec"]!["containers"][0]!["image"]!,
-        )})`,
-      ),
-    ))();
+    .then(deploymentList => {
+      const { tag } = ParseAnyReference(
+        deploymentList.items[0]!["spec"]!["template"]!["spec"]!["containers"][0]!["image"]!,
+      );
+      let version: string;
+      if (tag) {
+        version = tag;
+      } else {
+        version = "latest";
+      }
+      Log.info(`Pepr Controller (${version})`);
+    }))();
 
 const hash = process.argv[2];
 

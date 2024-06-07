@@ -10,7 +10,7 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
-  getSubstringAfterLastColon,
+  ParseAnyReference,
 } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
@@ -1164,22 +1164,67 @@ describe("validateHash", () => {
   });
 });
 
-describe("getSubstringAfterLastColon", () => {
-  test("returns the substring after the last colon", () => {
-    const input = "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.31.1";
-    const output = getSubstringAfterLastColon(input);
-    expect(output).toEqual("v0.31.1");
-  });
+describe("ParseAnyReference", () => {
+  const imageRefs = [
+    "nginx",
+    "nginx:1.23.3",
+    "defenseunicorns/zarf-agent:v0.22.1",
+    "defenseunicorns/zarf-agent@sha256:84605f731c6a18194794c51e70021c671ab064654b751aa57e905bce55be13de",
+    "ghcr.io/stefanprodan/podinfo:6.3.3",
+    "registry1.dso.mil/ironbank/opensource/defenseunicorns/zarf/zarf-agent:v0.25.0",
+    "registry1:8080/dso.mil/pepr",
+  ];
 
-  test("returns empty string if there is no colon", () => {
-    const input = "registry1.dso.mil";
-    const output = getSubstringAfterLastColon(input);
-    expect(output).toBe("latest");
-  });
+  test("parses valid image references correctly", () => {
+    const parsedRefs = imageRefs.map(ref => {
+      return ParseAnyReference(ref);
+    });
 
-  test("handles strings with multiple colons correctly", () => {
-    const input = "registry1:8080/dso.mil/pepr:latest";
-    const output = getSubstringAfterLastColon(input);
-    expect(output).toEqual("latest");
+    const expectedResult = [
+      {
+        host: "",
+        path: "nginx",
+        tag: "",
+        digest: "",
+      },
+      {
+        host: "",
+        path: "nginx",
+        tag: "1.23.3",
+        digest: "",
+      },
+      {
+        host: "",
+        path: "defenseunicorns/zarf-agent",
+        tag: "v0.22.1",
+        digest: "",
+      },
+      {
+        host: "",
+        path: "defenseunicorns/zarf-agent",
+        tag: "",
+        digest: "sha256:84605f731c6a18194794c51e70021c671ab064654b751aa57e905bce55be13de",
+      },
+      {
+        host: "ghcr.io",
+        path: "stefanprodan/podinfo",
+        tag: "6.3.3",
+        digest: "",
+      },
+      {
+        host: "registry1.dso.mil",
+        path: "ironbank/opensource/defenseunicorns/zarf/zarf-agent",
+        tag: "v0.25.0",
+        digest: "",
+      },
+      {
+        host: "registry1:8080",
+        path: "dso.mil/pepr",
+        digest: "",
+        tag: "",
+      },
+    ];
+
+    expect(parsedRefs).toEqual(expectedResult);
   });
 });
