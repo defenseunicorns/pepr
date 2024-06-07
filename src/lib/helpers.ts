@@ -340,3 +340,12 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
 }
+
+// getSubstringAfterLastColon for getting the controller image
+export function getSubstringAfterLastColon(input: string): string {
+  const lastColonIndex = input.lastIndexOf(":");
+  if (lastColonIndex === -1) {
+    return "";
+  }
+  return input.substring(lastColonIndex + 1);
+}

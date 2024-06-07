@@ -10,6 +10,7 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  getSubstringAfterLastColon,
 } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
@@ -1160,5 +1161,25 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
+  });
+});
+
+describe("getSubstringAfterLastColon", () => {
+  test("returns the substring after the last colon", () => {
+    const input = "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.31.1";
+    const output = getSubstringAfterLastColon(input);
+    expect(output).toEqual("v0.31.1");
+  });
+
+  test("returns empty string if there is no colon", () => {
+    const input = "registry1.dso.mil";
+    const output = getSubstringAfterLastColon(input);
+    expect(output).toBe("");
+  });
+
+  test("handles strings with multiple colons correctly", () => {
+    const input = "registry1:8080/dso.mil/pepr:latest";
+    const output = getSubstringAfterLastColon(input);
+    expect(output).toEqual("latest");
   });
 });

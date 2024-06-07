@@ -9,10 +9,8 @@ import fs from "fs";
 import { gunzipSync } from "zlib";
 import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
-import { packageJSON } from "../templates/data.json";
 import { peprStoreCRD } from "../lib/assets/store";
-import { validateHash } from "../lib/helpers";
-const { version } = packageJSON;
+import { validateHash, getSubstringAfterLastColon } from "../lib/helpers";
 
 function runModule(expectedHash: string) {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
@@ -55,7 +53,17 @@ function runModule(expectedHash: string) {
   }
 }
 
-Log.info(`Pepr Controller (v${version})`);
+(() =>
+  K8s(kind.Deployment)
+    .InNamespace("pepr-system")
+    .Get()
+    .then(deploymentList =>
+      Log.info(
+        `Pepr Controller (${getSubstringAfterLastColon(
+          deploymentList.items[0]!["spec"]!["template"]!["spec"]!["containers"][0]!["image"]!,
+        )})`,
+      ),
+    ))();
 
 const hash = process.argv[2];
 
