@@ -342,10 +342,10 @@ export function replaceString(str: string, stringA: string, stringB: string) {
 }
 
 // getSubstringAfterLastColon for getting the controller image
-export function getSubstringAfterLastColon(input: string): string {
+export function getSubstringAfterLastColon(input: string) {
   const lastColonIndex = input.lastIndexOf(":");
   if (lastColonIndex === -1) {
-    return "";
+    return "latest";
   }
   return input.substring(lastColonIndex + 1);
 }

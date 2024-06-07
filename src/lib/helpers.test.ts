@@ -1174,7 +1174,7 @@ describe("getSubstringAfterLastColon", () => {
   test("returns empty string if there is no colon", () => {
     const input = "registry1.dso.mil";
     const output = getSubstringAfterLastColon(input);
-    expect(output).toBe("");
+    expect(output).toBe("latest");
   });
 
   test("handles strings with multiple colons correctly", () => {
