@@ -3,7 +3,7 @@
 ARG PEPR_BUILD_VERSION=0.0.0-development
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
-FROM cgr.dev/chainguard/node-lts@sha256:3d635a3537e82a6bf1cf6ef571199cc8533fa45cb3c664777d7eb8930a14ec33 AS build
+FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f AS build
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ RUN npm run build && \
 ##### DELIVER #####
 
 # crane digest cgr.dev/chainguard/node-lts:latest
-FROM cgr.dev/chainguard/node-lts@sha256:3d635a3537e82a6bf1cf6ef571199cc8533fa45cb3c664777d7eb8930a14ec33
+FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f
 
 WORKDIR /app
 
