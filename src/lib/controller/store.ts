@@ -167,10 +167,7 @@ export class PeprControllerStore {
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
-        // On failure to update, re-add the operations to the cache to be retried
-        for (const idx of indexes) {
-          sendCache[idx] = payload[Number(idx)];
-        }
+        Object.keys(sendCache).forEach(key => delete sendCache[key]);
       }
     };
 
