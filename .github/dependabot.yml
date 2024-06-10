@@ -12,19 +12,7 @@ updates:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
-      peer-dependencies:
-        patterns:
-          - "@typescript-eslint/eslint-plugin"
-          - "@typescript-eslint/parser"
-          - "commander"
-          - "esbuild"
-          - "eslint"
-          - "node-forge"
-          - "prettier"
-          - "prompts"
-          - "typescript"
-          - "uuid"
-
+ 
   - package-ecosystem: github-actions
     directory: /
     schedule:
