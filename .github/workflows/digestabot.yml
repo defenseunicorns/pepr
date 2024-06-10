@@ -6,6 +6,9 @@ on:
     # At the end of every day
     - cron: "0 0 * * *"
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   image-update:
     name: Image digest update
@@ -16,8 +19,13 @@ jobs:
       id-token: write # used to sign the commits using gitsign
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: chainguard-dev/digestabot@v1.0.2
+    - name: Harden Runner
+      uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+    - uses: chainguard-dev/digestabot@4298e530896fb4164f9c89030c561b75b9321149 # v1.0.2
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         signoff: true # optional
