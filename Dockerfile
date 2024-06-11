@@ -1,9 +1,8 @@
 ### BUILD ###
 
-ARG PEPR_BUILD_VERSION=0.0.0-development
-
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f AS build
+ARG PEPR_BUILD_VERSION=0.0.0-development
 
 WORKDIR /app
 
