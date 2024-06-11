@@ -1,7 +1,5 @@
 ### BUILD ###
 
-ARG PEPR_BUILD_VERSION=0.0.0-development
-
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f AS build
 
@@ -9,8 +7,6 @@ WORKDIR /app
 
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
-
-RUN npm --no-git-tag-version version ${PEPR_BUILD_VERSION}
 
 # Install deps
 RUN npm ci

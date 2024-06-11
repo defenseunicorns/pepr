@@ -48,6 +48,10 @@ jobs:
 
           npm install -g npm
 
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --build-arg PEPR_BUILD_VERSION=${{ github.ref_name }} --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
+          npm --no-git-tag-version version ${{ github.ref_name }}
 
+          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
+
+          docker cp $(docker create --name kim ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }}):/app/node_modules/pepr/dist ./dist && docker rm kim
+          
           PEPR_VERSION=${{ github.ref_name }} npm publish --provenance --access public
