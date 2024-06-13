@@ -50,8 +50,12 @@ jobs:
 
           npm --no-git-tag-version version ${{ github.ref_name }}
 
+          # Build Controller Image
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 
-          docker cp $(docker create --name kim ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }}):/app/node_modules/pepr/dist ./dist && docker rm kim
+          # Build Pepr dist folder for NPM 
+          docker buildx build --tag pepr-npm . -f Dockerfile.dist
+
+          docker cp $(docker create --name kim pepr-npm):/app/dist ./dist && docker rm kim
           
-          PEPR_VERSION=${{ github.ref_name }} npm publish --provenance --access public
+          npm publish --provenance --access public

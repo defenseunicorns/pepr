@@ -1,0 +1,17 @@
+### NPM PUBLISH ###
+
+# NOTE:
+# Used to publish the Pepr dist to the npm registry
+# In this file, we keep the *.ts intentionally
+# Any other changes to Dockerfile should be reflected in Publish
+
+# crane digest cgr.dev/chainguard/node-lts:latest-dev
+FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f AS build
+
+WORKDIR /app
+
+COPY --chown=node:node . .
+
+RUN npm ci
+
+RUN npm run build 
