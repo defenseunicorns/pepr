@@ -15,3 +15,8 @@ COPY --chown=node:node . .
 RUN npm ci
 
 RUN npm run build 
+
+
+FROM scratch AS dist
+
+COPY --from=build /app/dist ./dist/

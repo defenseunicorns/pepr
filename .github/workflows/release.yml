@@ -54,8 +54,6 @@ jobs:
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 
           # Build Pepr dist folder for NPM 
-          docker buildx build --tag pepr-npm . -f Dockerfile.dist
-
-          docker cp $(docker create --name kim pepr-npm):/app/dist ./dist && docker rm kim
+          docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
           
           npm publish --provenance --access public
