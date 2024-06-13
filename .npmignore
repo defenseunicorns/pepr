@@ -24,6 +24,7 @@ jest.config.json
 
 /CODEOWNERS
 /Dockerfile
+/Dockerfile.dist
 /insecure*
 /tsconfig.*
 

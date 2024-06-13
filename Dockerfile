@@ -1,5 +1,10 @@
 ### BUILD ###
 
+# NOTE:
+# Used to build Controller image
+# In this file, we delete the *.ts intentionally
+# Any other changes to Dockerfile should be reflected in Publish
+
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node-lts@sha256:5bcab869041e81dbd3864046ad7a0c230fb3cc505bd8a960f2c288534e40a14f AS build
 
