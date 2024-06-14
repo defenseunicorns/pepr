@@ -135,7 +135,7 @@ export default function (program: RootCmd) {
         console.warn(
           `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
         );
-        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:${cfg.pepr.peprVersion}`;
+        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
       }
 
       // if image is a custom image, use that instead of the default
