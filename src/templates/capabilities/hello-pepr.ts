@@ -273,22 +273,22 @@ When(a.ConfigMap)
   .WithLabel("chuck-norris")
   .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
-    const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev",
-    );
+    // const response = await fetch<TheChuckNorrisJoke>(
+    //   "https://api.chucknorris.io/jokes/random?category=dev",
+    // );
 
-    // Instead, check the `response.ok` field
-    if (response.ok) {
-      // Add the Chuck Norris joke to the configmap
-      change.Raw.data["chuck-says"] = response.data.value;
-      return;
-    }
+    // // Instead, check the `response.ok` field
+    // if (response.ok) {
+    // Add the Chuck Norris joke to the configmap
+    change.Raw.data["chuck-says"] = "Good day to you!";
+    //   return;
+    // }
 
-    // You can also assert on different HTTP response codes
-    if (response.status === fetchStatus.NOT_FOUND) {
-      // Do something else
-      return;
-    }
+    // // You can also assert on different HTTP response codes
+    // if (response.status === fetchStatus.NOT_FOUND) {
+    //   // Do something else
+    //   return;
+    // }
   });
 
 /**
