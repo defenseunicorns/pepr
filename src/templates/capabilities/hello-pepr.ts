@@ -273,7 +273,7 @@ When(a.ConfigMap)
   .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev",
+      "https://icanhazdadjoke.com/",
     );
 
     // Instead, check the `response.ok` field
