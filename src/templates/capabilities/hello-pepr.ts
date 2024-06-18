@@ -251,21 +251,20 @@ When(a.ConfigMap)
  *
  * These are equivalent:
  * ```ts
- * const joke = await fetch<TheChuckNorrisJoke>("https://api.chucknorris.io/jokes/random?category=dev");
- * const joke = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisJoke;
+ * const joke = await fetch<TheChuckNorrisJoke>("https://icanhazdadjoke.com/");
+ * const joke = await fetch("https://icanhazdadjoke.com/") as TheChuckNorrisJoke;
  * ```
  *
  * Alternatively, you can drop the type completely:
  *
  * ```ts
- * fetch("https://api.chucknorris.io/jokes/random?category=dev")
+ * fetch("https://icanhazdadjoke.com")
  * ```
  */
 interface TheChuckNorrisJoke {
-  icon_url: string;
   id: string;
-  url: string;
-  value: string;
+  joke: string;
+  status: number;
 }
 
 When(a.ConfigMap)
@@ -273,22 +272,22 @@ When(a.ConfigMap)
   .WithLabel("chuck-norris")
   .Mutate(async change => {
     // Try/catch is not needed as a response object will always be returned
-    // const response = await fetch<TheChuckNorrisJoke>(
-    //   "https://api.chucknorris.io/jokes/random?category=dev",
-    // );
+    const response = await fetch<TheChuckNorrisJoke>(
+      "https://api.chucknorris.io/jokes/random?category=dev",
+    );
 
-    // // Instead, check the `response.ok` field
-    // if (response.ok) {
-    // Add the Chuck Norris joke to the configmap
-    change.Raw.data["chuck-says"] = "Good day to you!";
-    //   return;
-    // }
+    // Instead, check the `response.ok` field
+    if (response.ok) {
+      // Add the Chuck Norris joke to the configmap
+      change.Raw.data["chuck-says"] = response.data.joke;
+      return;
+    }
 
-    // // You can also assert on different HTTP response codes
-    // if (response.status === fetchStatus.NOT_FOUND) {
-    //   // Do something else
-    //   return;
-    // }
+    // You can also assert on different HTTP response codes
+    if (response.status === fetchStatus.NOT_FOUND) {
+      // Do something else
+      return;
+    }
   });
 
 /**
