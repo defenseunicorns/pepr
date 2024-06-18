@@ -274,6 +274,11 @@ When(a.ConfigMap)
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(
       "https://icanhazdadjoke.com/",
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      },
     );
 
     // Instead, check the `response.ok` field
