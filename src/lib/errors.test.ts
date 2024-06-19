@@ -9,6 +9,7 @@ describe("ValidateError Fuzz Testing", () => {
   test("should only accept predefined error values", () => {
     fc.assert(
       fc.property(fc.string(), error => {
+        console.log("error", error);
         if (ErrorList.includes(error)) {
           expect(() => ValidateError(error)).not.toThrow();
         } else {
