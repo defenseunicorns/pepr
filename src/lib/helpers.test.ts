@@ -11,6 +11,8 @@ import {
   ValidationError,
   validateCapabilityNames,
 } from "./helpers";
+import { sanitizeResourceName } from "../sdk/sdk";
+import * as fc from "fast-check";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
@@ -292,6 +294,31 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
+
+describe("validateCapabilityNames Property-Based Tests", () => {
+  test("should only accept names that are valid after sanitation", () => {
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            name: fc.string(),
+            bindings: fc.array(fc.anything()),
+            hasSchedule: fc.boolean(),
+          }),
+        ),
+        capabilities => {
+          if (capabilities.every(cap => cap.name === sanitizeResourceName(cap.name))) {
+            expect(() => validateCapabilityNames(capabilities as CapabilityExport[])).not.toThrow();
+          } else {
+            expect(() => validateCapabilityNames(capabilities as CapabilityExport[])).toThrowError(
+              /not a valid Kubernetes resource name/,
+            );
+          }
+        },
+      ),
+    );
+  });
+});
 describe("validateCapabilityNames", () => {
   test("should return true if all capability names are valid", () => {
     const capabilities = mockCapabilities;
