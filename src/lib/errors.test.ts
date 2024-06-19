@@ -2,8 +2,18 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, test } from "@jest/globals";
-
+import * as fc from "fast-check";
 import { Errors, ErrorList, ValidateError } from "./errors";
+
+// Property based test
+test("should always return the key as its value for each property", () => {
+  type ErrorKey = keyof typeof Errors;
+  fc.assert(
+    fc.property(fc.constantFrom<ErrorKey>("audit", "ignore", "reject"), key => {
+      expect(Errors[key]).toEqual(key);
+    }),
+  );
+});
 
 test("Errors object should have correct properties", () => {
   expect(Errors).toEqual({
