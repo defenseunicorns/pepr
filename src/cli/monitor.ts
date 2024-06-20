@@ -52,15 +52,19 @@ export default function (program: RootCmd) {
           // Check for `"msg":"Hello Pepr"`
           if (line.includes(respMsg)) {
             try {
-              const payload = JSON.parse(line);
+              const payload = JSON.parse(line.trim());
               const isMutate = payload.res.patchType || payload.res.warnings;
 
               const name = `${payload.namespace}${payload.name}`;
               const uid = payload.uid;
 
               if (isMutate) {
-                const plainPatch = atob(payload.res.patch) || "";
-                const patch = JSON.stringify(JSON.parse(plainPatch), null, 2);
+                const plainPatch =
+                  payload.res?.patch !== undefined && payload.res?.patch !== null
+                    ? atob(payload.res.patch)
+                    : "";
+
+                const patch = plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
 
                 const patchType = payload.res.patchType || payload.res.warnings || "";
 
@@ -82,8 +86,8 @@ export default function (program: RootCmd) {
                   console.log(`\n✅  VALIDATE   ${name} (${uid})`);
                 }
               }
-            } catch {
-              console.warn(`\nIGNORED - Unable to parse line: ${line}.`);
+            } catch (e) {
+              console.warn(e, `\nIGNORED - Unable to parse line: ${line}.`);
             }
           }
         }
