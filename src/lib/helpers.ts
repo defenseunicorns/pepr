@@ -9,6 +9,15 @@ import { sanitizeResourceName } from "../sdk/sdk";
 
 export class ValidationError extends Error {}
 
+export function sleep(seconds: number, callback: () => void) {
+  return new Promise<void>(resolve => {
+    setTimeout(() => {
+      callback();
+      resolve();
+    }, seconds * 1000);
+  });
+}
+
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
   if (capabilities && capabilities.length > 0) {
     for (let i = 0; i < capabilities.length; i++) {

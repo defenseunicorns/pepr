@@ -10,6 +10,7 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  sleep,
 } from "./helpers";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
 import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
@@ -292,6 +293,22 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
+
+describe("sleep function tests", () => {
+  jest.useFakeTimers();
+
+  test("sleep function delays for the specified time and executes callback before resolving", () => {
+    const callback = jest.fn();
+    const sleepPromise = sleep(1, callback);
+    jest.advanceTimersByTime(1000);
+
+    return sleepPromise.then(() => {
+      expect(callback).toHaveBeenCalled();
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
 describe("validateCapabilityNames", () => {
   test("should return true if all capability names are valid", () => {
     const capabilities = mockCapabilities;

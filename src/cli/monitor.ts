@@ -6,7 +6,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import stream from "stream";
 import { ResponseItem } from "../lib/types";
 import { RootCmd } from "./root";
-
+import { sleep } from "../lib/helpers";
 export default function (program: RootCmd) {
   program
     .command("monitor [module-uuid]")
@@ -42,55 +42,61 @@ export default function (program: RootCmd) {
       const log = new K8sLog(kc);
 
       const logStream = new stream.PassThrough();
-
+      let patchr = "";
       logStream.on("data", chunk => {
         const respMsg = `"msg":"Check response"`;
         // Split the chunk into lines
         const lines = chunk.toString().split("\n");
+        sleep(2, () => {
+          for (const line of lines) {
+            // Check for `"msg":"Hello Pepr"`
+            if (line.includes(respMsg)) {
+              try {
+                const payload = JSON.parse(line.trim());
+                const isMutate = payload.res.patchType || payload.res.warnings;
 
-        for (const line of lines) {
-          // Check for `"msg":"Hello Pepr"`
-          if (line.includes(respMsg)) {
-            try {
-              const payload = JSON.parse(line.trim());
-              const isMutate = payload.res.patchType || payload.res.warnings;
+                const name = `${payload.namespace}${payload.name}`;
+                const uid = payload.res.uid;
 
-              const name = `${payload.namespace}${payload.name}`;
-              const uid = payload.uid;
+                if (isMutate) {
+                  patchr = "atob";
+                  const plainPatch =
+                    payload.res?.patch !== undefined && payload.res?.patch !== null
+                      ? atob(payload.res.patch)
+                      : "";
 
-              if (isMutate) {
-                const plainPatch =
-                  payload.res?.patch !== undefined && payload.res?.patch !== null
-                    ? atob(payload.res.patch)
-                    : "";
-
-                const patch = plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
-
-                const patchType = payload.res.patchType || payload.res.warnings || "";
-
-                const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
-                console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
-                if (patchType.length > 0) {
-                  console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
-                }
-              } else {
-                const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
-
-                const filteredFailures = failures
-                  .filter((r: ResponseItem) => !r.allowed)
-                  .map((r: ResponseItem) => r.status.message);
-                if (filteredFailures.length > 0) {
-                  console.log(`\n❌  VALIDATE   ${name} (${uid})`);
-                  console.log(`\u001b[1;31m${filteredFailures}\u001b[0m`);
+                  patchr = "patch";
+                  const patch =
+                    plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
+                  patchr = "patchType";
+                  const patchType = payload.res.patchType || payload.res.warnings || "";
+                  patchr = "allowOrDeny";
+                  const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
+                  console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
+                  if (patchType.length > 0) {
+                    patchr = "patchType.length";
+                    console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
+                  }
                 } else {
-                  console.log(`\n✅  VALIDATE   ${name} (${uid})`);
+                  patchr = "validating";
+                  const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
+
+                  const filteredFailures = failures
+                    .filter((r: ResponseItem) => !r.allowed)
+                    .map((r: ResponseItem) => r.status.message);
+                  if (filteredFailures.length > 0) {
+                    console.log(`\n❌  VALIDATE   ${name} (${uid})`);
+                    console.log(`\u001b[1;31m${filteredFailures}\u001b[0m`);
+                  } else {
+                    console.log(`\n✅  VALIDATE   ${name} (${uid})`);
+                  }
                 }
+              } catch (e) {
+                console.warn(e, `\nIGNORED - Unable to parse line: ${line}.`, { patchr });
               }
-            } catch (e) {
-              console.warn(e, `\nIGNORED - Unable to parse line: ${line}.`);
             }
           }
-        }
+        });
       });
 
       for (const podName of podNames) {
