@@ -294,19 +294,17 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     }
 ]`);
 
-describe("sleep function tests", () => {
-  jest.useFakeTimers();
+test("sleep function", async () => {
+  const startTime = Date.now();
+  const sleepTimeSeconds = 2;
 
-  test("sleep function delays for the specified time and executes callback before resolving", () => {
-    const callback = jest.fn();
-    const sleepPromise = sleep(1, callback);
-    jest.advanceTimersByTime(1000);
+  await sleep(2);
 
-    return sleepPromise.then(() => {
-      expect(callback).toHaveBeenCalled();
-      expect(callback).toHaveBeenCalledTimes(1);
-    });
-  });
+  const endTime = Date.now();
+  const elapsedTime = endTime - startTime;
+
+  expect(elapsedTime).toBeGreaterThanOrEqual(sleepTimeSeconds);
+  expect(elapsedTime).toBeLessThan(3 * 1000); // milliseconds to second conversion
 });
 
 describe("validateCapabilityNames", () => {

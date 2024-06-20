@@ -9,10 +9,9 @@ import { sanitizeResourceName } from "../sdk/sdk";
 
 export class ValidationError extends Error {}
 
-export function sleep(seconds: number, callback: () => void) {
+export function sleep(seconds: number) {
   return new Promise<void>(resolve => {
     setTimeout(() => {
-      callback();
       resolve();
     }, seconds * 1000);
   });
