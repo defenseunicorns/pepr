@@ -61,14 +61,14 @@ export class Assets {
 
   zarfYamlChart = (path: string) => zarfYamlChart(this, path);
 
-  allYaml = async (rbacMode: string) => {
+  allYaml = async (rbacMode: string, imagePullSecret: string | boolean) => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore.namespaces);
     }
 
-    return allYaml(this, rbacMode);
+    return allYaml(this, rbacMode, imagePullSecret);
   };
 
   generateHelmChart = async (basePath: string) => {

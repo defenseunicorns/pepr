@@ -12,6 +12,7 @@ import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
 import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
+import { sanitizeResourceName } from "../sdk/sdk";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -44,12 +45,18 @@ export default function (program: RootCmd) {
       "-v, --version <version>. Example: '0.27.3'",
       "The version of the Pepr image to use in the deployment manifests.",
     )
+    .option(
+      "--withPullSecret [imagePullSecret]",
+      "Image Pull Secret: Use image pull secret for deployment (default: regcred).",
+    )
+
     .addOption(
       new Option(
         "--registry <GitHub|Iron Bank>",
         "Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image.",
       ).choices(["GitHub", "Iron Bank"]),
     )
+
     .addOption(
       new Option(
         "-z, --zarf [manifest|chart]",
@@ -143,10 +150,21 @@ export default function (program: RootCmd) {
         assets.image = image;
       }
 
+      // Ensure imagePullSecret is valid
+      if (opts.withPullSecret && typeof opts.withPullSecret === "string") {
+        if (sanitizeResourceName(opts.withPullSecret) !== opts.withPullSecret) {
+          // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+          console.error(
+            "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+          );
+          process.exit(1);
+        }
+      }
+
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const chartPath = `${uuid}-chart`;
       const yamlPath = resolve(outputDir, yamlFile);
-      const yaml = await assets.allYaml(opts.rbacMode);
+      const yaml = await assets.allYaml(opts.rbacMode, opts.withPullSecret);
 
       try {
         // wait for capabilities to be loaded and test names
