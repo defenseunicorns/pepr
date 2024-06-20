@@ -42,7 +42,6 @@ export default function (program: RootCmd) {
       const log = new K8sLog(kc);
 
       const logStream = new stream.PassThrough();
-      let patchr = "";
       logStream.on("data", chunk => {
         const respMsg = `"msg":"Check response"`;
         // Split the chunk into lines
@@ -59,26 +58,20 @@ export default function (program: RootCmd) {
                 const uid = payload.res.uid;
 
                 if (isMutate) {
-                  patchr = "atob";
                   const plainPatch =
                     payload.res?.patch !== undefined && payload.res?.patch !== null
                       ? atob(payload.res.patch)
                       : "";
 
-                  patchr = "patch";
                   const patch =
                     plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
-                  patchr = "patchType";
                   const patchType = payload.res.patchType || payload.res.warnings || "";
-                  patchr = "allowOrDeny";
                   const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
                   console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
                   if (patchType.length > 0) {
-                    patchr = "patchType.length";
                     console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
                   }
                 } else {
-                  patchr = "validating";
                   const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
 
                   const filteredFailures = failures
@@ -91,8 +84,8 @@ export default function (program: RootCmd) {
                     console.log(`\n✅  VALIDATE   ${name} (${uid})`);
                   }
                 }
-              } catch (e) {
-                console.warn(e, `\nIGNORED - Unable to parse line: ${line}.`, { patchr });
+              } catch {
+                console.warn(`\nIGNORED - Unable to parse line: ${line}.`);
               }
             }
           }
