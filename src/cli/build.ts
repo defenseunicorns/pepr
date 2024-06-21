@@ -46,8 +46,8 @@ export default function (program: RootCmd) {
       "The version of the Pepr image to use in the deployment manifests.",
     )
     .option(
-      "--withPullSecret [imagePullSecret]",
-      "Image Pull Secret: Use image pull secret for deployment (default: regcred).",
+      "--withPullSecret <imagePullSecret>",
+      "Image Pull Secret: Use image pull secret for controller Deployment.",
     )
 
     .addOption(
@@ -151,7 +151,7 @@ export default function (program: RootCmd) {
       }
 
       // Ensure imagePullSecret is valid
-      if (opts.withPullSecret && typeof opts.withPullSecret === "string") {
+      if (opts.withPullSecret) {
         if (sanitizeResourceName(opts.withPullSecret) !== opts.withPullSecret) {
           // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
           console.error(

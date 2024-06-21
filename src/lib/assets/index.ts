@@ -61,7 +61,7 @@ export class Assets {
 
   zarfYamlChart = (path: string) => zarfYamlChart(this, path);
 
-  allYaml = async (rbacMode: string, imagePullSecret: string | boolean) => {
+  allYaml = async (rbacMode: string, imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
