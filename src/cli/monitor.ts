@@ -6,7 +6,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import stream from "stream";
 import { ResponseItem } from "../lib/types";
 import { RootCmd } from "./root";
-import { sleep } from "../lib/helpers";
+
 export default function (program: RootCmd) {
   program
     .command("monitor [module-uuid]")
@@ -45,8 +45,8 @@ export default function (program: RootCmd) {
       logStream.on("data", async chunk => {
         const respMsg = `"msg":"Check response"`;
         // Split the chunk into lines
-        const lines = chunk.toString().split("\n");
-        await sleep(2);
+        const lines = await chunk.toString().split("\n");
+
         for (const line of lines) {
           // Check for `"msg":"Hello Pepr"`
           if (line.includes(respMsg)) {

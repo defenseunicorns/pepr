@@ -10,7 +10,6 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
-  sleep,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -295,21 +294,6 @@ const mockCapabilities: CapabilityExport[] = JSON.parse(`[
         ]
     }
 ]`);
-
-
-test("sleep function", async () => {
-  const startTime = Date.now();
-  const sleepTimeSeconds = 2;
-
-  await sleep(2);
-
-  const endTime = Date.now();
-  const elapsedTime = endTime - startTime;
-
-  expect(elapsedTime).toBeGreaterThanOrEqual(sleepTimeSeconds);
-  expect(elapsedTime).toBeLessThan(3 * 1000); // milliseconds to second conversion
-});
-
 
 describe("validateCapabilityNames Property-Based Tests", () => {
   test("should only accept names that are valid after sanitation", () => {
