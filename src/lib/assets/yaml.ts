@@ -190,9 +190,8 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string) {
+export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
   const { name, tls, apiToken, path } = assets;
-
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
@@ -200,7 +199,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp);
+  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -209,7 +208,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, assets.hash, assets.buildTimestamp),
+    deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),
