@@ -7,6 +7,9 @@ import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 import { validateCapabilityNames, namespaceDeploymentsReady } from "../lib/helpers";
+import { ImagePullSecret } from "../lib/types";
+import { sanitizeName } from "./init/utils";
+import { deployImagePullSecret } from "../lib/assets/deploy";
 
 export default function (program: RootCmd) {
   program
@@ -14,8 +17,46 @@ export default function (program: RootCmd) {
     .description("Deploy a Pepr Module")
     .option("-i, --image [image]", "Override the image tag")
     .option("--confirm", "Skip confirmation prompt")
+    .option("--pullSecret <name>", "Deploy imagePullSecret for Controller private registry")
+    .option("--docker-server <server>", "Docker server address")
+    .option("--docker-username <username>", "Docker registry username")
+    .option("--docker-email <email>", "Email for Docker registry")
+    .option("--docker-password <password>", "Password for Docker registry")
     .option("--force", "Force deploy the module, override manager field")
     .action(async opts => {
+      let imagePullSecret: ImagePullSecret | undefined;
+
+      if (
+        opts.pullSecret &&
+        opts.pullSecret.length > 0 &&
+        (!opts.dockerServer || !opts.dockerUsername || !opts.dockerEmail || !opts.dockerPassword)
+      ) {
+        console.error(
+          "Error: Must provide docker server, username, email, and password when providing pull secret",
+        );
+        process.exit(1);
+      } else if (opts.pullSecret && opts.pullSecret !== sanitizeName(opts.pullSecret)) {
+        // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+        console.error(
+          "Invalid imagePullSecret name. Please provide a valid name as defined in RFC 1123.",
+        );
+        process.exit(1);
+      } else if (opts.pullSecret) {
+        imagePullSecret = {
+          auths: {
+            [opts.dockerServer]: {
+              username: opts.dockerUsername,
+              password: opts.dockerPassword,
+              email: opts.dockerEmail,
+              auth: Buffer.from(`${opts.dockerUsername}:${opts.dockerPassword}`).toString("base64"),
+            },
+          },
+        };
+
+        await deployImagePullSecret(imagePullSecret, opts.pullSecret);
+        return;
+      }
+
       if (!opts.confirm) {
         // Prompt the user to confirm
         const confirm = await prompt({
