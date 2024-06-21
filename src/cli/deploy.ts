@@ -28,13 +28,14 @@ export default function (program: RootCmd) {
 
       if (
         opts.pullSecret &&
+        opts.pullSecret.length > 0 &&
         (!opts.dockerServer || !opts.dockerUsername || !opts.dockerEmail || !opts.dockerPassword)
       ) {
         console.error(
           "Error: Must provide docker server, username, email, and password when providing pull secret",
         );
         process.exit(1);
-      } else if (opts.pullSecret !== sanitizeName(opts.pullSecret)) {
+      } else if (opts.pullSecret && opts.pullSecret !== sanitizeName(opts.pullSecret)) {
         // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
         console.error(
           "Invalid imagePullSecret name. Please provide a valid name as defined in RFC 1123.",
