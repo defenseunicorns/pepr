@@ -42,6 +42,9 @@ export async function mutateProcessor(
 
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
+    const alias = actionMetadata.name + '/' + reqMetadata.name;
+    const mutateLog = Log.child({alias: `${alias}`})
+    mutateLog.info(reqMetadata, `Processing mutateLog request - should include alias`);
 
     for (const action of bindings) {
       // Skip this action if it's not a mutate action
@@ -55,7 +58,8 @@ export async function mutateProcessor(
       }
 
       const label = action.mutateCallback.name;
-      Log.info(actionMetadata, `Processing mutation action (${label})`);
+
+      mutateLog.info(actionMetadata, `Processing mutation action (${alias})`);
 
       matchedAction = true;
 
@@ -79,7 +83,7 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
-        Log.info(actionMetadata, `Mutation action succeeded (${label})`);
+        mutateLog.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
@@ -99,12 +103,12 @@ export async function mutateProcessor(
           errorMessage = "An error occurred with the mutate action.";
         }
 
-        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+        mutateLog.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+            mutateLog.error(actionMetadata, `Action failed: ${errorMessage}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
