@@ -30,7 +30,6 @@ export default function (program: RootCmd) {
         opts.pullSecret &&
         (!opts.dockerServer || !opts.dockerUsername || !opts.dockerEmail || !opts.dockerPassword)
       ) {
-        console.log(opts.dockerServer, opts.dockerUsername, opts.dockerEmail, opts.dockerPassword);
         console.error(
           "Error: Must provide docker server, username, email, and password when providing pull secret",
         );
