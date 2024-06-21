@@ -6,7 +6,7 @@ import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
-
+import * as fc from "fast-check";
 import { beforeEach, describe, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
@@ -178,6 +178,32 @@ describe("getOwnerRefFrom", () => {
         uid: "1",
       },
     ]);
+  });
+});
+describe("sanitizeResourceName Fuzzing Tests", () => {
+  test("should handle any random string input", () => {
+    fc.assert(
+      fc.property(fc.string(), name => {
+        expect(() => sanitizeResourceName(name)).not.toThrow();
+        const sanitized = sanitizeResourceName(name);
+        expect(typeof sanitized).toBe("string");
+      }),
+    );
+  });
+});
+
+describe("sanitizeResourceName Property-Based Tests", () => {
+  test("should always return lowercase, alphanumeric names without leading/trailing hyphens", () => {
+    fc.assert(
+      fc.property(fc.string(), name => {
+        const sanitized = sanitizeResourceName(name);
+        if (sanitized.length > 0) {
+          expect(sanitized).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+        }
+        expect(sanitized).toBe(sanitized.toLowerCase());
+        expect(sanitized.length).toBeLessThanOrEqual(250);
+      }),
+    );
   });
 });
 
