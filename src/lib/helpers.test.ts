@@ -319,6 +319,7 @@ describe("validateCapabilityNames Property-Based Tests", () => {
     );
   });
 });
+
 describe("validateCapabilityNames", () => {
   test("should return true if all capability names are valid", () => {
     const capabilities = mockCapabilities;

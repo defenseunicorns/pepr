@@ -60,7 +60,7 @@ export function peprDeploy() {
         const stdout: String = data.toString()
         state.accept = stdout.includes("✅") ? true : state.accept
         state.reject = stdout.includes("❌") ? true : state.reject
-
+        expect(stdout.includes("IGNORED")).toBe(false)
         if (state.accept && state.reject) {
           proc.kill()
           proc.stdin.destroy()
@@ -68,6 +68,7 @@ export function peprDeploy() {
           proc.stderr.destroy()
         }
       })
+     
       proc.on('exit', () => state.done = true);
 
       await until(() => state.done)
