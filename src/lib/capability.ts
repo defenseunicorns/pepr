@@ -180,135 +180,141 @@ export class Capability implements CapabilityExport {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
-  When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
-    const matchedKind = modelToGroupVersionKind(model.name);
+    When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
+      const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
-    if (!matchedKind && !kind) {
-      throw new Error(`Kind not specified for ${model.name}`);
-    }
-
-    const binding: Binding = {
-      model,
-      // If the kind is not specified, use the matched kind from the model
-      kind: kind || matchedKind,
-      event: Event.Any,
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-      },
-    };
-
-    const bindings = this.#bindings;
-    const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile };
-    const isNotEmpty = (value: object) => Object.keys(value).length > 0;
-    const log = (message: string, cbString: string) => {
-      const filteredObj = pickBy(isNotEmpty, binding.filters);
-
-      Log.info(`${message} configured for ${binding.event}`, prefix);
-      Log.info(filteredObj, prefix);
-      Log.debug(cbString, prefix);
-    };
-
-    function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
-      if (registerAdmission) {
-        log("Validate Action", validateCallback.toString());
-
-        // Push the binding to the list of bindings for this capability as a new BindingAction
-        // with the callback function to preserve
-        bindings.push({
-          ...binding,
-          isValidate: true,
-          validateCallback,
-        });
+      if (!matchedKind && !kind) {
+        throw new Error(`Kind not specified for ${model.name}`);
       }
 
-      return { Watch, Reconcile };
-    }
-
-    function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
-      if (registerAdmission) {
-        log("Mutate Action", mutateCallback.toString());
-
-        // Push the binding to the list of bindings for this capability as a new BindingAction
-        // with the callback function to preserve
-        bindings.push({
-          ...binding,
-          isMutate: true,
-          mutateCallback,
-        });
-      }
-
-      // Now only allow adding actions to the same binding
-      return { Watch, Validate, Reconcile };
-    }
-
-    function Watch(watchCallback: WatchAction<T>) {
-      if (registerWatch) {
-        log("Watch Action", watchCallback.toString());
-
-        bindings.push({
-          ...binding,
-          isWatch: true,
-          watchCallback,
-        });
-      }
-    }
-
-    function Reconcile(watchCallback: WatchAction<T>) {
-      if (registerWatch) {
-        log("Reconcile Action", watchCallback.toString());
-
-        bindings.push({
-          ...binding,
-          isWatch: true,
-          isQueue: true,
-          watchCallback,
-        });
-      }
-    }
-
-    function InNamespace(...namespaces: string[]): BindingWithName<T> {
-      Log.debug(`Add namespaces filter ${namespaces}`, prefix);
-      binding.filters.namespaces.push(...namespaces);
-      return { ...commonChain, WithName };
-    }
-
-    function WithName(name: string): BindingFilter<T> {
-      Log.debug(`Add name filter ${name}`, prefix);
-      binding.filters.name = name;
-      return commonChain;
-    }
-
-    function WithLabel(key: string, value = ""): BindingFilter<T> {
-      Log.debug(`Add label filter ${key}=${value}`, prefix);
-      binding.filters.labels[key] = value;
-      return commonChain;
-    }
-
-    function WithAnnotation(key: string, value = ""): BindingFilter<T> {
-      Log.debug(`Add annotation filter ${key}=${value}`, prefix);
-      binding.filters.annotations[key] = value;
-      return commonChain;
-    }
-
-    function bindEvent(event: Event) {
-      binding.event = event;
-      return {
-        ...commonChain,
-        InNamespace,
-        WithName,
+      const binding: Binding = {
+        model,
+        // If the kind is not specified, use the matched kind from the model
+        kind: kind || matchedKind,
+        event: Event.Any,
+        filters: {
+          name: "",
+          namespaces: [],
+          labels: {},
+          annotations: {},
+        },
       };
-    }
 
-    return {
-      IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
-      IsCreated: () => bindEvent(Event.Create),
-      IsUpdated: () => bindEvent(Event.Update),
-      IsDeleted: () => bindEvent(Event.Delete),
+      const bindings = this.#bindings;
+      const prefix = `${this.#name}: ${model.name}`;
+      const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile, Alias };
+      const isNotEmpty = (value: object) => Object.keys(value).length > 0;
+      const log = (message: string, cbString: string) => {
+        const filteredObj = pickBy(isNotEmpty, binding.filters);
+
+        Log.info(`${message} configured for ${binding.event}`, prefix);
+        Log.info(filteredObj, prefix);
+        Log.debug(cbString, prefix);
+      };
+
+      function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
+        if (registerAdmission) {
+          log("Validate Action", validateCallback.toString());
+
+          // Push the binding to the list of bindings for this capability as a new BindingAction
+          // with the callback function to preserve
+          bindings.push({
+            ...binding,
+            isValidate: true,
+            validateCallback,
+          });
+        }
+
+        return { Watch, Reconcile };
+      }
+
+      function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
+        if (registerAdmission) {
+          log("Mutate Action", mutateCallback.toString());
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+          bindings.push({
+            ...binding,
+            isMutate: true,
+            mutateCallback,
+          });
+        }
+
+        // Now only allow adding actions to the same binding
+        return { Watch, Validate, Reconcile };
+      }
+
+      function Watch(watchCallback: WatchAction<T>) {
+        if (registerWatch) {
+          log("Watch Action", watchCallback.toString());
+
+          bindings.push({
+            ...binding,
+            isWatch: true,
+            watchCallback,
+          });
+        }
+      }
+
+      function Reconcile(watchCallback: WatchAction<T>) {
+        if (registerWatch) {
+          log("Reconcile Action", watchCallback.toString());
+
+          bindings.push({
+            ...binding,
+            isWatch: true,
+            isQueue: true,
+            watchCallback,
+          });
+        }
+      }
+
+      function InNamespace(...namespaces: string[]): BindingWithName<T> {
+        Log.debug(`Add namespaces filter ${namespaces}`, prefix);
+        binding.filters.namespaces.push(...namespaces);
+        return { ...commonChain, WithName };
+      }
+
+      function WithName(name: string): BindingFilter<T> {
+        Log.debug(`Add name filter ${name}`, prefix);
+        binding.filters.name = name;
+        return commonChain;
+      }
+
+      function WithLabel(key: string, value = ""): BindingFilter<T> {
+        Log.debug(`Add label filter ${key}=${value}`, prefix);
+        binding.filters.labels[key] = value;
+        return commonChain;
+      }
+
+      function WithAnnotation(key: string, value = ""): BindingFilter<T> {
+        Log.debug(`Add annotation filter ${key}=${value}`, prefix);binding.filters.annotations[key] = value;
+        return commonChain;
+      }
+
+      function Alias(alias: string): BindingFilter<T> {
+        Log.debug(`Add prefix alias ${alias}`, prefix);
+        binding.alias = alias;
+        return commonChain;
+      }
+
+      function bindEvent(event: Event) {
+        binding.event = event;
+        return {
+          ...commonChain,
+          InNamespace,
+          WithName,
+          Alias,
+        };
+      }
+
+      return {
+        IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
+        IsCreated: () => bindEvent(Event.Create),
+        IsUpdated: () => bindEvent(Event.Update),
+        IsDeleted: () => bindEvent(Event.Delete),
+      };
     };
-  };
-}
+  }

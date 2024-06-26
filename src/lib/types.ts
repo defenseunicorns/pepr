@@ -81,6 +81,7 @@ export type Binding = {
     labels: Record<string, string>;
     annotations: Record<string, string>;
   };
+  alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
   readonly watchCallback?: WatchAction<GenericClass, InstanceType<GenericClass>>;
@@ -145,6 +146,7 @@ export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
    * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
   Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
+  Alias: (alias: string) => BindingFilter<T>;
 };
 
 export type ValidateActionChain<T extends GenericClass> = {
