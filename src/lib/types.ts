@@ -8,6 +8,20 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
 /**
+ * Specifically for deploying images with a private registry
+ */
+export interface ImagePullSecret {
+  auths: {
+    [server: string]: {
+      username: string;
+      password: string;
+      email: string;
+      auth: string;
+    };
+  };
+}
+
+/**
  * Specifically for parsing logs in monitor mode
  */
 export interface ResponseItem {
