@@ -21,7 +21,7 @@ describe("Storage with fuzzing and property-based tests", () => {
         const encodedKey = base64Encode(key);
         const mockData: DataStore = { [encodedKey]: value };
         storage.receive(mockData);
-        if (value.trim() === "") {
+        if (value === "") {
           expect(storage.getItem(key)).toBeNull();
         } else {
           expect(storage.getItem(key)).toEqual(value);
@@ -54,12 +54,11 @@ describe("Storage with fuzzing and property-based tests", () => {
   it("should ensure all set items are base64 encoded internally", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
-        if (key.trim() === "") return;
         storage.setItem(key, value);
         const encodedKey = base64Encode(key);
         const mockData: DataStore = { [encodedKey]: value };
         storage.receive(mockData);
-        if (value.trim() === "") {
+        if (value === "") {
           expect(storage.getItem(key)).toBeNull();
         } else {
           expect(storage.getItem(key)).toEqual(value);

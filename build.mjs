@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 
 import { analyzeMetafile, build } from "esbuild";
-import packageJSON from "./package.json" with { type: "json" };
+import packageJSON from "./package.json" assert { type: "json" };
 
 const { dependencies, peerDependencies } = packageJSON;
 const external = Object.keys(dependencies).concat(Object.keys(peerDependencies), "@kubernetes/client-node");
