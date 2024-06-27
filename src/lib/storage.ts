@@ -9,7 +9,7 @@ export type DataStore = Record<string, string>;
 export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
 export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
-
+import { base64Encode } from "./utils";
 const MAX_WAIT_TIME = 15000;
 export interface PeprStore {
   /**
@@ -60,6 +60,7 @@ export interface PeprStore {
  *
  * The API is similar to the [Storage API](https://developer.mozilla.org/docs/Web/API/Storage)
  */
+
 export class Storage implements PeprStore {
   #store: DataStore = {};
   #send!: DataSender;
@@ -86,7 +87,13 @@ export class Storage implements PeprStore {
 
   getItem = (key: string) => {
     // Return null if the value is the empty string
-    return this.#store[key] || null;
+    const encodedKey = base64Encode(key);
+
+    const result = this.#store[encodedKey] || null;
+    if (result !== null) {
+      return result;
+    }
+    return null;
   };
 
   clear = () => {
@@ -94,11 +101,13 @@ export class Storage implements PeprStore {
   };
 
   removeItem = (key: string) => {
-    this.#dispatchUpdate("remove", [key]);
+    const encodedKey = base64Encode(key);
+    this.#dispatchUpdate("remove", [encodedKey]);
   };
 
   setItem = (key: string, value: string) => {
-    this.#dispatchUpdate("add", [key], value);
+    const encodedKey = base64Encode(key);
+    this.#dispatchUpdate("add", [encodedKey], value);
   };
 
   /**
@@ -110,10 +119,11 @@ export class Storage implements PeprStore {
    * @returns
    */
   setItemAndWait = (key: string, value: string) => {
-    this.#dispatchUpdate("add", [key], value);
+    const encodedKey = base64Encode(key);
+    this.#dispatchUpdate("add", [encodedKey], value);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (data[key] === value) {
+        if (data[encodedKey] === value) {
           unsubscribe();
           resolve();
         }
@@ -135,10 +145,11 @@ export class Storage implements PeprStore {
    * @returns
    */
   removeItemAndWait = (key: string) => {
-    this.#dispatchUpdate("remove", [key]);
+    const encodedKey = base64Encode(key);
+    this.#dispatchUpdate("remove", [encodedKey]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!Object.hasOwn(data, key)) {
+        if (!Object.hasOwn(data, encodedKey)) {
           unsubscribe();
           resolve();
         }
