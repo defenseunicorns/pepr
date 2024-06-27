@@ -6,12 +6,12 @@ import { base64Encode } from "./utils";
 import { DataStore, Storage } from "./storage";
 import fc from "fast-check";
 
-describe("Storage with fuzzing and property-based", () => {
+describe("Storage with fuzzing and property-based tests", () => {
   let storage: Storage;
 
   beforeEach(() => {
     storage = new Storage();
-    storage.registerSender(jest.fn()); // Assume registerSender is required for Storage to function
+    storage.registerSender(jest.fn());
   });
 
   it("should correctly set and retrieve items", () => {
