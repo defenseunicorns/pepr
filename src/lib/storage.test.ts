@@ -6,7 +6,7 @@ import { base64Encode } from "./utils";
 import { DataStore, Storage } from "./storage";
 import fc from "fast-check";
 
-describe("Storage with fast-check", () => {
+describe("Storage with fuzzing and property-based", () => {
   let storage: Storage;
 
   beforeEach(() => {
@@ -17,7 +17,6 @@ describe("Storage with fast-check", () => {
   it("should correctly set and retrieve items", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
-        if (key.trim() === "") return;
         storage.setItem(key, value);
         const encodedKey = base64Encode(key);
         const mockData: DataStore = { [encodedKey]: value };
@@ -66,7 +65,7 @@ describe("Storage with fast-check", () => {
           expect(storage.getItem(key)).toEqual(value);
         }
       }),
-      { numRuns: 5 },
+      { numRuns: 100 },
     );
   });
 });
@@ -135,8 +134,8 @@ describe("Storage", () => {
   });
 
   it("should get an item", () => {
-    const keys = ["key1", "!", "!", "pepr", "https://google.com", "sftp://here:22"];
-    const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine"];
+    const keys = ["key1", "!", "!", "pepr", "https://google.com", "sftp://here:22", "!"];
+    const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine", " "];
 
     keys.map((key, i) => {
       const mockData: DataStore = { [base64Encode(key!)]: results[i]! };
