@@ -6,7 +6,7 @@ import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Agent } from "https";
 import { fetch } from "kubernetes-fluent-client";
 import { RequestInit } from "node-fetch";
-
+import { base64Encode } from "../src/lib/utils";
 import { cwd } from "./entrypoint.test";
 import { sleep } from "./k8s";
 
@@ -25,8 +25,8 @@ let expectedLines = [
   "Validate Action configured for CREATE",
   "Server listening on port 3000",
   "Controller startup complete",
-  `"hello-pepr-example-1-data": "{\\"key\\":\\"ex-1-val\\"}"`,
-  `"hello-pepr-watch-data": "This data was stored by a Watch Action."`,
+  `"hello-pepr-${base64Encode("example-1-data")}": "{\\"key\\":\\"ex-1-val\\"}"`,
+  `"hello-pepr-${base64Encode("watch-data")}": "This data was stored by a Watch Action."`,
 ];
 
 export function peprDev() {
