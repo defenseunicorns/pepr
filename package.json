@@ -38,7 +38,7 @@
     "kubernetes-fluent-client": "2.6.2",
     "pino": "9.2.0",
     "pino-pretty": "11.2.1",
-    "prom-client": "15.1.2",
+    "prom-client": "15.1.3",
     "ramda": "0.30.1"
   },
   "devDependencies": {
