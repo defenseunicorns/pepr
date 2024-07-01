@@ -95,8 +95,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
 
   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
-  watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
-    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts` : ""),
+  watcher.events.on(WatchEvent.RECONNECT, retryCount =>
+    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
   );
   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
