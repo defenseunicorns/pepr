@@ -203,7 +203,7 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile };
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile, Alias };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -295,12 +295,19 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
+    function Alias(alias: string): BindingFilter<T> {
+      Log.debug(`Add prefix alias ${alias}`, prefix);
+      binding.alias = alias;
+      return commonChain;
+    }
+
     function bindEvent(event: Event) {
       binding.event = event;
       return {
         ...commonChain,
         InNamespace,
         WithName,
+        Alias,
       };
     }
 
