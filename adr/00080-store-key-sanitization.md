@@ -1,4 +1,4 @@
-# 8: Store Key Sanitization
+# 8: Store Key Encoding
 
 Date: 2024-07-02
 
