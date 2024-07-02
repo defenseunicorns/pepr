@@ -8,7 +8,7 @@ Under Review
 
 ## Context
 
-Issues were discovered in a few spots when accepting arbitrary keycloak client ids and setting them into the Store without sanitization. IDs like https://google.com/ failed during `Store.setItem` due to the `/` character and returned 422. 
+Issues were discovered in a few spots when accepting arbitrary keycloak client ids (i.e. URIs) as Store keys without sanitization. IDs like 'https://google.com/' fail during `Store.setItem()` calls due to '/' characters being interpreted as _separators within a JSON data path_ by the underlying implementation (resulting in a thrown error and returning a 422).
 
 
 ## Decision
