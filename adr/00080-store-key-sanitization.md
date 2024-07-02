@@ -15,7 +15,7 @@ Issues were discovered in a few spots when accepting arbitrary keycloak client i
 
 * Base64 encode the key after receiving it from the user and before setting it into the Store.
 * Update the Store key prefix with v2: `/data/${capabilityName}-v2-${key}`
-* Migrate before calling `this.#onReady()` in the `#receive` function of `src/lib/controller/store.ts`, checking if each key that matches the old prefix, if so, migrating to the new prefix with base64 encoding. 
+* Migrate before calling `this.#onReady()` in the `#receive` function of `src/lib/controller/store.ts`: check each key to see if it matches the old prefix, and if so, migrating it to the new prefix with base64 encoding.
 * Add a new pepr command for viewing store items. like `npx pepr view-store`, maybe a `kubectl` plugin or alias too.
 * Enhance existing unit testing to cover the new base64 encoding and migration logic. Add a battery of new fuzz and property-based tests.
 
