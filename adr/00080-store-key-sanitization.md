@@ -23,6 +23,6 @@ Issues were discovered in a few spots when accepting arbitrary keycloak client i
 
 1. Users cannot easily read the PeprStore CR
 2. We need to migrate existing PeprStore CRs so that the `Store.getItem/Store.removeItem` will not fail due to the base64 encoding.
-3. Will slightly slow down the store startup since we need to check and possibly migrate store before onReady.
+3. Will slightly slow down the store startup since we need to check and possibly migrate store content before onReady.
 4. We need to build a new `pepr` command for viewing store items. Something like `npx pepr view-store`, or maybe a `kubectl` plugin and/or alias too.
 
