@@ -8,13 +8,14 @@ Under Review
 
 ## Context
 
-Issues were discovered in a few spots when accepting arbitrary keycloak client ids and setting them into the Store without sanitization. IDs like https://google.com/ failed during `Store.setItem` due to the `/` character and returned `422`. 
+Issues were discovered when accepting arbitrary Keycloak client IDs and setting them into the Store without sanitization. For instance, IDs like `https://google.com/` failed during Store.setItem due to the `/` character, resulting in a `422` error.
 
 
 ## Decision
 
 #### Sanitize using String Replacement
-* Another direction would be to sanitize the key by replacing `/` with a character that does not break the `patch` operation and increasing the tests to find other edge cases before releasing the change. This would not be base64 encoding, but a simple string replacement.
+* Sanitize the key by replacing `/` with a character that does not break the `patch` operation before placing the key.
+* Increasing the tests to find other edge cases before releasing the change.
 
 #### Why not use string replacement?
 
@@ -23,7 +24,7 @@ Issues were discovered in a few spots when accepting arbitrary keycloak client i
 ## Alternatives
 
 #### Sanitize using Base64 Encoding
-* One direction would be base64 encode the key after receiving it from the user and before setting it into the Store.
+* Base64 encode the key after receiving it from the user and before setting it into the Store.
 * Update the Store key prefix with v2: `/data/${capabilityName}-v2-${key}`
 * Migrate before calling `this.#onReady()` in the `#receive` function of `src/lib/controller/store.ts`, checking if each key that matches the old prefix, if so, migrating to the new prefix with base64 encoding. 
 * Add a new pepr command for viewing store items. like `npx pepr view-store`, maybe a `kubectl` plugin or alias too.
@@ -39,7 +40,6 @@ data:
   hello-pepr-watch-data: This data was stored by a Watch Action.
 kind: PeprStore
 metadata:
-  generation: 2
   name: pepr-static-test-store
   namespace: pepr-system
 ```
@@ -52,7 +52,6 @@ data:
   hello-pepr-v2-d2F0Y2gtZGF0YQo=: This data was stored by a Watch Action.
 kind: PeprStore
 metadata:
-  generation: 2
   name: pepr-static-test-store
   namespace: pepr-system
 ```
