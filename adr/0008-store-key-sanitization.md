@@ -13,6 +13,8 @@ Issues were discovered when accepting arbitrary Keycloak client IDs and setting 
 
 ## Decision
 
+Implementing base64 would be a heavy shift for an extremely important part of the system. Instead, we will sanitize the key by replacing `/` with a character that does not break the `patch` operation before placing the key. We will also increase the tests to find other edge cases before releasing the change.
+
 #### Sanitize using String Replacement
 * Sanitize the key by replacing `/` with a character that does not break the `patch` operation before placing the key.
 * Increasing the tests to find other edge cases before releasing the change.
