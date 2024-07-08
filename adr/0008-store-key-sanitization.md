@@ -13,15 +13,15 @@ Issues were discovered when accepting arbitrary Keycloak client IDs as Store key
 
 ## Decision
 
-Implementing base64 would be a heavy shift for an extremely important part of the system. Instead, we will sanitize the key by replacing `/` with a character that does not break the `patch` operation before placing the key. We will also increase the tests to find other edge cases before releasing the change.
+Sanitize the keys by replacing `/` with [a character that does not break the `patch` operation](https://datatracker.ietf.org/doc/html/rfc6902/#section-4) before setting, getting, or deleting a key in/from the store. We will also increase the tests to find other edge cases before releasing the change and deciding upon the exact character or pattern. We are prioritizing the cluster operator persona in this case who wants to quickly check all keys and values in the store by looking at the PeprStore CR.
 
 #### Sanitize using String Replacement
-* Sanitize the key by replacing `/` with a character that does not break the `patch` operation before placing the key.
+* Sanitize the key by replacing `/` with a character that does not break the `patch` operation before getting, setting, or deleting a key.
 * Increasing the tests to find other edge cases before releasing the change.
 
 #### Why not use string replacement?
 
-* There is a small risk of that there will be some edge case that we have not discovered yet of a key that you cannot place in the store
+* There is a small risk of that there will be some edge case that we have not discovered yet of a key that cannot be placed in the store
 
 ## Alternatives
 
@@ -60,30 +60,30 @@ metadata:
 #### Why not use base64 encoding?
 
 * Although base64 encoding gaurantees that the key will be unique and not contain any special characters, it will introduce a lot of overhead:
-* * make it harder for users to read PeprStore CR because key names will be encoded
-* * require a migration path for existing store items.
-* * may require a npx pepr command for viewing all store items at once.
-* * require a new store path prefix.
-* * potentially would want a k9s command for cluster users to be able to view PeprStore CR
-* * Relatively heavy shift for an extremely important part of the system.
+* * Harder for users to read PeprStore CR because key names will be encoded
+* * Require a migration path for existing store items
+* * Require a npx pepr command for viewing all store items at once?
+* * Require a new store path prefix.
+* * Potentially would want a k9s command for cluster users to be able to view PeprStore CR
+* * A lot must be done for a relatively simple problem that is based on the issue and much is lost in terms of interacting with the PeprStore CR.
 
 
 ## Pros and Cons of the Decision
 
 ### Pros
 - No migration path required because keys that cannot get placed in the store are not in the store
-- No overhead of base64 encoding
+- No overhead of base64 encoding/decoding
 - No new store path prefix
-- No new pepr command for viewing store items because users can use the store as always
+- No new pepr command for viewing store items because users can see the PeprStore CR as always
 - Add more unit and e2e tests around the store
 - No need for a k9s command for k9s users to be able to view PeprStore CR
 
 ### Cons
-- There could be edge cases that we have not discovered yet of a key that you cannot place in the store
+- Could be edge cases that we have not discovered yet of a key that you cannot place in the store
 
 ## Consequences
 
 1. Implement the sanitization feature so that the store can accept arbitrary keycloak client ids
-2. Add fuzz and property-based to unit tests to store to find edge cases
+2. Add fuzz and property-based tests to find edge cases
 3. Add more e2e tests around the store
 
