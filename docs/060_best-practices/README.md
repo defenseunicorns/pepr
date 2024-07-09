@@ -86,7 +86,7 @@ If the focus of the debug is on a `Mutate()` or `Validate()`, the relevenat logs
 kubectl logs -l pepr.dev/controller=admission -n pepr-system
 ```
 
-For a more refined admission log which can be optionally filter by the module UUID can be obtained [`npx pepr monitor`](https://docs.pepr.dev/main/best-practices/#monitoring):
+More refined admission logs which can be optionally filtered by the module UUID can be obtained [`npx pepr monitor`](https://docs.pepr.dev/main/best-practices/#monitoring):
 
 ```bash
 npx pepr monitor 
