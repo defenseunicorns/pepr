@@ -28,7 +28,99 @@ The workflow for developing features in Pepr is:
 
 ## Debugging
 
-Pepr can be broken down into two parts: Admission and Watches. If the focus of the debug is on a Mutation or Validation, then only pay attention to pods with labels `pepr.dev/controller: admission`, else, you can focus on `pepr.dev/controller: watch`.
+- [Breakpoints](https://docs.pepr.dev/main/best-practices/#using-breakpoints)
+- [Logging](https://docs.pepr.dev/main/best-practices/#logging)
+- [Internal Error Occurred](https://docs.pepr.dev/main/best-practices/#internal-error-occurred)
+- [Pepr Store](https://docs.pepr.dev/main/best-practices/#pepr-store)
+
+_It is always a best practice to add a `Validate` to your `Mutate` to ensure that the object is in a valid state before making changes._
+
+
+### Using Breakpoints
+
+Pepr supports breakpoints in the VSCode editor. To use breakpoints, run `npx pepr dev` in the root of the Pepr module in a JavaScript Debug Terminal. This command starts the Pepr development server running at `localhost:3000` with the `*WebhookConfiguration` configured to send `AdmissionRequest` objects to the local address.
+
+This allows you to set breakpoints in `Mutate()`, `Validate()`, `Reconcile()`, `Watch()` or `OnSchedule` and step through the code.
+
+Note that you will need a cluster running: 
+
+```bash
+k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait
+```
+
+```typescript
+When(a.Pod)
+  .IsCreated()
+  .InNamespace("my-app")
+  .WithName("database")
+  .Mutate(pod => {
+    // Set a breakpoint here
+    pod.metadata.labels["pepr"] = "true";
+    return pod;
+  })
+  .Validate(pod => {
+    // Set a breakpoint here
+    if (pod.metadata.labels["pepr"] !== "true") {
+      return ["Label 'pepr' must be 'true'"];
+    }
+  });
+```
+
+### Logging
+
+Pepr can deploy two controllers: Admission and Watch. The controllers deployed are dictated by the [actions](https://docs.pepr.dev/main/user-guide/actions/) used in the capabilities (Pepr only deploys what is necessary). The default log level is `info`, but it can be changed to `debug` by setting the environment variable `LOG_LEVEL` to `debug`.
+
+Pepr logs for all pods:
+
+```bash
+kubectl logs -l app.kubernetes.io/controller
+```
+
+#### Admission Controller
+
+If the focus of the debug is on a `Mutate()` or `Validate()`, the relevenat logs will be from pods with label `pepr.dev/controller: admission`.
+
+```bash
+kubectl logs -l pepr.dev/controller=admission -n pepr-system
+```
+
+For a more refined admission log which can be optionally filter by the module UUID can be obtained [`npx pepr monitor`](https://docs.pepr.dev/main/best-practices/#monitoring):
+
+```bash
+npx pepr monitor 
+```
+
+#### Watch Controller
+
+If the focus of the debug is a `Watch()`, `Reconcile()`, or `OnSchedule()`, look for logs from pods containing label `pepr.dev/controller: watch`.
+
+```bash
+kubectl logs -l pepr.dev/controller=watch -n pepr-system
+```
+
+### Internal Error Occurred
+
+```bash
+Error from server (InternalError): Internal error occurred: failed calling webhook "<pepr_module>pepr.dev": failed to call webhook: Post ...
+```
+
+When an internal error occurs, it is recommended to check the `*WebhookConfiguration` to check the timeout and failurePolicy. If a request cannot be processed within the timeout, the request will be rejected if the failurePolicy is set to `Fail`. If the failurePolicy is set to `Ignore`, he request will be allowed to continue.
+
+If you have a validating webhook, it is recommended to set the failurePolicy to `Fail` to ensure that the request is rejected if the webhook fails.
+
+```yaml
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    timeoutSeconds: 3
+```
+
+### Pepr Store
+
+If you need to read all store keys, or you think the PeprStore is malfunctioning, you can check the PeprStore CR:
+
+```bash
+kubectl get peprstore  -n pepr-system -o yaml
+```
 
 ## Deployment
 
