@@ -115,13 +115,19 @@ If you have a validating webhook, it is recommended to set the failurePolicy to 
     matchPolicy: Equivalent
     timeoutSeconds: 3
 ```
-The failurePolicy and timeout can be set in the `package.json` under `pepr`:
+
+The failurePolicy and timeout can be set in the `package.json` under `pepr`, and the settings will be reflected in the `*WebhookConfiguration` after the next build:
 
 ```json
   "pepr": {
     "uuid": "static-test",
     "onError": "ignore", # ignore or reject
     "webhookTimeout": 10,
+```
+
+Read more on customization [here](https://docs.pepr.dev/main/user-guide/customization/).
+
+
 ### Pepr Store
 
 If you need to read all store keys, or you think the PeprStore is malfunctioning, you can check the PeprStore CR:
