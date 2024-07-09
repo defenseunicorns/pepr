@@ -35,7 +35,7 @@ The workflow for developing features in Pepr is:
 
 _It is always a best practice to add a `Validate` to your `Mutate` to ensure that the object is in a valid state before making changes._
 
-_If you think your Webhook is not being called for a given resource, should check the `*WebhookConfiguration`._
+_If you think your Webhook is not being called for a given resource, check the `*WebhookConfiguration`._
 
 
 ### Using Breakpoints
