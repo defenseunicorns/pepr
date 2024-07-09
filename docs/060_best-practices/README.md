@@ -106,7 +106,7 @@ kubectl logs -l pepr.dev/controller=watch -n pepr-system
 Error from server (InternalError): Internal error occurred: failed calling webhook "<pepr_module>pepr.dev": failed to call webhook: Post ...
 ```
 
-When an internal error occurs, it is recommended to check the `*WebhookConfiguration` to check the timeout and failurePolicy. If a request cannot be processed within the timeout, the request will be rejected if the failurePolicy is set to `Fail`. If the failurePolicy is set to `Ignore`, he request will be allowed to continue.
+When an internal error occurs, it is recommended to check the `*WebhookConfiguration` to check the timeout and failurePolicy. If a request cannot be processed within the timeout, the request will be rejected if the failurePolicy is set to `Fail`. If the failurePolicy is set to `Ignore`, the request will be allowed to continue.
 
 If you have a validating webhook, it is recommended to set the failurePolicy to `Fail` to ensure that the request is rejected if the webhook fails.
 
