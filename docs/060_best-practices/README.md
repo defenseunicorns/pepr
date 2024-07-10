@@ -116,12 +116,12 @@ If you have a validating webhook, it is recommended to set the failurePolicy to 
     timeoutSeconds: 3
 ```
 
-The failurePolicy and timeout can be set in the `package.json` under `pepr`, and the settings will be reflected in the `*WebhookConfiguration` after the next build:
+The failurePolicy (onError - "ignore" or "enforce") and timeout can be set in the `package.json` under `pepr`, and the settings will be reflected in the `*WebhookConfiguration` after the next build:
 
 ```json
   "pepr": {
     "uuid": "static-test",
-    "onError": "ignore", # ignore or reject
+    "onError": "ignore", 
     "webhookTimeout": 10,
 ```
 
@@ -136,6 +136,9 @@ If you need to read all store keys, or you think the PeprStore is malfunctioning
 kubectl get peprstore  -n pepr-system -o yaml
 ```
 
+
+
+You should run in `npx pepr dev` mode to debug the issue.
 ## Deployment
 
 Production environment deployments should be `declarative` in order to avoid mistakes. The Pepr modules should be generated with `npx pepr build` and moved into the appropriate location.
