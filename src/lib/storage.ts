@@ -3,13 +3,13 @@
 
 import { clone } from "ramda";
 import Log from "./logger";
-
+import pointer from "json-pointer";
 export type DataOp = "add" | "remove";
 export type DataStore = Record<string, string>;
 export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
 export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
-import { base64Encode } from "./utils";
+
 const MAX_WAIT_TIME = 15000;
 export interface PeprStore {
   /**
@@ -87,10 +87,10 @@ export class Storage implements PeprStore {
 
   getItem = (key: string) => {
     // Return null if the value is the empty string
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
 
     const result = this.#store[encodedKey] || null;
-    if (result !== null) {
+    if (result !== null && typeof result !== "function" && typeof result !== "object") {
       return result;
     }
     return null;
@@ -101,12 +101,12 @@ export class Storage implements PeprStore {
   };
 
   removeItem = (key: string) => {
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     this.#dispatchUpdate("remove", [encodedKey]);
   };
 
   setItem = (key: string, value: string) => {
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     this.#dispatchUpdate("add", [encodedKey], value);
   };
 
@@ -119,7 +119,7 @@ export class Storage implements PeprStore {
    * @returns
    */
   setItemAndWait = (key: string, value: string) => {
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     this.#dispatchUpdate("add", [encodedKey], value);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
@@ -145,7 +145,7 @@ export class Storage implements PeprStore {
    * @returns
    */
   removeItemAndWait = (key: string) => {
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     this.#dispatchUpdate("remove", [encodedKey]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {

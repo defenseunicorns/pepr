@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { base64Encode } from "./utils";
+import pointer from "json-pointer";
 import { DataStore, Storage } from "./storage";
 import fc from "fast-check";
 
@@ -18,7 +18,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const encodedKey = base64Encode(key);
+        const encodedKey = pointer.escape(key);
         const mockData: DataStore = { [encodedKey]: value };
         storage.receive(mockData);
         if (value === "") {
@@ -55,7 +55,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const encodedKey = base64Encode(key);
+        const encodedKey = pointer.escape(key);
         const mockData: DataStore = { [encodedKey]: value };
         storage.receive(mockData);
         if (value === "") {
@@ -79,7 +79,7 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     const key = "key1";
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     storage.setItem("key1", "value1");
 
     expect(mockSender).toHaveBeenCalledWith("add", [encodedKey], "value1");
@@ -90,7 +90,7 @@ describe("Storage", () => {
     storage.registerSender(mockSender);
     jest.useFakeTimers();
     const key = "key1";
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.setItemAndWait(key, "value1");
 
@@ -104,7 +104,7 @@ describe("Storage", () => {
     jest.useFakeTimers();
 
     const key = "key1";
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.removeItemAndWait(key);
 
@@ -116,7 +116,7 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     const key = "key1";
-    const encodedKey = base64Encode(key);
+    const encodedKey = pointer.escape(key);
     storage.removeItem(key);
 
     expect(mockSender).toHaveBeenCalledWith("remove", [encodedKey], undefined);
@@ -137,7 +137,7 @@ describe("Storage", () => {
     const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine", " "];
 
     keys.map((key, i) => {
-      const mockData: DataStore = { [base64Encode(key!)]: results[i]! };
+      const mockData: DataStore = { [pointer.escape(key!)]: results[i]! };
 
       storage.receive(mockData);
       const value = storage.getItem(keys[i]);

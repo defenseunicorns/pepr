@@ -5,7 +5,7 @@ import { beforeAll, jest, afterAll, describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync, spawn, ChildProcess } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
-import { base64Encode } from "../src/lib/utils";
+import pointer from "json-pointer";
 import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
@@ -260,6 +260,9 @@ function testMutate() {
   });
 }
 
+function testStoreMigration() {
+
+}
 function testStore() {
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
@@ -267,15 +270,15 @@ function testStore() {
   });
 
   it("should write the correct data to the PeprStore", async () => {
-    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${base64Encode("example-1")}`);
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1")}`);
     expect(key1).toBe("was-here");
 
-    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${base64Encode("example-1-data")}`);
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1-data")}`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
-    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${base64Encode("watch-data")}`);
+    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("watch-data")}`);
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
