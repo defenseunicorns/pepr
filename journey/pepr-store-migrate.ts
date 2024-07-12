@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
-import { execSync, spawnSync, spawn } from "child_process";
+import { beforeAll, jest, afterAll, describe, expect, it } from "@jest/globals";
+import { execSync, spawnSync, spawn, ChildProcess } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
 import pointer from "json-pointer";
@@ -19,7 +19,7 @@ import {
 
 
 
-export function peprDeploy() {
+export function peprStoreMigrate() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
 
@@ -32,54 +32,7 @@ export function peprDeploy() {
 
   cleanupSamples();
 
-  describe("should ignore resources not defined in the capability namespace", testIgnore);
-
-  it("should perform validation of resources applied to the test cluster", testValidate);
-
-  describe("should perform mutation of resources applied to the test cluster", testMutate);
-
-  describe("should monitor the cluster for admission changes", () => {
-
-    const until = (predicate: () => boolean): Promise<void> => {
-      const poll = (resolve: () => void) => {
-        if (predicate()) { resolve() }
-        else { setTimeout(_ => poll(resolve), 250) }
-      }
-      return new Promise(poll);
-    }
-
-    it("npx pepr monitor should display validation results to console", async () => {
-      await testValidate();
-      
-      const cmd = ['pepr', 'monitor', 'static-test']
-
-      const proc = spawn('npx', cmd, { shell: true })
-
-      const state = { accept: false, reject: false, done: false }
-      proc.stdout.on('data', (data) => {
-        const stdout: String = data.toString()
-        state.accept = stdout.includes("✅") ? true : state.accept
-        state.reject = stdout.includes("❌") ? true : state.reject
-        expect(stdout.includes("IGNORED")).toBe(false)
-        if (state.accept && state.reject) {
-          proc.kill()
-          proc.stdin.destroy()
-          proc.stdout.destroy()
-          proc.stderr.destroy()
-        }
-      })
-     
-      proc.on('exit', () => state.done = true);
-
-      await until(() => state.done)
-
-      // completes only if conditions are met, so... getting here means success!
-    }, 10000);
-  });
-
-  describe("should display the UUIDs of the deployed modules", testUUID);
-
-  describe("should store data in the PeprStore", testStore);
+  describe("should upgrade and store data in the PeprStore", testStore);
 
   cleanupSamples();
 }
@@ -261,21 +214,30 @@ function testMutate() {
 }
 
 function testStore() {
+
+  beforeAll(() => {
+    // Apply the sample yaml for the HelloPepr capability
+    execSync("kubectl apply -f peprstore.yaml", {
+      cwd: resolve(cwd, "resources"),
+      stdio: "inherit",
+    });
+  });
+
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
     expect(resp).toBe("k-thx-bye");
   });
 
   it("should write the correct data to the PeprStore", async () => {
-    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("example-1")}`);
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1")}`);
     expect(key1).toBe("was-here");
 
-    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("example-1-data")}`);
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1-data")}`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
-    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("watch-data")}`);
+    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("watch-data")}`);
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }

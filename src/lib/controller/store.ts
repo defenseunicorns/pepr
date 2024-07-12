@@ -109,7 +109,7 @@ export class PeprControllerStore {
     const fillCache = (name: string, op: DataOp, key: string[], val?: string) => {
       if (op === "add") {
         // adjust the path for the capability
-        const path = `/data/v2/${name}-${key}`;
+        const path = `/data/${name}-v2-${key}`;
         const value = val || "";
         const cacheIdx = [op, path, value].join(":");
 
@@ -125,7 +125,7 @@ export class PeprControllerStore {
         }
 
         for (const k of key) {
-          const path = `/data/v2/${name}-${k}`;
+          const path = `/data/${name}-v2-${k}`;
           const cacheIdx = [op, path].join(":");
 
           // Add the operation to the cache
@@ -207,7 +207,7 @@ export class PeprControllerStore {
     const fillCache = (op: DataOp, key: string[], val?: string) => {
       if (op === "add") {
         // adjust the path for the capability
-        const path = `/data/v2/${capabilityName}-${key}`;
+        const path = `/data/${capabilityName}-v2-${key}`;
         const value = val || "";
         const cacheIdx = [op, path, value].join(":");
 
@@ -223,7 +223,7 @@ export class PeprControllerStore {
         }
 
         for (const k of key) {
-          const path = `/data/v2/${capabilityName}-${k}`;
+          const path = `/data/${capabilityName}-v2-${k}`;
           const cacheIdx = [op, path].join(":");
 
           // Add the operation to the cache
