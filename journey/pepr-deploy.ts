@@ -81,8 +81,6 @@ export function peprDeploy() {
 
   describe("should store data in the PeprStore", testStore);
 
-  peprStoreMigrate();
-
   cleanupSamples();
 }
 
