@@ -23,7 +23,13 @@ export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
 
+
   it("should deploy the Pepr controller into the test cluster", async () => {
+    // Apply the store crd
+    await applyStoreCRD();
+
+    // Apply the store
+    await applyLegacyStoreResource();
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
@@ -270,55 +276,56 @@ export function testStore() {
   });
 
   it("should write the correct data to the PeprStore", async () => {
-    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("example-1")}`);
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1`);
     expect(key1).toBe("was-here");
 
-    const nullKey1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1")}`);
+    const nullKey1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
     expect(nullKey1).toBe(null);
 
-    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("example-1-data")}`);
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1-data`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
 
-    const nullKey2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-${pointer.escape("example-1-data")}`);
+    const nullKey2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
     expect(nullKey2).toBe(null);
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
-    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-${pointer.escape("watch-data")}`);
+    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-watch-data`);
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
 
 
-export function peprStoreMigrate() {
+// export function peprStoreMigrate() {
 
-  // Purge the Pepr module from the cluster before running the tests
-  destroyModule("pepr-static-test");
+//   // Purge the Pepr module from the cluster before running the tests
+//   destroyModule("pepr-static-test");
 
-  beforeAll(async () => {
-    try {
-      const peprAlias = "file:pepr-0.0.0-development.tgz";
-      execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
-    } catch (e) {
-      // ignore, just to run this test in isolation
-    }
+//   beforeAll(async () => {
+//     try {
+//       const peprAlias = "file:pepr-0.0.0-development.tgz";
+//       execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
+//     } catch (e) {
+//       // ignore, just to run this test in isolation
+//     }
 
-    // Apply the store crd
-    await applyStoreCRD();
+//     // Apply the store crd
+//     await applyStoreCRD();
 
-    // Apply the store
-    await applyLegacyStoreResource();
+//     // Apply the store
+//     await applyLegacyStoreResource();
 
-  })
+//   })
 
-  it("should deploy the Pepr controller into the test cluster", async () => {
-    execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" })
-    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
-  });
+//   it("should deploy the Pepr controller into the test cluster", async () => {
+//     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" })
+//     await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
+//     await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
+//   });
 
-  // This asserts that the keys are v2
-  describe("should upgrade the PeprStore", testStore);
-}
+//   // This asserts that the keys are v2
+//   describe("should upgrade the PeprStore", testStore);
+// }
 
 async function applyStoreCRD() {
   // Apply the store crd

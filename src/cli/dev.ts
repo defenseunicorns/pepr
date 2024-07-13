@@ -82,14 +82,14 @@ export default function (program: RootCmd) {
             stdio: "inherit",
           });
 
-          program.on("close", async () => {
-            await Promise.all([
-              K8s(kind.MutatingWebhookConfiguration).Delete(name),
-              K8s(kind.ValidatingWebhookConfiguration).Delete(name),
-              K8s(PeprStore).InNamespace("pepr-system").Delete(scheduleStore),
-              K8s(PeprStore).InNamespace("pepr-system").Delete(store),
-            ]);
-          });
+          // program.on("close", async () => {
+          //   await Promise.all([
+          //     K8s(kind.MutatingWebhookConfiguration).Delete(name),
+          //     K8s(kind.ValidatingWebhookConfiguration).Delete(name),
+          //     K8s(PeprStore).InNamespace("pepr-system").Delete(scheduleStore),
+          //     K8s(PeprStore).InNamespace("pepr-system").Delete(store),
+          //   ]);
+          // });
 
           // listen for CTRL+C and remove webhooks
           process.on("SIGINT", () => {
