@@ -5,7 +5,7 @@ import { beforeAll, describe, jest } from "@jest/globals";
 
 import { before } from "./before";
 import { peprBuild } from "./pepr-build";
-import { peprDeploy, peprStoreMigrate } from "./pepr-deploy";
+import { peprDeploy } from "./pepr-deploy";
 import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
