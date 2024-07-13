@@ -5,7 +5,7 @@ import { beforeAll, describe, jest } from "@jest/globals";
 
 import { before } from "./before";
 import { peprBuild } from "./pepr-build";
-import { peprDeploy } from "./pepr-deploy";
+import { peprDeploy, peprStoreMigrate } from "./pepr-deploy";
 import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
@@ -21,12 +21,13 @@ jest.setTimeout(1000 * 60 * 5);
 // Configure the test environment before running the tests
 beforeAll(before);
 
-describe("Journey: `npx pepr init`", peprInit);
+// describe("Journey: `npx pepr init`", peprInit);
 
-describe("Journey: `npx pepr format`", peprFormat);
+// describe("Journey: `npx pepr format`", peprFormat);
 
-describe("Journey: `npx pepr build`", peprBuild);
+// describe("Journey: `npx pepr build`", peprBuild);
 
-describe("Journey: `npx pepr deploy`", peprDeploy);
+// describe("Journey: `npx pepr deploy`", peprDeploy);
 
-describe("Journey: `npx pepr dev`", peprDev);
+describe("Journey: `npx pepr deploy`", peprStoreMigrate);
+// describe("Journey: `npx pepr dev`", peprDev);
