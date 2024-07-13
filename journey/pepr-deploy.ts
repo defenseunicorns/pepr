@@ -295,38 +295,6 @@ export function testStore() {
   });
 }
 
-
-// export function peprStoreMigrate() {
-
-//   // Purge the Pepr module from the cluster before running the tests
-//   destroyModule("pepr-static-test");
-
-//   beforeAll(async () => {
-//     try {
-//       const peprAlias = "file:pepr-0.0.0-development.tgz";
-//       execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
-//     } catch (e) {
-//       // ignore, just to run this test in isolation
-//     }
-
-//     // Apply the store crd
-//     await applyStoreCRD();
-
-//     // Apply the store
-//     await applyLegacyStoreResource();
-
-//   })
-
-//   it("should deploy the Pepr controller into the test cluster", async () => {
-//     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" })
-//     await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
-//     await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
-//   });
-
-//   // This asserts that the keys are v2
-//   describe("should upgrade the PeprStore", testStore);
-// }
-
 async function applyStoreCRD() {
   // Apply the store crd
   const appliedStoreCRD = spawnSync("kubectl apply -f journey/resources/pepr-store-crd.yaml", {
