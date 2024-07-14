@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, beforeAll, expect, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { execSync, spawnSync, spawn } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
-import pointer from "json-pointer";
 import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
   deleteConfigMap,
+  noWaitPeprStoreKey,
   waitForConfigMap,
   waitForDeploymentReady,
   waitForNamespace,
@@ -25,11 +25,16 @@ export function peprDeploy() {
 
 
   it("should deploy the Pepr controller into the test cluster", async () => {
-    // Apply the store crd
+    // Apply the store crd and pepr-system ns
     await applyStoreCRD();
 
     // Apply the store
     await applyLegacyStoreResource();
+
+    /* 
+     * when controller starts up, it will migrate the store 
+     * and later on the keys will be tested to validate the migration
+     */
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
@@ -90,7 +95,7 @@ export function peprDeploy() {
   cleanupSamples();
 }
 
-export function cleanupSamples() {
+function cleanupSamples() {
   try {
     // Remove the sample yaml for the HelloPepr capability
     execSync("kubectl delete -f hello-pepr.samples.yaml --ignore-not-found", {
@@ -269,7 +274,7 @@ function testMutate() {
 }
 
 
-export function testStore() {
+function testStore() {
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
     expect(resp).toBe("k-thx-bye");
@@ -279,14 +284,16 @@ export function testStore() {
     const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1`);
     expect(key1).toBe("was-here");
 
-    const nullKey1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
-    expect(nullKey1).toBe(null);
+    // Should have been migrated and removed
+    const nullKey1 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
+    expect(nullKey1).toBeNull();
 
     const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1-data`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
 
-    const nullKey2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
-    expect(nullKey2).toBe(null);
+    // Should have been migrated and removed
+    const nullKey2 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
+    expect(nullKey2).toBeNull();
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
@@ -294,6 +301,34 @@ export function testStore() {
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
+
+
+// export function peprStoreMigrate() {
+
+//   beforeAll(async () => {
+//     try {
+//       const peprAlias = "file:pepr-0.0.0-development.tgz";
+//       execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
+//     } catch (e) {
+//       // ignore, just to run this test in isolation
+//     }
+
+//     // Apply the store crd
+//     await applyStoreCRD();
+
+//     // Apply the store
+//     await applyLegacyStoreResource();
+
+//   })
+
+//   it("should deploy the Pepr controller into the test cluster", async () => {
+//     execSync("kubectl rollout restart deploy/pepr-static-test -n pepr-system", { cwd, stdio: "inherit" })
+//     await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
+//   });
+
+//   // This asserts that the keys are v2
+//   describe("should upgrade the PeprStore", testStore);
+// }
 
 async function applyStoreCRD() {
   // Apply the store crd
