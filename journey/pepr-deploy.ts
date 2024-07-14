@@ -286,14 +286,14 @@ function testStore() {
 
     // Should have been migrated and removed
     const nullKey1 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
-    expect(nullKey1).toBeNull();
+    expect(nullKey1).toBeUndefined();
 
     const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1-data`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
 
     // Should have been migrated and removed
     const nullKey2 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
-    expect(nullKey2).toBeNull();
+    expect(nullKey1).toBeUndefined();
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
