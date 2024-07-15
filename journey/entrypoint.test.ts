@@ -31,6 +31,5 @@ describe("Journey: `npx pepr deploy`", peprDeploy);
 
 describe("Journey: `npx pepr dev`", peprDev);
 
-// describe("Journey: Test Store Migration", peprStoreMigrate);
 
 
