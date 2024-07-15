@@ -123,6 +123,7 @@ The failurePolicy (onError - "ignore" or "enforce") and timeout can be set in th
     "uuid": "static-test",
     "onError": "ignore", 
     "webhookTimeout": 10,
+  }
 ```
 
 Read more on customization [here](https://docs.pepr.dev/main/user-guide/customization/).
