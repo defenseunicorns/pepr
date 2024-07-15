@@ -19,10 +19,6 @@ import kfc from "./cli/kfc";
 if (process.env.npm_lifecycle_event !== "npx") {
   console.warn("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
-// Remove punycode warning
-if (process.env.PEPR_MODE !== "dev") {
-  process.removeAllListeners("warning");
-}
 const program = new RootCmd();
 
 program
