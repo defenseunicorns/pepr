@@ -11,6 +11,7 @@ export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
 const MAX_WAIT_TIME = 15000;
+const STORE_VERSION_PREFIX = "v2-";
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
@@ -123,7 +124,7 @@ export class Storage implements PeprStore {
     this.#dispatchUpdate("add", [encodedKey], value);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (data[encodedKey] === value) {
+        if (data[`${STORE_VERSION_PREFIX}-${encodedKey}`] === value) {
           unsubscribe();
           resolve();
         }
@@ -149,7 +150,7 @@ export class Storage implements PeprStore {
     this.#dispatchUpdate("remove", [encodedKey]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!Object.hasOwn(data, encodedKey)) {
+        if (!Object.hasOwn(data, `${STORE_VERSION_PREFIX}-${encodedKey}`)) {
           unsubscribe();
           resolve();
         }
