@@ -176,7 +176,6 @@ function testIgnore() {
   });
 }
 
-
 async function testValidate() {
   // Apply the sample yaml for the HelloPepr capability
   const applyOut = spawnSync("kubectl apply -f hello-pepr.samples.yaml", {
