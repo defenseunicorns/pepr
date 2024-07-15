@@ -303,32 +303,6 @@ function testStore() {
 }
 
 
-// export function peprStoreMigrate() {
-
-//   beforeAll(async () => {
-//     try {
-//       const peprAlias = "file:pepr-0.0.0-development.tgz";
-//       execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
-//     } catch (e) {
-//       // ignore, just to run this test in isolation
-//     }
-
-//     // Apply the store crd
-//     await applyStoreCRD();
-
-//     // Apply the store
-//     await applyLegacyStoreResource();
-
-//   })
-
-//   it("should deploy the Pepr controller into the test cluster", async () => {
-//     execSync("kubectl rollout restart deploy/pepr-static-test -n pepr-system", { cwd, stdio: "inherit" })
-//     await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
-//   });
-
-//   // This asserts that the keys are v2
-//   describe("should upgrade the PeprStore", testStore);
-// }
 
 async function applyStoreCRD() {
   // Apply the store crd
