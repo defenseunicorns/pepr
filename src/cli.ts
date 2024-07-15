@@ -20,7 +20,7 @@ if (process.env.npm_lifecycle_event !== "npx") {
   console.warn("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 // Remove punycode warning
-process.removeAllListeners('warning');
+process.removeAllListeners("warning");
 const program = new RootCmd();
 
 program
