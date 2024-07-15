@@ -1,6 +1,12 @@
 # Frequently Asked Questions
 
 
+## How do I remove the punycode warning?
+
+```bash
+export NODE_OPTIONS="--disable-warning=DEP0040"
+```
+
 ## How do I add custom labels to Pepr's Kubernetes manifests?
 
 During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.  
