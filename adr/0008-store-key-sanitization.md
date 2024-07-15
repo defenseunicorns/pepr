@@ -4,7 +4,7 @@ Date: 2024-07-02
 
 ## Status
 
-Under Review
+Accepted
 
 ## Context
 
@@ -14,6 +14,8 @@ Issues were discovered when accepting arbitrary Keycloak client IDs as Store key
 ## Decision
 
 Sanitize the keys by replacing `/` with [one or more characters](https://datatracker.ietf.org/doc/html/rfc6901#section-3) that do not break the [`patch` operation](https://datatracker.ietf.org/doc/html/rfc6902/#section-4) before setting, getting, or deleting a key in/from the store. We will also increase the tests to find other edge cases before releasing the change and deciding upon the exact character or pattern. We are prioritizing the cluster operator persona in this case who wants to quickly check all keys and values in the store by looking at the PeprStore CR.
+
+We migrate the keys in in the CR after the GET operation on the `PeprStore`.
 
 #### Sanitize using String Replacement
 * Sanitize the key by replacing `/` with a character that does not break the `patch` operation before getting, setting, or deleting a key.
@@ -51,7 +53,7 @@ After:
 apiVersion: pepr.dev/v1
 data:
   __pepr_do_not_delete__: k-thx-bye
-  hello-pepr-v2-d2F0Y2gtZGF0YQo=: This data was stored by a Watch Action.
+  hello-pepr-v2-watch-data: This data was stored by a Watch Action.
 kind: PeprStore
 metadata:
   name: pepr-static-test-store
@@ -61,7 +63,6 @@ metadata:
 
 * Although base64 encoding gaurantees that the key will be unique and not contain any special characters, it will introduce a lot of overhead:
 * * Harder for users to read PeprStore CR because key names will be encoded
-* * Require a migration path for existing store items
 * * Require a npx pepr command for viewing all store items at once?
 * * Require a new store path prefix.
 * * Potentially would want a k9s command for cluster users to be able to view PeprStore CR
