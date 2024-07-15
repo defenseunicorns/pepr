@@ -11,7 +11,7 @@ export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
 const MAX_WAIT_TIME = 15000;
-const STORE_VERSION_PREFIX = "v2-";
+const STORE_VERSION_PREFIX = "v2";
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
