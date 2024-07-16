@@ -141,14 +141,14 @@ export class PeprControllerStore {
 
     for (const name of Object.keys(this.#stores)) {
       // Get the prefix offset for the keys
-      const offset = `${name}-v2-`.length;
+      const offset = `${name}-`.length;
 
       // Loop over each key in the store
       for (const key of Object.keys(data)) {
         // Match on the capability name as a prefix for non v2 keys
         if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
           // populate migrate cache
-          fillCache(name, "remove", [key.slice(offset - 4)], data[key]);
+          fillCache(name, "remove", [key.slice(offset)], data[key]);
           fillCache(name, "add", [key.slice(offset)], data[key]);
         }
       }
