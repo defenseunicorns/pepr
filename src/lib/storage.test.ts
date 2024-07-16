@@ -2,10 +2,31 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import pointer from "json-pointer";
-import { DataStore, Storage } from "./storage";
+import { DataStore, Storage, v2StoreKey, stripV2Prefix } from "./storage";
 import fc from "fast-check";
 
+describe("stripV2Prefix", () => {
+  it("should remove the v2 prefix", () => {
+    const keys = ["v2-key1", "v2-key2", "v2-key3", "v2-key4", "v2-key5"];
+    const results = ["key1", "key2", "key3", "key4", "key5"];
+
+    for (let i = 0; i < keys.length; i++) {
+      const result = stripV2Prefix(keys[i]);
+      expect(result).toEqual(results[i]);
+    }
+  });
+});
+describe("v2StoreKey", () => {
+  it("should prefix the key with v2", () => {
+    const keys = ["key1", "key2", "key3", "key4", "key5"];
+    const results = ["v2-key1", "v2-key2", "v2-key3", "v2-key4", "v2-key5"];
+
+    for (let i = 0; i < keys.length; i++) {
+      const result = v2StoreKey(keys[i]);
+      expect(result).toEqual(results[i]);
+    }
+  });
+});
 describe("Storage with fuzzing and property-based tests", () => {
   let storage: Storage;
 
@@ -18,8 +39,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const encodedKey = pointer.escape(key);
-        const mockData: DataStore = { [encodedKey]: value };
+        const mockData: DataStore = { [v2StoreKey(key)]: value };
         storage.receive(mockData);
         if (value === "") {
           expect(storage.getItem(key)).toBeNull();
@@ -55,8 +75,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const encodedKey = pointer.escape(key);
-        const mockData: DataStore = { [encodedKey]: value };
+        const mockData: DataStore = { [v2StoreKey(key)]: value };
         storage.receive(mockData);
         if (value === "") {
           expect(storage.getItem(key)).toBeNull();
@@ -79,10 +98,9 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     const key = "key1";
-    const encodedKey = pointer.escape(key);
     storage.setItem("key1", "value1");
 
-    expect(mockSender).toHaveBeenCalledWith("add", [encodedKey], "value1");
+    expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
   });
 
   it("should set an item and wait", () => {
@@ -90,11 +108,11 @@ describe("Storage", () => {
     storage.registerSender(mockSender);
     jest.useFakeTimers();
     const key = "key1";
-    const encodedKey = pointer.escape(key);
+
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.setItemAndWait(key, "value1");
 
-    expect(mockSender).toHaveBeenCalledWith("add", [encodedKey], "value1");
+    expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
     jest.useRealTimers();
   });
 
@@ -104,11 +122,10 @@ describe("Storage", () => {
     jest.useFakeTimers();
 
     const key = "key1";
-    const encodedKey = pointer.escape(key);
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.removeItemAndWait(key);
 
-    expect(mockSender).toHaveBeenCalledWith("remove", [encodedKey], undefined);
+    expect(mockSender).toHaveBeenCalledWith("remove", [v2StoreKey(key)], undefined);
     jest.useRealTimers();
   });
 
@@ -116,10 +133,9 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     const key = "key1";
-    const encodedKey = pointer.escape(key);
     storage.removeItem(key);
 
-    expect(mockSender).toHaveBeenCalledWith("remove", [encodedKey], undefined);
+    expect(mockSender).toHaveBeenCalledWith("remove", [v2StoreKey(key)], undefined);
   });
 
   it("should clear all items", () => {
@@ -137,7 +153,7 @@ describe("Storage", () => {
     const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine", " "];
 
     keys.map((key, i) => {
-      const mockData: DataStore = { [pointer.escape(key!)]: results[i]! };
+      const mockData: DataStore = { [v2StoreKey(key)]: results[i]! };
 
       storage.receive(mockData);
       const value = storage.getItem(keys[i]);

@@ -12,6 +12,14 @@ export type Unsubscribe = () => void;
 
 const MAX_WAIT_TIME = 15000;
 const STORE_VERSION_PREFIX = "v2";
+
+export function v2StoreKey(key: string) {
+  return `${STORE_VERSION_PREFIX}-${pointer.escape(key)}`;
+}
+
+export function stripV2Prefix(key: string) {
+  return key.replace(/^v2-/, "");
+}
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
@@ -63,7 +71,7 @@ export interface PeprStore {
  */
 
 export class Storage implements PeprStore {
-  #store: DataStore = {};
+  store: DataStore = {};
   #send!: DataSender;
   #subscribers: Record<number, DataReceiver> = {};
   #subscriberId = 0;
@@ -75,22 +83,19 @@ export class Storage implements PeprStore {
 
   receive = (data: DataStore) => {
     Log.debug(data, `Pepr store data received`);
-    this.#store = data || {};
+    this.store = data || {};
 
     this.#onReady();
 
     // Notify all subscribers
     for (const idx in this.#subscribers) {
       // Send a unique clone of the store to each subscriber
-      this.#subscribers[idx](clone(this.#store));
+      this.#subscribers[idx](clone(this.store));
     }
   };
 
   getItem = (key: string) => {
-    // Return null if the value is the empty string
-    const encodedKey = pointer.escape(key);
-
-    const result = this.#store[encodedKey] || null;
+    const result = this.store[v2StoreKey(key)] || null;
     if (result !== null && typeof result !== "function" && typeof result !== "object") {
       return result;
     }
@@ -98,17 +103,15 @@ export class Storage implements PeprStore {
   };
 
   clear = () => {
-    this.#dispatchUpdate("remove", Object.keys(this.#store));
+    this.#dispatchUpdate("remove", Object.keys(this.store));
   };
 
   removeItem = (key: string) => {
-    const encodedKey = pointer.escape(key);
-    this.#dispatchUpdate("remove", [encodedKey]);
+    this.#dispatchUpdate("remove", [v2StoreKey(key)]);
   };
 
   setItem = (key: string, value: string) => {
-    const encodedKey = pointer.escape(key);
-    this.#dispatchUpdate("add", [encodedKey], value);
+    this.#dispatchUpdate("add", [v2StoreKey(key)], value);
   };
 
   /**
@@ -120,11 +123,10 @@ export class Storage implements PeprStore {
    * @returns
    */
   setItemAndWait = (key: string, value: string) => {
-    const encodedKey = pointer.escape(key);
-    this.#dispatchUpdate("add", [encodedKey], value);
+    this.#dispatchUpdate("add", [v2StoreKey(key)], value);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (data[`${STORE_VERSION_PREFIX}-${encodedKey}`] === value) {
+        if (data[`${v2StoreKey(key)}`] === value) {
           unsubscribe();
           resolve();
         }
@@ -146,11 +148,10 @@ export class Storage implements PeprStore {
    * @returns
    */
   removeItemAndWait = (key: string) => {
-    const encodedKey = pointer.escape(key);
-    this.#dispatchUpdate("remove", [encodedKey]);
+    this.#dispatchUpdate("remove", [v2StoreKey(key)]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!Object.hasOwn(data, `${STORE_VERSION_PREFIX}-${encodedKey}`)) {
+        if (!Object.hasOwn(data, `${v2StoreKey(key)}`)) {
           unsubscribe();
           resolve();
         }
@@ -185,7 +186,7 @@ export class Storage implements PeprStore {
   #onReady = () => {
     // Notify all ready handlers with a clone of the store
     for (const handler of this.#readyHandlers) {
-      handler(clone(this.#store));
+      handler(clone(this.store));
     }
 
     // Make this a noop so that it can't be called again

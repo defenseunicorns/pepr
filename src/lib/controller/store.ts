@@ -125,7 +125,7 @@ export class PeprControllerStore {
         }
 
         for (const k of key) {
-          const path = `/data/${name}-${k}`;
+          const path = `/data/${name}-v2-${k}`;
           const cacheIdx = [op, path].join(":");
 
           // Add the operation to the cache
@@ -141,14 +141,14 @@ export class PeprControllerStore {
 
     for (const name of Object.keys(this.#stores)) {
       // Get the prefix offset for the keys
-      const offset = `${name}-`.length;
+      const offset = `${name}-v2-`.length;
 
       // Loop over each key in the store
       for (const key of Object.keys(data)) {
         // Match on the capability name as a prefix for non v2 keys
         if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
           // populate migrate cache
-          fillCache(name, "remove", [key.slice(offset)], data[key]);
+          fillCache(name, "remove", [key.slice(offset - 4)], data[key]);
           fillCache(name, "add", [key.slice(offset)], data[key]);
         }
       }
@@ -207,7 +207,7 @@ export class PeprControllerStore {
     const fillCache = (op: DataOp, key: string[], val?: string) => {
       if (op === "add") {
         // adjust the path for the capability
-        const path = `/data/${capabilityName}-v2-${key}`;
+        const path = `/data/${capabilityName}-${key}`;
         const value = val || "";
         const cacheIdx = [op, path, value].join(":");
 
