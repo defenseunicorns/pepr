@@ -125,7 +125,7 @@ export class PeprControllerStore {
         }
 
         for (const k of key) {
-          const path = `/data/${name}-v2-${k}`;
+          const path = `/data/${name}-${k}`;
           const cacheIdx = [op, path].join(":");
 
           // Add the operation to the cache
