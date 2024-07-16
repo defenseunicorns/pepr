@@ -10,6 +10,8 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  mergePkgJSONEnv,
+  envMapToArray,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -1188,5 +1190,134 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
+  });
+});
+
+describe("mergePkgJSONEnv", () => {
+  const pkgJSON = {
+    FAV_COLOR: "blue",
+  };
+  const admissionEnv = { PEPR_WATCH_MODE: "false" };
+  const watcherEnv = { PEPR_WATCH_MODE: "true" };
+  test("should merge env variables from package.json", () => {
+    const result = mergePkgJSONEnv(admissionEnv, pkgJSON);
+    expect(result).toEqual({
+      FAV_COLOR: "blue",
+      PEPR_WATCH_MODE: "false",
+    });
+  });
+
+  test("should not be able to override PEPR_WATCH_MODE", () => {
+    const pkgJSON = {
+      PEPR_WATCH_MODE: "false",
+    };
+    const result = mergePkgJSONEnv(watcherEnv, pkgJSON);
+    expect(result).toEqual({
+      PEPR_WATCH_MODE: "true",
+    });
+  });
+
+  test("if conflicts arrise, package.json should be used", () => {
+    const pkgJSON = {
+      FAV_COLOR: "red",
+    };
+    const admissionEnv = { FAV_COLOR: "blue" };
+    const result = mergePkgJSONEnv(admissionEnv, pkgJSON);
+    expect(result).toEqual({
+      FAV_COLOR: "red",
+    });
+  });
+
+  test("if there is no package.json env, return other env", () => {
+    const admissionEnv = { FAV_COLOR: "blue" };
+    const result = mergePkgJSONEnv(admissionEnv);
+    expect(result).toEqual({
+      FAV_COLOR: "blue",
+    });
+  });
+});
+
+describe("envMapToArr", () => {
+  test("should return an array of key value pairs", () => {
+    const envMap = [
+      {
+        FAV_COLOR: "blue",
+        PEPR_WATCH_MODE: "true",
+      },
+      {
+        FAV_COLOR: "yellow",
+        PEPR_WATCH_MODE: "false",
+      },
+      {
+        FAV_COLOR: "orange",
+        PEPR_WATCH_MODE: "true",
+      },
+      {
+        FAV_COLOR: "green",
+        PEPR_WATCH_MODE: "false",
+      },
+      {
+        FAV_COLOR: "red",
+        PEPR_WATCH_MODE: "true",
+      },
+    ];
+
+    const expectation = [
+      [
+        {
+          name: "FAV_COLOR",
+          value: "blue",
+        },
+        {
+          name: "PEPR_WATCH_MODE",
+          value: "true",
+        },
+      ],
+      [
+        {
+          name: "FAV_COLOR",
+          value: "yellow",
+        },
+        {
+          name: "PEPR_WATCH_MODE",
+          value: "false",
+        },
+      ],
+      [
+        {
+          name: "FAV_COLOR",
+          value: "orange",
+        },
+        {
+          name: "PEPR_WATCH_MODE",
+          value: "true",
+        },
+      ],
+      [
+        {
+          name: "FAV_COLOR",
+          value: "green",
+        },
+        {
+          name: "PEPR_WATCH_MODE",
+          value: "false",
+        },
+      ],
+      [
+        {
+          name: "FAV_COLOR",
+          value: "red",
+        },
+        {
+          name: "PEPR_WATCH_MODE",
+          value: "true",
+        },
+      ],
+    ];
+
+    envMap.forEach((env, index) => {
+      const result = envMapToArray(env);
+      expect(result).toEqual(expectation[index]);
+    });
   });
 });
