@@ -102,7 +102,7 @@ Pepr can deploy two types of controllers: Admission and Watch. The controllers d
 To pull logs for all controller pods:
 
 ```bash
-kubectl logs -l app.kubernetes.io/controller
+kubectl logs -l app -n pepr-system
 ```
 
 #### Admission Controller
