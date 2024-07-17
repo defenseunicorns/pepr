@@ -90,7 +90,7 @@ export class Storage implements PeprStore {
     // Notify all subscribers
     for (const idx in this.#subscribers) {
       // Send a unique clone of the store to each subscriber
-      this.#subscribers[idx](clone(this.store));
+      this.#subscribers[idx](clone(this.#store));
     }
   };
 
