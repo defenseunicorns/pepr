@@ -100,7 +100,7 @@ When(a.Pod)
 
 Pepr can deploy two types of controllers: Admission and Watch. The controllers deployed are dictated by the [Actions](https://docs.pepr.dev/main/user-guide/actions/) called for by a given set of Capabilities (Pepr only deploys what is necessary). Within those controllers, the default log level is `info` but that can be changed to `debug` by setting the `LOG_LEVEL` environment variable to `debug`.
 
-Pepr logs for all pods:
+To pull logs for all controller pods:
 
 ```bash
 kubectl logs -l app.kubernetes.io/controller
