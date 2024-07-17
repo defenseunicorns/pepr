@@ -121,7 +121,7 @@ npx pepr monitor
 
 #### Watch Controller
 
-If the focus of the debug is a `Watch()`, `Reconcile()`, or `OnSchedule()`, look for logs from pods containing label `pepr.dev/controller: watch`.
+If the focus of the debug is a `Watch()`, `Reconcile()`, or `OnSchedule()`, look for logs from pods containing label `pepr.dev/controller: watcher`.
 
 ```bash
 kubectl logs -l pepr.dev/controller=watcher -n pepr-system
