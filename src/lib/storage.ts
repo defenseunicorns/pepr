@@ -186,7 +186,7 @@ export class Storage implements PeprStore {
   #onReady = () => {
     // Notify all ready handlers with a clone of the store
     for (const handler of this.#readyHandlers) {
-      handler(clone(this.store));
+      handler(clone(this.#store));
     }
 
     // Make this a noop so that it can't be called again
