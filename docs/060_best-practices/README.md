@@ -43,7 +43,6 @@ Pepr is a webhook-based system, meaning it is event-driven. When a resource is c
 Considering that many webhooks may be modifying the same resource, it is best practice to validate the resource after mutations are made to ensure that the resource is in a valid state if it has been changed since the last mutation.
 
 
-**_It is always a best practice to add a `Validate` to your `Mutate` to ensure that the object is in a valid state before making changes._**
 
 ```typescript
 When(a.Pod)
