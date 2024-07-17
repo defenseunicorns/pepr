@@ -95,7 +95,7 @@ export class Storage implements PeprStore {
   };
 
   getItem = (key: string) => {
-    const result = this.store[v2StoreKey(key)] || null;
+    const result = this.#store[v2StoreKey(key)] || null;
     if (result !== null && typeof result !== "function" && typeof result !== "object") {
       return result;
     }
