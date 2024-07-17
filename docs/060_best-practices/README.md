@@ -57,8 +57,9 @@ When(a.Pod)
   // another mutating webhook could removed labels
   .Validate(pod => {
     if (pod.metadata.labels["pepr"] !== "true") {
-      return ["Label 'pepr' must be 'true'"];
+      return pod.Approve("Label 'pepr' must be 'true'");
     }
+    return pod.Deny("Needs pepr label set to true")
   });
 ```
 
