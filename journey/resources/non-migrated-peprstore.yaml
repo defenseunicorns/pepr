@@ -1,3 +1,4 @@
+---
 apiVersion: pepr.dev/v1
 data:
   __pepr_do_not_delete__: k-thx-bye
@@ -8,3 +9,4 @@ kind: PeprStore
 metadata:
   name: pepr-static-test-store
   namespace: pepr-system
+
