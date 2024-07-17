@@ -1230,7 +1230,7 @@ describe("mergePkgJSONEnv", () => {
 
   test("if there is no package.json env, return other env", () => {
     const admissionEnv = { FAV_COLOR: "blue" };
-    const result = mergePkgJSONEnv(admissionEnv);
+    const result = mergePkgJSONEnv(admissionEnv, undefined);
     expect(result).toEqual({
       FAV_COLOR: "blue",
     });
