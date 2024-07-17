@@ -7,6 +7,7 @@ import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { V1ObjectMeta, KubernetesObject } from '@kubernetes/client-node';
+import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
@@ -23,6 +24,72 @@ export function peprBuild() {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
   });
+
+  it("should correct merge in the package.json env vars into the values.yaml helm chart file", async () => {
+    interface ValuesJSON {
+      admission: {
+        env: Record<string, string>[] | undefined;
+      };
+      watcher: {
+        env: Record<string, string>[] | undefined;
+      };
+    }
+
+    const expectedWatcherEnv = [
+      {
+        "name": "PEPR_WATCH_MODE",
+        "value": "true"
+      },
+      {
+        "name": "PEPR_PRETTY_LOG",
+        "value": "false"
+      },
+      {
+        "name": "LOG_LEVEL",
+        "value": "info"
+      },
+      {
+        "name": "MY_CUSTOM_VAR",
+        "value": "example-value"
+      },
+      {
+        "name": "ZARF_VAR",
+        "value": "###ZARF_VAR_THING###"
+      }
+    ];
+
+    const expectedAdmissionEnv = [
+      {
+        "name": "PEPR_WATCH_MODE",
+        "value": "false"
+      },
+      {
+        "name": "PEPR_PRETTY_LOG",
+        "value": "false"
+      },
+      {
+        "name": "LOG_LEVEL",
+        "value": "info"
+      },
+      {
+        "name": "MY_CUSTOM_VAR",
+        "value": "example-value"
+      },
+      {
+        "name": "ZARF_VAR",
+        "value": "###ZARF_VAR_THING###"
+      }
+    ]
+
+    try {
+      const valuesYaml = await fs.readFile(resolve(cwd, "dist", "static-test-chart", "values.yaml"), "utf8");
+      const valuesJSON = yaml.load(valuesYaml) as ValuesJSON;
+      expect(valuesJSON.admission.env).toEqual(expectedAdmissionEnv);
+      expect(valuesJSON.watcher!.env).toEqual(expectedWatcherEnv);
+    } catch (error) {
+      expect(error).toBeUndefined();
+    }
+  })
 }
 
 async function validateHelmChart() {
@@ -102,9 +169,9 @@ function parseYAMLToJSON(yamlContent: string): KubernetesObject[] | null {
 
 function sortKubernetesObjects(objects: KubernetesObject[]): KubernetesObject[] {
   return objects.sort((a, b) => {
-      if (a?.kind !== b?.kind) {
-          return (a?.kind ?? '').localeCompare(b?.kind ?? '');
-      }
-      return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? '').localeCompare((b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? '');
+    if (a?.kind !== b?.kind) {
+      return (a?.kind ?? '').localeCompare(b?.kind ?? '');
+    }
+    return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? '').localeCompare((b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? '');
   });
 }
