@@ -98,7 +98,7 @@ When(a.Pod)
 
 ### Logging
 
-Pepr can deploy two controllers: Admission and Watch. The controllers deployed are dictated by the [actions](https://docs.pepr.dev/main/user-guide/actions/) used in the capabilities (Pepr only deploys what is necessary). The default log level is `info`, but it can be changed to `debug` by setting the environment variable `LOG_LEVEL` to `debug`.
+Pepr can deploy two types of controllers: Admission and Watch. The controllers deployed are dictated by the [Actions](https://docs.pepr.dev/main/user-guide/actions/) called for by a given set of Capabilities (Pepr only deploys what is necessary). Within those controllers, the default log level is `info` but that can be changed to `debug` by setting the `LOG_LEVEL` environment variable to `debug`.
 
 Pepr logs for all pods:
 
