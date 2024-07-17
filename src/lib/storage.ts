@@ -83,7 +83,7 @@ export class Storage implements PeprStore {
 
   receive = (data: DataStore) => {
     Log.debug(data, `Pepr store data received`);
-    this.store = data || {};
+    this.#store = data || {};
 
     this.#onReady();
 
