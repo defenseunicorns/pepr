@@ -71,7 +71,7 @@ export interface PeprStore {
  */
 
 export class Storage implements PeprStore {
-  store: DataStore = {};
+  #store: DataStore = {};
   #send!: DataSender;
   #subscribers: Record<number, DataReceiver> = {};
   #subscriberId = 0;
