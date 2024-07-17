@@ -103,7 +103,7 @@ export class Storage implements PeprStore {
   };
 
   clear = () => {
-    this.#dispatchUpdate("remove", Object.keys(this.store));
+    this.#dispatchUpdate("remove", Object.keys(this.#store));
   };
 
   removeItem = (key: string) => {
