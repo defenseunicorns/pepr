@@ -124,7 +124,7 @@ npx pepr monitor
 If the focus of the debug is a `Watch()`, `Reconcile()`, or `OnSchedule()`, look for logs from pods containing label `pepr.dev/controller: watch`.
 
 ```bash
-kubectl logs -l pepr.dev/controller=watch -n pepr-system
+kubectl logs -l pepr.dev/controller=watcher -n pepr-system
 ```
 
 ### Internal Error Occurred
