@@ -4,15 +4,26 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
-
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
+import { mergePkgJSONEnv, envMapToArray } from "../helpers";
 
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+  const pkgJSONAdmissionEnv = {
+    PEPR_WATCH_MODE: "false",
+    PEPR_PRETTY_LOG: "false",
+    LOG_LEVEL: "info",
+  };
+  const pkgJSONWatchEnv = {
+    PEPR_WATCH_MODE: "true",
+    PEPR_PRETTY_LOG: "false",
+    LOG_LEVEL: "info",
+  };
+
   const overrides = {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
@@ -29,11 +40,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
-      env: [
-        { name: "PEPR_WATCH_MODE", value: "false" },
-        { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "info" },
-      ],
+      env: envMapToArray(mergePkgJSONEnv(pkgJSONAdmissionEnv, config.env)),
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",
@@ -77,11 +84,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     },
     watcher: {
       terminationGracePeriodSeconds: 5,
-      env: [
-        { name: "PEPR_WATCH_MODE", value: "true" },
-        { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "info" },
-      ],
+      env: envMapToArray(mergePkgJSONEnv(pkgJSONWatchEnv, config.env)),
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",
@@ -124,12 +127,6 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       podAnnotations: {},
     },
   };
-  if (process.env.PEPR_MODE === "dev") {
-    overrides.admission.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
-    overrides.watcher.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
-    overrides.admission.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
-    overrides.watcher.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
-  }
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
