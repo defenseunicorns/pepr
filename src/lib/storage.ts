@@ -3,7 +3,7 @@
 
 import { clone } from "ramda";
 import Log from "./logger";
-
+import pointer from "json-pointer";
 export type DataOp = "add" | "remove";
 export type DataStore = Record<string, string>;
 export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
@@ -11,6 +11,15 @@ export type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
 const MAX_WAIT_TIME = 15000;
+const STORE_VERSION_PREFIX = "v2";
+
+export function v2StoreKey(key: string) {
+  return `${STORE_VERSION_PREFIX}-${pointer.escape(key)}`;
+}
+
+export function stripV2Prefix(key: string) {
+  return key.replace(/^v2-/, "");
+}
 export interface PeprStore {
   /**
    * Returns the current value associated with the given key, or null if the given key does not exist.
@@ -60,6 +69,7 @@ export interface PeprStore {
  *
  * The API is similar to the [Storage API](https://developer.mozilla.org/docs/Web/API/Storage)
  */
+
 export class Storage implements PeprStore {
   #store: DataStore = {};
   #send!: DataSender;
@@ -85,8 +95,11 @@ export class Storage implements PeprStore {
   };
 
   getItem = (key: string) => {
-    // Return null if the value is the empty string
-    return this.#store[key] || null;
+    const result = this.#store[v2StoreKey(key)] || null;
+    if (result !== null && typeof result !== "function" && typeof result !== "object") {
+      return result;
+    }
+    return null;
   };
 
   clear = () => {
@@ -94,11 +107,11 @@ export class Storage implements PeprStore {
   };
 
   removeItem = (key: string) => {
-    this.#dispatchUpdate("remove", [key]);
+    this.#dispatchUpdate("remove", [v2StoreKey(key)]);
   };
 
   setItem = (key: string, value: string) => {
-    this.#dispatchUpdate("add", [key], value);
+    this.#dispatchUpdate("add", [v2StoreKey(key)], value);
   };
 
   /**
@@ -110,10 +123,10 @@ export class Storage implements PeprStore {
    * @returns
    */
   setItemAndWait = (key: string, value: string) => {
-    this.#dispatchUpdate("add", [key], value);
+    this.#dispatchUpdate("add", [v2StoreKey(key)], value);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (data[key] === value) {
+        if (data[`${v2StoreKey(key)}`] === value) {
           unsubscribe();
           resolve();
         }
@@ -135,10 +148,10 @@ export class Storage implements PeprStore {
    * @returns
    */
   removeItemAndWait = (key: string) => {
-    this.#dispatchUpdate("remove", [key]);
+    this.#dispatchUpdate("remove", [v2StoreKey(key)]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!Object.hasOwn(data, key)) {
+        if (!Object.hasOwn(data, `${v2StoreKey(key)}`)) {
           unsubscribe();
           resolve();
         }
