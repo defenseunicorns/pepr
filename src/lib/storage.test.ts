@@ -71,7 +71,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     );
   });
 
-  it("should ensure all set items are base64 encoded internally", () => {
+  it("should ensure all set items are v2-coded internally", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
