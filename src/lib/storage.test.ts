@@ -98,7 +98,7 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     const key = "key1";
-    storage.setItem("key1", "value1");
+    storage.setItem(key, "value1");
 
     expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
   });
