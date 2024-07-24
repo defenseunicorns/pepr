@@ -206,7 +206,7 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprMutateRequest<K>,
-  logger?: typeof Log
+  logger?: typeof Log,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
