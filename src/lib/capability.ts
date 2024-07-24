@@ -239,9 +239,9 @@ export class Capability implements CapabilityExport {
         bindings.push({
           ...binding,
           isMutate: true,
-          mutateCallback: async (req) => {
+          mutateCallback: async (req, logger = aliasLogger) => {
             aliasLogger.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
-            await mutateCallback(req);
+            await mutateCallback(req, logger);
           },
         });
       }
