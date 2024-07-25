@@ -8,7 +8,7 @@ import https from "https";
 import { Capability } from "../capability";
 import { MutateResponse, AdmissionRequest, ValidateResponse } from "../k8s";
 import Log from "../logger";
-import { MetricsCollector } from "../metrics";
+import { metricsCollector, MetricsCollector } from "../metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
@@ -20,7 +20,7 @@ export class Controller {
   #running = false;
 
   // Metrics collector
-  #metricsCollector = new MetricsCollector("pepr");
+  #metricsCollector = metricsCollector;
 
   // The token used to authenticate requests
   #token = "";
