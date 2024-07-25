@@ -4,7 +4,7 @@
 /* eslint-disable class-methods-use-this */
 
 import { performance } from "perf_hooks";
-import promClient, { Counter, Registry, Summary } from "prom-client";
+import promClient, { Counter, Registry, Gauge, Summary } from "prom-client";
 import Log from "./logger";
 
 const loggingPrefix = "MetricsCollector";
@@ -14,12 +14,15 @@ interface MetricNames {
   alerts: string;
   mutate: string;
   validate: string;
+  cacheMiss: string;
+  retryCount: string;
 }
 
 interface MetricArgs {
   name: string;
   help: string;
   registers: Registry[];
+  labelNames?: string[];
 }
 
 /**
@@ -28,6 +31,7 @@ interface MetricArgs {
 export class MetricsCollector {
   #registry: Registry;
   #counters: Map<string, Counter<string>> = new Map();
+  #gauges: Map<string, Gauge<string>> = new Map();
   #summaries: Map<string, Summary<string>> = new Map();
   #prefix: string;
 
@@ -36,6 +40,8 @@ export class MetricsCollector {
     alerts: "alerts",
     mutate: "Mutate",
     validate: "Validate",
+    cacheMiss: "cache_miss",
+    retryCount: "retry_count",
   };
 
   /**
@@ -49,15 +55,18 @@ export class MetricsCollector {
     this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api token received");
     this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
+    this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);
+    this.addGauge(this.#metricNames.retryCount, "Number of retries per count", ["count"]);
   }
 
   #getMetricName = (name: string) => `${this.#prefix}_${name}`;
 
-  #addMetric = <T extends Counter<string> | Summary<string>>(
+  #addMetric = <T extends Counter<string> | Gauge<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
     name: string,
     help: string,
+    labelNames?: string[],
   ) => {
     if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
@@ -68,21 +77,30 @@ export class MetricsCollector {
       name: this.#getMetricName(name),
       help,
       registers: [this.#registry],
+      labelNames,
     });
 
     collection.set(this.#getMetricName(name), metric);
   };
 
   addCounter = (name: string, help: string) => {
-    this.#addMetric(this.#counters, promClient.Counter, name, help);
+    this.#addMetric(this.#counters, promClient.Counter, name, help, []);
   };
 
   addSummary = (name: string, help: string) => {
-    this.#addMetric(this.#summaries, promClient.Summary, name, help);
+    this.#addMetric(this.#summaries, promClient.Summary, name, help, []);
+  };
+
+  addGauge = (name: string, help: string, labelNames?: string[]) => {
+    this.#addMetric(this.#gauges, promClient.Gauge, name, help, labelNames);
   };
 
   incCounter = (name: string) => {
     this.#counters.get(this.#getMetricName(name))?.inc();
+  };
+
+  incGauge = (name: string, labels?: Record<string, string>, value: number = 1) => {
+    this.#gauges.get(this.#getMetricName(name))?.inc(labels || {}, value);
   };
 
   /**
@@ -117,4 +135,30 @@ export class MetricsCollector {
   static observeStart() {
     return performance.now();
   }
+
+  /**
+   * Increments the cache miss gauge for a given label.
+   * @param label - The label for the cache miss.
+   */
+  incrementCacheMiss = (window: string) => {
+    this.incGauge(this.#metricNames.cacheMiss, { window });
+  };
+
+  /**
+   * Increments the retry count gauge.
+   * @param count - The count to increment by.
+   */
+  incrementRetryCount = (count: string) => {
+    this.incGauge(this.#metricNames.retryCount, { count });
+  };
+
+  /**
+   * Initializes the cache miss gauge for a given label.
+   * @param label - The label for the cache miss.
+   */
+  initCacheMissWindow = (window: string) => {
+    this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.set({ window }, 0);
+  };
 }
+
+export const metricsCollector = new MetricsCollector();
