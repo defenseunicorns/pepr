@@ -56,8 +56,6 @@ jobs:
           # Build Pepr dist folder for NPM 
           docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
           
-          npm publish --provenance --access public
-
   format:
     runs-on: ubuntu-latest
     steps:
