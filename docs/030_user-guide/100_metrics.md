@@ -10,6 +10,8 @@ The `MetricsCollector` exposes the following metrics:
 - `pepr_alerts`: A counter that increments when an alert event is triggered in the application.
 - `pepr_Mutate`: A summary that provides the observed durations of mutation events in the application.
 - `pepr_Validate`: A summary that provides the observed durations of validation events in the application.
+- `pepr_cache_miss`: A gauge that provides the number of cache misses per window.
+- `pepr_retry_count`: A gauge that provides the number of retries per count.
 
 ## API Details
 
@@ -68,6 +70,19 @@ GET /metrics
   pepr_Validate{quantile="0.999"} 201.23339900001884
   pepr_Validate_sum 402.4275380000472
   pepr_Validate_count 2
+
+  # HELP pepr_cache_miss Number of cache misses per window
+  # TYPE pepr_cache_miss gauge
+  pepr_cache_miss{window="2024-07-25T11:54:33.897Z"} 18
+  pepr_cache_miss{window="2024-07-25T12:24:34.592Z"} 0
+  pepr_cache_miss{window="2024-07-25T13:14:33.450Z"} 22
+  pepr_cache_miss{window="2024-07-25T13:44:34.234Z"} 19
+  pepr_cache_miss{window="2024-07-25T14:14:34.961Z"} 0
+
+  # HELP pepr_retry_count Number of retries per count
+  # TYPE pepr_retry_count gauge
+  pepr_retry_count{count="0"} 5
+  pepr_retry_count{count="1"} 4
 ```
 
 ## Prometheus Operator
