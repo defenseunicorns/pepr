@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "cw-kfc";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
+import { metricsCollector } from "./metrics";
 
 // Watch configuration
 const watchCfg: WatchCfg = {
@@ -105,6 +106,18 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
+  watcher.events.on(WatchEvent.CACHE_MISS, windowName => {
+    metricsCollector.incrementCacheMiss(windowName);
+  });
+
+  watcher.events.on(WatchEvent.INIT_CACHE_MISS, windowName => {
+    metricsCollector.initCacheMissWindow(windowName);
+  });
+
+  watcher.events.on(WatchEvent.INC_RETRY, retryCount => {
+    metricsCollector.incrementRetryCount(retryCount);
+  });
+
   // Start the watch
   try {
     await watcher.start();
