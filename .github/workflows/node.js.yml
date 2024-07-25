@@ -36,7 +36,10 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run test:unit
-
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   journey:
     runs-on: ubuntu-latest
     steps:
