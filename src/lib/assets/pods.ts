@@ -357,7 +357,7 @@ export function moduleSecret(name: string, data: Buffer, hash: string): kind.Sec
   }
 }
 
-function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
+export function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
   const def = {
     PEPR_WATCH_MODE: watchMode ? "true" : "false",
     PEPR_PRETTY_LOG: "false",
