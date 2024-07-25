@@ -40,7 +40,7 @@ jobs:
           username: dummy
           password: ${{ github.token }}
 
-      - name: Publish to GHCR & NPM
+      - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -57,3 +57,45 @@ jobs:
           docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
           
           npm publish --provenance --access public
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Use Node.js latest
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: latest
+          cache: "npm"
+      - run: npm ci
+
+
+  slsa:
+    needs: format
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.0.0
+
+  publish:
+    needs: [slsa, format]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node registry authentication
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+      - name: Publish package
+        id: publish
+        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@v2.0.0
+        with:
+          access: public
+          node-auth-token: ${{ secrets.NPM_TOKEN }}
+          package-name: ${{ needs.slsa.outputs.package-name }}
+          package-download-name: ${{ needs.slsa.outputs.package-download-name }}
+          package-download-sha256: ${{ needs.slsa.outputs.package-download-sha256 }}
+          provenance-name: ${{ needs.slsa.outputs.provenance-name }}
+          provenance-download-name: ${{ needs.slsa.outputs.provenance-download-name }}
+          provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
