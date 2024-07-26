@@ -13,7 +13,7 @@ import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
-import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate } from "./helm";
+import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
@@ -82,7 +82,9 @@ export class Assets {
     const mutationWebhookPath = resolve(CHAR_TEMPLATES_DIR, `mutation-webhook.yaml`);
     const validationWebhookPath = resolve(CHAR_TEMPLATES_DIR, `validation-webhook.yaml`);
     const admissionDeployPath = resolve(CHAR_TEMPLATES_DIR, `admission-deployment.yaml`);
+    const admissionServiceMonitorPath = resolve(CHAR_TEMPLATES_DIR, `admission-service-monitor.yaml`);
     const watcherDeployPath = resolve(CHAR_TEMPLATES_DIR, `watcher-deployment.yaml`);
+    const watcherServiceMonitorPath = resolve(CHAR_TEMPLATES_DIR, `watcher-service-monitor.yaml`);
     const tlsSecretPath = resolve(CHAR_TEMPLATES_DIR, `tls-secret.yaml`);
     const apiTokenSecretPath = resolve(CHAR_TEMPLATES_DIR, `api-token-secret.yaml`);
     const moduleSecretPath = resolve(CHAR_TEMPLATES_DIR, `module-secret.yaml`);
@@ -134,6 +136,7 @@ export class Assets {
 
       if (validateWebhook || mutateWebhook) {
         await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
+        await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate('admission')));
       }
 
       if (mutateWebhook) {
@@ -166,6 +169,7 @@ export class Assets {
 
       if (watchDeployment) {
         await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
+        await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate('watcher')));
       }
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);

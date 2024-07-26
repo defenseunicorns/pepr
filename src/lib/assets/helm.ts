@@ -221,3 +221,30 @@ export function admissionDeployTemplate(buildTimestamp: string) {
               {{- end }}
     `;
 }
+
+export function serviceMonitorTemplate(name: string) {
+  return `
+      {{- if .Values.${name}.serviceMonitor.enabled }}
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: ${name}
+        annotations:
+          {{- toYaml .Values.${name}.serviceMonitor.annotations | nindent 4 }}
+        labels:
+          {{- toYaml .Values.${name}.serviceMonitor.labels | nindent 4 }}
+      spec:
+        selector:
+          matchLabels:
+            pepr.dev/controller: ${name}
+        namespaceSelector:
+          matchNames:
+            - pepr-system
+        endpoints:
+          - targetPort: 3000
+            scheme: https
+            tlsConfig:
+              insecureSkipVerify: true
+      {{- end }}
+    `;
+}
