@@ -11,11 +11,14 @@ import { metricsCollector } from "./metrics";
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  retryMax: process.env.PEPR_RETRYMAX ? parseInt(process.env.PEPR_RETRYMAX, 10) : 5,
+  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
   retryDelaySec: process.env.PEPR_RETRYDELAYSECONDS ? parseInt(process.env.PEPR_RETRYDELAYSECONDS, 10) : 5,
   resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
     ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
     : 300,
+  relistIntervalSec: process.env.PEPR_RELISTINTERVALSECONDS
+    ? parseInt(process.env.PEPR_RELISTINTERVALSECONDS, 10)
+    : 1800,
 };
 
 // Map the event to the watch phase
@@ -114,7 +117,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     metricsCollector.initCacheMissWindow(windowName);
   });
 
-  watcher.events.on(WatchEvent.INC_RETRY, retryCount => {
+  watcher.events.on(WatchEvent.INC_RESYNC_FAILURE_COUNT, retryCount => {
     metricsCollector.incrementRetryCount(retryCount);
   });
 

@@ -107,3 +107,26 @@ test("initCacheMissWindow initializes cache miss gauge to zero", async () => {
   const metrics = await collector.getMetrics();
   expect(metrics).toMatch(/testPrefix_cache_miss{window="window1"} 0/);
 });
+
+test("should initialize cache miss window and maintain size limit", async () => {
+  process.env.PEPR_MAX_CACHE_MISS_WINDOWS = "3";
+  const collector = new MetricsCollector("pepr");
+  collector.initCacheMissWindow("window1");
+  collector.initCacheMissWindow("window2");
+  collector.initCacheMissWindow("window3");
+  collector.initCacheMissWindow("window4");
+
+  const metrics = await collector.getMetrics();
+  expect(metrics).not.toContain("window1");
+  expect(metrics).toContain("window4");
+
+  collector.initCacheMissWindow("window5");
+  collector.initCacheMissWindow("window6");
+  collector.initCacheMissWindow("window7");
+
+  const updatedMetrics = await collector.getMetrics();
+  expect(updatedMetrics).not.toContain("window4");
+  expect(updatedMetrics).toContain("window5");
+  expect(updatedMetrics).toContain("window6");
+  expect(updatedMetrics).toContain("window7");
+});

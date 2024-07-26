@@ -15,7 +15,7 @@ interface MetricNames {
   mutate: string;
   validate: string;
   cacheMiss: string;
-  retryCount: string;
+  resyncFailureCount: string;
 }
 
 interface MetricArgs {
@@ -34,6 +34,7 @@ export class MetricsCollector {
   #gauges: Map<string, Gauge<string>> = new Map();
   #summaries: Map<string, Summary<string>> = new Map();
   #prefix: string;
+  #cacheMissWindows: Map<string, number> = new Map();
 
   #metricNames: MetricNames = {
     errors: "errors",
@@ -41,7 +42,7 @@ export class MetricsCollector {
     mutate: "Mutate",
     validate: "Validate",
     cacheMiss: "cache_miss",
-    retryCount: "retry_count",
+    resyncFailureCount: "pepr_resync_failure_count",
   };
 
   /**
@@ -56,7 +57,7 @@ export class MetricsCollector {
     this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
     this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);
-    this.addGauge(this.#metricNames.retryCount, "Number of retries per count", ["count"]);
+    this.addGauge(this.#metricNames.resyncFailureCount, "Number of failures per resync operation", ["count"]);
   }
 
   #getMetricName = (name: string) => `${this.#prefix}_${name}`;
@@ -149,7 +150,7 @@ export class MetricsCollector {
    * @param count - The count to increment by.
    */
   incrementRetryCount = (count: string) => {
-    this.incGauge(this.#metricNames.retryCount, { count });
+    this.incGauge(this.#metricNames.resyncFailureCount, { count });
   };
 
   /**
@@ -157,7 +158,24 @@ export class MetricsCollector {
    * @param label - The label for the cache miss.
    */
   initCacheMissWindow = (window: string) => {
+    this.#manageCacheMissSize();
     this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.set({ window }, 0);
+    this.#cacheMissWindows.set(window, 0);
+  };
+
+  /**
+   * Manages the size of the cache miss gauge map.
+   */
+  #manageCacheMissSize = () => {
+    const maxCacheMissWindows = process.env.PEPR_MAX_CACHE_MISS_WINDOWS
+      ? parseInt(process.env.PEPR_MAX_CACHE_MISS_WINDOWS, 10)
+      : undefined;
+
+    if (maxCacheMissWindows !== undefined && this.#cacheMissWindows.size >= maxCacheMissWindows) {
+      const firstKey = this.#cacheMissWindows.keys().next().value;
+      this.#cacheMissWindows.delete(firstKey);
+      this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.remove({ window: firstKey });
+    }
   };
 }
 

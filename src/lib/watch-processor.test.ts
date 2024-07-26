@@ -77,7 +77,7 @@ describe("WatchProcessor", () => {
 
   it("should setup watches for all bindings with isWatch=true", async () => {
     const watchCfg: WatchCfg = {
-      retryMax: 5,
+      resyncFailureMax: 5,
       retryDelaySec: 5,
     };
 
@@ -161,7 +161,7 @@ describe("WatchProcessor", () => {
     const secondCall = mockWatch.mock.calls[1] as unknown as mockArg;
     const thirdCall = mockWatch.mock.calls[2] as unknown as mockArg;
 
-    expect(firstCall[1].retryMax).toEqual(5);
+    expect(firstCall[1].resyncFailureMax).toEqual(5);
     expect(firstCall[1].retryDelaySec).toEqual(5);
     expect(firstCall[0]).toBeInstanceOf(Function);
 
