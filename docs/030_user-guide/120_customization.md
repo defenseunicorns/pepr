@@ -34,7 +34,7 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 
 | Field                        | Description                                                                                                      | Example Values                  |
 |------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------|
-| `PEPR_RESYNC_FAILURE_MAX`    | The maximum number of times to fail to relist before re-establishing the url and doing a relist    | default: `"5"`                |
+| `PEPR_RESYNC_FAILURE_MAX`    | The maximum number of times to fail on a relist interval before re-establishing the url and doing a relist    | default: `"5"`                |
 | `PEPR_RETRYDELAYSECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
 | `PEPR_RESYNCINTERVALSECONDS` | Amount of seconds to wait before a forced-resyncing of the watch list                                            | default: `"300"` (5 mins)       |
 | `PEPR_RELISTINTERVALSECONDS` | Amount of seconds to wait before a relist of the watched resources  | default: `"1800"` (30 mins)       |

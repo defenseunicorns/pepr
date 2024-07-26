@@ -13,6 +13,11 @@ The `MetricsCollector` exposes the following metrics:
 - `pepr_cache_miss`: A gauge that provides the number of cache misses per window.
 - `pepr_resync_failure_count`: A gauge that provides the number of failures per resync operation.
 
+## Environment Variables
+
+| `PEPR_MAX_CACHE_MISS_WINDOWS` | Amount of cache miss windows to emit  | default: `"INF"`  |
+
+
 ## API Details
 
 **Method:** GET
