@@ -78,7 +78,7 @@ describe("WatchProcessor", () => {
   it("should setup watches for all bindings with isWatch=true", async () => {
     const watchCfg: WatchCfg = {
       resyncFailureMax: 5,
-      retryDelaySec: 5,
+      resyncDelaySec: 5,
     };
 
     capabilities.push({
@@ -162,7 +162,7 @@ describe("WatchProcessor", () => {
     const thirdCall = mockWatch.mock.calls[2] as unknown as mockArg;
 
     expect(firstCall[1].resyncFailureMax).toEqual(5);
-    expect(firstCall[1].retryDelaySec).toEqual(5);
+    expect(firstCall[1].resyncDelaySec).toEqual(5);
     expect(firstCall[0]).toBeInstanceOf(Function);
 
     firstCall[0]({} as kind.Pod, WatchPhase.Added);

@@ -12,12 +12,12 @@ import { metricsCollector } from "./metrics";
 // Watch configuration
 const watchCfg: WatchCfg = {
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
-  retryDelaySec: process.env.PEPR_RETRYDELAYSECONDS ? parseInt(process.env.PEPR_RETRYDELAYSECONDS, 10) : 5,
-  resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
-    ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
+  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10) : 5,
+  lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
+    ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
     : 300,
-  relistIntervalSec: process.env.PEPR_RELISTINTERVALSECONDS
-    ? parseInt(process.env.PEPR_RELISTINTERVALSECONDS, 10)
+  relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
+    ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
     : 1800,
 };
 
