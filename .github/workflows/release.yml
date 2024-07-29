@@ -67,17 +67,17 @@ jobs:
           cache: "npm"
       - run: npm ci
 
-
   slsa:
-    needs: format
     permissions:
       id-token: write
       contents: read
       actions: read
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.0.0
-
+    with:
+      run-scripts: "ci, build"
+      
   publish:
-    needs: [slsa, format]
+    needs: [slsa]
     runs-on: ubuntu-latest
     steps:
       - name: Set up Node registry authentication
