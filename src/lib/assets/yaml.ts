@@ -41,6 +41,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
       env: envMapToArray(mergePkgJSONEnv(pkgJSONAdmissionEnv, config.env)),
+      envFrom: [],
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",
@@ -85,6 +86,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     watcher: {
       terminationGracePeriodSeconds: 5,
       env: envMapToArray(mergePkgJSONEnv(pkgJSONWatchEnv, config.env)),
+      envFrom: [],
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",

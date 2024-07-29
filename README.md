@@ -6,6 +6,7 @@
 [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
 [![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr)
+[![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
 #### **_Type safe Kubernetes middleware for humans_**

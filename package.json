@@ -9,10 +9,12 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "files": ["/dist", "/src"],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
+    "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
@@ -37,8 +39,8 @@
     "fast-json-patch": "3.1.1",
     "json-pointer": "^0.6.2",
     "kubernetes-fluent-client": "3.0.0",
-    "pino": "9.3.1",
-    "pino-pretty": "11.2.1",
+    "pino": "9.3.2",
+    "pino-pretty": "11.2.2",
     "prom-client": "15.1.3",
     "ramda": "0.30.1"
   },
