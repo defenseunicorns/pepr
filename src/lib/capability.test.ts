@@ -92,15 +92,19 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     capability.registerScheduleStore();
-    expect(() => capability.registerScheduleStore()).toThrowError("Schedule store already registered for test-capability");
+    expect(() => capability.registerScheduleStore()).toThrowError(
+      "Schedule store already registered for test-capability",
+    );
   });
 
   it("should correctly chain When, InNamespace, WithLabel, and Mutate methods", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-      logger.info("Executing mutation action");
-    });
+    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Executing mutation action");
+      },
+    );
 
     capability
       .When(a.Pod)
@@ -131,9 +135,11 @@ describe("Capability", () => {
   it("should use child logger for mutate callback", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn((req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-      logger.info("Mutate action log");
-    });
+    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+      (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Mutate action log");
+      },
+    );
 
     capability
       .When(a.Pod)
@@ -168,9 +174,11 @@ describe("Capability", () => {
 
     const capability = new Capability(complexCapabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-      logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
-    });
+    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
+      },
+    );
 
     capability
       .When(a.Pod)
@@ -194,8 +202,12 @@ describe("Capability", () => {
     }
 
     expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation");
+    expect(mockLog.child).toHaveBeenCalledWith({
+      alias: "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+    });
+    expect(mockLog.info).toHaveBeenCalledWith(
+      "Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+    );
     expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
   });
 });
