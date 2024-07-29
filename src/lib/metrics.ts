@@ -41,8 +41,8 @@ export class MetricsCollector {
     alerts: "alerts",
     mutate: "Mutate",
     validate: "Validate",
-    cacheMiss: "cache_miss",
-    resyncFailureCount: "pepr_resync_failure_count",
+    cacheMiss: "Cache_Miss",
+    resyncFailureCount: "Resync_Failure_Count",
   };
 
   /**
@@ -141,7 +141,7 @@ export class MetricsCollector {
    * Increments the cache miss gauge for a given label.
    * @param label - The label for the cache miss.
    */
-  incrementCacheMiss = (window: string) => {
+  incCacheMiss = (window: string) => {
     this.incGauge(this.#metricNames.cacheMiss, { window });
   };
 
@@ -149,7 +149,7 @@ export class MetricsCollector {
    * Increments the retry count gauge.
    * @param count - The count to increment by.
    */
-  incrementRetryCount = (count: string) => {
+  incRetryCount = (count: string) => {
     this.incGauge(this.#metricNames.resyncFailureCount, { count });
   };
 
@@ -158,7 +158,7 @@ export class MetricsCollector {
    * @param label - The label for the cache miss.
    */
   initCacheMissWindow = (window: string) => {
-    this.#manageCacheMissSize();
+    this.#rollCacheMissWindows();
     this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.set({ window }, 0);
     this.#cacheMissWindows.set(window, 0);
   };
@@ -166,7 +166,7 @@ export class MetricsCollector {
   /**
    * Manages the size of the cache miss gauge map.
    */
-  #manageCacheMissSize = () => {
+  #rollCacheMissWindows = () => {
     const maxCacheMissWindows = process.env.PEPR_MAX_CACHE_MISS_WINDOWS
       ? parseInt(process.env.PEPR_MAX_CACHE_MISS_WINDOWS, 10)
       : undefined;

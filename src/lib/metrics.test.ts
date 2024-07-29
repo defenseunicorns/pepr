@@ -81,22 +81,22 @@ test("coverage tests, with duplicate counters, default prefix (pepr) and still w
   expect(metrics).toMatch(/pepr_testSummary_sum \d+\.\d+/);
 });
 
-test("incrementCacheMiss increments cache miss gauge", async () => {
+test("incCacheMiss increments cache miss gauge", async () => {
   const collector = new MetricsCollector("testPrefix");
 
-  collector.incrementCacheMiss("window1");
+  collector.incCacheMiss("window1");
 
   const metrics = await collector.getMetrics();
-  expect(metrics).toMatch(/testPrefix_cache_miss{window="window1"} 1/);
+  expect(metrics).toMatch(/testPrefix_Cache_Miss{window="window1"} 1/);
 });
 
-test("incrementRetryCount increments retry count gauge", async () => {
+test("incRetryCount increments retry count gauge", async () => {
   const collector = new MetricsCollector("testPrefix");
 
-  collector.incrementRetryCount("1");
+  collector.incRetryCount("1");
 
   const metrics = await collector.getMetrics();
-  expect(metrics).toMatch(/testPrefix_retry_count{count="1"} 1/);
+  expect(metrics).toMatch(/testPrefix_Resync_Failure_Count{count="1"} 1/);
 });
 
 test("initCacheMissWindow initializes cache miss gauge to zero", async () => {
@@ -105,7 +105,7 @@ test("initCacheMissWindow initializes cache miss gauge to zero", async () => {
   collector.initCacheMissWindow("window1");
 
   const metrics = await collector.getMetrics();
-  expect(metrics).toMatch(/testPrefix_cache_miss{window="window1"} 0/);
+  expect(metrics).toMatch(/testPrefix_Cache_Miss{window="window1"} 0/);
 });
 
 test("should initialize cache miss window and maintain size limit", async () => {

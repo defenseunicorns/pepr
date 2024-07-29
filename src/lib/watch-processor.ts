@@ -110,7 +110,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
   watcher.events.on(WatchEvent.CACHE_MISS, windowName => {
-    metricsCollector.incrementCacheMiss(windowName);
+    metricsCollector.incCacheMiss(windowName);
   });
 
   watcher.events.on(WatchEvent.INIT_CACHE_MISS, windowName => {
@@ -118,7 +118,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   });
 
   watcher.events.on(WatchEvent.INC_RESYNC_FAILURE_COUNT, retryCount => {
-    metricsCollector.incrementRetryCount(retryCount);
+    metricsCollector.incRetryCount(retryCount);
   });
 
   // Start the watch

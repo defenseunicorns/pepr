@@ -10,12 +10,12 @@ The `MetricsCollector` exposes the following metrics:
 - `pepr_alerts`: A counter that increments when an alert event is triggered in the application.
 - `pepr_Mutate`: A summary that provides the observed durations of mutation events in the application.
 - `pepr_Validate`: A summary that provides the observed durations of validation events in the application.
-- `pepr_cache_miss`: A gauge that provides the number of cache misses per window.
-- `pepr_resync_failure_count`: A gauge that provides the number of failures per resync operation.
+- `pepr_Cache_Miss`: A gauge that provides the number of cache misses per window.
+- `pepr_Resync_Failure_Count`: A gauge that provides the number of failures per resync operation.
 
 ## Environment Variables
 
-| `PEPR_MAX_CACHE_MISS_WINDOWS` | Amount of cache miss windows to emit  | default: `"INF"`  |
+| `PEPR_MAX_CACHE_MISS_WINDOWS` | Maximum number windows to emit `pepr_Cache_Miss` metrics for  | default: `"INF"`  |
 
 
 ## API Details
@@ -76,18 +76,18 @@ GET /metrics
   pepr_Validate_sum 402.4275380000472
   pepr_Validate_count 2
 
-  # HELP pepr_cache_miss Number of cache misses per window
-  # TYPE pepr_cache_miss gauge
-  pepr_cache_miss{window="2024-07-25T11:54:33.897Z"} 18
-  pepr_cache_miss{window="2024-07-25T12:24:34.592Z"} 0
-  pepr_cache_miss{window="2024-07-25T13:14:33.450Z"} 22
-  pepr_cache_miss{window="2024-07-25T13:44:34.234Z"} 19
-  pepr_cache_miss{window="2024-07-25T14:14:34.961Z"} 0
+  # HELP pepr_Cache_Miss Number of cache misses per window
+  # TYPE pepr_Cache_Miss gauge
+  pepr_Cache_Miss{window="2024-07-25T11:54:33.897Z"} 18
+  pepr_Cache_Miss{window="2024-07-25T12:24:34.592Z"} 0
+  pepr_Cache_Miss{window="2024-07-25T13:14:33.450Z"} 22
+  pepr_Cache_Miss{window="2024-07-25T13:44:34.234Z"} 19
+  pepr_Cache_Miss{window="2024-07-25T14:14:34.961Z"} 0
 
-  # HELP pepr_retry_count Number of retries per count
-  # TYPE pepr_retry_count gauge
-  pepr_retry_count{count="0"} 5
-  pepr_retry_count{count="1"} 4
+  # HELP pepr_resync_Failure_count Number of retries per count
+  # TYPE pepr_resync_Failure_count gauge
+  pepr_resync_Failure_count{count="0"} 5
+  pepr_resync_Failure_count{count="1"} 4
 ```
 
 ## Prometheus Operator
