@@ -9,6 +9,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "files": ["/dist"],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
