@@ -85,8 +85,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       serviceMonitor: {
         enabled: false,
         labels: {},
-        annotations: {}
-      }
+        annotations: {},
+      },
     },
     watcher: {
       terminationGracePeriodSeconds: 5,
@@ -136,8 +136,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         enabled: false,
         labels: {},
         annotations: {},
-      }
-    }
+      },
+    },
   };
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));

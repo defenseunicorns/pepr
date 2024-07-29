@@ -136,7 +136,7 @@ export class Assets {
 
       if (validateWebhook || mutateWebhook) {
         await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate('admission')));
+        await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate("admission")));
       }
 
       if (mutateWebhook) {
@@ -169,7 +169,7 @@ export class Assets {
 
       if (watchDeployment) {
         await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate('watcher')));
+        await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate("watcher")));
       }
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);
