@@ -9,10 +9,12 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "files": ["/dist", "/src"],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
+    "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs",
