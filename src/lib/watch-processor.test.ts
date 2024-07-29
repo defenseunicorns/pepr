@@ -79,6 +79,8 @@ describe("WatchProcessor", () => {
     const watchCfg: WatchCfg = {
       resyncFailureMax: 5,
       resyncDelaySec: 5,
+      lastSeenLimitSeconds: 300,
+      relistIntervalSec: 1800,
     };
 
     capabilities.push({
