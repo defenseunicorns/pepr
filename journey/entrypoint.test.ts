@@ -18,15 +18,15 @@ export const cwd = "pepr-test-module";
 
 jest.setTimeout(1000 * 60 * 5);
 
-// // Configure the test environment before running the tests
-// beforeAll(before);
+// Configure the test environment before running the tests
+beforeAll(before);
 
-// describe("Journey: `npx pepr init`", peprInit);
+describe("Journey: `npx pepr init`", peprInit);
 
-// describe("Journey: `npx pepr format`", peprFormat);
+describe("Journey: `npx pepr format`", peprFormat);
 
 describe("Journey: `npx pepr build`", peprBuild);
 
-// describe("Journey: `npx pepr deploy`", peprDeploy);
+describe("Journey: `npx pepr deploy`", peprDeploy);
 
-// describe("Journey: `npx pepr dev`", peprDev);
+describe("Journey: `npx pepr dev`", peprDev);
