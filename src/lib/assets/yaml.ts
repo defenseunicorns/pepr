@@ -82,6 +82,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       extraVolumeMounts: [],
       extraVolumes: [],
       affinity: {},
+      serviceMonitor: {
+        enabled: false,
+        labels: {},
+        annotations: {},
+      },
     },
     watcher: {
       terminationGracePeriodSeconds: 5,
@@ -127,6 +132,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       extraVolumes: [],
       affinity: {},
       podAnnotations: {},
+      serviceMonitor: {
+        enabled: false,
+        labels: {},
+        annotations: {},
+      },
     },
   };
 
