@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { nsTemplate, chartYaml, watcherDeployTemplate, admissionDeployTemplate } from "./helm";
+import { nsTemplate, chartYaml, watcherDeployTemplate, admissionDeployTemplate, serviceMonitorTemplate } from "./helm";
 import { expect, describe, test } from "@jest/globals";
 describe("Kubernetes Template Generators", () => {
   describe("nsTemplate", () => {
@@ -39,6 +39,26 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}");
+    });
+  });
+
+  describe("admissionServiceMonitor", () => {
+    test("should generate a Service Monitor template for the admission controller correctly", () => {
+      const result = serviceMonitorTemplate("admission");
+      expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
+      expect(result).toContain("kind: ServiceMonitor");
+      expect(result).toContain("name: admission");
+      expect(result).toContain("pepr.dev/controller: admission");
+    });
+  });
+
+  describe("watcherServiceMonitor", () => {
+    test("should generate a Service Monitor template for the watcher controller correctly", () => {
+      const result = serviceMonitorTemplate("watcher");
+      expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
+      expect(result).toContain("kind: ServiceMonitor");
+      expect(result).toContain("name: watcher");
+      expect(result).toContain("pepr.dev/controller: watcher");
     });
   });
 });
