@@ -11,7 +11,7 @@ The `MetricsCollector` exposes the following metrics:
 - `pepr_Mutate`: A summary that provides the observed durations of mutation events in the application.
 - `pepr_Validate`: A summary that provides the observed durations of validation events in the application.
 - `pepr_Cache_Miss`: A gauge that provides the number of cache misses per window.
-- `pepr_Resync_Failure_Count`: A gauge that provides the number of failures per resync operation.
+- `pepr_Resync_Failure_Count`: A gauge that provides the number of unsuccessful attempts at receiving an event within the last seen event limit before re-establishing a new connection.
 
 ## Environment Variables
 
