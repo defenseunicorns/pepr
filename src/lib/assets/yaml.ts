@@ -9,21 +9,9 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
-import { mergePkgJSONEnv, envMapToArray } from "../helpers";
-
+import { genEnv } from "./pods";
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-  const pkgJSONAdmissionEnv = {
-    PEPR_WATCH_MODE: "false",
-    PEPR_PRETTY_LOG: "false",
-    LOG_LEVEL: "info",
-  };
-  const pkgJSONWatchEnv = {
-    PEPR_WATCH_MODE: "true",
-    PEPR_PRETTY_LOG: "false",
-    LOG_LEVEL: "info",
-  };
-
   const overrides = {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
@@ -40,7 +28,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
-      env: envMapToArray(mergePkgJSONEnv(pkgJSONAdmissionEnv, config.env)),
+      env: genEnv(config, false, true),
       envFrom: [],
       image,
       annotations: {
@@ -90,7 +78,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
     },
     watcher: {
       terminationGracePeriodSeconds: 5,
-      env: envMapToArray(mergePkgJSONEnv(pkgJSONWatchEnv, config.env)),
+      env: genEnv(config, true, true),
       envFrom: [],
       image,
       annotations: {
