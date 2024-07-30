@@ -84,10 +84,10 @@ GET /metrics
   pepr_Cache_Miss{window="2024-07-25T13:44:34.234Z"} 19
   pepr_Cache_Miss{window="2024-07-25T14:14:34.961Z"} 0
 
-  # HELP pepr_resync_Failure_count Number of retries per count
-  # TYPE pepr_resync_Failure_count gauge
-  pepr_resync_Failure_count{count="0"} 5
-  pepr_resync_Failure_count{count="1"} 4
+  # HELP pepr_Resync_Failure_Count Number of retries per count
+  # TYPE pepr_Resync_Failure_Count gauge
+  pepr_Resync_Failure_count{count="0"} 5
+  pepr_Resync_Failure_count{count="1"} 4
 ```
 
 ## Prometheus Operator
