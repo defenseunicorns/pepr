@@ -229,7 +229,6 @@ describe("WatchProcessor", () => {
 
     const firstCall = mockWatch.mock.calls[0] as unknown as mockArg;
 
-    // Simulate the events
     const cacheMissWindowName = "window-1";
     const retryCount = "retry-1";
 
