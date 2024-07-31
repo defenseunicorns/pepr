@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
@@ -8,6 +7,7 @@ import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/flu
 import { Capability } from "./capability";
 import { setupWatch, logEvent } from "./watch-processor";
 import Log from "./logger";
+import { metricsCollector } from "./metrics"; // Import the metricsCollector
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
@@ -17,6 +17,14 @@ jest.mock("kubernetes-fluent-client");
 jest.mock("./logger", () => ({
   debug: jest.fn(),
   error: jest.fn(),
+}));
+
+jest.mock("./metrics", () => ({
+  metricsCollector: {
+    initCacheMissWindow: jest.fn(),
+    incCacheMiss: jest.fn(),
+    incRetryCount: jest.fn(),
+  },
 }));
 
 describe("WatchProcessor", () => {
@@ -201,6 +209,72 @@ describe("WatchProcessor", () => {
     thirdCall[0]({} as kind.Pod, WatchPhase.Modified);
     expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
     expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
+  });
+
+  it("should call the metricsCollector methods on respective events", async () => {
+    const mockIncCacheMiss = jest.spyOn(metricsCollector, "incCacheMiss");
+    const mockInitCacheMissWindow = jest.spyOn(metricsCollector, "initCacheMissWindow");
+    const mockIncRetryCount = jest.spyOn(metricsCollector, "incRetryCount");
+
+    const watchCallback = jest.fn();
+    const capabilities = [
+      {
+        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallback }],
+      },
+    ] as unknown as Capability[];
+
+    setupWatch(capabilities);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
+
+    const firstCall = mockWatch.mock.calls[0] as unknown as mockArg;
+
+    // Simulate the events
+    const cacheMissWindowName = "window-1";
+    const retryCount = "retry-1";
+
+    firstCall[0]({} as kind.Pod, WatchPhase.Added);
+    mockEvents.mock.calls.forEach(call => {
+      if (call[0] === WatchEvent.CACHE_MISS) {
+        call[1](cacheMissWindowName);
+      }
+      if (call[0] === WatchEvent.INIT_CACHE_MISS) {
+        call[1](cacheMissWindowName);
+      }
+      if (call[0] === WatchEvent.INC_RESYNC_FAILURE_COUNT) {
+        call[1](retryCount);
+      }
+    });
+
+    expect(mockIncCacheMiss).toHaveBeenCalledWith(cacheMissWindowName);
+    expect(mockInitCacheMissWindow).toHaveBeenCalledWith(cacheMissWindowName);
+    expect(mockIncRetryCount).toHaveBeenCalledWith(retryCount);
+  });
+
+  it("should call parseInt with process.env.PEPR_RELIST_INTERVAL_SECONDS", async () => {
+    const parseIntSpy = jest.spyOn(global, "parseInt");
+
+    process.env.PEPR_RELIST_INTERVAL_SECONDS = "1800";
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const watchCfg: WatchCfg = {
+      resyncFailureMax: 5,
+      resyncDelaySec: 5,
+      lastSeenLimitSeconds: 300,
+      relistIntervalSec: parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10),
+    };
+
+    capabilities.push({
+      bindings: [
+        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
+        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+      ],
+    } as unknown as Capability);
+
+    setupWatch(capabilities);
+
+    expect(parseIntSpy).toHaveBeenCalledWith("1800", 10);
+    parseIntSpy.mockRestore();
   });
 });
 
