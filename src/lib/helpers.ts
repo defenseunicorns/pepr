@@ -6,24 +6,7 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { mergeDeepRight } from "ramda";
 
-export function mergePkgJSONEnv(env: Record<string, string>, pkgJSONEnv?: Record<string, string>) {
-  if (!pkgJSONEnv) {
-    return env;
-  }
-  // Cannot override watch mode because it is critical to deployments
-  Object.keys(pkgJSONEnv).forEach(key => {
-    if (key === "PEPR_WATCH_MODE") {
-      delete pkgJSONEnv[key];
-    }
-  });
-  return mergeDeepRight(env, pkgJSONEnv);
-}
-
-export function envMapToArray(env: Record<string, string>) {
-  return Object.entries(env).map(([key, value]) => ({ name: key, value }));
-}
 export class ValidationError extends Error {}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
