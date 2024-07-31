@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
@@ -8,6 +7,7 @@ import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/flu
 import { Capability } from "./capability";
 import { setupWatch, logEvent } from "./watch-processor";
 import Log from "./logger";
+import { metricsCollector } from "./metrics";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
@@ -17,6 +17,14 @@ jest.mock("kubernetes-fluent-client");
 jest.mock("./logger", () => ({
   debug: jest.fn(),
   error: jest.fn(),
+}));
+
+jest.mock("./metrics", () => ({
+  metricsCollector: {
+    initCacheMissWindow: jest.fn(),
+    incCacheMiss: jest.fn(),
+    incRetryCount: jest.fn(),
+  },
 }));
 
 describe("WatchProcessor", () => {
@@ -77,8 +85,10 @@ describe("WatchProcessor", () => {
 
   it("should setup watches for all bindings with isWatch=true", async () => {
     const watchCfg: WatchCfg = {
-      retryMax: 5,
-      retryDelaySec: 5,
+      resyncFailureMax: 5,
+      resyncDelaySec: 5,
+      lastSeenLimitSeconds: 300,
+      relistIntervalSec: 1800,
     };
 
     capabilities.push({
@@ -161,8 +171,8 @@ describe("WatchProcessor", () => {
     const secondCall = mockWatch.mock.calls[1] as unknown as mockArg;
     const thirdCall = mockWatch.mock.calls[2] as unknown as mockArg;
 
-    expect(firstCall[1].retryMax).toEqual(5);
-    expect(firstCall[1].retryDelaySec).toEqual(5);
+    expect(firstCall[1].resyncFailureMax).toEqual(5);
+    expect(firstCall[1].resyncDelaySec).toEqual(5);
     expect(firstCall[0]).toBeInstanceOf(Function);
 
     firstCall[0]({} as kind.Pod, WatchPhase.Added);
@@ -199,6 +209,77 @@ describe("WatchProcessor", () => {
     thirdCall[0]({} as kind.Pod, WatchPhase.Modified);
     expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
     expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
+  });
+
+  it("should call the metricsCollector methods on respective events", async () => {
+    const mockIncCacheMiss = metricsCollector.incCacheMiss;
+    const mockInitCacheMissWindow = metricsCollector.initCacheMissWindow;
+    const mockIncRetryCount = metricsCollector.incRetryCount;
+
+    const watchCallback = jest.fn();
+    const capabilities = [
+      {
+        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallback }],
+      },
+    ] as unknown as Capability[];
+
+    setupWatch(capabilities);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
+
+    const firstCall = mockWatch.mock.calls[0] as unknown as mockArg;
+
+    const cacheMissWindowName = "window-1";
+    const retryCount = "retry-1";
+
+    firstCall[0]({} as kind.Pod, WatchPhase.Added);
+    mockEvents.mock.calls.forEach(call => {
+      if (call[0] === WatchEvent.CACHE_MISS) {
+        call[1](cacheMissWindowName);
+      }
+      if (call[0] === WatchEvent.INIT_CACHE_MISS) {
+        call[1](cacheMissWindowName);
+      }
+      if (call[0] === WatchEvent.INC_RESYNC_FAILURE_COUNT) {
+        call[1](retryCount);
+      }
+    });
+
+    expect(mockIncCacheMiss).toHaveBeenCalledWith(cacheMissWindowName);
+    expect(mockInitCacheMissWindow).toHaveBeenCalledWith(cacheMissWindowName);
+    expect(mockIncRetryCount).toHaveBeenCalledWith(retryCount);
+  });
+
+  it("should call parseInt with process.env.PEPR_RELIST_INTERVAL_SECONDS", async () => {
+    const parseIntSpy = jest.spyOn(global, "parseInt");
+
+    process.env.PEPR_RELIST_INTERVAL_SECONDS = "1800";
+    process.env.PEPR_LAST_SEEN_LIMIT_SECONDS = "300";
+    process.env.PEPR_RESYNC_DELAY_SECONDS = "60";
+    process.env.PEPR_RESYNC_FAILURE_MAX = "5";
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const watchCfg: WatchCfg = {
+      resyncFailureMax: parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10),
+      resyncDelaySec: parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10),
+      lastSeenLimitSeconds: parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10),
+      relistIntervalSec: parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10),
+    };
+
+    capabilities.push({
+      bindings: [
+        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
+        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+      ],
+    } as unknown as Capability);
+
+    setupWatch(capabilities);
+
+    expect(parseIntSpy).toHaveBeenCalledWith("1800", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("300", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("60", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("5", 10);
+    parseIntSpy.mockRestore();
   });
 });
 
