@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
@@ -8,7 +7,7 @@ import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/flu
 import { Capability } from "./capability";
 import { setupWatch, logEvent } from "./watch-processor";
 import Log from "./logger";
-import { metricsCollector } from "./metrics"; // Import the metricsCollector
+import { metricsCollector } from "./metrics";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
@@ -213,9 +212,9 @@ describe("WatchProcessor", () => {
   });
 
   it("should call the metricsCollector methods on respective events", async () => {
-    const mockIncCacheMiss = jest.spyOn(metricsCollector, "incCacheMiss");
-    const mockInitCacheMissWindow = jest.spyOn(metricsCollector, "initCacheMissWindow");
-    const mockIncRetryCount = jest.spyOn(metricsCollector, "incRetryCount");
+    const mockIncCacheMiss = metricsCollector.incCacheMiss;
+    const mockInitCacheMissWindow = metricsCollector.initCacheMissWindow;
+    const mockIncRetryCount = metricsCollector.incRetryCount;
 
     const watchCallback = jest.fn();
     const capabilities = [
@@ -255,12 +254,15 @@ describe("WatchProcessor", () => {
     const parseIntSpy = jest.spyOn(global, "parseInt");
 
     process.env.PEPR_RELIST_INTERVAL_SECONDS = "1800";
+    process.env.PEPR_LAST_SEEN_LIMIT_SECONDS = "300";
+    process.env.PEPR_RESYNC_DELAY_SECONDS = "60";
+    process.env.PEPR_RESYNC_FAILURE_MAX = "5";
 
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const watchCfg: WatchCfg = {
-      resyncFailureMax: 5,
-      resyncDelaySec: 5,
-      lastSeenLimitSeconds: 300,
+      resyncFailureMax: parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10),
+      resyncDelaySec: parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10),
+      lastSeenLimitSeconds: parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10),
       relistIntervalSec: parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10),
     };
 
@@ -274,6 +276,9 @@ describe("WatchProcessor", () => {
     setupWatch(capabilities);
 
     expect(parseIntSpy).toHaveBeenCalledWith("1800", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("300", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("60", 10);
+    expect(parseIntSpy).toHaveBeenCalledWith("5", 10);
     parseIntSpy.mockRestore();
   });
 });
