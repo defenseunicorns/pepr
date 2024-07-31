@@ -37,10 +37,6 @@ export function peprBuild() {
 
     const expectedWatcherEnv = [
       {
-        "name": "PEPR_WATCH_MODE",
-        "value": "true"
-      },
-      {
         "name": "PEPR_PRETTY_LOG",
         "value": "false"
       },
@@ -59,10 +55,6 @@ export function peprBuild() {
     ];
 
     const expectedAdmissionEnv = [
-      {
-        "name": "PEPR_WATCH_MODE",
-        "value": "false"
-      },
       {
         "name": "PEPR_PRETTY_LOG",
         "value": "false"

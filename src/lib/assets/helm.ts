@@ -105,6 +105,8 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                   {{- toYaml .Values.watcher.resources | nindent 12 }}
                 env:
                   {{- toYaml .Values.watcher.env | nindent 12 }}
+                  - name: PEPR_WATCH_MODE
+                    value: "true"
                 envFrom:
                   {{- toYaml .Values.watcher.envFrom | nindent 12 }}
                 securityContext:
@@ -189,6 +191,8 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   {{- toYaml .Values.admission.resources | nindent 12 }}
                 env:
                   {{- toYaml .Values.admission.env | nindent 12 }}
+                  - name: PEPR_WATCH_MODE
+                    value: "false"
                 envFrom:
                   {{- toYaml .Values.admission.envFrom | nindent 12 }}
                 securityContext:

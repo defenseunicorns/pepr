@@ -357,14 +357,22 @@ export function moduleSecret(name: string, data: Buffer, hash: string): kind.Sec
   }
 }
 
-export function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
-  const def = {
-    PEPR_WATCH_MODE: watchMode ? "true" : "false",
+export function genEnv(config: ModuleConfig, watchMode = false, ignoreWatchMode = false): V1EnvVar[] {
+  const noWatchDef = {
     PEPR_PRETTY_LOG: "false",
     LOG_LEVEL: config.logLevel || "info",
   };
-  const cfg = config.env || {};
-  const env = Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 
-  return env;
+  const def = {
+    PEPR_WATCH_MODE: watchMode ? "true" : "false",
+    ...noWatchDef,
+  };
+
+  if (config.env && config.env["PEPR_WATCH_MODE"]) {
+    delete config.env["PEPR_WATCH_MODE"];
+  }
+  const cfg = config.env || {};
+  return ignoreWatchMode
+    ? Object.entries({ ...noWatchDef, ...cfg }).map(([name, value]) => ({ name, value }))
+    : Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 }
