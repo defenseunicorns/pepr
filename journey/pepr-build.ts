@@ -79,7 +79,6 @@ export function peprBuild() {
       expect(valuesJSON.admission.env).toEqual(expectedAdmissionEnv);
       expect(valuesJSON.watcher!.env).toEqual(expectedWatcherEnv);
     } catch (error) {
-      console.log("Error: ", error);
       expect(error).toBeUndefined();
     }
   })
