@@ -13,7 +13,7 @@ Under `Security > Code Scanning` there is a [pinned dependency issue](https://gi
 ### How to Remediate
 [https://app.stepsecurity.io](https://app.stepsecurity.io/secureworkflow/defenseunicorns/pepr/release.yml/main?enable=pin) can be used to pin the dependencies in the file.
 
-This tell us exactly which version of each dependency is installed at any time, and increases our [OpenSSF Scorecard Score](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr). 
+This tells us exactly which version of each dependency is installed at any time, and increases our [OpenSSF Scorecard Score](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr). 
 
 ### Definition of Done
 - [ ] Update the dependency to be the pinned at that version
