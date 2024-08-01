@@ -29,7 +29,7 @@ Differences:
 * There is a side of Pepr that is much more similar to Kube*Builder or Operator SDK, it can be used to reconcile events in order. You can apply a CustomResourceDefinition and control cluster state based on that custom resource.
 * * When I see a `WebApplication` resource is created I want to deploy a certain deployment, service, serviceAccount, networkPolicy, serviceMonitor, PrometheusRule, etc
 * * When I see a certain `WebApplication` resource is deleted I wanted to delete said resources
-* * When I see it is updated ..
+* * When I see it is updated, then update the deployed Kubernetes resources
 
 
 Both are honestly great tools, it depends on your niche, what your needs are. We think Pepr can do different things but a lot of the same. It is an opportunity to consolidate tooling.
