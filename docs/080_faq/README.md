@@ -13,6 +13,26 @@ or
 npx --node-options="--disable-warning=DEP0040" pepr [command]
 ```
 
+## How does Pepr compare to Kyverno?
+
+Pepr has similarities but ultimately is very different than Kyverno.
+
+Similarities:
+* Mutating Webhooks that can dynamically change resources before admission
+* Validating Webhooks to configure what can/cannot go through admission
+* Both utilize Kubernetes Informers under the hood for pre*existing cluster resources (ie, they have already went through admission)
+
+Differences:
+* Pepr is more like a "framework" than a tool, in Pepr you create a Pepr [Module](https://docs.pepr.dev/main/user*guide/pepr*modules/), in the module itself you define [capabilities](https://docs.pepr.dev/main/user*guide/capabilities/) that enforce / apply desired cluster state
+* Pepr is TypeScript and Kyverno is Go
+* Pepr gives the flexibility of a full*fledged strongly typed programming language decide what decisions to make based on events happening in the cluster. IE, when this pod is created then i could theoretically create the same pod in another cluster. (You can do whatever you want because it is TypeScript)
+* There is a side of Pepr that is much more similar to Kube*Builder or Operator SDK, it can be used to reconcile events in order. You can apply a CustomResourceDefinition and control cluster state based on that custom resource.
+* * When I see a `WebApplication` resource is created I want to deploy a certain deployment, service, serviceAccount, networkPolicy, serviceMonitor, PrometheusRule, etc
+* * When I see a certain `WebApplication` resource is deleted I wanted to delete said resources
+* * When I see it is updated ..
+
+
+Both are honestly great tools, it depends on your niche, what your needs are. We think Pepr can do different things but a lot of the same. It is an opportunity to consolidate tooling.
 
 ## How do I add custom labels to Pepr's Kubernetes manifests?
 
