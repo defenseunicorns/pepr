@@ -78,6 +78,33 @@ When(a.ConfigMap)
   });
 ```
 
+## Mutate Alias
+
+You can also use the Alias function to include a user-defined alias for a Mutate action in the logs for easier debugging. This is especially useful when you have multiple Mutate actions in a single module.
+
+For example, to add an alias to a Mutate action:
+
+```typescript
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .InNamespace("pepr-demo")
+  .WithLabel("new-label")
+  .Alias(
+    "reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation",
+  )
+  .Mutate(async (po, logger) => {
+    logger.info(`Pod ${po.metadata.name} is being mutated.`);
+  });
+```
+
+This will result in log entries that include the alias:
+
+```bash
+
+```
+
+**Note:** The Alias function is optional and can be used to provide additional context in the logs. You must pass the logger object to the Mutate function to use the Alias function.
+
 ## See Also
 
 Looking for some more generic helpers? Check out the [Module Author SDK](../130_sdk.md) for information on other things that Pepr can help with.
