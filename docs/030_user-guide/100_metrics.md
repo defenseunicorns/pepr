@@ -8,14 +8,14 @@ The `MetricsCollector` exposes the following metrics:
 
 - `pepr_errors`: A counter that increments when an error event occurs in the application.
 - `pepr_alerts`: A counter that increments when an alert event is triggered in the application.
-- `pepr_Mutate`: A summary that provides the observed durations of mutation events in the application.
-- `pepr_Validate`: A summary that provides the observed durations of validation events in the application.
-- `pepr_Cache_Miss`: A gauge that provides the number of cache misses per window.
-- `pepr_Resync_Failure_Count`: A gauge that provides the number of unsuccessful attempts at receiving an event within the last seen event limit before re-establishing a new connection.
+- `pepr_mutate`: A summary that provides the observed durations of mutation events in the application.
+- `pepr_validate`: A summary that provides the observed durations of validation events in the application.
+- `pepr_cache_miss`: A gauge that provides the number of cache misses per window.
+- `pepr_resync_failure_Count`: A gauge that provides the number of unsuccessful attempts at receiving an event within the last seen event limit before re-establishing a new connection.
 
 ## Environment Variables
 
-| `PEPR_MAX_CACHE_MISS_WINDOWS` | Maximum number windows to emit `pepr_Cache_Miss` metrics for  | default: `"INF"`  |
+| `PEPR_mAX_CACHE_mISS_WINDOWS` | Maximum number windows to emit `pepr_cache_miss` metrics for  | default: `"INF"`  |
 
 
 ## API Details
@@ -52,42 +52,42 @@ GET /metrics
   # TYPE pepr_alerts counter
   pepr_alerts 10
 
-  # HELP pepr_Mutate Mutation operation summary
-  # TYPE pepr_Mutate summary
-  pepr_Mutate{quantile="0.01"} 100.60707900021225
-  pepr_Mutate{quantile="0.05"} 100.60707900021225
-  pepr_Mutate{quantile="0.5"} 100.60707900021225
-  pepr_Mutate{quantile="0.9"} 100.60707900021225
-  pepr_Mutate{quantile="0.95"} 100.60707900021225
-  pepr_Mutate{quantile="0.99"} 100.60707900021225
-  pepr_Mutate{quantile="0.999"} 100.60707900021225
-  pepr_Mutate_sum 100.60707900021225
-  pepr_Mutate_count 1
+  # HELP pepr_mutate Mutation operation summary
+  # TYPE pepr_mutate summary
+  pepr_mutate{quantile="0.01"} 100.60707900021225
+  pepr_mutate{quantile="0.05"} 100.60707900021225
+  pepr_mutate{quantile="0.5"} 100.60707900021225
+  pepr_mutate{quantile="0.9"} 100.60707900021225
+  pepr_mutate{quantile="0.95"} 100.60707900021225
+  pepr_mutate{quantile="0.99"} 100.60707900021225
+  pepr_mutate{quantile="0.999"} 100.60707900021225
+  pepr_mutate_sum 100.60707900021225
+  pepr_mutate_count 1
 
-  # HELP pepr_Validate Validation operation summary
-  # TYPE pepr_Validate summary
-  pepr_Validate{quantile="0.01"} 201.19413900002837
-  pepr_Validate{quantile="0.05"} 201.19413900002837
-  pepr_Validate{quantile="0.5"} 201.2137690000236
-  pepr_Validate{quantile="0.9"} 201.23339900001884
-  pepr_Validate{quantile="0.95"} 201.23339900001884
-  pepr_Validate{quantile="0.99"} 201.23339900001884
-  pepr_Validate{quantile="0.999"} 201.23339900001884
-  pepr_Validate_sum 402.4275380000472
-  pepr_Validate_count 2
+  # HELP pepr_validate Validation operation summary
+  # TYPE pepr_validate summary
+  pepr_validate{quantile="0.01"} 201.19413900002837
+  pepr_validate{quantile="0.05"} 201.19413900002837
+  pepr_validate{quantile="0.5"} 201.2137690000236
+  pepr_validate{quantile="0.9"} 201.23339900001884
+  pepr_validate{quantile="0.95"} 201.23339900001884
+  pepr_validate{quantile="0.99"} 201.23339900001884
+  pepr_validate{quantile="0.999"} 201.23339900001884
+  pepr_validate_sum 402.4275380000472
+  pepr_validate_count 2
 
-  # HELP pepr_Cache_Miss Number of cache misses per window
-  # TYPE pepr_Cache_Miss gauge
-  pepr_Cache_Miss{window="2024-07-25T11:54:33.897Z"} 18
-  pepr_Cache_Miss{window="2024-07-25T12:24:34.592Z"} 0
-  pepr_Cache_Miss{window="2024-07-25T13:14:33.450Z"} 22
-  pepr_Cache_Miss{window="2024-07-25T13:44:34.234Z"} 19
-  pepr_Cache_Miss{window="2024-07-25T14:14:34.961Z"} 0
+  # HELP pepr_cache_miss Number of cache misses per window
+  # TYPE pepr_cache_miss gauge
+  pepr_cache_miss{window="2024-07-25T11:54:33.897Z"} 18
+  pepr_cache_miss{window="2024-07-25T12:24:34.592Z"} 0
+  pepr_cache_miss{window="2024-07-25T13:14:33.450Z"} 22
+  pepr_cache_miss{window="2024-07-25T13:44:34.234Z"} 19
+  pepr_cache_miss{window="2024-07-25T14:14:34.961Z"} 0
 
-  # HELP pepr_Resync_Failure_Count Number of retries per count
-  # TYPE pepr_Resync_Failure_Count gauge
-  pepr_Resync_Failure_count{count="0"} 5
-  pepr_Resync_Failure_count{count="1"} 4
+  # HELP pepr_resync_failure_Count Number of retries per count
+  # TYPE pepr_resync_failure_Count gauge
+  pepr_resync_failure_count{count="0"} 5
+  pepr_resync_failure_count{count="1"} 4
 ```
 
 ## Prometheus Operator
