@@ -16,7 +16,7 @@ Under `Security > Code Scanning` there is a [pinned dependency issue](https://gi
 This tells us exactly which version of each dependency is installed at any time, and increases our [OpenSSF Scorecard Score](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr). 
 
 ### Definition of Done
-- [ ] Update the dependency to be the pinned at that version
+- [ ] Update the dependency to be pinned at the version indicated in the dependency issue
 - [ ] Update all dependencies in the file that need to be pinned
 
 
