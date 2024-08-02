@@ -15,7 +15,7 @@ The `MetricsCollector` exposes the following metrics:
 
 ## Environment Variables
 
-| `PEPR_mAX_CACHE_mISS_WINDOWS` | Maximum number windows to emit `pepr_cache_miss` metrics for  | default: `"INF"`  |
+| `PEPR_MAX_CACHE_MISS_WINDOWS` | Maximum number windows to emit `pepr_cache_miss` metrics for  | default: `Undefined`  |
 
 
 ## API Details
