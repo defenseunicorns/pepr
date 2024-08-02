@@ -7,7 +7,7 @@
 export NODE_OPTIONS="--disable-warning=DEP0040"
 ```
 
-or 
+or
 
 ```bash
 npx --node-options="--disable-warning=DEP0040" pepr [command]
@@ -15,30 +15,33 @@ npx --node-options="--disable-warning=DEP0040" pepr [command]
 
 ## How does Pepr compare to Kyverno?
 
-Pepr has similarities but ultimately is very different than Kyverno.
+Although Pepr and Kyverno have similarities, Pepr is very different than Kyverno.
 
 Similarities:
-* Mutating Webhooks that can dynamically change resources before admission
-* Validating Webhooks to configure what can/cannot go through admission
-* Both utilize Kubernetes Informers under the hood for pre*existing cluster resources (ie, they have already went through admission)
+
+* Both have Mutating Webhooks that can dynamically change resources before admission
+* Both have Validating Webhooks to configure what can/cannot go through admission
+* Both utilize Kubernetes Informers under the hood for pre-existing cluster resources (ie, resources that have already gone through admission)
 
 Differences:
-* Pepr is more like a "framework" than a tool, in Pepr you create a Pepr [Module](https://docs.pepr.dev/main/user*guide/pepr*modules/), in the module itself you define [capabilities](https://docs.pepr.dev/main/user*guide/capabilities/) that enforce / apply desired cluster state
-* Pepr is TypeScript and Kyverno is Go
-* Pepr gives the flexibility of a full*fledged strongly typed programming language decide what decisions to make based on events happening in the cluster. IE, when this pod is created then i could theoretically create the same pod in another cluster. (You can do whatever you want because it is TypeScript)
-* There is a side of Pepr that is much more similar to Kube*Builder or Operator SDK, it can be used to reconcile events in order. You can apply a CustomResourceDefinition and control cluster state based on that custom resource.
-* * When I see a `WebApplication` resource is created I want to deploy a certain deployment, service, serviceAccount, networkPolicy, serviceMonitor, PrometheusRule, etc
-* * When I see a certain `WebApplication` resource is deleted I wanted to delete said resources
-* * When I see it is updated, then update the deployed Kubernetes resources
 
+* They have very different mission statements. Pepr focuses on making operators as easy as possible. Kyverno focuses on reporting, not building operators.
+* Pepr is more like a "framework" than a tool. In Pepr you create a Pepr [Module](https://docs.pepr.dev/main/user*guide/pepr*modules/). In the Pepr module you define [capabilities](https://docs.pepr.dev/main/user*guide/capabilities/) that enforce / apply desired cluster state.
+* Pepr is written in TypeScript. Kyverno is written in Go.
+* Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
+* Pepr can be used to reconcile events in order, similar to Kube-Builder or Operator SDK.
+* Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource. For example:
+  * When a `WebApplication` resource is created, deploy a certain deployment, service, serviceAccount, networkPolicy, serviceMonitor, PrometheusRule, etc.
+  * When a `WebApplication` resource is deleted, delete all the resources that were created for that `WebApplication`
+  * When a `WebApplication` is updated, update the deployed Kubernetes resources for that `WebApplication`
 
-Both are honestly great tools, it depends on your niche, what your needs are. We think Pepr can do different things but a lot of the same. It is an opportunity to consolidate tooling.
+Both Pepr and Kyverno are great tools. Which one to use for your project depends on your use case.
 
 ## How do I add custom labels to Pepr's Kubernetes manifests?
 
-During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.  
+During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.
 
-The following example shows how to add custom namespace labels.  
+The following example shows how to add custom namespace labels.
 
 ```json
   "pepr": {
@@ -54,7 +57,7 @@ The following example shows how to add custom namespace labels.
   }
 ```
 
-The resulting namespace will be generated after `npx pepr build`.  
+The resulting namespace will be generated after `npx pepr build`.
 
 ```yaml
 apiVersion: v1
@@ -78,7 +81,7 @@ npx clear-npx-cache
 
 If you want to ensure the cache has been cleared, you can check the cache directory. The location of this directory varies based on your operating system and configuration. However, you can generally find it in your system's home directory under `.npm`.
 
-**Note** - If you are inside of the Pepr Core repo (https://github.com/defenseunicorns/pepr), then it is normal for `npx pepr -V` to return `0.0.0-development`.  
+**Note** - If you are inside of the Pepr Core repo (https://github.com/defenseunicorns/pepr), then it is normal for `npx pepr -V` to return `0.0.0-development`.
 
 ## I've found a bug, what should I do?
 
