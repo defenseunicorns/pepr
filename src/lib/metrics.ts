@@ -39,10 +39,10 @@ export class MetricsCollector {
   #metricNames: MetricNames = {
     errors: "errors",
     alerts: "alerts",
-    mutate: "Mutate",
-    validate: "Validate",
-    cacheMiss: "Cache_Miss",
-    resyncFailureCount: "Resync_Failure_Count",
+    mutate: "mutate",
+    validate: "validate",
+    cacheMiss: "cache_miss",
+    resyncFailureCount: "resync_failure_count",
   };
 
   /**
