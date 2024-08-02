@@ -130,7 +130,7 @@ For example, an action could be responsible for adding a specific label to a Kub
 
 There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There is also a `Watch()` Action that can be used to watch for changes to Kubernetes resources that already exist.
 
-See [actions](./docs/030_user-guide/030_actions.md) for more details.
+See [actions](./docs/030_user-guide/030_actions/README.md) for more details.
 
 ## Logical Pepr Flow
 
