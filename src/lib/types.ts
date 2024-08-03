@@ -94,6 +94,7 @@ export type Binding = {
     namespaces: string[];
     labels: Record<string, string>;
     annotations: Record<string, string>;
+    deletionTimestamp: boolean;
   };
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
@@ -139,6 +140,11 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
   WithAnnotation: (key: string, value?: string) => BindingFilter<T>;
 };
 
+export type BindingWithDeletionTimestamp<T extends GenericClass> = BindingFilter<T> & {
+  /** Only apply the action if the resource has a deletionTimestamp. */
+  WithDeletionTimestamp: () => BindingFilter<T>;
+};
+
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
@@ -147,7 +153,7 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
-};
+} & BindingWithDeletionTimestamp<T>;
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**

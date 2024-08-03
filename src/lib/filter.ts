@@ -22,6 +22,10 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   const { metadata } = srcObject || {};
   const combinedNamespaces = [...namespaces, ...capabilityNamespaces];
 
+  // Test for deletionTimestamp
+  if (binding.filters.deletionTimestamp && metadata?.deletionTimestamp == undefined) {
+    return true;
+  }
   // Test for matching operation
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
     return true;

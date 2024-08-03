@@ -13,6 +13,7 @@ import {
   Binding,
   BindingFilter,
   BindingWithName,
+  BindingWithDeletionTimestamp,
   CapabilityCfg,
   CapabilityExport,
   Event,
@@ -198,12 +199,13 @@ export class Capability implements CapabilityExport {
         namespaces: [],
         labels: {},
         annotations: {},
+        deletionTimestamp: false,
       },
     };
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile };
+    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -277,6 +279,12 @@ export class Capability implements CapabilityExport {
       return { ...commonChain, WithName };
     }
 
+    function WithDeletionTimestamp(): BindingWithDeletionTimestamp<T> {
+      Log.debug("Add deletionTimestamp filter");
+      binding.filters.deletionTimestamp = true;
+      return commonChain;
+    }
+
     function WithName(name: string): BindingFilter<T> {
       Log.debug(`Add name filter ${name}`, prefix);
       binding.filters.name = name;
@@ -301,6 +309,7 @@ export class Capability implements CapabilityExport {
         ...commonChain,
         InNamespace,
         WithName,
+        WithDeletionTimestamp,
       };
     }
 
