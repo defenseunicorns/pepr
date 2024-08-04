@@ -138,12 +138,13 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
    * @param value
    */
   WithAnnotation: (key: string, value?: string) => BindingFilter<T>;
-};
-
-export type BindingWithDeletionTimestamp<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource has a deletionTimestamp. */
   WithDeletionTimestamp: () => BindingFilter<T>;
 };
+
+// export type BindingWithDeletionTimestamp<T extends GenericClass> = BindingFilter<T> & {
+
+// };
 
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
@@ -153,7 +154,7 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
-} & BindingWithDeletionTimestamp<T>;
+};
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**

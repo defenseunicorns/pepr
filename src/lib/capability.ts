@@ -13,7 +13,6 @@ import {
   Binding,
   BindingFilter,
   BindingWithName,
-  BindingWithDeletionTimestamp,
   CapabilityCfg,
   CapabilityExport,
   Event,
@@ -279,7 +278,7 @@ export class Capability implements CapabilityExport {
       return { ...commonChain, WithName };
     }
 
-    function WithDeletionTimestamp(): BindingWithDeletionTimestamp<T> {
+    function WithDeletionTimestamp(): BindingFilter<T> {
       Log.debug("Add deletionTimestamp filter");
       binding.filters.deletionTimestamp = true;
       return commonChain;
