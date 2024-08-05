@@ -35,7 +35,7 @@ Both Pepr and Kyverno are great tools. Which one to use for your project depends
 
 ## How do I add custom labels to Pepr's Kubernetes manifests?
 
-During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.
+During the build process, custom labels can be added the `pepr-system` namespace based on the `pepr` section of the `package.json`. Checkout the [Customizing with package.json](../030_user-guide/[120_customization.md#packagejson-configurations-table].
 
 The following example shows how to add custom namespace labels.
 
