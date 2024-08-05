@@ -25,7 +25,6 @@ Similarities:
 
 Differences:
 
-* They have very different mission statements. Pepr focuses on making operators as easy as possible. Kyverno focuses on reporting, not building operators.
 * Pepr is more like a "framework" than a tool. In Pepr you create a Pepr [Module](https://docs.pepr.dev/main/user*guide/pepr*modules/). In the Pepr module you define [capabilities](https://docs.pepr.dev/main/user*guide/capabilities/) that enforce / apply desired cluster state.
 * Pepr is written in TypeScript. Kyverno is written in Go.
 * Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
