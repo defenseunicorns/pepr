@@ -20,7 +20,7 @@ Pepr and Operator SDK are both frameworks used for building Kubernetes operators
 Similarities:
 * **Scaffolding**: Automatically generate boilerplate code for new operators and Kubernetes manifests for building controllers.
 * **Helper Functions**: Provide utility functions to interact with Kubernetes resources and manage the lifecycle of Kubernetes resources.
-* **Admission Webhooks and Kubernetes Controllers**: Both support building admission controllers and Kubernetes controllers, utilizing Kubernetes Informer patterns.
+* **Admission Webhooks and Kubernetes Controllers**: Both support building admission and Kubernetes controllers by reacting to changes in the cluster in an automated way.
 
 Differences:
 * **Main Goals**: Operator SDK is mainly focused on building operators and later included support for Webhooks. In contrast, Pepr started out as a framework for building Webhooks and later added support for building operators via the Kubernetes Informer in the [Kubernetes-Fluent-Client](https://github.com/defenseunicorns/kubernetes-fluent-client) through [Watch](../030_user-guide/030_actions/040_watch.md) and [Reconcile](.../030_user-guide/030_actions/030_reconcile.md).
