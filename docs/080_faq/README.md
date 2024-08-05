@@ -26,7 +26,7 @@ Differences:
 * **Main Goals**: Operator SDK is mainly focused on building operators and later included support for Webhooks. In contrast, Pepr started out as a framework for building Webhooks and later added support for building operators via [Kubernetes-Fluent-Client](https://github.com/defenseunicorns/kubernetes-fluent-client) through [Watch](../030_user-guide/030_actions/040_watch.md) and [Reconcile](../030_user-guide/030_actions/030_reconcile.md).
 * **Language Support**: Operator SDK supports Go, Ansible, and Helm, while Pepr is written in TypeScript and designed with an English style fluent API for simplicity.
 * **Lifecycle Management**: Operator SDK provides tools for managing the lifecycle of operators through OLM (Operator Lifecycle Manager), while Pepr relies on [Helm](../030_user-guide/120_customization.md) for upgrades.
-* **Complexity**: Operator SDK uses native Kubernetes Go libraries for deep integration with Kubernetes resources, while Pepr exposes a high-level abstraction allowing users to focus on business logic without the need to understand the Go Kubernetes libraries.
+* **Complexity**: Operator SDK uses native Kubernetes Go libraries for deep integration with Kubernetes resources, while Pepr exposes a high-level abstraction allowing users to focus on business logic.
 * **Easy Setup**: While both make it easy to initialize a new project, Pepr comes with an out-of-the-box `hello-pepr.ts` example which demonstrates how to use Pepr effectively.
 * **API Design**: Pepr uses an English-style fluent API for simplicity, whereas Operator SDK employs Go for its API. Pepr is designed to facilitate quick development and deployment of Kubernetes operators and admission controllers with minimal effort.
 
