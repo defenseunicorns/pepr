@@ -15,7 +15,7 @@ npx --node-options="--disable-warning=DEP0040" pepr [command]
 
 ## How does Pepr compare to Kyverno?
 
-Although Pepr and Kyverno have similarities, Pepr is very different than Kyverno.
+Although Pepr and Kyverno have similarities, Pepr is very different than Kyverno. They have very different mission statements. Pepr focuses on making operators as easy as possible. Kyverno focuses on reporting, not building operators.
 
 Similarities:
 
