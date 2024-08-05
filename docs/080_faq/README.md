@@ -29,10 +29,7 @@ Differences:
 * Pepr is written in TypeScript. Kyverno is written in Go.
 * Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
 * Pepr can be used to reconcile events in order, similar to Kube-Builder or Operator SDK.
-* Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource. For example:
-  * When a `WebApplication` resource is created, deploy a certain deployment, service, serviceAccount, networkPolicy, serviceMonitor, PrometheusRule, etc.
-  * When a `WebApplication` resource is deleted, delete all the resources that were created for that `WebApplication`
-  * When a `WebApplication` is updated, update the deployed Kubernetes resources for that `WebApplication`
+* Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource.
 
 Both Pepr and Kyverno are great tools. Which one to use for your project depends on your use case.
 
