@@ -7,7 +7,7 @@
 export NODE_OPTIONS="--disable-warning=DEP0040"
 ```
 
-or 
+or
 
 ```bash
 npx --node-options="--disable-warning=DEP0040" pepr [command]
@@ -31,12 +31,31 @@ Differences:
 * **Easy Setup**: While both are easy to initialize a new project, Pepr comes out-of-the-box example with `hello-pepr.ts`, demonstrating how to use Pepr effectively.
 * **API Design**: Pepr uses an English-style fluent API for simplicity, whereas Operator SDK employs Go for its API. Pepr is designed to facilitate quick development and deployment of Kubernetes operators and admission controllers with minimal effort.
 
+## How does Pepr compare to Kyverno?
+
+Although Pepr and Kyverno have similarities, Pepr is very different than Kyverno. They have very different mission statements. Pepr focuses on making operators as easy as possible. Kyverno focuses on reporting, not building operators.
+
+Similarities:
+
+* Both have Mutating Webhooks that can dynamically change resources before admission
+* Both have Validating Webhooks to configure what can/cannot go through admission
+* Both provide a way to react to changes to pre-existing cluster resources (ie, resources that have already gone through admission)
+
+Differences:
+
+* Pepr is more like a "framework" than a tool. In Pepr you create a Pepr [Module](../030_user-guide/020_pepr-modules.md). In the Pepr module you define [capabilities](../030_user-guide/040_capabilities.md) that enforce / apply desired cluster state.
+* Pepr is written in TypeScript. Kyverno is written in Go.
+* Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
+* Pepr can be used to reconcile events in order, similar to Kube-Builder or Operator SDK.
+* Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource.
+
+Both Pepr and Kyverno are great tools. Which one to use for your project depends on your use case.
 
 ## How do I add custom labels to Pepr's Kubernetes manifests?
 
-During the build process, custom labels can be added the Kubernetes manifests that Pepr generates based on the Pepr section of the `package.json`. Currently, adding custom labels to `namespace` is supported.  
+During the build process, custom labels can be added the `pepr-system` namespace based on the `package.json`. Checkout the [Customizing with package.json](../030_user-guide/120_customization.md#packagejson-configurations-table).
 
-The following example shows how to add custom namespace labels.  
+The following example shows how to add custom namespace labels.
 
 ```json
   "pepr": {
@@ -52,7 +71,7 @@ The following example shows how to add custom namespace labels.
   }
 ```
 
-The resulting namespace will be generated after `npx pepr build`.  
+The resulting namespace will be generated after `npx pepr build`.
 
 ```yaml
 apiVersion: v1
@@ -76,7 +95,7 @@ npx clear-npx-cache
 
 If you want to ensure the cache has been cleared, you can check the cache directory. The location of this directory varies based on your operating system and configuration. However, you can generally find it in your system's home directory under `.npm`.
 
-**Note** - If you are inside of the Pepr Core repo (https://github.com/defenseunicorns/pepr), then it is normal for `npx pepr -V` to return `0.0.0-development`.  
+**Note** - If you are inside of the Pepr Core repo (https://github.com/defenseunicorns/pepr), then it is normal for `npx pepr -V` to return `0.0.0-development`.
 
 ## I've found a bug, what should I do?
 
