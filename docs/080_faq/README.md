@@ -21,7 +21,7 @@ Similarities:
 
 * Both have Mutating Webhooks that can dynamically change resources before admission
 * Both have Validating Webhooks to configure what can/cannot go through admission
-* Both utilize Kubernetes Informers under the hood for pre-existing cluster resources (ie, resources that have already gone through admission)
+* Both provide a way to react to changes to pre-existing cluster resources (ie, resources that have already gone through admission)
 
 Differences:
 
