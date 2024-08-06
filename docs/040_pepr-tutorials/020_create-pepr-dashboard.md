@@ -584,7 +584,7 @@ data:
             },
             "editorMode": "builder",
             "exemplar": false,
-            "expr": "pepr_Validate_count{container=\"server\"}",
+            "expr": "pepr_validate_count{container=\"server\"}",
             "instant": false,
             "legendFormat": "{{instance}}",
             "range": true,
@@ -596,7 +596,7 @@ data:
               "uid": "prometheus"
             },
             "editorMode": "builder",
-            "expr": "pepr_Validate_sum{container=\"watcher\"}",
+            "expr": "pepr_validate_sum{container=\"watcher\"}",
             "hide": false,
             "legendFormat": "{{instance}}",
             "range": true,
@@ -669,7 +669,7 @@ data:
               "uid": "prometheus"
             },
             "editorMode": "builder",
-            "expr": "pepr_Mutate_count{container=\"server\"}",
+            "expr": "pepr_mutate_count{container=\"server\"}",
             "legendFormat": "{{instance}}",
             "range": true,
             "refId": "A"
@@ -680,7 +680,7 @@ data:
               "uid": "prometheus"
             },
             "editorMode": "builder",
-            "expr": "rate(pepr_Mutate_count{container=\"watcher\"}[24h])",
+            "expr": "rate(pepr_mutate_count{container=\"watcher\"}[24h])",
             "hide": false,
             "legendFormat": "{{instance}}",
             "range": true,

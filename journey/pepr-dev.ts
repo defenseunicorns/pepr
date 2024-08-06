@@ -97,8 +97,8 @@ export function peprDev() {
 
   it("should expose Prometheus metrics", async () => {
     const metrics = await validateMetrics();
-    expect(metrics).toMatch("pepr_Validate");
-    expect(metrics).toMatch("pepr_Mutate");
+    expect(metrics).toMatch("pepr_validate");
+    expect(metrics).toMatch("pepr_mutate");
     expect(metrics).toMatch("pepr_errors");
     expect(metrics).toMatch("pepr_alerts");
   });
