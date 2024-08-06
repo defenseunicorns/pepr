@@ -12,7 +12,7 @@ Pepr's feature set has expanded beyond what is easily held in-mind.
 
 Additionally, its method for (partially) describing supported functionality -- a single, templatized, uber-capability called "hello-pepr" -- is showing its age. Designed primarly as a combined introduction & demonstration tool, hello-pepr has gotten unwieldy from aggregating examples in an ad-hoc manner. This makes it difficult to scan for known-included examples and tricky to know where to place new ones (or how comprehensive to make them).
 
-Pair that with Pepr moving out of proof-of-concept status and it becomes obvious that we need a better way to test the _whole_ of its featureset -- ideally something that is easier to examine, maintain, and parallelize the execution of.
+Pair that with Pepr moving out of proof-of-concept status and it becomes obvious that we need a better way to test the _whole_ of its feature set -- ideally something that is easier to examine, maintain, and parallelize the execution of.
 
 
 ## Decision
