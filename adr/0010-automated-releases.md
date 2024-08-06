@@ -8,7 +8,7 @@ Proposed
 
 ## Context
 
-Currently, releasing Pepr is a manual process. This is not ideal because anything done "by hand" :
+Currently, releasing Pepr is a manual process. This is not ideal because anything done "by hand":
 
 - is subject to the inattentive, accidental nature of humans (everybody has "bad" days),
 - requires a _trusted_ human to give effort (if outputs are to be trusted) which is sometimes difficult to arrange in an OSS ecosystem,
