@@ -4,7 +4,7 @@
 
 ## Session Recordings
 - [Optimizing Kubernetes Operators and Admission Control - Open Source Summit NA 2024](https://www.youtube.com/watch?v=SqJfvQ1frr4)
-- [Pepr Analyzation and Demo - YouTube](https://www.youtube.com/watch?v=kgSfS68hzbY)
+- [Pepr Analysis and Demo - YouTube](https://www.youtube.com/watch?v=kgSfS68hzbY)
 
 ## Workshops
 - [Pepr Scenario Killer Koda](https://killercoda.com/decoder/scenario/pepr)
