@@ -15,7 +15,7 @@
 
 ## 2023
 
-***Session Recording***
+***Session Recordings***
 - [Optimizing Kubernetes Ecosystems: Leveraging Fluent, Flexible APIs for Admission Control Strategies](https://www.youtube.com/watch?v=32xhSJPMtBU&t=12s)
 - [Getting Started with Defense Unicorns Integrating Capabilities with Pepr](https://www.youtube.com/watch?v=2kHIMo0ITo4)
 
