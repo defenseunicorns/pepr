@@ -74,6 +74,10 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+          
+      - name: Set package version
+        run: npm --no-git-tag-version version ${{ github.ref_name }} 
+
       - name: Publish package
         id: publish
         uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@v2.0.0
