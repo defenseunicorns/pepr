@@ -17,6 +17,7 @@
     "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
+    "version": "node scripts/set-version.js",
     "build": "tsc && node build.mjs",
     "build:image": "npm run build && docker buildx build --tag pepr:dev .",
     "test": "npm run test:unit && npm run test:journey",
