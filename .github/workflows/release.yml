@@ -1,6 +1,7 @@
 name: Version Release
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
@@ -33,28 +34,28 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
-      - name: "Pepr Controller: Login to GHCR"
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
-        with:
-          registry: ghcr.io
-          username: dummy
-          password: ${{ github.token }}
+      # - name: "Pepr Controller: Login to GHCR"
+      #   uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+      #   with:
+      #     registry: ghcr.io
+      #     username: dummy
+      #     password: ${{ github.token }}
 
-      - name: Publish to GHCR 
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          #!/bin/bash
+      # - name: Publish to GHCR 
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #   run: |
+      #     #!/bin/bash
 
-          npm install -g npm
+      #     npm install -g npm
 
-          npm --no-git-tag-version version ${{ github.ref_name }}
+      #     npm --no-git-tag-version version ${{ github.ref_name }}
 
-          # Build Controller Image
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
+      #     # Build Controller Image
+      #     docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
 
-          # Build Pepr dist folder for NPM 
-          docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
+      #     # Build Pepr dist folder for NPM 
+      #     docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
 
   slsa:
     permissions:
@@ -74,9 +75,9 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-          
+
       - name: Set package version
-        run: npm --no-git-tag-version version ${{ github.ref_name }} 
+        run: npm --no-git-tag-version version 0.34.0  #${{ github.ref_name }} 
 
       - name: Publish package
         id: publish
