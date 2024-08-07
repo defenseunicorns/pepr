@@ -48,13 +48,10 @@ jobs:
 
           npm install -g npm
 
-          npm --no-git-tag-version version ${{ github.ref_name }}
+          npm run version
 
           # Build Controller Image
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
-
-          # Build Pepr dist folder for NPM 
-          docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
 
   slsa:
     permissions:
