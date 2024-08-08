@@ -203,7 +203,7 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile };
+    const commonChain = { WithLabel, WithAnnotation, Mutate, Validate, Watch, Reconcile, Alias };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -233,12 +233,16 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
-        // Push the binding to the list of bindings for this capability as a new BindingAction
-        // with the callback function to preserve
+        // Create the child logger once and use it throughout the callback
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         bindings.push({
           ...binding,
           isMutate: true,
-          mutateCallback,
+          mutateCallback: async (req, logger = aliasLogger) => {
+            aliasLogger.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
+            await mutateCallback(req, logger);
+          },
         });
       }
 
@@ -295,12 +299,19 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
+    function Alias(alias: string) {
+      Log.debug(`Add prefix alias ${alias}`, prefix);
+      binding.alias = alias;
+      return commonChain;
+    }
+
     function bindEvent(event: Event) {
       binding.event = event;
       return {
         ...commonChain,
         InNamespace,
         WithName,
+        Alias,
       };
     }
 

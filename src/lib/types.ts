@@ -7,6 +7,8 @@ import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
+import Log from "./logger";
+
 /**
  * Specifically for deploying images with a private registry
  */
@@ -95,6 +97,7 @@ export type Binding = {
     labels: Record<string, string>;
     annotations: Record<string, string>;
   };
+  alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
   readonly watchCallback?: WatchAction<GenericClass, InstanceType<GenericClass>>;
@@ -159,6 +162,7 @@ export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
    * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
   Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
+  Alias: (alias: string) => BindingFilter<T>;
 };
 
 export type ValidateActionChain<T extends GenericClass> = {
@@ -216,6 +220,7 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprMutateRequest<K>,
+  logger?: typeof Log,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
