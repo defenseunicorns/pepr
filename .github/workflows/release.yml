@@ -71,7 +71,6 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-          
       - name: Set package version
         run: npm --no-git-tag-version version ${{ github.ref_name }} 
 
