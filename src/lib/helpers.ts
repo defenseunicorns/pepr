@@ -73,6 +73,17 @@ export function filterNoMatchReason(
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
 ): string {
+  // binding deletionTimestamp filter and object deletionTimestamp dont match
+  if (
+    (binding.filters && binding.filters.deletionTimestamp && obj.metadata && !obj.metadata.deletionTimestamp) ||
+    (binding.filters &&
+      binding.filters.deletionTimestamp &&
+      obj.metadata &&
+      obj.metadata!.deletionTimestamp === undefined)
+  ) {
+    return `Ignoring Watch Callback: Object does not have a deletion timestamp.`;
+  }
+
   // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
     return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
