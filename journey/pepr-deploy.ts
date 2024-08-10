@@ -254,7 +254,6 @@ function testMutate() {
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
 
     expect(cm5.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBe("succeeded");
-    expect(cm5.data?.["chuck-says"]).toBeTruthy();
   });
 
   it("should mutate secret-1", async () => {
@@ -292,7 +291,15 @@ function testStore() {
 
     // Should have been migrated and removed
     const nullKey2 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
-    expect(nullKey1).toBeUndefined();
+    expect(nullKey2).toBeUndefined();
+
+    // Should have a key from the joke url and getItem should have worked
+    const key3 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-https://icanhazdadjoke.com/`);
+    expect(key3).toContain(" ");
+    const cm = await waitForConfigMap("pepr-demo", "example-5");
+    // Store can put special characters /r/n in the data, compare first word
+    expect(cm.data?.["chuck-says"].length).toBeGreaterThanOrEqual(5);
+    expect(cm.data?.["chuck-says"]).toBeTruthy();
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {

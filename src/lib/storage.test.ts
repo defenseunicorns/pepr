@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { DataStore, Storage, v2StoreKey, stripV2Prefix } from "./storage";
+import { DataStore, Storage, v2StoreKey, v2UnescapedStoreKey, stripV2Prefix } from "./storage";
 import fc from "fast-check";
 
 describe("stripV2Prefix", () => {
@@ -27,6 +27,18 @@ describe("v2StoreKey", () => {
     }
   });
 });
+
+describe("v2UnescapedStoreKey", () => {
+  it("should prefix the key with v2", () => {
+    const keys = ["https://google.com", "sso-client-http://bin", "key3", "key4", "key5"];
+    const results = ["v2-https://google.com", "v2-sso-client-http://bin", "v2-key3", "v2-key4", "v2-key5"];
+
+    for (let i = 0; i < keys.length; i++) {
+      const result = v2UnescapedStoreKey(keys[i]);
+      expect(result).toEqual(results[i]);
+    }
+  });
+});
 describe("Storage with fuzzing and property-based tests", () => {
   let storage: Storage;
 
@@ -39,7 +51,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const mockData: DataStore = { [v2StoreKey(key)]: value };
+        const mockData: DataStore = { [v2UnescapedStoreKey(key)]: value };
         storage.receive(mockData);
         if (value === "") {
           expect(storage.getItem(key)).toBeNull();
@@ -75,7 +87,7 @@ describe("Storage with fuzzing and property-based tests", () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (key, value) => {
         storage.setItem(key, value);
-        const mockData: DataStore = { [v2StoreKey(key)]: value };
+        const mockData: DataStore = { [v2UnescapedStoreKey(key)]: value };
         storage.receive(mockData);
         if (value === "") {
           expect(storage.getItem(key)).toBeNull();
@@ -100,19 +112,20 @@ describe("Storage", () => {
     const key = "key1";
     storage.setItem(key, "value1");
 
-    expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
+    expect(mockSender).toHaveBeenCalledWith("add", [v2UnescapedStoreKey(key)], "value1");
   });
 
   it("should set an item and wait", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
     jest.useFakeTimers();
-    const key = "key1";
+    const keys = ["key1", "https://google.com", "sso-client-http://bin"];
 
-    // asserting on sender invocation rather than Promise so no need to wait
-    void storage.setItemAndWait(key, "value1");
+    keys.map(key => {
+      void storage.setItemAndWait(key, "value1");
+      expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
+    });
 
-    expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
     jest.useRealTimers();
   });
 
@@ -142,10 +155,10 @@ describe("Storage", () => {
     const mockSender = jest.fn();
     storage.registerSender(mockSender);
 
-    storage.receive({ key1: "value1", key2: "value2" });
+    storage.receive({ key1: "value1", key2: "value2", "sso-client-http://bin": "value3" });
     storage.clear();
 
-    expect(mockSender).toHaveBeenCalledWith("remove", ["key1", "key2"], undefined);
+    expect(mockSender).toHaveBeenCalledWith("remove", ["key1", "key2", "sso-client-http:~1~1bin"], undefined);
   });
 
   it("should get an item", () => {
@@ -153,7 +166,7 @@ describe("Storage", () => {
     const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine", " "];
 
     keys.map((key, i) => {
-      const mockData: DataStore = { [v2StoreKey(key)]: results[i]! };
+      const mockData: DataStore = { [v2UnescapedStoreKey(key)]: results[i]! };
 
       storage.receive(mockData);
       const value = storage.getItem(keys[i]);
