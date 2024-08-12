@@ -42,28 +42,29 @@ export default function (program: RootCmd) {
       const log = new K8sLog(kc);
 
       const logStream = new stream.PassThrough();
-
-      logStream.on("data", chunk => {
+      logStream.on("data", async chunk => {
         const respMsg = `"msg":"Check response"`;
         // Split the chunk into lines
-        const lines = chunk.toString().split("\n");
+        const lines = await chunk.toString().split("\n");
 
         for (const line of lines) {
           // Check for `"msg":"Hello Pepr"`
           if (line.includes(respMsg)) {
             try {
-              const payload = JSON.parse(line);
+              const payload = JSON.parse(line.trim());
               const isMutate = payload.res.patchType || payload.res.warnings;
 
               const name = `${payload.namespace}${payload.name}`;
-              const uid = payload.uid;
+              const uid = payload.res.uid;
 
               if (isMutate) {
-                const plainPatch = atob(payload.res.patch) || "";
-                const patch = JSON.stringify(JSON.parse(plainPatch), null, 2);
+                const plainPatch =
+                  payload.res?.patch !== undefined && payload.res?.patch !== null
+                    ? atob(payload.res.patch)
+                    : "";
 
+                const patch = plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
                 const patchType = payload.res.patchType || payload.res.warnings || "";
-
                 const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
                 console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
                 if (patchType.length > 0) {

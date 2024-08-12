@@ -31,7 +31,7 @@ export function namespace(namespaceLabels?: Record<string, string>) {
   }
 }
 
-export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
+export function watcher(assets: Assets, hash: string, buildTimestamp: string, imagePullSecret?: string) {
   const { name, image, capabilities, config } = assets;
 
   let hasSchedule = false;
@@ -54,7 +54,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
     return null;
   }
 
-  return {
+  const deploy: kind.Deployment = {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -176,13 +176,24 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string) {
       },
     },
   };
+
+  if (imagePullSecret) {
+    deploy.spec!.template.spec!.imagePullSecrets = [{ name: imagePullSecret }];
+  }
+
+  return deploy;
 }
 
-export function deployment(assets: Assets, hash: string, buildTimestamp: string): kind.Deployment {
+export function deployment(
+  assets: Assets,
+  hash: string,
+  buildTimestamp: string,
+  imagePullSecret?: string,
+): kind.Deployment {
   const { name, image, config } = assets;
   const app = name;
 
-  return {
+  const deploy: kind.Deployment = {
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -313,6 +324,12 @@ export function deployment(assets: Assets, hash: string, buildTimestamp: string)
       },
     },
   };
+
+  if (imagePullSecret) {
+    deploy.spec!.template.spec!.imagePullSecrets = [{ name: imagePullSecret }];
+  }
+
+  return deploy;
 }
 
 export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {
@@ -340,14 +357,22 @@ export function moduleSecret(name: string, data: Buffer, hash: string): kind.Sec
   }
 }
 
-function genEnv(config: ModuleConfig, watchMode = false): V1EnvVar[] {
-  const def = {
-    PEPR_WATCH_MODE: watchMode ? "true" : "false",
+export function genEnv(config: ModuleConfig, watchMode = false, ignoreWatchMode = false): V1EnvVar[] {
+  const noWatchDef = {
     PEPR_PRETTY_LOG: "false",
     LOG_LEVEL: config.logLevel || "info",
   };
-  const cfg = config.env || {};
-  const env = Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 
-  return env;
+  const def = {
+    PEPR_WATCH_MODE: watchMode ? "true" : "false",
+    ...noWatchDef,
+  };
+
+  if (config.env && config.env["PEPR_WATCH_MODE"]) {
+    delete config.env["PEPR_WATCH_MODE"];
+  }
+  const cfg = config.env || {};
+  return ignoreWatchMode
+    ? Object.entries({ ...noWatchDef, ...cfg }).map(([name, value]) => ({ name, value }))
+    : Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 }

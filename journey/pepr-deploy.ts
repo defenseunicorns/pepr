@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, jest, afterAll, describe, expect, it } from "@jest/globals";
-import { execSync, spawnSync, spawn, ChildProcess } from "child_process";
+import { describe, expect, it } from "@jest/globals";
+import { execSync, spawnSync, spawn } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
-
 import { destroyModule } from "../src/lib/assets/destroy";
 import { cwd } from "./entrypoint.test";
 import {
   deleteConfigMap,
+  noWaitPeprStoreKey,
   waitForConfigMap,
   waitForDeploymentReady,
   waitForNamespace,
@@ -23,7 +23,18 @@ export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
 
+
   it("should deploy the Pepr controller into the test cluster", async () => {
+    // Apply the store crd and pepr-system ns
+    await applyStoreCRD();
+
+    // Apply the store
+    await applyLegacyStoreResource();
+
+    /* 
+     * when controller starts up, it will migrate the store 
+     * and later on the keys will be tested to validate the migration
+     */
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
@@ -50,7 +61,7 @@ export function peprDeploy() {
 
     it("npx pepr monitor should display validation results to console", async () => {
       await testValidate();
-      
+
       const cmd = ['pepr', 'monitor', 'static-test']
 
       const proc = spawn('npx', cmd, { shell: true })
@@ -60,7 +71,7 @@ export function peprDeploy() {
         const stdout: String = data.toString()
         state.accept = stdout.includes("✅") ? true : state.accept
         state.reject = stdout.includes("❌") ? true : state.reject
-
+        expect(stdout.includes("IGNORED")).toBe(false)
         if (state.accept && state.reject) {
           proc.kill()
           proc.stdin.destroy()
@@ -68,6 +79,7 @@ export function peprDeploy() {
           proc.stderr.destroy()
         }
       })
+
       proc.on('exit', () => state.done = true);
 
       await until(() => state.done)
@@ -163,6 +175,7 @@ function testIgnore() {
     expect(cm.metadata?.labels?.["pepr"]).toBeUndefined();
   });
 }
+
 async function testValidate() {
   // Apply the sample yaml for the HelloPepr capability
   const applyOut = spawnSync("kubectl apply -f hello-pepr.samples.yaml", {
@@ -259,6 +272,7 @@ function testMutate() {
   });
 }
 
+
 function testStore() {
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
@@ -266,15 +280,49 @@ function testStore() {
   });
 
   it("should write the correct data to the PeprStore", async () => {
-    const key1 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1");
+    const key1 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1`);
     expect(key1).toBe("was-here");
 
-    const key2 = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-example-1-data");
+    // Should have been migrated and removed
+    const nullKey1 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
+    expect(nullKey1).toBeUndefined();
+
+    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1-data`);
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
+
+    // Should have been migrated and removed
+    const nullKey2 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
+    expect(nullKey1).toBeUndefined();
   });
 
   it("should write the correct data to the PeprStore from a Watch Action", async () => {
-    const key = await waitForPeprStoreKey("pepr-static-test-store", "hello-pepr-watch-data");
+    const key = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-watch-data`);
     expect(key).toBe("This data was stored by a Watch Action.");
   });
+}
+
+
+
+async function applyStoreCRD() {
+  // Apply the store crd
+  const appliedStoreCRD = spawnSync("kubectl apply -f journey/resources/pepr-store-crd.yaml", {
+    shell: true, // Run command in a shell
+    encoding: "utf-8", // Encode result as string
+    cwd: resolve(cwd, ".."),
+  });
+  const { stdout } = appliedStoreCRD;
+
+  expect(stdout).toContain("customresourcedefinition.apiextensions.k8s.io/peprstores.pepr.dev");
+}
+
+async function applyLegacyStoreResource() {
+  // Apply the store
+  const appliedStore = spawnSync("kubectl apply -f journey/resources/non-migrated-peprstore.yaml", {
+    shell: true, // Run command in a shell
+    encoding: "utf-8", // Encode result as string
+    cwd: resolve(cwd, ".."),
+  });
+  const { stdout } = appliedStore;
+
+  expect(stdout).toContain("peprstore.pepr.dev/pepr-static-test-store");
 }

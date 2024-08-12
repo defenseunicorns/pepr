@@ -1,16 +1,97 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test } from "@jest/globals";
+import { expect, test, describe } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-
+import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
-import { Event } from "./types";
+import { Event, Binding } from "./types";
+import { AdmissionRequest } from "./k8s";
 
 const callback = () => undefined;
 
 const podKind = modelToGroupVersionKind(kind.Pod.name);
+
+describe("Fuzzing shouldSkipRequest", () => {
+  test("should handle random inputs without crashing", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          event: fc.constantFrom("CREATE", "UPDATE", "DELETE", "ANY"),
+          kind: fc.record({
+            group: fc.string(),
+            version: fc.string(),
+            kind: fc.string(),
+          }),
+          filters: fc.record({
+            name: fc.string(),
+            namespaces: fc.array(fc.string()),
+            labels: fc.dictionary(fc.string(), fc.string()),
+            annotations: fc.dictionary(fc.string(), fc.string()),
+          }),
+        }),
+        fc.record({
+          operation: fc.string(),
+          uid: fc.string(),
+          name: fc.string(),
+          namespace: fc.string(),
+          kind: fc.record({
+            group: fc.string(),
+            version: fc.string(),
+            kind: fc.string(),
+          }),
+        }),
+        fc.array(fc.string()),
+        (binding, req, capabilityNamespaces) => {
+          expect(() =>
+            shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
+          ).not.toThrow();
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+describe("Property-Based Testing shouldSkipRequest", () => {
+  test("should only skip requests that do not match the binding criteria", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          event: fc.constantFrom("CREATE", "UPDATE", "DELETE", "ANY"),
+          kind: fc.record({
+            group: fc.string(),
+            version: fc.string(),
+            kind: fc.string(),
+          }),
+          filters: fc.record({
+            name: fc.string(),
+            namespaces: fc.array(fc.string()),
+            labels: fc.dictionary(fc.string(), fc.string()),
+            annotations: fc.dictionary(fc.string(), fc.string()),
+          }),
+        }),
+        fc.record({
+          operation: fc.string(),
+          uid: fc.string(),
+          name: fc.string(),
+          namespace: fc.string(),
+          kind: fc.record({
+            group: fc.string(),
+            version: fc.string(),
+            kind: fc.string(),
+          }),
+        }),
+        fc.array(fc.string()),
+        (binding, req, capabilityNamespaces) => {
+          const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
+          expect(typeof shouldSkip).toBe("boolean");
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
 
 test("should reject when name does not match", () => {
   const binding = {

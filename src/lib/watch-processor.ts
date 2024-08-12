@@ -7,14 +7,18 @@ import { filterNoMatchReason } from "./helpers";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
+import { metricsCollector } from "./metrics";
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  retryMax: process.env.PEPR_RETRYMAX ? parseInt(process.env.PEPR_RETRYMAX, 10) : 5,
-  retryDelaySec: process.env.PEPR_RETRYDELAYSECONDS ? parseInt(process.env.PEPR_RETRYDELAYSECONDS, 10) : 5,
-  resyncIntervalSec: process.env.PEPR_RESYNCINTERVALSECONDS
-    ? parseInt(process.env.PEPR_RESYNCINTERVALSECONDS, 10)
+  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
+  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10) : 5,
+  lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
+    ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
     : 300,
+  relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
+    ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
+    : 1800,
 };
 
 // Map the event to the watch phase
@@ -95,8 +99,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
 
   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
-  watcher.events.on(WatchEvent.RECONNECT, (err, retryCount) =>
-    logEvent(WatchEvent.RECONNECT, err ? `Reconnecting after ${retryCount} attempts` : ""),
+  watcher.events.on(WatchEvent.RECONNECT, retryCount =>
+    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
   );
   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
@@ -105,6 +109,18 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
   watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
+  watcher.events.on(WatchEvent.CACHE_MISS, windowName => {
+    metricsCollector.incCacheMiss(windowName);
+  });
+
+  watcher.events.on(WatchEvent.INIT_CACHE_MISS, windowName => {
+    metricsCollector.initCacheMissWindow(windowName);
+  });
+
+  watcher.events.on(WatchEvent.INC_RESYNC_FAILURE_COUNT, retryCount => {
+    metricsCollector.incRetryCount(retryCount);
+  });
+
   // Start the watch
   try {
     await watcher.start();

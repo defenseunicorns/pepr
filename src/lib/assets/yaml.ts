@@ -4,13 +4,12 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
-
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
-
+import { genEnv } from "./pods";
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
   const overrides = {
@@ -29,11 +28,8 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
-      env: [
-        { name: "PEPR_WATCH_MODE", value: "false" },
-        { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "info" },
-      ],
+      env: genEnv(config, false, true),
+      envFrom: [],
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",
@@ -74,14 +70,16 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       extraVolumeMounts: [],
       extraVolumes: [],
       affinity: {},
+      serviceMonitor: {
+        enabled: false,
+        labels: {},
+        annotations: {},
+      },
     },
     watcher: {
       terminationGracePeriodSeconds: 5,
-      env: [
-        { name: "PEPR_WATCH_MODE", value: "true" },
-        { name: "PEPR_PRETTY_LOG", value: "false" },
-        { name: "LOG_LEVEL", value: "info" },
-      ],
+      env: genEnv(config, true, true),
+      envFrom: [],
       image,
       annotations: {
         "pepr.dev/description": `${config.description}` || "",
@@ -122,14 +120,13 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       extraVolumes: [],
       affinity: {},
       podAnnotations: {},
+      serviceMonitor: {
+        enabled: false,
+        labels: {},
+        annotations: {},
+      },
     },
   };
-  if (process.env.PEPR_MODE === "dev") {
-    overrides.admission.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
-    overrides.watcher.env.push({ name: "ZARF_VAR", value: "###ZARF_VAR_THING###" });
-    overrides.admission.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
-    overrides.watcher.env.push({ name: "MY_CUSTOM_VAR", value: "example-value" });
-  }
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
@@ -190,9 +187,8 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string) {
+export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
   const { name, tls, apiToken, path } = assets;
-
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
@@ -200,7 +196,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp);
+  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -209,7 +205,7 @@ export async function allYaml(assets: Assets, rbacMode: string) {
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, assets.hash, assets.buildTimestamp),
+    deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),

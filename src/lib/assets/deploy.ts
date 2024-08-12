@@ -12,8 +12,35 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
-import { CapabilityExport } from "../types";
+import { CapabilityExport, ImagePullSecret } from "../types";
 
+export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string) {
+  try {
+    await K8s(kind.Namespace).Get("pepr-system");
+  } catch {
+    await K8s(kind.Namespace).Apply(namespace());
+  }
+
+  try {
+    await K8s(kind.Secret).Apply(
+      {
+        apiVersion: "v1",
+        kind: "Secret",
+        metadata: {
+          name,
+          namespace: "pepr-system",
+        },
+        type: "kubernetes.io/dockerconfigjson",
+        data: {
+          ".dockerconfigjson": Buffer.from(JSON.stringify(imagePullSecret)).toString("base64"),
+        },
+      },
+      { force: true },
+    );
+  } catch (e) {
+    Log.error(e);
+  }
+}
 export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
 
