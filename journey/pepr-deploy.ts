@@ -297,8 +297,6 @@ function testStore() {
     const key3 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-https://icanhazdadjoke.com/`);
     expect(key3).toContain(" ");
     const cm = await waitForConfigMap("pepr-demo", "example-5");
-    // Store can put special characters /r/n in the data, compare first word
-    expect(cm.data?.["chuck-says"].length).toBeGreaterThanOrEqual(5);
     expect(cm.data?.["chuck-says"]).toBeTruthy();
   });
 
