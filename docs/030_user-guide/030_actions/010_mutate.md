@@ -89,11 +89,9 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
   .WithLabel("pepr-test-pod")
-  .Alias(
-    "reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation",
-  )
+  .Alias("reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation")
   .Mutate(async (po, logger) => {
-    logger.info(`Pod ${po.metadata.name} is being mutated.`);
+    logger.info(`Pod ${po.Raw.metadata?.name} is being mutated.`);
   });
 ```
 

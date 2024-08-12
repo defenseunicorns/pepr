@@ -210,4 +210,48 @@ describe("Capability", () => {
     );
     expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
   });
+
+  it("should reset the alias before each mutation", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("First mutation action");
+      },
+    );
+
+    const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Second mutation action");
+      },
+    );
+
+    // First mutation with an alias
+    capability.When(a.Pod).IsCreatedOrUpdated().InNamespace("default").Alias("first-alias").Mutate(firstMutateCallback);
+
+    // Second mutation without an alias (should use "no alias provided")
+    capability.When(a.Pod).IsCreatedOrUpdated().InNamespace("default").Mutate(secondMutateCallback);
+
+    expect(capability.bindings).toHaveLength(2);
+
+    // Simulate the first mutation action
+    const peprRequest1 = new PeprMutateRequest<V1Pod>(mockRequest);
+    if (capability.bindings[0].mutateCallback) {
+      await capability.bindings[0].mutateCallback(peprRequest1);
+    }
+
+    expect(firstMutateCallback).toHaveBeenCalledWith(peprRequest1, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "first-alias" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: first-alias");
+
+    // Simulate the second mutation action
+    const peprRequest2 = new PeprMutateRequest<V1Pod>(mockRequest);
+    if (capability.bindings[1].mutateCallback) {
+      await capability.bindings[1].mutateCallback(peprRequest2);
+    }
+
+    expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: no alias provided");
+  });
 });
