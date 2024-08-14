@@ -61,13 +61,9 @@ jobs:
       - run: npm ci
       - run: npm run test:journey
       - run: npm run test:journey-wasm
-# Now do the soak test
 
-# Clone the watch-auditor repo 
-# CLone Pepr Soak CI 
-# Deploy Pepr Soak CI 
-# Deploy Watch Auditor
-# Publish results every 32 mins and every 5 mins
+
+      # Now do the soak test
       - name: clone pepr-excellent-examples
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -77,15 +73,6 @@ jobs:
       - name: "set env: PEXEX"
         run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
-      - name: clone watch-auditor
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          repository: cmwylie19/watch-auditor
-          path: watch-auditor
-
-      - name: "set env: SOAK"
-        run: echo "SOAK=${GITHUB_WORKSPACE}/watch-auditor" >> "$GITHUB_ENV"
-
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEXEX"
@@ -93,45 +80,15 @@ jobs:
 
       - name: deploy the soak test and environment
         run: |
-          cd "$PEXEX"/hello-pepr-soak-ci
-          npx pepr deploy -i pepr:dev
-
-      - name: deploy the watch-auditor 
-        run: |
-          cd "$SOAK"/watch-auditor
-          kubectl apply -f k8s/
-
-      - name: Run background tasks
-        run: |
+          cd "$PEXEX"
           chmod +x ./get-metrics.sh
           ./get-metrics.sh &
+          npm run test:e2e -w hello-pepr-store-ci -- -i pepr:dev
 
-
-
-      - name: Build the Project
-        run: |
-          echo "Building the project..."
-          # Replace this with the actual build command
-          mkdir build
-          echo "Example build output" > build/output.txt
-
-      - name: Run Tests
-        run: |
-          echo "Running tests..."
-          # Your commands to run tests
-          mkdir logs
-          echo "Example test log" > logs/test-log.txt
-
-      - name: Upload Build Output as Artifact
+      - name: Upload Log Output as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: build-output
-          path: build/
-
-      - name: Upload Test Logs as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-logs
+          name: log-output
           path: logs/
 
       - name: Cleanup

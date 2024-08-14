@@ -1,14 +1,20 @@
 #!/bin/bash
 
-# Loop to run commands every 15 minutes
+# watch-auditor ns is already created
+kubectl run metrics-collector -n watch-auditor --image=nginx -restart=Never
+
+# wait for deployments to be ready
+# we sleep instead of kubectl --wait=for
+# because deployments have not been deployed yet
+sleep 180
+
+# Loop to run commands every 5 minutes
 while true; do
-  # List all pods (example namespace: your-namespace)
-  kubectl get pods -n your-namespace
   
-  # Exec into specific pods and get metrics or logs
-  kubectl exec -it runner -n watch-auditor -- curl watch-auditor:8080/metrics >> logs/auditor-log.txt
-  kubectl exec your-pod-2 -n pepr-system -- curl -k https://localhost:3000/metrics >> logs/informer-log.txt
-  
-  # Wait for 15 minutes before next iteration
-  sleep 900
+  # Save metrics to logs folder and report
+  kubectl exec -it metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics >> logs/auditor-log.txt
+  cat logs/auditor-log.txt
+  kubectl exec -it metrics-collector -n watch-auditor -- curl -k https://pepr.svc.cluster.local:3000/metrics >> logs/informer-log.txt
+  cat logs/informer-log.txt
+  sleep 180
 done
