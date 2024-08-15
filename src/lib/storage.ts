@@ -17,6 +17,10 @@ export function v2StoreKey(key: string) {
   return `${STORE_VERSION_PREFIX}-${pointer.escape(key)}`;
 }
 
+export function v2UnescapedStoreKey(key: string) {
+  return `${STORE_VERSION_PREFIX}-${key}`;
+}
+
 export function stripV2Prefix(key: string) {
   return key.replace(/^v2-/, "");
 }
@@ -95,7 +99,7 @@ export class Storage implements PeprStore {
   };
 
   getItem = (key: string) => {
-    const result = this.#store[v2StoreKey(key)] || null;
+    const result = this.#store[v2UnescapedStoreKey(key)] || null;
     if (result !== null && typeof result !== "function" && typeof result !== "object") {
       return result;
     }
@@ -103,7 +107,10 @@ export class Storage implements PeprStore {
   };
 
   clear = () => {
-    this.#dispatchUpdate("remove", Object.keys(this.#store));
+    this.#dispatchUpdate(
+      "remove",
+      Object.keys(this.#store).map(key => pointer.escape(key)),
+    );
   };
 
   removeItem = (key: string) => {
@@ -124,9 +131,10 @@ export class Storage implements PeprStore {
    */
   setItemAndWait = (key: string, value: string) => {
     this.#dispatchUpdate("add", [v2StoreKey(key)], value);
+
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (data[`${v2StoreKey(key)}`] === value) {
+        if (data[`${v2UnescapedStoreKey(key)}`] === value) {
           unsubscribe();
           resolve();
         }
@@ -151,7 +159,7 @@ export class Storage implements PeprStore {
     this.#dispatchUpdate("remove", [v2StoreKey(key)]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
-        if (!Object.hasOwn(data, `${v2StoreKey(key)}`)) {
+        if (!Object.hasOwn(data, `${v2UnescapedStoreKey(key)}`)) {
           unsubscribe();
           resolve();
         }
