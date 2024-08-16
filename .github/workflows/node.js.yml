@@ -115,7 +115,7 @@ jobs:
           node-version: 20
           cache: "npm"
           cache-dependency-path: pepr-excellent-examples
-          
+
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEXEX"
@@ -123,10 +123,11 @@ jobs:
 
       - name: deploy the soak test and environment
         run: |
+          cd "$PEXEX"
           npm run test:e2e -w hello-pepr-store-ci -- -i pepr:dev
 
       - name: Upload Log Output as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: log-output
-          path: logs/
+          path: pepr-excellent-examples/logs/
