@@ -152,8 +152,6 @@ export class PeprControllerStore {
           fillCache(name, "add", [key.slice(offset)], data[key]);
         }
       }
-
-      // await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
     }
     await flushCache();
     this.#setupWatch();

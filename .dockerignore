@@ -4,3 +4,4 @@ Dockerfile
 Dockerfile.controller
 Dockerfile.dist
 pepr-upgrade-test
+scripts
