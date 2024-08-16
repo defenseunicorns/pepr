@@ -16,7 +16,6 @@ let stdout = execSync(cmd, { cwd: pexex })
 let examples = stdout.toLocaleString().trim().split("\n")
 
 // select those with 'test:e2e' scripts
-// TODO Exclude soak test
 let e2es = examples
   .map(ex => [ ex, require(`${ex}/package.json`) ])
   .filter(([ex, cfg]) => Object.hasOwn(cfg.scripts, 'test:e2e'))
