@@ -124,8 +124,7 @@ jobs:
       - name: deploy the soak test and environment
         run: |
           cd "$PEXEX"
-          ls -la
-          npm run test:soak -w hello-pepr-store-ci -- -i pepr:dev
+          npm run test:soak -w hello-pepr-soak-ci -- -i pepr:dev
 
       - name: Upload Log Output as Artifact
         uses: actions/upload-artifact@v2
