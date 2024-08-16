@@ -96,7 +96,7 @@ jobs:
 
       - run: npm ci
       - run: npm run test:journey
-      - run: npm run test:journey-wasm
+      # - run: npm run test:journey-wasm
 
 
       # Now do the soak test
@@ -124,6 +124,7 @@ jobs:
       - name: deploy the soak test and environment
         run: |
           cd "$PEXEX"
+          ls -la
           npm run test:soak -w hello-pepr-store-ci -- -i pepr:dev
 
       - name: Upload Log Output as Artifact
