@@ -109,6 +109,13 @@ jobs:
       - name: "set env: PEXEX"
         run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
+      - name: setup node
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: pepr-excellent-examples
+          
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEXEX"
