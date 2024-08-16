@@ -105,6 +105,10 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                   {{- toYaml .Values.watcher.resources | nindent 12 }}
                 env:
                   {{- toYaml .Values.watcher.env | nindent 12 }}
+                  - name: PEPR_WATCH_MODE
+                    value: "true"
+                envFrom:
+                  {{- toYaml .Values.watcher.envFrom | nindent 12 }}
                 securityContext:
                   {{- toYaml .Values.watcher.containerSecurityContext | nindent 12 }}
                 volumeMounts:
@@ -187,6 +191,10 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   {{- toYaml .Values.admission.resources | nindent 12 }}
                 env:
                   {{- toYaml .Values.admission.env | nindent 12 }}
+                  - name: PEPR_WATCH_MODE
+                    value: "false"
+                envFrom:
+                  {{- toYaml .Values.admission.envFrom | nindent 12 }}
                 securityContext:
                   {{- toYaml .Values.admission.containerSecurityContext | nindent 12 }}
                 volumeMounts:
@@ -215,5 +223,32 @@ export function admissionDeployTemplate(buildTimestamp: string) {
               {{- if .Values.admission.extraVolumes }}
               {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
               {{- end }}
+    `;
+}
+
+export function serviceMonitorTemplate(name: string) {
+  return `
+      {{- if .Values.${name}.serviceMonitor.enabled }}
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: ${name}
+        annotations:
+          {{- toYaml .Values.${name}.serviceMonitor.annotations | nindent 4 }}
+        labels:
+          {{- toYaml .Values.${name}.serviceMonitor.labels | nindent 4 }}
+      spec:
+        selector:
+          matchLabels:
+            pepr.dev/controller: ${name}
+        namespaceSelector:
+          matchNames:
+            - pepr-system
+        endpoints:
+          - targetPort: 3000
+            scheme: https
+            tlsConfig:
+              insecureSkipVerify: true
+      {{- end }}
     `;
 }

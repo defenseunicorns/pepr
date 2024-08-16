@@ -61,8 +61,8 @@ export class PeprControllerStore {
         K8s(PeprStore)
           .InNamespace(namespace)
           .Get(this.#name)
-          // If the get succeeds, setup the watch
-          .then(this.#setupWatch)
+          // If the get succeeds, migrate and setup the watch
+          .then(async (store: PeprStore) => await this.#migrateAndSetupWatch(store))
           // Otherwise, create the resource
           .catch(this.#createStoreResource),
       Math.random() * 3000,
@@ -72,6 +72,89 @@ export class PeprControllerStore {
   #setupWatch = () => {
     const watcher = K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
     watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
+  };
+
+  #migrateAndSetupWatch = async (store: PeprStore) => {
+    Log.debug(store, "Pepr Store migration");
+    const data: DataStore = store.data || {};
+    const migrateCache: Record<string, Operation> = {};
+
+    // Send the cached updates to the cluster
+    const flushCache = async () => {
+      const indexes = Object.keys(migrateCache);
+      const payload = Object.values(migrateCache);
+
+      // Loop over each key in the cache and delete it to avoid collisions with other sender calls
+      for (const idx of indexes) {
+        delete migrateCache[idx];
+      }
+
+      try {
+        // Send the patch to the cluster
+        await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+      } catch (err) {
+        Log.error(err, "Pepr store update failure");
+
+        if (err.status === 422) {
+          Object.keys(migrateCache).forEach(key => delete migrateCache[key]);
+        } else {
+          // On failure to update, re-add the operations to the cache to be retried
+          for (const idx of indexes) {
+            migrateCache[idx] = payload[Number(idx)];
+          }
+        }
+      }
+    };
+
+    const fillCache = (name: string, op: DataOp, key: string[], val?: string) => {
+      if (op === "add") {
+        // adjust the path for the capability
+        const path = `/data/${name}-v2-${key}`;
+        const value = val || "";
+        const cacheIdx = [op, path, value].join(":");
+
+        // Add the operation to the cache
+        migrateCache[cacheIdx] = { op, path, value };
+
+        return;
+      }
+
+      if (op === "remove") {
+        if (key.length < 1) {
+          throw new Error(`Key is required for REMOVE operation`);
+        }
+
+        for (const k of key) {
+          const path = `/data/${name}-${k}`;
+          const cacheIdx = [op, path].join(":");
+
+          // Add the operation to the cache
+          migrateCache[cacheIdx] = { op, path };
+        }
+
+        return;
+      }
+
+      // If we get here, the operation is not supported
+      throw new Error(`Unsupported operation: ${op}`);
+    };
+
+    for (const name of Object.keys(this.#stores)) {
+      // Get the prefix offset for the keys
+      const offset = `${name}-`.length;
+
+      // Loop over each key in the store
+      for (const key of Object.keys(data)) {
+        // Match on the capability name as a prefix for non v2 keys
+        if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
+          // populate migrate cache
+          fillCache(name, "remove", [key.slice(offset)], data[key]);
+          fillCache(name, "add", [key.slice(offset)], data[key]);
+        }
+      }
+    }
+    await flushCache();
+    this.#setupWatch();
   };
 
   #receive = (store: PeprStore) => {
@@ -121,6 +204,7 @@ export class PeprControllerStore {
     // Load the sendCache with patch operations
     const fillCache = (op: DataOp, key: string[], val?: string) => {
       if (op === "add") {
+        // adjust the path for the capability
         const path = `/data/${capabilityName}-${key}`;
         const value = val || "";
         const cacheIdx = [op, path, value].join(":");
@@ -167,9 +251,13 @@ export class PeprControllerStore {
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
-        // On failure to update, re-add the operations to the cache to be retried
-        for (const idx of indexes) {
-          sendCache[idx] = payload[Number(idx)];
+        if (err.status === 422) {
+          Object.keys(sendCache).forEach(key => delete sendCache[key]);
+        } else {
+          // On failure to update, re-add the operations to the cache to be retried
+          for (const idx of indexes) {
+            sendCache[idx] = payload[Number(idx)];
+          }
         }
       }
     };

@@ -1,16 +1,17 @@
 ### BUILD ###
 
-ARG PEPR_BUILD_VERSION=0.0.0-development
+# NOTE:
+# Used to build Controller image
+# In this file, we delete the *.ts intentionally
+# Any other changes to Dockerfile should be reflected in Publish
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
-FROM cgr.dev/chainguard/node-lts@sha256:3d635a3537e82a6bf1cf6ef571199cc8533fa45cb3c664777d7eb8930a14ec33 AS build
+FROM cgr.dev/chainguard/node-lts@sha256:62bbead79896a962d2257d6e9df94264cb843a3952a072a89fee9d82a7cc9564 AS build
 
 WORKDIR /app
 
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
-
-RUN npm --no-git-tag-version version ${PEPR_BUILD_VERSION}
 
 # Install deps
 RUN npm ci
@@ -37,7 +38,7 @@ RUN npm run build && \
 ##### DELIVER #####
 
 # crane digest cgr.dev/chainguard/node-lts:latest
-FROM cgr.dev/chainguard/node-lts@sha256:3d635a3537e82a6bf1cf6ef571199cc8533fa45cb3c664777d7eb8930a14ec33
+FROM cgr.dev/chainguard/node-lts@sha256:62bbead79896a962d2257d6e9df94264cb843a3952a072a89fee9d82a7cc9564
 
 WORKDIR /app
 

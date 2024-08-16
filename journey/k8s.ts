@@ -28,6 +28,14 @@ export async function waitForDeploymentReady(namespace: string, name: string) {
   }
 }
 
+export async function noWaitPeprStoreKey(name: string, matchKey: string) {
+    const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);
+    if (store.data[matchKey]) {
+      return store.data[matchKey];
+    }
+}
+
+
 export async function waitForPeprStoreKey(name: string, matchKey: string) {
   try {
     const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);

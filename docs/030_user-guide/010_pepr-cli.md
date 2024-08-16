@@ -45,6 +45,12 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 - `-i, --image [image]` - Override the image tag
 - `--confirm` - Skip confirmation prompt
+- `--pullSecret <name>` - Deploy imagePullSecret for Controller private registry
+- `--docker-server <server>` - Docker server address
+- `--docker-username <username>` - Docker registry username
+- `--docker-email <email>` - Email for Docker registry
+- `--docker-password <password>` - Password for Docker registry
+- `--force` - Force deploy the module, override manager field
 
 ---
 
@@ -89,6 +95,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `-i, --custom-image [custom-image]` - Custom Image: Use custom image for Admission and Watcher Deployments.
 - `--registry [GitHub, Iron Bank]` - Container registry: Choose container registry for deployment manifests.
 - `-v, --version <version>. Example: '0.27.3'` - The version of the Pepr image to use in the deployment manifests.
+-  `--withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment.
 - `-z, --zarf [manifest|chart]` - The Zarf package type to generate: manifest or chart (default: manifest).
 
 ## `npx pepr kfc`

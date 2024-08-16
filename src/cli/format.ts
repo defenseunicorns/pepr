@@ -45,7 +45,7 @@ export async function peprFormat(validateOnly: boolean) {
       });
 
       const formatter = await eslint.loadFormatter("stylish");
-      const resultText = await formatter.format(results);
+      const resultText = await formatter.format(results, {} as ESLint.LintResultData);
 
       if (resultText) {
         console.log(resultText);

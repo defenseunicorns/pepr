@@ -251,37 +251,56 @@ When(a.ConfigMap)
  *
  * These are equivalent:
  * ```ts
- * const joke = await fetch<TheChuckNorrisJoke>("https://api.chucknorris.io/jokes/random?category=dev");
- * const joke = await fetch("https://api.chucknorris.io/jokes/random?category=dev") as TheChuckNorrisJoke;
+ * const joke = await fetch<TheChuckNorrisJoke>("https://icanhazdadjoke.com/");
+ * const joke = await fetch("https://icanhazdadjoke.com/") as TheChuckNorrisJoke;
  * ```
  *
  * Alternatively, you can drop the type completely:
  *
  * ```ts
- * fetch("https://api.chucknorris.io/jokes/random?category=dev")
+ * fetch("https://icanhazdadjoke.com")
  * ```
  */
 interface TheChuckNorrisJoke {
-  icon_url: string;
   id: string;
-  url: string;
-  value: string;
+  joke: string;
+  status: number;
 }
 
 When(a.ConfigMap)
-  .IsCreated()
+  .IsCreatedOrUpdated()
   .WithLabel("chuck-norris")
-  .Mutate(async change => {
+  .Mutate(cm => cm.SetLabel("got-jokes", "true"))
+  .Watch(async cm => {
+    const jokeURL = "https://icanhazdadjoke.com/";
     // Try/catch is not needed as a response object will always be returned
-    const response = await fetch<TheChuckNorrisJoke>(
-      "https://api.chucknorris.io/jokes/random?category=dev",
-    );
+    const response = await fetch<TheChuckNorrisJoke>(jokeURL, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
     // Instead, check the `response.ok` field
     if (response.ok) {
+      const { joke } = response.data;
+      // Add Joke to the Store
+      await Store.setItemAndWait(jokeURL, joke);
       // Add the Chuck Norris joke to the configmap
-      change.Raw.data["chuck-says"] = response.data.value;
-      return;
+      try {
+        await K8s(kind.ConfigMap).Apply({
+          metadata: {
+            name: cm.metadata.name,
+            namespace: cm.metadata.namespace,
+          },
+          data: {
+            "chuck-says": Store.getItem(jokeURL),
+          },
+        });
+      } catch (error) {
+        Log.error(error, "Failed to apply ConfigMap using server-side apply.", {
+          cm,
+        });
+      }
     }
 
     // You can also assert on different HTTP response codes
