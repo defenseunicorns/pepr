@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           egress-policy: audit
 
@@ -48,22 +48,19 @@ jobs:
 
           npm install -g npm
 
-          npm --no-git-tag-version version ${{ github.ref_name }}
+          npm run version
 
           # Build Controller Image
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
-
-          # Build Pepr dist folder for NPM 
-          docker buildx build --output="." --target=dist --no-cache . -f Dockerfile.dist
 
   slsa:
     permissions:
       id-token: write
       contents: read
       actions: read
-    uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@5a775b367a56d5bd118a224a811bba288150a563 # v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.0.0
     with:
-      run-scripts: "ci, build"
+      run-scripts: "version, ci, build"
 
   publish:
     needs: [slsa]
