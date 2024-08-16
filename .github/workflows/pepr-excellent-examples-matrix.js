@@ -19,9 +19,7 @@ let examples = stdout.toLocaleString().trim().split("\n")
 // TODO Exclude soak test
 let e2es = examples
   .map(ex => [ ex, require(`${ex}/package.json`) ])
-  .filter(([ex, cfg]) =>{
-    Object.hasOwn(cfg.scripts, 'test:e2e') && ex.name !== 'hello-pepr-soak-ci'
-  } )
+  .filter(([ex, cfg]) => Object.hasOwn(cfg.scripts, 'test:e2e'))
 
 // gen matrix spec
 let spec = {
