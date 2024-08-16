@@ -1,11 +1,47 @@
 name: Node.js CI
 
 on:
+  workflow_dispatch:
   push:
+    paths-ignore:
+    - "**.md"
+    - "**.jpg"
+    - "**.png"
+    - "**.gif"
+    - "**.svg"
+    - "adr/**"
+    - "__mocks__/**"
+    - ".npmignore"
+    - ".prettierignore"
+    - "scripts/**"
+    - "hack/**"
+    - "_images/**"
+    - "**.yaml"
+    - "**.toml"
+    - "**.json"
+    - "docs/**"
+    - "CODEOWNERS"
     branches: ["main"]
   pull_request:
     branches: ["main"]
-
+    paths-ignore:
+    - "**.md"
+    - "**.jpg"
+    - "**.png"
+    - "**.gif"
+    - "**.svg"
+    - "adr/**"
+    - "__mocks__/**"
+    - ".npmignore"
+    - ".prettierignore"
+    - "scripts/**"
+    - "hack/**"
+    - "_images/**"
+    - "**.yaml"
+    - "**.toml"
+    - "docs/**"
+    - "**.json"
+    - "CODEOWNERS"
 permissions:
   contents: read
 
@@ -80,7 +116,6 @@ jobs:
 
       - name: deploy the soak test and environment
         run: |
-          cd "$PEXEX"
           npm run test:e2e -w hello-pepr-store-ci -- -i pepr:dev
 
       - name: Upload Log Output as Artifact
@@ -88,8 +123,3 @@ jobs:
         with:
           name: log-output
           path: logs/
-
-      - name: Cleanup
-        if: always()
-        run: |
-          kill $(jobs -p)
