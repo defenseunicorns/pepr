@@ -275,10 +275,8 @@ When(a.ConfigMap)
   .Watch(async cm => {
     const jokeURL = "https://icanhazdadjoke.com/";
 
-  // Set up Nock to mock the API calls globally with header matching
-  nock(jokeURL)
-    .get("/")
-    .reply(200, {
+    // Set up Nock to mock the API calls globally with header matching
+    nock(jokeURL).get("/").reply(200, {
       id: "R7UfaahVfFd",
       joke: "Funny joke goes here.",
       status: 200,
