@@ -63,8 +63,22 @@ export async function waitForConfigMap(namespace: string, name: string) {
   try {
     return await K8s(kind.ConfigMap).InNamespace(namespace).Get(name);
   } catch (error) {
-    await sleep(2);
+    await sleep(5);
     return waitForConfigMap(namespace, name);
+  }
+}
+
+export async function waitForConfigMapKey(namespace: string, name: string, key: string) {
+  try {
+    const cm = await waitForConfigMap(namespace, name);
+    if (cm.data![key]) {
+      return cm;
+    } else {
+      throw new Error("Waiting for key to be found...");
+    }
+  } catch (error) {
+    await sleep(5);
+    return waitForConfigMapKey(namespace, name, key);
   }
 }
 

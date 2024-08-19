@@ -9,6 +9,7 @@ import {
   fetchStatus,
   kind,
 } from "pepr";
+import nock from "nock";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -273,6 +274,16 @@ When(a.ConfigMap)
   .Mutate(cm => cm.SetLabel("got-jokes", "true"))
   .Watch(async cm => {
     const jokeURL = "https://icanhazdadjoke.com/";
+
+  // Set up Nock to mock the API calls globally with header matching
+  nock(jokeURL)
+    .get("/")
+    .reply(200, {
+      id: "R7UfaahVfFd",
+      joke: "Funny joke goes here.",
+      status: 200,
+    });
+
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(jokeURL, {
       headers: {
