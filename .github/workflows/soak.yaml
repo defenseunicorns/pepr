@@ -159,6 +159,11 @@ jobs:
           cd "$PEXEX"
           npm ci
 
+      - name: make logs directory
+        run: |
+          cd "$PEXEX"
+          mkdir logs
+          
       - name: deploy the soak test and environment
         run: |
           cd "$PEXEX"
