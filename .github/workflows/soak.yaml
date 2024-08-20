@@ -119,6 +119,9 @@ jobs:
       - name: "set env: AUDITOR"
         run: echo "AUDITOR=${GITHUB_WORKSPACE}/watch-auditor" >> "$GITHUB_ENV"
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Setup golang
         uses: ./.github/actions/golang
 
