@@ -51,7 +51,7 @@ on:
 
 jobs:
   pepr-build:
-    name: controller image
+    name: pepr-build
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -125,7 +125,7 @@ jobs:
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
-          
+
       - name: clone pepr-excellent-examples
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
