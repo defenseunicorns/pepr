@@ -142,7 +142,9 @@ jobs:
         shell: bash
 
       - name: Install default profile
-        run: ./istioctl install --set profile=demo -y
+        run: |
+          cd istio*/bin
+          ./istioctl install --set profile=demo -y
 
       - name: Set up Kubernetes
         uses: azure/setup-kubectl@v3
@@ -158,7 +160,12 @@ jobs:
           kubectl apply -f hack/soak.ci.yaml
 
       - name: Wait for 15 minutes before starting pod checks
-        run: sleep 900s  # 15 minutes
+        run: |
+          sleep 10s
+          kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot
+          kubectl wait --for=condition=ready -n istio-system pod -l app=istio-ingressgateway
+          kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
+          kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
 
       - name: Run the soak test and collect metrics
         run: |
@@ -175,12 +182,14 @@ jobs:
               fi
             done
           }
+          touch logs/auditor-log.txt
+          touch logs/informer-log.txt
 
           update_pod_map
 
           collect_metrics() {
-            kubectl exec -it metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total >> logs/auditor-log.txt
-            kubectl exec -it metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" >> logs/informer-log.txt
+            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
+            kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
@@ -203,7 +212,7 @@ jobs:
           done
 
           echo "Soak test passed successfully!"
- 
+        shell: bash
 
       - name: Upload logs
         uses: actions/upload-artifact@v3

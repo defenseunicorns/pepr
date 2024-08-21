@@ -100,7 +100,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: server
-          image: ghcr.io/defenseunicorns/pepr/controller:v0.33.0
+          image: pepr:dev
           imagePullPolicy: IfNotPresent
           command:
             - node
@@ -269,7 +269,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: watcher
-          image: ghcr.io/defenseunicorns/pepr/controller:v0.33.0
+          image: pepr:dev
           imagePullPolicy: IfNotPresent
           command:
             - node
@@ -310,6 +310,8 @@ spec:
               mountPath: /app/load
               readOnly: true
           env:
+            - name: PEPR_LAST_SEEN_LIMIT_SECONDS
+              value: '60'
             - name: PEPR_WATCH_MODE
               value: 'true'
             - name: PEPR_PRETTY_LOG
