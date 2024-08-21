@@ -1,0 +1,325 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-system
+  labels:
+    pepr.dev: ''
+    istio-injection: enabled
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pepr-soak-ci
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pepr-soak-ci
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pepr-soak-ci
+subjects:
+  - kind: ServiceAccount
+    name: pepr-soak-ci
+    namespace: pepr-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pepr-soak-ci
+  namespace: pepr-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pepr-soak-ci-api-token
+  namespace: pepr-system
+type: Opaque
+data:
+  value: >-
+    OTdkMWY2YzMyZGJjYTI5M2Q0ZGIwY2IwZjY3NjEzNWEzZWNmY2IzNTQwMjNhZGZjZmZiNGY2YjVkYjcyNGE4NQ==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pepr-soak-ci-tls
+  namespace: pepr-system
+type: kubernetes.io/tls
+data:
+  tls.crt: >-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDcGpDQ0FZNmdBd0lCQWdJQkFUQU5CZ2txaGtpRzl3MEJBUXNGQURBQU1CNFhEVEkwTURneU1ESXlNVEF3DQpOMW9YRFRJMU1EZ3lNREl5TVRBd04xb3dBRENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DDQpnZ0VCQUxQSXRIK1lpSG5jSkkxa2cwc1NiUENzd1V3K2VreXhZRHVaWWtTMGZSdVlNTnNXN2NHNHpSRjdmWFZNDQp6YzJnL1VFbXFRNC9PTWEvK0NwOWtWMHRJNTE3cFUzLytmQXZNM1M3UFVxTmZ4d3VvUnc3L2orR2xGZW9rQS82DQpIZEhFVlNwNU5kS0NmSjF4TGhNeURiRXFuUXdwV3hUMUhVczVMWFgrRklpSnJINmdxSStpQjg1azJlMVZkcUpiDQpaclo0Ly84aG5zNDN4NW5wQzJJdm41TUZNTVVTczZiRE5zbnBaemhocUdiaHY3dkkyV3VWNUd1REtCTVJ0MUpiDQpicHJKeUxWT05pbnQrUVAwY3ZueG9wL2VVa2FBQmJpTWYyc0lLNW15VzNuQTRzZmxhV25NUEpib0xwdktJWTFvDQphcnlpdzhJdnJuaHkvcGE4Y1BSNUd4YXpoZDBDQXdFQUFhTXJNQ2t3SndZRFZSMFJCQ0F3SG9JY2NHVndjaTF6DQpiMkZyTFdOcExuQmxjSEl0YzNsemRHVnRMbk4yWXpBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQVJKR0kydUFUDQowdjh3N3pDeUZiUnJndjUyUjRoRXJUbEl4NWRpRzBmWFcxSndMc0hOTG96dFBIcXdURVlSaEYyRGIwNE5HbnJwDQpOQm92UUJJcEwrOXk4ZkhMa2cxL2lsOWs2N0JBaDdBU2hscVdYMWc5MjR2TUdaSVdlR0xGaFFSMlA3M29HU05ODQpJWldOeGhzeWFEM3dNWVV3VVFUK04rbU5BelV4Z1VFYjYrV2M4WEdiZTFYZ2QvckF3RUh5UktqSEltZTZRMG44DQo2MlM4M1NQYXdiaFlka1BHNGw2VzYrMHlwcFV0Wml3cTZlV3BTVTQyMzVKSVVKMXdPaCszVUdTcFEwc25vcExGDQpTQWJ1bGI5TDlkM1Z3TFUxY1ZyQnAvaURsK1NISGRYTEhidThkS2txVWdLWElvbERIMjNxQ2JpcVRmcnhpeDJnDQpNczM5VjhFb0xDbWhVdz09DQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tDQo=
+  tls.key: >-
+    LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ0KTUlJRXBBSUJBQUtDQVFFQXM4aTBmNWlJZWR3a2pXU0RTeEpzOEt6QlRENTZUTEZnTzVsaVJMUjlHNWd3MnhidA0Kd2JqTkVYdDlkVXpOemFEOVFTYXBEajg0eHIvNEtuMlJYUzBqblh1bFRmLzU4Qzh6ZExzOVNvMS9IQzZoSER2Kw0KUDRhVVY2aVFEL29kMGNSVktuazEwb0o4blhFdUV6SU5zU3FkRENsYkZQVWRTemt0ZGY0VWlJbXNmcUNvajZJSA0Kem1UWjdWVjJvbHRtdG5qLy95R2V6amZIbWVrTFlpK2Zrd1V3eFJLenBzTTJ5ZWxuT0dHb1p1Ry91OGpaYTVYaw0KYTRNb0V4RzNVbHR1bXNuSXRVNDJLZTM1QS9SeStmR2luOTVTUm9BRnVJeC9hd2dybWJKYmVjRGl4K1ZwYWN3OA0KbHVndW04b2hqV2hxdktMRHdpK3VlSEwrbHJ4dzlIa2JGck9GM1FJREFRQUJBb0lCQUFrZFN6MU93OWg5dHlLdA0KN2xRUGZwTmpCcmV4VVN6ekx5QkdZZXQreFByeHA4UnJzS2tLRCtkcmZjeEZGUWZ3T2Zha0daejl5b2lVOGVWaA0Ka1UyS2ZNdyttUDVQMUdGL1d4bjNaaCtSOWRnOWF2Q09BQkZEWnVEY3pGVHJCcmo4UFo4V0h3cnBqNXpCd0thNw0KZW1NNWVGWEdBUGFhaUo0b0syeFljYjBNVWNEbm1WN3lQaWtzb3UzbWNyOThHcVhPbENENWR6eitweEp0ZTFzdQ0KMlZkYVNUazYyT3diTllwenRiMExiQ0MzZVVUYyt1VDcrVmI0encvcFBNY3lDMEZCVUZ6dEpaSFRXclZZVjl4bQ0Kd1VuWTZRN016enBtcHFzVzhTS0cwUzd0YTdnUTM3RVAyMlBKeVJweUUwczFTZTJIMVdvWWhTMUdFTVQ5dytsaw0KZnlDdkhTRUNnWUVBNmJ2TzRJeGVlR0Y2NDJvU244WDJ1dW11NUxmL1FTTUZXWkJoVmNNczBrQ3ROMy9XRWc3Tw0KZzZna0dGV0F0U0xkZ1JhSkhPbWpFRTdwSFhoZnpKYlMzOVkyNlh5b2cxUFg3ZWhFS3RJTS82ME9uSHFtZDRqdA0KYklYaytMa0lDVTNwelFOTVFacWxMZTdrTmp2MmNSU1RlNVZCRUhPSnh0U0M4N2tKUGxYOTZhMENnWUVBeE9reQ0Ka25FQXRiaVhUSFJIaUxwbTdBSm96ejE4aEdDN3VOdGgvZnFQVWMxNUtOMDNyYXp5YkRzejlPcUpyOFI0M2ViZw0Kd2pIc2tvZDFWQ0JFUWJmTGU0NlNsSnNFS0Nqc0o2Qm5rWkhIc3R1UC8zbFFVUVluMCtJbG9YM1ZrL3BoVmc3dA0KcWxkSWhTVlFiRWRZWWs0TGJ3T3RPQThRSC92NG5zYUZJRzE1OHZFQ2dZQXcweFNCLzVCMFlSaUVqTkhiSWtWSw0KQWlxUWlJYi9ta3N4ekdFb3d4Nkh4UTdwK3dCQ3dXa09RMzlXdmZXbTRPT1laWmE2dld0Y3FyOHpjc1BBUHZsSg0KM0x1WHhueUZBbXltdTlBUmlkTkJUV3N4OE1UNVQxY1pSbGJ3UmVhUjJ2NnQzclI5TjhxdGI2dW9VSnBJUU40Vw0KQUxXWXRDbmhxTjY1L3JzWmxHajMrUUtCZ1FDUTRLOG4xZUxhMFV6b29LazlMVUNxcHY4c2M2WFkxRDlxUEdlMQ0KOFpOZmNabVNlbWtMN0xLVTlWNDk5ZzZGOXoyaXJzdHh0ai9FYzh2Y3NMem55VzM2bzZTdmwvcVAvY1A3UitiTA0KMFFHb1ZDbDNvMjkzbmRyUjU1TWVaYkl0NVV1V2dQZFduRStzUHc4VUM4NDR6Z2xWamRQMTZnZElNU0QwMlVWNw0KM1hDYlVRS0JnUURkVFJkS2xtYU1NTmJKTElLWThIZDFXOGhHY1lXM0NwVlJTOEV1TXN1dUQ3ZnJKdFd5K1RVSw0KcklsNlRIeXl1S3ZpN05YYk5Ic0JaU0QreWtaNW1SOW1rdTBXbm1PUDIzTmlqNHVPM3ZEVmdqczNRYTBDcGh5WQ0KaUIvaVFWVGtwQjl0d3lIcTNPYjRHUXJYNGhrUGZpSllIS20wSURodFNRMm9SUzBDaGhpU1NBPT0NCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tDQo=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pepr-soak-ci
+  namespace: pepr-system
+  annotations:
+    pepr.dev/description: soak test for watch controller
+  labels:
+    app: pepr-soak-ci
+    pepr.dev/controller: admission
+    pepr.dev/uuid: soak-ci
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pepr-soak-ci
+      pepr.dev/controller: admission
+  template:
+    metadata:
+      annotations:
+        buildTimestamp: '1724191807324'
+      labels:
+        app: pepr-soak-ci
+        pepr.dev/controller: admission
+    spec:
+      terminationGracePeriodSeconds: 5
+      priorityClassName: system-node-critical
+      serviceAccountName: pepr-soak-ci
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        fsGroup: 65532
+      containers:
+        - name: server
+          image: ghcr.io/defenseunicorns/pepr/controller:v0.33.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - node
+            - /app/node_modules/pepr/dist/controller.js
+            - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTPS
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTPS
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 500m
+          env:
+            - name: PEPR_WATCH_MODE
+              value: 'false'
+            - name: PEPR_PRETTY_LOG
+              value: 'false'
+            - name: LOG_LEVEL
+              value: debug
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/certs
+              readOnly: true
+            - name: api-token
+              mountPath: /app/api-token
+              readOnly: true
+            - name: module
+              mountPath: /app/load
+              readOnly: true
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: pepr-soak-ci-tls
+        - name: api-token
+          secret:
+            secretName: pepr-soak-ci-api-token
+        - name: module
+          secret:
+            secretName: pepr-soak-ci-module
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pepr-soak-ci
+  namespace: pepr-system
+  labels:
+    pepr.dev/controller: admission
+spec:
+  selector:
+    app: pepr-soak-ci
+    pepr.dev/controller: admission
+  ports:
+    - port: 443
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pepr-soak-ci-watcher
+  namespace: pepr-system
+  labels:
+    pepr.dev/controller: watcher
+spec:
+  selector:
+    app: pepr-soak-ci-watcher
+    pepr.dev/controller: watcher
+  ports:
+    - port: 443
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pepr-soak-ci-module
+  namespace: pepr-system
+type: Opaque
+data:
+  module-72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3.js.gz: >-
+    H4sIAAAAAAAAE4VTXWtcNxB9z69QpyW5FyRl3aVgZK4pJG4J3dQmJO2DcYtWGq+V1ZVUfexyWe5/L9La6bYE903SnDk6c2ZmJyMxw/X6M6rMNd4bhzfRB4x5utjJSNLQZer64dJ0mYKTIwI97KQtKBxV3t2bTYlybVF8s5j7luKHiH8VE7GDgCHC8TUMh5ot4AGt9axGWPJyy5QBusOYjHcCFnzBz4BqTCqakNtbRZGMKZN7H8leZvVAlHc5emsxAt3itPdRJ3F7/I/C9jwBheCtURNDtzEO671+OXpdbL0lVCWaPAEF4+59HDHCHT2Ckzg4r1HA5XB2zhd8ATOt2eJQitFHRU23d1cx+iggYjUQ6B7XD95vP5oRfcnibEFVSdmPK7lGW2nliClIheLQ9HCNOxBQRaRsPDOu8hjvQAC66quGeabS7uWU3m2cj3hCksTt3UyNU7Zo1D8Z214oup04rK5//nN19dvVSoDGddlUGo0BnUanTC2xVQR/LPhy2SrUuHv7L0CewmMfBPzAl3wJMz3ev2Q/Gb7ULGEuAUQ9E2VLyhiJRosZSXNe4468fElOwyqiPA0ztl0mJuOGvGKsqf4xYdxhFItXhLG9NLlRlDWqbEkdAF8ySVnmkojGYP00osuEuQZiaUoZR6DKGgEujCQWV4l83DYDyQPagDERZQ1hjLDH+Ri+68Je90Dr2P2T+Yhqs8hYKiYjkdYChYarYwHPo/F7fEIXZ/L/oBtkntv+4Fe3Kg4O9wT5Gxnk2liTp+6ZNfv6WsHc08PvD+iEmodI7ZA6mSanSB4uD7Ka3i0o8l/OU98hl/zG656/c78+TeFRENM4euj529byLvczhWP7b7yG/kKd5KY3rfH6On4Kuh66Zwg/oPJOGYv/VUVsl/mIWWqZJa9V93N/Uf3w/AZDfN9a2QV6G+/6ixevX39Lki9R4XsZgnGbTx9Ww6k//HPiowwv/gZqT17GEwUAAA==
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pepr-soak-ci-store
+  namespace: pepr-system
+rules:
+  - apiGroups:
+      - pepr.dev
+    resources:
+      - peprstores
+    resourceNames:
+      - ''
+    verbs:
+      - create
+      - get
+      - patch
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pepr-soak-ci-store
+  namespace: pepr-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pepr-soak-ci-store
+subjects:
+  - kind: ServiceAccount
+    name: pepr-soak-ci-store
+    namespace: pepr-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pepr-soak-ci-watcher
+  namespace: pepr-system
+  annotations:
+    pepr.dev/description: soak test for watch controller
+  labels:
+    app: pepr-soak-ci-watcher
+    pepr.dev/controller: watcher
+    pepr.dev/uuid: soak-ci
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: pepr-soak-ci-watcher
+      pepr.dev/controller: watcher
+  template:
+    metadata:
+      annotations:
+        buildTimestamp: '1724191807324'
+      labels:
+        app: pepr-soak-ci-watcher
+        pepr.dev/controller: watcher
+    spec:
+      terminationGracePeriodSeconds: 5
+      serviceAccountName: pepr-soak-ci
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        fsGroup: 65532
+      containers:
+        - name: watcher
+          image: ghcr.io/defenseunicorns/pepr/controller:v0.33.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - node
+            - /app/node_modules/pepr/dist/controller.js
+            - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTPS
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTPS
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 500m
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/certs
+              readOnly: true
+            - name: module
+              mountPath: /app/load
+              readOnly: true
+          env:
+            - name: PEPR_WATCH_MODE
+              value: 'true'
+            - name: PEPR_PRETTY_LOG
+              value: 'false'
+            - name: LOG_LEVEL
+              value: debug
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: pepr-soak-ci-tls
+        - name: module
+          secret:
+            secretName: pepr-soak-ci-module
