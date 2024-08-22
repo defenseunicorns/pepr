@@ -147,7 +147,7 @@ jobs:
           ./istioctl install --set profile=demo -y
 
       - name: Set up Kubernetes
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v4
         with:
           version: 'latest'
 
