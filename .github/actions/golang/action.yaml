@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
+# The purpose of this action is for the soak test
+name: setup-go
+description: "Setup Go binary and caching"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      with:
+        go-version-file: 'go.mod'
+        cache: true

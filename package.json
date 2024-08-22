@@ -9,7 +9,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "files": ["/dist", "/src"],
+  "files": [
+    "/dist",
+    "/src"
+  ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -60,7 +63,7 @@
     "fast-check": "^3.19.0",
     "jest": "29.7.0",
     "js-yaml": "^4.1.0",
-    "nock": "13.5.4",
+    "nock": "^13.5.4",
     "ts-jest": "29.2.4"
   },
   "peerDependencies": {

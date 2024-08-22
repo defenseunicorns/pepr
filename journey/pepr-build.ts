@@ -20,12 +20,12 @@ export function peprBuild() {
     await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
   });
 
-  it("should generate the zarf.yaml f", async () => {
+  it("should generate the zarf.yaml file", async () => {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
   });
 
-  it("should correct merge in the package.json env vars into the values.yaml helm chart file", async () => {
+  it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {
     interface ValuesJSON {
       admission: {
         env: Record<string, string>[] | undefined;
