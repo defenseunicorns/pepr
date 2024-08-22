@@ -4,7 +4,7 @@ Date: 2024-03-21
 
 ## Status
 
-Delayed - Revisiting this in the future and recommending that named callbacks be used in the interim. 
+Accepted.
 
 ## Context
 
