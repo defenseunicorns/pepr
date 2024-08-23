@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: watch-auditor
+  labels:
+    istio-injection: enabled
+spec: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: metrics-collector
+  name: metrics-collector
+  namespace: watch-auditor
+spec:
+  containers:
+  - image: nginx
+    name: metrics-collector
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pepr-demo
+  labels:
+    istio-injection: enabled
+spec: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watch-auditor
+  namespace: watch-auditor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: watch-auditor
+  name: watch-auditor
+  namespace: watch-auditor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watch-auditor
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: watch-auditor
+    spec:
+      serviceAccountName: watch-auditor
+      containers:
+        - image: cmwylie19/watch-auditor:prod
+          name: watch-auditor
+          imagePullPolicy: IfNotPresent
+          args: ["serve", "--namespace=pepr-demo"]
+          ports:
+            - containerPort: 8080
+          resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: watch-auditor
+  name: watch-auditor
+  namespace: watch-auditor
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: watch-auditor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: watch-auditor-cr
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/status
+    verbs:
+      - get
+      - list
+      - delete
+      - create
+      - deletecollection
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: watch-auditor-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: watch-auditor-cr
+subjects:
+  - kind: ServiceAccount
+    name: watch-auditor
+    namespace: watch-auditor
+---

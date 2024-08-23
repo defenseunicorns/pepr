@@ -45,6 +45,22 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         runAsNonRoot: true,
         fsGroup: 65532,
       },
+      readinessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
+      },
+      livenessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
+      },
       resources: {
         requests: {
           memory: "64Mi",
@@ -94,6 +110,22 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         runAsGroup: 65532,
         runAsNonRoot: true,
         fsGroup: 65532,
+      },
+      readinessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
+      },
+      livenessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
       },
       resources: {
         requests: {
