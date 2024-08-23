@@ -179,7 +179,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
   //Start the watch
   try {
-    !process.env.PEPR_WATCH_INFORMER && await watcher.start();
+    !process.env.PEPR_WATCH_INFORMER && (await watcher.start());
   } catch (err) {
     Log.error(err, "Error starting watch");
     process.exit(1);
