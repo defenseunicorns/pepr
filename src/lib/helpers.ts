@@ -4,10 +4,19 @@
 import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport, GrpcResponse, GrpcUntransformedResponse } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
 export class ValidationError extends Error {}
+
+export function transformGrpcResponse(response: unknown): GrpcResponse {
+  const { details, eventtype } = response as unknown as GrpcUntransformedResponse;
+  const eventType =
+    eventtype === "ADD" ? WatchPhase.Added : eventtype === "UPDATE" ? WatchPhase.Modified : WatchPhase.Deleted;
+  const object = JSON.parse(details);
+  return { object, eventType };
+}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
   if (capabilities && capabilities.length > 0) {

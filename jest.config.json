@@ -3,5 +3,8 @@
   "testEnvironment": "node",
   "collectCoverage": true,
   "coverageReporters": ["json", "lcov", "text", "clover"],
-  "forceExit": true
+  "forceExit": true,
+  "coveragePathIgnorePatterns": [
+    "src/generated"
+  ]
 }

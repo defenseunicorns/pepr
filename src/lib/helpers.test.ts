@@ -31,7 +31,9 @@ import { SpiedFunction } from "jest-mock";
 
 import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
+import { checkDeploymentStatus, namespaceDeploymentsReady, transformGrpcResponse } from "./helpers";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { GrpcResponse, GrpcUntransformedResponse } from "./types";
 
 jest.mock("kubernetes-fluent-client", () => {
   return {
@@ -1188,5 +1190,67 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
+  });
+});
+
+describe("transformGrpcResponse", () => {
+  test("should transform a grpc response with ADD eventtype", () => {
+    const untransformedResponse: GrpcUntransformedResponse = {
+      details: '{"kind": "Pod", "metadata": {"name": "my-pod"}}',
+      eventtype: "ADD",
+    };
+
+    const expectedResponse: GrpcResponse = {
+      object: { kind: "Pod", metadata: { name: "my-pod" } },
+      eventType: WatchPhase.Added,
+    };
+
+    const transformedResponse = transformGrpcResponse(untransformedResponse);
+    expect(transformedResponse).toEqual(expectedResponse);
+  });
+
+  test("should transform a grpc response with UPDATE eventtype", () => {
+    const untransformedResponse: GrpcUntransformedResponse = {
+      details: '{"kind": "Pod", "metadata": {"name": "my-pod"}}',
+      eventtype: "UPDATE",
+    };
+
+    const expectedResponse: GrpcResponse = {
+      object: { kind: "Pod", metadata: { name: "my-pod" } },
+      eventType: WatchPhase.Modified,
+    };
+
+    const transformedResponse = transformGrpcResponse(untransformedResponse);
+    expect(transformedResponse).toEqual(expectedResponse);
+  });
+
+  test("should transform a grpc response with DELETE eventtype", () => {
+    const untransformedResponse: GrpcUntransformedResponse = {
+      details: '{"kind": "Pod", "metadata": {"name": "my-pod"}}',
+      eventtype: "DELETE",
+    };
+
+    const expectedResponse: GrpcResponse = {
+      object: { kind: "Pod", metadata: { name: "my-pod" } },
+      eventType: WatchPhase.Deleted,
+    };
+
+    const transformedResponse = transformGrpcResponse(untransformedResponse);
+    expect(transformedResponse).toEqual(expectedResponse);
+  });
+
+  test("should handle an unknown eventtype", () => {
+    const untransformedResponse: GrpcUntransformedResponse = {
+      details: '{"kind": "Pod", "metadata": {"name": "my-pod"}}',
+      eventtype: "UNKNOWN",
+    };
+
+    const expectedResponse: GrpcResponse = {
+      object: { kind: "Pod", metadata: { name: "my-pod" } },
+      eventType: WatchPhase.Deleted,
+    };
+
+    const transformedResponse = transformGrpcResponse(untransformedResponse);
+    expect(transformedResponse).toEqual(expectedResponse);
   });
 });

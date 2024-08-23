@@ -6,6 +6,8 @@ comment:
   behavior: default
   require_changes: no
 
+ignore:
+  - "src/generated/*"
   
 coverage:
   status:

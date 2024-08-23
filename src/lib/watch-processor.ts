@@ -3,11 +3,21 @@
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReason } from "./helpers";
+import { filterNoMatchReason, transformGrpcResponse } from "./helpers";
 import Log from "./logger";
 import { Queue } from "./queue";
-import { Binding, Event } from "./types";
+import { Binding, Event, GrpcError } from "./types";
 import { metricsCollector } from "./metrics";
+import { StreamProcessor } from "./stream-processor";
+import { WatchResponse } from "../generated/apiv1_pb";
+
+const streamProcessor = new StreamProcessor();
+
+const MAX_RETRIES = 5;
+const INITIAL_DELAY = 1000; // Start with 1 second
+const MAX_DELAY = 32000; // Maximum delay of 32 seconds
+
+let retries = 0;
 
 // Watch configuration
 const watchCfg: WatchCfg = {
@@ -50,12 +60,59 @@ export function setupWatch(capabilities: Capability[]) {
  * @param capabilityNamespaces list of namespaces to filter on
  */
 async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
+  streamProcessor.configure(binding);
+  let call = streamProcessor.watch();
+
+  const reconnect = () => {
+    if (retries >= MAX_RETRIES) {
+      Log.error("Max retries reached. Giving up on reconnecting.");
+      return;
+    }
+
+    const delay = Math.min(INITIAL_DELAY * Math.pow(2, retries), MAX_DELAY);
+    Log.debug(`Reconnecting in ${delay} ms...`);
+
+    setTimeout(() => {
+      retries++;
+      call.removeAllListeners();
+      call = streamProcessor.watch();
+      setupListeners();
+    }, delay);
+  };
+
+  const onData = async (response: WatchResponse) => {
+    const { object, eventType } = transformGrpcResponse(response.toObject());
+    if (binding.isQueue) {
+      await queue.enqueue(object, eventType);
+    } else {
+      await watchCallback(object, eventType);
+    }
+  };
+
+  const onEnd = () => {
+    Log.debug("Stream ended, attempting to re-establish...");
+    reconnect();
+  };
+
+  const onError = (err: GrpcError) => {
+    Log.error("Stream error:", err.details);
+    Log.debug("Attempting to re-establish the stream after error...");
+    reconnect();
+  };
+
+  const setupListeners = () => {
+    call.on("data", onData);
+    call.on("end", onEnd);
+    call.on("error", onError);
+  };
+
+  setupListeners();
   // Get the phases to match, fallback to any
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
   // The watch callback is run when an object is received or dequeued
 
-  Log.debug({ watchCfg }, "Effective WatchConfig");
+  // Log.debug({ watchCfg }, "Effective WatchConfig");
   const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(type)) {
@@ -77,7 +134,6 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   const queue = new Queue();
   queue.setReconcile(watchCallback);
 
-  // Setup the resource watch
   const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
     Log.debug(obj, `Watch event ${type} received`);
 
@@ -121,9 +177,9 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     metricsCollector.incRetryCount(retryCount);
   });
 
-  // Start the watch
+  //Start the watch
   try {
-    await watcher.start();
+    !process.env.PEPR_WATCH_INFORMER && await watcher.start();
   } catch (err) {
     Log.error(err, "Error starting watch");
     process.exit(1);

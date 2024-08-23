@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
+import { GenericClass, GenericKind, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
+import { WatchAction, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
+export interface GrpcUntransformedResponse {
+  details: string;
+  eventtype: string;
+}
+export interface GrpcResponse {
+  object: GenericKind;
+  eventType: WatchPhase;
+}
+export interface GrpcError {
+  code?: number;
+  message?: string;
+  metadata?: Record<string, string>;
+  details?: string;
+  stack?: string;
+}
 /**
  * Specifically for deploying images with a private registry
  */
