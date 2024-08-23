@@ -1,8 +1,4 @@
-
 // GENERATED CODE -- DO NOT EDIT!
-
-
-/* eslint-disable */
 
 // package: api
 // file: apiv1.proto
@@ -22,13 +18,6 @@ export interface IWatchServiceServer extends grpc.UntypedServiceImplementation {
 
 export class WatchServiceClient extends grpc.Client {
   constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
-  watch(
-    argument: apiv1_pb.WatchRequest,
-    metadataOrOptions?: grpc.Metadata | grpc.CallOptions | null,
-  ): grpc.ClientReadableStream<apiv1_pb.WatchResponse>;
-  watch(
-    argument: apiv1_pb.WatchRequest,
-    metadata?: grpc.Metadata | null,
-    options?: grpc.CallOptions | null,
-  ): grpc.ClientReadableStream<apiv1_pb.WatchResponse>;
+  watch(argument: apiv1_pb.WatchRequest, metadataOrOptions?: grpc.Metadata | grpc.CallOptions | null): grpc.ClientReadableStream<apiv1_pb.WatchResponse>;
+  watch(argument: apiv1_pb.WatchRequest, metadata?: grpc.Metadata | null, options?: grpc.CallOptions | null): grpc.ClientReadableStream<apiv1_pb.WatchResponse>;
 }
