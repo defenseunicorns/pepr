@@ -10,8 +10,10 @@ import { Binding, Event, GrpcError } from "./types";
 import { metricsCollector } from "./metrics";
 import { StreamProcessor } from "./stream-processor";
 import { WatchResponse } from "./apiv1_pb";
+import { ClientReadableStream } from "@grpc/grpc-js";
 
 const streamProcessor = new StreamProcessor();
+process.env.PEPR_WATCH_INFORMER && (streamProcessor.setClient());;
 
 const MAX_RETRIES = 5;
 const INITIAL_DELAY = 1000; // Start with 1 second
@@ -61,7 +63,7 @@ export function setupWatch(capabilities: Capability[]) {
  */
 async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   streamProcessor.configure(binding);
-  let call = streamProcessor.watch();
+  let call: ClientReadableStream<WatchResponse> 
 
   const reconnect = () => {
     if (retries >= MAX_RETRIES) {
@@ -106,7 +108,11 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     call.on("error", onError);
   };
 
-  setupListeners();
+  if (process.env.PEPR_WATCH_INFORMER) {
+    call = streamProcessor.watch();
+    setupListeners();
+  }
+  
   // Get the phases to match, fallback to any
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 

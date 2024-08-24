@@ -34,15 +34,18 @@ export interface StreamClient {
  */
 
 export class StreamProcessor implements StreamClient {
-  client: WatchServiceClient;
+  client?: WatchServiceClient;
   request: WatchRequest;
 
   constructor() {
-    this.client = new WatchServiceClient("localhost:50051", grpc.credentials.createInsecure());
     this.request = new WatchRequest();
   }
+
+  setClient() {
+    this.client = new WatchServiceClient("localhost:50051", grpc.credentials.createInsecure());
+  }
   watch = () => {
-    return this.client.watch(this.request);
+    return this.client!.watch(this.request);
   };
 
   configure = (binding: Binding) => {
