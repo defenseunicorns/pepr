@@ -35,7 +35,8 @@
     "test:journey:run-wasm": "jest --detectOpenHandles journey/entrypoint-wasm.test.ts",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
     "format:check": "eslint src && prettier src --check",
-    "format:fix": "eslint src --fix && prettier src --write"
+    "format:fix": "eslint src --fix && prettier src --write",
+    "proto:compile": "npx grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/lib --grpc_out=grpc_js:./src/lib --plugin=protoc-gen-grpc=$(which grpc_tools_node_protoc_plugin) --ts_out=service=grpc-node,mode=grpc-js:./src/lib -I ./src/api ./src/api/apiv1.proto"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.1",

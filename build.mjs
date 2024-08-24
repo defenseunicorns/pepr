@@ -41,8 +41,12 @@ async function builder() {
     // Build the library
     const lib = await build({
       ...buildOpts,
-      entryPoints: ["src/lib.ts"],
-      outfile: "dist/lib.js",
+      entryPoints: ["src/lib.ts",
+        "src/lib/apiv1_pb.js",
+        "src/lib/apiv1_grpc_pb.js",
+      ],
+      // outfile: "dist/lib.js",
+      outdir: "dist",
       sourcemap: true,
     });
 

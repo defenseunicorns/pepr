@@ -1,11 +1,11 @@
 import { jest, describe, beforeEach, afterEach, it, expect } from "@jest/globals";
 import { StreamProcessor } from "./stream-processor";
 import { Binding, Event } from "./types";
-import { WatchServiceClient } from "../generated/apiv1_grpc_pb";
+import { WatchServiceClient } from "./apiv1_grpc_pb";
 import * as grpc from "@grpc/grpc-js";
 import { kind } from "kubernetes-fluent-client";
 
-jest.mock("../generated/apiv1_grpc_pb", () => {
+jest.mock("./apiv1_grpc_pb", () => {
   const mockWatchServiceClient = {
     watch: jest.fn(),
   };
@@ -26,7 +26,7 @@ describe("StreamProcessor", () => {
 
   beforeEach(() => {
     // Re-mock WatchServiceClient for each test to reset state
-    jest.mock("../generated/apiv1_grpc_pb", () => {
+    jest.mock("./apiv1_grpc_pb", () => {
       const mockWatchServiceClient = {
         watch: jest.fn(),
       };

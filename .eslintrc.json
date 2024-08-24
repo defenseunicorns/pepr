@@ -17,7 +17,6 @@
   },
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
-    "src/generated/",
     "src/templates",
     "node_modules",
     "dist",

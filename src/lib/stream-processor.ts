@@ -1,5 +1,5 @@
-import { WatchServiceClient } from "../generated/apiv1_grpc_pb";
-import { WatchRequest } from "../generated/apiv1_pb";
+import { WatchServiceClient } from "./apiv1_grpc_pb";
+import { WatchRequest } from "./apiv1_pb";
 import * as grpc from "@grpc/grpc-js";
 import { Binding } from "./types";
 

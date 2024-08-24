@@ -9,7 +9,7 @@ import { Queue } from "./queue";
 import { Binding, Event, GrpcError } from "./types";
 import { metricsCollector } from "./metrics";
 import { StreamProcessor } from "./stream-processor";
-import { WatchResponse } from "../generated/apiv1_pb";
+import { WatchResponse } from "./apiv1_pb";
 
 const streamProcessor = new StreamProcessor();
 

@@ -7,7 +7,8 @@ comment:
   require_changes: no
 
 ignore:
-  - "src/generated/*"
+  - "src/lib/apiv1_grpc_pb.js"
+  - "src/lib/apiv1_pb.js"
   
 coverage:
   status:
