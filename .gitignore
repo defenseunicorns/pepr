@@ -11,6 +11,7 @@ Dockerfile.cross
 pepr
 dist/
 *.js
+!src/lib/*.js
 *.js.amp
 # Permit these few files to be checked in
 !hack/*.js
