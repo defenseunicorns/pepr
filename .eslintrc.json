@@ -24,7 +24,8 @@
     "pepr-test-module",
     "build.mjs",
     "journey",
-    "__mocks__"
+    "__mocks__",
+    "src/lib/*.js"
   ],
   "root": true
 }
