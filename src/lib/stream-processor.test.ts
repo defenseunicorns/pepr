@@ -8,7 +8,7 @@ import { kind } from "kubernetes-fluent-client";
 jest.mock("./apiv1_grpc_pb", () => {
   const mockWatchServiceClient = {
     watch: jest.fn(() => ({
-      on: jest.fn(), 
+      on: jest.fn(),
     })),
   };
   return {
