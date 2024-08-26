@@ -147,7 +147,7 @@ jobs:
           ./istioctl install --set profile=demo -y
 
       - name: Set up Kubernetes
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4.0.0
         with:
           version: 'latest'
 
@@ -215,7 +215,7 @@ jobs:
         shell: bash
 
       - name: Upload logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: soak-test-logs
           path: logs
