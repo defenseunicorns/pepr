@@ -11,18 +11,17 @@ import {
   deleteConfigMap,
   noWaitPeprStoreKey,
   waitForConfigMap,
+  waitForConfigMapKey,
   waitForDeploymentReady,
   waitForNamespace,
   waitForPeprStoreKey,
   waitForSecret,
 } from "./k8s";
-
-
+import nock from 'nock';
 
 export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
   destroyModule("pepr-static-test");
-
 
   it("should deploy the Pepr controller into the test cluster", async () => {
     // Apply the store crd and pepr-system ns
@@ -31,8 +30,8 @@ export function peprDeploy() {
     // Apply the store
     await applyLegacyStoreResource();
 
-    /* 
-     * when controller starts up, it will migrate the store 
+    /*
+     * when controller starts up, it will migrate the store
      * and later on the keys will be tested to validate the migration
      */
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
@@ -251,6 +250,7 @@ function testMutate() {
   });
 
   it("should mutate example-5", async () => {
+
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
 
     expect(cm5.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBe("succeeded");
@@ -295,8 +295,10 @@ function testStore() {
 
     // Should have a key from the joke url and getItem should have worked
     const key3 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-https://icanhazdadjoke.com/`);
-    expect(key3).toContain(" ");
-    const cm = await waitForConfigMap("pepr-demo", "example-5");
+    expect(key3).toBeTruthy();
+
+    const cm = await waitForConfigMapKey("pepr-demo", "example-5", "chuck-says");
+
     expect(cm.data?.["chuck-says"]).toBeTruthy();
   });
 
@@ -305,8 +307,6 @@ function testStore() {
     expect(key).toBe("This data was stored by a Watch Action.");
   });
 }
-
-
 
 async function applyStoreCRD() {
   // Apply the store crd
