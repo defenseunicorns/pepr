@@ -111,6 +111,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
                   port: 3000,
                   scheme: "HTTPS",
                 },
+                initialDelaySeconds: 10,
               },
               livenessProbe: {
                 httpGet: {
@@ -118,6 +119,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
                   port: 3000,
                   scheme: "HTTPS",
                 },
+                initialDelaySeconds: 10,
               },
               ports: [
                 {
@@ -248,6 +250,7 @@ export function deployment(
                   port: 3000,
                   scheme: "HTTPS",
                 },
+                initialDelaySeconds: 10,
               },
               livenessProbe: {
                 httpGet: {
@@ -255,6 +258,7 @@ export function deployment(
                   port: 3000,
                   scheme: "HTTPS",
                 },
+                initialDelaySeconds: 10,
               },
               ports: [
                 {
