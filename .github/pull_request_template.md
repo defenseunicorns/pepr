@@ -2,14 +2,14 @@
 
 ...
 
+End to End Test:  <!-- if applicable -->  
+(See [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples))
+
 ## Related Issue
 
 Fixes #
 <!-- or -->
 Relates to #
-
-End to End Test:  <!-- if applicable -->  
-(See [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples))
 
 ## Type of change
 
