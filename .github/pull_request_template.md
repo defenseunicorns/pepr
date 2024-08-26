@@ -8,6 +8,9 @@ Fixes #
 <!-- or -->
 Relates to #
 
+End to End Test:  <!-- if applicable -->  
+(See [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples))
+
 ## Type of change
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
@@ -15,6 +18,5 @@ Relates to #
 - [ ] Other (security config, docs update, etc)
 
 ## Checklist before merging
-
-- [ ] Test, docs, adr added or updated as needed
+- [ ] Unit, Journey, E2E Tests, docs, adr added or updated as needed
 - [ ] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed
