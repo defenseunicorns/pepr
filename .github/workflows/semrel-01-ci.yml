@@ -3,11 +3,8 @@ name: Continuous Integration (CI) Tests
 permissions: read-all
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches: ["next"]
-  # pull_request:
-  #   branches: ["next"]
+  workflow_dispatch:  # can be triggered via UI
+  workflow_call:      # can be triggered by other workflows
 
 jobs:
   format:
@@ -18,7 +15,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: latest
-          cache: "npm"
+          cache: npm
       - run: npm ci
       - run: npm run format:check
 
@@ -33,7 +30,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
       - run: npm ci
       - run: npm run test:unit
       - name: Upload coverage to Codecov
@@ -49,7 +46,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: latest
-          cache: "npm"
+          cache: npm
       - name: Setup Helm
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
         with:
@@ -60,19 +57,3 @@ jobs:
       - run: npm ci
       - run: npm run test:journey
       - run: npm run test:journey-wasm
-
-  trigger-e2e:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    needs:
-      - format
-      - test
-      - journey
-    steps:
-      - name: Trigger e2e tests
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api ${{ github.repository }}/dispatches \
-            --input - <<< '{"event_type":"trigger-e2e"}'

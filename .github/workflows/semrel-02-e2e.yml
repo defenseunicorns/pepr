@@ -3,9 +3,8 @@ name: End-to-End Tests (E2E) (Pepr Excellent Examples)
 permissions: read-all
 
 on:
-  workflow_dispatch:
-  repository_dispatch:
-    types: trigger-e2e
+  workflow_dispatch:  # can be triggered via UI
+  workflow_call:      # can be triggered by other workflows
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
@@ -34,7 +33,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
           cache-dependency-path: pepr
 
       - name: install pepr deps
@@ -95,7 +94,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
           cache-dependency-path: pepr
 
       - name: create matrix
@@ -150,7 +149,7 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
           cache-dependency-path: pepr-excellent-examples
 
       - name: install pepr-excellent-examples deps
