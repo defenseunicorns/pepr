@@ -58,6 +58,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
     },
     dependencies: {
       pepr: pgkVerOverride || version,
+      nock: "13.5.4",
     },
     devDependencies: {
       typescript,
