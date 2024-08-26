@@ -1,0 +1,24 @@
+# refs:
+# - https://shipit.dev/posts/trigger-github-actions-on-pr-close.html
+# - https://github.com/orgs/community/discussions/26724
+
+name: Release Testing
+
+permissions: read-all
+
+on:
+  workflow_dispatch:
+  # pull_request:
+  #   branches: [next]
+  #   types: [closed]
+
+jobs:
+  rc:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/semrel-rc.yml
+  soak:
+    needs: [rc]
+    uses: ./.github/workflows/semrel-soak.yml
+  rel:
+    needs: [soak]
+    uses: ./.github/workflows/semrel-official.yml

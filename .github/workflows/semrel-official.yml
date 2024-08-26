@@ -1,0 +1,15 @@
+name: Release (Official)
+
+permissions: read-all
+
+on:
+  workflow_dispatch:  # can be triggered via UI
+  workflow_call:      # can be triggered by other workflows
+
+jobs:
+  todo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "todo"
+        run: "echo 'todo'"
+        shell: bash
