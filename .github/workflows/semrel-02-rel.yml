@@ -19,6 +19,6 @@ jobs:
   soak:
     needs: [rc]
     uses: ./.github/workflows/semrel-soak.yml
-  rel:
+  official:
     needs: [soak]
     uses: ./.github/workflows/semrel-official.yml
