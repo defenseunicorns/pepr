@@ -39,6 +39,19 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch | default: `"300"` (5 mins)       |
 | `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources  | default: `"1800"` (30 mins)       |
 
+## Configuring Reconcile
+
+The [Reconcile Action](./030_actions/030_reconcile.md) allows you to maintain ordering of resource updates processed by a Pepr controller. The Reconcile configuration can be customized by specific enviroment variables of the Watcher Deployment and can be set in the `package.json` or in the helm `values.yaml` file.
+
+| Field | Description | Example Values |
+|-|-|-|
+| `PEPR_RECONCILE_STRATEGY` | How Pepr should order resource updates being Reconcile()'d. | default: `"singular"` |
+
+| Available Options ||
+|-|-|
+| `singular`  | Pepr will keep a single queue of events across _all_ Reconcile()'d resources of a kind.
+| `sharded`   | Pepr will keep multiple queues of events, one for each resource _instance_ of a kind.
+
 
 
 ## Customizing with Helm

@@ -19,11 +19,17 @@ const queueRecord: Record<string, Queue<KubernetesObject>> = {};
  * @returns The key for the object
  */
 export function queueRecordKey(obj: KubernetesObject) {
+  const options = ["singular", "sharded"]; // TODO : ts-type this fella
+  const d3fault = "singular";
+
+  let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
+  strat = options.includes(strat) ? strat : d3fault;
+
   const ns = obj.metadata?.namespace ?? "cluster-scoped";
   const kind = obj.kind ?? "UnknownKind";
   const name = obj.metadata?.name ?? "Unnamed";
 
-  return `${kind}/${name}/${ns}`;
+  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
 }
 
 // Watch configuration
