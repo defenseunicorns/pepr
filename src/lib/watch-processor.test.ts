@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { afterAll, beforeEach, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
@@ -322,62 +322,124 @@ describe("logEvent function", () => {
 });
 
 describe("queueRecordKey", () => {
-  it("should return correct key for an object with name, namespace, and kind", () => {
-    const obj: KubernetesObject = {
-      kind: "Pod",
-      metadata: {
-        name: "my-pod",
-        namespace: "my-namespace",
-      },
-    };
+  describe("PEPR_RECONCILE_STRATEGY=sharded", () => {
+    const original = process.env.PEPR_RECONCILE_STRATEGY;
 
-    expect(queueRecordKey(obj)).toBe("Pod/my-pod/my-namespace");
+    beforeAll(() => { process.env.PEPR_RECONCILE_STRATEGY = "sharded" });
+    afterAll(() => { process.env.PEPR_RECONCILE_STRATEGY = original });
+
+    it("should return correct key for an object with 'kind/name/namespace'", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+        metadata: {
+          name: "my-pod",
+          namespace: "my-namespace",
+        },
+      };
+
+      expect(queueRecordKey(obj)).toBe("Pod/my-pod/my-namespace");
+    });
+
+    it("should handle objects with missing namespace", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+        metadata: {
+          name: "my-pod",
+        },
+      };
+
+      expect(queueRecordKey(obj)).toBe("Pod/my-pod/cluster-scoped");
+    });
+
+    it("should handle objects with missing name", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+        metadata: {
+          namespace: "my-namespace",
+        },
+      };
+
+      expect(queueRecordKey(obj)).toBe("Pod/Unnamed/my-namespace");
+    });
+
+    it("should handle objects with missing metadata", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+      };
+
+      expect(queueRecordKey(obj)).toBe("Pod/Unnamed/cluster-scoped");
+    });
+
+    it("should handle objects with missing kind", () => {
+      const obj: KubernetesObject = {
+        metadata: {
+          name: "my-pod",
+          namespace: "my-namespace",
+        },
+      };
+
+      expect(queueRecordKey(obj)).toBe("UnknownKind/my-pod/my-namespace");
+    });
+
+    it("should handle completely empty objects", () => {
+      const obj: KubernetesObject = {};
+
+      expect(queueRecordKey(obj)).toBe("UnknownKind/Unnamed/cluster-scoped");
+    });
   });
 
-  it("should handle objects with missing namespace", () => {
-    const obj: KubernetesObject = {
-      kind: "Pod",
-      metadata: {
-        name: "my-pod",
-      },
-    };
+  describe("PEPR_RECONCILE_STRATEGY=singular", () => {
+    const original = process.env.PEPR_RECONCILE_STRATEGY;
 
-    expect(queueRecordKey(obj)).toBe("Pod/my-pod/cluster-scoped");
-  });
+    beforeAll(() => { process.env.PEPR_RECONCILE_STRATEGY = "singular" });
+    afterAll(() => { process.env.PEPR_RECONCILE_STRATEGY = original });
 
-  it("should handle objects with missing name", () => {
-    const obj: KubernetesObject = {
-      kind: "Pod",
-      metadata: {
-        namespace: "my-namespace",
-      },
-    };
+    it("should return correct key for an object with 'kind/namespace'", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+        metadata: {
+          name: "my-pod",
+          namespace: "my-namespace",
+        },
+      };
 
-    expect(queueRecordKey(obj)).toBe("Pod/Unnamed/my-namespace");
-  });
+      expect(queueRecordKey(obj)).toBe("Pod/my-namespace");
+    });
 
-  it("should handle objects with missing metadata", () => {
-    const obj: KubernetesObject = {
-      kind: "Pod",
-    };
+    it("should handle objects with missing namespace", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+        metadata: {
+          name: "my-pod",
+        },
+      };
 
-    expect(queueRecordKey(obj)).toBe("Pod/Unnamed/cluster-scoped");
-  });
+      expect(queueRecordKey(obj)).toBe("Pod/cluster-scoped");
+    });
 
-  it("should handle objects with missing kind", () => {
-    const obj: KubernetesObject = {
-      metadata: {
-        name: "my-pod",
-        namespace: "my-namespace",
-      },
-    };
+    it("should handle objects with missing metadata", () => {
+      const obj: KubernetesObject = {
+        kind: "Pod",
+      };
 
-    expect(queueRecordKey(obj)).toBe("UnknownKind/my-pod/my-namespace");
-  });
+      expect(queueRecordKey(obj)).toBe("Pod/cluster-scoped");
+    });
 
-  it("should handle completely empty objects", () => {
-    const obj: KubernetesObject = {};
+    it("should handle objects with missing kind", () => {
+      const obj: KubernetesObject = {
+        metadata: {
+          name: "my-pod",
+          namespace: "my-namespace",
+        },
+      };
 
-    expect(queueRecordKey(obj)).toBe("UnknownKind/Unnamed/cluster-scoped");
+      expect(queueRecordKey(obj)).toBe("UnknownKind/my-namespace");
+    });
+
+    it("should handle completely empty objects", () => {
+      const obj: KubernetesObject = {};
+
+      expect(queueRecordKey(obj)).toBe("UnknownKind/cluster-scoped");
+    });
   });
 });
