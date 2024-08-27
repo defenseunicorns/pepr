@@ -18,7 +18,7 @@ const watchCfg: WatchCfg = {
     : 300,
   relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
-    : 1800,
+    : 600,
 };
 
 // Map the event to the watch phase
