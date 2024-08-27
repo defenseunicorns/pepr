@@ -325,8 +325,12 @@ describe("queueRecordKey", () => {
   describe("PEPR_RECONCILE_STRATEGY=sharded", () => {
     const original = process.env.PEPR_RECONCILE_STRATEGY;
 
-    beforeAll(() => { process.env.PEPR_RECONCILE_STRATEGY = "sharded" });
-    afterAll(() => { process.env.PEPR_RECONCILE_STRATEGY = original });
+    beforeAll(() => {
+      process.env.PEPR_RECONCILE_STRATEGY = "sharded";
+    });
+    afterAll(() => {
+      process.env.PEPR_RECONCILE_STRATEGY = original;
+    });
 
     it("should return correct key for an object with 'kind/name/namespace'", () => {
       const obj: KubernetesObject = {
@@ -391,8 +395,12 @@ describe("queueRecordKey", () => {
   describe("PEPR_RECONCILE_STRATEGY=singular", () => {
     const original = process.env.PEPR_RECONCILE_STRATEGY;
 
-    beforeAll(() => { process.env.PEPR_RECONCILE_STRATEGY = "singular" });
-    afterAll(() => { process.env.PEPR_RECONCILE_STRATEGY = original });
+    beforeAll(() => {
+      process.env.PEPR_RECONCILE_STRATEGY = "singular";
+    });
+    afterAll(() => {
+      process.env.PEPR_RECONCILE_STRATEGY = original;
+    });
 
     it("should return correct key for an object with 'kind/namespace'", () => {
       const obj: KubernetesObject = {
