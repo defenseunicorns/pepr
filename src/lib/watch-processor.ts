@@ -9,6 +9,29 @@ import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
 
+// init a queueRecord record to store Queue instances for a given Kubernetes Object
+const queueRecord: Record<string, Queue<KubernetesObject>> = {};
+
+/**
+ * Get the key for a record in the queueRecord
+ *
+ * @param obj The object to get the key for
+ * @returns The key for the object
+ */
+export function queueRecordKey(obj: KubernetesObject) {
+  const options = ["singular", "sharded"]; // TODO : ts-type this fella
+  const d3fault = "singular";
+
+  let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
+  strat = options.includes(strat) ? strat : d3fault;
+
+  const ns = obj.metadata?.namespace ?? "cluster-scoped";
+  const kind = obj.kind ?? "UnknownKind";
+  const name = obj.metadata?.name ?? "Unnamed";
+
+  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
+}
+
 // Watch configuration
 const watchCfg: WatchCfg = {
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
@@ -74,12 +97,19 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     }
   };
 
-  const queue = new Queue();
-  queue.setReconcile(watchCallback);
+  function getOrCreateQueue(key: string): Queue<KubernetesObject> {
+    if (!queueRecord[key]) {
+      queueRecord[key] = new Queue<KubernetesObject>();
+      queueRecord[key].setReconcile(watchCallback);
+    }
+    return queueRecord[key];
+  }
 
   // Setup the resource watch
   const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
     Log.debug(obj, `Watch event ${type} received`);
+
+    const queue = getOrCreateQueue(queueRecordKey(obj));
 
     // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
