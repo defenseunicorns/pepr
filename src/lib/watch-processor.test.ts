@@ -88,7 +88,7 @@ describe("WatchProcessor", () => {
       resyncFailureMax: 5,
       resyncDelaySec: 5,
       lastSeenLimitSeconds: 300,
-      relistIntervalSec: 1800,
+      relistIntervalSec: 600,
     };
 
     capabilities.push({
