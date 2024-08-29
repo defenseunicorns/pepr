@@ -142,10 +142,6 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
   WithDeletionTimestamp: () => BindingFilter<T>;
 };
 
-// export type BindingWithDeletionTimestamp<T extends GenericClass> = BindingFilter<T> & {
-
-// };
-
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
