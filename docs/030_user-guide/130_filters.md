@@ -26,4 +26,8 @@ When(a.ConfigMap)
 - `.WithName("name")`: Filters resources by name.
 - `.InNamespace("namespace")`: Filters resources by namespace.
 - `.WithLabel("key", "value")`: Filters resources by label. (Can be multiple)
-- `.WithDeletionTimestamp()`: Filters resources that have a deletion timestamp.
+- `.WithDeletionTimestamp()`: Filters resources that have a deletion timestamp. 
+
+Notes: 
+- `WithDeletionTimestamp()` is does not work on Delete through the `Mutate` or `Validate` methods because the Kubernetes Admission Process does not fire the DELETE event with a deletion timestamp on the resource. 
+- `WithDeletionTimestamp()` is fired on an Update event during Admission (`Mutate` or `Validate`) _only_ when the finalizer is removed from the resource.

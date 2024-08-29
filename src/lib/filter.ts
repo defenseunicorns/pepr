@@ -23,7 +23,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   const combinedNamespaces = [...namespaces, ...capabilityNamespaces];
 
   // Delete bindings do not work through admission with DeletionTimestamp
-  if (binding.event.includes(Event.Delete)) {
+  if (binding.event.includes(Event.Delete) && binding.filters?.deletionTimestamp) {
     return true;
   }
 
