@@ -82,7 +82,7 @@ export async function writeEvent(
  * @param customResource the custom resource to get the owner reference for
  * @returns the owner reference array for the custom resource
  */
-export function getOwnerRefFrom(customResource: GenericKind): V1OwnerReference[] {
+export function getOwnerRefFrom(customResource: GenericKind, blockOwnerDeletion?: boolean, controller?: boolean): V1OwnerReference[] {
   const { name, uid } = customResource.metadata!;
 
   const ownerReference: V1OwnerReference = {
@@ -92,11 +92,11 @@ export function getOwnerRefFrom(customResource: GenericKind): V1OwnerReference[]
     name: name!,
   };
 
-  if (Object.prototype.hasOwnProperty.call(customResource, "blockOwnerDeletion")) {
-    ownerReference.blockOwnerDeletion = customResource.blockOwnerDeletion;
+  if (blockOwnerDeletion !== undefined ) {
+    ownerReference.blockOwnerDeletion = blockOwnerDeletion;
   }
-  if (Object.prototype.hasOwnProperty.call(customResource, "controller")) {
-    ownerReference.controller = customResource.controller;
+  if (controller !== undefined) {
+    ownerReference.controller = controller;
   }
 
   return [ownerReference];

@@ -164,34 +164,14 @@ describe("writeEvent", () => {
 });
 
 describe("getOwnerRefFrom", () => {
-  it("should return the owner reference for the CRD", () => {
-    const cr = {
-      apiVersion: "v1",
-      kind: "Package",
-      metadata: { name: "test", namespace: "default", uid: "1" },
-    };
-    const ownerRef = getOwnerRefFrom(cr as GenericKind);
-    expect(ownerRef).toEqual([
-      {
-        apiVersion: "v1",
-        kind: "Package",
-        name: "test",
-        uid: "1",
-      },
-    ]);
-  });
 
-  const crWithoutOptionals = {
+  const customResource = {
     apiVersion: "v1",
     kind: "Package",
     metadata: { name: "test", namespace: "default", uid: "1" },
   };
 
-  const crWithController = { ...crWithoutOptionals, controller: true };
-  const crWithBlockOwnerDeletion = { ...crWithoutOptionals, blockOwnerDeletion: false };
-  const crWithAllFields = { ...crWithoutOptionals, controller: true, blockOwnerDeletion: true };
-
-  const ownerRefWithoutOptionals = [
+  const ownerRef = [
     {
       apiVersion: "v1",
       kind: "Package",
@@ -200,35 +180,38 @@ describe("getOwnerRefFrom", () => {
     },
   ];
 
-  const ownerRefWithController = ownerRefWithoutOptionals.map(item => ({
+  const ownerRefWithController = ownerRef.map(item => ({
     ...item,
     controller: true,
   }));
-  const ownerRefWithBlockOwnerDeletion = ownerRefWithoutOptionals.map(item => ({
+  const ownerRefWithBlockOwnerDeletion = ownerRef.map(item => ({
     ...item,
     blockOwnerDeletion: false,
   }));
-  const ownerRefWithAllFields = ownerRefWithoutOptionals.map(item => ({
+  const ownerRefWithAllFields = ownerRef.map(item => ({
     ...item,
-    controller: true,
     blockOwnerDeletion: true,
+    controller: false,
   }));
 
-  const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
-
   test.each([
-    [crWithAllFields, ownerRefWithAllFields, V1OwnerReferenceFieldCount],
-    [crWithBlockOwnerDeletion, ownerRefWithBlockOwnerDeletion, V1OwnerReferenceFieldCount - 1],
-    [crWithController, ownerRefWithController, V1OwnerReferenceFieldCount - 1],
-    [crWithoutOptionals, ownerRefWithoutOptionals, V1OwnerReferenceFieldCount - 2],
+    [true, false, ownerRefWithAllFields],
+    [false, undefined, ownerRefWithBlockOwnerDeletion],
+    [undefined, true, ownerRefWithController],
+    [undefined, undefined, ownerRef],
   ])(
-    "should return the owner reference for the CRD with any combination of V1OwnerReference fields",
-    (customResource, ownerReference, fieldCount) => {
-      const result = getOwnerRefFrom(customResource);
-      expect(result).toEqual(ownerReference);
-      expect(Object.keys(result[0]).length).toEqual(fieldCount);
+    "should return owner reference for the CRD for combinations of V1OwnerReference fields - Optionals: blockOwnerDeletion (%s), controller (%s)",
+    (blockOwnerDeletion, controller, expected) => {
+      const result = getOwnerRefFrom(customResource, blockOwnerDeletion, controller);
+      expect(result).toEqual(expected);
     },
   );
+
+  it("should support all defined fields in the V1OwnerReference type", () => {
+   const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const result = getOwnerRefFrom(customResource, false, true);
+    expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
+  });
 });
 
 describe("sanitizeResourceName Fuzzing Tests", () => {
