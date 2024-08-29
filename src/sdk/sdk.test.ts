@@ -203,7 +203,7 @@ describe("getOwnerRefFrom", () => {
     "should return owner reference for the CRD for combinations of V1OwnerReference fields - Optionals: blockOwnerDeletion (%s), controller (%s)",
     (blockOwnerDeletion, controller, expected) => {
       const result = getOwnerRefFrom(customResource, blockOwnerDeletion, controller);
-      expect(result).toEqual(expected);
+      expect(result).toStrictEqual(expected);
     },
   );
 
