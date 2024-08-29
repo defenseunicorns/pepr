@@ -42,6 +42,11 @@ describe("Fuzzing shouldSkipRequest", () => {
             version: fc.string(),
             kind: fc.string(),
           }),
+          object: fc.record({
+            metadata: fc.record({
+              deletionTimestamp: fc.option(fc.date()),
+            }),
+          }),
         }),
         fc.array(fc.string()),
         (binding, req, capabilityNamespaces) => {
@@ -82,6 +87,11 @@ describe("Property-Based Testing shouldSkipRequest", () => {
             group: fc.string(),
             version: fc.string(),
             kind: fc.string(),
+          }),
+          object: fc.record({
+            metadata: fc.record({
+              deletionTimestamp: fc.option(fc.date()),
+            }),
           }),
         }),
         fc.array(fc.string()),
@@ -398,7 +408,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
-test("should deny when deletionTimestamp is not present", () => {
+test("should skip processing when deletionTimestamp is not present on pod", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -427,7 +437,7 @@ test("should deny when deletionTimestamp is not present", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
-test("should accept when deletionTimestamp is present", () => {
+test("should processing when deletionTimestamp is not present on pod", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,

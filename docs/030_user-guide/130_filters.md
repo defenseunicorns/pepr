@@ -6,13 +6,13 @@ Filters are functions that take a `AdmissionReview` or Watch event and return a 
 When(a.ConfigMap)
   // This limits the action to only act on new resources.
   .IsCreated()
-  // Name filter
-  .WithName("example-1")
   // Namespace filter
   .InNamespace("webapp")
-   // Label filter
-   .WithLabel("app", "webapp")
-   .WithLabel("env", "prod")
+  // Name filter
+  .WithName("example-1")
+  // Label filter
+  .WithLabel("app", "webapp")
+  .WithLabel("env", "prod")
   .Mutate(request => {
     request
       .SetLabel("pepr", "was-here")
