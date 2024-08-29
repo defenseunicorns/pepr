@@ -11,6 +11,7 @@ import { beforeEach, describe, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Mock } from "jest-mock";
+import { V1OwnerReference } from "@kubernetes/client-node";
 
 jest.mock("kubernetes-fluent-client", () => ({
   K8s: jest.fn(),
@@ -163,6 +164,15 @@ describe("writeEvent", () => {
 });
 
 describe("getOwnerRefFrom", () => {
+
+  const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length
+  const crWithoutOptionals = {
+    apiVersion: "v1",
+    kind: "Package",
+    metadata: { name: "test", namespace: "default", uid: "1" },
+  };
+
+
   it("should return the owner reference for the CRD", () => {
     const cr = {
       apiVersion: "v1",
@@ -179,7 +189,68 @@ describe("getOwnerRefFrom", () => {
       },
     ]);
   });
+  it("should return the owner reference for the CRD with optional fields", () => {
+    const customResource: GenericKind = {
+      apiVersion: "v1",
+      kind: "Package",
+      metadata: { name: "test", namespace: "default", uid: "1" },
+      blockOwnerDeletion: true,
+    };
+    const ownerRef = getOwnerRefFrom(customResource);
+    expect(ownerRef).toEqual([
+      {
+        apiVersion: "v1",
+        kind: "Package",
+        name: "test",
+        uid: "1",
+        blockOwnerDeletion: false
+      },
+    ]);
+    expect(Object.keys(ownerRef[0]).length).toEqual(V1OwnerReferenceFieldCount - 1);
+  });
+  it("should return the owner reference for the CRD with optional fields", () => {
+    const customResource: GenericKind = {
+      apiVersion: "v1",
+      kind: "Package",
+      metadata: { name: "test", namespace: "default", uid: "1" },
+      controller: true,
+    };
+    const ownerRef = getOwnerRefFrom(customResource);
+    expect(ownerRef).toEqual([
+      {
+        apiVersion: "v1",
+        kind: "Package",
+        name: "test",
+        uid: "1",
+        controller: true
+      },
+    ]);
+    expect(Object.keys(ownerRef[0]).length).toEqual(V1OwnerReferenceFieldCount - 1);
+  });
+
+  it("should return the owner reference for the CRD with all fields", () => {
+    const customResource: GenericKind = {
+      apiVersion: "v1",
+      kind: "Package",
+      metadata: { name: "test", namespace: "default", uid: "1" },
+      blockOwnerDeletion: true,
+      controller: true,
+    };
+    const ownerRef = getOwnerRefFrom(customResource);
+    expect(ownerRef).toEqual([
+      {
+        apiVersion: "v1",
+        kind: "Package",
+        name: "test",
+        uid: "1",
+        blockOwnerDeletion: true,
+        controller: true
+      },
+    ]);
+    expect(Object.keys(ownerRef[0]).length).toEqual(V1OwnerReferenceFieldCount);
+  });
 });
+
 describe("sanitizeResourceName Fuzzing Tests", () => {
   test("should handle any random string input", () => {
     fc.assert(
