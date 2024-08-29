@@ -82,18 +82,24 @@ export async function writeEvent(
  * @param customResource the custom resource to get the owner reference for
  * @returns the owner reference array for the custom resource
  */
-export function getOwnerRefFrom(customResource: GenericKind, blockOwnerDeletion?: boolean, controller?: boolean): V1OwnerReference[] {
+export function getOwnerRefFrom(
+  customResource: GenericKind,
+  blockOwnerDeletion?: boolean,
+  controller?: boolean,
+): V1OwnerReference[] {
   const { apiVersion, kind, metadata } = customResource;
   const { name, uid } = metadata!;
 
-  return [{
-    apiVersion: apiVersion!,
-    kind: kind!,
-    uid: uid!,
-    name: name!,
-    ...(blockOwnerDeletion !== undefined && { blockOwnerDeletion }),
-    ...(controller !== undefined && { controller }),
-  }];
+  return [
+    {
+      apiVersion: apiVersion!,
+      kind: kind!,
+      uid: uid!,
+      name: name!,
+      ...(blockOwnerDeletion !== undefined && { blockOwnerDeletion }),
+      ...(controller !== undefined && { controller }),
+    },
+  ];
 }
 
 /**

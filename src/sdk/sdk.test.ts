@@ -164,7 +164,6 @@ describe("writeEvent", () => {
 });
 
 describe("getOwnerRefFrom", () => {
-
   const customResource = {
     apiVersion: "v1",
     kind: "Package",
@@ -208,7 +207,7 @@ describe("getOwnerRefFrom", () => {
   );
 
   it("should support all defined fields in the V1OwnerReference type", () => {
-   const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
     const result = getOwnerRefFrom(customResource, false, true);
     expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
   });
