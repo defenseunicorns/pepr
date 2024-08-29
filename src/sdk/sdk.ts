@@ -92,13 +92,13 @@ export function getOwnerRefFrom(customResource: GenericKind): V1OwnerReference[]
       name: name!,
     };
 
-  if("blockOwnerDeletion" in customResource){
+  if(Object.prototype.hasOwnProperty.call(customResource, "blockOwnerDeletion")){
     ownerReference.blockOwnerDeletion = customResource.blockOwnerDeletion
   }
-  if("controller" in customResource){
+  if(Object.prototype.hasOwnProperty.call(customResource, "controller")){
     ownerReference.controller = customResource.controller
   }
-  //TODO: Why is this an array?
+
   return [ownerReference];
 }
 
