@@ -86,17 +86,17 @@ export function getOwnerRefFrom(customResource: GenericKind): V1OwnerReference[]
   const { name, uid } = customResource.metadata!;
 
   const ownerReference: V1OwnerReference = {
-      apiVersion: customResource.apiVersion!,
-      kind: customResource.kind!,
-      uid: uid!,
-      name: name!,
-    };
+    apiVersion: customResource.apiVersion!,
+    kind: customResource.kind!,
+    uid: uid!,
+    name: name!,
+  };
 
-  if(Object.prototype.hasOwnProperty.call(customResource, "blockOwnerDeletion")){
-    ownerReference.blockOwnerDeletion = customResource.blockOwnerDeletion
+  if (Object.prototype.hasOwnProperty.call(customResource, "blockOwnerDeletion")) {
+    ownerReference.blockOwnerDeletion = customResource.blockOwnerDeletion;
   }
-  if(Object.prototype.hasOwnProperty.call(customResource, "controller")){
-    ownerReference.controller = customResource.controller
+  if (Object.prototype.hasOwnProperty.call(customResource, "controller")) {
+    ownerReference.controller = customResource.controller;
   }
 
   return [ownerReference];
