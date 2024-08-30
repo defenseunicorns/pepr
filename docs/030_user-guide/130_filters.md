@@ -30,4 +30,4 @@ When(a.ConfigMap)
 
 Notes: 
 - `WithDeletionTimestamp()` is does not work on Delete through the `Mutate` or `Validate` methods because the Kubernetes Admission Process does not fire the DELETE event with a deletion timestamp on the resource. 
-- `WithDeletionTimestamp()` is fired on an Update event during Admission (`Mutate` or `Validate`) _only_ when the finalizer is removed from the resource.
+- `WithDeletionTimestamp()` _will_ match on an Update event during Admission (`Mutate` or `Validate`) when pending-deletion permitted changes (like removing a finalizer) occur.
