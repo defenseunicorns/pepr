@@ -74,7 +74,7 @@ export function filterNoMatchReason(
   capabilityNamespaces: string[],
 ): string {
   // binding deletionTimestamp filter and object deletionTimestamp dont match
-  if (binding.filters && binding.filters.deletionTimestamp && obj.metadata && !obj.metadata.deletionTimestamp) {
+  if (binding.filters?.deletionTimestamp && !obj.metadata?.deletionTimestamp) {
     return `Ignoring Watch Callback: Object does not have a deletion timestamp.`;
   }
 

@@ -28,12 +28,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   }
 
   // Test for deletionTimestamp
-  if (
-    binding.filters &&
-    binding.filters.deletionTimestamp &&
-    req.object.metadata &&
-    !req.object.metadata?.deletionTimestamp
-  ) {
+  if (binding.filters?.deletionTimestamp && !req.object.metadata?.deletionTimestamp) {
     return true;
   }
   // Test for matching operation
