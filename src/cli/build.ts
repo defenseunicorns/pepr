@@ -244,6 +244,10 @@ export async function loadModule(entryPoint = peprTS) {
 export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
+    const excludedDeps = [
+      ...externalLibs,
+      ...Object.keys(cfg.devDependencies).filter(dep => dep !== "typescript"),
+    ];
 
     const validFormat = await peprFormat(true);
 
@@ -265,7 +269,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
     const ctxCfg: BuildOptions = {
       bundle: true,
       entryPoints: [entryPoint],
-      external: externalLibs,
+      external: excludedDeps,
       format: "cjs",
       keepNames: true,
       legalComments: "external",
