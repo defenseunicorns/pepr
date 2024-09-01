@@ -1,4 +1,4 @@
-import { K8s, RegisterKind, kind as a, fetch, fetchStatus, kind } from "kubernetes-fluent-client";
+import { K8s, RegisterKind, fetch, fetchStatus, kind } from "kubernetes-fluent-client";
 import * as R from "ramda";
 
 import { Capability } from "./lib/capability";
@@ -8,8 +8,6 @@ import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
 import * as sdk from "./sdk/sdk";
-
-console.log("erfrgtgtgt");
 
 export {
   Capability,
