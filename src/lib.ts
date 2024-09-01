@@ -1,4 +1,4 @@
-import { K8s, RegisterKind, fetch, fetchStatus, kind } from "kubernetes-fluent-client";
+import { K8s, RegisterKind, kind as a, fetch, fetchStatus, kind } from "kubernetes-fluent-client";
 import * as R from "ramda";
 
 import { Capability } from "./lib/capability";
