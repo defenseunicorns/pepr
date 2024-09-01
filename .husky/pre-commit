@@ -3,5 +3,5 @@
 
 echo "Linting code before commit 🧐"
 npm run format:fix
-echo "Lint sucessfull 👍"
+echo "Lint successfull 👍"
 
