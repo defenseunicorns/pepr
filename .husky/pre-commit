@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "Linting code before commit"
+echo "Linting code before commit 🧐"
 npm run format:fix
-echo "Linted. Run 'git commit' again to commit the linted code."
+echo "Lint sucessfull 👍"
+
