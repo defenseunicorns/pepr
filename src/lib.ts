@@ -9,6 +9,8 @@ import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
 import * as sdk from "./sdk/sdk";
 
+console.log("erfrgtgtgt");
+
 export {
   Capability,
   K8s,
