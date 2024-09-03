@@ -80,6 +80,8 @@ export async function writeEvent(
 /**
  * Get the owner reference for a custom resource
  * @param customResource the custom resource to get the owner reference for
+ * @param blockOwnerDeletion if true, AND if the owner has the "foregroundDeletion" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. 
+ * @param controller if true, this reference points to the managing controller.
  * @returns the owner reference array for the custom resource
  */
 export function getOwnerRefFrom(
