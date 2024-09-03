@@ -28,9 +28,14 @@ export default function (program: RootCmd) {
     .description("Initialize a new Pepr Module")
     // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
+    .option("-f, --flaggy", "Set a flag!")
     .action(async opts => {
       let pkgOverride = "";
 
+      if(opts.flaggy){
+        console.log("beep boop!")
+        process.exit()
+      }
       // Overrides for testing. @todo: don't be so gross with Node CLI testing
       if (process.env.TEST_MODE === "true") {
         prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
