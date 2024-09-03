@@ -20,6 +20,8 @@ import {
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
+  FinalizeAction,
+  FinalizeActionChain,
   WhenSelector,
 } from "./types";
 
@@ -247,7 +249,7 @@ export class Capability implements CapabilityExport {
       return { Watch, Validate, Reconcile };
     }
 
-    function Watch(watchCallback: WatchAction<T>) {
+    function Watch(watchCallback: WatchAction<T>) : FinalizeActionChain<T>{
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
@@ -257,9 +259,11 @@ export class Capability implements CapabilityExport {
           watchCallback,
         });
       }
+
+      return { Finalize };
     }
 
-    function Reconcile(watchCallback: WatchAction<T>) {
+    function Reconcile(watchCallback: WatchAction<T>) : FinalizeActionChain<T> {
       if (registerWatch) {
         log("Reconcile Action", watchCallback.toString());
 
@@ -270,6 +274,27 @@ export class Capability implements CapabilityExport {
           watchCallback,
         });
       }
+
+      return { Finalize }
+    }
+
+    function Finalize(finalizeCallback: FinalizeAction<T>) : FinalizeActionChain<T> {
+      if (registerWatch) {
+        log("Finalize Action", finalizeCallback.toString());
+
+        // add binding for Mutate admission
+        // <module uuid>.<kind>.<ns>.<name>/finalize
+
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          isFinalize: true,
+          event: Event.Update,
+          finalizeCallback,
+        });
+      }
+
+      return { Finalize }
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {

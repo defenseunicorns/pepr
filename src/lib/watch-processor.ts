@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { K8s, kind, KubernetesObject, RegisterKind, GroupVersionKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
@@ -11,6 +11,9 @@ import { metricsCollector } from "./metrics";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
+
+// default + dynamically-registered Kinds
+let kinds = kind;
 
 /**
  * Get the key for an entry in the queues
@@ -97,10 +100,83 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
+
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
-          await binding.watchCallback?.(obj, phase);
+          if (binding.isFinalize) {
+            if (! obj.metadata?.deletionTimestamp) { return }
+            try {
+              await binding.finalizeCallback?.(obj);
+            }
+            finally {
+              // Have to RegisterKind as done in:
+              // /home/barrett/workspace/defuni/pepr-excellent-examples/_helpers/src/cluster.ts
+
+            //   export declare class V1CertificateSigningRequest {
+            //     /**
+            //     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            //     */
+            //     'apiVersion'?: string;
+            //     /**
+            //     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            //     */
+            //     'kind'?: string;
+            //     'metadata'?: V1ObjectMeta;
+            //     'spec': V1CertificateSigningRequestSpec;
+            //     'status'?: V1CertificateSigningRequestStatus;
+            //     static readonly discriminator: string | undefined;
+            //     static readonly attributeTypeMap: Array<{
+            //         name: string;
+            //         baseName: string;
+            //         type: string;
+            //         format: string;
+            //     }>;
+            //     static getAttributeTypeMap(): {
+            //         name: string;
+            //         baseName: string;
+            //         type: string;
+            //         format: string;
+            //     }[];
+            //     constructor();
+            // }
+
+              // const kynd = class extends kind.GenericKind {}
+              // const kynd = { name: obj.kind } as kind.GenericKind
+              // const kynd = class extends kind.GenericKind { name: "asdf" }
+              
+              // RegisterKind(kynd, { group: grp, version: ver, kind: knd })
+
+              // EventsV1Event: {
+              //   kind: "Event",
+              //   version: "v1",
+              //   group: "events.k8s.io",
+              // },
+
+              class kynd implements GroupVersionKind {
+                kind: string;
+                group: string;
+                constructor() {
+                  this.kind = "foo";
+                  this.group = "bar";
+                }
+              }
+              RegisterKind(foo, new foo());
+
+              await K8s(???, {
+                namespace: obj.metadata.namespace,
+                name: obj.metadata.name,
+              }).Patch([{
+                op: "remove",
+                path: "/metadata/deletionTimestamp"
+              }]);
+
+            }
+
+          } else {
+            await binding.watchCallback?.(obj, phase);
+          }
+
         } else {
           Log.debug(filterMatch);
         }
@@ -121,6 +197,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     } else {
       await watchCallback(obj, phase);
     }
+
   }, watchCfg);
 
   // If failure continues, log and exit
