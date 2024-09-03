@@ -29,6 +29,9 @@ export default function (program: RootCmd) {
     // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
     .option("-f, --flaggy", "Set a flag!")
+    .option("-n, --name", "Set a name!")
+    .option("-d, --description", "Set a description!")
+    .option("-e, --errorBehavior", "Set a errorBehavior!")
     .action(async opts => {
       let pkgOverride = "";
 

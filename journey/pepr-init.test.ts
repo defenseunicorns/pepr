@@ -14,7 +14,9 @@ it("should create a new Pepr project", () => {
 it("should display the input options", () => {
   const peprAlias = "file:pepr-0.0.0-development.tgz";
   const output = execSync(`npx --yes ${peprAlias} init --help`);
-  expect(output.toString()).toContain("flaggy")
+  expect(output.toString()).toContain("name")
+  expect(output.toString()).toContain("description")
+  expect(output.toString()).toContain("errorBehavior")
 });
 
 it("should print a fun message when flaggy is set", () => {
