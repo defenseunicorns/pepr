@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "@jest/globals";
 import prompts from "prompts";
-import { walkthrough } from "./walkthrough";
+import { walkthrough, confirm } from "./walkthrough";
 
 describe('when processing input', () =>{
   test("walkthrough() returns expected results", async () => {
@@ -62,4 +62,22 @@ describe('when processing input', () =>{
       errorBehavior: "reject", //TODO: Verify this is actually a string
     });
 });
+
+  test("confirm() returns true when manually prompted", async () =>{
+    prompts.inject(["y"]);
+    const result = await confirm("some string",{path: "some path", print: "some print"}, "some Pepr TS path");
+    expect(result).toBe(true);
+  })
+
+  test("confirm() returns true when set by flag prompted", async () =>{
+    prompts.inject(["y"]);
+    const result = await confirm("some string",{path: "some path", print: "some print"}, "some Pepr TS path", true);
+    expect(result).toBe(true);
+  })
+
+  test("confirm() returns false when set by flag prompted", async () =>{
+    prompts.inject(["y"]);
+    const result = await confirm("some string",{path: "some path", print: "some print"}, "some Pepr TS path", false);
+    expect(result).toBe(false);
+  })
 })

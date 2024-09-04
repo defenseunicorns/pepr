@@ -3,7 +3,6 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import prompts from "prompts";
 
 import { RootCmd } from "../root";
 import {
@@ -29,9 +28,10 @@ export default function (program: RootCmd) {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
-    .option("--name <string>", "Set a name!")
+    .option("--confirm", "Skip verification prompt before creating module")
     .option("--description <string>", "Set a description!")
+    .option("--name <string>", "Set a name!")
+    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
     .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
     .hook('preAction', async (thisCommand) => {
       response = await walkthrough(thisCommand.opts());
@@ -45,7 +45,7 @@ export default function (program: RootCmd) {
         pkgOverride);
       const peprTS = genPeprTS();
 
-      const confirmed = await confirm(dirName, packageJSON, peprTS.path);
+      const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");

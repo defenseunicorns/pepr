@@ -8,6 +8,7 @@ export function peprInit(){
   it("should display the help menu", () => {
     const peprAlias = "file:pepr-0.0.0-development.tgz";
     const output = execSync(`npx --yes ${peprAlias} init --help`);
+    expect(output.toString()).toContain("confirm")
     expect(output.toString()).toContain("name")
     expect(output.toString()).toContain("description")
     expect(output.toString()).toContain("errorBehavior")
@@ -25,7 +26,7 @@ export function peprInit(){
 
   it("should create a new Pepr project using input flags", () => {
     const peprAlias = "file:pepr-0.0.0-development.tgz";
-    const output = execSync(`npx --yes ${peprAlias} init --name myTestModule --description asdf --errorBehavior reject`
+    const output = execSync(`npx --yes ${peprAlias} init --name myTestModule --description asdf --errorBehavior reject --confirm`
     );
     console.log(output.toString())
     expect(output.toString()).toContain("mytestmodule")
