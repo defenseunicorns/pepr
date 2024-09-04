@@ -10,39 +10,40 @@ import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
 export type PromptOptions = {
-  name?: string,
-  description?: string,
-  errorBehavior?: "audit" | "ignore" | "reject"
-}
+  name?: string;
+  description?: string;
+  errorBehavior?: "audit" | "ignore" | "reject";
+};
 export type FinalPromptOptions = {
-  name: string,
-  description: string,
-  errorBehavior: "audit" | "ignore" | "reject"
-}
+  name: string;
+  description: string;
+  errorBehavior: "audit" | "ignore" | "reject";
+};
 
 //TODO: Better typing
-export async function walkthrough(opts?: PromptOptions): Promise<PromptOptions>{
-  const result =  
-    { 
-    ...await walkthroughName(opts?.name),
-    ...await walkthroughDescription(opts?.description),
-    ...await walkthroughErrorBehavior(opts?.errorBehavior)
-  }
-  return result
+export async function walkthrough(opts?: PromptOptions): Promise<PromptOptions> {
+  const result = {
+    ...(await walkthroughName(opts?.name)),
+    ...(await walkthroughDescription(opts?.description)),
+    ...(await walkthroughErrorBehavior(opts?.errorBehavior)),
+  };
+  return result;
 }
 
-export async function genericWalkthrough(key: string, promptObj: PromptObject): Promise<Answers<string>>{
-  if(key !== undefined){
-    return {key}
+export async function genericWalkthrough(
+  key: string,
+  promptObj: PromptObject,
+): Promise<Answers<string>> {
+  if (key !== undefined) {
+    return { key };
   }
   return prompt([promptObj]);
 }
 
-async function walkthroughName(name?: string): Promise<Answers<string>>{
-  
-  if(name !== undefined){
+async function walkthroughName(name?: string): Promise<Answers<string>> {
+  if (name !== undefined) {
     //TODO Validation logic
-    return {name}
+    return { name };
   }
 
   const askName: PromptObject = {
@@ -50,7 +51,7 @@ async function walkthroughName(name?: string): Promise<Answers<string>>{
     name: "name",
     message:
       "Enter a name for the new Pepr module. This will create a new directory based on the name.\n",
-    validate: async (val) => {
+    validate: async val => {
       try {
         const name = sanitizeName(val); //TODO: Type assertions
         await fs.access(name, fs.constants.F_OK);
@@ -64,11 +65,10 @@ async function walkthroughName(name?: string): Promise<Answers<string>>{
   return prompt([askName]);
 }
 
-
 async function walkthroughDescription(description?: string): Promise<Answers<string>> {
-  if(description !== undefined){
+  if (description !== undefined) {
     //TODO Validation logic
-    return {description}
+    return { description };
   }
 
   const askDescription: PromptObject = {
@@ -78,13 +78,14 @@ async function walkthroughDescription(description?: string): Promise<Answers<str
   };
 
   return prompt([askDescription]);
-
 }
 
-async function walkthroughErrorBehavior(errorBehavior?: "audit" | "ignore" | "reject"): Promise<Answers<string>> {
-  if(errorBehavior !== undefined){
+async function walkthroughErrorBehavior(
+  errorBehavior?: "audit" | "ignore" | "reject",
+): Promise<Answers<string>> {
+  if (errorBehavior !== undefined) {
     //TODO validation logic
-    return {errorBehavior: Errors.reject}
+    return { errorBehavior: Errors.reject };
   }
 
   const askErrorBehavior: PromptObject = {
@@ -139,8 +140,8 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     └── \x1b[1m${tsConfig.path}\x1b[0m
       `);
 
-  if(skipPrompt !== undefined){
-    return skipPrompt
+  if (skipPrompt !== undefined) {
+    return skipPrompt;
   }
 
   const confirm = await prompt({
@@ -149,5 +150,5 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     message: "Create the new Pepr module?",
   });
 
-  return !!confirm.confirm
+  return !!confirm.confirm;
 }

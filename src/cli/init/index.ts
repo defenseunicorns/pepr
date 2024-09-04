@@ -20,7 +20,7 @@ import {
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, FinalPromptOptions, PromptOptions, walkthrough } from "./walkthrough";
-import { ErrorList} from "../../lib/errors";
+import { ErrorList } from "../../lib/errors";
 
 export default function (program: RootCmd) {
   let response = {} as PromptOptions; //TODO kludge
@@ -33,16 +33,17 @@ export default function (program: RootCmd) {
     .option("--name <string>", "Set a name!")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
     .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
-    .hook('preAction', async (thisCommand) => {
+    .hook("preAction", async thisCommand => {
       response = await walkthrough(thisCommand.opts());
-      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value))
+      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
     })
     .action(async opts => {
       const pkgOverride = "";
       const dirName = sanitizeName(response.name as string); //TODO: kludge
       const packageJSON = genPkgJSON(
-        response as FinalPromptOptions,  //TODO: kludge
-        pkgOverride);
+        response as FinalPromptOptions, //TODO: kludge
+        pkgOverride,
+      );
       const peprTS = genPeprTS();
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
