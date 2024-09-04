@@ -20,40 +20,28 @@ import {
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
-import { confirm, walkthroughDescription, walkthroughErrorBehavior, walkthroughName } from "./walkthrough";
+import { confirm, FinalPromptOptions, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList} from "../../lib/errors";
 
 export default function (program: RootCmd) {
+  let response = {} as PromptOptions; //TODO kludge
+
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    // skip auto npm install and git init
-    .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
-    .option("--flaggy", "Set a flag!")
+    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
     .option("--name <string>", "Set a name!")
     .option("--description <string>", "Set a description!")
     .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
+    .hook('preAction', async (thisCommand) => {
+      response = await walkthrough(thisCommand.opts());
+      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value))
+    })
     .action(async opts => {
-      let pkgOverride = "";
-
-      if(opts.flaggy){
-        console.log("beep boop!")
-        process.exit()
-      }
-      // Overrides for testing. @todo: don't be so gross with Node CLI testing
-      if (process.env.TEST_MODE === "true") {
-        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
-        pkgOverride = "file:../pepr-0.0.0-development.tgz";
-      }
-
-      const respName = await walkthroughName(opts.name)
-      const respDesc = await walkthroughDescription(opts.description);
-      const respErr = await walkthroughErrorBehavior(opts.errorBehavior);
-      console.log(typeof respName.name)
-      const dirName = sanitizeName(respName.name);
-      const packageJSON = genPkgJSON({name: respName.name, 
-        description: respDesc.description,
-        errorBehavior: respErr.errorBehavior} ,
+      const pkgOverride = "";
+      const dirName = sanitizeName(response.name as string); //TODO: kludge
+      const packageJSON = genPkgJSON(
+        response as FinalPromptOptions,  //TODO: kludge
         pkgOverride);
       const peprTS = genPeprTS();
 

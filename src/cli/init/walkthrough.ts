@@ -9,8 +9,36 @@ import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
+export type PromptOptions = {
+  name?: string,
+  description?: string,
+  errorBehavior?: "audit" | "ignore" | "reject"
+}
+export type FinalPromptOptions = {
+  name: string,
+  description: string,
+  errorBehavior: "audit" | "ignore" | "reject"
+}
 
-export function walkthroughName(name?: string){
+//TODO: Better typing
+export async function walkthrough(opts?: PromptOptions): Promise<PromptOptions>{
+  const result =  
+    { 
+    ...await walkthroughName(opts?.name),
+    ...await walkthroughDescription(opts?.description),
+    ...await walkthroughErrorBehavior(opts?.errorBehavior)
+  }
+  return result
+}
+
+export async function genericWalkthrough(key: string, promptObj: PromptObject): Promise<Answers<string>>{
+  if(key !== undefined){
+    return {key}
+  }
+  return prompt([promptObj]);
+}
+
+async function walkthroughName(name?: string): Promise<Answers<string>>{
   
   if(name !== undefined){
     //TODO Validation logic
@@ -22,7 +50,7 @@ export function walkthroughName(name?: string){
     name: "name",
     message:
       "Enter a name for the new Pepr module. This will create a new directory based on the name.\n",
-    validate: async val => {
+    validate: async (val) => {
       try {
         const name = sanitizeName(val); //TODO: Type assertions
         await fs.access(name, fs.constants.F_OK);
@@ -33,11 +61,11 @@ export function walkthroughName(name?: string){
       }
     },
   };
-  return prompt([askName]) as Promise<InitOptions>;
+  return prompt([askName]);
 }
 
 
-export function walkthroughDescription(description?: string) {
+async function walkthroughDescription(description?: string): Promise<Answers<string>> {
   if(description !== undefined){
     //TODO Validation logic
     return {description}
@@ -49,11 +77,11 @@ export function walkthroughDescription(description?: string) {
     message: "(Recommended) Enter a description for the new Pepr module.\n",
   };
 
-  return prompt([askDescription]) as Promise<InitOptions>
+  return prompt([askDescription]);
 
 }
 
-export function walkthroughErrorBehavior(errorBehavior?: string){
+async function walkthroughErrorBehavior(errorBehavior?: "audit" | "ignore" | "reject"): Promise<Answers<string>> {
   if(errorBehavior !== undefined){
     //TODO validation logic
     return {errorBehavior: Errors.reject}
@@ -85,7 +113,7 @@ export function walkthroughErrorBehavior(errorBehavior?: string){
       },
     ],
   };
-  return prompt([askErrorBehavior]) as Promise<InitOptions>;
+  return prompt([askErrorBehavior]);
 }
 
 export async function confirm(
