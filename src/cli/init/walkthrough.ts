@@ -10,7 +10,13 @@ import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
 
-export function walkthrough(): Promise<InitOptions> {
+export function walkthroughName(name?: string){
+  
+  if(name !== undefined){
+    //TODO Validation logic
+    return {name}
+  }
+
   const askName: PromptObject = {
     type: "text",
     name: "name",
@@ -18,7 +24,7 @@ export function walkthrough(): Promise<InitOptions> {
       "Enter a name for the new Pepr module. This will create a new directory based on the name.\n",
     validate: async val => {
       try {
-        const name = sanitizeName(val);
+        const name = sanitizeName(val); //TODO: Type assertions
         await fs.access(name, fs.constants.F_OK);
 
         return "A directory with this name already exists";
@@ -27,12 +33,31 @@ export function walkthrough(): Promise<InitOptions> {
       }
     },
   };
+  return prompt([askName]) as Promise<InitOptions>;
+}
+
+
+export function walkthroughDescription(description?: string) {
+  if(description !== undefined){
+    //TODO Validation logic
+    return {description}
+  }
 
   const askDescription: PromptObject = {
     type: "text",
     name: "description",
     message: "(Recommended) Enter a description for the new Pepr module.\n",
   };
+
+  return prompt([askDescription]) as Promise<InitOptions>
+
+}
+
+export function walkthroughErrorBehavior(errorBehavior?: string){
+  if(errorBehavior !== undefined){
+    //TODO validation logic
+    return {errorBehavior: Errors.reject}
+  }
 
   const askErrorBehavior: PromptObject = {
     type: "select",
@@ -60,8 +85,7 @@ export function walkthrough(): Promise<InitOptions> {
       },
     ],
   };
-
-  return prompt([askName, askDescription, askErrorBehavior]) as Promise<InitOptions>;
+  return prompt([askErrorBehavior]) as Promise<InitOptions>;
 }
 
 export async function confirm(

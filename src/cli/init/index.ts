@@ -20,7 +20,8 @@ import {
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
-import { confirm, walkthrough } from "./walkthrough";
+import { confirm, walkthroughDescription, walkthroughErrorBehavior, walkthroughName } from "./walkthrough";
+import { ErrorList} from "../../lib/errors";
 
 export default function (program: RootCmd) {
   program
@@ -28,10 +29,10 @@ export default function (program: RootCmd) {
     .description("Initialize a new Pepr Module")
     // skip auto npm install and git init
     .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
-    .option("-f, --flaggy", "Set a flag!")
-    .option("-n, --name", "Set a name!")
-    .option("-d, --description", "Set a description!")
-    .option("-e, --errorBehavior", "Set a errorBehavior!")
+    .option("--flaggy", "Set a flag!")
+    .option("--name <string>", "Set a name!")
+    .option("--description <string>", "Set a description!")
+    .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
     .action(async opts => {
       let pkgOverride = "";
 
@@ -45,9 +46,15 @@ export default function (program: RootCmd) {
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
       }
 
-      const response = await walkthrough();
-      const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response, pkgOverride);
+      const respName = await walkthroughName(opts.name)
+      const respDesc = await walkthroughDescription(opts.description);
+      const respErr = await walkthroughErrorBehavior(opts.errorBehavior);
+      console.log(typeof respName.name)
+      const dirName = sanitizeName(respName.name);
+      const packageJSON = genPkgJSON({name: respName.name, 
+        description: respDesc.description,
+        errorBehavior: respErr.errorBehavior} ,
+        pkgOverride);
       const peprTS = genPeprTS();
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path);
