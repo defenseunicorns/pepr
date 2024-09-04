@@ -10,6 +10,9 @@ import { promises as fs } from "fs";
  * @returns the sanitized name
  */
 export function sanitizeName(name: string) {
+  if(typeof name !== "string"){
+    throw TypeError(`sanitizeName() was called with a non-string value. The value is: ${name} of type ${typeof name}`);
+  }
   // Replace any characters outside of [^a-z0-9-] with "-"
   let sanitized = name.toLowerCase().replace(/[^a-z0-9-]+/gi, "-");
 
