@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm run format:fix | awk '{sum += $2} END {print sum}'
+npx lint-staged
