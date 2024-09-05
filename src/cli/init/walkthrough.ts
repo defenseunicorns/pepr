@@ -148,6 +148,7 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     type: "confirm",
     name: "confirm",
     message: "Create the new Pepr module?",
+    format: (val) => (val === "y" || val === "yes") ? true : false
   });
 
   return !!confirm.confirm;

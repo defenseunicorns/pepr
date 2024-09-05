@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, it, test } from "@jest/globals";
 import prompts from "prompts";
 import { walkthrough, confirm } from "./walkthrough";
 
@@ -62,35 +62,35 @@ describe("when processing input", () => {
     });
   });
 
-  test("confirm() returns true when manually prompted", async () => {
-    prompts.inject(["y"]);
+  describe("confirm() handles input", () =>{
+    it.each(
+      [
+        ["y", true],
+        ["n", false]
+      ]
+    )("when prompt input is %s", async (userInput: string, expected: boolean) =>{
+    prompts.inject([userInput])
     const result = await confirm(
       "some string",
       { path: "some path", print: "some print" },
       "some Pepr TS path",
     );
-    expect(result).toBe(true);
-  });
+    expect(result).toBe(expected);
+    })
 
-  test("confirm() returns true when set by flag prompted", async () => {
-    prompts.inject(["y"]);
+    it.each(
+      [
+        [true],
+        [false]
+      ]
+    )("when flag input is %s", async (confirmFlag: boolean | undefined) =>{
     const result = await confirm(
       "some string",
       { path: "some path", print: "some print" },
       "some Pepr TS path",
-      true,
+      confirmFlag,
     );
-    expect(result).toBe(true);
-  });
-
-  test("confirm() returns false when set by flag prompted", async () => {
-    prompts.inject(["y"]);
-    const result = await confirm(
-      "some string",
-      { path: "some path", print: "some print" },
-      "some Pepr TS path",
-      false,
-    );
-    expect(result).toBe(false);
-  });
-});
+    expect(result).toBe(confirmFlag);
+    })
+  })
+})
