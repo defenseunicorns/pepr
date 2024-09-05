@@ -19,11 +19,11 @@ import {
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
-import { confirm, FinalPromptOptions, PromptOptions, walkthrough } from "./walkthrough";
+import { confirm, FinalPromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
 
 export default function (program: RootCmd) {
-  let response = {} as PromptOptions; //TODO kludge
+  let response = {} as FinalPromptOptions;
 
   program
     .command("init")
@@ -39,11 +39,8 @@ export default function (program: RootCmd) {
     })
     .action(async opts => {
       const pkgOverride = "";
-      const dirName = sanitizeName(response.name as string); //TODO: kludge
-      const packageJSON = genPkgJSON(
-        response as FinalPromptOptions, //TODO: kludge
-        pkgOverride,
-      );
+      const dirName = sanitizeName(response.name);
+      const packageJSON = genPkgJSON(response, pkgOverride);
       const peprTS = genPeprTS();
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);

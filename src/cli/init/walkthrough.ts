@@ -9,25 +9,20 @@ import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
-export type PromptOptions = {
-  name?: string;
-  description?: string;
-  errorBehavior?: "audit" | "ignore" | "reject";
-};
 export type FinalPromptOptions = {
   name: string;
   description: string;
   errorBehavior: "audit" | "ignore" | "reject";
 };
+export type PromptOptions = Partial<FinalPromptOptions>;
 
-//TODO: Better typing
-export async function walkthrough(opts?: PromptOptions): Promise<PromptOptions> {
+export async function walkthrough(opts?: PromptOptions): Promise<FinalPromptOptions> {
   const result = {
-    ...(await walkthroughName(opts?.name)),
-    ...(await walkthroughDescription(opts?.description)),
-    ...(await walkthroughErrorBehavior(opts?.errorBehavior)),
+    ...(await setName(opts?.name)),
+    ...(await setDescription(opts?.description)),
+    ...(await setErrorBehavior(opts?.errorBehavior)),
   };
-  return result;
+  return result as FinalPromptOptions; //TODO: Type coercion issue
 }
 
 export async function genericWalkthrough(
@@ -40,7 +35,7 @@ export async function genericWalkthrough(
   return prompt([promptObj]);
 }
 
-async function walkthroughName(name?: string): Promise<Answers<string>> {
+export async function setName(name?: string): Promise<Answers<string>> {
   if (name !== undefined) {
     //TODO Validation logic
     return { name };
@@ -51,9 +46,9 @@ async function walkthroughName(name?: string): Promise<Answers<string>> {
     name: "name",
     message:
       "Enter a name for the new Pepr module. This will create a new directory based on the name.\n",
-    validate: async val => {
+    validate: async (val: string) => {
       try {
-        const name = sanitizeName(val); //TODO: Type assertions
+        const name = sanitizeName(val);
         await fs.access(name, fs.constants.F_OK);
 
         return "A directory with this name already exists";
@@ -62,10 +57,12 @@ async function walkthroughName(name?: string): Promise<Answers<string>> {
       }
     },
   };
-  return prompt([askName]);
+  const response = prompt([askName]);
+  return response;
+  // return prompt([askName]);
 }
 
-async function walkthroughDescription(description?: string): Promise<Answers<string>> {
+async function setDescription(description?: string): Promise<Answers<string>> {
   if (description !== undefined) {
     //TODO Validation logic
     return { description };
@@ -80,7 +77,7 @@ async function walkthroughDescription(description?: string): Promise<Answers<str
   return prompt([askDescription]);
 }
 
-async function walkthroughErrorBehavior(
+async function setErrorBehavior(
   errorBehavior?: "audit" | "ignore" | "reject",
 ): Promise<Answers<string>> {
   if (errorBehavior !== undefined) {
@@ -148,7 +145,7 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     type: "confirm",
     name: "confirm",
     message: "Create the new Pepr module?",
-    format: (val) => (val === "y" || val === "yes") ? true : false
+    format: val => (val === "y" || val === "yes" ? true : false),
   });
 
   return !!confirm.confirm;
