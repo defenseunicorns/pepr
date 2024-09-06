@@ -48,9 +48,11 @@ describe("when processing input", () => {
 
   describe("confirm() handles input", () => {
     it.each([
-      ["y", true],
       ["n", false],
-    ])("when prompt input is %s", async (userInput: string, expected: boolean) => {
+      ["no", false],
+      ["y", true],
+      ["yes", true],
+    ])("when prompt input is '%s'", async (userInput: string, expected: boolean) => {
       prompts.inject([userInput]);
       const result = await confirm(
         "some string",

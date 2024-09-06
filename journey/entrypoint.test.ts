@@ -8,7 +8,7 @@ import { peprBuild } from "./pepr-build";
 import { peprDeploy } from "./pepr-deploy";
 import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
-import { peprInit } from "./pepr-init.test";
+import { peprInit } from "./pepr-init";
 
 // Unmock unit test things
 jest.deepUnmock("pino");

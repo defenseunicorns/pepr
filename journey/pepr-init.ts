@@ -15,24 +15,25 @@ export function peprInit(){
   });
 
   it("should create a new Pepr project with input from STDIN", () => {
+    execSync('rm -rf pepr-test-module')
     const peprAlias = "file:pepr-0.0.0-development.tgz";
-    const output = execSync(`npx --yes ${peprAlias} init --name testName --description testDesc`, { stdio:[ "pipe", "pipe", "inherit"], encoding: 'utf8', input: "\n" });
-    console.log((output.toString()));
-    console.log(JSON.stringify(output));
-    expect(output.toString()).toContain("'testname'");
+    const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --description testDesc --errorBehavior reject`, { stdio:[ "pipe", "pipe", "inherit"], encoding: 'utf8', input: "y\n" });
+    //TODO: Assert on filesystem
+    expect(output.toString()).toContain("'pepr-test-module'");
     expect(output.toString()).toContain("'testDesc'");
     expect(output.toString()).toContain("'reject'");
   });
 
   it("should create a new Pepr project using input flags", () => {
+    execSync('rm -rf pepr-test-module')
     const peprAlias = "file:pepr-0.0.0-development.tgz";
-    const output = execSync(`npx --yes ${peprAlias} init --name myTestModule --description asdf --errorBehavior reject --confirm`
+    const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --description asdf --errorBehavior reject --confirm`
     );
-    console.log(output.toString())
-    expect(output.toString()).toContain("mytestmodule")
+    //TODO: Assert on filesystem
+    expect(output.toString()).toContain("pepr-test-module")
     expect(output.toString()).toContain("asdf")
     expect(output.toString()).toContain("reject")
   });
 }
 
-describe("Should test Pepr init", peprInit)
+// describe("Should test Pepr init", peprInit)
