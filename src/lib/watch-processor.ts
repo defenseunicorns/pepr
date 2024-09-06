@@ -108,7 +108,6 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
       }
       const queue = queues[key];
       await queue.enqueue(obj, phase, watchCallback);
-
     } else {
       await watchCallback(obj, phase);
     }

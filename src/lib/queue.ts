@@ -29,6 +29,19 @@ export class Queue<K extends KubernetesObject> {
     this.#uid = `${Date.now()}-${randomBytes(2).toString("hex")}`;
   }
 
+  #logId() {
+    return { name: this.#name, uid: this.#uid };
+  }
+
+  #logStats() {
+    return {
+      queue: this.#logId(),
+      stats: {
+        length: this.#queue.length,
+      },
+    };
+  }
+
   /**
    * Enqueue adds an item to the queue and returns a promise that resolves when the item is
    * reconciled.
@@ -39,8 +52,16 @@ export class Queue<K extends KubernetesObject> {
    * @returns A promise that resolves when the object is reconciled
    */
   enqueue(item: K, phase: WatchPhase, reconcile: WatchCallback) {
-    // Log.debug(`Enqueueing ${item.metadata!.namespace}/${item.metadata!.name}`);
-    Log.debug({ queue: { name: this.#name, uid: this.#uid }, item }, "Enqueueing")
+    const note = {
+      queue: this.#logId(),
+      item: {
+        name: item.metadata?.name,
+        namespace: item.metadata?.namespace,
+        resourceVersion: item.metadata?.resourceVersion,
+      },
+    };
+    Log.info(note, "Enqueueing");
+    Log.debug(this.#logStats(), "Queue stats");
     return new Promise<void>((resolve, reject) => {
       this.#queue.push({ item, phase, callback: reconcile, resolve, reject });
       return this.#dequeue();
@@ -73,30 +94,25 @@ export class Queue<K extends KubernetesObject> {
       this.#pendingPromise = true;
 
       // Reconcile the element
-      let q = { name: this.#name, uid: this.#uid }
-      let note = {
-        queue: q,
+      const note = {
+        queue: this.#logId(),
         item: {
           name: element.item.metadata?.name,
           namespace: element.item.metadata?.namespace,
-          resourceVersion: element.item.metadata?.resourceVersion
-        }
-      }
-      Log.info(note, "Reconciling")
+          resourceVersion: element.item.metadata?.resourceVersion,
+        },
+      };
+      Log.info(note, "Reconciling");
       await element.callback(element.item, element.phase);
-      Log.info(note, "Reconciled")
-      Log.debug({
-        queue: note.queue,
-        stats: {
-          remaining: this.#queue.length
-        }
-      }, "Reconcile queue stats")
+      Log.info(note, "Reconciled");
 
       element.resolve();
     } catch (e) {
       Log.debug(`Error reconciling ${element.item.metadata!.name}`, { error: e });
       element.reject(e);
     } finally {
+      Log.debug(this.#logStats(), "Queue stats");
+
       // Reset the pending promise flag
       Log.debug("Resetting pending promise and dequeuing");
       this.#pendingPromise = false;

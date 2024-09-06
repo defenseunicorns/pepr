@@ -26,11 +26,9 @@ describe("Queue", () => {
     // const mockPod2 = {
     //   metadata: { name: "test-pod-2", namespace: "test-namespace-2" },
     // };
-
     // // Enqueue two packages
     // const promise1 = queue.enqueue(mockPod, WatchPhase.Added);
     // const promise2 = queue.enqueue(mockPod2, WatchPhase.Modified);
-
     // // Wait for both promises to resolve
     // await promise1;
     // await promise2;
@@ -42,13 +40,11 @@ describe("Queue", () => {
     // };
     // const error = new Error("reconciliation failed");
     // jest.spyOn(queue, "setReconcile").mockRejectedValueOnce(error as never);
-
     // try {
     //   await queue.enqueue(mockPod, WatchPhase.Added);
     // } catch (e) {
     //   expect(e).toBe(error);
     // }
-
     // // Ensure that the queue is ready to process the next pod
     // const mockPod2 = {
     //   metadata: { name: "test-pod-2", namespace: "test-namespace-2" },

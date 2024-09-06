@@ -5,7 +5,7 @@ import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-cli
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { setupWatch, logEvent, queueRecordKey } from "./watch-processor";
+import { setupWatch, logEvent, queueKey } from "./watch-processor";
 import Log from "./logger";
 import { metricsCollector } from "./metrics";
 
@@ -321,7 +321,7 @@ describe("logEvent function", () => {
   });
 });
 
-describe("queueRecordKey", () => {
+describe("queueKey", () => {
   describe("PEPR_RECONCILE_STRATEGY=sharded", () => {
     const original = process.env.PEPR_RECONCILE_STRATEGY;
 
@@ -341,7 +341,7 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/my-pod/my-namespace");
+      expect(queueKey(obj)).toBe("Pod/my-pod/my-namespace");
     });
 
     it("should handle objects with missing namespace", () => {
@@ -352,7 +352,7 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/my-pod/cluster-scoped");
+      expect(queueKey(obj)).toBe("Pod/my-pod/cluster-scoped");
     });
 
     it("should handle objects with missing name", () => {
@@ -363,7 +363,7 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/Unnamed/my-namespace");
+      expect(queueKey(obj)).toBe("Pod/Unnamed/my-namespace");
     });
 
     it("should handle objects with missing metadata", () => {
@@ -371,7 +371,7 @@ describe("queueRecordKey", () => {
         kind: "Pod",
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/Unnamed/cluster-scoped");
+      expect(queueKey(obj)).toBe("Pod/Unnamed/cluster-scoped");
     });
 
     it("should handle objects with missing kind", () => {
@@ -382,13 +382,13 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("UnknownKind/my-pod/my-namespace");
+      expect(queueKey(obj)).toBe("UnknownKind/my-pod/my-namespace");
     });
 
     it("should handle completely empty objects", () => {
       const obj: KubernetesObject = {};
 
-      expect(queueRecordKey(obj)).toBe("UnknownKind/Unnamed/cluster-scoped");
+      expect(queueKey(obj)).toBe("UnknownKind/Unnamed/cluster-scoped");
     });
   });
 
@@ -411,7 +411,7 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/my-namespace");
+      expect(queueKey(obj)).toBe("Pod/my-namespace");
     });
 
     it("should handle objects with missing namespace", () => {
@@ -422,7 +422,7 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/cluster-scoped");
+      expect(queueKey(obj)).toBe("Pod/cluster-scoped");
     });
 
     it("should handle objects with missing metadata", () => {
@@ -430,7 +430,7 @@ describe("queueRecordKey", () => {
         kind: "Pod",
       };
 
-      expect(queueRecordKey(obj)).toBe("Pod/cluster-scoped");
+      expect(queueKey(obj)).toBe("Pod/cluster-scoped");
     });
 
     it("should handle objects with missing kind", () => {
@@ -441,13 +441,13 @@ describe("queueRecordKey", () => {
         },
       };
 
-      expect(queueRecordKey(obj)).toBe("UnknownKind/my-namespace");
+      expect(queueKey(obj)).toBe("UnknownKind/my-namespace");
     });
 
     it("should handle completely empty objects", () => {
       const obj: KubernetesObject = {};
 
-      expect(queueRecordKey(obj)).toBe("UnknownKind/cluster-scoped");
+      expect(queueKey(obj)).toBe("UnknownKind/cluster-scoped");
     });
   });
 });
