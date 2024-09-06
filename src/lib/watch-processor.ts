@@ -15,8 +15,8 @@ const queueRecord: Record<string, Queue<KubernetesObject>> = {};
 /**
  * Get the key for a record in the queueRecord
  *
- * @param obj The object to get the key for
- * @returns The key for the object
+ * @param obj The object to derive a key from
+ * @returns The key for a Queue in the 
  */
 export function queueRecordKey(obj: KubernetesObject) {
   const options = ["singular", "sharded"]; // TODO : ts-type this fella
@@ -81,6 +81,9 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   Log.debug({ watchCfg }, "Effective WatchConfig");
   const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
     // First, filter the object based on the phase
+    Log.debug({find: "me", phaseMatch, type})
+    Log.debug({find: "me", binding})
+    Log.debug({find: "me", watchCallback: binding.watchCallback?.toString()})
     if (phaseMatch.includes(type)) {
       try {
         // Then, check if the object matches the filter
@@ -98,11 +101,19 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   };
 
   function getOrCreateQueue(key: string): Queue<KubernetesObject> {
-    if (!queueRecord[key]) {
-      queueRecord[key] = new Queue<KubernetesObject>();
-      queueRecord[key].setReconcile(watchCallback);
-    }
-    return queueRecord[key];
+    return queueRecord[key]
+      ? queueRecord[key]
+      : new Queue<KubernetesObject>(key);
+
+    // if (!queueRecord[key]) {
+    //   queueRecord[key] = new Queue<KubernetesObject>(key);
+
+    //   // need to set this with the idea that there can be multiple, DIFFERENT
+    //   //  callbacks needed for a given queue (i.e. CREATEs & DELETEs can be in
+    //   //  the same queue but need to do different things)
+    //   // queueRecord[key].setReconcile(watchCallback);
+    // }
+    // return queueRecord[key];
   }
 
   // Setup the resource watch
@@ -113,7 +124,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
     // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
-      await queue.enqueue(obj, type);
+      await queue.enqueue(obj, type, watchCallback);
     } else {
       // Otherwise, run the watch callback directly
       await watchCallback(obj, type);
