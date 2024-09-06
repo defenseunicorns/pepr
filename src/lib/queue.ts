@@ -5,10 +5,12 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { randomBytes } from "node:crypto";
 import Log from "./logger";
 
+type WatchCallback = (obj: KubernetesObject, phase: WatchPhase) => Promise<void>;
+
 type QueueItem<K extends KubernetesObject> = {
   item: K;
-  type: WatchPhase;
-  callback: (obj: KubernetesObject, type: WatchPhase) => Promise<void>;
+  phase: WatchPhase;
+  callback: WatchCallback;
   resolve: (value: void | PromiseLike<void>) => void;
   reject: (reason?: string) => void;
 };
@@ -21,17 +23,11 @@ export class Queue<K extends KubernetesObject> {
   #uid: string;
   #queue: QueueItem<K>[] = [];
   #pendingPromise = false;
-  // #reconcile?: (obj: KubernetesObject, type: WatchPhase) => Promise<void>;
 
   constructor(name: string) {
     this.#name = name;
     this.#uid = `${Date.now()}-${randomBytes(2).toString("hex")}`;
-    // this.#reconcile = async () => await new Promise(resolve => resolve());
   }
-
-  // setReconcile(reconcile: (obj: KubernetesObject, type: WatchPhase) => Promise<void>) {
-  //   this.#reconcile = reconcile;
-  // }
 
   /**
    * Enqueue adds an item to the queue and returns a promise that resolves when the item is
@@ -42,15 +38,11 @@ export class Queue<K extends KubernetesObject> {
    * @param reconcile The callback to enqueue for reconcile
    * @returns A promise that resolves when the object is reconciled
    */
-  enqueue(
-    item: K,
-    type: WatchPhase,
-    reconcile: (obj: KubernetesObject, type: WatchPhase) => Promise<void>
-  ) {
+  enqueue(item: K, phase: WatchPhase, reconcile: WatchCallback) {
     // Log.debug(`Enqueueing ${item.metadata!.namespace}/${item.metadata!.name}`);
     Log.debug({ queue: { name: this.#name, uid: this.#uid }, item }, "Enqueueing")
     return new Promise<void>((resolve, reject) => {
-      this.#queue.push({ item, type, callback: reconcile, resolve, reject });
+      this.#queue.push({ item, phase, callback: reconcile, resolve, reject });
       return this.#dequeue();
     });
   }
@@ -81,11 +73,24 @@ export class Queue<K extends KubernetesObject> {
       this.#pendingPromise = true;
 
       // Reconcile the element
-      // Log.debug(`Reconciling ${element.item.metadata!.name}`);
-      Log.debug({ queue: { name: this.#name, uid: this.#uid }, item: element.item }, "Reconciling")
-      Log.debug({find: "me", rfunc: element.callback.toString()})
-      await element.callback(element.item, element.type);
-      Log.debug({ queue: { name: this.#name, uid: this.#uid }, item: element.item }, "Reconciled")
+      let q = { name: this.#name, uid: this.#uid }
+      let note = {
+        queue: q,
+        item: {
+          name: element.item.metadata?.name,
+          namespace: element.item.metadata?.namespace,
+          resourceVersion: element.item.metadata?.resourceVersion
+        }
+      }
+      Log.info(note, "Reconciling")
+      await element.callback(element.item, element.phase);
+      Log.info(note, "Reconciled")
+      Log.debug({
+        queue: note.queue,
+        stats: {
+          remaining: this.#queue.length
+        }
+      }, "Reconcile queue stats")
 
       element.resolve();
     } catch (e) {
