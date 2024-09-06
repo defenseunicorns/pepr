@@ -3,35 +3,46 @@
 
 import { describe, expect, it } from "@jest/globals";
 import prompts from "prompts";
-import { walkthrough, confirm, FinalPromptOptions } from "./walkthrough";
+import { walkthrough, confirm, PromptOptions, PartialPromptOptions } from "./walkthrough";
 
 describe("when processing input", () => {
   describe("walkthough() returns expected results", () => {
     it.each([
-      ["description", ["My Test Module", "reject"]],
-      ["errorBehavior", ["My Test Module", "A test module for Pepr"]],
-      ["name", ["A test module for Pepr", "reject"]],
-      [undefined, ["My Test Module", "A test module for Pepr", "reject"]],
-    ])(`when the active flag is %s`, async (flagInput: string | undefined, promptInput) => {
-      const allFlagsSet: FinalPromptOptions = {
+      //Test flag combinations with [["$FLAG", ...]]
+      [["description", "errorBehavior"]],
+      [["description"]],
+      [["errorBehavior"]],
+      [["name", "description", "errorBehavior"]],
+      [["name", "description"]],
+      [["name", "errorBehavior"]],
+      [["name"]],
+      [undefined]],
+    )(`when the set flags are: %s`, async (flagInput: string[] | undefined) => {
+      const expected: PromptOptions = {
         name: "My Test Module",
         description: "A test module for Pepr",
         errorBehavior: "reject",
       };
-      const activeFlag = Object.entries(allFlagsSet)
-        .filter(([key]) => key === flagInput)
-        .reduce((accumulator, [key, value]) => ({ [key]: value }), {});
 
-      prompts.inject(promptInput);
+      // Set values for the flag(s) under test by making a subset of (expected)
+      type SupportedFlagNames = keyof typeof expected
+      type PartialTestInput = { [key in SupportedFlagNames]?: string }
+      const setFlags = flagInput?.reduce((acc: PartialTestInput, key: string) => {
+        if (key in expected) {
+          acc[key as SupportedFlagNames] = expected[key as SupportedFlagNames];
+        }
+        return acc;
+      }, {} as PartialTestInput) || {};
 
-      const result = await walkthrough(activeFlag);
+      // Simulate user-input for unset flags by making a subset of (expected - setFlags)
+      const promptInput = flagInput  ? Object.entries(expected)
+        .filter(([key]) => !flagInput.includes(key))
+        .map(([, value]) => value) : Object.values(expected);
+      prompts.inject(Object.values(promptInput));
 
-      // Check the returned object
-      expect(result).toEqual({
-        name: "My Test Module",
-        description: "A test module for Pepr",
-        errorBehavior: "reject",
-      });
+      const result = await walkthrough(setFlags as PartialPromptOptions);
+
+      expect(result).toEqual(expected);
     });
   });
 
@@ -50,7 +61,7 @@ describe("when processing input", () => {
     });
 
     it.each([[true], [false]])(
-      "when flag input is %s",
+      "when flag '--confirm' is %s",
       async (confirmFlag: boolean | undefined) => {
         const result = await confirm(
           "some string",

@@ -19,11 +19,11 @@ import {
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
-import { confirm, FinalPromptOptions, walkthrough } from "./walkthrough";
+import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
 
 export default function (program: RootCmd) {
-  let response = {} as FinalPromptOptions;
+  let response = {} as PromptOptions;
 
   program
     .command("init")

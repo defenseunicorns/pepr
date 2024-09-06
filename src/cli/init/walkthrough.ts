@@ -9,30 +9,22 @@ import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
-export type FinalPromptOptions = {
+
+export type PromptOptions = {
   name: string;
   description: string;
   errorBehavior: "audit" | "ignore" | "reject";
 };
-export type PromptOptions = Partial<FinalPromptOptions>;
 
-export async function walkthrough(opts?: PromptOptions): Promise<FinalPromptOptions> {
+export type PartialPromptOptions = Partial<PromptOptions>;
+
+export async function walkthrough(opts?: PartialPromptOptions): Promise<PromptOptions> {
   const result = {
     ...(await setName(opts?.name)),
     ...(await setDescription(opts?.description)),
     ...(await setErrorBehavior(opts?.errorBehavior)),
   };
-  return result as FinalPromptOptions; //TODO: Type coercion issue
-}
-
-export async function genericWalkthrough(
-  key: string,
-  promptObj: PromptObject,
-): Promise<Answers<string>> {
-  if (key !== undefined) {
-    return { key };
-  }
-  return prompt([promptObj]);
+  return result as PromptOptions; //TODO: Type coercion issue
 }
 
 export async function setName(name?: string): Promise<Answers<string>> {
@@ -82,7 +74,7 @@ async function setErrorBehavior(
 ): Promise<Answers<string>> {
   if (errorBehavior !== undefined) {
     //TODO validation logic
-    return { errorBehavior: Errors.reject };
+    return { errorBehavior };
   }
 
   const askErrorBehavior: PromptObject = {
