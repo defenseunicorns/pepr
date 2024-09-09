@@ -1,54 +1,152 @@
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
-import { KubernetesObject } from "@kubernetes/client-node";
+import { afterEach, describe, expect, jest, it } from "@jest/globals";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Queue } from "./queue";
 
+import Log from "./logger";
+jest.mock("./logger");
+
 describe("Queue", () => {
-  let queue: Queue<KubernetesObject>;
-
-  beforeEach(() => {
-    queue = new Queue("name");
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
-  test.skip("enqueue should add a pod to the queue and return a promise", async () => {
-    // const pod = {
-    //   metadata: { name: "test-pod", namespace: "test-pod" },
-    // };
-    // const promise = queue.enqueue(pod, WatchPhase.Added);
-    // expect(promise).toBeInstanceOf(Promise);
-    // await promise;
+  it("is uniquely identifiable", () => {
+    const name = "kind/namespace";
+    const queue = new Queue(name);
+
+    const label = queue.label();
+
+    expect(label).toEqual(
+      expect.objectContaining({
+        // given name of queue
+        name,
+
+        // unique, generated value (to disambiguate similarly-named queues)
+        // <epoch timestamp (ms)>-<4 char hex>
+        uid: expect.stringMatching(/[0-9]{13}-[0-9a-f]{4}/),
+      }),
+    );
   });
 
-  test.skip("dequeue should process pods in FIFO order", async () => {
-    // const mockPod = {
-    //   metadata: { name: "test-pod", namespace: "test-namespace" },
-    // };
-    // const mockPod2 = {
-    //   metadata: { name: "test-pod-2", namespace: "test-namespace-2" },
-    // };
-    // // Enqueue two packages
-    // const promise1 = queue.enqueue(mockPod, WatchPhase.Added);
-    // const promise2 = queue.enqueue(mockPod2, WatchPhase.Modified);
-    // // Wait for both promises to resolve
-    // await promise1;
-    // await promise2;
+  it("exposes runtime stats", async () => {
+    const name = "kind/namespace";
+    const queue = new Queue(name);
+
+    expect(queue.stats()).toEqual(
+      expect.objectContaining({
+        queue: queue.label(),
+        stats: { length: 0 },
+      }),
+    );
+
+    const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
+    const watchCb = () =>
+      new Promise<void>(res => {
+        setTimeout(res, 100);
+      });
+
+    await Promise.all([
+      queue.enqueue(kubeObj, WatchPhase.Added, watchCb),
+      queue.enqueue(kubeObj, WatchPhase.Added, watchCb),
+      queue.enqueue(kubeObj, WatchPhase.Added, watchCb),
+      queue.enqueue(kubeObj, WatchPhase.Added, watchCb),
+    ]);
+
+    const logDebug = Log.debug as jest.Mock;
+    const stats = logDebug.mock.calls
+      .flat()
+      .map(m => JSON.stringify(m))
+      .filter(m => m.includes('"stats":'));
+
+    [
+      '"length":1', // 1st entry runs near-immediately, so queue won't fill
+      '"length":1', // afterward, queue fills & unfills as callbacks process
+      '"length":2',
+      '"length":3',
+      '"length":3',
+      '"length":2',
+      '"length":1',
+      '"length":0',
+    ].map((exp, idx) => {
+      expect(stats[idx]).toEqual(expect.stringContaining(exp));
+    });
   });
 
-  test.skip("dequeue should handle errors in pod processing", async () => {
-    // const mockPod = {
-    //   metadata: { name: "test-pod", namespace: "test-namespace" },
-    // };
-    // const error = new Error("reconciliation failed");
-    // jest.spyOn(queue, "setReconcile").mockRejectedValueOnce(error as never);
-    // try {
-    //   await queue.enqueue(mockPod, WatchPhase.Added);
-    // } catch (e) {
-    //   expect(e).toBe(error);
-    // }
-    // // Ensure that the queue is ready to process the next pod
-    // const mockPod2 = {
-    //   metadata: { name: "test-pod-2", namespace: "test-namespace-2" },
-    // };
-    // await queue.enqueue(mockPod2, WatchPhase.Modified);
+  it("resolves when an enqueued event dequeues without error", async () => {
+    const name = "kind/namespace";
+    const queue = new Queue(name);
+
+    const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
+    const watchCb = () =>
+      new Promise<void>(res => {
+        setTimeout(res, 10);
+      });
+
+    const promise = queue.enqueue(kubeObj, WatchPhase.Added, watchCb);
+    expect(promise).toBeInstanceOf(Promise);
+
+    await expect(promise).resolves.not.toThrow();
+  });
+
+  it("rejects when an enqueued event dequeues with error", async () => {
+    const name = "kind/namespace";
+    const queue = new Queue(name);
+
+    const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
+    const watchCb = () =>
+      new Promise<void>((_, reject) => {
+        setTimeout(() => {
+          reject("oof");
+        }, 10);
+      });
+
+    const promise = queue.enqueue(kubeObj, WatchPhase.Added, watchCb);
+    expect(promise).toBeInstanceOf(Promise);
+
+    await expect(promise).rejects.toBe("oof");
+  });
+
+  it("processes events in FIFO order", async () => {
+    const name = "kind/namespace";
+    const queue = new Queue(name);
+
+    const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
+    const watchA = () =>
+      new Promise<void>(resolve => {
+        setTimeout(() => {
+          Log.info("watchA");
+          resolve();
+        }, 15);
+      });
+    const watchB = () =>
+      new Promise<void>(resolve => {
+        setTimeout(() => {
+          Log.info("watchB");
+          resolve();
+        }, 10);
+      });
+    const watchC = () =>
+      new Promise<void>(resolve => {
+        setTimeout(() => {
+          Log.info("watchC");
+          resolve();
+        }, 5);
+      });
+
+    await Promise.all([
+      queue.enqueue(kubeObj, WatchPhase.Added, watchA),
+      queue.enqueue(kubeObj, WatchPhase.Added, watchB),
+      queue.enqueue(kubeObj, WatchPhase.Added, watchC),
+    ]);
+
+    const logInfo = Log.info as jest.Mock;
+    const calls = logInfo.mock.calls
+      .flat()
+      .map(m => JSON.stringify(m))
+      .filter(m => /"watch[ABC]"/.test(m));
+
+    ['"watchA"', '"watchB"', '"watchC"'].map((exp, idx) => {
+      expect(calls[idx]).toEqual(expect.stringContaining(exp));
+    });
   });
 });

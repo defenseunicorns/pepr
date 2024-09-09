@@ -29,13 +29,13 @@ export class Queue<K extends KubernetesObject> {
     this.#uid = `${Date.now()}-${randomBytes(2).toString("hex")}`;
   }
 
-  #logId() {
+  label() {
     return { name: this.#name, uid: this.#uid };
   }
 
-  #logStats() {
+  stats() {
     return {
-      queue: this.#logId(),
+      queue: this.label(),
       stats: {
         length: this.#queue.length,
       },
@@ -53,7 +53,7 @@ export class Queue<K extends KubernetesObject> {
    */
   enqueue(item: K, phase: WatchPhase, reconcile: WatchCallback) {
     const note = {
-      queue: this.#logId(),
+      queue: this.label(),
       item: {
         name: item.metadata?.name,
         namespace: item.metadata?.namespace,
@@ -61,9 +61,9 @@ export class Queue<K extends KubernetesObject> {
       },
     };
     Log.info(note, "Enqueueing");
-    Log.debug(this.#logStats(), "Queue stats");
     return new Promise<void>((resolve, reject) => {
       this.#queue.push({ item, phase, callback: reconcile, resolve, reject });
+      Log.debug(this.stats(), "Queue stats - push");
       return this.#dequeue();
     });
   }
@@ -95,7 +95,7 @@ export class Queue<K extends KubernetesObject> {
 
       // Reconcile the element
       const note = {
-        queue: this.#logId(),
+        queue: this.label(),
         item: {
           name: element.item.metadata?.name,
           namespace: element.item.metadata?.namespace,
@@ -111,7 +111,7 @@ export class Queue<K extends KubernetesObject> {
       Log.debug(`Error reconciling ${element.item.metadata!.name}`, { error: e });
       element.reject(e);
     } finally {
-      Log.debug(this.#logStats(), "Queue stats");
+      Log.debug(this.stats(), "Queue stats - shift");
 
       // Reset the pending promise flag
       Log.debug("Resetting pending promise and dequeuing");
