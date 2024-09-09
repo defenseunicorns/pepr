@@ -23,7 +23,7 @@ COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 COPY --chown=node:node ./src/ ./src/
 
 RUN cp package.json package.json.bak # Create package.json backup
-RUN grep -v "\"prepare\": \"husky install\"," package.json # Don't configure husky in CI, see pepr/#1113
+RUN grep -v "\"prepare\": \"husky install\"," package.json > package.json # Don't configure husky in CI, see pepr/#1113
 
 RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
