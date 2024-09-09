@@ -3,7 +3,14 @@
 
 import { describe, expect, it } from "@jest/globals";
 import prompts from "prompts";
-import { walkthrough, confirm, PromptOptions, PartialPromptOptions, setName, setErrorBehavior } from "./walkthrough";
+import {
+  walkthrough,
+  confirm,
+  PromptOptions,
+  PartialPromptOptions,
+  setName,
+  setErrorBehavior,
+} from "./walkthrough";
 
 describe("when processing input", () => {
   describe("walkthough() returns expected results", () => {
@@ -16,8 +23,8 @@ describe("when processing input", () => {
       [["name", "description"]],
       [["name", "errorBehavior"]],
       [["name"]],
-      [undefined]],
-    )(`when the set flags are: %s`, async (flagInput: string[] | undefined) => {
+      [undefined],
+    ])(`when the set flags are: %s`, async (flagInput: string[] | undefined) => {
       const expected: PromptOptions = {
         name: "My Test Module",
         description: "A test module for Pepr",
@@ -25,19 +32,22 @@ describe("when processing input", () => {
       };
 
       // Set values for the flag(s) under test by making a subset of (expected)
-      type SupportedFlagNames = keyof typeof expected
-      type PartialTestInput = { [key in SupportedFlagNames]?: string }
-      const setFlags = flagInput?.reduce((acc: PartialTestInput, key: string) => {
-        if (key in expected) {
-          acc[key as SupportedFlagNames] = expected[key as SupportedFlagNames];
-        }
-        return acc;
-      }, {} as PartialTestInput) || {};
+      type SupportedFlagNames = keyof typeof expected;
+      type PartialTestInput = { [key in SupportedFlagNames]?: string };
+      const setFlags =
+        flagInput?.reduce((acc: PartialTestInput, key: string) => {
+          if (key in expected) {
+            acc[key as SupportedFlagNames] = expected[key as SupportedFlagNames];
+          }
+          return acc;
+        }, {} as PartialTestInput) || {};
 
       // Simulate user-input for unset flags by making a subset of (expected - setFlags)
-      const promptInput = flagInput  ? Object.entries(expected)
-        .filter(([key]) => !flagInput.includes(key))
-        .map(([, value]) => value) : Object.values(expected);
+      const promptInput = flagInput
+        ? Object.entries(expected)
+            .filter(([key]) => !flagInput.includes(key))
+            .map(([, value]) => value)
+        : Object.values(expected);
       prompts.inject(Object.values(promptInput));
 
       const result = await walkthrough(setFlags as PartialPromptOptions);
@@ -45,19 +55,19 @@ describe("when processing input", () => {
       expect(result).toEqual(expected);
     });
 
-    it("should prompt for input when given invalid input", async () =>{
-      const expected = {name: "aaa"}
+    it("should prompt for input when given invalid input", async () => {
+      const expected = { name: "aaa" };
       prompts.inject(["aaa"]);
       const result = await setName("aa");
-      expect(result).toStrictEqual(expected)
-    })
+      expect(result).toStrictEqual(expected);
+    });
 
-    it("should prompt for errorBehavior when given invalid input", async () =>{
-      const expected = {errorBehavior: "audit"}
+    it("should prompt for errorBehavior when given invalid input", async () => {
+      const expected = { errorBehavior: "audit" };
       prompts.inject(["audit"]);
       const result = await setErrorBehavior("not-valid" as "reject"); // Type-Coercion forces invalid input
-      expect(result).toStrictEqual(expected)
-    })
+      expect(result).toStrictEqual(expected);
+    });
   });
 
   describe("confirm() handles input", () => {

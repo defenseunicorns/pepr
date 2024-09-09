@@ -4,7 +4,7 @@
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
 
-import { Errors } from "../../lib/errors";
+import { ErrorList, Errors } from "../../lib/errors";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 
@@ -46,13 +46,12 @@ export async function setName(name?: string): Promise<Answers<string>> {
   };
 
   if (name !== undefined) {
-    if(name.length < 3){
-      console.error(`Module name must be at least 3 characters long. Received '${name}'`)
+    if (name.length < 3) {
+      console.error(`Module name must be at least 3 characters long. Received '${name}'`);
       const response = prompt([askName]);
-      return response
-    }
-    else{
-      return {name};
+      return response;
+    } else {
+      return { name };
     }
   }
 
@@ -69,7 +68,6 @@ async function setDescription(description?: string): Promise<Answers<string>> {
   if (description !== undefined) {
     return { description };
   }
-
 
   return prompt([askDescription]);
 }
@@ -105,7 +103,7 @@ export async function setErrorBehavior(
   };
 
   if (errorBehavior !== undefined) {
-    if (!["audit", "ignore", "reject"].includes(errorBehavior)){
+    if (!ErrorList.includes(errorBehavior)) {
       return prompt([askErrorBehavior]);
     }
     return { errorBehavior };
