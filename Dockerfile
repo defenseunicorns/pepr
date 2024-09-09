@@ -13,10 +13,8 @@ WORKDIR /app
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
 
-RUN grep -v "husky install" package.json > package.json # Don't use  husky in CI
-
 # Install deps
-RUN npm ci
+RUN HUSKY=0 npm ci
 
 COPY --chown=node:node ./hack/ ./hack/
 
@@ -24,10 +22,9 @@ COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
 
-
-RUN npm run build && \
-    npm ci --omit=dev --omit=peer && \
-    npm cache clean --force && \
+RUN HUSKY=0 npm run build && \
+    HUSKY=0 npm ci --omit=dev --omit=peer && \
+    HUSKY=0 npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
     # Remove Ramda unused Ramda files
