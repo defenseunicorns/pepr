@@ -38,7 +38,7 @@ export function getOrCreateQueue(obj: KubernetesObject) {
     queues[key] = new Queue<KubernetesObject>(key);
   }
   return queues[key];
-};
+}
 
 // Watch configuration
 const watchCfg: WatchCfg = {
@@ -110,7 +110,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     Log.debug(obj, `Watch event ${phase} received`);
 
     if (binding.isQueue) {
-      const queue = getOrCreateQueue(obj)
+      const queue = getOrCreateQueue(obj);
       await queue.enqueue(obj, phase, watchCallback);
     } else {
       await watchCallback(obj, phase);

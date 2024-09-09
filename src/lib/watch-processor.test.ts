@@ -6,7 +6,6 @@ import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types"
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
 import { setupWatch, logEvent, queueKey, getOrCreateQueue } from "./watch-processor";
-import { Queue } from "./queue";
 import Log from "./logger";
 import { metricsCollector } from "./metrics";
 
@@ -95,7 +94,14 @@ describe("WatchProcessor", () => {
 
     capabilities.push({
       bindings: [
-        { isWatch: true, isQueue: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
+        {
+          isWatch: true,
+          isQueue: true,
+          model: "someModel",
+          filters: { name: "bleh" },
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
         { isWatch: false, isQueue: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
       ],
     } as unknown as Capability);
