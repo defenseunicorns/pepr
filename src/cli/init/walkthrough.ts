@@ -7,8 +7,8 @@ import prompt, { Answers, PromptObject } from "prompts";
 import { ErrorList, Errors } from "../../lib/errors";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
+import { InitOptions } from "../../lib/types";
 
-export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
 
 export type PromptOptions = {
   name: string;
