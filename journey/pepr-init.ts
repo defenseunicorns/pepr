@@ -19,7 +19,7 @@ export function peprInit(){
     const peprAlias = "file:pepr-0.0.0-development.tgz";
     const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --errorBehavior reject --confirm`, { stdio:[ "pipe", "pipe", "inherit"], encoding: 'utf8', input: "asdf" });
 
-    const directoryContents = execSync("ls -l")
+    const directoryContents = execSync("ls -d pepr-test-module")
     expect(directoryContents.toString()).toContain("pepr-test-module")
     const actualErrorBehavior = execSync("grep reject pepr-test-module/package.json")
     expect(actualErrorBehavior.toString()).toContain("reject")
@@ -33,7 +33,7 @@ export function peprInit(){
     const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --description asdf --errorBehavior reject --confirm`
     );
 
-    const directoryContents = execSync("ls -l")
+    const directoryContents = execSync("ls -d pepr-test-module")
     expect(directoryContents.toString()).toContain("pepr-test-module")
     const actualErrorBehavior = execSync("grep reject pepr-test-module/package.json")
     expect(actualErrorBehavior.toString()).toContain("reject")
