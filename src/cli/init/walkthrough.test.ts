@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "@jest/globals";
 import prompts from "prompts";
-import { walkthrough, confirm, PromptOptions, PartialPromptOptions } from "./walkthrough";
+import { walkthrough, confirm, PromptOptions, PartialPromptOptions, setName, setErrorBehavior } from "./walkthrough";
 
 describe("when processing input", () => {
   describe("walkthough() returns expected results", () => {
@@ -44,6 +44,20 @@ describe("when processing input", () => {
 
       expect(result).toEqual(expected);
     });
+
+    it("should prompt for input when given invalid input", async () =>{
+      const expected = {name: "aaa"}
+      prompts.inject(["aaa"]);
+      const result = await setName("aa");
+      expect(result).toStrictEqual(expected)
+    })
+
+    it("should prompt for errorBehavior when given invalid input", async () =>{
+      const expected = {errorBehavior: "audit"}
+      prompts.inject(["audit"]);
+      const result = await setErrorBehavior("not-valid" as "reject"); // Type-Coercion forces invalid input
+      expect(result).toStrictEqual(expected)
+    })
   });
 
   describe("confirm() handles input", () => {

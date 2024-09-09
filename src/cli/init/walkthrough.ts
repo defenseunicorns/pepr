@@ -28,11 +28,6 @@ export async function walkthrough(opts?: PartialPromptOptions): Promise<PromptOp
 }
 
 export async function setName(name?: string): Promise<Answers<string>> {
-  if (name !== undefined) {
-    //TODO Validation logic
-    return { name };
-  }
-
   const askName: PromptObject = {
     type: "text",
     name: "name",
@@ -49,34 +44,39 @@ export async function setName(name?: string): Promise<Answers<string>> {
       }
     },
   };
-  const response = prompt([askName]);
-  return response;
-  // return prompt([askName]);
+
+  if (name !== undefined) {
+    if(name.length < 3){
+      console.error(`Module name must be at least 3 characters long. Received '${name}'`)
+      const response = prompt([askName]);
+      return response
+    }
+    else{
+      return {name};
+    }
+  }
+
+  return prompt([askName]);
 }
 
 async function setDescription(description?: string): Promise<Answers<string>> {
-  if (description !== undefined) {
-    //TODO Validation logic
-    return { description };
-  }
-
   const askDescription: PromptObject = {
     type: "text",
     name: "description",
     message: "(Recommended) Enter a description for the new Pepr module.\n",
   };
 
+  if (description !== undefined) {
+    return { description };
+  }
+
+
   return prompt([askDescription]);
 }
 
-async function setErrorBehavior(
+export async function setErrorBehavior(
   errorBehavior?: "audit" | "ignore" | "reject",
 ): Promise<Answers<string>> {
-  if (errorBehavior !== undefined) {
-    //TODO validation logic
-    return { errorBehavior };
-  }
-
   const askErrorBehavior: PromptObject = {
     type: "select",
     name: "errorBehavior",
@@ -103,6 +103,14 @@ async function setErrorBehavior(
       },
     ],
   };
+
+  if (errorBehavior !== undefined) {
+    if (!["audit", "ignore", "reject"].includes(errorBehavior)){
+      return prompt([askErrorBehavior]);
+    }
+    return { errorBehavior };
+  }
+
   return prompt([askErrorBehavior]);
 }
 
