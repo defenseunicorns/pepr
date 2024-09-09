@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { it, expect, describe } from "@jest/globals";
-import { exec, execSync, spawn, spawnSync } from "child_process";
+import { it, expect } from "@jest/globals";
+import { execSync } from "child_process";
 
 export function peprInit(){
   it("should display the help menu", () => {
