@@ -17,11 +17,14 @@ export function peprInit(){
   it("should create a new Pepr project with input from STDIN", () => {
     execSync('rm -rf pepr-test-module')
     const peprAlias = "file:pepr-0.0.0-development.tgz";
-    const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --description testDesc --errorBehavior reject`, { stdio:[ "pipe", "pipe", "inherit"], encoding: 'utf8', input: "y\n" });
-    //TODO: Assert on filesystem
-    expect(output.toString()).toContain("'pepr-test-module'");
-    expect(output.toString()).toContain("'testDesc'");
-    expect(output.toString()).toContain("'reject'");
+    const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --errorBehavior reject --confirm`, { stdio:[ "pipe", "pipe", "inherit"], encoding: 'utf8', input: "asdf" });
+
+    const directoryContents = execSync("ls -l")
+    expect(directoryContents.toString()).toContain("pepr-test-module")
+    const actualErrorBehavior = execSync("grep reject pepr-test-module/package.json")
+    expect(actualErrorBehavior.toString()).toContain("reject")
+    const actualDescription = execSync("grep asdf pepr-test-module/package.json")
+    expect(actualDescription.toString()).toContain("asdf")
   });
 
   it("should create a new Pepr project using input flags", () => {
@@ -29,10 +32,13 @@ export function peprInit(){
     const peprAlias = "file:pepr-0.0.0-development.tgz";
     const output = execSync(`npx --yes ${peprAlias} init --name pepr-test-module --description asdf --errorBehavior reject --confirm`
     );
-    //TODO: Assert on filesystem
-    expect(output.toString()).toContain("pepr-test-module")
-    expect(output.toString()).toContain("asdf")
-    expect(output.toString()).toContain("reject")
+
+    const directoryContents = execSync("ls -l")
+    expect(directoryContents.toString()).toContain("pepr-test-module")
+    const actualErrorBehavior = execSync("grep reject pepr-test-module/package.json")
+    expect(actualErrorBehavior.toString()).toContain("reject")
+    const actualDescription = execSync("grep asdf pepr-test-module/package.json")
+    expect(actualDescription.toString()).toContain("asdf")
   });
 }
 
