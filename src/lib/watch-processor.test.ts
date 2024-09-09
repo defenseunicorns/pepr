@@ -5,7 +5,8 @@ import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-cli
 import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
-import { setupWatch, logEvent, queueKey } from "./watch-processor";
+import { setupWatch, logEvent, queueKey, getOrCreateQueue } from "./watch-processor";
+import { Queue } from "./queue";
 import Log from "./logger";
 import { metricsCollector } from "./metrics";
 
@@ -40,6 +41,7 @@ describe("WatchProcessor", () => {
       bindings: [
         {
           isWatch: true,
+          isQueue: false,
           model: "someModel",
           filters: {},
           event: "Create",
@@ -93,8 +95,8 @@ describe("WatchProcessor", () => {
 
     capabilities.push({
       bindings: [
-        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
-        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+        { isWatch: true, isQueue: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
+        { isWatch: false, isQueue: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
       ],
     } as unknown as Capability);
 
@@ -449,5 +451,38 @@ describe("queueKey", () => {
 
       expect(queueKey(obj)).toBe("UnknownKind/cluster-scoped");
     });
+  });
+});
+
+describe("getOrCreateQueue", () => {
+  it("creates a Queue instance on first call", () => {
+    const obj: KubernetesObject = {
+      kind: "queue",
+      metadata: {
+        name: "nm",
+        namespace: "ns",
+      },
+    };
+
+    const firstQueue = getOrCreateQueue(obj);
+    expect(firstQueue.label()).toBeDefined();
+  });
+
+  it("returns same Queue instance on subsequent calls", () => {
+    const obj: KubernetesObject = {
+      kind: "queue",
+      metadata: {
+        name: "nm",
+        namespace: "ns",
+      },
+    };
+
+    const firstQueue = getOrCreateQueue(obj);
+    expect(firstQueue.label()).toBeDefined();
+
+    const secondQueue = getOrCreateQueue(obj);
+    expect(secondQueue.label()).toBeDefined();
+
+    expect(firstQueue).toBe(secondQueue);
   });
 });

@@ -32,6 +32,14 @@ export function queueKey(obj: KubernetesObject) {
   return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
 }
 
+export function getOrCreateQueue(obj: KubernetesObject) {
+  const key = queueKey(obj);
+  if (!queues[key]) {
+    queues[key] = new Queue<KubernetesObject>(key);
+  }
+  return queues[key];
+};
+
 // Watch configuration
 const watchCfg: WatchCfg = {
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
@@ -102,11 +110,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     Log.debug(obj, `Watch event ${phase} received`);
 
     if (binding.isQueue) {
-      const key = queueKey(obj);
-      if (!queues[key]) {
-        queues[key] = new Queue<KubernetesObject>(key);
-      }
-      const queue = queues[key];
+      const queue = getOrCreateQueue(obj)
       await queue.enqueue(obj, phase, watchCallback);
     } else {
       await watchCallback(obj, phase);
