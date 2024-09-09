@@ -5,6 +5,8 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
+ENV HUSKY=0
+
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node-lts@sha256:62bbead79896a962d2257d6e9df94264cb843a3952a072a89fee9d82a7cc9564 AS build
 
@@ -13,8 +15,10 @@ WORKDIR /app
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
 
+RUN grep -v "husky install" package.json > package.json # Don't use  husky in CI
+
 # Install deps
-RUN HUSKY=0 npm ci
+RUN npm ci
 
 COPY --chown=node:node ./hack/ ./hack/
 
@@ -22,9 +26,9 @@ COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
 
-RUN HUSKY=0 npm run build && \
-    HUSKY=0 npm ci --omit=dev --omit=peer && \
-    HUSKY=0 npm cache clean --force && \
+RUN npm run build && \
+    npm ci --omit=dev --omit=peer && \
+    npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
     # Remove Ramda unused Ramda files
