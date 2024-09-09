@@ -13,7 +13,7 @@ WORKDIR /app
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
 
-RUN grep -v "\"prepare\": \"husky install\"," package.json > package.json # Don't use  husky in CI, see pepr/#1113
+RUN grep -v "husky install" package.json > package.json # Don't use  husky in CI
 
 # Install deps
 RUN npm ci
