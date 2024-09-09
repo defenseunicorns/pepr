@@ -5,11 +5,11 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-ENV HUSKY=0
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node-lts@sha256:62bbead79896a962d2257d6e9df94264cb843a3952a072a89fee9d82a7cc9564 AS build
 
+ENV HUSKY=0
 WORKDIR /app
 
 # Copy the node config files
