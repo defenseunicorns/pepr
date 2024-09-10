@@ -105,72 +105,44 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
+            // if there's no deletionTimestamp, don't run finalizer callback
             if (! obj.metadata?.deletionTimestamp) { return }
+
+            // run the finalizer callback
             try {
               await binding.finalizeCallback?.(obj);
             }
+
+            // irrespective of callback success or failure, remove pepr finalizer
             finally {
-              // Have to RegisterKind as done in:
-              // /home/barrett/workspace/defuni/pepr-excellent-examples/_helpers/src/cluster.ts
 
-            //   export declare class V1CertificateSigningRequest {
-            //     /**
-            //     * APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            //     */
-            //     'apiVersion'?: string;
-            //     /**
-            //     * Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            //     */
-            //     'kind'?: string;
-            //     'metadata'?: V1ObjectMeta;
-            //     'spec': V1CertificateSigningRequestSpec;
-            //     'status'?: V1CertificateSigningRequestStatus;
-            //     static readonly discriminator: string | undefined;
-            //     static readonly attributeTypeMap: Array<{
-            //         name: string;
-            //         baseName: string;
-            //         type: string;
-            //         format: string;
-            //     }>;
-            //     static getAttributeTypeMap(): {
-            //         name: string;
-            //         baseName: string;
-            //         type: string;
-            //         format: string;
-            //     }[];
-            //     constructor();
-            // }
-
-              // const kynd = class extends kind.GenericKind {}
-              // const kynd = { name: obj.kind } as kind.GenericKind
-              // const kynd = class extends kind.GenericKind { name: "asdf" }
-              
-              // RegisterKind(kynd, { group: grp, version: ver, kind: knd })
-
-              // EventsV1Event: {
-              //   kind: "Event",
-              //   version: "v1",
-              //   group: "events.k8s.io",
-              // },
-
-              class kynd implements GroupVersionKind {
-                kind: string;
-                group: string;
-                constructor() {
-                  this.kind = "foo";
-                  this.group = "bar";
-                }
+              // ensure request model is registerd with KFC (non-built in CRD's, etc.)
+              const { model, kind } = binding;
+              try {
+                RegisterKind(model, kind);
+              } catch (e) {
+                const expected = e.message === `GVK ${model.name} already registered`
+                if (!expected) { throw e }
               }
-              RegisterKind(foo, new foo());
 
-              await K8s(???, {
+              // look up index of pepr finalizer
+              let finalizer = "pepr-finalizer";
+              let idx = obj?.metadata?.finalizers?.indexOf(finalizer) || -1;
+              if (idx < 0) {
+                let err = `Can't find finalizer: ${finalizer}.`;
+                Log.error({ obj, finalizer }, err);
+                throw err;
+              }
+// TODO: left-off here!
+              // JSON Patch - remove item from array
+              // https://datatracker.ietf.org/doc/html/rfc6902/#appendix-A.4
+              await K8s(model, {
                 namespace: obj.metadata.namespace,
                 name: obj.metadata.name,
               }).Patch([{
                 op: "remove",
-                path: "/metadata/deletionTimestamp"
+                path: `/metadata/finalizers/${idx}`
               }]);
-
             }
 
           } else {
