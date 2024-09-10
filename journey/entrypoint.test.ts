@@ -3,12 +3,13 @@
 
 import { beforeAll, describe, jest } from "@jest/globals";
 
-import { before } from "./before";
+import { promises as fs } from "fs";
 import { peprBuild } from "./pepr-build";
 import { peprDeploy } from "./pepr-deploy";
 import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
+import { resolve } from "path";
 
 // Unmock unit test things
 jest.deepUnmock("pino");
@@ -19,7 +20,19 @@ export const cwd = "pepr-test-module";
 jest.setTimeout(1000 * 60 * 5);
 
 // Configure the test environment before running the tests
-beforeAll(before);
+beforeAll((async () => {
+    const dir = resolve(cwd);
+    try {
+        await fs.access(dir);
+        await fs.rm(dir, { recursive: true, force: true });
+    } catch (err) {
+        if (err.code !== "ENOENT") {
+            throw err;
+            // The directory does not exist, do nothing
+        }
+    }
+})
+);
 
 describe("Journey: `npx pepr init`", peprInit);
 
