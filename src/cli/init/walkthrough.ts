@@ -118,7 +118,14 @@ export async function confirm(
   peprTSPath: string,
   skipPrompt?: boolean,
 ): Promise<boolean> {
-  console.log(`
+
+  const confirmationPrompt: PromptObject ={
+    type: "confirm",
+    name: "confirm",
+    message: "Create the new Pepr module?",
+  }
+  const confirmationMessage = 
+  `
   To be generated:
 
     \x1b[1m${dirName}\x1b[0m
@@ -133,18 +140,14 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     ├── \x1b[1m${peprTSPath}\x1b[0m
     ├── \x1b[1m${readme.path}\x1b[0m
     └── \x1b[1m${tsConfig.path}\x1b[0m
-      `);
+      `
 
   if (skipPrompt !== undefined) {
     return skipPrompt;
   }
 
-  const confirm = await prompt({
-    type: "confirm",
-    name: "confirm",
-    message: "Create the new Pepr module?",
-    format: val => (val === "y" || val === "yes" ? true : false),
-  });
+  console.log(confirmationMessage)
+  const confirm = await prompt([confirmationPrompt]);
 
   return !!confirm.confirm;
 }
