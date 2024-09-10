@@ -7,8 +7,6 @@ import prompt, { Answers, PromptObject } from "prompts";
 import { ErrorList, Errors } from "../../lib/errors";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
-import { InitOptions } from "../../lib/types";
-
 
 export type PromptOptions = {
   name: string;
@@ -118,16 +116,12 @@ export async function confirm(
   peprTSPath: string,
   skipPrompt?: boolean,
 ): Promise<boolean> {
-
-  const confirmationPrompt: PromptObject ={
+  const confirmationPrompt: PromptObject = {
     type: "confirm",
     name: "confirm",
     message: "Create the new Pepr module?",
-    format: (input) => (input === "y" || input === "yes") ? true : false,
-  }
-  const confirmationMessage = 
-  `
-  To be generated:
+  };
+  const confirmationMessage = `To be generated:
 
     \x1b[1m${dirName}\x1b[0m
     ├── \x1b[1m${eslint.path}\x1b[0m
@@ -141,14 +135,17 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     ├── \x1b[1m${peprTSPath}\x1b[0m
     ├── \x1b[1m${readme.path}\x1b[0m
     └── \x1b[1m${tsConfig.path}\x1b[0m
-      `
+  `;
 
   if (skipPrompt !== undefined) {
     return skipPrompt;
+  } else {
+    console.log(confirmationMessage);
+    const confirm = await prompt([confirmationPrompt]);
+    const shouldCreateModule =
+      confirm.confirm === "y" || confirm.confirm === "yes" || confirm.confirm === true
+        ? true
+        : false;
+    return shouldCreateModule;
   }
-
-  console.log(confirmationMessage)
-  const confirm = await prompt([confirmationPrompt]);
-
-  return !!confirm.confirm;
 }
