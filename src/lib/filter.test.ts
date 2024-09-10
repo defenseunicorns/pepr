@@ -29,6 +29,7 @@ describe("Fuzzing shouldSkipRequest", () => {
             namespaces: fc.array(fc.string()),
             labels: fc.dictionary(fc.string(), fc.string()),
             annotations: fc.dictionary(fc.string(), fc.string()),
+            deletionTimestamp: fc.boolean(),
           }),
         }),
         fc.record({
@@ -40,6 +41,11 @@ describe("Fuzzing shouldSkipRequest", () => {
             group: fc.string(),
             version: fc.string(),
             kind: fc.string(),
+          }),
+          object: fc.record({
+            metadata: fc.record({
+              deletionTimestamp: fc.option(fc.date()),
+            }),
           }),
         }),
         fc.array(fc.string()),
@@ -69,6 +75,7 @@ describe("Property-Based Testing shouldSkipRequest", () => {
             namespaces: fc.array(fc.string()),
             labels: fc.dictionary(fc.string(), fc.string()),
             annotations: fc.dictionary(fc.string(), fc.string()),
+            deletionTimestamp: fc.boolean(),
           }),
         }),
         fc.record({
@@ -80,6 +87,11 @@ describe("Property-Based Testing shouldSkipRequest", () => {
             group: fc.string(),
             version: fc.string(),
             kind: fc.string(),
+          }),
+          object: fc.record({
+            metadata: fc.record({
+              deletionTimestamp: fc.option(fc.date()),
+            }),
           }),
         }),
         fc.array(fc.string()),
@@ -103,6 +115,7 @@ test("should reject when name does not match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -121,6 +134,7 @@ test("should reject when kind does not match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -139,6 +153,7 @@ test("should reject when group does not match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -161,6 +176,7 @@ test("should reject when version does not match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -179,6 +195,7 @@ test("should allow when group, version, and kind match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -201,6 +218,7 @@ test("should allow when kind match and others are empty", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -219,6 +237,7 @@ test("should reject when teh capability namespace does not match", () => {
       namespaces: [],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -237,6 +256,7 @@ test("should reject when namespace does not match", () => {
       namespaces: ["bleh"],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -255,6 +275,7 @@ test("should allow when namespace is match", () => {
       namespaces: ["default", "unicorn", "things"],
       labels: {},
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -275,6 +296,7 @@ test("should reject when label does not match", () => {
         foo: "bar",
       },
       annotations: {},
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -290,7 +312,7 @@ test("should allow when label is match", () => {
     kind: podKind,
     filters: {
       name: "",
-
+      deletionTimestamp: false,
       namespaces: [],
       labels: {
         foo: "bar",
@@ -324,6 +346,7 @@ test("should reject when annotation does not match", () => {
       annotations: {
         foo: "bar",
       },
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -345,6 +368,7 @@ test("should allow when annotation is match", () => {
         foo: "bar",
         test: "test1",
       },
+      deletionTimestamp: false,
     },
     callback,
   };
@@ -368,6 +392,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
     filters: {
       name: "",
       namespaces: [],
+      deletionTimestamp: false,
       labels: {
         "app.kubernetes.io/name": "cool-name-podinfo",
       },
@@ -379,6 +404,65 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
   };
 
   const pod = DeletePod();
+
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
+});
+
+test("should skip processing when deletionTimestamp is not present on pod", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: {},
+      annotations: {
+        foo: "bar",
+        test: "test1",
+      },
+      deletionTimestamp: true,
+    },
+    callback,
+  };
+
+  const pod = CreatePod();
+  pod.object.metadata = pod.object.metadata || {};
+  pod.object.metadata.annotations = {
+    foo: "bar",
+    test: "test1",
+    test2: "test2",
+  };
+
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
+});
+
+test("should processing when deletionTimestamp is not present on pod", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: {},
+      annotations: {
+        foo: "bar",
+        test: "test1",
+      },
+      deletionTimestamp: true,
+    },
+    callback,
+  };
+
+  const pod = CreatePod();
+  pod.object.metadata = pod.object.metadata || {};
+  pod.object.metadata!.deletionTimestamp = new Date("2021-09-01T00:00:00Z");
+  pod.object.metadata.annotations = {
+    foo: "bar",
+    test: "test1",
+    test2: "test2",
+  };
 
   expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
