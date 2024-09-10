@@ -60,7 +60,7 @@ export class Queue<K extends KubernetesObject> {
         resourceVersion: item.metadata?.resourceVersion,
       },
     };
-    Log.info(note, "Enqueueing");
+    Log.debug(note, "Enqueueing");
     return new Promise<void>((resolve, reject) => {
       this.#queue.push({ item, phase, callback: reconcile, resolve, reject });
       Log.debug(this.stats(), "Queue stats - push");
@@ -102,9 +102,9 @@ export class Queue<K extends KubernetesObject> {
           resourceVersion: element.item.metadata?.resourceVersion,
         },
       };
-      Log.info(note, "Reconciling");
+      Log.debug(note, "Reconciling");
       await element.callback(element.item, element.phase);
-      Log.info(note, "Reconciled");
+      Log.debug(note, "Reconciled");
 
       element.resolve();
     } catch (e) {
