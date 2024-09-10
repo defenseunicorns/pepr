@@ -123,6 +123,7 @@ export async function confirm(
     type: "confirm",
     name: "confirm",
     message: "Create the new Pepr module?",
+    format: (input) => (input === "y" || input === "yes") ? true : false,
   }
   const confirmationMessage = 
   `
