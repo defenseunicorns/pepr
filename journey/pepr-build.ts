@@ -11,13 +11,18 @@ import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
 
 export function peprBuild() {
+
+  const moduleName = "pepr-test-module"
+
   it("should successfully build the Pepr project", async () => {
-    execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
+    execSync(`npx pepr build`, { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
   });
 
-  it("should generate produce the K8s yaml file", async () => {
-    await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
+  it("should generate the K8s yaml file", async () => {
+    const files = fs.readdir(`${cwd}/dist`)
+    const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
+    await fs.access(resolve(cwd, "dist", yamlFile as string)); //TODO: Type coercion
   });
 
   it("should generate the zarf.yaml file", async () => {
@@ -86,8 +91,12 @@ export function peprBuild() {
 
 async function validateHelmChart() {
 
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
-  const helmOutput = execSync('helm template .', { cwd: `${cwd}/dist/static-test-chart` }).toString();
+  const files = fs.readdir(`${cwd}/dist`)
+  const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
+  const chartDirectoryName = yamlFile?.split('.')[0].split('-').slice(-5).join("-").concat("-chart") as string; //TODO: Type coercion
+
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", yamlFile as string), "utf8"); //TODO: Type coercion
+  const helmOutput = execSync('helm template .', { cwd: `${cwd}/dist/${chartDirectoryName}`}).toString();
 
   const helmParsed = parseYAMLToJSON(helmOutput);
   const k8sParsed = parseYAMLToJSON(k8sYaml);
@@ -106,18 +115,24 @@ async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
 
+  const files = fs.readdir(`${cwd}/dist`)
+  const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", yamlFile as string), "utf8"); //TODO: Type coercion
   const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
 
   // The expected image name
   const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${peprVer}`;
 
+  //TODO: get expected metadtaa.name in a better way
+  const metadataName = yamlFile?.split('.')[0].split('-') as string[]; //TODO: Type coercion
+  const expectedMetaDataName = metadataName[0].concat("-").concat(metadataName.slice(-5).join("-"));
+
   // The expected zarf yaml contents
   const expectedZarfYaml = {
     kind: "ZarfPackageConfig",
     metadata: {
-      name: "pepr-static-test",
+      name: `${expectedMetaDataName}`,
       description: "Pepr Module: A test module for Pepr",
       url: "https://github.com/defenseunicorns/pepr",
       version: "0.0.1",
@@ -130,7 +145,7 @@ async function validateZarfYaml() {
           {
             name: "module",
             namespace: "pepr-system",
-            files: ["pepr-module-static-test.yaml"],
+            files: [`${yamlFile}`],
           },
         ],
         images: [expectedImage],
