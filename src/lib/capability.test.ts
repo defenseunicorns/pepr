@@ -1,10 +1,11 @@
 import { Capability } from "./capability";
 import Log from "./logger";
-import { CapabilityCfg, MutateAction } from "./types";
+import { CapabilityCfg, MutateAction, ValidateAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
 import { PeprMutateRequest } from "./mutate-request";
+import { PeprValidateRequest } from "./validate-request";
 import { Operation, AdmissionRequest } from "./k8s";
 
 jest.mock("./logger", () => {
@@ -253,5 +254,38 @@ describe("Capability", () => {
     expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: no alias provided");
+  });
+
+  it("should use child logger for validate callback", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability
+      .When(a.Pod)
+      .IsCreatedOrUpdated()
+      .InNamespace("default")
+      .Alias("test-alias")
+      .Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+    const binding = capability.bindings[0];
+
+    // Simulate the validation action
+    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
+
+    if (binding.validateCallback) {
+      await binding.validateCallback(mockPeprRequest);
+    }
+
+    expect(mockValidateCallback).toHaveBeenCalledWith(mockPeprRequest, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing validate action with alias: test-alias");
+    expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 });

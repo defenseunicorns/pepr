@@ -44,12 +44,6 @@ export async function mutateProcessor(
     const actionMetadata = { ...reqMetadata, name };
 
     for (const action of bindings) {
-      // Extract alias from the binding
-      const alias = action.alias || "";
-
-      // Create a child logger with the alias
-      const aliasLogger = Log.child({ alias });
-
       // Skip this action if it's not a mutate action
       if (!action.mutateCallback) {
         continue;
@@ -61,9 +55,6 @@ export async function mutateProcessor(
       }
 
       const label = action.mutateCallback.name;
-
-      // Log the alias
-      aliasLogger.info(actionMetadata, `Processing mutation action`);
 
       matchedAction = true;
 
@@ -87,8 +78,8 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
-        // Log the alias on success
-        aliasLogger.info(actionMetadata, `Mutation action succeeded (${label})`);
+        // Log on success
+        Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
         updateStatus("succeeded");
@@ -108,13 +99,13 @@ export async function mutateProcessor(
           errorMessage = "An error occurred with the mutate action.";
         }
 
-        // Log the alias on failure
-        aliasLogger.error(actionMetadata, `Action failed: ${errorMessage}`);
+        // Log on failure
+        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
         switch (config.onError) {
           case Errors.reject:
-            aliasLogger.error(actionMetadata, `Action failed: ${errorMessage}`);
+            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 

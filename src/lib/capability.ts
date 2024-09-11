@@ -218,12 +218,18 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
+        // Create the child logger once and use it throughout the callback
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
           ...binding,
           isValidate: true,
-          validateCallback,
+          validateCallback: async (req, logger = aliasLogger) => {
+            Log.info(`Executing validate action with alias: ${binding.alias || "no alias provided"}`);
+            return await validateCallback(req, logger);
+          },
         });
       }
 
@@ -241,7 +247,7 @@ export class Capability implements CapabilityExport {
           ...binding,
           isMutate: true,
           mutateCallback: async (req, logger = aliasLogger) => {
-            aliasLogger.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
+            Log.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
             await mutateCallback(req, logger);
           },
         });
@@ -307,7 +313,7 @@ export class Capability implements CapabilityExport {
     }
 
     function Alias(alias: string) {
-      Log.debug(`Add prefix alias ${alias}`, prefix);
+      Log.debug(`Adding prefix alias ${alias}`, prefix);
       binding.alias = alias;
       return commonChain;
     }

@@ -7,6 +7,7 @@ import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
+
 import Log from "./logger";
 
 /**
@@ -228,6 +229,7 @@ export type MutateAction<T extends GenericClass, K extends KubernetesObject = In
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprValidateRequest<K>,
+  logger?: typeof Log,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
 
 export type ValidateActionResponse = {
