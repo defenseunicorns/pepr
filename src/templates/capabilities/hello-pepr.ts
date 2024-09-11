@@ -9,6 +9,7 @@ import {
   fetchStatus,
   kind,
 } from "pepr";
+import nock from "nock";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -268,24 +269,47 @@ interface TheChuckNorrisJoke {
 }
 
 When(a.ConfigMap)
-  .IsCreated()
+  .IsCreatedOrUpdated()
   .WithLabel("chuck-norris")
-  .Mutate(async change => {
+  .Mutate(cm => cm.SetLabel("got-jokes", "true"))
+  .Watch(async cm => {
+    const jokeURL = "https://icanhazdadjoke.com/";
+
+    // Set up Nock to mock the API calls globally with header matching
+    nock(jokeURL).get("/").reply(200, {
+      id: "R7UfaahVfFd",
+      joke: "Funny joke goes here.",
+      status: 200,
+    });
+
     // Try/catch is not needed as a response object will always be returned
-    const response = await fetch<TheChuckNorrisJoke>(
-      "https://icanhazdadjoke.com/",
-      {
-        headers: {
-          Accept: "application/json",
-        },
+    const response = await fetch<TheChuckNorrisJoke>(jokeURL, {
+      headers: {
+        Accept: "application/json",
       },
-    );
+    });
 
     // Instead, check the `response.ok` field
     if (response.ok) {
+      const { joke } = response.data;
+      // Add Joke to the Store
+      await Store.setItemAndWait(jokeURL, joke);
       // Add the Chuck Norris joke to the configmap
-      change.Raw.data["chuck-says"] = response.data.joke;
-      return;
+      try {
+        await K8s(kind.ConfigMap).Apply({
+          metadata: {
+            name: cm.metadata.name,
+            namespace: cm.metadata.namespace,
+          },
+          data: {
+            "chuck-says": Store.getItem(jokeURL),
+          },
+        });
+      } catch (error) {
+        Log.error(error, "Failed to apply ConfigMap using server-side apply.", {
+          cm,
+        });
+      }
     }
 
     // You can also assert on different HTTP response codes

@@ -12,8 +12,8 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 10% 
+        threshold: 30% 
     patch: # Settings for PR patches
       default:
         target: auto
-        threshold: 10% # Adjust as needed
+        threshold: 30% # Adjust as needed

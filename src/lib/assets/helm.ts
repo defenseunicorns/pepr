@@ -90,15 +90,9 @@ export function watcherDeployTemplate(buildTimestamp: string) {
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
                 readinessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 3000
-                    scheme: HTTPS
+                  {{- toYaml .Values.watcher.readinessProbe | nindent 12 }}
                 livenessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 3000
-                    scheme: HTTPS
+                  {{- toYaml .Values.watcher.livenessProbe | nindent 12 }}
                 ports:
                   - containerPort: 3000
                 resources:
@@ -176,15 +170,9 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
                 readinessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 3000
-                    scheme: HTTPS
+                  {{- toYaml .Values.admission.readinessProbe | nindent 12 }}
                 livenessProbe:
-                  httpGet:
-                    path: /healthz
-                    port: 3000
-                    scheme: HTTPS
+                  {{- toYaml .Values.admission.livenessProbe | nindent 12 }}
                 ports:
                   - containerPort: 3000
                 resources:

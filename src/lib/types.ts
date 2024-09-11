@@ -96,6 +96,7 @@ export type Binding = {
     namespaces: string[];
     labels: Record<string, string>;
     annotations: Record<string, string>;
+    deletionTimestamp: boolean;
   };
   alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
@@ -140,6 +141,8 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
    * @param value
    */
   WithAnnotation: (key: string, value?: string) => BindingFilter<T>;
+  /** Only apply the action if the resource has a deletionTimestamp. */
+  WithDeletionTimestamp: () => BindingFilter<T>;
 };
 
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {

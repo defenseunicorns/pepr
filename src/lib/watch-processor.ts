@@ -9,6 +9,37 @@ import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
 
+// stores Queue instances
+const queues: Record<string, Queue<KubernetesObject>> = {};
+
+/**
+ * Get the key for an entry in the queues
+ *
+ * @param obj The object to derive a key from
+ * @returns The key to a Queue in the list of queues
+ */
+export function queueKey(obj: KubernetesObject) {
+  const options = ["singular", "sharded"];
+  const d3fault = "singular";
+
+  let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
+  strat = options.includes(strat) ? strat : d3fault;
+
+  const ns = obj.metadata?.namespace ?? "cluster-scoped";
+  const kind = obj.kind ?? "UnknownKind";
+  const name = obj.metadata?.name ?? "Unnamed";
+
+  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
+}
+
+export function getOrCreateQueue(obj: KubernetesObject) {
+  const key = queueKey(obj);
+  if (!queues[key]) {
+    queues[key] = new Queue<KubernetesObject>(key);
+  }
+  return queues[key];
+}
+
 // Watch configuration
 const watchCfg: WatchCfg = {
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
@@ -18,7 +49,7 @@ const watchCfg: WatchCfg = {
     : 300,
   relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
-    : 1800,
+    : 600,
 };
 
 // Map the event to the watch phase
@@ -54,16 +85,16 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
   // The watch callback is run when an object is received or dequeued
-
   Log.debug({ watchCfg }, "Effective WatchConfig");
-  const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
+
+  const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
     // First, filter the object based on the phase
-    if (phaseMatch.includes(type)) {
+    if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
-          await binding.watchCallback?.(obj, type);
+          await binding.watchCallback?.(obj, phase);
         } else {
           Log.debug(filterMatch);
         }
@@ -74,19 +105,15 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     }
   };
 
-  const queue = new Queue();
-  queue.setReconcile(watchCallback);
-
   // Setup the resource watch
-  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
-    Log.debug(obj, `Watch event ${type} received`);
+  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
+    Log.debug(obj, `Watch event ${phase} received`);
 
-    // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
-      await queue.enqueue(obj, type);
+      const queue = getOrCreateQueue(obj);
+      await queue.enqueue(obj, phase, watchCallback);
     } else {
-      // Otherwise, run the watch callback directly
-      await watchCallback(obj, type);
+      await watchCallback(obj, phase);
     }
   }, watchCfg);
 
@@ -130,8 +157,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   }
 }
 
-export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
-  const logMessage = `Watch event ${type} received${message ? `. ${message}.` : "."}`;
+export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  const logMessage = `Watch event ${event} received${message ? `. ${message}.` : "."}`;
   if (obj) {
     Log.debug(obj, logMessage);
   } else {
