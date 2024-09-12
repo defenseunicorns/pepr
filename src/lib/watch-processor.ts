@@ -131,7 +131,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
               // JSON Patch - replace a key
               // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
-              await K8s(model, {
+              obj = await K8s(model, {
                 namespace: obj.metadata.namespace,
                 name: obj.metadata.name,
               }).Patch([
