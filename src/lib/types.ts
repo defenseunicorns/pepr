@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { WatchAction, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
@@ -235,7 +235,6 @@ export type ValidateActionResponse = {
 
 export type FinalizeAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
-  // phase: WatchPhase,
 ) => Promise<void> | void;
 
 export type FinalizeActionChain<T extends GenericClass> = {

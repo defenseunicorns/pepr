@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { K8s, kind, KubernetesObject, RegisterKind, GroupVersionKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, RegisterKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
@@ -11,9 +11,6 @@ import { metricsCollector } from "./metrics";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
-
-// default + dynamically-registered Kinds
-let kinds = kind;
 
 /**
  * Get the key for an entry in the queues
@@ -100,60 +97,56 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
-
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
             // if there's no deletionTimestamp, don't run finalizer callback
-            if (! obj.metadata?.deletionTimestamp) { return }
+            if (!obj.metadata?.deletionTimestamp) {
+              return;
+            }
 
             // run the finalizer callback
             try {
               await binding.finalizeCallback?.(obj);
-            }
+            } finally {
+              // irrespective of callback success / failure, remove pepr finalizer
+              const peprFinal = "pepr.dev/finalizer";
 
-            // irrespective of callback success / failure, remove pepr finalizer
-            finally {
-              const peprFinal = "pepr-finalizer"
-
-              Log.debug({obj}, `Removing finalizer: ${peprFinal}`)
+              Log.debug({ obj }, `Removing finalizer: ${peprFinal}`);
 
               // ensure request model is registerd with KFC (non-built in CRD's, etc.)
               const { model, kind } = binding;
               try {
                 RegisterKind(model, kind);
               } catch (e) {
-                const expected = e.message === `GVK ${model.name} already registered`
-                if (!expected) { throw e }
+                const expected = e.message === `GVK ${model.name} already registered`;
+                if (!expected) {
+                  Log.error({ model, kind, error: e }, `Error registering "${kind}" during finalization.`);
+                }
               }
 
-              // look up index of pepr finalizer
-              let finalizer = "pepr-finalizer";
-              let idx = obj?.metadata?.finalizers?.indexOf(finalizer) || -1;
-              if (idx < 0) {
-                let err = `Can't find finalizer: ${finalizer}.`;
-                Log.error({ obj, finalizer }, err);
-                throw err;
-              }
+              // if there is more than on pepr finalizer, remove them all
+              const finalizers = obj.metadata.finalizers?.filter(f => f !== peprFinal);
 
-              // JSON Patch - remove item from array
-              // https://datatracker.ietf.org/doc/html/rfc6902/#appendix-A.4
+              // JSON Patch - replace a key
+              // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
               await K8s(model, {
                 namespace: obj.metadata.namespace,
                 name: obj.metadata.name,
-              }).Patch([{
-                op: "remove",
-                path: `/metadata/finalizers/${idx}`
-              }]);
+              }).Patch([
+                {
+                  op: "replace",
+                  path: `/metadata/finalizers`,
+                  value: finalizers,
+                },
+              ]);
 
-              Log.debug({obj}, `Removed finalizer: ${peprFinal}`)
+              Log.debug({ obj }, `Removed finalizer: ${peprFinal}`);
             }
-
           } else {
             await binding.watchCallback?.(obj, phase);
           }
-
         } else {
           Log.debug(filterMatch);
         }
@@ -174,7 +167,6 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     } else {
       await watchCallback(obj, phase);
     }
-
   }, watchCfg);
 
   // If failure continues, log and exit
