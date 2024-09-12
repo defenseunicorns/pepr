@@ -24,7 +24,7 @@
     "format:fix": "eslint src --fix && prettier src --write",
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
-    "prepare": "husky install",
+    "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky install; fi",
     "test": "npm run test:unit && npm run test:journey",
     "test:journey": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run",
     "test:journey-wasm": "npm run test:journey:k3d && npm run test:journey:build && npm run test:journey:image && npm run test:journey:run-wasm",
