@@ -113,8 +113,11 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
               await binding.finalizeCallback?.(obj);
             }
 
-            // irrespective of callback success or failure, remove pepr finalizer
+            // irrespective of callback success / failure, remove pepr finalizer
             finally {
+              const peprFinal = "pepr-finalizer"
+
+              Log.debug({obj}, `Removing finalizer: ${peprFinal}`)
 
               // ensure request model is registerd with KFC (non-built in CRD's, etc.)
               const { model, kind } = binding;
@@ -133,7 +136,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
                 Log.error({ obj, finalizer }, err);
                 throw err;
               }
-// TODO: left-off here!
+
               // JSON Patch - remove item from array
               // https://datatracker.ietf.org/doc/html/rfc6902/#appendix-A.4
               await K8s(model, {
@@ -143,6 +146,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
                 op: "remove",
                 path: `/metadata/finalizers/${idx}`
               }]);
+
+              Log.debug({obj}, `Removed finalizer: ${peprFinal}`)
             }
 
           } else {
