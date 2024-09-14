@@ -9,7 +9,6 @@
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 FROM cgr.dev/chainguard/node:latest-dev@sha256:0a7847d55e5837d4fd78cf1171ce09911e6b0a851bad27f44b8594ec101df9b6 AS build
 
-ENV HUSKY=0
 WORKDIR /app
 
 # Copy the node config files
