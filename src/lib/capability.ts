@@ -278,32 +278,41 @@ export class Capability implements CapabilityExport {
       return { Finalize };
     }
 
-    function Finalize(finalizeCallback: FinalizeAction<T>): FinalizeActionChain<T> {
-      if (registerWatch) {
-        log("Finalize Action", finalizeCallback.toString());
+    function Finalize(finalizeCallback: FinalizeAction<T>) {
+      log("Finalize Action", finalizeCallback.toString());
 
+      if (registerAdmission) {
         // add binding to inject pepr finalizer during admission (Mutate)
         const addFinalizer: MutateAction<T> = request => {
+          // check if has deletetionTimestamp
+          // could be any CRUD..?
+
           const finalizers = request.Raw.metadata?.finalizers || [];
           finalizers.push("pepr.dev/finalizer");
           request.Merge({ metadata: { finalizers } });
         };
-        bindings.push({
+        const mutateBinding = {
           ...binding,
           isMutate: true,
           isFinalize: true,
+          // event: Event.Create,
           mutateCallback: addFinalizer,
-        });
+        };
+        bindings.push(mutateBinding);
+      };
 
-        // add binding to process pepr finalizer callback / remove pepr finalizer
-        //   during watch (Update/deletionTimestamp)
-        bindings.push({
+      // add binding to process pepr finalizer callback / remove pepr finalizer
+      //   during watch (Update/deletionTimestamp)
+      if (registerWatch) {
+
+        const watchBinding = {
           ...binding,
           isWatch: true,
           isFinalize: true,
           event: Event.Update,
           finalizeCallback,
-        });
+        }
+        bindings.push(watchBinding);
       }
 
       return { Finalize };
