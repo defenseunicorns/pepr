@@ -236,7 +236,7 @@ export type ValidateAction<T extends GenericClass, K extends KubernetesObject = 
 export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
   phase: WatchPhase,
-  logger?: Logger
+  logger?: Logger,
 ) => Promise<void> | void;
 
 export type ValidateActionResponse = {

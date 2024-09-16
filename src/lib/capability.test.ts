@@ -301,9 +301,11 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     // Mock Watch callback function
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(async (update, phase, logger: typeof Log = mockLog) => {
-      logger.info("Watch action executed");
-    });
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update, phase, logger: typeof Log = mockLog) => {
+        logger.info("Watch action executed");
+      },
+    );
 
     // Chain the When and Watch methods
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
@@ -330,9 +332,11 @@ describe("Capability", () => {
   it("should pass the correct parameters to the Watch action", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(async (update, phase, logger: typeof Log = mockLog) => {
-      logger.info("Watch action executed");
-    });
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update, phase, logger: typeof Log = mockLog) => {
+        logger.info("Watch action executed");
+      },
+    );
 
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
 
