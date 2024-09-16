@@ -24,7 +24,7 @@ import {
   FinalizeActionChain,
   WhenSelector,
 } from "./types";
-import {Operation } from "./k8s";
+import { addFinalizer } from "./helpers";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -282,26 +282,8 @@ export class Capability implements CapabilityExport {
     function Finalize(finalizeCallback: FinalizeAction<T>) {
       log("Finalize Action", finalizeCallback.toString());
 
-      //TODO: move the guts of the callback-stuff to helpers.ts!
-
+      // add binding to inject pepr finalizer during admission (Mutate)
       if (registerAdmission) {
-        // add binding to inject pepr finalizer during admission (Mutate)
-        const addFinalizer: MutateAction<T> = request => {
-          // if DELETE is being processed, don't add finalizer
-          if (request.Request.operation === Operation.DELETE) { return }
-
-          // if UPDATE is being processed and has deletionTimestamp
-          //  resource is going through pre-delete flow; don't (re-)add finalizer
-          if (
-            request.Request.operation === Operation.UPDATE &&
-            request.Raw.metadata?.deletionTimestamp
-          ) { return }
-
-          const peprFinal = "pepr.dev/finalizer";
-          const finalizers = request.Raw.metadata?.finalizers || [];
-          if (!finalizers.includes(peprFinal)) { finalizers.push(peprFinal);   }
-          request.Merge({ metadata: { finalizers } });
-        };
         const mutateBinding = {
           ...binding,
           isMutate: true,
@@ -312,7 +294,7 @@ export class Capability implements CapabilityExport {
         bindings.push(mutateBinding);
       };
 
-      // add binding to process pepr finalizer callback / remove pepr finalizer
+      // add binding to process finalizer callback / remove pepr finalizer (Watch)
       if (registerWatch) {
         const watchBinding = {
           ...binding,

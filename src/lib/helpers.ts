@@ -2,10 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { promises as fs } from "fs";
-import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, kind, GenericClass } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport, DeepPartial } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
+import {Operation } from "./k8s";
+import { PeprMutateRequest } from "./mutate-request";
 
 export class ValidationError extends Error {}
 
@@ -345,3 +347,24 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
 }
+
+
+export function addFinalizer<K extends KubernetesObject>(
+  request: PeprMutateRequest<K>
+) {
+  // if a DELETE is being processed, don't add a finalizer
+  if (request.Request.operation === Operation.DELETE) { return }
+
+  // if an UPDATE is being processed and it HAS a deletionTimestamp, the
+  //  resource is going through a pre-delete flow so don't (re-)add a finalizer
+  if (
+    request.Request.operation === Operation.UPDATE &&
+    request.Raw.metadata?.deletionTimestamp
+  ) { return }
+
+  const peprFinal = "pepr.dev/finalizer";
+  const finalizers = request.Raw.metadata?.finalizers || [];
+  if (!finalizers.includes(peprFinal)) { finalizers.push(peprFinal); }
+
+  request.Merge(({ metadata: { finalizers } } as DeepPartial<K>));
+};

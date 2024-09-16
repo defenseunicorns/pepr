@@ -130,7 +130,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
               // if there is more than on pepr finalizer, remove them all
               const finalizers = obj.metadata.finalizers?.filter(f => f !== peprFinal);
-Log.debug({obj}, "Removed finalizer - before")
+
               // JSON Patch - replace a key
               // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
               obj = await K8s(model, {
@@ -143,7 +143,6 @@ Log.debug({obj}, "Removed finalizer - before")
                   value: finalizers,
                 },
               ]);
-Log.debug({obj}, "Removed finalizer - after")
               Log.debug({ obj }, `Removed finalizer '${peprFinal}' from '${resource}'`);
             }
           } else {
