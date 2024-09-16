@@ -3,12 +3,11 @@
 import { K8s, KubernetesObject, RegisterKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReason } from "./helpers";
+import { filterNoMatchReason, runmoveFinalizer } from "./helpers";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
-import { AsyncLocalStorage } from "async_hooks";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
@@ -102,49 +101,9 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
-            // if there's no deletionTimestamp, don't run finalizer callback
-            if (!obj.metadata?.deletionTimestamp) {
-              return;
-            }
+            if (!obj.metadata?.deletionTimestamp) { return; }
+            await runmoveFinalizer(binding, obj);
 
-            // run the finalizer callback
-            try {
-              await binding.finalizeCallback?.(obj);
-            } finally {
-              // irrespective of callback success / failure, remove pepr finalizer
-              const peprFinal = "pepr.dev/finalizer";
-              const resource = `${obj.metadata?.namespace}/${obj.metadata?.name}`
-
-              Log.debug({ obj }, `Removing finalizer '${peprFinal}' from '${resource}'`);
-
-              // ensure request model is registerd with KFC (non-built in CRD's, etc.)
-              const { model, kind } = binding;
-              try {
-                RegisterKind(model, kind);
-              } catch (e) {
-                const expected = e.message === `GVK ${model.name} already registered`;
-                if (!expected) {
-                  Log.error({ model, kind, error: e }, `Error registering "${kind}" during finalization.`);
-                }
-              }
-
-              // if there is more than on pepr finalizer, remove them all
-              const finalizers = obj.metadata.finalizers?.filter(f => f !== peprFinal);
-
-              // JSON Patch - replace a key
-              // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
-              obj = await K8s(model, {
-                namespace: obj.metadata.namespace,
-                name: obj.metadata.name,
-              }).Patch([
-                {
-                  op: "replace",
-                  path: `/metadata/finalizers`,
-                  value: finalizers,
-                },
-              ]);
-              Log.debug({ obj }, `Removed finalizer '${peprFinal}' from '${resource}'`);
-            }
           } else {
             await binding.watchCallback?.(obj, phase);
           }
