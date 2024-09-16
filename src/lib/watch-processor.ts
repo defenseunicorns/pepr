@@ -9,18 +9,18 @@ import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
 
-// init a queueRecord record to store Queue instances for a given Kubernetes Object
-const queueRecord: Record<string, Queue<KubernetesObject>> = {};
+// stores Queue instances
+const queues: Record<string, Queue<KubernetesObject>> = {};
 
 /**
- * Get the key for a record in the queueRecord
+ * Get the key for an entry in the queues
  *
- * @param obj The object to get the key for
- * @returns The key for the object
+ * @param obj The object to derive a key from
+ * @returns The key to a Queue in the list of queues
  */
-export function queueRecordKey(obj: KubernetesObject) {
-  const options = ["singular", "sharded"]; // TODO : ts-type this fella
-  const d3fault = "singular";
+export function queueKey(obj: KubernetesObject) {
+  const options = ["kind", "kindNs", "kindNsName", "global"];
+  const d3fault = "kind";
 
   let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
   strat = options.includes(strat) ? strat : d3fault;
@@ -29,7 +29,21 @@ export function queueRecordKey(obj: KubernetesObject) {
   const kind = obj.kind ?? "UnknownKind";
   const name = obj.metadata?.name ?? "Unnamed";
 
-  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
+  const lookup: Record<string, string> = {
+    kind: `${kind}`,
+    kindNs: `${kind}/${ns}`,
+    kindNsName: `${kind}/${ns}/${name}`,
+    global: "global",
+  };
+  return lookup[strat];
+}
+
+export function getOrCreateQueue(obj: KubernetesObject) {
+  const key = queueKey(obj);
+  if (!queues[key]) {
+    queues[key] = new Queue<KubernetesObject>(key);
+  }
+  return queues[key];
 }
 
 // Watch configuration
@@ -77,16 +91,16 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
   // The watch callback is run when an object is received or dequeued
-
   Log.debug({ watchCfg }, "Effective WatchConfig");
-  const watchCallback = async (obj: KubernetesObject, type: WatchPhase) => {
+
+  const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
     // First, filter the object based on the phase
-    if (phaseMatch.includes(type)) {
+    if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
-          await binding.watchCallback?.(obj, type);
+          await binding.watchCallback?.(obj, phase);
         } else {
           Log.debug(filterMatch);
         }
@@ -97,26 +111,15 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     }
   };
 
-  function getOrCreateQueue(key: string): Queue<KubernetesObject> {
-    if (!queueRecord[key]) {
-      queueRecord[key] = new Queue<KubernetesObject>();
-      queueRecord[key].setReconcile(watchCallback);
-    }
-    return queueRecord[key];
-  }
-
   // Setup the resource watch
-  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, type) => {
-    Log.debug(obj, `Watch event ${type} received`);
+  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
+    Log.debug(obj, `Watch event ${phase} received`);
 
-    const queue = getOrCreateQueue(queueRecordKey(obj));
-
-    // If the binding is a queue, enqueue the object
     if (binding.isQueue) {
-      await queue.enqueue(obj, type);
+      const queue = getOrCreateQueue(obj);
+      await queue.enqueue(obj, phase, watchCallback);
     } else {
-      // Otherwise, run the watch callback directly
-      await watchCallback(obj, type);
+      await watchCallback(obj, phase);
     }
   }, watchCfg);
 
@@ -160,8 +163,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   }
 }
 
-export function logEvent(type: WatchEvent, message: string = "", obj?: KubernetesObject) {
-  const logMessage = `Watch event ${type} received${message ? `. ${message}.` : "."}`;
+export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject) {
+  const logMessage = `Watch event ${event} received${message ? `. ${message}.` : "."}`;
   if (obj) {
     Log.debug(obj, logMessage);
   } else {
