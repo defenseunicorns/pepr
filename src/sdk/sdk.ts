@@ -79,18 +79,27 @@ export async function writeEvent(
 
 /**
  * Get the owner reference for a custom resource
- * @param cr the custom resource to get the owner reference for
- * @returns the owner reference for the custom resource
+ * @param customResource the custom resource to get the owner reference for
+ * @param blockOwnerDeletion if true, AND if the owner has the "foregroundDeletion" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed.
+ * @param controller if true, this reference points to the managing controller.
+ * @returns the owner reference array for the custom resource
  */
-export function getOwnerRefFrom(cr: GenericKind): V1OwnerReference[] {
-  const { name, uid } = cr.metadata!;
+export function getOwnerRefFrom(
+  customResource: GenericKind,
+  blockOwnerDeletion?: boolean,
+  controller?: boolean,
+): V1OwnerReference[] {
+  const { apiVersion, kind, metadata } = customResource;
+  const { name, uid } = metadata!;
 
   return [
     {
-      apiVersion: cr.apiVersion!,
-      kind: cr.kind!,
+      apiVersion: apiVersion!,
+      kind: kind!,
       uid: uid!,
       name: name!,
+      ...(blockOwnerDeletion !== undefined && { blockOwnerDeletion }),
+      ...(controller !== undefined && { controller }),
     },
   ];
 }

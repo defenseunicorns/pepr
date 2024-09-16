@@ -11,6 +11,7 @@ import { beforeEach, describe, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Mock } from "jest-mock";
+import { V1OwnerReference } from "@kubernetes/client-node";
 
 jest.mock("kubernetes-fluent-client", () => ({
   K8s: jest.fn(),
@@ -163,23 +164,55 @@ describe("writeEvent", () => {
 });
 
 describe("getOwnerRefFrom", () => {
-  it("should return the owner reference for the CRD", () => {
-    const cr = {
+  const customResource = {
+    apiVersion: "v1",
+    kind: "Package",
+    metadata: { name: "test", namespace: "default", uid: "1" },
+  };
+
+  const ownerRef = [
+    {
       apiVersion: "v1",
       kind: "Package",
-      metadata: { name: "test", namespace: "default", uid: "1" },
-    };
-    const ownerRef = getOwnerRefFrom(cr as GenericKind);
-    expect(ownerRef).toEqual([
-      {
-        apiVersion: "v1",
-        kind: "Package",
-        name: "test",
-        uid: "1",
-      },
-    ]);
+      name: "test",
+      uid: "1",
+    },
+  ];
+
+  const ownerRefWithController = ownerRef.map(item => ({
+    ...item,
+    controller: true,
+  }));
+  const ownerRefWithBlockOwnerDeletion = ownerRef.map(item => ({
+    ...item,
+    blockOwnerDeletion: false,
+  }));
+  const ownerRefWithAllFields = ownerRef.map(item => ({
+    ...item,
+    blockOwnerDeletion: true,
+    controller: false,
+  }));
+
+  test.each([
+    [true, false, ownerRefWithAllFields],
+    [false, undefined, ownerRefWithBlockOwnerDeletion],
+    [undefined, true, ownerRefWithController],
+    [undefined, undefined, ownerRef],
+  ])(
+    "should return owner reference for the CRD for combinations of V1OwnerReference fields - Optionals: blockOwnerDeletion (%s), controller (%s)",
+    (blockOwnerDeletion, controller, expected) => {
+      const result = getOwnerRefFrom(customResource, blockOwnerDeletion, controller);
+      expect(result).toStrictEqual(expected);
+    },
+  );
+
+  it("should support all defined fields in the V1OwnerReference type", () => {
+    const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const result = getOwnerRefFrom(customResource, false, true);
+    expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
   });
 });
+
 describe("sanitizeResourceName Fuzzing Tests", () => {
   test("should handle any random string input", () => {
     fc.assert(

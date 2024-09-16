@@ -19,8 +19,8 @@ const queues: Record<string, Queue<KubernetesObject>> = {};
  * @returns The key to a Queue in the list of queues
  */
 export function queueKey(obj: KubernetesObject) {
-  const options = ["singular", "sharded"];
-  const d3fault = "singular";
+  const options = ["kind", "kindNs", "kindNsName", "global"];
+  const d3fault = "kind";
 
   let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
   strat = options.includes(strat) ? strat : d3fault;
@@ -29,7 +29,13 @@ export function queueKey(obj: KubernetesObject) {
   const kind = obj.kind ?? "UnknownKind";
   const name = obj.metadata?.name ?? "Unnamed";
 
-  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
+  const lookup: Record<string, string> = {
+    kind: `${kind}`,
+    kindNs: `${kind}/${ns}`,
+    kindNsName: `${kind}/${ns}/${name}`,
+    global: "global",
+  };
+  return lookup[strat];
 }
 
 export function getOrCreateQueue(obj: KubernetesObject) {
