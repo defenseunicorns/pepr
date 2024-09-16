@@ -57,6 +57,22 @@ export function peprDev() {
     });
   });
 
+  it("should be ready to accept requests", async () => {
+    await waitForServer();
+  });
+
+  it("should protect the controller mutate & validate endpoint with an API token", async () => {
+    await validateAPIKey();
+  });
+
+  it("should expose Prometheus metrics", async () => {
+    const metrics = await validateMetrics();
+    expect(metrics).toMatch("pepr_validate");
+    expect(metrics).toMatch("pepr_mutate");
+    expect(metrics).toMatch("pepr_errors");
+    expect(metrics).toMatch("pepr_alerts");
+  });
+
   it("should be properly configured by the test module", done => {
     cmd.stdout.on("data", (data: Buffer) => {
       if (success) {
@@ -85,22 +101,6 @@ export function peprDev() {
         done();
       }
     });
-  });
-
-  it("should be ready to accept requests", async () => {
-    await waitForServer();
-  });
-
-  it("should protect the controller mutate & validate endpoint with an API token", async () => {
-    await validateAPIKey();
-  });
-
-  it("should expose Prometheus metrics", async () => {
-    const metrics = await validateMetrics();
-    expect(metrics).toMatch("pepr_validate");
-    expect(metrics).toMatch("pepr_mutate");
-    expect(metrics).toMatch("pepr_errors");
-    expect(metrics).toMatch("pepr_alerts");
   });
 
   afterAll(() => {

@@ -21,6 +21,7 @@ jest.setTimeout(1000 * 60 * 5);
 
 // Configure the test environment before running the tests
 beforeAll((async () => {
+    //TODO: You'll probably want to comment this out so that you don't need to re-init every time you're testing later Journey blocks (e.g., peprDeploy)
     const dir = resolve(cwd);
     try {
         await fs.access(dir);
