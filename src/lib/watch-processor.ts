@@ -8,6 +8,7 @@ import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
+import { AsyncLocalStorage } from "async_hooks";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
@@ -112,8 +113,9 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
             } finally {
               // irrespective of callback success / failure, remove pepr finalizer
               const peprFinal = "pepr.dev/finalizer";
+              const resource = `${obj.metadata?.namespace}/${obj.metadata?.name}`
 
-              Log.debug({ obj }, `Removing finalizer: ${peprFinal}`);
+              Log.debug({ obj }, `Removing finalizer '${peprFinal}' from '${resource}'`);
 
               // ensure request model is registerd with KFC (non-built in CRD's, etc.)
               const { model, kind } = binding;
@@ -128,7 +130,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
 
               // if there is more than on pepr finalizer, remove them all
               const finalizers = obj.metadata.finalizers?.filter(f => f !== peprFinal);
-
+Log.debug({obj}, "Removed finalizer - before")
               // JSON Patch - replace a key
               // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
               obj = await K8s(model, {
@@ -141,8 +143,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
                   value: finalizers,
                 },
               ]);
-
-              Log.debug({ obj }, `Removed finalizer: ${peprFinal}`);
+Log.debug({obj}, "Removed finalizer - after")
+              Log.debug({ obj }, `Removed finalizer '${peprFinal}' from '${resource}'`);
             }
           } else {
             await binding.watchCallback?.(obj, phase);

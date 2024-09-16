@@ -24,6 +24,7 @@ import {
   FinalizeActionChain,
   WhenSelector,
 } from "./types";
+import {Operation } from "./k8s";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -281,30 +282,38 @@ export class Capability implements CapabilityExport {
     function Finalize(finalizeCallback: FinalizeAction<T>) {
       log("Finalize Action", finalizeCallback.toString());
 
+      //TODO: move the guts of the callback-stuff to helpers.ts!
+
       if (registerAdmission) {
         // add binding to inject pepr finalizer during admission (Mutate)
         const addFinalizer: MutateAction<T> = request => {
-          // check if has deletetionTimestamp
-          // could be any CRUD..?
+          // if DELETE is being processed, don't add finalizer
+          if (request.Request.operation === Operation.DELETE) { return }
 
+          // if UPDATE is being processed and has deletionTimestamp
+          //  resource is going through pre-delete flow; don't (re-)add finalizer
+          if (
+            request.Request.operation === Operation.UPDATE &&
+            request.Raw.metadata?.deletionTimestamp
+          ) { return }
+
+          const peprFinal = "pepr.dev/finalizer";
           const finalizers = request.Raw.metadata?.finalizers || [];
-          finalizers.push("pepr.dev/finalizer");
+          if (!finalizers.includes(peprFinal)) { finalizers.push(peprFinal);   }
           request.Merge({ metadata: { finalizers } });
         };
         const mutateBinding = {
           ...binding,
           isMutate: true,
           isFinalize: true,
-          // event: Event.Create,
+          event: Event.Any,
           mutateCallback: addFinalizer,
         };
         bindings.push(mutateBinding);
       };
 
       // add binding to process pepr finalizer callback / remove pepr finalizer
-      //   during watch (Update/deletionTimestamp)
       if (registerWatch) {
-
         const watchBinding = {
           ...binding,
           isWatch: true,
