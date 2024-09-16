@@ -1,14 +1,14 @@
 import { Capability } from "./capability";
 import Log from "./logger";
-import { CapabilityCfg, MutateAction, ValidateAction, WatchLogAction } from "./types";
+import { CapabilityCfg, MutateAction, ValidateAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { Operation, AdmissionRequest } from "./k8s";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-import { isWatchMode } from "./module";
+//import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+//import { isWatchMode } from "./module";
 
 jest.mock("./logger", () => {
   return {
@@ -291,7 +291,7 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
-/*
+  /*
   it("should trigger Watch action and log with alias", async () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Capability } = require("./capability"); // Import Capability after mocking

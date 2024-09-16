@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+//import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
 import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
@@ -266,12 +266,12 @@ export class Capability implements CapabilityExport {
         log("Watch Action", watchCallback.toString());
 
         // Create the child logger for alias and cast it to the expected type
-        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+        //const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
 
         bindings.push({
           ...binding,
           isWatch: true,
-          watchCallback: async (update, phase, logger = aliasLogger) => {
+          watchCallback: async (update, phase) => {
             Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
             await watchCallback(update, phase); // Cast logger to the correct type
           },

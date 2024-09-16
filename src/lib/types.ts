@@ -7,8 +7,8 @@ import { WatchAction, WatchPhase } from "kubernetes-fluent-client/dist/fluent/ty
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
-import Log from "./logger";
-import { Logger } from 'pino';
+//import Log from "./logger";
+import { Logger } from "pino";
 
 /**
  * Specifically for deploying images with a private registry
@@ -233,8 +233,8 @@ export type ValidateAction<T extends GenericClass, K extends KubernetesObject = 
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
 
 // Create an extended version of WatchAction that includes logger
-export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> =
-  WatchAction<T, K> & ((update: K, phase: WatchPhase, logger?: Logger) => void | Promise<void>);
+export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = WatchAction<T, K> &
+  ((update: K, phase: WatchPhase, logger?: Logger) => void | Promise<void>);
 
 export type ValidateActionResponse = {
   allowed: boolean;
