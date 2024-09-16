@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-//import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
 import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
@@ -222,7 +221,7 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
-        // Create the child logger once and use it throughout the callback
+        // Create the child logger
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
@@ -244,7 +243,7 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
-        // Create the child logger once and use it throughout the callback
+        // Create the child logger
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
 
         bindings.push({
@@ -265,17 +264,21 @@ export class Capability implements CapabilityExport {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
-        // Create the child logger for alias and use it in the watchCallback
-        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+        console.log("Watch method is being called");
+
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
 
         bindings.push({
           ...binding,
           isWatch: true,
-          watchCallback: async (update, phase) => {
+          watchCallback: async (update, phase, logger = aliasLogger) => {
             Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
-            await watchCallback(update, phase, aliasLogger); // Pass the aliasLogger to the watchCallback
+            await watchCallback(update, phase, logger);
           },
         });
+
+        console.log("Watch binding has been added", bindings);
       }
     }
 

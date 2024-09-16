@@ -8,26 +8,33 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { Operation, AdmissionRequest } from "./k8s";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-//import { isWatchMode } from "./module";
 
-jest.mock("./logger", () => {
-  return {
-    __esModule: true,
-    default: {
-      info: jest.fn(),
-      debug: jest.fn(),
-      child: jest.fn().mockReturnThis(),
-    },
-  };
-});
+// Mocking isBuildMode, isWatchMode, and isDevMode globally
+jest.mock("./module", () => ({
+  isBuildMode: jest.fn(() => true),
+  isWatchMode: jest.fn(() => true),
+  isDevMode: jest.fn(() => true),
+}));
+
+// Mock logger globally
+jest.mock("./logger", () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+  },
+}));
 
 const mockLog = Log as jest.Mocked<typeof Log>;
 
 describe("Capability", () => {
   let mockRequest: AdmissionRequest<V1Pod>;
+
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+
     mockRequest = {
       operation: Operation.CREATE,
       object: {
@@ -44,7 +51,7 @@ describe("Capability", () => {
           },
         },
         spec: {
-          containers: [], // Add the containers property here
+          containers: [],
         },
       },
       dryRun: false,
@@ -65,7 +72,6 @@ describe("Capability", () => {
 
   it("should initialize with given configuration", () => {
     const capability = new Capability(capabilityConfig);
-
     expect(capability.name).toBe(capabilityConfig.name);
     expect(capability.description).toBe(capabilityConfig.description);
     expect(capability.namespaces).toEqual(capabilityConfig.namespaces);
@@ -291,49 +297,55 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
-
-  it("should trigger Watch action and log with alias", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Capability } = require("./capability"); // Import Capability after mocking
-
+  it("should register a Watch action and execute it with the logger", async () => {
     const capability = new Capability(capabilityConfig);
 
-    // Ensure the mock isWatchMode is true
-    //expect(isWatchMode()).toBe(true);
+    // Mock Watch callback function
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(async (update, phase, logger: typeof Log = mockLog) => {
+      logger.info("Watch action executed");
+    });
 
-    // Define a mock Watch callback
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update: V1Pod, phase: WatchPhase, logger: typeof Log = mockLog) => {
-        logger.info(`Processing ${update.metadata?.name} in phase ${phase}`);
-      },
-    );
+    // Chain the When and Watch methods
+    capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
 
-    // Register the Watch action
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespace("default")
-      .Alias("test-watch-alias")
-      .Watch(mockWatchCallback);
+    // Log the bindings to ensure they are being added
+    console.log("Bindings after watch registration: ", capability.bindings);
 
-    //expect(capability.bindings).toHaveLength(1);
-    //const binding = capability.bindings[0];
+    // Retrieve the registered binding
+    const binding = capability.bindings.find(b => b.isWatch === true);
 
-    // Simulate the watch action with a valid update object and phase
-    //const mockUpdate = { ...mockRequest.object }; // Use a valid Kubernetes object structure for update
-    //const phase: WatchPhase = WatchPhase.Modified; // Use a valid phase from WatchPhase enum
+    // Check that the watch callback was registered
+    expect(binding).toBeDefined();
+    expect(binding?.isWatch).toBe(true);
 
-    //if (binding.watchCallback) {
-    //  await binding.watchCallback(mockUpdate, phase);
-    //}
+    // Simulate calling the watch callback with test data
+    const testPod = new V1Pod();
+    await binding?.watchCallback?.(testPod, WatchPhase.Added, mockLog);
 
-    // Verify that the watch callback was called with the correct parameters
-    //expect(mockWatchCallback).toHaveBeenCalledWith(mockUpdate, phase, expect.anything());
+    // Ensure that the logger's `info` method was called
+    expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
+    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, WatchPhase.Added, mockLog);
+  });
 
-    // Verify that the logger's child method was called with the correct alias
-    //expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-watch-alias" });
+  it("should pass the correct parameters to the Watch action", async () => {
+    const capability = new Capability(capabilityConfig);
 
-    // Verify that the logger's info method was called with the correct message
-    //expect(mockLog.info).toHaveBeenCalledWith(`Processing test-pod in phase ${phase}`);
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(async (update, phase, logger: typeof Log = mockLog) => {
+      logger.info("Watch action executed");
+    });
+
+    capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
+
+    const binding = capability.bindings.find(b => b.isWatch);
+    expect(binding).toBeDefined();
+
+    const testPod = new V1Pod();
+    const testPhase = WatchPhase.Modified;
+
+    // Call the watch callback with custom data
+    await binding?.watchCallback?.(testPod, testPhase, mockLog);
+
+    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, mockLog);
+    expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
   });
 });
