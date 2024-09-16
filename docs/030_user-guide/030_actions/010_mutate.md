@@ -78,34 +78,6 @@ When(a.ConfigMap)
   });
 ```
 
-## Mutate Alias
-
-You can also use the Alias function to include a user-defined alias for a Mutate action in the logs for easier debugging. This is especially useful when you have multiple Mutate actions in a single module.
-
-For example, to add an alias to a Mutate action:
-
-```typescript
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .InNamespace("pepr-demo")
-  .WithLabel("pepr-test-pod")
-  .Alias("reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation")
-  .Mutate(async (po, logger) => {
-    logger.info(`Pod ${po.Raw.metadata?.name} is being mutated.`);
-  });
-```
-
-This will result in log entries that include the alias:
-
-```bash
-{"level":30,"time":1723436729311,"pid":16,"hostname":"pepr-static-test-5dd9b7cc9c-78rwn","alias":"reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation","uid":"751e5fca-ba69-434f-927a-232b1ca5e39c","namespace":"pepr-demo","name":"hello-pepr","msg":"Processing mutation action"}
-{"level":30,"time":1723436729311,"pid":16,"hostname":"pepr-static-test-5dd9b7cc9c-78rwn","alias":"reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation","msg":"Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation"}
-{"level":30,"time":1723436729311,"pid":16,"hostname":"pepr-static-test-5dd9b7cc9c-78rwn","msg":"Pod pepr-test-pod is being mutated."}
-{"level":30,"time":1723436729311,"pid":16,"hostname":"pepr-static-test-5dd9b7cc9c-78rwn","alias":"reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation","uid":"751e5fca-ba69-434f-927a-232b1ca5e39c","namespace":"pepr-demo","name":"hello-pepr","msg":"Mutation action succeeded (mutateCallback)"}
-```
-
-**Note:** The Alias function is optional and can be used to provide additional context in the logs. You must pass the logger object as shown above to the Mutate function to use the Alias function.
-
 ## See Also
 
 Looking for some more generic helpers? Check out the [Module Author SDK](../130_sdk.md) for information on other things that Pepr can help with.
