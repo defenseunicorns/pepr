@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { WatchAction, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
@@ -232,9 +232,12 @@ export type ValidateAction<T extends GenericClass, K extends KubernetesObject = 
   logger?: Logger,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
 
-// Create an extended version of WatchAction that includes logger
-export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = WatchAction<T, K> &
-  ((update: K, phase: WatchPhase, logger?: Logger) => void | Promise<void>);
+// Define WatchLogAction by adding an optional logger parameter to the WatchAction
+export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  update: K,
+  phase: WatchPhase,
+  logger?: Logger
+) => Promise<void> | void;
 
 export type ValidateActionResponse = {
   allowed: boolean;
