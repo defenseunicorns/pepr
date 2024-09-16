@@ -36,11 +36,11 @@ export function peprDeploy() {
   beforeAll(async ()=>{
     magicString = await getMagicString();
     // Purge the Pepr module from the cluster before running the tests
-    // destroyModule(`${magicString}`);
+    await destroyModule(`${magicString}`);
   })
 
   //TODO This causes the pepr-system namespace to terminate upon completion
-  it.skip("should deploy the Pepr controller into the test cluster", async () => {
+  it("should deploy the Pepr controller into the test cluster", async () => {
 
     // Apply the store crd and pepr-system ns
     await applyStoreCRD();
