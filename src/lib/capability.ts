@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
+import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
@@ -20,11 +21,14 @@ import {
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
+  WatchLogAction,
   WhenSelector,
 } from "./types";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
+
+console.log("Register Watch:", registerWatch);
 
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
@@ -257,14 +261,20 @@ export class Capability implements CapabilityExport {
       return { Watch, Validate, Reconcile };
     }
 
-    function Watch(watchCallback: WatchAction<T>) {
+    function Watch(watchCallback: WatchLogAction<T>): void {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
+
+        // Create the child logger for alias and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
 
         bindings.push({
           ...binding,
           isWatch: true,
-          watchCallback,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
+            await watchCallback(update, phase); // Cast logger to the correct type
+          },
         });
       }
     }
@@ -272,7 +282,6 @@ export class Capability implements CapabilityExport {
     function Reconcile(watchCallback: WatchAction<T>) {
       if (registerWatch) {
         log("Reconcile Action", watchCallback.toString());
-
         bindings.push({
           ...binding,
           isWatch: true,

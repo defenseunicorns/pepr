@@ -2,12 +2,13 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchAction, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
 import Log from "./logger";
+import { Logger } from 'pino';
 
 /**
  * Specifically for deploying images with a private registry
@@ -101,7 +102,7 @@ export type Binding = {
   alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
-  readonly watchCallback?: WatchAction<GenericClass, InstanceType<GenericClass>>;
+  readonly watchCallback?: WatchLogAction<GenericClass, InstanceType<GenericClass>>;
 };
 
 export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
@@ -180,7 +181,7 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Watch: (action: WatchAction<T, InstanceType<T>>) => void;
+  Watch: (action: WatchLogAction<T, InstanceType<T>>) => void;
 
   /**
    * Establish a reconcile for the specified resource. The callback function will be executed after the admission controller has
@@ -193,7 +194,7 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Reconcile: (action: WatchAction<T, InstanceType<T>>) => void;
+  Reconcile: (action: WatchLogAction<T, InstanceType<T>>) => void;
 };
 
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
@@ -223,13 +224,17 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprMutateRequest<K>,
-  logger?: typeof Log,
+  logger?: Logger,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprValidateRequest<K>,
-  logger?: typeof Log,
+  logger?: Logger,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
+
+// Create an extended version of WatchAction that includes logger
+export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> =
+  WatchAction<T, K> & ((update: K, phase: WatchPhase, logger?: Logger) => void | Promise<void>);
 
 export type ValidateActionResponse = {
   allowed: boolean;
