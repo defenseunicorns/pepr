@@ -25,7 +25,6 @@ export function genPkgJSON(opts: InitOptions) {
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
 
-
   const data = {
     name,
     version: "0.0.1",

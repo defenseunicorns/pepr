@@ -38,9 +38,8 @@ export default function (program: RootCmd) {
       Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
     })
     .action(async opts => {
-      const pkgOverride = "";
       const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response, pkgOverride);
+      const packageJSON = genPkgJSON(response);
       const peprTS = genPeprTS();
 
       const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
