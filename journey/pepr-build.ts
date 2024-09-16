@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
-import { expect, it } from "@jest/globals";
+import { beforeAll, expect, it } from "@jest/globals";
 import { loadYaml } from "@kubernetes/client-node";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { V1ObjectMeta, KubernetesObject } from '@kubernetes/client-node';
@@ -14,7 +14,17 @@ export function peprBuild() {
 
   const moduleName = "pepr-test-module"
 
+  beforeAll(() => {
+    execSync(`jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'})
+    execSync('npm install', {cwd: 'pepr-test-module'})
+
+    //Prepare the 'env' key in the test module's package.json
+    const envValues = '{"MY_CUSTOM_VAR": "example-value","ZARF_VAR": "###ZARF_VAR_THING###"}'
+    execSync(`jq \'.pepr.env = ${envValues}\' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'});
+  })
+
   it("should successfully build the Pepr project", async () => {
+
     execSync(`npx pepr build`, { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
   });
@@ -23,6 +33,7 @@ export function peprBuild() {
     const files = fs.readdir(`${cwd}/dist`)
     const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
     await fs.access(resolve(cwd, "dist", yamlFile as string)); //TODO: Type coercion
+    //Assert: What's a good assertion?
   });
 
   it("should generate the zarf.yaml file", async () => {
@@ -79,7 +90,11 @@ export function peprBuild() {
     ]
 
     try {
-      const valuesYaml = await fs.readFile(resolve(cwd, "dist", "static-test-chart", "values.yaml"), "utf8");
+      const files = fs.readdir(`${cwd}/dist`)
+      const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
+      const chartDirectoryName = yamlFile?.split('.')[0].split('-').slice(-5).join("-").concat("-chart") as string; //TODO: Type coercion
+
+      const valuesYaml = await fs.readFile(resolve(cwd, "dist", chartDirectoryName, "values.yaml"), "utf8");
       const valuesJSON = yaml.load(valuesYaml) as ValuesJSON;
       expect(valuesJSON.admission.env).toEqual(expectedAdmissionEnv);
       expect(valuesJSON.watcher!.env).toEqual(expectedWatcherEnv);

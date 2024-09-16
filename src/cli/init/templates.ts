@@ -17,7 +17,7 @@ import { InitOptions } from "../../lib/types";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
-export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string) {
+export function genPkgJSON(opts: InitOptions) {
   // Generate a random UUID for the module based on the module name
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
@@ -25,10 +25,6 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string) {
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
 
-  const testEnv = {
-    MY_CUSTOM_VAR: "example-value",
-    ZARF_VAR: "###ZARF_VAR_THING###",
-  };
 
   const data = {
     name,
@@ -39,7 +35,7 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string) {
       node: ">=18.0.0",
     },
     pepr: {
-      uuid: pkgVersionOverride ? "static-test" : uuid,
+      uuid: uuid,
       onError: opts.errorBehavior,
       webhookTimeout: 10,
       customLabels: {
@@ -51,13 +47,13 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string) {
         namespaces: [],
       },
       includedFiles: [],
-      env: pkgVersionOverride ? testEnv : {},
+      env: {},
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],
     },
     dependencies: {
-      pepr: pkgVersionOverride || version,
+      pepr: version,
       nock: "13.5.4",
     },
     devDependencies: {
