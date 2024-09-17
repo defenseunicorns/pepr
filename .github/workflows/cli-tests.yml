@@ -61,6 +61,7 @@ jobs:
           retention-days: 1
 
   cli-tests:
+    needs: pepr-build
     name: Run CLI tests
     runs-on: ubuntu-latest
     steps:
