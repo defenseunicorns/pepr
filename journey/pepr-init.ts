@@ -27,16 +27,9 @@ export function peprInit(){
     expect(output.toString()).toContain("--errorBehavior")
   });
 
-  it.skip("should create a new Pepr project", () => {
+  it("should create a new Pepr project", () => {
     //TODO: Prompt hangs
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
-    verifyModuleCreation()
-  });
-
-  it("should create a new Pepr project using input flags", () => {
-    execSync(`rm -rf ${moduleName}`)
-    //TODO: Not actually testing input flags
-    execSync(`TEST_MODE=true npx --yes ${peprAlias} init --name ${moduleName} --description ${description} --errorBehavior ${errorBehavior} --confirm`);
     verifyModuleCreation()
   });
 }
