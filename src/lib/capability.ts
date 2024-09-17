@@ -24,7 +24,7 @@ import {
   FinalizeActionChain,
   WhenSelector,
 } from "./types";
-import { addFinalizer } from "./helpers";
+import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
