@@ -57,9 +57,10 @@ jobs:
             --errorBehavior reject \
             --confirm \
             --skip-post-init
-          grep "my-flagged-module" my-flagged-module/package.json
-          grep "Set by flag" my-flagged-module/package.json
-          grep "reject" my-flagged-module/package.json
+          RESULT_FILE="my-flagged-module/package.json"
+          grep "my-flagged-module" $RESULT_FILE
+          grep "Set by flag" $RESULT_FILE
+          grep "reject" $RESULT_FILE
 
       - name: pepr init - creates a module with input from stdin
         run: |
@@ -70,6 +71,7 @@ jobs:
             --errorBehavior reject \
             --confirm \
             --skip-post-init
-          grep "my-flagged-module" my-flagged-module/package.json
-          grep "Set by flag" my-flagged-module/package.json
-          grep "reject" my-flagged-module/package.json
+          RESULT_FILE="stdin-module/package.json"
+          grep "stdin-module" $RESULT_FILE
+          grep "Set by flag" $RESULT_FILE
+          grep "reject" $RESULT_FILE
