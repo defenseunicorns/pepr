@@ -20,14 +20,24 @@ import {
   tsConfig,
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
-import { confirm, walkthrough } from "./walkthrough";
+import { confirm, PromptOptions, walkthrough } from "./walkthrough";
+import { ErrorList } from "../../lib/errors";
 
 export default function (program: RootCmd) {
+  let response = {} as PromptOptions;
+
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    // skip auto npm install and git init
-    .option("--skip-post-init", "Skip npm install, git init and VSCode launch")
+    .option("--confirm", "Skip verification prompt before creating module")
+    .option("--description <string>", "Set a description!")
+    .option("--name <string>", "Set a name!")
+    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
+    .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
+    .hook("preAction", async thisCommand => {
+      response = await walkthrough(thisCommand.opts());
+      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
+    })
     .action(async opts => {
       let pkgOverride = "";
 
@@ -37,12 +47,11 @@ export default function (program: RootCmd) {
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
       }
 
-      const response = await walkthrough();
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
       const peprTS = genPeprTS();
 
-      const confirmed = await confirm(dirName, packageJSON, peprTS.path);
+      const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");

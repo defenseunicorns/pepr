@@ -6,6 +6,7 @@ import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
+import { Answers } from "prompts";
 
 /**
  * Specifically for deploying images with a private registry
@@ -230,3 +231,5 @@ export type ValidateActionResponse = {
   statusCode?: number;
   statusMessage?: string;
 };
+
+export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
