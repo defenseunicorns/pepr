@@ -41,13 +41,17 @@ jobs:
           cd "$PEPR"
           npm ci
 
-      - name: \'pepr init\' displays the help menu
+      - name: pepr init - displays the help menu
         run: |
           cd "$PEPR"
           npm run gen-data-json
-          npx ts-node src/cli.ts init --help
+          npx ts-node src/cli.ts init --help > result.log
+          grep "--name" result.log
+          grep "--description" result.log
+          grep "--errorBehavior" result.log
+          grep "--confirm" result.log
 
-      - name: \'pepr init\' creates a module with input from flags
+      - name: pepr init - creates a module with input from flags
         run: |
           cd "$PEPR"
           npm run gen-data-json
@@ -57,3 +61,6 @@ jobs:
             --errorBehavior reject \
             --confirm \
             --skip-post-init
+          grep "my-flagged-module" package.json
+          grep "From flags" package.json
+          grep "reject" package.json
