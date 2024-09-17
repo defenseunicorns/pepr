@@ -34,15 +34,17 @@ export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
   const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
 
   Log.debug({ obj }, `Removing finalizer '${peprFinal}' from '${resource}'`);
-
+  
   // ensure request model is registerd with KFC (for non-built in CRD's, etc.)
   const { model, kind } = binding;
   try {
     RegisterKind(model, kind);
+
   } catch (e) {
     const expected = e.message === `GVK ${model.name} already registered`;
     if (!expected) {
       Log.error({ model, kind, error: e }, `Error registering "${kind}" during finalization.`);
+      return;
     }
   }
 

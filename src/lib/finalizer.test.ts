@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it } from "@jest/globals";
-import { addFinalizer } from "./finalizer";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { addFinalizer, removeFinalizer } from "./finalizer";
+import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
+import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { Operation, AdmissionRequest } from "./k8s";
 import { PeprMutateRequest } from "./mutate-request";
+import { Binding } from "./types";
+
+jest.mock("kubernetes-fluent-client");
+const mockK8s = jest.mocked(K8s);
+const mockRegisterKind = jest.mocked(RegisterKind);
+
+const PEPR_FINALIZER = "pepr.dev/finalizer";
 
 describe("addFinalizer", () => {
-  const peprFinal = "pepr.dev/finalizer";
   let request: PeprMutateRequest<KubernetesObject>;
 
   const fakeAdmissionRequest = (op: Operation): AdmissionRequest<KubernetesObject> => {
@@ -25,7 +32,7 @@ describe("addFinalizer", () => {
         },
       },
     };
-
+    
     return {
       operation: op,
       object: obj,
@@ -53,29 +60,33 @@ describe("addFinalizer", () => {
       //  i.e. it directly modifies the passed-in request object
       addFinalizer(request);
 
-      expect(request.Raw.metadata!.finalizers).toContain(peprFinal);
+      expect(request.Raw.metadata!.finalizers).toContain(PEPR_FINALIZER);
     });
 
     it("adds pepr finalizer when other finalizers are present", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too"];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too" ];
+      request.Raw.metadata!.finalizers = [ ...original ];
 
       addFinalizer(request);
 
-      const expected = [...original, peprFinal];
+      const expected = [ ...original, PEPR_FINALIZER ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
     });
 
     it("does not add another pepr finalizer when one is already present", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too", peprFinal];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too", PEPR_FINALIZER ];
+      request.Raw.metadata!.finalizers = [ ...original ];
 
       addFinalizer(request);
 
-      const expected = [...original];
+      const expected = [ ...original ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
     });
   });
 
@@ -91,41 +102,47 @@ describe("addFinalizer", () => {
 
       addFinalizer(request);
 
-      expect(request.Raw.metadata!.finalizers).toContain(peprFinal);
+      expect(request.Raw.metadata!.finalizers).toContain(PEPR_FINALIZER);
     });
 
     it("adds pepr finalizer when other finalizers are present", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too"];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too" ];
+      request.Raw.metadata!.finalizers = [ ...original ];
 
       addFinalizer(request);
 
-      const expected = [...original, peprFinal];
+      const expected = [ ...original, PEPR_FINALIZER ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
     });
 
     it("does not add another pepr finalizer when one is already present", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too", peprFinal];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too", PEPR_FINALIZER ];
+      request.Raw.metadata!.finalizers = [ ...original ];
 
       addFinalizer(request);
 
-      const expected = [...original];
+      const expected = [ ...original ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
     });
 
     it("does not add pepr finalizer if a deletetionTimestamp is present", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too"];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too" ];
+      request.Raw.metadata!.finalizers = [ ...original ];
       request.Raw.metadata!.deletionTimestamp = new Date();
 
       addFinalizer(request);
 
-      const expected = [...original];
+      const expected = [ ...original ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
     });
   });
 
@@ -137,14 +154,89 @@ describe("addFinalizer", () => {
     });
 
     it("does not add pepr finalizer", () => {
-      const original = ["i.am.a/macguffin", "i.am.one/too"];
-      request.Raw.metadata!.finalizers = [...original];
+      const original = [ "i.am.a/macguffin", "i.am.one/too" ];
+      request.Raw.metadata!.finalizers = [ ...original ];
 
       addFinalizer(request);
 
-      const expected = [...original];
+      const expected = [ ...original ];
       expect(request.Raw.metadata!.finalizers).toHaveLength(expected.length);
-      expect(request.Raw.metadata!.finalizers).toEqual(expect.arrayContaining(expected));
+      expect(request.Raw.metadata!.finalizers).toEqual(
+        expect.arrayContaining(expected)
+      );
+    });
+  });
+});
+
+describe("removeFinalizer", () => {
+  const mockPatch = jest.fn();
+
+  const fakeBinding = () => ({
+    model: {},
+    kind: {},
+  } as unknown as Binding);
+
+  const fakeObject = () => ({
+    metadata: {
+      namespace: "test-namespace",
+      name: "test-name",
+    }
+  } as KubernetesObject);
+
+  describe("when RegisterKind fails", () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+
+      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+        return { Patch: mockPatch } as unknown as K8sInit<T, K>;
+      });
+
+      mockRegisterKind.mockImplementation(() => { throw "oops"; });
+    });
+
+    it("does NOT send a JSON Patch to remove pepr finalizers", () => {
+      const object = fakeObject();
+      const binding = fakeBinding();
+
+      removeFinalizer(binding, object);
+
+      expect(mockPatch.mock.calls).toHaveLength(0);
+    });
+  });
+
+  describe("when RegisterKind succeeds", () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+
+      mockPatch.mockImplementation((ops) => {
+        return { ops };
+      });
+
+      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+        return { Patch: mockPatch } as unknown as K8sInit<T, K>;
+      });
+
+      mockRegisterKind.mockImplementation(() => {});
+    });
+
+    it("sends a JSON Patch to remove pepr finalizers", () => {
+      const originalFinalizers = [ "ignore.me/now", "ignore.me/too", PEPR_FINALIZER ];
+      const adjustedFinalizers = originalFinalizers.filter(f => f !== PEPR_FINALIZER);
+
+      const object = fakeObject();
+      object.metadata!.finalizers = [ ...originalFinalizers ];
+      const binding = fakeBinding();
+
+      removeFinalizer(binding, object);
+
+      const expected = [{
+        op: "replace",
+        path: `/metadata/finalizers`,
+        value: adjustedFinalizers,
+      }];
+      expect(mockPatch.mock.calls).toHaveLength(1);
+      expect(mockPatch.mock.calls[0]).toHaveLength(1);
+      expect(mockPatch.mock.calls[0][0]).toEqual(expected);
     });
   });
 });
