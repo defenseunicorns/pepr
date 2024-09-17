@@ -37,12 +37,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: install pepr deps
+      - name: Some testing stuff
         run: |
           cd "$PEPR"
           npm ci
-
-      - name: build pepr image
-        run: |
-          cd "$PEPR"
           npx ts-node src/cli.ts init --help
