@@ -54,6 +54,6 @@ jobs:
           npx ts-node src/cli.ts init \
             --name my-flagged-module \
             --description "From flags" \
-            --errorBehavior reject 
+            --errorBehavior reject \
             --confirm \
             --skip-post-init
