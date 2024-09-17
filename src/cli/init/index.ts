@@ -25,7 +25,7 @@ import { ErrorList } from "../../lib/errors";
 
 export default function (program: RootCmd) {
   let response = {} as PromptOptions;
-
+  let pkgOverride = "";
   program
     .command("init")
     .description("Initialize a new Pepr Module")
@@ -35,18 +35,18 @@ export default function (program: RootCmd) {
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
     .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
     .hook("preAction", async thisCommand => {
-      response = await walkthrough(thisCommand.opts());
-      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
-    })
-    .action(async opts => {
-      let pkgOverride = "";
-
-      // Overrides for testing. @todo: don't be so gross with Node CLI testing
+      // TODO: Overrides for testing. Don't be so gross with Node CLI testing
+      // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
         prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
+        response = await walkthrough();
+      } else {
+        response = await walkthrough(thisCommand.opts());
+        Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
       }
-
+    })
+    .action(async opts => {
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
       const peprTS = genPeprTS();
