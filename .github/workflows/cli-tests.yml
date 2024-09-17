@@ -1,0 +1,96 @@
+name: CLI tests
+
+permissions: read-all
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 12AM EST/9PM PST
+
+# refs
+# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
+# https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+
+jobs:
+  pepr-build:
+    name: controller image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: clone pepr
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: setup node
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: pepr
+
+      - name: install pepr deps
+        run: |
+          cd "$PEPR"
+          npm ci
+
+      - name: build pepr image
+        run: |
+          cd "$PEPR"
+          npm run build:image
+
+      - name: tar pepr image
+        run: |
+          PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
+          echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
+          docker image save --output "$PEPR_TAR" pepr:dev
+
+      - name: upload image tar artifact
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: pepr-img.tar
+          path: pepr-img.tar
+          retention-days: 1
+
+  cli-tests:
+    name: Run CLI tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: "install k3d"
+        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        shell: bash
+
+      - name: dowload image tar artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: pepr-img.tar
+          path: ${{ github.workspace }}
+
+      - name: import pepr image from tar
+        run: |
+          PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
+          echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
+          docker image load --input "$PEPR_TAR"
+
+      - name: setup node
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: pepr-excellent-examples
+
+      - name: run CLI tests
+        run: |
+            echo "Beep boop!"
