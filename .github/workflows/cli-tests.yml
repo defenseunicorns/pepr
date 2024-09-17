@@ -92,4 +92,4 @@ jobs:
       - name: run CLI tests
         run: |
           npm run test:journey:build
-          npx --yes file:pepr-0.0.0-development init --help
+          npx --yes file:pepr-img init --help
