@@ -41,4 +41,5 @@ jobs:
         run: |
           cd "$PEPR"
           npm ci
+          npm run gen-data-json
           npx ts-node src/cli.ts init --help
