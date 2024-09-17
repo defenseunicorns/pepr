@@ -91,4 +91,4 @@ jobs:
 
       - name: run CLI tests
         run: |
-            echo "Beep boop!"
+            npx pepr init --help
