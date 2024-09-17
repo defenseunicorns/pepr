@@ -34,9 +34,17 @@ let magicString = "unset";
 export function peprDeploy() {
 
   beforeAll(async ()=>{
+    console.info("!!!STARTING PEPR-DEPLOY TESTS!!!")
+    execSync(`jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'})
+    execSync('npm install', {cwd: 'pepr-test-module'})
+
     magicString = await getMagicString();
     // Purge the Pepr module from the cluster before running the tests
     await destroyModule(`${magicString}`);
+  })
+
+  afterAll(()=>{
+    console.info("!!!FINISHED PEPR-DEPLOY TESTS!!!!")
   })
 
   //TODO This causes the pepr-system namespace to terminate upon completion

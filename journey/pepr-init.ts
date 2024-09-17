@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { it, expect } from "@jest/globals";
+import { it, expect, beforeAll, afterAll } from "@jest/globals";
 import { execSync } from "child_process";
 
 export function peprInit(){
@@ -19,6 +19,13 @@ export function peprInit(){
     expect(actualDescription.toString()).toContain(`${description}`)
   }
 
+  beforeAll(() => {
+    console.info("!!!STARTING PEPR-INIT TESTS!!!")
+  })
+
+  afterAll(() => {
+    console.info("!!!FINISHED PEPR-INIT TESTS!!!")
+  })
   it("should display the help menu", () => {
     const output = execSync(`npx --yes ${peprAlias} init --help`);
     expect(output.toString()).toContain("--confirm")

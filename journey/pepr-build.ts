@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
-import { beforeAll, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, expect, it } from "@jest/globals";
 import { loadYaml } from "@kubernetes/client-node";
 import { exec, execSync } from "child_process";
 import { promises as fs } from "fs";
@@ -15,12 +15,17 @@ export function peprBuild() {
   const moduleName = "pepr-test-module"
 
   beforeAll(() => {
+    console.info("!!!STARTING PEPR-BUILD TESTS!!!")
     execSync(`jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'})
     execSync('npm install', {cwd: 'pepr-test-module'})
 
     //Prepare the 'env' key in the test module's package.json
     const envValues = '{"MY_CUSTOM_VAR": "example-value","ZARF_VAR": "###ZARF_VAR_THING###"}'
     execSync(`jq \'.pepr.env = ${envValues}\' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'});
+  })
+
+  afterAll(()=>{
+    console.info("!!!FINISHED PEPR-BUILD TESTS!!!!")
   })
 
   it("should successfully build the Pepr project", async () => {

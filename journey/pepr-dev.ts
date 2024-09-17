@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { afterAll, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, expect, it } from "@jest/globals";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Agent } from "https";
 import { fetch } from "kubernetes-fluent-client";
@@ -31,6 +31,14 @@ let expectedLines = [
 export function peprDev() {
   let cmd: ChildProcessWithoutNullStreams;
   let success = false;
+
+  beforeAll(() =>{
+    console.info("!!!STARTING PEPR-DEV TESTS!!!")
+  })
+
+  afterAll(() =>{
+    console.info("!!!FINISHED PEPR-DEV TESTS!!!")
+  })
 
   it("should start the Pepr dev server", () => {
     cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd, stdio: "pipe" });
