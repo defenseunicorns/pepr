@@ -37,9 +37,21 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: Some testing stuff
+      - name: Prep for CLI tests
         run: |
           cd "$PEPR"
           npm ci
           npm run gen-data-json
+
+      - name: \'pepr init\' displays the help menu
+        run: |
           npx ts-node src/cli.ts init --help
+
+      - name: \'pepr init\' creates a module with input from flags
+        run: |
+          npx ts-node src/cli.ts init \
+            --name my-flagged-module \
+            --description "From flags" \
+            --errorBehavior reject 
+            --confirm \
+            --skip-post-init
