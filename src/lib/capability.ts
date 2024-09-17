@@ -292,7 +292,7 @@ export class Capability implements CapabilityExport {
           mutateCallback: addFinalizer,
         };
         bindings.push(mutateBinding);
-      };
+      }
 
       // add binding to process finalizer callback / remove pepr finalizer (Watch)
       if (registerWatch) {
@@ -302,7 +302,7 @@ export class Capability implements CapabilityExport {
           isFinalize: true,
           event: Event.Update,
           finalizeCallback,
-        }
+        };
         bindings.push(watchBinding);
       }
 

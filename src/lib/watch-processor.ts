@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { K8s, KubernetesObject, RegisterKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReason, runmoveFinalizer } from "./helpers";
+import { filterNoMatchReason, removeFinalizer } from "./helpers";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
@@ -101,9 +101,16 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
-            if (!obj.metadata?.deletionTimestamp) { return; }
-            await runmoveFinalizer(binding, obj);
+            if (!obj.metadata?.deletionTimestamp) {
+              return;
+            }
+            try {
+              await binding.finalizeCallback?.(obj);
 
+              // irrespective of callback success / failure, remove pepr finalizer
+            } finally {
+              await removeFinalizer(binding, obj);
+            }
           } else {
             await binding.watchCallback?.(obj, phase);
           }
