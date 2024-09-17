@@ -18,6 +18,7 @@ export function peprBuild() {
     console.info("!!!STARTING PEPR-BUILD TESTS!!!")
     execSync(`jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'})
     execSync('npm install', {cwd: 'pepr-test-module'})
+    console.log(execSync(`jq '.dependencies' package.json`, {cwd: 'pepr-test-module'}))
 
     //Prepare the 'env' key in the test module's package.json
     const envValues = '{"MY_CUSTOM_VAR": "example-value","ZARF_VAR": "###ZARF_VAR_THING###"}'
