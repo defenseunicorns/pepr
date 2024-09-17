@@ -46,10 +46,10 @@ jobs:
           cd "$PEPR"
           npm run gen-data-json
           npx ts-node src/cli.ts init --help > result.log
-          grep "--name" result.log
-          grep "--description" result.log
-          grep "--errorBehavior" result.log
-          grep "--confirm" result.log
+          grep " \-\-name" result.log
+          grep " \-\-description" result.log
+          grep " \-\-errorBehavior" result.log
+          grep " \-\-confirm" result.log
 
       - name: pepr init - creates a module with input from flags
         run: |
