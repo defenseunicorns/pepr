@@ -43,11 +43,13 @@ jobs:
 
       - name: \'pepr init\' displays the help menu
         run: |
+          cd "$PEPR"
           npm run gen-data-json
           npx ts-node src/cli.ts init --help
 
       - name: \'pepr init\' creates a module with input from flags
         run: |
+          cd "$PEPR"
           npm run gen-data-json
           npx ts-node src/cli.ts init \
             --name my-flagged-module \
