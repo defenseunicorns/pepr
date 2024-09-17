@@ -61,6 +61,6 @@ jobs:
             --errorBehavior reject \
             --confirm \
             --skip-post-init
-          grep "my-flagged-module" package.json
-          grep "From flags" package.json
-          grep "reject" package.json
+          grep "my-flagged-module" my-flagged-module/package.json
+          grep "From flags" my-flagged-module/package.json
+          grep "reject" my-flagged-module/package.json
