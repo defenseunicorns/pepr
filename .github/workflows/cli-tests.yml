@@ -91,4 +91,5 @@ jobs:
 
       - name: run CLI tests
         run: |
-            npx pepr init --help
+          npm run test:journey:build
+          npx --yes file:pepr-0.0.0-development init --help
