@@ -28,13 +28,15 @@ export function peprInit(){
   });
 
   it("should create a new Pepr project", () => {
-    const peprAlias = "file:pepr-0.0.0-development.tgz";
+    //TODO: Prompt hangs
     execSync(`TEST_MODE=true npx --yes ${peprAlias} init`, { stdio: "inherit" });
+    verifyModuleCreation()
   });
 
   it("should create a new Pepr project using input flags", () => {
     execSync(`rm -rf ${moduleName}`)
-    execSync(`npx --yes ${peprAlias} init --name ${moduleName} --description ${description} --errorBehavior ${errorBehavior} --confirm`);
+    //TODO: Not actually testing input flags
+    execSync(`TEST_MODE-true npx --yes ${peprAlias} init --name ${moduleName} --description ${description} --errorBehavior ${errorBehavior} --confirm`);
     verifyModuleCreation()
   });
 }
