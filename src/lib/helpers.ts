@@ -2,12 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { promises as fs } from "fs";
-import { K8s, KubernetesObject, kind, RegisterKind } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { Binding, CapabilityExport, DeepPartial } from "./types";
+import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { Operation } from "./k8s";
-import { PeprMutateRequest } from "./mutate-request";
 
 export class ValidationError extends Error {}
 
@@ -346,58 +344,4 @@ export function replaceString(str: string, stringA: string, stringB: string) {
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
-}
-
-export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>) {
-  // if a DELETE is being processed, don't add a finalizer
-  if (request.Request.operation === Operation.DELETE) {
-    return;
-  }
-
-  // if an UPDATE is being processed and it HAS a deletionTimestamp, the
-  //  resource is going through a pre-delete flow so don't (re-)add a finalizer
-  if (request.Request.operation === Operation.UPDATE && request.Raw.metadata?.deletionTimestamp) {
-    return;
-  }
-
-  const peprFinal = "pepr.dev/finalizer";
-  const finalizers = request.Raw.metadata?.finalizers || [];
-  if (!finalizers.includes(peprFinal)) {
-    finalizers.push(peprFinal);
-  }
-
-  request.Merge({ metadata: { finalizers } } as DeepPartial<K>);
-}
-
-export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
-  const peprFinal = "pepr.dev/finalizer";
-  const meta = obj.metadata!;
-  const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
-
-  Log.debug({ obj }, `Removing finalizer '${peprFinal}' from '${resource}'`);
-
-  // ensure request model is registerd with KFC (for non-built in CRD's, etc.)
-  const { model, kind } = binding;
-  try {
-    RegisterKind(model, kind);
-  } catch (e) {
-    const expected = e.message === `GVK ${model.name} already registered`;
-    if (!expected) {
-      Log.error({ model, kind, error: e }, `Error registering "${kind}" during finalization.`);
-    }
-  }
-
-  // remove pepr finalizers
-  const finalizers = meta.finalizers?.filter(f => f !== peprFinal) || [];
-
-  // JSON Patch - replace a key
-  // https://datatracker.ietf.org/doc/html/rfc6902/#section-4.3
-  obj = await K8s(model, meta).Patch([
-    {
-      op: "replace",
-      path: `/metadata/finalizers`,
-      value: finalizers,
-    },
-  ]);
-  Log.debug({ obj }, `Removed finalizer '${peprFinal}' from '${resource}'`);
 }
