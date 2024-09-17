@@ -7,10 +7,6 @@ on:
   pull_request:
     branches: ["main"]
 
-# refs
-# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
-# https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
-
 jobs:
   pepr-build:
     name: controller image
@@ -57,10 +53,23 @@ jobs:
           npm run gen-data-json
           npx ts-node src/cli.ts init \
             --name my-flagged-module \
-            --description "From flags" \
+            --description "Set by flag" \
             --errorBehavior reject \
             --confirm \
             --skip-post-init
           grep "my-flagged-module" my-flagged-module/package.json
-          grep "From flags" my-flagged-module/package.json
+          grep "Set by flag" my-flagged-module/package.json
+          grep "reject" my-flagged-module/package.json
+
+      - name: pepr init - creates a module with input from stdin
+        run: |
+          cd "$PEPR"
+          npm run gen-data-json
+          echo "stdin-module" | npx ts-node src/cli.ts init \
+            --description "Set by flag" \
+            --errorBehavior reject \
+            --confirm \
+            --skip-post-init
+          grep "my-flagged-module" my-flagged-module/package.json
+          grep "Set by flag" my-flagged-module/package.json
           grep "reject" my-flagged-module/package.json
