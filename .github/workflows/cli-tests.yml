@@ -91,4 +91,9 @@ jobs:
 
       - name: run CLI tests
         run: |
+          pwd
+          ls -al
+          cd ..
+          pwd
+          ls -al
           npx --yes file:pepr-img init --help
