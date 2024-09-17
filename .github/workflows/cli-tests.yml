@@ -2,9 +2,10 @@ name: CLI tests
 
 permissions: read-all
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 4 * * *' # 12AM EST/9PM PST
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
