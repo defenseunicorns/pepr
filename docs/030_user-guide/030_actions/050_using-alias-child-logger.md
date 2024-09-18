@@ -2,57 +2,63 @@
 
 You can use the Alias function to include a user-defined alias in the logs for Mutate, Validate, and Watch actions. This can make for easier debugging since your user-defined alias will be included in the action's logs. This is especially useful when you have multiple actions of the same type in a single module.
 
-For example, the below capability uses Mutate, Validate, and Watch actions with the Alias function:
+The below example uses Mutate, Validate, and Watch actions with the Alias function:
 
-```typescript
+```ts
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .InNamespace("pepr-demo")
-  .WithLabel("pepr-test-pod")
-  .Alias("reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation")
-  .Mutate(async (po, logger) => {
-    logger.info(`Pod ${po.Raw.metadata?.name} is being mutated.`);
-  })
-  .Validate((request, logger) => {
-    logger.info(`Pod ${request.Raw.metadata?.name} is being validated`);
-    return request.Approve();
-  })
-  .Watch((po, phase, logger) => {
-    logger.info(`Pod ${po.metadata?.name} is being watched in ${phase}.`);
+  .Alias("mutate")
+  .Mutate((po, logger) => {
+    logger.info(`alias: mutate ${po.Raw.metadata.name}`);
+  });
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Alias("validate")
+  .Validate((po, logger) => {
+    logger.info(`alias: validate ${po.Raw.metadata.name}`);
+    return po.Approve();
+  });
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Alias("watch")
+  .Watch((po, _, logger) => {
+    logger.info(`alias: watch ${po.metadata.name}`);
   });
 ```
 
-This will result in log entries that include the alias:
+This will result in log entries when creating a Pod with the that include the alias:
 
+**Logs for Mutate When Pod `red` is Created:**
 ```bash
-{"level":30,"time":1726518117378,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","namespace":"pepr-demo","name":"/pepr-test","gvk":{"group":"","version":"v1","kind":"Pod"},"operation":"CREATE","admissionKind":"Mutate","msg":"Incoming request"}
-{"level":30,"time":1726518117378,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","namespace":"pepr-demo","name":"/pepr-test","msg":"Processing request"}
-{"level":30,"time":1726518117379,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","msg":"Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518117379,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being mutated."}
-{"level":30,"time":1726518117379,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","namespace":"pepr-demo","name":"hello-pepr","msg":"Mutation action succeeded (mutateCallback)"}
-{"level":30,"time":1726518117379,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","namespace":"pepr-demo","name":"/pepr-test","res":{"uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","allowed":true,"patchType":"JSONPatch","patch":"W3sib3AiOiJhZGQiLCJwYXRoIjoiL21ldGFkYXRhL2Fubm90YXRpb25zL3N0YXRpYy10ZXN0LnBlcHIuZGV2fjFoZWxsby1wZXByIiwidmFsdWUiOiJzdWNjZWVkZWQifV0="},"msg":"Check response"}
-{"level":30,"time":1726518117379,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"bba25f64-7ab8-480a-b00d-6053ceb386f5","method":"POST","url":"/mutate/a603ef202f4b9e33e626c12a4840964d46dd83133a2a9ad9e7ba6f015861543f?timeout=10s","status":200,"duration":"1 ms"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","namespace":"pepr-demo","name":"/pepr-test","gvk":{"group":"","version":"v1","kind":"Pod"},"operation":"CREATE","admissionKind":"Validate","msg":"Incoming request"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","namespace":"pepr-demo","name":"/pepr-test","msg":"Processing validation request"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","namespace":"pepr-demo","name":"hello-pepr","msg":"Processing validation action (validateCallback)"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","msg":"Executing validate action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being validated"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","namespace":"pepr-demo","name":"hello-pepr","msg":"Validation action complete (validateCallback): allowed"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","namespace":"pepr-demo","name":"/pepr-test","res":{"uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","allowed":true},"msg":"Check response"}
-{"level":30,"time":1726518117381,"pid":16,"hostname":"pepr-static-test-78d87cbd99-48xpn","uid":"e57b7c91-92b9-445f-a36a-e5e15e3fe573","method":"POST","url":"/validate/a603ef202f4b9e33e626c12a4840964d46dd83133a2a9ad9e7ba6f015861543f?timeout=10s","status":200,"duration":"0 ms"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","namespace":"pepr-demo","name":"/red","gvk":{"group":"","version":"v1","kind":"Pod"},"operation":"CREATE","admissionKind":"Mutate","msg":"Incoming request"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","namespace":"pepr-demo","name":"/red","msg":"Processing request"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","msg":"Executing mutation action with alias: mutate"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","alias":"mutate","msg":"alias: mutate red"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","namespace":"pepr-demo","name":"hello-pepr","msg":"Mutation action succeeded (mutateCallback)"}
+{"level":30,"time":1726632368808,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","namespace":"pepr-demo","name":"/red","res":{"uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","allowed":true,"patchType":"JSONPatch","patch":"W3sib3AiOiJhZGQiLCJwYXRoIjoiL21ldGFkYXRhL2Fubm90YXRpb25zL3N0YXRpYy10ZXN0LnBlcHIuZGV2fjFoZWxsby1wZXByIiwidmFsdWUiOiJzdWNjZWVkZWQifV0="},"msg":"Check response"}
+{"level":30,"time":1726632368809,"pid":16,"hostname":"pepr-static-test-6786948977-6hbnt","uid":"b2221631-e87c-41a2-94c8-cdaef15e7b5f","method":"POST","url":"/mutate/c1a7fb6e3f2ab9dc08909d2de4166987520f317d53b759ab882dfd0b1c198479?timeout=10s","status":200,"duration":"1 ms"}
 ```
 
-and
-
+**Logs for Validate When Pod `red` is Created:**
 ```bash
-{"level":30,"time":1726518117383,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","msg":"Executing watch action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518117383,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being watched in ADDED."}
-{"level":30,"time":1726518117384,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","msg":"Executing watch action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518117384,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being watched in MODIFIED."}
-{"level":30,"time":1726518117392,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","msg":"Executing watch action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518117392,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being watched in MODIFIED."}
-{"level":30,"time":1726518123934,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","msg":"Executing watch action with alias: reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation"}
-{"level":30,"time":1726518123934,"pid":16,"hostname":"pepr-static-test-watcher-746fc6897c-kgbrv","alias":"reject:pods:runAsRoot:privileged:runAsGroup:allowPrivilegeEscalation","msg":"Pod pepr-test is being watched in MODIFIED."}
+{"level":30,"time":1726631437605,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","namespace":"pepr-demo","name":"/red","gvk":{"group":"","version":"v1","kind":"Pod"},"operation":"CREATE","admissionKind":"Validate","msg":"Incoming request"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","namespace":"pepr-demo","name":"/red","msg":"Processing validation request"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","namespace":"pepr-demo","name":"hello-pepr","msg":"Processing validation action (validateCallback)"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","msg":"Executing validate action with alias: validate"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","alias":"validate","msg":"alias: validate red"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","namespace":"pepr-demo","name":"hello-pepr","msg":"Validation action complete (validateCallback): allowed"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","namespace":"pepr-demo","name":"/red","res":{"uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","allowed":true},"msg":"Check response"}
+{"level":30,"time":1726631437606,"pid":16,"hostname":"pepr-static-test-6786948977-j7f9h","uid":"731eff93-d457-4ffc-a98c-0bcbe4c1727a","method":"POST","url":"/validate/c1a7fb6e3f2ab9dc08909d2de4166987520f317d53b759ab882dfd0b1c198479?timeout=10s","status":200,"duration":"5 ms"}
+```
+
+**Logs for Watch When Pod `red` is Created:**
+```bash
+{"level":30,"time":1726633024247,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","msg":"Executing watch action with alias: watch"}
+{"level":30,"time":1726633024247,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","alias":"watch","msg":"alias: watch red at phase ADDED"}
+{"level":30,"time":1726633024250,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","msg":"Executing watch action with alias: watch"}
+{"level":30,"time":1726633024250,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","alias":"watch","msg":"alias: watch red at phase MODIFIED"}
+{"level":30,"time":1726633024255,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","msg":"Executing watch action with alias: watch"}
+{"level":30,"time":1726633024255,"pid":16,"hostname":"pepr-static-test-watcher-db8c4cddd-5nj27","alias":"watch","msg":"alias: watch red at phase MODIFIED"}
 ```
 
 **Note:** The Alias function is optional and can be used to provide additional context in the logs. You must pass the logger object as shown above to the action to use the Alias function.
