@@ -35,10 +35,9 @@ jobs:
           cd "$PEPR"
           npm ci
 
-      - name: build & tgz pepr module
+      - name: build & pack pepr module
         run: |
-          pwd
-          ls -la
+          cd "$PEPR"
           npm run build
           pkg=$(npm pack)
           mv "$pkg" "pepr-pkg.tgz"
