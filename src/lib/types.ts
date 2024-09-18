@@ -155,11 +155,13 @@ export type BindingWithRegexName<T extends GenericClass> = BindingFilter<T> & {
   WithRegexName: (name: RegExp) => BindingFilter<T>;
 };
 
-export type BindingAll<T extends GenericClass> = BindingWithName<T> | BindingWithRegexName<T> & {
-  /** Only apply the action if the resource is in one of the specified namespaces.*/
-  InNamespace: (...namespaces: string[]) => BindingWithName<T> | BindingWithRegexName<T>;
-  InRegexNamespace: (...namespaces: RegExp[]) => BindingWithName<T> | BindingWithRegexName<T>;
-};
+export type BindingAll<T extends GenericClass> =
+  | BindingWithName<T>
+  | (BindingWithRegexName<T> & {
+      /** Only apply the action if the resource is in one of the specified namespaces.*/
+      InNamespace: (...namespaces: string[]) => BindingWithName<T> | BindingWithRegexName<T>;
+      InRegexNamespace: (...namespaces: RegExp[]) => BindingWithName<T> | BindingWithRegexName<T>;
+    });
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**
