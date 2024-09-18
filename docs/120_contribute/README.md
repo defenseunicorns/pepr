@@ -64,7 +64,6 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 >
 > - Test cases that capture end-to-end/journey behavior are usually stored in [pepr-excellent-examples](https://github.com/defenseunicorns/pepr-excellent-examples) or run as a Github workflow (`.github/workflows`).
 > - Journey tests established in `journey/` are from an earlier time in project history.
-> - Issue [pepr/#1140](https://github.com/defenseunicorns/pepr/issues/1140) exists to refactor the test suite under `journey/`.
 
 - Run all tests: `npm test`
 
