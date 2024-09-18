@@ -84,7 +84,7 @@ export default function (program: RootCmd) {
                 }
               }
             } catch {
-              console.info(`\nIGNORED - Unable to parse line: ${line}.`);
+              // Do nothing
             }
           }
         }
