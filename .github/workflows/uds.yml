@@ -146,6 +146,8 @@ jobs:
           content="$( jq '.dependencies.pepr = "file:$PEPR_PKG"' package.json )"
           echo -E "$content" > package.json
           npm install
+          cat package.json
+          cat package-lock.json
 
       - name: uds run
         run: |
