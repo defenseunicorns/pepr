@@ -7,7 +7,6 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
-//import Log from "./logger";
 import { Logger } from "pino";
 
 /**
