@@ -289,6 +289,28 @@ export function generateWatchNamespaceError(
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces = bindings.flatMap(binding => binding.filters.namespaces);
+  const bindingRegexNamespaces = bindings.flatMap(binding => binding.filters.regexNamespaces || []);
+
+  // Ensure that each regexNamespace matches each capabilityNamespace
+  if (
+    bindingRegexNamespaces &&
+    bindingRegexNamespaces.length > 0 &&
+    capabilityNamespaces &&
+    capabilityNamespaces.length > 0
+  ) {
+    for (const regexNamespace of bindingRegexNamespaces) {
+      let matches = false;
+      for (const capabilityNamespace of capabilityNamespaces) {
+        if (matchesRegex(regexNamespace, capabilityNamespace)) {
+          matches = true;
+          break;
+        }
+      }
+      if (!matches) {
+        return `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`;
+      }
+    }
+  }
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
