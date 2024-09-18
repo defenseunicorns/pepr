@@ -6,7 +6,7 @@ An action is a discrete set of behaviors defined in a single function that acts 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-Actions are `Mutate()`, `Validate()`, `Watch()`, or `Reconcile()`. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch and Reconcile actions run in a separate controller that tracks changes to resources, including existing resources.
+Actions are `Mutate()`, `Validate()`, `Watch()`, `Reconcile()`, and `Finalize()`. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch and Reconcile actions run in a separate controller that tracks changes to resources, including existing resource; the Finalize action spans both the admission & afterward.
 
 Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`npx pepr init`](./010_pepr-cli.md#pepr-init):
 
