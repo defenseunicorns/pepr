@@ -4,6 +4,7 @@ import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-c
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
+import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
@@ -100,7 +101,20 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
-          await binding.watchCallback?.(obj, phase);
+          if (binding.isFinalize) {
+            if (!obj.metadata?.deletionTimestamp) {
+              return;
+            }
+            try {
+              await binding.finalizeCallback?.(obj);
+
+              // irrespective of callback success / failure, remove pepr finalizer
+            } finally {
+              await removeFinalizer(binding, obj);
+            }
+          } else {
+            await binding.watchCallback?.(obj, phase);
+          }
         } else {
           Log.debug(filterMatch);
         }

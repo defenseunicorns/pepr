@@ -20,8 +20,11 @@ import {
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
+  FinalizeAction,
+  FinalizeActionChain,
   WhenSelector,
 } from "./types";
+import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -249,7 +252,7 @@ export class Capability implements CapabilityExport {
       return { Watch, Validate, Reconcile };
     }
 
-    function Watch(watchCallback: WatchAction<T>) {
+    function Watch(watchCallback: WatchAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
@@ -259,9 +262,11 @@ export class Capability implements CapabilityExport {
           watchCallback,
         });
       }
+
+      return { Finalize };
     }
 
-    function Reconcile(watchCallback: WatchAction<T>) {
+    function Reconcile(watchCallback: WatchAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Reconcile Action", watchCallback.toString());
 
@@ -272,6 +277,38 @@ export class Capability implements CapabilityExport {
           watchCallback,
         });
       }
+
+      return { Finalize };
+    }
+
+    function Finalize(finalizeCallback: FinalizeAction<T>) {
+      log("Finalize Action", finalizeCallback.toString());
+
+      // add binding to inject pepr finalizer during admission (Mutate)
+      if (registerAdmission) {
+        const mutateBinding = {
+          ...binding,
+          isMutate: true,
+          isFinalize: true,
+          event: Event.Any,
+          mutateCallback: addFinalizer,
+        };
+        bindings.push(mutateBinding);
+      }
+
+      // add binding to process finalizer callback / remove pepr finalizer (Watch)
+      if (registerWatch) {
+        const watchBinding = {
+          ...binding,
+          isWatch: true,
+          isFinalize: true,
+          event: Event.Update,
+          finalizeCallback,
+        };
+        bindings.push(watchBinding);
+      }
+
+      return { Finalize };
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
