@@ -3,7 +3,7 @@
 
 ## How do I remove the punycode warning?
 
-By default, warnings are removed. You can allow warnings by setting the `NODE_OPTIONS` environment variable.
+By default, warnings are removed. You can allow warnings by setting the `PEPR_NODE_WARNINGS` environment variable.
 
 ```bash
 PEPR_NODE_WARNINGS="show"
