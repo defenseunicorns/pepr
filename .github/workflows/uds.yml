@@ -40,7 +40,7 @@ jobs:
           cd "$PEPR"
           npm run build
           pkg=$(npm pack)
-          mv "$pkg" "pepr-pkg.tgz"
+          mv "$pkg" "${GITHUB_WORKSPACE}/pepr-pkg.tgz"
 
       - name: upload package tgz artifact
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
