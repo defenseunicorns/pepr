@@ -15,6 +15,7 @@ import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 import { ResponseItem } from "../types";
 
+process.removeAllListeners("warning");
 export class Controller {
   // Track whether the server is running
   #running = false;
