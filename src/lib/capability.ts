@@ -196,6 +196,8 @@ export class Capability implements CapabilityExport {
       filters: {
         name: "",
         namespaces: [],
+        regexNamespaces: [],
+        regexName: new RegExp(/a^/),
         labels: {},
         annotations: {},
         deletionTimestamp: false,

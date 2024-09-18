@@ -1,10 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { matchesRegex } from "./helpers";
 import { AdmissionRequest, Operation } from "./k8s";
 import logger from "./logger";
 import { Binding, Event } from "./types";
 
+export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
+  const { regexNamespaces }= binding.filters || {};
+  const result = shouldSkipRequest(binding, req, capabilityNamespaces);
+  if (!result) {
+    if(regexNamespaces && regexNamespaces.length > 0){
+      for(const regexNamespace of regexNamespaces){
+        if(!matchesRegex(regexNamespace, req.object.metadata?.namespace || "")){
+          return false;
+        }
+      }
+    }
+  }
+  return result
+}
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *

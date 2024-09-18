@@ -7,6 +7,27 @@ import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 
+export function matchesRegex(pattern: RegExp, testString: string): boolean {
+  // edge-case
+  if (!pattern) {
+    return false;
+  }
+
+  try {
+    const regex = new RegExp(pattern);
+    return regex.test(testString);
+  } catch (e) {
+    return false;
+  }
+}
+export function isValidRegex(regex: RegExp): boolean {
+  try {
+    new RegExp(regex);
+    return true;
+  } catch {
+    return false;
+  }
+}
 export class ValidationError extends Error {}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
@@ -65,6 +86,22 @@ export function checkOverlap(bindingFilters: Record<string, string>, objectFilte
   return matchCount === Object.keys(bindingFilters).length;
 }
 
+export function filterNoMatchReasonRegex(  binding: Partial<Binding>,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[]):string {
+    const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
+    const { regexNamespaces }= binding.filters || {};
+    if(result === ""){
+      if(regexNamespaces && regexNamespaces.length > 0){
+        for(const regexNamespace of regexNamespaces){
+          if(!matchesRegex(regexNamespace, obj.metadata?.namespace || "")){
+            return `Ignoring Watch Callback: Object namespace matches regex ${regexNamespace}.`;
+          }
+        }
+      }
+    }
+    return result
+  }
 /**
  * Decide to run callback after the event comes back from API Server
  **/
