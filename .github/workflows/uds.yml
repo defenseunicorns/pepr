@@ -150,4 +150,4 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
+          PEPR_CUSTOM_IMAGE="pepr:dev" "$UDS_CLI" run slim-dev
