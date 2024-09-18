@@ -254,4 +254,3 @@ export type FinalizeActionChain<T extends GenericClass> = {
 };
 
 export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
-
