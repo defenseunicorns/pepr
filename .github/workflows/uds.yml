@@ -99,8 +99,8 @@ jobs:
           repository: defenseunicorns/uds-core
           path: uds-core
 
-      - name: "set envCLI
-        run: echo "UDS_CORcliGITHUB_WORKSPACE}/uds-core" >> "$GITHUB_ENV"
+      - name: "set env: UDS_CORE"
+        run: echo "UDS_CORE=${GITHUB_WORKSPACE}/uds-core" >> "$GITHUB_ENV"
 
       - name: setup node
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
@@ -130,6 +130,12 @@ jobs:
       - name: "set env: UDS_CLI"
         run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
 
+
+  #     - name: import pepr image from tar
+  #       run: |
+  #         PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
+  #         echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
+  #         docker image load --input "$PEPR_TAR"
 
 # install UDS cli
 # checkout uds-core
