@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport,  Event } from "./types";
 import {
   createRBACMap,
   addVerbIfNotExists,
   checkOverlap,
-  filterNoMatchReason,
+  filterNoMatchReasonRegex,
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  isValidRegex,
+  matchesRegex
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -29,9 +31,11 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
-import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
+import { K8s, GenericClass, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
+
+export const callback = () => undefined;
 
 jest.mock("kubernetes-fluent-client", () => {
   return {
@@ -1048,7 +1052,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1099,7 +1103,7 @@ describe("filterMatcher", () => {
       metadata: {},
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1117,7 +1121,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1133,7 +1137,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1151,7 +1155,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1162,13 +1166,32 @@ describe("filterMatcher", () => {
   });
 
   test("returns capability namespace error when object is not in capability namespaces", () => {
-    const binding = {};
+    const binding = {
+      model: kind.Pod,
+      event: Event.Any,
+      kind: {
+        group: "",
+        version: "v1",
+        kind: "Pod",
+      },
+      filters: {
+        name: "bleh",
+        namespaces: [],
+        regexNamespaces: [],
+        regexName: new RegExp(/a^/),
+        labels: {},
+        annotations: {},
+        deletionTimestamp: false,
+      },
+      callback,
+    };
+
     const obj = {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(
-      binding as unknown as Partial<Binding>,
+    const result = filterNoMatchReasonRegex(
+      binding as Binding,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
@@ -1179,11 +1202,11 @@ describe("filterMatcher", () => {
 
   test("returns binding namespace error when filter namespace is not part of capability namespaces", () => {
     const binding = {
-      filters: { namespaces: ["ns3"] },
+      filters: { namespaces: ["ns3"], regexNamespaces: [] },
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1195,19 +1218,19 @@ describe("filterMatcher", () => {
 
   test("returns binding and object namespace error when they do not overlap", () => {
     const binding = {
-      filters: { namespaces: ["ns1"] },
+      filters: { namespaces: ["ns1"], regexNamespaces: [] },
     };
     const obj = {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2.",
+      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2."
     );
   });
 
@@ -1219,7 +1242,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1257,5 +1280,85 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
+  });
+});
+
+
+describe('isValidRegex', () => {
+  test('should return true for a valid regex', () => {
+    const validRegex = /abc/;
+    const result = isValidRegex(validRegex);
+    expect(result).toBe(true);
+  });
+  test('should return true for an empty regex', () => {
+    const emptyRegex = new RegExp('');
+    const result = isValidRegex(emptyRegex);
+    expect(result).toBe(true);
+  });
+
+  test('should return true for complex valid regex', () => {
+    const complexRegex = new RegExp('^[a-zA-Z0-9_-]{3,16}$');
+    const result = isValidRegex(complexRegex);
+    expect(result).toBe(true);
+  });
+
+});
+
+describe('matchesRegex', () => {
+  test('should return true for a valid pattern that matches the string', () => {
+    const pattern = /abc/;
+    const testString = 'abc123';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for a valid pattern that does not match the string', () => {
+    const pattern = /xyz/;
+    const testString = 'abc123';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(false);
+  });
+
+  test('should return false for an invalid regex pattern', () => {
+    const invalidPattern = new RegExp(/^p/);  // Invalid regex with unclosed bracket
+    const testString = 'test';
+    const result = matchesRegex(invalidPattern, testString);
+    expect(result).toBe(false);
+  });
+
+  test('should return false when pattern is null or undefined', () => {
+    const testString = 'abc123';
+    // Check for undefined
+    expect(matchesRegex(undefined as any, testString)).toBe(false);
+    // Check for null
+    expect(matchesRegex(null as any, testString)).toBe(false);
+  });
+
+  test('should return true for an empty string matching an empty regex', () => {
+    const pattern = new RegExp('');
+    const testString = '';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for an empty string and a non-empty regex', () => {
+    const pattern = new RegExp('abc');
+    const testString = '';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(false);
+  });
+
+  test('should return true for a complex valid regex that matches', () => {
+    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const testString = 'test@example.com';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(true);
+  });
+
+  test('should return false for a complex valid regex that does not match', () => {
+    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const testString = 'invalid-email.com';
+    const result = matchesRegex(pattern, testString);
+    expect(result).toBe(false);
   });
 });

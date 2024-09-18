@@ -93,7 +93,9 @@ export type Binding = {
   readonly kind: GroupVersionKind;
   readonly filters: {
     name: string;
+    regexName: RegExp;
     namespaces: string[];
+    regexNamespaces: RegExp[];
     labels: Record<string, string>;
     annotations: Record<string, string>;
     deletionTimestamp: boolean;
@@ -150,9 +152,15 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   WithName: (name: string) => BindingFilter<T>;
 };
 
-export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
+export type BindingWithRegexName<T extends GenericClass> = BindingFilter<T> & {
+  /** Only apply the action if the resource name matches the specified regex name. */
+  WithRegexName: (name: RegExp) => BindingFilter<T>;
+};
+
+export type BindingAll<T extends GenericClass> = BindingWithName<T> | BindingWithRegexName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
-  InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+  InNamespace: (...namespaces: string[]) => BindingWithName<T> | BindingWithRegexName<T>;
+  InRegexNamespace: (...namespaces: RegExp[]) => BindingWithName<T> | BindingWithRegexName<T>;
 };
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
