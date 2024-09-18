@@ -15,7 +15,9 @@ import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 import { ResponseItem } from "../types";
 
-process.removeAllListeners("warning");
+if (!process.env.PEPR_NODE_WARNINGS) {
+  process.removeAllListeners("warning");
+}
 export class Controller {
   // Track whether the server is running
   #running = false;
@@ -109,7 +111,7 @@ export class Controller {
     // Handle EADDRINUSE errors
     server.on("error", (e: { code: string }) => {
       if (e.code === "EADDRINUSE") {
-        Log.warn(
+        Log.info(
           `Address in use, retrying in 2 seconds. If this persists, ensure ${port} is not in use, e.g. "lsof -i :${port}"`,
         );
         setTimeout(() => {
@@ -163,7 +165,7 @@ export class Controller {
     const { token } = req.params;
     if (token !== this.#token) {
       const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
-      Log.warn(err);
+      Log.info(err);
       res.status(401).send(err);
       this.#metricsCollector.alert();
       return;
@@ -305,7 +307,7 @@ export class Controller {
         duration: `${elapsedTime} ms`,
       };
 
-      res.statusCode >= 300 ? Log.warn(message) : Log.info(message);
+      Log.info(message);
     });
 
     next();

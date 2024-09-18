@@ -23,12 +23,6 @@ import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList, Errors } from "../../lib/errors";
 
-const isDevMode = process.argv.includes("dev");
-
-if (!isDevMode) {
-  process.removeAllListeners("warning");
-}
-
 export default function (program: RootCmd) {
   let response = {} as PromptOptions;
   let pkgOverride = "";

@@ -2,6 +2,18 @@
 
 This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
 
+## Display Node Warnings
+
+You can display warnings in the logs by setting the `NODE_NO_WARNINGS` environment variable to `false` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `true`.
+
+```json
+{
+  "env": {
+    "PEPR_NODE_WARNINGS": "show"
+  }
+}
+```
+
 ## Customizing Log Format
 
 The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format. 
