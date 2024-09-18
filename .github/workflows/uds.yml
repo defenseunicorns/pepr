@@ -37,6 +37,7 @@ jobs:
 
       - name: build & tgz pepr module
         run: |
+          pwd
           npm run build
           pkg=$(npm pack)
           mv "$pkg" "pepr-pkg.tgz"
