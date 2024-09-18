@@ -6,7 +6,7 @@ on:
 
 jobs:
   pepr-build:
-    name: build project
+    name: build pepr
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
