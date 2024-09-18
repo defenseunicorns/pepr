@@ -94,27 +94,41 @@ jobs:
           name: pepr-img.tar
           path: ${{ github.workspace }}
 
-  #     - name: import pepr image from tar
-  #       run: |
-  #         PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
-  #         echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
-  #         docker image load --input "$PEPR_TAR"
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          repository: defenseunicorns/uds-core
+          path: uds-core
 
-  #     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-  #       with:
-  #         repository: defenseunicorns/pepr-excellent-examples
-  #         path: pepr-excellent-examples
+      - name: "set envCLI
+        run: echo "UDS_CORcliGITHUB_WORKSPACE}/uds-core" >> "$GITHUB_ENV"
 
-  #     - name: setup node
-  #       uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-  #       with:
-  #         node-version: 20
-  #         cache: "npm"
-  #         cache-dependency-path: pepr-excellent-examples
+      - name: setup node
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: uds-core
 
-  #     - name: install uds cli
-  #       run: |
-  #         echo "TODO"
+      - name: install uds cli
+        run: |
+          LATEST_URL="https://api.github.com/repos/defenseunicorns/uds-cli/releases/latest"
+          REMOTE_URL=$(
+            curl --silent "$LATEST_URL" \
+              | grep 'browser_download_url.*_Linux_amd64"' \
+              | cut -d : -f 2,3 \
+              | tr -d \" \
+              | tr -d " "
+          )
+          UDS_CLI="./uds-cli"
+          if [ ! -f "$UDS_CLI" ] ; then
+            curl --location --output "$UDS_CLI" "$REMOTE_URL"
+            chmod +x "$UDS_CLI"
+          fi
+          ls -lah "$UDS_CLI"
+          "$UDS_CLI" version
+
+      - name: "set env: UDS_CLI"
+        run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
 
 
 # install UDS cli
