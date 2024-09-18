@@ -143,7 +143,7 @@ jobs:
       - name: swap module tgz into uds-core 
         run: |
           cd "$UDS_CORE"
-          content="$( jq '.dependencies.pepr = "file:$PEPR_PKG"' package.json )"
+          content="$( jq '.dependencies.pepr = "file:'$PEPR_PKG'"' package.json )"
           echo -E "$content" > package.json
           npm install
           cat package.json
