@@ -91,7 +91,9 @@ export class PeprControllerStore {
 
       try {
         // Send the patch to the cluster
-        await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        if (payload.length > 0) {
+          await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        }
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 
@@ -247,7 +249,9 @@ export class PeprControllerStore {
 
       try {
         // Send the patch to the cluster
-        await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        if (payload.length > 0) {
+          await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
+        }
       } catch (err) {
         Log.error(err, "Pepr store update failure");
 

@@ -22,7 +22,7 @@ export async function walkthrough(opts?: PartialPromptOptions): Promise<PromptOp
     ...(await setDescription(opts?.description)),
     ...(await setErrorBehavior(opts?.errorBehavior)),
   };
-  return result as PromptOptions; //TODO: Type coercion issue
+  return result as PromptOptions;
 }
 
 export async function setName(name?: string): Promise<Answers<string>> {
