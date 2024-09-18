@@ -136,17 +136,26 @@ jobs:
       - name: "set env: PEPR_IMG"
         run: echo "PEPR_IMG=${GITHUB_WORKSPACE}/pepr-img.tar" >> "$GITHUB_ENV"
 
+      - name: import docker image from pepr tar
+        run: |
+          docker image load --input "$PEPR_TAR"
+
       - name: uds run slim-dev
         run: |
           echo "--- uds core ---"
           cd "$UDS_CORE"
           ls -la
           echo ""
+          echo "--- uds cli ---"
+          ls -la "$UDS_CLI"
+          echo ""
           echo "--- pepr-pkg ---"
           ls -la "$PEPR_PKG"
           echo ""
           echo "--- pepr-img ---"
           ls -la "$PEPR_IMG"
+          echo ""
+          docker images
 
 
 
