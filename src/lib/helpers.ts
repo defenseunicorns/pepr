@@ -86,22 +86,24 @@ export function checkOverlap(bindingFilters: Record<string, string>, objectFilte
   return matchCount === Object.keys(bindingFilters).length;
 }
 
-export function filterNoMatchReasonRegex(  binding: Partial<Binding>,
+export function filterNoMatchReasonRegex(
+  binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
-  capabilityNamespaces: string[]):string {
-    const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
-    const { regexNamespaces }= binding.filters || {};
-    if(result === ""){
-      if(regexNamespaces && regexNamespaces.length > 0){
-        for(const regexNamespace of regexNamespaces){
-          if(!matchesRegex(regexNamespace, obj.metadata?.namespace || "")){
-            return `Ignoring Watch Callback: Object namespace matches regex ${regexNamespace}.`;
-          }
+  capabilityNamespaces: string[],
+): string {
+  const { regexNamespaces } = binding.filters || {};
+  const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
+  if (result === "") {
+    if (regexNamespaces && regexNamespaces.length > 0) {
+      for (const regexNamespace of regexNamespaces) {
+        if (!matchesRegex(regexNamespace, obj.metadata?.namespace || "")) {
+          return `Ignoring Watch Callback: Object namespace matches regex ${regexNamespace}.`;
         }
       }
     }
-    return result
   }
+  return result;
+}
 /**
  * Decide to run callback after the event comes back from API Server
  **/

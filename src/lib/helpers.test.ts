@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport,  Event } from "./types";
+import { Binding, CapabilityExport, Event } from "./types";
 import {
   createRBACMap,
   addVerbIfNotExists,
@@ -11,7 +11,7 @@ import {
   ValidationError,
   validateCapabilityNames,
   isValidRegex,
-  matchesRegex
+  matchesRegex,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -31,7 +31,7 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
-import { K8s, GenericClass, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
+import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
 
@@ -1230,7 +1230,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2."
+      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2.",
     );
   });
 
@@ -1283,81 +1283,81 @@ describe("validateHash", () => {
   });
 });
 
-
-describe('isValidRegex', () => {
-  test('should return true for a valid regex', () => {
+describe("isValidRegex", () => {
+  test("should return true for a valid regex", () => {
     const validRegex = /abc/;
     const result = isValidRegex(validRegex);
     expect(result).toBe(true);
   });
-  test('should return true for an empty regex', () => {
-    const emptyRegex = new RegExp('');
+  test("should return true for an empty regex", () => {
+    const emptyRegex = new RegExp("");
     const result = isValidRegex(emptyRegex);
     expect(result).toBe(true);
   });
 
-  test('should return true for complex valid regex', () => {
-    const complexRegex = new RegExp('^[a-zA-Z0-9_-]{3,16}$');
+  test("should return true for complex valid regex", () => {
+    const complexRegex = new RegExp("^[a-zA-Z0-9_-]{3,16}$");
     const result = isValidRegex(complexRegex);
     expect(result).toBe(true);
   });
-
 });
 
-describe('matchesRegex', () => {
-  test('should return true for a valid pattern that matches the string', () => {
+describe("matchesRegex", () => {
+  test("should return true for a valid pattern that matches the string", () => {
     const pattern = /abc/;
-    const testString = 'abc123';
+    const testString = "abc123";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
-  test('should return false for a valid pattern that does not match the string', () => {
+  test("should return false for a valid pattern that does not match the string", () => {
     const pattern = /xyz/;
-    const testString = 'abc123';
+    const testString = "abc123";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
 
-  test('should return false for an invalid regex pattern', () => {
-    const invalidPattern = new RegExp(/^p/);  // Invalid regex with unclosed bracket
-    const testString = 'test';
+  test("should return false for an invalid regex pattern", () => {
+    const invalidPattern = new RegExp(/^p/); // Invalid regex with unclosed bracket
+    const testString = "test";
     const result = matchesRegex(invalidPattern, testString);
     expect(result).toBe(false);
   });
 
-  test('should return false when pattern is null or undefined', () => {
-    const testString = 'abc123';
+  test("should return false when pattern is null or undefined", () => {
+    const testString = "abc123";
     // Check for undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(matchesRegex(undefined as any, testString)).toBe(false);
     // Check for null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(matchesRegex(null as any, testString)).toBe(false);
   });
 
-  test('should return true for an empty string matching an empty regex', () => {
-    const pattern = new RegExp('');
-    const testString = '';
+  test("should return true for an empty string matching an empty regex", () => {
+    const pattern = new RegExp("");
+    const testString = "";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
-  test('should return false for an empty string and a non-empty regex', () => {
-    const pattern = new RegExp('abc');
-    const testString = '';
+  test("should return false for an empty string and a non-empty regex", () => {
+    const pattern = new RegExp("abc");
+    const testString = "";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
 
-  test('should return true for a complex valid regex that matches', () => {
+  test("should return true for a complex valid regex that matches", () => {
     const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
-    const testString = 'test@example.com';
+    const testString = "test@example.com";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
-  test('should return false for a complex valid regex that does not match', () => {
+  test("should return false for a complex valid regex that does not match", () => {
     const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
-    const testString = 'invalid-email.com';
+    const testString = "invalid-email.com";
     const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
