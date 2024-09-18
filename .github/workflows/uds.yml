@@ -6,7 +6,7 @@ on:
 
 jobs:
   pepr-build:
-    name: build project
+    name: build pepr
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -68,7 +68,7 @@ jobs:
           retention-days: 1
 
   uds-run:
-    name: uds run slim-dev
+    name: uds smoke test
     runs-on: ubuntu-latest
     needs:
       - pepr-build
@@ -140,30 +140,16 @@ jobs:
         run: |
           docker image load --input "$PEPR_IMG"
 
+      - name: swap module tgz into uds-core 
+        run: |
+          cd "$UDS_CORE"
+          content="$( jq '.dependencies.pepr = "file:$PEPR_PKG"' package.json )"
+          echo -E "$content" > package.json
+          npm install
+          cat package.json
+          cat package-lock.json
+
       - name: uds run
         run: |
-          echo "--- uds core ---"
           cd "$UDS_CORE"
-          ls -la
-          echo ""
-          echo "--- uds cli ---"
-          ls -la "$UDS_CLI"
-          echo ""
-          echo "--- pepr-pkg ---"
-          ls -la "$PEPR_PKG"
-          echo ""
-          echo "--- pepr-img ---"
-          ls -la "$PEPR_IMG"
-          echo ""
-          docker images
-
-
-
-
-# install UDS cli
-# checkout uds-core
-# swap in-question version of pepr into uds-core package.json
-# - how though?  will using file:*.tar.gz packages work?
-#   - in that case pepr-build will need to build & upload the tar.gz as an arti too
-#   - will need a pipeline input to allow setting which branch of pepr to pull / build too
-# run uds run slim-dev using the PEPR_CUSTOM_IMAGE="pepr:dev" env var
+          PEPR_CUSTOM_IMAGE="pepr:dev" "$UDS_CLI" run slim-dev
