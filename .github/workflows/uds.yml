@@ -138,9 +138,9 @@ jobs:
 
       - name: import docker image from pepr tar
         run: |
-          docker image load --input "$PEPR_TAR"
+          docker image load --input "$PEPR_IMG"
 
-      - name: uds run slim-dev
+      - name: uds run
         run: |
           echo "--- uds core ---"
           cd "$UDS_CORE"
