@@ -6,7 +6,7 @@ on:
 
 jobs:
   pepr-build:
-    name: controller image
+    name: build project
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -38,6 +38,7 @@ jobs:
       - name: build & tgz pepr module
         run: |
           pwd
+          ls -la
           npm run build
           pkg=$(npm pack)
           mv "$pkg" "pepr-pkg.tgz"
