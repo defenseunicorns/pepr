@@ -21,7 +21,7 @@ import {
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
-import { ErrorList } from "../../lib/errors";
+import { ErrorList, Errors } from "../../lib/errors";
 
 export default function (program: RootCmd) {
   let response = {} as PromptOptions;
@@ -29,11 +29,11 @@ export default function (program: RootCmd) {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .option("--confirm", "Skip verification prompt before creating module")
-    .option("--description <string>", "Set a description!")
-    .option("--name <string>", "Set a name!")
-    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch")
-    .option(`--errorBehavior [${ErrorList}]`, "Set a errorBehavior!")
+    .option("--confirm", "Skip verification prompt when creating a new module.")
+    .option("--description <string>", "Explain the purpose of the new module.")
+    .option("--name <string>", "Set the name of the new module.")
+    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
+    .option(`--errorBehavior <${ErrorList.join('|')}>`, "Set a errorBehavior.", Errors.reject)
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
