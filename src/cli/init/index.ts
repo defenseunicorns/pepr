@@ -33,7 +33,7 @@ export default function (program: RootCmd) {
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join('|')}>`, "Set a errorBehavior.", Errors.reject)
+    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set a errorBehavior.", Errors.reject)
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
