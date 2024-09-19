@@ -4,12 +4,12 @@ This document outlines how to customize the build output through Helm overrides 
 
 ## Display Node Warnings
 
-You can display warnings in the logs by setting the `PEPR_NODE_WARNINGS` environment variable to `false` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `true`.
+You can display warnings in the logs by setting the `PEPR_NODE_WARNINGS` environment variable to `true` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `undefined`.
 
 ```json
 {
   "env": {
-    "PEPR_NODE_WARNINGS": "show"
+    "PEPR_NODE_WARNINGS": "true"
   }
 }
 ```
