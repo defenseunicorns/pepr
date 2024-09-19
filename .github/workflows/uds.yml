@@ -100,6 +100,8 @@ jobs:
           fi
           ls -lah "$UDS_CLI"
           "$UDS_CLI" version
+          echo ""
+          echo "PATH --> $PATH"
 
       - name: "set env: UDS_CLI"
         run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
