@@ -610,8 +610,76 @@ describe("namespaceComplianceValidator", () => {
   afterEach(() => {
     errorSpy.mockRestore();
   });
+  test("should throw error for invalid regex namespaces", () => {
+    const nsViolationCopy: CapabilityExport[] = nonNsViolation.map(capability => ({
+      ...capability,
+      bindings: capability.bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [/^system/],
+        },
+      })),
+    }));
+    expect(() => {
+      namespaceComplianceValidator(nsViolationCopy[0]);
+    }).toThrowError(
+      `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${nsViolationCopy[0].bindings[0].filters.regexNamespaces[0]}.`,
+    );
+  });
+  test("should not throw an error for valid regex namespaces", () => {
+    const nonNSViolationCopy: CapabilityExport[] = nonNsViolation.map(capability => ({
+      ...capability,
+      bindings: capability.bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [/^mia/],
+        },
+      })),
+    }));
+    expect(() => {
+      namespaceComplianceValidator(nonNSViolationCopy[0]);
+    }).not.toThrow();
+  });
 
-  test("should not throw an error for invalid namespaces", () => {
+  test("should throw error for invalid regex ignored namespaces", () => {
+    const nsViolationCopy: CapabilityExport[] = nonNsViolation.map(capability => ({
+      ...capability,
+      bindings: capability.bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [/^mia/],
+        },
+      })),
+    }));
+    expect(() => {
+      namespaceComplianceValidator(nsViolationCopy[0], ["miami"]);
+    }).toThrowError(
+      `Ignoring Watch Callback: Regex namespace: ${nsViolationCopy[0].bindings[0].filters.regexNamespaces[0]}, is an ignored namespace: miami.`,
+    );
+  });
+  test("should not throw an error for valid regex ignored namespaces", () => {
+    const nonNSViolationCopy: CapabilityExport[] = nonNsViolation.map(capability => ({
+      ...capability,
+      bindings: capability.bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [/^mia/],
+        },
+      })),
+    }));
+    expect(() => {
+      namespaceComplianceValidator(nonNSViolationCopy[0], ["Seattle"]);
+    }).not.toThrow();
+  });
+  test("should not throw an error for valid namespaces", () => {
     expect(() => {
       namespaceComplianceValidator(nonNsViolation[0]);
     }).not.toThrow();
