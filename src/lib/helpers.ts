@@ -91,15 +91,18 @@ export function filterNoMatchReasonRegex(
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
 ): string {
-  const { regexNamespaces } = binding.filters || {};
+  const { regexNamespaces, regexName } = binding.filters || {};
   const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
   if (result === "") {
-    if (regexNamespaces && regexNamespaces.length > 0) {
+    if (Array.isArray(regexNamespaces) && regexNamespaces.length > 0) {
       for (const regexNamespace of regexNamespaces) {
         if (!matchesRegex(regexNamespace, obj.metadata?.namespace || "")) {
-          return `Ignoring Watch Callback: Object namespace matches regex ${regexNamespace}.`;
+          return `Ignoring Watch Callback: Object namespace ${obj.metadata?.namespace} does not match regex ${regexNamespace}.`;
         }
       }
+    }
+    if (regexName && regexName.source !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
+      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
     }
   }
   return result;

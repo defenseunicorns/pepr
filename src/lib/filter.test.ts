@@ -105,7 +105,164 @@ describe("Property-Based Testing shouldSkipRequestRegex", () => {
   });
 });
 
-test("should reject when name does not match", () => {
+test("create: should reject when regex name does not match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: new RegExp(/^default$/),
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+});
+test("create: should not reject when regex name does match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: /^cool/,
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+});
+test("delete: should reject when regex name does not match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: /^default$/,
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+});
+test("delete: should not reject when regex name does match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: /^cool/,
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+});
+
+test("create: should not reject when regex namespace does match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [/^helm/],
+      regexName: new RegExp(""),
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+});
+
+test("create: should reject when regex namespace does not match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [/^argo/],
+      regexName: new RegExp(""),
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+});
+
+test("delete: should reject when regex namespace does not match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "bleh",
+      namespaces: [],
+      regexNamespaces: [/^argo/],
+      regexName: new RegExp(""),
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+});
+
+test("delete: should not reject when regex namespace does match", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [/^helm/],
+      regexName: new RegExp(""),
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+});
+
+test("delete: should reject when name does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -114,18 +271,16 @@ test("should reject when name does not match", () => {
       name: "bleh",
       namespaces: [],
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: /^not-cool/,
       labels: {},
       annotations: {},
       deletionTimestamp: false,
     },
     callback,
   };
-  const pod = CreatePod();
-
+  const pod = DeletePod();
   expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
 });
-
 test("should reject when kind does not match", () => {
   const binding = {
     model: kind.Pod,
@@ -135,7 +290,7 @@ test("should reject when kind does not match", () => {
       name: "",
       namespaces: [],
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
       labels: {},
       annotations: {},
       deletionTimestamp: false,
@@ -159,7 +314,7 @@ test("should reject when group does not match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -184,7 +339,7 @@ test("should reject when version does not match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -205,7 +360,7 @@ test("should allow when group, version, and kind match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -230,7 +385,7 @@ test("should allow when kind match and others are empty", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -251,7 +406,7 @@ test("should reject when the capability namespace does not match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -272,7 +427,7 @@ test("should reject when namespace does not match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -293,7 +448,7 @@ test("should allow when namespace is match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -316,7 +471,7 @@ test("should reject when label does not match", () => {
       annotations: {},
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -335,7 +490,7 @@ test("should allow when label is match", () => {
       deletionTimestamp: false,
       namespaces: [],
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
       labels: {
         foo: "bar",
         test: "test1",
@@ -370,7 +525,7 @@ test("should reject when annotation does not match", () => {
       },
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -394,7 +549,7 @@ test("should allow when annotation is match", () => {
       },
       deletionTimestamp: false,
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
     },
     callback,
   };
@@ -419,7 +574,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
       name: "",
       namespaces: [],
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
       deletionTimestamp: false,
       labels: {
         "app.kubernetes.io/name": "cool-name-podinfo",
@@ -446,7 +601,7 @@ test("should skip processing when deletionTimestamp is not present on pod", () =
       namespaces: [],
       labels: {},
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
       annotations: {
         foo: "bar",
         test: "test1",
@@ -477,7 +632,7 @@ test("should processing when deletionTimestamp is not present on pod", () => {
       namespaces: [],
       labels: {},
       regexNamespaces: [],
-      regexName: new RegExp(/a^/),
+      regexName: new RegExp(""),
       annotations: {
         foo: "bar",
         test: "test1",

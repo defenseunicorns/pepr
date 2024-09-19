@@ -200,7 +200,7 @@ export class Capability implements CapabilityExport {
         name: "",
         namespaces: [],
         regexNamespaces: [],
-        regexName: new RegExp(/a^/),
+        regexName: new RegExp(""),
         labels: {},
         annotations: {},
         deletionTimestamp: false,
