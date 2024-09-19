@@ -47,7 +47,6 @@ jobs:
           cd "$PEPR"
           npm run test:journey:build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          ls -al ${GITHUB_WORKSPACE}
           
 
       - name: build pepr image
@@ -131,12 +130,8 @@ jobs:
           cd "$PEXEX"
           npm ci
 
-      - name: Run the npm pepr package under test
-        run: |
-          npx --yes file:pepr-0.0.0-development.tgz --version
-          npx --yes file:pepr-0.0.0-development.tgz init --help
-
       - name: run e2e tests
         run: |
+          npx --yes file:pepr-0.0.0-development.tgz --version
           cd "$PEXEX"
           npm run --workspace=use-arbitrary-pepr-version test:e2e -- --image pepr:dev
