@@ -46,6 +46,9 @@ jobs:
         run: |
           cd "$PEPR"
           npm run test:journey:build
+          pwd
+          ls -al
+          
 
       - name: build pepr image
         run: |
