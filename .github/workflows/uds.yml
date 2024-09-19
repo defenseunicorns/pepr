@@ -96,14 +96,10 @@ jobs:
           BINS="$HOME/.local/bin"
           mkdir -p "$BINS"
           UDS_CLI="$BINS/uds"
-          if [ ! -f "$UDS_CLI" ] ; then
-            curl --location --output "$UDS_CLI" "$REMOTE_URL"
-            chmod +x "$UDS_CLI"
-          fi
-          uds version
+          curl --location --output "$UDS_CLI" "$REMOTE_URL"
+          chmod +x "$UDS_CLI"
 
-      - name: "set env: UDS_CLI"
-        run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
+          uds version
 
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
