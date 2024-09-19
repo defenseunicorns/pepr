@@ -42,7 +42,6 @@ export async function mutateProcessor(
 
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
-
     for (const action of bindings) {
       // Skip this action if it's not a mutate action
       if (!action.mutateCallback) {

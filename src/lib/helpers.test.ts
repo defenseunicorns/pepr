@@ -1056,6 +1056,41 @@ describe("filterMatcher", () => {
     expect(result).toEqual("Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.");
   });
 
+  test("return an Ignoring Watch Callback string if the binding name and object name are different", () => {
+    const binding = {
+      filters: { name: "pepr" },
+    };
+    const obj = {
+      metadata: {
+        name: "not-pepr",
+      },
+    };
+    const capabilityNamespaces: string[] = [];
+    const result = filterNoMatchReason(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      `Ignoring Watch Callback: No overlap between binding and object name. Binding name pepr, Object name not-pepr.`,
+    );
+  });
+  test("returns no Ignoring Watch Callback string if the binding name and object name are the same", () => {
+    const binding = {
+      filters: { name: "pepr" },
+    };
+    const obj = {
+      metadata: { name: "pepr" },
+    };
+    const capabilityNamespaces: string[] = [];
+    const result = filterNoMatchReason(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual("");
+  });
+
   test("return deletionTimestamp error when there is no deletionTimestamp in the object", () => {
     const binding = {
       filters: { deletionTimestamp: true },
