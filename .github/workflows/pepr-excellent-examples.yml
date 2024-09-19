@@ -42,6 +42,11 @@ jobs:
           cd "$PEPR"
           npm ci
 
+      - name: build npm pepr package
+        run: |
+          cd "$PEPR"
+          npm run test:journey:build
+
       - name: build pepr image
         run: |
           cd "$PEPR"
@@ -53,7 +58,14 @@ jobs:
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image save --output "$PEPR_TAR" pepr:dev
 
-      - name: upload image tar artifact
+      - name: upload npm pepr package .tgz artifact
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: pepr-0.0.0-development.tgz
+          path: pepr-0.0.0-development.tgz
+          retention-days: 1
+
+      - name: upload pepr controller image .tar artifact
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: pepr-img.tar
@@ -77,10 +89,16 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-      - name: dowload image tar artifact
+      - name: dowload pepr controller image .tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: pepr-img.tar
+          path: ${{ github.workspace }}
+
+      - name: dowload npm pepr package .tgz artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: pepr-0.0.0-development.tgz
           path: ${{ github.workspace }}
 
       - name: import pepr image from tar
@@ -110,20 +128,10 @@ jobs:
           cd "$PEXEX"
           npm ci
 
-      - name: overwrite node_modules with pepr dist from branch
+      - name: Run the npm pepr package under test
         run: |
-          pwd
-          ls -al
-          tar -xvf pepr-img.tar
-          ls -al 
-          cd "$PEXEX"
-          npm install
-          ls -l node_modules/pepr
-          rm -rf node_modules/pepr
-          ln -s $(pwd)/../pepr node_modules/pepr
-          ls -l node_modules/pepr
-          rm -rf use-arbitrary-pepr-version/node_modules/pepr
-          ln -s $(pwd)/../pepr use-arbitrary-pepr-version/node_modules/pepr
+          npx --yes file:pepr-0.0.0-development.tgz --version
+          npx --yes file:pepr-0.0.0-development.tgz init --help
 
       - name: run e2e tests
         run: |
