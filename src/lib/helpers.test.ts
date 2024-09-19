@@ -1070,7 +1070,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1087,7 +1087,7 @@ describe("filterMatcher", () => {
       metadata: { name: "pepr" },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1187,7 +1187,7 @@ describe("filterMatcher", () => {
     };
 
     const obj = {
-      metadata: { namespace: "ns2" },
+      metadata: { namespace: "ns2", name: "bleh" },
     };
     const capabilityNamespaces = ["ns1"];
     const result = filterNoMatchReasonRegex(
