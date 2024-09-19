@@ -10,7 +10,6 @@ import {
   validateHash,
   ValidationError,
   validateCapabilityNames,
-  isValidRegex,
   matchesRegex,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
@@ -1450,25 +1449,6 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
-  });
-});
-
-describe("isValidRegex", () => {
-  test("should return true for a valid regex", () => {
-    const validRegex = /abc/;
-    const result = isValidRegex(validRegex);
-    expect(result).toBe(true);
-  });
-  test("should return true for an empty regex", () => {
-    const emptyRegex = new RegExp("");
-    const result = isValidRegex(emptyRegex);
-    expect(result).toBe(true);
-  });
-
-  test("should return true for complex valid regex", () => {
-    const complexRegex = new RegExp("^[a-zA-Z0-9_-]{3,16}$");
-    const result = isValidRegex(complexRegex);
-    expect(result).toBe(true);
   });
 });
 

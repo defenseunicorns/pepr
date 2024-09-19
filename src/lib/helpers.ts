@@ -16,18 +16,11 @@ export function matchesRegex(pattern: RegExp, testString: string): boolean {
   try {
     const regex = new RegExp(pattern);
     return regex.test(testString);
-  } catch (e) {
-    return false;
-  }
-}
-export function isValidRegex(regex: RegExp): boolean {
-  try {
-    new RegExp(regex);
-    return true;
   } catch {
     return false;
   }
 }
+
 export class ValidationError extends Error {}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
