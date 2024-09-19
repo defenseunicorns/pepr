@@ -2,9 +2,10 @@ name: E2E - Pepr Excellent Examples
 
 permissions: read-all
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 4 * * *' # 12AM EST/9PM PST
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
@@ -161,4 +162,10 @@ jobs:
       - name: run e2e tests
         run: |
           cd "$PEXEX"
-          npm run --workspace=${{ matrix.name }} test:e2e -- --image pepr:dev
+          npm run --workspace=use-arbitrary-version test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-config test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-finalize test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-ns-wrong test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-reconcile-kind test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-store test:e2e -- --image pepr:dev
+          npm run --workspace=hello-pepr-validate test:e2e -- --image pepr:dev
