@@ -7,15 +7,33 @@ import logger from "./logger";
 import { Binding, Event } from "./types";
 
 export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
-  const { regexNamespaces } = binding.filters || {};
+  const { regexNamespaces, regexName } = binding.filters || {};
   const result = shouldSkipRequest(binding, req, capabilityNamespaces);
+  const operation = req.operation.toUpperCase();
   if (!result) {
     if (regexNamespaces && regexNamespaces.length > 0) {
       for (const regexNamespace of regexNamespaces) {
-        if (!matchesRegex(regexNamespace, req.object.metadata?.namespace || "")) {
-          return false;
+        if (
+          !matchesRegex(
+            regexNamespace,
+            (operation === Operation.DELETE ? req.oldObject?.metadata?.namespace : req.object.metadata?.namespace) ||
+              "",
+          )
+        ) {
+          return true;
         }
       }
+    }
+
+    if (
+      regexName &&
+      regexName.source !== "" &&
+      !matchesRegex(
+        regexName,
+        (operation === Operation.DELETE ? req.oldObject?.metadata?.name : req.object.metadata?.name) || "",
+      )
+    ) {
+      return true;
     }
   }
   return result;

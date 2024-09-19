@@ -1045,6 +1045,108 @@ describe("checkOverlap", () => {
 });
 
 describe("filterMatcher", () => {
+  test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexNamespaces: [/(.*)-system/], namespaces: [] },
+    };
+    const obj = { metadata: { namespace: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { namespace: "pepr-demo" } },
+      { ...obj, metadata: { namespace: "pepr-uds" } },
+      { ...obj, metadata: { namespace: "pepr-core" } },
+      { ...obj, metadata: { namespace: "uds-ns" } },
+      { ...obj, metadata: { namespace: "uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(
+        `Ignoring Watch Callback: Object namespace ${object.metadata?.namespace} does not match regex ${binding.filters.regexNamespaces[0]}.`,
+      );
+    });
+  });
+
+  test("returns no regex namespace filter error for Pods whos namespace does match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexNamespaces: [/(.*)-system/], namespaces: [] },
+    };
+    const obj = { metadata: { namespace: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { namespace: "pepr-system" } },
+      { ...obj, metadata: { namespace: "pepr-uds-system" } },
+      { ...obj, metadata: { namespace: "uds-system" } },
+      { ...obj, metadata: { namespace: "some-thing-that-is-a-system" } },
+      { ...obj, metadata: { namespace: "your-system" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(``);
+    });
+  });
+
+  // Names Fail
+  test("returns regex name filter error for Pods whos name does not match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexName: /^system/, namespaces: [] },
+    };
+    const obj = { metadata: { name: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { name: "pepr-demo" } },
+      { ...obj, metadata: { name: "pepr-uds" } },
+      { ...obj, metadata: { name: "pepr-core" } },
+      { ...obj, metadata: { name: "uds-ns" } },
+      { ...obj, metadata: { name: "uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(
+        `Ignoring Watch Callback: Object name ${object.metadata?.name} does not match regex ${binding.filters.regexName}.`,
+      );
+    });
+  });
+
+  // Names Pass
+  test("returns no regex name filter error for Pods whos name does match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexName: /^system/, namespaces: [] },
+    };
+    const obj = { metadata: { name: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { name: "systemd" } },
+      { ...obj, metadata: { name: "systemic" } },
+      { ...obj, metadata: { name: "system-of-kube-apiserver" } },
+      { ...obj, metadata: { name: "system" } },
+      { ...obj, metadata: { name: "system-uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(``);
+    });
+  });
+
   test("returns namespace filter error for namespace objects with namespace filters", () => {
     const binding = {
       kind: { kind: "Namespace" },
@@ -1178,7 +1280,7 @@ describe("filterMatcher", () => {
         name: "bleh",
         namespaces: [],
         regexNamespaces: [],
-        regexName: new RegExp(/a^/),
+        regexName: new RegExp(""),
         labels: {},
         annotations: {},
         deletionTimestamp: false,
