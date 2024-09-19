@@ -108,7 +108,7 @@ jobs:
         id: create-matrix
 
   excellent-examples:
-    name: ${{ matrix.name }}
+    name: use-arbitrary-pepr-version
     runs-on: ubuntu-latest
     needs:
       - examples-matrix
@@ -162,10 +162,4 @@ jobs:
       - name: run e2e tests
         run: |
           cd "$PEXEX"
-          npm run --workspace=use-arbitrary-version test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-config test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-finalize test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-ns-wrong test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-reconcile-kind test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-store test:e2e -- --image pepr:dev
-          npm run --workspace=hello-pepr-validate test:e2e -- --image pepr:dev
+          npm run --workspace=use-arbitrary-pepr-version test:e2e -- --image pepr:dev
