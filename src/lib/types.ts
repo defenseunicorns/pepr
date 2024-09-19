@@ -150,20 +150,16 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
-};
-
-export type BindingWithRegexName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified regex name. */
   WithRegexName: (name: RegExp) => BindingFilter<T>;
 };
 
-export type BindingAll<T extends GenericClass> =
-  | BindingWithName<T>
-  | (BindingWithRegexName<T> & {
-      /** Only apply the action if the resource is in one of the specified namespaces.*/
-      InNamespace: (...namespaces: string[]) => BindingWithName<T> | BindingWithRegexName<T>;
-      InRegexNamespace: (...namespaces: RegExp[]) => BindingWithName<T> | BindingWithRegexName<T>;
-    });
+export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
+  /** Only apply the action if the resource is in one of the specified namespaces.*/
+  InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+  /** Only apply the action if the resource is in one of the specified regex namespaces.*/
+  InRegexNamespace: (...namespaces: RegExp[]) => BindingWithName<T>;
+};
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
   /**
