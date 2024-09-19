@@ -95,7 +95,7 @@ jobs:
           )
           BINS="$HOME/.local/bin"
           mkdir -p "$BINS"
-          UDS_CLI="$BINS/uds-cli"
+          UDS_CLI="$BINS/uds"
           if [ ! -f "$UDS_CLI" ] ; then
             curl --location --output "$UDS_CLI" "$REMOTE_URL"
             chmod +x "$UDS_CLI"
