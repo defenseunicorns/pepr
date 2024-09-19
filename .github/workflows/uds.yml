@@ -93,15 +93,12 @@ jobs:
               | tr -d \" \
               | tr -d " "
           )
-          UDS_CLI="./uds-cli"
+          UDS_CLI="$HOME/.local/bin/uds-cli"
           if [ ! -f "$UDS_CLI" ] ; then
             curl --location --output "$UDS_CLI" "$REMOTE_URL"
             chmod +x "$UDS_CLI"
           fi
-          ls -lah "$UDS_CLI"
-          "$UDS_CLI" version
-          echo ""
-          echo "PATH --> $PATH"
+          uds version
 
       - name: "set env: UDS_CLI"
         run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
@@ -122,4 +119,4 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          PEPR_CUSTOM_IMAGE="pepr:dev" "$UDS_CLI" run slim-dev
+          PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
