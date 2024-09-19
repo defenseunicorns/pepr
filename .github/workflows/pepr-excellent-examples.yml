@@ -46,8 +46,8 @@ jobs:
         run: |
           cd "$PEPR"
           npm run test:journey:build
-          pwd
-          ls -al
+          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          ls -al ${GITHUB_WORKSPACE}
           
 
       - name: build pepr image
