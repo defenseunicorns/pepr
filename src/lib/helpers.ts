@@ -117,6 +117,11 @@ export function filterNoMatchReason(
     return `Ignoring Watch Callback: Object does not have a deletion timestamp.`;
   }
 
+  // Check that if binding has a name filter, it matches the object name
+  if (binding.filters?.name && binding.filters.name !== obj.metadata?.name) {
+    return `Ignoring Watch Callback: No overlap between binding and object name. Binding name ${binding.filters.name}, Object name ${obj.metadata?.name}.`;
+  }
+
   // binding kind is namespace with a InNamespace filter
   if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
     return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;

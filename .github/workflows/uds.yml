@@ -3,10 +3,12 @@ name: UDS - Smoke Test
 permissions: read-all
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 12AM EST/9PM PST
 
 jobs:
   pepr-build:
-    name: build pepr
+    name: pepr build
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -35,20 +37,6 @@ jobs:
           cd "$PEPR"
           npm ci
 
-      - name: build & pack pepr module
-        run: |
-          cd "$PEPR"
-          npm run build
-          pkg=$(npm pack)
-          mv "$pkg" "${GITHUB_WORKSPACE}/pepr-pkg.tgz"
-
-      - name: upload package tgz artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-        with:
-          name: pepr-pkg.tgz
-          path: pepr-pkg.tgz
-          retention-days: 1
-
       - name: build pepr image
         run: |
           cd "$PEPR"
@@ -68,7 +56,7 @@ jobs:
           retention-days: 1
 
   uds-run:
-    name: uds smoke test
+    name: uds run
     runs-on: ubuntu-latest
     needs:
       - pepr-build
@@ -107,25 +95,13 @@ jobs:
               | tr -d \" \
               | tr -d " "
           )
-          UDS_CLI="./uds-cli"
-          if [ ! -f "$UDS_CLI" ] ; then
-            curl --location --output "$UDS_CLI" "$REMOTE_URL"
-            chmod +x "$UDS_CLI"
-          fi
-          ls -lah "$UDS_CLI"
-          "$UDS_CLI" version
+          BINS="$HOME/.local/bin"
+          mkdir -p "$BINS"
+          UDS_CLI="$BINS/uds"
+          curl --location --output "$UDS_CLI" "$REMOTE_URL"
+          chmod +x "$UDS_CLI"
 
-      - name: "set env: UDS_CLI"
-        run: echo "UDS_CLI=${GITHUB_WORKSPACE}/uds-cli" >> "$GITHUB_ENV"
-
-      - name: dowload module tgz artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: pepr-pkg.tgz
-          path: ${{ github.workspace }}
-
-      - name: "set env: PEPR_PKG"
-        run: echo "PEPR_PKG=${GITHUB_WORKSPACE}/pepr-pkg.tgz" >> "$GITHUB_ENV"
+          uds version
 
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -140,14 +116,7 @@ jobs:
         run: |
           docker image load --input "$PEPR_IMG"
 
-      - name: swap module tgz into uds-core 
-        run: |
-          cd "$UDS_CORE"
-          content="$( jq '.dependencies.pepr = "file:'$PEPR_PKG'"' package.json )"
-          echo -E "$content" > package.json
-          npm install
-
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          PEPR_CUSTOM_IMAGE="pepr:dev" "$UDS_CLI" run slim-dev
+          PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
