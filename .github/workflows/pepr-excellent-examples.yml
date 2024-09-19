@@ -112,6 +112,8 @@ jobs:
 
       - name: overwrite node_modules with pepr dist from branch
         run: |
+          pwd
+          cd "$PEXEX"
           npm install
           rm -rf node_modules/pepr
           ln -s $(pwd)/../pepr node_modules/pepr
