@@ -132,6 +132,10 @@ jobs:
 
       - name: run e2e tests
         run: |
+          pwd
+          ls -al
           npx --yes file:pepr-0.0.0-development.tgz --version
           cd "$PEXEX"
+          pwd
+          ls -al
           npm run --workspace=use-arbitrary-pepr-version test:e2e -- --image pepr:dev
