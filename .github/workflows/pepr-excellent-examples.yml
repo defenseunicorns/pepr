@@ -118,6 +118,8 @@ jobs:
           rm -rf node_modules/pepr
           ln -s $(pwd)/../pepr node_modules/pepr
           ls -l node_modules/pepr
+          rm -rf use-arbitrary-pepr-version/node_modules/pepr
+          ln -s $(pwd)/../pepr use-arbitrary-pepr-version/node_modules/pepr
 
       - name: run e2e tests
         run: |
