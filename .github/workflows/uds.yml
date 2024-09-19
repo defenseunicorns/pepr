@@ -93,7 +93,9 @@ jobs:
               | tr -d \" \
               | tr -d " "
           )
-          UDS_CLI="$HOME/.local/bin/uds-cli"
+          BINS="$HOME/.local/bin"
+          mkdir -p "$BINS"
+          UDS_CLI="$BINS/uds-cli"
           if [ ! -f "$UDS_CLI" ] ; then
             curl --location --output "$UDS_CLI" "$REMOTE_URL"
             chmod +x "$UDS_CLI"
