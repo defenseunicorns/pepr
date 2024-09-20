@@ -13,8 +13,8 @@ export function matchesRegex(pattern: string, testString: string): boolean {
     return false;
   }
 
-    const regex = new RegExp(pattern);
-    return regex.test(testString);
+  const regex = new RegExp(pattern);
+  return regex.test(testString);
 }
 
 export class ValidationError extends Error {}
@@ -305,7 +305,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       for (const capabilityNamespace of capabilityNamespaces) {
-        if (regexNamespace !== '' && matchesRegex(regexNamespace, capabilityNamespace)) {
+        if (regexNamespace !== "" && matchesRegex(regexNamespace, capabilityNamespace)) {
           matches = true;
           break;
         }

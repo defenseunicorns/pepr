@@ -319,7 +319,7 @@ export class Capability implements CapabilityExport {
 
     function InRegexNamespace(...namespaces: RegExp[]): BindingWithName<T> {
       Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
-      binding.filters.regexNamespaces.push(...namespaces.map((regex) => regex.source));
+      binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
       return { ...commonChain, WithName, WithRegexName };
     }
 

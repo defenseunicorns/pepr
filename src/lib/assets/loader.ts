@@ -18,7 +18,7 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
         ...process.env,
         LOG_LEVEL: "warn",
         PEPR_MODE: "build",
-        NODE_OPTIONS: "--disable-warning=DEP0040"
+        NODE_OPTIONS: "--disable-warning=DEP0040",
       },
     });
 
