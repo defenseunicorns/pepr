@@ -3,7 +3,7 @@
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { pickBy } from "ramda";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
+//import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
@@ -282,7 +282,7 @@ export class Capability implements CapabilityExport {
       }
     }
 
-    function Reconcile(watchCallback: WatchAction<T>) {
+    /*     function Reconcile(watchCallback: WatchAction<T>) {
       if (registerWatch) {
         log("Reconcile Action", watchCallback.toString());
         bindings.push({
@@ -290,6 +290,25 @@ export class Capability implements CapabilityExport {
           isWatch: true,
           isQueue: true,
           watchCallback,
+        });
+      }
+    } */
+
+    function Reconcile(reconcileCallback: WatchLogAction<T>): void {
+      if (registerWatch) {
+        log("Reconcile Action", reconcileCallback.toString());
+
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          isQueue: true,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing reconcile action with alias: ${binding.alias || "no alias provided"}`);
+            await reconcileCallback(update, phase, logger);
+          },
         });
       }
     }

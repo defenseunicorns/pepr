@@ -8,6 +8,7 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { Operation, AdmissionRequest } from "./k8s";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { Event } from "./types";
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
 jest.mock("./module", () => ({
@@ -351,5 +352,115 @@ describe("Capability", () => {
 
     expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, mockLog);
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
+  });
+
+  it("should use child logger for reconcile callback", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update, phase, logger: typeof Log = mockLog) => {
+        logger.info("Reconcile action log");
+      },
+    );
+
+    capability.When(a.Pod).IsCreatedOrUpdated().Reconcile(mockReconcileCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+    const binding = capability.bindings[0];
+
+    // Simulate calling the reconcile action
+    const testPod = new V1Pod();
+    const testPhase = WatchPhase.Modified;
+
+    if (binding.watchCallback) {
+      await binding.watchCallback(testPod, testPhase);
+    }
+
+    expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing reconcile action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
+  });
+
+  it("should add deletionTimestamp filter", () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability.When(a.Pod).IsCreatedOrUpdated().WithDeletionTimestamp().Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+    expect(capability.bindings[0].filters.deletionTimestamp).toBe(true);
+  });
+
+  it("should add name filter", () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability.When(a.Pod).IsCreatedOrUpdated().WithName("test-name").Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+    expect(capability.bindings[0].filters.name).toBe("test-name");
+  });
+
+  it("should add annotation filter", () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability.When(a.Pod).IsCreatedOrUpdated().WithAnnotation("test-key", "test-value").Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+    expect(capability.bindings[0].filters.annotations["test-key"]).toBe("test-value");
+  });
+
+  it("should bind an update event", () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability.When(a.Pod).IsUpdated().InNamespace("default").Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+    expect(capability.bindings[0].event).toBe(Event.Update);
+  });
+
+  it("should bind a delete event", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    capability.When(a.Pod).IsDeleted().InNamespace("default").Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+
+    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+    expect(capability.bindings[0].event).toBe(Event.Delete);
   });
 });
