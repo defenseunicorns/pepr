@@ -617,7 +617,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [/^system/],
+          regexNamespaces: [new RegExp(/^system/).source],
         },
       })),
     }));
@@ -635,7 +635,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [/^mia/],
+          regexNamespaces: [new RegExp(/^mia/).source],
         },
       })),
     }));
@@ -652,7 +652,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [/^mia/],
+          regexNamespaces: [new RegExp(/^mia/).source],
         },
       })),
     }));
@@ -670,7 +670,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [/^mia/],
+          regexNamespaces: [new RegExp(/^mia/).source],
         },
       })),
     }));
@@ -1347,7 +1347,7 @@ describe("filterMatcher", () => {
         name: "bleh",
         namespaces: [],
         regexNamespaces: [],
-        regexName: new RegExp(""),
+        regexName: new RegExp("").source,
         labels: {},
         annotations: {},
         deletionTimestamp: false,
@@ -1456,21 +1456,21 @@ describe("matchesRegex", () => {
   test("should return true for a valid pattern that matches the string", () => {
     const pattern = /abc/;
     const testString = "abc123";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for a valid pattern that does not match the string", () => {
     const pattern = /xyz/;
     const testString = "abc123";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(false);
   });
 
   test("should return false for an invalid regex pattern", () => {
     const invalidPattern = new RegExp(/^p/); // Invalid regex with unclosed bracket
     const testString = "test";
-    const result = matchesRegex(invalidPattern, testString);
+    const result = matchesRegex(invalidPattern.source, testString);
     expect(result).toBe(false);
   });
 
@@ -1487,28 +1487,28 @@ describe("matchesRegex", () => {
   test("should return true for an empty string matching an empty regex", () => {
     const pattern = new RegExp("");
     const testString = "";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for an empty string and a non-empty regex", () => {
     const pattern = new RegExp("abc");
     const testString = "";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(false);
   });
 
   test("should return true for a complex valid regex that matches", () => {
     const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
     const testString = "test@example.com";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for a complex valid regex that does not match", () => {
     const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
     const testString = "invalid-email.com";
-    const result = matchesRegex(pattern, testString);
+    const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(false);
   });
 });
