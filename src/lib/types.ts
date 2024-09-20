@@ -197,7 +197,7 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
- 
+
   Reconcile: (action: WatchLogAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
 };
 

@@ -262,7 +262,7 @@ export class Capability implements CapabilityExport {
       // Now only allow adding actions to the same binding
       return { Watch, Validate, Reconcile };
     }
-    
+
     function Watch(watchCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
@@ -287,7 +287,7 @@ export class Capability implements CapabilityExport {
       return { Finalize };
     }
 
-    function Reconcile(reconcileCallback: WatchLogAction<T>): void {
+    function Reconcile(reconcileCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Reconcile Action", reconcileCallback.toString());
 
@@ -335,7 +335,6 @@ export class Capability implements CapabilityExport {
       }
 
       return { Finalize };
-      
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
