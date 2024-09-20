@@ -6,6 +6,44 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
+import { AdmissionRequest } from "./k8s";
+
+export function ignoredNSObjectViolation(
+  req: Partial<AdmissionRequest> = {},
+  obj: Partial<KubernetesObject> = {},
+  ignoredNamespaces?: string[],
+): boolean | string {
+  if (!ignoredNamespaces || ignoredNamespaces.length === 0) {
+    if (req && req.uid) {
+      return false;
+    } else {
+      return "";
+    }
+  }
+  // check if admission request is in ignored namespace
+  if (req && req.uid && ignoredNamespaces.length > 0) {
+    const operation = req.operation?.toUpperCase() || undefined;
+    for (const ignoredNS of ignoredNamespaces) {
+      if (operation && operation === "DELETE" && req.oldObject?.metadata?.namespace === ignoredNS) {
+        return true;
+      }
+      if (operation && operation !== "DELETE" && req.object?.metadata?.namespace === ignoredNS) {
+        return true;
+      }
+    }
+  }
+
+  // check if watch object is in ignored namespace
+  if (obj && obj.metadata && obj.metadata.namespace) {
+    if (ignoredNamespaces.includes(obj.metadata.namespace)) {
+      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} is in an ignored namespace ${ignoredNamespaces.join(", ")}.`;
+    } else {
+      return "";
+    }
+  }
+
+  return false;
+}
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
@@ -79,6 +117,7 @@ export function filterNoMatchReasonRegex(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
 ): string {
   const { regexNamespaces, regexName } = binding.filters || {};
   const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
@@ -94,6 +133,12 @@ export function filterNoMatchReasonRegex(
       return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
     }
   }
+
+  const ignoredNS = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
+  if (ignoredNS !== "" && typeof ignoredNS === "string") {
+    return ignoredNS;
+  }
+
   return result;
 }
 /**

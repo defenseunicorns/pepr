@@ -11,6 +11,7 @@ import {
   ValidationError,
   validateCapabilityNames,
   matchesRegex,
+  ignoredNSObjectViolation,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -33,6 +34,7 @@ import { SpiedFunction } from "jest-mock";
 import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
+import { Operation } from "./types";
 
 export const callback = () => undefined;
 
@@ -1510,5 +1512,84 @@ describe("matchesRegex", () => {
     const testString = "invalid-email.com";
     const result = matchesRegex(new RegExp(pattern).source, testString);
     expect(result).toBe(false);
+  });
+});
+
+describe("ignoredNSObjectViolation", () => {
+  test("should return false when ignoredNamespaces is empty and req has uid", () => {
+    const req = { uid: "12345" };
+    const result = ignoredNSObjectViolation(req, {}, []);
+    expect(result).toBe(false);
+  });
+
+  test("should return an empty string when ignoredNamespaces is empty and req has no uid", () => {
+    const result = ignoredNSObjectViolation({}, {});
+    expect(result).toBe("");
+  });
+
+  test("should return true when operation is DELETE and oldObject is in an ignored namespace", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.DELETE,
+      oldObject: { metadata: { namespace: "ignored-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(true);
+  });
+
+  test("should return true when operation is not DELETE and object is in an ignored namespace", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      object: { metadata: { namespace: "ignored-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(true);
+  });
+
+  test("should return watch violation message when object is in an ignored namespace", () => {
+    const obj = {
+      metadata: {
+        namespace: "ignored-ns",
+        name: "test-object",
+      },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
+    expect(result).toBe("Ignoring Watch Callback: Object name test-object is in an ignored namespace ignored-ns.");
+  });
+
+  test("should return an empty string when object is not in an ignored namespace", () => {
+    const obj = {
+      metadata: {
+        namespace: "allowed-ns",
+        name: "test-object",
+      },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
+    expect(result).toBe("");
+  });
+
+  test("should return false when no violations are found and req has uid", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      object: { metadata: { namespace: "allowed-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(false);
+
+    const req2 = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      oldObject: { metadata: { namespace: "allowed-ns" } },
+    };
+    const ignoredNamespaces2 = ["ignored-ns"];
+    const result2 = ignoredNSObjectViolation(req2, {}, ignoredNamespaces2);
+    expect(result2).toBe(false);
   });
 });

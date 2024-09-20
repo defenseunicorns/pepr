@@ -6,7 +6,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 
 import { clone } from "ramda";
-import { Operation, AdmissionRequest } from "./k8s";
+import { AdmissionRequest, Operation } from "./types";
 import { ValidateActionResponse } from "./types";
 
 /**

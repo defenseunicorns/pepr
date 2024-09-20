@@ -4,7 +4,8 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 
-import { AdmissionRequest, Operation } from "./k8s";
+import { AdmissionRequest } from "./k8s";
+import { Operation } from "./types";
 import { DeepPartial } from "./types";
 
 /**
