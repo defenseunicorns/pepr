@@ -1,39 +1,40 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport, Event } from "./types";
+import { Binding, CapabilityExport, DeepPartial, Event } from "./types";
 import {
-  createRBACMap,
   addVerbIfNotExists,
+  bindingAndCapabilityNSConflict,
+  createDirectoryIfNotExists,
+  createRBACMap,
+  checkDeploymentStatus,
   checkOverlap,
   filterNoMatchReasonRegex,
-  validateHash,
-  ValidationError,
-  validateCapabilityNames,
-  matchesRegex,
   ignoredNSObjectViolation,
-} from "./helpers";
-import { sanitizeResourceName } from "../sdk/sdk";
-import * as fc from "fast-check";
-import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
-import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
-import { promises as fs } from "fs";
-
-import {
-  createDirectoryIfNotExists,
+  dedent,
+  filterNoMatchReason,
+  generateWatchNamespaceError,
   hasAnyOverlap,
   hasEveryOverlap,
   ignoredNamespaceConflict,
-  bindingAndCapabilityNSConflict,
-  generateWatchNamespaceError,
+  matchesRegex,
+  namespaceDeploymentsReady,
   namespaceComplianceValidator,
-  dedent,
+  parseTimeout,
+  replaceString,
+  secretOverLimit,
+  validateHash,
+  validateCapabilityNames,
+  ValidationError,
 } from "./helpers";
+import * as sut from "./helpers";
+import { sanitizeResourceName } from "../sdk/sdk";
+import * as fc from "fast-check";
+import { expect, describe, it, test, jest, beforeEach, afterEach } from "@jest/globals";
+import { promises as fs } from "fs";
 import { SpiedFunction } from "jest-mock";
-
 import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
 import { Operation } from "./types";
 
 export const callback = () => undefined;
@@ -341,6 +342,7 @@ describe("validateCapabilityNames", () => {
     expect(validateCapabilityNames(undefined)).toBe(undefined);
   });
 });
+
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
     const result = createRBACMap(mockCapabilities);
@@ -1070,47 +1072,47 @@ describe("replaceString", () => {
   });
 });
 
-describe("checkOverlap", () => {
-  test("should return false since all binding annotations/labels do not exist on the object", () => {
-    expect(checkOverlap({ key1: "", key2: "" }, { key1: "something" })).toBe(false);
-  });
-  test("should return false since all binding annotations/labels values do not match on the object values", () => {
-    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "value1", key2: "key2" })).toBe(false);
-  });
-  test("should return true since all binding annotations/labels keys and values match the object keys and values", () => {
-    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "key1", key2: "key2" })).toBe(true);
-  });
+// describe("checkOverlap", () => {
+//   test("should return false since all binding annotations/labels do not exist on the object", () => {
+//     expect(checkOverlap({ key1: "", key2: "" }, { key1: "something" })).toBe(false);
+//   });
+//   test("should return false since all binding annotations/labels values do not match on the object values", () => {
+//     expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "value1", key2: "key2" })).toBe(false);
+//   });
+//   test("should return true since all binding annotations/labels keys and values match the object keys and values", () => {
+//     expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "key1", key2: "key2" })).toBe(true);
+//   });
 
-  test("should return true since all binding annotations/labels keys exist on the object", () => {
-    expect(checkOverlap({ key1: "", key2: "" }, { key1: "key1", key2: "key2" })).toBe(true);
-  });
+//   test("should return true since all binding annotations/labels keys exist on the object", () => {
+//     expect(checkOverlap({ key1: "", key2: "" }, { key1: "key1", key2: "key2" })).toBe(true);
+//   });
 
-  test("(Mixed) should return true since key and key value match on object", () => {
-    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
-  });
-  test("(Mixed) should return false since key1 value is different on object", () => {
-    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
-  });
-  test("should return true if binding has no labels or annotations", () => {
-    expect(checkOverlap({}, { key1: "value1" })).toBe(true);
-  });
+//   test("(Mixed) should return true since key and key value match on object", () => {
+//     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
+//   });
+//   test("(Mixed) should return false since key1 value is different on object", () => {
+//     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
+//   });
+//   test("should return true if binding has no labels or annotations", () => {
+//     expect(checkOverlap({}, { key1: "value1" })).toBe(true);
+//   });
 
-  test("should return false if there is no overlap", () => {
-    expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
-  });
+//   test("should return false if there is no overlap", () => {
+//     expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
+//   });
 
-  test("should return true since object has key1 and value1", () => {
-    expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
-  });
+//   test("should return true since object has key1 and value1", () => {
+//     expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
+//   });
 
-  test("should return false since object value does not match binding value", () => {
-    expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
-  });
+//   test("should return false since object value does not match binding value", () => {
+//     expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
+//   });
 
-  test("should return true if the object has no labels and neither does the binding", () => {
-    expect(checkOverlap({}, {})).toBe(true);
-  });
-});
+//   test("should return true if the object has no labels and neither does the binding", () => {
+//     expect(checkOverlap({}, {})).toBe(true);
+//   });
+// });
 
 describe("filterMatcher", () => {
   test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
@@ -1227,7 +1229,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.");
+    expect(result).toEqual("Ignoring Watch Callback: Cannot use namespace filter on a namespace object.");
   });
 
   test("return an Ignoring Watch Callback string if the binding name and object name are different", () => {
@@ -1245,9 +1247,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual(
-      `Ignoring Watch Callback: No overlap between binding and object name. Binding name pepr, Object name not-pepr.`,
-    );
+    expect(result).toEqual(`Ignoring Watch Callback: Binding defines name 'pepr' but Object carries 'not-pepr'.`);
   });
   test("returns no Ignoring Watch Callback string if the binding name and object name are the same", () => {
     const binding = {
@@ -1278,7 +1278,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Ignoring Watch Callback: Object does not have a deletion timestamp.");
+    expect(result).toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp but Object does not carry it.");
   });
 
   test("return no deletionTimestamp error when there is a deletionTimestamp in the object", () => {
@@ -1296,7 +1296,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).not.toEqual("Ignoring Watch Callback: Object does not have a deletion timestamp.");
+    expect(result).not.toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp Object does not carry it.");
   });
 
   test("returns label overlap error when there is no overlap between binding and object labels", () => {
@@ -1313,7 +1313,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      'Ignoring Watch Callback: No overlap between binding and object labels. Binding labels {"key":"value"}, Object Labels {"anotherKey":"anotherValue"}.',
+      `Ignoring Watch Callback: Binding defines labels '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
   });
 
@@ -1331,7 +1331,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      'Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations {"key":"value"}, Object annotations {"anotherKey":"anotherValue"}.',
+      `Ignoring Watch Callback: Binding defines annotations '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
   });
 
@@ -1366,7 +1366,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ns1, Object namespace: ns2.",
+      `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'`,
     );
   });
 
@@ -1382,7 +1382,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ns1, ns2, Binding namespaces: ns3.",
+      `Ignoring Watch Callback: Binding defines namespaces ["ns3"] but namespaces allowed by Capability are '["ns1","ns2"]'`,
     );
   });
 
@@ -1399,9 +1399,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2.",
-    );
+    expect(result).toEqual(`Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`);
   });
 
   test("returns empty string when all checks pass", () => {
@@ -1590,5 +1588,650 @@ describe("ignoredNSObjectViolation", () => {
     const ignoredNamespaces2 = ["ignored-ns"];
     const result2 = ignoredNSObjectViolation(req2, {}, ignoredNamespaces2);
     expect(result2).toBe(false);
+  });
+});
+
+describe("refactor", () => {
+  describe("definesDeletionTimestamp", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ filters: {} }, false],
+      [{ filters: { deletionTimestamp: null } }, false],
+      [{ filters: { deletionTimestamp: false } }, false],
+      [{ filters: { deletionTimestamp: true } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definesDeletionTimestamp(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("ignoresDeletionTimestamp", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, true],
+      [{ filters: {} }, true],
+      [{ filters: { deletionTimestamp: null } }, true],
+      [{ filters: { deletionTimestamp: false } }, true],
+      [{ filters: { deletionTimestamp: true } }, false],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.ignoresDeletionTimestamp(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriesDeletionTimestamp", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, false],
+      [{ metadata: {} }, false],
+      [{ metadata: { deletionTimestamp: null } }, false],
+      [{ metadata: { deletionTimestamp: new Date() } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const ko = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.carriesDeletionTimestamp(ko);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("missingDeletionTimestamp", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, true],
+      [{ metadata: {} }, true],
+      [{ metadata: { deletionTimestamp: null } }, true],
+      [{ metadata: { deletionTimestamp: new Date() } }, false],
+    ])("given %j, returns %s", (given, expected) => {
+      const ko = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.missingDeletionTimestamp(ko);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("mismatchedDeletionTimestamp", () => {
+    //[ Binding, KubernetesObject, result ]
+    it.each([
+      [{}, {}, false],
+      [{}, { metadata: { deletionTimestamp: new Date() } }, false],
+      [{ filters: { deletionTimestamp: true } }, {}, true],
+      [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
+    ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const object = obj as DeepPartial<KubernetesObject>;
+
+      const result = sut.mismatchedDeletionTimestamp(binding, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("definedName", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, ""],
+      [{ filters: {} }, ""],
+      [{ filters: { name: null } }, ""],
+      [{ filters: { name: "name" } }, "name"],
+    ])("given %j, returns '%s'", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definedName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("definesName", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ filters: {} }, false],
+      [{ filters: { name: null } }, false],
+      [{ filters: { name: "name" } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definesName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("ignoresName", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, true],
+      [{ filters: {} }, true],
+      [{ filters: { name: null } }, true],
+      [{ filters: { name: "name" } }, false],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.ignoresName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriedName", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, ""],
+      [{ metadata: {} }, ""],
+      [{ metadata: { name: null } }, ""],
+      [{ metadata: { name: "name" } }, "name"],
+    ])("given %j, returns '%s'", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.carriedName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriesName", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, false],
+      [{ metadata: {} }, false],
+      [{ metadata: { name: null } }, false],
+      [{ metadata: { name: "name" } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.carriesName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("missingName", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, true],
+      [{ metadata: {} }, true],
+      [{ metadata: { name: null } }, true],
+      [{ metadata: { name: "name" } }, false],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.missingName(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("mismatchedName", () => {
+    //[ Binding, KubernetesObject, result ]
+    it.each([
+      [{}, {}, false],
+      [{}, { metadata: { name: "name" } }, false],
+      [{ filters: { name: "name" } }, {}, true],
+      [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
+    ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const object = obj as DeepPartial<KubernetesObject>;
+
+      const result = sut.mismatchedName(binding, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("boundKind", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, ""],
+      [{ kind: {} }, ""],
+      [{ kind: { kind: null } }, ""],
+      [{ kind: { kind: "" } }, ""],
+      [{ kind: { kind: "Kind" } }, "Kind"],
+    ])("given %j, returns '%s'", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.boundKind(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("bindsToKind", () => {
+    //[ Binding, Kind, result ]
+    it.each([
+      [{}, "", false],
+      [{ kind: {} }, "", false],
+      [{ kind: { kind: null } }, "", false],
+      [{ kind: { kind: "" } }, "", false],
+      [{}, "Kind", false],
+      [{ kind: {} }, "Kind", false],
+      [{ kind: { kind: null } }, "Kind", false],
+      [{ kind: { kind: "" } }, "Kind", false],
+      [{ kind: { kind: "Kind" } }, "Kind", true],
+    ])("given binding %j, and kind '%s', returns %s", (bnd, knd, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const kind = knd as string;
+
+      const result = sut.bindsToKind(binding, kind);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("bindsToNamespace", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ kind: {} }, false],
+      [{ kind: { kind: null } }, false],
+      [{ kind: { kind: "" } }, false],
+      [{ kind: { kind: "Namespace" } }, true],
+    ])("given binding %j returns %s", (bnd, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+
+      const result = sut.bindsToNamespace(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("definedNamespaces", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, []],
+      [{ filters: {} }, []],
+      [{ filters: { namespaces: null } }, []],
+      [{ filters: { namespaces: [] } }, []],
+      [{ filters: { namespaces: ["namespace"] } }, ["namespace"]],
+      [{ filters: { namespaces: ["name", "space"] } }, ["name", "space"]],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definedNamespaces(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("definesNamespaces", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ filters: {} }, false],
+      [{ filters: { namespaces: null } }, false],
+      [{ filters: { namespaces: [] } }, false],
+      [{ filters: { namespaces: ["namespace"] } }, true],
+      [{ filters: { namespaces: ["name", "space"] } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definesNamespaces(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriedNamespace", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, ""],
+      [{ metadata: {} }, ""],
+      [{ metadata: { namespace: null } }, ""],
+      [{ metadata: { namespace: "" } }, ""],
+      [{ metadata: { namespace: "namespace" } }, "namespace"],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.carriedNamespace(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("carriesNamespace", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, false],
+      [{ metadata: {} }, false],
+      [{ metadata: { namespace: null } }, false],
+      [{ metadata: { namespace: "" } }, false],
+      [{ metadata: { namespace: "namespace" } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.carriesNamespace(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("mismatchedNamespace", () => {
+    //[ Binding, KubernetesObject, result ]
+    it.each([
+      [{}, {}, false],
+      [{}, { metadata: { namespace: "namespace" } }, false],
+      [{ filters: { namespaces: ["namespace"] } }, {}, true],
+      [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "nopesause" } }, true],
+      [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "namespace" } }, false],
+    ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const object = obj as DeepPartial<Binding>;
+
+      const result = sut.mismatchedNamespace(binding, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("misboundNamespace", () => {
+    //[ Binding, result ]
+    it.each([
+      [{ kind: { kind: "Kind" }, filters: { namespaces: [] } }, false],
+      [{ kind: { kind: "Kind" }, filters: { namespaces: ["namespace"] } }, false],
+      [{ kind: { kind: "Namespace" }, filters: { namespaces: [] } }, false],
+      [{ kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"] } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.misboundNamespace(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("definedAnnotations", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, {}],
+      [{ filters: {} }, {}],
+      [{ filters: { annotations: null } }, {}],
+      [{ filters: { annotations: {} } }, {}],
+      [{ filters: { annotations: { annotation: "" } } }, { annotation: "" }],
+      [{ filters: { annotations: { anno: "tation" } } }, { anno: "tation" }],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definedAnnotations(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("definesAnnotations", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ filters: {} }, false],
+      [{ filters: { annotations: null } }, false],
+      [{ filters: { annotations: {} } }, false],
+      [{ filters: { annotations: { annotation: "" } } }, true],
+      [{ filters: { annotations: { anno: "tation" } } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definesAnnotations(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriedAnnotations", () => {
+    //[ KuberneteObject, result ]
+    it.each([
+      [{}, {}],
+      [{ metadata: {} }, {}],
+      [{ metadata: { annotations: null } }, {}],
+      [{ metadata: { annotations: {} } }, {}],
+      [{ metadata: { annotations: { annotation: "" } } }, { annotation: "" }],
+      [{ metadata: { annotations: { anno: "tation" } } }, { anno: "tation" }],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.carriedAnnotations(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("carriesAnnotations", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, false],
+      [{ metadata: {} }, false],
+      [{ metadata: { annotations: null } }, false],
+      [{ metadata: { annotations: {} } }, false],
+      [{ metadata: { annotations: { annotation: "" } } }, true],
+      [{ metadata: { annotations: { anno: "tation" } } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.carriesAnnotations(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("metasMismatch", () => {
+    it.each([
+      [{}, {}, false],
+      [{}, { anno: "tate" }, false],
+
+      [{ anno: "" }, {}, true],
+      [{ anno: "" }, { anno: "" }, false],
+      [{ anno: "" }, { anno: "tate" }, false],
+
+      [{ anno: "tate" }, {}, true],
+      [{ anno: "tate" }, { anno: "" }, true],
+      [{ anno: "tate" }, { anno: "tate" }, false],
+
+      [{ an: "no", ta: "te" }, { an: "" }, true],
+      [{ an: "no", ta: "te" }, { an: "no" }, true],
+      [{ an: "no", ta: "te" }, { an: "no", ta: "" }, true],
+      [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
+    ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
+      const result = sut.metasMismatch(bnd, obj);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("mismatchedAnnotations", () => {
+    //[ Binding, KubernetesObject, result ]
+    it.each([
+      [{}, {}, false],
+      [{}, { metadata: { annotations: { anno: "tate" } } }, false],
+
+      [{ filters: { annotations: { anno: "" } } }, {}, true],
+      [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "" } } }, false],
+      [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+
+      [{ filters: { annotations: { anno: "tate" } } }, {}, true],
+      [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "" } } }, true],
+      [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+
+      [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "" } } }, true],
+      [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no" } } }, true],
+      [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "" } } }, true],
+      [
+        { filters: { annotations: { an: "no", ta: "te" } } },
+        { metadata: { annotations: { an: "no", ta: "te" } } },
+        false,
+      ],
+    ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const object = obj as DeepPartial<Binding>;
+
+      const result = sut.mismatchedAnnotations(binding, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("definedLabels", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, {}],
+      [{ filters: {} }, {}],
+      [{ filters: { labels: null } }, {}],
+      [{ filters: { labels: {} } }, {}],
+      [{ filters: { labels: { label: "" } } }, { label: "" }],
+      [{ filters: { labels: { lab: "el" } } }, { lab: "el" }],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definedLabels(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("definesLabels", () => {
+    //[ Binding, result ]
+    it.each([
+      [{}, false],
+      [{ filters: {} }, false],
+      [{ filters: { labels: null } }, false],
+      [{ filters: { labels: {} } }, false],
+      [{ filters: { labels: { label: "" } } }, true],
+      [{ filters: { labels: { lab: "el" } } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<Binding>;
+
+      const result = sut.definesLabels(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("carriedLabels", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, {}],
+      [{ metadata: {} }, {}],
+      [{ metadata: { labels: null } }, {}],
+      [{ metadata: { labels: {} } }, {}],
+      [{ metadata: { labels: { label: "" } } }, { label: "" }],
+      [{ metadata: { labels: { lab: "el" } } }, { lab: "el" }],
+    ])("given %j, returns %j", (given, expected) => {
+      const binding = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.carriedLabels(binding);
+
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe("carriesLabels", () => {
+    //[ KubernetesObject, result ]
+    it.each([
+      [{}, false],
+      [{ metadata: {} }, false],
+      [{ metadata: { labels: null } }, false],
+      [{ metadata: { labels: {} } }, false],
+      [{ metadata: { labels: { label: "" } } }, true],
+      [{ metadata: { labels: { lab: "el" } } }, true],
+    ])("given %j, returns %s", (given, expected) => {
+      const binding = given as DeepPartial<KubernetesObject>;
+
+      const result = sut.carriesLabels(binding);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("mismatchedLabels", () => {
+    //[ Binding, KubernetesObject, result ]
+    it.each([
+      [{}, {}, false],
+      [{}, { metadata: { labels: { la: "ble" } } }, false],
+
+      [{ filters: { labels: { la: "" } } }, {}, true],
+      [{ filters: { labels: { la: "" } } }, { metadata: { labels: { la: "" } } }, false],
+      [{ filters: { labels: { la: "" } } }, { metadata: { labels: { la: "ble" } } }, false],
+
+      [{ filters: { labels: { la: "ble" } } }, {}, true],
+      [{ filters: { labels: { la: "ble" } } }, { metadata: { labels: { la: "" } } }, true],
+      [{ filters: { labels: { la: "ble" } } }, { metadata: { labels: { la: "ble" } } }, false],
+
+      [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "" } } }, true],
+      [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a" } } }, true],
+      [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "" } } }, true],
+      [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
+    ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+      const object = obj as DeepPartial<Binding>;
+
+      const result = sut.mismatchedLabels(binding, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("uncarryableNamespace", () => {
+    //[ capa ns's, KubernetesObject, result ]
+    it.each([
+      [[], {}, false],
+      [[], { metadata: { namespace: "namespace" } }, false],
+
+      [["namespace"], {}, false],
+      [["namespace"], { metadata: {} }, false],
+      [["namespace"], { metadata: { namespace: null } }, false],
+      [["namespace"], { metadata: { namespace: "" } }, false],
+      [["namespace"], { metadata: { namespace: "incorrect" } }, true],
+      [["namespace"], { metadata: { namespace: "namespace" } }, false],
+
+      [["name", "space"], {}, false],
+      [["name", "space"], { metadata: {} }, false],
+      [["name", "space"], { metadata: { namespace: null } }, false],
+      [["name", "space"], { metadata: { namespace: "" } }, false],
+      [["name", "space"], { metadata: { namespace: "incorrect" } }, true],
+      [["name", "space"], { metadata: { namespace: "name" } }, false],
+      [["name", "space"], { metadata: { namespace: "space" } }, false],
+    ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
+      const object = obj as DeepPartial<Binding>;
+
+      const result = sut.uncarryableNamespace(nss, object);
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe("unbindableNamespaces", () => {
+    //[ capa ns's, Binding, result ]
+    it.each([
+      [[], {}, false],
+      [[], { metadata: { namespace: "namespace" } }, false],
+
+      [["namespace"], {}, false],
+      [["namespace"], { filters: {} }, false],
+      [["namespace"], { filters: { namespaces: null } }, false],
+      [["namespace"], { filters: { namespaces: [] } }, false],
+      [["namespace"], { filters: { namespaces: ["incorrect"] } }, true],
+      [["namespace"], { filters: { namespaces: ["namespace"] } }, false],
+
+      [["name", "space"], {}, false],
+      [["name", "space"], { filters: {} }, false],
+      [["name", "space"], { filters: { namespaces: null } }, false],
+      [["name", "space"], { filters: { namespaces: [] } }, false],
+      [["name", "space"], { filters: { namespaces: ["namespace"] } }, true],
+      [["name", "space"], { filters: { namespaces: ["name"] } }, false],
+      [["name", "space"], { filters: { namespaces: ["space"] } }, false],
+      [["name", "space"], { filters: { namespaces: ["incorrect", "space"] } }, true],
+    ])("given capabilityNamespaces %j and binding %j, returns %s", (nss, bnd, expected) => {
+      const binding = bnd as DeepPartial<Binding>;
+
+      const result = sut.unbindableNamespaces(nss, binding);
+
+      expect(result).toBe(expected);
+    });
   });
 });

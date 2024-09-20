@@ -4,9 +4,9 @@
 import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { Binding, CapabilityExport } from "./types";
+import { AdmissionRequest, Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { AdmissionRequest } from "./types";
+import { __, allPass, complement, curry, defaultTo, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
 
 export function ignoredNSObjectViolation(
   req: Partial<AdmissionRequest> = {},
@@ -141,6 +141,107 @@ export function filterNoMatchReasonRegex(
 
   return result;
 }
+
+export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
+export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
+
+export const carriesDeletionTimestamp = pipe(obj => !!obj.metadata?.deletionTimestamp, defaultTo(false));
+export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
+
+export const mismatchedDeletionTimestamp = allPass([
+  pipe(nthArg(0), definesDeletionTimestamp),
+  pipe(nthArg(1), missingDeletionTimestamp),
+]);
+
+export const definedName = pipe(binding => binding?.filters?.name, defaultTo(""));
+export const definesName = pipe(definedName, equals(""), not);
+export const ignoresName = complement(definesName);
+
+export const carriedName = pipe(obj => obj?.metadata?.name, defaultTo(""));
+export const carriesName = pipe(carriedName, equals(""), not);
+export const missingName = complement(carriesName);
+
+export const mismatchedName = allPass([
+  pipe(nthArg(0), definesName),
+  pipe((bnd, obj) => definedName(bnd) !== carriedName(obj)),
+]);
+
+export const boundKind = pipe(binding => binding?.kind?.kind, defaultTo(""));
+export const bindsToKind = curry(
+  allPass([pipe(nthArg(0), boundKind, equals(""), not), pipe((bnd, knd) => boundKind(bnd) === knd)]),
+);
+export const bindsToNamespace = curry(pipe(bindsToKind(__, "Namespace")));
+export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
+export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
+
+export const carriedNamespace = pipe(obj => obj?.metadata?.namespace, defaultTo(""));
+export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
+
+export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
+export const mismatchedNamespace = allPass([
+  pipe(nthArg(0), definesNamespaces),
+  pipe((bnd, obj) => definedNamespaces(bnd).includes(carriedNamespace(obj)), not),
+]);
+
+export const definedAnnotations = pipe(binding => binding?.filters?.annotations, defaultTo({}));
+export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
+
+export const carriedAnnotations = pipe(obj => obj?.metadata?.annotations, defaultTo({}));
+export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
+
+export const metasMismatch = pipe(
+  (defined, carried) => {
+    const result = { defined, carried, unalike: {} };
+
+    result.unalike = Object.entries(result.defined)
+      .map(([key, val]) => {
+        const keyMissing = !Object.hasOwn(result.carried, key);
+        const noValue = !val;
+        const valMissing = !result.carried[key];
+
+        // prettier-ignore
+        return (
+          keyMissing ? { [key]: val } :
+          noValue ? {} :
+          valMissing ? { [key]: val } :
+          {}
+        )
+      })
+      .reduce((acc, cur) => ({ ...acc, ...cur }), {});
+
+    return result.unalike;
+  },
+  unalike => Object.keys(unalike).length > 0,
+);
+
+export const mismatchedAnnotations = allPass([
+  pipe(nthArg(0), definesAnnotations),
+  pipe((bnd, obj) => metasMismatch(definedAnnotations(bnd), carriedAnnotations(obj))),
+]);
+
+export const definedLabels = pipe(binding => binding?.filters?.labels, defaultTo({}));
+export const definesLabels = pipe(definedLabels, equals({}), not);
+
+export const carriedLabels = pipe(obj => obj?.metadata?.labels, defaultTo({}));
+export const carriesLabels = pipe(carriedLabels, equals({}), not);
+
+export const mismatchedLabels = allPass([
+  pipe(nthArg(0), definesLabels),
+  pipe((bnd, obj) => metasMismatch(definedLabels(bnd), carriedLabels(obj))),
+]);
+
+export const uncarryableNamespace = allPass([
+  pipe(nthArg(0), length, gt(__, 0)),
+  pipe(nthArg(1), carriesNamespace),
+  pipe((nss, obj) => nss.includes(carriedNamespace(obj)), not),
+]);
+
+export const unbindableNamespaces = allPass([
+  pipe(nthArg(0), length, gt(__, 0)),
+  pipe(nthArg(1), definesNamespaces),
+  pipe((nss, bnd) => difference(definedNamespaces(bnd), nss), length, equals(0), not),
+]);
+
 /**
  * Decide to run callback after the event comes back from API Server
  **/
@@ -149,80 +250,51 @@ export function filterNoMatchReason(
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
 ): string {
-  // binding deletionTimestamp filter and object deletionTimestamp dont match
-  if (binding.filters?.deletionTimestamp && !obj.metadata?.deletionTimestamp) {
-    return `Ignoring Watch Callback: Object does not have a deletion timestamp.`;
-  }
+  const prefix = "Ignoring Watch Callback:";
 
-  // Check that if binding has a name filter, it matches the object name
-  if (binding.filters?.name && binding.filters.name !== obj.metadata?.name) {
-    return `Ignoring Watch Callback: No overlap between binding and object name. Binding name ${binding.filters.name}, Object name ${obj.metadata?.name}.`;
-  }
+  // prettier-ignore
+  return (
+    mismatchedDeletionTimestamp(binding, obj) ?
+      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
 
-  // binding kind is namespace with a InNamespace filter
-  if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
-    return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
-  }
+    mismatchedName(binding, obj) ?
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
 
-  if (typeof obj === "object" && obj !== null && "metadata" in obj && obj.metadata !== undefined && binding.filters) {
-    // binding labels and object labels dont match
-    if (obj.metadata.labels && !checkOverlap(binding.filters.labels, obj.metadata.labels)) {
-      return `Ignoring Watch Callback: No overlap between binding and object labels. Binding labels ${JSON.stringify(
-        binding.filters.labels,
-      )}, Object Labels ${JSON.stringify(obj.metadata.labels)}.`;
-    }
+    misboundNamespace(binding) ?
+      `${prefix} Cannot use namespace filter on a namespace object.` :
 
-    // binding annotations and object annotations dont match
-    if (obj.metadata.annotations && !checkOverlap(binding.filters.annotations, obj.metadata.annotations)) {
-      return `Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations ${JSON.stringify(
-        binding.filters.annotations,
-      )}, Object annotations ${JSON.stringify(obj.metadata.annotations)}.`;
-    }
-  }
+    mismatchedLabels(binding, obj) ?
+      (
+        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
+        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
+      ) :
 
-  // Check object is in the capability namespace
-  if (
-    Array.isArray(capabilityNamespaces) &&
-    capabilityNamespaces.length > 0 &&
-    obj.metadata &&
-    obj.metadata.namespace &&
-    !capabilityNamespaces.includes(obj.metadata.namespace)
-  ) {
-    return `Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ${capabilityNamespaces.join(
-      ", ",
-    )}, Object namespace: ${obj.metadata.namespace}.`;
-  }
+    mismatchedAnnotations(binding, obj) ?
+      (
+        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
+        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+      ) :
 
-  // chceck every filter namespace is a capability namespace
-  if (
-    Array.isArray(capabilityNamespaces) &&
-    capabilityNamespaces.length > 0 &&
-    binding.filters &&
-    Array.isArray(binding.filters.namespaces) &&
-    binding.filters.namespaces.length > 0 &&
-    !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
-  ) {
-    return `Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ${capabilityNamespaces.join(
-      ", ",
-    )}, Binding namespaces: ${binding.filters.namespaces.join(", ")}.`;
-  }
+    uncarryableNamespace(capabilityNamespaces, obj) ?
+      (
+        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+      ) :
 
-  // filter namespace is not the same of object namespace
-  if (
-    binding.filters &&
-    Array.isArray(binding.filters.namespaces) &&
-    binding.filters.namespaces.length > 0 &&
-    obj.metadata &&
-    obj.metadata.namespace &&
-    !binding.filters.namespaces.includes(obj.metadata.namespace)
-  ) {
-    return `Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ${binding.filters.namespaces.join(
-      ", ",
-    )}, Object namespace: ${obj.metadata.namespace}.`;
-  }
+    unbindableNamespaces(capabilityNamespaces, binding) ?
+      (
+        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+      ) :
 
-  // no problems
-  return "";
+    mismatchedNamespace(binding, obj) ?
+      (
+        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
+        `but Object carries '${carriedNamespace(obj)}'.`
+      ):
+
+    ""
+  );
 }
 
 export function addVerbIfNotExists(verbs: string[], verb: string) {
