@@ -21,8 +21,11 @@ import {
   ValidateAction,
   ValidateActionChain,
   WatchLogAction,
+  FinalizeAction,
+  FinalizeActionChain,
   WhenSelector,
 } from "./types";
+import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -259,8 +262,8 @@ export class Capability implements CapabilityExport {
       // Now only allow adding actions to the same binding
       return { Watch, Validate, Reconcile };
     }
-
-    function Watch(watchCallback: WatchLogAction<T>): void {
+    
+    function Watch(watchCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
@@ -280,19 +283,9 @@ export class Capability implements CapabilityExport {
 
         console.log("Watch binding has been added", bindings);
       }
-    }
 
-    /*     function Reconcile(watchCallback: WatchAction<T>) {
-      if (registerWatch) {
-        log("Reconcile Action", watchCallback.toString());
-        bindings.push({
-          ...binding,
-          isWatch: true,
-          isQueue: true,
-          watchCallback,
-        });
-      }
-    } */
+      return { Finalize };
+    }
 
     function Reconcile(reconcileCallback: WatchLogAction<T>): void {
       if (registerWatch) {
@@ -311,6 +304,38 @@ export class Capability implements CapabilityExport {
           },
         });
       }
+      return { Finalize };
+    }
+
+    function Finalize(finalizeCallback: FinalizeAction<T>) {
+      log("Finalize Action", finalizeCallback.toString());
+
+      // add binding to inject pepr finalizer during admission (Mutate)
+      if (registerAdmission) {
+        const mutateBinding = {
+          ...binding,
+          isMutate: true,
+          isFinalize: true,
+          event: Event.Any,
+          mutateCallback: addFinalizer,
+        };
+        bindings.push(mutateBinding);
+      }
+
+      // add binding to process finalizer callback / remove pepr finalizer (Watch)
+      if (registerWatch) {
+        const watchBinding = {
+          ...binding,
+          isWatch: true,
+          isFinalize: true,
+          event: Event.Update,
+          finalizeCallback,
+        };
+        bindings.push(watchBinding);
+      }
+
+      return { Finalize };
+      
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
