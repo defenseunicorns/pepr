@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test } from "@jest/globals";
+import { expect, it } from "@jest/globals";
 
 import { sanitizeName } from "./utils";
 
-test("sanitizeName() sanitizes names correctly", () => {
-  const cases = [
-    {
-      input: "My Test Module",
-      expected: "my-test-module",
-    },
-    {
-      input: "!! 123 @@ Module",
-      expected: "123-module",
-    },
-    {
-      input: "---Test-Module---",
-      expected: "test-module",
-    },
-  ];
+it.each([
+  //Test sanitizeName() with ["$BAD_INPUT", "$SANITIZED_INPUT"]
+  ["My Test Module", "my-test-module"],
+  ["!! 123 @@ Module", "123-module"],
+  ["---Test-Module---", "test-module"],
+])("sanitizeName() sanitizes '%s' correctly", (input: string, expected: string) => {
+  expect(sanitizeName(input)).toBe(expected);
+});
 
-  for (const { input, expected } of cases) {
-    const result = sanitizeName(input);
-    expect(result).toBe(expected);
-  }
+it("sanitizeName() should throw TypeError when given a non-string", () => {
+  expect(() => sanitizeName({ input: 0 } as unknown as string)).toThrow(TypeError);
 });

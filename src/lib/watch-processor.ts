@@ -4,6 +4,7 @@ import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-c
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
+import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
@@ -19,8 +20,8 @@ const queues: Record<string, Queue<KubernetesObject>> = {};
  * @returns The key to a Queue in the list of queues
  */
 export function queueKey(obj: KubernetesObject) {
-  const options = ["singular", "sharded"];
-  const d3fault = "singular";
+  const options = ["kind", "kindNs", "kindNsName", "global"];
+  const d3fault = "kind";
 
   let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
   strat = options.includes(strat) ? strat : d3fault;
@@ -29,7 +30,13 @@ export function queueKey(obj: KubernetesObject) {
   const kind = obj.kind ?? "UnknownKind";
   const name = obj.metadata?.name ?? "Unnamed";
 
-  return strat === "singular" ? `${kind}/${ns}` : `${kind}/${name}/${ns}`;
+  const lookup: Record<string, string> = {
+    kind: `${kind}`,
+    kindNs: `${kind}/${ns}`,
+    kindNsName: `${kind}/${ns}/${name}`,
+    global: "global",
+  };
+  return lookup[strat];
 }
 
 export function getOrCreateQueue(obj: KubernetesObject) {
@@ -94,7 +101,20 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
         if (filterMatch === "") {
-          await binding.watchCallback?.(obj, phase);
+          if (binding.isFinalize) {
+            if (!obj.metadata?.deletionTimestamp) {
+              return;
+            }
+            try {
+              await binding.finalizeCallback?.(obj);
+
+              // irrespective of callback success / failure, remove pepr finalizer
+            } finally {
+              await removeFinalizer(binding, obj);
+            }
+          } else {
+            await binding.watchCallback?.(obj, phase);
+          }
         } else {
           Log.debug(filterMatch);
         }

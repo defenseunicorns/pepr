@@ -6,6 +6,7 @@ import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
+import { Answers } from "prompts";
 
 /**
  * Specifically for deploying images with a private registry
@@ -87,6 +88,7 @@ export type Binding = {
   isValidate?: boolean;
   isWatch?: boolean;
   isQueue?: boolean;
+  isFinalize?: boolean;
   readonly model: GenericClass;
   readonly kind: GroupVersionKind;
   readonly filters: {
@@ -99,6 +101,7 @@ export type Binding = {
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
   readonly watchCallback?: WatchAction<GenericClass, InstanceType<GenericClass>>;
+  readonly finalizeCallback?: FinalizeAction<GenericClass, InstanceType<GenericClass>>;
 };
 
 export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
@@ -176,7 +179,7 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Watch: (action: WatchAction<T, InstanceType<T>>) => void;
+  Watch: (action: WatchAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
 
   /**
    * Establish a reconcile for the specified resource. The callback function will be executed after the admission controller has
@@ -189,7 +192,7 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Reconcile: (action: WatchAction<T, InstanceType<T>>) => void;
+  Reconcile: (action: WatchAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
 };
 
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
@@ -230,3 +233,24 @@ export type ValidateActionResponse = {
   statusCode?: number;
   statusMessage?: string;
 };
+
+export type FinalizeAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  update: K,
+) => Promise<void> | void;
+
+export type FinalizeActionChain<T extends GenericClass> = {
+  /**
+   * Establish a finalizer for the specified resource. The callback given will be executed by the watch
+   * controller after it has received notification of an update adding a deletionTimestamp.
+   *
+   * **Beta Function**: This method is still in early testing and edge cases may still exist.
+   *
+   * @since 0.35.0
+   *
+   * @param action
+   * @returns
+   */
+  Finalize: (action: FinalizeAction<T, InstanceType<T>>) => void;
+};
+
+export type InitOptions = Answers<"name" | "description" | "errorBehavior">;

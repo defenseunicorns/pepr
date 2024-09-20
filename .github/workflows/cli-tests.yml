@@ -1,0 +1,77 @@
+name: CLI tests
+
+permissions: read-all
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  pepr-build:
+    name: controller image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: clone pepr
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: setup node
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+        with:
+          node-version: 20
+          cache-dependency-path: pepr
+
+      - name: Prep for CLI tests
+        run: |
+          cd "$PEPR"
+          npm ci
+
+      - name: pepr init - displays the help menu
+        run: |
+          cd "$PEPR"
+          npm run gen-data-json
+          npx ts-node src/cli.ts init --help > result.log
+          grep " \-\-name" result.log
+          grep " \-\-description" result.log
+          grep " \-\-errorBehavior" result.log
+          grep " \-\-confirm" result.log
+
+      - name: pepr init - creates a module with input from flags
+        run: |
+          cd "$PEPR"
+          npm run gen-data-json
+          npx ts-node src/cli.ts init \
+            --name my-flagged-module \
+            --description "Set by flag" \
+            --errorBehavior reject \
+            --confirm \
+            --skip-post-init
+          RESULT_FILE="my-flagged-module/package.json"
+          grep "my-flagged-module" $RESULT_FILE
+          grep "Set by flag" $RESULT_FILE
+          grep "reject" $RESULT_FILE
+
+      - name: pepr init - creates a module with input from stdin
+        run: |
+          cd "$PEPR"
+          npm run gen-data-json
+          echo "stdin-module" | npx ts-node src/cli.ts init \
+            --description "Set by flag" \
+            --errorBehavior reject \
+            --confirm \
+            --skip-post-init
+          RESULT_FILE="stdin-module/package.json"
+          grep "stdin-module" $RESULT_FILE
+          grep "Set by flag" $RESULT_FILE
+          grep "reject" $RESULT_FILE
