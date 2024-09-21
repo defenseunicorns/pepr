@@ -3,6 +3,14 @@
 
 ## How do I remove the punycode warning?
 
+By default, warnings are removed. You can allow warnings by setting the `PEPR_NODE_WARNINGS` environment variable.
+
+```bash
+PEPR_NODE_WARNINGS="true"
+```
+
+If you allow warnings, you can disable the specific punycode warning by:
+
 ```bash
 export NODE_OPTIONS="--disable-warning=DEP0040"
 ```
@@ -12,6 +20,7 @@ or
 ```bash
 npx --node-options="--disable-warning=DEP0040" pepr [command]
 ```
+
 
 ## How does Pepr compare to Operator SDK?
 
