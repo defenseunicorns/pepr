@@ -307,10 +307,13 @@ export class Capability implements CapabilityExport {
       return { Finalize };
     }
 
-    function Finalize(finalizeCallback: FinalizeAction<T>) {
+    function Finalize(finalizeCallback: FinalizeAction<T>): void {
       log("Finalize Action", finalizeCallback.toString());
 
-      // add binding to inject pepr finalizer during admission (Mutate)
+      // Create the child logger and cast it to the expected type
+      const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+      // Add binding to inject Pepr finalizer during admission (Mutate)
       if (registerAdmission) {
         const mutateBinding = {
           ...binding,
@@ -322,20 +325,22 @@ export class Capability implements CapabilityExport {
         bindings.push(mutateBinding);
       }
 
-      // add binding to process finalizer callback / remove pepr finalizer (Watch)
+      // Add binding to process finalizer callback / remove Pepr finalizer (Watch)
       if (registerWatch) {
         const watchBinding = {
           ...binding,
           isWatch: true,
           isFinalize: true,
           event: Event.Update,
-          finalizeCallback,
+          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
+            Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
+            await finalizeCallback(update, logger);
+          },
         };
         bindings.push(watchBinding);
       }
-
-      return { Finalize };
     }
+
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);

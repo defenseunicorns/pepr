@@ -382,6 +382,33 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
   });
 
+  /* it("should use child logger for finalize callback", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
+      async (update, logger: typeof Log = mockLog) => {
+        logger.info("Finalize action log");
+      },
+    );
+
+    capability.When(a.Pod).IsCreatedOrUpdated().Finalize(mockFinalizeCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+    const binding = capability.bindings[0];
+
+    // Simulate calling the finalize action
+    const testPod = new V1Pod();
+
+    if (binding.finalizeCallback) {
+      await binding.finalizeCallback(testPod);
+    }
+
+    expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
+  }); */
+
   it("should add deletionTimestamp filter", () => {
     const capability = new Capability(capabilityConfig);
 

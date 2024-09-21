@@ -251,6 +251,7 @@ export type ValidateActionResponse = {
 
 export type FinalizeAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
+  logger?: Logger,
 ) => Promise<void> | void;
 
 export type FinalizeActionChain<T extends GenericClass> = {
