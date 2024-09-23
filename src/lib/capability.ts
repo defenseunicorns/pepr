@@ -314,13 +314,13 @@ export class Capability implements CapabilityExport {
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
-      return { ...commonChain, WithName, WithRegexName };
+      return { ...commonChain, WithName, WithNameRegex };
     }
 
-    function InRegexNamespace(...namespaces: RegExp[]): BindingWithName<T> {
+    function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
       Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
       binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
-      return { ...commonChain, WithName, WithRegexName };
+      return { ...commonChain, WithName, WithNameRegex };
     }
 
     function WithDeletionTimestamp(): BindingFilter<T> {
@@ -329,7 +329,7 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
-    function WithRegexName(regexName: RegExp): BindingFilter<T> {
+    function WithNameRegex(regexName: RegExp): BindingFilter<T> {
       Log.debug(`Add regex name filter ${regexName}`, prefix);
       binding.filters.regexName = regexName.source;
       return commonChain;
@@ -358,9 +358,9 @@ export class Capability implements CapabilityExport {
       return {
         ...commonChain,
         InNamespace,
-        InRegexNamespace,
+        InNamespaceRegex,
         WithName,
-        WithRegexName,
+        WithNameRegex,
         WithDeletionTimestamp,
       };
     }
