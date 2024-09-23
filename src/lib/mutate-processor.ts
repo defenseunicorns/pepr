@@ -50,7 +50,7 @@ export async function mutateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequestRegex(action, req, namespaces, config.alwaysIgnore.namespaces)) {
+      if (shouldSkipRequestRegex(action, req, namespaces, config?.alwaysIgnore?.namespaces || [])) {
         continue;
       }
 
