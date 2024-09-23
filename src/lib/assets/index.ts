@@ -65,7 +65,7 @@ export class Assets {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
-      namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces || []);
+      namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
     return allYaml(this, rbacMode, imagePullSecret);
