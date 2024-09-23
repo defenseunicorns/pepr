@@ -7,7 +7,7 @@ import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequestRegex } from "./filter";
 import { Event, Binding } from "./types";
-import { AdmissionRequest } from "./k8s";
+import { AdmissionRequest } from "./types";
 
 export const callback = () => undefined;
 

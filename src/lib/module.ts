@@ -4,8 +4,8 @@ import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Controller } from "./controller";
 import { ValidateError } from "./errors";
-import { AdmissionRequest, MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
-import { CapabilityExport } from "./types";
+import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
+import { CapabilityExport, AdmissionRequest } from "./types";
 import { setupWatch } from "./watch-processor";
 import { Log } from "../lib";
 
@@ -108,7 +108,7 @@ export class PeprModule {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
         try {
-          setupWatch(capabilities);
+          setupWatch(capabilities, pepr?.alwaysIgnore?.namespaces);
         } catch (e) {
           Log.error(e, "Error setting up watch");
           process.exit(1);
