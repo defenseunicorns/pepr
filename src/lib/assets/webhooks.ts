@@ -82,7 +82,7 @@ export async function webhookConfig(
   const ignore = [peprIgnoreLabel];
 
   const { name, tls, config, apiToken, host } = assets;
-  const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces || []);
+  const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces);
 
   // Add any namespaces to ignore
   if (ignoreNS) {
