@@ -3,10 +3,8 @@
 
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
-
-import { AdmissionRequest } from "./k8s";
-import { Operation } from "./types";
-import { DeepPartial } from "./types";
+import { Operation, AdmissionRequest, DeepPartial } from "./types";
+import {} from "./types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context

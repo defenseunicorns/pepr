@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { matchesRegex, ignoredNSObjectViolation } from "./helpers";
-import { AdmissionRequest } from "./k8s";
+import { AdmissionRequest } from "./types";
 import logger from "./logger";
 import { Binding, Event } from "./types";
 import { Operation } from "./types";

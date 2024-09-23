@@ -3,9 +3,7 @@
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-
-import { AdmissionRequest } from "./k8s";
-import { ValidateActionResponse } from "./types";
+import { ValidateActionResponse, AdmissionRequest } from "./types";
 import { PeprValidateRequest } from "./validate-request";
 import { Operation } from "./types";
 describe("PeprValidateRequest", () => {

@@ -6,7 +6,7 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { AdmissionRequest } from "./k8s";
+import { AdmissionRequest } from "./types";
 
 export function ignoredNSObjectViolation(
   req: Partial<AdmissionRequest> = {},
