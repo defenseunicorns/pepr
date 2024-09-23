@@ -139,7 +139,7 @@ export default function (program: RootCmd) {
 
       // If registry is set to Iron Bank, use Iron Bank image
       if (opts?.registry == "Iron Bank") {
-        console.warn(
+        console.info(
           `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
         );
         image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
@@ -348,7 +348,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
 
         // If the regex didn't match, leave a generic error
         if (conflicts.length < 1) {
-          console.warn(
+          console.info(
             `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
             "Version Conflict",
           );
@@ -356,7 +356,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
 
         // Otherwise, loop through each conflicting package and print an error
         conflicts.forEach(match => {
-          console.warn(
+          console.info(
             `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
             "Version Conflict",
           );

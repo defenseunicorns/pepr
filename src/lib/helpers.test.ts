@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport, Event } from "./types";
 import {
   createRBACMap,
   addVerbIfNotExists,
   checkOverlap,
-  filterNoMatchReason,
+  filterNoMatchReasonRegex,
   validateHash,
   ValidationError,
   validateCapabilityNames,
+  matchesRegex,
+  ignoredNSObjectViolation,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
@@ -29,9 +31,12 @@ import {
 } from "./helpers";
 import { SpiedFunction } from "jest-mock";
 
-import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
+import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
+import { Operation } from "./types";
+
+export const callback = () => undefined;
 
 jest.mock("kubernetes-fluent-client", () => {
   return {
@@ -606,8 +611,75 @@ describe("namespaceComplianceValidator", () => {
   afterEach(() => {
     errorSpy.mockRestore();
   });
-
-  test("should not throw an error for invalid namespaces", () => {
+  test("should throw error for invalid regex namespaces", () => {
+    const nsViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [new RegExp(/^system/).source],
+        },
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nsViolationCapability);
+    }).toThrowError(
+      `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${nsViolationCapability.bindings[0].filters.regexNamespaces[0]}.`,
+    );
+  });
+  test("should not throw an error for valid regex namespaces", () => {
+    const nonnsViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [new RegExp(/^mia/).source],
+        },
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonnsViolationCapability);
+    }).not.toThrow();
+  });
+  test("should throw error for invalid regex ignored namespaces", () => {
+    const nsViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [new RegExp(/^mia/).source],
+        },
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nsViolationCapability, ["miami"]);
+    }).toThrowError(
+      `Ignoring Watch Callback: Regex namespace: ${nsViolationCapability.bindings[0].filters.regexNamespaces[0]}, is an ignored namespace: miami.`,
+    );
+  });
+  test("should not throw an error for valid regex ignored namespaces", () => {
+    const nonnsViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: [],
+          regexNamespaces: [new RegExp(/^mia/).source],
+        },
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonnsViolationCapability, ["Seattle"]);
+    }).not.toThrow();
+  });
+  test("should not throw an error for valid namespaces", () => {
     expect(() => {
       namespaceComplianceValidator(nonNsViolation[0]);
     }).not.toThrow();
@@ -1041,6 +1113,108 @@ describe("checkOverlap", () => {
 });
 
 describe("filterMatcher", () => {
+  test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexNamespaces: [/(.*)-system/], namespaces: [] },
+    };
+    const obj = { metadata: { namespace: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { namespace: "pepr-demo" } },
+      { ...obj, metadata: { namespace: "pepr-uds" } },
+      { ...obj, metadata: { namespace: "pepr-core" } },
+      { ...obj, metadata: { namespace: "uds-ns" } },
+      { ...obj, metadata: { namespace: "uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(
+        `Ignoring Watch Callback: Object namespace ${object.metadata?.namespace} does not match regex ${binding.filters.regexNamespaces[0]}.`,
+      );
+    });
+  });
+
+  test("returns no regex namespace filter error for Pods whos namespace does match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexNamespaces: [/(.*)-system/], namespaces: [] },
+    };
+    const obj = { metadata: { namespace: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { namespace: "pepr-system" } },
+      { ...obj, metadata: { namespace: "pepr-uds-system" } },
+      { ...obj, metadata: { namespace: "uds-system" } },
+      { ...obj, metadata: { namespace: "some-thing-that-is-a-system" } },
+      { ...obj, metadata: { namespace: "your-system" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(``);
+    });
+  });
+
+  // Names Fail
+  test("returns regex name filter error for Pods whos name does not match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexName: /^system/, namespaces: [] },
+    };
+    const obj = { metadata: { name: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { name: "pepr-demo" } },
+      { ...obj, metadata: { name: "pepr-uds" } },
+      { ...obj, metadata: { name: "pepr-core" } },
+      { ...obj, metadata: { name: "uds-ns" } },
+      { ...obj, metadata: { name: "uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(
+        `Ignoring Watch Callback: Object name ${object.metadata?.name} does not match regex ${binding.filters.regexName}.`,
+      );
+    });
+  });
+
+  // Names Pass
+  test("returns no regex name filter error for Pods whos name does match the regex", () => {
+    const binding = {
+      kind: { kind: "Pod" },
+      filters: { regexName: /^system/, namespaces: [] },
+    };
+    const obj = { metadata: { name: "pepr-demo" } };
+    const objArray = [
+      { ...obj, metadata: { name: "systemd" } },
+      { ...obj, metadata: { name: "systemic" } },
+      { ...obj, metadata: { name: "system-of-kube-apiserver" } },
+      { ...obj, metadata: { name: "system" } },
+      { ...obj, metadata: { name: "system-uds" } },
+    ];
+    const capabilityNamespaces: string[] = [];
+    objArray.map(object => {
+      const result = filterNoMatchReasonRegex(
+        binding as unknown as Partial<Binding>,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
+      expect(result).toEqual(``);
+    });
+  });
+
   test("returns namespace filter error for namespace objects with namespace filters", () => {
     const binding = {
       kind: { kind: "Namespace" },
@@ -1048,7 +1222,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1066,7 +1240,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1083,7 +1257,7 @@ describe("filterMatcher", () => {
       metadata: { name: "pepr" },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1099,7 +1273,7 @@ describe("filterMatcher", () => {
       metadata: {},
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1117,7 +1291,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1133,7 +1307,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1151,7 +1325,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1162,13 +1336,32 @@ describe("filterMatcher", () => {
   });
 
   test("returns capability namespace error when object is not in capability namespaces", () => {
-    const binding = {};
+    const binding = {
+      model: kind.Pod,
+      event: Event.Any,
+      kind: {
+        group: "",
+        version: "v1",
+        kind: "Pod",
+      },
+      filters: {
+        name: "bleh",
+        namespaces: [],
+        regexNamespaces: [],
+        regexName: "",
+        labels: {},
+        annotations: {},
+        deletionTimestamp: false,
+      },
+      callback,
+    };
+
     const obj = {
-      metadata: { namespace: "ns2" },
+      metadata: { namespace: "ns2", name: "bleh" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(
-      binding as unknown as Partial<Binding>,
+    const result = filterNoMatchReasonRegex(
+      binding as Binding,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
@@ -1179,11 +1372,11 @@ describe("filterMatcher", () => {
 
   test("returns binding namespace error when filter namespace is not part of capability namespaces", () => {
     const binding = {
-      filters: { namespaces: ["ns3"] },
+      filters: { namespaces: ["ns3"], regexNamespaces: [] },
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1195,13 +1388,13 @@ describe("filterMatcher", () => {
 
   test("returns binding and object namespace error when they do not overlap", () => {
     const binding = {
-      filters: { namespaces: ["ns1"] },
+      filters: { namespaces: ["ns1"], regexNamespaces: [] },
     };
     const obj = {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1219,7 +1412,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(
+    const result = filterNoMatchReasonRegex(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1257,5 +1450,145 @@ describe("validateHash", () => {
     // Example of a valid SHA-256 hash
     const validHash = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1";
     expect(() => validateHash(validHash)).not.toThrow();
+  });
+});
+
+describe("matchesRegex", () => {
+  test("should return true for a valid pattern that matches the string", () => {
+    const pattern = /abc/;
+    const testString = "abc123";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(true);
+  });
+
+  test("should return false for a valid pattern that does not match the string", () => {
+    const pattern = /xyz/;
+    const testString = "abc123";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(false);
+  });
+
+  test("should return false for an invalid regex pattern", () => {
+    const invalidPattern = new RegExp(/^p/); // Invalid regex with unclosed bracket
+    const testString = "test";
+    const result = matchesRegex(invalidPattern.source, testString);
+    expect(result).toBe(false);
+  });
+
+  test("should return false when pattern is null or undefined", () => {
+    const testString = "abc123";
+    // Check for undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(matchesRegex(undefined as any, testString)).toBe(false);
+    // Check for null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(matchesRegex(null as any, testString)).toBe(false);
+  });
+
+  test("should return true for an empty string matching an empty regex", () => {
+    const pattern = new RegExp("");
+    const testString = "";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(true);
+  });
+
+  test("should return false for an empty string and a non-empty regex", () => {
+    const pattern = new RegExp("abc");
+    const testString = "";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(false);
+  });
+
+  test("should return true for a complex valid regex that matches", () => {
+    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const testString = "test@example.com";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(true);
+  });
+
+  test("should return false for a complex valid regex that does not match", () => {
+    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const testString = "invalid-email.com";
+    const result = matchesRegex(new RegExp(pattern).source, testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe("ignoredNSObjectViolation", () => {
+  test("should return false when ignoredNamespaces is empty and req has uid", () => {
+    const req = { uid: "12345" };
+    const result = ignoredNSObjectViolation(req, {}, []);
+    expect(result).toBe(false);
+  });
+
+  test("should return an empty string when ignoredNamespaces is empty and req has no uid", () => {
+    const result = ignoredNSObjectViolation({}, {});
+    expect(result).toBe("");
+  });
+
+  test("should return true when operation is DELETE and oldObject is in an ignored namespace", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.DELETE,
+      oldObject: { metadata: { namespace: "ignored-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(true);
+  });
+
+  test("should return true when operation is not DELETE and object is in an ignored namespace", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      object: { metadata: { namespace: "ignored-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(true);
+  });
+
+  test("should return watch violation message when object is in an ignored namespace", () => {
+    const obj = {
+      metadata: {
+        namespace: "ignored-ns",
+        name: "test-object",
+      },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
+    expect(result).toBe("Ignoring Watch Callback: Object name test-object is in an ignored namespace ignored-ns.");
+  });
+
+  test("should return an empty string when object is not in an ignored namespace", () => {
+    const obj = {
+      metadata: {
+        namespace: "allowed-ns",
+        name: "test-object",
+      },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
+    expect(result).toBe("");
+  });
+
+  test("should return false when no violations are found and req has uid", () => {
+    const req = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      object: { metadata: { namespace: "allowed-ns" } },
+    };
+    const ignoredNamespaces = ["ignored-ns"];
+    const result = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+    expect(result).toBe(false);
+
+    const req2 = {
+      uid: "12345",
+      operation: Operation.CREATE,
+      oldObject: { metadata: { namespace: "allowed-ns" } },
+    };
+    const ignoredNamespaces2 = ["ignored-ns"];
+    const result2 = ignoredNSObjectViolation(req2, {}, ignoredNamespaces2);
+    expect(result2).toBe(false);
   });
 });

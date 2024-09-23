@@ -31,7 +31,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: 20
           cache: "npm"
@@ -106,7 +106,7 @@ jobs:
         run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: 20
           cache: "npm"
@@ -235,7 +235,7 @@ jobs:
         run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: 20
           cache: "npm"

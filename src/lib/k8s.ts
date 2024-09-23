@@ -3,6 +3,7 @@
 
 import { GenericKind, GroupVersionKind, KubernetesObject, RegisterKind } from "kubernetes-fluent-client";
 
+// DEPRECATED: Use Operation in types.ts instead
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
@@ -27,6 +28,7 @@ export const peprStoreGVK = {
 
 RegisterKind(PeprStore, peprStoreGVK);
 
+// DEPRECATED: Use Operation in types.ts instead
 /**
  * GroupVersionResource unambiguously identifies a resource. It doesn't anonymously include GroupVersion
  * to avoid automatic coercion. It doesn't use a GroupVersion to avoid custom marshalling
@@ -36,6 +38,8 @@ export interface GroupVersionResource {
   readonly version: string;
   readonly resource: string;
 }
+
+// DEPRECATED: Use Operation in types.ts instead
 
 /**
  * A Kubernetes admission request to be processed by a capability.
