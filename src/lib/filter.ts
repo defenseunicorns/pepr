@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { matchesRegex } from "./helpers";
-import { AdmissionRequest, Operation } from "./k8s";
+import { matchesRegex, ignoredNSObjectViolation } from "./helpers";
+import { AdmissionRequest } from "./types";
 import logger from "./logger";
 import { Binding, Event } from "./types";
+import { Operation } from "./types";
 
-export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
+export function shouldSkipRequestRegex(
+  binding: Binding,
+  req: AdmissionRequest,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+) {
   const { regexNamespaces, regexName } = binding.filters || {};
   const result = shouldSkipRequest(binding, req, capabilityNamespaces);
   const operation = req.operation.toUpperCase();
@@ -36,6 +42,13 @@ export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, 
       return true;
     }
   }
+
+  // check ignored namespaces
+  const ignoredNS = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
+  if (ignoredNS) {
+    return true;
+  }
+
   return result;
 }
 /**

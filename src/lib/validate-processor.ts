@@ -5,12 +5,15 @@ import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { shouldSkipRequestRegex } from "./filter";
-import { AdmissionRequest, ValidateResponse } from "./k8s";
+import { ValidateResponse } from "./k8s";
+import { AdmissionRequest } from "./types";
 import Log from "./logger";
 import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
+import { ModuleConfig } from "./module";
 
 export async function validateProcessor(
+  config: ModuleConfig,
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
@@ -41,7 +44,7 @@ export async function validateProcessor(
       };
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequestRegex(action, req, namespaces)) {
+      if (shouldSkipRequestRegex(action, req, namespaces, config?.alwaysIgnore?.namespaces)) {
         continue;
       }
 
