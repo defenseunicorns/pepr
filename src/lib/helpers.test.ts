@@ -1347,7 +1347,7 @@ describe("filterMatcher", () => {
         name: "bleh",
         namespaces: [],
         regexNamespaces: [],
-        regexName: new RegExp("").source,
+        regexName: "",
         labels: {},
         annotations: {},
         deletionTimestamp: false,
