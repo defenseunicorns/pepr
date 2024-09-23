@@ -3,8 +3,6 @@
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { pickBy } from "ramda";
-//import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
-
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
@@ -74,6 +72,10 @@ export class Capability implements CapabilityExport {
       });
     }
   };
+
+  public getScheduleStore() {
+    return this.#scheduleStore;
+  }
 
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
@@ -340,7 +342,6 @@ export class Capability implements CapabilityExport {
         bindings.push(watchBinding);
       }
     }
-
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);

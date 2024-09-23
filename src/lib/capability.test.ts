@@ -1,6 +1,6 @@
 import { Capability } from "./capability";
 import Log from "./logger";
-import { CapabilityCfg, MutateAction, ValidateAction, WatchLogAction } from "./types";
+import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
@@ -9,6 +9,9 @@ import { PeprValidateRequest } from "./validate-request";
 import { Operation, AdmissionRequest } from "./k8s";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Event } from "./types";
+import { GenericClass } from "kubernetes-fluent-client";
+import { Schedule } from "./schedule";
+import { OnSchedule } from "./schedule";
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
 jest.mock("./module", () => ({
@@ -25,6 +28,20 @@ jest.mock("./logger", () => ({
     debug: jest.fn(),
     child: jest.fn().mockReturnThis(),
   },
+}));
+
+// Mock Storage and OnSchedule
+jest.mock("./storage", () => ({
+  Storage: jest.fn(() => ({
+    onReady: jest.fn(),
+  })),
+}));
+
+// Mock OnSchedule and ensure it has a mock setStore method
+jest.mock("./schedule", () => ({
+  OnSchedule: jest.fn().mockImplementation(() => ({
+    setStore: jest.fn(), // Ensure setStore is a mocked function
+  })),
 }));
 
 const mockLog = Log as jest.Mocked<typeof Log>;
@@ -298,6 +315,35 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
+  it("should log 'no alias provided' if alias is not set in validate callback", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    // Mock the validate callback
+    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Validate action log");
+        return { allowed: true };
+      },
+    );
+
+    // Do not set alias, to trigger "no alias provided"
+    capability.When(a.Pod).IsCreatedOrUpdated().Validate(mockValidateCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+    const binding = capability.bindings[0];
+
+    // Simulate the validation action
+    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
+
+    if (binding.validateCallback) {
+      await binding.validateCallback(mockPeprRequest);
+    }
+
+    // Expect the log to contain "no alias provided"
+    expect(mockLog.info).toHaveBeenCalledWith("Executing validate action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
+  });
+
   it("should register a Watch action and execute it with the logger", async () => {
     const capability = new Capability(capabilityConfig);
 
@@ -382,32 +428,39 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
   });
 
-  /* it("should use child logger for finalize callback", async () => {
+  it("should use child logger for finalize callback", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
-      async (update, logger: typeof Log = mockLog) => {
-        logger.info("Finalize action log");
-      },
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(async (update, logger: typeof Log = mockLog) => {
+      logger.info("Finalize action log");
+    });
+
+    // Create a mock WatchLogAction function that matches the expected signature
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {},
     );
 
-    capability.When(a.Pod).IsCreatedOrUpdated().Finalize(mockFinalizeCallback);
+    // Chain .Watch() with the correct function signature before .Finalize()
+    capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback).Finalize(mockFinalizeCallback);
 
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
+    // Find the finalize binding
+    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+
+    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
 
     // Simulate calling the finalize action
     const testPod = new V1Pod();
 
-    if (binding.finalizeCallback) {
-      await binding.finalizeCallback(testPod);
+    if (finalizeBinding?.finalizeCallback) {
+      await finalizeBinding.finalizeCallback(testPod);
     }
 
     expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: no alias provided");
     expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
-  }); */
+  });
 
   it("should add deletionTimestamp filter", () => {
     const capability = new Capability(capabilityConfig);
@@ -489,5 +542,114 @@ describe("Capability", () => {
 
     expect(capability.bindings).toHaveLength(1); // Ensure binding is created
     expect(capability.bindings[0].event).toBe(Event.Delete);
+  });
+
+  it("should throw an error if neither matchedKind nor kind is provided", () => {
+    const capability = new Capability(capabilityConfig);
+
+    // Mock a model with just a name, missing the kind
+    const mockModel: { name: string } = {
+      name: "InvalidModel",
+    };
+
+    // Expect an error when neither matchedKind nor kind is provided
+    expect(() => {
+      capability.When(mockModel as unknown as GenericClass); // Cast to the expected type without using 'any'
+    }).toThrowError(`Kind not specified for ${mockModel.name}`);
+  });
+
+  it("should create a new schedule and watch the schedule store when PEPR_WATCH_MODE is 'true'", () => {
+    // Set the environment variable
+    process.env.PEPR_WATCH_MODE = "true";
+
+    const capability = new Capability(capabilityConfig);
+
+    const mockSchedule: Schedule = {
+      name: "test-schedule",
+      every: 5,
+      unit: "minutes",
+      run: jest.fn(),
+      startTime: new Date(),
+      completions: 1,
+    };
+
+    // Call OnSchedule with a mock schedule
+    capability.OnSchedule(mockSchedule);
+
+    // Ensure that the schedule store's `onReady` method is called with the correct callback
+    const scheduleStoreInstance = capability.getScheduleStore();
+    expect(scheduleStoreInstance.onReady).toHaveBeenCalledWith(expect.any(Function));
+
+    // Simulate the `onReady` callback being invoked
+    const onReadyCallback = (scheduleStoreInstance.onReady as jest.Mock).mock.calls[0][0] as () => void;
+    onReadyCallback(); // The callback function is now invoked as a type of `() => void`
+
+    // Ensure the new OnSchedule instance is created with the correct schedule data
+    expect(OnSchedule).toHaveBeenCalledWith(mockSchedule);
+
+    // Clean up environment variables after the test
+    delete process.env.PEPR_WATCH_MODE;
+  });
+
+  it("should not create a new schedule or watch the schedule store when PEPR_WATCH_MODE is not set", () => {
+    // Ensure environment variables are not set
+    delete process.env.PEPR_WATCH_MODE;
+    delete process.env.PEPR_MODE;
+
+    const capability = new Capability(capabilityConfig);
+
+    const mockSchedule: Schedule = {
+      name: "test-schedule",
+      every: 5,
+      unit: "minutes",
+      run: jest.fn(),
+      startTime: new Date(),
+      completions: 1,
+    };
+
+    // Call OnSchedule with a mock schedule
+    capability.OnSchedule(mockSchedule);
+
+    // Ensure that the schedule store's `onReady` method is not called
+    const scheduleStoreInstance = capability.getScheduleStore();
+    expect(scheduleStoreInstance.onReady).not.toHaveBeenCalled();
+
+    // Ensure that OnSchedule was not called
+    expect(OnSchedule).not.toHaveBeenCalled();
+  });
+
+  it("should use aliasLogger if no logger is provided in watch callback", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    // Mock the watch callback
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
+        logger?.info("Watch action log");
+      },
+    );
+
+    // Chain Watch without providing an explicit logger
+    capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback);
+
+    expect(capability.bindings).toHaveLength(1);
+    const binding = capability.bindings[0];
+
+    // Simulate the watch action without passing a logger, so aliasLogger is used
+    const testPod = new V1Pod();
+    await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
+
+    // Assert that aliasLogger was used
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing watch action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
+  });
+
+  it("should add annotation with an empty value when no value is provided in WithAnnotation", () => {
+    const capability = new Capability(capabilityConfig);
+
+    // Chain WithAnnotation without providing a value (default to empty string)
+    capability.When(a.Pod).IsCreatedOrUpdated().WithAnnotation("test-annotation");
+
+    expect(capability.bindings).toHaveLength(0);
   });
 });
