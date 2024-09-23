@@ -26,7 +26,9 @@ jest.mock("./metrics", () => ({
     incRetryCount: jest.fn(),
   },
 }));
-
+it("something", () => {
+  expect(1).toBe(1);
+});
 describe("WatchProcessor", () => {
   const mockStart = jest.fn();
   const mockK8s = jest.mocked(K8s);

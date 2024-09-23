@@ -36,7 +36,7 @@
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
     "format:check": "eslint src && prettier src --check",
     "format:fix": "eslint src --fix && prettier src --write",
-    "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky install; fi"
+    "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
   },
   "dependencies": {
     "@types/ramda": "0.30.2",
