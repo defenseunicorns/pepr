@@ -4,7 +4,7 @@
 import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
-import { shouldSkipRequest } from "./filter";
+import { shouldSkipRequestRegex } from "./filter";
 import { AdmissionRequest, ValidateResponse } from "./k8s";
 import Log from "./logger";
 import { convertFromBase64Map } from "./utils";
@@ -41,7 +41,7 @@ export async function validateProcessor(
       };
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequest(action, req, namespaces)) {
+      if (shouldSkipRequestRegex(action, req, namespaces)) {
         continue;
       }
 

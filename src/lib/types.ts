@@ -81,7 +81,10 @@ export type WhenSelector<T extends GenericClass> = {
   /** Register an action to be executed when a Kubernetes resource is deleted. */
   IsDeleted: () => BindingAll<T>;
 };
-
+export interface RegExpFilter {
+  obj: RegExp;
+  source: string;
+}
 export type Binding = {
   event: Event;
   isMutate?: boolean;
@@ -93,7 +96,9 @@ export type Binding = {
   readonly kind: GroupVersionKind;
   readonly filters: {
     name: string;
+    regexName: string;
     namespaces: string[];
+    regexNamespaces: string[];
     labels: Record<string, string>;
     annotations: Record<string, string>;
     deletionTimestamp: boolean;
@@ -148,11 +153,15 @@ export type BindingFilter<T extends GenericClass> = CommonActionChain<T> & {
 export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
+  /** Only apply the action if the resource name matches the specified regex name. */
+  WithNameRegex: (name: RegExp) => BindingFilter<T>;
 };
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+  /** Only apply the action if the resource is in one of the specified regex namespaces.*/
+  InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
 };
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {

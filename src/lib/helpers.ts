@@ -7,6 +7,16 @@ import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 
+export function matchesRegex(pattern: string, testString: string): boolean {
+  // edge-case
+  if (!pattern) {
+    return false;
+  }
+
+  const regex = new RegExp(pattern);
+  return regex.test(testString);
+}
+
 export class ValidationError extends Error {}
 
 export function validateCapabilityNames(capabilities: CapabilityExport[] | undefined): void {
@@ -65,6 +75,27 @@ export function checkOverlap(bindingFilters: Record<string, string>, objectFilte
   return matchCount === Object.keys(bindingFilters).length;
 }
 
+export function filterNoMatchReasonRegex(
+  binding: Partial<Binding>,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[],
+): string {
+  const { regexNamespaces, regexName } = binding.filters || {};
+  const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
+  if (result === "") {
+    if (Array.isArray(regexNamespaces) && regexNamespaces.length > 0) {
+      for (const regexNamespace of regexNamespaces) {
+        if (!matchesRegex(regexNamespace, obj.metadata?.namespace || "")) {
+          return `Ignoring Watch Callback: Object namespace ${obj.metadata?.namespace} does not match regex ${regexNamespace}.`;
+        }
+      }
+    }
+    if (regexName && regexName !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
+      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
+    }
+  }
+  return result;
+}
 /**
  * Decide to run callback after the event comes back from API Server
  **/
@@ -249,7 +280,8 @@ export function generateWatchNamespaceError(
 // namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces = bindings.flatMap(binding => binding.filters.namespaces);
+  const bindingNamespaces = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
+  const bindingRegexNamespaces = bindings.flatMap((binding: Binding) => binding.filters.regexNamespaces || []);
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
@@ -260,6 +292,47 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     throw new Error(
       `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,
     );
+  }
+
+  // Ensure that each regexNamespace matches a capabilityNamespace
+
+  if (
+    bindingRegexNamespaces &&
+    bindingRegexNamespaces.length > 0 &&
+    capabilityNamespaces &&
+    capabilityNamespaces.length > 0
+  ) {
+    for (const regexNamespace of bindingRegexNamespaces) {
+      let matches = false;
+      for (const capabilityNamespace of capabilityNamespaces) {
+        if (regexNamespace !== "" && matchesRegex(regexNamespace, capabilityNamespace)) {
+          matches = true;
+          break;
+        }
+      }
+      if (!matches) {
+        throw new Error(
+          `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`,
+        );
+      }
+    }
+  }
+  // ensure regexNamespaces do not match ignored ns
+  if (
+    bindingRegexNamespaces &&
+    bindingRegexNamespaces.length > 0 &&
+    ignoredNamespaces &&
+    ignoredNamespaces.length > 0
+  ) {
+    for (const regexNamespace of bindingRegexNamespaces) {
+      for (const ignoredNS of ignoredNamespaces) {
+        if (matchesRegex(regexNamespace, ignoredNS)) {
+          throw new Error(
+            `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${ignoredNS}.`,
+          );
+        }
+      }
+    }
   }
 }
 

@@ -1,10 +1,43 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { matchesRegex } from "./helpers";
 import { AdmissionRequest, Operation } from "./k8s";
 import logger from "./logger";
 import { Binding, Event } from "./types";
 
+export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
+  const { regexNamespaces, regexName } = binding.filters || {};
+  const result = shouldSkipRequest(binding, req, capabilityNamespaces);
+  const operation = req.operation.toUpperCase();
+  if (!result) {
+    if (regexNamespaces && regexNamespaces.length > 0) {
+      for (const regexNamespace of regexNamespaces) {
+        if (
+          !matchesRegex(
+            regexNamespace,
+            (operation === Operation.DELETE ? req.oldObject?.metadata?.namespace : req.object.metadata?.namespace) ||
+              "",
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+
+    if (
+      regexName &&
+      regexName !== "" &&
+      !matchesRegex(
+        regexName,
+        (operation === Operation.DELETE ? req.oldObject?.metadata?.name : req.object.metadata?.name) || "",
+      )
+    ) {
+      return true;
+    }
+  }
+  return result;
+}
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
