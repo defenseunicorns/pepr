@@ -10,7 +10,7 @@ import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
-import { namespaceComplianceValidator, replaceString } from "../helpers";
+import { matchesRegex, namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
 import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";

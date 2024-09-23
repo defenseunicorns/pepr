@@ -27,7 +27,7 @@ export function shouldSkipRequestRegex(binding: Binding, req: AdmissionRequest, 
 
     if (
       regexName &&
-      regexName.source !== "" &&
+      regexName !== "" &&
       !matchesRegex(
         regexName,
         (operation === Operation.DELETE ? req.oldObject?.metadata?.name : req.object.metadata?.name) || "",

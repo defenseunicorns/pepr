@@ -7,18 +7,14 @@ import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 
-export function matchesRegex(pattern: RegExp, testString: string): boolean {
+export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
   if (!pattern) {
     return false;
   }
 
-  try {
     const regex = new RegExp(pattern);
     return regex.test(testString);
-  } catch {
-    return false;
-  }
 }
 
 export class ValidationError extends Error {}
@@ -94,7 +90,7 @@ export function filterNoMatchReasonRegex(
         }
       }
     }
-    if (regexName && regexName.source !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
+    if (regexName && regexName !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
       return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
     }
   }
@@ -309,7 +305,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       for (const capabilityNamespace of capabilityNamespaces) {
-        if (matchesRegex(regexNamespace, capabilityNamespace)) {
+        if (regexNamespace !== '' && matchesRegex(regexNamespace, capabilityNamespace)) {
           matches = true;
           break;
         }

@@ -200,7 +200,7 @@ export class Capability implements CapabilityExport {
         name: "",
         namespaces: [],
         regexNamespaces: [],
-        regexName: new RegExp(""),
+        regexName: "",
         labels: {},
         annotations: {},
         deletionTimestamp: false,
@@ -319,7 +319,7 @@ export class Capability implements CapabilityExport {
 
     function InRegexNamespace(...namespaces: RegExp[]): BindingWithName<T> {
       Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
-      binding.filters.regexNamespaces.push(...namespaces);
+      binding.filters.regexNamespaces.push(...namespaces.map((regex) => regex.source));
       return { ...commonChain, WithName, WithRegexName };
     }
 
@@ -331,7 +331,7 @@ export class Capability implements CapabilityExport {
 
     function WithRegexName(regexName: RegExp): BindingFilter<T> {
       Log.debug(`Add regex name filter ${regexName}`, prefix);
-      binding.filters.regexName = regexName;
+      binding.filters.regexName = regexName.source;
       return commonChain;
     }
 
