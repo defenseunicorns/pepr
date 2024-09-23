@@ -45,7 +45,7 @@ jobs:
       - name: build npm pepr package
         run: |
           cd "$PEPR"
-          npm run test:journey:build
+          npm run build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           
 
