@@ -28,8 +28,6 @@ import { addFinalizer } from "./finalizer";
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
 
-console.log("Register Watch:", registerWatch);
-
 /**
  * A capability is a unit of functionality that can be registered with the Pepr runtime.
  */
@@ -269,8 +267,6 @@ export class Capability implements CapabilityExport {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
-        console.log("Watch method is being called");
-
         // Create the child logger and cast it to the expected type
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
 
@@ -282,10 +278,7 @@ export class Capability implements CapabilityExport {
             await watchCallback(update, phase, logger);
           },
         });
-
-        console.log("Watch binding has been added", bindings);
       }
-
       return { Finalize };
     }
 
