@@ -8,11 +8,9 @@ import {
   createDirectoryIfNotExists,
   createRBACMap,
   checkDeploymentStatus,
-  checkOverlap,
   filterNoMatchReasonRegex,
   ignoredNSObjectViolation,
   dedent,
-  filterNoMatchReason,
   generateWatchNamespaceError,
   hasAnyOverlap,
   hasEveryOverlap,
@@ -1071,48 +1069,6 @@ describe("replaceString", () => {
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 });
-
-// describe("checkOverlap", () => {
-//   test("should return false since all binding annotations/labels do not exist on the object", () => {
-//     expect(checkOverlap({ key1: "", key2: "" }, { key1: "something" })).toBe(false);
-//   });
-//   test("should return false since all binding annotations/labels values do not match on the object values", () => {
-//     expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "value1", key2: "key2" })).toBe(false);
-//   });
-//   test("should return true since all binding annotations/labels keys and values match the object keys and values", () => {
-//     expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "key1", key2: "key2" })).toBe(true);
-//   });
-
-//   test("should return true since all binding annotations/labels keys exist on the object", () => {
-//     expect(checkOverlap({ key1: "", key2: "" }, { key1: "key1", key2: "key2" })).toBe(true);
-//   });
-
-//   test("(Mixed) should return true since key and key value match on object", () => {
-//     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
-//   });
-//   test("(Mixed) should return false since key1 value is different on object", () => {
-//     expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
-//   });
-//   test("should return true if binding has no labels or annotations", () => {
-//     expect(checkOverlap({}, { key1: "value1" })).toBe(true);
-//   });
-
-//   test("should return false if there is no overlap", () => {
-//     expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
-//   });
-
-//   test("should return true since object has key1 and value1", () => {
-//     expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
-//   });
-
-//   test("should return false since object value does not match binding value", () => {
-//     expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
-//   });
-
-//   test("should return true if the object has no labels and neither does the binding", () => {
-//     expect(checkOverlap({}, {})).toBe(true);
-//   });
-// });
 
 describe("filterMatcher", () => {
   test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {

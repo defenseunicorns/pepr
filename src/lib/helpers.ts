@@ -83,36 +83,6 @@ type RBACMap = {
   };
 };
 
-// check for overlap with labels and annotations between bindings and kubernetes objects
-export function checkOverlap(bindingFilters: Record<string, string>, objectFilters: Record<string, string>): boolean {
-  // True if labels/annotations are empty
-  if (Object.keys(bindingFilters).length === 0) {
-    return true;
-  }
-
-  let matchCount = 0;
-
-  for (const key in bindingFilters) {
-    // object must have label/annotation
-    if (Object.prototype.hasOwnProperty.call(objectFilters, key)) {
-      const val1 = bindingFilters[key];
-      const val2 = objectFilters[key];
-
-      // If bindingFilter has empty value for this key, only need to ensure objectFilter has this key
-      if (val1 === "" && key in objectFilters) {
-        matchCount++;
-      }
-      // If bindingFilter has a value, it must match the value in objectFilter
-      else if (val1 !== "" && val1 === val2) {
-        matchCount++;
-      }
-    }
-  }
-
-  // For single-key objects in bindingFilter or matching all keys in multiple-keys scenario
-  return matchCount === Object.keys(bindingFilters).length;
-}
-
 export function filterNoMatchReasonRegex(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
