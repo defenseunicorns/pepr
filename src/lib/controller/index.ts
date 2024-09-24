@@ -230,7 +230,7 @@ export class Controller {
         if (admissionKind === "Mutate") {
           response = await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata);
         } else {
-          response = await validateProcessor(this.#capabilities, request, reqMetadata);
+          response = await validateProcessor(this.#config, this.#capabilities, request, reqMetadata);
         }
 
         // Run the after hook if it exists

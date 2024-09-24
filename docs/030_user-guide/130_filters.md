@@ -24,7 +24,9 @@ When(a.ConfigMap)
 ## `Filters`
 
 - `.WithName("name")`: Filters resources by name.
+- `.WithNameRegex(/^pepr/)`: Filters resources by name using a regex.
 - `.InNamespace("namespace")`: Filters resources by namespace.
+- `.InNamespaceRegex(/(.*)-system/)`: Filters resources by namespace using a regex.
 - `.WithLabel("key", "value")`: Filters resources by label. (Can be multiple)
 - `.WithDeletionTimestamp()`: Filters resources that have a deletion timestamp. 
 

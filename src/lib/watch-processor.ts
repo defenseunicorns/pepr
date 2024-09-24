@@ -3,7 +3,7 @@
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReason } from "./helpers";
+import { filterNoMatchReasonRegex } from "./helpers";
 import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
@@ -73,11 +73,11 @@ const eventToPhaseMap = {
  *
  * @param capabilities The capabilities to load watches for
  */
-export function setupWatch(capabilities: Capability[]) {
+export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]) {
   capabilities.map(capability =>
     capability.bindings
       .filter(binding => binding.isWatch)
-      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces)),
+      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces, ignoredNamespaces)),
   );
 }
 
@@ -87,7 +87,7 @@ export function setupWatch(capabilities: Capability[]) {
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
+async function runBinding(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
   // Get the phases to match, fallback to any
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
 
@@ -99,7 +99,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
     if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
-        const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
+        const filterMatch = filterNoMatchReasonRegex(binding, obj, capabilityNamespaces, ignoredNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
             if (!obj.metadata?.deletionTimestamp) {
