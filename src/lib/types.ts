@@ -10,6 +10,12 @@ import { Answers } from "prompts";
 
 import { Logger } from "pino";
 
+export enum Operation {
+  CREATE = "CREATE",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  CONNECT = "CONNECT",
+}
 /**
  * Specifically for deploying images with a private registry
  */
