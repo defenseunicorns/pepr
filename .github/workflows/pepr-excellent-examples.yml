@@ -179,11 +179,12 @@ jobs:
       - name: run e2e tests
         run: |
           pwd
-          ls -al
-          npx --yes file:pepr-0.0.0-development.tgz --version
+          ls -l pepr-0.0.0-development.tgz
+          mv pepr-0.0.0-development.tgz pepr-excellent-examples/
           cd "$PEXEX"
           pwd
-          ls -al
+          ls -l pepr-0.0.0-development.tgz
+          npx --yes file:pepr-0.0.0-development.tgz --version
           npm run --workspace=test-specific-version test:e2e -- --image pepr:dev
 
   excellent-examples:
