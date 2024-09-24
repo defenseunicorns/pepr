@@ -56,7 +56,6 @@ export async function mutateProcessor(
 
       const label = action.mutateCallback.name;
       Log.info(actionMetadata, `Processing mutation action (${label})`);
-
       matchedAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
@@ -79,6 +78,7 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
+        // Log on success
         Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
@@ -99,6 +99,7 @@ export async function mutateProcessor(
           errorMessage = "An error occurred with the mutate action.";
         }
 
+        // Log on failure
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
