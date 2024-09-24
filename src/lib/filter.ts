@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { matchesRegex, ignoredNSObjectViolation } from "./helpers";
-import { AdmissionRequest } from "./types";
+import {
+  definesDeletionTimestamp,
+  ignoredNSObjectViolation,
+  matchesRegex,
+  mismatchedDeletionTimestamp,
+} from "./helpers";
+import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import logger from "./logger";
-import { Binding, Event } from "./types";
-import { Operation } from "./types";
+import { allPass, defaultTo, equals, pipe } from "ramda";
 
 export function shouldSkipRequestRegex(
   binding: Binding,
   req: AdmissionRequest,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
-) {
+): boolean {
   const { regexNamespaces, regexName } = binding.filters || {};
   const result = shouldSkipRequest(binding, req, capabilityNamespaces);
   const operation = req.operation.toUpperCase();
@@ -51,6 +55,21 @@ export function shouldSkipRequestRegex(
 
   return result;
 }
+
+// export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
+// export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
+// export const mismatchedDeletionTimestamp = allPass([
+//   pipe(nthArg(0), definesDeletionTimestamp),
+//   pipe(nthArg(1), missingDeletionTimestamp),
+// ]);
+// export const carriedNamespace = pipe(obj => obj?.metadata?.namespace, defaultTo(""));
+// export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
+
+export const definedEvent = pipe(binding => binding?.event, defaultTo(""));
+export const definesDelete = pipe(definedEvent, equals(Operation.DELETE));
+
+export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
+
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
@@ -58,7 +77,7 @@ export function shouldSkipRequestRegex(
  * @param req the incoming request
  * @returns
  */
-export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]) {
+export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
   const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations, name } = binding.filters || {};
   const operation = req.operation.toUpperCase();
@@ -68,15 +87,25 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   const { metadata } = srcObject || {};
   const combinedNamespaces = [...namespaces, ...capabilityNamespaces];
 
-  // Delete bindings do not work through admission with DeletionTimestamp
-  if (binding.event.includes(Event.Delete) && binding.filters?.deletionTimestamp) {
-    return true;
-  }
+  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
-  // Test for deletionTimestamp
-  if (binding.filters?.deletionTimestamp && !req.object.metadata?.deletionTimestamp) {
+  if (misboundDeleteWithDeletionTimestamp(binding)) {
     return true;
   }
+  // if (definesDelete(binding) && definesDeletionTimestamp(binding)) {
+  //   return true;
+  // }
+  // if (binding.event.includes(Event.Delete) && binding.filters?.deletionTimestamp) {
+  //   return true;
+  // }
+
+  if (mismatchedDeletionTimestamp(binding, obj)) {
+    return true;
+  }
+  // if (binding.filters?.deletionTimestamp && !req.object.metadata?.deletionTimestamp) {
+  //   return true;
+  // }
+
   // Test for matching operation
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
     return true;

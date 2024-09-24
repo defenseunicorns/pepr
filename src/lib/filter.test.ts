@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe } from "@jest/globals";
+import { expect, test, describe, it } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequestRegex } from "./filter";
-import { Event, Binding } from "./types";
-import { AdmissionRequest } from "./types";
+import * as sut from "./filter";
+import { AdmissionRequest, Binding, DeepPartial, Event } from "./types";
 
 export const callback = () => undefined;
 
@@ -652,4 +652,64 @@ test("should processing when deletionTimestamp is not present on pod", () => {
   };
 
   expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+});
+
+describe("definedEvent", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ event: "" }, ""],
+    [{ event: "nonsense" }, "nonsense"],
+    [{ event: Event.Create }, Event.Create],
+    [{ event: Event.CreateOrUpdate }, Event.CreateOrUpdate],
+    [{ event: Event.Update }, Event.Update],
+    [{ event: Event.Delete }, Event.Delete],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedEvent(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesDelete", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ event: "" }, false],
+    [{ event: "nonsense" }, false],
+    [{ event: Event.Create }, false],
+    [{ event: Event.CreateOrUpdate }, false],
+    [{ event: Event.Update }, false],
+    [{ event: Event.Delete }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesDelete(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("misboundDeleteWithDeletionTimestamp", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ event: "" }, false],
+    [{ event: "nonsense" }, false],
+    [{ event: Event.Create }, false],
+    [{ event: Event.CreateOrUpdate }, false],
+    [{ event: Event.Update }, false],
+    [{ event: Event.Delete }, false],
+    [{ event: Event.Delete, filters: {} }, false],
+    [{ event: Event.Delete, filters: { deletionTimestamp: false } }, false],
+    [{ event: Event.Delete, filters: { deletionTimestamp: true } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.misboundDeleteWithDeletionTimestamp(binding);
+
+    expect(result).toEqual(expected);
+  });
 });
