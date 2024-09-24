@@ -55,7 +55,7 @@ export async function mutateProcessor(
       }
 
       const label = action.mutateCallback.name;
-
+      Log.info(actionMetadata, `Processing mutation action (${label})`);
       matchedAction = true;
 
       // Add annotations to the request to indicate that the capability started processing

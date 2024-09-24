@@ -251,6 +251,8 @@ export class Capability implements CapabilityExport {
         // Create the child logger
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
 
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isMutate: true,
@@ -272,6 +274,8 @@ export class Capability implements CapabilityExport {
         // Create the child logger and cast it to the expected type
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
 
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
@@ -291,6 +295,8 @@ export class Capability implements CapabilityExport {
         // Create the child logger and cast it to the expected type
         const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
 
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
