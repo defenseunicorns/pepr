@@ -121,7 +121,7 @@ jobs:
         id: create-matrix
 
   excellent-examples-testing:
-    name: use-arbitrary-pepr-version
+    name: test-specific-version
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -184,7 +184,7 @@ jobs:
           cd "$PEXEX"
           pwd
           ls -al
-          npm run --workspace=use-arbitrary-pepr-version test:e2e -- --image pepr:dev
+          npm run --workspace=test-specific-version test:e2e -- --image pepr:dev
 
   excellent-examples:
     name: ${{ matrix.name }}
