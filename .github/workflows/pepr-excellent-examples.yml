@@ -249,5 +249,4 @@ jobs:
       - name: run e2e tests
         run: |
           cd "$PEXEX"
-          echo "Beep boop! I'm an E2E test!"
-          # npm run --workspace=${{ matrix.name }} test:e2e -- --image pepr:dev
+          npm run --workspace=${{ matrix.name }} test:e2e -- --image pepr:dev
