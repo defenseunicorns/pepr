@@ -81,6 +81,36 @@ export const mismatchedName = allPass([
   pipe((binding, request) => definedName(binding) !== declaredName(request)),
 ]);
 
+export const definedGroup = pipe(binding => binding?.kind?.group, defaultTo(""));
+export const definesGroup = pipe(definedGroup, equals(""), not);
+
+export const declaredGroup = pipe(request => request?.kind?.group, defaultTo(""));
+
+export const mismatchedGroup = allPass([
+  pipe(nthArg(0), definesGroup),
+  pipe((binding, request) => definedGroup(binding) !== declaredGroup(request)),
+]);
+
+export const definedVersion = pipe(binding => binding?.kind?.version, defaultTo(""));
+export const definesVersion = pipe(definedVersion, equals(""), not);
+
+export const declaredVersion = pipe(request => request?.kind?.version, defaultTo(""));
+
+export const mismatchedVersion = allPass([
+  pipe(nthArg(0), definesVersion),
+  pipe((binding, request) => definedVersion(binding) !== declaredVersion(request)),
+]);
+
+export const definedKind = pipe(binding => binding?.kind?.kind, defaultTo(""));
+export const definesKind = pipe(definedKind, equals(""), not);
+
+export const declaredKind = pipe(request => request?.kind?.kind, defaultTo(""));
+
+export const mismatchedKind = allPass([
+  pipe(nthArg(0), definesKind),
+  pipe((binding, request) => definedKind(binding) !== declaredKind(request)),
+]);
+
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
@@ -89,7 +119,6 @@ export const mismatchedName = allPass([
  * @returns
  */
 export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
-  const { group, kind, version } = binding.kind || {};
   const { namespaces, labels, annotations } = binding.filters || {};
   const operation = req.operation.toUpperCase();
   const uid = req.uid;
@@ -131,20 +160,26 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
-  // Test for matching kinds
-  if (kind !== req.kind.kind) {
+  if (mismatchedGroup(binding, req)) {
     return true;
   }
+  // if (group && group !== req.kind.group) {
+  //   return true;
+  // }
 
-  // Test for matching groups
-  if (group && group !== req.kind.group) {
+  if (mismatchedVersion(binding, req)) {
     return true;
   }
+  // if (version && version !== req.kind.version) {
+  //   return true;
+  // }
 
-  // Test for matching versions
-  if (version && version !== req.kind.version) {
+  if (mismatchedKind(binding, req)) {
     return true;
   }
+  // if (kind !== req.kind.kind) {
+  //   return true;
+  // }
 
   // Test for matching namespaces
   if (

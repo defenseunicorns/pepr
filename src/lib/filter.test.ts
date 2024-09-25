@@ -664,7 +664,7 @@ describe("definedEvent", () => {
     [{ event: Event.CreateOrUpdate }, Event.CreateOrUpdate],
     [{ event: Event.Update }, Event.Update],
     [{ event: Event.Delete }, Event.Delete],
-  ])("given %j, returns %s", (given, expected) => {
+  ])("given %j, returns '%s'", (given, expected) => {
     const binding = given as DeepPartial<Binding>;
 
     const result = sut.definedEvent(binding);
@@ -762,7 +762,7 @@ describe("declaredOperation", () => {
     [{ operation: Operation.CREATE }, Operation.CREATE],
     [{ operation: Operation.UPDATE }, Operation.UPDATE],
     [{ operation: Operation.DELETE }, Operation.DELETE],
-  ])("given %j, returns %s", (given, expected) => {
+  ])("given %j, returns '%s'", (given, expected) => {
     const request = given as DeepPartial<AdmissionRequest>;
 
     const result = sut.declaredOperation(request);
@@ -818,7 +818,7 @@ describe("declaredName", () => {
     [{ name: null }, ""],
     [{ name: "" }, ""],
     [{ name: "name" }, "name"],
-  ])("given %j, returns %s", (given, expected) => {
+  ])("given %j, returns '%s'", (given, expected) => {
     const request = given as DeepPartial<AdmissionRequest>;
 
     const result = sut.declaredName(request);
@@ -840,6 +840,222 @@ describe("mismatchedName", () => {
     const request = req as DeepPartial<AdmissionRequest>;
 
     const result = sut.mismatchedName(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definedGroup", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { group: null } }, ""],
+    [{ kind: { group: "" } }, ""],
+    [{ kind: { group: "group" } }, "group"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedGroup(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesGroup", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ kind: null }, false],
+    [{ kind: {} }, false],
+    [{ kind: { group: null } }, false],
+    [{ kind: { group: "" } }, false],
+    [{ kind: { group: "group" } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesGroup(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("declaredGroup", () => {
+  //[ AdmissionRequest, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { group: null } }, ""],
+    [{ kind: { group: "" } }, ""],
+    [{ kind: { group: "group" } }, "group"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const request = given as DeepPartial<AdmissionRequest>;
+
+    const result = sut.declaredGroup(request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedGroup", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { group: "group" } }, false],
+    [{ kind: { group: "group" } }, {}, true],
+    [{ kind: { group: "group" } }, { kind: { group: "wrong" } }, true],
+    [{ kind: { group: "group" } }, { kind: { group: "group" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = sut.mismatchedGroup(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definedVersion", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { version: null } }, ""],
+    [{ kind: { version: "" } }, ""],
+    [{ kind: { version: "version" } }, "version"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedVersion(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesVersion", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ kind: null }, false],
+    [{ kind: {} }, false],
+    [{ kind: { version: null } }, false],
+    [{ kind: { version: "" } }, false],
+    [{ kind: { version: "version" } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesVersion(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("declaredVersion", () => {
+  //[ AdmissionRequest, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { version: null } }, ""],
+    [{ kind: { version: "" } }, ""],
+    [{ kind: { version: "version" } }, "version"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const request = given as DeepPartial<AdmissionRequest>;
+
+    const result = sut.declaredVersion(request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedVersion", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { version: "version" } }, false],
+    [{ kind: { version: "version" } }, {}, true],
+    [{ kind: { version: "version" } }, { kind: { version: "wrong" } }, true],
+    [{ kind: { version: "version" } }, { kind: { version: "version" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = sut.mismatchedVersion(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definedKind", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { kind: null } }, ""],
+    [{ kind: { kind: "" } }, ""],
+    [{ kind: { kind: "kind" } }, "kind"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedKind(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesKind", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ kind: null }, false],
+    [{ kind: {} }, false],
+    [{ kind: { kind: null } }, false],
+    [{ kind: { kind: "" } }, false],
+    [{ kind: { kind: "kind" } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesKind(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("declaredKind", () => {
+  //[ AdmissionRequest, result ]
+  it.each([
+    [{}, ""],
+    [{ kind: null }, ""],
+    [{ kind: {} }, ""],
+    [{ kind: { kind: null } }, ""],
+    [{ kind: { kind: "" } }, ""],
+    [{ kind: { kind: "kind" } }, "kind"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const request = given as DeepPartial<AdmissionRequest>;
+
+    const result = sut.declaredKind(request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedKind", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { kind: "kind" } }, false],
+    [{ kind: { kind: "kind" } }, {}, true],
+    [{ kind: { kind: "kind" } }, { kind: { kind: "wrong" } }, true],
+    [{ kind: { kind: "kind" } }, { kind: { kind: "kind" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = sut.mismatchedKind(binding, request);
 
     expect(result).toEqual(expected);
   });
