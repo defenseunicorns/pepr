@@ -6,6 +6,8 @@ import {
   ignoredNSObjectViolation,
   matchesRegex,
   mismatchedDeletionTimestamp,
+  definesName,
+  definedName,
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import logger from "./logger";
@@ -73,6 +75,12 @@ export const mismatchedEvent = pipe(
   not,
 );
 
+export const declaredName = pipe(request => request?.name, defaultTo(""));
+export const mismatchedName = allPass([
+  pipe(nthArg(0), definesName),
+  pipe((binding, request) => definedName(binding) !== declaredName(request)),
+]);
+
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
@@ -82,7 +90,7 @@ export const mismatchedEvent = pipe(
  */
 export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
   const { group, kind, version } = binding.kind || {};
-  const { namespaces, labels, annotations, name } = binding.filters || {};
+  const { namespaces, labels, annotations } = binding.filters || {};
   const operation = req.operation.toUpperCase();
   const uid = req.uid;
   // Use the old object if the request is a DELETE operation
@@ -109,7 +117,6 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
-  // Test for matching operation
   if (mismatchedEvent(binding, req)) {
     return true;
   }
@@ -117,10 +124,12 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
-  // Test name first, since it's the most specific
-  if (name && name !== req.name) {
+  if (mismatchedName(binding, req)) {
     return true;
   }
+  // if (name && name !== req.name) {
+  //   return true;
+  // }
 
   // Test for matching kinds
   if (kind !== req.kind.kind) {
