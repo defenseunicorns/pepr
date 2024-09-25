@@ -2,9 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
-
 import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
@@ -20,6 +18,7 @@ import {
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
+  WatchLogAction,
   FinalizeAction,
   FinalizeActionChain,
   WhenSelector,
@@ -71,6 +70,10 @@ export class Capability implements CapabilityExport {
       });
     }
   };
+
+  public getScheduleStore() {
+    return this.#scheduleStore;
+  }
 
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
@@ -209,7 +212,7 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile };
+    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile, Alias };
     const isNotEmpty = (value: object) => Object.keys(value).length > 0;
     const log = (message: string, cbString: string) => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
@@ -223,12 +226,18 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
           ...binding,
           isValidate: true,
-          validateCallback,
+          validateCallback: async (req, logger = aliasLogger) => {
+            Log.info(`Executing validate action with alias: ${binding.alias || "no alias provided"}`);
+            return await validateCallback(req, logger);
+          },
         });
       }
 
@@ -239,12 +248,18 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
           ...binding,
           isMutate: true,
-          mutateCallback,
+          mutateCallback: async (req, logger = aliasLogger) => {
+            Log.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
+            await mutateCallback(req, logger);
+          },
         });
       }
 
@@ -252,39 +267,56 @@ export class Capability implements CapabilityExport {
       return { Watch, Validate, Reconcile };
     }
 
-    function Watch(watchCallback: WatchAction<T>): FinalizeActionChain<T> {
+    function Watch(watchCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
-          watchCallback,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
+            await watchCallback(update, phase, logger);
+          },
         });
       }
-
       return { Finalize };
     }
 
-    function Reconcile(watchCallback: WatchAction<T>): FinalizeActionChain<T> {
+    function Reconcile(reconcileCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
-        log("Reconcile Action", watchCallback.toString());
+        log("Reconcile Action", reconcileCallback.toString());
 
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
           isQueue: true,
-          watchCallback,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing reconcile action with alias: ${binding.alias || "no alias provided"}`);
+            await reconcileCallback(update, phase, logger);
+          },
         });
       }
-
       return { Finalize };
     }
 
-    function Finalize(finalizeCallback: FinalizeAction<T>) {
+    function Finalize(finalizeCallback: FinalizeAction<T>): void {
       log("Finalize Action", finalizeCallback.toString());
 
-      // add binding to inject pepr finalizer during admission (Mutate)
+      // Create the child logger and cast it to the expected type
+      const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+      // Add binding to inject Pepr finalizer during admission (Mutate)
       if (registerAdmission) {
         const mutateBinding = {
           ...binding,
@@ -296,19 +328,20 @@ export class Capability implements CapabilityExport {
         bindings.push(mutateBinding);
       }
 
-      // add binding to process finalizer callback / remove pepr finalizer (Watch)
+      // Add binding to process finalizer callback / remove Pepr finalizer (Watch)
       if (registerWatch) {
         const watchBinding = {
           ...binding,
           isWatch: true,
           isFinalize: true,
           event: Event.Update,
-          finalizeCallback,
+          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
+            Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
+            await finalizeCallback(update, logger);
+          },
         };
         bindings.push(watchBinding);
       }
-
-      return { Finalize };
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
@@ -353,6 +386,12 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
+    function Alias(alias: string) {
+      Log.debug(`Adding prefix alias ${alias}`, prefix);
+      binding.alias = alias;
+      return commonChain;
+    }
+
     function bindEvent(event: Event) {
       binding.event = event;
       return {
@@ -362,6 +401,7 @@ export class Capability implements CapabilityExport {
         WithName,
         WithNameRegex,
         WithDeletionTimestamp,
+        Alias,
       };
     }
 
