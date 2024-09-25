@@ -717,6 +717,10 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
 describe("operationMatchesEvent", () => {
   //[ Operation, Event, result ]
   it.each([
+    ["", "", true],
+    ["", Event.Create, false],
+    [Operation.CREATE, "", false],
+
     [Operation.CREATE, Event.Create, true],
     [Operation.CREATE, Event.Update, false],
     [Operation.CREATE, Event.Delete, false],
@@ -767,53 +771,42 @@ describe("declaredOperation", () => {
   });
 });
 
-// IN SHORT: these are what the AdmissionRequest wants to do
-// export enum Operation {
-//   CREATE = "CREATE",
-//   UPDATE = "UPDATE",
-//   DELETE = "DELETE",
-//   CONNECT = "CONNECT",
-// }
-// IN SHORT: these are what the bindings are listening for
-// export enum Event {
-//   Create = "CREATE",
-//   Update = "UPDATE",
-//   Delete = "DELETE",
-//   CreateOrUpdate = "CREATEORUPDATE",
-//   Any = "*",
-// }
-// describe("mismatchedEvent", () => {
-//   //[ Binding, AdmissionRequest, result ]
-//   it.each([
-//     [Operation.CREATE, Event.Create, true],
-//     [Operation.CREATE, Event.Update, false],
-//     [Operation.CREATE, Event.Delete, false],
-//     [Operation.CREATE, Event.CreateOrUpdate, true],
-//     [Operation.CREATE, Event.Any, true],
+describe("mismatchedEvent", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { operation: Operation.CREATE }, true],
+    [{ event: Event.Create }, {}, true],
 
-//     [Operation.UPDATE, Event.Create, false],
-//     [Operation.UPDATE, Event.Update, true],
-//     [Operation.UPDATE, Event.Delete, false],
-//     [Operation.UPDATE, Event.CreateOrUpdate, true],
-//     [Operation.UPDATE, Event.Any, true],
+    [{ event: Event.Create }, { operation: Operation.CREATE }, false],
+    [{ event: Event.Update }, { operation: Operation.CREATE }, true],
+    [{ event: Event.Delete }, { operation: Operation.CREATE }, true],
+    [{ event: Event.CreateOrUpdate }, { operation: Operation.CREATE }, false],
+    [{ event: Event.Any }, { operation: Operation.CREATE }, false],
 
-//     [Operation.DELETE, Event.Create, false],
-//     [Operation.DELETE, Event.Update, false],
-//     [Operation.DELETE, Event.Delete, true],
-//     [Operation.DELETE, Event.CreateOrUpdate, false],
-//     [Operation.DELETE, Event.Any, true],
+    [{ event: Event.Create }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.Update }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.Delete }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.CreateOrUpdate }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.Any }, { operation: Operation.UPDATE }, false],
 
-//     [Operation.CONNECT, Event.Create, false],
-//     [Operation.CONNECT, Event.Update, false],
-//     [Operation.CONNECT, Event.Delete, false],
-//     [Operation.CONNECT, Event.CreateOrUpdate, false],
-//     [Operation.CONNECT, Event.Any, true],
-//   ])("given binding %j and admission request %j, returns %s", (op, evt, expected) => {
-//     const binding = bnd as DeepPartial<Binding>;
-//     const request = req as DeepPartial<AdmissionRequest>;
+    [{ event: Event.Create }, { operation: Operation.DELETE }, true],
+    [{ event: Event.Update }, { operation: Operation.DELETE }, true],
+    [{ event: Event.Delete }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CreateOrUpdate }, { operation: Operation.DELETE }, true],
+    [{ event: Event.Any }, { operation: Operation.DELETE }, false],
 
-//     const result = sut.misboundDeleteWithDeletionTimestamp(binding);
+    [{ event: Event.Create }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.Update }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.Delete }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.CreateOrUpdate }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.Any }, { operation: Operation.CONNECT }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
 
-//     expect(result).toEqual(expected);
-//   });
-// });
+    const result = sut.mismatchedEvent(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});

@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import logger from "./logger";
-import { allPass, anyPass, defaultTo, equals, nthArg, pipe } from "ramda";
+import { allPass, anyPass, defaultTo, equals, not, nthArg, pipe } from "ramda";
 
 export function shouldSkipRequestRegex(
   binding: Binding,
@@ -61,28 +61,17 @@ export const definesDelete = pipe(definedEvent, equals(Operation.DELETE));
 
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
 
-// IN SHORT: these are what the bindings are listening for
-// export enum Event {
-//   Create = "CREATE",
-//   Update = "UPDATE",
-//   Delete = "DELETE",
-//   CreateOrUpdate = "CREATEORUPDATE",
-//   Any = "*",
-// }
-
-// IN SHORT: these are what the AdmissionRequest wants to do
-// export enum Operation {
-//   CREATE = "CREATE",
-//   UPDATE = "UPDATE",
-//   DELETE = "DELETE",
-//   CONNECT = "CONNECT",
-// }
-// if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
-
-export const operationMatchesEvent = anyPass([pipe((op, evt) => evt.includes(op)), pipe(nthArg(1), equals(Event.Any))]);
+export const operationMatchesEvent = anyPass([
+  pipe(nthArg(1), equals(Event.Any)),
+  pipe((op, evt) => op === evt),
+  pipe((op, evt) => (op ? evt.includes(op) : false)),
+]);
 
 export const declaredOperation = pipe(request => request?.operation, defaultTo(""));
-// export const mismatchedEvent = (binding, request) => {}
+export const mismatchedEvent = pipe(
+  (binding, request) => operationMatchesEvent(declaredOperation(request), definedEvent(binding)),
+  not,
+);
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -121,12 +110,12 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   // }
 
   // Test for matching operation
-  // if (mismatchedEvent(binding, req)){
-  //   return true
-  // }
-  if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
+  if (mismatchedEvent(binding, req)) {
     return true;
   }
+  // if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
+  //   return true;
+  // }
 
   // Test name first, since it's the most specific
   if (name && name !== req.name) {

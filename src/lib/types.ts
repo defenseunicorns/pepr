@@ -7,6 +7,10 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { Answers } from "prompts";
 
+// TODO: why does our test data NOT use CAPS for verbs?
+// - AdmissionRequest.operation is of type Operation (lower down in this file)
+// - Kube docs uses '"operation": "CREATE"' (https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request)
+// - our did test data uses non-caps '"operation": "Delete"' (src/fixtures/data/delete-pod.json)
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
