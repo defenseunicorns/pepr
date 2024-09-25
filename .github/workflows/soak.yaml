@@ -200,8 +200,12 @@ jobs:
             if [ $((i % 6)) -eq 0 ]; then  # Every 30 minutes 
               update_pod_map
 
+              # get a list of pods every 30 mins
+              kubectl get pods -n pepr-demo 
+
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
+                echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
                   exit 1
