@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import logger from "./logger";
-import { allPass, defaultTo, equals, pipe } from "ramda";
+import { allPass, anyPass, defaultTo, equals, nthArg, pipe } from "ramda";
 
 export function shouldSkipRequestRegex(
   binding: Binding,
@@ -56,19 +56,33 @@ export function shouldSkipRequestRegex(
   return result;
 }
 
-// export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
-// export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
-// export const mismatchedDeletionTimestamp = allPass([
-//   pipe(nthArg(0), definesDeletionTimestamp),
-//   pipe(nthArg(1), missingDeletionTimestamp),
-// ]);
-// export const carriedNamespace = pipe(obj => obj?.metadata?.namespace, defaultTo(""));
-// export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
-
 export const definedEvent = pipe(binding => binding?.event, defaultTo(""));
 export const definesDelete = pipe(definedEvent, equals(Operation.DELETE));
 
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
+
+// IN SHORT: these are what the bindings are listening for
+// export enum Event {
+//   Create = "CREATE",
+//   Update = "UPDATE",
+//   Delete = "DELETE",
+//   CreateOrUpdate = "CREATEORUPDATE",
+//   Any = "*",
+// }
+
+// IN SHORT: these are what the AdmissionRequest wants to do
+// export enum Operation {
+//   CREATE = "CREATE",
+//   UPDATE = "UPDATE",
+//   DELETE = "DELETE",
+//   CONNECT = "CONNECT",
+// }
+// if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
+
+export const operationMatchesEvent = anyPass([pipe((op, evt) => evt.includes(op)), pipe(nthArg(1), equals(Event.Any))]);
+
+export const declaredOperation = pipe(request => request?.operation, defaultTo(""));
+// export const mismatchedEvent = (binding, request) => {}
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -107,6 +121,9 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   // }
 
   // Test for matching operation
+  // if (mismatchedEvent(binding, req)){
+  //   return true
+  // }
   if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
     return true;
   }
