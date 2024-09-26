@@ -2,10 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
+
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { Answers } from "prompts";
+
+import { Logger } from "pino";
 
 export enum Operation {
   CREATE = "CREATE",
@@ -108,9 +112,10 @@ export type Binding = {
     annotations: Record<string, string>;
     deletionTimestamp: boolean;
   };
+  alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;
-  readonly watchCallback?: WatchAction<GenericClass, InstanceType<GenericClass>>;
+  readonly watchCallback?: WatchLogAction<GenericClass, InstanceType<GenericClass>>;
   readonly finalizeCallback?: FinalizeAction<GenericClass, InstanceType<GenericClass>>;
 };
 
@@ -179,6 +184,7 @@ export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {
    * @param action The action to be executed when the Kubernetes resource is processed by the AdmissionController.
    */
   Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
+  Alias: (alias: string) => BindingFilter<T>;
 };
 
 export type ValidateActionChain<T extends GenericClass> = {
@@ -193,7 +199,8 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Watch: (action: WatchAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
+
+  Watch: (action: WatchLogAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
 
   /**
    * Establish a reconcile for the specified resource. The callback function will be executed after the admission controller has
@@ -206,7 +213,8 @@ export type ValidateActionChain<T extends GenericClass> = {
    * @param action
    * @returns
    */
-  Reconcile: (action: WatchAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
+
+  Reconcile: (action: WatchLogAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
 };
 
 export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> & {
@@ -236,11 +244,20 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprMutateRequest<K>,
+  logger?: Logger,
 ) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: PeprValidateRequest<K>,
+  logger?: Logger,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
+
+// Define WatchLogAction by adding an optional logger parameter to the WatchAction
+export type WatchLogAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
+  update: K,
+  phase: WatchPhase,
+  logger?: Logger,
+) => Promise<void> | void;
 
 export type ValidateActionResponse = {
   allowed: boolean;
@@ -250,6 +267,7 @@ export type ValidateActionResponse = {
 
 export type FinalizeAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   update: K,
+  logger?: Logger,
 ) => Promise<void> | void;
 
 export type FinalizeActionChain<T extends GenericClass> = {
