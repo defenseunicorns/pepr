@@ -2,6 +2,18 @@
 
 This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
 
+## Redact Store Values from Logs
+
+By default, the store values are displayed in logs, to redact them you can set the `PEPR_STORE_REDACTED_VALUES` environment variable to `true` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `undefined`.
+
+```json
+{
+  "env": {
+    "PEPR_STORE_REDACTED_VALUES": "true"
+  }
+}
+```
+
 ## Display Node Warnings
 
 You can display warnings in the logs by setting the `PEPR_NODE_WARNINGS` environment variable to `true` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `undefined`.

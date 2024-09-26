@@ -10,6 +10,7 @@ import { PeprStore } from "../k8s";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 
+const redactedValue = "**redacted**";
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
 
@@ -75,7 +76,7 @@ export class PeprControllerStore {
   };
 
   #migrateAndSetupWatch = async (store: PeprStore) => {
-    Log.debug(store ? Object.keys(store).join(",") : {}, "Pepr Store migration");
+    Log.debug(redactedStore(store), "Pepr Store migration");
     const data: DataStore = store.data || {};
     const migrateCache: Record<string, Operation> = {};
 
@@ -160,8 +161,7 @@ export class PeprControllerStore {
   };
 
   #receive = (store: PeprStore) => {
-    // HERE
-    Log.debug(Object.keys(store).join(","), "Pepr Store update");
+    Log.debug(redactedStore(store), "Pepr Store update");
 
     // Wrap the update in a debounced function
     const debounced = () => {
@@ -275,7 +275,7 @@ export class PeprControllerStore {
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
-        Log.debug(Object.keys(sendCache).join(","), "Sending updates to Pepr store");
+        Log.debug(redactedPatch(sendCache), "Sending updates to Pepr store");
         void flushCache();
       }
     }, debounceBackoff);
@@ -305,4 +305,37 @@ export class PeprControllerStore {
       Log.error(err, "Failed to create Pepr store");
     }
   };
+}
+
+export function redactedStore(store: PeprStore): PeprStore {
+  const redacted = process.env.PEPR_STORE_REDACTED_VALUES === "true";
+  return {
+    ...store,
+    data: Object.keys(store.data).reduce((acc: Record<string, string>, key: string) => {
+      acc[key] = redacted ? redactedValue : store.data[key];
+      return acc;
+    }, {}),
+  };
+}
+
+export function redactedPatch(patch: Record<string, Operation> = {}): Record<string, Operation> {
+  const redacted = process.env.PEPR_STORE_REDACTED_VALUES === "true";
+
+  if (!redacted) {
+    return patch;
+  }
+
+  const redactedCache: Record<string, Operation> = {};
+
+  Object.keys(patch).forEach(key => {
+    const operation = patch[key];
+    const redactedKey = key.includes(":") ? key.substring(0, key.lastIndexOf(":")) + ":**redacted**" : key;
+    const redactedOperation: Operation = {
+      ...operation,
+      ...("value" in operation ? { value: "**redacted**" } : {}),
+    };
+    redactedCache[redactedKey] = redactedOperation;
+  });
+
+  return redactedCache;
 }
