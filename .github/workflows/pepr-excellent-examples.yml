@@ -42,17 +42,12 @@ jobs:
           cd "$PEPR"
           npm ci
 
-      - name: build npm pepr package
-        run: |
-          cd "$PEPR"
-          npm run build
-          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          
-
-      - name: build pepr image
+      - name: build pepr package and container image
         run: |
           cd "$PEPR"
           npm run build:image
+          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          ls -l ${GITHUB_WORKSPACE}
 
       - name: tar pepr image
         run: |
@@ -60,18 +55,14 @@ jobs:
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image save --output "$PEPR_TAR" pepr:dev
 
-      - name: upload npm pepr package .tgz artifact
+      - name: upload pepr package .tgz and pepr controller image .tar artifacts
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
-          name: pepr-0.0.0-development.tgz
-          path: pepr-0.0.0-development.tgz
-          retention-days: 1
-
-      - name: upload pepr controller image .tar artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-        with:
-          name: pepr-img.tar
-          path: pepr-img.tar
+          name: pepr-packge-and-controller-image.tgz
+          path: | 
+            pepr-0.0.0-development.tgz
+            pepr-img.tar
+          if-no-files-found: error
           retention-days: 1
 
   examples-matrix:
@@ -137,20 +128,15 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-      - name: dowload pepr controller image .tar artifact
+      - name: download pepr package .tgz and pepr controller image .tar artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          name: pepr-img.tar
-          path: ${{ github.workspace }}
-
-      - name: dowload npm pepr package .tgz artifact
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: pepr-0.0.0-development.tgz
+          name: pepr-packge-and-controller-image.tgz
           path: ${{ github.workspace }}
 
       - name: import pepr image from tar
         run: |
+          ls -al ${GITHUB_WORKSPACE}
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
@@ -178,14 +164,14 @@ jobs:
 
       - name: run e2e tests
         run: |
-          pwd
-          ls -l pepr-0.0.0-development.tgz
           mv pepr-0.0.0-development.tgz pepr-excellent-examples/
           cd "$PEXEX"
           pwd
           ls -l pepr-0.0.0-development.tgz
           npx --yes file:pepr-0.0.0-development.tgz --version
-          npm run --workspace=test-specific-version test:e2e -- --image pepr:dev
+          npm run --workspace=test-specific-version test:e2e -- \
+            --image pepr:dev \
+            --custom-package pepr-0.0.0-development.tgz
 
   excellent-examples:
     name: ${{ matrix.name }}
