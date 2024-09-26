@@ -60,7 +60,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -110,7 +110,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: "install k3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
@@ -200,8 +200,12 @@ jobs:
             if [ $((i % 6)) -eq 0 ]; then  # Every 30 minutes 
               update_pod_map
 
+              # get a list of pods every 30 mins
+              kubectl get pods -n pepr-demo 
+
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
+                echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
                   exit 1
