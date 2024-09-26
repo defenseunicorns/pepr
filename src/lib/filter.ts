@@ -9,10 +9,11 @@ import {
   mismatchedName,
   unbindableNamespaces,
   uncarryableNamespace,
+  mismatchedAnnotations,
+  mismatchedLabels,
   mismatchedNamespace,
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
-import Log from "./logger";
 import { allPass, anyPass, defaultTo, equals, not, nthArg, pipe } from "ramda";
 
 export function shouldSkipRequestRegex(
@@ -140,141 +141,23 @@ export const declaredUid = pipe(request => request?.uid, defaultTo(""));
  * @returns
  */
 export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
-  const { labels, annotations } = binding.filters || {};
-  const operation = req.operation.toUpperCase();
-  const uid = req.uid;
-  // Use the old object if the request is a DELETE operation
-  const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
-  const { metadata } = srcObject || {};
-
   const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
-  if (misboundDeleteWithDeletionTimestamp(binding)) {
-    return true;
-  }
-  // if (definesDelete(binding) && definesDeletionTimestamp(binding)) {
-  //   return true;
-  // }
-  // if (binding.event.includes(Event.Delete) && binding.filters?.deletionTimestamp) {
-  //   return true;
-  // }
+  // prettier-ignore
+  return (
+    misboundDeleteWithDeletionTimestamp(binding) ? true :
+    mismatchedDeletionTimestamp(binding, obj) ? true :
+    mismatchedEvent(binding, req) ? true :
+    mismatchedName(binding, obj) ? true :
+    mismatchedGroup(binding, req) ? true :
+    mismatchedVersion(binding, req) ? true :
+    mismatchedKind(binding, req) ? true :
+    unbindableNamespaces(capabilityNamespaces, binding) ? true :
+    uncarryableNamespace(capabilityNamespaces, obj) ? true :
+    mismatchedNamespace(binding, obj) ? true :
+    mismatchedLabels(binding, obj) ? true :
+    mismatchedAnnotations(binding, obj) ? true :
 
-  if (mismatchedDeletionTimestamp(binding, obj)) {
-    return true;
-  }
-  // if (binding.filters?.deletionTimestamp && !req.object.metadata?.deletionTimestamp) {
-  //   return true;
-  // }
-
-  if (mismatchedEvent(binding, req)) {
-    return true;
-  }
-  // if (!binding.event.includes(operation) && !binding.event.includes(Event.Any)) {
-  //   return true;
-  // }
-
-  if (mismatchedName(binding, obj)) {
-    return true;
-  }
-  // if (name && name !== req.name) {
-  //   return true;
-  // }
-
-  if (mismatchedGroup(binding, req)) {
-    return true;
-  }
-  // if (group && group !== req.kind.group) {
-  //   return true;
-  // }
-
-  if (mismatchedVersion(binding, req)) {
-    return true;
-  }
-  // if (version && version !== req.kind.version) {
-  //   return true;
-  // }
-
-  if (mismatchedKind(binding, req)) {
-    return true;
-  }
-  // if (kind !== req.kind.kind) {
-  //   return true;
-  // }
-
-  if (unbindableNamespaces(capabilityNamespaces, binding)) {
-    return true;
-  }
-  if (uncarryableNamespace(capabilityNamespaces, obj)) {
-    return true;
-  }
-  if (mismatchedNamespace(binding, obj)) {
-    return true;
-  }
-  // if (
-  //   (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
-  //   (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
-  // ) {
-  //   Log.debug(
-  //     { uid: declaredUid(req) },
-  //     `${definedCategory(binding)} binding (${definedCallbackName(binding)}) ` +
-  //       `does not match request namespace "${carriedNamespace(req)}"`,
-  //   );
-  //   return true;
-  // }
-  // if (
-  //   (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
-  //   (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
-  // ) {
-  //   // let type = "";
-  //   // let label = "";
-  //   // if (binding.isMutate) {
-  //   //   type = "Mutate";
-  //   //   label = binding.mutateCallback!.name;
-  //   // } else if (binding.isValidate) {
-  //   //   type = "Validate";
-  //   //   label = binding.validateCallback!.name;
-  //   // } else if (binding.isWatch) {
-  //   //   type = "Watch";
-  //   //   label = binding.watchCallback!.name;
-  //   // }
-  //   // Log.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
-  //   // return true;
-  // }
-
-  // Test for matching labels
-  for (const [key, value] of Object.entries(labels)) {
-    const testKey = metadata?.labels?.[key];
-
-    // First check if the label exists
-    if (!testKey) {
-      Log.debug({ uid }, `Label ${key} does not exist`);
-      return true;
-    }
-
-    // Then check if the value matches, if specified
-    if (value && testKey !== value) {
-      Log.debug({ uid }, `${testKey} does not match ${value}`);
-      return true;
-    }
-  }
-
-  // Test for matching annotations
-  for (const [key, value] of Object.entries(annotations)) {
-    const testKey = metadata?.annotations?.[key];
-
-    // First check if the annotation exists
-    if (!testKey) {
-      Log.debug({ uid }, `Annotation ${key} does not exist`);
-      return true;
-    }
-
-    // Then check if the value matches, if specified
-    if (value && testKey !== value) {
-      Log.debug({ uid }, `${testKey} does not match ${value}`);
-      return true;
-    }
-  }
-
-  // No failed filters, so we should not skip this request
-  return false;
+    false
+  );
 }
