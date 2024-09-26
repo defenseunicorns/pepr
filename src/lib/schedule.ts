@@ -3,7 +3,7 @@
 
 import { PeprStore } from "./storage";
 
-type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
+export type Unit = "seconds" | "second" | "minute" | "minutes" | "hours" | "hour";
 
 export interface Schedule {
   /**
