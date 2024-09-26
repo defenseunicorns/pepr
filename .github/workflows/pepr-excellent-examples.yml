@@ -111,72 +111,11 @@ jobs:
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
         id: create-matrix
 
-  excellent-examples-testing:
-    name: test-specific-version
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-    needs: "pepr-build"
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
-        with:
-          egress-policy: audit
-
-      - name: "install k3d"
-        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
-        shell: bash
-
-      - name: download artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: pepr-packge-and-controller-image
-          path: ${{ github.workspace }}
-
-      - name: import pepr image from tar
-        run: |
-          PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
-          echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
-          docker image load --input "$PEPR_TAR"
-
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          repository: defenseunicorns/pepr-excellent-examples
-          path: pepr-excellent-examples
-          ref: 1109-use-pepr-dist
-
-      - name: "set env: PEXEX"
-        run: echo "PEXEX=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
-
-      - name: setup node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: pepr-excellent-examples
-
-      - name: install pepr-excellent-examples deps
-        run: |
-          cd "$PEXEX"
-          npm ci
-
-      - name: run e2e tests
-        run: |
-          cd "$PEXEX"
-          pwd
-          ls -l ../pepr-0.0.0-development.tgz
-          npx --yes file:../pepr-0.0.0-development.tgz --version
-          npm run --workspace=test-specific-version test:e2e -- \
-            --image pepr:dev \
-            --custom-package ../pepr-0.0.0-development.tgz
-
   excellent-examples:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs:
       - examples-matrix
-      - excellent-examples-testing
     if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
@@ -228,4 +167,9 @@ jobs:
       - name: run e2e tests
         run: |
           cd "$PEXEX"
-          npm run --workspace=${{ matrix.name }} test:e2e -- --image pepr:dev
+          pwd
+          ls -l ../pepr-0.0.0-development.tgz
+          npx --yes file:../pepr-0.0.0-development.tgz --version
+          npm run --workspace=${{ matrix.name }} test:e2e -- \
+            --image pepr:dev \
+            --custom-package ../pepr-0.0.0-development.tgz
