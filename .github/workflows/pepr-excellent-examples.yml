@@ -58,7 +58,7 @@ jobs:
       - name: upload pepr package .tgz and pepr controller image .tar artifacts
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
-          name: pepr-packge-and-controller-image.tgz
+          name: pepr-packge-and-controller-image
           path: | 
             pepr-0.0.0-development.tgz
             pepr-img.tar
@@ -131,12 +131,11 @@ jobs:
       - name: download pepr package .tgz and pepr controller image .tar artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          name: pepr-packge-and-controller-image.tgz
+          name: pepr-packge-and-controller-image
           path: ${{ github.workspace }}
 
       - name: import pepr image from tar
         run: |
-          ls -al ${GITHUB_WORKSPACE}
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
@@ -164,14 +163,13 @@ jobs:
 
       - name: run e2e tests
         run: |
-          mv pepr-0.0.0-development.tgz pepr-excellent-examples/
           cd "$PEXEX"
           pwd
-          ls -l pepr-0.0.0-development.tgz
-          npx --yes file:pepr-0.0.0-development.tgz --version
+          ls -l ../pepr-0.0.0-development.tgz
+          npx --yes file:../pepr-0.0.0-development.tgz --version
           npm run --workspace=test-specific-version test:e2e -- \
             --image pepr:dev \
-            --custom-package pepr-0.0.0-development.tgz
+            --custom-package ../pepr-0.0.0-development.tgz
 
   excellent-examples:
     name: ${{ matrix.name }}
