@@ -6,7 +6,24 @@ import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { AdmissionRequest, Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { __, allPass, complement, curry, defaultTo, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
+import {
+  carriedAnnotations,
+  carriedLabels,
+  carriedName,
+  carriedNamespace,
+  definedAnnotations,
+  definedLabels,
+  definedName,
+  definedNamespaces,
+  misboundNamespace,
+  mismatchedAnnotations,
+  mismatchedDeletionTimestamp,
+  mismatchedLabels,
+  mismatchedName,
+  mismatchedNamespace,
+  unbindableNamespaces,
+  uncarryableNamespace,
+} from "./adjudicators";
 
 export function ignoredNSObjectViolation(
   req: Partial<AdmissionRequest> = {},
@@ -111,106 +128,6 @@ export function filterNoMatchReasonRegex(
 
   return result;
 }
-
-export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
-export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
-
-export const carriesDeletionTimestamp = pipe(obj => !!obj.metadata?.deletionTimestamp, defaultTo(false));
-export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
-
-export const mismatchedDeletionTimestamp = allPass([
-  pipe(nthArg(0), definesDeletionTimestamp),
-  pipe(nthArg(1), missingDeletionTimestamp),
-]);
-
-export const definedName = pipe(binding => binding?.filters?.name, defaultTo(""));
-export const definesName = pipe(definedName, equals(""), not);
-export const ignoresName = complement(definesName);
-
-export const carriedName = pipe(obj => obj?.metadata?.name, defaultTo(""));
-export const carriesName = pipe(carriedName, equals(""), not);
-export const missingName = complement(carriesName);
-
-export const mismatchedName = allPass([
-  pipe(nthArg(0), definesName),
-  pipe((bnd, obj) => definedName(bnd) !== carriedName(obj)),
-]);
-
-export const boundKind = pipe(binding => binding?.kind?.kind, defaultTo(""));
-export const bindsToKind = curry(
-  allPass([pipe(nthArg(0), boundKind, equals(""), not), pipe((bnd, knd) => boundKind(bnd) === knd)]),
-);
-export const bindsToNamespace = curry(pipe(bindsToKind(__, "Namespace")));
-export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
-export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
-
-export const carriedNamespace = pipe(obj => obj?.metadata?.namespace, defaultTo(""));
-export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
-
-export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
-export const mismatchedNamespace = allPass([
-  pipe(nthArg(0), definesNamespaces),
-  pipe((bnd, obj) => definedNamespaces(bnd).includes(carriedNamespace(obj)), not),
-]);
-
-export const definedAnnotations = pipe(binding => binding?.filters?.annotations, defaultTo({}));
-export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
-
-export const carriedAnnotations = pipe(obj => obj?.metadata?.annotations, defaultTo({}));
-export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
-
-export const metasMismatch = pipe(
-  (defined, carried) => {
-    const result = { defined, carried, unalike: {} };
-
-    result.unalike = Object.entries(result.defined)
-      .map(([key, val]) => {
-        const keyMissing = !Object.hasOwn(result.carried, key);
-        const noValue = !val;
-        const valMissing = !result.carried[key];
-
-        // prettier-ignore
-        return (
-          keyMissing ? { [key]: val } :
-          noValue ? {} :
-          valMissing ? { [key]: val } :
-          {}
-        )
-      })
-      .reduce((acc, cur) => ({ ...acc, ...cur }), {});
-
-    return result.unalike;
-  },
-  unalike => Object.keys(unalike).length > 0,
-);
-
-export const mismatchedAnnotations = allPass([
-  pipe(nthArg(0), definesAnnotations),
-  pipe((bnd, obj) => metasMismatch(definedAnnotations(bnd), carriedAnnotations(obj))),
-]);
-
-export const definedLabels = pipe(binding => binding?.filters?.labels, defaultTo({}));
-export const definesLabels = pipe(definedLabels, equals({}), not);
-
-export const carriedLabels = pipe(obj => obj?.metadata?.labels, defaultTo({}));
-export const carriesLabels = pipe(carriedLabels, equals({}), not);
-
-export const mismatchedLabels = allPass([
-  pipe(nthArg(0), definesLabels),
-  pipe((bnd, obj) => metasMismatch(definedLabels(bnd), carriedLabels(obj))),
-]);
-
-export const uncarryableNamespace = allPass([
-  pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), carriesNamespace),
-  pipe((nss, obj) => nss.includes(carriedNamespace(obj)), not),
-]);
-
-export const unbindableNamespaces = allPass([
-  pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), definesNamespaces),
-  pipe((nss, bnd) => difference(definedNamespaces(bnd), nss), length, equals(0), not),
-]);
 
 /**
  * Decide to run callback after the event comes back from API Server
