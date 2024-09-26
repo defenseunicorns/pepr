@@ -1060,3 +1060,94 @@ describe("mismatchedKind", () => {
     expect(result).toEqual(expected);
   });
 });
+
+describe("definedCategory", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ isValidate: true }, "Validate"],
+    [{ isMutate: true }, "Mutate"],
+    [{ isWatch: true }, "Watch"],
+    [{ isFinalize: true, isWatch: true }, "Finalize"],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedCategory(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definedCallback", () => {
+  const validateCallback = () => {};
+  const mutateCallback = () => {};
+  const watchCallback = () => {};
+  const finalizeCallback = () => {};
+
+  //[ Binding, result ]
+  it.each([
+    [{}, null],
+    [{ isValidate: true, validateCallback }, validateCallback],
+    [{ isMutate: true, mutateCallback }, mutateCallback],
+    [{ isWatch: true, watchCallback }, watchCallback],
+    [{ isFinalize: true, finalizeCallback }, finalizeCallback],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedCallback(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definedCallbackName", () => {
+  const validateCallback = () => {};
+  const mutateCallback = () => {};
+  const watchCallback = () => {};
+  const finalizeCallback = () => {};
+
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ isValidate: true, validateCallback }, "validateCallback"],
+    [{ isMutate: true, mutateCallback }, "mutateCallback"],
+    [{ isWatch: true, watchCallback }, "watchCallback"],
+    [{ isFinalize: true, finalizeCallback }, "finalizeCallback"],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedCallbackName(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("declaredUid", () => {
+  //[ AdmissionRequest, result ]
+  it.each([
+    [{}, ""],
+    [{ uid: null }, ""],
+    [{ uid: "uid" }, "uid"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const request = given as DeepPartial<AdmissionRequest>;
+
+    const result = sut.declaredUid(request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("declaredNamespace", () => {
+  //[ AdmissionRequest, result ]
+  it.each([
+    [{}, ""],
+    [{ namespace: null }, ""],
+    [{ namespace: "namespace" }, "namespace"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const request = given as DeepPartial<AdmissionRequest>;
+
+    const result = sut.declaredNamespace(request);
+
+    expect(result).toEqual(expected);
+  });
+});

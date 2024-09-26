@@ -10,7 +10,7 @@ import {
   definedName,
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
-import logger from "./logger";
+import Log from "./logger";
 import { allPass, anyPass, defaultTo, equals, not, nthArg, pipe } from "ramda";
 
 export function shouldSkipRequestRegex(
@@ -111,6 +111,32 @@ export const mismatchedKind = allPass([
   pipe((binding, request) => definedKind(binding) !== declaredKind(request)),
 ]);
 
+export const definedCategory = pipe(binding => {
+  // prettier-ignore
+  return (
+    binding.isFinalize ? "Finalize" :
+    binding.isWatch ? "Watch" :
+    binding.isMutate ? "Mutate" :
+    binding.isValidate ? "Validate" :
+    ""
+  );
+});
+
+export const definedCallback = pipe(binding => {
+  // prettier-ignore
+  return (
+    binding.isFinalize ? binding.finalizeCallback :
+    binding.isWatch ? binding.watchCallback :
+    binding.isMutate ? binding.mutateCallback :
+    binding.isValidate ? binding.validateCallback:
+    null
+  );
+});
+export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), cb => cb.name);
+
+export const declaredUid = pipe(request => request?.uid, defaultTo(""));
+export const declaredNamespace = pipe(request => request?.namespace, defaultTo(""));
+
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
  *
@@ -186,23 +212,27 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
     (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
     (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
   ) {
-    let type = "";
-    let label = "";
-
-    if (binding.isMutate) {
-      type = "Mutate";
-      label = binding.mutateCallback!.name;
-    } else if (binding.isValidate) {
-      type = "Validate";
-      label = binding.validateCallback!.name;
-    } else if (binding.isWatch) {
-      type = "Watch";
-      label = binding.watchCallback!.name;
-    }
-
-    logger.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
-
+    Log.debug(
+      { uid: declaredUid(req) },
+      `${definedCategory(binding)} binding (${definedCallbackName(binding)}) ` +
+        `does not match request namespace "${declaredNamespace(req)}"`,
+    );
     return true;
+
+    // let type = "";
+    // let label = "";
+    // if (binding.isMutate) {
+    //   type = "Mutate";
+    //   label = binding.mutateCallback!.name;
+    // } else if (binding.isValidate) {
+    //   type = "Validate";
+    //   label = binding.validateCallback!.name;
+    // } else if (binding.isWatch) {
+    //   type = "Watch";
+    //   label = binding.watchCallback!.name;
+    // }
+    // Log.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
+    // return true;
   }
 
   // Test for matching labels
@@ -211,13 +241,13 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
 
     // First check if the label exists
     if (!testKey) {
-      logger.debug({ uid }, `Label ${key} does not exist`);
+      Log.debug({ uid }, `Label ${key} does not exist`);
       return true;
     }
 
     // Then check if the value matches, if specified
     if (value && testKey !== value) {
-      logger.debug({ uid }, `${testKey} does not match ${value}`);
+      Log.debug({ uid }, `${testKey} does not match ${value}`);
       return true;
     }
   }
@@ -228,13 +258,13 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
 
     // First check if the annotation exists
     if (!testKey) {
-      logger.debug({ uid }, `Annotation ${key} does not exist`);
+      Log.debug({ uid }, `Annotation ${key} does not exist`);
       return true;
     }
 
     // Then check if the value matches, if specified
     if (value && testKey !== value) {
-      logger.debug({ uid }, `${testKey} does not match ${value}`);
+      Log.debug({ uid }, `${testKey} does not match ${value}`);
       return true;
     }
   }
