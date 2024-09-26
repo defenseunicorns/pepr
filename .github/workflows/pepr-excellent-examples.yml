@@ -147,7 +147,6 @@ jobs:
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
-          ref: 1109-use-pepr-dist
 
       - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
         run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
