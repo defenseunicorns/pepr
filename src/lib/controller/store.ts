@@ -75,7 +75,7 @@ export class PeprControllerStore {
   };
 
   #migrateAndSetupWatch = async (store: PeprStore) => {
-    Log.debug(store, "Pepr Store migration");
+    Log.debug(store ? Object.keys(store).join(",") : {}, "Pepr Store migration");
     const data: DataStore = store.data || {};
     const migrateCache: Record<string, Operation> = {};
 
@@ -160,7 +160,8 @@ export class PeprControllerStore {
   };
 
   #receive = (store: PeprStore) => {
-    Log.debug(store, "Pepr Store update");
+    // HERE
+    Log.debug(Object.keys(store).join(","), "Pepr Store update");
 
     // Wrap the update in a debounced function
     const debounced = () => {
@@ -274,7 +275,7 @@ export class PeprControllerStore {
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
-        Log.debug(sendCache, "Sending updates to Pepr store");
+        Log.debug(Object.keys(sendCache).join(","), "Sending updates to Pepr store");
         void flushCache();
       }
     }, debounceBackoff);
