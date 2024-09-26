@@ -811,40 +811,6 @@ describe("mismatchedEvent", () => {
   });
 });
 
-describe("declaredName", () => {
-  //[ AdmissionRequest, result ]
-  it.each([
-    [{}, ""],
-    [{ name: null }, ""],
-    [{ name: "" }, ""],
-    [{ name: "name" }, "name"],
-  ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
-
-    const result = sut.declaredName(request);
-
-    expect(result).toEqual(expected);
-  });
-});
-
-describe("mismatchedName", () => {
-  //[ Binding, AdmissionRequest, result ]
-  it.each([
-    [{}, {}, false],
-    [{}, { name: "name" }, false],
-    [{ filters: { name: "name" } }, {}, true],
-    [{ filters: { name: "name" } }, { name: "wrong" }, true],
-    [{ filters: { name: "name" } }, { name: "name" }, false],
-  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const request = req as DeepPartial<AdmissionRequest>;
-
-    const result = sut.mismatchedName(binding, request);
-
-    expect(result).toEqual(expected);
-  });
-});
-
 describe("definedGroup", () => {
   //[ Binding, result ]
   it.each([
@@ -1132,21 +1098,6 @@ describe("declaredUid", () => {
     const request = given as DeepPartial<AdmissionRequest>;
 
     const result = sut.declaredUid(request);
-
-    expect(result).toEqual(expected);
-  });
-});
-
-describe("declaredNamespace", () => {
-  //[ AdmissionRequest, result ]
-  it.each([
-    [{}, ""],
-    [{ namespace: null }, ""],
-    [{ namespace: "namespace" }, "namespace"],
-  ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
-
-    const result = sut.declaredNamespace(request);
 
     expect(result).toEqual(expected);
   });

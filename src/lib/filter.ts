@@ -6,8 +6,9 @@ import {
   ignoredNSObjectViolation,
   matchesRegex,
   mismatchedDeletionTimestamp,
-  definesName,
-  definedName,
+  carriedNamespace,
+  mismatchedName,
+  // unbindableNamespaces,
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import Log from "./logger";
@@ -75,12 +76,6 @@ export const mismatchedEvent = pipe(
   not,
 );
 
-export const declaredName = pipe(request => request?.name, defaultTo(""));
-export const mismatchedName = allPass([
-  pipe(nthArg(0), definesName),
-  pipe((binding, request) => definedName(binding) !== declaredName(request)),
-]);
-
 export const definedGroup = pipe(binding => binding?.kind?.group, defaultTo(""));
 export const definesGroup = pipe(definedGroup, equals(""), not);
 
@@ -135,7 +130,6 @@ export const definedCallback = pipe(binding => {
 export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), cb => cb.name);
 
 export const declaredUid = pipe(request => request?.uid, defaultTo(""));
-export const declaredNamespace = pipe(request => request?.namespace, defaultTo(""));
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -179,7 +173,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
-  if (mismatchedName(binding, req)) {
+  if (mismatchedName(binding, obj)) {
     return true;
   }
   // if (name && name !== req.name) {
@@ -207,6 +201,13 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
+  // if (unbindableNamespaces(capabilityNamespaces, binding)) {
+  //   return true;
+  // }
+  // if (mismatchedNamespace(binding, req)) {
+  //   return true;
+  // }
+
   // Test for matching namespaces
   if (
     (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
@@ -215,7 +216,7 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
     Log.debug(
       { uid: declaredUid(req) },
       `${definedCategory(binding)} binding (${definedCallbackName(binding)}) ` +
-        `does not match request namespace "${declaredNamespace(req)}"`,
+        `does not match request namespace "${carriedNamespace(req)}"`,
     );
     return true;
 
