@@ -29,7 +29,6 @@ export default function (program: RootCmd) {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .option("--unpublished", "This is a pepr flag that simulates not being on main.")
     .option("--confirm", "Skip verification prompt when creating a new module.")
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
