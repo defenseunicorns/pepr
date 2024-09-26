@@ -443,7 +443,7 @@ test("should allow when namespace is match", () => {
     kind: podKind,
     filters: {
       name: "",
-      namespaces: ["default", "unicorn", "things"],
+      namespaces: ["helm-releasename", "unicorn", "things"],
       labels: {},
       annotations: {},
       deletionTimestamp: false,

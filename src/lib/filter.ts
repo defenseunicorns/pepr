@@ -6,9 +6,10 @@ import {
   ignoredNSObjectViolation,
   matchesRegex,
   mismatchedDeletionTimestamp,
-  carriedNamespace,
   mismatchedName,
-  // unbindableNamespaces,
+  unbindableNamespaces,
+  uncarryableNamespace,
+  mismatchedNamespace,
 } from "./helpers";
 import { AdmissionRequest, Binding, Event, Operation } from "./types";
 import Log from "./logger";
@@ -139,13 +140,12 @@ export const declaredUid = pipe(request => request?.uid, defaultTo(""));
  * @returns
  */
 export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
-  const { namespaces, labels, annotations } = binding.filters || {};
+  const { labels, annotations } = binding.filters || {};
   const operation = req.operation.toUpperCase();
   const uid = req.uid;
   // Use the old object if the request is a DELETE operation
   const srcObject = operation === Operation.DELETE ? req.oldObject : req.object;
   const { metadata } = srcObject || {};
-  const combinedNamespaces = [...namespaces, ...capabilityNamespaces];
 
   const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
@@ -201,40 +201,45 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
   //   return true;
   // }
 
-  // if (unbindableNamespaces(capabilityNamespaces, binding)) {
-  //   return true;
-  // }
-  // if (mismatchedNamespace(binding, req)) {
-  //   return true;
-  // }
-
-  // Test for matching namespaces
-  if (
-    (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
-    (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
-  ) {
-    Log.debug(
-      { uid: declaredUid(req) },
-      `${definedCategory(binding)} binding (${definedCallbackName(binding)}) ` +
-        `does not match request namespace "${carriedNamespace(req)}"`,
-    );
+  if (unbindableNamespaces(capabilityNamespaces, binding)) {
     return true;
-
-    // let type = "";
-    // let label = "";
-    // if (binding.isMutate) {
-    //   type = "Mutate";
-    //   label = binding.mutateCallback!.name;
-    // } else if (binding.isValidate) {
-    //   type = "Validate";
-    //   label = binding.validateCallback!.name;
-    // } else if (binding.isWatch) {
-    //   type = "Watch";
-    //   label = binding.watchCallback!.name;
-    // }
-    // Log.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
-    // return true;
   }
+  if (uncarryableNamespace(capabilityNamespaces, obj)) {
+    return true;
+  }
+  if (mismatchedNamespace(binding, obj)) {
+    return true;
+  }
+  // if (
+  //   (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
+  //   (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
+  // ) {
+  //   Log.debug(
+  //     { uid: declaredUid(req) },
+  //     `${definedCategory(binding)} binding (${definedCallbackName(binding)}) ` +
+  //       `does not match request namespace "${carriedNamespace(req)}"`,
+  //   );
+  //   return true;
+  // }
+  // if (
+  //   (combinedNamespaces.length && !combinedNamespaces.includes(req.namespace || "")) ||
+  //   (!namespaces.includes(req.namespace || "") && capabilityNamespaces.length !== 0 && namespaces.length !== 0)
+  // ) {
+  //   // let type = "";
+  //   // let label = "";
+  //   // if (binding.isMutate) {
+  //   //   type = "Mutate";
+  //   //   label = binding.mutateCallback!.name;
+  //   // } else if (binding.isValidate) {
+  //   //   type = "Validate";
+  //   //   label = binding.validateCallback!.name;
+  //   // } else if (binding.isWatch) {
+  //   //   type = "Watch";
+  //   //   label = binding.watchCallback!.name;
+  //   // }
+  //   // Log.debug({ uid }, `${type} binding (${label}) does not match request namespace "${req.namespace}"`);
+  //   // return true;
+  // }
 
   // Test for matching labels
   for (const [key, value] of Object.entries(labels)) {
