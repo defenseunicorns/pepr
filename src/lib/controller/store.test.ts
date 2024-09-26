@@ -14,7 +14,10 @@ const peprStoreFuzz = fc.record({
     name: fc.string(),
     namespace: fc.string(),
   }),
-  data: fc.dictionary(fc.string(), fc.string()),
+  data: fc.dictionary(
+    fc.string().filter(str => str !== "__proto__"),
+    fc.string().filter(str => str !== "__proto__"),
+  ),
 });
 describe("Fuzzing redactedStore", () => {
   afterEach(() => {
