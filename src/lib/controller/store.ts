@@ -319,7 +319,7 @@ export function redactedStore(store: PeprStore): PeprStore {
 }
 
 export function redactedPatch(patch: Record<string, Operation> = {}): Record<string, Operation> {
-  const redacted = process.env.PEPR_STORE_REDACTED_VALUES === "true";
+  const redacted = process.env.PEPR_STORE_REDACT_VALUES === "true";
 
   if (!redacted) {
     return patch;
