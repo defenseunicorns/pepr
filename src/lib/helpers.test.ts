@@ -3,37 +3,35 @@
 
 import { Binding, CapabilityExport, Event } from "./types";
 import {
-  createRBACMap,
   addVerbIfNotExists,
-  checkOverlap,
+  bindingAndCapabilityNSConflict,
+  createDirectoryIfNotExists,
+  createRBACMap,
+  checkDeploymentStatus,
   filterNoMatchReasonRegex,
-  validateHash,
-  ValidationError,
-  validateCapabilityNames,
-  matchesRegex,
   ignoredNSObjectViolation,
+  dedent,
+  generateWatchNamespaceError,
+  hasAnyOverlap,
+  hasEveryOverlap,
+  ignoredNamespaceConflict,
+  matchesRegex,
+  namespaceDeploymentsReady,
+  namespaceComplianceValidator,
+  parseTimeout,
+  replaceString,
+  secretOverLimit,
+  validateHash,
+  validateCapabilityNames,
+  ValidationError,
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
 import { expect, describe, test, jest, beforeEach, afterEach } from "@jest/globals";
-import { parseTimeout, secretOverLimit, replaceString } from "./helpers";
 import { promises as fs } from "fs";
-
-import {
-  createDirectoryIfNotExists,
-  hasAnyOverlap,
-  hasEveryOverlap,
-  ignoredNamespaceConflict,
-  bindingAndCapabilityNSConflict,
-  generateWatchNamespaceError,
-  namespaceComplianceValidator,
-  dedent,
-} from "./helpers";
 import { SpiedFunction } from "jest-mock";
-
 import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { checkDeploymentStatus, namespaceDeploymentsReady } from "./helpers";
 import { Operation } from "./types";
 
 export const callback = () => undefined;
@@ -341,6 +339,7 @@ describe("validateCapabilityNames", () => {
     expect(validateCapabilityNames(undefined)).toBe(undefined);
   });
 });
+
 describe("createRBACMap", () => {
   test("should return the correct RBACMap for given capabilities", () => {
     const result = createRBACMap(mockCapabilities);
@@ -1070,48 +1069,6 @@ describe("replaceString", () => {
   });
 });
 
-describe("checkOverlap", () => {
-  test("should return false since all binding annotations/labels do not exist on the object", () => {
-    expect(checkOverlap({ key1: "", key2: "" }, { key1: "something" })).toBe(false);
-  });
-  test("should return false since all binding annotations/labels values do not match on the object values", () => {
-    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "value1", key2: "key2" })).toBe(false);
-  });
-  test("should return true since all binding annotations/labels keys and values match the object keys and values", () => {
-    expect(checkOverlap({ key1: "key1", key2: "key2" }, { key1: "key1", key2: "key2" })).toBe(true);
-  });
-
-  test("should return true since all binding annotations/labels keys exist on the object", () => {
-    expect(checkOverlap({ key1: "", key2: "" }, { key1: "key1", key2: "key2" })).toBe(true);
-  });
-
-  test("(Mixed) should return true since key and key value match on object", () => {
-    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "one", key2: "something" })).toBe(true);
-  });
-  test("(Mixed) should return false since key1 value is different on object", () => {
-    expect(checkOverlap({ key1: "one", key2: "" }, { key1: "different", key2: "" })).toBe(false);
-  });
-  test("should return true if binding has no labels or annotations", () => {
-    expect(checkOverlap({}, { key1: "value1" })).toBe(true);
-  });
-
-  test("should return false if there is no overlap", () => {
-    expect(checkOverlap({ key1: "value1" }, { key2: "value2" })).toBe(false);
-  });
-
-  test("should return true since object has key1 and value1", () => {
-    expect(checkOverlap({ key1: "value1" }, { key1: "value1", key2: "value2" })).toBe(true);
-  });
-
-  test("should return false since object value does not match binding value", () => {
-    expect(checkOverlap({ key1: "value1" }, { key1: "value2" })).toBe(false);
-  });
-
-  test("should return true if the object has no labels and neither does the binding", () => {
-    expect(checkOverlap({}, {})).toBe(true);
-  });
-});
-
 describe("filterMatcher", () => {
   test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
     const binding = {
@@ -1227,7 +1184,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.");
+    expect(result).toEqual("Ignoring Watch Callback: Cannot use namespace filter on a namespace object.");
   });
 
   test("return an Ignoring Watch Callback string if the binding name and object name are different", () => {
@@ -1245,9 +1202,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual(
-      `Ignoring Watch Callback: No overlap between binding and object name. Binding name pepr, Object name not-pepr.`,
-    );
+    expect(result).toEqual(`Ignoring Watch Callback: Binding defines name 'pepr' but Object carries 'not-pepr'.`);
   });
   test("returns no Ignoring Watch Callback string if the binding name and object name are the same", () => {
     const binding = {
@@ -1278,7 +1233,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Ignoring Watch Callback: Object does not have a deletion timestamp.");
+    expect(result).toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp but Object does not carry it.");
   });
 
   test("return no deletionTimestamp error when there is a deletionTimestamp in the object", () => {
@@ -1296,7 +1251,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).not.toEqual("Ignoring Watch Callback: Object does not have a deletion timestamp.");
+    expect(result).not.toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp Object does not carry it.");
   });
 
   test("returns label overlap error when there is no overlap between binding and object labels", () => {
@@ -1313,7 +1268,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      'Ignoring Watch Callback: No overlap between binding and object labels. Binding labels {"key":"value"}, Object Labels {"anotherKey":"anotherValue"}.',
+      `Ignoring Watch Callback: Binding defines labels '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
   });
 
@@ -1331,7 +1286,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      'Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations {"key":"value"}, Object annotations {"anotherKey":"anotherValue"}.',
+      `Ignoring Watch Callback: Binding defines annotations '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
   });
 
@@ -1366,7 +1321,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ns1, Object namespace: ns2.",
+      `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'`,
     );
   });
 
@@ -1382,7 +1337,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ns1, ns2, Binding namespaces: ns3.",
+      `Ignoring Watch Callback: Binding defines namespaces ["ns3"] but namespaces allowed by Capability are '["ns1","ns2"]'`,
     );
   });
 
@@ -1399,9 +1354,7 @@ describe("filterMatcher", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual(
-      "Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ns1, Object namespace: ns2.",
-    );
+    expect(result).toEqual(`Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`);
   });
 
   test("returns empty string when all checks pass", () => {

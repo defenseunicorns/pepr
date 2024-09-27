@@ -6,8 +6,7 @@ import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequestRegex } from "./filter";
-import { Event, Binding } from "./types";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest, Binding, Event } from "./types";
 
 export const callback = () => undefined;
 
@@ -443,7 +442,7 @@ test("should allow when namespace is match", () => {
     kind: podKind,
     filters: {
       name: "",
-      namespaces: ["default", "unicorn", "things"],
+      namespaces: ["helm-releasename", "unicorn", "things"],
       labels: {},
       annotations: {},
       deletionTimestamp: false,
