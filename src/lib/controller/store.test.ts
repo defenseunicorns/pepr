@@ -51,7 +51,7 @@ describe("Fuzzing redactedStore", () => {
     fc.assert(
       fc.property(peprStoreFuzz, store => {
         const redactionEnabled = fc.boolean();
-        process.env.PEPR_STORE_REDACTED_VALUES = redactionEnabled ? "true" : "false";
+        process.env.PEPR_STORE_REDACT_VALUES = redactionEnabled ? "true" : "false";
 
         const result = redactedStore(store);
 
