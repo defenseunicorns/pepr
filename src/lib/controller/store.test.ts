@@ -119,7 +119,7 @@ describe("redactedPatch", () => {
       }
     });
   });
-  test("should not redact keys and values if PEPR_STORE_REDACTED_VALUES is not true", () => {
+  test("should not redact keys and values if PEPR_STORE_REDACT_VALUES is not true", () => {
     addOperationKeys.forEach((key, i) => {
       const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
       for (const [k, v] of Object.entries(redactedResult)) {
