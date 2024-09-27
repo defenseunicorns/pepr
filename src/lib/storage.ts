@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { clone } from "ramda";
-import Log from "./logger";
 import pointer from "json-pointer";
 export type DataOp = "add" | "remove";
 export type DataStore = Record<string, string>;
@@ -86,7 +85,6 @@ export class Storage implements PeprStore {
   };
 
   receive = (data: DataStore) => {
-    Log.debug(data, `Pepr store data received`);
     this.#store = data || {};
 
     this.#onReady();
