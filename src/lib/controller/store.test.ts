@@ -109,7 +109,7 @@ describe("redactedPatch", () => {
     delete process.env.PEPR_STORE_REDACT_VALUES;
   });
 
-  test("should redact keys and values if PEPR_STORE_REDACTED_VALUES is true", () => {
+  test("should redact keys and values if PEPR_STORE_REDACT_VALUES is true", () => {
     process.env.PEPR_STORE_REDACT_VALUES = "true";
     addOperationKeys.forEach((key, i) => {
       const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
