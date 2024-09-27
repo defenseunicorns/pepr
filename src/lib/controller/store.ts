@@ -308,7 +308,7 @@ export class PeprControllerStore {
 }
 
 export function redactedStore(store: PeprStore): PeprStore {
-  const redacted = process.env.PEPR_STORE_REDACTED_VALUES === "true";
+  const redacted = process.env.PEPR_STORE_REDACT_VALUES === "true";
   return {
     ...store,
     data: Object.keys(store.data).reduce((acc: Record<string, string>, key: string) => {
