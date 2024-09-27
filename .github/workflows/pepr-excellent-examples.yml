@@ -179,9 +179,9 @@ jobs:
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         if: always()
         with:
-          name: troubleshooting-logs
+          name: "troubleshooting_logs_${{matrix.name}}"
           path: | 
-            "$PEPR_EXCELLENT_EXAMPLES_PATH/package.json"
-            "**/package-lock.json"
+            pepr-excellent-examples/package.json
+            pepr-excellent-examples/package-lock.json
           if-no-files-found: error
           retention-days: 1
