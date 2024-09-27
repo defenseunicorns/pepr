@@ -172,3 +172,13 @@ jobs:
           npm run --workspace=${{ matrix.name }} test:e2e -- \
             --image pepr:dev \
             --custom-package ../pepr-0.0.0-development.tgz
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: troubleshooting-logs
+          path: | 
+            "$PEPR_EXCELLENT_EXAMPLES_PATH/package.json"
+            "**/package-lock.json"
+          if-no-files-found: error
+          retention-days: 1
