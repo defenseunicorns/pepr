@@ -40,7 +40,7 @@ describe("Fuzzing redactedStore", () => {
   test("should not redact values if PEPR_STORE_REDACT_VALUES is not true", () => {
     fc.assert(
       fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACTED_VALUES = "false";
+        process.env.PEPR_STORE_REDACT_VALUES = "false";
         const result = redactedStore(store);
         expect(result.data).toEqual(store.data);
       }),
