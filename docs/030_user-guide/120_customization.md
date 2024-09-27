@@ -9,7 +9,7 @@ By default, the store values are displayed in logs, to redact them you can set t
 ```json
 {
   "env": {
-    "PEPR_STORE_REDACTED_VALUES": "true"
+    "PEPR_STORE_REDACT_VALUES": "true"
   }
 }
 ```
