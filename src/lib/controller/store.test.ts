@@ -106,7 +106,7 @@ const addOperationValues: AddOperation<string>[] = [
 
 describe("redactedPatch", () => {
   afterEach(() => {
-    delete process.env.PEPR_STORE_REDACTED_VALUES;
+    delete process.env.PEPR_STORE_REDACT_VALUES;
   });
 
   test("should redact keys and values if PEPR_STORE_REDACTED_VALUES is true", () => {
