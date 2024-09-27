@@ -27,7 +27,7 @@ describe("Fuzzing redactedStore", () => {
   test("should redact values if PEPR_STORE_REDACT_VALUES is true", () => {
     fc.assert(
       fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACTED_VALUES = "true";
+        process.env.PEPR_STORE_REDACT_VALUES = "true";
         const result = redactedStore(store);
 
         Object.values(result.data).forEach(value => {
