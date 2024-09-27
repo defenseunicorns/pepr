@@ -21,7 +21,7 @@ const peprStoreFuzz = fc.record({
 });
 describe("Fuzzing redactedStore", () => {
   afterEach(() => {
-    delete process.env.PEPR_STORE_REDACTED_VALUES;
+    delete process.env.PEPR_STORE_REDACT_VALUES;
   });
 
   test("should redact values if PEPR_STORE_REDACTED_VALUES is true", () => {
