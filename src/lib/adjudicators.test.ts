@@ -277,6 +277,42 @@ describe("definesNamespaces", () => {
   });
 });
 
+describe("definedNamespaceRegexes", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, []],
+    [{ filters: {} }, []],
+    [{ filters: { regexNamespaces: null } }, []],
+    [{ filters: { regexNamespaces: [] } }, []],
+    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
+    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
+  ])("given %j, returns %j", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedNamespaceRegexes(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesNamespaceRegexes", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ filters: {} }, false],
+    [{ filters: { regexNamespaces: null } }, false],
+    [{ filters: { regexNamespaces: [] } }, false],
+    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
+    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesNamespaceRegexes(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("carriedNamespace", () => {
   //[ KubernetesObject, result ]
   it.each([
@@ -324,6 +360,37 @@ describe("mismatchedNamespace", () => {
     const object = obj as DeepPartial<Binding>;
 
     const result = sut.mismatchedNamespace(binding, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedNamespaceRegex", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "n3mespace" } }, true],
+
+    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "space" } }, false],
+    [
+      { filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } },
+      { metadata: { namespace: "namespace" } },
+      true,
+    ],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const object = obj as DeepPartial<Binding>;
+
+    const result = sut.mismatchedNamespaceRegex(binding, object);
 
     expect(result).toBe(expected);
   });

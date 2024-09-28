@@ -5,6 +5,7 @@ import { Event, Operation } from "./types";
 import {
   __,
   allPass,
+  any,
   anyPass,
   complement,
   curry,
@@ -65,6 +66,9 @@ export const ignoresName = complement(definesName);
 
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
+
+export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
+export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
 export const definedAnnotations = pipe(binding => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
@@ -129,6 +133,16 @@ export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
   pipe((bnd, obj) => definedNamespaces(bnd).includes(carriedNamespace(obj)), not),
+]);
+
+export const mismatchedNamespaceRegex = allPass([
+  pipe(nthArg(0), definesNamespaceRegexes),
+  pipe((bnd, obj) =>
+    pipe(
+      any((rex: string) => new RegExp(rex).test(carriedNamespace(obj))),
+      not,
+    )(definedNamespaceRegexes(bnd)),
+  ),
 ]);
 
 export const metasMismatch = pipe(

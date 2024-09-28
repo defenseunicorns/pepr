@@ -1073,11 +1073,11 @@ describe("filterMatcher", () => {
   test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
     const binding = {
       kind: { kind: "Pod" },
-      filters: { regexNamespaces: [/(.*)-system/], namespaces: [] },
+      filters: { regexNamespaces: ["(.*)-system"], namespaces: [] },
     };
     const obj = { metadata: { namespace: "pepr-demo" } };
     const objArray = [
-      { ...obj, metadata: { namespace: "pepr-demo" } },
+      { ...obj },
       { ...obj, metadata: { namespace: "pepr-uds" } },
       { ...obj, metadata: { namespace: "pepr-core" } },
       { ...obj, metadata: { namespace: "uds-ns" } },
@@ -1091,7 +1091,7 @@ describe("filterMatcher", () => {
         capabilityNamespaces,
       );
       expect(result).toEqual(
-        `Ignoring Watch Callback: Object namespace ${object.metadata?.namespace} does not match regex ${binding.filters.regexNamespaces[0]}.`,
+        `Ignoring Watch Callback: Binding defines namespace regexes '["(.*)-system"]' but Object carries '${object?.metadata?.namespace}'.`,
       );
     });
   });

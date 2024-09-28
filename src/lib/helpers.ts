@@ -15,12 +15,14 @@ import {
   definedLabels,
   definedName,
   definedNamespaces,
+  definedNamespaceRegexes,
   misboundNamespace,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
   mismatchedLabels,
   mismatchedName,
   mismatchedNamespace,
+  mismatchedNamespaceRegex,
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
@@ -106,16 +108,19 @@ export function filterNoMatchReasonRegex(
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
-  const { regexNamespaces, regexName } = binding.filters || {};
+  const prefix = "Ignoring Watch Callback:";
+
+  const { regexName } = binding.filters || {};
   const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
   if (result === "") {
-    if (Array.isArray(regexNamespaces) && regexNamespaces.length > 0) {
-      for (const regexNamespace of regexNamespaces) {
-        if (!matchesRegex(regexNamespace, obj.metadata?.namespace || "")) {
-          return `Ignoring Watch Callback: Object namespace ${obj.metadata?.namespace} does not match regex ${regexNamespace}.`;
-        }
-      }
+    if (mismatchedNamespaceRegex(binding, obj)) {
+      return (
+        `${prefix} Binding defines namespace regexes ` +
+        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
+        `but Object carries '${carriedNamespace(obj)}'.`
+      );
     }
+
     if (regexName && regexName !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
       return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
     }
