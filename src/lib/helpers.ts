@@ -14,6 +14,7 @@ import {
   definedAnnotations,
   definedLabels,
   definedName,
+  definedNameRegex,
   definedNamespaces,
   definedNamespaceRegexes,
   misboundNamespace,
@@ -25,6 +26,7 @@ import {
   mismatchedNamespaceRegex,
   unbindableNamespaces,
   uncarryableNamespace,
+  mismatchedNameRegex,
 } from "./adjudicators";
 
 export function ignoredNSObjectViolation(
@@ -110,7 +112,6 @@ export function filterNoMatchReasonRegex(
 ): string {
   const prefix = "Ignoring Watch Callback:";
 
-  const { regexName } = binding.filters || {};
   const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
   if (result === "") {
     if (mismatchedNamespaceRegex(binding, obj)) {
@@ -121,8 +122,11 @@ export function filterNoMatchReasonRegex(
       );
     }
 
-    if (regexName && regexName !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
-      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
+    if (mismatchedNameRegex(binding, obj)) {
+      return (
+        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
+        `but Object carries '${carriedName(obj)}'.`
+      );
     }
   }
 

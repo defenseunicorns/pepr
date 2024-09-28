@@ -137,6 +137,38 @@ describe("ignoresName", () => {
   });
 });
 
+describe("definedNameRegex", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ filters: {} }, ""],
+    [{ filters: { regexName: null } }, ""],
+    [{ filters: { regexName: "n.me" } }, "n.me"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedNameRegex(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("definesNameRegex", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ filters: {} }, false],
+    [{ filters: { regexName: null } }, false],
+    [{ filters: { regexName: "n.me" } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesNameRegex(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("carriedName", () => {
   //[ KubernetesObject, result ]
   it.each([
@@ -197,6 +229,28 @@ describe("mismatchedName", () => {
     const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedName(binding, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedNameRegex", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, {}, true],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "neme" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nime" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nome" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nume" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "n3me" } }, true],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
+
+    const result = sut.mismatchedNameRegex(binding, object);
 
     expect(result).toBe(expected);
   });

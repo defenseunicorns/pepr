@@ -64,6 +64,9 @@ export const definedName = pipe(binding => binding?.filters?.name, defaultTo("")
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
+export const definedNameRegex = pipe(binding => binding?.filters?.regexName, defaultTo(""));
+export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
+
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
@@ -122,6 +125,11 @@ export const mismatchedDeletionTimestamp = allPass([
 export const mismatchedName = allPass([
   pipe(nthArg(0), definesName),
   pipe((bnd, obj) => definedName(bnd) !== carriedName(obj)),
+]);
+
+export const mismatchedNameRegex = allPass([
+  pipe(nthArg(0), definesNameRegex),
+  pipe((bnd, obj) => new RegExp(definedNameRegex(bnd)).test(carriedName(obj)), not),
 ]);
 
 export const bindsToKind = curry(

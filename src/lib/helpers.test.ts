@@ -1124,11 +1124,11 @@ describe("filterMatcher", () => {
   test("returns regex name filter error for Pods whos name does not match the regex", () => {
     const binding = {
       kind: { kind: "Pod" },
-      filters: { regexName: /^system/, namespaces: [] },
+      filters: { regexName: "^system", namespaces: [] },
     };
     const obj = { metadata: { name: "pepr-demo" } };
     const objArray = [
-      { ...obj, metadata: { name: "pepr-demo" } },
+      { ...obj },
       { ...obj, metadata: { name: "pepr-uds" } },
       { ...obj, metadata: { name: "pepr-core" } },
       { ...obj, metadata: { name: "uds-ns" } },
@@ -1142,7 +1142,7 @@ describe("filterMatcher", () => {
         capabilityNamespaces,
       );
       expect(result).toEqual(
-        `Ignoring Watch Callback: Object name ${object.metadata?.name} does not match regex ${binding.filters.regexName}.`,
+        `Ignoring Watch Callback: Binding defines name regex '^system' but Object carries '${object?.metadata?.name}'.`,
       );
     });
   });
