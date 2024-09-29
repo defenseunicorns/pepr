@@ -11,6 +11,7 @@ import {
   carriedLabels,
   carriedName,
   carriedNamespace,
+  carriesIgnoredNamespace,
   definedAnnotations,
   definedLabels,
   definedName,
@@ -22,11 +23,11 @@ import {
   mismatchedDeletionTimestamp,
   mismatchedLabels,
   mismatchedName,
+  mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
   unbindableNamespaces,
   uncarryableNamespace,
-  mismatchedNameRegex,
 } from "./adjudicators";
 
 export function ignoredNSObjectViolation(
@@ -130,9 +131,11 @@ export function filterNoMatchReasonRegex(
     }
   }
 
-  const ignoredNS = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
-  if (ignoredNS !== "" && typeof ignoredNS === "string") {
-    return ignoredNS;
+  if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
+    return (
+      `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+      `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+    );
   }
 
   return result;
@@ -174,13 +177,13 @@ export function filterNoMatchReason(
     uncarryableNamespace(capabilityNamespaces, obj) ?
       (
         `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     unbindableNamespaces(capabilityNamespaces, binding) ?
       (
         `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     mismatchedNamespace(binding, obj) ?

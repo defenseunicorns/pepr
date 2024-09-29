@@ -194,6 +194,12 @@ export const uncarryableNamespace = allPass([
   pipe((nss, obj) => nss.includes(carriedNamespace(obj)), not),
 ]);
 
+export const carriesIgnoredNamespace = allPass([
+  pipe(nthArg(0), length, gt(__, 0)),
+  pipe(nthArg(1), carriesNamespace),
+  pipe((nss, obj) => nss.includes(carriedNamespace(obj))),
+]);
+
 export const unbindableNamespaces = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe(nthArg(1), definesNamespaces),

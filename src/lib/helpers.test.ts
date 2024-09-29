@@ -1321,7 +1321,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'`,
+      `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'.`,
     );
   });
 
@@ -1337,7 +1337,7 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(
-      `Ignoring Watch Callback: Binding defines namespaces ["ns3"] but namespaces allowed by Capability are '["ns1","ns2"]'`,
+      `Ignoring Watch Callback: Binding defines namespaces ["ns3"] but namespaces allowed by Capability are '["ns1","ns2"]'.`,
     );
   });
 
@@ -1355,6 +1355,26 @@ describe("filterMatcher", () => {
       capabilityNamespaces,
     );
     expect(result).toEqual(`Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`);
+  });
+
+  test("return watch violation message when object is in an ignored namespace", () => {
+    const binding = {
+      filters: { namespaces: ["ns1"], regexNamespaces: [] },
+    };
+    const obj = {
+      metadata: { namespace: "ns3" },
+    };
+    const capabilityNamespaces = ["ns1", "ns2"];
+    const ignoredNamespaces = ["ns3"];
+    const result = filterNoMatchReasonRegex(
+      binding as unknown as Partial<Binding>,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+      ignoredNamespaces,
+    );
+    expect(result).toEqual(
+      `Ignoring Watch Callback: Object carries namespace 'ns3' but ignored namespaces include '["ns3"]'.`,
+    );
   });
 
   test("returns empty string when all checks pass", () => {

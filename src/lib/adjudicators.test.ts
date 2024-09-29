@@ -723,6 +723,35 @@ describe("uncarryableNamespace", () => {
   });
 });
 
+describe("carriesIgnoredNamespace", () => {
+  //[ ignored ns's, KubernetesObject, result ]
+  it.each([
+    [[], {}, false],
+    [[], { metadata: { namespace: "whatever" } }, false],
+
+    [["ignored"], {}, false],
+    [["ignored"], { metadata: {} }, false],
+    [["ignored"], { metadata: { namespace: null } }, false],
+    [["ignored"], { metadata: { namespace: "" } }, false],
+    [["ignored"], { metadata: { namespace: "namespace" } }, false],
+    [["ignored"], { metadata: { namespace: "ignored" } }, true],
+
+    [["ign", "ored"], {}, false],
+    [["ign", "ored"], { metadata: {} }, false],
+    [["ign", "ored"], { metadata: { namespace: null } }, false],
+    [["ign", "ored"], { metadata: { namespace: "" } }, false],
+    [["ign", "ored"], { metadata: { namespace: "ign" } }, true],
+    [["ign", "ored"], { metadata: { namespace: "ored" } }, true],
+    [["ign", "ored"], { metadata: { namespace: "namespace" } }, false],
+  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
+    const object = obj as DeepPartial<Binding>;
+
+    const result = sut.carriesIgnoredNamespace(nss, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("unbindableNamespaces", () => {
   //[ capa ns's, Binding, result ]
   it.each([
