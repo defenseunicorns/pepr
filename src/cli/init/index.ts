@@ -81,7 +81,7 @@ export default function (program: RootCmd) {
             });
 
             // setup git
-            execSync("git init --initial-branch=test", {
+            execSync("git init --initial-branch=main", {
               stdio: "inherit",
             });
 
