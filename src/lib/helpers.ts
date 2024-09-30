@@ -4,63 +4,31 @@
 import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { AdmissionRequest, Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 import {
   carriedAnnotations,
   carriedLabels,
   carriedName,
   carriedNamespace,
+  carriesIgnoredNamespace,
   definedAnnotations,
   definedLabels,
   definedName,
+  definedNameRegex,
   definedNamespaces,
+  definedNamespaceRegexes,
   misboundNamespace,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
   mismatchedLabels,
   mismatchedName,
+  mismatchedNameRegex,
   mismatchedNamespace,
+  mismatchedNamespaceRegex,
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-
-export function ignoredNSObjectViolation(
-  req: Partial<AdmissionRequest> = {},
-  obj: Partial<KubernetesObject> = {},
-  ignoredNamespaces?: string[],
-): boolean | string {
-  if (!ignoredNamespaces || ignoredNamespaces.length === 0) {
-    if (req && req.uid) {
-      return false;
-    } else {
-      return "";
-    }
-  }
-  // check if admission request is in ignored namespace
-  if (req && req.uid && ignoredNamespaces.length > 0) {
-    const operation = req.operation?.toUpperCase() || undefined;
-    for (const ignoredNS of ignoredNamespaces) {
-      if (operation && operation === "DELETE" && req.oldObject?.metadata?.namespace === ignoredNS) {
-        return true;
-      }
-      if (operation && operation !== "DELETE" && req.object?.metadata?.namespace === ignoredNS) {
-        return true;
-      }
-    }
-  }
-
-  // check if watch object is in ignored namespace
-  if (obj && obj.metadata && obj.metadata.namespace) {
-    if (ignoredNamespaces.includes(obj.metadata.namespace)) {
-      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} is in an ignored namespace ${ignoredNamespaces.join(", ")}.`;
-    } else {
-      return "";
-    }
-  }
-
-  return false;
-}
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
@@ -100,35 +68,6 @@ type RBACMap = {
   };
 };
 
-export function filterNoMatchReasonRegex(
-  binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
-  capabilityNamespaces: string[],
-  ignoredNamespaces?: string[],
-): string {
-  const { regexNamespaces, regexName } = binding.filters || {};
-  const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
-  if (result === "") {
-    if (Array.isArray(regexNamespaces) && regexNamespaces.length > 0) {
-      for (const regexNamespace of regexNamespaces) {
-        if (!matchesRegex(regexNamespace, obj.metadata?.namespace || "")) {
-          return `Ignoring Watch Callback: Object namespace ${obj.metadata?.namespace} does not match regex ${regexNamespace}.`;
-        }
-      }
-    }
-    if (regexName && regexName !== "" && !matchesRegex(regexName, obj.metadata?.name || "")) {
-      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} does not match regex ${regexName}.`;
-    }
-  }
-
-  const ignoredNS = ignoredNSObjectViolation({}, obj, ignoredNamespaces);
-  if (ignoredNS !== "" && typeof ignoredNS === "string") {
-    return ignoredNS;
-  }
-
-  return result;
-}
-
 /**
  * Decide to run callback after the event comes back from API Server
  **/
@@ -136,6 +75,7 @@ export function filterNoMatchReason(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
 ): string {
   const prefix = "Ignoring Watch Callback:";
 
@@ -165,20 +105,39 @@ export function filterNoMatchReason(
     uncarryableNamespace(capabilityNamespaces, obj) ?
       (
         `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     unbindableNamespaces(capabilityNamespaces, binding) ?
       (
         `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'`
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     mismatchedNamespace(binding, obj) ?
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
         `but Object carries '${carriedNamespace(obj)}'.`
-      ):
+      ) :
+
+    mismatchedNamespaceRegex(binding, obj) ?
+      (
+        `${prefix} Binding defines namespace regexes ` +
+        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
+        `but Object carries '${carriedNamespace(obj)}'.`
+      ) :
+
+    mismatchedNameRegex(binding, obj) ?
+      (
+        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
+        `but Object carries '${carriedName(obj)}'.`
+      ) :
+
+    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
+      (
+        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+      ) :
 
     ""
   );
