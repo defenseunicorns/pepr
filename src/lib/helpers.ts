@@ -68,15 +68,6 @@ type RBACMap = {
   };
 };
 
-export function filterNoMatchReasonRegex(
-  binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
-  capabilityNamespaces: string[],
-  ignoredNamespaces?: string[],
-): string {
-  return filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
-}
-
 /**
  * Decide to run callback after the event comes back from API Server
  **/

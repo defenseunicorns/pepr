@@ -8,7 +8,7 @@ import {
   createDirectoryIfNotExists,
   createRBACMap,
   checkDeploymentStatus,
-  filterNoMatchReasonRegex,
+  filterNoMatchReason,
   dedent,
   generateWatchNamespaceError,
   hasAnyOverlap,
@@ -1067,7 +1067,7 @@ describe("replaceString", () => {
   });
 });
 
-describe("filterMatcher", () => {
+describe("filterNoMatchReason", () => {
   test("returns regex namespace filter error for Pods whos namespace does not match the regex", () => {
     const binding = {
       kind: { kind: "Pod" },
@@ -1083,7 +1083,7 @@ describe("filterMatcher", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReasonRegex(
+      const result = filterNoMatchReason(
         binding as unknown as Partial<Binding>,
         object as unknown as Partial<KubernetesObject>,
         capabilityNamespaces,
@@ -1109,7 +1109,7 @@ describe("filterMatcher", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReasonRegex(
+      const result = filterNoMatchReason(
         binding as unknown as Partial<Binding>,
         object as unknown as Partial<KubernetesObject>,
         capabilityNamespaces,
@@ -1134,7 +1134,7 @@ describe("filterMatcher", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReasonRegex(
+      const result = filterNoMatchReason(
         binding as unknown as Partial<Binding>,
         object as unknown as Partial<KubernetesObject>,
         capabilityNamespaces,
@@ -1161,7 +1161,7 @@ describe("filterMatcher", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReasonRegex(
+      const result = filterNoMatchReason(
         binding as unknown as Partial<Binding>,
         object as unknown as Partial<KubernetesObject>,
         capabilityNamespaces,
@@ -1177,7 +1177,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1195,7 +1195,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1210,7 +1210,7 @@ describe("filterMatcher", () => {
       metadata: { name: "pepr" },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1226,7 +1226,7 @@ describe("filterMatcher", () => {
       metadata: {},
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1244,7 +1244,7 @@ describe("filterMatcher", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1260,7 +1260,7 @@ describe("filterMatcher", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1278,7 +1278,7 @@ describe("filterMatcher", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1313,7 +1313,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2", name: "bleh" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as Binding,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1329,7 +1329,7 @@ describe("filterMatcher", () => {
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1347,7 +1347,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1364,7 +1364,7 @@ describe("filterMatcher", () => {
     };
     const capabilityNamespaces = ["ns3"];
     const ignoredNamespaces = ["ns3"];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
@@ -1383,7 +1383,7 @@ describe("filterMatcher", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReasonRegex(
+    const result = filterNoMatchReason(
       binding as unknown as Partial<Binding>,
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,

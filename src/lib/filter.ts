@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { AdmissionRequest, Binding, Operation } from "./types";
-// import { ignoredNSObjectViolation, matchesRegex } from "./helpers";
 import {
   carriesIgnoredNamespace,
   misboundDeleteWithDeletionTimestamp,
@@ -20,15 +19,6 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-
-export function shouldSkipRequestRegex(
-  binding: Binding,
-  req: AdmissionRequest,
-  capabilityNamespaces: string[],
-  ignoredNamespaces?: string[],
-): boolean {
-  return shouldSkipRequest(binding, req, capabilityNamespaces, ignoredNamespaces);
-}
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
