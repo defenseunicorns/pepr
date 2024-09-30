@@ -27,24 +27,26 @@ export function shouldSkipRequestRegex(
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): boolean {
-  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+  return shouldSkipRequest(binding, req, capabilityNamespaces, ignoredNamespaces);
 
-  const result = shouldSkipRequest(binding, req, capabilityNamespaces);
-  if (!result) {
-    if (mismatchedNamespaceRegex(binding, obj)) {
-      return true;
-    }
+  // const result = shouldSkipRequest(binding, req, capabilityNamespaces, ignoredNamespaces);
 
-    if (mismatchedNameRegex(binding, obj)) {
-      return true;
-    }
-  }
+  // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+  // if (!result) {
+  //   if (mismatchedNamespaceRegex(binding, obj)) {
+  //     return true;
+  //   }
 
-  if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
-    return true;
-  }
+  //   if (mismatchedNameRegex(binding, obj)) {
+  //     return true;
+  //   }
+  // }
 
-  return result;
+  // if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
+  //   return true;
+  // }
+
+  // return result;
 }
 
 /**
@@ -54,7 +56,12 @@ export function shouldSkipRequestRegex(
  * @param req the incoming request
  * @returns
  */
-export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capabilityNamespaces: string[]): boolean {
+export function shouldSkipRequest(
+  binding: Binding,
+  req: AdmissionRequest,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+): boolean {
   const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
   // prettier-ignore
@@ -71,6 +78,9 @@ export function shouldSkipRequest(binding: Binding, req: AdmissionRequest, capab
     mismatchedNamespace(binding, obj) ? true :
     mismatchedLabels(binding, obj) ? true :
     mismatchedAnnotations(binding, obj) ? true :
+    mismatchedNamespaceRegex(binding, obj) ? true :
+    mismatchedNameRegex(binding, obj) ? true :
+    carriesIgnoredNamespace(ignoredNamespaces, obj) ? true :
 
     false
   );
