@@ -3,8 +3,8 @@
 
 import { AdmissionRequest, Binding, Operation } from "./types";
 // import { ignoredNSObjectViolation, matchesRegex } from "./helpers";
-import { ignoredNSObjectViolation } from "./helpers";
 import {
+  carriesIgnoredNamespace,
   misboundDeleteWithDeletionTimestamp,
   mismatchedDeletionTimestamp,
   mismatchedAnnotations,
@@ -27,9 +27,6 @@ export function shouldSkipRequestRegex(
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): boolean {
-  // const { regexName } = binding.filters || {};
-  // const operation = req.operation.toUpperCase();
-
   const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
   const result = shouldSkipRequest(binding, req, capabilityNamespaces);
@@ -37,38 +34,13 @@ export function shouldSkipRequestRegex(
     if (mismatchedNamespaceRegex(binding, obj)) {
       return true;
     }
-    // if (regexNamespaces && regexNamespaces.length > 0) {
-    //   for (const regexNamespace of regexNamespaces) {
-    //     if (
-    //       !matchesRegex(
-    //         regexNamespace,
-    //         (operation === Operation.DELETE ? req.oldObject?.metadata?.namespace : req.object.metadata?.namespace) ||
-    //           "",
-    //       )
-    //     ) {
-    //       return true;
-    //     }
-    //   }
-    // }
 
     if (mismatchedNameRegex(binding, obj)) {
       return true;
     }
-    // if (
-    //   regexName &&
-    //   regexName !== "" &&
-    //   !matchesRegex(
-    //     regexName,
-    //     (operation === Operation.DELETE ? req.oldObject?.metadata?.name : req.object.metadata?.name) || "",
-    //   )
-    // ) {
-    //   return true;
-    // }
   }
 
-  // check ignored namespaces
-  const ignoredNS = ignoredNSObjectViolation(req, {}, ignoredNamespaces);
-  if (ignoredNS) {
+  if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
     return true;
   }
 
