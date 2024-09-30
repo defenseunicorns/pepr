@@ -6,7 +6,12 @@ Initialize a new Pepr Module.
 
 **Options:**
 
-- `--skip-post-init` - Skip npm install, git init and VSCode launch
+- `--skip-post-init` - Skip npm install, git init and VSCode launch.
+- `--confirm` - Skip verification prompt when creating a new module.
+- `--description <string>` - Explain the purpose of the new module.
+- `--name <string>` - Set the name of the new module.
+- `--skip-post-init` - Skip npm install, git init, and VSCode launch.
+- `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
 
 ---
 
