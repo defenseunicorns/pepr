@@ -5,15 +5,14 @@ import { expect, test, describe } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
-import { shouldSkipRequestRegex } from "./filter";
-import { Event, Binding } from "./types";
-import { AdmissionRequest } from "./types";
+import { shouldSkipRequest } from "./filter";
+import { AdmissionRequest, Binding, Event } from "./types";
 
 export const callback = () => undefined;
 
 export const podKind = modelToGroupVersionKind(kind.Pod.name);
 
-describe("Fuzzing shouldSkipRequestRegex", () => {
+describe("Fuzzing shouldSkipRequest", () => {
   test("should handle random inputs without crashing", () => {
     fc.assert(
       fc.property(
@@ -51,7 +50,7 @@ describe("Fuzzing shouldSkipRequestRegex", () => {
         fc.array(fc.string()),
         (binding, req, capabilityNamespaces) => {
           expect(() =>
-            shouldSkipRequestRegex(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
+            shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
           ).not.toThrow();
         },
       ),
@@ -59,7 +58,7 @@ describe("Fuzzing shouldSkipRequestRegex", () => {
     );
   });
 });
-describe("Property-Based Testing shouldSkipRequestRegex", () => {
+describe("Property-Based Testing shouldSkipRequest", () => {
   test("should only skip requests that do not match the binding criteria", () => {
     fc.assert(
       fc.property(
@@ -96,7 +95,7 @@ describe("Property-Based Testing shouldSkipRequestRegex", () => {
         }),
         fc.array(fc.string()),
         (binding, req, capabilityNamespaces) => {
-          const shouldSkip = shouldSkipRequestRegex(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
+          const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
           expect(typeof shouldSkip).toBe("boolean");
         },
       ),
@@ -122,7 +121,7 @@ test("create: should reject when regex name does not match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 test("create: should not reject when regex name does match", () => {
   const binding = {
@@ -141,7 +140,7 @@ test("create: should not reject when regex name does match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 test("delete: should reject when regex name does not match", () => {
   const binding = {
@@ -160,7 +159,7 @@ test("delete: should reject when regex name does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 test("delete: should not reject when regex name does match", () => {
   const binding = {
@@ -179,7 +178,7 @@ test("delete: should not reject when regex name does match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("create: should not reject when regex namespace does match", () => {
@@ -199,7 +198,7 @@ test("create: should not reject when regex namespace does match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("create: should reject when regex namespace does not match", () => {
@@ -219,7 +218,7 @@ test("create: should reject when regex namespace does not match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("delete: should reject when regex namespace does not match", () => {
@@ -239,7 +238,7 @@ test("delete: should reject when regex namespace does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("delete: should not reject when regex namespace does match", () => {
@@ -259,7 +258,7 @@ test("delete: should not reject when regex namespace does match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("delete: should reject when name does not match", () => {
@@ -279,7 +278,7 @@ test("delete: should reject when name does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 test("should reject when kind does not match", () => {
   const binding = {
@@ -299,7 +298,7 @@ test("should reject when kind does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should reject when group does not match", () => {
@@ -320,7 +319,7 @@ test("should reject when group does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should reject when version does not match", () => {
@@ -345,7 +344,7 @@ test("should reject when version does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when group, version, and kind match", () => {
@@ -366,7 +365,7 @@ test("should allow when group, version, and kind match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should allow when kind match and others are empty", () => {
@@ -391,7 +390,7 @@ test("should allow when kind match and others are empty", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should reject when the capability namespace does not match", () => {
@@ -412,7 +411,7 @@ test("should reject when the capability namespace does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, ["bleh", "bleh2"])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toBe(true);
 });
 
 test("should reject when namespace does not match", () => {
@@ -433,7 +432,7 @@ test("should reject when namespace does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when namespace is match", () => {
@@ -443,7 +442,7 @@ test("should allow when namespace is match", () => {
     kind: podKind,
     filters: {
       name: "",
-      namespaces: ["default", "unicorn", "things"],
+      namespaces: ["helm-releasename", "unicorn", "things"],
       labels: {},
       annotations: {},
       deletionTimestamp: false,
@@ -454,7 +453,7 @@ test("should allow when namespace is match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should reject when label does not match", () => {
@@ -477,7 +476,7 @@ test("should reject when label does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when label is match", () => {
@@ -508,7 +507,7 @@ test("should allow when label is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should reject when annotation does not match", () => {
@@ -531,7 +530,7 @@ test("should reject when annotation does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should allow when annotation is match", () => {
@@ -562,7 +561,7 @@ test("should allow when annotation is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should use `oldObject` when the operation is `DELETE`", () => {
@@ -588,7 +587,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
 
   const pod = DeletePod();
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });
 
 test("should skip processing when deletionTimestamp is not present on pod", () => {
@@ -619,7 +618,7 @@ test("should skip processing when deletionTimestamp is not present on pod", () =
     test2: "test2",
   };
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(true);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(true);
 });
 
 test("should processing when deletionTimestamp is not present on pod", () => {
@@ -651,5 +650,5 @@ test("should processing when deletionTimestamp is not present on pod", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequestRegex(binding, pod, [])).toBe(false);
+  expect(shouldSkipRequest(binding, pod, [])).toBe(false);
 });

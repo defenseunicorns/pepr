@@ -13,7 +13,7 @@
   "subResource": "",
   "name": "podinfo",
   "namespace": "default",
-  "operation": "Delete",
+  "operation": "DELETE",
   "userInfo": {
     "username": "system:serviceaccount:kube-system:replicaset-controller",
     "uid": "95c8f0ca-d31a-4d3f-9f27-9a2a2661ab3c",
