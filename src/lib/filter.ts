@@ -28,25 +28,6 @@ export function shouldSkipRequestRegex(
   ignoredNamespaces?: string[],
 ): boolean {
   return shouldSkipRequest(binding, req, capabilityNamespaces, ignoredNamespaces);
-
-  // const result = shouldSkipRequest(binding, req, capabilityNamespaces, ignoredNamespaces);
-
-  // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
-  // if (!result) {
-  //   if (mismatchedNamespaceRegex(binding, obj)) {
-  //     return true;
-  //   }
-
-  //   if (mismatchedNameRegex(binding, obj)) {
-  //     return true;
-  //   }
-  // }
-
-  // if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
-  //   return true;
-  // }
-
-  // return result;
 }
 
 /**

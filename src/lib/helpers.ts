@@ -4,7 +4,7 @@
 import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { AdmissionRequest, Binding, CapabilityExport } from "./types";
+import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 import {
   carriedAnnotations,
@@ -29,43 +29,6 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-
-export function ignoredNSObjectViolation(
-  req: Partial<AdmissionRequest> = {},
-  obj: Partial<KubernetesObject> = {},
-  ignoredNamespaces?: string[],
-): boolean | string {
-  if (!ignoredNamespaces || ignoredNamespaces.length === 0) {
-    if (req && req.uid) {
-      return false;
-    } else {
-      return "";
-    }
-  }
-  // check if admission request is in ignored namespace
-  if (req && req.uid && ignoredNamespaces.length > 0) {
-    const operation = req.operation?.toUpperCase() || undefined;
-    for (const ignoredNS of ignoredNamespaces) {
-      if (operation && operation === "DELETE" && req.oldObject?.metadata?.namespace === ignoredNS) {
-        return true;
-      }
-      if (operation && operation !== "DELETE" && req.object?.metadata?.namespace === ignoredNS) {
-        return true;
-      }
-    }
-  }
-
-  // check if watch object is in ignored namespace
-  if (obj && obj.metadata && obj.metadata.namespace) {
-    if (ignoredNamespaces.includes(obj.metadata.namespace)) {
-      return `Ignoring Watch Callback: Object name ${obj.metadata?.name} is in an ignored namespace ${ignoredNamespaces.join(", ")}.`;
-    } else {
-      return "";
-    }
-  }
-
-  return false;
-}
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
@@ -111,34 +74,7 @@ export function filterNoMatchReasonRegex(
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
-  const prefix = "Ignoring Watch Callback:";
-
-  const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
-  if (result === "") {
-    if (mismatchedNamespaceRegex(binding, obj)) {
-      return (
-        `${prefix} Binding defines namespace regexes ` +
-        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      );
-    }
-
-    if (mismatchedNameRegex(binding, obj)) {
-      return (
-        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
-      );
-    }
-  }
-
-  if (carriesIgnoredNamespace(ignoredNamespaces, obj)) {
-    return (
-      `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-      `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
-    );
-  }
-
-  return result;
+  return filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
 }
 
 /**
@@ -148,6 +84,7 @@ export function filterNoMatchReason(
   binding: Partial<Binding>,
   obj: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
 ): string {
   const prefix = "Ignoring Watch Callback:";
 
@@ -190,7 +127,26 @@ export function filterNoMatchReason(
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
         `but Object carries '${carriedNamespace(obj)}'.`
-      ):
+      ) :
+
+    mismatchedNamespaceRegex(binding, obj) ?
+      (
+        `${prefix} Binding defines namespace regexes ` +
+        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
+        `but Object carries '${carriedNamespace(obj)}'.`
+      ) :
+
+    mismatchedNameRegex(binding, obj) ?
+      (
+        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
+        `but Object carries '${carriedName(obj)}'.`
+      ) :
+
+    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
+      (
+        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+      ) :
 
     ""
   );
