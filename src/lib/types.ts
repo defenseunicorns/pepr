@@ -7,7 +7,6 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
-import { Answers } from "prompts";
 
 import { Logger } from "pino";
 
@@ -284,8 +283,6 @@ export type FinalizeActionChain<T extends GenericClass> = {
    */
   Finalize: (action: FinalizeAction<T, InstanceType<T>>) => void;
 };
-
-export type InitOptions = Answers<"name" | "description" | "errorBehavior">;
 
 /**
  * A Kubernetes admission request to be processed by a capability.
