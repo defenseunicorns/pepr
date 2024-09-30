@@ -5,6 +5,7 @@ import { Event, Operation } from "./types";
 import {
   __,
   allPass,
+  any,
   anyPass,
   complement,
   curry,
@@ -63,8 +64,14 @@ export const definedName = pipe(binding => binding?.filters?.name, defaultTo("")
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
+export const definedNameRegex = pipe(binding => binding?.filters?.regexName, defaultTo(""));
+export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
+
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
+
+export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
+export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
 export const definedAnnotations = pipe(binding => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
@@ -120,6 +127,11 @@ export const mismatchedName = allPass([
   pipe((bnd, obj) => definedName(bnd) !== carriedName(obj)),
 ]);
 
+export const mismatchedNameRegex = allPass([
+  pipe(nthArg(0), definesNameRegex),
+  pipe((bnd, obj) => new RegExp(definedNameRegex(bnd)).test(carriedName(obj)), not),
+]);
+
 export const bindsToKind = curry(
   allPass([pipe(nthArg(0), definedKind, equals(""), not), pipe((bnd, knd) => definedKind(bnd) === knd)]),
 );
@@ -129,6 +141,16 @@ export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
   pipe((bnd, obj) => definedNamespaces(bnd).includes(carriedNamespace(obj)), not),
+]);
+
+export const mismatchedNamespaceRegex = allPass([
+  pipe(nthArg(0), definesNamespaceRegexes),
+  pipe((bnd, obj) =>
+    pipe(
+      any((rex: string) => new RegExp(rex).test(carriedNamespace(obj))),
+      not,
+    )(definedNamespaceRegexes(bnd)),
+  ),
 ]);
 
 export const metasMismatch = pipe(
@@ -170,6 +192,12 @@ export const uncarryableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe(nthArg(1), carriesNamespace),
   pipe((nss, obj) => nss.includes(carriedNamespace(obj)), not),
+]);
+
+export const carriesIgnoredNamespace = allPass([
+  pipe(nthArg(0), length, gt(__, 0)),
+  pipe(nthArg(1), carriesNamespace),
+  pipe((nss, obj) => nss.includes(carriedNamespace(obj))),
 ]);
 
 export const unbindableNamespaces = allPass([

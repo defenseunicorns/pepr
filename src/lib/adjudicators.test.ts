@@ -137,6 +137,38 @@ describe("ignoresName", () => {
   });
 });
 
+describe("definedNameRegex", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, ""],
+    [{ filters: {} }, ""],
+    [{ filters: { regexName: null } }, ""],
+    [{ filters: { regexName: "n.me" } }, "n.me"],
+  ])("given %j, returns '%s'", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedNameRegex(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("definesNameRegex", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ filters: {} }, false],
+    [{ filters: { regexName: null } }, false],
+    [{ filters: { regexName: "n.me" } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesNameRegex(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("carriedName", () => {
   //[ KubernetesObject, result ]
   it.each([
@@ -197,6 +229,28 @@ describe("mismatchedName", () => {
     const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedName(binding, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedNameRegex", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, {}, true],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "neme" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nime" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nome" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nume" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "n3me" } }, true],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
+
+    const result = sut.mismatchedNameRegex(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -277,6 +331,42 @@ describe("definesNamespaces", () => {
   });
 });
 
+describe("definedNamespaceRegexes", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, []],
+    [{ filters: {} }, []],
+    [{ filters: { regexNamespaces: null } }, []],
+    [{ filters: { regexNamespaces: [] } }, []],
+    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
+    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
+  ])("given %j, returns %j", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definedNamespaceRegexes(binding);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("definesNamespaceRegexes", () => {
+  //[ Binding, result ]
+  it.each([
+    [{}, false],
+    [{ filters: {} }, false],
+    [{ filters: { regexNamespaces: null } }, false],
+    [{ filters: { regexNamespaces: [] } }, false],
+    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
+    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = given as DeepPartial<Binding>;
+
+    const result = sut.definesNamespaceRegexes(binding);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("carriedNamespace", () => {
   //[ KubernetesObject, result ]
   it.each([
@@ -324,6 +414,37 @@ describe("mismatchedNamespace", () => {
     const object = obj as DeepPartial<Binding>;
 
     const result = sut.mismatchedNamespace(binding, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedNamespaceRegex", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "n3mespace" } }, true],
+
+    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "space" } }, false],
+    [
+      { filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } },
+      { metadata: { namespace: "namespace" } },
+      true,
+    ],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const object = obj as DeepPartial<Binding>;
+
+    const result = sut.mismatchedNamespaceRegex(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -597,6 +718,35 @@ describe("uncarryableNamespace", () => {
     const object = obj as DeepPartial<Binding>;
 
     const result = sut.uncarryableNamespace(nss, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("carriesIgnoredNamespace", () => {
+  //[ ignored ns's, KubernetesObject, result ]
+  it.each([
+    [[], {}, false],
+    [[], { metadata: { namespace: "whatever" } }, false],
+
+    [["ignored"], {}, false],
+    [["ignored"], { metadata: {} }, false],
+    [["ignored"], { metadata: { namespace: null } }, false],
+    [["ignored"], { metadata: { namespace: "" } }, false],
+    [["ignored"], { metadata: { namespace: "namespace" } }, false],
+    [["ignored"], { metadata: { namespace: "ignored" } }, true],
+
+    [["ign", "ored"], {}, false],
+    [["ign", "ored"], { metadata: {} }, false],
+    [["ign", "ored"], { metadata: { namespace: null } }, false],
+    [["ign", "ored"], { metadata: { namespace: "" } }, false],
+    [["ign", "ored"], { metadata: { namespace: "ign" } }, true],
+    [["ign", "ored"], { metadata: { namespace: "ored" } }, true],
+    [["ign", "ored"], { metadata: { namespace: "namespace" } }, false],
+  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
+    const object = obj as DeepPartial<Binding>;
+
+    const result = sut.carriesIgnoredNamespace(nss, object);
 
     expect(result).toBe(expected);
   });
