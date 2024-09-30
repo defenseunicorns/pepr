@@ -3,7 +3,7 @@
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReasonRegex } from "./helpers";
+import { filterNoMatchReason } from "./helpers";
 import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
@@ -99,7 +99,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
     if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
-        const filterMatch = filterNoMatchReasonRegex(binding, obj, capabilityNamespaces, ignoredNamespaces);
+        const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
             if (!obj.metadata?.deletionTimestamp) {
