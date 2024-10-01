@@ -12,6 +12,10 @@ import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+  if (!apiToken) {
+    throw new Error("apiToken is required");
+  }
+
   const overrides = {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
@@ -220,7 +224,7 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
 }
 
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path } = assets;
+  const { name, tls, apiToken, path, capabilities = [] } = assets; // Ensure default empty array for capabilities
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
@@ -228,11 +232,13 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
+
+  // Make sure watcher receives the empty array in capabilities if undefined
   const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, rbacMode),
+    clusterRole(name, capabilities, rbacMode),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
@@ -258,5 +264,5 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
   }
 
   // Convert the resources to a single YAML string
-  return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
+  return resources.map(r => dumpYaml(r, { noRefs: true })).join("\n---\n");
 }

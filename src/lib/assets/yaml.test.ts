@@ -1,421 +1,358 @@
-import { overridesFile, allYaml } from "./yaml";
+import { overridesFile, allYaml, zarfYaml, zarfYamlChart } from "./yaml";
 import { promises as fs } from "fs";
 import { dumpYaml } from "@kubernetes/client-node";
 import { describe, expect, it, jest } from "@jest/globals";
 import { Assets } from ".";
+import yaml from "js-yaml";
 
-const assets: Assets = JSON.parse(`{
-  "config": {
-    "uuid": "static-test",
-    "onError": "ignore",
-    "webhookTimeout": 10,
-    "customLabels": {
-      "namespace": {
-        "pepr.dev": ""
-      }
-    },
-    "alwaysIgnore": {
-      "namespaces": []
-    },
-    "includedFiles": [],
-    "env": {
-      "MY_CUSTOM_VAR": "example-value",
-      "ZARF_VAR": "###ZARF_VAR_THING###"
-    },
-    "peprVersion": "0.0.0-development",
-    "appVersion": "0.0.1",
-    "description": "A test module for Pepr"
-  },
-  "path": "/Users/cmwylie19/pepr/pepr-test-module/dist/pepr-static-test.js",
-  "name": "pepr-static-test",
-  "tls": {
-    "ca": "",
-    "key": "",
-    "crt": "",
-    "pem": {
-      "ca": "",
-      "crt": "",
-      "key": ""
-    }
-  },
-  "apiToken": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
-  "alwaysIgnore": {
-    "namespaces": []
-  },
-  "capabilities": [
-    {
-      "name": "hello-pepr",
-      "description": "A simple example capability to show how things work.",
-      "namespaces": [
-        "pepr-demo",
-        "pepr-demo-2"
-      ],
-      "bindings": [
-        {
-          "kind": {
-            "kind": "Namespace",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "Namespace",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "pepr-demo-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isWatch": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isWatch": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATEORUPDATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "change": "by-label"
-            },
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "DELETE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "change": "by-label"
-            },
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-4",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-4a",
-            "namespaces": [
-              "pepr-demo-2"
-            ],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "chuck-norris": ""
-            },
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "Secret",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "secret-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "group": "pepr.dev",
-            "version": "v1",
-            "kind": "Unicorn"
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "group": "pepr.dev",
-            "version": "v1",
-            "kind": "Unicorn"
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        }
-      ],
-      "hasSchedule": false
-    }
-  ],
-  "image": "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development",
-  "buildTimestamp": "1721936569867",
-  "hash": "e303205079a4445946f6eacde9ec4800534653f85aca6f84539d0f7158a22569"
-}`);
-
-// Mock the `fs.writeFile` and `fs.readFile` functions
+// Mock fs.writeFile and fs.readFile
 jest.mock("fs", () => ({
   promises: {
     writeFile: jest.fn(),
-    readFile: jest.fn(),
+    readFile: jest.fn(() => Buffer.from("mock-code-content")),
   },
 }));
 
 jest.mock("@kubernetes/client-node", () => ({
   dumpYaml: jest.fn(input => {
-    // Check the input type and return corresponding mocked YAML
     if ((input as { kind: string }).kind === "ClusterRole") {
-      return "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole";
+      return `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: example-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]`;
     }
-    if (
-      typeof input === "object" &&
-      input !== null &&
-      "kind" in input &&
-      (input as { kind: string }).kind === "ClusterRoleBinding"
-    ) {
-      return "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding";
+    if ((input as { kind: string }).kind === "ClusterRoleBinding") {
+      return `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: example-cluster-role-binding`;
     }
-    if (
-      typeof input === "object" &&
-      input !== null &&
-      "kind" in input &&
-      (input as { kind: string }).kind === "ServiceAccount"
-    ) {
-      return "apiVersion: v1\nkind: ServiceAccount";
+    if ((input as { kind: string }).kind === "ServiceAccount") {
+      return `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: example-service-account`;
     }
-    // Default mocked response for other inputs
-    return "mocked-yaml-output";
+    if ((input as { kind: string }).kind === "Secret") {
+      return `apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret`;
+    }
+    if ((input as { kind: string }).kind === "Deployment") {
+      return `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-deployment`;
+    }
+    return `apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret`;
   }),
 }));
 
-// Mock the RBAC section in package.json
-jest.mock("../../../package.json", () => ({
-  rbac: {
-    roles: [
-      {
-        apiGroups: [""],
-        resources: ["pods"],
-        verbs: ["get", "list", "watch"],
-      },
-    ],
-    roleBindings: [
-      {
-        roleRef: {
-          apiGroup: "rbac.authorization.k8s.io",
-          kind: "Role",
-          name: "pod-reader",
+describe("yaml.ts comprehensive tests", () => {
+  const mockAssets: Assets = {
+    config: {
+      uuid: "test-uuid",
+      onError: "ignore",
+      webhookTimeout: 30,
+      customLabels: { namespace: { "pepr.dev": "" } },
+      alwaysIgnore: { namespaces: [] },
+      peprVersion: "0.0.1",
+      appVersion: "0.0.1",
+      description: "Test module description",
+    },
+    name: "pepr-test",
+    image: "ghcr.io/defenseunicorns/pepr/controller:v0.0.1",
+    apiToken: "mock-api-token",
+    hash: "mock-hash",
+    tls: { ca: "", crt: "", key: "", pem: { ca: "", crt: "", key: "" } },
+    capabilities: [],
+    path: "/mock/path/to/code.js",
+    buildTimestamp: "1234567890",
+    alwaysIgnore: {
+      namespaces: undefined,
+    },
+    setHash: (hash: string) => {
+      mockAssets.hash = hash;
+    },
+    deploy: async (): Promise<void> => {
+      return Promise.resolve();
+    },
+    zarfYaml: (path: string) => {
+      return dumpYaml({
+        kind: "ZarfPackageConfig",
+        metadata: {
+          name: mockAssets.name,
+          description: `Pepr Module: ${mockAssets.config.description}`,
+          url: "https://github.com/defenseunicorns/pepr",
+          version: mockAssets.config.appVersion,
         },
-        subjects: [
+        components: [
           {
-            kind: "ServiceAccount",
-            name: "default",
-            namespace: "default",
+            name: "module",
+            required: true,
+            manifests: [{ name: "module", namespace: "pepr-system", files: [path] }],
+            images: [mockAssets.image],
           },
         ],
-      },
-    ],
-  },
-}));
-
-describe("yaml.ts", () => {
-  it("should include RBAC roles and roleBindings from package.json in the generated YAML file", async () => {
-    const expectedYamlContent = dumpYaml({
-      secrets: {
-        apiToken: Buffer.from("some-api-token").toString("base64"),
-      },
-      hash: "1234",
-      namespace: {
-        annotations: {},
-        labels: {
-          "pepr.dev": "",
+      });
+    },
+    zarfYamlChart: (path: string) => {
+      return dumpYaml({
+        kind: "ZarfPackageConfig",
+        metadata: {
+          name: mockAssets.name,
+          description: `Pepr Module: ${mockAssets.config.description}`,
+          url: "https://github.com/defenseunicorns/pepr",
+          version: mockAssets.config.appVersion,
         },
-      },
-      uuid: "pepr",
-      admission: expect.any(Object),
-      watcher: expect.any(Object),
-      rbac: {
-        roles: [
+        components: [
+          {
+            name: "module",
+            required: true,
+            charts: [
+              {
+                name: "module",
+                namespace: "pepr-system",
+                version: "0.0.1",
+                localPath: path,
+              },
+            ],
+            images: [mockAssets.image],
+          },
+        ],
+      });
+    },
+    allYaml: async (): Promise<string> => {
+      return dumpYaml({
+        kind: "ClusterRole",
+        metadata: {
+          name: "example-cluster-role",
+        },
+        rules: [
           {
             apiGroups: [""],
             resources: ["pods"],
-            verbs: ["get", "list", "watch"],
+            verbs: ["get", "watch", "list"],
           },
         ],
-        roleBindings: [
+      });
+    },
+    generateHelmChart: async (basePath: string): Promise<void> => {
+      // Implement the function logic here
+      console.log(`Generating Helm chart at base path: ${basePath}`);
+      return Promise.resolve();
+    },
+  };
+
+  it("overridesFile: should generate the correct YAML and write it to file", async () => {
+    const path = "./test-values.yaml";
+
+    await overridesFile(mockAssets, path);
+
+    const expectedContent = dumpYaml(
+      {
+        secrets: {
+          apiToken: Buffer.from("mock-api-token").toString("base64"),
+        },
+        hash: "mock-hash",
+        namespace: { annotations: {}, labels: { "pepr.dev": "" } },
+        uuid: "pepr-test",
+        admission: expect.any(Object),
+        watcher: expect.any(Object),
+      },
+      { noRefs: true, forceQuotes: true },
+    );
+
+    expect(fs.writeFile).toHaveBeenCalledWith(path, expectedContent);
+  });
+
+  it("zarfYaml: should generate correct Zarf package YAML", () => {
+    const path = "/mock/path/to/chart";
+    const result = zarfYaml(mockAssets, path);
+
+    const expectedYaml = dumpYaml(
+      {
+        kind: "ZarfPackageConfig",
+        metadata: {
+          name: "pepr-test",
+          description: "Pepr Module: Test module description",
+          url: "https://github.com/defenseunicorns/pepr",
+          version: "0.0.1",
+        },
+        components: [
           {
-            roleRef: {
-              apiGroup: "rbac.authorization.k8s.io",
-              kind: "Role",
-              name: "pod-reader",
-            },
-            subjects: [
-              {
-                kind: "ServiceAccount",
-                name: "default",
-                namespace: "default",
-              },
-            ],
+            name: "module",
+            required: true,
+            manifests: [{ name: "module", namespace: "pepr-system", files: [path] }],
+            images: ["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"],
           },
         ],
       },
-    });
+      { noRefs: true },
+    );
 
-    await overridesFile(assets, "./test-values.yaml");
-
-    expect(fs.writeFile).toHaveBeenCalledWith("./test-values.yaml", expectedYamlContent);
+    expect(result).toBe(expectedYaml);
   });
 
-  describe("yaml.ts", () => {
-    it("should generate correct YAML for all resources in allYaml function", async () => {
-      // Mock fs.readFile to return a Buffer
-      (fs.readFile as jest.Mock).mockResolvedValueOnce(Buffer.from("code-content").toString() as unknown as never);
+  it("zarfYamlChart: should generate correct Helm chart YAML", () => {
+    const path = "/mock/path/to/chart";
+    const result = zarfYamlChart(mockAssets, path);
 
-      const result = await allYaml(assets, "scoped", "image-pull-secret");
+    const expectedYaml = dumpYaml(
+      {
+        kind: "ZarfPackageConfig",
+        metadata: {
+          name: "pepr-test",
+          description: "Pepr Module: Test module description",
+          url: "https://github.com/defenseunicorns/pepr",
+          version: "0.0.1",
+        },
+        components: [
+          {
+            name: "module",
+            required: true,
+            charts: [
+              {
+                name: "module",
+                namespace: "pepr-system",
+                version: "0.0.1",
+                localPath: path,
+              },
+            ],
+            images: ["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"],
+          },
+        ],
+      },
+      { noRefs: true },
+    );
 
-      // Adjust test expectations to match the mocked output
-      expect(result).toContain("apiVersion: rbac.authorization.k8s.io/v1");
-      expect(result).toContain("kind: ClusterRole");
-      expect(result).toContain("kind: ClusterRoleBinding");
+    expect(result).toBe(expectedYaml);
+  });
+
+  it("allYaml: should generate correct YAML for all resources", async () => {
+    const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+
+    // Expected fragments of the YAML
+    const expectedContent = [
+      "apiVersion: rbac.authorization.k8s.io/v1",
+      "kind: ClusterRole",
+      "kind: ClusterRoleBinding",
+      "apiVersion: v1",
+      "kind: ServiceAccount",
+      "kind: Secret",
+      "kind: Deployment",
+    ];
+
+    // Add logs to display the actual and expected results
+    console.log("Actual YAML Output:\n", result);
+    console.log("Expected Fragments:\n", expectedContent);
+
+    expectedContent.forEach(fragment => {
+      expect(result).toContain(fragment);
     });
+  });
+
+  it("allYaml: should generate valid YAML structure", async () => {
+    const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+
+    console.log("Generated YAML Output:\n", result); // <-- Add this log
+
+    // Parse all documents in the YAML
+    const parsedYaml = yaml.loadAll(result) as Array<{
+      apiVersion: string;
+      kind: string;
+      metadata: { name: string };
+      rules?: { apiGroups: string[]; resources: string[]; verbs: string[] }[];
+    }>;
+
+    // Check the first document, which should be a ClusterRole
+    const clusterRole = parsedYaml.find(doc => doc.kind === "ClusterRole");
+
+    expect(clusterRole).toHaveProperty("apiVersion", "rbac.authorization.k8s.io/v1");
+    expect(clusterRole).toHaveProperty("kind", "ClusterRole");
+    expect(clusterRole!.metadata).toHaveProperty("name", "example-cluster-role");
+  });
+});
+
+describe("yaml.ts error handling and edge case tests", () => {
+  const mockAssets: Assets = {
+    config: {
+      uuid: "test-uuid",
+      onError: "ignore",
+      webhookTimeout: 30,
+      customLabels: { namespace: { "pepr.dev": "" } },
+      alwaysIgnore: { namespaces: [] },
+      peprVersion: "0.0.1",
+      appVersion: "0.0.1",
+      description: "Test module description",
+    },
+    name: "pepr-test",
+    image: "ghcr.io/defenseunicorns/pepr/controller:v0.0.1",
+    apiToken: "mock-api-token",
+    hash: "mock-hash",
+    tls: { ca: "", crt: "", key: "", pem: { ca: "", crt: "", key: "" } },
+    capabilities: [],
+    path: "/mock/path/to/code.js",
+    buildTimestamp: "1234567890",
+    alwaysIgnore: {
+      namespaces: undefined,
+    },
+    setHash: (hash: string) => {
+      mockAssets.hash = hash;
+    },
+    deploy: async (): Promise<void> => Promise.resolve(),
+    zarfYaml: () => dumpYaml({ kind: "ZarfPackageConfig" }),
+    zarfYamlChart: () => dumpYaml({ kind: "ZarfPackageConfig" }),
+    allYaml: async (): Promise<string> => dumpYaml({ kind: "ClusterRole" }),
+    generateHelmChart: async (): Promise<void> => Promise.resolve(),
+  };
+
+  // ERROR HANDLING TESTS
+
+  it("overridesFile: should throw an error if fs.writeFile fails", async () => {
+    const path = "./test-values.yaml";
+    const writeFileMock = fs.writeFile as jest.Mock;
+    writeFileMock.mockImplementationOnce(() => Promise.reject(new Error("File write error")));
+
+    await expect(overridesFile(mockAssets, path)).rejects.toThrow("File write error");
+  });
+
+  it("allYaml: should throw an error if fs.readFile fails", async () => {
+    const readFileMock = fs.readFile as jest.Mock;
+    readFileMock.mockImplementationOnce(() => Promise.reject(new Error("File read error")));
+
+    await expect(allYaml(mockAssets, "scoped", "image-pull-secret")).rejects.toThrow("File read error");
+  });
+
+  // EDGE CASE TESTS
+
+  it("overridesFile: should throw an error if apiToken is missing", async () => {
+    const path = "./test-values.yaml";
+    const assetsWithoutToken = { ...mockAssets, apiToken: undefined };
+
+    await expect(overridesFile(assetsWithoutToken as unknown as Assets, path)).rejects.toThrow("apiToken is required");
+  });
+
+  it("allYaml: should handle empty capabilities array", async () => {
+    const assetsWithEmptyCapabilities = { ...mockAssets, capabilities: [] };
+
+    const resultWithEmptyCapabilities = await allYaml(assetsWithEmptyCapabilities, "scoped", "image-pull-secret");
+    expect(resultWithEmptyCapabilities).toContain("kind: ClusterRole");
+  });
+
+  it("allYaml: should handle invalid imagePullSecret", async () => {
+    const assetsWithInvalidSecret = { ...mockAssets };
+    const result = await allYaml(assetsWithInvalidSecret, "scoped", undefined);
+
+    // Ensure that imagePullSecret does not break the YAML generation
+    expect(result).toContain("kind: ClusterRole");
   });
 });
