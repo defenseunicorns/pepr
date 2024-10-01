@@ -289,170 +289,126 @@ class Watcher {
      * Watch for changes to the resource.
      */
     #watch = async () => {
-        let retryCount = 0;
-        const maxRetries = 5;
-        const retryDelay = 5000; // Delay in milliseconds before retrying
-        const inactivityTimeout = 30000; // Timeout to detect silent disconnects (in milliseconds)
-        const watchAttempt = async () => {
-            let timeoutHandle;
+        try {
+            // Start with a list operation
+            await this.#list();
+            // Build the URL and request options
+            const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
+            let agentOptions;
+            if (opts.agent && opts.agent instanceof https_1.default.Agent) {
+                agentOptions = {
+                    key: opts.agent.options.key,
+                    cert: opts.agent.options.cert,
+                    ca: opts.agent.options.ca,
+                    rejectUnauthorized: false,
+                };
+            }
+            // Perform the fetch call with the proper HTTPS agent
+            let response;
             try {
-                // Start with a list operation
-                await this.#list();
-                // Build the URL and request options
-                const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-                let agentOptions;
-                if (opts.agent && opts.agent instanceof https_1.default.Agent) {
-                    agentOptions = {
-                        key: opts.agent.options.key,
-                        cert: opts.agent.options.cert,
-                        ca: opts.agent.options.ca,
-                        rejectUnauthorized: false,
-                    };
-                }
-                // Perform the fetch call with the proper HTTPS agent from Undici
-                let response;
-                try {
-                    response = await (0, undici_1.fetch)(url, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "User-Agent": `kubernetes-fluent-client`,
+                response = await (0, undici_1.fetch)(url, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "User-Agent": `kubernetes-fluent-client`,
+                    },
+                    dispatcher: new undici_1.Agent({
+                        connect: {
+                            ...agentOptions,
                         },
-                        dispatcher: new undici_1.Agent({
-                            connect: {
-                                ...agentOptions,
-                            },
-                        }),
-                    });
+                    }),
+                });
+            }
+            catch (err) {
+                console.error("Error during fetch:", err);
+                return;
+            }
+            // Reset the pending reconnect flag
+            this.#pendingReconnect = false;
+            // If the request is successful, start listening for events
+            if (response.ok) {
+                this.#events.emit(WatchEvent.CONNECT, url.pathname);
+                const { body } = response;
+                if (!body) {
+                    throw new Error("No response body found");
                 }
-                catch (err) {
-                    console.error("Error during fetch:", err);
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        console.log(`Retrying connection in ${retryDelay} ms... (${retryCount}/${maxRetries})`);
-                        setTimeout(watchAttempt, retryDelay);
-                    }
-                    else {
-                        console.error("Max retry attempts reached. Giving up.");
-                        this.#events.emit(WatchEvent.GIVE_UP, err);
-                    }
-                    return;
-                }
-                // Reset the pending reconnect flag
-                this.#pendingReconnect = false;
-                // If the request is successful, start listening for events
-                if (response.ok) {
-                    this.#events.emit(WatchEvent.CONNECT, url.pathname);
-                    const { body } = response;
-                    if (!body) {
-                        throw new Error("No response body found");
-                    }
-                    // Reset the retry count
-                    retryCount = 0;
-                    this.#resyncFailureCount = 0;
-                    this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                    // Use a native stream to process the response body
-                    const stream = body.getReader();
-                    const decoder = new TextDecoder();
-                    let buffer = "";
-                    // Function to handle silent disconnect
-                    const resetInactivityTimeout = () => {
-                        clearTimeout(timeoutHandle);
-                        timeoutHandle = setTimeout(() => {
-                            console.error("Inactivity detected, reconnecting...");
+                // Reset the retry count
+                this.#resyncFailureCount = 0;
+                this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
+                // Use a native stream issue #1180
+                const stream = body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+                const readStream = async () => {
+                    try {
+                        const { done, value } = await stream.read();
+                        if (done) {
+                            console.log("Stream ended, attempting reconnection...");
                             this.#streamCleanup();
-                            if (retryCount < maxRetries) {
-                                retryCount++;
-                                console.log(`Reconnecting in ${retryDelay} ms... (${retryCount}/${maxRetries})`);
-                                setTimeout(watchAttempt, retryDelay);
+                            await this.#reconnect();
+                            return;
+                        }
+                        // these are the watch messages from Kubernetes
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        // We may have received an impletely line that cannot be parsed
+                        // Incase the stream ended on a partial we can just wait for the next chunk
+                        buffer = lines.pop();
+                        for (const line of lines) {
+                            try {
+                                // Parse the event payload
+                                const { object: payload, type: phase } = JSON.parse(line);
+                                // Update the last seen time
+                                this.#lastSeenTime = Date.now();
+                                // If the watch is too old, remove the resourceVersion and reload the watch
+                                if (phase === types_1.WatchPhase.Error && payload.code === 410) {
+                                    throw {
+                                        name: "TooOld",
+                                        message: this.#resourceVersion,
+                                    };
+                                }
+                                // Process the event payload, do not update the resource version as that is handled by the list operation
+                                await this.#process(payload, phase);
                             }
-                            else {
-                                console.error("Max retry attempts reached due to inactivity. Giving up.");
-                                this.#events.emit(WatchEvent.GIVE_UP, new Error("Max retries reached due to inactivity."));
-                            }
-                        }, inactivityTimeout);
-                    };
-                    // Start inactivity timeout to handle silent disconnects
-                    resetInactivityTimeout();
-                    // Reading from the stream until it ends or is interrupted
-                    let doneReading = false;
-                    while (!doneReading) {
-                        try {
-                            const { done, value } = await stream.read();
-                            if (done) {
-                                console.log("Stream ended, attempting reconnection...");
-                                if (retryCount < maxRetries) {
-                                    retryCount++;
-                                    console.log(`Reconnecting in ${retryDelay} ms... (${retryCount}/${maxRetries})`);
-                                    setTimeout(watchAttempt, retryDelay);
+                            catch (err) {
+                                if (err.name === "TooOld") {
+                                    // Reload the watch
+                                    void this.#errHandler(err);
+                                    return;
                                 }
-                                else {
-                                    console.error("Max retry attempts reached after stream ended. Giving up.");
-                                    this.#events.emit(WatchEvent.GIVE_UP, new Error("Max retries reached after stream end."));
-                                }
-                                doneReading = true;
-                                break;
-                            }
-                            // Reset inactivity timeout upon receiving data
-                            resetInactivityTimeout();
-                            buffer += decoder.decode(value, { stream: true });
-                            const lines = buffer.split("\n");
-                            // Keep the last partial line in the buffer
-                            buffer = lines.pop();
-                            for (const line of lines) {
-                                try {
-                                    // Parse the event payload
-                                    const { object: payload, type: phase } = JSON.parse(line);
-                                    // Update the last seen time
-                                    this.#lastSeenTime = Date.now();
-                                    // If the watch is too old, remove the resourceVersion and reload the watch
-                                    if (phase === types_1.WatchPhase.Error && payload.code === 410) {
-                                        throw {
-                                            name: "TooOld",
-                                            message: this.#resourceVersion,
-                                        };
-                                    }
-                                    // Process the event payload, do not update the resource version as that is handled by the list operation
-                                    await this.#process(payload, phase);
-                                }
-                                catch (err) {
-                                    if (err.name === "TooOld") {
-                                        // Close the current stream and restart the watch
-                                        console.log("Received TooOld error, closing stream and restarting watch...");
-                                        this.#streamCleanup();
-                                        void this.#errHandler(err);
-                                        return;
-                                    }
-                                    this.#events.emit(WatchEvent.DATA_ERROR, err);
-                                }
+                                this.#events.emit(WatchEvent.DATA_ERROR, err);
                             }
                         }
-                        catch (err) {
-                            console.error("Error reading from stream:", err);
-                            if (retryCount < maxRetries) {
-                                retryCount++;
-                                console.log(`Reconnecting in ${retryDelay} ms... (${retryCount}/${maxRetries})`);
-                                setTimeout(watchAttempt, retryDelay);
-                            }
-                            else {
-                                console.error("Max retry attempts reached while reading stream. Giving up.");
-                                this.#events.emit(WatchEvent.GIVE_UP, err);
-                                return;
-                            }
-                        }
+                        // Try reading again bc you read all the lines
+                        // or maybe we call reconnect?
+                        await readStream();
                     }
-                    // Cleanup stream at the end
-                    this.#streamCleanup();
-                }
-                else {
-                    throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
-                }
+                    catch (err) {
+                        console.error("Error reading from stream:", err);
+                        await this.#reconnect(); // Handle the disconnect and attempt to reconnect
+                    }
+                };
+                // Start reading from the stream
+                await readStream();
             }
-            catch (e) {
-                console.error("Error in watch:", e);
-                void this.#errHandler(e);
+            else {
+                throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
             }
-        };
-        watchAttempt();
+        }
+        catch (e) {
+            void this.#errHandler(e);
+        }
+    };
+    // Function to handle reconnecting
+    #reconnect = async () => {
+        try {
+            this.#streamCleanup();
+            console.log("Retrying watch");
+            await this.#watch();
+        }
+        catch (err) {
+            console.error("Retrying failed:", err);
+            this.#events.emit(WatchEvent.GIVE_UP, err);
+        }
     };
     /** Clear the resync timer and schedule a new one. */
     #checkResync = () => {
