@@ -46,6 +46,9 @@ export class Assets {
 
     // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
+
+    // Initialize capabilities to an empty array
+    this.capabilities = [];
   }
 
   setHash = (hash: string) => {
