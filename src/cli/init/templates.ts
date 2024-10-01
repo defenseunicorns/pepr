@@ -13,7 +13,7 @@ import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
-import { InitOptions } from "../../lib/types";
+import { InitOptions } from "../types";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
