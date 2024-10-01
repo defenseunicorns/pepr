@@ -162,12 +162,14 @@ export const metasMismatch = pipe(
         const keyMissing = !Object.hasOwn(result.carried, key);
         const noValue = !val;
         const valMissing = !result.carried[key];
+        const valDiffers = result.carried[key] !== result.defined[key];
 
         // prettier-ignore
         return (
           keyMissing ? { [key]: val } :
           noValue ? {} :
           valMissing ? { [key]: val } :
+          valDiffers ? { [key]: val } :
           {}
         )
       })

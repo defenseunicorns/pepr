@@ -39,7 +39,8 @@
       "labels": {
         "app.kubernetes.io/name": "cool-name-podinfo",
         "pod-template-hash": "66bbff7cf4",
-        "zarf-agent": "patched"
+        "zarf-agent": "patched",
+        "test-op": "create"
       },
       "name": "cool-name-podinfo-66bbff7cf4-fwhl2",
       "namespace": "helm-releasename",
