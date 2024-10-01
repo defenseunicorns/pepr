@@ -1,15 +1,10 @@
 "use strict";
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Kubernetes Fluent Client Authors
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Watcher = exports.WatchEvent = void 0;
-const byline_1 = __importDefault(require("byline"));
 const crypto_1 = require("crypto");
 const events_1 = require("events");
-const node_fetch_1 = __importDefault(require("node-fetch"));
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
@@ -294,25 +289,35 @@ class Watcher {
             await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-            // Create a stream to read the response body
-            this.#stream = byline_1.default.createStream();
-            // Bind the stream events
-            this.#stream.on("error", this.#errHandler);
-            this.#stream.on("close", this.#streamCleanup);
-            this.#stream.on("finish", this.#streamCleanup);
-            // Make the actual request
-            const response = await (0, node_fetch_1.default)(url, { ...opts });
+            const fetchOpts = {
+                method: opts.method,
+                headers: {
+                    "Content-Type": "application/json",
+                    // Set the user agent like kubectl does
+                    "User-Agent": `kubernetes-fluent-client`,
+                }
+            };
+            // Make the actual request using native fetch
+            const response = await fetch(url, fetchOpts);
             // Reset the pending reconnect flag
             this.#pendingReconnect = false;
             // If the request is successful, start listening for events
             if (response.ok) {
                 this.#events.emit(WatchEvent.CONNECT, url.pathname);
                 const { body } = response;
+                if (!body) {
+                    throw new Error("No response body found");
+                }
                 // Reset the retry count
                 this.#resyncFailureCount = 0;
                 this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                // Listen for events and call the callback function
-                this.#stream.on("data", async (line) => {
+                // Use native stream to process the response body line by line
+                const readline = require('readline');
+                const rl = readline.createInterface({
+                    input: body,
+                    crlfDelay: Infinity
+                });
+                rl.on('line', async (line) => {
                     try {
                         // Parse the event payload
                         const { object: payload, type: phase } = JSON.parse(line);
@@ -330,8 +335,8 @@ class Watcher {
                     }
                     catch (err) {
                         if (err.name === "TooOld") {
-                            // Prevent any body events from firing
-                            body.removeAllListeners();
+                            // Close the readline interface
+                            rl.close();
                             // Reload the watch
                             void this.#errHandler(err);
                             return;
@@ -339,12 +344,12 @@ class Watcher {
                         this.#events.emit(WatchEvent.DATA_ERROR, err);
                     }
                 });
-                // Bind the body events
-                body.on("error", this.#errHandler);
-                body.on("close", this.#streamCleanup);
-                body.on("finish", this.#streamCleanup);
-                // Pipe the response body to the stream
-                body.pipe(this.#stream);
+                rl.on('close', () => {
+                    this.#streamCleanup();
+                });
+                rl.on('error', (err) => {
+                    this.#errHandler(err);
+                });
             }
             else {
                 throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);

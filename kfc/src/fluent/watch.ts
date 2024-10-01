@@ -4,8 +4,9 @@
 import byline from "byline";
 import { createHash } from "crypto";
 import { EventEmitter } from "events";
-import fetch from "node-fetch";
-
+import { pipeline } from "stream";
+import { TextDecoder } from "util";
+import { Readable } from "stream";
 import { fetch as wrappedFetch } from "../fetch";
 import { GenericClass, KubernetesListObject } from "../types";
 import { Filters, WatchAction, WatchPhase } from "./types";
@@ -358,46 +359,55 @@ export class Watcher<T extends GenericClass> {
     try {
       // Start with a list operation
       await this.#list();
-
+  
       // Build the URL and request options
       const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-
-      // Create a stream to read the response body
-      this.#stream = byline.createStream();
-
-      // Bind the stream events
-      this.#stream.on("error", this.#errHandler);
-      this.#stream.on("close", this.#streamCleanup);
-      this.#stream.on("finish", this.#streamCleanup);
-
-      // Make the actual request
-      const response = await fetch(url, { ...opts });
-
+      const fetchOpts = {
+        method: opts.method,
+        headers: {
+          "Content-Type": "application/json",
+          // Set the user agent like kubectl does
+          "User-Agent": `kubernetes-fluent-client`,
+        }
+      }
+      // Make the actual request using native fetch
+      const response = await fetch(url, fetchOpts);
+  
       // Reset the pending reconnect flag
       this.#pendingReconnect = false;
-
+  
       // If the request is successful, start listening for events
       if (response.ok) {
         this.#events.emit(WatchEvent.CONNECT, url.pathname);
-
+  
         const { body } = response;
-
+  
+        if (!body) {
+          throw new Error("No response body found");
+        }
+  
         // Reset the retry count
         this.#resyncFailureCount = 0;
         this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-
-        // Listen for events and call the callback function
-        this.#stream.on("data", async line => {
+  
+        // Use native stream to process the response body line by line
+        const readline = require('readline');
+        const rl = readline.createInterface({
+          input: body,
+          crlfDelay: Infinity
+        });
+  
+        rl.on('line', async (line: string) => {
           try {
             // Parse the event payload
             const { object: payload, type: phase } = JSON.parse(line) as {
               type: WatchPhase;
               object: InstanceType<T>;
             };
-
+  
             // Update the last seen time
             this.#lastSeenTime = Date.now();
-
+  
             // If the watch is too old, remove the resourceVersion and reload the watch
             if (phase === WatchPhase.Error && payload.code === 410) {
               throw {
@@ -405,30 +415,34 @@ export class Watcher<T extends GenericClass> {
                 message: this.#resourceVersion!,
               };
             }
-
+  
             // Process the event payload, do not update the resource version as that is handled by the list operation
             await this.#process(payload, phase);
           } catch (err) {
             if (err.name === "TooOld") {
-              // Prevent any body events from firing
-              body.removeAllListeners();
-
+              // Close the readline interface
+              rl.close();
+  
               // Reload the watch
               void this.#errHandler(err);
               return;
             }
-
+  
             this.#events.emit(WatchEvent.DATA_ERROR, err);
           }
         });
-
-        // Bind the body events
-        body.on("error", this.#errHandler);
-        body.on("close", this.#streamCleanup);
-        body.on("finish", this.#streamCleanup);
-
-        // Pipe the response body to the stream
-        body.pipe(this.#stream);
+  
+        rl.on('close', () => {
+          this.#streamCleanup();
+        });
+        interface Error {
+          name: string;
+          message: string;
+        }
+        rl.on('error', (err: Error) => {
+          this.#errHandler(err);
+        });
+  
       } else {
         throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
       }
