@@ -10,7 +10,6 @@ import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
-// Generates the overrides object
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
 
@@ -56,7 +55,7 @@ interface Config {
   alwaysIgnore: {
     namespaces: string[];
   };
-  [key: string]: unknown; // Add other properties as needed
+  [key: string]: unknown;
 }
 
 export function generateAdmissionConfig(config: Config, image: string, name: string) {
