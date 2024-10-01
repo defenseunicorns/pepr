@@ -43,12 +43,9 @@ export async function validateProcessor(
         allowed: true, // Assume it's allowed until a validation check fails
       };
 
-      // if (shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces)) {
-      //   continue;
-      // }
       // Continue to the next action without doing anything if this one should be skipped
       const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
-      if (shouldSkip === "") {
+      if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
       }
