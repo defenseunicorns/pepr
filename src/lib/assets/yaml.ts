@@ -67,7 +67,7 @@ export function generateAdmissionConfig(config: Config, image: string, name: str
   return {
     terminationGracePeriodSeconds: 5,
     failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
-    webhookTimeout: config.webhookTimeout ?? 30, // Provide a default value
+    webhookTimeout: config.webhookTimeout ?? 30,
     env: genEnv(config, false, true),
     image,
     annotations: { "pepr.dev/description": config.description || "" },
@@ -170,7 +170,7 @@ export async function overridesFile(assets: Assets, path: string) {
 }
 
 // Generates Zarf YAML
-function generateZarfConfig(assets: Assets, path: string, chart = false) {
+export function generateZarfConfig(assets: Assets, path: string, chart = false) {
   const { name, image, config } = assets;
 
   return {
