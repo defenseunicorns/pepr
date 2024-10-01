@@ -21,7 +21,7 @@ COPY --chown=node:node ./hack/ ./hack/
 COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
-
+COPY kfc/ ./kfc/
 RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
     npm cache clean --force && \
@@ -30,9 +30,13 @@ RUN npm run build && \
     # Remove Ramda unused Ramda files
     rm -rf node_modules/ramda/dist && \
     rm -rf node_modules/ramda/es && \
+    rm -rf node_modules/kubernetes-fluent-client/src && \
+    rm -rf node_modules/kubernetes-fluent-client/dist && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
+    cp -r kfc/dist node_modules/kubernetes-fluent-client/dist && \
+    cp -r kfc/src node_modules/kubernetes-fluent-client/src && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
