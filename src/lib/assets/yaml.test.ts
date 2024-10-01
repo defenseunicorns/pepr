@@ -5,6 +5,8 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { Assets } from ".";
 import yaml from "js-yaml";
 
+jest.mock("./webhooks"); // Mock the entire webhooks module
+
 // Mock fs.writeFile and fs.readFile
 jest.mock("fs", () => ({
   promises: {
@@ -251,7 +253,6 @@ describe("yaml.ts comprehensive tests", () => {
       "kind: Deployment",
     ];
 
-    // Add logs to display the actual and expected results
     console.log("Actual YAML Output:\n", result);
     console.log("Expected Fragments:\n", expectedContent);
 
@@ -263,7 +264,7 @@ describe("yaml.ts comprehensive tests", () => {
   it("allYaml: should generate valid YAML structure", async () => {
     const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
 
-    console.log("Generated YAML Output:\n", result); // <-- Add this log
+    console.log("Generated YAML Output:\n", result);
 
     // Parse all documents in the YAML
     const parsedYaml = yaml.loadAll(result) as Array<{
@@ -315,8 +316,6 @@ describe("yaml.ts error handling and edge case tests", () => {
     generateHelmChart: async (): Promise<void> => Promise.resolve(),
   };
 
-  // ERROR HANDLING TESTS
-
   it("overridesFile: should throw an error if fs.writeFile fails", async () => {
     const path = "./test-values.yaml";
     const writeFileMock = fs.writeFile as jest.Mock;
@@ -332,13 +331,26 @@ describe("yaml.ts error handling and edge case tests", () => {
     await expect(allYaml(mockAssets, "scoped", "image-pull-secret")).rejects.toThrow("File read error");
   });
 
-  // EDGE CASE TESTS
-
   it("overridesFile: should throw an error if apiToken is missing", async () => {
     const path = "./test-values.yaml";
     const assetsWithoutToken = { ...mockAssets, apiToken: undefined };
 
     await expect(overridesFile(assetsWithoutToken as unknown as Assets, path)).rejects.toThrow("apiToken is required");
+  });
+
+  it("should handle populated capabilities array", async () => {
+    const mockAssetsWithCapabilities = {
+      ...mockAssets,
+      capabilities: [
+        { verb: "get", bindings: [], hasSchedule: false, name: "get", description: "get description" },
+        { verb: "watch", bindings: [], hasSchedule: false, name: "watch", description: "watch description" },
+        { verb: "list", bindings: [], hasSchedule: false, name: "list", description: "list description" },
+      ],
+    };
+
+    const result = await allYaml(mockAssetsWithCapabilities, "scoped", "image-pull-secret");
+
+    expect(result).toContain('verbs: ["get", "watch", "list"]');
   });
 
   it("allYaml: should handle empty capabilities array", async () => {
