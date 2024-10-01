@@ -11,7 +11,7 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { webhookConfig } from "./webhooks";
 
 // Generates the overrides object
-function generateOverrides(assets: Assets, image: string, apiToken: string) {
+export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
 
   return {
@@ -59,14 +59,18 @@ interface Config {
   [key: string]: unknown; // Add other properties as needed
 }
 
-function generateAdmissionConfig(config: Config, image: string, name: string) {
+export function generateAdmissionConfig(config: Config, image: string, name: string) {
+  if (!config.uuid) {
+    throw new Error("uuid is required in config");
+  }
+
   return {
     terminationGracePeriodSeconds: 5,
     failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
     webhookTimeout: config.webhookTimeout ?? 30, // Provide a default value
     env: genEnv(config, false, true),
     image,
-    annotations: { "pepr.dev/description": `${config.description}` || "" },
+    annotations: { "pepr.dev/description": config.description || "" },
     labels: {
       app: name,
       "pepr.dev/controller": "admission",
@@ -88,7 +92,7 @@ function generateAdmissionConfig(config: Config, image: string, name: string) {
 }
 
 // Generates the watcher object configuration
-function generateWatcherConfig(config: Config, image: string, name: string) {
+export function generateWatcherConfig(config: Config, image: string, name: string) {
   return {
     terminationGracePeriodSeconds: 5,
     env: genEnv(config, true, true),
@@ -115,7 +119,7 @@ function generateWatcherConfig(config: Config, image: string, name: string) {
 }
 
 // Generates the security context configuration
-function generateSecurityContext() {
+export function generateSecurityContext() {
   return {
     runAsUser: 65532,
     runAsGroup: 65532,
@@ -125,7 +129,7 @@ function generateSecurityContext() {
 }
 
 // Generates the container security context
-function generateContainerSecurityContext() {
+export function generateContainerSecurityContext() {
   return {
     runAsUser: 65532,
     runAsGroup: 65532,
@@ -138,7 +142,7 @@ function generateContainerSecurityContext() {
 }
 
 // Generates the probe configuration
-function generateProbeConfig() {
+export function generateProbeConfig() {
   return {
     httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
     initialDelaySeconds: 10,
@@ -146,7 +150,7 @@ function generateProbeConfig() {
 }
 
 // Generates the resource configuration
-function generateResourceConfig() {
+export function generateResourceConfig() {
   return {
     requests: { memory: "64Mi", cpu: "100m" },
     limits: { memory: "256Mi", cpu: "500m" },
