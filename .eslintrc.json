@@ -13,6 +13,7 @@
     "complexity": ["warn", { "max": 5 }],
     "max-depth": ["warn", { "max": 3 }],
     "max-params": ["warn", { "max": 4 }],
+    "max-nested-callbacks": ["warn", { "max": 4 }],
     "class-methods-use-this": "warn",
     "consistent-this": "warn",
     "no-invalid-this": "warn",
