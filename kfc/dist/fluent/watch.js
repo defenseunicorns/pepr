@@ -95,6 +95,8 @@ class Watcher {
         watchCfg.relistIntervalSec ??= 600;
         // Set the resync interval to 10 minutes if not specified
         watchCfg.lastSeenLimitSeconds ??= 600;
+        // eliminate this
+        watchCfg.resyncFailureMax = undefined;
         // Set the last seen limit to the resync interval
         this.#lastSeenLimit = watchCfg.lastSeenLimitSeconds * 1000;
         // Set the latest relist interval to now
@@ -313,10 +315,11 @@ class Watcher {
                         "User-Agent": `kubernetes-fluent-client`,
                     },
                     dispatcher: new undici_1.Agent({
+                        // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
                         // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
                         keepAliveMaxTimeout: 600000,
                         keepAliveTimeout: 600000,
-                        bodyTimeout: 600000,
+                        bodyTimeout: 600000, // 0 to disable entirely
                         connect: {
                             ...agentOptions,
                         },
