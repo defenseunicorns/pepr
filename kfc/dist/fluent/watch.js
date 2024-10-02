@@ -298,7 +298,7 @@ class Watcher {
     #watch = async () => {
         try {
             // Start with a list operation
-            // await this.#list();
+            await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
             let agentOptions;
