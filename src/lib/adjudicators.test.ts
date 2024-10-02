@@ -550,11 +550,13 @@ describe("metasMismatch", () => {
     [{ anno: "tate" }, {}, true],
     [{ anno: "tate" }, { anno: "" }, true],
     [{ anno: "tate" }, { anno: "tate" }, false],
+    [{ anno: "tate" }, { anno: "tato" }, true],
 
     [{ an: "no", ta: "te" }, { an: "" }, true],
     [{ an: "no", ta: "te" }, { an: "no" }, true],
     [{ an: "no", ta: "te" }, { an: "no", ta: "" }, true],
     [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
   ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
     const result = sut.metasMismatch(bnd, obj);
 
@@ -575,10 +577,12 @@ describe("mismatchedAnnotations", () => {
     [{ filters: { annotations: { anno: "tate" } } }, {}, true],
     [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "" } } }, true],
     [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tato" } } }, true],
 
     [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "" } } }, true],
     [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no" } } }, true],
     [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "" } } }, true],
+    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "to" } } }, true],
     [
       { filters: { annotations: { an: "no", ta: "te" } } },
       { metadata: { annotations: { an: "no", ta: "te" } } },

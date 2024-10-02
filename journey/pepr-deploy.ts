@@ -17,7 +17,6 @@ import {
   waitForPeprStoreKey,
   waitForSecret,
 } from "./k8s";
-import nock from 'nock';
 
 export function peprDeploy() {
   // Purge the Pepr module from the cluster before running the tests
@@ -37,7 +36,10 @@ export function peprDeploy() {
     execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
-    await Promise.all([waitForDeploymentReady("pepr-system", "pepr-static-test"), waitForDeploymentReady("pepr-system", "pepr-static-test-watcher")]);
+    await Promise.all([
+      waitForDeploymentReady("pepr-system", "pepr-static-test"),
+      waitForDeploymentReady("pepr-system", "pepr-static-test-watcher"),
+    ]);
   });
 
   cleanupSamples();
@@ -49,39 +51,41 @@ export function peprDeploy() {
   describe("should perform mutation of resources applied to the test cluster", testMutate);
 
   describe("should monitor the cluster for admission changes", () => {
-
     const until = (predicate: () => boolean): Promise<void> => {
       const poll = (resolve: () => void) => {
-        if (predicate()) { resolve() }
-        else { setTimeout(_ => poll(resolve), 250) }
-      }
+        if (predicate()) {
+          resolve();
+        } else {
+          setTimeout(_ => poll(resolve), 250);
+        }
+      };
       return new Promise(poll);
-    }
+    };
 
     it("npx pepr monitor should display validation results to console", async () => {
       await testValidate();
 
-      const cmd = ['pepr', 'monitor', 'static-test']
+      const cmd = ["pepr", "monitor", "static-test"];
 
-      const proc = spawn('npx', cmd, { shell: true })
+      const proc = spawn("npx", cmd, { shell: true });
 
-      const state = { accept: false, reject: false, done: false }
-      proc.stdout.on('data', (data) => {
-        const stdout: String = data.toString()
-        state.accept = stdout.includes("✅") ? true : state.accept
-        state.reject = stdout.includes("❌") ? true : state.reject
-        expect(stdout.includes("IGNORED")).toBe(false)
+      const state = { accept: false, reject: false, done: false };
+      proc.stdout.on("data", data => {
+        const stdout: String = data.toString();
+        state.accept = stdout.includes("✅") ? true : state.accept;
+        state.reject = stdout.includes("❌") ? true : state.reject;
+        expect(stdout.includes("IGNORED")).toBe(false);
         if (state.accept && state.reject) {
-          proc.kill()
-          proc.stdin.destroy()
-          proc.stdout.destroy()
-          proc.stderr.destroy()
+          proc.kill();
+          proc.stdin.destroy();
+          proc.stdout.destroy();
+          proc.stderr.destroy();
         }
-      })
+      });
 
-      proc.on('exit', () => state.done = true);
+      proc.on("exit", () => (state.done = true));
 
-      await until(() => state.done)
+      await until(() => state.done);
 
       // completes only if conditions are met, so... getting here means success!
     }, 10000);
@@ -110,7 +114,6 @@ function cleanupSamples() {
 }
 
 function testUUID() {
-
   it("should display the UUIDs of the deployed modules", async () => {
     const uuidOut = spawnSync("npx pepr uuid", {
       shell: true, // Run command in a shell
@@ -144,7 +147,7 @@ function testUUID() {
     ].join("\n");
     expect(stdout).toMatch(expected);
   });
-};
+}
 
 function testIgnore() {
   it("should ignore resources not in the capability namespaces during mutation", async () => {
@@ -195,7 +198,6 @@ async function testValidate() {
     `No evil CM annotations allowed.\n`,
   ].join("");
   expect(stderr).toMatch(expected);
-
 }
 
 function testMutate() {
@@ -250,7 +252,6 @@ function testMutate() {
   });
 
   it("should mutate example-5", async () => {
-
     const cm5 = await waitForConfigMap("pepr-demo", "example-5");
 
     expect(cm5.metadata?.annotations?.["static-test.pepr.dev/hello-pepr"]).toBe("succeeded");
@@ -271,7 +272,6 @@ function testMutate() {
   });
 }
 
-
 function testStore() {
   it("should create the PeprStore", async () => {
     const resp = await waitForPeprStoreKey("pepr-static-test-store", "__pepr_do_not_delete__");
@@ -286,15 +286,24 @@ function testStore() {
     const nullKey1 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1`);
     expect(nullKey1).toBeUndefined();
 
-    const key2 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-example-1-data`);
+    const key2 = await waitForPeprStoreKey(
+      "pepr-static-test-store",
+      `hello-pepr-v2-example-1-data`,
+    );
     expect(key2).toBe(JSON.stringify({ key: "ex-1-val" }));
 
     // Should have been migrated and removed
-    const nullKey2 = await noWaitPeprStoreKey("pepr-static-test-store", `hello-pepr-example-1-data`);
+    const nullKey2 = await noWaitPeprStoreKey(
+      "pepr-static-test-store",
+      `hello-pepr-example-1-data`,
+    );
     expect(nullKey2).toBeUndefined();
 
     // Should have a key from the joke url and getItem should have worked
-    const key3 = await waitForPeprStoreKey("pepr-static-test-store", `hello-pepr-v2-https://icanhazdadjoke.com/`);
+    const key3 = await waitForPeprStoreKey(
+      "pepr-static-test-store",
+      `hello-pepr-v2-https://icanhazdadjoke.com/`,
+    );
     expect(key3).toBeTruthy();
 
     const cm = await waitForConfigMapKey("pepr-demo", "example-5", "chuck-says");
