@@ -11,6 +11,7 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { webhookConfig } from "./webhooks";
 
 const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
+const DEFAULT_USER_ID = 65532;
 
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
@@ -119,17 +120,17 @@ export function generateWatcherConfig(config: Config, image: string, name: strin
 
 export function generateSecurityContext() {
   return {
-    runAsUser: 65532,
-    runAsGroup: 65532,
+    runAsUser: DEFAULT_USER_ID,
+    runAsGroup: DEFAULT_USER_ID,
     runAsNonRoot: true,
-    fsGroup: 65532,
+    fsGroup: DEFAULT_USER_ID,
   };
 }
 
 export function generateContainerSecurityContext() {
   return {
-    runAsUser: 65532,
-    runAsGroup: 65532,
+    runAsUser: DEFAULT_USER_ID,
+    runAsGroup: DEFAULT_USER_ID,
     runAsNonRoot: true,
     allowPrivilegeEscalation: false,
     capabilities: {
