@@ -10,7 +10,7 @@ import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
-const DEFAULT_WEBHOOK_TIMEOUT = 30;
+const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
 
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
@@ -30,7 +30,7 @@ export function generateOverrides(assets: Assets, image: string, apiToken: strin
     admission: generateAdmissionConfig(
       {
         ...config,
-        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT,
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
         alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] },
       },
       image,
@@ -39,7 +39,7 @@ export function generateOverrides(assets: Assets, image: string, apiToken: strin
     watcher: generateWatcherConfig(
       {
         ...config,
-        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT,
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
         alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] }, // Ensure alwaysIgnore.namespaces is always an array
       },
       image,
@@ -67,7 +67,7 @@ export function generateAdmissionConfig(config: Config, image: string, name: str
   return {
     terminationGracePeriodSeconds: 5,
     failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
-    webhookTimeout: config.webhookTimeout ?? 30,
+    webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
     env: genEnv(config, false, true),
     image,
     annotations: { "pepr.dev/description": config.description || "" },
