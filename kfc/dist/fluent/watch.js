@@ -13,6 +13,7 @@ const undici_1 = require("undici");
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
+const stream_1 = require("stream");
 var WatchEvent;
 (function (WatchEvent) {
     /** Watch is connected successfully */
@@ -312,6 +313,8 @@ class Watcher {
                         "User-Agent": `kubernetes-fluent-client`,
                     },
                     dispatcher: new undici_1.Agent({
+                        keepAliveMaxTimeout: 10,
+                        keepAliveTimeout: 10,
                         connect: {
                             ...agentOptions,
                         },
@@ -335,23 +338,15 @@ class Watcher {
                 this.#resyncFailureCount = 0;
                 this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
                 // Use a native stream issue #1180
-                const stream = body.getReader();
+                const stream = stream_1.Readable.from(body);
                 const decoder = new TextDecoder();
                 let buffer = "";
-                const readStream = async () => {
+                stream.on('data', (chunk) => {
                     try {
-                        const { done, value } = await stream.read();
-                        if (done) {
-                            console.log("Stream ended, attempting reconnection...");
-                            this.#streamCleanup();
-                            await this.#reconnect();
-                            return;
-                        }
-                        // these are the watch messages from Kubernetes
-                        buffer += decoder.decode(value, { stream: true });
-                        const lines = buffer.split("\n");
-                        // We may have received an impletely line that cannot be parsed
-                        // Incase the stream ended on a partial we can just wait for the next chunk
+                        // Decode chunk using TextDecoder
+                        buffer += decoder.decode(chunk, { stream: true });
+                        const lines = buffer.split('\n');
+                        // Keep last incomplete line in the buffer for the next chunk
                         buffer = lines.pop();
                         for (const line of lines) {
                             try {
@@ -367,7 +362,7 @@ class Watcher {
                                     };
                                 }
                                 // Process the event payload, do not update the resource version as that is handled by the list operation
-                                await this.#process(payload, phase);
+                                void this.#process(payload, phase);
                             }
                             catch (err) {
                                 if (err.name === "TooOld") {
@@ -378,23 +373,38 @@ class Watcher {
                                 this.#events.emit(WatchEvent.DATA_ERROR, err);
                             }
                         }
-                        // Try reading again bc you read all the lines
-                        // or maybe we call reconnect?
-                        await readStream();
                     }
                     catch (err) {
-                        console.error("Error reading from stream:", err);
-                        await this.#reconnect(); // Handle the disconnect and attempt to reconnect
+                        console.error("Error processing stream data:", err);
                     }
-                };
-                // Start reading from the stream
-                await readStream();
+                });
+                stream.on('close', () => {
+                    console.log('Stream closed, attempting reconnection...');
+                    this.#streamCleanup();
+                    void this.#reconnect();
+                });
+                stream.on('end', () => {
+                    console.log('Stream ended gracefully, reconnecting...');
+                    this.#streamCleanup();
+                    void this.#reconnect();
+                });
+                stream.on('error', (err) => {
+                    console.error('Stream error:', err);
+                    this.#streamCleanup();
+                    void this.#reconnect();
+                });
+                stream.on('finish', () => {
+                    console.log('Stream finished.');
+                    this.#streamCleanup();
+                    void this.#reconnect();
+                });
             }
             else {
                 throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
             }
         }
         catch (e) {
+            console.error("Watch function error:", e);
             void this.#errHandler(e);
         }
     };

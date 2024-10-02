@@ -10,6 +10,7 @@ import { fetch as wrappedFetch } from "../fetch";
 import { GenericClass, KubernetesListObject } from "../types";
 import { Filters, WatchAction, WatchPhase } from "./types";
 import { k8sCfg, pathBuilder } from "./utils";
+import { Readable } from 'stream';
 
 export enum WatchEvent {
   /** Watch is connected successfully */
@@ -380,6 +381,8 @@ export class Watcher<T extends GenericClass> {
             "User-Agent": `kubernetes-fluent-client`,
           },
           dispatcher: new Agent({
+            keepAliveMaxTimeout: 10,
+            keepAliveTimeout: 10,
             connect: {
               ...agentOptions,
             },
@@ -408,27 +411,18 @@ export class Watcher<T extends GenericClass> {
         this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
 
         // Use a native stream issue #1180
-        const stream = body.getReader();
+        const stream = Readable.from(body)
         const decoder = new TextDecoder();
         let buffer = "";
 
-        const readStream = async () => {
+        stream.on('data', (chunk) => {
           try {
-            const { done, value } = await stream.read();
-            if (done) {
-              console.log("Stream ended, attempting reconnection...");
-              this.#streamCleanup();
-              await this.#reconnect();
-              return;
-            }
-
-            // these are the watch messages from Kubernetes
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            // We may have received an impletely line that cannot be parsed
-            // Incase the stream ended on a partial we can just wait for the next chunk
+            // Decode chunk using TextDecoder
+            buffer += decoder.decode(chunk, { stream: true });
+            const lines = buffer.split('\n');
+            // Keep last incomplete line in the buffer for the next chunk
             buffer = lines.pop()!;
-
+  
             for (const line of lines) {
               try {
                 // Parse the event payload
@@ -436,10 +430,10 @@ export class Watcher<T extends GenericClass> {
                   type: WatchPhase;
                   object: InstanceType<T>;
                 };
-
+  
                 // Update the last seen time
                 this.#lastSeenTime = Date.now();
-
+  
                 // If the watch is too old, remove the resourceVersion and reload the watch
                 if (phase === WatchPhase.Error && payload.code === 410) {
                   throw {
@@ -447,37 +441,57 @@ export class Watcher<T extends GenericClass> {
                     message: this.#resourceVersion!,
                   };
                 }
-
+  
                 // Process the event payload, do not update the resource version as that is handled by the list operation
-                await this.#process(payload, phase);
+                void this.#process(payload, phase);
               } catch (err) {
                 if (err.name === "TooOld") {
                   // Reload the watch
                   void this.#errHandler(err);
                   return;
                 }
-
+  
                 this.#events.emit(WatchEvent.DATA_ERROR, err);
               }
             }
-            // Try reading again bc you read all the lines
-            // or maybe we call reconnect?
-            await readStream();
           } catch (err) {
-            console.error("Error reading from stream:", err);
-            await this.#reconnect(); // Handle the disconnect and attempt to reconnect
+            console.error("Error processing stream data:", err);
           }
-        };
-
-        // Start reading from the stream
-        await readStream();
+        });
+  
+        stream.on('close', () => {
+          console.log('Stream closed, attempting reconnection...');
+          this.#streamCleanup();
+          void this.#reconnect();
+        });
+  
+        stream.on('end', () => {
+          console.log('Stream ended gracefully, reconnecting...');
+          this.#streamCleanup();
+          void this.#reconnect();
+        });
+  
+        stream.on('error', (err) => {
+          console.error('Stream error:', err);
+          this.#streamCleanup();
+          void this.#reconnect();
+        });
+  
+        stream.on('finish', () => {
+          console.log('Stream finished.');
+          this.#streamCleanup();
+          void this.#reconnect();
+        });
+  
       } else {
         throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
       }
     } catch (e) {
+      console.error("Watch function error:", e);
       void this.#errHandler(e);
     }
   };
+  
 
   // Function to handle reconnecting
   #reconnect = async () => {
