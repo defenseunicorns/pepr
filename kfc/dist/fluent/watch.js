@@ -323,6 +323,7 @@ class Watcher {
             }
             catch (err) {
                 console.error("Error during fetch:", err);
+                await this.#reconnect();
                 return;
             }
             // Reset the pending reconnect flag

@@ -390,6 +390,7 @@ export class Watcher<T extends GenericClass> {
         });
       } catch (err) {
         console.error("Error during fetch:", err);
+        await this.#reconnect(); 
         return;
       }
 
