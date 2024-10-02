@@ -1,5 +1,5 @@
 import {
-  overridesFile,
+  writeOverridesFile,
   allYaml,
   zarfYaml,
   zarfYamlChart,
@@ -463,7 +463,7 @@ describe("yaml.ts individual function tests", () => {
       const path = "./test-values.yaml";
 
       it("should write the correct overrides file", async () => {
-        await overridesFile(mockAssets, path);
+        await writeOverridesFile(mockAssets, path);
 
         const expectedContent = dumpYaml(
           {
@@ -483,23 +483,23 @@ describe("yaml.ts individual function tests", () => {
       });
 
       it("should throw an error if apiToken is missing", async () => {
-        await expect(overridesFile({ ...mockAssets, apiToken: undefined } as unknown as Assets, path)).rejects.toThrow(
-          "apiToken is required",
-        );
+        await expect(
+          writeOverridesFile({ ...mockAssets, apiToken: undefined } as unknown as Assets, path),
+        ).rejects.toThrow("apiToken is required");
       });
 
       it("should throw an error if fs.writeFile fails", async () => {
         const writeFileMock = fs.writeFile as jest.Mock;
         writeFileMock.mockImplementationOnce(() => Promise.reject(new Error("File write error")));
 
-        await expect(overridesFile(mockAssets, path)).rejects.toThrow("File write error");
+        await expect(writeOverridesFile(mockAssets, path)).rejects.toThrow("File write error");
       });
 
       it("overridesFile: should throw an error if apiToken is missing", async () => {
         const path = "./test-values.yaml";
         const assetsWithoutToken = { ...mockAssets, apiToken: undefined };
 
-        await expect(overridesFile(assetsWithoutToken as unknown as Assets, path)).rejects.toThrow(
+        await expect(writeOverridesFile(assetsWithoutToken as unknown as Assets, path)).rejects.toThrow(
           "apiToken is required",
         );
       });

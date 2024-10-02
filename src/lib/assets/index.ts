@@ -9,7 +9,7 @@ import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
+import { allYaml, zarfYaml, writeOverridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
@@ -109,7 +109,7 @@ export class Assets {
       await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
 
       // create values file
-      await overridesFile(this, valuesPath);
+      await writeOverridesFile(this, valuesPath);
 
       // create the chart.yaml
       await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));

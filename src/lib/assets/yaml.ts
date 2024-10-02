@@ -153,7 +153,7 @@ export function generateResourceConfig() {
   };
 }
 
-export async function overridesFile(assets: Assets, path: string) {
+export async function writeOverridesFile(assets: Assets, path: string) {
   const { apiToken } = assets;
 
   if (!apiToken) {
