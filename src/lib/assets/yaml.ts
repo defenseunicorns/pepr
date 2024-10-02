@@ -10,6 +10,7 @@ import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
+// Generates the overrides object
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
 
@@ -55,7 +56,7 @@ interface Config {
   alwaysIgnore: {
     namespaces: string[];
   };
-  [key: string]: unknown;
+  [key: string]: unknown; // Add other properties as needed
 }
 
 export function generateAdmissionConfig(config: Config, image: string, name: string) {
@@ -206,7 +207,7 @@ export function zarfYamlChart(assets: Assets, path: string) {
 
 // Generates and writes all resources into a YAML string
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path, capabilities } = assets; // Ensure default empty array for capabilities
+  const { name, tls, apiToken, path, capabilities = [] } = assets; // Ensure default empty array for capabilities
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
