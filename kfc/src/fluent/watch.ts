@@ -381,8 +381,10 @@ export class Watcher<T extends GenericClass> {
             "User-Agent": `kubernetes-fluent-client`,
           },
           dispatcher: new Agent({
-            keepAliveMaxTimeout: 10,
-            keepAliveTimeout: 10,
+            // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
+            keepAliveMaxTimeout: 600000,
+            keepAliveTimeout: 600000,
+            bodyTimeout: 600000,
             connect: {
               ...agentOptions,
             },
