@@ -10,6 +10,8 @@ import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
+const DEFAULT_WEBHOOK_TIMEOUT = 30;
+
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
 
@@ -28,7 +30,7 @@ export function generateOverrides(assets: Assets, image: string, apiToken: strin
     admission: generateAdmissionConfig(
       {
         ...config,
-        webhookTimeout: config.webhookTimeout ?? 30,
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT,
         alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] },
       },
       image,
@@ -37,7 +39,7 @@ export function generateOverrides(assets: Assets, image: string, apiToken: strin
     watcher: generateWatcherConfig(
       {
         ...config,
-        webhookTimeout: config.webhookTimeout ?? 30, // Provide a default value if undefined
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT,
         alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] }, // Ensure alwaysIgnore.namespaces is always an array
       },
       image,
