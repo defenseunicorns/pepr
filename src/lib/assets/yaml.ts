@@ -195,7 +195,7 @@ export function zarfYamlChart(assets: Assets, path: string) {
 }
 
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path, capabilities = [] } = assets; // Ensure default empty array for capabilities
+  const { name, tls, apiToken, path, capabilities } = assets;
   const code = await fs.readFile(path);
 
   assets.hash = crypto.createHash("sha256").update(code).digest("hex");
