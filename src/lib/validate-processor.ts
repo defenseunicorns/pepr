@@ -22,7 +22,7 @@ export async function validateProcessor(
   const response: ValidateResponse[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
   if (isSecret) {
     convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }

@@ -30,7 +30,7 @@ export function convertFromBase64Map(obj: { data?: Record<string, string> }) {
 
   obj.data = obj.data ?? {};
   for (const key in obj.data) {
-    if (obj.data[key] == undefined) {
+    if (obj.data[key] === undefined) {
       obj.data[key] = "";
     } else {
       const decoded = base64Decode(obj.data[key]);
