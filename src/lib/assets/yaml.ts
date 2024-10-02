@@ -10,7 +10,6 @@ import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 
-// Generates the overrides object
 export function generateOverrides(assets: Assets, image: string, apiToken: string) {
   const { hash, name, config } = assets;
 
@@ -47,7 +46,6 @@ export function generateOverrides(assets: Assets, image: string, apiToken: strin
   };
 }
 
-// Generates the admission object configuration
 interface Config {
   onError?: string;
   webhookTimeout: number;
@@ -91,7 +89,6 @@ export function generateAdmissionConfig(config: Config, image: string, name: str
   };
 }
 
-// Generates the watcher object configuration
 export function generateWatcherConfig(config: Config, image: string, name: string) {
   return {
     terminationGracePeriodSeconds: 5,
@@ -118,7 +115,6 @@ export function generateWatcherConfig(config: Config, image: string, name: strin
   };
 }
 
-// Generates the security context configuration
 export function generateSecurityContext() {
   return {
     runAsUser: 65532,
@@ -128,7 +124,6 @@ export function generateSecurityContext() {
   };
 }
 
-// Generates the container security context
 export function generateContainerSecurityContext() {
   return {
     runAsUser: 65532,
@@ -141,7 +136,6 @@ export function generateContainerSecurityContext() {
   };
 }
 
-// Generates the probe configuration
 export function generateProbeConfig() {
   return {
     httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
@@ -149,7 +143,6 @@ export function generateProbeConfig() {
   };
 }
 
-// Generates the resource configuration
 export function generateResourceConfig() {
   return {
     requests: { memory: "64Mi", cpu: "100m" },
@@ -157,7 +150,6 @@ export function generateResourceConfig() {
   };
 }
 
-// Writes the overrides file
 export async function overridesFile(assets: Assets, path: string) {
   const { apiToken } = assets;
 
@@ -169,7 +161,6 @@ export async function overridesFile(assets: Assets, path: string) {
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
-// Generates Zarf YAML
 export function generateZarfConfig(assets: Assets, path: string, chart = false) {
   const { name, image, config } = assets;
 
@@ -195,22 +186,18 @@ export function generateZarfConfig(assets: Assets, path: string, chart = false) 
   };
 }
 
-// Writes Zarf YAML for a manifest file
 export function zarfYaml(assets: Assets, path: string) {
   return dumpYaml(generateZarfConfig(assets, path), { noRefs: true });
 }
 
-// Writes Zarf YAML for a Helm chart
 export function zarfYamlChart(assets: Assets, path: string) {
   return dumpYaml(generateZarfConfig(assets, path, true), { noRefs: true });
 }
 
-// Generates and writes all resources into a YAML string
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
   const { name, tls, apiToken, path, capabilities = [] } = assets; // Ensure default empty array for capabilities
   const code = await fs.readFile(path);
 
-  // Generate a hash of the code
   assets.hash = crypto.createHash("sha256").update(code).digest("hex");
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
