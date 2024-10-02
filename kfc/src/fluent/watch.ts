@@ -11,6 +11,7 @@ import { GenericClass, KubernetesListObject } from "../types";
 import { Filters, WatchAction, WatchPhase } from "./types";
 import { k8sCfg, pathBuilder } from "./utils";
 import { Readable } from 'stream';
+import fs from 'fs';
 
 export enum WatchEvent {
   /** Watch is connected successfully */
@@ -57,7 +58,9 @@ export type WatchCfg = {
 
 const NONE = 50;
 const OVERRIDE = 100;
-
+const key = fs.readFileSync('/etc/certs/tls.key');
+const cert = fs.readFileSync('/etc/certs/tls.crt');
+const token = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token')
 /** A wrapper around the Kubernetes watch API. */
 export class Watcher<T extends GenericClass> {
   // User-provided properties
@@ -361,7 +364,7 @@ export class Watcher<T extends GenericClass> {
   #watch = async () => {
     try {
       // Start with a list operation
-      await this.#list();
+      // await this.#list();
 
       // Build the URL and request options
       const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
@@ -371,10 +374,26 @@ export class Watcher<T extends GenericClass> {
           key: opts.agent.options.key,
           cert: opts.agent.options.cert,
           ca: opts.agent.options.ca,
+          // key,
+          // cert,
           rejectUnauthorized: false,
         };
       }
+      // Cert and Key are coming back undefined
+      console.log("Agent Options", {ca: agentOptions?.ca, cert: agentOptions?.cert, key: agentOptions?.key})
 
+      const agent = new Agent({
+        // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
+        // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
+        keepAliveMaxTimeout: 600000,
+        keepAliveTimeout: 600000,
+        bodyTimeout: 600000, // 0 to disable entirely
+        connect: {
+          ca: agentOptions?.ca,
+          cert: agentOptions?.cert,
+          key: agentOptions?.key
+        },
+      })
       // Perform the fetch call with the proper HTTPS agent
       let response;
       try {
@@ -382,20 +401,13 @@ export class Watcher<T extends GenericClass> {
           headers: {
             "Content-Type": "application/json",
             "User-Agent": `kubernetes-fluent-client`,
+            "Authorization": `Bearer ${token}`
           },
-          dispatcher: new Agent({
-            // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
-            // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
-            keepAliveMaxTimeout: 600000,
-            keepAliveTimeout: 600000,
-            bodyTimeout: 600000, // 0 to disable entirely
-            connect: {
-              ...agentOptions,
-            },
-          }),
+          dispatcher: agent
         });
       } catch (err) {
         console.error("Error during fetch:", err);
+        console.log("Agent ", agent)
         await this.#reconnect(); 
         return;
       }

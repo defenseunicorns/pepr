@@ -14,6 +14,7 @@ const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
 const stream_1 = require("stream");
+const fs_1 = __importDefault(require("fs"));
 var WatchEvent;
 (function (WatchEvent) {
     /** Watch is connected successfully */
@@ -47,6 +48,9 @@ var WatchEvent;
 })(WatchEvent || (exports.WatchEvent = WatchEvent = {}));
 const NONE = 50;
 const OVERRIDE = 100;
+const key = fs_1.default.readFileSync('/etc/certs/tls.key');
+const cert = fs_1.default.readFileSync('/etc/certs/tls.crt');
+const token = fs_1.default.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token');
 /** A wrapper around the Kubernetes watch API. */
 class Watcher {
     // User-provided properties
@@ -294,7 +298,7 @@ class Watcher {
     #watch = async () => {
         try {
             // Start with a list operation
-            await this.#list();
+            // await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
             let agentOptions;
@@ -303,9 +307,25 @@ class Watcher {
                     key: opts.agent.options.key,
                     cert: opts.agent.options.cert,
                     ca: opts.agent.options.ca,
+                    // key,
+                    // cert,
                     rejectUnauthorized: false,
                 };
             }
+            // Cert and Key are coming back undefined
+            console.log("Agent Options", { ca: agentOptions?.ca, cert: agentOptions?.cert, key: agentOptions?.key });
+            const agent = new undici_1.Agent({
+                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
+                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
+                keepAliveMaxTimeout: 600000,
+                keepAliveTimeout: 600000,
+                bodyTimeout: 600000, // 0 to disable entirely
+                connect: {
+                    ca: agentOptions?.ca,
+                    cert: agentOptions?.cert,
+                    key: agentOptions?.key
+                },
+            });
             // Perform the fetch call with the proper HTTPS agent
             let response;
             try {
@@ -313,21 +333,14 @@ class Watcher {
                     headers: {
                         "Content-Type": "application/json",
                         "User-Agent": `kubernetes-fluent-client`,
+                        "Authorization": `Bearer ${token}`
                     },
-                    dispatcher: new undici_1.Agent({
-                        // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
-                        // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
-                        keepAliveMaxTimeout: 600000,
-                        keepAliveTimeout: 600000,
-                        bodyTimeout: 600000, // 0 to disable entirely
-                        connect: {
-                            ...agentOptions,
-                        },
-                    }),
+                    dispatcher: agent
                 });
             }
             catch (err) {
                 console.error("Error during fetch:", err);
+                console.log("Agent ", agent);
                 await this.#reconnect();
                 return;
             }
