@@ -9,7 +9,7 @@ import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, writeZarfYaml, writeOverridesFile, writeZarfYamlChart } from "./yaml";
+import { generateAllYaml, writeZarfYaml, writeOverridesFile, writeZarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
@@ -71,7 +71,7 @@ export class Assets {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
-    return allYaml(this, rbacMode, imagePullSecret);
+    return generateAllYaml(this, rbacMode, imagePullSecret);
   };
 
   generateHelmChart = async (basePath: string) => {

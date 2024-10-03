@@ -197,7 +197,7 @@ export function writeZarfYamlChart(assets: Assets, path: string) {
   return dumpYaml(generateZarfConfig(assets, path, true), { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
+export async function generateAllYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
   const { name, tls, apiToken, path, capabilities } = assets;
   const code = await fs.readFile(path);
 

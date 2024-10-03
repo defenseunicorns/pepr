@@ -1,6 +1,6 @@
 import {
   writeOverridesFile,
-  allYaml,
+  generateAllYaml,
   writeZarfYaml,
   writeZarfYamlChart,
   generateOverrides,
@@ -572,10 +572,9 @@ describe("yaml.ts individual function tests", () => {
       });
     });
 
-    // Test allYaml
-    describe("allYaml", () => {
+    describe("generateAllYaml", () => {
       it("should generate all resources YAML", async () => {
-        const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+        const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
         const expectedFragments = [
           "apiVersion: rbac.authorization.k8s.io/v1",
@@ -593,9 +592,9 @@ describe("yaml.ts individual function tests", () => {
       });
     });
 
-    it("allYaml: should handle invalid imagePullSecret", async () => {
+    it("should handle invalid imagePullSecret", async () => {
       const assetsWithInvalidSecret = { ...mockAssets };
-      const result = await allYaml(assetsWithInvalidSecret, "scoped", undefined);
+      const result = await generateAllYaml(assetsWithInvalidSecret, "scoped", undefined);
 
       // Ensure that imagePullSecret does not break the YAML generation
       expect(result).toContain("kind: ClusterRole");
@@ -1045,8 +1044,8 @@ describe("yaml.ts individual function tests", () => {
         path: "/mock/path/to/code.js",
       };
 
-      // Invoke the allYaml function to generate the hash
-      await allYaml(mockAssets, "scoped", "image-pull-secret");
+      // Invoke the generateAllYaml function to generate the hash
+      await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Check if fs.readFile was called
       expect(fs.readFile).toHaveBeenCalledWith(mockAssets.path);
@@ -1062,7 +1061,7 @@ describe("yaml.ts individual function tests", () => {
         path: "/mock/path/to/code.js",
       };
 
-      await allYaml(mockAssets, "scoped", "image-pull-secret");
+      await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       const expectedHash = crypto.createHash("sha256").update("mock-code-content").digest("hex");
       expect(mockAssets.hash).toBe(expectedHash);
@@ -1075,7 +1074,7 @@ describe("yaml.ts individual function tests", () => {
       };
 
       // Call the allYaml function
-      await allYaml(mockAssets, "scoped", "image-pull-secret");
+      await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Check if webhookConfig was called with the expected arguments
       expect(webhookConfig).toHaveBeenCalledWith(mockAssets, "mutate", 30);
@@ -1090,7 +1089,7 @@ describe("yaml.ts individual function tests", () => {
         ...baseMockAssets,
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Ensure that the resources include clusterRole, serviceAccount, etc.
       expect(result).toContain("kind: ClusterRole");
@@ -1104,7 +1103,7 @@ describe("yaml.ts individual function tests", () => {
         ...baseMockAssets,
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Conditionally check if `imagePullSecret` is present, without failing the test if it's not included
       if (result.includes("imagePullSecret")) {
@@ -1120,7 +1119,7 @@ describe("yaml.ts individual function tests", () => {
         ...baseMockAssets,
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
       expect(result).toContain("kind: ClusterRoleBinding");
@@ -1136,7 +1135,7 @@ describe("yaml.ts individual function tests", () => {
         ],
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       expect(result).toContain('verbs: ["get", "watch", "list"]');
     });
@@ -1147,7 +1146,7 @@ describe("yaml.ts individual function tests", () => {
         capabilities: [],
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
     });
@@ -1161,7 +1160,7 @@ describe("yaml.ts individual function tests", () => {
         path: "/invalid/path/to/code.js",
       };
 
-      await expect(allYaml(mockAssets, "scoped", "image-pull-secret")).rejects.toThrow("File read error");
+      await expect(generateAllYaml(mockAssets, "scoped", "image-pull-secret")).rejects.toThrow("File read error");
     });
 
     it("should generate valid YAML structure for all resources", async () => {
@@ -1169,7 +1168,7 @@ describe("yaml.ts individual function tests", () => {
         ...baseMockAssets,
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Parse the YAML output
       const parsedYaml = yaml.loadAll(result) as Array<{
@@ -1222,7 +1221,7 @@ describe("yaml.ts individual function tests", () => {
         generateHelmChart: async (): Promise<void> => Promise.resolve(),
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       // Adjust this assertion based on what output you expect from capabilities
       expect(result).toContain('verbs: ["get", "watch", "list"]');
@@ -1263,7 +1262,7 @@ describe("yaml.ts individual function tests", () => {
         },
       };
 
-      const result = await allYaml(mockAssets, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssets, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
     });
@@ -1300,7 +1299,7 @@ describe("yaml.ts individual function tests", () => {
         capabilities: [],
       };
 
-      const result = await allYaml(mockAssetsWithoutCapabilities, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssetsWithoutCapabilities, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
       // Additional assertions can be added as needed
@@ -1338,7 +1337,7 @@ describe("yaml.ts individual function tests", () => {
         capabilities: [],
       };
 
-      const result = await allYaml(mockAssetsWithoutName, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssetsWithoutName, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
     });
@@ -1375,7 +1374,7 @@ describe("yaml.ts individual function tests", () => {
         path: "",
       };
 
-      const result = await allYaml(mockAssetsWithoutPath, "scoped", "image-pull-secret");
+      const result = await generateAllYaml(mockAssetsWithoutPath, "scoped", "image-pull-secret");
 
       expect(result).toContain("kind: ClusterRole");
     });
