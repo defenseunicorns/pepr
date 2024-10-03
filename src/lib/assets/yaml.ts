@@ -189,11 +189,11 @@ export function generateZarfConfig(assets: Assets, path: string, chart = false) 
   };
 }
 
-export function zarfYaml(assets: Assets, path: string) {
+export function writeZarfYaml(assets: Assets, path: string) {
   return dumpYaml(generateZarfConfig(assets, path), { noRefs: true });
 }
 
-export function zarfYamlChart(assets: Assets, path: string) {
+export function writeZarfYamlChart(assets: Assets, path: string) {
   return dumpYaml(generateZarfConfig(assets, path, true), { noRefs: true });
 }
 

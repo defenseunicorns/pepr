@@ -1,8 +1,8 @@
 import {
   writeOverridesFile,
   allYaml,
-  zarfYaml,
-  zarfYamlChart,
+  writeZarfYaml,
+  writeZarfYamlChart,
   generateOverrides,
   generateAdmissionConfig,
   generateWatcherConfig,
@@ -505,11 +505,10 @@ describe("yaml.ts individual function tests", () => {
       });
     });
 
-    // Test zarfYaml
-    describe("zarfYaml", () => {
+    describe("writeZarfYaml", () => {
       it("should generate correct Zarf package YAML", () => {
         const path = "/mock/path/to/chart";
-        const result = zarfYaml(mockAssets, path);
+        const result = writeZarfYaml(mockAssets, path);
 
         const expectedYaml = dumpYaml(
           {
@@ -536,11 +535,10 @@ describe("yaml.ts individual function tests", () => {
       });
     });
 
-    // Test zarfYamlChart
-    describe("zarfYamlChart", () => {
+    describe("writeZarfYamlChart", () => {
       it("should generate correct Helm chart YAML", () => {
         const path = "/mock/path/to/chart";
-        const result = zarfYamlChart(mockAssets, path);
+        const result = writeZarfYamlChart(mockAssets, path);
 
         const expectedYaml = dumpYaml(
           {

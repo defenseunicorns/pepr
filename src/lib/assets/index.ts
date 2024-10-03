@@ -9,7 +9,7 @@ import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, zarfYaml, writeOverridesFile, zarfYamlChart } from "./yaml";
+import { allYaml, writeZarfYaml, writeOverridesFile, writeZarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
@@ -60,9 +60,9 @@ export class Assets {
     await deploy(this, force, webhookTimeout);
   };
 
-  zarfYaml = (path: string) => zarfYaml(this, path);
+  zarfYaml = (path: string) => writeZarfYaml(this, path);
 
-  zarfYamlChart = (path: string) => zarfYamlChart(this, path);
+  zarfYamlChart = (path: string) => writeZarfYamlChart(this, path);
 
   allYaml = async (rbacMode: string, imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
