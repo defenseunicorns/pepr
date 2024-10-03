@@ -6,7 +6,7 @@ import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
-import { Operation, AdmissionRequest } from "./types";
+import { Operation, AdmissionRequest } from "./k8s";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Event } from "./types";
 import { GenericClass } from "kubernetes-fluent-client";

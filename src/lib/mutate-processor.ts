@@ -34,7 +34,7 @@ export async function mutateProcessor(
   let skipDecode: string[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
   if (isSecret) {
     skipDecode = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
@@ -50,7 +50,9 @@ export async function mutateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces)) {
+      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
         continue;
       }
 
@@ -62,7 +64,7 @@ export async function mutateProcessor(
       // this will allow tracking of failed mutations that were permitted to continue
       const updateStatus = (status: string) => {
         // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
-        if (req.operation == "DELETE") {
+        if (req.operation === "DELETE") {
           return;
         }
 
@@ -128,7 +130,7 @@ export async function mutateProcessor(
   }
 
   // delete operations can't be mutate, just return before the transformation
-  if (req.operation == "DELETE") {
+  if (req.operation === "DELETE") {
     return response;
   }
 

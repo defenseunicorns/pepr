@@ -22,7 +22,7 @@ export async function validateProcessor(
   const response: ValidateResponse[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
   if (isSecret) {
     convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
@@ -44,7 +44,9 @@ export async function validateProcessor(
       };
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces)) {
+      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
         continue;
       }
 
