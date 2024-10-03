@@ -184,12 +184,14 @@ jobs:
           }
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
+          touch logs/watch-logs.txt
 
           update_pod_map
 
           collect_metrics() {
             kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
+            kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
@@ -208,6 +210,7 @@ jobs:
                 echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
+                  kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
                   exit 1
                 fi
               done
