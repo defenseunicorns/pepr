@@ -302,6 +302,32 @@ class Watcher {
             this.#events.emit(WatchEvent.DATA_ERROR, err);
         }
     };
+    // process a line from the chunk
+    #processLine = async (line, process) => {
+        try {
+            // Parse the event payload
+            const { object: payload, type: phase } = JSON.parse(line);
+            // Update the last seen time
+            this.#lastSeenTime = Date.now();
+            // If the watch is too old, remove the resourceVersion and reload the watch
+            if (phase === types_1.WatchPhase.Error && payload.code === 410) {
+                throw {
+                    name: "TooOld",
+                    message: this.#resourceVersion,
+                };
+            }
+            // Process the event payload, do not update the resource version as that is handled by the list operation
+            await process(payload, phase);
+        }
+        catch (err) {
+            if (err.name === "TooOld") {
+                // Reload the watch
+                void this.#errHandler(err);
+                return;
+            }
+            this.#events.emit(WatchEvent.DATA_ERROR, err);
+        }
+    };
     /**
      * Watch for changes to the resource.
      */
@@ -361,35 +387,14 @@ class Watcher {
                 const decoder = new TextDecoder();
                 let buffer = "";
                 // Listen for events and call the callback function
-                this.#stream.on("data", chunk => {
+                this.#stream.on("data", async (chunk) => {
                     try {
+                        // this whole section is kind of ugly +=, .pop()!
                         buffer += decoder.decode(chunk, { stream: true });
                         const lines = buffer.split("\n");
                         buffer = lines.pop();
                         for (const line of lines) {
-                            try {
-                                // Parse the event payload
-                                const { object: payload, type: phase } = JSON.parse(line);
-                                // Update the last seen time
-                                this.#lastSeenTime = Date.now();
-                                // If the watch is too old, remove the resourceVersion and reload the watch
-                                if (phase === types_1.WatchPhase.Error && payload.code === 410) {
-                                    throw {
-                                        name: "TooOld",
-                                        message: this.#resourceVersion,
-                                    };
-                                }
-                                // Process the event payload, do not update the resource version as that is handled by the list operation
-                                void this.#process(payload, phase);
-                            }
-                            catch (err) {
-                                if (err.name === "TooOld") {
-                                    // Reload the watch
-                                    void this.#errHandler(err);
-                                    return;
-                                }
-                                this.#events.emit(WatchEvent.DATA_ERROR, err);
-                            }
+                            await this.#processLine(line, this.#process);
                         }
                     }
                     catch (err) {
@@ -407,18 +412,6 @@ class Watcher {
         }
         catch (e) {
             void this.#errHandler(e);
-        }
-    };
-    // Function to handle reconnecting
-    #reconnect = async () => {
-        try {
-            this.#streamCleanup();
-            console.log("Retrying watch");
-            await this.#watch();
-        }
-        catch (err) {
-            console.error("Retrying failed:", err);
-            this.#events.emit(WatchEvent.GIVE_UP, err);
         }
     };
     /** Clear the resync timer and schedule a new one. */

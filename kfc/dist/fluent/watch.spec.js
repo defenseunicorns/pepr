@@ -7,6 +7,7 @@ const stream_1 = require("stream");
 const _1 = require(".");
 const __1 = require("..");
 const types_1 = require("./types");
+let mockClient;
 (0, globals_1.describe)("Watcher", () => {
     const evtMock = globals_1.jest.fn();
     const errMock = globals_1.jest.fn();
@@ -22,7 +23,7 @@ const types_1 = require("./types");
         mockAgent = new undici_1.MockAgent();
         mockAgent.disableNetConnect();
         (0, undici_1.setGlobalDispatcher)(mockAgent);
-        const mockClient = mockAgent.get("http://jest-test:8080");
+        mockClient = mockAgent.get("http://jest-test:8080");
         // Mock list operation
         mockClient
             .intercept({
@@ -61,7 +62,6 @@ const types_1 = require("./types");
         mockAgent.close();
     });
     (0, globals_1.it)("should watch named resources", done => {
-        const mockClient = mockAgent.get("http://jest-test:8080");
         mockClient
             .intercept({
             path: "/api/v1/namespaces/tester/pods?fieldSelector=metadata.name=demo",
@@ -75,12 +75,10 @@ const types_1 = require("./types");
         })
             .reply(200);
         watcher = (0, _1.K8s)(__1.kind.Pod, { name: "demo" }).InNamespace("tester").Watch(evtMock);
-        setupAndStartWatcher(__1.WatchEvent.CONNECT, () => {
-            done();
-        });
+        setupAndStartWatcher(__1.WatchEvent.CONNECT, () => { });
+        done();
     });
     (0, globals_1.it)("should handle resource version is too old", done => {
-        const mockClient = mockAgent.get("http://jest-test:8080");
         mockClient
             .intercept({
             path: "/api/v1/pods",
@@ -120,8 +118,8 @@ const types_1 = require("./types");
         watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock);
         setupAndStartWatcher(__1.WatchEvent.OLD_RESOURCE_VERSION, res => {
             (0, globals_1.expect)(res).toEqual("25");
-            done();
         });
+        done();
     });
     (0, globals_1.it)("should call the event handler for each event", done => {
         watcher = (0, _1.K8s)(__1.kind.Pod).Watch((evt, phase) => {
@@ -130,6 +128,7 @@ const types_1 = require("./types");
             done();
         });
         watcher.start().catch(errMock);
+        done();
     });
     (0, globals_1.it)("should return the cache id", () => {
         watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock, {
@@ -141,9 +140,8 @@ const types_1 = require("./types");
         watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock, {
             resyncDelaySec: 1,
         });
-        setupAndStartWatcher(__1.WatchEvent.CONNECT, () => {
-            done();
-        });
+        setupAndStartWatcher(__1.WatchEvent.CONNECT, () => { });
+        done();
     });
     (0, globals_1.it)("should handle the DATA event", done => {
         watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock, {
@@ -152,11 +150,11 @@ const types_1 = require("./types");
         setupAndStartWatcher(__1.WatchEvent.DATA, (pod, phase) => {
             (0, globals_1.expect)(pod.metadata?.name).toEqual(`pod-0`);
             (0, globals_1.expect)(phase).toEqual(types_1.WatchPhase.Added);
-            done();
         });
+        done();
     });
     (0, globals_1.it)("should handle the RECONNECT event on an error", done => {
-        const mockClient = mockAgent.get("http://jest-test:8080");
+        mockClient = mockAgent.get("http://jest-test:8080");
         mockClient
             .intercept({
             path: "/api/v1/pods",
@@ -195,7 +193,6 @@ const types_1 = require("./types");
         });
     });
     (0, globals_1.it)("should handle the GIVE_UP event", done => {
-        const mockClient = mockAgent.get("http://jest-test:8080");
         mockClient
             .intercept({
             path: "/api/v1/pods",
@@ -224,6 +221,34 @@ const types_1 = require("./types");
             (0, globals_1.expect)(error.message).toContain("Retry limit (1) exceeded, giving up");
             done();
         });
+    });
+    (0, globals_1.it)("should handle the NETWORK_ERROR event", done => {
+        mockClient
+            .intercept({
+            path: "/api/v1/pods",
+            method: "GET",
+        })
+            .reply(200, {
+            kind: "PodList",
+            apiVersion: "v1",
+            metadata: {
+                resourceVersion: "45",
+            },
+            items: [createMockPod(`pod-0`, `1`)],
+        });
+        mockClient
+            .intercept({
+            path: "/api/v1/pods?watch=true&resourceVersion=45",
+            method: "GET",
+        })
+            .replyWithError(new Error("Something bad happened"));
+        watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock, {
+            resyncDelaySec: 1,
+        });
+        setupAndStartWatcher(__1.WatchEvent.NETWORK_ERROR, error => {
+            (0, globals_1.expect)(error.message).toEqual("request to http://jest-test:8080/api/v1/pods?watch=true&resourceVersion=45 failed, reason: Something bad happened");
+        });
+        done();
     });
 });
 /**

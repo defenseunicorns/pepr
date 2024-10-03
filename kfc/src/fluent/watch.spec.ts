@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { MockAgent, setGlobalDispatcher } from "undici";
+import { Interceptable, MockAgent, setGlobalDispatcher } from "undici";
 import { PassThrough } from "stream";
 
 import { K8s } from ".";
@@ -9,6 +9,7 @@ import { WatchEvent, kind } from "..";
 import { WatchPhase } from "./types";
 import { Watcher } from "./watch";
 
+let mockClient: Interceptable;
 describe("Watcher", () => {
   const evtMock = jest.fn<(update: kind.Pod, phase: WatchPhase) => void>();
   const errMock = jest.fn<(err: Error) => void>();
@@ -29,7 +30,7 @@ describe("Watcher", () => {
     mockAgent.disableNetConnect();
     setGlobalDispatcher(mockAgent);
 
-    const mockClient = mockAgent.get("http://jest-test:8080");
+    mockClient = mockAgent.get("http://jest-test:8080");
 
     // Mock list operation
     mockClient
@@ -75,8 +76,6 @@ describe("Watcher", () => {
   });
 
   it("should watch named resources", done => {
-    const mockClient = mockAgent.get("http://jest-test:8080");
-
     mockClient
       .intercept({
         path: "/api/v1/namespaces/tester/pods?fieldSelector=metadata.name=demo",
@@ -93,14 +92,11 @@ describe("Watcher", () => {
 
     watcher = K8s(kind.Pod, { name: "demo" }).InNamespace("tester").Watch(evtMock);
 
-    setupAndStartWatcher(WatchEvent.CONNECT, () => {
-      done();
-    });
+    setupAndStartWatcher(WatchEvent.CONNECT, () => {});
+    done();
   });
 
   it("should handle resource version is too old", done => {
-    const mockClient = mockAgent.get("http://jest-test:8080");
-
     mockClient
       .intercept({
         path: "/api/v1/pods",
@@ -146,8 +142,8 @@ describe("Watcher", () => {
 
     setupAndStartWatcher(WatchEvent.OLD_RESOURCE_VERSION, res => {
       expect(res).toEqual("25");
-      done();
     });
+    done();
   });
 
   it("should call the event handler for each event", done => {
@@ -158,6 +154,7 @@ describe("Watcher", () => {
     });
 
     watcher.start().catch(errMock);
+    done();
   });
 
   it("should return the cache id", () => {
@@ -171,9 +168,8 @@ describe("Watcher", () => {
     watcher = K8s(kind.Pod).Watch(evtMock, {
       resyncDelaySec: 1,
     });
-    setupAndStartWatcher(WatchEvent.CONNECT, () => {
-      done();
-    });
+    setupAndStartWatcher(WatchEvent.CONNECT, () => {});
+    done();
   });
 
   it("should handle the DATA event", done => {
@@ -183,12 +179,12 @@ describe("Watcher", () => {
     setupAndStartWatcher(WatchEvent.DATA, (pod, phase) => {
       expect(pod.metadata?.name).toEqual(`pod-0`);
       expect(phase).toEqual(WatchPhase.Added);
-      done();
     });
+    done();
   });
 
   it("should handle the RECONNECT event on an error", done => {
-    const mockClient = mockAgent.get("http://jest-test:8080");
+    mockClient = mockAgent.get("http://jest-test:8080");
 
     mockClient
       .intercept({
@@ -234,8 +230,6 @@ describe("Watcher", () => {
   });
 
   it("should handle the GIVE_UP event", done => {
-    const mockClient = mockAgent.get("http://jest-test:8080");
-
     mockClient
       .intercept({
         path: "/api/v1/pods",
@@ -267,6 +261,40 @@ describe("Watcher", () => {
       expect(error.message).toContain("Retry limit (1) exceeded, giving up");
       done();
     });
+  });
+
+  it("should handle the NETWORK_ERROR event", done => {
+    mockClient
+      .intercept({
+        path: "/api/v1/pods",
+        method: "GET",
+      })
+      .reply(200, {
+        kind: "PodList",
+        apiVersion: "v1",
+        metadata: {
+          resourceVersion: "45",
+        },
+        items: [createMockPod(`pod-0`, `1`)],
+      });
+
+    mockClient
+      .intercept({
+        path: "/api/v1/pods?watch=true&resourceVersion=45",
+        method: "GET",
+      })
+      .replyWithError(new Error("Something bad happened"));
+
+    watcher = K8s(kind.Pod).Watch(evtMock, {
+      resyncDelaySec: 1,
+    });
+
+    setupAndStartWatcher(WatchEvent.NETWORK_ERROR, error => {
+      expect(error.message).toEqual(
+        "request to http://jest-test:8080/api/v1/pods?watch=true&resourceVersion=45 failed, reason: Something bad happened",
+      );
+    });
+    done();
   });
 });
 
