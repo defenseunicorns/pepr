@@ -3,51 +3,14 @@ name: Soak Test
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
-  # push:
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "**.json"
-  #   - "docs/**"
-  #   - "CODEOWNERS"
-  #   branches: ["main"]
-  # pull_request:
-  #   branches: ["main"]
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "docs/**"
-  #   - "**.json"
-  #   - "CODEOWNERS"
-# refs
-# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
-# https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
 
 jobs:
   pepr-build:
@@ -81,9 +44,16 @@ jobs:
           npm ci
 
       - name: build pepr image
+        if: ${{ inputs.kfcBranch == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+  
+      - name: build kfc pepr image
+        if: ${{ inputs.kfcBranch != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -r ${{ inputs.logLevel }}
 
       - name: tar pepr image
         run: |

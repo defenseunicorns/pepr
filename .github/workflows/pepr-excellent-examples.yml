@@ -3,6 +3,12 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
@@ -46,9 +52,18 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
+        if: ${{ inputs.kfcBranch == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          ls -l ${GITHUB_WORKSPACE}
+
+      - name: build pepr package and kfc dev container image
+        if: ${{ inputs.kfcBranch != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -r ${{ inputs.logLevel }}
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
