@@ -48,7 +48,6 @@ var WatchEvent;
 })(WatchEvent || (exports.WatchEvent = WatchEvent = {}));
 const NONE = 50;
 const OVERRIDE = 100;
-const TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
 /** A wrapper around the Kubernetes watch API. */
 class Watcher {
     // User-provided properties
@@ -78,6 +77,8 @@ class Watcher {
     #resourceVersion;
     // Track the list of items in the cache
     #cache = new Map();
+    // Token Path
+    #TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
     /**
      * Setup a Kubernetes watcher for the specified model and filters. The callback function will be called for each event received.
      * The watch can be aborted by calling {@link Watcher.close} or by calling abort() on the AbortController returned by {@link Watcher.start}.
@@ -168,9 +169,9 @@ class Watcher {
      */
     async #getToken() {
         try {
-            return (await fs_1.default.promises.readFile(TOKEN_PATH, 'utf8')).trim();
+            return (await fs_1.default.promises.readFile(this.#TOKEN_PATH, "utf8")).trim();
         }
-        catch (err) {
+        catch {
             return null;
         }
     }
@@ -328,7 +329,7 @@ class Watcher {
                 connect: {
                     ca: agentOptions?.ca,
                     cert: agentOptions?.cert,
-                    key: agentOptions?.key
+                    key: agentOptions?.key,
                 },
             });
             const token = await this.#getToken();
@@ -341,7 +342,7 @@ class Watcher {
             }
             const response = await (0, undici_1.fetch)(url, {
                 headers,
-                dispatcher: agent
+                dispatcher: agent,
             });
             // Reset the pending reconnect flag
             this.#pendingReconnect = false;
@@ -360,10 +361,10 @@ class Watcher {
                 const decoder = new TextDecoder();
                 let buffer = "";
                 // Listen for events and call the callback function
-                this.#stream.on('data', (chunk) => {
+                this.#stream.on("data", chunk => {
                     try {
                         buffer += decoder.decode(chunk, { stream: true });
-                        const lines = buffer.split('\n');
+                        const lines = buffer.split("\n");
                         buffer = lines.pop();
                         for (const line of lines) {
                             try {
@@ -395,10 +396,10 @@ class Watcher {
                         void this.#errHandler(err);
                     }
                 });
-                this.#stream.on('close', this.#streamCleanup);
-                this.#stream.on('end', this.#streamCleanup);
-                this.#stream.on('error', this.#errHandler);
-                this.#stream.on('finish', this.#streamCleanup);
+                this.#stream.on("close", this.#streamCleanup);
+                this.#stream.on("end", this.#streamCleanup);
+                this.#stream.on("error", this.#errHandler);
+                this.#stream.on("finish", this.#streamCleanup);
             }
             else {
                 throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
