@@ -217,7 +217,7 @@ describe("yaml.ts individual function tests", () => {
     };
 
     it("should generate overrides object with correct structure", () => {
-      const result = generateOverrides(mockAssets, mockAssets.image, mockAssets.apiToken);
+      const result = generateOverrides(mockAssets, mockAssets.apiToken);
       expect(result).toHaveProperty("secrets.apiToken");
       expect(result).toHaveProperty("hash", mockAssets.hash);
       expect(result).toHaveProperty("namespace");
@@ -227,12 +227,12 @@ describe("yaml.ts individual function tests", () => {
     });
 
     it("should base64 encode the apiToken in the overrides", () => {
-      const result = generateOverrides(mockAssets, mockAssets.image, mockAssets.apiToken);
+      const result = generateOverrides(mockAssets, mockAssets.apiToken);
       expect(result.secrets.apiToken).toBe(Buffer.from(mockAssets.apiToken).toString("base64"));
     });
 
     it("should generate correct overrides with webhookTimeout and alwaysIgnore.namespaces defined", () => {
-      const result = generateOverrides(baseMockAssets, baseMockAssets.image, baseMockAssets.apiToken);
+      const result = generateOverrides(baseMockAssets, baseMockAssets.apiToken);
 
       expect(result).toHaveProperty("secrets.apiToken", Buffer.from(baseMockAssets.apiToken).toString("base64"));
       expect(result).toHaveProperty("hash", baseMockAssets.hash);
@@ -251,7 +251,7 @@ describe("yaml.ts individual function tests", () => {
         },
       };
 
-      const result = generateOverrides(mockAssetsWithoutTimeout, baseMockAssets.image, baseMockAssets.apiToken);
+      const result = generateOverrides(mockAssetsWithoutTimeout, baseMockAssets.apiToken);
 
       expect(result.admission).toHaveProperty("webhookTimeout", 30); // Should default to 30
       expect(result.watcher).toHaveProperty("terminationGracePeriodSeconds", 5); // Confirm watcher structure
@@ -266,7 +266,7 @@ describe("yaml.ts individual function tests", () => {
           alwaysIgnore: {}, // No namespaces defined
         },
       };
-      const result = generateOverrides(mockAssetsWithoutNamespaces, baseMockAssets.image, baseMockAssets.apiToken);
+      const result = generateOverrides(mockAssetsWithoutNamespaces, baseMockAssets.apiToken);
 
       expect(result.admission).toHaveProperty("webhookTimeout", 30);
     });
@@ -281,7 +281,7 @@ describe("yaml.ts individual function tests", () => {
           alwaysIgnore: { namespaces: [] },
         },
       };
-      const result = generateOverrides(mockAssetsWithUndefinedConfig, baseMockAssets.image, baseMockAssets.apiToken);
+      const result = generateOverrides(mockAssetsWithUndefinedConfig, baseMockAssets.apiToken);
 
       expect(result.admission).toHaveProperty("webhookTimeout", 30); // Should default to 30
     });

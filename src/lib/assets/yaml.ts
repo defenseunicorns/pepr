@@ -13,8 +13,8 @@ import { webhookConfig } from "./webhooks";
 const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
 const DEFAULT_USER_ID = 65532;
 
-export function generateOverrides(assets: Assets, image: string, apiToken: string) {
-  const { hash, name, config } = assets;
+export function generateOverrides(assets: Assets, apiToken: string) {
+  const { hash, name, config, image } = assets;
 
   return {
     secrets: {
@@ -160,7 +160,7 @@ export async function writeOverridesFile(assets: Assets, path: string) {
     throw new Error("apiToken is required");
   }
 
-  const overrides = generateOverrides(assets, assets.image, apiToken);
+  const overrides = generateOverrides(assets, apiToken);
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
