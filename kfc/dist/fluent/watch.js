@@ -9,7 +9,6 @@ exports.Watcher = exports.WatchEvent = void 0;
 const crypto_1 = require("crypto");
 const events_1 = require("events");
 const https_1 = __importDefault(require("https"));
-const undici_1 = require("undici");
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
@@ -337,27 +336,16 @@ class Watcher {
             await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-            let agentOptions;
             if (opts.agent && opts.agent instanceof https_1.default.Agent) {
-                agentOptions = {
+                https_1.default.globalAgent = new https_1.default.Agent({
                     key: opts.agent.options.key,
                     cert: opts.agent.options.cert,
                     ca: opts.agent.options.ca,
                     rejectUnauthorized: false,
-                };
+                    keepAlive: true,
+                    keepAliveMsecs: 600000,
+                });
             }
-            const agent = new undici_1.Agent({
-                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
-                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
-                keepAliveMaxTimeout: 600000,
-                keepAliveTimeout: 600000,
-                bodyTimeout: 0,
-                connect: {
-                    ca: agentOptions?.ca,
-                    cert: agentOptions?.cert,
-                    key: agentOptions?.key,
-                },
-            });
             const token = await this.#getToken();
             const headers = {
                 "Content-Type": "application/json",
@@ -366,9 +354,9 @@ class Watcher {
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
             }
-            const response = await (0, undici_1.fetch)(url, {
+            // Perform the fetch call with native fetch
+            const response = await fetch(url, {
                 headers,
-                dispatcher: agent,
             });
             // Reset the pending reconnect flag
             this.#pendingReconnect = false;
@@ -382,14 +370,13 @@ class Watcher {
                 // Reset the retry count
                 this.#resyncFailureCount = 0;
                 this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                // Use a native stream issue #1180
+                // Use a native stream
                 this.#stream = stream_1.Readable.from(body);
                 const decoder = new TextDecoder();
                 let buffer = "";
                 // Listen for events and call the callback function
                 this.#stream.on("data", async (chunk) => {
                     try {
-                        // this whole section is kind of ugly +=, .pop()!
                         buffer += decoder.decode(chunk, { stream: true });
                         const lines = buffer.split("\n");
                         buffer = lines.pop();
