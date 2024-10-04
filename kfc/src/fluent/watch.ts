@@ -466,8 +466,9 @@ export class Watcher<T extends GenericClass> {
   
           req.on('data', async (chunk) => {
             try {
-              buffer += decoder.decode(chunk, { stream: true });
+              buffer += chunk
               const lines = buffer.split('\n');
+              // Avoid  Watch event data_error received. Unexpected end of JSON input.
               buffer = lines.pop()!;
   
               for (const line of lines) {
