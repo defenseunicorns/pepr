@@ -441,7 +441,7 @@ export class Watcher<T extends GenericClass> {
       };
   
       if (token) {
-        headers['authorization'] = `Bearer ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
   
       // Make the HTTP/2 request

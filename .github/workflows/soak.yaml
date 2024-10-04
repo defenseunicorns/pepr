@@ -202,6 +202,7 @@ jobs:
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
+            kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
             if [ $((i % 6)) -eq 0 ]; then  # Every 30 minutes 
               update_pod_map
 
