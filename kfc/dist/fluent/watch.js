@@ -9,10 +9,10 @@ exports.Watcher = exports.WatchEvent = void 0;
 const crypto_1 = require("crypto");
 const events_1 = require("events");
 const https_1 = __importDefault(require("https"));
+const http2_1 = __importDefault(require("http2"));
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
-const stream_1 = require("stream");
 const fs_1 = __importDefault(require("fs"));
 var WatchEvent;
 (function (WatchEvent) {
@@ -336,66 +336,79 @@ class Watcher {
             await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
+            let agentOptions;
             if (opts.agent && opts.agent instanceof https_1.default.Agent) {
-                https_1.default.globalAgent = new https_1.default.Agent({
+                agentOptions = {
                     key: opts.agent.options.key,
                     cert: opts.agent.options.cert,
                     ca: opts.agent.options.ca,
                     rejectUnauthorized: false,
-                    keepAlive: true,
-                    keepAliveMsecs: 600000,
-                });
+                };
             }
+            // HTTP/2 client connection setup
+            const client = http2_1.default.connect(url.origin, {
+                ca: agentOptions?.ca,
+                cert: agentOptions?.cert,
+                key: agentOptions?.key,
+                rejectUnauthorized: agentOptions?.rejectUnauthorized,
+            });
+            // Set up headers for the HTTP/2 request
             const token = await this.#getToken();
             const headers = {
-                "Content-Type": "application/json",
-                "User-Agent": "kubernetes-fluent-client",
+                ':method': 'GET',
+                ':path': url.pathname + url.search,
+                'content-type': 'application/json',
+                'user-agent': 'kubernetes-fluent-client',
             };
             if (token) {
-                headers["Authorization"] = `Bearer ${token}`;
+                headers['authorization'] = `Bearer ${token}`;
             }
-            // Perform the fetch call with native fetch
-            const response = await fetch(url, {
-                headers,
-            });
-            // Reset the pending reconnect flag
-            this.#pendingReconnect = false;
-            // If the request is successful, start listening for events
-            if (response.ok) {
-                this.#events.emit(WatchEvent.CONNECT, url.pathname);
-                const { body } = response;
-                if (!body) {
-                    throw new Error("No response body found");
-                }
-                // Reset the retry count
-                this.#resyncFailureCount = 0;
-                this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                // Use a native stream
-                this.#stream = stream_1.Readable.from(body);
-                const decoder = new TextDecoder();
-                let buffer = "";
-                // Listen for events and call the callback function
-                this.#stream.on("data", async (chunk) => {
-                    try {
-                        buffer += decoder.decode(chunk, { stream: true });
-                        const lines = buffer.split("\n");
-                        buffer = lines.pop();
-                        for (const line of lines) {
-                            await this.#processLine(line, this.#process);
+            // Make the HTTP/2 request
+            const req = client.request(headers);
+            req.setEncoding('utf8');
+            let buffer = "";
+            const decoder = new TextDecoder();
+            // Handle response data
+            req.on('response', (headers, flags) => {
+                const statusCode = headers[':status'];
+                if (statusCode && statusCode >= 200 && statusCode < 300) {
+                    this.#pendingReconnect = false;
+                    this.#events.emit(WatchEvent.CONNECT, url.pathname);
+                    // Reset the retry count
+                    this.#resyncFailureCount = 0;
+                    this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
+                    req.on('data', async (chunk) => {
+                        try {
+                            buffer += decoder.decode(chunk, { stream: true });
+                            const lines = buffer.split('\n');
+                            buffer = lines.pop();
+                            for (const line of lines) {
+                                await this.#processLine(line, this.#process);
+                            }
                         }
-                    }
-                    catch (err) {
-                        void this.#errHandler(err);
-                    }
-                });
-                this.#stream.on("close", this.#streamCleanup);
-                this.#stream.on("end", this.#streamCleanup);
-                this.#stream.on("error", this.#errHandler);
-                this.#stream.on("finish", this.#streamCleanup);
-            }
-            else {
-                throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
-            }
+                        catch (err) {
+                            void this.#errHandler(err);
+                        }
+                    });
+                    req.on('end', () => {
+                        this.#streamCleanup();
+                        client.close();
+                    });
+                    req.on('close', () => {
+                        this.#streamCleanup();
+                        client.close();
+                    });
+                    req.on('error', (err) => {
+                        this.#errHandler(err);
+                        client.close();
+                    });
+                }
+                else {
+                    const statusMessage = headers[':status-text'] || 'Unknown';
+                    throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
+                }
+            });
+            req.end();
         }
         catch (e) {
             void this.#errHandler(e);
