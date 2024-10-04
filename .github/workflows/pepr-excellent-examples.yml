@@ -52,7 +52,7 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
-        if: ${{ inputs.kfcBranch == 'none' }}
+        if: ${{ github.event.inputs.kfcBranch == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
@@ -60,7 +60,7 @@ jobs:
           ls -l ${GITHUB_WORKSPACE}
 
       - name: build pepr package and kfc dev container image
-        if: ${{ inputs.kfcBranch != 'none' }}
+        if: ${{ github.event.inputs.kfcBranch != 'none' }}
         run: |
           cd "$PEPR"
           node hack/kfc-dev.js build -r ${{ inputs.logLevel }}
