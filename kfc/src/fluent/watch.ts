@@ -171,6 +171,16 @@ export class Watcher<T extends GenericClass> {
     this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
     if (this.#useHTTP2) {
       await this.#http2Watch();
+      // while (true){
+      //   let res;
+      //   try {
+      //      res = await this.#http2Watch();
+      //   } catch (e){
+      //     // log/ emit error
+      //   }
+        
+      // }
+      
     } else {
       await this.#watch();
     }
@@ -427,6 +437,7 @@ export class Watcher<T extends GenericClass> {
    * http2 Watch for changes to the resource.
    */
   #http2Watch = async () => {
+    // return new Promise((_, reject) => {})
     try {
       // Start with a list operation
       await this.#list();
@@ -520,6 +531,7 @@ export class Watcher<T extends GenericClass> {
       // What do we do after we log the error?
       void this.#http2ErrHandler(e);
     }
+    //resolve()
   };
 
   /**
