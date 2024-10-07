@@ -161,10 +161,9 @@ jobs:
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
-            if [ $((i % 6)) -eq 0 ]; then  # Every 30 minutes 
+            if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              # get a list of pods every 30 mins
               kubectl get pods -n pepr-demo 
 
               # Verify that no pod's count exceeds 1
