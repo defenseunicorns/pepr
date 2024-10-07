@@ -185,10 +185,7 @@ jobs:
           kubectl wait --for=condition=ready -n istio-system pod -l app=istio-ingressgateway
           kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
           kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
-      - name: Turn on http2 watcher
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          kubectl patch deployment pepr-soak-ci-watcher -n pepr-system --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/2/env", "value": 'true'}]'
+
       - name: Run the soak test and collect metrics
         run: |
           # Initialize the map to store pod counts
@@ -206,7 +203,8 @@ jobs:
           }
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
-
+          kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher
+          
           update_pod_map
 
           collect_metrics() {
