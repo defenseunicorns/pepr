@@ -692,7 +692,8 @@ export class Watcher<T extends GenericClass> {
   };
 
   #http2Cleanup = () => {
-    this.#req!.end();
+    // this.#req!.end();
     this.#client!.close();
+    void this.#http2Watch();
   };
 }

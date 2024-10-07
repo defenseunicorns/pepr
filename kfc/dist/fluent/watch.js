@@ -578,8 +578,9 @@ class Watcher {
         }
     };
     #http2Cleanup = () => {
-        this.#req.end();
+        // this.#req!.end();
         this.#client.close();
+        void this.#http2Watch();
     };
 }
 exports.Watcher = Watcher;
