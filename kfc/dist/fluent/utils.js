@@ -90,7 +90,7 @@ async function k8sCfg(method) {
         },
     });
     // Enable compression
-    opts.compress = false;
+    opts.compress = true;
     return { opts, serverUrl: cluster.server };
 }
 /**
