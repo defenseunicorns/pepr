@@ -164,7 +164,7 @@ jobs:
         run: mkdir -p logs
 
       - name: Deploy Pepr 
-        if: ${{ (github.event.inputs.http2 || 'none') != 'false' }}
+        if: ${{ (github.event.inputs.http2 || 'none') != 'true' }}
         run: |
           kubectl apply -f hack/soak.ci.yaml
 
@@ -204,7 +204,7 @@ jobs:
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
           kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher
-          
+
           update_pod_map
 
           collect_metrics() {
