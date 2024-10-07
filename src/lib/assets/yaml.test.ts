@@ -659,11 +659,17 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(mockAssets, path, false);
 
       expect(result.kind).toBe("ZarfPackageConfig");
-      expect(result.metadata.name).toBe("pepr-test");
-      expect(result.metadata.description).toBe("Pepr Module: Test module description");
-      expect(result.metadata.version).toBe("1.2.3");
-      expect(result.components[0].manifests).toEqual([{ name: "module", namespace: "pepr-system", files: [path] }]);
-      expect(result.components[0].charts).toBeUndefined(); // Ensure charts is not present
+      const typedResult = result as {
+        metadata: { name: string; version?: string; description?: string };
+        components: { manifests?: { name: string; namespace: string; files: string[] }[]; charts?: unknown }[];
+      };
+      expect(typedResult.metadata.name).toBe("pepr-test");
+      expect(typedResult.metadata.description).toBe("Pepr Module: Test module description");
+      expect(typedResult.metadata.version).toBe("1.2.3");
+      expect(typedResult.components[0].manifests).toEqual([
+        { name: "module", namespace: "pepr-system", files: [path] },
+      ]);
+      expect(typedResult.components[0].charts).toBeUndefined(); // Ensure charts is not present
     });
 
     it("should generate Zarf package config with charts when chart is true", () => {
@@ -671,13 +677,17 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(mockAssets, path, true);
 
       expect(result.kind).toBe("ZarfPackageConfig");
-      expect(result.metadata.name).toBe("pepr-test");
-      expect(result.metadata.description).toBe("Pepr Module: Test module description");
-      expect(result.metadata.version).toBe("1.2.3");
-      expect(result.components[0].charts).toEqual([
+      const typedResult = result as {
+        metadata: { name: string; description?: string; version?: string };
+        components: { charts: unknown[]; manifests?: unknown }[];
+      };
+      expect(typedResult.metadata.name).toBe("pepr-test");
+      expect(typedResult.metadata.description).toBe("Pepr Module: Test module description");
+      expect(typedResult.metadata.version).toBe("1.2.3");
+      expect(typedResult.components[0].charts).toEqual([
         { name: "module", namespace: "pepr-system", version: "1.2.3", localPath: path },
       ]);
-      expect(result.components[0].manifests).toBeUndefined(); // Ensure manifests is not present
+      expect(typedResult.components[0].manifests).toBeUndefined(); // Ensure manifests is not present
     });
 
     it("should default to appVersion 0.0.1 when not provided", () => {
@@ -689,7 +699,8 @@ describe("yaml.ts individual function tests", () => {
       const path = "/mock/path/to/manifest";
       const result = generateZarfConfig(mockAssetsWithoutVersion, path);
 
-      expect(result.metadata.version).toBe("0.0.1"); // Ensure default version is set
+      const typedResult = result as { metadata: { version: string } };
+      expect(typedResult.metadata.version).toBe("0.0.1"); // Ensure default version is set
     });
 
     it("should include charts when chart is true and appVersion is defined", () => {
@@ -725,11 +736,11 @@ describe("yaml.ts individual function tests", () => {
       };
 
       const result = generateZarfConfig(mockAssets, path, true);
-
-      expect(result.components[0].charts).toEqual([
+      const typedResult = result as { components: { charts: unknown[]; manifests?: unknown }[] };
+      expect(typedResult.components[0].charts).toEqual([
         { name: "module", namespace: "pepr-system", version: "1.2.3", localPath: path },
       ]);
-      expect(result.components[0].manifests).toBeUndefined(); // Ensure manifests are not included
+      expect(typedResult.components[0].manifests).toBeUndefined(); // Ensure manifests are not included
     });
 
     it("should handle missing description gracefully", () => {
@@ -741,7 +752,8 @@ describe("yaml.ts individual function tests", () => {
       const path = "/mock/path/to/manifest";
       const result = generateZarfConfig(mockAssetsWithoutDescription, path);
 
-      expect(result.metadata.description).toBe("Pepr Module: undefined"); // Ensure description is handled
+      const typedResult = result as { metadata: { description: string } };
+      expect(typedResult.metadata.description).toBe("Pepr Module: undefined"); // Ensure description is handled
     });
 
     it("should always include the image in the components", () => {
@@ -800,11 +812,13 @@ describe("yaml.ts individual function tests", () => {
 
       // When chart is false
       let result = generateZarfConfig(mockAssets, path, false);
-      expect(result.components[0].images).toEqual(["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"]);
+      let typedResult = result as { components: { images: string[] }[] };
+      expect(typedResult.components[0].images).toEqual(["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"]);
 
       // When chart is true
       result = generateZarfConfig(mockAssets, path, true);
-      expect(result.components[0].images).toEqual(["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"]);
+      typedResult = result as { components: { images: string[] }[] };
+      expect(typedResult.components[0].images).toEqual(["ghcr.io/defenseunicorns/pepr/controller:v0.0.1"]);
     });
 
     it("should include charts when chart is true", () => {
@@ -842,12 +856,13 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(assets, path, true);
 
       // Ensure charts array is present
-      expect(result.components[0]).toHaveProperty("charts");
-      expect(result.components[0].charts).toEqual([
+      const typedResult = result as { components: { charts: unknown[]; manifests?: unknown }[] };
+      expect(typedResult.components[0]).toHaveProperty("charts");
+      expect(typedResult.components[0].charts).toEqual([
         { name: "module", namespace: "pepr-system", version: "1.2.3", localPath: path },
       ]);
       // Ensure manifests is undefined
-      expect(result.components[0].manifests).toBeUndefined();
+      expect(typedResult.components[0].manifests).toBeUndefined();
     });
 
     it("should include manifests when chart is false or undefined", () => {
@@ -885,10 +900,15 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(assets, path, false);
 
       // Ensure manifests array is present
-      expect(result.components[0]).toHaveProperty("manifests");
-      expect(result.components[0].manifests).toEqual([{ name: "module", namespace: "pepr-system", files: [path] }]);
+      const typedResult = result as {
+        components: { charts?: unknown; manifests: { name: string; namespace: string; files: string[] }[] }[];
+      };
+      expect(typedResult.components[0]).toHaveProperty("manifests");
+      expect(typedResult.components[0].manifests).toEqual([
+        { name: "module", namespace: "pepr-system", files: [path] },
+      ]);
       // Ensure charts is undefined
-      expect(result.components[0].charts).toBeUndefined();
+      expect(typedResult.components[0].charts).toBeUndefined();
     });
 
     it("should use provided appVersion", () => {
@@ -926,7 +946,8 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(assets, path, true);
 
       // Ensure the correct appVersion is used
-      expect(result.metadata.version).toBe("1.2.3");
+      const typedResult = result as { metadata: { version: string } };
+      expect(typedResult.metadata.version).toBe("1.2.3");
     });
 
     it("should default appVersion to 0.0.1 if undefined", () => {
@@ -964,7 +985,8 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(assets, path, true);
 
       // Ensure the default appVersion is used
-      expect(result.metadata.version).toBe("0.0.1");
+      const typedResult = result as { metadata: { version: string } };
+      expect(typedResult.metadata.version).toBe("0.0.1");
     });
 
     it("should always include the image in the components", () => {
@@ -1002,8 +1024,9 @@ describe("yaml.ts individual function tests", () => {
       const result = generateZarfConfig(assets, path, false);
 
       // Ensure the images array is present and contains the image
-      expect(result.components[0]).toHaveProperty("images");
-      expect(result.components[0].images).toEqual(["mock-image"]);
+      const typedResult = result as { components: { images: string[] }[] };
+      expect(typedResult.components[0]).toHaveProperty("images");
+      expect(typedResult.components[0].images).toEqual(["mock-image"]);
     });
   });
 

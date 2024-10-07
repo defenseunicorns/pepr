@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml } from "@kubernetes/client-node";
+import {
+  dumpYaml,
+  V1Affinity,
+  V1EnvVar,
+  V1PodSpec,
+  V1Probe,
+  V1ResourceRequirements,
+  V1Toleration,
+  V1VolumeMount,
+  V1Volume,
+} from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
@@ -9,11 +19,78 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
+import Log from "../logger";
 
 const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
 const DEFAULT_USER_ID = 65532;
 
-export function generateOverrides(assets: Assets, apiToken: string) {
+interface Config {
+  onError?: string;
+  webhookTimeout: number;
+  description?: string;
+  uuid: string;
+  alwaysIgnore: {
+    namespaces: string[];
+  };
+  [key: string]: unknown; // Add other properties as needed
+}
+interface GeneratedConfig {
+  terminationGracePeriodSeconds: number;
+  failurePolicy?: string;
+  webhookTimeout?: number;
+  env: V1EnvVar[];
+  image: string;
+  annotations: Record<string, string>;
+  labels: Record<string, string>;
+  securityContext: V1PodSpec["securityContext"];
+  readinessProbe: V1Probe;
+  livenessProbe: V1Probe;
+  resources: V1ResourceRequirements;
+  containerSecurityContext: V1PodSpec["containers"][0]["securityContext"];
+  nodeSelector: Record<string, string>;
+  tolerations: V1Toleration[];
+  extraVolumeMounts: V1VolumeMount[];
+  extraVolumes: V1Volume[];
+  affinity: V1Affinity;
+  podAnnotations: Record<string, string>;
+  serviceMonitor: {
+    enabled: boolean;
+    labels: Record<string, string>;
+    annotations: Record<string, string>;
+  };
+}
+
+interface ZarfPackageConfig {
+  kind: string;
+  metadata: {
+    name: string;
+    description: string;
+    url: string;
+    version: string;
+  };
+  components: Array<{
+    name: string;
+    required: boolean;
+    manifests?: Array<{ name: string; namespace: string; files: string[] }>;
+    charts?: Array<{ name: string; namespace: string; version: string; localPath: string }>;
+    images: string[];
+  }>;
+}
+
+export function generateOverrides(
+  assets: Assets,
+  apiToken: string,
+): {
+  secrets: { apiToken: string };
+  hash: string;
+  namespace: {
+    annotations: Record<string, string>;
+    labels: Record<string, string>;
+  };
+  uuid: string;
+  admission: GeneratedConfig;
+  watcher: GeneratedConfig;
+} {
   const { hash, name, config, image } = assets;
 
   return {
@@ -49,20 +126,9 @@ export function generateOverrides(assets: Assets, apiToken: string) {
   };
 }
 
-interface Config {
-  onError?: string;
-  webhookTimeout: number;
-  description?: string;
-  uuid: string;
-  alwaysIgnore: {
-    namespaces: string[];
-  };
-  [key: string]: unknown; // Add other properties as needed
-}
-
-export function generateAdmissionConfig(config: Config, image: string, name: string) {
+export function generateAdmissionConfig(config: Config, image: string, name: string): GeneratedConfig {
   if (!config.uuid) {
-    throw new Error("uuid is required in config");
+    Log.error(`UUID is required in config for image ${image} and name ${name}`);
   }
 
   return {
@@ -139,21 +205,27 @@ export function generateContainerSecurityContext() {
   };
 }
 
-export function generateProbeConfig() {
+export function generateProbeConfig(): {
+  httpGet: { path: string; port: number; scheme: string };
+  initialDelaySeconds: number;
+} {
   return {
     httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
     initialDelaySeconds: 10,
   };
 }
 
-export function generateResourceConfig() {
+export function generateResourceConfig(): {
+  requests: { memory: string; cpu: string };
+  limits: { memory: string; cpu: string };
+} {
   return {
     requests: { memory: "64Mi", cpu: "100m" },
     limits: { memory: "256Mi", cpu: "500m" },
   };
 }
 
-export async function writeOverridesFile(assets: Assets, path: string) {
+export async function writeOverridesFile(assets: Assets, path: string): Promise<void> {
   const { apiToken } = assets;
 
   if (!apiToken) {
@@ -164,7 +236,7 @@ export async function writeOverridesFile(assets: Assets, path: string) {
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
-export function generateZarfConfig(assets: Assets, path: string, chart = false) {
+export function generateZarfConfig(assets: Assets, path: string, chart = false): ZarfPackageConfig {
   const { name, image, config } = assets;
 
   return {
@@ -189,15 +261,15 @@ export function generateZarfConfig(assets: Assets, path: string, chart = false) 
   };
 }
 
-export function writeZarfYaml(assets: Assets, path: string) {
+export function writeZarfYaml(assets: Assets, path: string): string {
   return dumpYaml(generateZarfConfig(assets, path), { noRefs: true });
 }
 
-export function writeZarfYamlChart(assets: Assets, path: string) {
+export function writeZarfYamlChart(assets: Assets, path: string): string {
   return dumpYaml(generateZarfConfig(assets, path, true), { noRefs: true });
 }
 
-export async function generateAllYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
+export async function generateAllYaml(assets: Assets, rbacMode: string, imagePullSecret?: string): Promise<string> {
   const { name, tls, apiToken, path, capabilities } = assets;
   const code = await fs.readFile(path);
 
