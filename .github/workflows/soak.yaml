@@ -3,6 +3,11 @@ name: Soak Test
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Soak test branch'
+        required: true
+        default: 'main'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
 
