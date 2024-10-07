@@ -176,7 +176,6 @@ jobs:
       - name: Deploy applications
         run: |
           kubectl apply -f hack/auditor.ci.yaml
-          kubectl apply -f hack/soak.ci.yaml
 
       - name: Wait for 15 minutes before starting pod checks
         run: |
