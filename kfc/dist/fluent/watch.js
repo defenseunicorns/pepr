@@ -100,6 +100,7 @@ class Watcher {
         watchCfg.resyncDelaySec ??= 5;
         // Set the relist interval to 10 minutes if not specified
         watchCfg.relistIntervalSec ??= 600;
+        // Set the useHTTP2 to false if not specified
         watchCfg.useHTTP2 ??= false;
         // Set the resync interval to 10 minutes if not specified
         watchCfg.lastSeenLimitSeconds ??= 600;
