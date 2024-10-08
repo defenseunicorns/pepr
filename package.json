@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@types/ramda": "0.30.2",
-    "express": "4.21.0",
+    "express": "4.21.1",
     "fast-json-patch": "3.1.1",
     "json-pointer": "^0.6.2",
     "kubernetes-fluent-client": "4.0.0-rc-http2-watch",
