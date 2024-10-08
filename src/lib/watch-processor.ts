@@ -48,7 +48,7 @@ export function getOrCreateQueue(obj: KubernetesObject) {
 }
 
 // Watch configuration
-const watchCfg: WatchCfg = {
+const watchCfg = {
   // // @ts-ignore
   useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
@@ -59,7 +59,7 @@ const watchCfg: WatchCfg = {
   relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
     : 600,
-};
+} as WatchCfg;
 
 // Map the event to the watch phase
 const eventToPhaseMap = {
