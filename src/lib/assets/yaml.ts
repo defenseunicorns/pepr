@@ -31,7 +31,7 @@ enum FailurePolicy {
   Reject = "reject",
 }
 
-interface Config {
+interface Config<T = Record<string, unknown>> {
   onError?: string;
   webhookTimeout: number;
   description?: string;
@@ -39,7 +39,7 @@ interface Config {
   alwaysIgnore: {
     namespaces: string[];
   };
-  [key: string]: unknown; // Add other properties as needed
+  additionalFields?: T; // Add other properties as needed
 }
 
 interface BaseConfig {
