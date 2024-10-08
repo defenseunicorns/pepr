@@ -3,51 +3,13 @@ name: Soak Test
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Soak test branch'
+        required: true
+        default: 'main'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
-  # push:
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "**.json"
-  #   - "docs/**"
-  #   - "CODEOWNERS"
-  #   branches: ["main"]
-  # pull_request:
-  #   branches: ["main"]
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "docs/**"
-  #   - "**.json"
-  #   - "CODEOWNERS"
-# refs
-# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
-# https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
 
 jobs:
   pepr-build:
@@ -60,7 +22,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -110,7 +72,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
       - name: "install k3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
@@ -184,12 +146,14 @@ jobs:
           }
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
+          touch logs/watch-logs.txt
 
           update_pod_map
 
           collect_metrics() {
             kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
+            kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
@@ -197,10 +161,9 @@ jobs:
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
-            if [ $((i % 6)) -eq 0 ]; then  # Every 30 minutes 
+            if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              # get a list of pods every 30 mins
               kubectl get pods -n pepr-demo 
 
               # Verify that no pod's count exceeds 1
@@ -208,6 +171,7 @@ jobs:
                 echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
+                  kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
                   exit 1
                 fi
               done
