@@ -11,7 +11,9 @@ import {
   V1Toleration,
   V1VolumeMount,
   V1Volume,
+  V1PodSecurityContext,
 } from "@kubernetes/client-node";
+import Log from "../logger";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
@@ -19,10 +21,15 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
-import Log from "../logger";
 
 const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
 const DEFAULT_USER_ID = 65532;
+
+enum FailurePolicy {
+  Fail = "Fail",
+  Ignore = "Ignore",
+  Reject = "reject",
+}
 
 interface Config {
   onError?: string;
@@ -34,10 +41,9 @@ interface Config {
   };
   [key: string]: unknown; // Add other properties as needed
 }
-interface GeneratedConfig {
+
+interface BaseConfig {
   terminationGracePeriodSeconds: number;
-  failurePolicy?: string;
-  webhookTimeout?: number;
   env: V1EnvVar[];
   image: string;
   annotations: Record<string, string>;
@@ -59,7 +65,10 @@ interface GeneratedConfig {
     annotations: Record<string, string>;
   };
 }
-
+interface GeneratedConfig extends BaseConfig {
+  failurePolicy?: string;
+  webhookTimeout: number;
+}
 interface ZarfPackageConfig {
   kind: string;
   metadata: {
@@ -77,10 +86,15 @@ interface ZarfPackageConfig {
   }>;
 }
 
-export function generateOverrides(
-  assets: Assets,
-  apiToken: string,
-): {
+interface ContainerSecurityContext {
+  runAsUser: number;
+  runAsGroup: number;
+  runAsNonRoot: boolean;
+  allowPrivilegeEscalation: boolean;
+  capabilities: { drop: string[] };
+}
+
+interface Overrides {
   secrets: { apiToken: string };
   hash: string;
   namespace: {
@@ -89,8 +103,10 @@ export function generateOverrides(
   };
   uuid: string;
   admission: GeneratedConfig;
-  watcher: GeneratedConfig;
-} {
+  watcher: BaseConfig;
+}
+
+export function generateOverrides(assets: Assets, apiToken: string): Overrides {
   const { hash, name, config, image } = assets;
 
   return {
@@ -129,11 +145,12 @@ export function generateOverrides(
 export function generateAdmissionConfig(config: Config, image: string, name: string): GeneratedConfig {
   if (!config.uuid) {
     Log.error(`UUID is required in config for image ${image} and name ${name}`);
+    throw new Error(`uuid is required in config for image ${image} and name ${name}`);
   }
 
   return {
     terminationGracePeriodSeconds: 5,
-    failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
+    failurePolicy: config.onError === FailurePolicy.Reject ? FailurePolicy.Fail : FailurePolicy.Ignore,
     webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
     env: genEnv(config, false, true),
     image,
@@ -158,7 +175,7 @@ export function generateAdmissionConfig(config: Config, image: string, name: str
   };
 }
 
-export function generateWatcherConfig(config: Config, image: string, name: string) {
+export function generateWatcherConfig(config: Config, image: string, name: string): BaseConfig {
   return {
     terminationGracePeriodSeconds: 5,
     env: genEnv(config, true, true),
@@ -184,7 +201,7 @@ export function generateWatcherConfig(config: Config, image: string, name: strin
   };
 }
 
-export function generateSecurityContext() {
+export function generateSecurityContext(): V1PodSecurityContext {
   return {
     runAsUser: DEFAULT_USER_ID,
     runAsGroup: DEFAULT_USER_ID,
@@ -193,7 +210,7 @@ export function generateSecurityContext() {
   };
 }
 
-export function generateContainerSecurityContext() {
+export function generateContainerSecurityContext(): ContainerSecurityContext {
   return {
     runAsUser: DEFAULT_USER_ID,
     runAsGroup: DEFAULT_USER_ID,
@@ -205,20 +222,14 @@ export function generateContainerSecurityContext() {
   };
 }
 
-export function generateProbeConfig(): {
-  httpGet: { path: string; port: number; scheme: string };
-  initialDelaySeconds: number;
-} {
+export function generateProbeConfig(): V1Probe {
   return {
     httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
     initialDelaySeconds: 10,
   };
 }
 
-export function generateResourceConfig(): {
-  requests: { memory: string; cpu: string };
-  limits: { memory: string; cpu: string };
-} {
+export function generateResourceConfig(): V1ResourceRequirements {
   return {
     requests: { memory: "64Mi", cpu: "100m" },
     limits: { memory: "256Mi", cpu: "500m" },
