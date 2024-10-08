@@ -9,13 +9,13 @@ exports.Watcher = exports.WatchEvent = void 0;
 const byline_1 = __importDefault(require("byline"));
 const crypto_1 = require("crypto");
 const events_1 = require("events");
-const node_fetch_1 = __importDefault(require("node-fetch"));
 const https_1 = __importDefault(require("https"));
 const http2_1 = __importDefault(require("http2"));
-const fs_1 = __importDefault(require("fs"));
+const node_fetch_1 = __importDefault(require("node-fetch"));
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
+const fs_1 = __importDefault(require("fs"));
 var WatchEvent;
 (function (WatchEvent) {
     /** Watch is connected successfully */
@@ -58,8 +58,6 @@ class Watcher {
     #watchCfg;
     #latestRelistWindow = "";
     #useHTTP2 = false;
-    #req = null;
-    #client = null;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -81,7 +79,7 @@ class Watcher {
     #resourceVersion;
     // Track the list of items in the cache
     #cache = new Map();
-    // Token Path of the ServiceAccount
+    // Token Path
     #TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
     /**
      * Setup a Kubernetes watcher for the specified model and filters. The callback function will be called for each event received.
@@ -100,14 +98,14 @@ class Watcher {
         watchCfg.resyncDelaySec ??= 5;
         // Set the relist interval to 10 minutes if not specified
         watchCfg.relistIntervalSec ??= 600;
-        // Set the useHTTP2 to false if not specified
-        watchCfg.useHTTP2 ??= false;
         // Set the resync interval to 10 minutes if not specified
         watchCfg.lastSeenLimitSeconds ??= 600;
         // Set the last seen limit to the resync interval
         this.#lastSeenLimit = watchCfg.lastSeenLimitSeconds * 1000;
         // Set the latest relist interval to now
         this.#latestRelistWindow = new Date().toISOString();
+        // Set the latest relist interval to now
+        this.#useHTTP2 = watchCfg.useHTTP2 ?? false;
         // Add random jitter to the relist/resync intervals (up to 1 second)
         const jitter = Math.floor(Math.random() * 1000);
         // Check every relist interval for cache staleness
@@ -133,24 +131,14 @@ class Watcher {
      */
     async start() {
         this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
-        if (this.#useHTTP2) {
-            await this.#http2Watch();
-        }
-        else {
-            await this.#watch();
-        }
+        this.#useHTTP2 ? await this.#http2Watch() : await this.#watch();
         return this.#abortController;
     }
     /** Close the watch. Also available on the AbortController returned by {@link Watcher.start}. */
     close() {
         clearInterval(this.$relistTimer);
         clearInterval(this.#resyncTimer);
-        if (this.#useHTTP2) {
-            this.#http2Cleanup();
-        }
-        else {
-            this.#streamCleanup();
-        }
+        this.#streamCleanup();
         this.#abortController.abort();
     }
     /**
@@ -177,6 +165,19 @@ class Watcher {
      */
     get events() {
         return this.#events;
+    }
+    /**
+     * Read the serviceAccount Token
+     *
+     * @returns token or null
+     */
+    async #getToken() {
+        try {
+            return (await fs_1.default.promises.readFile(this.#TOKEN_PATH, "utf8")).trim();
+        }
+        catch {
+            return null;
+        }
     }
     /**
      * Build the URL and request options for the watch.
@@ -305,25 +306,7 @@ class Watcher {
             this.#events.emit(WatchEvent.DATA_ERROR, err);
         }
     };
-    /**
-     * Read the serviceAccount Token
-     *
-     * @returns token or null
-     */
-    async #getToken() {
-        try {
-            return (await fs_1.default.promises.readFile(this.#TOKEN_PATH, "utf8")).trim();
-        }
-        catch {
-            return null;
-        }
-    }
-    /**
-     * Process a line from the chunk
-     *
-     * @param line - Line from the chunk
-     * @param process - Callback function to process the line
-     */
+    // process a line from the chunk
     #processLine = async (line, process) => {
         try {
             // Parse the event payload
@@ -350,93 +333,8 @@ class Watcher {
         }
     };
     /**
-     * http2 Watch for changes to the resource.
-     */
-    #http2Watch = async () => {
-        try {
-            // Start with a list operation
-            await this.#list();
-            // Build the URL and request options
-            const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-            let agentOptions;
-            if (opts.agent && opts.agent instanceof https_1.default.Agent) {
-                agentOptions = {
-                    key: opts.agent.options.key,
-                    cert: opts.agent.options.cert,
-                    ca: opts.agent.options.ca,
-                    rejectUnauthorized: false,
-                };
-            }
-            // HTTP2 client connection setup
-            this.#client = http2_1.default.connect(url.origin, agentOptions);
-            // Setup headers for the http2 request
-            const token = await this.#getToken();
-            const headers = {
-                ":method": "GET",
-                ":path": url.pathname + url.search,
-                "content-type": "application/json",
-                "user-agent": "kubernetes-fluent-client",
-            };
-            if (token) {
-                headers["Authorization"] = `Bearer ${token}`;
-            }
-            // Make the actual request
-            this.#req = this.#client.request(headers);
-            this.#req.setEncoding("utf8");
-            let buffer = "";
-            // Handle response data
-            this.#req.on("response", async (headers) => {
-                const statusCode = headers[":status"];
-                if (statusCode && statusCode >= 200 && statusCode < 300) {
-                    this.#pendingReconnect = false;
-                    this.#events.emit(WatchEvent.CONNECT, url.pathname);
-                    // Reset the retry count
-                    this.#resyncFailureCount = 0;
-                    this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                    this.#req.on("data", async (chunk) => {
-                        try {
-                            buffer += chunk;
-                            const lines = buffer.split("\n");
-                            // Avoid  Watch event data_error received. Unexpected end of JSON input.
-                            // completes JSON on the next chunk
-                            // Come up with some scenarios around this
-                            // last event never process until next data request
-                            buffer = lines.pop() || "";
-                            for (const line of lines) {
-                                await this.#processLine(line, this.#process);
-                            }
-                        }
-                        catch (e) {
-                            // Why is this async why use void?
-                            void this.#http2ErrHandler(e);
-                        }
-                    });
-                    this.#req.on("end", () => {
-                        this.#http2Cleanup();
-                    });
-                    this.#req.on("close", () => {
-                        this.#http2Cleanup();
-                    });
-                    this.#req.on("error", err => {
-                        this.#http2ErrHandler(err);
-                        this.#http2Cleanup();
-                    });
-                }
-                else {
-                    const statusMessage = headers[":status-text"] || "Unknown";
-                    throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
-                }
-            });
-            this.#http2Cleanup();
-        }
-        catch (e) {
-            // What do we do after we log the error?
-            void this.#http2ErrHandler(e);
-        }
-    };
-    /**
-     * Watch for changes to the resource.
-     */
+   * Watch for changes to the resource.
+   */
     #watch = async () => {
         try {
             // Start with a list operation
@@ -479,6 +377,93 @@ class Watcher {
             void this.#errHandler(e);
         }
     };
+    /**
+     * Watch for changes to the resource.
+     */
+    #http2Watch = async () => {
+        try {
+            // Start with a list operation
+            await this.#list();
+            // Build the URL and request options
+            const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
+            let agentOptions;
+            if (opts.agent && opts.agent instanceof https_1.default.Agent) {
+                agentOptions = {
+                    key: opts.agent.options.key,
+                    cert: opts.agent.options.cert,
+                    ca: opts.agent.options.ca,
+                    rejectUnauthorized: false,
+                };
+            }
+            // HTTP/2 client connection setup
+            const client = http2_1.default.connect(url.origin, {
+                ca: agentOptions?.ca,
+                cert: agentOptions?.cert,
+                key: agentOptions?.key,
+                rejectUnauthorized: agentOptions?.rejectUnauthorized,
+            });
+            // Set up headers for the HTTP/2 request
+            const token = await this.#getToken();
+            const headers = {
+                ':method': 'GET',
+                ':path': url.pathname + url.search,
+                'content-type': 'application/json',
+                'user-agent': 'kubernetes-fluent-client',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            // Make the HTTP/2 request
+            const req = client.request(headers);
+            req.setEncoding('utf8');
+            let buffer = "";
+            // Handle response data
+            req.on('response', (headers, flags) => {
+                const statusCode = headers[':status'];
+                if (statusCode && statusCode >= 200 && statusCode < 300) {
+                    this.#pendingReconnect = false;
+                    this.#events.emit(WatchEvent.CONNECT, url.pathname);
+                    // Reset the retry count
+                    this.#resyncFailureCount = 0;
+                    this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
+                    req.on('data', async (chunk) => {
+                        try {
+                            buffer += chunk;
+                            const lines = buffer.split('\n');
+                            // Avoid  Watch event data_error received. Unexpected end of JSON input.
+                            buffer = lines.pop();
+                            for (const line of lines) {
+                                await this.#processLine(line, this.#process);
+                            }
+                        }
+                        catch (err) {
+                            void this.#errHandler(err);
+                        }
+                    });
+                    req.on('end', () => {
+                        this.#streamCleanup();
+                        client.close();
+                    });
+                    req.on('close', () => {
+                        this.#streamCleanup();
+                        client.close();
+                    });
+                    req.on('error', (err) => {
+                        this.#errHandler(err);
+                        client.close();
+                    });
+                }
+                else {
+                    const statusMessage = headers[':status-text'] || 'Unknown';
+                    throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
+                }
+            });
+            req.end();
+        }
+        catch (e) {
+            void this.#errHandler(e);
+        }
+    };
     /** Clear the resync timer and schedule a new one. */
     #checkResync = () => {
         // Ignore if the last seen time is not set
@@ -503,14 +488,8 @@ class Watcher {
                 else {
                     this.#pendingReconnect = true;
                     this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
-                    if (this.#useHTTP2) {
-                        this.#http2Cleanup();
-                        void this.#http2Watch();
-                    }
-                    else {
-                        this.#streamCleanup();
-                        void this.#watch();
-                    }
+                    this.#streamCleanup();
+                    // void this.#watch();
                 }
             }
             else {
@@ -545,42 +524,13 @@ class Watcher {
         // Force a resync
         this.#lastSeenTime = OVERRIDE;
     };
-    /**
-     * Handle errors from the stream.
-     *
-     * @param err - the error that occurred
-     */
-    #http2ErrHandler = async (err) => {
-        switch (err.name) {
-            case "AbortError":
-                clearInterval(this.$relistTimer);
-                clearInterval(this.#resyncTimer);
-                this.#http2Cleanup();
-                this.#events.emit(WatchEvent.ABORT, err);
-                return;
-            case "TooOld":
-                // Purge the resource version if it is too old
-                this.#resourceVersion = undefined;
-                this.#events.emit(WatchEvent.OLD_RESOURCE_VERSION, err.message);
-                break;
-            default:
-                this.#events.emit(WatchEvent.NETWORK_ERROR, err);
-                break;
-        }
-        // Force a resync
-        this.#lastSeenTime = OVERRIDE;
-    };
     /** Cleanup the stream and listeners. */
     #streamCleanup = () => {
         if (this.#stream) {
             this.#stream.removeAllListeners();
             this.#stream.destroy();
         }
-    };
-    #http2Cleanup = () => {
-        // this.#req!.end();
-        this.#client.close();
-        void this.#http2Watch();
+        this.#useHTTP2 && void this.#http2Watch();
     };
 }
 exports.Watcher = Watcher;

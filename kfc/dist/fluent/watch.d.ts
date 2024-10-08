@@ -41,7 +41,7 @@ export type WatchCfg = {
     relistIntervalSec?: number;
     /** Max amount of seconds to go without receiving an event before reconciliation starts. Defaults to 300 (5 minutes). */
     lastSeenLimitSeconds?: number;
-    /** Whether to use the http2 client */
+    /** Use http2 for the Watch */
     useHTTP2?: boolean;
 };
 /** A wrapper around the Kubernetes watch API. */

@@ -21,7 +21,9 @@ COPY --chown=node:node ./hack/ ./hack/
 COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
-COPY kfc/ ./kfc/
+COPY --chown=node:node kfc/ ./kfc/
+COPY --chown=node:node ./kfc/src ./node_modules/kubernetes-fluent-client/src
+COPY --chown=node:node ./kfc/dist ./node_modules/kubernetes-fluent-client/dist
 RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
     npm cache clean --force && \

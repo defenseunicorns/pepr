@@ -1,0 +1,26 @@
+{
+  "env": {
+    "browser": false,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jsdoc/recommended-typescript-error"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.json"],
+    "ecmaVersion": 2022
+  },
+  "rules": {
+    "class-methods-use-this": "warn",
+    "consistent-this": "warn",
+    "no-invalid-this": "warn",
+    "@typescript-eslint/no-floating-promises": ["warn", { "ignoreVoid": true }],
+    "jsdoc/tag-lines": ["error", "any", { "startLines": 1 }]
+  },
+  "plugins": ["@typescript-eslint"],
+  "ignorePatterns": ["node_modules", "dist", "__mocks__", "e2e/crds", "e2e/crds"],
+  "root": true
+}

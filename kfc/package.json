@@ -1,0 +1,72 @@
+{
+  "name": "kubernetes-fluent-client",
+  "version": "0.0.0-development",
+  "description": "A @kubernetes/client-node fluent API wrapper that leverages K8s Server Side Apply.",
+  "bin": "./dist/cli.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "semantic-release": "semantic-release",
+    "test": "jest src --coverage",
+    "test:e2e": "jest e2e",
+    "format:check": "eslint src && prettier . --check",
+    "format:fix": "eslint --fix src && prettier . --write"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/defenseunicorns/kubernetes-fluent-client.git"
+  },
+  "keywords": [
+    "kubernetes",
+    "k8s",
+    "fluent",
+    "devops",
+    "devsecops",
+    "api"
+  ],
+  "author": "Defense Unicorns",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/defenseunicorns/kubernetes-fluent-client/issues"
+  },
+  "homepage": "https://github.com/defenseunicorns/kubernetes-fluent-client#readme",
+  "dependencies": {
+    "@kubernetes/client-node": "1.0.0-rc6",
+    "byline": "5.0.0",
+    "fast-json-patch": "3.1.1",
+    "http-status-codes": "2.3.0",
+    "node-fetch": "2.7.0",
+    "quicktype-core": "23.0.170",
+    "type-fest": "4.26.1",
+    "yargs": "17.7.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.5.0",
+    "@commitlint/config-conventional": "19.5.0",
+    "@jest/globals": "29.7.0",
+    "@types/byline": "4.2.36",
+    "@types/readable-stream": "4.0.15",
+    "@types/urijs": "^1.19.25",
+    "@types/yargs": "17.0.33",
+    "@typescript-eslint/eslint-plugin": "8.8.0",
+    "@typescript-eslint/parser": "8.8.0",
+    "eslint-plugin-jsdoc": "50.3.1",
+    "jest": "29.7.0",
+    "nock": "13.5.5",
+    "prettier": "3.3.3",
+    "semantic-release": "24.1.2",
+    "ts-jest": "29.2.5",
+    "typescript": "5.6.2"
+  },
+  "release": {
+    "branches": [
+      "main",
+      "next"
+    ]
+  }
+}

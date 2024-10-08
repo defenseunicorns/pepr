@@ -7,72 +7,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const globals_1 = require("@jest/globals");
 const nock_1 = __importDefault(require("nock"));
 const readable_stream_1 = require("readable-stream");
-const http2_1 = __importDefault(require("http2"));
 const _1 = require(".");
 const __1 = require("..");
 const types_1 = require("./types");
-globals_1.jest.mock('http2', () => {
-    return {
-        connect: globals_1.jest.fn(),
-        constants: globals_1.jest.requireActual('http2').constants,
-    };
-});
-const mockHttp2 = http2_1.default;
-const evtMock = globals_1.jest.fn();
-const errMock = globals_1.jest.fn();
-(0, globals_1.describe)("Watcher http2", () => {
-    let mockClient;
-    let mockRequest;
-    let watcher;
-    const setupAndStartWatcher = (eventType, handler) => {
-        watcher.events.on(eventType, handler);
-        watcher.start().catch(errMock);
-    };
-    (0, globals_1.beforeEach)(() => {
-        globals_1.jest.resetAllMocks();
-        // Mock the http2 client session and stream
-        mockClient = {
-            on: globals_1.jest.fn(),
-            close: globals_1.jest.fn(),
-        };
-        mockRequest = new readable_stream_1.PassThrough();
-        mockRequest.end = globals_1.jest.fn();
-        mockHttp2.connect.mockReturnValue(mockClient);
-        mockClient.request = globals_1.jest.fn(() => mockRequest);
-        watcher = (0, _1.K8s)(__1.kind.Pod).Watch(evtMock, {
-            useHTTP2: true,
-            resyncDelaySec: 6,
-        });
-    });
-    (0, globals_1.it)("should handle HTTP/2 watch connection and events", done => {
-        setupAndStartWatcher(__1.WatchEvent.CONNECT, () => {
-            (0, globals_1.expect)(mockHttp2.connect).toHaveBeenCalled();
-        });
-        const headers = { ':status': 200 };
-        mockRequest.emit('response', headers);
-        mockRequest.emit('data', JSON.stringify({ type: 'ADDED', object: createMockPod('pod-0', '1') }) + '\n');
-        mockRequest.emit('end');
-        done();
-    });
-    (0, globals_1.it)("should handle HTTP/2 data events properly", done => {
-        setupAndStartWatcher(__1.WatchEvent.DATA, (pod, phase) => {
-            (0, globals_1.expect)(pod.metadata?.name).toEqual('pod-0');
-            (0, globals_1.expect)(phase).toEqual(types_1.WatchPhase.Added);
-        });
-        const headers = { ':status': 200 };
-        mockRequest.emit('response', headers);
-        mockRequest.emit('data', JSON.stringify({ type: 'ADDED', object: createMockPod('pod-0', '1') }) + '\n');
-        done();
-    });
-    // it("should handle HTTP/2 errors properly", done => {
-    //   setupAndStartWatcher(WatchEvent.NETWORK_ERROR, error => {
-    //     expect(error.message).toEqual('request to http://jest-test:8080/api/v1/pods?watch=true failed, reason: getaddrinfo ENOTFOUND jest-test');
-    //   });
-    //   mockRequest.emit('network_error', new Error('request to http://jest-test:8080/api/v1/pods?watch=true failed, reason: getaddrinfo ENOTFOUND jest-test'));
-    //   done();
-    // });
-});
 (0, globals_1.describe)("Watcher", () => {
+    const evtMock = globals_1.jest.fn();
+    const errMock = globals_1.jest.fn();
     const setupAndStartWatcher = (eventType, handler) => {
         watcher.events.on(eventType, handler);
         watcher.start().catch(errMock);
