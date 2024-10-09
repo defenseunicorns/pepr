@@ -19,7 +19,13 @@ import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { watcher, moduleSecret } from "./pods";
 
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import {
+  getAllClusterRoles,
+  getAllClusterRoleBindings,
+  getAllServiceAccounts,
+  getAllRoles,
+  getAllRoleBindings,
+} from "./rbac";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -121,14 +127,14 @@ export class Assets {
       await fs.writeFile(tlsSecretPath, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
       await fs.writeFile(apiTokenSecretPath, dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }));
       await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
-      await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
-      await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
+      await fs.writeFile(storeRolePath, dumpYaml(getAllRoles(this.name), { noRefs: true }));
+      await fs.writeFile(storeRoleBindingPath, dumpYaml(getAllRoleBindings(this.name), { noRefs: true }));
       await fs.writeFile(
         clusterRolePath,
-        dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
+        dumpYaml(getAllClusterRoles(this.name, this.capabilities, "rbac"), { noRefs: true }),
       );
-      await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
+      await fs.writeFile(clusterRoleBindingPath, dumpYaml(getAllClusterRoleBindings(this.name), { noRefs: true }));
+      await fs.writeFile(serviceAccountPath, dumpYaml(getAllServiceAccounts(this.name), { noRefs: true }));
 
       const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
       const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
