@@ -59,7 +59,7 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
         with:
           name: pepr-package-and-controller-image
           path: | 
@@ -174,7 +174,7 @@ jobs:
             --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
         if: always()
         with:
           name: "troubleshooting_logs_${{matrix.name}}"
