@@ -31,11 +31,13 @@ jobs:
     # Skip any PR created by dependabot to avoid permission issues:
     if: (github.actor != 'dependabot[bot]')
 
+    continue-on-error: true
+
     steps:
       # Fetch project source with GitHub Actions Checkout. Use either v3 or v4.
       - uses: actions/checkout@v4
       # Run the "semgrep ci" command on the command line of the docker image.
-      - run: semgrep scan
+      - run: semgrep scan --error --quiet
       # - run: semgrep ci
         # env:
           # Connect to Semgrep AppSec Platform through your SEMGREP_APP_TOKEN.
