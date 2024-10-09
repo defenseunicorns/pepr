@@ -10,11 +10,11 @@ import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import {
-  getAllClusterRoles,
-  getAllClusterRoleBindings,
-  getAllServiceAccounts,
-  getAllRoles,
-  getAllRoleBindings,
+  getClusterRoles,
+  getClusterRoleBindings,
+  getServiceAccounts,
+  getStoreRoles,
+  getStoreRoleBindings,
 } from "./rbac";
 import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
@@ -96,35 +96,25 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
 }
 
 async function setupRBAC(name: string, capabilities: CapabilityExport[], force: boolean) {
-  Log.info("Applying cluster role bindings");
-  const clusterRoleBindings = getAllClusterRoleBindings(name);
-  for (const crb of clusterRoleBindings) {
-    await K8s(kind.ClusterRoleBinding).Apply(crb, { force });
-  }
+  Log.info("Applying cluster role binding");
+  const crb = getClusterRoleBindings(name);
+  await K8s(kind.ClusterRoleBinding).Apply(crb, { force });
 
-  Log.info("Applying cluster roles");
-  const clusterRoles = getAllClusterRoles(name, capabilities);
-  for (const cr of clusterRoles) {
-    await K8s(kind.ClusterRole).Apply(cr, { force });
-  }
+  Log.info("Applying cluster role");
+  const cr = getClusterRoles(name, capabilities);
+  await K8s(kind.ClusterRole).Apply(cr, { force });
 
-  Log.info("Applying service accounts");
-  const serviceAccounts = getAllServiceAccounts(name);
-  for (const sa of serviceAccounts) {
-    await K8s(kind.ServiceAccount).Apply(sa, { force });
-  }
+  Log.info("Applying service account");
+  const sa = getServiceAccounts(name);
+  await K8s(kind.ServiceAccount).Apply(sa, { force });
 
-  Log.info("Applying store roles");
-  const roles = getAllRoles(name);
-  for (const role of roles) {
-    await K8s(kind.Role).Apply(role, { force });
-  }
+  Log.info("Applying store role");
+  const role = getStoreRoles(name);
+  await K8s(kind.Role).Apply(role, { force });
 
-  Log.info("Applying store role bindings");
-  const roleBindings = getAllRoleBindings(name);
-  for (const rb of roleBindings) {
-    await K8s(kind.RoleBinding).Apply(rb, { force });
-  }
+  Log.info("Applying store role binding");
+  const roleBinding = getStoreRoleBindings(name);
+  await K8s(kind.RoleBinding).Apply(roleBinding, { force });
 }
 
 async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean) {

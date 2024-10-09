@@ -6,24 +6,24 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
+import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import {
-  getAllClusterRoles,
-  getAllClusterRoleBindings,
-  getAllServiceAccounts,
-  getAllRoles,
-  getAllRoleBindings,
+  getClusterRoles,
+  getClusterRoleBindings,
+  getServiceAccounts,
+  getStoreRoles,
+  getStoreRoleBindings,
 } from "./rbac";
 import { webhookConfig } from "./webhooks";
+import { getCustomStoreRoleRules, getCustomClusterRoleRules } from "./rbac";
+import { genEnv } from "./pods";
 
 // Function to generate Helm Chart overrides file (values.yaml) from assets
+// Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-  // Fetch custom RBAC configurations
-  const customClusterRoles = getAllClusterRoles(name, [], "rbac"); // Use an empty capabilities array for Helm chart
-  const customClusterRoleBindings = getAllClusterRoleBindings(name);
-  const customServiceAccounts = getAllServiceAccounts(name);
-  const customRoles = getAllRoles(name);
-  const customRoleBindings = getAllRoleBindings(name);
+  // Fetch custom rules from the package.json file
+  const customClusterRoleRules = getCustomClusterRoleRules(); // Extract ClusterRole rules
+  const customStoreRoleRules = getCustomStoreRoleRules(); // Extract StoreRole rules
 
   const overrides = {
     secrets: {
@@ -42,9 +42,10 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
       env: genEnv(config, false, true),
+      envFrom: [],
       image,
       annotations: {
-        "pepr.dev/description": `${config.description || ""}`,
+        "pepr.dev/description": `${config.description}` || "",
       },
       labels: {
         app: name,
@@ -104,16 +105,77 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         annotations: {},
       },
     },
-    rbac: {
-      clusterRoles: customClusterRoles,
-      clusterRoleBindings: customClusterRoleBindings,
-      serviceAccounts: customServiceAccounts,
-      roles: customRoles,
-      roleBindings: customRoleBindings,
+    watcher: {
+      terminationGracePeriodSeconds: 5,
+      env: genEnv(config, true, true),
+      envFrom: [],
+      image,
+      annotations: {
+        "pepr.dev/description": `${config.description}` || "",
+      },
+      labels: {
+        app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
+        "pepr.dev/uuid": config.uuid,
+      },
+      securityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        fsGroup: 65532,
+      },
+      readinessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
+      },
+      livenessProbe: {
+        httpGet: {
+          path: "/healthz",
+          port: 3000,
+          scheme: "HTTPS",
+        },
+        initialDelaySeconds: 10,
+      },
+      resources: {
+        requests: {
+          memory: "64Mi",
+          cpu: "100m",
+        },
+        limits: {
+          memory: "256Mi",
+          cpu: "500m",
+        },
+      },
+      containerSecurityContext: {
+        runAsUser: 65532,
+        runAsGroup: 65532,
+        runAsNonRoot: true,
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ["ALL"],
+        },
+      },
+      nodeSelector: {},
+      tolerations: [],
+      extraVolumeMounts: [],
+      extraVolumes: [],
+      affinity: {},
+      podAnnotations: {},
+      serviceMonitor: {
+        enabled: false,
+        labels: {},
+        annotations: {},
+      },
     },
+    customClusterRoleRules,
+    customStoreRoleRules,
   };
 
-  await fs.writeFile(path, dumpYaml(overrides));
+  await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
 export function zarfYaml({ name, image, config }: Assets, path: string) {
@@ -184,27 +246,21 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
   const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
-  // Collect all resources that need to be added to the YAML file
   const resources = [
     namespace(assets.config.customLabels?.namespace),
+    getClusterRoles(name, assets.capabilities, rbacMode), // Only generated ClusterRole
+    getClusterRoleBindings(name),
+    getServiceAccounts(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
     deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),
+    getStoreRoles(name), // Only generated store Role
+    getStoreRoleBindings(name),
   ];
 
-  // Add RBAC items individually to ensure each has a separate YAML entry
-  resources.push(
-    ...getAllClusterRoles(name, assets.capabilities, rbacMode),
-    ...getAllClusterRoleBindings(name),
-    ...getAllServiceAccounts(name),
-    ...getAllRoles(name),
-    ...getAllRoleBindings(name),
-  );
-
-  // Add webhooks and watcher deployment if they exist
   if (mutateWebhook) {
     resources.push(mutateWebhook);
   }
@@ -217,6 +273,6 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
     resources.push(watchDeployment);
   }
 
-  // Convert the resources to a single YAML string with separate entries
-  return resources.map(resource => dumpYaml(resource)).join("\n---\n");
+  // Convert the resources to a single YAML string
+  return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
 }
