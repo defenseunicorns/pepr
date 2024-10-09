@@ -24,7 +24,7 @@ Flags:
   -l, --local string        path of KFC source code
 
 Examples: 
-  # Build dev image from repo
+  # Build dev image from remote repo
   > node hack/kfc-dev.js build -r <branch>
   > node hack/kfc-dev.js build -r undici-fetch
 
@@ -132,12 +132,22 @@ if (command === "build" && flag === "-l" && path) {
   runSequence(install, build, image);
 }
 
-// Import KFC source code into node_modules in pepr-test-module
+// Import KFC source code into node_modules
 if (command === "import" && flag === "-l" && path) {
   sourcePathSrc = p.join(__dirname, `${path}/src`);
   sourcePathDist = p.join(__dirname, `${path}/dist`);
-  dirPathSrc = p.join(__dirname, "../pepr-test-module/node_modules/kubernetes-fluent-client/src");
-  dirPathDist = p.join(__dirname, "../pepr-test-module/node_modules/kubernetes-fluent-client/dist");
-  fs.cpSync(sourcePathSrc, dirPathSrc, { recursive: true, overwrite: true });
-  fs.cpSync(sourcePathDist, dirPathDist, { recursive: true, overwrite: true });
+  dirTestModulePathSrc = p.join(
+    __dirname,
+    "../pepr-test-module/node_modules/kubernetes-fluent-client/src",
+  );
+  dirTestModulePathDist = p.join(
+    __dirname,
+    "../pepr-test-module/node_modules/kubernetes-fluent-client/dist",
+  );
+  dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
+  dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
+  fs.cpSync(sourcePathSrc, dirTestModulePathSrc, { recursive: true, overwrite: true });
+  fs.cpSync(sourcePathDist, dirTestModulePathDist, { recursive: true, overwrite: true });
+  fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
+  fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
 }

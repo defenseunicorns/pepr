@@ -22,8 +22,12 @@ COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
 COPY --chown=node:node kubernetes-fluent-client/ ./kubernetes-fluent-client/
-RUN npm run build && \
+RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src && \
+    cp -r kubernetes-fluent-client/dist node_modules/kubernetes-fluent-client/dist && \
+    npm run build && \
     npm ci --omit=dev --omit=peer && \
+    cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src && \
+    cp -r kubernetes-fluent-client/dist node_modules/kubernetes-fluent-client/dist && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
