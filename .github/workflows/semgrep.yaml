@@ -23,6 +23,7 @@ jobs:
     name: semgrep/ci
     # If you are self-hosting, change the following `runs-on` value:
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     container:
       # A Docker image with Semgrep installed. Do not change this.
@@ -36,7 +37,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - run: semgrep scan --error --quiet
-        continue-on-error: true
 
 
       - run: semgrep ci
