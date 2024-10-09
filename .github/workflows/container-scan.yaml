@@ -1,7 +1,8 @@
 name: Container Scans
 
 permissions:
-  contents: read
+  actions: read
+  contents: write # for sbom-action artifact uploads
 
 on:
   push:
@@ -35,3 +36,5 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           image: pepr:dev
+          upload-artifact: true
+          upload-artifact-retention: 30
