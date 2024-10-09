@@ -148,7 +148,7 @@ function validateRBACConfig(rbacConfig: CustomRBACConfig): CustomRBACConfig {
  * @param {string} itemName - The name of the role type being validated.
  * @returns {V1Role[] | V1ClusterRole[]} The list of valid roles.
  */
-function validateRoleEntries<T extends V1Role | V1ClusterRole>(roles: T[], itemName: string): T[] {
+export function validateRoleEntries<T extends V1Role | V1ClusterRole>(roles: T[], itemName: string): T[] {
   if (!Array.isArray(roles)) {
     Log.warn(`Invalid ${itemName} entries: Expected an array but got ${typeof roles}`);
     return [];
@@ -170,7 +170,7 @@ function validateRoleEntries<T extends V1Role | V1ClusterRole>(roles: T[], itemN
  * @param {string} itemName - The name of the role type being validated.
  * @returns {boolean} True if the role is valid, false otherwise.
  */
-function validateRoleItem(role: KubernetesResource, itemName: string): boolean {
+export function validateRoleItem(role: KubernetesResource, itemName: string): boolean {
   if (!role || typeof role !== "object") {
     Log.warn(`Invalid ${itemName} item: Expected an object but got ${typeof role}`);
     return false;
@@ -233,7 +233,7 @@ export function getPeprConfig(packageData: PackageJson): PeprConfig {
  * @param {PeprConfig} peprConfig - The pepr configuration.
  * @returns {CustomRBACConfig} The RBAC configuration.
  */
-function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
+export function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
   if (!peprConfig.rbac) {
     Log.info("Missing RBAC configuration in package.json.");
     return createEmptyRBACConfig();
