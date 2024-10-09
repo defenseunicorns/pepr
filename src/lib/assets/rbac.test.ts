@@ -158,16 +158,26 @@ describe("RBAC Module Tests", () => {
   });
 
   describe("getClusterRoles", () => {
-    /*       test("Should generate a ClusterRole with scoped access", () => {
-        const capabilities = [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"], bindings: [], hasSchedule: false, name: "", description: "" }];
-        const result = getClusterRoles("test-cluster-role", capabilities, "scoped");
-        expect(result).toEqual({
-          apiVersion: "rbac.authorization.k8s.io/v1",
-          kind: "ClusterRole",
-          metadata: { name: "test-cluster-role" },
-          rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }],
-        });
-      }); */
+    test("Should generate a ClusterRole with scoped access", () => {
+      const capabilities = [
+        {
+          apiGroups: ["apps"],
+          resources: ["deployments"],
+          verbs: ["create", "update"],
+          bindings: [],
+          hasSchedule: false,
+          name: "",
+          description: "",
+        },
+      ];
+      const result = getClusterRoles("test-cluster-role", capabilities, "scoped");
+      expect(result).toEqual({
+        apiVersion: "rbac.authorization.k8s.io/v1",
+        kind: "ClusterRole",
+        metadata: { name: "test-cluster-role" },
+        rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }],
+      });
+    });
 
     test("Should generate a ClusterRole with full access", () => {
       const capabilities: CapabilityExport[] = [];

@@ -77,6 +77,9 @@ export interface CapabilityCfg {
 export interface CapabilityExport extends CapabilityCfg {
   bindings: Binding[];
   hasSchedule: boolean;
+  apiGroups?: string[];
+  resources?: string[];
+  verbs?: string[];
 }
 
 export type WhenSelector<T extends GenericClass> = {

@@ -7,7 +7,8 @@ import path from "path";
 import Log from "../logger";
 import { V1Role, V1ClusterRole } from "@kubernetes/client-node";
 import { CapabilityExport } from "../types";
-import { createRBACMap } from "../helpers";
+
+//import { createRBACMap } from "../helpers";
 //import { groupBy, uniq } from "lodash";
 interface CustomRBACConfig {
   roles?: V1Role[];
@@ -261,10 +262,10 @@ function logError(error: Error): void {
 
 /**
  * Generates a ClusterRole with access to cluster resources based on the provided capabilities.
+ * If scoped mode is used, it consolidates rules by combining verbs for identical apiGroups and resources.
  * @param {string} name - The name of the ClusterRole.
  * @param {CapabilityExport[]} capabilities - The capabilities to use for generating the rules.
  * @param {string} [rbacMode=""] - The RBAC mode to use.
- * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
  * @returns {kind.ClusterRole} The generated ClusterRole.
  */
 export function getClusterRoles(
@@ -272,33 +273,48 @@ export function getClusterRoles(
   capabilities: CapabilityExport[],
   rbacMode: string = "",
 ): kind.ClusterRole {
-  const rbacMap = createRBACMap(capabilities);
+  const mergedRules: {
+    [key: string]: { apiGroups: string[]; resources: string[]; verbs: Set<string> };
+  } = {};
+
+  capabilities.forEach(capability => {
+    capability.apiGroups?.forEach(apiGroup => {
+      capability.resources?.forEach(resource => {
+        const ruleKey = `${apiGroup}-${resource}`;
+
+        if (!mergedRules[ruleKey]) {
+          mergedRules[ruleKey] = {
+            apiGroups: [apiGroup],
+            resources: [resource],
+            verbs: new Set(capability.verbs),
+          };
+        } else {
+          capability.verbs?.forEach(verb => mergedRules[ruleKey].verbs.add(verb));
+        }
+      });
+    });
+  });
+
+  const rules =
+    rbacMode === "scoped"
+      ? Object.values(mergedRules).map(rule => ({
+          apiGroups: rule.apiGroups,
+          resources: rule.resources,
+          verbs: Array.from(rule.verbs),
+        }))
+      : [
+          {
+            apiGroups: ["*"],
+            resources: ["*"],
+            verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+          },
+        ];
+
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
     metadata: { name },
-    rules:
-      rbacMode === "scoped"
-        ? [
-            ...Object.keys(rbacMap).map(key => {
-              // let group:string, version:string, kind:string;
-              let group: string;
-              key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
-
-              return {
-                apiGroups: [group],
-                resources: [rbacMap[key].plural],
-                verbs: rbacMap[key].verbs,
-              };
-            }),
-          ]
-        : [
-            {
-              apiGroups: ["*"],
-              resources: ["*"],
-              verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
-            },
-          ],
+    rules,
   };
 }
 
