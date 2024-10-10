@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "$PEPR"
           cd "$PEPR"
-          node hack/kfc-dev.js build -r "${{ github.event.inputs.logLevel }}"
+          node hack/kfc-dev.js build -r "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
