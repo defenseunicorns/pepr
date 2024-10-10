@@ -120,7 +120,7 @@ const runSequence = async (...commands) => {
 
 // Build dev image from repo
 if (command === "build" && flag === "-r" && path) {
-  await runSequence(clone, install, build, image);
+  runSequence(clone, install, build, image);
 }
 
 // Build dev image from local source
