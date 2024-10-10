@@ -39,7 +39,6 @@ export class PeprControllerStore {
     if (name.includes("schedule")) {
       // Establish the store for each capability
       for (const { name, registerScheduleStore, hasSchedule } of capabilities) {
-        // Guard Clause to exit early
         if (hasSchedule === true) {
           // Register the scheduleStore with the capability
           setStorageInstance(registerScheduleStore, name);

@@ -8,6 +8,8 @@ import { AddOperation } from "fast-json-patch";
 import { redactedValue } from "./store";
 import Log from "../logger";
 import { PeprStore } from "../k8s";
+import { CapabilityCfg } from "../types";
+import { Capability } from "../capability";
 
 describe("pepr store tests", () => {
   const peprStoreFuzz = fc.record({
@@ -25,6 +27,14 @@ describe("pepr store tests", () => {
 
   describe("when initializing the store", () => {
     it("should migrate and setup the watch", async () => {
+      const capabilityConfig: CapabilityCfg = {
+        name: "test-capability",
+        description: "Test capability description",
+        namespaces: ["default"],
+      };
+
+      const testCapability = new Capability(capabilityConfig);
+
       jest.mock("kubernetes-fluent-client", () => ({
         K8s: jest.fn().mockReturnValue({
           InNamespace: jest.fn().mockReturnThis(),
@@ -32,7 +42,7 @@ describe("pepr store tests", () => {
         }),
       }));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const peprControllerStore = new PeprControllerStore([], `pepr-test-store`, () => {
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {
         Log.info("✅ Test setup complete");
         // Initialize the schedule store for each capability
         new PeprControllerStore([], `pepr-test-schedule`, () => {
@@ -46,7 +56,15 @@ describe("pepr store tests", () => {
       // Assert the private method was called
       // ??
     });
-    it("should create the store resource if it does not exist", async () => {
+    it("should create the store resource for a scheduled capability", async () => {
+      const capabilityConfig: CapabilityCfg = {
+        name: "test-capability",
+        description: "Test capability description",
+        namespaces: ["default"],
+      };
+
+      const testCapability = new Capability(capabilityConfig);
+
       jest.mock("kubernetes-fluent-client", () => ({
         K8s: jest.fn().mockReturnValue({
           InNamespace: jest.fn().mockReturnThis(),
@@ -54,7 +72,7 @@ describe("pepr store tests", () => {
         }),
       }));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const peprControllerStore = new PeprControllerStore([], `pepr-test-store`, () => {
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-store`, () => {
         Log.info("✅ Test setup complete");
         // Initialize the schedule store for each capability
         new PeprControllerStore([], `pepr-test-schedule`, () => {
