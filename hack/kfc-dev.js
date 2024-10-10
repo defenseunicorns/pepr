@@ -27,7 +27,7 @@ Flags:
   -l, --local string        path of KFC source code
 
 Examples: 
-  # Build dev image from remote repo
+  # Build dev image from specific branch
   > node hack/kfc-dev.js build -r <branch>
   > node hack/kfc-dev.js build -r undici-fetch
 
