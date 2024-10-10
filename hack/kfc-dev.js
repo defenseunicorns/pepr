@@ -41,7 +41,7 @@ Examples:
 
 `;
 
-/** Warnings are basic - not inteded to cover each case  */
+/** Warnings are basic - not intended to cover every case  */
 
 if (!command) {
   console.log(usage);
