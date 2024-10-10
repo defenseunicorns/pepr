@@ -10,7 +10,7 @@ import { PeprStore } from "../k8s";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 
-const redactedValue = "**redacted**";
+export const redactedValue = "**redacted**";
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
 
