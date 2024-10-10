@@ -121,18 +121,17 @@ const runSequence = async (...commands) => {
 
 // Build dev image from repo
 if (command === "build" && flag === "-r" && path) {
-  runSequence(clone, install, buildKFC, image);
-  // prepare for build and pack
-  const output = execSync(`ls`, { cwd: currentDir });
-  console.log(output.toString());
-  sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
-  sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
-  console.log(sourcePathSrc, ":", sourcePathDist);
+  async () => {
+    await runSequence(clone, install, buildKFC, image);
+    // prepare for build and pack
 
-  // dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
-  // dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
-  // fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
-  // fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
+    sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
+    sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
+    dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
+    dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
+    fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
+    fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
+  };
 }
 
 // Build dev image from local source
