@@ -131,7 +131,12 @@ class Watcher {
      */
     async start() {
         this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
-        this.#useHTTP2 ? await this.#http2Watch() : await this.#watch();
+        if (this.#useHTTP2) {
+            await this.#http2Watch();
+        }
+        else {
+            await this.#watch();
+        }
         return this.#abortController;
     }
     /** Close the watch. Also available on the AbortController returned by {@link Watcher.start}. */
@@ -333,8 +338,8 @@ class Watcher {
         }
     };
     /**
-   * Watch for changes to the resource.
-   */
+     * Watch for changes to the resource.
+     */
     #watch = async () => {
         try {
             // Start with a list operation
@@ -405,31 +410,31 @@ class Watcher {
             // Set up headers for the HTTP/2 request
             const token = await this.#getToken();
             const headers = {
-                ':method': 'GET',
-                ':path': url.pathname + url.search,
-                'content-type': 'application/json',
-                'user-agent': 'kubernetes-fluent-client',
+                ":method": "GET",
+                ":path": url.pathname + url.search,
+                "content-type": "application/json",
+                "user-agent": "kubernetes-fluent-client",
             };
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+                headers["Authorization"] = `Bearer ${token}`;
             }
             // Make the HTTP/2 request
             const req = client.request(headers);
-            req.setEncoding('utf8');
+            req.setEncoding("utf8");
             let buffer = "";
             // Handle response data
-            req.on('response', (headers, flags) => {
-                const statusCode = headers[':status'];
+            req.on("response", headers => {
+                const statusCode = headers[":status"];
                 if (statusCode && statusCode >= 200 && statusCode < 300) {
                     this.#pendingReconnect = false;
                     this.#events.emit(WatchEvent.CONNECT, url.pathname);
                     // Reset the retry count
                     this.#resyncFailureCount = 0;
                     this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                    req.on('data', async (chunk) => {
+                    req.on("data", async (chunk) => {
                         try {
                             buffer += chunk;
-                            const lines = buffer.split('\n');
+                            const lines = buffer.split("\n");
                             // Avoid  Watch event data_error received. Unexpected end of JSON input.
                             buffer = lines.pop();
                             for (const line of lines) {
@@ -440,25 +445,23 @@ class Watcher {
                             void this.#errHandler(err);
                         }
                     });
-                    req.on('end', () => {
+                    req.on("end", () => {
+                        client.close();
                         this.#streamCleanup();
-                        client.close();
                     });
-                    req.on('close', () => {
+                    req.on("close", () => {
+                        client.close();
                         this.#streamCleanup();
-                        client.close();
                     });
-                    req.on('error', (err) => {
-                        this.#errHandler(err);
-                        client.close();
+                    req.on("error", err => {
+                        void this.#errHandler(err);
                     });
                 }
                 else {
-                    const statusMessage = headers[':status-text'] || 'Unknown';
+                    const statusMessage = headers[":status-text"] || "Unknown";
                     throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
                 }
             });
-            req.end();
         }
         catch (e) {
             void this.#errHandler(e);
@@ -489,7 +492,9 @@ class Watcher {
                     this.#pendingReconnect = true;
                     this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
                     this.#streamCleanup();
-                    // void this.#watch();
+                    if (!this.#useHTTP2) {
+                        void this.#watch();
+                    }
                 }
             }
             else {
@@ -530,7 +535,9 @@ class Watcher {
             this.#stream.removeAllListeners();
             this.#stream.destroy();
         }
-        this.#useHTTP2 && void this.#http2Watch();
+        if (this.#useHTTP2) {
+            void this.#http2Watch();
+        }
     };
 }
 exports.Watcher = Watcher;

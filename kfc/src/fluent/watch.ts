@@ -5,7 +5,7 @@ import byline from "byline";
 import { createHash } from "crypto";
 import { EventEmitter } from "events";
 import https from "https";
-import http2 from "http2"
+import http2 from "http2";
 import fetch from "node-fetch";
 import { fetch as wrappedFetch } from "../fetch";
 import { GenericClass, KubernetesListObject } from "../types";
@@ -168,7 +168,11 @@ export class Watcher<T extends GenericClass> {
    */
   public async start(): Promise<AbortController> {
     this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
-    this.#useHTTP2 ? await this.#http2Watch() : await this.#watch();
+    if (this.#useHTTP2) {
+      await this.#http2Watch();
+    } else {
+      await this.#watch();
+    }
     return this.#abortController;
   }
 
@@ -411,8 +415,8 @@ export class Watcher<T extends GenericClass> {
   };
 
   /**
- * Watch for changes to the resource.
- */
+   * Watch for changes to the resource.
+   */
   #watch = async () => {
     try {
       // Start with a list operation
@@ -497,26 +501,26 @@ export class Watcher<T extends GenericClass> {
       // Set up headers for the HTTP/2 request
       const token = await this.#getToken();
       const headers: Record<string, string> = {
-        ':method': 'GET',
-        ':path': url.pathname + url.search,
-        'content-type': 'application/json',
-        'user-agent': 'kubernetes-fluent-client',
+        ":method": "GET",
+        ":path": url.pathname + url.search,
+        "content-type": "application/json",
+        "user-agent": "kubernetes-fluent-client",
       };
 
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       // Make the HTTP/2 request
       const req = client.request(headers);
 
-      req.setEncoding('utf8');
+      req.setEncoding("utf8");
 
       let buffer = "";
 
       // Handle response data
-      req.on('response', (headers, flags) => {
-        const statusCode = headers[':status'];
+      req.on("response", headers => {
+        const statusCode = headers[":status"];
 
         if (statusCode && statusCode >= 200 && statusCode < 300) {
           this.#pendingReconnect = false;
@@ -526,10 +530,10 @@ export class Watcher<T extends GenericClass> {
           this.#resyncFailureCount = 0;
           this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
 
-          req.on('data', async (chunk) => {
+          req.on("data", async chunk => {
             try {
-              buffer += chunk
-              const lines = buffer.split('\n');
+              buffer += chunk;
+              const lines = buffer.split("\n");
               // Avoid  Watch event data_error received. Unexpected end of JSON input.
               buffer = lines.pop()!;
 
@@ -541,27 +545,24 @@ export class Watcher<T extends GenericClass> {
             }
           });
 
-          req.on('end', () => {
-            this.#streamCleanup();
+          req.on("end", () => {
             client.close();
+            this.#streamCleanup();
           });
 
-          req.on('close', () => {
-            this.#streamCleanup();
+          req.on("close", () => {
             client.close();
+            this.#streamCleanup();
           });
 
-          req.on('error', (err) => {
-            this.#errHandler(err);
-            client.close();
+          req.on("error", err => {
+            void this.#errHandler(err);
           });
         } else {
-          const statusMessage = headers[':status-text'] || 'Unknown';
+          const statusMessage = headers[":status-text"] || "Unknown";
           throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
         }
       });
-
-      req.end();
     } catch (e) {
       void this.#errHandler(e);
     }
@@ -598,7 +599,9 @@ export class Watcher<T extends GenericClass> {
           this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
           this.#streamCleanup();
 
-          // void this.#watch();
+          if (!this.#useHTTP2) {
+            void this.#watch();
+          }
         }
       } else {
         // Otherwise, call the finally function if it exists
@@ -646,6 +649,8 @@ export class Watcher<T extends GenericClass> {
       this.#stream.removeAllListeners();
       this.#stream.destroy();
     }
-    this.#useHTTP2 &&  void this.#http2Watch()
+    if (this.#useHTTP2) {
+      void this.#http2Watch();
+    }
   };
 }
