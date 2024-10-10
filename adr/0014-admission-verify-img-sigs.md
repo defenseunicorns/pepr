@@ -58,7 +58,7 @@ Slack coversation surrounding the above led to the following scoping determinati
 TBD
 
 Working through options in design doc &mdash;
-[1. Admission-time verification of image signatures](./0001-admission-verify-img-sigs.md).
+[1. Admission-time verification of image signatures](../design/0001-admission-verify-img-sigs.md).
 
 
 ## Consequences
