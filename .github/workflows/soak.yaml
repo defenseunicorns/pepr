@@ -165,7 +165,8 @@ jobs:
               update_pod_map
 
               kubectl get pods -n pepr-demo 
-
+              kubectl top po -n pepr-system
+              
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
                 echo "$pod: ${pod_map[$pod]}"
