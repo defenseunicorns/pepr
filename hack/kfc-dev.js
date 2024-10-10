@@ -7,7 +7,18 @@ const command = process.argv[2];
 const flag = process.argv[3];
 const path = process.argv[4];
 
+// Scaffolding
+const repoUrl = `https://github.com/defenseunicorns/kubernetes-fluent-client.git`;
+let currentDir = process.cwd();
 const moreInfo = "\n\nUse node hack/kfc-dev.js for more information.";
+// let dockerFilePath;
+
+// if (currentDir.includes("hack")) {
+//   console.log("it does ", currentDir);
+//   dockerFilePath = p.join(__dirname, "../Dockerfile.kfc");
+// } else {
+//   dockerFilePath = p.join(__dirname, "Dockerfile.kfc");
+// }
 
 const usage = `
 Helper for using a KFC release candidate in Pepr. 
@@ -75,15 +86,12 @@ if (command === "import" && flag === "-r") {
   process.exit(1);
 }
 
-// Scaffolding
-const repoUrl = `https://github.com/defenseunicorns/kubernetes-fluent-client.git`;
-let currentDir = process.cwd();
-
 // Commands
 const clone = { cmd: `git clone -b ${path} ${repoUrl}`, dir: currentDir };
 const install = { cmd: `npm install`, dir: "kubernetes-fluent-client" };
 const build = { cmd: `npm run build`, dir: "kubernetes-fluent-client" };
 const image = {
+  // cmd: `docker buildx build --output type=docker --tag pepr:dev . -f ${dockerFilePath}`,
   cmd: `docker buildx build --output type=docker --tag pepr:dev . -f Dockerfile.kfc`,
   dir: currentDir,
 };
