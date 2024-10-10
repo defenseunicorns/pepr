@@ -51,6 +51,7 @@ jobs:
       - name: build kfc pepr image
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
+          ls -l 
           node hack/kfc-dev.js build -r "${{ github.event.inputs.logLevel }}"
 
       - name: tar pepr image
