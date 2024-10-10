@@ -101,23 +101,22 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
       try {
         // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
-        if (filterMatch === "") {
-          if (binding.isFinalize) {
-            if (!obj.metadata?.deletionTimestamp) {
-              return;
-            }
-            try {
-              await binding.finalizeCallback?.(obj);
-
-              // irrespective of callback success / failure, remove pepr finalizer
-            } finally {
-              await removeFinalizer(binding, obj);
-            }
-          } else {
-            await binding.watchCallback?.(obj, phase);
-          }
-        } else {
+        if (filterMatch !== "") {
           Log.debug(filterMatch);
+          return;
+        }
+
+        if (!binding.isFinalize) {
+          await binding.watchCallback?.(obj, phase);
+          return;
+        }
+
+        if (!obj.metadata?.deletionTimestamp) return;
+
+        try {
+          await binding.finalizeCallback?.(obj);
+        } finally {
+          await removeFinalizer(binding, obj);
         }
       } catch (e) {
         // Errors in the watch callback should not crash the controller

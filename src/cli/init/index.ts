@@ -86,13 +86,13 @@ export default function (program: RootCmd) {
             });
 
             // try to open vscode
-            try {
-              execSync("code .", {
-                stdio: "inherit",
-              });
-            } catch (e) {
-              // vscode not found, do nothing
-            }
+            // try {
+            execSync("code .", {
+              stdio: "inherit",
+            });
+            // } catch (e) {
+            // vscode not found, do nothing
+            // }
           }
 
           console.log(`New Pepr module created at ${dirName}`);

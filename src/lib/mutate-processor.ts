@@ -89,33 +89,14 @@ export async function mutateProcessor(
         updateStatus("warning");
         response.warnings = response.warnings || [];
 
-        let errorMessage = "";
-
-        try {
-          if (e.message && e.message !== "[object Object]") {
-            errorMessage = e.message;
-          } else {
-            throw new Error("An error occurred in the mutate action.");
-          }
-        } catch (e) {
-          errorMessage = "An error occurred with the mutate action.";
-        }
+        const errorMessage =
+          e.message && e.message !== "[object Object]" ? e.message : "An error occurred in the mutate action.";
 
         // Log on failure
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
-        switch (config.onError) {
-          case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-            response.result = "Pepr module configured to reject on error";
-            return response;
-
-          case Errors.audit:
-            response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
-            break;
-        }
+        handleMutationError(errorMessage, actionMetadata, response, config);
       }
     }
   }
@@ -160,4 +141,23 @@ export async function mutateProcessor(
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
 
   return response;
+}
+
+function handleMutationError(
+  errorMessage: string,
+  actionMetadata: Record<string, string>,
+  response: MutateResponse,
+  config: ModuleConfig,
+) {
+  switch (config.onError) {
+    case Errors.reject:
+      Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+      response.result = "Pepr module configured to reject on error";
+      break;
+
+    case Errors.audit:
+      response.auditAnnotations = response.auditAnnotations || {};
+      response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
+      break;
+  }
 }

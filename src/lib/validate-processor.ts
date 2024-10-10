@@ -59,12 +59,10 @@ export async function validateProcessor(
         localResponse.allowed = resp.allowed;
 
         // If the validation callback returned a status code or message, set it in the Response
-        if (resp.statusCode || resp.statusMessage) {
-          localResponse.status = {
-            code: resp.statusCode || 400,
-            message: resp.statusMessage || `Validation failed for ${name}`,
-          };
-        }
+        localResponse.status = {
+          code: resp.statusCode || 400,
+          message: resp.statusMessage || `Validation failed for ${name}`,
+        };
 
         Log.info(actionMetadata, `Validation action complete (${label}): ${resp.allowed ? "allowed" : "denied"}`);
       } catch (e) {

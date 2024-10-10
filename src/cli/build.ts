@@ -330,41 +330,39 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
   } catch (e) {
     console.error(`Error building module:`, e);
 
-    if (e.stdout) {
-      const out = e.stdout.toString() as string;
-      const err = e.stderr.toString();
+    if (!e.stdout) process.exit(1);
+    const out = e.stdout.toString() as string;
+    const err = e.stderr.toString();
 
-      console.log(out);
-      console.error(err);
+    console.log(out);
+    console.error(err);
 
-      // Check for version conflicts
-      if (out.includes("Types have separate declarations of a private property '_name'.")) {
-        // Try to find the conflicting package
-        const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
-        out.matchAll(pgkErrMatch);
+    // Check for version conflicts
+    if (out.includes("Types have separate declarations of a private property '_name'.")) {
+      // Try to find the conflicting package
+      const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
+      out.matchAll(pgkErrMatch);
 
-        // Look for package conflict errors
-        const conflicts = [...out.matchAll(pgkErrMatch)];
+      // Look for package conflict errors
+      const conflicts = [...out.matchAll(pgkErrMatch)];
 
-        // If the regex didn't match, leave a generic error
-        if (conflicts.length < 1) {
-          console.info(
-            `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
-            "Version Conflict",
-          );
-        }
-
-        // Otherwise, loop through each conflicting package and print an error
-        conflicts.forEach(match => {
-          console.info(
-            `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
-            "Version Conflict",
-          );
-        });
+      // If the regex didn't match, leave a generic error
+      if (conflicts.length < 1) {
+        console.info(
+          `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
+          "Version Conflict",
+        );
       }
+
+      // Otherwise, loop through each conflicting package and print an error
+      conflicts.forEach(match => {
+        console.info(
+          `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
+          "Version Conflict",
+        );
+      });
     }
 
     // On any other error, exit with a non-zero exit code
-    process.exit(1);
   }
 }
