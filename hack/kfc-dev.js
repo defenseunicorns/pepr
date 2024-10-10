@@ -113,7 +113,7 @@ const runSequence = async (...commands) => {
       await runCmd(cmd, dir);
     }
     console.log("All commands executed successfully.");
-    process.exit(1);
+    process.exit(0);
   } catch (error) {
     console.error("An error occurred during command execution:", error);
   }
