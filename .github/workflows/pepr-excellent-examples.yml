@@ -65,6 +65,7 @@ jobs:
           cd "$PEPR"
           node hack/kfc-dev.js build -r "${{ github.event.inputs.kfcBranch }}"
           echo "success"
+          ls -l 
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
