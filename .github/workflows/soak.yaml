@@ -52,7 +52,6 @@ jobs:
       - name: build kfc pepr image
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
-          echo "$PEPR"
           cd "$PEPR"
           node hack/kfc-dev.js build -r "${{ github.event.inputs.kfcBranch }}"
 
