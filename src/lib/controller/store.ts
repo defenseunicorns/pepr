@@ -52,7 +52,6 @@ export class PeprControllerStore {
       }
     }
 
-    // Add a jitter to the Store creation to avoid collisions
     setTimeout(
       () =>
         K8s(PeprStore)
@@ -62,7 +61,7 @@ export class PeprControllerStore {
           .then(async (store: PeprStore) => await this.#migrateAndSetupWatch(store))
           // Otherwise, create the resource
           .catch(this.#createStoreResource),
-      Math.random() * 3000,
+      Math.random() * 3000, // Add a jitter to the Store creation to avoid collisions
     );
   }
 
@@ -256,8 +255,8 @@ export class PeprControllerStore {
           Object.keys(sendCache).forEach(key => delete sendCache[key]);
         } else {
           // On failure to update, re-add the operations to the cache to be retried
-          for (const idx of indexes) {
-            sendCache[idx] = payload[Number(idx)];
+          for (const index of indexes) {
+            sendCache[index] = payload[Number(index)];
           }
         }
       }
@@ -328,7 +327,7 @@ export function redactedPatch(patch: Record<string, Operation> = {}): Record<str
     const redactedKey = key.includes(":") ? key.substring(0, key.lastIndexOf(":")) + ":**redacted**" : key;
     const redactedOperation: Operation = {
       ...operation,
-      ...("value" in operation ? { value: "**redacted**" } : {}),
+      ...("value" in operation ? { value: redactedValue } : {}),
     };
     redactedCache[redactedKey] = redactedOperation;
   });
