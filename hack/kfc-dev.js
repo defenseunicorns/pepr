@@ -1,5 +1,5 @@
 // Helper for using a KFC release candidate in Pepr
-const { exec } = require("child_process");
+const { exec, execSync } = require("child_process");
 const fs = require("fs");
 const p = require("path");
 
@@ -123,12 +123,13 @@ const runSequence = async (...commands) => {
 if (command === "build" && flag === "-r" && path) {
   runSequence(clone, install, buildKFC, image);
   // prepare for build and pack
-  sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
-  sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
-  dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
-  dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
-  fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
-  fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
+  execSync(`ls`, { cwd: currentDir });
+  // sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
+  // sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
+  // dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
+  // dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
+  // fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
+  // fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
 }
 
 // Build dev image from local source
