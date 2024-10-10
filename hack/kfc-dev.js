@@ -125,8 +125,10 @@ if (command === "build" && flag === "-r" && path) {
   // prepare for build and pack
   const output = execSync(`ls`, { cwd: currentDir });
   console.log(output.toString());
-  // sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
-  // sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
+  sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
+  sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
+  console.log(sourcePathSrc, ":", sourcePathDist);
+
   // dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
   // dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
   // fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
