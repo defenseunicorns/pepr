@@ -24,27 +24,10 @@ export function chartYaml(name: string, description?: string) {
     name: ${name}
     description: ${description || ""}
 
-    # A chart can be either an 'application' or a 'library' chart.
-    #
-    # Application charts are a collection of templates that can be packaged into versioned archives
-    # to be deployed.
-    #
-    # Library charts provide useful utilities or functions for the chart developer. They're included as
-    # a dependency of application charts to inject those utilities and functions into the rendering
-    # pipeline. Library charts do not define any templates and therefore cannot be deployed.
     type: application
-
-    # This is the chart version. This version number should be incremented each time you make changes
-    # to the chart and its templates, including the app version.
-    # Versions are expected to follow Semantic Versioning (https://semver.org/)
     version: 0.1.0
-
-    # This is the version number of the application being deployed. This version number should be
-    # incremented each time you make changes to the application. Versions are not expected to
-    # follow Semantic Versioning. They should reflect the version the application is using.
-    # It is recommended to use it with quotes.
     appVersion: "1.16.0"
-`;
+  `;
 }
 
 export function watcherDeployTemplate(buildTimestamp: string) {
@@ -68,7 +51,7 @@ export function watcherDeployTemplate(buildTimestamp: string) {
             pepr.dev/controller: watcher
         template:
           metadata:
-            annotations: 
+            annotations:
               buildTimestamp: "${buildTimestamp}"
               {{- if .Values.watcher.podAnnotations }}
               {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
@@ -207,11 +190,97 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   secretName: {{ .Values.uuid }}-api-token
               - name: module
                 secret:
-                  secretName: {{ .Values.uuid }}-module  
+                  secretName: {{ .Values.uuid }}-module
               {{- if .Values.admission.extraVolumes }}
               {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
               {{- end }}
     `;
+}
+
+export interface ClusterRoleRule {
+  apiGroups: string[];
+  resources: string[];
+  verbs: string[];
+}
+
+export interface RoleRule {
+  apiGroups: string[];
+  resources: string[];
+  verbs: string[];
+}
+
+export function clusterRoleTemplate(customClusterRoleRules: ClusterRoleRule[]) {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: pepr-custom-cluster-role
+    rules:
+      ${customClusterRoleRules
+        .map(
+          rule => `
+      - apiGroups: ${JSON.stringify(rule.apiGroups)}
+        resources: ${JSON.stringify(rule.resources)}
+        verbs: ${JSON.stringify(rule.verbs)}
+      `,
+        )
+        .join("")}
+  `;
+}
+
+export function roleTemplate(customStoreRoleRules: RoleRule[]) {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: pepr-custom-role
+      namespace: pepr-system
+    rules:
+      ${customStoreRoleRules
+        .map(
+          rule => `
+      - apiGroups: ${JSON.stringify(rule.apiGroups)}
+        resources: ${JSON.stringify(rule.resources)}
+        verbs: ${JSON.stringify(rule.verbs)}
+      `,
+        )
+        .join("")}
+  `;
+}
+
+export function clusterRoleBindingTemplate() {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: pepr-custom-cluster-role-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: pepr-custom-cluster-role
+    subjects:
+    - kind: ServiceAccount
+      name: pepr-custom-service-account
+      namespace: pepr-system
+  `;
+}
+
+export function roleBindingTemplate() {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: pepr-custom-role-binding
+      namespace: pepr-system
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: pepr-custom-role
+    subjects:
+    - kind: ServiceAccount
+      name: pepr-custom-service-account
+      namespace: pepr-system
+  `;
 }
 
 export function serviceMonitorTemplate(name: string) {

@@ -10,10 +10,19 @@ import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
-import { namespaceComplianceValidator, replaceString } from "../helpers";
-import { createDirectoryIfNotExists, dedent } from "../helpers";
+import { namespaceComplianceValidator, replaceString, createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
-import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
+import {
+  chartYaml,
+  nsTemplate,
+  admissionDeployTemplate,
+  watcherDeployTemplate,
+  serviceMonitorTemplate,
+  clusterRoleTemplate,
+  roleTemplate,
+  clusterRoleBindingTemplate,
+  roleBindingTemplate,
+} from "./helm";
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
@@ -25,7 +34,11 @@ import {
   getServiceAccounts,
   getStoreRoles,
   getStoreRoleBindings,
+  getCustomClusterRoleRules,
+  getCustomStoreRoleRules,
 } from "./rbac";
+import { ClusterRoleRule, RoleRule } from "./helm";
+
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -47,10 +60,7 @@ export class Assets {
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
     this.hash = "";
-    // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
-
-    // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
@@ -69,11 +79,9 @@ export class Assets {
 
   allYaml = async (rbacMode: string, imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
-    // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
-
     return allYaml(this, rbacMode, imagePullSecret);
   };
 
@@ -86,7 +94,7 @@ export class Assets {
       await this.createHelmFiles(CHART_DIR, CHAR_TEMPLATES_DIR);
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);
-      process.exit(1);
+      throw new Error(`Error generating helm chart: ${err.message}`);
     }
   };
 
@@ -117,6 +125,33 @@ export class Assets {
     const clusterRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `cluster-role-binding.yaml`);
     const serviceAccountPath = resolve(CHAR_TEMPLATES_DIR, `service-account.yaml`);
 
+    const customClusterRolePath = resolve(CHAR_TEMPLATES_DIR, `custom-cluster-role.yaml`);
+    const customClusterRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `custom-cluster-role-binding.yaml`);
+    const customRolePath = resolve(CHAR_TEMPLATES_DIR, `custom-role.yaml`);
+    const customRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `custom-role-binding.yaml`);
+
+    // Load and transform custom rules from the RBAC configuration
+    const rawCustomClusterRoleRules = getCustomClusterRoleRules();
+    const rawCustomStoreRoleRules = getCustomStoreRoleRules();
+
+    type Rule = {
+      apiGroups?: string[];
+      resources?: string[];
+      verbs?: string[];
+    };
+
+    const customClusterRoleRules: ClusterRoleRule[] = rawCustomClusterRoleRules.map((rule: Rule) => ({
+      apiGroups: rule.apiGroups || [],
+      resources: rule.resources || [],
+      verbs: rule.verbs || [],
+    }));
+
+    const customStoreRoleRules: RoleRule[] = rawCustomStoreRoleRules.map((rule: Rule) => ({
+      apiGroups: rule.apiGroups || [],
+      resources: rule.resources || [],
+      verbs: rule.verbs || [],
+    }));
+
     await overridesFile(this, valuesPath);
     await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
     await fs.writeFile(nsPath, dedent(nsTemplate()));
@@ -136,6 +171,12 @@ export class Assets {
     );
     await fs.writeFile(clusterRoleBindingPath, dumpYaml(getClusterRoleBindings(this.name), { noRefs: true }));
     await fs.writeFile(serviceAccountPath, dumpYaml(getServiceAccounts(this.name), { noRefs: true }));
+
+    // Write the new custom templates using the actual rule data
+    await fs.writeFile(customClusterRolePath, dedent(clusterRoleTemplate(customClusterRoleRules)));
+    await fs.writeFile(customClusterRoleBindingPath, dedent(clusterRoleBindingTemplate()));
+    await fs.writeFile(customRolePath, dedent(roleTemplate(customStoreRoleRules)));
+    await fs.writeFile(customRoleBindingPath, dedent(roleBindingTemplate()));
 
     await this.createWebhookFiles(
       mutationWebhookPath,
