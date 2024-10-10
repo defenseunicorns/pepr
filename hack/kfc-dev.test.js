@@ -62,7 +62,6 @@ describe("KFC Dev Helper E2E Test", () => {
     expect(dockerOutput.toString()).toContain("pepr");
   });
 
-  // requires Kubernetes Fluent Client to be in the same parent directory as Pepr
   it("should import a local KFC to kubernetes-fluent-client folder", () => {
     execSync("node hack/kfc-dev.js build -l ../../kubernetes-fluent-client", {
       stdio: "pipe",
