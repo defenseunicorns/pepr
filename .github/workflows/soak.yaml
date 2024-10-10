@@ -46,12 +46,14 @@ jobs:
       - name: build pepr image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
+          cd "$PEPR"
           npm run build:image
   
       - name: build kfc pepr image
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
-          ls -l 
+          echo "$PEPR"
+          cd "$PEPR"
           node hack/kfc-dev.js build -r "${{ github.event.inputs.logLevel }}"
 
       - name: tar pepr image
