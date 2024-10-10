@@ -82,7 +82,8 @@ let currentDir = process.cwd();
 // Commands
 const clone = { cmd: `git clone -b ${path} ${repoUrl}`, dir: currentDir };
 const install = { cmd: `npm install`, dir: "kubernetes-fluent-client" };
-const build = { cmd: `npm run build`, dir: "kubernetes-fluent-client" };
+const buildKFC = { cmd: `npm run build`, dir: "kubernetes-fluent-client" };
+const buildPepr = { cmd: `npm run build`, dir: currentDir };
 const image = {
   cmd: `docker buildx build --output type=docker --tag pepr:dev . -f Dockerfile.kfc`,
   dir: currentDir,
@@ -113,7 +114,6 @@ const runSequence = async (...commands) => {
       await runCmd(cmd, dir);
     }
     console.log("All commands executed successfully.");
-    process.exit(0);
   } catch (error) {
     console.error("An error occurred during command execution:", error);
   }
@@ -121,7 +121,14 @@ const runSequence = async (...commands) => {
 
 // Build dev image from repo
 if (command === "build" && flag === "-r" && path) {
-  runSequence(clone, install, build, image);
+  runSequence(clone, install, buildKFC, image);
+  // prepare for build and pack
+  sourcePathSrc = p.join(__dirname, `kubernetes-fluent-client/src`);
+  sourcePathDist = p.join(__dirname, `kubernetes-fluent-client/dist`);
+  dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
+  dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
+  fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
+  fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
 }
 
 // Build dev image from local source
@@ -130,7 +137,7 @@ if (command === "build" && flag === "-l" && path) {
   dirPath = p.join(__dirname, "../kubernetes-fluent-client");
   fs.mkdirSync(dirPath, { recursive: true });
   fs.cpSync(sourcePath, dirPath, { recursive: true, overwrite: true });
-  runSequence(install, build, image);
+  runSequence(install, buildKFC, image);
 }
 
 // Import KFC source code into node_modules
