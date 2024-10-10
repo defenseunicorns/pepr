@@ -3,7 +3,7 @@
 
 import { Operation } from "fast-json-patch";
 import { K8s } from "kubernetes-fluent-client";
-import { startsWith } from "ramda";
+import * as ramda from "ramda";
 
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
@@ -26,33 +26,29 @@ export class PeprControllerStore {
     // Setup Pepr State bindings
     this.#name = name;
 
+    const setStorageInstance = (registrationFunction: () => Storage, name: string) => {
+      const scheduleStore = registrationFunction();
+
+      // Bind the store sender to the capability
+      scheduleStore.registerSender(this.#send(name));
+
+      // Store the storage instance
+      this.#stores[name] = scheduleStore;
+    };
+
     if (name.includes("schedule")) {
       // Establish the store for each capability
       for (const { name, registerScheduleStore, hasSchedule } of capabilities) {
-        // Guard Clause to exit  early
-        if (hasSchedule !== true) {
-          continue;
+        // Guard Clause to exit early
+        if (hasSchedule === true) {
+          // Register the scheduleStore with the capability
+          setStorageInstance(registerScheduleStore, name);
         }
-        // Register the scheduleStore with the capability
-        const { scheduleStore } = registerScheduleStore();
-
-        // Bind the store sender to the capability
-        scheduleStore.registerSender(this.#send(name));
-
-        // Store the storage instance
-        this.#stores[name] = scheduleStore;
       }
     } else {
       // Establish the store for each capability
       for (const { name, registerStore } of capabilities) {
-        // Register the store with the capability
-        const { store } = registerStore();
-
-        // Bind the store sender to the capability
-        store.registerSender(this.#send(name));
-
-        // Store the storage instance
-        this.#stores[name] = store;
+        setStorageInstance(registerStore, name);
       }
     }
 
@@ -149,7 +145,7 @@ export class PeprControllerStore {
       // Loop over each key in the store
       for (const key of Object.keys(data)) {
         // Match on the capability name as a prefix for non v2 keys
-        if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
+        if (ramda.startsWith(name, key) && !ramda.startsWith(`${name}-v2`, key)) {
           // populate migrate cache
           fillCache(name, "remove", [key.slice(offset)], data[key]);
           fillCache(name, "add", [key.slice(offset)], data[key]);
@@ -179,7 +175,7 @@ export class PeprControllerStore {
         // Loop over each key in the secret
         for (const key of Object.keys(data)) {
           // Match on the capability name as a prefix
-          if (startsWith(name, key)) {
+          if (ramda.startsWith(name, key)) {
             // Strip the prefix and store the value
             filtered[key.slice(offset)] = data[key];
           }
