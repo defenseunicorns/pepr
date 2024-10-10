@@ -55,12 +55,16 @@ Slack coversation surrounding the above led to the following scoping determinati
 
 ## Decision
 
-TBD
+Pepr will add a new image verification helper & image verification libraries to the Pepr Controller &mdash; something approximating the form: `(registry-ref, public-key-defs) =>  { return bool-if-the-image-sig-is-valid }` &mdash; which should be able to validate `cosign` image signatures.
 
-Working through options in design doc &mdash;
+UDS Operator will take advantage of the new verification helper when validating admission of Pods into the UDS cluster.
+
+Further design work can be found in design doc &mdash;
 [1. Admission-time verification of image signatures](../design/0001-admission-verify-img-sigs.md).
 
 
 ## Consequences
 
-TBD
+- Pepr Controller will grow in size through inclusion of image validation library; degree of growth is unknown.
+- Pepr SDK / "helpers" library will expand through inclusion of new helper method.
+- UDS Operator team will be able to use the new helper in during admission-time checking within the UDS Operator.
