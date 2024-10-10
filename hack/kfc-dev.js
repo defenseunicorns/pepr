@@ -131,6 +131,7 @@ if (command === "build" && flag === "-r" && path) {
     dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
     fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
     fs.cpSync(sourcePathDist, dirLocalModulePathDist, { recursive: true, overwrite: true });
+    await runCmd(buildPepr);
   };
 }
 
