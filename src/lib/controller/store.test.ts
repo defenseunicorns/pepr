@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe } from "@jest/globals";
+import { expect, test, describe, it, jest } from "@jest/globals";
 import * as fc from "fast-check";
-import { redactedStore, redactedPatch } from "./store";
+import { redactedStore, redactedPatch, PeprControllerStore } from "./store";
 import { AddOperation } from "fast-json-patch";
 import { redactedValue } from "./store";
+import Log from "../logger";
+import { PeprStore } from "../k8s";
 
 describe("pepr store tests", () => {
   const peprStoreFuzz = fc.record({
@@ -19,6 +21,53 @@ describe("pepr store tests", () => {
       fc.string().filter(str => str !== "__proto__"),
       fc.string().filter(str => str !== "__proto__"),
     ),
+  });
+
+  describe("when initializing the store", () => {
+    it("should migrate and setup the watch", async () => {
+      jest.mock("kubernetes-fluent-client", () => ({
+        K8s: jest.fn().mockReturnValue({
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: jest.fn().mockImplementationOnce(() => new PeprStore()),
+        }),
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const peprControllerStore = new PeprControllerStore([], `pepr-test-store`, () => {
+        Log.info("✅ Test setup complete");
+        // Initialize the schedule store for each capability
+        new PeprControllerStore([], `pepr-test-schedule`, () => {
+          Log.info("✅ Test scheduling complete");
+        });
+      });
+
+      // Fast-forward time
+      // jest.runAllTimers();
+
+      // Assert the private method was called
+      // ??
+    });
+    it("should create the store resource if it does not exist", async () => {
+      jest.mock("kubernetes-fluent-client", () => ({
+        K8s: jest.fn().mockReturnValue({
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: jest.fn().mockImplementationOnce(() => new Error()),
+        }),
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const peprControllerStore = new PeprControllerStore([], `pepr-test-store`, () => {
+        Log.info("✅ Test setup complete");
+        // Initialize the schedule store for each capability
+        new PeprControllerStore([], `pepr-test-schedule`, () => {
+          Log.info("✅ Test scheduling complete");
+        });
+      });
+
+      // Fast-forward time
+      // jest.runAllTimers();
+
+      // Assert the private method was called
+      // ??
+    });
   });
 
   describe("when PEPR_STORE_REDACT_VALUE is true", () => {
