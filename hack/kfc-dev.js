@@ -123,8 +123,8 @@ const runSequence = async (...commands) => {
 if (command === "build" && flag === "-r" && path) {
   runSequence(clone, install, buildKFC, image);
   // prepare for build and pack
-  sourcePathSrc = p.join(__dirname, `kubernetes-fluent-client/src`);
-  sourcePathDist = p.join(__dirname, `kubernetes-fluent-client/dist`);
+  sourcePathSrc = p.join(__dirname, `../kubernetes-fluent-client/src`);
+  sourcePathDist = p.join(__dirname, `../kubernetes-fluent-client/dist`);
   dirLocalModulePathSrc = p.join(__dirname, "../node_modules/kubernetes-fluent-client/src");
   dirLocalModulePathDist = p.join(__dirname, "../node_modules/kubernetes-fluent-client/dist");
   fs.cpSync(sourcePathSrc, dirLocalModulePathSrc, { recursive: true, overwrite: true });
