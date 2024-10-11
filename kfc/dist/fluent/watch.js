@@ -450,13 +450,19 @@ class Watcher {
                         catch (err) {
                             void this.#errHandler(err);
                         }
+                        finally {
+                            if (this.#client) {
+                                this.#client.close();
+                                this.#streamCleanup();
+                            }
+                        }
                     });
                     this.#req?.on("end", () => {
-                        this.#client.close();
+                        this.#client?.close();
                         this.#streamCleanup();
                     });
                     this.#req?.on("close", () => {
-                        this.#client.close();
+                        this.#client?.close();
                         this.#streamCleanup();
                     });
                     this.#req?.on("error", err => {
