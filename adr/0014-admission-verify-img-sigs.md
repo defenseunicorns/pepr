@@ -145,7 +145,9 @@ A JS-native binding / rewrite / wrapper for cosign functionality could be pulled
 
 ##### Cons
 
-- n/a
+- None certain.
+
+- More of a "risk of a con" than an actual con, but... there is some question of whether this library will work as-desired for the airgap use case (though likely it will) -- a near-future PoC using this lib should give an concrete anwser.
 
 ### Chosen Implementation Option
 
