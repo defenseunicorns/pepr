@@ -563,6 +563,9 @@ export class Watcher<T extends GenericClass> {
           throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
         }
       });
+      req.on("error", err => {
+        void this.#errHandler(err);
+      });
     } catch (e) {
       void this.#errHandler(e);
     }
