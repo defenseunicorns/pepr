@@ -48,7 +48,7 @@ program
 program
   .command("build")
   .description("Builds a dev image from a repo or local path")
-  .option("-r, --repo <branch>", "Specify the branch to clone and build from the repo")
+  .option("-b, --branch <branch>", "Specify the branch to clone and build from")
   .option("-l, --local <path>", "Specify the local path to build from")
   .action(async options => {
     let currentDir = process.cwd();
