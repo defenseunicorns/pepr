@@ -151,7 +151,7 @@ A JS-native binding / rewrite / wrapper for cosign functionality could be pulled
 
 Install JS-native lib &mdash; [sigstore-js](https://github.com/sigstore/sigstore-js).
 
-Despite the other options having more appeal in terms of technical interest (WebAssembly is _neat_!) and/or offering to take Pepr a step twoard other "cloud native" tools (i.e. largely available as Go libs), this option is:
+Despite the other options having more appeal in terms of technical interest (WebAssembly is _neat_!) and/or offering to take Pepr a step toward other "cloud native" tools (i.e. largely available as Go libs), this option is:
 
 - the simplest to implement _by far_, and
 
