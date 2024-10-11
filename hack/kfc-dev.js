@@ -47,7 +47,7 @@ program
 // Build Command
 program
   .command("build")
-  .description("Builds a dev image from a repo or local path")
+  .description("Builds a custom dev image")
   .option("-b, --branch <branch>", "Specify the branch to clone and build from")
   .option("-l, --local <path>", "Specify the local path to build from")
   .action(async options => {
