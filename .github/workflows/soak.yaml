@@ -58,7 +58,7 @@ jobs:
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
           cd "$PEPR"
-          node hack/kfc-dev.js build -r "${{ github.event.inputs.kfcBranch }}"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
