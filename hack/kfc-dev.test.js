@@ -1,15 +1,16 @@
 const { expect } = require("@jest/globals");
 const { execSync } = require("node:child_process");
 const fs = require("fs");
-const path = require("path");
 const { beforeEach } = require("node:test");
 
 describe("KFC Dev Helper E2E Test", () => {
   beforeEach(() => {
     try {
       fs.rmSync("kubernetes-fluent-client", { recursive: true, force: true });
-      execSync("docker rmi pepr");
-    } catch (err) {}
+      execSync("docker rmi pepr:dev");
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   afterAll(() => {
@@ -25,7 +26,7 @@ describe("KFC Dev Helper E2E Test", () => {
         encoding: "utf8",
       });
     } catch (error) {
-      expect(error.stdout.toString()).toContain("Usage:");
+      expect(error.stderr.toString()).toContain("Usage:");
     }
   });
 
@@ -36,7 +37,7 @@ describe("KFC Dev Helper E2E Test", () => {
         encoding: "utf8",
       });
     } catch (error) {
-      expect(error.stderr.toString()).toContain("Please provide a flag.");
+      expect(error.stderr.toString()).toContain("Please provide a path for the import operation.");
     }
   });
 
@@ -47,7 +48,7 @@ describe("KFC Dev Helper E2E Test", () => {
         encoding: "utf8",
       });
     } catch (error) {
-      expect(error.stderr.toString()).toContain("Please provide a flag.");
+      expect(error.stderr.toString()).toContain("Please provide a path for the import operation.");
     }
   });
 
