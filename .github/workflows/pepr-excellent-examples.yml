@@ -63,7 +63,7 @@ jobs:
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
           cd "$PEPR"
-          node hack/kfc-dev.js build -r "${{ github.event.inputs.kfcBranch }}"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
           rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
           rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
           cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
