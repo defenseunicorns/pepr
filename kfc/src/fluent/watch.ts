@@ -542,9 +542,6 @@ export class Watcher<T extends GenericClass> {
               }
             } catch (err) {
               void this.#errHandler(err);
-            } finally {
-              client.close();
-              this.#streamCleanup();
             }
           });
 

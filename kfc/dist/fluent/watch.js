@@ -444,10 +444,6 @@ class Watcher {
                         catch (err) {
                             void this.#errHandler(err);
                         }
-                        finally {
-                            client.close();
-                            this.#streamCleanup();
-                        }
                     });
                     req.on("end", () => {
                         client.close();
