@@ -58,6 +58,8 @@ class Watcher {
     #watchCfg;
     #latestRelistWindow = "";
     #useHTTP2 = false;
+    #client;
+    #req;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -386,6 +388,10 @@ class Watcher {
      * Watch for changes to the resource.
      */
     #http2Watch = async () => {
+        // free memory
+        if (this.#client) {
+            this.#client.close();
+        }
         try {
             // Start with a list operation
             await this.#list();
@@ -401,7 +407,7 @@ class Watcher {
                 };
             }
             // HTTP/2 client connection setup
-            const client = http2_1.default.connect(url.origin, {
+            this.#client = http2_1.default.connect(url.origin, {
                 ca: agentOptions?.ca,
                 cert: agentOptions?.cert,
                 key: agentOptions?.key,
@@ -419,11 +425,11 @@ class Watcher {
                 headers["Authorization"] = `Bearer ${token}`;
             }
             // Make the HTTP/2 request
-            const req = client.request(headers);
-            req.setEncoding("utf8");
+            this.#req = this.#client?.request(headers);
+            this.#req?.setEncoding("utf8");
             let buffer = "";
             // Handle response data
-            req.on("response", headers => {
+            this.#req?.on("response", headers => {
                 const statusCode = headers[":status"];
                 if (statusCode && statusCode >= 200 && statusCode < 300) {
                     this.#pendingReconnect = false;
@@ -431,7 +437,7 @@ class Watcher {
                     // Reset the retry count
                     this.#resyncFailureCount = 0;
                     this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                    req.on("data", async (chunk) => {
+                    this.#req?.on("data", async (chunk) => {
                         try {
                             buffer += chunk;
                             const lines = buffer.split("\n");
@@ -445,15 +451,15 @@ class Watcher {
                             void this.#errHandler(err);
                         }
                     });
-                    req.on("end", () => {
-                        client.close();
+                    this.#req?.on("end", () => {
+                        this.#client.close();
                         this.#streamCleanup();
                     });
-                    req.on("close", () => {
-                        client.close();
+                    this.#req?.on("close", () => {
+                        this.#client.close();
                         this.#streamCleanup();
                     });
-                    req.on("error", err => {
+                    this.#req?.on("error", err => {
                         void this.#errHandler(err);
                     });
                 }
@@ -462,7 +468,7 @@ class Watcher {
                     throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
                 }
             });
-            req.on("error", err => {
+            this.#req?.on("error", err => {
                 void this.#errHandler(err);
             });
         }

@@ -70,6 +70,8 @@ export class Watcher<T extends GenericClass> {
   #watchCfg: WatchCfg;
   #latestRelistWindow: string = "";
   #useHTTP2: boolean = false;
+  #client: http2.ClientHttp2Session | undefined;
+  #req: http2.ClientHttp2Stream | undefined;
 
   // Track the last time data was received
   #lastSeenTime = NONE;
@@ -473,6 +475,11 @@ export class Watcher<T extends GenericClass> {
    * Watch for changes to the resource.
    */
   #http2Watch = async () => {
+    // free memory
+    if(this.#client) {
+      this.#client.close();
+    }
+
     try {
       // Start with a list operation
       await this.#list();
@@ -491,7 +498,7 @@ export class Watcher<T extends GenericClass> {
       }
 
       // HTTP/2 client connection setup
-      const client = http2.connect(url.origin, {
+      this.#client = http2.connect(url.origin, {
         ca: agentOptions?.ca,
         cert: agentOptions?.cert,
         key: agentOptions?.key,
@@ -512,14 +519,14 @@ export class Watcher<T extends GenericClass> {
       }
 
       // Make the HTTP/2 request
-      const req = client.request(headers);
+       this.#req = this.#client?.request(headers);
 
-      req.setEncoding("utf8");
+      this.#req?.setEncoding("utf8");
 
       let buffer = "";
 
       // Handle response data
-      req.on("response", headers => {
+      this.#req?.on("response", headers => {
         const statusCode = headers[":status"];
 
         if (statusCode && statusCode >= 200 && statusCode < 300) {
@@ -530,7 +537,7 @@ export class Watcher<T extends GenericClass> {
           this.#resyncFailureCount = 0;
           this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
 
-          req.on("data", async chunk => {
+          this.#req?.on("data", async chunk => {
             try {
               buffer += chunk;
               const lines = buffer.split("\n");
@@ -545,17 +552,17 @@ export class Watcher<T extends GenericClass> {
             }
           });
 
-          req.on("end", () => {
-            client.close();
+          this.#req?.on("end", () => {
+            this.#client!.close();
             this.#streamCleanup();
           });
 
-          req.on("close", () => {
-            client.close();
+          this.#req?.on("close", () => {
+            this.#client!.close();
             this.#streamCleanup();
           });
 
-          req.on("error", err => {
+          this.#req?.on("error", err => {
             void this.#errHandler(err);
           });
         } else {
@@ -563,7 +570,7 @@ export class Watcher<T extends GenericClass> {
           throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
         }
       });
-      req.on("error", err => {
+      this.#req?.on("error", err => {
         void this.#errHandler(err);
       });
     } catch (e) {
