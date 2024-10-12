@@ -6,15 +6,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Watcher = exports.WatchEvent = void 0;
-const byline_1 = __importDefault(require("byline"));
 const crypto_1 = require("crypto");
 const events_1 = require("events");
 const https_1 = __importDefault(require("https"));
-const http2_1 = __importDefault(require("http2"));
-const node_fetch_1 = __importDefault(require("node-fetch"));
+const undici_1 = require("undici");
 const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
+const stream_1 = require("stream");
 const fs_1 = __importDefault(require("fs"));
 var WatchEvent;
 (function (WatchEvent) {
@@ -57,7 +56,6 @@ class Watcher {
     #callback;
     #watchCfg;
     #latestRelistWindow = "";
-    #useHTTP2 = false;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -104,8 +102,6 @@ class Watcher {
         this.#lastSeenLimit = watchCfg.lastSeenLimitSeconds * 1000;
         // Set the latest relist interval to now
         this.#latestRelistWindow = new Date().toISOString();
-        // Set the latest relist interval to now
-        this.#useHTTP2 = watchCfg.useHTTP2 ?? false;
         // Add random jitter to the relist/resync intervals (up to 1 second)
         const jitter = Math.floor(Math.random() * 1000);
         // Check every relist interval for cache staleness
@@ -131,12 +127,7 @@ class Watcher {
      */
     async start() {
         this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
-        if (this.#useHTTP2) {
-            await this.#http2Watch();
-        }
-        else {
-            await this.#watch();
-        }
+        await this.#watch();
         return this.#abortController;
     }
     /** Close the watch. Also available on the AbortController returned by {@link Watcher.start}. */
@@ -346,51 +337,6 @@ class Watcher {
             await this.#list();
             // Build the URL and request options
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
-            // Create a stream to read the response body
-            this.#stream = byline_1.default.createStream();
-            // Bind the stream events
-            this.#stream.on("error", this.#errHandler);
-            this.#stream.on("close", this.#streamCleanup);
-            this.#stream.on("finish", this.#streamCleanup);
-            // Make the actual request
-            const response = await (0, node_fetch_1.default)(url, { ...opts });
-            // Reset the pending reconnect flag
-            this.#pendingReconnect = false;
-            // If the request is successful, start listening for events
-            if (response.ok) {
-                this.#events.emit(WatchEvent.CONNECT, url.pathname);
-                const { body } = response;
-                // Reset the retry count
-                this.#resyncFailureCount = 0;
-                this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                // Listen for events and call the callback function
-                this.#stream.on("data", async (line) => {
-                    await this.#processLine(line, this.#process);
-                });
-                // Bind the body events
-                body.on("error", this.#errHandler);
-                body.on("close", this.#streamCleanup);
-                body.on("finish", this.#streamCleanup);
-                // Pipe the response body to the stream
-                body.pipe(this.#stream);
-            }
-            else {
-                throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
-            }
-        }
-        catch (e) {
-            void this.#errHandler(e);
-        }
-    };
-    /**
-     * Watch for changes to the resource.
-     */
-    #http2Watch = async () => {
-        try {
-            // Start with a list operation
-            await this.#list();
-            // Build the URL and request options
-            const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
             let agentOptions;
             if (opts.agent && opts.agent instanceof https_1.default.Agent) {
                 agentOptions = {
@@ -400,71 +346,69 @@ class Watcher {
                     rejectUnauthorized: false,
                 };
             }
-            // HTTP/2 client connection setup
-            const client = http2_1.default.connect(url.origin, {
-                ca: agentOptions?.ca,
-                cert: agentOptions?.cert,
-                key: agentOptions?.key,
-                rejectUnauthorized: agentOptions?.rejectUnauthorized,
+            const agent = new undici_1.Agent({
+                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Errors.md?plain=1#L16
+                // https://github.com/nodejs/undici/blob/87d7ccf6b51c61a4f4a056f7c2cac78347618486/docs/docs/api/Client.md?plain=1#L24
+                keepAliveMaxTimeout: 600000,
+                keepAliveTimeout: 600000,
+                bodyTimeout: 0,
+                connect: {
+                    ca: agentOptions?.ca,
+                    cert: agentOptions?.cert,
+                    key: agentOptions?.key,
+                },
             });
-            // Set up headers for the HTTP/2 request
             const token = await this.#getToken();
             const headers = {
-                ":method": "GET",
-                ":path": url.pathname + url.search,
-                "content-type": "application/json",
-                "user-agent": "kubernetes-fluent-client",
+                "Content-Type": "application/json",
+                "User-Agent": "kubernetes-fluent-client",
             };
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
             }
-            // Make the HTTP/2 request
-            const req = client.request(headers);
-            req.setEncoding("utf8");
-            let buffer = "";
-            // Handle response data
-            req.on("response", headers => {
-                const statusCode = headers[":status"];
-                if (statusCode && statusCode >= 200 && statusCode < 300) {
-                    this.#pendingReconnect = false;
-                    this.#events.emit(WatchEvent.CONNECT, url.pathname);
-                    // Reset the retry count
-                    this.#resyncFailureCount = 0;
-                    this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
-                    req.on("data", async (chunk) => {
-                        try {
-                            buffer += chunk;
-                            const lines = buffer.split("\n");
-                            // Avoid  Watch event data_error received. Unexpected end of JSON input.
-                            buffer = lines.pop();
-                            for (const line of lines) {
-                                await this.#processLine(line, this.#process);
-                            }
+            const response = await (0, undici_1.fetch)(url, {
+                headers,
+                dispatcher: agent,
+            });
+            // Reset the pending reconnect flag
+            this.#pendingReconnect = false;
+            // If the request is successful, start listening for events
+            if (response.ok) {
+                this.#events.emit(WatchEvent.CONNECT, url.pathname);
+                const { body } = response;
+                if (!body) {
+                    throw new Error("No response body found");
+                }
+                // Reset the retry count
+                this.#resyncFailureCount = 0;
+                this.#events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, this.#resyncFailureCount);
+                // Use a native stream issue #1180
+                this.#stream = stream_1.Readable.from(body);
+                const decoder = new TextDecoder();
+                let buffer = "";
+                // Listen for events and call the callback function
+                this.#stream.on("data", async (chunk) => {
+                    try {
+                        // this whole section is kind of ugly +=, .pop()!
+                        buffer += decoder.decode(chunk, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop();
+                        for (const line of lines) {
+                            await this.#processLine(line, this.#process);
                         }
-                        catch (err) {
-                            void this.#errHandler(err);
-                        }
-                    });
-                    req.on("end", () => {
-                        client.close();
-                        this.#streamCleanup();
-                    });
-                    req.on("close", () => {
-                        client.close();
-                        this.#streamCleanup();
-                    });
-                    req.on("error", err => {
+                    }
+                    catch (err) {
                         void this.#errHandler(err);
-                    });
-                }
-                else {
-                    const statusMessage = headers[":status-text"] || "Unknown";
-                    throw new Error(`watch connect failed: ${statusCode} ${statusMessage}`);
-                }
-            });
-            req.on("error", err => {
-                void this.#errHandler(err);
-            });
+                    }
+                });
+                this.#stream.on("close", this.#streamCleanup);
+                this.#stream.on("end", this.#streamCleanup);
+                this.#stream.on("error", this.#errHandler);
+                this.#stream.on("finish", this.#streamCleanup);
+            }
+            else {
+                throw new Error(`watch connect failed: ${response.status} ${response.statusText}`);
+            }
         }
         catch (e) {
             void this.#errHandler(e);
@@ -495,9 +439,7 @@ class Watcher {
                     this.#pendingReconnect = true;
                     this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
                     this.#streamCleanup();
-                    if (!this.#useHTTP2) {
-                        void this.#watch();
-                    }
+                    void this.#watch();
                 }
             }
             else {
@@ -536,11 +478,11 @@ class Watcher {
     #streamCleanup = () => {
         if (this.#stream) {
             this.#stream.removeAllListeners();
-            this.#stream.destroy();
+            if (!this.#stream.readableEnded) {
+                this.#stream.destroy();
+            }
         }
-        if (this.#useHTTP2) {
-            void this.#http2Watch();
-        }
+        void this.#watch();
     };
 }
 exports.Watcher = Watcher;
