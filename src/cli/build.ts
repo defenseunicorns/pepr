@@ -330,7 +330,9 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
   } catch (e) {
     console.error(`Error building module:`, e);
 
-    if (!e.stdout) process.exit(1);
+
+    if (!e.stdout) process.exit(1); // On any other error, exit with a non-zero exit code
+    
     const out = e.stdout.toString() as string;
     const err = e.stderr.toString();
 
@@ -363,6 +365,5 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
       });
     }
 
-    // On any other error, exit with a non-zero exit code
   }
 }
