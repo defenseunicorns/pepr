@@ -3,6 +3,12 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
@@ -25,7 +31,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -46,9 +52,23 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          ls -l ${GITHUB_WORKSPACE}
+
+      - name: build pepr package and kfc dev container image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
+          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
+          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
+          cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
+          cp -R "$PEPR/kubernetes-fluent-client/dist" "$PEPR/node_modules/kubernetes-fluent-client/dist"
+          npm run build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
@@ -59,7 +79,7 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: pepr-package-and-controller-image
           path: | 
@@ -82,7 +102,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -91,7 +111,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: clone pepr-excellent-examples
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -146,7 +166,7 @@ jobs:
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
 
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -174,7 +194,7 @@ jobs:
             --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: always()
         with:
           name: "troubleshooting_logs_${{matrix.name}}"

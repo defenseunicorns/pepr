@@ -1,0 +1,40 @@
+name: Container Scans
+
+permissions:
+  actions: read
+  contents: write # for sbom-action artifact uploads
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  container-scans:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+      - name: Use Node.js latest
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+        with:
+          node-version: 20
+          cache: "npm"
+      - name: Install Pepr Dependencies
+        run: npm ci
+      - name: Build Pepr Controller Image
+        run: npm run build:image
+      - name: Vulnerability Scan
+        uses: anchore/scan-action@4e08a16a68fb1b35d2fca00f0607db0b5b5120a7 # v5.0.0
+        with:
+          image: "pepr:dev"
+          fail-build: true
+          severity-cutoff: high
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: pepr:dev
+          upload-artifact: true
+          upload-artifact-retention: 30
