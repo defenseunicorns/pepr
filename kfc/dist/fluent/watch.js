@@ -407,6 +407,12 @@ class Watcher {
                 key: agentOptions?.key,
                 rejectUnauthorized: agentOptions?.rejectUnauthorized,
             });
+            // Handle client connection errors
+            client.on("error", err => {
+                this.#events.emit(WatchEvent.NETWORK_ERROR, err);
+                this.#streamCleanup(client);
+                this.#scheduleReconnect();
+            });
             // Set up headers for the HTTP/2 request
             const token = await this.#getToken();
             const headers = {
@@ -446,12 +452,12 @@ class Watcher {
                         }
                     });
                     req.on("end", () => {
-                        client.close();
-                        this.#streamCleanup();
+                        this.#streamCleanup(client);
+                        this.#scheduleReconnect();
                     });
                     req.on("close", () => {
-                        client.close();
-                        this.#streamCleanup();
+                        this.#streamCleanup(client);
+                        this.#scheduleReconnect();
                     });
                     req.on("error", err => {
                         void this.#errHandler(err);
@@ -464,6 +470,10 @@ class Watcher {
             });
             req.on("error", err => {
                 void this.#errHandler(err);
+            });
+            this.#abortController.signal.addEventListener("abort", () => {
+                req.close();
+                this.#streamCleanup(client);
             });
         }
         catch (e) {
@@ -518,6 +528,7 @@ class Watcher {
                 clearInterval(this.$relistTimer);
                 clearInterval(this.#resyncTimer);
                 this.#streamCleanup();
+                this.#scheduleReconnect();
                 this.#events.emit(WatchEvent.ABORT, err);
                 return;
             case "TooOld":
@@ -532,14 +543,24 @@ class Watcher {
         // Force a resync
         this.#lastSeenTime = OVERRIDE;
     };
+    /** Schedules a reconnect with a delay to prevent rapid reconnections. */
+    #scheduleReconnect() {
+        // Introduce a delay with a randomized jitter to avoid reconnect storms.
+        const jitter = Math.floor(Math.random() * 1000); // Up to 1 second of random delay.
+        const delay = (this.#watchCfg.resyncDelaySec ?? 5) * 1000 + jitter;
+        setTimeout(() => {
+            this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
+            this.#http2Watch();
+        }, delay);
+    }
     /** Cleanup the stream and listeners. */
-    #streamCleanup = () => {
+    #streamCleanup = (client) => {
         if (this.#stream) {
             this.#stream.removeAllListeners();
             this.#stream.destroy();
         }
-        if (this.#useHTTP2) {
-            void this.#http2Watch();
+        if (client) {
+            client.close();
         }
     };
 }
