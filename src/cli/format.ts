@@ -69,8 +69,6 @@ export async function peprFormat(validateOnly: boolean) {
         } else {
           await fs.writeFile(filePath, formatted);
         }
-
-        // Otherwise, write the formatted file
       }
 
       return !hasFailure;
