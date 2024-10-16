@@ -3,7 +3,7 @@
 .eslintrc.json
 .github
 _images
-.prettierrc
+# .prettierrc
 .vscode
 adr
 /docs/
