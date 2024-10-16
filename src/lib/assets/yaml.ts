@@ -1,18 +1,115 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml } from "@kubernetes/client-node";
+import {
+  dumpYaml,
+  V1Affinity,
+  V1EnvVar,
+  V1PodSpec,
+  V1Probe,
+  V1ResourceRequirements,
+  V1Toleration,
+  V1VolumeMount,
+  V1Volume,
+  V1PodSecurityContext,
+} from "@kubernetes/client-node";
+import Log from "../logger";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, watcher } from "./pods";
+import { deployment, moduleSecret, namespace, watcher, genEnv } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
-import { genEnv } from "./pods";
-// Helm Chart overrides file (values.yaml) generated from assets
-export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-  const overrides = {
+
+const DEFAULT_WEBHOOK_TIMEOUT_SECS = 30;
+const DEFAULT_USER_ID = 65532;
+
+enum FailurePolicy {
+  Fail = "Fail",
+  Ignore = "Ignore",
+  Reject = "reject",
+}
+
+interface Config<T = Record<string, unknown>> {
+  onError?: string;
+  webhookTimeout: number;
+  description?: string;
+  uuid: string;
+  alwaysIgnore: {
+    namespaces: string[];
+  };
+  additionalFields?: T; // Add other properties as needed
+}
+
+interface BaseConfig {
+  terminationGracePeriodSeconds: number;
+  env: V1EnvVar[];
+  image: string;
+  annotations: Record<string, string>;
+  labels: Record<string, string>;
+  securityContext: V1PodSpec["securityContext"];
+  readinessProbe: V1Probe;
+  livenessProbe: V1Probe;
+  resources: V1ResourceRequirements;
+  containerSecurityContext: V1PodSpec["containers"][0]["securityContext"];
+  nodeSelector: Record<string, string>;
+  tolerations: V1Toleration[];
+  extraVolumeMounts: V1VolumeMount[];
+  extraVolumes: V1Volume[];
+  affinity: V1Affinity;
+  podAnnotations: Record<string, string>;
+  serviceMonitor: {
+    enabled: boolean;
+    labels: Record<string, string>;
+    annotations: Record<string, string>;
+  };
+}
+interface GeneratedConfig extends BaseConfig {
+  failurePolicy?: string;
+  webhookTimeout: number;
+}
+interface ZarfPackageConfig {
+  kind: string;
+  metadata: {
+    name: string;
+    description: string;
+    url: string;
+    version: string;
+  };
+  components: Array<{
+    name: string;
+    required: boolean;
+    manifests?: Array<{ name: string; namespace: string; files: string[] }>;
+    charts?: Array<{ name: string; namespace: string; version: string; localPath: string }>;
+    images: string[];
+  }>;
+}
+
+interface ContainerSecurityContext {
+  runAsUser: number;
+  runAsGroup: number;
+  runAsNonRoot: boolean;
+  allowPrivilegeEscalation: boolean;
+  capabilities: { drop: string[] };
+}
+
+interface Overrides {
+  secrets: { apiToken: string };
+  hash: string;
+  namespace: {
+    annotations: Record<string, string>;
+    labels: Record<string, string>;
+  };
+  uuid: string;
+  admission: GeneratedConfig;
+  watcher: BaseConfig;
+}
+
+export function generateOverrides(assets: Assets, apiToken: string): Overrides {
+  const { hash, name, config, image } = assets;
+
+  return {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
     },
@@ -24,146 +121,136 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       },
     },
     uuid: name,
-    admission: {
-      terminationGracePeriodSeconds: 5,
-      failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
-      webhookTimeout: config.webhookTimeout,
-      env: genEnv(config, false, true),
-      envFrom: [],
+    admission: generateAdmissionConfig(
+      {
+        ...config,
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
+        alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] },
+      },
       image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
+      name,
+    ),
+    watcher: generateWatcherConfig(
+      {
+        ...config,
+        webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
+        alwaysIgnore: { namespaces: config.alwaysIgnore?.namespaces ?? [] }, // Ensure alwaysIgnore.namespaces is always an array
       },
-      labels: {
-        app: name,
-        "pepr.dev/controller": "admission",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        fsGroup: 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "64Mi",
-          cpu: "100m",
-        },
-        limits: {
-          memory: "256Mi",
-          cpu: "500m",
-        },
-      },
-      containerSecurityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
-        },
-      },
-      podAnnotations: {},
-      nodeSelector: {},
-      tolerations: [],
-      extraVolumeMounts: [],
-      extraVolumes: [],
-      affinity: {},
-      serviceMonitor: {
-        enabled: false,
-        labels: {},
-        annotations: {},
-      },
+      image,
+      name,
+    ),
+  };
+}
+
+export function generateAdmissionConfig(config: Config, image: string, name: string): GeneratedConfig {
+  if (!config.uuid) {
+    Log.error(`UUID is required in config for image ${image} and name ${name}`);
+    throw new Error(`uuid is required in config for image ${image} and name ${name}`);
+  }
+
+  return {
+    terminationGracePeriodSeconds: 5,
+    failurePolicy: config.onError === FailurePolicy.Reject ? FailurePolicy.Fail : FailurePolicy.Ignore,
+    webhookTimeout: config.webhookTimeout ?? DEFAULT_WEBHOOK_TIMEOUT_SECS,
+    env: genEnv(config, false, true),
+    image,
+    annotations: { "pepr.dev/description": config.description || "" },
+    labels: {
+      app: name,
+      "pepr.dev/controller": "admission",
+      "pepr.dev/uuid": config.uuid,
     },
-    watcher: {
-      terminationGracePeriodSeconds: 5,
-      env: genEnv(config, true, true),
-      envFrom: [],
-      image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
-      },
-      labels: {
-        app: `${name}-watcher`,
-        "pepr.dev/controller": "watcher",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        fsGroup: 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "64Mi",
-          cpu: "100m",
-        },
-        limits: {
-          memory: "256Mi",
-          cpu: "500m",
-        },
-      },
-      containerSecurityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
-        },
-      },
-      nodeSelector: {},
-      tolerations: [],
-      extraVolumeMounts: [],
-      extraVolumes: [],
-      affinity: {},
-      podAnnotations: {},
-      serviceMonitor: {
-        enabled: false,
-        labels: {},
-        annotations: {},
-      },
+    securityContext: generateSecurityContext(),
+    readinessProbe: generateProbeConfig(),
+    livenessProbe: generateProbeConfig(),
+    resources: generateResourceConfig(),
+    containerSecurityContext: generateContainerSecurityContext(),
+    nodeSelector: {},
+    tolerations: [],
+    extraVolumeMounts: [],
+    extraVolumes: [],
+    affinity: {},
+    podAnnotations: {},
+    serviceMonitor: { enabled: false, labels: {}, annotations: {} },
+  };
+}
+
+export function generateWatcherConfig(config: Config, image: string, name: string): BaseConfig {
+  return {
+    terminationGracePeriodSeconds: 5,
+    env: genEnv(config, true, true),
+    image,
+    annotations: { "pepr.dev/description": `${config.description}` || "" },
+    labels: {
+      app: `${name}-watcher`,
+      "pepr.dev/controller": "watcher",
+      "pepr.dev/uuid": config.uuid,
+    },
+    securityContext: generateSecurityContext(),
+    readinessProbe: generateProbeConfig(),
+    livenessProbe: generateProbeConfig(),
+    resources: generateResourceConfig(),
+    containerSecurityContext: generateContainerSecurityContext(),
+    nodeSelector: {},
+    tolerations: [],
+    extraVolumeMounts: [],
+    extraVolumes: [],
+    affinity: {},
+    podAnnotations: {},
+    serviceMonitor: { enabled: false, labels: {}, annotations: {} },
+  };
+}
+
+export function generateSecurityContext(): V1PodSecurityContext {
+  return {
+    runAsUser: DEFAULT_USER_ID,
+    runAsGroup: DEFAULT_USER_ID,
+    runAsNonRoot: true,
+    fsGroup: DEFAULT_USER_ID,
+  };
+}
+
+export function generateContainerSecurityContext(): ContainerSecurityContext {
+  return {
+    runAsUser: DEFAULT_USER_ID,
+    runAsGroup: DEFAULT_USER_ID,
+    runAsNonRoot: true,
+    allowPrivilegeEscalation: false,
+    capabilities: {
+      drop: ["ALL"],
     },
   };
+}
 
+export function generateProbeConfig(): V1Probe {
+  return {
+    httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+    initialDelaySeconds: 10,
+  };
+}
+
+export function generateResourceConfig(): V1ResourceRequirements {
+  return {
+    requests: { memory: "64Mi", cpu: "100m" },
+    limits: { memory: "256Mi", cpu: "500m" },
+  };
+}
+
+export async function writeOverridesFile(assets: Assets, path: string): Promise<void> {
+  const { apiToken } = assets;
+
+  if (!apiToken) {
+    throw new Error("apiToken is required");
+  }
+
+  const overrides = generateOverrides(assets, apiToken);
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
-export function zarfYaml({ name, image, config }: Assets, path: string) {
-  const zarfCfg = {
+
+export function generateZarfConfig(assets: Assets, path: string, chart = false): ZarfPackageConfig {
+  const { name, image, config } = assets;
+
+  return {
     kind: "ZarfPackageConfig",
     metadata: {
       name,
@@ -175,55 +262,28 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
       {
         name: "module",
         required: true,
-        manifests: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            files: [path],
-          },
-        ],
+        manifests: !chart ? [{ name: "module", namespace: "pepr-system", files: [path] }] : undefined,
+        charts: chart
+          ? [{ name: "module", namespace: "pepr-system", version: `${config.appVersion || "0.0.1"}`, localPath: path }]
+          : undefined,
         images: [image],
       },
     ],
   };
-
-  return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export function zarfYamlChart({ name, image, config }: Assets, path: string) {
-  const zarfCfg = {
-    kind: "ZarfPackageConfig",
-    metadata: {
-      name,
-      description: `Pepr Module: ${config.description}`,
-      url: "https://github.com/defenseunicorns/pepr",
-      version: `${config.appVersion || "0.0.1"}`,
-    },
-    components: [
-      {
-        name: "module",
-        required: true,
-        charts: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            version: `${config.appVersion || "0.0.1"}`,
-            localPath: path,
-          },
-        ],
-        images: [image],
-      },
-    ],
-  };
-
-  return dumpYaml(zarfCfg, { noRefs: true });
+export function writeZarfYaml(assets: Assets, path: string): string {
+  return dumpYaml(generateZarfConfig(assets, path), { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path } = assets;
+export function writeZarfYamlChart(assets: Assets, path: string): string {
+  return dumpYaml(generateZarfConfig(assets, path, true), { noRefs: true });
+}
+
+export async function generateAllYaml(assets: Assets, rbacMode: string, imagePullSecret?: string): Promise<string> {
+  const { name, tls, apiToken, path, capabilities } = assets;
   const code = await fs.readFile(path);
 
-  // Generate a hash of the code
   assets.hash = crypto.createHash("sha256").update(code).digest("hex");
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
@@ -232,7 +292,7 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, rbacMode),
+    clusterRole(name, capabilities, rbacMode),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
@@ -245,18 +305,9 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
     storeRoleBinding(name),
   ];
 
-  if (mutateWebhook) {
-    resources.push(mutateWebhook);
-  }
+  if (mutateWebhook) resources.push(mutateWebhook);
+  if (validateWebhook) resources.push(validateWebhook);
+  if (watchDeployment) resources.push(watchDeployment);
 
-  if (validateWebhook) {
-    resources.push(validateWebhook);
-  }
-
-  if (watchDeployment) {
-    resources.push(watchDeployment);
-  }
-
-  // Convert the resources to a single YAML string
-  return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
+  return resources.map(r => dumpYaml(r, { noRefs: true })).join("\n---\n");
 }

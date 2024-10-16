@@ -9,7 +9,7 @@ import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
+import { generateAllYaml, writeZarfYaml, writeOverridesFile, writeZarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
@@ -46,6 +46,9 @@ export class Assets {
 
     // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
+
+    // Initialize capabilities to an empty array
+    this.capabilities = [];
   }
 
   setHash = (hash: string) => {
@@ -57,9 +60,9 @@ export class Assets {
     await deploy(this, force, webhookTimeout);
   };
 
-  zarfYaml = (path: string) => zarfYaml(this, path);
+  zarfYaml = (path: string) => writeZarfYaml(this, path);
 
-  zarfYamlChart = (path: string) => zarfYamlChart(this, path);
+  zarfYamlChart = (path: string) => writeZarfYamlChart(this, path);
 
   allYaml = async (rbacMode: string, imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
@@ -68,7 +71,7 @@ export class Assets {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
-    return allYaml(this, rbacMode, imagePullSecret);
+    return generateAllYaml(this, rbacMode, imagePullSecret);
   };
 
   generateHelmChart = async (basePath: string) => {
@@ -106,7 +109,7 @@ export class Assets {
       await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
 
       // create values file
-      await overridesFile(this, valuesPath);
+      await writeOverridesFile(this, valuesPath);
 
       // create the chart.yaml
       await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
