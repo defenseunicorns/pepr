@@ -100,6 +100,7 @@ globals_1.jest.mock("../fetch");
     const fakeUrl = new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake");
     const fakeOpts = {
         body: JSON.stringify(fakePayload),
+        compress: true,
         headers: new node_fetch_1.Headers({
             "Content-Type": "application/json",
             "User-Agent": `kubernetes-fluent-client`,
@@ -131,6 +132,7 @@ globals_1.jest.mock("../fetch");
         (0, globals_1.expect)(result).toEqual(fakePayload);
         (0, globals_1.expect)(mockedFetch).toHaveBeenCalledWith(new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake/status"), globals_1.expect.objectContaining({
             method: "PATCH",
+            compress: true,
             headers: new node_fetch_1.Headers({
                 "Content-Type": "application/merge-patch+json",
                 "User-Agent": `kubernetes-fluent-client`,
@@ -150,6 +152,7 @@ globals_1.jest.mock("../fetch");
         (0, globals_1.expect)(result).toEqual(fakePayload);
         (0, globals_1.expect)(mockedFetch).toHaveBeenCalledWith(new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake"), globals_1.expect.objectContaining({
             method: "PATCH",
+            compress: true,
             headers: new node_fetch_1.Headers({
                 "Content-Type": "application/json-patch+json",
                 "User-Agent": `kubernetes-fluent-client`,
@@ -168,6 +171,7 @@ globals_1.jest.mock("../fetch");
         (0, globals_1.expect)(result).toEqual(fakePayload);
         (0, globals_1.expect)(mockedFetch).toHaveBeenCalledWith(new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake?fieldManager=pepr&fieldValidation=Strict&force=false"), globals_1.expect.objectContaining({
             method: "PATCH",
+            compress: true,
             headers: new node_fetch_1.Headers({
                 "Content-Type": "application/apply-patch+yaml",
                 "User-Agent": `kubernetes-fluent-client`,
@@ -186,6 +190,7 @@ globals_1.jest.mock("../fetch");
         (0, globals_1.expect)(result).toEqual(fakePayload);
         (0, globals_1.expect)(mockedFetch).toHaveBeenCalledWith(new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake?fieldManager=pepr&fieldValidation=Strict&force=true"), globals_1.expect.objectContaining({
             method: "PATCH",
+            compress: true,
             headers: new node_fetch_1.Headers({
                 "Content-Type": "application/apply-patch+yaml",
                 "User-Agent": `kubernetes-fluent-client`,

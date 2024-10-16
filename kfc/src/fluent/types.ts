@@ -7,6 +7,22 @@ import type { PartialDeep } from "type-fest";
 
 import { GenericClass, GroupVersionKind } from "../types";
 import { WatchCfg, Watcher } from "./watch";
+import https from "https";
+import { SecureClientSessionOptions } from "http2";
+/**
+ * Agent options for the the http2Watch
+ */
+export type AgentOptions = Pick<
+  SecureClientSessionOptions,
+  "ca" | "cert" | "key" | "rejectUnauthorized"
+>;
+
+/**
+ * Options for the http2Watch
+ */
+export interface Options {
+  agent?: https.Agent & { options?: AgentOptions };
+}
 
 /**
  * The Phase matched when using the K8s Watch API.
