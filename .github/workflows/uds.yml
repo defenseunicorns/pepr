@@ -112,16 +112,26 @@ jobs:
       - name: "set env: PEPR_IMG"
         run: echo "PEPR_IMG=${GITHUB_WORKSPACE}/pepr-img.tar" >> "$GITHUB_ENV"
 
+      - name: clone pepr
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
       - name: import docker image from pepr tar
         run: |
           docker image load --input "$PEPR_IMG"
 
-      - name: uds HTTP2-based watcher
+      - name: swap-in HTTP2-based watcher
         run: |
-          jq --version
-          node --version
+          cd "$UDS_CORE"
+          node "$PEPR/.github/workflows/uds-http2-watcher.js" ./package.json
+          cat ./package.json
 
-      # - name: uds run
-      #   run: |
-      #     cd "$UDS_CORE"
-      #     PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
+      - name: uds run
+        run: |
+          cd "$UDS_CORE"
+          PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
