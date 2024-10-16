@@ -3,9 +3,9 @@
 
 import { expect, test, describe, it, jest } from "@jest/globals";
 import * as fc from "fast-check";
-import { redactedStore, redactedPatch, PeprControllerStore } from "./store";
+import { PeprControllerStore } from "./store";
+import { redactedStore, redactedPatch } from "../logger";
 import { AddOperation } from "fast-json-patch";
-import { redactedValue } from "./store";
 import Log from "../logger";
 import { CapabilityCfg } from "../types";
 import { Capability } from "../capability";
@@ -13,6 +13,7 @@ import { Schedule } from "../schedule";
 import { PeprStore } from "../k8s";
 
 describe("pepr store tests", () => {
+  const redactedValue = "**redacted**";
   const peprStoreFuzz = fc.record({
     kind: fc.constant("PeprStore"),
     apiVersion: fc.constant("v1"),
