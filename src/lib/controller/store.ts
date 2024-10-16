@@ -9,6 +9,7 @@ import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
 import Log from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
+import { fillCache, flushCache } from "./migrateCache";
 
 export const redactedValue = "**redacted**";
 const namespace = "pepr-system";
@@ -72,69 +73,7 @@ export class PeprControllerStore {
   #migrateAndSetupWatch = async (store: PeprStore) => {
     Log.debug(redactedStore(store), "Pepr Store migration");
     const data: DataStore = store.data || {};
-    const migrateCache: Record<string, Operation> = {};
-
-    // Send the cached updates to the cluster
-    const flushCache = async () => {
-      const indexes = Object.keys(migrateCache);
-      const payload = Object.values(migrateCache);
-
-      // Loop over each key in the cache and delete it to avoid collisions with other sender calls
-      for (const idx of indexes) {
-        delete migrateCache[idx];
-      }
-
-      try {
-        // Send the patch to the cluster
-        if (payload.length > 0) {
-          await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
-        }
-      } catch (err) {
-        Log.error(err, "Pepr store update failure");
-
-        if (err.status === 422) {
-          Object.keys(migrateCache).forEach(key => delete migrateCache[key]);
-        } else {
-          // On failure to update, re-add the operations to the cache to be retried
-          for (const idx of indexes) {
-            migrateCache[idx] = payload[Number(idx)];
-          }
-        }
-      }
-    };
-
-    const fillCache = (name: string, op: DataOp, key: string[], val?: string) => {
-      if (op === "add") {
-        // adjust the path for the capability
-        const path = `/data/${name}-v2-${key}`;
-        const value = val || "";
-        const cacheIdx = [op, path, value].join(":");
-
-        // Add the operation to the cache
-        migrateCache[cacheIdx] = { op, path, value };
-
-        return;
-      }
-
-      if (op === "remove") {
-        if (key.length < 1) {
-          throw new Error(`Key is required for REMOVE operation`);
-        }
-
-        for (const k of key) {
-          const path = `/data/${name}-${k}`;
-          const cacheIdx = [op, path].join(":");
-
-          // Add the operation to the cache
-          migrateCache[cacheIdx] = { op, path };
-        }
-
-        return;
-      }
-
-      // If we get here, the operation is not supported
-      throw new Error(`Unsupported operation: ${op}`);
-    };
+    let migrateCache: Record<string, Operation> = {};
 
     for (const name of Object.keys(this.#stores)) {
       // Get the prefix offset for the keys
@@ -145,12 +84,12 @@ export class PeprControllerStore {
         // Match on the capability name as a prefix for non v2 keys
         if (ramda.startsWith(name, key) && !ramda.startsWith(`${name}-v2`, key)) {
           // populate migrate cache
-          fillCache(name, "remove", [key.slice(offset)], data[key]);
-          fillCache(name, "add", [key.slice(offset)], data[key]);
+          migrateCache = fillCache(migrateCache, name, "remove", [key.slice(offset)], data[key]);
+          migrateCache = fillCache(migrateCache, name, "add", [key.slice(offset)], data[key]);
         }
       }
     }
-    await flushCache();
+    migrateCache = await flushCache(migrateCache, namespace, this.#name);
     this.#setupWatch();
   };
 
@@ -196,81 +135,18 @@ export class PeprControllerStore {
   };
 
   #send = (capabilityName: string) => {
-    const sendCache: Record<string, Operation> = {};
-
-    // Load the sendCache with patch operations
-    const fillCache = (op: DataOp, key: string[], val?: string) => {
-      if (op === "add") {
-        // adjust the path for the capability
-        const path = `/data/${capabilityName}-${key}`;
-        const value = val || "";
-        const cacheIdx = [op, path, value].join(":");
-
-        // Add the operation to the cache
-        sendCache[cacheIdx] = { op, path, value };
-
-        return;
-      }
-
-      if (op === "remove") {
-        if (key.length < 1) {
-          throw new Error(`Key is required for REMOVE operation`);
-        }
-
-        for (const k of key) {
-          const path = `/data/${capabilityName}-${k}`;
-          const cacheIdx = [op, path].join(":");
-
-          // Add the operation to the cache
-          sendCache[cacheIdx] = { op, path };
-        }
-
-        return;
-      }
-
-      // If we get here, the operation is not supported
-      throw new Error(`Unsupported operation: ${op}`);
-    };
-
-    // Send the cached updates to the cluster
-    const flushCache = async () => {
-      const indexes = Object.keys(sendCache);
-      const payload = Object.values(sendCache);
-
-      // Loop over each key in the cache and delete it to avoid collisions with other sender calls
-      for (const idx of indexes) {
-        delete sendCache[idx];
-      }
-
-      try {
-        // Send the patch to the cluster
-        if (payload.length > 0) {
-          await K8s(PeprStore, { namespace, name: this.#name }).Patch(payload);
-        }
-      } catch (err) {
-        Log.error(err, "Pepr store update failure");
-
-        if (err.status === 422) {
-          Object.keys(sendCache).forEach(key => delete sendCache[key]);
-        } else {
-          // On failure to update, re-add the operations to the cache to be retried
-          for (const index of indexes) {
-            sendCache[index] = payload[Number(index)];
-          }
-        }
-      }
-    };
+    let sendCache: Record<string, Operation> = {};
 
     // Create a sender function for the capability to add/remove data from the store
     const sender: DataSender = async (op: DataOp, key: string[], val?: string) => {
-      fillCache(op, key, val);
+      sendCache = fillCache(sendCache, capabilityName, op, key, val);
     };
 
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
         Log.debug(redactedPatch(sendCache), "Sending updates to Pepr store");
-        void flushCache();
+        void flushCache(sendCache, namespace, this.#name);
       }
     }, debounceBackoff);
 
