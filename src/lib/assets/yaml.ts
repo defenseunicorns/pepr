@@ -67,7 +67,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
           cpu: "200m",
         },
         limits: {
-          memory: "1Gi",
+          memory: "512Mi",
           cpu: "500m",
         },
       },
@@ -133,7 +133,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
           cpu: "200m",
         },
         limits: {
-          memory: "1Gi",
+          memory: "512Mi",
           cpu: "500m",
         },
       },

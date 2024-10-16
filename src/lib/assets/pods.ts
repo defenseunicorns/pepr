@@ -132,7 +132,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
                   cpu: "200m",
                 },
                 limits: {
-                  memory: "1Gi",
+                  memory: "512Mi",
                   cpu: "500m",
                 },
               },
@@ -271,7 +271,7 @@ export function deployment(
                   cpu: "200m",
                 },
                 limits: {
-                  memory: "1Gi",
+                  memory: "512Mi",
                   cpu: "500m",
                 },
               },
