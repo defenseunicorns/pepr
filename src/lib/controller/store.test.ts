@@ -7,9 +7,9 @@ import { redactedStore, redactedPatch, PeprControllerStore } from "./store";
 import { AddOperation } from "fast-json-patch";
 import { redactedValue } from "./store";
 import Log from "../logger";
-import { PeprStore } from "../k8s";
 import { CapabilityCfg } from "../types";
 import { Capability } from "../capability";
+import { Schedule } from "../schedule";
 
 describe("pepr store tests", () => {
   const peprStoreFuzz = fc.record({
@@ -35,10 +35,21 @@ describe("pepr store tests", () => {
 
       const testCapability = new Capability(capabilityConfig);
 
+      const mockSchedule: Schedule = {
+        name: "test-schedule",
+        every: 5,
+        unit: "minutes",
+        run: jest.fn(),
+        startTime: new Date(),
+        completions: 1,
+      };
+
+      testCapability.OnSchedule(mockSchedule);
+
       jest.mock("kubernetes-fluent-client", () => ({
         K8s: jest.fn().mockReturnValue({
           InNamespace: jest.fn().mockReturnThis(),
-          Get: jest.fn().mockImplementationOnce(() => new PeprStore()),
+          Get: jest.fn().mockReturnThis(),
         }),
       }));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,7 +79,7 @@ describe("pepr store tests", () => {
       jest.mock("kubernetes-fluent-client", () => ({
         K8s: jest.fn().mockReturnValue({
           InNamespace: jest.fn().mockReturnThis(),
-          Get: jest.fn().mockImplementationOnce(() => new Error()),
+          Get: jest.fn().mockReturnThis(),
         }),
       }));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
