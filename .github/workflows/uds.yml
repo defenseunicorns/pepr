@@ -116,7 +116,12 @@ jobs:
         run: |
           docker image load --input "$PEPR_IMG"
 
-      - name: uds run
+      - name: uds HTTP2-based watcher
         run: |
-          cd "$UDS_CORE"
-          PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
+          jq --version
+          node --version
+
+      # - name: uds run
+      #   run: |
+      #     cd "$UDS_CORE"
+      #     PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
