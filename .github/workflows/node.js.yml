@@ -59,5 +59,9 @@ jobs:
         shell: bash
 
       - run: npm ci
+      - name: troubleshooting
+        run: | 
+          pwd  
+          ls -al
       - run: npm run test:journey
       - run: npm run test:journey-wasm
