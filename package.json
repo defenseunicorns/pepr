@@ -43,9 +43,9 @@
     "express": "4.21.1",
     "fast-json-patch": "3.1.1",
     "json-pointer": "^0.6.2",
-    "kubernetes-fluent-client": "4.0.0-rc-http2-watch",
-    "pino": "9.4.0",
-    "pino-pretty": "11.2.2",
+    "kubernetes-fluent-client": "3.1.1",
+    "pino": "9.5.0",
+    "pino-pretty": "11.3.0",
     "prom-client": "15.1.3",
     "ramda": "0.30.1"
   },

@@ -62,6 +62,7 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | `PEPR_RETRY_DELAY_SECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
 | `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch | default: `"300"` (5 mins)       |
 | `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources  | default: `"600"` (10 mins)       |
+| `PEPR_HTTP2_WATCH` | Configure the Kubernetes Fluent Client to use an http2 watcher  | default: `"undefined"` |
 
 ## Configuring Reconcile
 
