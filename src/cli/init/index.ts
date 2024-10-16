@@ -39,7 +39,7 @@ export default function (program: RootCmd) {
       // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
         prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
-        pkgOverride = "file:../pepr-0.0.0-development.tgz";
+        pkgOverride = "file:/asdf/pepr-0.0.0-development.tgz";
         response = await walkthrough();
       } else {
         response = await walkthrough(thisCommand.opts());
