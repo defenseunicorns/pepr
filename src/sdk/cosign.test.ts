@@ -1,15 +1,58 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect } from "@jest/globals";
+import { afterAll, beforeAll, expect } from "@jest/globals";
 import { describe, it } from "@jest/globals";
 import * as sut from "./cosign";
 
+// Refs:
+// airgap cosign sign: https://github.com/sigstore/cosign/issues/3437
+// - don't upload to Rekor w/ "cosign sign --tlog-upload=false" flag
+
+// airgap cosign verify: https://github.com/sigstore/cosign/issues/3423
+// - don't require verification in Rekor w/ "cosign verify --insecure-ignore-tlog=false --offline=true" flag
+
 describe("verifyImage()", () => {
-  it("does ...", async () => {
-    expect(sut.verifyImage("???", "???")).toBe(false);
+  let iref: string;
+  let cscs: string[];
+
+  beforeAll(() => {
+    // create a Dockerfile
+    // > echo "FROM docker.io/library/hello-world"
+    //
+    // > docker build --tag ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m --push .
+    // --or--
+    // >docker build --tag ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+    // > docker push ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+    // create a new cosign keypair
+    // > COSIGN_PASSWORD="password" cosign generate-key-pair
+    // > mv cosign.pub cosign-A.pub
+    // > mv cosign.key cosign-A.key
+    // > COSIGN_PASSWORD="password" cosign generate-key-pair
+    // > mv cosign.pub cosign-B.pub
+    // > mv cosign.key cosign-B.key
+    // sign image
+    // > COSIGN_PASSWORD="password" cosign sign --key cosign-A.key ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+    // verify image
+    // > cosign verify --insecure-ignore-tlog=true --key cosign-A.pub ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+    // > cosign verify --insecure-ignore-tlog=true --key cosign-B.pub ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+  });
+
+  afterAll(() => {
+    // clean up keypair / signing certificates / temporary files
+    // delete image from ttl.sh..?
+  });
+
+  it("accepts pubkeys", () => {
+    iref = "???";
+    cscs = ["???", "???", "??"];
+
+    expect(sut.verifyImage(iref, cscs)).toBe(false);
   });
 });
+
+// it("accepts certs & cert chains..?", () => {});
+//  https://docs.sigstore.dev/cosign/signing/signing_with_containers/#sign-and-attach-a-certificate-and-certificate-chain
 
 // Immediate questions:
 // - How do we get image sigs from remote/zarf registries?
