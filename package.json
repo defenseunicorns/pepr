@@ -11,7 +11,9 @@
   },
   "files": [
     "/dist",
-    "/src"
+    "/src",
+    "!src/**/*.test.ts",
+    "!dist/**/*.test.d.ts*"
   ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
