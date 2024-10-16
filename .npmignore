@@ -34,3 +34,4 @@ jest.config.json
 
 # Exclude all test files
 src/**/*.test.ts
+src/**/*.test.d.ts.map
