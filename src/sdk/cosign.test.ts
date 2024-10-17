@@ -144,9 +144,11 @@ async function cleanWorkdirs() {
   const prefix = workdirPrefix();
   const dir = dirname(prefix);
   const pre = basename(prefix);
+
   const workdirs = readdirSync(dir)
     .filter(f => f.startsWith(pre))
     .map(m => join(dir, m));
+
   await Promise.all(workdirs.map(m => rm(m, { recursive: true, force: true })));
 }
 
