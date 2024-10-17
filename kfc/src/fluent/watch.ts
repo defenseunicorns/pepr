@@ -70,7 +70,7 @@ export class Watcher<T extends GenericClass> {
   #watchCfg: WatchCfg;
   #latestRelistWindow: string = "";
   #useHTTP2: boolean = false;
-  #client: http2.ClientHttp2Session | undefined;
+
   // Track the last time data was received
   #lastSeenTime = NONE;
   #lastSeenLimit: number;
@@ -520,12 +520,12 @@ export class Watcher<T extends GenericClass> {
       const agentOptions = Watcher.#getAgentOptions(opts as Options);
 
       // HTTP/2 client connection setup
-      this.#client = Watcher.#createHttp2Client(url.origin, agentOptions);
+      const client = Watcher.#createHttp2Client(url.origin, agentOptions);
 
       // Handle client connection errors
-      this.#client.on("error", err => {
+      client.on("error", err => {
         this.#events.emit(WatchEvent.NETWORK_ERROR, err);
-        this.#streamCleanup();
+        this.#streamCleanup(client);
         this.#scheduleReconnect();
       });
 
@@ -533,15 +533,15 @@ export class Watcher<T extends GenericClass> {
       const headers = await this.#generateRequestHeaders(url);
 
       // Make the HTTP/2 request
-      const req = this.#client.request(headers);
+      const req = client.request(headers);
       req.setEncoding("utf8");
 
       // Handler events for the HTTP/2 request
-      this.#handleHttp2Request(req);
+      this.#handleHttp2Request(req, client);
 
       // Handle abort signal
       this.#abortController.signal.addEventListener("abort", () => {
-        this.#streamCleanup();
+        this.#streamCleanup(client);
       });
     } catch (e) {
       void this.#errHandler(e);
@@ -578,10 +578,7 @@ export class Watcher<T extends GenericClass> {
           this.#pendingReconnect = true;
           this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
           this.#streamCleanup();
-
-          if (this.#useHTTP2) {
-            void this.#scheduleReconnect();
-          }
+          this.#scheduleReconnect();
 
           if (!this.#useHTTP2) {
             void this.#watch();
@@ -630,8 +627,9 @@ export class Watcher<T extends GenericClass> {
   /**
    *
    * @param req - the request stream
+   * @param client - the client session
    */
-  #handleHttp2Request(req: http2.ClientHttp2Stream) {
+  #handleHttp2Request(req: http2.ClientHttp2Stream, client: http2.ClientHttp2Session) {
     let buffer = "";
 
     req.on("response", headers => {
@@ -639,7 +637,7 @@ export class Watcher<T extends GenericClass> {
       if (statusCode && statusCode >= 200 && statusCode < 300) {
         this.#onWatchConnected();
       } else {
-        this.#cleanupAndReconnect(new Error(`watch connect failed: ${statusCode}`));
+        this.#cleanupAndReconnect(client, new Error(`watch connect failed: ${statusCode}`));
       }
     });
 
@@ -653,8 +651,8 @@ export class Watcher<T extends GenericClass> {
       });
     });
 
-    req.on("end", () => this.#cleanupAndReconnect());
-    req.on("close", () => this.#cleanupAndReconnect());
+    req.on("end", () => this.#cleanupAndReconnect(client));
+    req.on("close", () => this.#cleanupAndReconnect(client));
     req.on("error", error => this.#errHandler(error));
   }
 
@@ -684,26 +682,26 @@ export class Watcher<T extends GenericClass> {
   /**
    * Cleanup the stream and listeners.
    *
+   * @param client - the client session
    */
-  // #streamCleanup = (client?: http2.ClientHttp2Session) => {
-  #streamCleanup = () => {
+  #streamCleanup = (client?: http2.ClientHttp2Session) => {
     if (this.#stream) {
       this.#stream.removeAllListeners();
       this.#stream.destroy();
     }
-    if (this.#client) {
-      this.#client.close();
-      this.#client = undefined;
+    if (client) {
+      client.close();
     }
   };
 
   /**
    * Cleanup the stream and listeners and reconnect.
    *
+   * @param client - the client session
    * @param error - the error that occurred
    */
-  #cleanupAndReconnect(error?: Error) {
-    this.#streamCleanup();
+  #cleanupAndReconnect(client: http2.ClientHttp2Session, error?: Error) {
+    this.#streamCleanup(client);
 
     if (error) {
       this.#events.emit(WatchEvent.NETWORK_ERROR, error);

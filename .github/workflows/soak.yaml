@@ -14,49 +14,6 @@ on:
         default: 'false'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
-  # push:
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "**.json"
-  #   - "docs/**"
-  #   - "CODEOWNERS"
-  #   branches: ["main"]
-  # pull_request:
-  #   branches: ["main"]
-  #   paths-ignore:
-  #   - "**.md"
-  #   - "**.jpg"
-  #   - "**.png"
-  #   - "**.gif"
-  #   - "**.svg"
-  #   - "adr/**"
-  #   - "__mocks__/**"
-  #   - ".npmignore"
-  #   - ".prettierignore"
-  #   - "scripts/**"
-  #   - "hack/**"
-  #   - "_images/**"
-  #   - "**.yaml"
-  #   - "**.toml"
-  #   - "docs/**"
-  #   - "**.json"
-  #   - "CODEOWNERS"
-# refs
-# https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
-# https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
 
 jobs:
   pepr-build:
@@ -212,7 +169,7 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..27}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..27}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes) (Every 5 mins 5*27 = 135 mins = 2 hours 15 mins)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
@@ -232,6 +189,17 @@ jobs:
                   exit 1
                 fi
               done
+
+              # Every 10 minutes, scale up or down the `watch-auditor` deployment
+              if [ $((i % 4)) -eq 0 ]; then
+                # On even iterations (e.g., i = 0, 4, 8...), scale up to 1 replica
+                echo "Scaling up the watch-auditor deployment to 1 replica"
+                kubectl scale deploy watch-auditor -n watch-auditor --replicas=1
+              else
+                # On odd iterations (e.g., i = 2, 6, 10...), scale down to 0 replicas
+                echo "Scaling down the watch-auditor deployment to 0 replicas"
+                kubectl scale deploy watch-auditor -n watch-auditor --replicas=0
+              fi
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
           done

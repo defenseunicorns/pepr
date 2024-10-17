@@ -59,7 +59,6 @@ class Watcher {
     #watchCfg;
     #latestRelistWindow = "";
     #useHTTP2 = false;
-    #client;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -430,23 +429,23 @@ class Watcher {
             const { opts, url } = await this.#buildURL(true, this.#resourceVersion);
             const agentOptions = _a.#getAgentOptions(opts);
             // HTTP/2 client connection setup
-            this.#client = _a.#createHttp2Client(url.origin, agentOptions);
+            const client = _a.#createHttp2Client(url.origin, agentOptions);
             // Handle client connection errors
-            this.#client.on("error", err => {
+            client.on("error", err => {
                 this.#events.emit(WatchEvent.NETWORK_ERROR, err);
-                this.#streamCleanup();
+                this.#streamCleanup(client);
                 this.#scheduleReconnect();
             });
             // Set up headers for the HTTP/2 request
             const headers = await this.#generateRequestHeaders(url);
             // Make the HTTP/2 request
-            const req = this.#client.request(headers);
+            const req = client.request(headers);
             req.setEncoding("utf8");
             // Handler events for the HTTP/2 request
-            this.#handleHttp2Request(req);
+            this.#handleHttp2Request(req, client);
             // Handle abort signal
             this.#abortController.signal.addEventListener("abort", () => {
-                this.#streamCleanup();
+                this.#streamCleanup(client);
             });
         }
         catch (e) {
@@ -478,9 +477,7 @@ class Watcher {
                     this.#pendingReconnect = true;
                     this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
                     this.#streamCleanup();
-                    if (this.#useHTTP2) {
-                        void this.#scheduleReconnect();
-                    }
+                    this.#scheduleReconnect();
                     if (!this.#useHTTP2) {
                         void this.#watch();
                     }
@@ -522,8 +519,9 @@ class Watcher {
     /**
      *
      * @param req - the request stream
+     * @param client - the client session
      */
-    #handleHttp2Request(req) {
+    #handleHttp2Request(req, client) {
         let buffer = "";
         req.on("response", headers => {
             const statusCode = headers[":status"];
@@ -531,7 +529,7 @@ class Watcher {
                 this.#onWatchConnected();
             }
             else {
-                this.#cleanupAndReconnect(new Error(`watch connect failed: ${statusCode}`));
+                this.#cleanupAndReconnect(client, new Error(`watch connect failed: ${statusCode}`));
             }
         });
         req.on("data", chunk => {
@@ -542,8 +540,8 @@ class Watcher {
                 void this.#processLine(line, this.#process);
             });
         });
-        req.on("end", () => this.#cleanupAndReconnect());
-        req.on("close", () => this.#cleanupAndReconnect());
+        req.on("end", () => this.#cleanupAndReconnect(client));
+        req.on("close", () => this.#cleanupAndReconnect(client));
         req.on("error", error => this.#errHandler(error));
     }
     /** Schedules a reconnect with a delay to prevent rapid reconnections. */
@@ -568,25 +566,25 @@ class Watcher {
     /**
      * Cleanup the stream and listeners.
      *
+     * @param client - the client session
      */
-    // #streamCleanup = (client?: http2.ClientHttp2Session) => {
-    #streamCleanup = () => {
+    #streamCleanup = (client) => {
         if (this.#stream) {
             this.#stream.removeAllListeners();
             this.#stream.destroy();
         }
-        if (this.#client) {
-            this.#client.close();
-            this.#client = undefined;
+        if (client) {
+            client.close();
         }
     };
     /**
      * Cleanup the stream and listeners and reconnect.
      *
+     * @param client - the client session
      * @param error - the error that occurred
      */
-    #cleanupAndReconnect(error) {
-        this.#streamCleanup();
+    #cleanupAndReconnect(client, error) {
+        this.#streamCleanup(client);
         if (error) {
             this.#events.emit(WatchEvent.NETWORK_ERROR, error);
             void this.#errHandler(error);
