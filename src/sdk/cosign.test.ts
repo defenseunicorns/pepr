@@ -62,7 +62,6 @@ async function httpDownload(url: string, path: string): Promise<void> {
     // GitHub API requires a UA (else 403)
     const opts = { headers: { "User-Agent": "node" } };
 
-    const stream = createWriteStream(path);
     https
       .get(url, opts, async resp => {
         const { statusCode } = resp;
@@ -83,13 +82,11 @@ async function httpDownload(url: string, path: string): Promise<void> {
           return;
         }
 
-        resp.pipe(stream);
-
-        stream.on("finish", () => {
-          stream.close();
-          chmodSync(path, 0o777);
-          resolve();
+        const ws = createWriteStream(path).on("finish", () => {
+          ws.close(() => resolve());
         });
+
+        resp.pipe(ws);
       })
       .on("error", async err => {
         await unlink(path);
@@ -131,6 +128,7 @@ async function downloadCosign() {
 
   const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
   await httpDownload(remote, local);
+  chmodSync(local, 0o777);
 
   return local;
 }
