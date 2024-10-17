@@ -13,7 +13,14 @@ describe("sendCache", () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
-  describe("when removing entries)", () => {
+
+  it("should reject unsupported operations", () => {
+    expect(() => {
+      fillCache({}, "capability", "unsupported" as "remove", ["key"]); // Type coercion for "unsupported" to verify exception occurs
+    }).toThrow("Unsupported operation: unsupported");
+  });
+
+  describe("when updates are sent to the PeprStore", () => {
     it("should clear the cache", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
@@ -59,7 +66,7 @@ describe("sendCache", () => {
     });
   });
 
-  describe("when adding entries)", () => {
+  describe("when creating 'add' operations", () => {
     it("should write to the cache", () => {
       const input: Record<string, Operation> = {
         "add:/data/capability-key:value": { op: "add", path: "/data/capability-key", value: "value" },
@@ -74,6 +81,23 @@ describe("sendCache", () => {
       };
       const result = fillCache({}, "capability", "add", ["key"], undefined);
       expect(result).toStrictEqual(input);
+    });
+
+    describe("when creating 'remove' operations", () => {
+      it("should write to the cache", () => {
+        const input: Record<string, Operation> = {
+          "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
+        };
+        const result = fillCache({}, "capability", "remove", ["key"]);
+        expect(result).toStrictEqual(input);
+      });
+
+      it("should require a key to be defined", () => {
+        // eslint-disable-next-line max-nested-callbacks
+        expect(() => {
+          fillCache({}, "capability", "remove", []);
+        }).toThrow("Key is required for REMOVE operation");
+      });
     });
   });
 });
