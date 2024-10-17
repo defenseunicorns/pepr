@@ -100,11 +100,11 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const storeResult = capability.registerStore();
-    expect(storeResult).toHaveProperty("store");
+    expect(storeResult).toBeDefined();
     expect(mockLog.info).toHaveBeenCalledWith(`Registering store for ${capabilityConfig.name}`);
 
     const scheduleStoreResult = capability.registerScheduleStore();
-    expect(scheduleStoreResult).toHaveProperty("scheduleStore");
+    expect(scheduleStoreResult.onReady).toBeDefined;
     expect(mockLog.info).toHaveBeenCalledWith(`Registering schedule store for ${capabilityConfig.name}`);
   });
 

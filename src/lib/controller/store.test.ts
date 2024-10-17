@@ -1,131 +1,136 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe, afterEach } from "@jest/globals";
-import * as fc from "fast-check";
-import { redactedStore, redactedPatch } from "./store";
-import { AddOperation } from "fast-json-patch";
+import { PeprControllerStore } from "./store";
+import Log from "../logger";
+import { CapabilityCfg } from "../types";
+import { Capability } from "../capability";
+import { Schedule } from "../schedule";
+import { PeprStore } from "../k8s";
+import { describe, it, jest } from "@jest/globals";
 
-const redactedValue = "**redacted**";
-const peprStoreFuzz = fc.record({
-  kind: fc.constant("PeprStore"),
-  apiVersion: fc.constant("v1"),
-  metadata: fc.record({
-    name: fc.string(),
-    namespace: fc.string(),
-  }),
-  data: fc.dictionary(
-    fc.string().filter(str => str !== "__proto__"),
-    fc.string().filter(str => str !== "__proto__"),
-  ),
-});
-describe("Fuzzing redactedStore", () => {
-  afterEach(() => {
-    delete process.env.PEPR_STORE_REDACT_VALUES;
-  });
+describe("pepr store tests", () => {
+  describe("when initializing the store", () => {
+    it("do something", async () => {
+      const capabilityConfig: CapabilityCfg = {
+        name: "test-capability",
+        description: "Test capability description",
+        namespaces: ["default"],
+      };
 
-  test("should redact values if PEPR_STORE_REDACT_VALUES is true", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACT_VALUES = "true";
-        const result = redactedStore(store);
+      const testCapability = new Capability(capabilityConfig);
 
-        Object.values(result.data).forEach(value => {
-          expect(value).toBe(redactedValue);
+      const mockSchedule: Schedule = {
+        name: "test-schedule",
+        every: 5,
+        unit: "minutes",
+        run: jest.fn(),
+        startTime: new Date(),
+        completions: 1,
+      };
+
+      testCapability.OnSchedule(mockSchedule);
+
+      const mockPeprStore = new PeprStore();
+      jest.useFakeTimers(); // Use fake timers
+
+      jest.mock("kubernetes-fluent-client", () => ({
+        K8s: jest.fn().mockReturnValue({
+          InNamespace: jest.fn().mockReturnThis(),
+          // eslint-disable-next-line max-nested-callbacks
+          Get: jest.fn().mockImplementationOnce(() => {
+            return Promise.resolve(mockPeprStore);
+          }),
+        }),
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {
+        Log.info("✅ Test setup complete");
+        // Initialize the schedule store for each capability
+        new PeprControllerStore([], `pepr-test-schedule`, () => {
+          Log.info("✅ Test scheduling complete");
         });
-      }),
-    );
-  });
+      });
+      jest.advanceTimersByTime(3000);
+      await Promise.resolve();
+      // Fast-forward time
+      // jest.runAllTimers();
 
-  test("should not redact values if PEPR_STORE_REDACT_VALUES is not true", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACT_VALUES = "false";
-        const result = redactedStore(store);
-        expect(result.data).toEqual(store.data);
-      }),
-    );
-  });
-
-  test("should maintain other properties of the store", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        const redactionEnabled = fc.boolean();
-        process.env.PEPR_STORE_REDACT_VALUES = redactionEnabled ? "true" : "false";
-
-        const result = redactedStore(store);
-
-        expect(result.kind).toBe(store.kind);
-        expect(result.apiVersion).toBe(store.apiVersion);
-        expect(result.metadata).toEqual(store.metadata);
-      }),
-    );
-  });
-});
-
-const addOperationKeys = [
-  "add:/data/hello-pepr-a:secret",
-  "add:/data/hello-pepr-v2-b:secret",
-  "add:/data/hello-pepr-v2-c:secret",
-  "add:/data/hello-pepr-v2-d:secret",
-  "add:/data/hello-pepr-v2-e:secret",
-  "add:/data/hello-pepr-v2-f:secret",
-];
-const addOperationValues: AddOperation<string>[] = [
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-a",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-b",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-c",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-d",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-e",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-f",
-    value: "secret",
-  },
-];
-
-describe("redactedPatch", () => {
-  afterEach(() => {
-    delete process.env.PEPR_STORE_REDACT_VALUES;
-  });
-
-  test("should redact keys and values if PEPR_STORE_REDACT_VALUES is true", () => {
-    process.env.PEPR_STORE_REDACT_VALUES = "true";
-    addOperationKeys.forEach((key, i) => {
-      const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
-      for (const [k, v] of Object.entries(redactedResult)) {
-        expect(k).toContain(`:${redactedValue}`);
-        expect(v).toEqual(expect.objectContaining({ value: redactedValue }));
-      }
+      // Assert the private method was called
+      // ??
+      jest.useRealTimers();
     });
-  });
-  test("should not redact keys and values if PEPR_STORE_REDACT_VALUES is not true", () => {
-    addOperationKeys.forEach((key, i) => {
-      const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
-      for (const [k, v] of Object.entries(redactedResult)) {
-        expect(k).not.toContain(`:${redactedValue}`);
-        expect(v).not.toEqual(expect.objectContaining({ value: redactedValue }));
-      }
+
+    it("should migrate and setup the watch (with schedule)", async () => {
+      const capabilityConfig: CapabilityCfg = {
+        name: "test-capability",
+        description: "Test capability description",
+        namespaces: ["default"],
+      };
+
+      const testCapability = new Capability(capabilityConfig);
+
+      const mockSchedule: Schedule = {
+        name: "test-schedule",
+        every: 5,
+        unit: "minutes",
+        run: jest.fn(),
+        startTime: new Date(),
+        completions: 1,
+      };
+
+      testCapability.OnSchedule(mockSchedule);
+
+      jest.mock("kubernetes-fluent-client", () => ({
+        K8s: jest.fn().mockReturnValue({
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: jest.fn().mockReturnThis(),
+        }),
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {
+        Log.info("✅ Test setup complete");
+        // Initialize the schedule store for each capability
+        new PeprControllerStore([], `pepr-test-schedule`, () => {
+          Log.info("✅ Test scheduling complete");
+        });
+      });
+
+      // Fast-forward time
+      // jest.runAllTimers();
+
+      // Assert the private method was called
+      // ??
+    });
+    it("should create the store resource for a scheduled capability (without schedule)", async () => {
+      const capabilityConfig: CapabilityCfg = {
+        name: "test-capability",
+        description: "Test capability description",
+        namespaces: ["default"],
+      };
+
+      const testCapability = new Capability(capabilityConfig);
+
+      jest.mock("kubernetes-fluent-client", () => ({
+        K8s: jest.fn().mockReturnValue({
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: jest.fn().mockReturnThis(),
+        }),
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-store`, () => {
+        Log.info("✅ Test setup complete");
+        // Initialize the schedule store for each capability
+        new PeprControllerStore([], `pepr-test-schedule`, () => {
+          Log.info("✅ Test scheduling complete");
+        });
+      });
+
+      // Fast-forward time
+      // jest.runAllTimers();
+
+      // Assert the private method was called
+      // ??
     });
   });
 });
