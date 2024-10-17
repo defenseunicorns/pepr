@@ -6,7 +6,7 @@
 # Any other changes to Dockerfile should be reflected in Publish
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
-FROM cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a AS build
+FROM cgr.dev/chainguard/node:latest-dev@sha256:648ea69b0d35ca05efdd8ceaee113c1b9743b952b93df669070a3ee485f15d15 AS build
 
 WORKDIR /app
 
@@ -38,7 +38,7 @@ RUN npm run build && \
 ##### DELIVER #####
 
 # crane digest cgr.dev/chainguard/node-lts:latest
-FROM cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
+FROM cgr.dev/chainguard/node:latest@sha256:d2cdf60b41eda9dee8dbee733fc338eebc3ef03cbe2573bd2222ce0982a66b1e
 
 WORKDIR /app
 
