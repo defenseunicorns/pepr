@@ -3,6 +3,7 @@ import { DataOp } from "../storage";
 import Log from "../logger";
 import { K8s } from "kubernetes-fluent-client";
 import { PeprStore } from "../k8s";
+import { StatusCodes } from "http-status-codes";
 
 // Send the cached updates to the cluster
 export const flushCache = async (sendCache: Record<string, Operation>, namespace: string, name: string) => {
@@ -10,9 +11,7 @@ export const flushCache = async (sendCache: Record<string, Operation>, namespace
   const payload = Object.values(sendCache);
 
   // Loop over each key in the cache and delete it to avoid collisions with other sender calls
-  Object.keys(sendCache).forEach(key => {
-    delete sendCache[key];
-  });
+  Object.keys(sendCache).forEach(key => delete sendCache[key]);
 
   try {
     // Send the patch to the cluster
@@ -22,9 +21,7 @@ export const flushCache = async (sendCache: Record<string, Operation>, namespace
   } catch (err) {
     Log.error(err, "Pepr store update failure");
 
-    if (err.status === 422) {
-      Object.keys(sendCache).forEach(key => delete sendCache[key]);
-    } else {
+    if (err.status !== StatusCodes.UNPROCESSABLE_ENTITY) {
       // On failure to update, re-add the operations to the cache to be retried
       for (const index of indexes) {
         sendCache[index] = payload[Number(index)];
