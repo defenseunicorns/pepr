@@ -10,7 +10,7 @@ import { PeprStore } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillCache, flushCache } from "./migrateCache";
-import { sendUpdatesAndFlushCache } from "./sendCache";
+import { fillSendCache, sendUpdatesAndFlushCache } from "./sendCache";
 
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
@@ -138,8 +138,8 @@ export class PeprControllerStore {
     let sendCache: Record<string, Operation> = {};
 
     // Create a sender function for the capability to add/remove data from the store
-    const sender: DataSender = async (op: DataOp, key: string[], val?: string) => {
-      sendCache = fillCache(sendCache, capabilityName, op, key, val);
+    const sender: DataSender = async (op: DataOp, key: string[], value?: string) => {
+      sendCache = fillSendCache(sendCache, capabilityName, op, { key, value });
     };
 
     // Send any cached updates every debounceBackoff milliseconds
