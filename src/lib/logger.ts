@@ -48,14 +48,18 @@ export function redactedPatch(patch: Record<string, Operation> = {}): Record<str
 
   const redactedCache: Record<string, Operation> = {};
 
-  Object.keys(patch).forEach(key => {
-    const operation = patch[key];
-    const redactedKey = key.includes(":") ? key.substring(0, key.lastIndexOf(":")) + ":**redacted**" : key;
-    const redactedOperation: Operation = {
-      ...operation,
-      ...("value" in operation ? { value: redactedValue } : {}),
-    };
-    redactedCache[redactedKey] = redactedOperation;
+  Object.entries(patch).forEach(([key, operation]) => {
+    const isRedacted = key.includes(":");
+    const targetKey = isRedacted ? `${key.substring(0, key.lastIndexOf(":"))}:**redacted**` : key;
+
+    const redactedOperation = isRedacted
+      ? {
+          ...operation,
+          ...(Object.hasOwn(operation, "value") ? { value: redactedValue } : {}),
+        }
+      : operation;
+
+    redactedCache[targetKey] = redactedOperation;
   });
 
   return redactedCache;
