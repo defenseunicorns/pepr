@@ -10,22 +10,22 @@ export const flushCache = async (sendCache: Record<string, Operation>, namespace
   const indexes = Object.keys(sendCache);
   const payload = Object.values(sendCache);
 
-  // Loop over each key in the cache and delete it to avoid collisions with other sender calls
-  Object.keys(sendCache).forEach(key => delete sendCache[key]);
-
   try {
     // Send the patch to the cluster
     if (payload.length > 0) {
       await K8s(PeprStore, { namespace, name }).Patch(payload);
+      Object.keys(sendCache).forEach(key => delete sendCache[key]); // Loop over each key in the cache and delete it to avoid collisions with other sender calls
     }
   } catch (err) {
     Log.error(err, "Pepr store update failure");
 
-    if (err.status !== StatusCodes.UNPROCESSABLE_ENTITY) {
+    if (err.status === StatusCodes.UNPROCESSABLE_ENTITY) {
+      Object.keys(sendCache).forEach(key => delete sendCache[key]); // Loop over each key in the cache and delete it to avoid collisions with other sender calls
+    } else {
       // On failure to update, re-add the operations to the cache to be retried
-      for (const index of indexes) {
+      indexes.forEach(index => {
         sendCache[index] = payload[Number(index)];
-      }
+      });
     }
   }
   return sendCache;

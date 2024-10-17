@@ -29,7 +29,7 @@ describe("sendCache", () => {
       expect(result).toStrictEqual({});
     });
 
-    it("should handle Unprocessable Entity Errors (HTTP/422)", async () => {
+    it("should clear cache for Unprocessable Entity Errors (HTTP/422)", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
           Patch: jest.fn().mockRejectedValueOnce({ status: 422 } as never),
@@ -42,6 +42,20 @@ describe("sendCache", () => {
       };
       const result = await flushCache(input, "some namespace", "some name");
       expect(result).toStrictEqual({});
+    });
+    it("should repopulate cache for all other HTTP Errors", async () => {
+      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+        return {
+          Patch: jest.fn().mockRejectedValueOnce({ status: 400 } as never),
+        } as unknown as K8sInit<T, K>;
+      });
+
+      const input: Record<string, Operation> = {
+        entry: { op: "remove", path: "/some/path" },
+        entry2: { op: "add", path: "some/path", value: "value" },
+      };
+      const result = await flushCache(input, "some namespace", "some name");
+      expect(result).toStrictEqual(input);
     });
   });
 
