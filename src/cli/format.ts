@@ -63,13 +63,10 @@ export async function peprFormat(validateOnly: boolean) {
         const formatted = await format(content, { filepath: filePath, ...cfg });
 
         // If in validate-only mode, check if the file is formatted correctly
-        if (validateOnly) {
-          if (formatted !== content) {
-            hasFailure = true;
-            console.error(`File ${filePath} is not formatted correctly`);
-          }
+        if (validateOnly && formatted !== content) {
+          hasFailure = true;
+          console.error(`File ${filePath} is not formatted correctly`);
         } else {
-          // Otherwise, write the formatted file
           await fs.writeFile(filePath, formatted);
         }
       }
