@@ -60,7 +60,9 @@ export class Assets {
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
     this.hash = "";
+    // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
+    // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
@@ -79,6 +81,7 @@ export class Assets {
 
   allYaml = async (rbacMode: string, imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
+    // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
@@ -99,8 +102,11 @@ export class Assets {
   };
 
   private async createHelmDirectories(CHART_DIR: string, CHAR_TEMPLATES_DIR: string) {
+    // create chart dir
     await createDirectoryIfNotExists(CHART_DIR);
+    // create charts dir
     await createDirectoryIfNotExists(`${CHART_DIR}/charts`);
+    // create templates dir
     await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
   }
 
@@ -152,8 +158,11 @@ export class Assets {
       verbs: rule.verbs || [],
     }));
 
+    // create values file
     await overridesFile(this, valuesPath);
+    // create the chart.yaml
     await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
+    // create the namespace.yaml in templates
     await fs.writeFile(nsPath, dedent(nsTemplate()));
 
     const code = await fs.readFile(this.path);
