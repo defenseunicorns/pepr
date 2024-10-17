@@ -128,11 +128,11 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
               ],
               resources: {
                 requests: {
-                  memory: "64Mi",
-                  cpu: "100m",
+                  memory: "256Mi",
+                  cpu: "200m",
                 },
                 limits: {
-                  memory: "256Mi",
+                  memory: "512Mi",
                   cpu: "500m",
                 },
               },
@@ -267,11 +267,11 @@ export function deployment(
               ],
               resources: {
                 requests: {
-                  memory: "64Mi",
-                  cpu: "100m",
+                  memory: "256Mi",
+                  cpu: "200m",
                 },
                 limits: {
-                  memory: "256Mi",
+                  memory: "512Mi",
                   cpu: "500m",
                 },
               },

@@ -4,10 +4,16 @@ permissions: read-all
 on:
   workflow_dispatch:
     inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
       branch:
         description: 'Soak test branch'
         required: true
         default: 'main'
+
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
 
@@ -43,9 +49,16 @@ jobs:
           npm ci
 
       - name: build pepr image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+  
+      - name: build kfc pepr image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
@@ -166,6 +179,7 @@ jobs:
 
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
+              kubectl get po -n pepr-system
               
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
