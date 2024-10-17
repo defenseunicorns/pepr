@@ -17,9 +17,9 @@ import {
   getStoreRoleBinding,
   validateRoleEntries,
   validateRoleItem,
+  createRBACMap,
 } from "./rbac";
 import { CapabilityExport } from "../types";
-import { createRBACMap } from "../helpers";
 import { V1ClusterRole, V1Role } from "@kubernetes/client-node";
 
 type KubernetesResource = V1ClusterRole | V1Role;
