@@ -10,9 +10,9 @@ export const flushCache = async (sendCache: Record<string, Operation>, namespace
   const payload = Object.values(sendCache);
 
   // Loop over each key in the cache and delete it to avoid collisions with other sender calls
-  for (const idx of indexes) {
-    delete sendCache[idx];
-  }
+  Object.keys(sendCache).forEach(key => {
+    delete sendCache[key];
+  });
 
   try {
     // Send the patch to the cluster
