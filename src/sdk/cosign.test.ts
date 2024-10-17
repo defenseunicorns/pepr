@@ -3,76 +3,230 @@
 
 import { afterAll, beforeAll, expect } from "@jest/globals";
 import { describe, it } from "@jest/globals";
+import { promisify } from "node:util";
+import * as child_process from "node:child_process";
+const exec = promisify(child_process.exec);
+import * as https from "node:https";
+import { access, mkdtemp, rm, writeFile, unlink } from "node:fs/promises";
+import { createWriteStream, chmodSync, readdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, dirname, join } from "node:path";
+import { randomUUID } from "node:crypto";
 import * as sut from "./cosign";
 
-// Refs:
-// airgap cosign sign: https://github.com/sigstore/cosign/issues/3437
-// - don't upload to Rekor w/ "cosign sign --tlog-upload=false" flag
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+async function httpGet(url: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    // GitHub API requires a UA (else 403)
+    const opts = { headers: { "User-Agent": "node" } };
 
-// airgap cosign verify: https://github.com/sigstore/cosign/issues/3423
-// - don't require verification in Rekor w/ "cosign verify --insecure-ignore-tlog=false --offline=true" flag
+    https
+      .get(url, opts, resp => {
+        const { statusCode } = resp;
+        const contentType = resp.headers["content-type"] || "";
+
+        let error;
+        if (!statusCode?.toString().startsWith("2")) {
+          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+          error = true;
+        } else if (!contentType.includes("application/json")) {
+          reject(new Error(`err: content type: ${contentType}: expected application/json`));
+          error = true;
+        }
+
+        if (error) {
+          resp.resume();
+          return;
+        }
+
+        resp.setEncoding("utf8");
+
+        let raw = "";
+        resp.on("data", chunk => {
+          raw += chunk;
+        });
+        resp.on("end", () => {
+          try {
+            resolve(JSON.parse(raw));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on("error", e => reject(e));
+  });
+}
+
+async function httpDownload(url: string, path: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // GitHub API requires a UA (else 403)
+    const opts = { headers: { "User-Agent": "node" } };
+
+    const stream = createWriteStream(path);
+    https
+      .get(url, opts, async resp => {
+        const { statusCode } = resp;
+
+        if (statusCode?.toString().startsWith("3")) {
+          const redirect = resp.headers.location as string;
+          await httpDownload(redirect, path);
+          resolve();
+        }
+
+        let error;
+        if (!statusCode?.toString().startsWith("2")) {
+          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+          error = true;
+        }
+        if (error) {
+          resp.resume();
+          return;
+        }
+
+        resp.pipe(stream);
+
+        stream.on("finish", () => {
+          stream.close();
+          chmodSync(path, 0o777);
+          resolve();
+        });
+      })
+      .on("error", async err => {
+        await unlink(path);
+        reject(err);
+      });
+  });
+}
+
+const cmd = async (command: string, opts = {}) => await exec(command, opts);
+const cmdStdout = async (command: string, opts = {}) => (await cmd(command, opts)).stdout.trim();
+const cmdStderr = async (command: string, opts = {}) => (await cmd(command, opts)).stderr.trim();
+const exists = async (path: string) => {
+  try {
+    await access(path);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+async function downloadCosign() {
+  let result;
+
+  result = await cmdStdout("npm root");
+  const local = `${result}/.bin/cosign`;
+
+  if (await exists(local)) {
+    return local;
+  }
+
+  result = await exec("uname -s");
+  const os = result.stdout.trim().toLowerCase();
+
+  result = await exec("uname -m");
+  const arch = result.stdout.trim().replace("x86_64", "amd64");
+
+  const got = await httpGet("https://api.github.com/repos/sigstore/cosign/releases/latest");
+  const ver = got["tag_name"];
+
+  const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
+  await httpDownload(remote, local);
+
+  return local;
+}
+
+const workdirPrefix = () => join(tmpdir(), `${basename(__filename)}-`);
+
+async function createWorkdir() {
+  const prefix = workdirPrefix();
+  return await mkdtemp(prefix);
+}
+
+async function cleanWorkdirs() {
+  const prefix = workdirPrefix();
+  const dir = dirname(prefix);
+  const pre = basename(prefix);
+  const workdirs = readdirSync(dir)
+    .filter(f => f.startsWith(pre))
+    .map(m => join(dir, m));
+  await Promise.all(workdirs.map(m => rm(m, { recursive: true, force: true })));
+}
+
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+const timed = async (msg: string, func: () => Promise<any>) => {
+  console.time(msg);
+  const result = await func();
+  console.timeEnd(msg);
+  return result;
+};
+
+const indent = (msg: string) =>
+  msg
+    .split("\n")
+    .map(m => `  ${m}`)
+    .join("\n");
+
+const secs = (s: number) => s * 1000;
+const mins = (m: number) => m * secs(60);
 
 describe("verifyImage()", () => {
-  let iref: string;
+  let cosign: string;
+  let workdir: string;
+
+  const passwd = "password";
+  const prefix = "signing";
+  const pubkey = `${prefix}.pub`;
+  const prvkey = `${prefix}.key`;
+
+  let iref = `ttl.sh/${randomUUID()}:2m`;
   let cscs: string[];
 
-  beforeAll(() => {
-    // create a Dockerfile
-    // > echo "FROM docker.io/library/hello-world"
-    //
-    // > docker build --tag ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m --push .
-    // --or--
-    // >docker build --tag ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
-    // > docker push ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
-    // create a new cosign keypair
-    // > COSIGN_PASSWORD="password" cosign generate-key-pair
-    // > mv cosign.pub cosign-A.pub
-    // > mv cosign.key cosign-A.key
-    // > COSIGN_PASSWORD="password" cosign generate-key-pair
-    // > mv cosign.pub cosign-B.pub
-    // > mv cosign.key cosign-B.key
-    // sign image
-    // > COSIGN_PASSWORD="password" cosign sign --key cosign-A.key ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
-    // verify image
-    // > cosign verify --insecure-ignore-tlog=true --key cosign-A.pub ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
-    // > cosign verify --insecure-ignore-tlog=true --key cosign-B.pub ttl.sh/c8565cc7-55c7-433f-b1ad-cc7cf54ee75b:30m
+  beforeAll(async () => {
+    cosign = await timed("getting cosign CLI binary", downloadCosign);
+    console.log(`  cosign: ${cosign}`);
+
+    workdir = await timed("creating workdir", createWorkdir);
+    console.log(`  workdir: ${workdir}`);
+
+    let result;
+    result = await timed(`generating keypair: ${prefix}.*`, async () =>
+      cmdStderr(`${cosign} generate-key-pair --output-key-prefix=${prefix}`, {
+        cwd: workdir,
+        env: { COSIGN_PASSWORD: passwd },
+      }),
+    );
+    console.log(indent(result));
+
+    await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
+    result = await timed(`uploading container image: ${iref}`, async () =>
+      cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
+    );
+    console.log(indent(result));
+
+    result = await timed(`signing image: ${iref}`, async () =>
+      cmdStderr(`${cosign} sign --tlog-upload=false --key=${prvkey} ${iref}`, {
+        cwd: workdir,
+        env: { COSIGN_PASSWORD: passwd },
+      }),
+    );
+  }, mins(1));
+
+  afterAll(async () => await cleanWorkdirs());
+
+  it("can be verified via CLI", async () => {
+    const result = await cmdStderr(
+      `${cosign} verify --insecure-ignore-tlog=true --key=${pubkey} ${iref}`,
+      { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    );
+
+    expect(result).not.toContain("no matching signatures");
+    expect(result).toContain("signatures were verified");
   });
 
-  afterAll(() => {
-    // clean up keypair / signing certificates / temporary files
-    // delete image from ttl.sh..?
-  });
-
-  it("accepts pubkeys", () => {
+  it("can be verified via sigstore-js", () => {
     iref = "???";
     cscs = ["???", "???", "??"];
 
     expect(sut.verifyImage(iref, cscs)).toBe(false);
   });
 });
-
-// it("accepts certs & cert chains..?", () => {});
-//  https://docs.sigstore.dev/cosign/signing/signing_with_containers/#sign-and-attach-a-certificate-and-certificate-chain
-
-// Immediate questions:
-// - How do we get image sigs from remote/zarf registries?
-//   - OCI introspection tools? Oras?
-//   - go libs (crane?)
-//   - Something else in TS?
-//   - offline sigs: cosign save & cosign verify?
-//     - https://github.com/sigstore/cosign/tree/main?tab=readme-ov-file#verify-a-container-in-an-air-gapped-environment
-// - Can we use `cosign` from TypeScript/JavaScript?  (Jeff says in #product-support thread)
-//   - Are there alternatives to cosign for validation?  OpenSSL stuff?
-// - Cosign binary is 105MB (which is almost the same size as the Pepr controller itself).  Is that advisable?
-//   - easiest impl; include & done!  But what about growth potential?
-// - Is there a way to pull in the a go library an just use _that_ from cosign?
-//   - https://github.com/gopherjs/gopherjs ..?  Pros, cons?
-//   - wasm (entrypoint-wasm.test.ts, etc.)? Pros, cons?
-//     - https://go.dev/wiki/WebAssembly
-//     - https://github.com/cmwylie19/wasm-pepr-test/blob/main/pepr-test-module/capabilities/hello-pepr.ts
-//     - opaque binary (so debugging gets tricky..?)
-//     - doesn't need to talk over network to sidecar
-//     - network call from Go, piped back into JS: https://github.com/SamDz16/goWasm-http-request/blob/master/main.go#L40
-//   - sidecar w/ coms over GRPc
-//     - https://github.com/cmwylie19/watch-informer/blob/main/pkg/server/server.go
-//     - https://github.com/defenseunicorns/pepr/pull/1087/files
