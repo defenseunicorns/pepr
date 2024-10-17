@@ -10,6 +10,7 @@ import { PeprStore } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillCache, flushCache } from "./migrateCache";
+import { sendUpdatesAndFlushCache } from "./sendCache";
 
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
@@ -145,7 +146,7 @@ export class PeprControllerStore {
     setInterval(() => {
       if (Object.keys(sendCache).length > 0) {
         Log.debug(redactedPatch(sendCache), "Sending updates to Pepr store");
-        void flushCache(sendCache, namespace, this.#name);
+        void sendUpdatesAndFlushCache(sendCache, namespace, this.#name);
       }
     }, debounceBackoff);
 

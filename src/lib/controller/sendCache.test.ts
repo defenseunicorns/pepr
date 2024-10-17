@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { fillCache, flushCache } from "./sendCache";
+import { fillCache, sendUpdatesAndFlushCache } from "./sendCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -25,7 +25,7 @@ describe("sendCache", () => {
         entry: { op: "remove", path: "/some/path" },
         entry2: { op: "add", path: "some/path", value: "value" },
       };
-      const result = await flushCache(input, "some namespace", "some name");
+      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
       expect(result).toStrictEqual({});
     });
 
@@ -40,7 +40,7 @@ describe("sendCache", () => {
         entry: { op: "remove", path: "/some/path" },
         entry2: { op: "add", path: "some/path", value: "value" },
       };
-      const result = await flushCache(input, "some namespace", "some name");
+      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
       expect(result).toStrictEqual({});
     });
     it("should repopulate cache for all other HTTP Errors", async () => {
@@ -54,7 +54,7 @@ describe("sendCache", () => {
         entry: { op: "remove", path: "/some/path" },
         entry2: { op: "add", path: "some/path", value: "value" },
       };
-      const result = await flushCache(input, "some namespace", "some name");
+      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
       expect(result).toStrictEqual(input);
     });
   });

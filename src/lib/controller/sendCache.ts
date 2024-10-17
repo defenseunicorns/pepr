@@ -5,15 +5,17 @@ import { K8s } from "kubernetes-fluent-client";
 import { PeprStore } from "../k8s";
 import { StatusCodes } from "http-status-codes";
 
-// Send the cached updates to the cluster
-export const flushCache = async (sendCache: Record<string, Operation>, namespace: string, name: string) => {
+export const sendUpdatesAndFlushCache = async (
+  sendCache: Record<string, Operation>,
+  namespace: string,
+  name: string,
+) => {
   const indexes = Object.keys(sendCache);
   const payload = Object.values(sendCache);
 
   try {
-    // Send the patch to the cluster
     if (payload.length > 0) {
-      await K8s(PeprStore, { namespace, name }).Patch(payload);
+      await K8s(PeprStore, { namespace, name }).Patch(payload); // Send the patch to the cluster
       Object.keys(sendCache).forEach(key => delete sendCache[key]); // Loop over each key in the cache and delete it to avoid collisions with other sender calls
     }
   } catch (err) {
@@ -22,9 +24,8 @@ export const flushCache = async (sendCache: Record<string, Operation>, namespace
     if (err.status === StatusCodes.UNPROCESSABLE_ENTITY) {
       Object.keys(sendCache).forEach(key => delete sendCache[key]); // Loop over each key in the cache and delete it to avoid collisions with other sender calls
     } else {
-      // On failure to update, re-add the operations to the cache to be retried
       indexes.forEach(index => {
-        sendCache[index] = payload[Number(index)];
+        sendCache[index] = payload[Number(index)]; // On failure to update, re-add the operations to the cache to be retried
       });
     }
   }
