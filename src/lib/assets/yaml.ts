@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -9,14 +8,15 @@ import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import {
-  getClusterRoles,
-  getClusterRoleBindings,
-  getServiceAccounts,
-  getStoreRoles,
-  getStoreRoleBindings,
+  getClusterRole,
+  getClusterRoleBinding,
+  getServiceAccount,
+  getStoreRole,
+  getStoreRoleBinding,
+  getCustomClusterRoleRule,
+  getCustomStoreRoleRule,
 } from "./rbac";
 import { webhookConfig } from "./webhooks";
-import { getCustomStoreRoleRules, getCustomClusterRoleRules } from "./rbac";
 import { genEnv } from "./pods";
 import { ClusterRoleRule, RoleRule } from "./helm";
 
@@ -24,8 +24,8 @@ import { ClusterRoleRule, RoleRule } from "./helm";
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
   // Fetch custom rules from the package.json file
-  const customClusterRoleRules = getCustomClusterRoleRules(); // Extract ClusterRole rules
-  const customStoreRoleRules = getCustomStoreRoleRules(); // Extract StoreRole rules
+  const customClusterRoleRules = getCustomClusterRoleRule(); // Extract ClusterRole rules
+  const customStoreRoleRules = getCustomStoreRoleRule(); // Extract StoreRole rules
 
   const overrides = {
     secrets: {
@@ -270,8 +270,8 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
   const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   // Fetch custom rules from the RBAC configuration
-  const rawCustomClusterRoleRules = getCustomClusterRoleRules();
-  const rawCustomStoreRoleRules = getCustomStoreRoleRules();
+  const rawCustomClusterRoleRules = getCustomClusterRoleRule();
+  const rawCustomStoreRoleRules = getCustomStoreRoleRule();
 
   // Validate and transform the raw cluster role rules to ensure they match the expected structure
   const customClusterRoleRules: ClusterRoleRule[] = rawCustomClusterRoleRules.filter(isClusterRoleRule).map(rule => ({
@@ -350,19 +350,19 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
-    getClusterRoles(name, assets.capabilities, rbacMode), // Generated ClusterRole
-    getClusterRoleBindings(name),
-    getServiceAccounts(name),
+    getClusterRole(name, assets.capabilities, rbacMode), // Generated ClusterRole
+    getClusterRoleBinding(name),
+    getServiceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
     deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),
-    getStoreRoles(name), // Generated Role
-    getStoreRoleBindings(name),
+    getStoreRole(name),
+    getStoreRoleBinding(name),
 
-    // Add the new custom RBAC resources as objects
+    // Add the custom RBAC resources as objects
     customClusterRole,
     customRole,
     customClusterRoleBinding,

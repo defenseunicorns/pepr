@@ -7,20 +7,18 @@ import path from "path";
 import Log from "../logger";
 import { V1Role, V1ClusterRole } from "@kubernetes/client-node";
 import { CapabilityExport } from "../types";
+import { RBACMap } from "../helpers";
 
-//import { createRBACMap } from "../helpers";
-//import { groupBy, uniq } from "lodash";
 interface CustomRBACConfig {
   roles?: V1Role[];
   clusterRoles?: V1ClusterRole[];
 }
+interface PeprConfig {
+  rbac?: CustomRBACConfig;
+}
 
 interface PackageJson {
   pepr?: PeprConfig;
-}
-
-interface PeprConfig {
-  rbac?: CustomRBACConfig;
 }
 
 interface KubernetesResource {
@@ -35,11 +33,235 @@ interface KubernetesResource {
 }
 
 /**
+ * Grants the controller access to cluster resources beyond the mutating webhook.
+ *
+ * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
+ * @returns
+ */
+
+/**
+ * Generates a Kubernetes ClusterRole resource with the specified rules and RBAC mode.
+ *
+ * @param {string} name - The name of the ClusterRole.
+ * @param {CapabilityExport[]} capabilities - The capabilities that define the RBAC rules.
+ * @param {string} [rbacMode=""] - The RBAC mode (e.g., "scoped") to determine the rule generation logic.
+ * @returns {kind.ClusterRole} A Kubernetes ClusterRole object with the generated rules.
+ */
+export function getClusterRole(
+  name: string,
+  capabilities: CapabilityExport[],
+  rbacMode: string = "",
+): kind.ClusterRole {
+  const rbacMap = createRBACMap(capabilities);
+  return {
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    kind: "ClusterRole",
+    metadata: { name },
+    rules:
+      rbacMode === "scoped"
+        ? [
+            ...Object.keys(rbacMap).map(key => {
+              let group: string;
+              key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
+
+              return {
+                apiGroups: [group],
+                resources: [rbacMap[key].plural],
+                verbs: rbacMap[key].verbs,
+              };
+            }),
+          ]
+        : [
+            {
+              apiGroups: ["*"],
+              resources: ["*"],
+              verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+            },
+          ],
+  };
+}
+
+/**
+ * Generates a Kubernetes ClusterRoleBinding resource that binds a ClusterRole to a ServiceAccount.
+ *
+ * @param {string} name - The name of the ClusterRoleBinding.
+ * @returns {kind.ClusterRoleBinding} A Kubernetes ClusterRoleBinding object.
+ */
+export function getClusterRoleBinding(name: string): kind.ClusterRoleBinding {
+  return {
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    kind: "ClusterRoleBinding",
+    metadata: { name },
+    roleRef: {
+      apiGroup: "rbac.authorization.k8s.io",
+      kind: "ClusterRole",
+      name,
+    },
+    subjects: [
+      {
+        kind: "ServiceAccount",
+        name,
+        namespace: "pepr-system",
+      },
+    ],
+  };
+}
+
+/**
+ * Generates a Kubernetes ServiceAccount resource with the specified name.
+ *
+ * @param {string} name - The name of the ServiceAccount.
+ * @returns {kind.ServiceAccount} A Kubernetes ServiceAccount object.
+ */
+export function getServiceAccount(name: string): kind.ServiceAccount {
+  return {
+    apiVersion: "v1",
+    kind: "ServiceAccount",
+    metadata: {
+      name,
+      namespace: "pepr-system",
+    },
+  };
+}
+
+/**
+ * Generates a Kubernetes Role resource with store-specific permissions.
+ *
+ * @param {string} name - The base name for the Role. The function appends "-store" to the name.
+ * @returns {kind.Role} A Kubernetes Role object with store-specific permissions.
+ */
+export function getStoreRole(name: string): kind.Role {
+  name = `${name}-store`;
+  return {
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    kind: "Role",
+    metadata: { name, namespace: "pepr-system" },
+    rules: [
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        resourceNames: [""],
+        verbs: ["create", "get", "patch", "watch"],
+      },
+    ],
+  };
+}
+
+/**
+ * Generates a Kubernetes RoleBinding resource that binds a Role with store-specific permissions to a ServiceAccount.
+ *
+ * @param {string} name - The base name for the RoleBinding. The function appends "-store" to the name.
+ * @returns {kind.RoleBinding} A Kubernetes RoleBinding object with store-specific permissions.
+ */
+export function getStoreRoleBinding(name: string): kind.RoleBinding {
+  name = `${name}-store`;
+  return {
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    kind: "RoleBinding",
+    metadata: { name, namespace: "pepr-system" },
+    roleRef: {
+      apiGroup: "rbac.authorization.k8s.io",
+      kind: "Role",
+      name,
+    },
+    subjects: [
+      {
+        kind: "ServiceAccount",
+        name,
+        namespace: "pepr-system",
+      },
+    ],
+  };
+}
+
+/**
+ * Logs the error with a specific message based on its type.
+ * @param {Error} error - The error to be logged.
+ */
+function logError(error: Error): void {
+  Log.error(`Error occurred: ${error.message}`);
+}
+
+/**
+ * Reads and parses the package.json file.
+ * @returns {PackageJson} The parsed package.json data.
+ * @throws {PackageJsonError} If the package.json file cannot be read or parsed.
+ */
+export function readPackageJson(): PackageJson {
+  try {
+    const packageJsonPath = path.resolve(process.cwd(), "package.json");
+    const fileContent = fs.readFileSync(packageJsonPath, "utf8");
+    Log.info(`Reading package.json from: ${packageJsonPath}`);
+    Log.info(`File content read from package.json: ${fileContent}`); // Log the raw file content
+    const parsedContent = JSON.parse(fileContent);
+    Log.info(`Parsed package.json content: ${JSON.stringify(parsedContent, null, 2)}`); // Log the parsed content
+    return parsedContent as PackageJson;
+  } catch (error) {
+    throw new Error(`Error reading or parsing package.json: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Reads the custom RBAC configuration from the package.json file.
+ * @returns {CustomRBACConfig} The custom RBAC configuration.
+ */
+export function readCustomRBAC(packageData?: PackageJson): CustomRBACConfig {
+  try {
+    const data = packageData || readPackageJson();
+    const peprConfig: PeprConfig = getPeprConfig(data);
+    const rbacConfig: CustomRBACConfig = getRBACConfig(peprConfig);
+
+    Log.info(`Extracted RBAC configuration: ${JSON.stringify(rbacConfig, null, 2)}`);
+    return validateRBACConfig(rbacConfig);
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)));
+    return createEmptyRBACConfig();
+  }
+}
+
+/**
+ * Retrieves the pepr configuration from the package.json data.
+ * @param {PackageJson} packageData - The parsed package.json data.
+ * @returns {PeprConfig} The pepr configuration.
+ */
+export function getPeprConfig(packageData: PackageJson): PeprConfig {
+  if (!packageData || !packageData.pepr) {
+    Log.info("No 'pepr' configuration found in package.json.");
+    return {};
+  }
+  return packageData.pepr;
+}
+
+/**
+ * Retrieves the RBAC configuration from the pepr configuration.
+ * @param {PeprConfig} peprConfig - The pepr configuration.
+ * @returns {CustomRBACConfig} The RBAC configuration.
+ */
+export function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
+  if (!peprConfig.rbac) {
+    Log.info("Missing RBAC configuration in package.json.");
+    return createEmptyRBACConfig();
+  }
+  return peprConfig.rbac;
+}
+
+/**
+ * Creates an empty RBAC configuration.
+ * @returns {CustomRBACConfig} An empty RBAC configuration.
+ */
+function createEmptyRBACConfig(): CustomRBACConfig {
+  return {
+    roles: [],
+    clusterRoles: [],
+  };
+}
+
+/**
  * Extracts custom rules for ClusterRoles from the custom RBAC configuration.
  * This function returns only the rules defined in the package.json, not the full ClusterRole objects.
  * @returns {object[]} An array of rules for ClusterRoles.
  */
-export function getCustomClusterRoleRules(packageData?: PackageJson): object[] {
+export function getCustomClusterRoleRule(packageData?: PackageJson): object[] {
   const customClusterRoles = getCustomRBACField("clusterRoles", packageData);
   Log.info(`Custom ClusterRole rules extracted: ${JSON.stringify(customClusterRoles, null, 2)}`);
 
@@ -75,7 +297,7 @@ export function getCustomClusterRoleRules(packageData?: PackageJson): object[] {
  * The rules are consolidated by combining verbs for identical apiGroups and resources.
  * @returns {object[]} An array of merged rules for Roles.
  */
-export function getCustomStoreRoleRules(packageData?: PackageJson): object[] {
+export function getCustomStoreRoleRule(packageData?: PackageJson): object[] {
   const customRoles = getCustomRBACField("roles", packageData);
   Log.info(`Custom Role rules extracted: ${JSON.stringify(customRoles, null, 2)}`);
 
@@ -179,230 +401,50 @@ export function validateRoleItem(role: KubernetesResource, itemName: string): bo
 }
 
 /**
- * Reads the custom RBAC configuration from the package.json file.
- * @returns {CustomRBACConfig} The custom RBAC configuration.
+ * Creates an RBAC map from the provided capabilities, consolidating resource and verb mappings
+ * based on the capability's bindings and resources.
+ *
+ * If the capability has no bindings, it uses the capability's own resources and verbs.
+ * For each binding, it creates a key in the format `group/version/kind`, and assigns appropriate
+ * verbs and resource names (plural forms).
+ *
+ * Additionally, it includes predefined mappings for `pepr.dev` and `apiextensions.k8s.io` groups.
+ *
+ * @param {CapabilityExport[]} capabilities - An array of capabilities that define API groups, resources, verbs, and bindings.
+ * @returns {RBACMap} A map where the keys represent `group/version/kind` and the values contain verbs and resource plural names.
  */
-export function readCustomRBAC(packageData?: PackageJson): CustomRBACConfig {
-  try {
-    const data = packageData || readPackageJson();
-    const peprConfig: PeprConfig = getPeprConfig(data);
-    const rbacConfig: CustomRBACConfig = getRBACConfig(peprConfig);
+export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
+  return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
+    // If no bindings, use capability's resources and verbs directly
+    if (capability.bindings.length === 0) {
+      const key = `${capability.apiGroups?.[0] || "defaultGroup"}/v1/${capability.resources?.[0]}`;
+      acc[key] = {
+        verbs: capability.verbs || [],
+        plural: capability.resources?.[0] || "defaultResource",
+      };
+    }
 
-    Log.info(`RBAC configuration successfully extracted: ${JSON.stringify(rbacConfig, null, 2)}`);
-    return validateRBACConfig(rbacConfig);
-  } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)));
-    return createEmptyRBACConfig();
-  }
-}
+    capability.bindings.forEach(binding => {
+      const key = `${binding.kind.group}/${binding.kind.version}/${binding.kind.kind}`;
 
-/**
- * Reads and parses the package.json file.
- * @returns {PackageJson} The parsed package.json data.
- * @throws {PackageJsonError} If the package.json file cannot be read or parsed.
- */
-export function readPackageJson(): PackageJson {
-  try {
-    const packageJsonPath = path.resolve(process.cwd(), "package.json");
-    const fileContent = fs.readFileSync(packageJsonPath, "utf8");
-    Log.info(`Reading package.json from: ${packageJsonPath}`);
-    Log.info(`File content read from package.json: ${fileContent}`); // Log the raw file content
-    const parsedContent = JSON.parse(fileContent);
-    Log.info(`Parsed package.json content: ${JSON.stringify(parsedContent, null, 2)}`); // Log the parsed content
-    return parsedContent as PackageJson;
-  } catch (error) {
-    throw new Error(`Error reading or parsing package.json: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-/**
- * Retrieves the pepr configuration from the package.json data.
- * @param {PackageJson} packageData - The parsed package.json data.
- * @returns {PeprConfig} The pepr configuration.
- */
-export function getPeprConfig(packageData: PackageJson): PeprConfig {
-  if (!packageData || !packageData.pepr) {
-    Log.info("No 'pepr' configuration found in package.json.");
-    return {};
-  }
-  return packageData.pepr;
-}
-
-/**
- * Retrieves the RBAC configuration from the pepr configuration.
- * @param {PeprConfig} peprConfig - The pepr configuration.
- * @returns {CustomRBACConfig} The RBAC configuration.
- */
-export function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
-  if (!peprConfig.rbac) {
-    Log.info("Missing RBAC configuration in package.json.");
-    return createEmptyRBACConfig();
-  }
-  return peprConfig.rbac;
-}
-
-/**
- * Creates an empty RBAC configuration.
- * @returns {CustomRBACConfig} An empty RBAC configuration.
- */
-function createEmptyRBACConfig(): CustomRBACConfig {
-  return {
-    roles: [],
-    clusterRoles: [],
-  };
-}
-
-/**
- * Logs the error with a specific message based on its type.
- * @param {Error} error - The error to be logged.
- */
-function logError(error: Error): void {
-  Log.error(`Error occurred: ${error.message}`);
-}
-
-/**
- * Generates a ClusterRole with access to cluster resources based on the provided capabilities.
- * If scoped mode is used, it consolidates rules by combining verbs for identical apiGroups and resources.
- * @param {string} name - The name of the ClusterRole.
- * @param {CapabilityExport[]} capabilities - The capabilities to use for generating the rules.
- * @param {string} [rbacMode=""] - The RBAC mode to use.
- * @returns {kind.ClusterRole} The generated ClusterRole.
- */
-export function getClusterRoles(
-  name: string,
-  capabilities: CapabilityExport[],
-  rbacMode: string = "",
-): kind.ClusterRole {
-  const mergedRules: {
-    [key: string]: { apiGroups: string[]; resources: string[]; verbs: Set<string> };
-  } = {};
-
-  capabilities.forEach(capability => {
-    capability.apiGroups?.forEach(apiGroup => {
-      capability.resources?.forEach(resource => {
-        const ruleKey = `${apiGroup}-${resource}`;
-
-        if (!mergedRules[ruleKey]) {
-          mergedRules[ruleKey] = {
-            apiGroups: [apiGroup],
-            resources: [resource],
-            verbs: new Set(capability.verbs),
-          };
-        } else {
-          capability.verbs?.forEach(verb => mergedRules[ruleKey].verbs.add(verb));
-        }
-      });
-    });
-  });
-
-  const rules =
-    rbacMode === "scoped"
-      ? Object.values(mergedRules).map(rule => ({
-          apiGroups: rule.apiGroups,
-          resources: rule.resources,
-          verbs: Array.from(rule.verbs),
-        }))
-      : [
-          {
-            apiGroups: ["*"],
-            resources: ["*"],
-            verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
-          },
-        ];
-
-  return {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "ClusterRole",
-    metadata: { name },
-    rules,
-  };
-}
-
-/**
- * Generates a ClusterRoleBinding for the specified name.
- * @param {string} name - The name of the ClusterRoleBinding.
- * @returns {kind.ClusterRoleBinding} The generated ClusterRoleBinding.
- */
-export function getClusterRoleBindings(name: string): kind.ClusterRoleBinding {
-  return {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "ClusterRoleBinding",
-    metadata: { name },
-    roleRef: {
-      apiGroup: "rbac.authorization.k8s.io",
-      kind: "ClusterRole",
-      name,
-    },
-    subjects: [
-      {
-        kind: "ServiceAccount",
-        name,
-        namespace: "pepr-system",
-      },
-    ],
-  };
-}
-
-/**
- * Generates a ServiceAccount for the specified name.
- * @param {string} name - The name of the ServiceAccount.
- * @returns {kind.ServiceAccount} The generated ServiceAccount.
- */
-export function getServiceAccounts(name: string): kind.ServiceAccount {
-  return {
-    apiVersion: "v1",
-    kind: "ServiceAccount",
-    metadata: {
-      name,
-      namespace: "pepr-system",
-    },
-  };
-}
-
-/**
- * Generates a Role for the specified name with store-specific permissions.
- * @param {string} name - The base name for the Role.
- * @returns {kind.Role} The generated Role with store-specific permissions.
- */
-export function getStoreRoles(name: string): kind.Role {
-  name = `${name}-store`;
-  return {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "Role",
-    metadata: { name, namespace: "pepr-system" },
-    rules: [
-      {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        resourceNames: [""],
+      acc["pepr.dev/v1/peprstore"] = {
         verbs: ["create", "get", "patch", "watch"],
-      },
-    ],
-  };
-}
+        plural: "peprstores",
+      };
 
-/**
- * Generates a RoleBinding for the specified name with store-specific permissions.
- * @param {string} name - The base name for the RoleBinding.
- * @returns {kind.RoleBinding} The generated RoleBinding with store-specific permissions.
- */
-export function getStoreRoleBindings(name: string): kind.RoleBinding {
-  name = `${name}-store`;
-  return {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "RoleBinding",
-    metadata: { name, namespace: "pepr-system" },
-    roleRef: {
-      apiGroup: "rbac.authorization.k8s.io",
-      kind: "Role",
-      name,
-    },
-    subjects: [
-      {
-        kind: "ServiceAccount",
-        name,
-        namespace: "pepr-system",
-      },
-    ],
-  };
+      acc["apiextensions.k8s.io/v1/customresourcedefinition"] = {
+        verbs: ["patch", "create"],
+        plural: "customresourcedefinitions",
+      };
+
+      if (!acc[key] && binding.isWatch) {
+        acc[key] = {
+          verbs: ["watch"],
+          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
+        };
+      }
+    });
+
+    return acc;
+  }, {});
 }

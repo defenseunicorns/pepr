@@ -61,7 +61,7 @@ export function validateHash(expectedHash: string): void {
   }
 }
 
-type RBACMap = {
+export type RBACMap = {
   [key: string]: {
     verbs: string[];
     plural: string;

@@ -29,13 +29,13 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { watcher, moduleSecret } from "./pods";
 
 import {
-  getClusterRoles,
-  getClusterRoleBindings,
-  getServiceAccounts,
-  getStoreRoles,
-  getStoreRoleBindings,
-  getCustomClusterRoleRules,
-  getCustomStoreRoleRules,
+  getClusterRole,
+  getClusterRoleBinding,
+  getServiceAccount,
+  getStoreRole,
+  getStoreRoleBinding,
+  getCustomClusterRoleRule,
+  getCustomStoreRoleRule,
 } from "./rbac";
 import { ClusterRoleRule, RoleRule } from "./helm";
 
@@ -131,8 +131,8 @@ export class Assets {
     const customRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `custom-role-binding.yaml`);
 
     // Load and transform custom rules from the RBAC configuration
-    const rawCustomClusterRoleRules = getCustomClusterRoleRules();
-    const rawCustomStoreRoleRules = getCustomStoreRoleRules();
+    const rawCustomClusterRoleRules = getCustomClusterRoleRule();
+    const rawCustomStoreRoleRules = getCustomStoreRoleRule();
 
     type Rule = {
       apiGroups?: string[];
@@ -163,14 +163,14 @@ export class Assets {
     await fs.writeFile(tlsSecretPath, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
     await fs.writeFile(apiTokenSecretPath, dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }));
     await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
-    await fs.writeFile(storeRolePath, dumpYaml(getStoreRoles(this.name), { noRefs: true }));
-    await fs.writeFile(storeRoleBindingPath, dumpYaml(getStoreRoleBindings(this.name), { noRefs: true }));
+    await fs.writeFile(storeRolePath, dumpYaml(getStoreRole(this.name), { noRefs: true }));
+    await fs.writeFile(storeRoleBindingPath, dumpYaml(getStoreRoleBinding(this.name), { noRefs: true }));
     await fs.writeFile(
       clusterRolePath,
-      dumpYaml(getClusterRoles(this.name, this.capabilities, "rbac"), { noRefs: true }),
+      dumpYaml(getClusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
     );
-    await fs.writeFile(clusterRoleBindingPath, dumpYaml(getClusterRoleBindings(this.name), { noRefs: true }));
-    await fs.writeFile(serviceAccountPath, dumpYaml(getServiceAccounts(this.name), { noRefs: true }));
+    await fs.writeFile(clusterRoleBindingPath, dumpYaml(getClusterRoleBinding(this.name), { noRefs: true }));
+    await fs.writeFile(serviceAccountPath, dumpYaml(getServiceAccount(this.name), { noRefs: true }));
 
     // Write the new custom templates using the actual rule data
     await fs.writeFile(customClusterRolePath, dedent(clusterRoleTemplate(customClusterRoleRules)));
@@ -239,3 +239,4 @@ export class Assets {
     }
   }
 }
+export { getCustomClusterRoleRule };
