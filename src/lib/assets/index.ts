@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -10,8 +11,7 @@ import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
-import { namespaceComplianceValidator, replaceString } from "../helpers";
-import { createDirectoryIfNotExists, dedent } from "../helpers";
+import { namespaceComplianceValidator, replaceString, createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
 import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
 import { promises as fs } from "fs";
@@ -19,7 +19,15 @@ import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { watcher, moduleSecret } from "./pods";
 
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import {
+  getClusterRole,
+  getClusterRoleBinding,
+  getServiceAccount,
+  getStoreRole,
+  getStoreRoleBinding,
+  getCustomClusterRoleRule,
+} from "./rbac";
+
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -43,7 +51,6 @@ export class Assets {
     this.hash = "";
     // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
-
     // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
@@ -67,13 +74,32 @@ export class Assets {
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
-
     return allYaml(this, rbacMode, imagePullSecret);
   };
 
   generateHelmChart = async (basePath: string) => {
     const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
     const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
+
+    try {
+      await this.createHelmDirectories(CHART_DIR, CHAR_TEMPLATES_DIR);
+      await this.createHelmFiles(CHART_DIR, CHAR_TEMPLATES_DIR);
+    } catch (err) {
+      console.error(`Error generating helm chart: ${err.message}`);
+      throw new Error(`Error generating helm chart: ${err.message}`);
+    }
+  };
+
+  private async createHelmDirectories(CHART_DIR: string, CHAR_TEMPLATES_DIR: string) {
+    // create chart dir
+    await createDirectoryIfNotExists(CHART_DIR);
+    // create charts dir
+    await createDirectoryIfNotExists(`${CHART_DIR}/charts`);
+    // create templates dir
+    await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
+  }
+
+  private async createHelmFiles(CHART_DIR: string, CHAR_TEMPLATES_DIR: string) {
     const valuesPath = resolve(CHART_DIR, `values.yaml`);
     const chartPath = resolve(CHART_DIR, `Chart.yaml`);
     const nsPath = resolve(CHAR_TEMPLATES_DIR, `namespace.yaml`);
@@ -94,86 +120,88 @@ export class Assets {
     const clusterRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `cluster-role-binding.yaml`);
     const serviceAccountPath = resolve(CHAR_TEMPLATES_DIR, `service-account.yaml`);
 
-    // create helm chart
-    try {
-      // create chart dir
-      await createDirectoryIfNotExists(CHART_DIR);
+    // create values file
+    await overridesFile(this, valuesPath);
+    // create the chart.yaml
+    await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
+    // create the namespace.yaml in templates
+    await fs.writeFile(nsPath, dedent(nsTemplate()));
 
-      // create charts dir
-      await createDirectoryIfNotExists(`${CHART_DIR}/charts`);
+    const code = await fs.readFile(this.path);
 
-      // create templates dir
-      await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
+    await fs.writeFile(watcherSVCPath, dumpYaml(watcherService(this.name), { noRefs: true }));
+    await fs.writeFile(admissionSVCPath, dumpYaml(service(this.name), { noRefs: true }));
+    await fs.writeFile(tlsSecretPath, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
+    await fs.writeFile(apiTokenSecretPath, dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }));
+    await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
+    await fs.writeFile(storeRolePath, dumpYaml(getStoreRole(this.name), { noRefs: true }));
+    await fs.writeFile(storeRoleBindingPath, dumpYaml(getStoreRoleBinding(this.name), { noRefs: true }));
+    await fs.writeFile(
+      clusterRolePath,
+      dumpYaml(getClusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
+    );
+    await fs.writeFile(clusterRoleBindingPath, dumpYaml(getClusterRoleBinding(this.name), { noRefs: true }));
+    await fs.writeFile(serviceAccountPath, dumpYaml(getServiceAccount(this.name), { noRefs: true }));
 
-      // create values file
-      await overridesFile(this, valuesPath);
+    await this.createWebhookFiles(
+      mutationWebhookPath,
+      validationWebhookPath,
+      admissionDeployPath,
+      admissionServiceMonitorPath,
+      watcherDeployPath,
+      watcherServiceMonitorPath,
+    );
+  }
 
-      // create the chart.yaml
-      await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
+  private async createWebhookFiles(
+    mutationWebhookPath: string,
+    validationWebhookPath: string,
+    admissionDeployPath: string,
+    admissionServiceMonitorPath: string,
+    watcherDeployPath: string,
+    watcherServiceMonitorPath: string,
+  ) {
+    const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
+    const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
+    const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
 
-      // create the namespace.yaml in templates
-      await fs.writeFile(nsPath, dedent(nsTemplate()));
-
-      const code = await fs.readFile(this.path);
-
-      await fs.writeFile(watcherSVCPath, dumpYaml(watcherService(this.name), { noRefs: true }));
-      await fs.writeFile(admissionSVCPath, dumpYaml(service(this.name), { noRefs: true }));
-      await fs.writeFile(tlsSecretPath, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
-      await fs.writeFile(apiTokenSecretPath, dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }));
-      await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
-      await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
-      await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(
-        clusterRolePath,
-        dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
-      );
-      await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
-
-      const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
-      const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
-      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
-
-      if (validateWebhook || mutateWebhook) {
-        await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate("admission")));
-      }
-
-      if (mutateWebhook) {
-        const yamlMutateWebhook = dumpYaml(mutateWebhook, { noRefs: true });
-        const mutateWebhookTemplate = replaceString(
-          replaceString(
-            replaceString(yamlMutateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
-            "{{ .Values.admission.failurePolicy }}",
-          ),
-          `${this.config.webhookTimeout}` || "10",
-          "{{ .Values.admission.webhookTimeout }}",
-        );
-        await fs.writeFile(mutationWebhookPath, mutateWebhookTemplate);
-      }
-
-      if (validateWebhook) {
-        const yamlValidateWebhook = dumpYaml(validateWebhook, { noRefs: true });
-        const validateWebhookTemplate = replaceString(
-          replaceString(
-            replaceString(yamlValidateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
-            "{{ .Values.admission.failurePolicy }}",
-          ),
-          `${this.config.webhookTimeout}` || "10",
-          "{{ .Values.admission.webhookTimeout }}",
-        );
-        await fs.writeFile(validationWebhookPath, validateWebhookTemplate);
-      }
-
-      if (watchDeployment) {
-        await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate("watcher")));
-      }
-    } catch (err) {
-      console.error(`Error generating helm chart: ${err.message}`);
-      process.exit(1);
+    if (validateWebhook || mutateWebhook) {
+      await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
+      await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate("admission")));
     }
-  };
+
+    if (mutateWebhook) {
+      const yamlMutateWebhook = dumpYaml(mutateWebhook, { noRefs: true });
+      const mutateWebhookTemplate = replaceString(
+        replaceString(
+          replaceString(yamlMutateWebhook, this.name, "{{ .Values.uuid }}"),
+          this.config.onError === "reject" ? "Fail" : "Ignore",
+          "{{ .Values.admission.failurePolicy }}",
+        ),
+        `${this.config.webhookTimeout}` || "10",
+        "{{ .Values.admission.webhookTimeout }}",
+      );
+      await fs.writeFile(mutationWebhookPath, mutateWebhookTemplate);
+    }
+
+    if (validateWebhook) {
+      const yamlValidateWebhook = dumpYaml(validateWebhook, { noRefs: true });
+      const validateWebhookTemplate = replaceString(
+        replaceString(
+          replaceString(yamlValidateWebhook, this.name, "{{ .Values.uuid }}"),
+          this.config.onError === "reject" ? "Fail" : "Ignore",
+          "{{ .Values.admission.failurePolicy }}",
+        ),
+        `${this.config.webhookTimeout}` || "10",
+        "{{ .Values.admission.webhookTimeout }}",
+      );
+      await fs.writeFile(validationWebhookPath, validateWebhookTemplate);
+    }
+
+    if (watchDeployment) {
+      await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
+      await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate("watcher")));
+    }
+  }
 }
+export { getCustomClusterRoleRule };
