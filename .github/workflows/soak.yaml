@@ -4,10 +4,16 @@ permissions: read-all
 on:
   workflow_dispatch:
     inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
       branch:
         description: 'Soak test branch'
         required: true
         default: 'main'
+
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
 
@@ -43,9 +49,16 @@ jobs:
           npm ci
 
       - name: build pepr image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+  
+      - name: build kfc pepr image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
@@ -54,7 +67,7 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload image tar artifact
-        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: pepr-img.tar
           path: pepr-img.tar
@@ -165,7 +178,9 @@ jobs:
               update_pod_map
 
               kubectl get pods -n pepr-demo 
-
+              kubectl top po -n pepr-system
+              kubectl get po -n pepr-system
+              
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
                 echo "$pod: ${pod_map[$pod]}"
@@ -183,7 +198,7 @@ jobs:
         shell: bash
 
       - name: Upload logs
-        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: soak-test-logs
           path: logs
