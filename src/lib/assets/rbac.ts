@@ -20,7 +20,6 @@ interface PeprConfig {
 interface PackageJson {
   pepr?: PeprConfig;
 }
-
 interface KubernetesResource {
   metadata?: {
     name?: string;
@@ -40,44 +39,54 @@ interface KubernetesResource {
  */
 
 /**
- * Generates a Kubernetes ClusterRole resource with the specified rules and RBAC mode.
+ * Generates a Kubernetes ClusterRole resource with the specified rules and RBAC mode,
+ * and merges custom RBAC rules from package.json.
  *
  * @param {string} name - The name of the ClusterRole.
  * @param {CapabilityExport[]} capabilities - The capabilities that define the RBAC rules.
  * @param {string} [rbacMode=""] - The RBAC mode (e.g., "scoped") to determine the rule generation logic.
- * @returns {kind.ClusterRole} A Kubernetes ClusterRole object with the generated rules.
+ * @param {PackageJson} [packageData] - Optional package.json data for extracting custom RBAC rules.
+ * @returns {kind.ClusterRole} A Kubernetes ClusterRole object with the generated and merged custom rules.
  */
 export function getClusterRole(
   name: string,
   capabilities: CapabilityExport[],
   rbacMode: string = "",
+  packageData?: PackageJson,
 ): kind.ClusterRole {
   const rbacMap = createRBACMap(capabilities);
+
+  // Generate dynamic rules based on capabilities
+  const generatedRules =
+    rbacMode === "scoped"
+      ? Object.keys(rbacMap).map(key => {
+          let group: string;
+          key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
+          return {
+            apiGroups: [group],
+            resources: [rbacMap[key].plural],
+            verbs: rbacMap[key].verbs,
+          };
+        })
+      : [
+          {
+            apiGroups: ["*"],
+            resources: ["*"],
+            verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+          },
+        ];
+
+  // Get custom cluster role rules from package.json
+  const customClusterRules = getCustomClusterRoleRule(packageData);
+
+  // Merge custom rules with generated rules
+  const mergedRules = mergeRBACRules(generatedRules, customClusterRules);
+
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "ClusterRole",
     metadata: { name },
-    rules:
-      rbacMode === "scoped"
-        ? [
-            ...Object.keys(rbacMap).map(key => {
-              let group: string;
-              key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
-
-              return {
-                apiGroups: [group],
-                resources: [rbacMap[key].plural],
-                verbs: rbacMap[key].verbs,
-              };
-            }),
-          ]
-        : [
-            {
-              apiGroups: ["*"],
-              resources: ["*"],
-              verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
-            },
-          ],
+    rules: mergedRules,
   };
 }
 
@@ -125,25 +134,37 @@ export function getServiceAccount(name: string): kind.ServiceAccount {
 }
 
 /**
- * Generates a Kubernetes Role resource with store-specific permissions.
+ * Generates a Kubernetes Role resource with store-specific permissions,
+ * and merges custom RBAC rules from package.json.
  *
  * @param {string} name - The base name for the Role. The function appends "-store" to the name.
- * @returns {kind.Role} A Kubernetes Role object with store-specific permissions.
+ * @param {PackageJson} [packageData] - Optional package.json data for extracting custom RBAC rules.
+ * @returns {kind.Role} A Kubernetes Role object with store-specific permissions and merged custom rules.
  */
-export function getStoreRole(name: string): kind.Role {
+export function getStoreRole(name: string, packageData?: PackageJson): kind.Role {
   name = `${name}-store`;
+
+  // Default store role rules
+  const generatedRules = [
+    {
+      apiGroups: ["pepr.dev"],
+      resources: ["peprstores"],
+      resourceNames: [""],
+      verbs: ["create", "get", "patch", "watch"],
+    },
+  ];
+
+  // Get custom store role rules from package.json
+  const customStoreRules = getCustomStoreRoleRule(packageData);
+
+  // Merge custom rules with generated rules
+  const mergedRules = mergeRBACRules(generatedRules, customStoreRules);
+
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
     kind: "Role",
     metadata: { name, namespace: "pepr-system" },
-    rules: [
-      {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        resourceNames: [""],
-        verbs: ["create", "get", "patch", "watch"],
-      },
-    ],
+    rules: mergedRules,
   };
 }
 
@@ -398,6 +419,43 @@ export function validateRoleItem(role: KubernetesResource, itemName: string): bo
     return false;
   }
   return true;
+}
+
+/**
+ * Merges two arrays of RBAC rules. If a rule with the same apiGroup and resource exists,
+ * it merges the verbs, otherwise, it adds the new rule.
+ *
+ * @param {Array} generatedRules - The rules generated from capabilities.
+ * @param {Array} customRules - The custom rules from package.json.
+ * @returns {Array} Merged array of RBAC rules.
+ */
+function mergeRBACRules(
+  generatedRules: Array<{ apiGroups: string[]; resources: string[]; verbs: string[] }>,
+  customRules: Array<{ apiGroups?: string[]; resources?: string[]; verbs?: string[] }>,
+) {
+  const mergedRules = [...generatedRules];
+
+  customRules.forEach(customRule => {
+    const existingRule = mergedRules.find(
+      rule =>
+        JSON.stringify(rule.apiGroups) === JSON.stringify(customRule.apiGroups) &&
+        JSON.stringify(rule.resources) === JSON.stringify(customRule.resources),
+    );
+
+    if (existingRule) {
+      // Merge verbs, avoiding duplicates
+      existingRule.verbs = Array.from(new Set([...existingRule.verbs, ...(customRule.verbs || [])]));
+    } else {
+      // Add new custom rule if no match is found
+      mergedRules.push({
+        apiGroups: customRule.apiGroups || [],
+        resources: customRule.resources || [],
+        verbs: customRule.verbs || [],
+      });
+    }
+  });
+
+  return mergedRules;
 }
 
 /**

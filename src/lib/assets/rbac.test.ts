@@ -131,6 +131,11 @@ describe("RBAC Module Tests", () => {
             resources: ["*"],
             verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
           },
+          {
+            apiGroups: ["apps"],
+            resources: ["deployments"],
+            verbs: ["create", "update"],
+          },
         ],
       });
     });
@@ -142,7 +147,13 @@ describe("RBAC Module Tests", () => {
         apiVersion: "rbac.authorization.k8s.io/v1",
         kind: "ClusterRole",
         metadata: { name: "test-cluster-role" },
-        rules: [],
+        rules: [
+          {
+            apiGroups: ["apps"],
+            resources: ["deployments"],
+            verbs: ["create", "update"],
+          },
+        ],
       });
     });
 

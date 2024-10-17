@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -12,17 +13,7 @@ import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString, createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
-import {
-  chartYaml,
-  nsTemplate,
-  admissionDeployTemplate,
-  watcherDeployTemplate,
-  serviceMonitorTemplate,
-  clusterRoleTemplate,
-  roleTemplate,
-  clusterRoleBindingTemplate,
-  roleBindingTemplate,
-} from "./helm";
+import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
@@ -35,9 +26,7 @@ import {
   getStoreRole,
   getStoreRoleBinding,
   getCustomClusterRoleRule,
-  getCustomStoreRoleRule,
 } from "./rbac";
-import { ClusterRoleRule, RoleRule } from "./helm";
 
 export class Assets {
   readonly name: string;
@@ -131,33 +120,6 @@ export class Assets {
     const clusterRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `cluster-role-binding.yaml`);
     const serviceAccountPath = resolve(CHAR_TEMPLATES_DIR, `service-account.yaml`);
 
-    const customClusterRolePath = resolve(CHAR_TEMPLATES_DIR, `custom-cluster-role.yaml`);
-    const customClusterRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `custom-cluster-role-binding.yaml`);
-    const customRolePath = resolve(CHAR_TEMPLATES_DIR, `custom-role.yaml`);
-    const customRoleBindingPath = resolve(CHAR_TEMPLATES_DIR, `custom-role-binding.yaml`);
-
-    // Load and transform custom rules from the RBAC configuration
-    const rawCustomClusterRoleRules = getCustomClusterRoleRule();
-    const rawCustomStoreRoleRules = getCustomStoreRoleRule();
-
-    type Rule = {
-      apiGroups?: string[];
-      resources?: string[];
-      verbs?: string[];
-    };
-
-    const customClusterRoleRules: ClusterRoleRule[] = rawCustomClusterRoleRules.map((rule: Rule) => ({
-      apiGroups: rule.apiGroups || [],
-      resources: rule.resources || [],
-      verbs: rule.verbs || [],
-    }));
-
-    const customStoreRoleRules: RoleRule[] = rawCustomStoreRoleRules.map((rule: Rule) => ({
-      apiGroups: rule.apiGroups || [],
-      resources: rule.resources || [],
-      verbs: rule.verbs || [],
-    }));
-
     // create values file
     await overridesFile(this, valuesPath);
     // create the chart.yaml
@@ -180,12 +142,6 @@ export class Assets {
     );
     await fs.writeFile(clusterRoleBindingPath, dumpYaml(getClusterRoleBinding(this.name), { noRefs: true }));
     await fs.writeFile(serviceAccountPath, dumpYaml(getServiceAccount(this.name), { noRefs: true }));
-
-    // Write the new custom templates using the actual rule data
-    await fs.writeFile(customClusterRolePath, dedent(clusterRoleTemplate(customClusterRoleRules)));
-    await fs.writeFile(customClusterRoleBindingPath, dedent(clusterRoleBindingTemplate()));
-    await fs.writeFile(customRolePath, dedent(roleTemplate(customStoreRoleRules)));
-    await fs.writeFile(customRoleBindingPath, dedent(roleBindingTemplate()));
 
     await this.createWebhookFiles(
       mutationWebhookPath,

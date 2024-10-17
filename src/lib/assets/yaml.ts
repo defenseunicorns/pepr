@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml, KubernetesObject, V1ClusterRoleBinding, V1RoleBinding } from "@kubernetes/client-node";
+import { dumpYaml } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
@@ -18,14 +18,16 @@ import {
 } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
-import { ClusterRoleRule, RoleRule } from "./helm";
 
-// Function to generate Helm Chart overrides file (values.yaml) from assets
-// Helm Chart overrides file (values.yaml) generated from assets
+/**
+ * Function to generate Helm Chart overrides file (values.yaml) from assets
+ * @param {Assets} assets - The assets object containing the module's configuration and data.
+ * @param {string} path - The path where the values.yaml file will be written.
+ */
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-  // Fetch custom rules from the package.json file
-  const customClusterRoleRules = getCustomClusterRoleRule(); // Extract ClusterRole rules
-  const customStoreRoleRules = getCustomStoreRoleRule(); // Extract StoreRole rules
+  // Fetch custom rules from the package.json file (or other source)
+  const customClusterRoleRules = getCustomClusterRoleRule(); // Extract custom ClusterRole rules
+  const customStoreRoleRules = getCustomStoreRoleRule(); // Extract custom Role rules
 
   const overrides = {
     secrets: {
@@ -43,7 +45,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
-      env: genEnv(config, false, true),
+      env: genEnv(config, false, true), // Generate environment variables
       envFrom: [],
       image,
       annotations: {
@@ -173,10 +175,21 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         annotations: {},
       },
     },
-    customClusterRoleRules,
-    customStoreRoleRules,
+
+    // Custom RBAC section to add ClusterRoles and Roles
+    rbac: {
+      clusterRoles: customClusterRoleRules.map((rule, index) => ({
+        name: `custom-cluster-role-${index + 1}`,
+        rules: rule,
+      })),
+      roles: customStoreRoleRules.map((rule, index) => ({
+        name: `custom-role-${index + 1}`,
+        rules: rule,
+      })),
+    },
   };
 
+  // Write the updated overrides to the values.yaml file
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
@@ -237,27 +250,6 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg);
 }
 
-// Type guard functions to check if an object matches the ClusterRoleRule or RoleRule types
-function isClusterRoleRule(rule: unknown): rule is ClusterRoleRule {
-  return (
-    typeof rule === "object" &&
-    rule !== null &&
-    Array.isArray((rule as ClusterRoleRule).apiGroups) &&
-    Array.isArray((rule as ClusterRoleRule).resources) &&
-    Array.isArray((rule as ClusterRoleRule).verbs)
-  );
-}
-
-function isRoleRule(rule: unknown): rule is RoleRule {
-  return (
-    typeof rule === "object" &&
-    rule !== null &&
-    Array.isArray((rule as RoleRule).apiGroups) &&
-    Array.isArray((rule as RoleRule).resources) &&
-    Array.isArray((rule as RoleRule).verbs)
-  );
-}
-
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
   const { name, tls, apiToken, path } = assets;
   const code = await fs.readFile(path);
@@ -268,85 +260,6 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
   const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
-
-  // Fetch custom rules from the RBAC configuration
-  const rawCustomClusterRoleRules = getCustomClusterRoleRule();
-  const rawCustomStoreRoleRules = getCustomStoreRoleRule();
-
-  // Validate and transform the raw cluster role rules to ensure they match the expected structure
-  const customClusterRoleRules: ClusterRoleRule[] = rawCustomClusterRoleRules.filter(isClusterRoleRule).map(rule => ({
-    apiGroups: rule.apiGroups,
-    resources: rule.resources,
-    verbs: rule.verbs,
-  }));
-
-  // Validate and transform the raw store role rules to ensure they match the expected structure
-  const customStoreRoleRules: RoleRule[] = rawCustomStoreRoleRules.filter(isRoleRule).map(rule => ({
-    apiGroups: rule.apiGroups,
-    resources: rule.resources,
-    verbs: rule.verbs,
-  }));
-
-  // Generate the custom RBAC resources using the validated data as KubernetesObject instances
-  const customClusterRole: KubernetesObject & { rules: ClusterRoleRule[] } = {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "ClusterRole",
-    metadata: {
-      name: "pepr-custom-cluster-role",
-    },
-    rules: customClusterRoleRules,
-  };
-
-  const customRole: KubernetesObject & { rules: RoleRule[] } = {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "Role",
-    metadata: {
-      name: "pepr-custom-role",
-      namespace: "pepr-system",
-    },
-    rules: customStoreRoleRules as RoleRule[],
-  };
-
-  const customClusterRoleBinding: V1ClusterRoleBinding = {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "ClusterRoleBinding",
-    metadata: {
-      name: "pepr-custom-cluster-role-binding",
-    },
-    roleRef: {
-      apiGroup: "rbac.authorization.k8s.io",
-      kind: "ClusterRole",
-      name: "pepr-custom-cluster-role",
-    },
-    subjects: [
-      {
-        kind: "ServiceAccount",
-        name: "pepr-custom-service-account",
-        namespace: "pepr-system",
-      },
-    ],
-  };
-
-  const customRoleBinding: V1RoleBinding = {
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    kind: "RoleBinding",
-    metadata: {
-      name: "pepr-custom-role-binding",
-      namespace: "pepr-system",
-    },
-    roleRef: {
-      apiGroup: "rbac.authorization.k8s.io",
-      kind: "Role",
-      name: "pepr-custom-role",
-    },
-    subjects: [
-      {
-        kind: "ServiceAccount",
-        name: "pepr-custom-service-account",
-        namespace: "pepr-system",
-      },
-    ],
-  };
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
@@ -361,12 +274,6 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
     moduleSecret(name, code, assets.hash),
     getStoreRole(name),
     getStoreRoleBinding(name),
-
-    // Add the custom RBAC resources as objects
-    customClusterRole,
-    customRole,
-    customClusterRoleBinding,
-    customRoleBinding,
   ];
 
   if (mutateWebhook) {

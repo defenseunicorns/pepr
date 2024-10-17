@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import {
-  nsTemplate,
-  chartYaml,
-  watcherDeployTemplate,
-  admissionDeployTemplate,
-  serviceMonitorTemplate,
-  roleBindingTemplate,
-  clusterRoleBindingTemplate,
-  roleTemplate,
-  RoleRule,
-  clusterRoleTemplate,
-  ClusterRoleRule,
-} from "./helm";
+import { nsTemplate, chartYaml, watcherDeployTemplate, admissionDeployTemplate, serviceMonitorTemplate } from "./helm";
 import { expect, describe, test } from "@jest/globals";
 describe("Kubernetes Template Generators", () => {
   describe("nsTemplate", () => {
@@ -121,69 +109,6 @@ describe("Helm Templates", () => {
       expect(result).toContain("kind: Deployment");
       expect(result).toContain(`buildTimestamp: "${buildTimestamp}"`);
       expect(result).toContain("serviceAccountName: {{ .Values.uuid }}");
-    });
-  });
-
-  describe("ClusterRole Template", () => {
-    test("should generate cluster role template correctly", () => {
-      const customClusterRoleRules: ClusterRoleRule[] = [
-        { apiGroups: [""], resources: ["pods"], verbs: ["get", "list"] },
-        { apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] },
-      ];
-      const result = clusterRoleTemplate(customClusterRoleRules);
-      expect(result).toContain("kind: ClusterRole");
-      expect(result).toContain('apiGroups: [""]');
-      expect(result).toContain('resources: ["pods"]');
-      expect(result).toContain('verbs: ["get","list"]');
-      expect(result).toContain('apiGroups: ["apps"]');
-      expect(result).toContain('resources: ["deployments"]');
-      expect(result).toContain('verbs: ["create","update"]');
-    });
-  });
-
-  describe("Role Template", () => {
-    test("should generate role template correctly", () => {
-      const customStoreRoleRules: RoleRule[] = [
-        { apiGroups: [""], resources: ["configmaps"], verbs: ["get", "create"] },
-        { apiGroups: ["core"], resources: ["services"], verbs: ["list", "watch"] },
-      ];
-      const result = roleTemplate(customStoreRoleRules);
-      expect(result).toContain("kind: Role");
-      expect(result).toContain("namespace: pepr-system");
-      expect(result).toContain('apiGroups: [""]');
-      expect(result).toContain('resources: ["configmaps"]');
-      expect(result).toContain('verbs: ["get","create"]');
-      expect(result).toContain('apiGroups: ["core"]');
-      expect(result).toContain('resources: ["services"]');
-      expect(result).toContain('verbs: ["list","watch"]');
-    });
-  });
-
-  describe("ClusterRoleBinding Template", () => {
-    test("should generate cluster role binding template correctly", () => {
-      const result = clusterRoleBindingTemplate();
-      expect(result).toContain("kind: ClusterRoleBinding");
-      expect(result).toContain("name: pepr-custom-cluster-role-binding");
-      expect(result).toContain("roleRef:");
-      expect(result).toContain("kind: ClusterRole");
-      expect(result).toContain("name: pepr-custom-cluster-role");
-      expect(result).toContain("subjects:");
-      expect(result).toContain("kind: ServiceAccount");
-      expect(result).toContain("namespace: pepr-system");
-    });
-  });
-
-  describe("RoleBinding Template", () => {
-    test("should generate role binding template correctly", () => {
-      const result = roleBindingTemplate();
-      expect(result).toContain("kind: RoleBinding");
-      expect(result).toContain("name: pepr-custom-role-binding");
-      expect(result).toContain("roleRef:");
-      expect(result).toContain("kind: Role");
-      expect(result).toContain("name: pepr-custom-role");
-      expect(result).toContain("subjects:");
-      expect(result).toContain("kind: ServiceAccount");
-      expect(result).toContain("namespace: pepr-system");
     });
   });
 
