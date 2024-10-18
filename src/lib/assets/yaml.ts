@@ -7,11 +7,28 @@ import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import {
+  getClusterRole,
+  getClusterRoleBinding,
+  getServiceAccount,
+  getStoreRole,
+  getStoreRoleBinding,
+  getCustomClusterRoleRule,
+  getCustomStoreRoleRule,
+} from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
-// Helm Chart overrides file (values.yaml) generated from assets
+
+/**
+ * Function to generate Helm Chart overrides file (values.yaml) from assets
+ * @param {Assets} assets - The assets object containing the module's configuration and data.
+ * @param {string} path - The path where the values.yaml file will be written.
+ */
 export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+  // Fetch custom rules from the package.json file (or other source)
+  const customClusterRoleRules = getCustomClusterRoleRule(); // Extract custom ClusterRole rules
+  const customStoreRoleRules = getCustomStoreRoleRule(); // Extract custom Role rules
+
   const overrides = {
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
@@ -28,7 +45,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
-      env: genEnv(config, false, true),
+      env: genEnv(config, false, true), // Generate environment variables
       envFrom: [],
       image,
       annotations: {
@@ -158,10 +175,24 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
         annotations: {},
       },
     },
+
+    // Custom RBAC section to add ClusterRoles and Roles
+    rbac: {
+      clusterRoles: customClusterRoleRules.map((rule, index) => ({
+        name: `custom-cluster-role-${index + 1}`,
+        rules: rule,
+      })),
+      roles: customStoreRoleRules.map((rule, index) => ({
+        name: `custom-role-${index + 1}`,
+        rules: rule,
+      })),
+    },
   };
 
+  // Write the updated overrides to the values.yaml file
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
+
 export function zarfYaml({ name, image, config }: Assets, path: string) {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
@@ -187,7 +218,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
     ],
   };
 
-  return dumpYaml(zarfCfg, { noRefs: true });
+  return dumpYaml(zarfCfg);
 }
 
 export function zarfYamlChart({ name, image, config }: Assets, path: string) {
@@ -216,7 +247,7 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
     ],
   };
 
-  return dumpYaml(zarfCfg, { noRefs: true });
+  return dumpYaml(zarfCfg);
 }
 
 export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
@@ -232,17 +263,17 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, rbacMode),
-    clusterRoleBinding(name),
-    serviceAccount(name),
+    getClusterRole(name, assets.capabilities, rbacMode), // Generated ClusterRole
+    getClusterRoleBinding(name),
+    getServiceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
     deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
     moduleSecret(name, code, assets.hash),
-    storeRole(name),
-    storeRoleBinding(name),
+    getStoreRole(name),
+    getStoreRoleBinding(name),
   ];
 
   if (mutateWebhook) {
