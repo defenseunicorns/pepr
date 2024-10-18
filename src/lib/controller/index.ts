@@ -4,6 +4,7 @@
 import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
+import { Socket } from "net";
 
 import { Capability } from "../capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
@@ -26,10 +27,10 @@ export class Controller {
   #metricsCollector = metricsCollector;
 
   // The token used to authenticate requests
-  #token = "";
+  token = "";
 
   // The express app instance
-  readonly #app = express();
+  readonly app = express();
 
   // Initialized with the constructor
   readonly #config: ModuleConfig;
@@ -49,7 +50,7 @@ export class Controller {
 
     // Initialize the Pepr store for each capability
     new PeprControllerStore(capabilities, `pepr-${config.uuid}-store`, () => {
-      this.#bindEndpoints();
+      this.bindEndpoints();
       onReady && onReady();
       Log.info("✅ Controller startup complete");
       // Initialize the schedule store for each capability
@@ -59,10 +60,10 @@ export class Controller {
     });
 
     // Middleware for logging requests
-    this.#app.use(Controller.#logger);
+    this.app.use(Controller.logger);
 
     // Middleware for parsing JSON, limit to 2mb vs 100K for K8s compatibility
-    this.#app.use(express.json({ limit: "2mb" }));
+    this.app.use(express.json({ limit: "2mb" }));
 
     if (beforeHook) {
       Log.info(`Using beforeHook: ${beforeHook}`);
@@ -80,6 +81,7 @@ export class Controller {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
+    this.#running = true;
 
     // Load SSL certificate and key
     const options = {
@@ -90,16 +92,27 @@ export class Controller {
     // Get the API token if not in watch mode
     if (!isWatchMode()) {
       // Get the API token from the environment variable or the mounted secret
-      this.#token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
-      Log.info(`Using API token: ${this.#token}`);
+      this.token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
+      Log.info(`Using API token: ${this.token}`);
 
-      if (!this.#token) {
+      if (!this.token) {
         throw new Error("API token not found");
       }
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.#app).listen(port);
+    const server = https.createServer(options, this.app).listen(port);
+
+    // Set the timeout value
+    server.timeout = 9500; // 9.5 seconds
+
+    // Handle the timeout event
+    server.on("timeout", (socket: Socket) => {
+      Log.warn("Admission webhook request timed out.");
+      // Increment the timeout metric
+      this.#metricsCollector.timeout();
+      socket.destroy(); // Close the socket after timeout
+    });
 
     // Handle server listening event
     server.on("listening", () => {
@@ -131,25 +144,25 @@ export class Controller {
     });
   };
 
-  #bindEndpoints = () => {
+  bindEndpoints = () => {
     // Health check endpoint
-    this.#app.get("/healthz", Controller.#healthz);
+    this.app.get("/healthz", Controller.healthz);
 
     // Metrics endpoint
-    this.#app.get("/metrics", this.#metrics);
+    this.app.get("/metrics", this.metrics);
 
     if (isWatchMode()) {
       return;
     }
 
     // Require auth for webhook endpoints
-    this.#app.use(["/mutate/:token", "/validate/:token"], this.#validateToken);
+    this.app.use(["/mutate/:token", "/validate/:token"], this.validateToken);
 
     // Mutate endpoint
-    this.#app.post("/mutate/:token", this.#admissionReq("Mutate"));
+    this.app.post("/mutate/:token", this.admissionReq("Mutate"));
 
     // Validate endpoint
-    this.#app.post("/validate/:token", this.#admissionReq("Validate"));
+    this.app.post("/validate/:token", this.admissionReq("Validate"));
   };
 
   /**
@@ -160,10 +173,10 @@ export class Controller {
    * @param next The next middleware function
    * @returns
    */
-  #validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
+  validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
     // Validate the token
     const { token } = req.params;
-    if (token !== this.#token) {
+    if (token !== this.token) {
       const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
       Log.info(err);
       res.status(401).send(err);
@@ -181,7 +194,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  #metrics = async (req: express.Request, res: express.Response) => {
+  metrics = async (req: express.Request, res: express.Response) => {
     try {
       res.send(await this.#metricsCollector.getMetrics());
     } catch (err) {
@@ -196,7 +209,7 @@ export class Controller {
    * @param admissionKind the type of admission request
    * @returns the request handler
    */
-  #admissionReq = (admissionKind: "Mutate" | "Validate") => {
+  admissionReq = (admissionKind: "Mutate" | "Validate") => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
       // Start the metrics timer
@@ -294,7 +307,7 @@ export class Controller {
    * @param res the outgoing response
    * @param next the next middleware function
    */
-  static #logger(req: express.Request, res: express.Response, next: express.NextFunction) {
+  static logger(req: express.Request, res: express.Response, next: express.NextFunction) {
     const startTime = Date.now();
 
     res.on("finish", () => {
@@ -318,7 +331,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  static #healthz(req: express.Request, res: express.Response) {
+  static healthz(req: express.Request, res: express.Response) {
     try {
       res.send("OK");
     } catch (err) {

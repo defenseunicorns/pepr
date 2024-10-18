@@ -16,6 +16,7 @@ interface MetricNames {
   validate: string;
   cacheMiss: string;
   resyncFailureCount: string;
+  timeouts: string;
 }
 
 interface MetricArgs {
@@ -43,6 +44,7 @@ export class MetricsCollector {
     validate: "validate",
     cacheMiss: "cache_miss",
     resyncFailureCount: "resync_failure_count",
+    timeouts: "timeouts",
   };
 
   /**
@@ -58,6 +60,7 @@ export class MetricsCollector {
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
     this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);
     this.addGauge(this.#metricNames.resyncFailureCount, "Number of failures per resync operation", ["count"]);
+    this.addCounter(this.#metricNames.timeouts, "Number of webhook request timeouts"); // Add this line for timeouts
   }
 
   #getMetricName = (name: string) => `${this.#prefix}_${name}`;
@@ -113,6 +116,11 @@ export class MetricsCollector {
    * Increments the alerts counter.
    */
   alert = () => this.incCounter(this.#metricNames.alerts);
+
+  /**
+   * Increments the timeout counter.
+   */
+  timeout = () => this.incCounter(this.#metricNames.timeouts);
 
   /**
    * Observes the duration since the provided start time and updates the summary.
@@ -173,7 +181,9 @@ export class MetricsCollector {
 
     if (maxCacheMissWindows !== undefined && this.#cacheMissWindows.size >= maxCacheMissWindows) {
       const firstKey = this.#cacheMissWindows.keys().next().value;
-      this.#cacheMissWindows.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.#cacheMissWindows.delete(firstKey);
+      }
       this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.remove({ window: firstKey });
     }
   };
