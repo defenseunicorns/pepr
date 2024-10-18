@@ -8,7 +8,6 @@ import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
 import * as sdk from "./sdk/sdk";
-console.log("HI");
 export {
   Capability,
   K8s,
