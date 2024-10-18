@@ -192,17 +192,13 @@ jobs:
 
               # Every 10 minutes, scale up or down the `watch-auditor` deployment
               if [ $((i % 4)) -eq 0 ]; then
-                # On even iterations (e.g., i = 0, 4, 8...), scale up to 1 replica
-                echo "Scaling down the watch-auditor deployment to 0 replicas"
-                if ! kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0; then
-                  echo "Error scaling down the deployment. Continuing..."
-                fi
+                # On even iterations (e.g., i = 0, 4, 8...), remove the deployment
+                echo "Removing the watch-auditor deployment"
+                kubectl delete -f hack/auditor.ci.yaml
               else
-                # On odd iterations (e.g., i = 2, 6, 10...), scale down to 1 replicas
-                echo "Scaling up the watch-auditor deployment to 0 replicas"
-                if ! kubectl scale deploy/watch-auditor -n watch-auditor --replicas=1; then
-                  echo "Error scaling up the deployment. Continuing..."
-                fi
+                # On odd iterations (e.g., i = 2, 6, 10...), apply the deployment
+                echo "Deploying the watch-auditor"
+                kubectl apply -f hack/auditor.ci.yaml
               fi
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
