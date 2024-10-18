@@ -196,7 +196,6 @@ jobs:
                 echo "Scaling down the watch-auditor deployment to 0 replicas"
                 kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0
               else
-                # On odd iterations (e.g., i = 2, 6, 10...), scale up to 1 replica
                 echo "Scaling up the watch-auditor deployment to 0 replicas"
                 kubectl scale deploy/watch-auditor -n watch-auditor --replicas=1
               fi
