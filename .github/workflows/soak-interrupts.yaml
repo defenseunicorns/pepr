@@ -202,7 +202,7 @@ jobs:
             sleep 300s  # Sleep for 5 minutes before the next iteration
           done
 
-          echo "Soak test passed successfully!"
+          echo "Soak interrupt test passed successfully!"
         shell: bash
 
       - name: Upload logs
