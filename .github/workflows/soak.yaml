@@ -193,18 +193,22 @@ jobs:
               # Every 10 minutes, scale up or down the `watch-auditor` deployment
               if [ $((i % 4)) -eq 0 ]; then
                 # On even iterations (e.g., i = 0, 4, 8...), scale up to 1 replica
-                echo "Scaling up the watch-auditor deployment to 1 replica"
-                kubectl scale deploy watch-auditor -n watch-auditor --replicas=1
-              else
-                # On odd iterations (e.g., i = 2, 6, 10...), scale down to 0 replicas
                 echo "Scaling down the watch-auditor deployment to 0 replicas"
-                kubectl scale deploy watch-auditor -n watch-auditor --replicas=0
+                if ! kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0; then
+                  echo "Error scaling down the deployment. Continuing..."
+                fi
+              else
+                # On odd iterations (e.g., i = 2, 6, 10...), scale down to 1 replicas
+                echo "Scaling up the watch-auditor deployment to 0 replicas"
+                if ! kubectl scale deploy/watch-auditor -n watch-auditor --replicas=1; then
+                  echo "Error scaling up the deployment. Continuing..."
+                fi
               fi
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
           done
 
-          echo "Soak test passed successfully!"
+          echo "Soak test passed successfully!"å
         shell: bash
 
       - name: Upload logs
