@@ -192,7 +192,6 @@ jobs:
 
               # Every 10 minutes, scale up or down the `watch-auditor` deployment
               if [ $((i % 4)) -eq 0 ]; then
-                # On even iterations (e.g., i = 0, 4, 8...), scale down to 0 replicas
                 echo "Scaling down the watch-auditor deployment to 0 replicas"
                 kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0
               else
