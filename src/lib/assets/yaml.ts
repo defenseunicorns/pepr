@@ -7,15 +7,7 @@ import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
-import {
-  getClusterRole,
-  getClusterRoleBinding,
-  getServiceAccount,
-  getStoreRole,
-  getStoreRoleBinding,
-  getCustomClusterRoleRule,
-  getCustomStoreRoleRule,
-} from "./rbac";
+import { getClusterRole, getClusterRoleBinding, getServiceAccount, getStoreRole, getStoreRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
 
@@ -24,10 +16,21 @@ import { genEnv } from "./pods";
  * @param {Assets} assets - The assets object containing the module's configuration and data.
  * @param {string} path - The path where the values.yaml file will be written.
  */
-export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
-  // Fetch custom rules from the package.json file (or other source)
-  const customClusterRoleRules = getCustomClusterRoleRule(); // Extract custom ClusterRole rules
-  const customStoreRoleRules = getCustomStoreRoleRule(); // Extract custom Role rules
+/**
+ * Function to generate Helm Chart overrides file (values.yaml) from assets
+ * @param {Assets} assets - The assets object containing the module's configuration and data.
+ * @param {string} path - The path where the values.yaml file will be written.
+ */
+export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
+  const rbacMode = ""; // Set your desired rbacMode here or pass it from `Assets`
+
+  // Generate ClusterRole and StoreRole using the provided capabilities
+  const clusterRole = getClusterRole(name, capabilities, rbacMode);
+  const storeRole = getStoreRole(name);
+
+  console.log(`Writing overrides to ${path}`);
+  console.log(`clusterRole: ${JSON.stringify(clusterRole)}`);
+  console.log(`storeRole: ${JSON.stringify(storeRole)}`);
 
   const overrides = {
     secrets: {
@@ -176,16 +179,18 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       },
     },
 
-    // Custom RBAC section to add ClusterRoles and Roles
+    // Custom RBAC section to add ClusterRole and Role
     rbac: {
-      clusterRoles: customClusterRoleRules.map((rule, index) => ({
-        name: `custom-cluster-role-${index + 1}`,
-        rules: rule,
-      })),
-      roles: customStoreRoleRules.map((rule, index) => ({
-        name: `custom-role-${index + 1}`,
-        rules: rule,
-      })),
+      clusterRoles: [
+        {
+          rules: clusterRole.rules,
+        },
+      ],
+      roles: [
+        {
+          rules: storeRole.rules,
+        },
+      ],
     },
   };
 

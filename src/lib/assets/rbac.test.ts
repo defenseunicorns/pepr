@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import fs from "fs";
 import Log from "../logger";
 import { beforeEach, describe, jest, expect, test } from "@jest/globals";
@@ -73,7 +76,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [
+            clusterRole: [
               { rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }] },
             ],
           },
@@ -248,7 +251,7 @@ describe("RBAC Module Tests", () => {
 
   describe("getPeprConfig", () => {
     test("Should return the pepr configuration when present in package data", () => {
-      const mockPackageData = { pepr: { rbac: { clusterRoles: [] } } };
+      const mockPackageData = { pepr: { rbac: { clusterRole: [] } } };
       const result = getPeprConfig(mockPackageData);
       expect(result).toEqual(mockPackageData.pepr);
     });
@@ -264,10 +267,10 @@ describe("RBAC Module Tests", () => {
   describe("getCustomRBACField", () => {
     test("Should return an empty array when RBAC field is missing", () => {
       const mockPackageData = { pepr: { rbac: {} } };
-      const result = getCustomRBACField("clusterRoles", mockPackageData);
+      const result = getCustomRBACField("clusterRole", mockPackageData);
       expect(result).toEqual([]);
       expect(Log.info).toHaveBeenCalledWith(
-        "No custom RBAC items found for clusterRoles. Processing will continue without these items.",
+        "No custom RBAC items found for clusterRole. Processing will continue without these items.",
       );
     });
 
@@ -275,14 +278,14 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [
+            clusterRole: [
               { rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }] },
             ],
           },
         },
       };
-      const result = getCustomRBACField("clusterRoles", mockPackageData);
-      expect(result).toEqual(mockPackageData.pepr.rbac.clusterRoles);
+      const result = getCustomRBACField("clusterRole", mockPackageData);
+      expect(result).toEqual(mockPackageData.pepr.rbac.clusterRole);
     });
   });
 
@@ -291,7 +294,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [{ rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["get", "list"] }] }],
+            clusterRole: [{ rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["get", "list"] }] }],
           },
         },
       };
@@ -301,13 +304,13 @@ describe("RBAC Module Tests", () => {
     });
 
     test("Should return an empty array when cluster role rules are missing", () => {
-      const mockPackageData = { pepr: { rbac: { clusterRoles: [] } } };
+      const mockPackageData = { pepr: { rbac: { clusterRole: [] } } };
       const result = getCustomClusterRoleRule(mockPackageData);
       expect(result).toEqual([]);
     });
 
-    test("Should handle undefined customClusterRoles gracefully", () => {
-      const mockPackageData = { pepr: { rbac: {} } }; // No clusterRoles defined
+    test("Should handle undefined customClusterRole gracefully", () => {
+      const mockPackageData = { pepr: { rbac: {} } }; // No clusterRole defined
       const result = getCustomClusterRoleRule(mockPackageData);
       expect(result).toEqual([]); // Should return an empty array
     });
@@ -316,7 +319,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [{ metadata: { name: "test-cluster-role" } }], // No rules field
+            clusterRole: [{ metadata: { name: "test-cluster-role" } }], // No rules field
           },
         },
       };
@@ -329,7 +332,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [
+            clusterRole: [
               { rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["get"] }] },
               { rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["list"] }] },
             ],
@@ -351,7 +354,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            clusterRoles: [
+            clusterRole: [
               { rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["get"] }] },
               { rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["list"] }] },
             ],
@@ -376,7 +379,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            roles: [{ rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }] }],
+            role: [{ rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }] }],
           },
         },
       };
@@ -386,7 +389,7 @@ describe("RBAC Module Tests", () => {
     });
 
     test("Should return an empty array when store role rules are missing", () => {
-      const mockPackageData = { pepr: { rbac: { roles: [] } } };
+      const mockPackageData = { pepr: { rbac: { role: [] } } };
       const result = getCustomStoreRoleRule(mockPackageData);
       expect(result).toEqual([]);
     });
@@ -395,7 +398,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            roles: [
+            role: [
               { rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create"] }] },
               { rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["update"] }] },
             ],
@@ -413,8 +416,8 @@ describe("RBAC Module Tests", () => {
       ]);
     });
 
-    test("Should handle undefined customRoles gracefully", () => {
-      const mockPackageData = { pepr: { rbac: {} } }; // No roles defined
+    test("Should handle undefined customRole gracefully", () => {
+      const mockPackageData = { pepr: { rbac: {} } }; // No role defined
       const result = getCustomStoreRoleRule(mockPackageData);
       expect(result).toEqual([]); // Should return an empty array
     });
@@ -423,7 +426,7 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            roles: [{ metadata: { name: "test-role" } }], // No rules field
+            role: [{ metadata: { name: "test-role" } }], // No rules field
           },
         },
       };
@@ -437,8 +440,8 @@ describe("RBAC Module Tests", () => {
     test("Should log info and return empty RBAC configuration when RBAC is missing", () => {
       const peprConfig = {};
       const result = getRBACConfig(peprConfig);
-      expect(result).toEqual({ roles: [], clusterRoles: [] });
-      expect(Log.info).toHaveBeenCalledWith("Missing RBAC configuration in package.json.");
+      expect(result).toEqual({ role: [], clusterRole: [] });
+      expect(Log.info).toHaveBeenCalledWith("No RBAC configuration found in package.json.");
     });
   });
 
@@ -447,13 +450,13 @@ describe("RBAC Module Tests", () => {
       const mockPackageData = {
         pepr: {
           rbac: {
-            roles: [
+            role: [
               {
                 metadata: { name: "test-role" },
                 rules: [{ apiGroups: ["apps"], resources: ["deployments"], verbs: ["create", "update"] }],
               },
             ],
-            clusterRoles: [
+            clusterRole: [
               {
                 metadata: { name: "test-cluster-role" },
                 rules: [{ apiGroups: [""], resources: ["nodes"], verbs: ["get", "list"] }],
@@ -475,7 +478,7 @@ describe("RBAC Module Tests", () => {
       const logErrorSpy = jest.spyOn(Log, "error").mockImplementation(() => {});
       const result = readCustomRBAC();
 
-      expect(result).toEqual({ roles: [], clusterRoles: [] }); // Should return empty RBAC configuration
+      expect(result).toEqual({ role: [], clusterRole: [] }); // Should return empty RBAC configuration
       expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Simulated file read error"));
     });
   });
@@ -517,16 +520,16 @@ describe("RBAC Module Tests", () => {
   describe("validateRoleEntries", () => {
     test("Should log warning when roles are not an array", () => {
       const invalidRoles = {} as unknown; // Not an array
-      const result = validateRoleEntries(invalidRoles as (V1ClusterRole | V1Role)[], "roles");
+      const result = validateRoleEntries(invalidRoles as (V1ClusterRole | V1Role)[], "role");
       expect(result).toEqual([]);
-      expect(Log.warn).toHaveBeenCalledWith("Invalid roles entries: Expected an array but got object");
+      expect(Log.warn).toHaveBeenCalledWith("Invalid role entries: Expected an array but got object");
     });
 
     test("Should log warning when role entry is missing rules array", () => {
       const rolesWithMissingRules: Partial<V1Role>[] = [{ metadata: { name: "test-role" } }];
-      const result = validateRoleEntries(rolesWithMissingRules, "roles");
+      const result = validateRoleEntries(rolesWithMissingRules, "role");
       expect(result).toEqual([]);
-      expect(Log.warn).toHaveBeenCalledWith("Invalid roles entry: Missing required 'rules' array");
+      expect(Log.warn).toHaveBeenCalledWith("Invalid role entry: Missing required 'rules' array");
     });
   });
 

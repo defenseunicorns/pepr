@@ -10,8 +10,8 @@ import { CapabilityExport } from "../types";
 import { RBACMap } from "../helpers";
 
 interface CustomRBACConfig {
-  roles?: V1Role[];
-  clusterRoles?: V1ClusterRole[];
+  role?: V1Role[];
+  clusterRole?: V1ClusterRole[];
 }
 interface PeprConfig {
   rbac?: CustomRBACConfig;
@@ -212,10 +212,10 @@ export function readPackageJson(): PackageJson {
   try {
     const packageJsonPath = path.resolve(process.cwd(), "package.json");
     const fileContent = fs.readFileSync(packageJsonPath, "utf8");
-    Log.info(`Reading package.json from: ${packageJsonPath}`);
-    Log.info(`File content read from package.json: ${fileContent}`); // Log the raw file content
+    //Log.info(`Reading package.json from: ${packageJsonPath}`);
+    //Log.info(`File content read from package.json: ${fileContent}`); // Log the raw file content
     const parsedContent = JSON.parse(fileContent);
-    Log.info(`Parsed package.json content: ${JSON.stringify(parsedContent, null, 2)}`); // Log the parsed content
+    //Log.info(`Parsed package.json content: ${JSON.stringify(parsedContent, null, 2)}`); // Log the parsed content
     return parsedContent as PackageJson;
   } catch (error) {
     throw new Error(`Error reading or parsing package.json: ${error instanceof Error ? error.message : String(error)}`);
@@ -232,7 +232,7 @@ export function readCustomRBAC(packageData?: PackageJson): CustomRBACConfig {
     const peprConfig: PeprConfig = getPeprConfig(data);
     const rbacConfig: CustomRBACConfig = getRBACConfig(peprConfig);
 
-    Log.info(`Extracted RBAC configuration: ${JSON.stringify(rbacConfig, null, 2)}`);
+    //Log.info(`Extracted RBAC configuration: ${JSON.stringify(rbacConfig, null, 2)}`);
     return validateRBACConfig(rbacConfig);
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)));
@@ -260,7 +260,7 @@ export function getPeprConfig(packageData: PackageJson): PeprConfig {
  */
 export function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
   if (!peprConfig.rbac) {
-    Log.info("Missing RBAC configuration in package.json.");
+    Log.info("No RBAC configuration found in package.json.");
     return createEmptyRBACConfig();
   }
   return peprConfig.rbac;
@@ -272,8 +272,8 @@ export function getRBACConfig(peprConfig: PeprConfig): CustomRBACConfig {
  */
 function createEmptyRBACConfig(): CustomRBACConfig {
   return {
-    roles: [],
-    clusterRoles: [],
+    role: [],
+    clusterRole: [],
   };
 }
 
@@ -283,8 +283,8 @@ function createEmptyRBACConfig(): CustomRBACConfig {
  * @returns {object[]} An array of rules for ClusterRoles.
  */
 export function getCustomClusterRoleRule(packageData?: PackageJson): object[] {
-  const customClusterRoles = getCustomRBACField("clusterRoles", packageData);
-  Log.info(`Custom ClusterRole rules extracted: ${JSON.stringify(customClusterRoles, null, 2)}`);
+  const customClusterRoles = getCustomRBACField("clusterRole", packageData);
+  //Log.info(`Custom ClusterRole rules extracted: ${JSON.stringify(customClusterRoles, null, 2)}`);
 
   const mergedRules: {
     [key: string]: { apiGroups: string[] | undefined; resources: string[] | undefined; verbs: Set<string> };
@@ -319,8 +319,8 @@ export function getCustomClusterRoleRule(packageData?: PackageJson): object[] {
  * @returns {object[]} An array of merged rules for Roles.
  */
 export function getCustomStoreRoleRule(packageData?: PackageJson): object[] {
-  const customRoles = getCustomRBACField("roles", packageData);
-  Log.info(`Custom Role rules extracted: ${JSON.stringify(customRoles, null, 2)}`);
+  const customRoles = getCustomRBACField("role", packageData);
+  //Log.info(`Custom Role rules extracted: ${JSON.stringify(customRoles, null, 2)}`);
 
   const mergedRules: {
     [key: string]: { apiGroups: string[] | undefined; resources: string[] | undefined; verbs: Set<string> };
@@ -379,8 +379,8 @@ export function getCustomRBACField<K extends keyof CustomRBACConfig>(
  */
 function validateRBACConfig(rbacConfig: CustomRBACConfig): CustomRBACConfig {
   return {
-    roles: validateRoleEntries(rbacConfig.roles ?? [], "roles"),
-    clusterRoles: validateRoleEntries(rbacConfig.clusterRoles ?? [], "clusterRoles"),
+    role: validateRoleEntries(rbacConfig.role ?? [], "roles"),
+    clusterRole: validateRoleEntries(rbacConfig.clusterRole ?? [], "clusterRoles"),
   };
 }
 

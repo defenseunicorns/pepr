@@ -144,7 +144,7 @@ The following example demonstrates how to add custom RBAC rules to the Pepr modu
 {
   "pepr": {
     "rbac": {
-      "roles": [
+      "role": [
         {
           "rules": [
             {
@@ -160,7 +160,7 @@ The following example demonstrates how to add custom RBAC rules to the Pepr modu
           ]
         }
       ],
-      "clusterRoles": [
+      "clusterRole": [
         {
           "rules": [
             {
