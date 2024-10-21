@@ -169,6 +169,10 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
     metricsCollector.incRetryCount(retryCount);
   });
 
+  watcher.events.on(WatchEvent.CLIENT_SIZE, message => {
+    logEvent(WatchEvent.CLIENT_SIZE, message);
+  });
+
   // Start the watch
   try {
     await watcher.start();
