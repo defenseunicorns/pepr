@@ -54,8 +54,8 @@ program
     let currentDir = process.cwd();
 
     // Clone from the repo
-    if (options.repo) {
-      const clone = { cmd: `git clone -b ${options.repo} ${repoUrl}`, dir: currentDir };
+    if (options.branch) {
+      const clone = { cmd: `git clone -b ${options.branch} ${repoUrl}`, dir: currentDir };
       const install = { cmd: `npm install`, dir: "kubernetes-fluent-client" };
       const build = { cmd: `npm run build`, dir: "kubernetes-fluent-client" };
       const image = {
