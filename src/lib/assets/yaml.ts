@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -10,192 +11,191 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { getClusterRole, getClusterRoleBinding, getServiceAccount, getStoreRole, getStoreRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
+import path from "path";
 
 /**
  * Function to generate Helm Chart overrides file (values.yaml) from assets
  * @param {Assets} assets - The assets object containing the module's configuration and data.
- * @param {string} path - The path where the values.yaml file will be written.
+ * @param {string} filePath - The path where the values.yaml file will be written.
  */
-/**
- * Function to generate Helm Chart overrides file (values.yaml) from assets
- * @param {Assets} assets - The assets object containing the module's configuration and data.
- * @param {string} path - The path where the values.yaml file will be written.
- */
-export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
-  const rbacMode = ""; // Set your desired rbacMode here or pass it from `Assets`
+export async function overridesFile(assets: Assets, filePath: string, rbacMode: string) {
+  try {
+    // Set the RBAC mode from the assets configuration, or default if not provided
+    console.log(`Generating overrides file with RBAC mode: ${rbacMode}`);
 
-  // Generate ClusterRole and StoreRole using the provided capabilities
-  const clusterRole = getClusterRole(name, capabilities, rbacMode);
-  const storeRole = getStoreRole(name);
+    // Generate ClusterRole and StoreRole using the provided capabilities
+    const clusterRole = getClusterRole(assets.name, assets.capabilities, rbacMode);
+    const storeRole = getStoreRole(assets.name);
 
-  console.log(`Writing overrides to ${path}`);
-  console.log(`clusterRole: ${JSON.stringify(clusterRole)}`);
-  console.log(`storeRole: ${JSON.stringify(storeRole)}`);
+    // Check if generated roles have rules
+    const clusterRoleRules = clusterRole.rules && clusterRole.rules.length > 0 ? clusterRole.rules : [];
+    const storeRoleRules = storeRole.rules && storeRole.rules.length > 0 ? storeRole.rules : [];
 
-  const overrides = {
-    secrets: {
-      apiToken: Buffer.from(apiToken).toString("base64"),
-    },
-    hash,
-    namespace: {
-      annotations: {},
-      labels: {
-        "pepr.dev": "",
+    const overrides = {
+      secrets: {
+        apiToken: Buffer.from(assets.apiToken).toString("base64"),
       },
-    },
-    uuid: name,
-    admission: {
-      terminationGracePeriodSeconds: 5,
-      failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
-      webhookTimeout: config.webhookTimeout,
-      env: genEnv(config, false, true), // Generate environment variables
-      envFrom: [],
-      image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
-      },
-      labels: {
-        app: name,
-        "pepr.dev/controller": "admission",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        fsGroup: 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "256Mi",
-          cpu: "200m",
-        },
-        limits: {
-          memory: "512Mi",
-          cpu: "500m",
-        },
-      },
-      containerSecurityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
-        },
-      },
-      podAnnotations: {},
-      nodeSelector: {},
-      tolerations: [],
-      extraVolumeMounts: [],
-      extraVolumes: [],
-      affinity: {},
-      serviceMonitor: {
-        enabled: false,
-        labels: {},
+      hash: assets.hash,
+      namespace: {
         annotations: {},
-      },
-    },
-    watcher: {
-      terminationGracePeriodSeconds: 5,
-      env: genEnv(config, true, true),
-      envFrom: [],
-      image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
-      },
-      labels: {
-        app: `${name}-watcher`,
-        "pepr.dev/controller": "watcher",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        fsGroup: 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "256Mi",
-          cpu: "200m",
-        },
-        limits: {
-          memory: "512Mi",
-          cpu: "500m",
+        labels: {
+          "pepr.dev": "",
         },
       },
-      containerSecurityContext: {
-        runAsUser: 65532,
-        runAsGroup: 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
+      uuid: assets.name,
+      admission: {
+        terminationGracePeriodSeconds: 5,
+        failurePolicy: assets.config.onError === "reject" ? "Fail" : "Ignore",
+        webhookTimeout: assets.config.webhookTimeout,
+        env: genEnv(assets.config, false, true), // Generate environment variables
+        envFrom: [],
+        image: assets.image,
+        annotations: {
+          "pepr.dev/description": `${assets.config.description}` || "",
+        },
+        labels: {
+          app: assets.name,
+          "pepr.dev/controller": "admission",
+          "pepr.dev/uuid": assets.config.uuid,
+        },
+        securityContext: {
+          runAsUser: 65532,
+          runAsGroup: 65532,
+          runAsNonRoot: true,
+          fsGroup: 65532,
+        },
+        readinessProbe: {
+          httpGet: {
+            path: "/healthz",
+            port: 3000,
+            scheme: "HTTPS",
+          },
+          initialDelaySeconds: 10,
+        },
+        livenessProbe: {
+          httpGet: {
+            path: "/healthz",
+            port: 3000,
+            scheme: "HTTPS",
+          },
+          initialDelaySeconds: 10,
+        },
+        resources: {
+          requests: {
+            memory: "256Mi",
+            cpu: "200m",
+          },
+          limits: {
+            memory: "512Mi",
+            cpu: "500m",
+          },
+        },
+        containerSecurityContext: {
+          runAsUser: 65532,
+          runAsGroup: 65532,
+          runAsNonRoot: true,
+          allowPrivilegeEscalation: false,
+          capabilities: {
+            drop: ["ALL"],
+          },
+        },
+        podAnnotations: {},
+        nodeSelector: {},
+        tolerations: [],
+        extraVolumeMounts: [],
+        extraVolumes: [],
+        affinity: {},
+        serviceMonitor: {
+          enabled: false,
+          labels: {},
+          annotations: {},
         },
       },
-      nodeSelector: {},
-      tolerations: [],
-      extraVolumeMounts: [],
-      extraVolumes: [],
-      affinity: {},
-      podAnnotations: {},
-      serviceMonitor: {
-        enabled: false,
-        labels: {},
-        annotations: {},
+      watcher: {
+        terminationGracePeriodSeconds: 5,
+        env: genEnv(assets.config, true, true),
+        envFrom: [],
+        image: assets.image,
+        annotations: {
+          "pepr.dev/description": `${assets.config.description}` || "",
+        },
+        labels: {
+          app: `${assets.name}-watcher`,
+          "pepr.dev/controller": "watcher",
+          "pepr.dev/uuid": assets.config.uuid,
+        },
+        securityContext: {
+          runAsUser: 65532,
+          runAsGroup: 65532,
+          runAsNonRoot: true,
+          fsGroup: 65532,
+        },
+        readinessProbe: {
+          httpGet: {
+            path: "/healthz",
+            port: 3000,
+            scheme: "HTTPS",
+          },
+          initialDelaySeconds: 10,
+        },
+        livenessProbe: {
+          httpGet: {
+            path: "/healthz",
+            port: 3000,
+            scheme: "HTTPS",
+          },
+          initialDelaySeconds: 10,
+        },
+        resources: {
+          requests: {
+            memory: "256Mi",
+            cpu: "200m",
+          },
+          limits: {
+            memory: "512Mi",
+            cpu: "500m",
+          },
+        },
+        containerSecurityContext: {
+          runAsUser: 65532,
+          runAsGroup: 65532,
+          runAsNonRoot: true,
+          allowPrivilegeEscalation: false,
+          capabilities: {
+            drop: ["ALL"],
+          },
+        },
+        nodeSelector: {},
+        tolerations: [],
+        extraVolumeMounts: [],
+        extraVolumes: [],
+        affinity: {},
+        podAnnotations: {},
+        serviceMonitor: {
+          enabled: false,
+          labels: {},
+          annotations: {},
+        },
       },
-    },
 
-    // Custom RBAC section to add ClusterRole and Role
-    rbac: {
-      clusterRoles: [
-        {
-          rules: clusterRole.rules,
-        },
-      ],
-      roles: [
-        {
-          rules: storeRole.rules,
-        },
-      ],
-    },
-  };
+      // Custom RBAC section to add ClusterRole and Role
+      rbac: {
+        clusterRoles: clusterRoleRules.length ? [{ rules: clusterRoleRules }] : [],
+        roles: storeRoleRules.length ? [{ rules: storeRoleRules }] : [],
+      },
+    };
 
-  // Write the updated overrides to the values.yaml file
-  await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
+    // Check if the output directory exists and create it if needed
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+
+    // Write the overrides YAML to the specified file path
+    await fs.writeFile(filePath, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
+    console.log(`Successfully wrote overrides to ${filePath}`);
+  } catch (err) {
+    console.error(`Failed to write overrides file at ${filePath}:`, err);
+    throw new Error(`Error generating overrides file: ${err.message}`);
+  }
 }
 
 export function zarfYaml({ name, image, config }: Assets, path: string) {

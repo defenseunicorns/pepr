@@ -127,7 +127,8 @@ describe("Assets Class", () => {
 
   describe("generateHelmChart", () => {
     it("should throw an error when generateHelmChart fails", async () => {
-      await expect(assets.generateHelmChart("/fail-path")).rejects.toThrow(
+      const rbacMode = "admin";
+      await expect(assets.generateHelmChart("/fail-path", rbacMode)).rejects.toThrow(
         "Error generating helm chart: Test error while creating directories",
       );
     });

@@ -77,13 +77,13 @@ export class Assets {
     return allYaml(this, rbacMode, imagePullSecret);
   };
 
-  generateHelmChart = async (basePath: string) => {
+  generateHelmChart = async (basePath: string, rbacMode: string) => {
     const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
     const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
 
     try {
       await this.createHelmDirectories(CHART_DIR, CHAR_TEMPLATES_DIR);
-      await this.createHelmFiles(CHART_DIR, CHAR_TEMPLATES_DIR);
+      await this.createHelmFiles(CHART_DIR, CHAR_TEMPLATES_DIR, rbacMode);
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);
       throw new Error(`Error generating helm chart: ${err.message}`);
@@ -99,7 +99,7 @@ export class Assets {
     await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
   }
 
-  private async createHelmFiles(CHART_DIR: string, CHAR_TEMPLATES_DIR: string) {
+  private async createHelmFiles(CHART_DIR: string, CHAR_TEMPLATES_DIR: string, rbacMode: string) {
     const valuesPath = resolve(CHART_DIR, `values.yaml`);
     const chartPath = resolve(CHART_DIR, `Chart.yaml`);
     const nsPath = resolve(CHAR_TEMPLATES_DIR, `namespace.yaml`);
@@ -121,7 +121,7 @@ export class Assets {
     const serviceAccountPath = resolve(CHAR_TEMPLATES_DIR, `service-account.yaml`);
 
     // create values file
-    await overridesFile(this, valuesPath);
+    await overridesFile(this, valuesPath, rbacMode);
     // create the chart.yaml
     await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
     // create the namespace.yaml in templates

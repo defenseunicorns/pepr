@@ -185,7 +185,7 @@ export default function (program: RootCmd) {
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
-      await assets.generateHelmChart(outputDir);
+      await assets.generateHelmChart(outputDir, opts.rbacMode);
 
       console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
