@@ -177,8 +177,6 @@ export async function overridesFile(assets: Assets, filePath: string, rbacMode: 
           annotations: {},
         },
       },
-
-      // Custom RBAC section to add ClusterRole and Role
       rbac: {
         clusterRoles: clusterRoleRules.length ? [{ rules: clusterRoleRules }] : [],
         roles: storeRoleRules.length ? [{ rules: storeRoleRules }] : [],
@@ -189,7 +187,7 @@ export async function overridesFile(assets: Assets, filePath: string, rbacMode: 
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
 
-    // Write the overrides YAML to the specified file path
+    // Write the overrides YAML
     await fs.writeFile(filePath, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
     console.log(`Successfully wrote overrides to ${filePath}`);
   } catch (err) {
