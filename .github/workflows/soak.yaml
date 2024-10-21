@@ -52,6 +52,7 @@ jobs:
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
+          ls -la
           rm -rf node_modules/kubernetes-fluent-client/src
           rm -rf node_modules/kubernetes-fluent-client/dist
           cp -r kfc/src node_modules/kubernetes-fluent-client/src
