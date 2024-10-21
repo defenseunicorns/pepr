@@ -7,15 +7,23 @@ import { promisify } from "node:util";
 import * as child_process from "node:child_process";
 const exec = promisify(child_process.exec);
 import * as https from "node:https";
-import { access, mkdtemp, rm, writeFile, unlink } from "node:fs/promises";
-import { chmodSync, createWriteStream, PathLike, readdirSync, readFileSync } from "node:fs";
+import { access, mkdtemp, readFile, rm, writeFile, unlink } from "node:fs/promises";
+// import { chmodSync, createWriteStream, PathLike, readdirSync, readFileSync } from "node:fs";
+import { chmodSync, createWriteStream, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as crypto from "node:crypto";
+// import { crypto } from '@sigstore/core'; // Is this neccessary?
+// import { toTrustMaterial, TrustMaterial, Verifier } from "@sigstore/verify";
+import { toTrustMaterial, Verifier } from "@sigstore/verify";
+import { PublicKeyDetails, TrustedRoot } from "@sigstore/protobuf-specs";
+import { bundleFromJSON } from "@sigstore/bundle";
+import { toSignedEntity } from "@sigstore/verify";
+
 import * as sut from "./cosign";
 
-import type { Signature, Signer } from "@sigstore/sign/dist/signer";
-import { DSSEBundleBuilder } from "@sigstore/sign";
+// import type { Signature, Signer } from "@sigstore/sign/dist/signer";
+// import { DSSEBundleBuilder } from "@sigstore/sign";
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 async function httpGet(url: string): Promise<any> {
@@ -332,34 +340,34 @@ describe.only("sigstore-js - pub/prv keys", () => {
     // });
     // console.log("l-pub", pubKeyObj);
 
-    // https://github.com/sigstore/sigstore-js/tree/main/packages/sign
-    class KeyfileSigner implements Signer {
-      private prv: crypto.KeyObject;
-      private pub: crypto.KeyObject;
+    // // https://github.com/sigstore/sigstore-js/tree/main/packages/sign
+    // class KeyfileSigner implements Signer {
+    //   private prv: crypto.KeyObject;
+    //   private pub: crypto.KeyObject;
 
-      constructor(prv: PathLike, pub: PathLike) {
-        this.prv = crypto.createPrivateKey({
-          key: readFileSync(prv, { encoding: "utf8" }),
-          format: "pem",
-          encoding: "utf-8",
-        });
-        this.pub = crypto.createPublicKey({
-          key: readFileSync(pub, { encoding: "utf8" }),
-          format: "pem",
-          encoding: "utf-8",
-        });
-      }
+    //   constructor(prv: PathLike, pub: PathLike) {
+    //     this.prv = crypto.createPrivateKey({
+    //       key: readFileSync(prv, { encoding: "utf8" }),
+    //       format: "pem",
+    //       encoding: "utf-8",
+    //     });
+    //     this.pub = crypto.createPublicKey({
+    //       key: readFileSync(pub, { encoding: "utf8" }),
+    //       format: "pem",
+    //       encoding: "utf-8",
+    //     });
+    //   }
 
-      public async sign(data: Buffer): Promise<Signature> {
-        const signature = crypto.sign(null, data, this.prv);
-        const publicKey = this.pub.export({ format: "pem", type: "spki" }).toString("ascii");
+    //   public async sign(data: Buffer): Promise<Signature> {
+    //     const signature = crypto.sign(null, data, this.prv);
+    //     const publicKey = this.pub.export({ format: "pem", type: "spki" }).toString("ascii");
 
-        return {
-          signature: signature,
-          key: { $case: "publicKey", publicKey },
-        };
-      }
-    }
+    //     return {
+    //       signature: signature,
+    //       key: { $case: "publicKey", publicKey },
+    //     };
+    //   }
+    // }
 
     // https://github.com/sigstore/sigstore-js/tree/main/packages/sign#witness
     //  - The BundleBuilder may also be configured with zero-or-more Witness instances, and
@@ -371,18 +379,217 @@ describe.only("sigstore-js - pub/prv keys", () => {
     //   tlogUpload: false
     // };
 
-    // "The bytes of the artifact to be signed." //
-    //  - how do I derive those bytes from the image..?
-    const payload = Buffer.from("something to be signed");
+    // const signer = new KeyfileSigner(`${workdir}/${rawPrvkey}`, `${workdir}/${rawPubkey}`);
+    // const bundler = new DSSEBundleBuilder({ signer, witnesses: [] });
 
-    const signer = new KeyfileSigner(`${workdir}/${rawPrvkey}`, `${workdir}/${rawPubkey}`);
-    const bundler = new DSSEBundleBuilder({ signer, witnesses: [] });
+    // "The bytes of the artifact to be signed."
+    //  - how do I derive those bytes from the image's .sig?
+    // > crane manifest $(cosign triangulate ttl.sh/777ac082-afc2-4db3-83aa-97199998943b:2m) | jq .
+    // {
+    //   "schemaVersion": 2,
+    //   "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    //   "config": {
+    //     "mediaType": "application/vnd.oci.image.config.v1+json",
+    //     "size": 233,
+    //     "digest": "sha256:9b79fe7132ddc3150ee3fe6a7839a1865afa0b7f86dcfe71493774b7c68e9fc3"
+    //   },
+    //   "layers": [
+    //     {
+    //       "mediaType": "application/vnd.dev.cosign.simplesigning.v1+json",
+    //       "size": 259,
+    //       "digest": "sha256:4bfa764756f08768b73685a840922d5124f109b4522fb146922ff290a49c1898",
+    //       "annotations": {
+    //         "dev.cosignproject.cosign/signature": "MEYCIQCeZwnvT94cZ/SaMaBHAKvy6D/K5AJROcP9sdEzdGljxgIhAMzRydB2Wppkdj/hd4erFgXbvVuNn8UFdBHXc8SYfr95"
+    //       }
+    //     }
+    //   ]
+    // }
+    // > crane digest ttl.sh/777ac082-afc2-4db3-83aa-97199998943b:2m
+    // sha256:cb1a3c1190265153e7b50ccfde70e3683eba5326cfae8ac68632e1a6b9985573
+    // > crane manifest ttl.sh/777ac082-afc2-4db3-83aa-97199998943b:2m | jq .
+    // {
+    //   "schemaVersion": 2,
+    //   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+    //   "config": {
+    //     "mediaType": "application/vnd.docker.container.image.v1+json",
+    //     "size": 566,
+    //     "digest": "sha256:d8b02de37449f92e6b735b204ace6c1af1259aadb47c3f5f5a9865479b4e79ac"
+    //   },
+    //   "layers": [
+    //     {
+    //       "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+    //       "size": 2459,
+    //       "digest": "sha256:c1ec31eb59444d78df06a974d155e597c894ab4cda84f08294145e845394988e"
+    //     }
+    //   ]
+    // }
+    // const payload = Buffer.from("sha256:6d9dcd1dde16b24a1d14010cc88b7735bbda8ab13b203f44075049e3fee554e4");
 
-    const artifact = { type: "text/plain", data: payload };
-    const bundle = await bundler.create(artifact);
-    console.log(bundle);
+    // const artifact = { type: "text/plain", data: payload };
+    // const bundle = await bundler.create(artifact);
+    // const bPayload = bundle.content.dsseEnvelope.payload.toString();
+    // const bSig = bundle.content.dsseEnvelope.signatures[0].sig.toString('base64');
+    // console.log("payload:", bPayload);
+    // console.log("signature:", bSig);
+    // console.log(JSON.stringify(bundle));
+    // console.log(bundle);
+    // {
+    //   mediaType: 'application/vnd.dev.sigstore.bundle.v0.3+json',
+    //   content: {
+    //     '$case': 'dsseEnvelope',
+    //     dsseEnvelope: {
+    //       payloadType: 'text/plain',
+    //       payload: <Buffer 73 6f 6d 65 74 68 69 6e 67 20 74 6f 20 62 65 20 73 69 67 6e 65 64>,
+    //       signatures: [Array]
+    //     }
+    //   },
+    //   verificationMaterial: {
+    //     content: { '$case': 'publicKey', publicKey: [Object] },
+    //     tlogEntries: [],
+    //     timestampVerificationData: { rfc3161Timestamps: [] }
+    //   }
+    // }
 
     // expect(sign(payload, options)).toBe(false);
+
+    // let result;
+    // result = await cmdStderr(`${cosign} sign --tlog-upload=false --key=${rawPrvkey} ${iref}`, {
+    //   cwd: workdir,
+    //   env: { COSIGN_PASSWORD: passwd },
+    // })
+    // result = await cmdStderr(
+    //   `${cosign} verify --insecure-ignore-tlog=true --key=${pubkey} ${iref}`,
+    //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    // );
+    // result = await cmdStderr(`${cosign} sign --tlog-upload=false --key=${rawPrvkey} ${iref}`, {
+    //   cwd: workdir,
+    //   env: { COSIGN_PASSWORD: passwd },
+    // })
+
+    // let dotSig = await cmdStdout(
+    //   `${cosign} triangulate ${iref}`,
+    //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    // );
+    // console.log(dotSig);
+
+    // result = await cmdStdout(
+    //   `crane manifest ${dotSig}`,
+    //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    // );
+    // console.log(JSON.stringify(JSON.parse(result), null, 2));
+
+    // result = await cmdStdout(
+    //   `crane manifest ${iref}`,
+    //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    // );
+    // console.log(result);
+
+    // result = await cmdStdout(
+    //   `crane digest ${iref}`,
+    //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+    // );
+    // console.log(result);
+
+    // const payload = Buffer.from(result);
+    // const artifact = { type: "text/plain", data: payload };
+    // const bundle = await bundler.create(artifact);
+    // const bPayload = bundle.content.dsseEnvelope.payload.toString();
+    // const bSig = bundle.content.dsseEnvelope.signatures[0].sig.toString('base64');
+    // console.log("payload:", bPayload);
+    // console.log("signature:", bSig);
+    // console.log(JSON.stringify(bundle, null, 2));
+
+    // // https://github.com/sigstore/sigstore-js/tree/main/packages/sign
+    // class KeyfileSigner implements Signer {
+    //   private prv: crypto.KeyObject;
+    //   private pub: crypto.KeyObject;
+
+    //   constructor(prv: PathLike, pub: PathLike) {
+    //     this.prv = crypto.createPrivateKey({
+    //       key: readFileSync(prv, { encoding: "utf8" }),
+    //       format: "pem",
+    //       encoding: "utf-8",
+    //     });
+    //     this.pub = crypto.createPublicKey({
+    //       key: readFileSync(pub, { encoding: "utf8" }),
+    //       format: "pem",
+    //       encoding: "utf-8",
+    //     });
+    //   }
+
+    //   public async sign(data: Buffer): Promise<Signature> {
+    //     const signature = crypto.sign(null, data, this.prv);
+    //     const publicKey = this.pub.export({ format: "pem", type: "spki" }).toString("ascii");
+
+    //     return {
+    //       signature: signature,
+    //       key: { $case: "publicKey", publicKey },
+    //     };
+    //   }
+    // }
+
+    // const signer = new KeyfileSigner(`${workdir}/${rawPrvkey}`, `${workdir}/${rawPubkey}`);
+    // const bundler = new DSSEBundleBuilder({ signer, witnesses: [] });
+
+    // const payload = Buffer.from("???");
+    // const artifact = { type: "text/plain", data: payload };
+    // const bundle = await bundler.create(artifact);
+
+    // https://github.com/sigstore/sigstore-js/blob/main/packages/verify/src/__tests__/verifier.test.ts
+    const pubKeyRaw = await readFile(`${workdir}/${rawPubkey}`, { encoding: "utf8" });
+    const pubKey = crypto.createPublicKey({
+      key: pubKeyRaw,
+      format: "pem",
+      encoding: "utf-8",
+    });
+
+    const trustedRoot = {
+      tlogs: [],
+      ctlogs: [],
+      timestampAuthorities: [],
+      certificateAuthorities: [],
+    } as unknown as TrustedRoot;
+
+    const keys = {
+      hint: {
+        rawBytes: pubKey.export({ type: "spki", format: "der" }),
+        keyDetails: PublicKeyDetails.PKIX_ECDSA_P256_SHA_256,
+        validFor: { start: new Date(0) },
+      },
+    };
+    const trustMaterial = toTrustMaterial(trustedRoot, keys);
+
+    const subject = new Verifier(trustMaterial, {
+      ctlogThreshold: 0,
+      tlogThreshold: 0,
+      tsaThreshold: 0,
+    });
+
+    const bundle = bundleFromJSON({
+      mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
+      verificationMaterial: {
+        publicKey: {
+          hint: "hint",
+        },
+        tlogEntries: [],
+        timestampVerificationData: {
+          rfc3161Timestamps: [],
+        },
+      },
+      // how do I derive digest/signature from a signed image..?
+      messageSignature: {
+        messageDigest: {
+          algorithm: "SHA2_256",
+          digest: "aOZWslHmfoNYvvhIOrDVHGYZ8+ehqfDnWDjUH/No9yg=",
+        },
+        signature:
+          "MEQCIHs5aUulq1HpR+fwmSKpLk/oAwq5O9CDNFHhZAKfG5GmAiBwcVnf2obzsCGVlf0AIvbvHr21NXt7tpLBl4+Brh6OKA==",
+      },
+    });
+
+    const signedEntity = toSignedEntity(bundle, Buffer.from("hello, world!"));
+
+    subject.verify(signedEntity);
   });
 });
 
