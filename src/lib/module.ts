@@ -9,6 +9,15 @@ import { CapabilityExport, AdmissionRequest } from "./types";
 import { setupWatch } from "./watch-processor";
 import { Log } from "../lib";
 
+// This should be the upstream type, needs to be exported from KFC
+export interface Rule {
+  apiGroups?: string[];
+  nonResourceURLs?: string[];
+  apiVersions?: string[];
+  resourceNames?: string[];
+  resources?: string[];
+  verbs?: string[];
+}
 /** Custom Labels Type for package.json */
 export interface CustomLabels {
   namespace?: Record<string, string>;
@@ -35,6 +44,9 @@ export type ModuleConfig = {
   env?: Record<string, string>;
   /** Custom Labels for Kubernetes Objects */
   customLabels?: CustomLabels;
+  /** Add Configuration for RBAC */
+  // Get from KFC
+  rbac?: Rule[];
 };
 
 export type PackageJSON = {

@@ -13,7 +13,7 @@ import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
-import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
+import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, clusterRoleTemplate, serviceMonitorTemplate } from "./helm";
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
@@ -123,10 +123,12 @@ export class Assets {
       await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
       await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
       await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(
-        clusterRolePath,
-        dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
-      );
+      // change this to a helm chart template
+      await fs.writeFile(clusterRolePath, dedent(clusterRoleTemplate()));
+      // await fs.writeFile(
+      //   clusterRolePath,
+      //   dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
+      // );
       await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
       await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
 
