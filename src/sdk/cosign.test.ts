@@ -8,11 +8,14 @@ import * as child_process from "node:child_process";
 const exec = promisify(child_process.exec);
 import * as https from "node:https";
 import { access, mkdtemp, rm, writeFile, unlink } from "node:fs/promises";
-import { createWriteStream, chmodSync, readdirSync } from "node:fs";
+import { chmodSync, createWriteStream, PathLike, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
-import { randomUUID } from "node:crypto";
+import * as crypto from "node:crypto";
 import * as sut from "./cosign";
+
+import type { Signature, Signer } from "@sigstore/sign/dist/signer";
+import { DSSEBundleBuilder } from "@sigstore/sign";
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 async function httpGet(url: string): Promise<any> {
@@ -169,7 +172,7 @@ const indent = (msg: string) =>
 const secs = (s: number) => s * 1000;
 const mins = (m: number) => m * secs(60);
 
-describe("verifyImage()", () => {
+describe("cosign CLI - pub/prv keys", () => {
   let cosign: string;
   let workdir: string;
 
@@ -178,8 +181,7 @@ describe("verifyImage()", () => {
   const pubkey = `${prefix}.pub`;
   const prvkey = `${prefix}.key`;
 
-  let iref = `ttl.sh/${randomUUID()}:2m`;
-  let cscs: string[];
+  const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
   beforeAll(async () => {
     cosign = await timed("getting cosign CLI binary", downloadCosign);
@@ -222,11 +224,176 @@ describe("verifyImage()", () => {
     expect(result).not.toContain("no matching signatures");
     expect(result).toContain("signatures were verified");
   });
+});
 
-  it("can be verified via sigstore-js", () => {
-    iref = "???";
-    cscs = ["???", "???", "??"];
+describe.only("sigstore-js - pub/prv keys", () => {
+  let cosign: string;
+  let workdir: string;
 
-    expect(sut.verifyImage(iref, cscs)).toBe(false);
+  const passwd = "password";
+  const prefix = "signing";
+  const rawPrvkey = `${prefix}-raw.key`;
+  const rawPubkey = `${prefix}-raw.pub`;
+  const cosPrvkey = `${prefix}-cos.key`;
+  // const cosPubkey = `${prefix}-cos.pub`;
+
+  const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
+
+  beforeAll(async () => {
+    cosign = await timed("getting cosign CLI binary", downloadCosign);
+    console.log(`  cosign: ${cosign}`);
+
+    workdir = await timed("creating workdir", createWorkdir);
+    console.log(`  workdir: ${workdir}`);
+
+    let result;
+    result = await timed(`generating keypair: ${prefix}.*`, async () => {
+      const keypair = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" });
+
+      await writeFile(
+        `${workdir}/${rawPubkey}`,
+        keypair.publicKey.export({ format: "pem", type: "spki" }).toString("ascii"),
+      );
+      chmodSync(`${workdir}/${rawPubkey}`, 0o644);
+
+      await writeFile(
+        `${workdir}/${rawPrvkey}`,
+        keypair.privateKey
+          // .export({ format: "pem", type: "pkcs8", cipher: "aes-256-cbc", passphrase: passwd})
+          .export({ format: "pem", type: "pkcs8" })
+          .toString("ascii"),
+      );
+      chmodSync(`${workdir}/${rawPrvkey}`, 0o600);
+    });
+    console.log(indent(`Public key written to ${rawPubkey}`));
+    console.log(indent(`Private key written to ${rawPrvkey}`));
+
+    result = await timed(`converting ${rawPrvkey} to ${cosPrvkey}`, async () =>
+      cmdStderr(
+        `${cosign} import-key-pair --key=${rawPrvkey} --output-key-prefix=${basename(cosPrvkey, ".key")}`,
+        {
+          cwd: workdir,
+          env: { COSIGN_PASSWORD: passwd },
+        },
+      ),
+    );
+
+    await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
+    result = await timed(`uploading container image: ${iref}`, async () =>
+      cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
+    );
+    console.log(indent(result));
+
+    result = await timed(`signing image: ${iref}`, async () =>
+      cmdStderr(`${cosign} sign --tlog-upload=false --key=${cosPrvkey} ${iref}`, {
+        cwd: workdir,
+        env: { COSIGN_PASSWORD: passwd },
+      }),
+    );
+  }, mins(1));
+
+  afterAll(async () => await cleanWorkdirs());
+
+  // WIP: trying to run through the entire sigstore-js flow to:
+  //  - prove that sigstore-js stuff works, and
+  //  - know how to config sigstore-js calls so that they can verify cosign-gen'd data.
+  it("can be verified via sigstore-js", async () => {
+    // const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+    //   modulusLength: 2048,
+    // });
+    // console.log("prv", privateKey);
+    // console.log("pub", publicKey);
+
+    // let prvKey = await readFile(`${workdir}/${prvkey}`, {encoding: "utf8"});
+    // console.log(prvKey)
+    // prvKey = prvKey.replace(/\\n/g, "\n");
+    // console.log(prvKey)
+    // prvKey = prvKey.replaceAll("ENCRYPTED SIGSTORE", "EC")
+    // console.log(prvKey)
+    // let prvKeyObj = createPrivateKey({
+    //   key: prvKey,
+    //   format: "pem",
+    //   type: "pkcs8",
+    //   passphrase: "password",
+    //   encoding: "utf-8"
+    // });
+    // console.log("l-prv", prvKeyObj);
+    // const localPub = createPublicKey(await readFile(`${workdir}/${pubkey}`, {encoding: "utf8"}));
+    // console.log("l-pub", localPub);
+
+    // remove passphrase from prvkey (so cosing import-key-pair can work with it!)
+    // > openssl ec -inform pem -outform pem -passin pass:password -in signing.key -out signing3.pem.key
+
+    // let pubKey = await readFile(`${workdir}/${pubkey}`, {encoding: "utf8"});
+    // let pubKeyObj = createPublicKey({
+    //   key: pubKey,
+    //   format: "pem",
+    //   encoding: "utf-8"
+    // });
+    // console.log("l-pub", pubKeyObj);
+
+    // https://github.com/sigstore/sigstore-js/tree/main/packages/sign
+    class KeyfileSigner implements Signer {
+      private prv: crypto.KeyObject;
+      private pub: crypto.KeyObject;
+
+      constructor(prv: PathLike, pub: PathLike) {
+        this.prv = crypto.createPrivateKey({
+          key: readFileSync(prv, { encoding: "utf8" }),
+          format: "pem",
+          encoding: "utf-8",
+        });
+        this.pub = crypto.createPublicKey({
+          key: readFileSync(pub, { encoding: "utf8" }),
+          format: "pem",
+          encoding: "utf-8",
+        });
+      }
+
+      public async sign(data: Buffer): Promise<Signature> {
+        const signature = crypto.sign(null, data, this.prv);
+        const publicKey = this.pub.export({ format: "pem", type: "spki" }).toString("ascii");
+
+        return {
+          signature: signature,
+          key: { $case: "publicKey", publicKey },
+        };
+      }
+    }
+
+    // https://github.com/sigstore/sigstore-js/tree/main/packages/sign#witness
+    //  - The BundleBuilder may also be configured with zero-or-more Witness instances, and
+    //  - RekorWitness - Adds an entry to the Rekor transparency log and returns a TransparencyLogEntry to be included in the Bundle
+    //  - ...so, if we don't config a witness then we don't have to worry about it..?
+    // https://www.npmjs.com/package/sigstore
+    //  - I don't see the option to pass along a privatekey..?
+    // let options = {
+    //   tlogUpload: false
+    // };
+
+    // "The bytes of the artifact to be signed." //
+    //  - how do I derive those bytes from the image..?
+    const payload = Buffer.from("something to be signed");
+
+    const signer = new KeyfileSigner(`${workdir}/${rawPrvkey}`, `${workdir}/${rawPubkey}`);
+    const bundler = new DSSEBundleBuilder({ signer, witnesses: [] });
+
+    const artifact = { type: "text/plain", data: payload };
+    const bundle = await bundler.create(artifact);
+    console.log(bundle);
+
+    // expect(sign(payload, options)).toBe(false);
+  });
+});
+
+describe.skip("verifyImage()", () => {
+  let iref: string;
+  let pubkeys: string[];
+
+  it("can be verified via new helper", () => {
+    //
+    // TODO: come back once you figure out how to use sigstore-js!
+    //
+    expect(sut.verifyImage(iref, pubkeys)).toBe("???");
   });
 });
