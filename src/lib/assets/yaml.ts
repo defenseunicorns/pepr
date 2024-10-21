@@ -20,9 +20,12 @@ export async function overridesFile(
   rbacMode: string,
 ) {
   console.log("Creating overrides file with rbac mode: ", rbacMode);
+  const rbacOverrides = clusterRole(name, capabilities, rbacMode);
+
   // check if config has rbac defined
   const customRbac = config.rbac || [];
   // if no scoped mode - use cluster admin mode
+
   const rbacMap = createRBACMap(capabilities);
   const scopedRules = [
     ...Object.keys(rbacMap).map(key => {
@@ -55,7 +58,7 @@ export async function overridesFile(
   });
 
   const overrides = {
-    rbac: Object.values(deduper),
+    rbac: rbacOverrides,
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
     },

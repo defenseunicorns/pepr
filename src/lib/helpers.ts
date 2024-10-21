@@ -170,6 +170,14 @@ export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
           plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
         };
       }
+
+      // Add finalizer rbac
+      if (binding.isFinalize) {
+        acc[key] = {
+          verbs: ["patch"],
+          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
+        };
+      }
     });
 
     return acc;
