@@ -142,7 +142,7 @@ jobs:
     if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
-      max-parallel: 18
+      max-parallel: 12
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
