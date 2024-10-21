@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+export function clusterRoleTemplate() {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: {{ .Values.uuid }}
+      namespace: pepr-system
+    rules: 
+      {{- if .Values.rbac }}
+      {{- toYaml .Values.rbac | nindent 2 }}
+      {{- end }}
+  `;
+}
+
 export function nsTemplate() {
   return `
     apiVersion: v1
@@ -44,7 +58,7 @@ export function chartYaml(name: string, description?: string) {
     # follow Semantic Versioning. They should reflect the version the application is using.
     # It is recommended to use it with quotes.
     appVersion: "1.16.0"
-  `;
+`;
 }
 
 export function watcherDeployTemplate(buildTimestamp: string) {
@@ -68,7 +82,7 @@ export function watcherDeployTemplate(buildTimestamp: string) {
             pepr.dev/controller: watcher
         template:
           metadata:
-            annotations:
+            annotations: 
               buildTimestamp: "${buildTimestamp}"
               {{- if .Values.watcher.podAnnotations }}
               {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
@@ -207,7 +221,7 @@ export function admissionDeployTemplate(buildTimestamp: string) {
                   secretName: {{ .Values.uuid }}-api-token
               - name: module
                 secret:
-                  secretName: {{ .Values.uuid }}-module
+                  secretName: {{ .Values.uuid }}-module  
               {{- if .Values.admission.extraVolumes }}
               {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
               {{- end }}
