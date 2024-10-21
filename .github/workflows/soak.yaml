@@ -182,8 +182,8 @@ jobs:
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system ---tail=3  | jq 'select(.msg | contains("Watch event client_size received."))'  
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system ---tail=3  | jq 'select(.msg | contains("Watch event client_size received."))' >> logs/client-bytes.txt
+              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=3  | jq 'select(.msg | contains("Watch event client_size received."))'  
+              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=3  | jq 'select(.msg | contains("Watch event client_size received."))' >> logs/client-bytes.txt
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
               kubectl get po -n pepr-system
