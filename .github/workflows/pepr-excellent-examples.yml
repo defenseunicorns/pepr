@@ -142,7 +142,7 @@ jobs:
     if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
-      max-parallel: 16
+      max-parallel: 32 # Roughly matches the number of E2E tests and below GitHub concurrency limit
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
