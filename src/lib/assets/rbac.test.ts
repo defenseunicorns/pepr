@@ -346,22 +346,24 @@ describe("RBAC generation", () => {
 describe("RBAC generation with mocked package.json", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const mockPackageJsonRBAC = [
-      {
-        apiGroups: ["pepr.dev"],
-        resources: ["pods"],
-        verbs: ["get", "list"],
-      },
-      {
-        apiGroups: ["apps"],
-        resources: ["deployments"],
-        verbs: ["create", "delete"],
-      },
-    ];
-
     jest.spyOn(fs, "readFileSync").mockImplementation((path: unknown) => {
       if (typeof path === "string" && path.includes("package.json")) {
-        return JSON.stringify({ rbac: mockPackageJsonRBAC });
+        return JSON.stringify({
+          pepr: {
+            rbac: [
+              {
+                apiGroups: ["pepr.dev"],
+                resources: ["pods"],
+                verbs: ["get", "list"],
+              },
+              {
+                apiGroups: ["apps"],
+                resources: ["deployments"],
+                verbs: ["create", "delete"],
+              },
+            ],
+          },
+        });
       }
       return "{}";
     });

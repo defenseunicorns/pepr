@@ -10,52 +10,14 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
-import { createRBACMap } from "../helpers";
-import { Rule } from "../module";
-// import { mergeAll } from "ramda";
+
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
   { hash, name, image, config, apiToken, capabilities }: Assets,
   path: string,
   rbacMode: string,
 ) {
-  console.log("Creating overrides file with rbac mode: ", rbacMode);
-  const rbacOverrides = clusterRole(name, capabilities, rbacMode);
-
-  // check if config has rbac defined
-  const customRbac = config.rbac || [];
-  // if no scoped mode - use cluster admin mode
-
-  const rbacMap = createRBACMap(capabilities);
-  const scopedRules = [
-    ...Object.keys(rbacMap).map(key => {
-      // let group:string, version:string, kind:string;
-      let group: string;
-      key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
-
-      return {
-        apiGroups: [group],
-        resources: [rbacMap[key].plural],
-        verbs: rbacMap[key].verbs,
-      };
-    }),
-  ];
-  // merge and deduplicate the custom rbac and scoped rules
-  const mergedRBAC = [...customRbac, ...scopedRules];
-  const deduper: Record<string, Rule> = {};
-  mergedRBAC.forEach(rule => {
-    const key = `${rule.apiGroups}/${rule.resources}`;
-    // check the values
-    if (deduper[key]) {
-      // if it does not have this rules verbs, add them
-      deduper[key].verbs?.map(verb => {
-        if (!rule.verbs?.includes(verb)) {
-          rule.verbs?.push(verb);
-        }
-      });
-    }
-    deduper[key] = rule;
-  });
+  const rbacOverrides = clusterRole(name, capabilities, rbacMode).rules;
 
   const overrides = {
     rbac: rbacOverrides,

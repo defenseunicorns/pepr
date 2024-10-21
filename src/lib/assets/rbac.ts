@@ -7,8 +7,9 @@ import { createRBACMap, RBACMap } from "../helpers";
 import fs from "fs";
 import path from "path";
 import { Rule } from "../module";
+import { Log } from "../../lib";
 
-const packageJsonPath = path.resolve(__dirname, "package.json");
+const packageJsonPath = path.resolve(process.cwd(), "package.json");
 
 /**
  * Grants the controller access to cluster resources beyond the mutating webhook.
@@ -138,18 +139,16 @@ export function storeRoleBinding(name: string): kind.RoleBinding {
   };
 }
 
-// Read and parse the package.json file
-
 const readRBACFromPackageJson = (): RBACMap | null => {
   try {
     const packageJsonData = fs.readFileSync(packageJsonPath, "utf8");
     const packageJson = JSON.parse(packageJsonData);
 
-    // Extract the RBAC information
-    if (packageJson.rbac) {
-      return packageJson.rbac;
+    if (packageJson.pepr && packageJson.pepr.rbac) {
+      return packageJson.pepr.rbac;
     } else {
-      throw new Error("RBAC information not found in package.json");
+      Log.info("RBAC information not found under 'pepr' in package.json");
+      return null;
     }
   } catch (error) {
     console.error("Error reading package.json:", error.message);
