@@ -12,7 +12,6 @@ import { GenericClass, KubernetesListObject } from "../types";
 import { Filters, WatchAction, WatchPhase, Options, AgentOptions } from "./types";
 import { k8sCfg, pathBuilder } from "./utils";
 import fs from "fs";
-import sizeOf from "object-sizeof";
 
 export enum WatchEvent {
   /** Watch is connected successfully */
@@ -43,9 +42,7 @@ export enum WatchEvent {
   INC_RESYNC_FAILURE_COUNT = "inc_resync_failure_count",
   /** Initialize a relist window */
   INIT_CACHE_MISS = "init_cache_miss",
-  CLIENT_SIZE = "client_size",
-  REQ_SIZE = "req_size",
-  CACHE_SIZE = "cache_size",
+  /** Memory Usage */
   MEMORY_USAGE = "memory_usage",
 }
 
@@ -557,13 +554,8 @@ export class Watcher<T extends GenericClass> {
 
   /** Clear the resync timer and schedule a new one. */
   #checkResync = () => {
-    // print the size of this.#client
-    if (this.#client) {
-      this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${sizeOf(this.#client)} bytes`);
-      this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${sizeOf(this.#req)} bytes`);
-      this.#events.emit(WatchEvent.CACHE_SIZE, `this.#cache is ${sizeOf(this.#cache)} bytes`);
-      this.#events.emit(WatchEvent.MEMORY_USAGE, `Memory usage is ${process.memoryUsage()} bytes`);
-    }
+    
+    this.#events.emit(WatchEvent.MEMORY_USAGE, process.memoryUsage());
     // Ignore if the last seen time is not set
     if (this.#lastSeenTime === NONE) {
       return;
@@ -681,7 +673,7 @@ export class Watcher<T extends GenericClass> {
     setTimeout(() => {
       this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
       void this.#http2Watch();
-    }, delay);
+    }, delay*3);
   }
 
   /**

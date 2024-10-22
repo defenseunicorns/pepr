@@ -104,7 +104,6 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - node
-            - --max_old_space_size=400 
             - /app/node_modules/pepr/dist/controller.js
             - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
           readinessProbe:
@@ -275,7 +274,6 @@ spec:
           # https://blog.risingstack.com/finding-a-memory-leak-in-node-js/
           command:
             - node
-            - --max_old_space_size=400 
             - /app/node_modules/pepr/dist/controller.js
             - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
           readinessProbe:
@@ -312,6 +310,8 @@ spec:
             - name: module
               mountPath: /app/load
               readOnly: true
+            - name: heap-snapshots
+              mountPath: /app/heap_snapshots
           env:
             - name: PEPR_LAST_SEEN_LIMIT_SECONDS
               value: '300'
@@ -334,3 +334,18 @@ spec:
         - name: module
           secret:
             secretName: pepr-soak-ci-module
+        - name: heap-snapshots
+          persistentVolumeClaim:
+            claimName: heap-snapshot-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: heap-snapshot-pvc
+  namespace: pepr-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi 

@@ -30,9 +30,7 @@ export declare enum WatchEvent {
     INC_RESYNC_FAILURE_COUNT = "inc_resync_failure_count",
     /** Initialize a relist window */
     INIT_CACHE_MISS = "init_cache_miss",
-    CLIENT_SIZE = "client_size",
-    REQ_SIZE = "req_size",
-    CACHE_SIZE = "cache_size",
+    /** Memory Usage */
     MEMORY_USAGE = "memory_usage"
 }
 /** Configuration for the watch function. */

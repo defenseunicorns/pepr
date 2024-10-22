@@ -17,7 +17,6 @@ const fetch_1 = require("../fetch");
 const types_1 = require("./types");
 const utils_1 = require("./utils");
 const fs_1 = __importDefault(require("fs"));
-const object_sizeof_1 = __importDefault(require("object-sizeof"));
 var WatchEvent;
 (function (WatchEvent) {
     /** Watch is connected successfully */
@@ -48,9 +47,7 @@ var WatchEvent;
     WatchEvent["INC_RESYNC_FAILURE_COUNT"] = "inc_resync_failure_count";
     /** Initialize a relist window */
     WatchEvent["INIT_CACHE_MISS"] = "init_cache_miss";
-    WatchEvent["CLIENT_SIZE"] = "client_size";
-    WatchEvent["REQ_SIZE"] = "req_size";
-    WatchEvent["CACHE_SIZE"] = "cache_size";
+    /** Memory Usage */
     WatchEvent["MEMORY_USAGE"] = "memory_usage";
 })(WatchEvent || (exports.WatchEvent = WatchEvent = {}));
 const NONE = 50;
@@ -461,13 +458,7 @@ class Watcher {
     };
     /** Clear the resync timer and schedule a new one. */
     #checkResync = () => {
-        // print the size of this.#client
-        if (this.#client) {
-            this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${(0, object_sizeof_1.default)(this.#client)} bytes`);
-            this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${(0, object_sizeof_1.default)(this.#req)} bytes`);
-            this.#events.emit(WatchEvent.CACHE_SIZE, `this.#cache is ${(0, object_sizeof_1.default)(this.#cache)} bytes`);
-            this.#events.emit(WatchEvent.MEMORY_USAGE, `Memory usage is ${process.memoryUsage()} bytes`);
-        }
+        this.#events.emit(WatchEvent.MEMORY_USAGE, process.memoryUsage());
         // Ignore if the last seen time is not set
         if (this.#lastSeenTime === NONE) {
             return;
@@ -567,7 +558,7 @@ class Watcher {
         setTimeout(() => {
             this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
             void this.#http2Watch();
-        }, delay);
+        }, delay * 3);
     }
     /**
      * Handle a successful connection to the watch.
