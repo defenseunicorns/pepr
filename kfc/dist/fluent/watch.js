@@ -49,6 +49,7 @@ var WatchEvent;
     /** Initialize a relist window */
     WatchEvent["INIT_CACHE_MISS"] = "init_cache_miss";
     WatchEvent["CLIENT_SIZE"] = "client_size";
+    WatchEvent["REQ_SIZE"] = "req_size";
 })(WatchEvent || (exports.WatchEvent = WatchEvent = {}));
 const NONE = 50;
 const OVERRIDE = 100;
@@ -62,6 +63,7 @@ class Watcher {
     #latestRelistWindow = "";
     #useHTTP2 = false;
     #client;
+    #req;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -441,10 +443,10 @@ class Watcher {
             // Set up headers for the HTTP/2 request
             const headers = await this.#generateRequestHeaders(url);
             // Make the HTTP/2 request
-            const req = this.#client.request(headers);
-            req.setEncoding("utf8");
+            this.#req = this.#client.request(headers);
+            this.#req.setEncoding("utf8");
             // Handler events for the HTTP/2 request
-            this.#handleHttp2Request(req, this.#client);
+            this.#handleHttp2Request(this.#req, this.#client);
             // Handle abort signal
             this.#abortController.signal.addEventListener("abort", () => {
                 this.#streamCleanup(this.#client);
@@ -459,6 +461,7 @@ class Watcher {
         // print the size of this.#client
         if (this.#client) {
             this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${(0, object_sizeof_1.default)(this.#client)} bytes`);
+            this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${(0, object_sizeof_1.default)(this.#req)} bytes`);
         }
         // Ignore if the last seen time is not set
         if (this.#lastSeenTime === NONE) {

@@ -44,6 +44,7 @@ export enum WatchEvent {
   /** Initialize a relist window */
   INIT_CACHE_MISS = "init_cache_miss",
   CLIENT_SIZE = "client_size",
+  REQ_SIZE = "req_size",
 }
 
 /** Configuration for the watch function. */
@@ -73,6 +74,7 @@ export class Watcher<T extends GenericClass> {
   #latestRelistWindow: string = "";
   #useHTTP2: boolean = false;
   #client: http2.ClientHttp2Session | undefined
+  #req: http2.ClientHttp2Stream | undefined
 
   // Track the last time data was received
   #lastSeenTime = NONE;
@@ -535,11 +537,11 @@ export class Watcher<T extends GenericClass> {
       const headers = await this.#generateRequestHeaders(url);
 
       // Make the HTTP/2 request
-      const req = this.#client.request(headers);
-      req.setEncoding("utf8");
+      this.#req = this.#client.request(headers);
+      this.#req.setEncoding("utf8");
 
       // Handler events for the HTTP/2 request
-      this.#handleHttp2Request(req, this.#client);
+      this.#handleHttp2Request(this.#req, this.#client);
 
       // Handle abort signal
       this.#abortController.signal.addEventListener("abort", () => {
@@ -555,7 +557,7 @@ export class Watcher<T extends GenericClass> {
     // print the size of this.#client
     if (this.#client) {
       this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${sizeOf(this.#client)} bytes`);
-
+      this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${sizeOf(this.#req)} bytes`);
     }
     // Ignore if the last seen time is not set
     if (this.#lastSeenTime === NONE) {
