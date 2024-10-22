@@ -175,6 +175,9 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   watcher.events.on(WatchEvent.REQ_SIZE, message => {
     logEvent(WatchEvent.REQ_SIZE, message);
   });
+  watcher.events.on(WatchEvent.CACHE_SIZE, message => {
+    logEvent(WatchEvent.CACHE_SIZE, message);
+  });
 
   // Start the watch
   try {

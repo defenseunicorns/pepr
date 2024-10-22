@@ -706,6 +706,7 @@ export class Watcher<T extends GenericClass> {
     if (client) {
       client.close();
       client = undefined;
+      this.#req = undefined;
     }
   };
 

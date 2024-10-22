@@ -589,6 +589,7 @@ class Watcher {
         if (client) {
             client.close();
             client = undefined;
+            this.#req = undefined;
         }
     };
     /**
