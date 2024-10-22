@@ -175,7 +175,8 @@ export class Watcher<T extends GenericClass> {
   public async start(): Promise<AbortController> {
     this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
     if (this.#useHTTP2) {
-      await this.#http2Watch();
+      // try void here
+      void this.#http2Watch();
     } else {
       await this.#watch();
     }
