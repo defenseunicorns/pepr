@@ -9,8 +9,7 @@ import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
-import { fillCache, flushCache } from "./migrateCache";
-import { fillSendCache, sendUpdatesAndFlushCache } from "./sendCache";
+import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
@@ -73,7 +72,7 @@ export class PeprControllerStore {
   #migrateAndSetupWatch = async (store: PeprStore) => {
     Log.debug(redactedStore(store), "Pepr Store migration");
     const data: DataStore = store.data || {};
-    let migrateCache: Record<string, Operation> = {};
+    let storeCache: Record<string, Operation> = {};
 
     for (const name of Object.keys(this.#stores)) {
       // Get the prefix offset for the keys
@@ -84,12 +83,20 @@ export class PeprControllerStore {
         // Match on the capability name as a prefix for non v2 keys
         if (ramda.startsWith(name, key) && !ramda.startsWith(`${name}-v2`, key)) {
           // populate migrate cache
-          migrateCache = fillCache(migrateCache, name, "remove", [key.slice(offset)], data[key]);
-          migrateCache = fillCache(migrateCache, name, "add", [key.slice(offset)], data[key]);
+          storeCache = fillStoreCache(storeCache, name, "remove", {
+            key: [key.slice(offset)],
+            value: data[key],
+            version: "v2",
+          });
+          storeCache = fillStoreCache(storeCache, name, "add", {
+            key: [key.slice(offset)],
+            value: data[key],
+            version: "v2",
+          });
         }
       }
     }
-    migrateCache = await flushCache(migrateCache, namespace, this.#name);
+    storeCache = await sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
     this.#setupWatch();
   };
 
@@ -135,18 +142,18 @@ export class PeprControllerStore {
   };
 
   #send = (capabilityName: string) => {
-    let sendCache: Record<string, Operation> = {};
+    let storeCache: Record<string, Operation> = {};
 
     // Create a sender function for the capability to add/remove data from the store
     const sender: DataSender = async (op: DataOp, key: string[], value?: string) => {
-      sendCache = fillSendCache(sendCache, capabilityName, op, { key, value });
+      storeCache = fillStoreCache(storeCache, capabilityName, op, { key, value });
     };
 
     // Send any cached updates every debounceBackoff milliseconds
     setInterval(() => {
-      if (Object.keys(sendCache).length > 0) {
-        Log.debug(redactedPatch(sendCache), "Sending updates to Pepr store");
-        void sendUpdatesAndFlushCache(sendCache, namespace, this.#name);
+      if (Object.keys(storeCache).length > 0) {
+        Log.debug(redactedPatch(storeCache), "Sending updates to Pepr store");
+        void sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
       }
     }, debounceBackoff);
 

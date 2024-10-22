@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { fillSendCache, sendUpdatesAndFlushCache } from "./sendCache";
+import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -16,7 +16,7 @@ describe("sendCache", () => {
 
   it("should reject unsupported operations", () => {
     expect(() => {
-      fillSendCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion for "unsupported" to verify exception occurs
+      fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion for "unsupported" to verify exception occurs
     }).toThrow("Unsupported operation: unsupported");
   });
 
@@ -71,7 +71,7 @@ describe("sendCache", () => {
       const input: Record<string, Operation> = {
         "add:/data/capability-key:value": { op: "add", path: "/data/capability-key", value: "value" },
       };
-      const result = fillSendCache({}, "capability", "add", { key: ["key"], value: "value" });
+      const result = fillStoreCache({}, "capability", "add", { key: ["key"], value: "value", version: "" });
       expect(result).toStrictEqual(input);
     });
 
@@ -79,7 +79,7 @@ describe("sendCache", () => {
       const input: Record<string, Operation> = {
         "add:/data/capability-key:": { op: "add", path: "/data/capability-key", value: "" },
       };
-      const result = fillSendCache({}, "capability", "add", { key: ["key"] });
+      const result = fillStoreCache({}, "capability", "add", { key: ["key"], version: "" });
       expect(result).toStrictEqual(input);
     });
 
@@ -88,14 +88,14 @@ describe("sendCache", () => {
         const input: Record<string, Operation> = {
           "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
         };
-        const result = fillSendCache({}, "capability", "remove", { key: ["key"] });
+        const result = fillStoreCache({}, "capability", "remove", { key: ["key"] });
         expect(result).toStrictEqual(input);
       });
 
       it("should require a key to be defined", () => {
         // eslint-disable-next-line max-nested-callbacks
         expect(() => {
-          fillSendCache({}, "capability", "remove", { key: [] });
+          fillStoreCache({}, "capability", "remove", { key: [] });
         }).toThrow("Key is required for REMOVE operation");
       });
     });

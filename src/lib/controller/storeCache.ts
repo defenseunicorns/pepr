@@ -36,18 +36,19 @@ export const sendUpdatesAndFlushCache = async (
 type KeyValuePair = {
   key: string[];
   value?: string; // Optional property, defaults to ""
+  version?: string;
 };
 
-// Load the sendCache with patch operations
-export const fillSendCache = (
+export const fillStoreCache = (
   sendCache: Record<string, Operation>,
   capabilityName: string,
   op: DataOp,
   kvp: KeyValuePair,
 ): Record<string, Operation> => {
   if (op === "add") {
-    // adjust the path for the capability
-    const path = `/data/${capabilityName}-${kvp.key}`;
+    const path = [`/data/${capabilityName}`, kvp.version, kvp.key] // adjust the path, see ADR-0008
+      .filter(str => str !== "" && str !== undefined)
+      .join("-");
     const value = kvp.value || "";
     const cacheIdx = [op, path, value].join(":");
 
