@@ -311,7 +311,9 @@ spec:
               readOnly: true
           env:
             - name: PEPR_LAST_SEEN_LIMIT_SECONDS
-              value: '60'
+              value: '300'
+            - name: PEPR_RESYNC_DELAY_SECONDS
+              value: '15'
             - name: PEPR_WATCH_MODE
               value: 'true'
             - name: PEPR_HTTP2_WATCH
