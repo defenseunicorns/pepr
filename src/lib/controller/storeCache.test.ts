@@ -1,9 +1,8 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import { describe, expect, it, jest, afterEach } from "@jest/globals";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { afterEach } from "node:test";
 
 jest.mock("kubernetes-fluent-client");
 
