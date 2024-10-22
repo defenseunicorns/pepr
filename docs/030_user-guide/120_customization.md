@@ -132,7 +132,7 @@ Below are the available configurations through `package.json`.
 | `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`  |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]   |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`           |
-| `rbac`          | Custom RBAC rules                    | `{"rules": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| `rbac`          | Custom RBAC rules                    | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
 
 These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
 
@@ -143,35 +143,18 @@ The following example demonstrates how to add custom RBAC rules to the Pepr modu
 ```json
 {
   "pepr": {
-    "rbac": {
-      "role": [
-        {
-          "rules": [
-            {
-              "apiGroups": [""],
-              "resources": ["pods"],
-              "verbs": ["get", "list", "watch"]
-            },
-            {
-              "apiGroups": ["apps"],
-              "resources": ["deployments"],
-              "verbs": ["create", "update", "patch"]
-            }
-          ]
-        }
-      ],
-      "clusterRole": [
-        {
-          "rules": [
-            {
-              "apiGroups": [""],
-              "resources": ["nodes"],
-              "verbs": ["get"]
-            }
-          ]
-        }
-      ]
-    }
+    "rbac": [
+      {
+        "apiGroups": ["pepr.dev"],
+        "resources": ["customresources"],
+        "verbs": ["get", "list"]
+      },
+      {
+        "apiGroups": ["apps"],
+        "resources": ["deployments"],
+        "verbs": ["create", "delete"]
+      }
+    ]
   }
 }
 ```

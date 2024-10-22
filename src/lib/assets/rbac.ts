@@ -12,10 +12,14 @@ import { Log } from "../../lib";
 const packageJsonPath = path.resolve(process.cwd(), "package.json");
 
 /**
- * Grants the controller access to cluster resources beyond the mutating webhook.
+ * Creates a Kubernetes ClusterRole based on capabilities and optional custom RBAC rules.
  *
- * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this should work for multiple modules.
- * @returns
+ * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this
+ * should work for multiple modules.
+ * @param {string} name - The name of the ClusterRole.
+ * @param {CapabilityExport[]} capabilities - Array of capabilities defining RBAC rules.
+ * @param {string} [rbacMode=""] - The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules.
+ * @returns {kind.ClusterRole} - A Kubernetes ClusterRole object.
  */
 export function clusterRole(name: string, capabilities: CapabilityExport[], rbacMode: string = ""): kind.ClusterRole {
   // Read custom RBAC from package.json
@@ -70,6 +74,12 @@ export function clusterRole(name: string, capabilities: CapabilityExport[], rbac
   };
 }
 
+/**
+ * Creates a Kubernetes ClusterRoleBinding for a specified ClusterRole.
+ *
+ * @param {string} name - The name of the ClusterRole to bind.
+ * @returns {kind.ClusterRoleBinding} - A Kubernetes ClusterRoleBinding object.
+ */
 export function clusterRoleBinding(name: string): kind.ClusterRoleBinding {
   return {
     apiVersion: "rbac.authorization.k8s.io/v1",
@@ -90,6 +100,12 @@ export function clusterRoleBinding(name: string): kind.ClusterRoleBinding {
   };
 }
 
+/**
+ * Creates a Kubernetes ServiceAccount with the specified name.
+ *
+ * @param {string} name - The name of the ServiceAccount.
+ * @returns {kind.ServiceAccount} - A Kubernetes ServiceAccount object.
+ */
 export function serviceAccount(name: string): kind.ServiceAccount {
   return {
     apiVersion: "v1",
@@ -101,6 +117,12 @@ export function serviceAccount(name: string): kind.ServiceAccount {
   };
 }
 
+/**
+ * Creates a Kubernetes Role for managing peprstores in a specified namespace.
+ *
+ * @param {string} name - The base name of the Role.
+ * @returns {kind.Role} - A Kubernetes Role object for peprstores.
+ */
 export function storeRole(name: string): kind.Role {
   name = `${name}-store`;
   return {
@@ -118,6 +140,12 @@ export function storeRole(name: string): kind.Role {
   };
 }
 
+/**
+ * Creates a Kubernetes RoleBinding for a specified Role in the pepr-system namespace.
+ *
+ * @param {string} name - The base name of the Role to bind.
+ * @returns {kind.RoleBinding} - A Kubernetes RoleBinding object.
+ */
 export function storeRoleBinding(name: string): kind.RoleBinding {
   name = `${name}-store`;
   return {
@@ -139,6 +167,11 @@ export function storeRoleBinding(name: string): kind.RoleBinding {
   };
 }
 
+/**
+ * Reads and parses RBAC information from the package.json file under the 'pepr' key.
+ *
+ * @returns {RBACMap | null} - An object representing the RBAC rules from package.json or null if not found.
+ */
 const readRBACFromPackageJson = (): RBACMap | null => {
   try {
     const packageJsonData = fs.readFileSync(packageJsonPath, "utf8");
