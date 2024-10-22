@@ -172,7 +172,7 @@ export function storeRoleBinding(name: string): kind.RoleBinding {
  *
  * @returns {RBACMap | null} - An object representing the RBAC rules from package.json or null if not found.
  */
-const readRBACFromPackageJson = (): RBACMap | null => {
+export const readRBACFromPackageJson = (): RBACMap | null => {
   try {
     const packageJsonData = fs.readFileSync(packageJsonPath, "utf8");
     const packageJson = JSON.parse(packageJsonData);

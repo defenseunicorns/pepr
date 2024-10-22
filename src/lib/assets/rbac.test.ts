@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { clusterRole } from "./rbac"; // Adjust the import to your actual file path
+import {
+  clusterRole,
+  clusterRoleBinding,
+  storeRole,
+  serviceAccount,
+  storeRoleBinding,
+  readRBACFromPackageJson,
+} from "./rbac";
 import { CapabilityExport } from "../types";
 import { it, describe, expect, beforeEach, jest } from "@jest/globals";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Event } from "../types";
 import fs from "fs";
+import * as helpers from "../helpers";
 
 const mockCapabilities: CapabilityExport[] = [
   {
@@ -224,123 +232,75 @@ describe("RBAC generation", () => {
     ]);
   });
 
-  /* const duplicateApiGroupCapabilities: CapabilityExport[] = [
-    {
-      apiGroups: ['pepr.dev'],
-      resources: ['peprstores'],
-      verbs: ['create'],
-      bindings: [
-        {
-          kind: { group: 'pepr.dev', version: 'v1', kind: 'peprstore', plural: 'peprstores' },
-          isWatch: false,
-          event: Event.Create,
-          model: {} as GenericClass,
-          filters: {
-            name: '',
-            regexName: '',
-            namespaces: [],
-            regexNamespaces: [],
-            labels: {},
-            annotations: {},
-            deletionTimestamp: false
-          }
-        },
-      ],
-      hasSchedule: false,
-      name: '',
-      description: ''
-    },
-    {
-      apiGroups: ['pepr.dev'],
-      resources: ['peprlogs'],
-      verbs: ['get', 'list'],
-      bindings: [
-        {
-          kind: { group: 'pepr.dev', version: 'v1', kind: 'peprlog', plural: 'peprlogs' },
-          isWatch: false,
-          event: Event.Create,
-          model: {} as GenericClass,
-          filters: {
-            name: '',
-            regexName: '',
-            namespaces: [],
-            regexNamespaces: [],
-            labels: {},
-            annotations: {},
-            deletionTimestamp: false
-          }
-        },
-      ],
-      hasSchedule: false,
-      name: '',
-      description: ''
-    }
-  ]; */
-
-  /*   it('should deduplicate verbs and resources in rules', () => {
+  it("should deduplicate verbs and resources in rules", () => {
     const capabilitiesWithDuplicates: CapabilityExport[] = [
       {
-        apiGroups: ['pepr.dev'],
-        resources: ['peprstores'],
-        verbs: ['create', 'get'],
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["create", "get"],
         bindings: [
           {
-            kind: { group: 'pepr.dev', version: 'v1', kind: 'peprlog', plural: 'peprlogs' },
+            kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
             isWatch: false,
             event: Event.Create,
             model: {} as GenericClass,
             filters: {
-              name: '',
-              regexName: '',
+              name: "",
+              regexName: "",
               namespaces: [],
               regexNamespaces: [],
               labels: {},
               annotations: {},
-              deletionTimestamp: false
-            }
+              deletionTimestamp: false,
+            },
           },
         ],
         hasSchedule: false,
-        name: '',
-        description: ''
+        name: "",
+        description: "",
       },
       {
-        apiGroups: ['pepr.dev'],
-        resources: ['peprstores'],
-        verbs: ['get', 'patch'],
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["get", "patch"],
         bindings: [
           {
-            kind: { group: 'pepr.dev', version: 'v1', kind: 'peprlog', plural: 'peprlogs' },
+            kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
             isWatch: false,
             event: Event.Create,
             model: {} as GenericClass,
             filters: {
-              name: '',
-              regexName: '',
+              name: "",
+              regexName: "",
               namespaces: [],
               regexNamespaces: [],
               labels: {},
               annotations: {},
-              deletionTimestamp: false
-            }
+              deletionTimestamp: false,
+            },
           },
         ],
         hasSchedule: false,
-        name: '',
-        description: ''
-      }
+        name: "",
+        description: "",
+      },
     ];
 
-    const result = clusterRole('test-role', capabilitiesWithDuplicates, 'scoped');
+    const result = clusterRole("test-role", capabilitiesWithDuplicates, "scoped");
 
-    expect(result.rules).toEqual([
+    // Filter out only the rules for 'pepr.dev' and 'peprstores'
+    const filteredRules = result.rules?.filter(
+      rule => rule.apiGroups?.includes("pepr.dev") && rule.resources?.includes("peprstores"),
+    );
+
+    expect(filteredRules).toEqual([
       {
-        apiGroups: ['pepr.dev'],
-        resources: ['peprstores'],
-        verbs: ['create', 'get', 'patch'],
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["create", "get", "patch", "watch"],
       },
     ]);
-  }); */
+  });
 });
 
 describe("RBAC generation with mocked package.json", () => {
@@ -355,6 +315,11 @@ describe("RBAC generation with mocked package.json", () => {
                 apiGroups: ["pepr.dev"],
                 resources: ["pods"],
                 verbs: ["get", "list"],
+              },
+              {
+                apiGroups: ["pepr.dev"],
+                resources: ["pods"],
+                verbs: ["list"],
               },
               {
                 apiGroups: ["apps"],
@@ -418,5 +383,305 @@ describe("RBAC generation with mocked package.json", () => {
     const result = clusterRole("test-role", mockCapabilities);
 
     expect(result.rules).toEqual(expectedWildcardRules);
+  });
+});
+
+describe("clusterRoleBinding", () => {
+  it("should create a ClusterRoleBinding with the specified name", () => {
+    const roleName = "test-cluster-role";
+    const expectedClusterRoleBinding = {
+      apiVersion: "rbac.authorization.k8s.io/v1",
+      kind: "ClusterRoleBinding",
+      metadata: { name: roleName },
+      roleRef: {
+        apiGroup: "rbac.authorization.k8s.io",
+        kind: "ClusterRole",
+        name: roleName,
+      },
+      subjects: [
+        {
+          kind: "ServiceAccount",
+          name: roleName,
+          namespace: "pepr-system",
+        },
+      ],
+    };
+
+    const result = clusterRoleBinding(roleName);
+
+    expect(result).toEqual(expectedClusterRoleBinding);
+  });
+});
+
+describe("serviceAccount", () => {
+  it("should create a ServiceAccount with the specified name", () => {
+    const accountName = "test-service-account";
+    const expectedServiceAccount = {
+      apiVersion: "v1",
+      kind: "ServiceAccount",
+      metadata: {
+        name: accountName,
+        namespace: "pepr-system",
+      },
+    };
+
+    const result = serviceAccount(accountName);
+
+    expect(result).toEqual(expectedServiceAccount);
+  });
+});
+
+describe("storeRole", () => {
+  it("should create a Role for managing peprstores with the specified name", () => {
+    const roleName = "test-role";
+    const expectedRole = {
+      apiVersion: "rbac.authorization.k8s.io/v1",
+      kind: "Role",
+      metadata: {
+        name: `${roleName}-store`,
+        namespace: "pepr-system",
+      },
+      rules: [
+        {
+          apiGroups: ["pepr.dev"],
+          resources: ["peprstores"],
+          resourceNames: [""],
+          verbs: ["create", "get", "patch", "watch"],
+        },
+      ],
+    };
+
+    const result = storeRole(roleName);
+
+    expect(result).toEqual(expectedRole);
+  });
+});
+
+describe("storeRoleBinding", () => {
+  it("should create a RoleBinding for the specified Role", () => {
+    const roleName = "test-role";
+    const expectedRoleBinding = {
+      apiVersion: "rbac.authorization.k8s.io/v1",
+      kind: "RoleBinding",
+      metadata: {
+        name: `${roleName}-store`,
+        namespace: "pepr-system",
+      },
+      roleRef: {
+        apiGroup: "rbac.authorization.k8s.io",
+        kind: "Role",
+        name: `${roleName}-store`,
+      },
+      subjects: [
+        {
+          kind: "ServiceAccount",
+          name: `${roleName}-store`,
+          namespace: "pepr-system",
+        },
+      ],
+    };
+
+    const result = storeRoleBinding(roleName);
+
+    expect(result).toEqual(expectedRoleBinding);
+  });
+});
+
+describe("readRBACFromPackageJson", () => {
+  it("should log an error and return null if reading package.json fails", () => {
+    // Mock fs.readFileSync to throw an error
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+      throw new Error("Failed to read file");
+    });
+
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = readRBACFromPackageJson();
+
+    // Check if the result is null
+    expect(result).toBeNull();
+
+    // Check if the error was logged
+    expect(consoleSpy).toHaveBeenCalledWith("Error reading package.json:", "Failed to read file");
+
+    // Restore the original implementation
+    jest.restoreAllMocks();
+  });
+});
+
+describe("clusterRole", () => {
+  // Mocking the readRBACFromPackageJson function to return null
+  jest.mock("./rbac", () => ({
+    ...(jest.requireActual("./rbac") as object),
+    readRBACFromPackageJson: jest.fn(() => null),
+  }));
+
+  // Mocking createRBACMap to isolate the behavior of clusterRole function
+  jest.mock("../helpers", () => ({
+    ...(jest.requireActual("../helpers") as object),
+    createRBACMap: jest.fn(),
+  }));
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it("should handle keys with less than 3 segments and set group to an empty string", () => {
+    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+      nodes: {
+        plural: "nodes",
+        verbs: ["get"],
+      },
+    });
+
+    const capabilitiesWithShortKey: CapabilityExport[] = [
+      {
+        apiGroups: [""],
+        resources: ["nodes"],
+        verbs: ["get"],
+        bindings: [
+          {
+            kind: { group: "", version: "v1", kind: "node", plural: "nodes" },
+            isWatch: false,
+            event: Event.Create,
+            model: {} as GenericClass,
+            filters: {
+              name: "",
+              regexName: "",
+              namespaces: [],
+              regexNamespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+            },
+          },
+        ],
+        hasSchedule: false,
+        name: "",
+        description: "",
+      },
+    ];
+
+    const result = clusterRole("test-role", capabilitiesWithShortKey, "scoped");
+
+    expect(result.rules).toEqual([
+      {
+        apiGroups: [""],
+        resources: ["nodes"],
+        verbs: ["get"],
+      },
+    ]);
+  });
+
+  it("should handle keys with 3 or more segments and set group correctly", () => {
+    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+      "apps/v1/deployments": {
+        plural: "deployments",
+        verbs: ["create"],
+      },
+    });
+
+    const capabilitiesWithLongKey: CapabilityExport[] = [
+      {
+        apiGroups: ["apps/v1"],
+        resources: ["deployments"],
+        verbs: ["create"],
+        bindings: [
+          {
+            kind: { group: "apps", version: "v1", kind: "deployment", plural: "deployments" },
+            isWatch: false,
+            event: Event.Create,
+            model: {} as GenericClass,
+            filters: {
+              name: "",
+              regexName: "",
+              namespaces: [],
+              regexNamespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+            },
+          },
+        ],
+        hasSchedule: false,
+        name: "",
+        description: "",
+      },
+    ];
+
+    const result = clusterRole("test-role", capabilitiesWithLongKey, "scoped");
+
+    expect(result.rules).toEqual([
+      {
+        apiGroups: ["apps"],
+        resources: ["deployments"],
+        verbs: ["create"],
+      },
+    ]);
+  });
+
+  it("should handle non-array custom RBAC by defaulting to an empty array", () => {
+    // Mock readRBACFromPackageJson to return a non-array value
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+      return JSON.stringify({
+        pepr: {
+          rbac: "not-an-array", // Simulate invalid RBAC structure
+        },
+      });
+    });
+
+    const result = clusterRole("test-role", mockCapabilities, "scoped");
+
+    // The result should only contain rules from the capabilities, not from the invalid custom RBAC
+    expect(result.rules).toEqual([
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["create", "get", "patch", "watch"],
+      },
+      {
+        apiGroups: ["apiextensions.k8s.io"],
+        resources: ["customresourcedefinitions"],
+        verbs: ["patch", "create"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["namespaces"],
+        verbs: ["watch"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["configmaps"],
+        verbs: ["watch"],
+      },
+    ]);
+  });
+
+  it("should default to an empty verbs array if rule.verbs is undefined", () => {
+    const customRbacWithNoVerbs = [
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["customresources"],
+        verbs: undefined, // Simulate undefined verbs
+      },
+    ];
+
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+      return JSON.stringify({
+        pepr: {
+          rbac: customRbacWithNoVerbs,
+        },
+      });
+    });
+
+    const result = clusterRole("test-role", mockCapabilities, "scoped");
+
+    // Check that the verbs array is empty for the custom RBAC rule with undefined verbs
+    expect(result.rules).toContainEqual({
+      apiGroups: ["pepr.dev"],
+      resources: ["customresources"],
+      verbs: [],
+    });
   });
 });
