@@ -32,7 +32,8 @@ export declare enum WatchEvent {
     INIT_CACHE_MISS = "init_cache_miss",
     CLIENT_SIZE = "client_size",
     REQ_SIZE = "req_size",
-    CACHE_SIZE = "cache_size"
+    CACHE_SIZE = "cache_size",
+    MEMORY_USAGE = "memory_usage"
 }
 /** Configuration for the watch function. */
 export type WatchCfg = {

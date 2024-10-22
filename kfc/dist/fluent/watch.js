@@ -51,6 +51,7 @@ var WatchEvent;
     WatchEvent["CLIENT_SIZE"] = "client_size";
     WatchEvent["REQ_SIZE"] = "req_size";
     WatchEvent["CACHE_SIZE"] = "cache_size";
+    WatchEvent["MEMORY_USAGE"] = "memory_usage";
 })(WatchEvent || (exports.WatchEvent = WatchEvent = {}));
 const NONE = 50;
 const OVERRIDE = 100;
@@ -465,6 +466,7 @@ class Watcher {
             this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${(0, object_sizeof_1.default)(this.#client)} bytes`);
             this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${(0, object_sizeof_1.default)(this.#req)} bytes`);
             this.#events.emit(WatchEvent.CACHE_SIZE, `this.#cache is ${(0, object_sizeof_1.default)(this.#cache)} bytes`);
+            this.#events.emit(WatchEvent.MEMORY_USAGE, `Memory usage is ${process.memoryUsage()} bytes`);
         }
         // Ignore if the last seen time is not set
         if (this.#lastSeenTime === NONE) {

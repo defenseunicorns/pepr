@@ -179,6 +179,10 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
     logEvent(WatchEvent.CACHE_SIZE, message);
   });
 
+  watcher.events.on(WatchEvent.MEMORY_USAGE, message => {
+    logEvent(WatchEvent.MEMORY_USAGE, message);
+  });
+
   // Start the watch
   try {
     await watcher.start();

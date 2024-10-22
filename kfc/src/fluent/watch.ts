@@ -46,6 +46,7 @@ export enum WatchEvent {
   CLIENT_SIZE = "client_size",
   REQ_SIZE = "req_size",
   CACHE_SIZE = "cache_size",
+  MEMORY_USAGE = "memory_usage",
 }
 
 /** Configuration for the watch function. */
@@ -561,6 +562,7 @@ export class Watcher<T extends GenericClass> {
       this.#events.emit(WatchEvent.CLIENT_SIZE, `this.#client is ${sizeOf(this.#client)} bytes`);
       this.#events.emit(WatchEvent.REQ_SIZE, `this.#req is ${sizeOf(this.#req)} bytes`);
       this.#events.emit(WatchEvent.CACHE_SIZE, `this.#cache is ${sizeOf(this.#cache)} bytes`);
+      this.#events.emit(WatchEvent.MEMORY_USAGE, `Memory usage is ${process.memoryUsage()} bytes`);
     }
     // Ignore if the last seen time is not set
     if (this.#lastSeenTime === NONE) {

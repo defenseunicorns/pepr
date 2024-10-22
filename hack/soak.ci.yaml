@@ -104,6 +104,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - node
+            - --max_old_space_size=400 
             - /app/node_modules/pepr/dist/controller.js
             - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
           readinessProbe:
@@ -120,10 +121,10 @@ spec:
             - containerPort: 3000
           resources:
             requests:
-              memory: 64Mi
+              memory: 256Mi
               cpu: 100m
             limits:
-              memory: 256Mi
+              memory: 768Mi
               cpu: 500m
           env:
             - name: PEPR_WATCH_MODE
@@ -271,8 +272,10 @@ spec:
         - name: watcher
           image: pepr:dev
           imagePullPolicy: IfNotPresent
+          # https://blog.risingstack.com/finding-a-memory-leak-in-node-js/
           command:
             - node
+            - --max_old_space_size=400 
             - /app/node_modules/pepr/dist/controller.js
             - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
           readinessProbe:
@@ -289,10 +292,10 @@ spec:
             - containerPort: 3000
           resources:
             requests:
-              memory: 64Mi
+              memory: 256Mi
               cpu: 100m
             limits:
-              memory: 256Mi
+              memory: 783Mi
               cpu: 500m
           securityContext:
             runAsUser: 65532
