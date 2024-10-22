@@ -23,7 +23,6 @@ export class PeprControllerStore {
   constructor(capabilities: Capability[], name: string, onReady?: () => void) {
     this.#onReady = onReady;
 
-    // Setup Pepr State bindings
     this.#name = name;
 
     const setStorageInstance = (registrationFunction: () => Storage, name: string) => {
@@ -56,9 +55,7 @@ export class PeprControllerStore {
         K8s(PeprStore)
           .InNamespace(namespace)
           .Get(this.#name)
-          // If the get succeeds, migrate and setup the watch
           .then(async (store: PeprStore) => await this.#migrateAndSetupWatch(store))
-          // Otherwise, create the resource
           .catch(this.#createStoreResource),
       Math.random() * 3000, // Add a jitter to the Store creation to avoid collisions
     );

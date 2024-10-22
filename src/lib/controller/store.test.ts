@@ -2,135 +2,108 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { PeprControllerStore } from "./store";
-import Log from "../logger";
 import { CapabilityCfg } from "../types";
 import { Capability } from "../capability";
 import { Schedule } from "../schedule";
 import { PeprStore } from "../k8s";
-import { describe, it, jest } from "@jest/globals";
+import { afterEach, describe, it, jest } from "@jest/globals";
+import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
+import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+
+jest.mock("kubernetes-fluent-client");
 
 describe("pepr store tests", () => {
+  const mockK8s = jest.mocked(K8s);
+  const capabilityConfig: CapabilityCfg = {
+    name: "test-capability",
+    description: "Test capability description",
+    namespaces: ["default"],
+  };
+
+  const testCapability = new Capability(capabilityConfig);
+
+  const mockSchedule: Schedule = {
+    name: "test-schedule",
+    every: 5,
+    unit: "minutes",
+    run: jest.fn(),
+    startTime: new Date(),
+    completions: 1,
+  };
+
+  const mockPeprStore = new PeprStore();
+
+  afterEach(() => {
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  });
+
   describe("when initializing the store", () => {
     it("do something", async () => {
-      const capabilityConfig: CapabilityCfg = {
-        name: "test-capability",
-        description: "Test capability description",
-        namespaces: ["default"],
-      };
-
-      const testCapability = new Capability(capabilityConfig);
-
-      const mockSchedule: Schedule = {
-        name: "test-schedule",
-        every: 5,
-        unit: "minutes",
-        run: jest.fn(),
-        startTime: new Date(),
-        completions: 1,
-      };
-
-      testCapability.OnSchedule(mockSchedule);
-
-      const mockPeprStore = new PeprStore();
       jest.useFakeTimers(); // Use fake timers
 
-      jest.mock("kubernetes-fluent-client", () => ({
-        K8s: jest.fn().mockReturnValue({
-          InNamespace: jest.fn().mockReturnThis(),
-          // eslint-disable-next-line max-nested-callbacks
-          Get: jest.fn().mockImplementationOnce(() => {
-            return Promise.resolve(mockPeprStore);
-          }),
-        }),
-      }));
+      mockK8s.mockImplementation(
+        <T extends GenericClass, K extends KubernetesObject>() =>
+          ({
+            Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+            InNamespace: jest.fn().mockReturnValueOnce({
+              // eslint-disable-next-line max-nested-callbacks
+              Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+            }),
+            Watch: jest.fn().mockReturnValueOnce(undefined),
+            Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+          }) as unknown as K8sInit<T, K>,
+      );
+
+      testCapability.OnSchedule(mockSchedule);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {
-        Log.info("✅ Test setup complete");
-        // Initialize the schedule store for each capability
-        new PeprControllerStore([], `pepr-test-schedule`, () => {
-          Log.info("✅ Test scheduling complete");
-        });
+        new PeprControllerStore([], `pepr-test-schedule`, () => {});
       });
-      jest.advanceTimersByTime(3000);
+      jest.advanceTimersToNextTimer();
       await Promise.resolve();
-      // Fast-forward time
-      // jest.runAllTimers();
-
-      // Assert the private method was called
-      // ??
-      jest.useRealTimers();
     });
 
     it("should migrate and setup the watch (with schedule)", async () => {
-      const capabilityConfig: CapabilityCfg = {
-        name: "test-capability",
-        description: "Test capability description",
-        namespaces: ["default"],
-      };
-
-      const testCapability = new Capability(capabilityConfig);
-
-      const mockSchedule: Schedule = {
-        name: "test-schedule",
-        every: 5,
-        unit: "minutes",
-        run: jest.fn(),
-        startTime: new Date(),
-        completions: 1,
-      };
+      mockK8s.mockImplementation(
+        <T extends GenericClass, K extends KubernetesObject>() =>
+          ({
+            Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+            InNamespace: jest.fn().mockReturnValueOnce({
+              // eslint-disable-next-line max-nested-callbacks
+              Get: jest.fn().mockRejectedValueOnce(new Error("errrr") as never),
+            }),
+            Watch: jest.fn().mockReturnValueOnce(undefined),
+            Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+          }) as unknown as K8sInit<T, K>,
+      );
 
       testCapability.OnSchedule(mockSchedule);
-
-      jest.mock("kubernetes-fluent-client", () => ({
-        K8s: jest.fn().mockReturnValue({
-          InNamespace: jest.fn().mockReturnThis(),
-          Get: jest.fn().mockReturnThis(),
-        }),
-      }));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {
-        Log.info("✅ Test setup complete");
-        // Initialize the schedule store for each capability
-        new PeprControllerStore([], `pepr-test-schedule`, () => {
-          Log.info("✅ Test scheduling complete");
-        });
-      });
-
-      // Fast-forward time
-      // jest.runAllTimers();
-
-      // Assert the private method was called
-      // ??
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-schedule`, () => {});
+      jest.advanceTimersToNextTimer();
+      await Promise.resolve();
     });
+
     it("should create the store resource for a scheduled capability (without schedule)", async () => {
-      const capabilityConfig: CapabilityCfg = {
-        name: "test-capability",
-        description: "Test capability description",
-        namespaces: ["default"],
-      };
-
-      const testCapability = new Capability(capabilityConfig);
-
-      jest.mock("kubernetes-fluent-client", () => ({
-        K8s: jest.fn().mockReturnValue({
-          InNamespace: jest.fn().mockReturnThis(),
-          Get: jest.fn().mockReturnThis(),
-        }),
-      }));
+      mockK8s.mockImplementation(
+        <T extends GenericClass, K extends KubernetesObject>() =>
+          ({
+            Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+            InNamespace: jest.fn().mockReturnValueOnce({
+              // eslint-disable-next-line max-nested-callbacks
+              Get: jest.fn().mockRejectedValueOnce(new Error("errrr") as never),
+              // Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+            }),
+            Watch: jest.fn().mockReturnValueOnce(undefined),
+            Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+          }) as unknown as K8sInit<T, K>,
+      );
+      testCapability.OnSchedule(mockSchedule);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-store`, () => {
-        Log.info("✅ Test setup complete");
-        // Initialize the schedule store for each capability
-        new PeprControllerStore([], `pepr-test-schedule`, () => {
-          Log.info("✅ Test scheduling complete");
-        });
-      });
-
-      // Fast-forward time
-      // jest.runAllTimers();
-
-      // Assert the private method was called
-      // ??
+      const peprControllerStore = new PeprControllerStore([testCapability], `pepr-test-store`, () => {});
+      jest.advanceTimersToNextTimer();
+      await Promise.resolve();
     });
   });
 });
