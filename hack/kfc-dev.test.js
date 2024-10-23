@@ -53,7 +53,7 @@ describe("KFC Dev Helper E2E Test", () => {
   });
 
   it("should download a remote branch of KFC to kubernetes-fluent-client folder", () => {
-    execSync("node hack/kfc-dev.js build -r main", {
+    execSync("node hack/kfc-dev.js build -b main", {
       stdio: "pipe",
       encoding: "utf8",
     });
