@@ -6,7 +6,7 @@
 # Any other changes to Dockerfile should be reflected in Publish
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
-FROM cgr.dev/chainguard/node:latest-dev@sha256:8a604e50086fdfa5c6298722bdf86bfbffd82e64e3ecc736b133bc0dbcb9d121 AS build
+FROM cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a AS build
 
 WORKDIR /app
 
@@ -46,7 +46,7 @@ RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src
 ##### DELIVER #####
 
 # crane digest cgr.dev/chainguard/node-lts:latest
-FROM cgr.dev/chainguard/node:latest@sha256:2ec55b47bddaa173fbcd6283d492b10e903da51dc7da12988024829ad0454dd7
+FROM cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
 
 WORKDIR /app
 

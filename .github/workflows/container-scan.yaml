@@ -27,7 +27,7 @@ jobs:
       - name: Build Pepr Controller Image
         run: npm run build:image
       - name: Vulnerability Scan
-        uses: anchore/scan-action@4e08a16a68fb1b35d2fca00f0607db0b5b5120a7 # v5.0.0
+        uses: anchore/scan-action@ef0b0b023552a0c077534074723a9915280284bb # v5.1.0
         with:
           image: "pepr:dev"
           fail-build: true

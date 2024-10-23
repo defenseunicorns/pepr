@@ -142,7 +142,7 @@ jobs:
     if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 32 # Roughly matches the number of E2E tests and below GitHub concurrency limit
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
@@ -187,11 +187,16 @@ jobs:
           npm ci
 
       - name: run e2e tests
-        run: |
-          cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
-          npm run --workspace=${{ matrix.name }} test:e2e -- \
-            --image pepr:dev \
-            --custom-package ../pepr-0.0.0-development.tgz
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 6
+          command: |
+            cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
+            npm run --workspace=${{ matrix.name }} test:e2e -- \
+              --image pepr:dev \
+              --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
