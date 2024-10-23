@@ -202,7 +202,7 @@ jobs:
             sleep 70s
             # sleep 300s  # Sleep for 5 minutes before the next iteration
           done
-          kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/pepr-soak-ci.logs
+          # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/pepr-soak-ci.logs
           echo "Soak test passed successfully!"
         shell: bash
 
