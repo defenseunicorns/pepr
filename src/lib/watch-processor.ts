@@ -190,8 +190,16 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   });
 
 
-  watcher.events.on(WatchEvent.MEMORY_USAGE, message => {
-    Log.debug(message, "Memory usage");
+  watcher.events.on(WatchEvent.MEMORY_USAGE, memoryUsage => {
+    logEvent(WatchEvent.MEMORY_USAGE, JSON.stringify(memoryUsage));
+  });
+
+  watcher.events.on(WatchEvent.HTTP2_REQUEST_END, () => {
+    logEvent(WatchEvent.HTTP2_REQUEST_END)
+  });
+
+  watcher.events.on(WatchEvent.HTTP2_REQUEST_CLOSE, () => {
+    logEvent(WatchEvent.HTTP2_REQUEST_END)
   });
 
   // Start the watch

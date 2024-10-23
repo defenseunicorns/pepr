@@ -109,11 +109,12 @@ jobs:
           docker image load --input "$PEPR_TAR"
 
       - name: Create k3d Cluster
-        run: "k3d cluster create"
+        #@all means in all "nodes"
+        run: k3d cluster create soak-cluster --volume "${GITHUB_WORKSPACE}/heap_snapshots:/app/heap_snapshots@all"
         shell: bash
 
       - name: Import pepr image into k3d
-        run: "k3d image import pepr:dev -c k3s-default"
+        run: "k3d image import pepr:dev -c soak-cluster"
         shell: bash
 
       - name: Install istioctl
@@ -210,3 +211,9 @@ jobs:
         with:
           name: soak-test-logs
           path: logs
+
+      - name: Upload heap snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: heap-snapshots
+          path: ${GITHUB_WORKSPACE}/heap_snapshots

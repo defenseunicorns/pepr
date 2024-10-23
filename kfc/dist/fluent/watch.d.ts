@@ -31,7 +31,11 @@ export declare enum WatchEvent {
     /** Initialize a relist window */
     INIT_CACHE_MISS = "init_cache_miss",
     /** Memory Usage */
-    MEMORY_USAGE = "memory_usage"
+    MEMORY_USAGE = "memory_usage",
+    /** HTTP2 Request End */
+    HTTP2_REQUEST_END = "http2_request_end",
+    /** HTTP2 Request Close */
+    HTTP2_REQUEST_CLOSE = "http2_request_close"
 }
 /** Configuration for the watch function. */
 export type WatchCfg = {

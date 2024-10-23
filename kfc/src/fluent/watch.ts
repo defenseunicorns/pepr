@@ -44,6 +44,10 @@ export enum WatchEvent {
   INIT_CACHE_MISS = "init_cache_miss",
   /** Memory Usage */
   MEMORY_USAGE = "memory_usage",
+  /** HTTP2 Request End */
+  HTTP2_REQUEST_END = "http2_request_end",
+  /** HTTP2 Request Close */
+  HTTP2_REQUEST_CLOSE = "http2_request_close",
 }
 
 /** Configuration for the watch function. */
@@ -102,6 +106,10 @@ export class Watcher<T extends GenericClass> {
 
   // The resource version to start the watch at, this will be updated after the list operation.
   #resourceVersion?: string;
+  // Add a reconnect attempts counter
+  #reconnectAttempts = 0;
+  #maxReconnectDelay = 30000; // Maximum delay (32 seconds)
+  #baseReconnectDelay = 5000; // Base delay (5 second)
 
   // Track the list of items in the cache
   #cache = new Map<string, InstanceType<T>>();
@@ -554,7 +562,7 @@ export class Watcher<T extends GenericClass> {
 
   /** Clear the resync timer and schedule a new one. */
   #checkResync = () => {
-    
+
     this.#events.emit(WatchEvent.MEMORY_USAGE, process.memoryUsage());
     // Ignore if the last seen time is not set
     if (this.#lastSeenTime === NONE) {
@@ -660,20 +668,29 @@ export class Watcher<T extends GenericClass> {
       });
     });
 
-    req.on("end", () => this.#cleanupAndReconnect(client));
-    req.on("close", () => this.#cleanupAndReconnect(client));
+    req.on("end", () => {
+      this.#events.emit(WatchEvent.HTTP2_REQUEST_END);
+      this.#cleanupAndReconnect(client)
+    });
+    req.on("close", () => {
+      this.#events.emit(WatchEvent.HTTP2_REQUEST_CLOSE);
+      this.#cleanupAndReconnect(client)
+    });
     req.on("error", error => this.#errHandler(error));
   }
 
   /** Schedules a reconnect with a delay to prevent rapid reconnections. */
   #scheduleReconnect() {
-    const jitter = Math.floor(Math.random() * 1000);
-    const delay = (this.#watchCfg.resyncDelaySec ?? 5) * 1000 + jitter;
+    const jitter = Math.floor(Math.random() * 1000); // Random jitter to avoid reconnect storms
+    const delay = Math.min(this.#baseReconnectDelay * Math.pow(2, this.#reconnectAttempts), this.#maxReconnectDelay);
 
     setTimeout(() => {
       this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
+      this.#reconnectAttempts++; // Increment the reconnect attempts
+
+      // Attempt the HTTP/2 watch again
       void this.#http2Watch();
-    }, delay*3);
+    }, delay + jitter);
   }
 
   /**
@@ -681,6 +698,7 @@ export class Watcher<T extends GenericClass> {
    */
   #onWatchConnected() {
     this.#pendingReconnect = false;
+    this.#reconnectAttempts = 0;
     this.#events.emit(WatchEvent.CONNECT);
 
     // Reset the retry count
