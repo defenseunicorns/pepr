@@ -185,9 +185,9 @@ jobs:
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              kubectl get pods -n pepr-demo 
-              kubectl top po -n pepr-system
-              kubectl get po -n pepr-system
+              kubectl get pods -n pepr-demo || true
+              kubectl top po -n pepr-system || true
+              kubectl get po -n pepr-system || true
               
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
