@@ -17,9 +17,13 @@ import * as helpers from "../helpers";
 
 const mockCapabilities: CapabilityExport[] = [
   {
-    apiGroups: ["pepr.dev"],
-    resources: ["peprstores"],
-    verbs: ["create", "get", "patch", "watch"],
+    rbac: [
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["create", "get", "patch", "watch"],
+      },
+    ],
     bindings: [
       {
         kind: { group: "pepr.dev", version: "v1", kind: "peprstore", plural: "peprstores" },
@@ -42,9 +46,13 @@ const mockCapabilities: CapabilityExport[] = [
     description: "",
   },
   {
-    apiGroups: ["apiextensions.k8s.io"],
-    resources: ["customresourcedefinitions"],
-    verbs: ["patch", "create"],
+    rbac: [
+      {
+        apiGroups: ["apiextensions.k8s.io"],
+        resources: ["customresourcedefinitions"],
+        verbs: ["patch", "create"],
+      },
+    ],
     bindings: [
       {
         kind: {
@@ -73,9 +81,13 @@ const mockCapabilities: CapabilityExport[] = [
     description: "",
   },
   {
-    apiGroups: [""],
-    resources: ["namespaces"],
-    verbs: ["watch"],
+    rbac: [
+      {
+        apiGroups: [""],
+        resources: ["namespaces"],
+        verbs: ["watch"],
+      },
+    ],
     bindings: [
       {
         kind: { group: "", version: "v1", kind: "namespace", plural: "namespaces" },
@@ -99,9 +111,13 @@ const mockCapabilities: CapabilityExport[] = [
     description: "",
   },
   {
-    apiGroups: [""],
-    resources: ["configmaps"],
-    verbs: ["watch"],
+    rbac: [
+      {
+        apiGroups: [""],
+        resources: ["configmaps"],
+        verbs: ["watch"],
+      },
+    ],
     bindings: [
       {
         kind: { group: "", version: "v1", kind: "configmap", plural: "configmaps" },
@@ -189,9 +205,13 @@ describe("RBAC generation", () => {
   it("should include finalize verbs if isFinalize is true in scoped mode", () => {
     const capabilitiesWithFinalize: CapabilityExport[] = [
       {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        verbs: ["patch"],
+        rbac: [
+          {
+            apiGroups: ["pepr.dev"],
+            resources: ["peprstores"],
+            verbs: ["patch"],
+          },
+        ],
         bindings: [
           {
             kind: { group: "pepr.dev", version: "v1", kind: "peprstore", plural: "peprstores" },
@@ -235,9 +255,13 @@ describe("RBAC generation", () => {
   it("should deduplicate verbs and resources in rules", () => {
     const capabilitiesWithDuplicates: CapabilityExport[] = [
       {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        verbs: ["create", "get"],
+        rbac: [
+          {
+            apiGroups: ["pepr.dev"],
+            resources: ["peprstores"],
+            verbs: ["create", "get"],
+          },
+        ],
         bindings: [
           {
             kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
@@ -260,9 +284,13 @@ describe("RBAC generation", () => {
         description: "",
       },
       {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        verbs: ["get", "patch"],
+        rbac: [
+          {
+            apiGroups: ["pepr.dev"],
+            resources: ["peprstores"],
+            verbs: ["get", "patch"],
+          },
+        ],
         bindings: [
           {
             kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
@@ -537,9 +565,13 @@ describe("clusterRole", () => {
 
     const capabilitiesWithShortKey: CapabilityExport[] = [
       {
-        apiGroups: [""],
-        resources: ["nodes"],
-        verbs: ["get"],
+        rbac: [
+          {
+            apiGroups: [""],
+            resources: ["nodes"],
+            verbs: ["get"],
+          },
+        ],
         bindings: [
           {
             kind: { group: "", version: "v1", kind: "node", plural: "nodes" },
@@ -584,9 +616,13 @@ describe("clusterRole", () => {
 
     const capabilitiesWithLongKey: CapabilityExport[] = [
       {
-        apiGroups: ["apps/v1"],
-        resources: ["deployments"],
-        verbs: ["create"],
+        rbac: [
+          {
+            apiGroups: ["apps/v1"],
+            resources: ["deployments"],
+            verbs: ["create"],
+          },
+        ],
         bindings: [
           {
             kind: { group: "apps", version: "v1", kind: "deployment", plural: "deployments" },

@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { kind } from "kubernetes-fluent-client";
+import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
 import { CapabilityExport } from "../types";
 import { createRBACMap, RBACMap } from "../helpers";
 import fs from "fs";
 import path from "path";
-import { Rule } from "../module";
 import { Log } from "../../lib";
 
 const packageJsonPath = path.resolve(process.cwd(), "package.json");
@@ -42,7 +42,7 @@ export function clusterRole(name: string, capabilities: CapabilityExport[], rbac
 
   // Merge and deduplicate custom RBAC and scoped rules
   const mergedRBAC = [...(Array.isArray(customRbac) ? customRbac : []), ...scopedRules];
-  const deduper: Record<string, Rule & { verbs: string[] }> = {};
+  const deduper: Record<string, PolicyRule & { verbs: string[] }> = {};
 
   mergedRBAC.forEach(rule => {
     const key = `${rule.apiGroups}/${rule.resources}`;
