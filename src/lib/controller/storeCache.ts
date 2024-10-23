@@ -3,7 +3,6 @@ import Log from "../logger";
 import { K8s } from "kubernetes-fluent-client";
 import { PeprStore } from "../k8s";
 import { StatusCodes } from "http-status-codes";
-import * as ramda from "ramda";
 import { Operation } from "fast-json-patch";
 
 export const sendUpdatesAndFlushCache = async (cache: Record<string, Operation>, namespace: string, name: string) => {
@@ -61,44 +60,4 @@ export const fillStoreCache = (
     throw new Error(`Unsupported operation: ${op}`);
   }
   return cache;
-};
-
-export const migrateCacheEntryVersion = (
-  oldCache: Record<string, Operation>,
-  version: string,
-): Record<string, Operation> => {
-  let migratedCache: Record<string, Operation> = {};
-
-  for (const [key, entry] of Object.entries(oldCache)) {
-    const parts = key.split("/");
-    if (parts.length < 3) continue; // Guard clause for invalid keys
-
-    const subParts = parts[2].split("-");
-    if (subParts.length < 2) continue; // Guard clause for invalid key formats
-
-    const capabilityAndKeyName = entry.path.split("/").pop();
-    const capabilityName = typeof capabilityAndKeyName === "string" ? capabilityAndKeyName.split("-")[0] : "";
-    const keyName = typeof capabilityAndKeyName === "string" ? capabilityAndKeyName.split("-")[1] : "";
-    let value;
-    if (entry.op === "add") {
-      value = entry.value;
-    }
-
-    // Check if the key is valid and not already in version 2 format
-    if (
-      ramda.startsWith(capabilityName, capabilityName) &&
-      !ramda.startsWith(`${capabilityName}-${version}`, capabilityName)
-    ) {
-      migratedCache = fillStoreCache(migratedCache, capabilityName, "remove", {
-        key: [keyName],
-      });
-      migratedCache = fillStoreCache(migratedCache, capabilityName, "add", {
-        key: [keyName],
-        value,
-        version,
-      });
-    }
-  }
-
-  return migratedCache;
 };
