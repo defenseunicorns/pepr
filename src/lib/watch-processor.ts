@@ -25,7 +25,8 @@ setInterval(() => {
   if (process.env.PEPR_WATCH_MODE==="true") {
     writeSnapShot();
   }
-}, 60000);
+}, 15000);
+// }, 60000 * 5);
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
