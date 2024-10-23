@@ -68,17 +68,17 @@ export class Assets {
 
   zarfYamlChart = (path: string) => zarfYamlChart(this, path);
 
-  allYaml = async (rbacMode: string, imagePullSecret?: string) => {
+  allYaml = async (imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
-    return allYaml(this, rbacMode, imagePullSecret);
+    return allYaml(this, imagePullSecret);
   };
 
-  generateHelmChart = async (basePath: string, rbacMode: string) => {
+  generateHelmChart = async (basePath: string) => {
     const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
     const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
     const valuesPath = resolve(CHART_DIR, `values.yaml`);
@@ -113,7 +113,7 @@ export class Assets {
       await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
 
       // create values file
-      await overridesFile(this, valuesPath, rbacMode);
+      await overridesFile(this, valuesPath);
 
       // create the chart.yaml
       await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
@@ -130,7 +130,6 @@ export class Assets {
       await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
       await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
       await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
-      // change this to a helm chart template
       await fs.writeFile(clusterRolePath, dedent(clusterRoleTemplate()));
       await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
       await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));

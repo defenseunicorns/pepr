@@ -4,6 +4,7 @@
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
+import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
 
 import { Assets } from ".";
 import Log from "../logger";
@@ -84,18 +85,24 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
     throw new Error("No code provided");
   }
 
-  await setupRBAC(name, assets.capabilities, force);
+  await setupRBAC(name, assets.capabilities, force, assets.config.rbacMode, assets.config.rbac);
   await setupController(assets, code, hash, force);
   await setupWatcher(assets, hash, force);
 }
 
-async function setupRBAC(name: string, capabilities: CapabilityExport[], force: boolean) {
+async function setupRBAC(
+  name: string,
+  capabilities: CapabilityExport[],
+  force: boolean,
+  rbacMode?: string,
+  rbac?: PolicyRule[],
+) {
   Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
   await K8s(kind.ClusterRoleBinding).Apply(crb, { force });
 
   Log.info("Applying cluster role");
-  const cr = clusterRole(name, capabilities);
+  const cr = clusterRole(name, capabilities, rbacMode, rbac);
   await K8s(kind.ClusterRole).Apply(cr, { force });
 
   Log.info("Applying service account");

@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import {
-  clusterRole,
-  clusterRoleBinding,
-  storeRole,
-  serviceAccount,
-  storeRoleBinding,
-  readRBACFromPackageJson,
-} from "./rbac";
+import { clusterRole, clusterRoleBinding, storeRole, serviceAccount, storeRoleBinding } from "./rbac";
 import { CapabilityExport } from "../types";
 import { it, describe, expect, beforeEach, jest } from "@jest/globals";
 import { GenericClass } from "kubernetes-fluent-client";
+import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
 import { Event } from "../types";
 import fs from "fs";
 import * as helpers from "../helpers";
@@ -156,7 +150,7 @@ describe("RBAC generation", () => {
   });
 
   it("should generate correct ClusterRole rules in scoped mode", () => {
-    const result = clusterRole("test-role", mockCapabilities, "scoped");
+    const result = clusterRole("test-role", mockCapabilities, "scoped", []);
 
     expect(result.rules).toEqual([
       {
@@ -191,13 +185,13 @@ describe("RBAC generation", () => {
       },
     ];
 
-    const result = clusterRole("test-role", mockCapabilities);
+    const result = clusterRole("test-role", mockCapabilities, "admin", []);
 
     expect(result.rules).toEqual(expectedWildcardRules);
   });
 
   it("should return an empty rules array when capabilities are empty in scoped mode", () => {
-    const result = clusterRole("test-role", [], "scoped");
+    const result = clusterRole("test-role", [], "scoped", []);
 
     expect(result.rules).toEqual([]);
   });
@@ -236,7 +230,12 @@ describe("RBAC generation", () => {
       },
     ];
 
-    const result = clusterRole("test-role", capabilitiesWithFinalize, "scoped");
+    const result = clusterRole(
+      "test-role",
+      capabilitiesWithFinalize,
+      "scoped",
+      capabilitiesWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     expect(result.rules).toEqual([
       {
@@ -314,7 +313,12 @@ describe("RBAC generation", () => {
       },
     ];
 
-    const result = clusterRole("test-role", capabilitiesWithDuplicates, "scoped");
+    const result = clusterRole(
+      "test-role",
+      capabilitiesWithDuplicates,
+      "scoped",
+      capabilitiesWithDuplicates.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     // Filter out only the rules for 'pepr.dev' and 'peprstores'
     const filteredRules = result.rules?.filter(
@@ -362,43 +366,6 @@ describe("RBAC generation with mocked package.json", () => {
     });
   });
 
-  it("should merge and deduplicate rules from capabilities and custom RBAC in scoped mode", () => {
-    const result = clusterRole("test-role", mockCapabilities, "scoped");
-
-    expect(result.rules).toEqual([
-      {
-        apiGroups: ["pepr.dev"],
-        resources: ["pods"],
-        verbs: ["get", "list"],
-      },
-      {
-        apiGroups: ["apps"],
-        resources: ["deployments"],
-        verbs: ["create", "delete"],
-      },
-      {
-        apiGroups: ["pepr.dev"],
-        resources: ["peprstores"],
-        verbs: ["create", "get", "patch", "watch"],
-      },
-      {
-        apiGroups: ["apiextensions.k8s.io"],
-        resources: ["customresourcedefinitions"],
-        verbs: ["patch", "create"],
-      },
-      {
-        apiGroups: [""],
-        resources: ["namespaces"],
-        verbs: ["watch"],
-      },
-      {
-        apiGroups: [""],
-        resources: ["configmaps"],
-        verbs: ["watch"],
-      },
-    ]);
-  });
-
   it("should generate a ClusterRole with wildcard rules when not in scoped mode", () => {
     const expectedWildcardRules = [
       {
@@ -408,7 +375,12 @@ describe("RBAC generation with mocked package.json", () => {
       },
     ];
 
-    const result = clusterRole("test-role", mockCapabilities);
+    const result = clusterRole(
+      "test-role",
+      mockCapabilities,
+      "admin",
+      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     expect(result.rules).toEqual(expectedWildcardRules);
   });
@@ -515,28 +487,6 @@ describe("storeRoleBinding", () => {
   });
 });
 
-describe("readRBACFromPackageJson", () => {
-  it("should log an error and return null if reading package.json fails", () => {
-    // Mock fs.readFileSync to throw an error
-    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
-      throw new Error("Failed to read file");
-    });
-
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-
-    const result = readRBACFromPackageJson();
-
-    // Check if the result is null
-    expect(result).toBeNull();
-
-    // Check if the error was logged
-    expect(consoleSpy).toHaveBeenCalledWith("Error reading package.json:", "Failed to read file");
-
-    // Restore the original implementation
-    jest.restoreAllMocks();
-  });
-});
-
 describe("clusterRole", () => {
   // Mocking the readRBACFromPackageJson function to return null
   jest.mock("./rbac", () => ({
@@ -595,7 +545,12 @@ describe("clusterRole", () => {
       },
     ];
 
-    const result = clusterRole("test-role", capabilitiesWithShortKey, "scoped");
+    const result = clusterRole(
+      "test-role",
+      capabilitiesWithShortKey,
+      "scoped",
+      capabilitiesWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     expect(result.rules).toEqual([
       {
@@ -618,7 +573,7 @@ describe("clusterRole", () => {
       {
         rbac: [
           {
-            apiGroups: ["apps/v1"],
+            apiGroups: ["apps"],
             resources: ["deployments"],
             verbs: ["create"],
           },
@@ -646,7 +601,12 @@ describe("clusterRole", () => {
       },
     ];
 
-    const result = clusterRole("test-role", capabilitiesWithLongKey, "scoped");
+    const result = clusterRole(
+      "test-role",
+      capabilitiesWithLongKey,
+      "scoped",
+      capabilitiesWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     expect(result.rules).toEqual([
       {
@@ -667,7 +627,12 @@ describe("clusterRole", () => {
       });
     });
 
-    const result = clusterRole("test-role", mockCapabilities, "scoped");
+    const result = clusterRole(
+      "test-role",
+      mockCapabilities,
+      "scoped",
+      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
 
     // The result should only contain rules from the capabilities, not from the invalid custom RBAC
     expect(result.rules).toEqual([
@@ -695,11 +660,12 @@ describe("clusterRole", () => {
   });
 
   it("should default to an empty verbs array if rule.verbs is undefined", () => {
-    const customRbacWithNoVerbs = [
+    // Simulate a custom RBAC rule with empty verbs
+    const customRbacWithNoVerbs: PolicyRule[] = [
       {
         apiGroups: ["pepr.dev"],
         resources: ["customresources"],
-        verbs: undefined, // Simulate undefined verbs
+        verbs: [], // Set verbs to an empty array to satisfy the V1PolicyRule type
       },
     ];
 
@@ -711,9 +677,9 @@ describe("clusterRole", () => {
       });
     });
 
-    const result = clusterRole("test-role", mockCapabilities, "scoped");
+    const result = clusterRole("test-role", mockCapabilities, "scoped", customRbacWithNoVerbs);
 
-    // Check that the verbs array is empty for the custom RBAC rule with undefined verbs
+    // Check that the verbs array is empty for the custom RBAC rule
     expect(result.rules).toContainEqual({
       apiGroups: ["pepr.dev"],
       resources: ["customresources"],

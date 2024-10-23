@@ -36,9 +36,10 @@ export type ModuleConfig = {
   env?: Record<string, string>;
   /** Custom Labels for Kubernetes Objects */
   customLabels?: CustomLabels;
-  /** Add Configuration for RBAC */
-  // Get from KFC
+  /** Custom RBAC rules */
   rbac?: PolicyRule[];
+  /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
+  rbacMode?: string;
 };
 
 export type PackageJSON = {

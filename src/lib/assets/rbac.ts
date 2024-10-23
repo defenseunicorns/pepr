@@ -4,12 +4,7 @@
 import { kind } from "kubernetes-fluent-client";
 import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
 import { CapabilityExport } from "../types";
-import { createRBACMap, RBACMap } from "../helpers";
-import fs from "fs";
-import path from "path";
-import { Log } from "../../lib";
-
-const packageJsonPath = path.resolve(process.cwd(), "package.json");
+import { createRBACMap } from "../helpers";
 
 /**
  * Creates a Kubernetes ClusterRole based on capabilities and optional custom RBAC rules.
@@ -21,10 +16,12 @@ const packageJsonPath = path.resolve(process.cwd(), "package.json");
  * @param {string} [rbacMode=""] - The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules.
  * @returns {kind.ClusterRole} - A Kubernetes ClusterRole object.
  */
-export function clusterRole(name: string, capabilities: CapabilityExport[], rbacMode: string = ""): kind.ClusterRole {
-  // Read custom RBAC from package.json
-  const customRbac = readRBACFromPackageJson() || [];
-
+export function clusterRole(
+  name: string,
+  capabilities: CapabilityExport[],
+  rbacMode: string = "admin",
+  customRbac: kind.PolicyRule[] | undefined,
+): kind.ClusterRole {
   // Create the RBAC map from capabilities
   const rbacMap = createRBACMap(capabilities);
 
@@ -166,25 +163,3 @@ export function storeRoleBinding(name: string): kind.RoleBinding {
     ],
   };
 }
-
-/**
- * Reads and parses RBAC information from the package.json file under the 'pepr' key.
- *
- * @returns {RBACMap | null} - An object representing the RBAC rules from package.json or null if not found.
- */
-export const readRBACFromPackageJson = (): RBACMap | null => {
-  try {
-    const packageJsonData = fs.readFileSync(packageJsonPath, "utf8");
-    const packageJson = JSON.parse(packageJsonData);
-
-    if (packageJson.pepr && packageJson.pepr.rbac) {
-      return packageJson.pepr.rbac;
-    } else {
-      Log.info("RBAC information not found under 'pepr' in package.json");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error reading package.json:", error.message);
-    return null;
-  }
-};

@@ -133,6 +133,7 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           appVersion: cfg.version,
           description: cfg.description,
+          rbacMode: opts.rbacMode,
         },
         path,
       );
@@ -164,7 +165,7 @@ export default function (program: RootCmd) {
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const chartPath = `${uuid}-chart`;
       const yamlPath = resolve(outputDir, yamlFile);
-      const yaml = await assets.allYaml(opts.rbacMode, opts.withPullSecret);
+      const yaml = await assets.allYaml(opts.withPullSecret);
 
       try {
         // wait for capabilities to be loaded and test names
@@ -185,7 +186,7 @@ export default function (program: RootCmd) {
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);
 
-      await assets.generateHelmChart(outputDir, opts.rbacMode);
+      await assets.generateHelmChart(outputDir);
 
       console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
