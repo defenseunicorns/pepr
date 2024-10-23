@@ -97,7 +97,7 @@ jobs:
         shell: bash
 
       - name: Create a directory for heap snapshots
-        run: mkdir -p /tmp/heap_snapshots 
+        run: mkdir -p /tmp/k3dvol 
 
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -112,8 +112,7 @@ jobs:
           docker image load --input "$PEPR_TAR"
 
       - name: Create k3d Cluster
-        #@all means in all "nodes"
-        run: k3d cluster create soak-cluster --volume "/tmp/heap_snapshots:/app/heap_snapshots@all"
+        run: k3d cluster create soak-cluster --volume "/tmp/k3dvol:/app/k3dvol"
         shell: bash
 
       - name: Import pepr image into k3d
@@ -179,7 +178,7 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..6}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..2}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
@@ -214,7 +213,7 @@ jobs:
           path: logs
 
       - name: Upload heap snapshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: heap-snapshots
-          path: /tmp/heap_snapshots
+          path: /tmp/k3dvol

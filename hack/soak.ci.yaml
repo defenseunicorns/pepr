@@ -364,4 +364,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/tmp/heap_snapshots"
+    path: "/tmp/k3dvol"
