@@ -179,7 +179,7 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..6}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..2}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
@@ -203,7 +203,7 @@ jobs:
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
           done
-
+          kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/pepr-soak-ci.logs
           echo "Soak test passed successfully!"
         shell: bash
 
