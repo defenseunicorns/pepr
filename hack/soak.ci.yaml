@@ -349,3 +349,18 @@ spec:
   resources:
     requests:
       storage: 1Gi 
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: heap-snapshot-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/tmp/heap_snapshots"
