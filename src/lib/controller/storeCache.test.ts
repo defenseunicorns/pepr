@@ -1,5 +1,5 @@
 import { describe, expect, it, jest, afterEach } from "@jest/globals";
-import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
+import { fillStoreCache, sendUpdatesAndFlushCache, migrateCacheEntryVersion } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -81,22 +81,32 @@ describe("sendCache", () => {
       const result = fillStoreCache({}, "capability", "add", { key: ["key"], version: "" });
       expect(result).toStrictEqual(input);
     });
+  });
+  describe("when creating 'remove' operations", () => {
+    it("should write to the cache", () => {
+      const input: Record<string, Operation> = {
+        "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
+      };
+      const result = fillStoreCache({}, "capability", "remove", { key: ["key"] });
+      expect(result).toStrictEqual(input);
+    });
 
-    describe("when creating 'remove' operations", () => {
-      it("should write to the cache", () => {
-        const input: Record<string, Operation> = {
-          "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
-        };
-        const result = fillStoreCache({}, "capability", "remove", { key: ["key"] });
-        expect(result).toStrictEqual(input);
-      });
-
-      it("should require a key to be defined", () => {
-        // eslint-disable-next-line max-nested-callbacks
-        expect(() => {
-          fillStoreCache({}, "capability", "remove", { key: [] });
-        }).toThrow("Key is required for REMOVE operation");
-      });
+    it("should require a key to be defined", () => {
+      // eslint-disable-next-line max-nested-callbacks
+      expect(() => {
+        fillStoreCache({}, "capability", "remove", { key: [] });
+      }).toThrow("Key is required for REMOVE operation");
+    });
+  });
+  describe("when migrating entry versions", () => {
+    it("should migrate from v1 to v2", () => {
+      const expected: Record<string, Operation> = {
+        "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
+        "add:/data/capability-v2-key:myVal": { op: "add", path: "/data/capability-v2-key", value: "myVal" },
+      };
+      let result = fillStoreCache({}, "capability", "add", { key: ["key"], value: "myVal", version: "" });
+      result = migrateCacheEntryVersion(result, "v2");
+      expect(result).toStrictEqual(expected);
     });
   });
 });
