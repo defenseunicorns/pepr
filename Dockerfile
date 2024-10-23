@@ -47,5 +47,4 @@ RUN npm run build && \
 FROM cgr.dev/chainguard/node:latest@sha256:2ec55b47bddaa173fbcd6283d492b10e903da51dc7da12988024829ad0454dd7
 
 WORKDIR /app
-
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/

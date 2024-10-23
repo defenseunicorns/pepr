@@ -311,12 +311,12 @@ spec:
               mountPath: /app/load
               readOnly: true
             - name: heap-snapshots
-              mountPath: /app/heap_snapshots
+              mountPath: /data
           env:
             - name: PEPR_LAST_SEEN_LIMIT_SECONDS
-              value: '300'
+              value: '60'
             - name: PEPR_RESYNC_DELAY_SECONDS
-              value: '15'
+              value: '5'
             - name: PEPR_WATCH_MODE
               value: 'true'
             - name: PEPR_HTTP2_WATCH
@@ -344,6 +344,7 @@ metadata:
   name: heap-snapshot-pvc
   namespace: pepr-system
 spec:
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:

@@ -179,7 +179,7 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..2}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..6}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
@@ -187,8 +187,6 @@ jobs:
               update_pod_map
 
               kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event memory_usage received."))' || true 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_end received."))' || true 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_close received."))' || true 
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
               kubectl get po -n pepr-system

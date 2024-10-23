@@ -14,7 +14,7 @@ import path from 'path';
 
 
 const writeSnapShot = () => {
-  const snapshotPath = path.join('/app/heap_snapshots', `heapdump-${Date.now()}.heapsnapshot`);
+  const snapshotPath = path.join('/data', `heapdump-${Date.now()}.heapsnapshot`);
   writeHeapSnapshot(snapshotPath);
 };
 
@@ -25,7 +25,7 @@ setInterval(() => {
   if (process.env.PEPR_WATCH_MODE==="true") {
     writeSnapShot();
   }
-}, 6000);
+}, 60000 * 5);
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
