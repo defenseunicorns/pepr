@@ -83,7 +83,6 @@ export class PeprControllerStore {
           storeCache = fillStoreCache(storeCache, name, "remove", {
             key: [key.slice(offset)],
             value: data[key],
-            version: "v2",
           });
           storeCache = fillStoreCache(storeCache, name, "add", {
             key: [key.slice(offset)],
