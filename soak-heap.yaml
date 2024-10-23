@@ -96,6 +96,9 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
+      - name: Create a directory for heap snapshots
+        run: mkdir -p ${GITHUB_WORKSPACE}/heap_snapshots 
+
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:

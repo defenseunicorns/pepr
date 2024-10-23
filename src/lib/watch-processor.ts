@@ -9,26 +9,26 @@ import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
-// import v8 from 'v8';
-// import path from 'path';
-// import fs from 'fs';
+import v8 from 'v8';
+import path from 'path';
+import fs from 'fs';
 
-// const writeHeapSnapshot = () => {
-//   const snapshotStream = v8.getHeapSnapshot();
-//   const snapshotPath = path.join('/app/heap_snapshots', `heapdump-${Date.now()}.heapsnapshot`);
+const writeHeapSnapshot = () => {
+  const snapshotStream = v8.getHeapSnapshot();
+  const snapshotPath = path.join('/app/heap_snapshots', `heapdump-${Date.now()}.heapsnapshot`);
   
-//   const fileStream = fs.createWriteStream(snapshotPath);
-//   snapshotStream.pipe(fileStream);
-// };
+  const fileStream = fs.createWriteStream(snapshotPath);
+  snapshotStream.pipe(fileStream);
+};
 
-// setInterval(() => {
-//   const memoryUsage = process.memoryUsage();
-//   Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
+setInterval(() => {
+  const memoryUsage = process.memoryUsage();
+  Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
 
-//   if (process.env.PEPR_WATCH_MODE==="true") {
-//     writeHeapSnapshot();
-//   }
-// }, 60000);
+  if (process.env.PEPR_WATCH_MODE==="true") {
+    writeHeapSnapshot();
+  }
+}, 60000);
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
