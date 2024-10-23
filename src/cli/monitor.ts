@@ -49,43 +49,41 @@ export default function (program: RootCmd) {
 
         for (const line of lines) {
           // Check for `"msg":"Hello Pepr"`
-          if (line.includes(respMsg)) {
-            try {
-              const payload = JSON.parse(line.trim());
-              const isMutate = payload.res.patchType || payload.res.warnings;
+          if (!line.includes(respMsg)) continue;
+          try {
+            const payload = JSON.parse(line.trim());
+            const isMutate = payload.res.patchType || payload.res.warnings;
 
-              const name = `${payload.namespace}${payload.name}`;
-              const uid = payload.res.uid;
+            const name = `${payload.namespace}${payload.name}`;
+            const uid = payload.res.uid;
 
-              if (isMutate) {
-                const plainPatch =
-                  payload.res?.patch !== undefined && payload.res?.patch !== null
-                    ? atob(payload.res.patch)
-                    : "";
+            if (isMutate) {
+              const plainPatch =
+                payload.res?.patch !== undefined && payload.res?.patch !== null
+                  ? atob(payload.res.patch)
+                  : "";
 
-                const patch = plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
-                const patchType = payload.res.patchType || payload.res.warnings || "";
-                const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
-                console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
-                if (patchType.length > 0) {
-                  console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
-                }
-              } else {
-                const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
+              const patch = plainPatch !== "" && JSON.stringify(JSON.parse(plainPatch), null, 2);
+              const patchType = payload.res.patchType || payload.res.warnings || "";
+              const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
+              console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
+              patchType.length > 0 && console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
+            } else {
+              const failures = Array.isArray(payload.res) ? payload.res : [payload.res];
 
-                const filteredFailures = failures
-                  .filter((r: ResponseItem) => !r.allowed)
-                  .map((r: ResponseItem) => r.status.message);
-                if (filteredFailures.length > 0) {
-                  console.log(`\n❌  VALIDATE   ${name} (${uid})`);
-                  console.log(`\u001b[1;31m${filteredFailures}\u001b[0m`);
-                } else {
-                  console.log(`\n✅  VALIDATE   ${name} (${uid})`);
-                }
-              }
-            } catch {
-              // Do nothing
+              const filteredFailures = failures
+                .filter((r: ResponseItem) => !r.allowed)
+                .map((r: ResponseItem) => r.status.message);
+
+              console.log(
+                `\n${filteredFailures.length > 0 ? "❌" : "✅"}  VALIDATE   ${name} (${uid})`,
+              );
+              console.log(
+                filteredFailures.length > 0 ? `\u001b[1;31m${filteredFailures}\u001b[0m` : "",
+              );
             }
+          } catch {
+            // Do nothing
           }
         }
       });
