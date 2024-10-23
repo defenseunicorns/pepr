@@ -106,6 +106,148 @@ async function httpDownload(url: string, path: string): Promise<void> {
   });
 }
 
+// enum MediaTypeDockerV1 {
+//   Manifest = "application/vnd.docker.distribution.manifest.v1+prettyjws",
+// }
+
+// enum MediaTypeDockerV2 {
+//   Manifest = "application/vnd.docker.distribution.manifest.v2+json",
+// }
+
+enum MediaTypeOciV1 {
+  Manifest = "application/vnd.oci.image.manifest.v1+json",
+  Index = "application/vnd.oci.image.index.v1+json",
+  Package = "application/vnd.zarf.config.v1+json",
+}
+
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+async function headManifest(rawUrl: string): Promise<any> {
+  const url = new URL(rawUrl);
+  console.log("url:", url);
+  return new Promise((resolve, reject) => {
+    const opts = {
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: "HEAD",
+      headers: { Accept: MediaTypeOciV1.Manifest },
+    };
+    console.log("headManifest opts:", opts);
+    // DKR1: has Docker-Content-Digest response header (but it's wrong!)
+    // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
+    // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
+    //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
+
+    // So:
+    //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
+    //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
+    //    - make sure it matches what `cosign triangulate` gives!
+    //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
+    //  then if DKR2, grab Docker-Content-Digest response header
+    //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
+    https
+      .request(opts, resp => {
+        console.log("cb..?");
+        const { statusCode } = resp;
+        // const contentType = resp.headers["content-type"] || "";
+
+        let error;
+        if (!statusCode?.toString().startsWith("2")) {
+          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+          error = true;
+        }
+
+        if (error) {
+          resp.resume();
+          return;
+        }
+
+        resp.setEncoding("utf8");
+
+        // let raw = "";
+        // resp.on("data", chunk => {
+        //   console.log("chunk:", chunk)
+        //   raw += chunk;
+        // });
+        resp.on("end", () => {
+          console.log("end", "!");
+          try {
+            resolve(resp.headers);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on("error", e => reject(e))
+      .end();
+  });
+}
+
+// /* eslint-disable  @typescript-eslint/no-explicit-any */
+// async function getManifest(url: string): Promise<any> {
+//   return new Promise((resolve, reject) => {
+//     const MANIFEST_MEDIA_TYPE_DKR1 = "application/vnd.docker.distribution.manifest.v1+prettyjws";
+//     const MANIFEST_MEDIA_TYPE_DKR2 = "application/vnd.docker.distribution.manifest.v2+json";
+//     const MANIFEST_MEDIA_TYPE_OCI = "application/vnd.oci.image.manifest.v1+json";
+//     const opts = { headers: { "Accept": MANIFEST_MEDIA_TYPE_DKR2 } };
+
+//     // DKR1: has Docker-Content-Digest response header (but it's wrong!)
+//     // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
+//     // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
+//     //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
+
+//     // So:
+//     //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
+//     //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
+//     //    - make sure it matches what `cosign triangulate` gives!
+//     //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
+//     //  then if DKR2, grab Docker-Content-Digest response header
+//     //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
+
+//     https
+//       .get(url, opts, resp => {
+//         const { statusCode } = resp;
+//         const contentType = resp.headers["content-type"] || "";
+
+//         let error;
+//         if (!statusCode?.toString().startsWith("2")) {
+//           reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+//           error = true;
+//         } else if (
+//           !contentType.includes(MANIFEST_MEDIA_TYPE_OCI) &&
+//           !contentType.includes(MANIFEST_MEDIA_TYPE_DKR2)
+//         ) {
+//           reject(new Error(
+//             `err: content type: ${contentType}: expected one of ` +
+//             `['${MANIFEST_MEDIA_TYPE_OCI}', '${MANIFEST_MEDIA_TYPE_DKR2}']`)
+//           );
+//           error = true;
+//         }
+
+//         if (error) {
+//           resp.resume();
+//           return;
+//         }
+
+//         resp.setEncoding("utf8");
+
+//         let raw = "";
+//         resp.on("data", chunk => {
+//           raw += chunk;
+//         });
+//         resp.on("end", () => {
+//           try {
+//             resolve(JSON.parse(raw));
+//           } catch (e) {
+//             reject(e);
+//           }
+//         });
+//       })
+//       .on("error", e => reject(e));
+//   });
+// }
+
 const cmd = async (command: string, opts = {}) => await exec(command, opts);
 const cmdStdout = async (command: string, opts = {}) => (await cmd(command, opts)).stdout.trim();
 const cmdStderr = async (command: string, opts = {}) => (await cmd(command, opts)).stderr.trim();
@@ -294,6 +436,7 @@ describe.only("sigstore-js - pub/prv keys", () => {
 
     result = await timed(`signing image: ${iref}`, async () =>
       cmdStderr(`${cosign} sign --tlog-upload=false --key=${cosPrvkey} ${iref}`, {
+        // cmdStderr(`${cosign} sign --output-payload=payload.txt --tlog-upload=false --key=${cosPrvkey} ${iref}`, {
         cwd: workdir,
         env: { COSIGN_PASSWORD: passwd },
       }),
@@ -470,25 +613,25 @@ describe.only("sigstore-js - pub/prv keys", () => {
     //   `${cosign} triangulate ${iref}`,
     //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
     // );
-    // console.log(dotSig);
+    // console.log("cosign triangulate:", dotSig);
 
-    // result = await cmdStdout(
+    // let result = await cmdStdout(
     //   `crane manifest ${dotSig}`,
     //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
     // );
-    // console.log(JSON.stringify(JSON.parse(result), null, 2));
+    // console.log("crane manifest (dotSig):", JSON.stringify(JSON.parse(result), null, 2));
 
     // result = await cmdStdout(
     //   `crane manifest ${iref}`,
     //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
     // );
-    // console.log(result);
+    // console.log("crane manifest:", result);
 
     // result = await cmdStdout(
     //   `crane digest ${iref}`,
     //   { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
     // );
-    // console.log(result);
+    // console.log("crane digest:", result);
 
     // const payload = Buffer.from(result);
     // const artifact = { type: "text/plain", data: payload };
@@ -499,41 +642,85 @@ describe.only("sigstore-js - pub/prv keys", () => {
     // console.log("signature:", bSig);
     // console.log(JSON.stringify(bundle, null, 2));
 
-    // // https://github.com/sigstore/sigstore-js/tree/main/packages/sign
-    // class KeyfileSigner implements Signer {
-    //   private prv: crypto.KeyObject;
-    //   private pub: crypto.KeyObject;
+    // // https://github.com/sigstore/sigstore-js/blob/main/packages/verify/src/__tests__/verifier.test.ts
+    // const pubKeyRaw = await readFile(`${workdir}/${rawPubkey}`, { encoding: "utf8" });
+    // const pubKey = crypto.createPublicKey({
+    //   key: pubKeyRaw,
+    //   format: "pem",
+    //   encoding: "utf-8",
+    // });
 
-    //   constructor(prv: PathLike, pub: PathLike) {
-    //     this.prv = crypto.createPrivateKey({
-    //       key: readFileSync(prv, { encoding: "utf8" }),
-    //       format: "pem",
-    //       encoding: "utf-8",
-    //     });
-    //     this.pub = crypto.createPublicKey({
-    //       key: readFileSync(pub, { encoding: "utf8" }),
-    //       format: "pem",
-    //       encoding: "utf-8",
-    //     });
-    //   }
+    // const trustedRoot = {
+    //   tlogs: [],
+    //   ctlogs: [],
+    //   timestampAuthorities: [],
+    //   certificateAuthorities: [],
+    // } as unknown as TrustedRoot;
 
-    //   public async sign(data: Buffer): Promise<Signature> {
-    //     const signature = crypto.sign(null, data, this.prv);
-    //     const publicKey = this.pub.export({ format: "pem", type: "spki" }).toString("ascii");
+    // const keys = {
+    //   hint: {
+    //     rawBytes: pubKey.export({ type: "spki", format: "der" }),
+    //     keyDetails: PublicKeyDetails.PKIX_ECDSA_P256_SHA_256,
+    //     validFor: { start: new Date(0) },
+    //   },
+    // };
+    // const trustMaterial = toTrustMaterial(trustedRoot, keys);
 
-    //     return {
-    //       signature: signature,
-    //       key: { $case: "publicKey", publicKey },
-    //     };
-    //   }
-    // }
+    // const subject = new Verifier(trustMaterial, {
+    //   ctlogThreshold: 0,
+    //   tlogThreshold: 0,
+    //   tsaThreshold: 0,
+    // });
 
-    // const signer = new KeyfileSigner(`${workdir}/${rawPrvkey}`, `${workdir}/${rawPubkey}`);
-    // const bundler = new DSSEBundleBuilder({ signer, witnesses: [] });
+    // const bundle = bundleFromJSON({
+    //   mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
+    //   verificationMaterial: {
+    //     publicKey: {
+    //       hint: "hint",
+    //     },
+    //     tlogEntries: [],
+    //     timestampVerificationData: {
+    //       rfc3161Timestamps: [],
+    //     },
+    //   },
+    //   // how do I derive digest/signature from a signed image..?
+    //   messageSignature: {
+    //     messageDigest: {
+    //       algorithm: "SHA2_256",
+    //       digest: "aOZWslHmfoNYvvhIOrDVHGYZ8+ehqfDnWDjUH/No9yg=",
+    //     },
+    //     signature:
+    //       "MEQCIHs5aUulq1HpR+fwmSKpLk/oAwq5O9CDNFHhZAKfG5GmAiBwcVnf2obzsCGVlf0AIvbvHr21NXt7tpLBl4+Brh6OKA==",
+    //   },
+    // });
 
-    // const payload = Buffer.from("???");
-    // const artifact = { type: "text/plain", data: payload };
-    // const bundle = await bundler.create(artifact);
+    // const signedEntity = toSignedEntity(bundle, Buffer.from("hello, world!"));
+
+    // subject.verify(signedEntity);
+
+    const imgDigest = await cmdStdout(`crane digest ${iref}`, {
+      cwd: workdir,
+      env: { COSIGN_PASSWORD: passwd },
+    });
+    console.log("crane digest:", imgDigest);
+
+    const imgManifest = await cmdStdout(`crane manifest ${iref}`, {
+      cwd: workdir,
+      env: { COSIGN_PASSWORD: passwd },
+    });
+    console.log("crane manifest:", imgManifest);
+
+    const dotSig = await cmdStdout(`${cosign} triangulate ${iref}`, {
+      cwd: workdir,
+      env: { COSIGN_PASSWORD: passwd },
+    });
+    console.log("cosign triangulate:", dotSig);
+
+    const sigManifest = await cmdStdout(`crane manifest ${dotSig}`, {
+      cwd: workdir,
+      env: { COSIGN_PASSWORD: passwd },
+    });
+    console.log("crane manifest (dotSig):", JSON.stringify(JSON.parse(sigManifest), null, 2));
 
     // https://github.com/sigstore/sigstore-js/blob/main/packages/verify/src/__tests__/verifier.test.ts
     const pubKeyRaw = await readFile(`${workdir}/${rawPubkey}`, { encoding: "utf8" });
@@ -554,7 +741,6 @@ describe.only("sigstore-js - pub/prv keys", () => {
       hint: {
         rawBytes: pubKey.export({ type: "spki", format: "der" }),
         keyDetails: PublicKeyDetails.PKIX_ECDSA_P256_SHA_256,
-        validFor: { start: new Date(0) },
       },
     };
     const trustMaterial = toTrustMaterial(trustedRoot, keys);
@@ -564,6 +750,48 @@ describe.only("sigstore-js - pub/prv keys", () => {
       tlogThreshold: 0,
       tsaThreshold: 0,
     });
+
+    const sig = JSON.parse(sigManifest).layers[0].annotations["dev.cosignproject.cosign/signature"];
+    console.log("sig (enc):", sig);
+    console.log("sig (dec):", Buffer.from(sig, "base64").toString("utf8"));
+
+    // decrypted sig payload... somehow!
+    //{"critical":{"identity":{"docker-reference":"ttl.sh/f2ce2df1-bf5a-4f50-9554-3d7717d138ad"},"image":{"docker-manifest-digest":"sha256:cb1a3c1190265153e7b50ccfde70e3683eba5326cfae8ac68632e1a6b9985573"},"type":"cosign container image signature"},"optional":null}
+    // No, wait!  it's in the blob content!
+    // --> change tag ref to digest ref:
+    //      - from: ttl.sh/7503ca0a-2deb-4b17-8b33-4740d9f7292c:2m
+    //      - to: ttl.sh/7503ca0a-2deb-4b17-8b33-4740d9f7292c@sha256:b12f22a18ebe7206b579d4834f258833f2fbf92c754ca6cc10f48093d87ebf74
+    // --> then pull blob content
+    // crane blob ttl.sh/7503ca0a-2deb-4b17-8b33-4740d9f7292c@sha256:b12f22a18ebe7206b579d4834f258833f2fbf92c754ca6cc10f48093d87ebf74
+
+    // const payload = (await readFile(`${workdir}/payload.txt`)).toString("utf8");
+    // console.log("payload:", payload);
+
+    // host     / name              : tag
+    // docker.io/library/hello-world:latest
+    // host  / name                               : tag
+    // ttl.sh/5dad3c9b-7ccc-4115-be27-c9244e7c0e06:2m
+    const irefHost = iref.split("/")[0];
+    const irefImage = iref.replace(`${irefHost}/`, "");
+    const irefTag = irefImage.split(":").at(-1);
+    const irefName = irefImage.replace(`:${irefTag}`, "");
+
+    const manifestUrl = `https://${irefHost}/v2/${irefName}/manifests/${irefTag}`;
+    console.log("manifestUrl", manifestUrl);
+
+    // get digest for tag'd image
+    // perfrom "well-known" conversion on image w/ digest to find .sig file (in lieu of cosign triangulate)
+    // pull .sig file blob to access "docker-manifest-digest" (for use in verifier)
+
+    console.log("---> pre");
+    const manifestHead = await headManifest(manifestUrl);
+    console.log("manifestHead:", manifestHead);
+    console.log("---> post");
+
+    console.log("iref", iref);
+    // LEFTOFF:
+    // - try to sha256 has the docker-style manifest & see if it matches with the
+    //    crane-defined sha:??? value!
 
     const bundle = bundleFromJSON({
       mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
@@ -576,21 +804,20 @@ describe.only("sigstore-js - pub/prv keys", () => {
           rfc3161Timestamps: [],
         },
       },
-      // how do I derive digest/signature from a signed image..?
+      // how do I derive message digest from a signed image..?
       messageSignature: {
         messageDigest: {
           algorithm: "SHA2_256",
-          digest: "aOZWslHmfoNYvvhIOrDVHGYZ8+ehqfDnWDjUH/No9yg=",
+          digest: "aOZWslHmfoNYvvhIOrDVHGYZ8+ehqfDnWDjUH/No9yg=", //???
         },
-        signature:
-          "MEQCIHs5aUulq1HpR+fwmSKpLk/oAwq5O9CDNFHhZAKfG5GmAiBwcVnf2obzsCGVlf0AIvbvHr21NXt7tpLBl4+Brh6OKA==",
+        signature: sig,
       },
     });
 
     const signedEntity = toSignedEntity(bundle, Buffer.from("hello, world!"));
 
     subject.verify(signedEntity);
-  });
+  }, 6000);
 });
 
 describe.skip("verifyImage()", () => {

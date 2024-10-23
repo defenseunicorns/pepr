@@ -22,4 +22,7 @@ export function verifyImage(iref: string, pubkeys: string[]) {
   //  - Should this func be taking signing certs?  Or pubkeys?  Can one be derived from the other?
 
   // https://edu.chainguard.dev/open-source/sigstore/cosign/an-introduction-to-cosign/#cosign-with-keys
+
+  // Cosign image signatures (the nuts & bolts)
+  // https://medium.com/sigstore/cosign-image-signatures-77bab238a93
 }
