@@ -97,7 +97,7 @@ jobs:
         shell: bash
 
       - name: Create a directory for heap snapshots
-        run: mkdir -p /tmp/k3dvol 
+        run: mkdir -p "${GITHUB_WORKSPACE}/tmp/k3dvol" 
 
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -112,7 +112,7 @@ jobs:
           docker image load --input "$PEPR_TAR"
 
       - name: Create k3d Cluster
-        run: k3d cluster create soak-cluster --volume "/tmp/k3dvol:/tmp/k3dvol"
+        run: k3d cluster create soak-cluster --volume "${GITHUB_WORKSPACE}/tmp/k3dvol:/tmp/k3dvol"
         shell: bash
 
       - name: Import pepr image into k3d
@@ -217,4 +217,4 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: heap-snapshots
-          path: /tmp/k3dvol
+          path: "${GITHUB_WORKSPACE}/tmp/k3dvol"
