@@ -95,6 +95,9 @@ jobs:
       - name: "install k3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
+      - name: "echo Github Workspace"
+        run: "echo $GITHUB_WORKSPACE"
+        shell: bash
 
       - name: Create a directory for heap snapshots
         run: mkdir -p "${GITHUB_WORKSPACE}/tmp/k3dvol" 
