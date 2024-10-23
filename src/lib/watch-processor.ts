@@ -107,6 +107,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
               return;
             }
             try {
+              // TODO
               await binding.finalizeCallback?.(obj);
 
               // irrespective of callback success / failure, remove pepr finalizer
