@@ -121,9 +121,9 @@ enum MediaTypeOciV1 {
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-async function headManifest(rawUrl: string): Promise<any> {
+async function headManifest(rawUrl: string, mediaType: string): Promise<any> {
   const url = new URL(rawUrl);
-  console.log("url:", url);
+
   return new Promise((resolve, reject) => {
     const opts = {
       protocol: url.protocol,
@@ -131,26 +131,12 @@ async function headManifest(rawUrl: string): Promise<any> {
       port: url.port,
       path: url.pathname,
       method: "HEAD",
-      headers: { Accept: MediaTypeOciV1.Manifest },
+      headers: { Accept: mediaType },
     };
-    console.log("headManifest opts:", opts);
-    // DKR1: has Docker-Content-Digest response header (but it's wrong!)
-    // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
-    // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
-    //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
 
-    // So:
-    //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
-    //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
-    //    - make sure it matches what `cosign triangulate` gives!
-    //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
-    //  then if DKR2, grab Docker-Content-Digest response header
-    //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
     https
       .request(opts, resp => {
-        console.log("cb..?");
         const { statusCode } = resp;
-        // const contentType = resp.headers["content-type"] || "";
 
         let error;
         if (!statusCode?.toString().startsWith("2")) {
@@ -165,18 +151,10 @@ async function headManifest(rawUrl: string): Promise<any> {
 
         resp.setEncoding("utf8");
 
-        // let raw = "";
-        // resp.on("data", chunk => {
-        //   console.log("chunk:", chunk)
-        //   raw += chunk;
-        // });
+        resp.on("data", () => {});
+
         resp.on("end", () => {
-          console.log("end", "!");
-          try {
-            resolve(resp.headers);
-          } catch (e) {
-            reject(e);
-          }
+          resolve(resp.headers);
         });
       })
       .on("error", e => reject(e))
@@ -783,10 +761,21 @@ describe.only("sigstore-js - pub/prv keys", () => {
     // perfrom "well-known" conversion on image w/ digest to find .sig file (in lieu of cosign triangulate)
     // pull .sig file blob to access "docker-manifest-digest" (for use in verifier)
 
-    console.log("---> pre");
-    const manifestHead = await headManifest(manifestUrl);
+    // DKR1: has Docker-Content-Digest response header (but it's wrong!)
+    // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
+    // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
+    //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
+
+    // So:
+    //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
+    //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
+    //    - make sure it matches what `cosign triangulate` gives!
+    //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
+    //  then if DKR2, grab Docker-Content-Digest response header
+    //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
+
+    const manifestHead = await headManifest(manifestUrl, MediaTypeOciV1.Manifest);
     console.log("manifestHead:", manifestHead);
-    console.log("---> post");
 
     console.log("iref", iref);
     // LEFTOFF:
@@ -817,7 +806,7 @@ describe.only("sigstore-js - pub/prv keys", () => {
     const signedEntity = toSignedEntity(bundle, Buffer.from("hello, world!"));
 
     subject.verify(signedEntity);
-  }, 6000);
+  }, 10000);
 });
 
 describe.skip("verifyImage()", () => {
