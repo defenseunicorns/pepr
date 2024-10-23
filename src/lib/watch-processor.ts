@@ -9,16 +9,13 @@ import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
-import v8 from 'v8';
+import { writeHeapSnapshot } from 'node:v8';
 import path from 'path';
-import fs from 'fs';
 
-const writeHeapSnapshot = () => {
-  const snapshotStream = v8.getHeapSnapshot();
+
+const writeSnapShot = () => {
   const snapshotPath = path.join('/app/heap_snapshots', `heapdump-${Date.now()}.heapsnapshot`);
-  
-  const fileStream = fs.createWriteStream(snapshotPath);
-  snapshotStream.pipe(fileStream);
+  writeHeapSnapshot(snapshotPath);
 };
 
 setInterval(() => {
@@ -26,9 +23,9 @@ setInterval(() => {
   Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
 
   if (process.env.PEPR_WATCH_MODE==="true") {
-    writeHeapSnapshot();
+    writeSnapShot();
   }
-}, 60000);
+}, 6000);
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
