@@ -3,8 +3,8 @@
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Operation, AdmissionRequest } from "./types";
-import { PeprMutateRequest } from "./mutate-request";
+import { AdmissionRequest } from "./types";
+import { PeprMutateRequest, Operation } from "./mutate-types";
 
 describe("PeprMutateRequest", () => {
   let mockRequest: AdmissionRequest<KubernetesObject>;
@@ -92,7 +92,7 @@ describe("PeprMutateRequest", () => {
       object: undefined as unknown as KubernetesObject,
     };
 
-    expect(() => new PeprMutateRequest(mockRequest)).toThrow("unable to load the request object into PeprRequest.RawP");
+    expect(() => new PeprMutateRequest(mockRequest)).toThrow("Unable to load the request object into PeprRequest.Raw");
   });
 
   it("should merge the provided object with the current resource", () => {

@@ -11,7 +11,7 @@ import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
 import Log from "./logger";
 import { ModuleConfig } from "./module";
-import { PeprMutateRequest } from "./mutate-request";
+import { PeprMutateRequest } from "./mutate-types";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
 export async function mutateProcessor(
