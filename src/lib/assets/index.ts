@@ -132,10 +132,6 @@ export class Assets {
       await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
       // change this to a helm chart template
       await fs.writeFile(clusterRolePath, dedent(clusterRoleTemplate()));
-      // await fs.writeFile(
-      //   clusterRolePath,
-      //   dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
-      // );
       await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
       await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
 
