@@ -176,7 +176,7 @@ jobs:
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt || true
             kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
           }
-
+          kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
           for i in {1..2}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
