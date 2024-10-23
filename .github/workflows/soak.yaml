@@ -112,7 +112,7 @@ jobs:
           docker image load --input "$PEPR_TAR"
 
       - name: Create k3d Cluster
-        run: k3d cluster create soak-cluster --volume "/tmp/k3dvol:/app/k3dvol"
+        run: k3d cluster create soak-cluster --volume "/tmp/k3dvol:/tmp/k3dvol"
         shell: bash
 
       - name: Import pepr image into k3d
