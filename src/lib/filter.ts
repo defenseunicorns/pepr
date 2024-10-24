@@ -38,7 +38,7 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-import { mismatchedNameRegexFilter } from "./adjudicatorsFilterWrapper";
+import { mismatchedNameRegexFilter, mismatchedNamespaceRegexFilter } from "./adjudicatorsFilterWrapper";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -136,6 +136,7 @@ export const shouldSkipRequestWithFilterChain = (
   const filterChain = new FilterChain();
 
   filterChain.addFilter(mismatchedNameRegexFilter);
+  filterChain.addFilter(mismatchedNamespaceRegexFilter);
 
   const admissionFilterMessage = filterChain.execute({ binding, request: req });
   return admissionFilterMessage;
