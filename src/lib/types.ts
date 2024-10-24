@@ -7,6 +7,7 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 /**
  * Specifically for deploying images with a private registry
