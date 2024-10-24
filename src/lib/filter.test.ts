@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe } from "@jest/globals";
+import { expect, describe, it } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
@@ -13,7 +13,7 @@ export const callback = () => undefined;
 export const podKind = modelToGroupVersionKind(kind.Pod.name);
 
 describe("Fuzzing shouldSkipRequest", () => {
-  test("should handle random inputs without crashing", () => {
+  it("should handle random inputs without crashing", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -60,7 +60,7 @@ describe("Fuzzing shouldSkipRequest", () => {
 });
 
 describe("Property-Based Testing shouldSkipRequest", () => {
-  test("should only skip requests that do not match the binding criteria", () => {
+  it("should only skip requests that do not match the binding criteria", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -105,7 +105,7 @@ describe("Property-Based Testing shouldSkipRequest", () => {
   });
 });
 
-test("create: should reject when regex name does not match", () => {
+it("create: should reject when regex name does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -127,7 +127,7 @@ test("create: should reject when regex name does not match", () => {
   );
 });
 
-test("create: should not reject when regex name does match", () => {
+it("create: should not reject when regex name does match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -147,7 +147,7 @@ test("create: should not reject when regex name does match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("delete: should reject when regex name does not match", () => {
+it("delete: should reject when regex name does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -169,7 +169,7 @@ test("delete: should reject when regex name does not match", () => {
   );
 });
 
-test("delete: should not reject when regex name does match", () => {
+it("delete: should not reject when regex name does match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -189,7 +189,7 @@ test("delete: should not reject when regex name does match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("create: should not reject when regex namespace does match", () => {
+it("create: should not reject when regex namespace does match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -209,7 +209,7 @@ test("create: should not reject when regex namespace does match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("create: should reject when regex namespace does not match", () => {
+it("create: should reject when regex namespace does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -231,7 +231,7 @@ test("create: should reject when regex namespace does not match", () => {
   );
 });
 
-test("delete: should reject when regex namespace does not match", () => {
+it("delete: should reject when regex namespace does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -253,7 +253,7 @@ test("delete: should reject when regex namespace does not match", () => {
   );
 });
 
-test("delete: should not reject when regex namespace does match", () => {
+it("delete: should not reject when regex namespace does match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -273,7 +273,7 @@ test("delete: should not reject when regex namespace does match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("delete: should reject when name does not match", () => {
+it("delete: should reject when name does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -295,7 +295,7 @@ test("delete: should reject when name does not match", () => {
   );
 });
 
-test("should reject when kind does not match", () => {
+it("should reject when kind does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -322,7 +322,7 @@ test("should reject when kind does not match", () => {
   );
 });
 
-test("should reject when group does not match", () => {
+it("should reject when group does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -349,7 +349,7 @@ test("should reject when group does not match", () => {
   );
 });
 
-test("should reject when version does not match", () => {
+it("should reject when version does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -376,7 +376,7 @@ test("should reject when version does not match", () => {
   );
 });
 
-test("should allow when group, version, and kind match", () => {
+it("should allow when group, version, and kind match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -397,7 +397,7 @@ test("should allow when group, version, and kind match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should allow when kind match and others are empty", () => {
+it("should allow when kind match and others are empty", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -422,7 +422,7 @@ test("should allow when kind match and others are empty", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should reject when the capability namespace does not match", () => {
+it("should reject when the capability namespace does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -445,7 +445,7 @@ test("should reject when the capability namespace does not match", () => {
   );
 });
 
-test("should reject when namespace does not match", () => {
+it("should reject when namespace does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -468,7 +468,7 @@ test("should reject when namespace does not match", () => {
   );
 });
 
-test("should allow when namespace is match", () => {
+it("should allow when namespace is match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -489,7 +489,7 @@ test("should allow when namespace is match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should reject when label does not match", () => {
+it("should reject when label does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -514,7 +514,7 @@ test("should reject when label does not match", () => {
   );
 });
 
-test("should allow when label is match", () => {
+it("should allow when label is match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -545,7 +545,7 @@ test("should allow when label is match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should reject when annotation does not match", () => {
+it("should reject when annotation does not match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -570,7 +570,7 @@ test("should reject when annotation does not match", () => {
   );
 });
 
-test("should allow when annotation is match", () => {
+it("should allow when annotation is match", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -601,7 +601,7 @@ test("should allow when annotation is match", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should use `oldObject` when the operation is `DELETE`", () => {
+it("should use `oldObject` when the operation is `DELETE`", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Delete,
@@ -625,7 +625,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should allow when deletionTimestamp is present on pod", () => {
+it("should allow when deletionTimestamp is present on pod", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -657,7 +657,7 @@ test("should allow when deletionTimestamp is present on pod", () => {
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
-test("should reject when deletionTimestamp is not present on pod", () => {
+it("should reject when deletionTimestamp is not present on pod", () => {
   const binding = {
     model: kind.Pod,
     event: Event.Any,
@@ -688,4 +688,87 @@ test("should reject when deletionTimestamp is not present on pod", () => {
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines deletionTimestamp but Object does not carry it./,
   );
+});
+
+it("create: should not reject when namespace is not ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequest(binding, pod, [])).toMatch("");
+});
+it("create: should reject when namespace is ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
+    /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+  );
+});
+
+it("delete: should reject when namespace is ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
+    /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+  );
+});
+
+it("delete: should not reject when namespace is not ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequest(binding, pod, [])).toMatch("");
 });

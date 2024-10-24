@@ -1,42 +1,49 @@
+/* eslint-disable complexity */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding, Operation } from "./types";
+import { AdmissionRequest, Binding } from "./types";
 import {
-  carriesIgnoredNamespace,
-  carriedName,
-  definedEvent,
-  declaredOperation,
-  definedName,
-  definedGroup,
-  declaredGroup,
-  definedVersion,
-  declaredVersion,
-  definedKind,
-  declaredKind,
-  definedNamespaces,
-  carriedNamespace,
-  definedLabels,
-  carriedLabels,
-  definedAnnotations,
-  carriedAnnotations,
-  definedNamespaceRegexes,
-  definedNameRegex,
-  misboundDeleteWithDeletionTimestamp,
-  mismatchedDeletionTimestamp,
-  mismatchedAnnotations,
-  mismatchedLabels,
-  mismatchedName,
-  mismatchedNameRegex,
-  mismatchedNamespace,
-  mismatchedNamespaceRegex,
-  mismatchedEvent,
-  mismatchedGroup,
-  mismatchedVersion,
-  mismatchedKind,
-  unbindableNamespaces,
-  uncarryableNamespace,
-} from "./adjudicators";
+  carriesIgnoredNamespacesFilter,
+  mismatchedAnnotationsFilter,
+  mismatchedDeletionTimestampFilter,
+  mismatchedGroupFilter,
+  mismatchedKindFilter,
+  mismatchedLabelsFilter,
+  mismatchedNameFilter,
+  mismatchedNameRegexFilter,
+  mismatchedNamespaceFilter,
+  mismatchedNamespaceRegexFilter,
+  mismatchedVersionFilter,
+  uncarryableNamespaceFilter,
+} from "./adjudicatorsFilterWrapper";
+
+//TODO: Dupe'd declaration
+type FilterParams = {
+  binding: Binding;
+  request: AdmissionRequest;
+  capabilityNamespaces: string[];
+  ignoredNamespaces?: string[];
+};
+interface Filter {
+  (data: FilterParams): string;
+}
+
+export class FilterChain {
+  private filters: Filter[] = [];
+
+  public addFilter(filter: Filter): FilterChain {
+    this.filters.push(filter);
+    return this;
+  }
+  public execute(data: FilterParams): string {
+    return this.filters.reduce((result, filter) => {
+      result += filter(data);
+      // The result of each filter is passed as a new concatenated string
+      return result;
+    }, "");
+  }
+}
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -45,99 +52,34 @@ import {
  * @param req the incoming request
  * @returns
  */
-export function shouldSkipRequest(
+export const shouldSkipRequest = (
   binding: Binding,
   req: AdmissionRequest,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
-): string {
-  const prefix = "Ignoring Admission Callback:";
-  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+): string => {
+  // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
-  // prettier-ignore
-  return (
-    misboundDeleteWithDeletionTimestamp(binding) ? 
-      `${prefix} Cannot use deletionTimestamp filter on a DELETE operation.` :
+  const filterChain = new FilterChain();
 
-    mismatchedDeletionTimestamp(binding, obj) ?
-      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
+  filterChain.addFilter(mismatchedNameRegexFilter);
+  filterChain.addFilter(mismatchedNamespaceFilter);
+  filterChain.addFilter(mismatchedNamespaceRegexFilter);
+  filterChain.addFilter(uncarryableNamespaceFilter);
+  filterChain.addFilter(mismatchedDeletionTimestampFilter);
+  filterChain.addFilter(mismatchedAnnotationsFilter);
+  filterChain.addFilter(mismatchedLabelsFilter);
+  filterChain.addFilter(mismatchedKindFilter);
+  filterChain.addFilter(mismatchedGroupFilter);
+  filterChain.addFilter(mismatchedVersionFilter);
+  filterChain.addFilter(mismatchedNameFilter);
+  filterChain.addFilter(carriesIgnoredNamespacesFilter);
 
-    mismatchedEvent(binding, req) ?
-      (
-        `${prefix} Binding defines event '${definedEvent(binding)}' but ` +
-        `Request declares '${declaredOperation(req)}'.`
-      ) :
-
-    mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
-
-    mismatchedGroup(binding, req) ?
-      (
-        `${prefix} Binding defines group '${definedGroup(binding)}' but ` +
-        `Request declares '${declaredGroup(req)}'.`
-      ) :
-
-    mismatchedVersion(binding, req) ?
-      (
-        `${prefix} Binding defines version '${definedVersion(binding)}' but ` +
-        `Request declares '${declaredVersion(req)}'.`
-      ) :
-
-    mismatchedKind(binding, req) ?
-      (
-        `${prefix} Binding defines kind '${definedKind(binding)}' but ` +
-        `Request declares '${declaredKind(req)}'.`
-      ) :
-
-    unbindableNamespaces(capabilityNamespaces, binding) ?
-      (
-        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    uncarryableNamespace(capabilityNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    mismatchedNamespace(binding, obj) ?
-      (
-        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
-
-    mismatchedLabels(binding, obj) ?
-      (
-        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
-      ) :
-
-    mismatchedAnnotations(binding, obj) ?
-      (
-        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
-      ) :
-
-    mismatchedNamespaceRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines namespace regexes ` +
-        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
-
-    mismatchedNameRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
-      ) :
-
-    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
-      ) :
-
-    ""
-  );
-}
+  const admissionFilterMessage = filterChain.execute({
+    binding,
+    request: req,
+    capabilityNamespaces,
+    ignoredNamespaces,
+  });
+  return admissionFilterMessage;
+};
