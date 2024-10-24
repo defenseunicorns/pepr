@@ -5,7 +5,6 @@ import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-flu
 import { Operation } from "./mutate-types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
-
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
