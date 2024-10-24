@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { kind } from "kubernetes-fluent-client";
-import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { CapabilityExport } from "../types";
 import { createRBACMap } from "../helpers";
 
