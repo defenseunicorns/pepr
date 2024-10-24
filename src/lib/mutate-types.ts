@@ -12,7 +12,7 @@ export enum Operation {
   CONNECT = "CONNECT",
 }
 
-// AdmissionRequest interface for handling admission requests in the mutation context
+// AdmissionRequest interface for handling admission requests in mutation context
 export interface AdmissionRequest<T = KubernetesObject> {
   readonly uid: string;
   readonly kind: GroupVersionKind;
