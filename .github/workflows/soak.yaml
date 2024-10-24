@@ -148,11 +148,11 @@ jobs:
 
       - name: Wait for 15 minutes before starting pod checks
         run: |
-          sleep 10s
-          kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot
+          sleep 20s
+          kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot 
           kubectl wait --for=condition=ready -n istio-system pod -l app=istio-ingressgateway
           kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
-          # kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
+          #kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher --timeout=180s
 
       - name: Run the soak test and collect metrics
         run: |
@@ -175,7 +175,7 @@ jobs:
           touch logs/watch-logs.txt
 
           update_pod_map
-
+          kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher --timeout=180s
           kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher -c watcher || true
           kubectl exec -it deploy/pepr-soak-ci-watcher -n pepr-system -- ls /data || true
 
