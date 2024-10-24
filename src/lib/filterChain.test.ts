@@ -693,3 +693,86 @@ it("should reject when deletionTimestamp is not present on pod", () => {
     /Ignoring Admission Callback: Binding defines deletionTimestamp but Object does not carry it./,
   );
 });
+
+it("create: should not reject when namespace is not ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch("");
+});
+it("create: should reject when namespace is ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = CreatePod();
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [], ["helm-releasename"])).toMatch(
+    /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+  );
+});
+
+it("delete: should reject when namespace is ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [], ["helm-releasename"])).toMatch(
+    /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+  );
+});
+
+it("delete: should not reject when namespace is not ignored", () => {
+  const binding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    },
+    callback,
+  };
+  const pod = DeletePod();
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch("");
+});

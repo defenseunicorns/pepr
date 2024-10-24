@@ -39,11 +39,13 @@ import {
   uncarryableNamespace,
 } from "./adjudicators";
 import {
+  carriesIgnoredNamespacesFilter,
   mismatchedAnnotationsFilter,
   mismatchedDeletionTimestampFilter,
   mismatchedGroupFilter,
   mismatchedKindFilter,
   mismatchedLabelsFilter,
+  mismatchedNameFilter,
   mismatchedNameRegexFilter,
   mismatchedNamespaceFilter,
   mismatchedNamespaceRegexFilter,
@@ -116,7 +118,12 @@ export function shouldSkipRequest(
 }
 
 //TODO: Dupe'd declaration
-type FilterParams = { binding: Binding; request: AdmissionRequest; capabilityNamespaces: string[] };
+type FilterParams = {
+  binding: Binding;
+  request: AdmissionRequest;
+  capabilityNamespaces: string[];
+  ignoredNamespaces?: string[];
+};
 interface Filter {
   (data: FilterParams): string;
 }
@@ -141,7 +148,7 @@ export const shouldSkipRequestWithFilterChain = (
   binding: Binding,
   req: AdmissionRequest,
   capabilityNamespaces: string[],
-  // ignoredNamespaces?: string[],
+  ignoredNamespaces?: string[],
 ): string => {
   // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
@@ -157,7 +164,14 @@ export const shouldSkipRequestWithFilterChain = (
   filterChain.addFilter(mismatchedKindFilter);
   filterChain.addFilter(mismatchedGroupFilter);
   filterChain.addFilter(mismatchedVersionFilter);
+  filterChain.addFilter(mismatchedNameFilter);
+  filterChain.addFilter(carriesIgnoredNamespacesFilter);
 
-  const admissionFilterMessage = filterChain.execute({ binding, request: req, capabilityNamespaces });
+  const admissionFilterMessage = filterChain.execute({
+    binding,
+    request: req,
+    capabilityNamespaces,
+    ignoredNamespaces,
+  });
   return admissionFilterMessage;
 };

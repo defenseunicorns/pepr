@@ -4,7 +4,7 @@
 import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
-import { shouldSkipRequest } from "./filter";
+import { shouldSkipRequestWithFilterChain } from "./filter";
 import { ValidateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
 import Log from "./logger";
@@ -44,7 +44,7 @@ export async function validateProcessor(
       };
 
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequestWithFilterChain(action, req, namespaces, config?.alwaysIgnore?.namespaces);
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
