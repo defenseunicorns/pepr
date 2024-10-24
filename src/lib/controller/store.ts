@@ -6,7 +6,7 @@ import { K8s } from "kubernetes-fluent-client";
 import { startsWith } from "ramda";
 
 import { Capability } from "../capability";
-import { PeprStore } from "../k8s";
+import { Store } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
@@ -14,7 +14,7 @@ import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 const namespace = "pepr-system";
 export const debounceBackoff = 5000;
 
-export class PeprControllerStore {
+export class StoreController {
   #name: string;
   #stores: Record<string, Storage> = {};
   #sendDebounce: NodeJS.Timeout | undefined;
@@ -52,21 +52,21 @@ export class PeprControllerStore {
 
     setTimeout(
       () =>
-        K8s(PeprStore)
+        K8s(Store)
           .InNamespace(namespace)
           .Get(this.#name)
-          .then(async (store: PeprStore) => await this.#migrateAndSetupWatch(store))
+          .then(async (store: Store) => await this.#migrateAndSetupWatch(store))
           .catch(this.#createStoreResource),
       Math.random() * 3000, // Add a jitter to the Store creation to avoid collisions
     );
   }
 
   #setupWatch = () => {
-    const watcher = K8s(PeprStore, { name: this.#name, namespace }).Watch(this.#receive);
+    const watcher = K8s(Store, { name: this.#name, namespace }).Watch(this.#receive);
     watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
   };
 
-  #migrateAndSetupWatch = async (store: PeprStore) => {
+  #migrateAndSetupWatch = async (store: Store) => {
     Log.debug(redactedStore(store), "Pepr Store migration");
     const data: DataStore = store.data || {};
     let storeCache: Record<string, Operation> = {};
@@ -96,7 +96,7 @@ export class PeprControllerStore {
     this.#setupWatch();
   };
 
-  #receive = (store: PeprStore) => {
+  #receive = (store: Store) => {
     Log.debug(redactedStore(store), "Pepr Store update");
 
     // Wrap the update in a debounced function
@@ -161,7 +161,7 @@ export class PeprControllerStore {
     Log.debug(e);
 
     try {
-      await K8s(PeprStore).Apply({
+      await K8s(Store).Apply({
         metadata: {
           name: this.#name,
           namespace,

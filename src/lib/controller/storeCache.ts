@@ -1,7 +1,7 @@
 import { DataOp } from "../storage";
 import Log from "../logger";
 import { K8s } from "kubernetes-fluent-client";
-import { PeprStore } from "../k8s";
+import { Store } from "../k8s";
 import { StatusCodes } from "http-status-codes";
 import { Operation } from "fast-json-patch";
 
@@ -11,7 +11,7 @@ export const sendUpdatesAndFlushCache = async (cache: Record<string, Operation>,
 
   try {
     if (payload.length > 0) {
-      await K8s(PeprStore, { namespace, name }).Patch(payload); // Send patch to cluster
+      await K8s(Store, { namespace, name }).Patch(payload); // Send patch to cluster
       Object.keys(cache).forEach(key => delete cache[key]);
     }
   } catch (err) {

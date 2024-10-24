@@ -3,7 +3,7 @@
 
 import { Operation } from "fast-json-patch";
 import { pino, stdTimeFunctions } from "pino";
-import { PeprStore } from "./k8s";
+import { Store } from "./k8s";
 
 const isPrettyLog = process.env.PEPR_PRETTY_LOGS === "true";
 const redactedValue = "**redacted**";
@@ -28,7 +28,7 @@ if (process.env.LOG_LEVEL) {
   Log.level = process.env.LOG_LEVEL;
 }
 
-export function redactedStore(store: PeprStore): PeprStore {
+export function redactedStore(store: Store): Store {
   const redacted = process.env.PEPR_STORE_REDACT_VALUES === "true";
   return {
     ...store,
