@@ -10,11 +10,13 @@ import {
   definedNamespaces,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
+  mismatchedGroup,
   mismatchedKind,
   mismatchedLabels,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
+  mismatchedVersion,
   uncarryableNamespace,
 } from "./adjudicators";
 import { AdmissionRequest, Binding, Operation } from "./types";
@@ -88,6 +90,22 @@ export const mismatchedLabelsFilter = (data: FilterParams): string => {
 export const mismatchedKindFilter = (data: FilterParams): string => {
   const result = mismatchedKind(data.binding, data.request)
     ? `${prefix} Binding defines kind '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedGroupFilter = (data: FilterParams): string => {
+  const result = mismatchedGroup(data.binding, data.request)
+    ? `${prefix} Binding defines group '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedVersionFilter = (data: FilterParams): string => {
+  const result = mismatchedVersion(data.binding, data.request)
+    ? `${prefix} Binding defines version '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
     : "";
 
   return result;

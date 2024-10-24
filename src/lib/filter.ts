@@ -41,11 +41,13 @@ import {
 import {
   mismatchedAnnotationsFilter,
   mismatchedDeletionTimestampFilter,
+  mismatchedGroupFilter,
   mismatchedKindFilter,
   mismatchedLabelsFilter,
   mismatchedNameRegexFilter,
   mismatchedNamespaceFilter,
   mismatchedNamespaceRegexFilter,
+  mismatchedVersionFilter,
   uncarryableNamespaceFilter,
 } from "./adjudicatorsFilterWrapper";
 
@@ -153,6 +155,8 @@ export const shouldSkipRequestWithFilterChain = (
   filterChain.addFilter(mismatchedAnnotationsFilter);
   filterChain.addFilter(mismatchedLabelsFilter);
   filterChain.addFilter(mismatchedKindFilter);
+  filterChain.addFilter(mismatchedGroupFilter);
+  filterChain.addFilter(mismatchedVersionFilter);
 
   const admissionFilterMessage = filterChain.execute({ binding, request: req, capabilityNamespaces });
   return admissionFilterMessage;
