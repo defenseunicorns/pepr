@@ -1,10 +1,14 @@
 import {
+  carriedAnnotations,
   carriedName,
   carriedNamespace,
+  definedAnnotations,
   definedNameRegex,
   definedNamespaceRegexes,
   definedNamespaces,
+  mismatchedAnnotations,
   mismatchedDeletionTimestamp,
+  mismatchedLabels,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
@@ -55,6 +59,24 @@ export const mismatchedDeletionTimestampFilter = (data: FilterParams): string =>
   const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
   const result = mismatchedDeletionTimestamp(data.binding, obj)
     ? `${prefix} Binding defines deletionTimestamp but Object does not carry it.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedAnnotationsFilter = (data: FilterParams): string => {
+  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
+  const result = mismatchedAnnotations(data.binding, obj)
+    ? `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(data.binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedLabelsFilter = (data: FilterParams): string => {
+  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
+  const result = mismatchedLabels(data.binding, obj)
+    ? `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data.binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
     : "";
 
   return result;

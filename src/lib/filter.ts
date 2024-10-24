@@ -39,7 +39,9 @@ import {
   uncarryableNamespace,
 } from "./adjudicators";
 import {
+  mismatchedAnnotationsFilter,
   mismatchedDeletionTimestampFilter,
+  mismatchedLabelsFilter,
   mismatchedNameRegexFilter,
   mismatchedNamespaceFilter,
   mismatchedNamespaceRegexFilter,
@@ -147,6 +149,8 @@ export const shouldSkipRequestWithFilterChain = (
   filterChain.addFilter(mismatchedNamespaceRegexFilter);
   filterChain.addFilter(uncarryableNamespaceFilter);
   filterChain.addFilter(mismatchedDeletionTimestampFilter);
+  filterChain.addFilter(mismatchedAnnotationsFilter);
+  filterChain.addFilter(mismatchedLabelsFilter);
 
   const admissionFilterMessage = filterChain.execute({ binding, request: req, capabilityNamespaces });
   return admissionFilterMessage;
