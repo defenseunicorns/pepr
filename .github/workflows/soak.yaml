@@ -138,6 +138,9 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
+      - name: print dir
+        run: ls -la
+
       - name: Deploy applications
         run: |
           kubectl apply -f hack/auditor.ci.yaml
