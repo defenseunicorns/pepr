@@ -14,7 +14,7 @@ import path from 'path';
 
 
 const writeSnapShot = () => {
-  const snapshotPath = path.join(`/home/runner/work/pepr/pepr/data`, `heapdump-${Date.now()}.heapsnapshot`);
+  const snapshotPath = path.join(`/data`, `heapdump-${Date.now()}.heapsnapshot`);
   writeHeapSnapshot(snapshotPath);
 };
 
