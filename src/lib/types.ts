@@ -64,6 +64,7 @@ export interface CapabilityCfg {
 export interface CapabilityExport extends CapabilityCfg {
   bindings: Binding[];
   hasSchedule: boolean;
+  rbac?: PolicyRule[];
 }
 
 export type WhenSelector<T extends GenericClass> = {

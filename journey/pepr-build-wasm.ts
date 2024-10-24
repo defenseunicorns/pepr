@@ -12,13 +12,15 @@ import { cwd } from "./entrypoint.test";
 // test npx pepr build -o dst
 const outputDir = "dist/pepr-test-module/child/folder";
 export function peprBuild() {
-
   it("should build artifacts in the dst folder", async () => {
-    await fs.mkdir(outputDir, { recursive: true })
+    await fs.mkdir(outputDir, { recursive: true });
   });
 
   it("should successfully build the Pepr project with arguments", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, { cwd: cwd, stdio: "inherit" });
+    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
+      cwd: cwd,
+      stdio: "inherit",
+    });
   });
 
   it("should generate produce the K8s yaml file", async () => {
@@ -37,10 +39,13 @@ export function peprBuild() {
 
 async function validateClusterRoleYaml() {
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, outputDir, "pepr-module-static-test.yaml"), "utf8");
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
 
-  expect(k8sYaml.includes(cr)).toEqual(true)
+  expect(k8sYaml.includes(cr)).toEqual(true);
 }
 
 async function validateZarfYaml() {
@@ -48,7 +53,10 @@ async function validateZarfYaml() {
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
 
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, outputDir, "pepr-module-static-test.yaml"), "utf8");
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
   const zarfYAML = await fs.readFile(resolve(cwd, outputDir, "zarf.yaml"), "utf8");
 
   // The expected image name
