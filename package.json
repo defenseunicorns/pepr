@@ -44,7 +44,7 @@
     "express": "4.21.1",
     "fast-json-patch": "3.1.1",
     "json-pointer": "^0.6.2",
-    "kubernetes-fluent-client": "3.2.0",
+    "kubernetes-fluent-client": "3.2.1",
     "pino": "9.5.0",
     "pino-pretty": "11.3.0",
     "prom-client": "15.1.3",
