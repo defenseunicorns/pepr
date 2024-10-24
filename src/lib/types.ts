@@ -9,7 +9,7 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
 import { Logger } from "pino";
-import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 export enum Operation {
   CREATE = "CREATE",
