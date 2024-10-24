@@ -1,3 +1,4 @@
+import { KubernetesObject } from "kubernetes-fluent-client";
 import {
   carriedAnnotations,
   carriedName,
@@ -24,114 +25,110 @@ import {
 } from "./adjudicators";
 import { AdmissionRequest, Binding, Operation } from "./types";
 
-//TODO: Dupe'd declaration
 type FilterParams = {
   binding: Binding;
   request: AdmissionRequest;
   capabilityNamespaces: string[];
   ignoredNamespaces?: string[];
 };
+
 const prefix = "Ignoring Admission Callback:";
 
-export const mismatchedNameFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedName(data.binding, obj)
-    ? `${prefix} Binding defines name '${definedName(data.binding)}' but Object carries '${carriedName(obj)}'.`
-    : "";
-  return result;
+const createBindingObjectFilter = (
+  mismatchCheck: (data: Binding, obj?: KubernetesObject) => boolean,
+  logMessage: (data: Binding, obj?: KubernetesObject) => string,
+) => {
+  return (data: FilterParams): string => {
+    const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
+    return mismatchCheck(data.binding, obj) ? logMessage(data.binding, obj) : "";
+  };
 };
 
-export const mismatchedNameRegexFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedNameRegex(data.binding, obj)
-    ? `${prefix} Binding defines name regex '${definedNameRegex(data.binding)}' but Object carries '${carriedName(data.request.operation)}'.`
-    : "";
-  return result;
+const createBindingRequestFilter = (
+  mismatchCheck: (data: Binding, obj: AdmissionRequest) => boolean,
+  logMessage: (data: Binding, obj: AdmissionRequest) => string,
+) => {
+  return (data: FilterParams): string => {
+    return mismatchCheck(data.binding, data.request) ? logMessage(data.binding, data.request) : "";
+  };
 };
 
-export const mismatchedNamespaceRegexFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedNamespaceRegex(data.binding, obj)
-    ? `${prefix} Binding defines namespace regexes '${JSON.stringify(definedNamespaceRegexes(data.binding))}' but Object carries '${carriedNamespace(obj)}'.`
-    : "";
-
-  return result;
+const createArrayObjectFilter = (
+  mismatchCheck: (data: string[], obj?: KubernetesObject) => boolean,
+  logMessage: (data: string[], obj?: KubernetesObject) => string,
+) => {
+  return (data: FilterParams): string => {
+    const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
+    return mismatchCheck(data.capabilityNamespaces, obj) ? logMessage(data.capabilityNamespaces, obj) : "";
+  };
 };
 
-export const mismatchedNamespaceFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedNamespace(data.binding, obj)
-    ? `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(data.binding))}' but Object carries '${carriedNamespace(obj)}'.`
-    : "";
+export const mismatchedNameFilter = createBindingObjectFilter(
+  mismatchedName,
+  (data, obj) => `${prefix} data.binding defines name '${definedName(data)}' but Object carries '${carriedName(obj)}'.`,
+);
 
-  return result;
-};
+export const mismatchedNameRegexFilter = createBindingObjectFilter(
+  mismatchedNameRegex,
+  (data, obj) =>
+    `${prefix} data.binding defines name regex '${definedNameRegex(data)}' but Object carries '${carriedName(obj)}'.`,
+);
 
-export const uncarryableNamespaceFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = uncarryableNamespace(data.capabilityNamespaces, obj)
-    ? `${prefix} Object carries namespace '${carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(data.capabilityNamespaces)}'.`
-    : "";
+export const mismatchedNamespaceRegexFilter = createBindingObjectFilter(
+  mismatchedNamespaceRegex,
+  (data, obj) =>
+    `${prefix} data.binding defines namespace regexes '${JSON.stringify(definedNamespaceRegexes(data))}' but Object carries '${carriedNamespace(obj)}'.`,
+);
 
-  return result;
-};
+export const mismatchedNamespaceFilter = createBindingObjectFilter(
+  mismatchedNamespace,
+  (data, obj) =>
+    `${prefix} data.binding defines namespace regexes '${JSON.stringify(definedNamespaces(data))}' but Object carries '${carriedNamespace(obj)}'.`,
+);
 
-export const mismatchedDeletionTimestampFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedDeletionTimestamp(data.binding, obj)
-    ? `${prefix} Binding defines deletionTimestamp but Object does not carry it.`
-    : "";
+export const mismatchedAnnotationsFilter = createBindingObjectFilter(
+  mismatchedAnnotations,
+  (data, obj) =>
+    `${prefix} data.binding defines annotations '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+);
 
-  return result;
-};
+export const mismatchedLabelsFilter = createBindingObjectFilter(
+  mismatchedLabels,
+  (data, obj) =>
+    `${prefix} data.binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+);
 
-export const mismatchedAnnotationsFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedAnnotations(data.binding, obj)
-    ? `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(data.binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
-    : "";
+export const mismatchedDeletionTimestampFilter = createBindingObjectFilter(
+  mismatchedDeletionTimestamp,
+  (data, obj) =>
+    `${prefix} data.binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+);
+export const mismatchedKindFilter = createBindingRequestFilter(
+  mismatchedKind,
+  (data, request) =>
+    `${prefix} data.binding defines kind '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+);
 
-  return result;
-};
+export const mismatchedGroupFilter = createBindingObjectFilter(
+  mismatchedGroup,
+  (data, request) =>
+    `${prefix} data.binding defines group '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+);
 
-export const mismatchedLabelsFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = mismatchedLabels(data.binding, obj)
-    ? `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data.binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
-    : "";
+export const mismatchedVersionFilter = createBindingRequestFilter(
+  mismatchedVersion,
+  (data, request) =>
+    `${prefix} data.binding defines version '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+);
 
-  return result;
-};
+export const carriesIgnoredNamespacesFilter = createArrayObjectFilter(
+  carriesIgnoredNamespace,
+  (data, obj) =>
+    `${prefix} Object carries namespace '${carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(data)}'.`,
+);
 
-export const mismatchedKindFilter = (data: FilterParams): string => {
-  const result = mismatchedKind(data.binding, data.request)
-    ? `${prefix} Binding defines kind '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
-    : "";
-
-  return result;
-};
-
-export const mismatchedGroupFilter = (data: FilterParams): string => {
-  const result = mismatchedGroup(data.binding, data.request)
-    ? `${prefix} Binding defines group '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
-    : "";
-
-  return result;
-};
-
-export const mismatchedVersionFilter = (data: FilterParams): string => {
-  const result = mismatchedVersion(data.binding, data.request)
-    ? `${prefix} Binding defines version '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
-    : "";
-
-  return result;
-};
-
-export const carriesIgnoredNamespacesFilter = (data: FilterParams): string => {
-  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
-  const result = carriesIgnoredNamespace(data.ignoredNamespaces, obj)
-    ? `${prefix} Object carries namespace '${carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(data.ignoredNamespaces)}'.`
-    : "";
-
-  return result;
-};
+export const uncarryableNamespaceFilter = createArrayObjectFilter(
+  uncarryableNamespace,
+  (data, obj) =>
+    `${prefix} Object carries namespace '${carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(data)}'.`,
+);
