@@ -4,7 +4,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { GroupVersionKind } from "kubernetes-fluent-client";
 
-// Basic operation type for mutation operations
+// Operation type for mutation operations
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
