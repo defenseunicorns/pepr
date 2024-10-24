@@ -120,7 +120,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
               // [ true, void, undefined ] SHOULD remove finalizer
               // [ false ] should NOT remove finalizer
               shouldRemoveFinalizer === false
-                ? Log.debug({ obj }, `Skip removal of finalizer '${peprFinal}' from '${resource}'`)
+                ? Log.debug({ obj }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
                 : await removeFinalizer(binding, obj);
             }
           } else {
