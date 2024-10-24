@@ -6,7 +6,7 @@ import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
-import { shouldSkipRequestWithFilterChain } from "./filter";
+import { shouldSkipRequest } from "./filter";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
 import Log from "./logger";
@@ -50,7 +50,7 @@ export async function mutateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequestWithFilterChain(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
