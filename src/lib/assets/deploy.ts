@@ -143,6 +143,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   await K8s(kind.Deployment).Apply(dep, { force });
 }
 
+// Setup the watcher deployment and service
 async function setupWatcher(assets: Assets, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
   const watchDeployment = watcher(assets, hash, assets.buildTimestamp);
