@@ -1,7 +1,6 @@
 name: Soak Test
 
-permissions: 
-  actions: write
+permissions: read-all
 on:
   workflow_dispatch:
     inputs:
@@ -97,12 +96,6 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-
-      - name: Create a directory for heap snapshots
-        run: |
-          mkdir -p /tmp/k3dvol
-          chmod 777 /tmp/k3dvol
-
       - name: dowload image tar artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
@@ -116,11 +109,11 @@ jobs:
           docker image load --input "$PEPR_TAR"
 
       - name: Create k3d Cluster
-        run: k3d cluster create soak-cluster --volume "${GITHUB_WORKSPACE}/tmp/k3dvol:/tmp/k3dvol"
+        run: "k3d cluster create"
         shell: bash
 
       - name: Import pepr image into k3d
-        run: "k3d image import pepr:dev -c soak-cluster"
+        run: "k3d image import pepr:dev -c k3s-default"
         shell: bash
 
       - name: Install istioctl
@@ -141,9 +134,6 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
-      - name: print root
-        run: ls -la /
-
       - name: Deploy applications
         run: |
           kubectl apply -f hack/auditor.ci.yaml
@@ -151,15 +141,14 @@ jobs:
 
       - name: Wait for 15 minutes before starting pod checks
         run: |
-          sleep 20s
-          kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot 
+          sleep 10s
+          kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot
           kubectl wait --for=condition=ready -n istio-system pod -l app=istio-ingressgateway
           kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
-          #kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher --timeout=180s
+          kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
 
       - name: Run the soak test and collect metrics
         run: |
-          kubectl get ev -n pepr-system --sort-by='.lastTimestamp'
           # Initialize the map to store pod counts
           declare -A pod_map
           
@@ -178,32 +167,28 @@ jobs:
           touch logs/watch-logs.txt
 
           update_pod_map
-          kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher --timeout=180s
-          kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher -c watcher || true
-          kubectl exec -it deploy/pepr-soak-ci-watcher -n pepr-system -- ls /data || true
 
           collect_metrics() {
-            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt || true
-            kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt || true
+            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
+            kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
             kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
-
-            kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher -c watcher || true
-            kubectl exec -it deploy/pepr-soak-ci-watcher -n pepr-system -- ls /data || true
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..2}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..52}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
-
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              kubectl get pods -n pepr-demo || true
-              kubectl top po -n pepr-system || true
-              kubectl get po -n pepr-system || true
-
+              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event memory_usage received."))' || true 
+              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_end received."))' || true 
+              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_close received."))' || true 
+              kubectl get pods -n pepr-demo 
+              kubectl top po -n pepr-system
+              kubectl get po -n pepr-system
+              
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
                 echo "$pod: ${pod_map[$pod]}"
@@ -214,10 +199,9 @@ jobs:
                 fi
               done
             fi
-            sleep 60s
-            # sleep 300s  # Sleep for 5 minutes before the next iteration
+            sleep 300s  # Sleep for 5 minutes before the next iteration
           done
-          kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/pepr-soak-ci.logs
+
           echo "Soak test passed successfully!"
         shell: bash
 
@@ -226,9 +210,3 @@ jobs:
         with:
           name: soak-test-logs
           path: logs
-
-      - name: Upload heap snapshots
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
-        with:
-          name: heap-snapshots
-          path: /tmp/k3dvol

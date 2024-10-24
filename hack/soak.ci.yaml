@@ -310,8 +310,6 @@ spec:
             - name: module
               mountPath: /app/load
               readOnly: true
-            - name: heap-snapshots
-              mountPath: /data
           env:
             - name: PEPR_LAST_SEEN_LIMIT_SECONDS
               value: '60'
@@ -334,34 +332,4 @@ spec:
         - name: module
           secret:
             secretName: pepr-soak-ci-module
-        - name: heap-snapshots
-          persistentVolumeClaim:
-            claimName: heap-snapshot-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: heap-snapshot-pvc
-  namespace: pepr-system
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi 
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: heap-snapshot-pv
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: /tmp/k3dvol
+
