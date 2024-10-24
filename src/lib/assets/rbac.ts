@@ -18,7 +18,7 @@ export function clusterRole(
   name: string,
   capabilities: CapabilityExport[],
   rbacMode: string = "admin",
-  customRbac: kind.PolicyRule[] | undefined,
+  customRbac: PolicyRule[] | undefined,
 ): kind.ClusterRole {
   // Create the RBAC map from capabilities
   const rbacMap = createRBACMap(capabilities);
