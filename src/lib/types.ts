@@ -6,17 +6,9 @@ import { Operation } from "./mutate-types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
 
-import { PeprMutateRequest } from "./mutate-types";
+import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
-//import { Logger } from "pino";
-
-/* export enum Operation {
-  CREATE = "CREATE",
-  UPDATE = "UPDATE",
-  DELETE = "DELETE",
-  CONNECT = "CONNECT",
-} */
 /**
  * Specifically for deploying images with a private registry
  */
@@ -41,12 +33,6 @@ export interface ResponseItem {
     message: string;
   };
 }
-/**
- * Recursively make all properties in T optional.
- */
-/* export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-}; */
 
 /**
  * The type of Kubernetes mutating webhook event that the action is registered for.

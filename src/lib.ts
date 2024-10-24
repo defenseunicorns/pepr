@@ -4,7 +4,7 @@ import * as R from "ramda";
 import { Capability } from "./lib/capability";
 import Log from "./lib/logger";
 import { PeprModule } from "./lib/module";
-import { PeprMutateRequest } from "./lib/mutate-types";
+import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
 import * as sdk from "./sdk/sdk";

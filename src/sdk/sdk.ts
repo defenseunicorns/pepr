@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { PeprValidateRequest } from "../lib/validate-request";
-import { PeprMutateRequest } from "../lib/mutate-types";
+import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericKind } from "kubernetes-fluent-client";

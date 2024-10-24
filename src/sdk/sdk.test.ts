@@ -3,7 +3,7 @@
 
 import { expect, test } from "@jest/globals";
 import { PeprValidateRequest } from "../lib/validate-request";
-import { PeprMutateRequest } from "../lib/mutate-types";
+import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 import * as fc from "fast-check";
