@@ -17,7 +17,9 @@ const writeSnapShot = () => {
   const snapshotPath = path.join(`/data`, `heapdump-${Date.now()}.heapsnapshot`);
   writeHeapSnapshot(snapshotPath);
 };
-
+if (process.env.PEPR_WATCH_MODE==="true") {
+  writeSnapShot();
+}
 setInterval(() => {
   const memoryUsage = process.memoryUsage();
   Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
@@ -25,7 +27,7 @@ setInterval(() => {
   if (process.env.PEPR_WATCH_MODE==="true") {
     writeSnapShot();
   }
-}, 15000);
+}, 4000);
 // }, 60000 * 5);
 
 // stores Queue instances

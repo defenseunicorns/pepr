@@ -172,6 +172,9 @@ jobs:
 
           update_pod_map
 
+          kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher -c watcher || true
+          kubectl exec -it deploy/pepr-soak-ci-watcher -n pepr-system -- ls /data || true
+
           collect_metrics() {
             kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt || true
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt || true
@@ -190,7 +193,7 @@ jobs:
               kubectl get pods -n pepr-demo || true
               kubectl top po -n pepr-system || true
               kubectl get po -n pepr-system || true
-              
+
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
                 echo "$pod: ${pod_map[$pod]}"
