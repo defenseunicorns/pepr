@@ -9,6 +9,7 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 
 import { Logger } from "pino";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 export enum Operation {
   CREATE = "CREATE",
@@ -77,6 +78,7 @@ export interface CapabilityCfg {
 export interface CapabilityExport extends CapabilityCfg {
   bindings: Binding[];
   hasSchedule: boolean;
+  rbac?: PolicyRule[];
 }
 
 export type WhenSelector<T extends GenericClass> = {
