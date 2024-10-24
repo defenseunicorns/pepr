@@ -12,7 +12,7 @@ import { metricsCollector, MetricsCollector } from "../metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
-import { PeprControllerStore } from "./store";
+import { StoreController } from "./store";
 import { ResponseItem, AdmissionRequest } from "../types";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
@@ -48,12 +48,12 @@ export class Controller {
     this.#capabilities = capabilities;
 
     // Initialize the Pepr store for each capability
-    new PeprControllerStore(capabilities, `pepr-${config.uuid}-store`, () => {
+    new StoreController(capabilities, `pepr-${config.uuid}-store`, () => {
       this.#bindEndpoints();
       onReady && onReady();
       Log.info("✅ Controller startup complete");
       // Initialize the schedule store for each capability
-      new PeprControllerStore(capabilities, `pepr-${config.uuid}-schedule`, () => {
+      new StoreController(capabilities, `pepr-${config.uuid}-schedule`, () => {
         Log.info("✅ Scheduling processed");
       });
     });

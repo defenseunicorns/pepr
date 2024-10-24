@@ -6,7 +6,7 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 /**
  * PeprStore for internal use by Pepr. This is used to store arbitrary data in the cluster.
  */
-export class PeprStore extends GenericKind {
+export class Store extends GenericKind {
   declare data: {
     [key: string]: string;
   };
@@ -18,7 +18,7 @@ export const peprStoreGVK = {
   group: "pepr.dev",
 };
 
-RegisterKind(PeprStore, peprStoreGVK);
+RegisterKind(Store, peprStoreGVK);
 
 export interface MutateResponse {
   /** UID is an identifier for the individual request/response. This must be copied over from the corresponding AdmissionRequest. */
