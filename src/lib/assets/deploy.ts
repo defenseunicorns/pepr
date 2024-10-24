@@ -85,7 +85,7 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
     throw new Error("No code provided");
   }
 
-  await setupRBAC(name, assets.capabilities, force, assets.config.rbacMode, assets.config.rbac);
+  await setupRBAC(name, assets.capabilities, force, assets.config);
   await setupController(assets, code, hash, force);
   await setupWatcher(assets, hash, force);
 }
@@ -94,9 +94,10 @@ async function setupRBAC(
   name: string,
   capabilities: CapabilityExport[],
   force: boolean,
-  rbacMode?: string,
-  rbac?: PolicyRule[],
+  config: { rbacMode?: string; rbac?: PolicyRule[] },
 ) {
+  const { rbacMode, rbac } = config;
+
   Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
   await K8s(kind.ClusterRoleBinding).Apply(crb, { force });

@@ -9,8 +9,6 @@ import { createRBACMap } from "../helpers";
 /**
  * Creates a Kubernetes ClusterRole based on capabilities and optional custom RBAC rules.
  *
- * @todo: should dynamically generate this based on resources used by the module. will also need to explore how this
- * should work for multiple modules.
  * @param {string} name - The name of the ClusterRole.
  * @param {CapabilityExport[]} capabilities - Array of capabilities defining RBAC rules.
  * @param {string} [rbacMode=""] - The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules.
