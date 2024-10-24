@@ -4,6 +4,7 @@ import {
   definedNameRegex,
   definedNamespaceRegexes,
   definedNamespaces,
+  mismatchedDeletionTimestamp,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
@@ -45,6 +46,15 @@ export const uncarryableNamespaceFilter = (data: FilterParams): string => {
   const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
   const result = uncarryableNamespace(data.capabilityNamespaces, obj)
     ? `${prefix} Object carries namespace '${carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(data.capabilityNamespaces)}'.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedDeletionTimestampFilter = (data: FilterParams): string => {
+  const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
+  const result = mismatchedDeletionTimestamp(data.binding, obj)
+    ? `${prefix} Binding defines deletionTimestamp but Object does not carry it.`
     : "";
 
   return result;
