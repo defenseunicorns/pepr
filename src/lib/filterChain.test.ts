@@ -5,7 +5,7 @@ import { expect, test, describe } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../fixtures/loader";
-import { shouldSkipRequest, shouldSkipRequestWithFilterChain } from "./filter";
+import { shouldSkipRequestWithFilterChain } from "./filter";
 import { AdmissionRequest, Binding, Event } from "./types";
 
 export const callback = () => undefined;
@@ -50,7 +50,7 @@ describe("Fuzzing shouldSkipRequest", () => {
         fc.array(fc.string()),
         (binding, req, capabilityNamespaces) => {
           expect(() =>
-            shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
+            shouldSkipRequestWithFilterChain(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
           ).not.toThrow();
         },
       ),
@@ -96,7 +96,11 @@ describe("Property-Based Testing shouldSkipRequest", () => {
         }),
         fc.array(fc.string()),
         (binding, req, capabilityNamespaces) => {
-          const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
+          const shouldSkip = shouldSkipRequestWithFilterChain(
+            binding as Binding,
+            req as AdmissionRequest,
+            capabilityNamespaces,
+          );
           expect(typeof shouldSkip).toBe("string");
         },
       ),
@@ -122,7 +126,7 @@ test("create: should reject when regex name does not match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
   );
 });
@@ -144,7 +148,7 @@ test("create: should not reject when regex name does match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("delete: should reject when regex name does not match", () => {
@@ -164,7 +168,7 @@ test("delete: should reject when regex name does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
   );
 });
@@ -186,7 +190,7 @@ test("delete: should not reject when regex name does match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("create: should not reject when regex namespace does match", () => {
@@ -206,7 +210,7 @@ test("create: should not reject when regex namespace does match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("create: should reject when regex namespace does not match", () => {
@@ -226,7 +230,7 @@ test("create: should reject when regex namespace does not match", () => {
     callback,
   };
   const pod = CreatePod();
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
   );
 });
@@ -248,7 +252,7 @@ test("delete: should reject when regex namespace does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
   );
 });
@@ -270,7 +274,7 @@ test("delete: should not reject when regex namespace does match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("delete: should reject when name does not match", () => {
@@ -290,7 +294,7 @@ test("delete: should reject when name does not match", () => {
     callback,
   };
   const pod = DeletePod();
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name '.*' but Object carries '.*'./,
   );
 });
@@ -317,7 +321,7 @@ test("should reject when kind does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines kind '.*' but Request declares '.*'./,
   );
 });
@@ -344,7 +348,7 @@ test("should reject when group does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines group '.*' but Request declares '.*'./,
   );
 });
@@ -371,7 +375,7 @@ test("should reject when version does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines version '.*' but Request declares '.*'./,
   );
 });
@@ -394,7 +398,7 @@ test("should allow when group, version, and kind match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should allow when kind match and others are empty", () => {
@@ -419,7 +423,7 @@ test("should allow when kind match and others are empty", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should reject when the capability namespace does not match", () => {
@@ -440,7 +444,7 @@ test("should reject when the capability namespace does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, ["bleh", "bleh2"])).toMatch(
     /Ignoring Admission Callback: Object carries namespace '.*' but namespaces allowed by Capability are '.*'./,
   );
 });
@@ -463,7 +467,7 @@ test("should reject when namespace does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespaces '.*' but Object carries '.*'./,
   );
 });
@@ -486,7 +490,7 @@ test("should allow when namespace is match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should reject when label does not match", () => {
@@ -509,7 +513,7 @@ test("should reject when label does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines labels '.*' but Object carries '.*'./,
   );
 });
@@ -542,7 +546,7 @@ test("should allow when label is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should reject when annotation does not match", () => {
@@ -565,7 +569,7 @@ test("should reject when annotation does not match", () => {
   };
   const pod = CreatePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines annotations '.*' but Object carries '.*'./,
   );
 });
@@ -598,7 +602,7 @@ test("should allow when annotation is match", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should use `oldObject` when the operation is `DELETE`", () => {
@@ -622,7 +626,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
 
   const pod = DeletePod();
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should allow when deletionTimestamp is present on pod", () => {
@@ -654,7 +658,7 @@ test("should allow when deletionTimestamp is present on pod", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod, [])).toBe("");
+  expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toBe("");
 });
 
 test("should reject when deletionTimestamp is not present on pod", () => {
@@ -685,29 +689,7 @@ test("should reject when deletionTimestamp is not present on pod", () => {
     test2: "test2",
   };
 
-  expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines deletionTimestamp but Object does not carry it./,
-  );
-});
-
-test.only("filterchain: should reject when regex name does not match", () => {
-  const binding = {
-    model: kind.Pod,
-    event: Event.Any,
-    kind: podKind,
-    filters: {
-      name: "",
-      namespaces: [],
-      regexNamespaces: [],
-      regexName: "^default$",
-      labels: {},
-      annotations: {},
-      deletionTimestamp: false,
-    },
-    callback,
-  };
-  const pod = CreatePod();
   expect(shouldSkipRequestWithFilterChain(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
+    /Ignoring Admission Callback: Binding defines deletionTimestamp but Object does not carry it./,
   );
 });
