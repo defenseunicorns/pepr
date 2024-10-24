@@ -2,12 +2,15 @@ import {
   carriedAnnotations,
   carriedName,
   carriedNamespace,
+  declaredKind,
   definedAnnotations,
+  definedKind,
   definedNameRegex,
   definedNamespaceRegexes,
   definedNamespaces,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
+  mismatchedKind,
   mismatchedLabels,
   mismatchedNameRegex,
   mismatchedNamespace,
@@ -77,6 +80,14 @@ export const mismatchedLabelsFilter = (data: FilterParams): string => {
   const obj = data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
   const result = mismatchedLabels(data.binding, obj)
     ? `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data.binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+    : "";
+
+  return result;
+};
+
+export const mismatchedKindFilter = (data: FilterParams): string => {
+  const result = mismatchedKind(data.binding, data.request)
+    ? `${prefix} Binding defines kind '${definedKind(data.binding)}' but Request declares '${declaredKind(data.request)}'.`
     : "";
 
   return result;

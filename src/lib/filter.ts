@@ -41,6 +41,7 @@ import {
 import {
   mismatchedAnnotationsFilter,
   mismatchedDeletionTimestampFilter,
+  mismatchedKindFilter,
   mismatchedLabelsFilter,
   mismatchedNameRegexFilter,
   mismatchedNamespaceFilter,
@@ -151,6 +152,7 @@ export const shouldSkipRequestWithFilterChain = (
   filterChain.addFilter(mismatchedDeletionTimestampFilter);
   filterChain.addFilter(mismatchedAnnotationsFilter);
   filterChain.addFilter(mismatchedLabelsFilter);
+  filterChain.addFilter(mismatchedKindFilter);
 
   const admissionFilterMessage = filterChain.execute({ binding, request: req, capabilityNamespaces });
   return admissionFilterMessage;
