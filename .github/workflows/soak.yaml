@@ -149,10 +149,11 @@ jobs:
           kubectl wait --for=condition=ready -n istio-system pod -l istio=pilot
           kubectl wait --for=condition=ready -n istio-system pod -l app=istio-ingressgateway
           kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
-          kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
+          # kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
 
       - name: Run the soak test and collect metrics
         run: |
+          kubectl get ev -n pepr-system --sort-by='.lastTimestamp'
           # Initialize the map to store pod counts
           declare -A pod_map
           
@@ -179,6 +180,9 @@ jobs:
             kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt || true
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt || true
             kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
+
+            kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher -c watcher || true
+            kubectl exec -it deploy/pepr-soak-ci-watcher -n pepr-system -- ls /data || true
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
