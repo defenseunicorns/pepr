@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding, Operation } from "./types";
+import { AdmissionRequest, Binding } from "./types";
+import { Operation } from "./mutate-types";
 import {
   carriesIgnoredNamespace,
   carriedName,
@@ -56,7 +57,7 @@ export function shouldSkipRequest(
 
   // prettier-ignore
   return (
-    misboundDeleteWithDeletionTimestamp(binding) ? 
+    misboundDeleteWithDeletionTimestamp(binding) ?
       `${prefix} Cannot use deletionTimestamp filter on a DELETE operation.` :
 
     mismatchedDeletionTimestamp(binding, obj) ?

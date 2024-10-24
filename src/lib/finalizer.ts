@@ -3,8 +3,8 @@
 
 import { K8s, KubernetesObject, RegisterKind } from "kubernetes-fluent-client";
 import Log from "./logger";
-import { Binding, DeepPartial } from "./types";
-import { Operation } from "./types";
+import { Binding } from "./types";
+import { Operation, DeepPartial } from "./mutate-types";
 import { PeprMutateRequest } from "./mutate-request";
 
 export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>) {
