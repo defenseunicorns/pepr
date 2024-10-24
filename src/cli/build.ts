@@ -133,6 +133,7 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           appVersion: cfg.version,
           description: cfg.description,
+          rbacMode: opts.rbacMode,
         },
         path,
       );
@@ -164,7 +165,7 @@ export default function (program: RootCmd) {
       const yamlFile = `pepr-module-${uuid}.yaml`;
       const chartPath = `${uuid}-chart`;
       const yamlPath = resolve(outputDir, yamlFile);
-      const yaml = await assets.allYaml(opts.rbacMode, opts.withPullSecret);
+      const yaml = await assets.allYaml(opts.withPullSecret);
 
       try {
         // wait for capabilities to be loaded and test names

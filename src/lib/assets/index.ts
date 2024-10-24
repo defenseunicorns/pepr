@@ -13,13 +13,20 @@ import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
-import { chartYaml, nsTemplate, admissionDeployTemplate, watcherDeployTemplate, serviceMonitorTemplate } from "./helm";
+import {
+  chartYaml,
+  nsTemplate,
+  admissionDeployTemplate,
+  watcherDeployTemplate,
+  clusterRoleTemplate,
+  serviceMonitorTemplate,
+} from "./helm";
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { watcher, moduleSecret } from "./pods";
 
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -61,14 +68,14 @@ export class Assets {
 
   zarfYamlChart = (path: string) => zarfYamlChart(this, path);
 
-  allYaml = async (rbacMode: string, imagePullSecret?: string) => {
+  allYaml = async (imagePullSecret?: string) => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
-    return allYaml(this, rbacMode, imagePullSecret);
+    return allYaml(this, imagePullSecret);
   };
 
   generateHelmChart = async (basePath: string) => {
@@ -123,10 +130,7 @@ export class Assets {
       await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
       await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
       await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(
-        clusterRolePath,
-        dumpYaml(clusterRole(this.name, this.capabilities, "rbac"), { noRefs: true }),
-      );
+      await fs.writeFile(clusterRolePath, dedent(clusterRoleTemplate()));
       await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
       await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
 

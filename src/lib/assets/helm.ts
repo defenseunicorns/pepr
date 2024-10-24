@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+export function clusterRoleTemplate() {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: {{ .Values.uuid }}
+      namespace: pepr-system
+    rules: 
+      {{- if .Values.rbac }}
+      {{- toYaml .Values.rbac | nindent 2 }}
+      {{- end }}
+  `;
+}
+
 export function nsTemplate() {
   return `
     apiVersion: v1

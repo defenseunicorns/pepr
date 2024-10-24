@@ -3,6 +3,12 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
+    inputs:
+      kfcBranch:
+        description: 'KFC dev branch'
+        required: false
+        type: string
+        default: 'none'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
@@ -25,7 +31,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -46,9 +52,23 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
+          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          ls -l ${GITHUB_WORKSPACE}
+
+      - name: build pepr package and kfc dev container image
+        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
+        run: |
+          cd "$PEPR"
+          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
+          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
+          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
+          cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
+          cp -R "$PEPR/kubernetes-fluent-client/dist" "$PEPR/node_modules/kubernetes-fluent-client/dist"
+          npm run build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
@@ -82,7 +102,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -91,7 +111,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: clone pepr-excellent-examples
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -122,7 +142,7 @@ jobs:
     if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 32 # Roughly matches the number of E2E tests and below GitHub concurrency limit
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
@@ -146,7 +166,7 @@ jobs:
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
 
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -167,11 +187,16 @@ jobs:
           npm ci
 
       - name: run e2e tests
-        run: |
-          cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
-          npm run --workspace=${{ matrix.name }} test:e2e -- \
-            --image pepr:dev \
-            --custom-package ../pepr-0.0.0-development.tgz
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 6
+          command: |
+            cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
+            npm run --workspace=${{ matrix.name }} test:e2e -- \
+              --image pepr:dev \
+              --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3

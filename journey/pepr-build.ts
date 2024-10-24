@@ -6,14 +6,23 @@ import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { V1ObjectMeta, KubernetesObject } from '@kubernetes/client-node';
+import { V1ObjectMeta, KubernetesObject } from "@kubernetes/client-node";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
+
+const outputDir = "dist/pepr-test-module/child/folder";
 
 export function peprBuild() {
   it("should successfully build the Pepr project", async () => {
     execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
+  });
+
+  it("should successfully build the Pepr project with arguments", async () => {
+    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
+      cwd: cwd,
+      stdio: "inherit",
+    });
   });
 
   it("should generate produce the K8s yaml file", async () => {
@@ -23,6 +32,10 @@ export function peprBuild() {
   it("should generate the zarf.yaml file", async () => {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
+  });
+
+  it("should generate a scoped ClusterRole", async () => {
+    await validateClusterRoleYaml();
   });
 
   it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {
@@ -37,57 +50,73 @@ export function peprBuild() {
 
     const expectedWatcherEnv = [
       {
-        "name": "PEPR_PRETTY_LOG",
-        "value": "false"
+        name: "PEPR_PRETTY_LOG",
+        value: "false",
       },
       {
-        "name": "LOG_LEVEL",
-        "value": "info"
+        name: "LOG_LEVEL",
+        value: "info",
       },
       {
-        "name": "MY_CUSTOM_VAR",
-        "value": "example-value"
+        name: "MY_CUSTOM_VAR",
+        value: "example-value",
       },
       {
-        "name": "ZARF_VAR",
-        "value": "###ZARF_VAR_THING###"
-      }
+        name: "ZARF_VAR",
+        value: "###ZARF_VAR_THING###",
+      },
     ];
 
     const expectedAdmissionEnv = [
       {
-        "name": "PEPR_PRETTY_LOG",
-        "value": "false"
+        name: "PEPR_PRETTY_LOG",
+        value: "false",
       },
       {
-        "name": "LOG_LEVEL",
-        "value": "info"
+        name: "LOG_LEVEL",
+        value: "info",
       },
       {
-        "name": "MY_CUSTOM_VAR",
-        "value": "example-value"
+        name: "MY_CUSTOM_VAR",
+        value: "example-value",
       },
       {
-        "name": "ZARF_VAR",
-        "value": "###ZARF_VAR_THING###"
-      }
-    ]
+        name: "ZARF_VAR",
+        value: "###ZARF_VAR_THING###",
+      },
+    ];
 
     try {
-      const valuesYaml = await fs.readFile(resolve(cwd, "dist", "static-test-chart", "values.yaml"), "utf8");
+      const valuesYaml = await fs.readFile(
+        resolve(cwd, "dist", "static-test-chart", "values.yaml"),
+        "utf8",
+      );
       const valuesJSON = yaml.load(valuesYaml) as ValuesJSON;
       expect(valuesJSON.admission.env).toEqual(expectedAdmissionEnv);
       expect(valuesJSON.watcher!.env).toEqual(expectedWatcherEnv);
     } catch (error) {
       expect(error).toBeUndefined();
     }
-  })
+  });
+}
+
+async function validateClusterRoleYaml() {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+
+
+  expect(k8sYaml.includes(cr)).toEqual(true);
 }
 
 async function validateHelmChart() {
-
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
-  const helmOutput = execSync('helm template .', { cwd: `${cwd}/dist/static-test-chart` }).toString();
+  const helmOutput = execSync("helm template .", {
+    cwd: `${cwd}/dist/static-test-chart`,
+  }).toString();
 
   const helmParsed = parseYAMLToJSON(helmOutput);
   const k8sParsed = parseYAMLToJSON(k8sYaml);
@@ -162,8 +191,10 @@ function parseYAMLToJSON(yamlContent: string): KubernetesObject[] | null {
 function sortKubernetesObjects(objects: KubernetesObject[]): KubernetesObject[] {
   return objects.sort((a, b) => {
     if (a?.kind !== b?.kind) {
-      return (a?.kind ?? '').localeCompare(b?.kind ?? '');
+      return (a?.kind ?? "").localeCompare(b?.kind ?? "");
     }
-    return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? '').localeCompare((b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? '');
+    return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? "").localeCompare(
+      (b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? "",
+    );
   });
 }

@@ -6,14 +6,14 @@ import fs from "fs";
 import https from "https";
 
 import { Capability } from "../capability";
-import { MutateResponse, AdmissionRequest, ValidateResponse } from "../k8s";
+import { MutateResponse, ValidateResponse } from "../k8s";
 import Log from "../logger";
 import { metricsCollector, MetricsCollector } from "../metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
-import { ResponseItem } from "../types";
+import { ResponseItem, AdmissionRequest } from "../types";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");

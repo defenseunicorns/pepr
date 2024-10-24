@@ -1,19 +1,17 @@
-name: Soak Test
+name: Soak Interrupts Test
 
 permissions: read-all
 on:
   workflow_dispatch:
     inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
       branch:
-        description: 'Soak test branch'
+        description: 'Branch to run the workflow on'
         required: true
         default: 'main'
-
+      http2:
+        description: 'use http2 watcher'
+        required: false
+        default: 'false'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
 
@@ -49,16 +47,9 @@ jobs:
           npm ci
 
       - name: build pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
-  
-      - name: build kfc pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
@@ -73,8 +64,8 @@ jobs:
           path: pepr-img.tar
           retention-days: 1
 
-  soak-test:
-    name: soak-test
+  soak-interrupts-test:
+    name: soak-interrupts-test
     runs-on: ubuntu-latest
     needs:
       - pepr-build
@@ -129,10 +120,19 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
+      - name: Deploy Pepr 
+        if: ${{ (github.event.inputs.http2 || 'none') != 'true' }}
+        run: |
+          kubectl apply -f hack/soak.ci.yaml
+
+      - name: Deploy http2 Pepr
+        if: ${{ (github.event.inputs.http2 || 'none') == 'true' }}
+        run: |
+          kubectl apply -f hack/soak-http2.ci.yaml
+
       - name: Deploy applications
         run: |
           kubectl apply -f hack/auditor.ci.yaml
-          kubectl apply -f hack/soak.ci.yaml
 
       - name: Wait for 15 minutes before starting pod checks
         run: |
@@ -159,42 +159,50 @@ jobs:
           }
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
-          touch logs/watch-logs.txt
 
           update_pod_map
 
           collect_metrics() {
-            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
+            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt || true
             kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
-            kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
+            kubectl logs -n pepr-system deploy/pepr-soak-ci-watcher > logs/watch-log.txt
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..27}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..13}; do  # 13 iterations cover 65 minutes (1 hours and 5 minutes) (Every 5 mins x 13 = 65 mins = 1 hour 5 mins)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
+              # get a list of pods every 10 mins
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
-              kubectl get po -n pepr-system
-              
+              kubectl get po -n pepr-system 
+
               # Verify that no pod's count exceeds 1
               for pod in "${!pod_map[@]}"; do
                 echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
-                  kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
                   exit 1
                 fi
               done
+
+              # Every 20 minutes, scale up or down the `watch-auditor` deployment
+              if [ $((i % 4)) -eq 0 ]; then
+                echo "Scaling down the watch-auditor deployment to 0 replicas"
+                kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0
+              else
+                echo "Scaling up the watch-auditor deployment to 1 replica"
+                kubectl scale deploy/watch-auditor -n watch-auditor --replicas=1
+              fi
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
           done
 
-          echo "Soak test passed successfully!"
+          echo "Soak interrupt test passed successfully!"
         shell: bash
 
       - name: Upload logs

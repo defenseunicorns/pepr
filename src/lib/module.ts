@@ -8,6 +8,7 @@ import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
 import { CapabilityExport, AdmissionRequest } from "./types";
 import { setupWatch } from "./watch-processor";
 import { Log } from "../lib";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 /** Custom Labels Type for package.json */
 export interface CustomLabels {
@@ -35,6 +36,10 @@ export type ModuleConfig = {
   env?: Record<string, string>;
   /** Custom Labels for Kubernetes Objects */
   customLabels?: CustomLabels;
+  /** Custom RBAC rules */
+  rbac?: PolicyRule[];
+  /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
+  rbacMode?: string;
 };
 
 export type PackageJSON = {
