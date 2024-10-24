@@ -4,7 +4,7 @@
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
-import { PolicyRule } from "kubernetes-fluent-client/dist/upstream";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 import { Assets } from ".";
 import Log from "../logger";
