@@ -3,7 +3,7 @@
 
 import { Operation } from "fast-json-patch";
 import { K8s } from "kubernetes-fluent-client";
-import * as ramda from "ramda";
+import { startsWith } from "ramda";
 
 import { Capability } from "../capability";
 import { PeprStore } from "../k8s";
@@ -78,7 +78,7 @@ export class PeprControllerStore {
       // Loop over each key in the store
       for (const key of Object.keys(data)) {
         // Match on the capability name as a prefix for non v2 keys
-        if (ramda.startsWith(name, key) && !ramda.startsWith(`${name}-v2`, key)) {
+        if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
           // populate migrate cache
           storeCache = fillStoreCache(storeCache, name, "remove", {
             key: [key.slice(offset)],
@@ -115,7 +115,7 @@ export class PeprControllerStore {
         // Loop over each key in the secret
         for (const key of Object.keys(data)) {
           // Match on the capability name as a prefix
-          if (ramda.startsWith(name, key)) {
+          if (startsWith(name, key)) {
             // Strip the prefix and store the value
             filtered[key.slice(offset)] = data[key];
           }

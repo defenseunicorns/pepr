@@ -104,7 +104,7 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith(`Registering store for ${capabilityConfig.name}`);
 
     const scheduleStoreResult = capability.registerScheduleStore();
-    expect(scheduleStoreResult.onReady).toBeDefined;
+    expect(scheduleStoreResult.onReady).toBeDefined();
     expect(mockLog.info).toHaveBeenCalledWith(`Registering schedule store for ${capabilityConfig.name}`);
   });
 
