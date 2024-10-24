@@ -138,8 +138,8 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
-      - name: print dir
-        run: ls -la
+      - name: print root
+        run: ls -la /
 
       - name: Deploy applications
         run: |
