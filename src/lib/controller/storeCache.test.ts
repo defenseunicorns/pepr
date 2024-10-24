@@ -49,6 +49,7 @@ describe("sendCache", () => {
       const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
       expect(result).toStrictEqual({});
     });
+
     it("should repopulate cache for all other HTTP Errors", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
