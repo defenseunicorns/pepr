@@ -38,6 +38,7 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
+import { mismatchedNameRegexFilter } from "./adjudicatorsFilterWrapper";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -102,3 +103,40 @@ export function shouldSkipRequest(
 
   return admissionFilterMessage;
 }
+
+//TODO: Dupe'd declaration
+type FilterParams = { binding: Binding; request: AdmissionRequest };
+interface Filter {
+  (data: FilterParams): string;
+}
+
+export class FilterChain {
+  private filters: Filter[] = [];
+
+  public addFilter(filter: Filter): FilterChain {
+    this.filters.push(filter);
+    return this;
+  }
+  public execute(data: FilterParams): string {
+    return this.filters.reduce((result, filter) => {
+      // The result of each filter is passed as a new concatenated string
+      return filter(data);
+    }, "");
+  }
+}
+
+export const shouldSkipRequestWithFilterChain = (
+  binding: Binding,
+  req: AdmissionRequest,
+  // capabilityNamespaces: string[],
+  // ignoredNamespaces?: string[],
+): string => {
+  // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+
+  const filterChain = new FilterChain();
+
+  filterChain.addFilter(mismatchedNameRegexFilter);
+
+  const admissionFilterMessage = filterChain.execute({ binding, request: req });
+  return admissionFilterMessage;
+};
