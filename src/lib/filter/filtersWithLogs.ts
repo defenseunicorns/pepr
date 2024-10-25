@@ -1,6 +1,5 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
-  carriedNamespace,
   carriesIgnoredNamespace,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
@@ -27,15 +26,15 @@ const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined =
 };
 
 const createFilter = (
-  filterInputSelector: (data: FilterParams) => FilterInput,
-  filterCriteriaSelector: (data: FilterParams) => FilterInput,
-  mismatchCheck: (filterInput: FilterInput, filterCriteria?: FilterInput) => boolean,
+  filterInputSelector: (data: FilterParams) => FilterInput, // FilterInput is unvalidated
+  filterCriteriaSelector: (data: FilterParams) => FilterInput, // FilterCriteria adjudicates FilterInput
+  filterCheck: (filterInput: FilterInput, filterCriteria?: FilterInput) => boolean, // Adjudicates FilterInput based upon FilterCriteria
   logMessage: (filterInput: FilterInput, filterCriteria?: FilterInput) => string,
 ) => {
   return (data: FilterParams): string => {
     const filterInput = filterInputSelector(data);
     const filterCriteria = filterCriteriaSelector(data);
-    return mismatchCheck(filterInput, filterCriteria) ? logMessage(filterInput, filterCriteria) : "";
+    return filterCheck(filterInput, filterCriteria) ? logMessage(filterInput, filterCriteria) : "";
   };
 };
 
@@ -114,8 +113,7 @@ export const unbindableNamespacesFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, request) => uncarryableNamespace(binding, request),
-  (binding, request) =>
-    `${prefix} Binding carries namespace '${carriedNamespace(request)}' but namespaces allowed by Capability are '${JSON.stringify(binding)}'.`,
+  (binding, request) => bindingAdmissionRequestLogMessage("namespace", binding, request),
 );
 
 export const mismatchedGroupFilter = createFilter(
@@ -125,11 +123,9 @@ export const mismatchedGroupFilter = createFilter(
   (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("group", binding, kubernetesObject),
 );
 
-const prefix = "Ignoring Admission Callback:";
 export const mismatchedDeletionTimestampFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedDeletionTimestamp(binding, kubernetesObject),
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (binding, kubernetesObject) => `${prefix} Binding defines deletionTimestamp but Object does not carry it.`,
+  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("deletionTimestamp", binding, kubernetesObject),
 );

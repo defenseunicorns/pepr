@@ -11,14 +11,24 @@ export const bindingKubernetesObjectLogMessage = (
   let logMessage = "";
   if (subject === "group") {
     logMessage = `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
+  } else if (subject === "deletionTimestamp") {
+    logMessage = `${prefix} Binding defines ${subject} but Object does not carry it.`;
   } else {
     logMessage = `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
   }
   return logMessage;
 };
 
-export const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput, request?: FilterInput) =>
-  `${prefix} Binding defines ${subject} '${definedName(binding)}' but Request declares '${carriedName(request)}'.`;
+export const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput, request?: FilterInput) => {
+  let logMessage = "";
+
+  if (subject === "namespace") {
+    logMessage = `${prefix} Binding carries ${subject} '${definedName(binding)}' but namespaces allowed by Capability are '${carriedName(request)}'.`;
+  } else {
+    logMessage = `${prefix} Binding defines ${subject} '${definedName(binding)}' but Request declares '${carriedName(request)}'.`;
+  }
+  return logMessage;
+};
 
 export const ignoreArrayKubernetesObjectLogMessage = (
   subject: string,
