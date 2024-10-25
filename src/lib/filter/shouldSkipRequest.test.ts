@@ -130,101 +130,77 @@ describe("when a pod is created", () => {
   });
 
   it("should not reject when regex name does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "^cool",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, filters: mismatchedFilter };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should not reject when regex namespace does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: ["^helm"],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: ["^helm"],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+
+    const binding = { ...defaultBinding, filters: mismatchedFilter };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should reject when regex namespace does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: ["^argo"],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: ["^argo"],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, filters: mismatchedFilter };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
     );
   });
   it("should not reject when namespace is not ignored", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, mismatchedFilter };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch("");
   });
   it("should reject when namespace is ignored", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, mismatchedFilter };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
       /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
@@ -233,22 +209,33 @@ describe("when a pod is created", () => {
 });
 
 describe("when a pod is deleted", () => {
+  const defaultFilters = {
+    name: "",
+    namespaces: [],
+    regexNamespaces: [],
+    regexName: "^default$",
+    labels: {},
+    annotations: {},
+    deletionTimestamp: false,
+  };
+  const defaultBinding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: defaultFilters,
+    callback,
+  };
   it("should reject when regex name does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^default$",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "^default$",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, filters: mismatchedFilter };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
@@ -256,40 +243,33 @@ describe("when a pod is deleted", () => {
   });
 
   it("should not reject when regex name does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "^cool",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
     };
+    const binding = { ...defaultBinding, filters: mismatchedFilter };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should reject when regex namespace does not match", () => {
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: ["^argo"],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    };
     const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: ["^argo"],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+      ...defaultBinding,
+      filters: mismatchedFilter,
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -298,40 +278,36 @@ describe("when a pod is deleted", () => {
   });
 
   it("should not reject when regex namespace does match", () => {
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: ["^helm"],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    };
     const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: ["^helm"],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+      ...defaultBinding,
+      filters: mismatchedFilter,
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should reject when name does not match", () => {
+    const mismatchedFilter = {
+      name: "bleh",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "^not-cool",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    };
     const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "bleh",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^not-cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+      ...defaultBinding,
+      filters: mismatchedFilter,
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -340,20 +316,18 @@ describe("when a pod is deleted", () => {
   });
 
   it("should reject when namespace is ignored", () => {
+    const mismatchedFilter = {
+      name: "",
+      namespaces: [],
+      regexNamespaces: [],
+      regexName: "",
+      labels: {},
+      annotations: {},
+      deletionTimestamp: false,
+    };
     const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
+      ...defaultBinding,
+      mismatchedFilter,
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
