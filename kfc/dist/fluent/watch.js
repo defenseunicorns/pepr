@@ -616,6 +616,7 @@ class Watcher {
             client = undefined;
             this.#req = undefined;
         }
+        this.close();
     };
     /**
      * Cleanup the stream and listeners and reconnect.
