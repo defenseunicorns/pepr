@@ -9,7 +9,7 @@ import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
-// import { writeHeapSnapshot } from 'node:v8';
+import { writeHeapSnapshot } from 'node:v8';
 // import path from 'path';
 
 
@@ -17,9 +17,7 @@ import { metricsCollector } from "./metrics";
 //   const snapshotPath = path.join(`/data`, `heapdump-${Date.now()}.heapsnapshot`);
 //   writeHeapSnapshot(snapshotPath);
 // };
-// if (process.env.PEPR_WATCH_MODE==="true") {
-//   writeSnapShot();
-// }
+
 // setInterval(() => {
 //   const memoryUsage = process.memoryUsage();
 //   Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
@@ -27,7 +25,7 @@ import { metricsCollector } from "./metrics";
 //   if (process.env.PEPR_WATCH_MODE==="true") {
 //     writeSnapShot();
 //   }
-// // }, 4000);
+// }, 15000);
 // }, 60000 * 5);
 
 // stores Queue instances
@@ -89,188 +87,17 @@ const eventToPhaseMap = {
   [Event.Any]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
 };
 
-// /**
-//  * Entrypoint for setting up watches for all capabilities
-//  *
-//  * @param capabilities The capabilities to load watches for
-//  */
-// export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]) {
-//   capabilities.map(capability =>
-//     capability.bindings
-//       .filter(binding => binding.isWatch)
-//       .forEach(bindingElement => runBinding(bindingElement, capability.namespaces, ignoredNamespaces)),
-//   );
-// }
-
-// /**
-//  * Setup a watch for a binding
-//  *
-//  * @param binding the binding to watch
-//  * @param capabilityNamespaces list of namespaces to filter on
-//  */
-// async function runBinding(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
-//   // Get the phases to match, fallback to any
-//   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
-
-//   // The watch callback is run when an object is received or dequeued
-//   Log.debug({ watchCfg }, "Effective WatchConfig");
-
-//   const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
-//     // First, filter the object based on the phase
-//     if (phaseMatch.includes(phase)) {
-//       try {
-//         // Then, check if the object matches the filter
-//         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
-//         if (filterMatch === "") {
-//           if (binding.isFinalize) {
-//             if (!obj.metadata?.deletionTimestamp) {
-//               return;
-//             }
-//             try {
-//               await binding.finalizeCallback?.(obj);
-
-//               // irrespective of callback success / failure, remove pepr finalizer
-//             } finally {
-//               await removeFinalizer(binding, obj);
-//             }
-//           } else {
-//             await binding.watchCallback?.(obj, phase);
-//           }
-//         } else {
-//           Log.debug(filterMatch);
-//         }
-//       } catch (e) {
-//         // Errors in the watch callback should not crash the controller
-//         Log.error(e, "Error executing watch callback");
-//       }
-//     }
-//   };
-
-//   // Setup the resource watch
-//   // configure watcher func here
-  
-//   const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
-//     Log.debug(obj, `Watch event ${phase} received`);
-
-//     if (binding.isQueue) {
-//       const queue = getOrCreateQueue(obj);
-//       await queue.enqueue(obj, phase, watchCallback);
-//     } else {
-//       await watchCallback(obj, phase);
-//     }
-//   }, watchCfg);
-
-//   // If failure continues, log and exit
-//   watcher.events.on(WatchEvent.GIVE_UP, err => {
-//     Log.error(err, "Watch failed after 5 attempts, giving up");
-//     process.exit(1);
-//   });
-
-//   watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
-
-//   watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
-//   watcher.events.on(WatchEvent.RECONNECT, retryCount =>
-//     logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
-//   );
-//   watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
-//   watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
-//   watcher.events.on(WatchEvent.ABORT, err => logEvent(WatchEvent.ABORT, err.message));
-//   watcher.events.on(WatchEvent.OLD_RESOURCE_VERSION, err => logEvent(WatchEvent.OLD_RESOURCE_VERSION, err));
-//   watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
-//   watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
-//   watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
-//   watcher.events.on(WatchEvent.CACHE_MISS, windowName => {
-//     metricsCollector.incCacheMiss(windowName);
-//   });
-
-//   watcher.events.on(WatchEvent.INIT_CACHE_MISS, windowName => {
-//     metricsCollector.initCacheMissWindow(windowName);
-//   });
-
-//   watcher.events.on(WatchEvent.INC_RESYNC_FAILURE_COUNT, retryCount => {
-//     metricsCollector.incRetryCount(retryCount);
-//   });
-
-
-//   watcher.events.on(WatchEvent.MEMORY_USAGE, memoryUsage => {
-//     logEvent(WatchEvent.MEMORY_USAGE, JSON.stringify(memoryUsage));
-//   });
-
-//   watcher.events.on(WatchEvent.HTTP2_REQUEST_END, () => {
-//     logEvent(WatchEvent.HTTP2_REQUEST_END)
-//   });
-
-//   watcher.events.on(WatchEvent.HTTP2_REQUEST_CLOSE, () => {
-//     logEvent(WatchEvent.HTTP2_REQUEST_END)
-//   });
-
-//   // Start the watch
-//   try {
-//     await watcher.start();
-//   } catch (err) {
-//     Log.error(err, "Error starting watch");
-//     process.exit(1);
-//   }
-// }
-
-// export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject) {
-//   const logMessage = `Watch event ${event} received${message ? `. ${message}.` : "."}`;
-//   if (obj) {
-//     Log.debug(obj, logMessage);
-//   } else {
-//     Log.debug(logMessage);
-//   }
-// }
-
 /**
- * Entrypoint for setting up watches for all capabilities with interval-based restarts.
+ * Entrypoint for setting up watches for all capabilities
  *
  * @param capabilities The capabilities to load watches for
  */
 export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]) {
-  capabilities.forEach(capability =>
+  capabilities.map(capability =>
     capability.bindings
       .filter(binding => binding.isWatch)
-      .forEach(binding => setupWatcherWithRestart(binding, capability.namespaces, ignoredNamespaces)),
+      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces, ignoredNamespaces)),
   );
-}
-
-/**
- * Sets up the watcher with automatic restarting at a 30-minute interval.
- *
- * @param binding The binding to watch
- * @param capabilityNamespaces List of namespaces to filter on
- * @param ignoredNamespaces List of ignored namespaces
- */
-function setupWatcherWithRestart(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
-  let watcher: ReturnType<typeof K8s.prototype.Watch> | undefined;
-
-  const startWatcher = async () => {
-    watcher = await runBinding(binding, capabilityNamespaces, ignoredNamespaces);
-    Log.debug("Watcher started.");
-  };
-
-  const stopWatcher = async () => {
-    if (watcher) {
-      await watcher.close(); // Gracefully close the watcher
-      Log.debug("Watcher closed.");
-      watcher = undefined; // Release the memory by setting watcher to undefined
-    }
-  };
-
-  // Start the initial watcher
-  startWatcher();
-
-  // Set an interval to restart the watcher every 30 minutes (1800000 milliseconds)
-  setInterval(async () => {
-    Log.debug("Restarting watcher after 30 minutes.");
-    watcher.events.removeAllListeners();
-    await stopWatcher(); // Stop the current watcher
-    if (typeof global.gc === 'function') {
-      global.gc();
-    }
-    await startWatcher(); // Start a new watcher
-  }, 1800000); // 30 minutes interval
 }
 
 /**
@@ -278,8 +105,6 @@ function setupWatcherWithRestart(binding: Binding, capabilityNamespaces: string[
  *
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
- * @param ignoredNamespaces optional ignored namespaces
- * @returns the watcher instance
  */
 async function runBinding(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
   // Get the phases to match, fallback to any
@@ -289,14 +114,20 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   Log.debug({ watchCfg }, "Effective WatchConfig");
 
   const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
+    // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
+        // Then, check if the object matches the filter
         const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
         if (filterMatch === "") {
           if (binding.isFinalize) {
-            if (!obj.metadata?.deletionTimestamp) return;
+            if (!obj.metadata?.deletionTimestamp) {
+              return;
+            }
             try {
               await binding.finalizeCallback?.(obj);
+
+              // irrespective of callback success / failure, remove pepr finalizer
             } finally {
               await removeFinalizer(binding, obj);
             }
@@ -307,6 +138,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
           Log.debug(filterMatch);
         }
       } catch (e) {
+        // Errors in the watch callback should not crash the controller
         Log.error(e, "Error executing watch callback");
       }
     }
@@ -315,6 +147,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   // Setup the resource watch
   const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
     Log.debug(obj, `Watch event ${phase} received`);
+
     if (binding.isQueue) {
       const queue = getOrCreateQueue(obj);
       await queue.enqueue(obj, phase, watchCallback);
@@ -323,8 +156,8 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
     }
   }, watchCfg);
 
-   // If failure continues, log and exit
-   watcher.events.on(WatchEvent.GIVE_UP, err => {
+  // If failure continues, log and exit
+  watcher.events.on(WatchEvent.GIVE_UP, err => {
     Log.error(err, "Watch failed after 5 attempts, giving up");
     process.exit(1);
   });
@@ -370,7 +203,6 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   // Start the watch
   try {
     await watcher.start();
-    return watcher;
   } catch (err) {
     Log.error(err, "Error starting watch");
     process.exit(1);

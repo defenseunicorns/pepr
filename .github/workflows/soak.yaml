@@ -182,9 +182,9 @@ jobs:
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event memory_usage received."))' || true 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_end received."))' || true 
-              kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_close received."))' || true 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event memory_usage received."))' || true 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_end received."))' || true 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_close received."))' || true 
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
               kubectl get po -n pepr-system
