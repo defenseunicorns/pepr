@@ -18,33 +18,7 @@ import {
   unbindableNamespacesFilter,
   uncarryableNamespaceFilter,
 } from "./adjudicatorsFilterWrapper";
-
-//TODO: Dupe'd declaration
-type FilterParams = {
-  binding: Binding;
-  request: AdmissionRequest;
-  capabilityNamespaces: string[];
-  ignoredNamespaces?: string[];
-};
-interface Filter {
-  (data: FilterParams): string;
-}
-
-export class FilterChain {
-  private filters: Filter[] = [];
-
-  public addFilter(filter: Filter): FilterChain {
-    this.filters.push(filter);
-    return this;
-  }
-  public execute(data: FilterParams): string {
-    return this.filters.reduce((result, filter) => {
-      result += filter(data);
-      // The result of each filter is passed as a new concatenated string
-      return result;
-    }, "");
-  }
-}
+import { FilterChain } from "./filterChain";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.
@@ -59,23 +33,22 @@ export const shouldSkipRequest = (
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string => {
-  // const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
-
   const filterChain = new FilterChain();
 
-  filterChain.addFilter(mismatchedNameRegexFilter);
-  filterChain.addFilter(mismatchedNamespaceFilter);
-  filterChain.addFilter(mismatchedNamespaceRegexFilter);
-  filterChain.addFilter(uncarryableNamespaceFilter);
-  filterChain.addFilter(mismatchedDeletionTimestampFilter);
-  filterChain.addFilter(mismatchedAnnotationsFilter);
-  filterChain.addFilter(mismatchedLabelsFilter);
-  filterChain.addFilter(mismatchedKindFilter);
-  filterChain.addFilter(mismatchedGroupFilter);
-  filterChain.addFilter(mismatchedVersionFilter);
-  filterChain.addFilter(mismatchedNameFilter);
-  filterChain.addFilter(carriesIgnoredNamespacesFilter);
-  filterChain.addFilter(unbindableNamespacesFilter);
+  filterChain
+    .addFilter(mismatchedNameRegexFilter)
+    .addFilter(mismatchedNamespaceFilter)
+    .addFilter(mismatchedNamespaceRegexFilter)
+    .addFilter(uncarryableNamespaceFilter)
+    .addFilter(mismatchedDeletionTimestampFilter)
+    .addFilter(mismatchedAnnotationsFilter)
+    .addFilter(mismatchedLabelsFilter)
+    .addFilter(mismatchedKindFilter)
+    .addFilter(mismatchedGroupFilter)
+    .addFilter(mismatchedVersionFilter)
+    .addFilter(mismatchedNameFilter)
+    .addFilter(carriesIgnoredNamespacesFilter)
+    .addFilter(unbindableNamespacesFilter);
 
   const admissionFilterMessage = filterChain.execute({
     binding,
