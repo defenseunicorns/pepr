@@ -13,7 +13,8 @@ import {
   mismatchedVersion,
   uncarryableNamespace,
 } from "./adjudicators";
-import { FilterInput, FilterParams, Operation } from "../types";
+import { Operation } from "../mutate-types";
+import { FilterInput, FilterParams } from "../types";
 import {
   arrayKubernetesObjectLogMessage,
   bindingAdmissionRequestLogMessage,

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Event, Operation } from "../types";
+import { Event } from "../types";
+import { Operation } from "../mutate-types";
 import {
   __,
   allPass,
