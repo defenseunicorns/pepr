@@ -34,8 +34,15 @@ const bindingKubernetesObjectLogMessage = (subject: string, binding: Binding, ku
 const bindingAdmissionRequestLogMessage = (subject: string, binding: Binding, request?: AdmissionRequest) =>
   `${prefix} Binding defines ${subject} '${definedName(binding)}' but Request declares '${carriedName(request)}'.`;
 
-const arrayKubernetesObjectLogMessage = (subject: string, array?: string[], kubernetesObject?: KubernetesObject) =>
+const ignoreArrayKubernetesObjectLogMessage = (
+  subject: string,
+  array?: string[],
+  kubernetesObject?: KubernetesObject,
+) =>
   `${prefix} Object carries ${subject} '${carriedNamespace(kubernetesObject)}' but ignored ${subject}s include '${JSON.stringify(array)}'.`;
+
+const arrayKubernetesObjectLogMessage = (subject: string, array?: string[], kubernetesObject?: KubernetesObject) =>
+  `${prefix} Object carries ${subject} '${carriedNamespace(kubernetesObject)}' but ${subject}s allowed by Capability are '${JSON.stringify(array)}'.`;
 
 const createFilter = <T1, T2>(
   dataSelector: (data: FilterParams) => T1,
@@ -92,27 +99,11 @@ export const mismatchedLabelsFilter = createFilter(
   (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("labels", binding, kubernetesObject),
 );
 
-export const mismatchedDeletionTimestampFilter = createFilter(
-  data => data.binding,
-  data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
-  (binding, kubernetesObject) => mismatchedDeletionTimestamp(binding, kubernetesObject),
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (binding, kubernetesObject) => `${prefix} Binding defines deletionTimestamp but Object does not carry it.`,
-);
-
 export const mismatchedKindFilter = createFilter(
   data => data.binding,
   data => data.request,
   (binding, request) => mismatchedKind(binding, request),
   (binding, request) => bindingAdmissionRequestLogMessage("kind", binding, request),
-);
-
-export const mismatchedGroupFilter = createFilter(
-  data => data.binding,
-  data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
-  (binding, kubernetesObject) => mismatchedGroup(binding, kubernetesObject),
-  (binding, kubernetesObject) =>
-    `${prefix} Binding defines group '${definedKind(binding)}' but Request declares '${declaredKind(kubernetesObject)}'.`,
 );
 
 export const mismatchedVersionFilter = createFilter(
@@ -126,7 +117,7 @@ export const carriesIgnoredNamespacesFilter = createFilter(
   data => data.ignoredNamespaces,
   data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
   (ignoreArray, kubernetesObject) => carriesIgnoredNamespace(ignoreArray, kubernetesObject),
-  (ignoreArray, kubernetesObject) => arrayKubernetesObjectLogMessage("namespace", ignoreArray, kubernetesObject),
+  (ignoreArray, kubernetesObject) => ignoreArrayKubernetesObjectLogMessage("namespace", ignoreArray, kubernetesObject),
 );
 
 export const uncarryableNamespaceFilter = createFilter(
@@ -134,13 +125,29 @@ export const uncarryableNamespaceFilter = createFilter(
   data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
   (capabilityNamespaces, kubernetesObject) => uncarryableNamespace(capabilityNamespaces, kubernetesObject),
   (capabilityNamespaces, kubernetesObject) =>
-    `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`,
+    arrayKubernetesObjectLogMessage("namespace", capabilityNamespaces, kubernetesObject),
 );
 
 export const unbindableNamespacesFilter = createFilter(
   data => data.binding,
   data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
-  (capabilityNamespaces, binding) => uncarryableNamespace(capabilityNamespaces, binding),
-  (capabilityNamespaces, binding) =>
-    `${prefix} Binding carries namespace '${carriedNamespace(binding)}' but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`,
+  (binding, request) => uncarryableNamespace(binding, request),
+  (binding, request) =>
+    `${prefix} Binding carries namespace '${carriedNamespace(request)}' but namespaces allowed by Capability are '${JSON.stringify(binding)}'.`,
+);
+
+export const mismatchedGroupFilter = createFilter(
+  data => data.binding,
+  data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
+  (binding, kubernetesObject) => mismatchedGroup(binding, kubernetesObject),
+  (binding, kubernetesObject) =>
+    `${prefix} Binding defines group '${definedKind(binding)}' but Request declares '${declaredKind(kubernetesObject)}'.`,
+);
+
+export const mismatchedDeletionTimestampFilter = createFilter(
+  data => data.binding,
+  data => (data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object),
+  (binding, kubernetesObject) => mismatchedDeletionTimestamp(binding, kubernetesObject),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (binding, kubernetesObject) => `${prefix} Binding defines deletionTimestamp but Object does not carry it.`,
 );
