@@ -1,12 +1,4 @@
-import { AdmissionRequest, Binding } from "../types";
-
-//TODO: Dupe'd declaration
-type FilterParams = {
-  binding: Binding;
-  request: AdmissionRequest;
-  capabilityNamespaces: string[];
-  ignoredNamespaces?: string[];
-};
+import { FilterParams } from "../types";
 
 interface Filter {
   (data: FilterParams): string;
