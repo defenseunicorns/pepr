@@ -110,9 +110,9 @@ async function httpDownload(url: string, path: string): Promise<void> {
 //   Manifest = "application/vnd.docker.distribution.manifest.v1+prettyjws",
 // }
 
-// enum MediaTypeDockerV2 {
-//   Manifest = "application/vnd.docker.distribution.manifest.v2+json",
-// }
+enum MediaTypeDockerV2 {
+  Manifest = "application/vnd.docker.distribution.manifest.v2+json",
+}
 
 enum MediaTypeOciV1 {
   Manifest = "application/vnd.oci.image.manifest.v1+json",
@@ -121,7 +121,7 @@ enum MediaTypeOciV1 {
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-async function headManifest(rawUrl: string, mediaType: string): Promise<any> {
+async function head(rawUrl: string, mediaType: string): Promise<any> {
   const url = new URL(rawUrl);
 
   return new Promise((resolve, reject) => {
@@ -155,6 +155,54 @@ async function headManifest(rawUrl: string, mediaType: string): Promise<any> {
 
         resp.on("end", () => {
           resolve(resp.headers);
+        });
+      })
+      .on("error", e => reject(e))
+      .end();
+  });
+}
+
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+async function get(rawUrl: string, mediaType: string): Promise<any> {
+  const url = new URL(rawUrl);
+
+  return new Promise((resolve, reject) => {
+    const opts = {
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: "GET",
+      headers: { Accept: mediaType },
+    };
+
+    https
+      .request(opts, resp => {
+        const { statusCode } = resp;
+
+        let error;
+        if (!statusCode?.toString().startsWith("2")) {
+          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+          error = true;
+        }
+
+        if (error) {
+          resp.resume();
+          return;
+        }
+
+        resp.setEncoding("utf8");
+
+        let raw = "";
+        resp.on("data", chunk => {
+          raw += chunk;
+        });
+        resp.on("end", () => {
+          try {
+            resolve({ head: resp.headers, body: raw });
+          } catch (e) {
+            reject(e);
+          }
         });
       })
       .on("error", e => reject(e))
@@ -774,8 +822,34 @@ describe.only("sigstore-js - pub/prv keys", () => {
     //  then if DKR2, grab Docker-Content-Digest response header
     //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
 
-    const manifestHead = await headManifest(manifestUrl, MediaTypeOciV1.Manifest);
-    console.log("manifestHead:", manifestHead);
+    const supportsMediaType = async (url: string, mediaType: string) => {
+      return (await head(url, mediaType))["content-type"] === mediaType;
+    };
+
+    const canOciV1Manifest = async (manifestUrl: string) => {
+      return supportsMediaType(manifestUrl, MediaTypeOciV1.Manifest);
+    };
+
+    const canDockerV2Manifest = async (manifestUrl: string) => {
+      return supportsMediaType(manifestUrl, MediaTypeDockerV2.Manifest);
+    };
+
+    // { head: {}, body: "" }
+    const imageManifest = (await canOciV1Manifest(manifestUrl))
+      ? await get(manifestUrl, MediaTypeOciV1.Manifest)
+      : (await canDockerV2Manifest(manifestUrl))
+        ? await get(manifestUrl, MediaTypeDockerV2.Manifest)
+        : (() => {
+            throw "Can't pull image manifest with supported MediaType.";
+          })();
+    console.log("imageManifest", imageManifest);
+
+    const imageDigest = `sha256:${crypto
+      .createHash("sha256")
+      .update(imageManifest.body)
+      .digest("hex")
+      .toString()}`;
+    console.log("imageDigest", imageDigest);
 
     console.log("iref", iref);
     // LEFTOFF:
