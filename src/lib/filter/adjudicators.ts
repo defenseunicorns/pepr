@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Event, Operation } from "./types";
+import { Event, Operation } from "../types";
 import {
   __,
   allPass,
@@ -57,6 +57,8 @@ export const carriesLabels = pipe(carriedLabels, equals({}), not);
 /*
   Binding collectors
 */
+
+//TODO: Defnined can go??
 export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 

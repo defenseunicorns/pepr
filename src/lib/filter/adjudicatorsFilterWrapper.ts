@@ -18,7 +18,7 @@ import {
   mismatchedVersion,
   uncarryableNamespace,
 } from "./adjudicators";
-import { AdmissionRequest, Binding, Operation } from "./types";
+import { AdmissionRequest, Binding, Operation } from "../types";
 
 type FilterParams = {
   binding: Binding;
@@ -27,37 +27,40 @@ type FilterParams = {
   ignoredNamespaces?: string[];
 };
 
-const prefix = "Ignoring Admission Callback:";
-const bindingKubernetesObjectLogMessage = (subject: string, binding: Binding, kubernetesObject?: KubernetesObject) =>
-  `${prefix} Binding defines ${subject} '${definedName(binding)}' but Object carries '${carriedName(kubernetesObject)}'.`;
+type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;
 
-const bindingAdmissionRequestLogMessage = (subject: string, binding: Binding, request?: AdmissionRequest) =>
+const prefix = "Ignoring Admission Callback:";
+
+const bindingKubernetesObjectLogMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) =>
+  `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+
+const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput, request?: FilterInput) =>
   `${prefix} Binding defines ${subject} '${definedName(binding)}' but Request declares '${carriedName(request)}'.`;
 
 const ignoreArrayKubernetesObjectLogMessage = (
   subject: string,
-  array?: string[],
-  kubernetesObject?: KubernetesObject,
+  filterCriteria?: FilterInput,
+  filterInput?: FilterInput,
 ) =>
-  `${prefix} Object carries ${subject} '${carriedNamespace(kubernetesObject)}' but ignored ${subject}s include '${JSON.stringify(array)}'.`;
+  `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ignored ${subject}s include '${JSON.stringify(filterCriteria)}'.`;
 
-const arrayKubernetesObjectLogMessage = (subject: string, array?: string[], kubernetesObject?: KubernetesObject) =>
-  `${prefix} Object carries ${subject} '${carriedNamespace(kubernetesObject)}' but ${subject}s allowed by Capability are '${JSON.stringify(array)}'.`;
+const arrayKubernetesObjectLogMessage = (subject: string, filterCriteria?: FilterInput, filterInput?: FilterInput) =>
+  `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
 };
 
-const createFilter = <T1, T2>(
-  dataSelector: (data: FilterParams) => T1,
-  objectSelector: (data: FilterParams) => T2,
-  mismatchCheck: (data: T1, kubernetesObject?: T2) => boolean,
-  logMessage: (data: T1, kubernetesObject?: T2) => string,
+const createFilter = (
+  filterInputSelector: (data: FilterParams) => FilterInput,
+  filterCriteriaSelector: (data: FilterParams) => FilterInput,
+  mismatchCheck: (filterInput: FilterInput, filterCriteria?: FilterInput) => boolean,
+  logMessage: (filterInput: FilterInput, filterCriteria?: FilterInput) => string,
 ) => {
   return (data: FilterParams): string => {
-    const dataValue = dataSelector(data);
-    const objectValue = objectSelector(data);
-    return mismatchCheck(dataValue, objectValue) ? logMessage(dataValue, objectValue) : "";
+    const filterInput = filterInputSelector(data);
+    const filterCriteria = filterCriteriaSelector(data);
+    return mismatchCheck(filterInput, filterCriteria) ? logMessage(filterInput, filterCriteria) : "";
   };
 };
 

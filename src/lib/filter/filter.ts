@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding } from "./types";
+import { AdmissionRequest, Binding } from "../types";
 import {
   carriesIgnoredNamespacesFilter,
   mismatchedAnnotationsFilter,

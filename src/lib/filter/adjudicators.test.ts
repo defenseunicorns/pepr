@@ -4,7 +4,7 @@
 import { expect, describe, it } from "@jest/globals";
 import * as sut from "./adjudicators";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial, Event, Operation } from "./types";
+import { AdmissionRequest, Binding, DeepPartial, Event, Operation } from "../types";
 
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
