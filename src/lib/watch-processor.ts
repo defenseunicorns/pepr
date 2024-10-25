@@ -9,7 +9,7 @@ import Log from "./logger";
 import { Queue } from "./queue";
 import { Binding, Event } from "./types";
 import { metricsCollector } from "./metrics";
-import { writeHeapSnapshot } from 'node:v8';
+// import { writeHeapSnapshot } from 'node:v8';
 // import path from 'path';
 
 
@@ -21,12 +21,13 @@ import { writeHeapSnapshot } from 'node:v8';
 // setInterval(() => {
 //   const memoryUsage = process.memoryUsage();
 //   Log.debug(`Memory Usage: ${JSON.stringify(memoryUsage)}`);
-
+//   if (typeof gc === 'function') {
+//     gc();
+//   }
 //   if (process.env.PEPR_WATCH_MODE==="true") {
 //     writeSnapShot();
 //   }
-// }, 15000);
-// }, 60000 * 5);
+// }, 60000 * 1);
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
