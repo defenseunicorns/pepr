@@ -152,7 +152,7 @@ class Watcher {
             this.#latestRelistWindow = new Date().toISOString();
             this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
             void this.#list();
-        }, 30 * 1000 + jitter);
+        }, 30 * 60000);
         // Rebuild the watch every resync delay interval
         this.#resyncTimer = setInterval(this.#checkResync, 5 * 1000 + jitter);
         this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
@@ -170,7 +170,6 @@ class Watcher {
         this.#events.removeAllListeners();
         clearInterval(this.$relistTimer);
         clearInterval(this.#resyncTimer);
-        this.#streamCleanup();
         this.#abortController.abort();
     }
     /**

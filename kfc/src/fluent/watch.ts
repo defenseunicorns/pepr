@@ -187,7 +187,7 @@ export class Watcher<T extends GenericClass> {
         this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
         void this.#list();
       },
-      30* 1000 + jitter,
+      30* 60000,
       // watchCfg.relistIntervalSec * 1000 + jitter,
     );
 
