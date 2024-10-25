@@ -15,6 +15,7 @@ import {
   mismatchedNamespaceFilter,
   mismatchedNamespaceRegexFilter,
   mismatchedVersionFilter,
+  unbindableNamespacesFilter,
   uncarryableNamespaceFilter,
 } from "./adjudicatorsFilterWrapper";
 
@@ -74,6 +75,7 @@ export const shouldSkipRequest = (
   filterChain.addFilter(mismatchedVersionFilter);
   filterChain.addFilter(mismatchedNameFilter);
   filterChain.addFilter(carriesIgnoredNamespacesFilter);
+  filterChain.addFilter(unbindableNamespacesFilter);
 
   const admissionFilterMessage = filterChain.execute({
     binding,

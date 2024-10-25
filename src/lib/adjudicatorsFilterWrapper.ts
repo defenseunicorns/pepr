@@ -63,6 +63,17 @@ const createArrayObjectFilter = (
   };
 };
 
+const createArrayBindingFilter = (
+  mismatchCheck: (data: string[], obj?: Binding) => boolean,
+  logMessage: (data: string[], obj?: Binding) => string,
+) => {
+  return (data: FilterParams): string => {
+    return mismatchCheck(data.capabilityNamespaces, data.binding)
+      ? logMessage(data.capabilityNamespaces, data.binding)
+      : "";
+  };
+};
+
 export const mismatchedNameFilter = createBindingObjectFilter(
   mismatchedName,
   (data, obj) => `${prefix} Binding defines name '${definedName(data)}' but Object carries '${carriedName(obj)}'.`,
@@ -83,7 +94,7 @@ export const mismatchedNamespaceRegexFilter = createBindingObjectFilter(
 export const mismatchedNamespaceFilter = createBindingObjectFilter(
   mismatchedNamespace,
   (data, obj) =>
-    `${prefix} Binding defines namespace regexes '${JSON.stringify(definedNamespaces(data))}' but Object carries '${carriedNamespace(obj)}'.`,
+    `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(data))}' but Object carries '${carriedNamespace(obj)}'.`,
 );
 
 export const mismatchedAnnotationsFilter = createBindingObjectFilter(
@@ -100,8 +111,8 @@ export const mismatchedLabelsFilter = createBindingObjectFilter(
 
 export const mismatchedDeletionTimestampFilter = createBindingObjectFilter(
   mismatchedDeletionTimestamp,
-  (data, obj) =>
-    `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (data, obj) => `${prefix} Binding defines deletionTimestamp but Object does not carry it.`,
 );
 export const mismatchedKindFilter = createBindingRequestFilter(
   mismatchedKind,
@@ -130,5 +141,11 @@ export const carriesIgnoredNamespacesFilter = createArrayObjectFilter(
 export const uncarryableNamespaceFilter = createArrayObjectFilter(
   uncarryableNamespace,
   (data, obj) =>
-    `${prefix} Object carries namespace '${carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(data)}'.`,
+    `${prefix} Object carries namespace '${carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(data)}'.`,
+);
+
+export const unbindableNamespacesFilter = createArrayBindingFilter(
+  uncarryableNamespace,
+  (data, obj) =>
+    `${prefix} Binding carries namespace '${carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(data)}'.`,
 );
