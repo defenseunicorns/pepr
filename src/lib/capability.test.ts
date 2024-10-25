@@ -4,9 +4,10 @@ import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAc
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
+import { Operation } from "./mutate-types";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
-import { Operation, AdmissionRequest } from "./types";
+import { AdmissionRequest } from "./types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Event } from "./types";
 import { GenericClass } from "kubernetes-fluent-client";
