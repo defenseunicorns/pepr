@@ -9,7 +9,6 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { AdmissionRequest } from "./validate-types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-import { Operation } from "./mutate-types";
 import { Event } from "./types";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
