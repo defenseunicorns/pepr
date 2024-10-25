@@ -4,10 +4,8 @@
 /* eslint-disable class-methods-use-this */
 
 import { KubernetesObject } from "kubernetes-fluent-client";
-
 import { clone } from "ramda";
-import { AdmissionRequest } from "./types";
-import { ValidateActionResponse } from "./types";
+import { AdmissionRequest, ValidateActionResponse } from "./validate-types";
 import { Operation } from "./mutate-types";
 
 /**

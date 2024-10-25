@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { addFinalizer, removeFinalizer } from "./finalizer";
 import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest } from "./validate-types";
 import { Operation } from "./mutate-types";
 import { PeprMutateRequest } from "./mutate-request";
 import { Binding } from "./types";

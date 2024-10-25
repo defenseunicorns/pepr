@@ -6,7 +6,7 @@ import { kind } from "kubernetes-fluent-client";
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter";
 import { ValidateResponse } from "./k8s";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest } from "./validate-types";
 import Log from "./logger";
 import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";

@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest } from "./validate-types";
 import { Operation } from "./mutate-types";
 import { PeprMutateRequest } from "./mutate-request";
 

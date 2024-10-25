@@ -2,7 +2,7 @@
 #
 # This Action will scan dependency manifest files that change as part of a Pull Request,
 # surfacing known-vulnerable versions of the packages declared or updated in the PR.
-# Once installed, if the workflow run is marked as required, 
+# Once installed, if the workflow run is marked as required,
 # PRs introducing known-vulnerable packages will be blocked from merging.
 #
 # Source repository: https://github.com/actions/dependency-review-action
@@ -35,11 +35,11 @@ jobs:
         run: |
           npx madge --circular --ts-config tsconfig.json --extensions ts,js src/ > tmp.log || true # Force exit 0 for post-processing
           tail -n +4 tmp.log > circular-deps.log
-          if [ $(wc -l < circular-deps.log) -gt 17 ]; then
-            echo "circular-deps.log has more than 17 circular dependencies."
+          if [ $(wc -l < circular-deps.log) -gt 16 ]; then
+            echo "circular-deps.log has more than 16 circular dependencies."
             wc -l circular-deps.log
             exit 1
           else
-            echo "circular-deps.log has 17 or fewer circular dependencies."
+            echo "circular-deps.log has 16 or fewer circular dependencies."
             exit 0
           fi

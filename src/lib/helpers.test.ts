@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport, Event } from "./types";
+import { Binding, CapabilityExport } from "./types";
 import {
   addVerbIfNotExists,
   bindingAndCapabilityNSConflict,
@@ -31,6 +31,7 @@ import { promises as fs } from "fs";
 import { SpiedFunction } from "jest-mock";
 import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { Event } from "./types";
 
 export const callback = () => undefined;
 

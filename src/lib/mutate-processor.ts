@@ -8,7 +8,7 @@ import { Capability } from "./capability";
 import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter";
 import { MutateResponse } from "./k8s";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest } from "./validate-types";
 import Log from "./logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";

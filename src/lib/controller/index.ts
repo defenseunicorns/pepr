@@ -13,7 +13,8 @@ import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
-import { ResponseItem, AdmissionRequest } from "../types";
+import { ResponseItem } from "../types";
+import { AdmissionRequest } from "../validate-types";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesObject } from "kubernetes-fluent-client";
-import { GroupVersionKind } from "kubernetes-fluent-client";
+import { GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
 
 // Basic operation type for mutation operations
 export enum Operation {

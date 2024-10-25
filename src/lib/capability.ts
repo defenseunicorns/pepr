@@ -13,7 +13,6 @@ import {
   BindingWithName,
   CapabilityCfg,
   CapabilityExport,
-  Event,
   MutateAction,
   MutateActionChain,
   ValidateAction,
@@ -23,6 +22,7 @@ import {
   FinalizeActionChain,
   WhenSelector,
 } from "./types";
+import { Event } from "./types";
 import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
