@@ -12,7 +12,7 @@ export const callback = () => undefined;
 
 export const podKind = modelToGroupVersionKind(kind.Pod.name);
 
-describe("Fuzzing shouldSkipRequest", () => {
+describe("when fuzzing shouldSkipRequest", () => {
   it("should handle random inputs without crashing", () => {
     fc.assert(
       fc.property(
@@ -57,9 +57,7 @@ describe("Fuzzing shouldSkipRequest", () => {
       { numRuns: 100 },
     );
   });
-});
 
-describe("Property-Based Testing shouldSkipRequest", () => {
   it("should only skip requests that do not match the binding criteria", () => {
     fc.assert(
       fc.property(
@@ -105,25 +103,28 @@ describe("Property-Based Testing shouldSkipRequest", () => {
   });
 });
 
+describe("when checking specific properties of shouldSkipRequest()", () => {});
+
 describe("when a pod is created", () => {
+  const defaultFilters = {
+    name: "",
+    namespaces: [],
+    regexNamespaces: [],
+    regexName: "^default$",
+    labels: {},
+    annotations: {},
+    deletionTimestamp: false,
+  };
+  const defaultBinding = {
+    model: kind.Pod,
+    event: Event.Any,
+    kind: podKind,
+    filters: defaultFilters,
+    callback,
+  };
   it("should reject when regex name does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.Any,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^default$",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
-      callback,
-    };
     const pod = CreatePod();
-    expect(shouldSkipRequest(binding, pod, [])).toMatch(
+    expect(shouldSkipRequest(defaultBinding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
     );
   });
