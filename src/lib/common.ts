@@ -104,7 +104,7 @@ export enum Operation {
 }
 
 // AdmissionRequest interface for handling admission requests in mutation context
-export interface AdmissionRequest<T = KubernetesObject> {
+/* export interface AdmissionRequest<T = KubernetesObject> {
   readonly uid: string;
   readonly kind: GroupVersionKind;
   readonly resource: GroupVersionResource;
@@ -126,7 +126,7 @@ export interface AdmissionRequest<T = KubernetesObject> {
   readonly dryRun?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly options?: any;
-}
+} */
 
 // DeepPartial utility type for deep optional properties
 export type DeepPartial<T> = {
