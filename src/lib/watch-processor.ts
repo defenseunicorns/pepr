@@ -265,6 +265,7 @@ function setupWatcherWithRestart(binding: Binding, capabilityNamespaces: string[
   setInterval(async () => {
     Log.debug("Restarting watcher after 30 minutes.");
     await stopWatcher(); // Stop the current watcher
+    watcher.events.removeAllListeners();
     await startWatcher(); // Start a new watcher
   }, 1800000); // 30 minutes interval
 }
