@@ -375,3 +375,12 @@ export interface GroupVersionResource {
   readonly version: string;
   readonly resource: string;
 }
+
+export type FilterParams = {
+  binding: Binding;
+  request: AdmissionRequest;
+  capabilityNamespaces: string[];
+  ignoredNamespaces?: string[];
+};
+
+export type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;

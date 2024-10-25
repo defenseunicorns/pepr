@@ -17,7 +17,7 @@ import {
   mismatchedVersionFilter,
   unbindableNamespacesFilter,
   uncarryableNamespaceFilter,
-} from "./filterRulesWithLogs";
+} from "./filtersWithLogs";
 import { FilterChain } from "./filterChain";
 
 /**

@@ -1,8 +1,5 @@
-import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding } from "../types";
+import { FilterInput } from "../types";
 import { carriedName, carriedNamespace, definedName } from "./adjudicators";
-
-type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;
 
 const prefix = "Ignoring Admission Callback:";
 

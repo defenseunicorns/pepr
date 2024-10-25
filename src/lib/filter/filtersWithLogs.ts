@@ -14,22 +14,13 @@ import {
   mismatchedVersion,
   uncarryableNamespace,
 } from "./adjudicators";
-import { AdmissionRequest, Binding, Operation } from "../types";
+import { FilterInput, FilterParams, Operation } from "../types";
 import {
   arrayKubernetesObjectLogMessage,
   bindingAdmissionRequestLogMessage,
   bindingKubernetesObjectLogMessage,
   ignoreArrayKubernetesObjectLogMessage,
 } from "./logMessages";
-
-type FilterParams = {
-  binding: Binding;
-  request: AdmissionRequest;
-  capabilityNamespaces: string[];
-  ignoredNamespaces?: string[];
-};
-
-type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
