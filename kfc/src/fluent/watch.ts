@@ -208,7 +208,6 @@ export class Watcher<T extends GenericClass> {
     this.#events.removeAllListeners();
     clearInterval(this.$relistTimer);
     clearInterval(this.#resyncTimer);
-    this.#streamCleanup();
     this.#abortController.abort();
   }
 

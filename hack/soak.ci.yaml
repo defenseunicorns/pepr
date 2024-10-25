@@ -274,8 +274,6 @@ spec:
           # https://blog.risingstack.com/finding-a-memory-leak-in-node-js/
           command:
             - node
-            - --expose-gc
-            - --max-old-space-size=100
             - /app/node_modules/pepr/dist/controller.js
             - 72bd9a27f01b365525d6bd9b153743cddc39044d105345c3c2bc5de405dbcdf3
           # readinessProbe:
