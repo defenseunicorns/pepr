@@ -148,20 +148,20 @@ export class Watcher<T extends GenericClass> {
     this.#useHTTP2 = watchCfg.useHTTP2 ?? false;
 
     // Add random jitter to the relist/resync intervals (up to 1 second)
-    const jitter = Math.floor(Math.random() * 1000);
+    // const jitter = Math.floor(Math.random() * 1000);
 
-    // Check every relist interval for cache staleness
-    this.$relistTimer = setInterval(
-      () => {
-        this.#latestRelistWindow = new Date().toISOString();
-        this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
-        void this.#list();
-      },
-      watchCfg.relistIntervalSec * 1000 + jitter,
-    );
+    // // Check every relist interval for cache staleness
+    // this.$relistTimer = setInterval(
+    //   () => {
+    //     this.#latestRelistWindow = new Date().toISOString();
+    //     this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
+    //     void this.#list();
+    //   },
+    //   watchCfg.relistIntervalSec * 1000 + jitter,
+    // );
 
-    // Rebuild the watch every resync delay interval
-    this.#resyncTimer = setInterval(this.#checkResync, watchCfg.resyncDelaySec * 1000 + jitter);
+    // // Rebuild the watch every resync delay interval
+    // this.#resyncTimer = setInterval(this.#checkResync, watchCfg.resyncDelaySec * 1000 + jitter);
 
     // Bind class properties
     this.#model = model;
@@ -179,6 +179,20 @@ export class Watcher<T extends GenericClass> {
    * @returns The AbortController for the watch.
    */
   public async start(): Promise<AbortController> {
+    const jitter = Math.floor(Math.random() * 1000);
+      // Check every relist interval for cache staleness
+    this.$relistTimer = setInterval(
+      () => {
+        this.#latestRelistWindow = new Date().toISOString();
+        this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
+        void this.#list();
+      },
+      30* 1000 + jitter,
+      // watchCfg.relistIntervalSec * 1000 + jitter,
+    );
+
+    // Rebuild the watch every resync delay interval
+    this.#resyncTimer = setInterval(this.#checkResync, 5 * 1000 + jitter);
     this.#events.emit(WatchEvent.INIT_CACHE_MISS, this.#latestRelistWindow);
     if (this.#useHTTP2) {
       // try void here
@@ -191,6 +205,7 @@ export class Watcher<T extends GenericClass> {
 
   /** Close the watch. Also available on the AbortController returned by {@link Watcher.start}. */
   public close() {
+    this.#events.removeAllListeners();
     clearInterval(this.$relistTimer);
     clearInterval(this.#resyncTimer);
     this.#streamCleanup();
@@ -689,7 +704,8 @@ export class Watcher<T extends GenericClass> {
       this.#reconnectAttempts++; // Increment the reconnect attempts
 
       // Attempt the HTTP/2 watch again
-      void this.#http2Watch();
+      // void this.#http2Watch();
+      void this.start();
     }, delay + jitter);
   }
 
@@ -735,6 +751,7 @@ export class Watcher<T extends GenericClass> {
     if (error) {
       void this.#errHandler(error);
     }
+
 
     this.#scheduleReconnect();
   }
