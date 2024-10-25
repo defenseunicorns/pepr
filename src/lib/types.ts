@@ -7,17 +7,7 @@ import { Logger } from "pino";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { ValidateActionResponse } from "./validate-types";
-
-/**
- * The type of Kubernetes mutating webhook event that the action is registered for.
- */
-export enum Event {
-  Create = "CREATE",
-  Update = "UPDATE",
-  Delete = "DELETE",
-  CreateOrUpdate = "CREATEORUPDATE",
-  Any = "*",
-}
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 /**
  * Specifically for deploying images with a private registry
@@ -44,6 +34,17 @@ export interface ResponseItem {
   };
 }
 
+/**
+ * The type of Kubernetes mutating webhook event that the action is registered for.
+ */
+export enum Event {
+  Create = "CREATE",
+  Update = "UPDATE",
+  Delete = "DELETE",
+  CreateOrUpdate = "CREATEORUPDATE",
+  Any = "*",
+}
+
 export interface CapabilityCfg {
   /**
    * The name of the capability. This should be unique.
@@ -63,6 +64,7 @@ export interface CapabilityCfg {
 export interface CapabilityExport extends CapabilityCfg {
   bindings: Binding[];
   hasSchedule: boolean;
+  rbac?: PolicyRule[];
 }
 
 export type WhenSelector<T extends GenericClass> = {

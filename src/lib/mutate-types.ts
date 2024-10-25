@@ -3,7 +3,7 @@
 
 import { GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
 
-// Basic operation type for mutation operations
+// Operation type for mutation operations
 export enum Operation {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
@@ -11,7 +11,7 @@ export enum Operation {
   CONNECT = "CONNECT",
 }
 
-// AdmissionRequest interface for handling admission requests in the mutation context
+// AdmissionRequest interface for handling admission requests in mutation context
 export interface AdmissionRequest<T = KubernetesObject> {
   readonly uid: string;
   readonly kind: GroupVersionKind;

@@ -61,7 +61,7 @@ export function validateHash(expectedHash: string): void {
   }
 }
 
-type RBACMap = {
+export type RBACMap = {
   [key: string]: {
     verbs: string[];
     plural: string;
@@ -167,6 +167,14 @@ export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
       if (!acc[key] && binding.isWatch) {
         acc[key] = {
           verbs: ["watch"],
+          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
+        };
+      }
+
+      // Add finalizer rbac
+      if (binding.isFinalize) {
+        acc[key] = {
+          verbs: ["patch"],
           plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
         };
       }
