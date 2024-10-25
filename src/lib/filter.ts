@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding } from "./types";
-import { AdmissionRequest } from "./validate-types";
-import { Operation } from "./mutate-types";
+import { AdmissionRequest } from "./common";
+import { Operation } from "./common";
 import {
   carriesIgnoredNamespace,
   carriedName,

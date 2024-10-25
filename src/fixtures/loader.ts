@@ -1,6 +1,6 @@
 import { kind } from "kubernetes-fluent-client";
 
-import { AdmissionRequest } from "../lib/validate-types";
+import { AdmissionRequest } from "../lib/common";
 import createPod from "./data/create-pod.json";
 import deletePod from "./data/delete-pod.json";
 

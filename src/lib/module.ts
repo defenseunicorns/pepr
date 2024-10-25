@@ -6,7 +6,7 @@ import { Controller } from "./controller";
 import { ValidateError } from "./errors";
 import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
 import { CapabilityExport } from "./types";
-import { AdmissionRequest } from "./validate-types";
+import { AdmissionRequest } from "./common";
 import { setupWatch } from "./watch-processor";
 import { Log } from "../lib";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";

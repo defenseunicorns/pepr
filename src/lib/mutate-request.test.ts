@@ -3,8 +3,8 @@
 
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest } from "./validate-types";
-import { Operation } from "./mutate-types";
+import { AdmissionRequest } from "./common";
+import { Operation } from "./common";
 import { PeprMutateRequest } from "./mutate-request";
 
 describe("PeprMutateRequest", () => {

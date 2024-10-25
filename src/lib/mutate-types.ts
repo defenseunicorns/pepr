@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
+/* import { GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
+import type { GroupVersionResource } from "./common";
 
 // Operation type for mutation operations
 export enum Operation {
@@ -39,11 +40,11 @@ export interface AdmissionRequest<T = KubernetesObject> {
 // DeepPartial utility type for deep optional properties
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-};
+}; */
 
 // GroupVersionResource interface for resource identification
-export interface GroupVersionResource {
+/* export interface GroupVersionResource {
   readonly group: string;
   readonly version: string;
   readonly resource: string;
-}
+} */

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Event } from "./types";
-import { Operation } from "./mutate-types";
+import { Operation } from "./common";
 import {
   __,
   allPass,

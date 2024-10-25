@@ -14,7 +14,7 @@ import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { PeprControllerStore } from "./store";
 import { ResponseItem } from "../types";
-import { AdmissionRequest } from "../validate-types";
+import { AdmissionRequest } from "../common";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");

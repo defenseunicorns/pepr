@@ -8,7 +8,7 @@ import { CreatePod, DeletePod } from "../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 import { Binding } from "./types";
 import { Event } from "./types";
-import { AdmissionRequest } from "./validate-types";
+import { AdmissionRequest } from "./common";
 
 export const callback = () => undefined;
 
