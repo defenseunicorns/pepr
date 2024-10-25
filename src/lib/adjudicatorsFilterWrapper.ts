@@ -65,60 +65,60 @@ const createArrayObjectFilter = (
 
 export const mismatchedNameFilter = createBindingObjectFilter(
   mismatchedName,
-  (data, obj) => `${prefix} data.binding defines name '${definedName(data)}' but Object carries '${carriedName(obj)}'.`,
+  (data, obj) => `${prefix} Binding defines name '${definedName(data)}' but Object carries '${carriedName(obj)}'.`,
 );
 
 export const mismatchedNameRegexFilter = createBindingObjectFilter(
   mismatchedNameRegex,
   (data, obj) =>
-    `${prefix} data.binding defines name regex '${definedNameRegex(data)}' but Object carries '${carriedName(obj)}'.`,
+    `${prefix} Binding defines name regex '${definedNameRegex(data)}' but Object carries '${carriedName(obj)}'.`,
 );
 
 export const mismatchedNamespaceRegexFilter = createBindingObjectFilter(
   mismatchedNamespaceRegex,
   (data, obj) =>
-    `${prefix} data.binding defines namespace regexes '${JSON.stringify(definedNamespaceRegexes(data))}' but Object carries '${carriedNamespace(obj)}'.`,
+    `${prefix} Binding defines namespace regexes '${JSON.stringify(definedNamespaceRegexes(data))}' but Object carries '${carriedNamespace(obj)}'.`,
 );
 
 export const mismatchedNamespaceFilter = createBindingObjectFilter(
   mismatchedNamespace,
   (data, obj) =>
-    `${prefix} data.binding defines namespace regexes '${JSON.stringify(definedNamespaces(data))}' but Object carries '${carriedNamespace(obj)}'.`,
+    `${prefix} Binding defines namespace regexes '${JSON.stringify(definedNamespaces(data))}' but Object carries '${carriedNamespace(obj)}'.`,
 );
 
 export const mismatchedAnnotationsFilter = createBindingObjectFilter(
   mismatchedAnnotations,
   (data, obj) =>
-    `${prefix} data.binding defines annotations '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+    `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
 );
 
 export const mismatchedLabelsFilter = createBindingObjectFilter(
   mismatchedLabels,
   (data, obj) =>
-    `${prefix} data.binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+    `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
 );
 
 export const mismatchedDeletionTimestampFilter = createBindingObjectFilter(
   mismatchedDeletionTimestamp,
   (data, obj) =>
-    `${prefix} data.binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
+    `${prefix} Binding defines labels '${JSON.stringify(definedAnnotations(data))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`,
 );
 export const mismatchedKindFilter = createBindingRequestFilter(
   mismatchedKind,
   (data, request) =>
-    `${prefix} data.binding defines kind '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+    `${prefix} Binding defines kind '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
 );
 
 export const mismatchedGroupFilter = createBindingObjectFilter(
   mismatchedGroup,
   (data, request) =>
-    `${prefix} data.binding defines group '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+    `${prefix} Binding defines group '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
 );
 
 export const mismatchedVersionFilter = createBindingRequestFilter(
   mismatchedVersion,
   (data, request) =>
-    `${prefix} data.binding defines version '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
+    `${prefix} Binding defines version '${definedKind(data)}' but Request declares '${declaredKind(request)}'.`,
 );
 
 export const carriesIgnoredNamespacesFilter = createArrayObjectFilter(
