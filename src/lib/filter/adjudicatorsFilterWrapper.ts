@@ -1,11 +1,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
-  carriedName,
   carriedNamespace,
   carriesIgnoredNamespace,
-  declaredKind,
-  definedKind,
-  definedName,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
   mismatchedGroup,
@@ -19,6 +15,12 @@ import {
   uncarryableNamespace,
 } from "./adjudicators";
 import { AdmissionRequest, Binding, Operation } from "../types";
+import {
+  arrayKubernetesObjectLogMessage,
+  bindingAdmissionRequestLogMessage,
+  bindingKubernetesObjectLogMessage,
+  ignoreArrayKubernetesObjectLogMessage,
+} from "./logMessages";
 
 type FilterParams = {
   binding: Binding;
@@ -28,24 +30,6 @@ type FilterParams = {
 };
 
 type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;
-
-const prefix = "Ignoring Admission Callback:";
-
-const bindingKubernetesObjectLogMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) =>
-  `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
-
-const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput, request?: FilterInput) =>
-  `${prefix} Binding defines ${subject} '${definedName(binding)}' but Request declares '${carriedName(request)}'.`;
-
-const ignoreArrayKubernetesObjectLogMessage = (
-  subject: string,
-  filterCriteria?: FilterInput,
-  filterInput?: FilterInput,
-) =>
-  `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ignored ${subject}s include '${JSON.stringify(filterCriteria)}'.`;
-
-const arrayKubernetesObjectLogMessage = (subject: string, filterCriteria?: FilterInput, filterInput?: FilterInput) =>
-  `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
@@ -147,10 +131,10 @@ export const mismatchedGroupFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedGroup(binding, kubernetesObject),
-  (binding, kubernetesObject) =>
-    `${prefix} Binding defines group '${definedKind(binding)}' but Request declares '${declaredKind(kubernetesObject)}'.`,
+  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("group", binding, kubernetesObject),
 );
 
+const prefix = "Ignoring Admission Callback:";
 export const mismatchedDeletionTimestampFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),

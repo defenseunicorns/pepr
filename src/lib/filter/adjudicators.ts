@@ -58,7 +58,6 @@ export const carriesLabels = pipe(carriedLabels, equals({}), not);
   Binding collectors
 */
 
-//TODO: Defnined can go??
 export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
