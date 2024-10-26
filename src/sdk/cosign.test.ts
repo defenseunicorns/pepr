@@ -244,32 +244,6 @@ async function cleanWorkdirs() {
   await Promise.all(workdirs.map(m => rm(m, { recursive: true, force: true })));
 }
 
-// async function downloadCosign() {
-//   let result;
-
-//   result = await cmdStdout("npm root");
-//   const local = `${result}/.bin/cosign`;
-
-//   if (await exists(local)) {
-//     return local;
-//   }
-
-//   result = await exec("uname -s");
-//   const os = result.stdout.trim().toLowerCase();
-
-//   result = await exec("uname -m");
-//   const arch = result.stdout.trim().replace("x86_64", "amd64");
-
-//   const got = await httpGet("https://api.github.com/repos/sigstore/cosign/releases/latest");
-//   const ver = got["tag_name"];
-
-//   const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
-//   await httpDownload(remote, local);
-//   chmodSync(local, 0o777);
-
-//   return local;
-// }
-
 enum OS {
   Linux = "Linux",
   Mac = "Darwin",
@@ -294,6 +268,7 @@ async function downloadCosign(path: string, binName: string) {
 
   let os = await sniffOS();
   os = os === OS.Linux ? OS.Linux.toLowerCase() : os;
+  os = os === OS.Mac ? OS.Mac.toLowerCase() : os;
 
   let arch = await sniffArch();
   arch = arch === Arch.x86_64 ? "amd64" : arch;
