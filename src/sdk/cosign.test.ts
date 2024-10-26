@@ -213,70 +213,6 @@ async function get(rawUrl: string, mediaType: string): Promise<any> {
   });
 }
 
-// /* eslint-disable  @typescript-eslint/no-explicit-any */
-// async function getManifest(url: string): Promise<any> {
-//   return new Promise((resolve, reject) => {
-//     const MANIFEST_MEDIA_TYPE_DKR1 = "application/vnd.docker.distribution.manifest.v1+prettyjws";
-//     const MANIFEST_MEDIA_TYPE_DKR2 = "application/vnd.docker.distribution.manifest.v2+json";
-//     const MANIFEST_MEDIA_TYPE_OCI = "application/vnd.oci.image.manifest.v1+json";
-//     const opts = { headers: { "Accept": MANIFEST_MEDIA_TYPE_DKR2 } };
-
-//     // DKR1: has Docker-Content-Digest response header (but it's wrong!)
-//     // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
-//     // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
-//     //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
-
-//     // So:
-//     //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
-//     //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
-//     //    - make sure it matches what `cosign triangulate` gives!
-//     //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
-//     //  then if DKR2, grab Docker-Content-Digest response header
-//     //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
-
-//     https
-//       .get(url, opts, resp => {
-//         const { statusCode } = resp;
-//         const contentType = resp.headers["content-type"] || "";
-
-//         let error;
-//         if (!statusCode?.toString().startsWith("2")) {
-//           reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
-//           error = true;
-//         } else if (
-//           !contentType.includes(MANIFEST_MEDIA_TYPE_OCI) &&
-//           !contentType.includes(MANIFEST_MEDIA_TYPE_DKR2)
-//         ) {
-//           reject(new Error(
-//             `err: content type: ${contentType}: expected one of ` +
-//             `['${MANIFEST_MEDIA_TYPE_OCI}', '${MANIFEST_MEDIA_TYPE_DKR2}']`)
-//           );
-//           error = true;
-//         }
-
-//         if (error) {
-//           resp.resume();
-//           return;
-//         }
-
-//         resp.setEncoding("utf8");
-
-//         let raw = "";
-//         resp.on("data", chunk => {
-//           raw += chunk;
-//         });
-//         resp.on("end", () => {
-//           try {
-//             resolve(JSON.parse(raw));
-//           } catch (e) {
-//             reject(e);
-//           }
-//         });
-//       })
-//       .on("error", e => reject(e));
-//   });
-// }
-
 const cmd = async (command: string, opts = {}) => await exec(command, opts);
 const cmdStdout = async (command: string, opts = {}) => (await cmd(command, opts)).stdout.trim();
 const cmdStderr = async (command: string, opts = {}) => (await cmd(command, opts)).stderr.trim();
@@ -288,32 +224,6 @@ const exists = async (path: string) => {
     return false;
   }
 };
-
-async function downloadCosign() {
-  let result;
-
-  result = await cmdStdout("npm root");
-  const local = `${result}/.bin/cosign`;
-
-  if (await exists(local)) {
-    return local;
-  }
-
-  result = await exec("uname -s");
-  const os = result.stdout.trim().toLowerCase();
-
-  result = await exec("uname -m");
-  const arch = result.stdout.trim().replace("x86_64", "amd64");
-
-  const got = await httpGet("https://api.github.com/repos/sigstore/cosign/releases/latest");
-  const ver = got["tag_name"];
-
-  const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
-  await httpDownload(remote, local);
-  chmodSync(local, 0o777);
-
-  return local;
-}
 
 const workdirPrefix = () => join(tmpdir(), `${basename(__filename)}-`);
 
@@ -334,6 +244,88 @@ async function cleanWorkdirs() {
   await Promise.all(workdirs.map(m => rm(m, { recursive: true, force: true })));
 }
 
+// async function downloadCosign() {
+//   let result;
+
+//   result = await cmdStdout("npm root");
+//   const local = `${result}/.bin/cosign`;
+
+//   if (await exists(local)) {
+//     return local;
+//   }
+
+//   result = await exec("uname -s");
+//   const os = result.stdout.trim().toLowerCase();
+
+//   result = await exec("uname -m");
+//   const arch = result.stdout.trim().replace("x86_64", "amd64");
+
+//   const got = await httpGet("https://api.github.com/repos/sigstore/cosign/releases/latest");
+//   const ver = got["tag_name"];
+
+//   const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
+//   await httpDownload(remote, local);
+//   chmodSync(local, 0o777);
+
+//   return local;
+// }
+
+enum OS {
+  Linux = "Linux",
+  Mac = "Darwin",
+}
+
+enum Arch {
+  x86_64 = "x86_64",
+  arm64 = "arm64",
+}
+
+const sniffOS = async () => await cmdStdout("uname -s");
+const sniffArch = async () => await cmdStdout("uname -m");
+
+async function downloadCosign(path: string, binName: string) {
+  // result = await cmdStdout("npm root");
+  // const local = `${result}/.bin/cosign`;
+  const local = join(path, binName);
+
+  if (await exists(local)) {
+    return local;
+  }
+
+  let os = await sniffOS();
+  os = os === OS.Linux ? OS.Linux.toLowerCase() : os;
+
+  let arch = await sniffArch();
+  arch = arch === Arch.x86_64 ? "amd64" : arch;
+
+  const got = await httpGet("https://api.github.com/repos/sigstore/cosign/releases/latest");
+  const ver = got["tag_name"];
+
+  const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
+  await httpDownload(remote, local);
+  chmodSync(local, 0o777);
+
+  return local;
+}
+
+describe.skip("downloadCosign()", () => {
+  let workdir: string;
+
+  beforeAll(async () => {
+    workdir = await createWorkdir();
+  });
+
+  afterAll(async () => {
+    await cleanWorkdirs();
+  });
+
+  it("works", async () => {
+    const cosign = await downloadCosign(workdir, "cosign");
+    const result = await cmdStdout(`${cosign} version`, { cwd: workdir });
+    expect(result).toMatch(/cosign: A tool/);
+  });
+});
+
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 const timed = async (msg: string, func: () => Promise<any>) => {
   console.time(msg);
@@ -347,7 +339,6 @@ const indent = (msg: string) =>
     .split("\n")
     .map(m => `  ${m}`)
     .join("\n");
-
 const secs = (s: number) => s * 1000;
 const mins = (m: number) => m * secs(60);
 
@@ -363,7 +354,10 @@ describe("cosign CLI - pub/prv keys", () => {
   const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
   beforeAll(async () => {
-    cosign = await timed("getting cosign CLI binary", downloadCosign);
+    cosign = await timed(
+      "getting cosign CLI binary",
+      async () => await downloadCosign(workdir, "cosign"),
+    );
     console.log(`  cosign: ${cosign}`);
 
     workdir = await timed("creating workdir", createWorkdir);
@@ -405,7 +399,7 @@ describe("cosign CLI - pub/prv keys", () => {
   });
 });
 
-describe.only("sigstore-js - pub/prv keys", () => {
+describe("sigstore-js - pub/prv keys", () => {
   let cosign: string;
   let workdir: string;
 
@@ -419,7 +413,10 @@ describe.only("sigstore-js - pub/prv keys", () => {
   const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
   beforeAll(async () => {
-    cosign = await timed("getting cosign CLI binary", downloadCosign);
+    cosign = await timed(
+      "getting cosign CLI binary",
+      async () => await downloadCosign(workdir, "cosign"),
+    );
     console.log(`  cosign: ${cosign}`);
 
     workdir = await timed("creating workdir", createWorkdir);
