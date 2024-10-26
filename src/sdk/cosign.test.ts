@@ -6,7 +6,8 @@ import { describe, it } from "@jest/globals";
 import { promisify } from "node:util";
 import * as child_process from "node:child_process";
 const exec = promisify(child_process.exec);
-import * as https from "node:https";
+// import * as https from "node:https";
+import { https } from "follow-redirects";
 import { access, mkdtemp, readFile, rm, writeFile, unlink } from "node:fs/promises";
 // import { chmodSync, createWriteStream, PathLike, readdirSync, readFileSync } from "node:fs";
 import { chmodSync, createWriteStream, readdirSync } from "node:fs";
@@ -139,8 +140,8 @@ async function head(rawUrl: string, mediaType: string): Promise<any> {
         const { statusCode } = resp;
 
         let error;
-        if (!statusCode?.toString().startsWith("2")) {
-          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
+        if (!statusCode?.toString().startsWith("2") && !statusCode?.toString().startsWith("3")) {
+          reject(new Error(`err: status code: ${statusCode}: expected 2xx|3xx`));
           error = true;
         }
 
@@ -181,7 +182,9 @@ async function get(rawUrl: string, mediaType: string): Promise<any> {
         const { statusCode } = resp;
 
         let error;
-        if (!statusCode?.toString().startsWith("2")) {
+
+        if (!statusCode?.toString().startsWith("2") && !statusCode?.toString().startsWith("3")) {
+          console.log(resp.headers);
           reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
           error = true;
         }
@@ -805,23 +808,6 @@ describe.only("sigstore-js - pub/prv keys", () => {
     const manifestUrl = `https://${irefHost}/v2/${irefName}/manifests/${irefTag}`;
     console.log("manifestUrl", manifestUrl);
 
-    // get digest for tag'd image
-    // perfrom "well-known" conversion on image w/ digest to find .sig file (in lieu of cosign triangulate)
-    // pull .sig file blob to access "docker-manifest-digest" (for use in verifier)
-
-    // DKR1: has Docker-Content-Digest response header (but it's wrong!)
-    // DKR2: has Docker-Content-Digest response header and it's right (it matches cosign triangulate's val)
-    // OCI: has... to have the manifest JSON.stringified() & sha256sum'd?
-    //  i.e. https://blog.sigstore.dev/cosign-image-signatures-77bab238a93/#the-payload
-
-    // So:
-    //  HEAD request w/ OCI Accept header to the /manifest endpoint & check content type
-    //  if OCI, JSON.parse()/stringify() manifest body & sha256sum -- that's the image digest..?
-    //    - make sure it matches what `cosign triangulate` gives!
-    //  if DKR1, reg doesn't support OCI, so re-call /manifest endpoint with DKR2 & check type
-    //  then if DKR2, grab Docker-Content-Digest response header
-    //  else (still DKR1) reg doesn't support DKR2, so quit w/ error
-
     const supportsMediaType = async (url: string, mediaType: string) => {
       return (await head(url, mediaType))["content-type"] === mediaType;
     };
@@ -835,13 +821,11 @@ describe.only("sigstore-js - pub/prv keys", () => {
     };
 
     // { head: {}, body: "" }
-    const imageManifest = (await canOciV1Manifest(manifestUrl))
-      ? await get(manifestUrl, MediaTypeOciV1.Manifest)
-      : (await canDockerV2Manifest(manifestUrl))
-        ? await get(manifestUrl, MediaTypeDockerV2.Manifest)
-        : (() => {
-            throw "Can't pull image manifest with supported MediaType.";
-          })();
+    // prettier-ignore
+    const imageManifest = 
+      await canOciV1Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeOciV1.Manifest) :
+      await canDockerV2Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeDockerV2.Manifest) :
+      (() => { throw "Can't pull image manifest with supported MediaType." })();
     console.log("imageManifest", imageManifest);
 
     const imageDigest = `sha256:${crypto
@@ -851,10 +835,30 @@ describe.only("sigstore-js - pub/prv keys", () => {
       .toString()}`;
     console.log("imageDigest", imageDigest);
 
+    const sigTag = `${imageDigest.replace(":", "-")}.sig`;
+    console.log("sigTag", sigTag);
+
+    const triangulated = `${irefHost}/${irefName}:${sigTag}`;
+    console.log("triangulated", triangulated);
+
+    const sigImageUrl = `https://${irefHost}/v2/${irefName}/manifests/${sigTag}`;
+    console.log("sigImageUrl", sigImageUrl);
+
+    const sigImageManifestResp = await get(sigImageUrl, MediaTypeOciV1.Manifest);
+    const sigImageManifest = JSON.parse(sigImageManifestResp.body);
+    console.log("sigImageManifest", sigImageManifest);
+
+    const sigBlobDigest = sigImageManifest.layers.at(0).digest;
+    console.log("sigBlobDigest", sigBlobDigest);
+
+    const sigBlobUrl = `https://${irefHost}/v2/${irefName}/blobs/${sigBlobDigest}`;
+    console.log("sigBlobUrl", sigBlobUrl);
+
+    const sigBlobResp = await get(sigBlobUrl, "application/octet-stream");
+    const sigBlob = sigBlobResp.body;
+    console.log("sigBlob", sigBlob);
+
     console.log("iref", iref);
-    // LEFTOFF:
-    // - try to sha256 has the docker-style manifest & see if it matches with the
-    //    crane-defined sha:??? value!
 
     const bundle = bundleFromJSON({
       mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
@@ -867,21 +871,23 @@ describe.only("sigstore-js - pub/prv keys", () => {
           rfc3161Timestamps: [],
         },
       },
-      // how do I derive message digest from a signed image..?
       messageSignature: {
         messageDigest: {
           algorithm: "SHA2_256",
-          digest: "aOZWslHmfoNYvvhIOrDVHGYZ8+ehqfDnWDjUH/No9yg=", //???
+          digest: crypto.createHash("sha256").update(sigBlob).digest().toString(),
         },
         signature: sig,
       },
     });
 
-    const signedEntity = toSignedEntity(bundle, Buffer.from("hello, world!"));
+    // const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob + "nope!"));
+    const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob));
 
     subject.verify(signedEntity);
   }, 10000);
 });
+
+// TODO: figure out how to test against Docker Registry & Zot Registry (for boty docker & OCI mediatypes )
 
 describe.skip("verifyImage()", () => {
   let iref: string;
