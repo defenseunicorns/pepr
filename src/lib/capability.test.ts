@@ -5,7 +5,6 @@ import {
   AdmissionRequest,
   CapabilityCfg,
   FinalizeAction,
-  IPeprMutateRequest,
   IPeprValidateRequest,
   MutateAction,
   ValidateAction,
@@ -136,7 +135,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -171,7 +170,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Mutate action log");
       },
     );
@@ -210,7 +209,7 @@ describe("Capability", () => {
     const capability = new Capability(complexCapabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -249,13 +248,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
 
     const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );

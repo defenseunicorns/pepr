@@ -6,6 +6,7 @@ import { Event, Operation } from "./enums";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { PeprMutateRequest } from "./mutate-request";
 
 // DeepPartial utility type for deep optional properties
 export type DeepPartial<T> = {
@@ -222,7 +223,7 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
 };
 
 // Interface for PeprMutateRequest
-export interface IPeprMutateRequest<T extends KubernetesObject> {
+/* export interface IPeprMutateRequest<T extends KubernetesObject> {
   Raw: T;
   PermitSideEffects: boolean;
   readonly IsDryRun: boolean | undefined;
@@ -236,7 +237,7 @@ export interface IPeprMutateRequest<T extends KubernetesObject> {
   RemoveAnnotation(key: string): this;
   HasLabel(key: string): boolean;
   HasAnnotation(key: string): boolean;
-}
+} */
 
 // Interface for PeprValidateRequest
 export interface IPeprValidateRequest<T extends KubernetesObject> {
@@ -251,9 +252,9 @@ export interface IPeprValidateRequest<T extends KubernetesObject> {
 }
 
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: IPeprMutateRequest<K>,
+  req: PeprMutateRequest<K>,
   logger?: Logger,
-) => Promise<void> | void | Promise<IPeprMutateRequest<K>> | IPeprMutateRequest<K>;
+) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
   req: IPeprValidateRequest<K>,
