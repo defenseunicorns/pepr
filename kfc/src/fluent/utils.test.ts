@@ -123,7 +123,6 @@ describe("kubeExec Function", () => {
   const fakeUrl = new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake");
   const fakeOpts = {
     body: JSON.stringify(fakePayload),
-    compress: true,
     headers: new Headers({
       "Content-Type": "application/json",
       "User-Agent": `kubernetes-fluent-client`,
@@ -164,7 +163,6 @@ describe("kubeExec Function", () => {
       new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake/status"),
       expect.objectContaining({
         method: "PATCH",
-        compress: true,
         headers: new Headers({
           "Content-Type": "application/merge-patch+json",
           "User-Agent": `kubernetes-fluent-client`,
@@ -191,7 +189,6 @@ describe("kubeExec Function", () => {
       new URL("http://jest-test:8080/api/v1/namespaces/default/pods/fake"),
       expect.objectContaining({
         method: "PATCH",
-        compress: true,
         headers: new Headers({
           "Content-Type": "application/json-patch+json",
           "User-Agent": `kubernetes-fluent-client`,
@@ -218,7 +215,6 @@ describe("kubeExec Function", () => {
       ),
       expect.objectContaining({
         method: "PATCH",
-        compress: true,
         headers: new Headers({
           "Content-Type": "application/apply-patch+yaml",
           "User-Agent": `kubernetes-fluent-client`,
@@ -245,7 +241,6 @@ describe("kubeExec Function", () => {
       ),
       expect.objectContaining({
         method: "PATCH",
-        compress: true,
         headers: new Headers({
           "Content-Type": "application/apply-patch+yaml",
           "User-Agent": `kubernetes-fluent-client`,

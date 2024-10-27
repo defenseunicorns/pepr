@@ -68,7 +68,7 @@ export function getOrCreateQueue(obj: KubernetesObject) {
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
+  // useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
   resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10) : 5,
   lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
@@ -189,17 +189,17 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   });
 
 
-  watcher.events.on(WatchEvent.MEMORY_USAGE, memoryUsage => {
-    logEvent(WatchEvent.MEMORY_USAGE, JSON.stringify(memoryUsage));
-  });
+  // watcher.events.on(WatchEvent.MEMORY_USAGE, memoryUsage => {
+  //   logEvent(WatchEvent.MEMORY_USAGE, JSON.stringify(memoryUsage));
+  // });
 
-  watcher.events.on(WatchEvent.HTTP2_REQUEST_END, () => {
-    logEvent(WatchEvent.HTTP2_REQUEST_END)
-  });
+  // watcher.events.on(WatchEvent.HTTP2_REQUEST_END, () => {
+  //   logEvent(WatchEvent.HTTP2_REQUEST_END)
+  // });
 
-  watcher.events.on(WatchEvent.HTTP2_REQUEST_CLOSE, () => {
-    logEvent(WatchEvent.HTTP2_REQUEST_END)
-  });
+  // watcher.events.on(WatchEvent.HTTP2_REQUEST_CLOSE, () => {
+  //   logEvent(WatchEvent.HTTP2_REQUEST_END)
+  // });
 
   // Start the watch
   try {
