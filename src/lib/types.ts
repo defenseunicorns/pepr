@@ -2,12 +2,15 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { Operation } from "./mutate-types";
+import { Event, Operation } from "./enums";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
-import { PeprMutateRequest } from "./mutate-request";
-import { PeprValidateRequest } from "./validate-request";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+
+// DeepPartial utility type for deep optional properties
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 /**
  * Specifically for deploying images with a private registry
@@ -32,17 +35,6 @@ export interface ResponseItem {
   status: {
     message: string;
   };
-}
-
-/**
- * The type of Kubernetes mutating webhook event that the action is registered for.
- */
-export enum Event {
-  Create = "CREATE",
-  Update = "UPDATE",
-  Delete = "DELETE",
-  CreateOrUpdate = "CREATEORUPDATE",
-  Any = "*",
 }
 
 export interface CapabilityCfg {
@@ -229,13 +221,42 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
   Validate: (action: ValidateAction<T, InstanceType<T>>) => ValidateActionChain<T>;
 };
 
+// Interface for PeprMutateRequest
+export interface IPeprMutateRequest<T extends KubernetesObject> {
+  Raw: T;
+  PermitSideEffects: boolean;
+  readonly IsDryRun: boolean | undefined;
+  OldResource: T | undefined;
+  Request: AdmissionRequest<T>;
+
+  Merge(obj: DeepPartial<T>): void;
+  SetLabel(key: string, value: string): this;
+  SetAnnotation(key: string, value: string): this;
+  RemoveLabel(key: string): this;
+  RemoveAnnotation(key: string): this;
+  HasLabel(key: string): boolean;
+  HasAnnotation(key: string): boolean;
+}
+
+// Interface for PeprValidateRequest
+export interface IPeprValidateRequest<T extends KubernetesObject> {
+  Raw: T;
+  OldResource: T | undefined;
+  Request: AdmissionRequest<T>;
+
+  HasLabel(key: string): boolean;
+  HasAnnotation(key: string): boolean;
+  Approve(): ValidateActionResponse;
+  Deny(statusMessage?: string, statusCode?: number): ValidateActionResponse;
+}
+
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprMutateRequest<K>,
+  req: IPeprMutateRequest<K>,
   logger?: Logger,
-) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
+) => Promise<void> | void | Promise<IPeprMutateRequest<K>> | IPeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprValidateRequest<K>,
+  req: IPeprValidateRequest<K>,
   logger?: Logger,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
 

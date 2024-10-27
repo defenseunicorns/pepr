@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Operation, AdmissionRequest, DeepPartial } from "./mutate-types";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { IPeprMutateRequest, AdmissionRequest, DeepPartial } from "./types";
+import { Operation } from "./enums";
+import { KubernetesObject, GenericClass } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 import { Logger } from "pino";
-import { GenericClass } from "kubernetes-fluent-client";
 
 // MutateAction type for handling mutation callbacks
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprMutateRequest<K>,
+  req: IPeprMutateRequest<K>,
   logger?: Logger,
-) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
+) => Promise<void> | void | Promise<IPeprMutateRequest<K>> | IPeprMutateRequest<K>;
 
 // PeprMutateRequest class for mutation request handling
-export class PeprMutateRequest<T extends KubernetesObject> {
+export class PeprMutateRequest<T extends KubernetesObject> implements IPeprMutateRequest<T> {
   Raw: T;
   #input: AdmissionRequest<T>;
 

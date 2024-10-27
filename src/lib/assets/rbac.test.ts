@@ -5,7 +5,7 @@ import { CapabilityExport } from "../types";
 import { it, describe, expect, beforeEach, jest } from "@jest/globals";
 import { GenericClass } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
-import { Event } from "../types";
+import { Event } from "../enums";
 import fs from "fs";
 import * as helpers from "../helpers";
 

@@ -3,18 +3,16 @@
 
 /* eslint-disable class-methods-use-this */
 
+import { AdmissionRequest, IPeprValidateRequest, ValidateActionResponse } from "./types";
+import { Operation } from "./enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
-
 import { clone } from "ramda";
-import { AdmissionRequest } from "./types";
-import { ValidateActionResponse } from "./types";
-import { Operation } from "./mutate-types";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
  * of a mutating webhook request.
  */
-export class PeprValidateRequest<T extends KubernetesObject> {
+export class PeprValidateRequest<T extends KubernetesObject> implements IPeprValidateRequest<T> {
   Raw: T;
 
   #input: AdmissionRequest<T>;

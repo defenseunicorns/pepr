@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding, CapabilityExport, Event } from "./types";
+import { Binding, CapabilityExport } from "./types";
+import { Event } from "./enums";
 import {
   addVerbIfNotExists,
   bindingAndCapabilityNSConflict,

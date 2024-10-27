@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
+/**
+ * The type of Kubernetes mutating webhook event that the action is registered for.
+ */
+export enum Event {
+  Create = "CREATE",
+  Update = "UPDATE",
+  Delete = "DELETE",
+  CreateOrUpdate = "CREATEORUPDATE",
+  Any = "*",
+}
+
+// Operation type for mutation operations
+export enum Operation {
+  CREATE = "CREATE",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  CONNECT = "CONNECT",
+}
