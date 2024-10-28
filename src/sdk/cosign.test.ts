@@ -703,6 +703,11 @@ async function builderExists(name: string) {
   return !!found;
 }
 
+// TODO
+// describe("sigstore-js - registry (Docker) - pub/prv keys", () => {
+
+// }
+
 describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
   let workdir: string;
   let cosign: string;
