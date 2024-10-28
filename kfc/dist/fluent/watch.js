@@ -56,8 +56,6 @@ class Watcher {
     #callback;
     #watchCfg;
     #latestRelistWindow = "";
-    #backoffDelay = 1000;
-    #maxBackoffDelay = 60000;
     // Track the last time data was received
     #lastSeenTime = NONE;
     #lastSeenLimit;
@@ -441,7 +439,6 @@ class Watcher {
                     this.#pendingReconnect = true;
                     this.#events.emit(WatchEvent.RECONNECT, this.#resyncFailureCount);
                     this.#streamCleanup();
-                    void this.#exponentialBackoffWatch();
                 }
             }
             else {
@@ -484,12 +481,6 @@ class Watcher {
                 this.#stream.destroy();
             }
         }
-    };
-    #exponentialBackoffWatch = async () => {
-        const jitter = Math.random() * 1000;
-        // await new Promise(resolve => setTimeout(resolve, this.#backoffDelay + jitter));
-        await new Promise(resolve => setTimeout(resolve, 1000 + jitter));
-        // this.#backoffDelay = Math.min(this.#backoffDelay * 2, this.#maxBackoffDelay);
         void this.#watch();
     };
 }
