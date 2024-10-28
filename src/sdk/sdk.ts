@@ -4,8 +4,7 @@
 import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericKind } from "kubernetes-fluent-client";
-import { K8s, kind } from "kubernetes-fluent-client";
+import { GenericKind, K8s, kind } from "kubernetes-fluent-client";
 import Log from "../lib/logger";
 
 /**

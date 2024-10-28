@@ -7,7 +7,7 @@ import { ValidateError } from "./errors";
 import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
 import { CapabilityExport, AdmissionRequest } from "./types";
 import { setupWatch } from "./watch-processor";
-import { Log } from "../lib";
+import Log from "../lib/logger";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 /** Custom Labels Type for package.json */
