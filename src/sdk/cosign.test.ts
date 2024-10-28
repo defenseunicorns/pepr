@@ -785,10 +785,6 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
     });
 
     await timed(`uploading test container image: ${iref}`, async () => {
-      // console.log("workdir", workdir)
-      // console.log("docker", `docker build --tag ${iref} --push .`)
-
-      // const tgz = `${workdir}/image.tar.gz`;
       const dir = `${workdir}/image.dir`;
 
       const command = `
