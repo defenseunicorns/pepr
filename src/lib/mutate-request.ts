@@ -3,15 +3,8 @@
 
 import { AdmissionRequest, DeepPartial } from "./types";
 import { Operation } from "./enums";
-import { KubernetesObject, GenericClass } from "kubernetes-fluent-client";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
-import { Logger } from "pino";
-
-// MutateAction type for handling mutation callbacks
-export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: PeprMutateRequest<K>,
-  logger?: Logger,
-) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 // PeprMutateRequest class for mutation request handling
 export class PeprMutateRequest<T extends KubernetesObject> {

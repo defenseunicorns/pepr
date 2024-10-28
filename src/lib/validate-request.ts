@@ -14,7 +14,6 @@ import { clone } from "ramda";
  */
 export class PeprValidateRequest<T extends KubernetesObject> implements IPeprValidateRequest<T> {
   Raw: T;
-
   #input: AdmissionRequest<T>;
 
   /**
