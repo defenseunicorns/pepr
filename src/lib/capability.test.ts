@@ -1,25 +1,18 @@
-/* eslint-disable max-statements */
 import { Capability } from "./capability";
 import Log from "./logger";
-import {
-  AdmissionRequest,
-  CapabilityCfg,
-  FinalizeAction,
-  IPeprMutateRequest,
-  IPeprValidateRequest,
-  MutateAction,
-  ValidateAction,
-  WatchLogAction,
-} from "./types";
+import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
-import { Event, Operation } from "./enums";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-import { GenericClass } from "kubernetes-fluent-client";
-import { OnSchedule, Schedule } from "./schedule";
+import { Operation } from "./mutate-types";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
+import { AdmissionRequest } from "./types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { Event } from "./types";
+import { GenericClass } from "kubernetes-fluent-client";
+import { Schedule } from "./schedule";
+import { OnSchedule } from "./schedule";
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
 jest.mock("./module", () => ({
@@ -136,7 +129,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -171,8 +164,8 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Executing mutation action");
+      (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Mutate action log");
       },
     );
 
@@ -197,6 +190,7 @@ describe("Capability", () => {
     expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
+    expect(mockLog.info).toHaveBeenCalledWith("Mutate action log");
   });
 
   it("should handle complex alias and logging correctly", async () => {
@@ -209,8 +203,8 @@ describe("Capability", () => {
     const capability = new Capability(complexCapabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Executing mutation action");
+      async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
       },
     );
 
@@ -242,20 +236,21 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith(
       "Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
     );
+    expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
   });
 
   it("should reset the alias before each mutation", async () => {
     const capability = new Capability(capabilityConfig);
 
     const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Executing mutation action");
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("First mutation action");
       },
     );
 
     const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Executing mutation action");
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Second mutation action");
       },
     );
 
@@ -292,7 +287,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -309,7 +304,7 @@ describe("Capability", () => {
     const binding = capability.bindings[0];
 
     // Simulate the validation action
-    const mockPeprRequest = new PeprValidateRequest(mockRequest);
+    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
 
     if (binding.validateCallback) {
       await binding.validateCallback(mockPeprRequest);
@@ -326,7 +321,7 @@ describe("Capability", () => {
 
     // Mock the validate callback
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -339,7 +334,7 @@ describe("Capability", () => {
     const binding = capability.bindings[0];
 
     // Simulate the validation action
-    const mockPeprRequest = new PeprValidateRequest(mockRequest);
+    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
 
     if (binding.validateCallback) {
       await binding.validateCallback(mockPeprRequest);
@@ -558,7 +553,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -574,7 +569,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -590,7 +585,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -606,7 +601,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -622,7 +617,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
