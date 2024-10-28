@@ -586,9 +586,10 @@ export class Watcher<T extends GenericClass> {
 
   #exponentialBackoffWatch = async () => {
     const jitter = Math.random() * 1000; 
-    await new Promise(resolve => setTimeout(resolve, this.#backoffDelay + jitter));
+    // await new Promise(resolve => setTimeout(resolve, this.#backoffDelay + jitter));
+    await new Promise(resolve => setTimeout(resolve, 1000 + jitter));
   
-    this.#backoffDelay = Math.min(this.#backoffDelay * 2, this.#maxBackoffDelay);
+    // this.#backoffDelay = Math.min(this.#backoffDelay * 2, this.#maxBackoffDelay);
   
     void this.#watch();
   };
