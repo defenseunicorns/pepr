@@ -10,9 +10,13 @@ import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
+
 // Helm Chart overrides file (values.yaml) generated from assets
-export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
+  const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
+
   const overrides = {
+    rbac: rbacOverrides,
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
     },
@@ -219,8 +223,8 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path } = assets;
+export async function allYaml(assets: Assets, imagePullSecret?: string) {
+  const { name, tls, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
@@ -232,7 +236,7 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const resources = [
     namespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, rbacMode),
+    clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),

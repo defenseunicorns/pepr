@@ -4,6 +4,7 @@
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 import { Assets } from ".";
 import Log from "../logger";
@@ -84,18 +85,25 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
     throw new Error("No code provided");
   }
 
-  await setupRBAC(name, assets.capabilities, force);
+  await setupRBAC(name, assets.capabilities, force, assets.config);
   await setupController(assets, code, hash, force);
   await setupWatcher(assets, hash, force);
 }
 
-async function setupRBAC(name: string, capabilities: CapabilityExport[], force: boolean) {
+async function setupRBAC(
+  name: string,
+  capabilities: CapabilityExport[],
+  force: boolean,
+  config: { rbacMode?: string; rbac?: PolicyRule[] },
+) {
+  const { rbacMode, rbac } = config;
+
   Log.info("Applying cluster role binding");
   const crb = clusterRoleBinding(name);
   await K8s(kind.ClusterRoleBinding).Apply(crb, { force });
 
   Log.info("Applying cluster role");
-  const cr = clusterRole(name, capabilities);
+  const cr = clusterRole(name, capabilities, rbacMode, rbac);
   await K8s(kind.ClusterRole).Apply(cr, { force });
 
   Log.info("Applying service account");
@@ -135,6 +143,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   await K8s(kind.Deployment).Apply(dep, { force });
 }
 
+// Setup the watcher deployment and service
 async function setupWatcher(assets: Assets, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
   const watchDeployment = watcher(assets, hash, assets.buildTimestamp);
