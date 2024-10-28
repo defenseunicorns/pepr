@@ -26,6 +26,9 @@ export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequ
   }
 
   request.Merge({ metadata: { finalizers } } as DeepPartial<K>);
+
+  // Log the addition of a finalizer with the alias
+  Log.info({ alias: request.Request.name }, `Added finalizer '${peprFinal}' to ${request.Raw.metadata?.name}`);
 }
 
 export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
@@ -33,7 +36,7 @@ export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
   const meta = obj.metadata!;
   const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
 
-  Log.debug({ obj }, `Removing finalizer '${peprFinal}' from '${resource}'`);
+  Log.debug({ obj, alias: binding.alias }, `Removing finalizer '${peprFinal}' from '${resource}'`);
 
   // ensure request model is registerd with KFC (for non-built in CRD's, etc.)
   const { model, kind } = binding;
