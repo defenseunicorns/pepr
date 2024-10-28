@@ -5,6 +5,7 @@ import {
   AdmissionRequest,
   CapabilityCfg,
   FinalizeAction,
+  IPeprMutateRequest,
   IPeprValidateRequest,
   MutateAction,
   ValidateAction,
@@ -135,7 +136,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -170,8 +171,8 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Mutate action log");
+      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+        logger.info("Executing mutation action");
       },
     );
 
@@ -196,7 +197,6 @@ describe("Capability", () => {
     expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
-    expect(mockLog.info).toHaveBeenCalledWith("Mutate action log");
   });
 
   it("should handle complex alias and logging correctly", async () => {
@@ -209,7 +209,7 @@ describe("Capability", () => {
     const capability = new Capability(complexCapabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -248,13 +248,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
 
     const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );

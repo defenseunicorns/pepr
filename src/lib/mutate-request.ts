@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, DeepPartial } from "./types";
+import { AdmissionRequest, DeepPartial, IPeprMutateRequest } from "./types";
 import { Operation } from "./enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 
 // PeprMutateRequest class for mutation request handling
-export class PeprMutateRequest<T extends KubernetesObject> {
+export class PeprMutateRequest<T extends KubernetesObject> implements IPeprMutateRequest<T> {
   Raw: T;
   #input: AdmissionRequest<T>;
 

@@ -22,9 +22,10 @@ import {
   FinalizeAction,
   FinalizeActionChain,
   WhenSelector,
+  IPeprMutateRequest,
 } from "./types";
 import { Event } from "./enums";
-import { addFinalizer } from "./finalizer";
+import { PeprMutateRequest } from "./mutate-request";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -319,12 +320,20 @@ export class Capability implements CapabilityExport {
 
       // Add binding to inject Pepr finalizer during admission (Mutate)
       if (registerAdmission) {
-        const mutateBinding = {
+        const mutateBinding: Binding = {
           ...binding,
           isMutate: true,
           isFinalize: true,
           event: Event.Any,
-          mutateCallback: addFinalizer,
+          mutateCallback: async (req, logger) => {
+            // Wrap req as IPeprMutateRequest
+            const peprRequest = new PeprMutateRequest(req.Request) as IPeprMutateRequest<typeof req.Raw>;
+
+            // Ensure the original mutate callback is called with the wrapped request
+            if (binding.mutateCallback) {
+              await binding.mutateCallback(peprRequest, logger);
+            }
+          },
         };
         bindings.push(mutateBinding);
       }
