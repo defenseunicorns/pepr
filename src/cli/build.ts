@@ -66,9 +66,9 @@ export default function (program: RootCmd) {
         .default("manifest"),
     )
     .addOption(
-      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
-        .choices(["admin", "scoped"])
-        .default("admin"),
+      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)").choices(
+        ["admin", "scoped"],
+      ),
     )
     .action(async opts => {
       // assign custom output directory if provided
@@ -133,7 +133,10 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           appVersion: cfg.version,
           description: cfg.description,
-          rbacMode: opts.rbacMode,
+          // Can override the rbacMode with the CLI option
+          rbacMode:
+            opts.rbacMode ??
+            (cfg.pepr.rbacMode && cfg.pepr.rbacMode !== "scoped" ? "admin" : cfg.pepr.rbacMode),
         },
         path,
       );

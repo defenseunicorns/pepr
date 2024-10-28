@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { loadAllYaml } from "@kubernetes/client-node";
+
 import { expect, it } from "@jest/globals";
-import { loadYaml } from "@kubernetes/client-node";
+import { loadYaml, V1PolicyRule as PolicyRule, loadAllYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
@@ -100,14 +100,27 @@ export function peprBuild() {
   });
 }
 
-async function validateClusterRoleYaml() {
+export async function validateClusterRoleYaml(validateChart = false) {
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(
     resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
     "utf8",
   );
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+  if (validateChart) {
+    const yamlChartRBAC = await fs.readFile(
+      resolve("journey", "resources", "static-test-chart", "values.yaml"),
+      "utf8",
+    );
+    const expectedYamlChartRBAC = await fs.readFile(
+      resolve("journey", "resources", "values.yaml"),
+      "utf8",
+    );
+    const jsonChartRBAC = yaml.load(yamlChartRBAC) as Record<string, PolicyRule[]>;
+    const expectedJsonChartRBAC = yaml.load(expectedYamlChartRBAC) as Record<string, PolicyRule[]>;
 
+    expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
+  }
 
   expect(k8sYaml.includes(cr)).toEqual(true);
 }

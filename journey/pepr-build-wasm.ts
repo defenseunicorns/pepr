@@ -6,7 +6,7 @@ import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-
+import { validateClusterRoleYaml } from "./pepr-build";
 import { cwd } from "./entrypoint.test";
 
 // test npx pepr build -o dst
@@ -16,8 +16,10 @@ export function peprBuild() {
     await fs.mkdir(outputDir, { recursive: true });
   });
 
-  it("should successfully build the Pepr project with arguments", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
+  it("should successfully build the Pepr project with arguments and rbacMode scoped", async () => {
+    // Set rbacMode in the Pepr Module Config of the package.json.
+    await addScopedRbacMode();
+    execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
       cwd: cwd,
       stdio: "inherit",
     });
@@ -33,19 +35,18 @@ export function peprBuild() {
   });
 
   it("should generate a scoped ClusterRole", async () => {
-    await validateClusterRoleYaml();
+    const validateHelmChart = true;
+    await validateClusterRoleYaml(validateHelmChart);
   });
 }
 
-async function validateClusterRoleYaml() {
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
-  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
-
-  expect(k8sYaml.includes(cr)).toEqual(true);
+// Set rbacMode in the Pepr Module Config and write it back to disk
+async function addScopedRbacMode() {
+  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
+  const packageJsonObj = JSON.parse(packageJson);
+  console.log(JSON.stringify(packageJsonObj.pepr));
+  packageJsonObj.pepr.rbacMode = "scoped";
+  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
 
 async function validateZarfYaml() {
