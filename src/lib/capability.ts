@@ -337,7 +337,7 @@ export class Capability implements CapabilityExport {
           event: Event.Update,
           finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
             Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
-            await finalizeCallback(update, logger);
+            return await finalizeCallback(update, logger);
           },
         };
         bindings.push(watchBinding);
