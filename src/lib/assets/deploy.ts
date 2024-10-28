@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-import { Assets } from ".";
+import { AssetsConfig } from "./assetsConfig";
 import Log from "../logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
@@ -42,7 +42,7 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
     Log.error(e);
   }
 }
-export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number) {
+export async function deploy(assets: AssetsConfig, force: boolean, webhookTimeout?: number) {
   Log.info("Establishing connection to Kubernetes");
 
   const { name, host, path } = assets;
@@ -119,7 +119,7 @@ async function setupRBAC(
   await K8s(kind.RoleBinding).Apply(roleBinding, { force });
 }
 
-async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean) {
+async function setupController(assets: AssetsConfig, code: Buffer, hash: string, force: boolean) {
   const { name } = assets;
 
   Log.info("Applying module secret");
@@ -144,7 +144,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
 }
 
 // Setup the watcher deployment and service
-async function setupWatcher(assets: Assets, hash: string, force: boolean) {
+async function setupWatcher(assets: AssetsConfig, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
   const watchDeployment = watcher(assets, hash, assets.buildTimestamp);
   if (watchDeployment) {

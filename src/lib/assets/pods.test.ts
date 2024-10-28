@@ -1,12 +1,12 @@
 import { namespace, watcher, deployment, moduleSecret, genEnv } from "./pods";
 import { expect, describe, test, jest, afterEach } from "@jest/globals";
-import { Assets } from ".";
+import { AssetsConfig } from "./assetsConfig";
 import { ModuleConfig } from "../module";
 import { gzipSync } from "zlib";
 
 jest.mock("zlib");
 
-const assets: Assets = JSON.parse(`{
+const assets: AssetsConfig = JSON.parse(`{
   "config": {
     "uuid": "static-test",
     "onError": "ignore",

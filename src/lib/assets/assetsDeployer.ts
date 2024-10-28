@@ -2,23 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { AssetsConfig } from "./assetsConfig";
-import { AssetsDeployer } from "./assetsDeployer";
-import { ModuleConfig } from "../module";
-
-export function createAssets(config: ModuleConfig, path: string, host?: string) {
-  const assetsConfig = new AssetsConfig(config, path, host);
-  return new AssetsDeployer(assetsConfig);
-}
-
-/* import crypto from "crypto";
-import { dumpYaml } from "@kubernetes/client-node";
-import { ModuleConfig } from "../module";
-import { TLSOut, genTLS } from "../tls";
-import { CapabilityExport } from "../types";
-import { WebhookIgnore } from "../k8s";
 import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
-import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
+import { allYaml, zarfYaml, zarfYamlChart, overridesFile } from "./yaml";
+import { dumpYaml } from "@kubernetes/client-node";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
 import { createDirectoryIfNotExists, dedent } from "../helpers";
 import { resolve } from "path";
@@ -36,59 +23,37 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { watcher, moduleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
-export class Assets {
-  readonly name: string;
-  readonly tls: TLSOut;
-  readonly apiToken: string;
-  readonly alwaysIgnore!: WebhookIgnore;
-  capabilities!: CapabilityExport[];
 
-  image: string;
-  buildTimestamp: string;
-  hash: string;
+export class AssetsDeployer {
+  constructor(private assetsConfig: AssetsConfig) {}
 
-  constructor(
-    readonly config: ModuleConfig,
-    readonly path: string,
-    readonly host?: string,
-  ) {
-    this.name = `pepr-${config.uuid}`;
-    this.buildTimestamp = `${Date.now()}`;
-    this.alwaysIgnore = config.alwaysIgnore;
-    this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
-    this.hash = "";
-    // Generate the ephemeral tls things
-    this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
-
-    // Generate the api token for the controller / webhook
-    this.apiToken = crypto.randomBytes(32).toString("hex");
+  async deploy(force: boolean, webhookTimeout?: number) {
+    // Load capabilities and trigger the deploy logic
+    this.assetsConfig.capabilities = await loadCapabilities(this.assetsConfig.path);
+    await deploy(this.assetsConfig, force, webhookTimeout);
   }
 
-  setHash = (hash: string) => {
-    this.hash = hash;
-  };
+  async allYaml(imagePullSecret?: string) {
+    this.assetsConfig.capabilities = await loadCapabilities(this.assetsConfig.path);
 
-  deploy = async (force: boolean, webhookTimeout?: number) => {
-    this.capabilities = await loadCapabilities(this.path);
-    await deploy(this, force, webhookTimeout);
-  };
-
-  zarfYaml = (path: string) => zarfYaml(this, path);
-
-  zarfYamlChart = (path: string) => zarfYamlChart(this, path);
-
-  allYaml = async (imagePullSecret?: string) => {
-    this.capabilities = await loadCapabilities(this.path);
-    // give error if namespaces are not respected
-    for (const capability of this.capabilities) {
-      namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
+    // Namespace validation and generating YAMLs
+    for (const capability of this.assetsConfig.capabilities) {
+      namespaceComplianceValidator(capability, this.assetsConfig.alwaysIgnore?.namespaces);
     }
 
-    return allYaml(this, imagePullSecret);
-  };
+    return allYaml(this.assetsConfig, imagePullSecret);
+  }
+
+  async zarfYaml(path: string) {
+    return zarfYaml(this.assetsConfig, path);
+  }
+
+  async zarfYamlChart(path: string) {
+    return zarfYamlChart(this.assetsConfig, path);
+  }
 
   generateHelmChart = async (basePath: string) => {
-    const CHART_DIR = `${basePath}/${this.config.uuid}-chart`;
+    const CHART_DIR = `${basePath}/${this.assetsConfig.config.uuid}-chart`;
     const CHAR_TEMPLATES_DIR = `${CHART_DIR}/templates`;
     const valuesPath = resolve(CHART_DIR, `values.yaml`);
     const chartPath = resolve(CHART_DIR, `Chart.yaml`);
@@ -122,33 +87,52 @@ export class Assets {
       await createDirectoryIfNotExists(`${CHAR_TEMPLATES_DIR}`);
 
       // create values file
-      await overridesFile(this, valuesPath);
+      await overridesFile(this.assetsConfig, valuesPath);
 
       // create the chart.yaml
-      await fs.writeFile(chartPath, dedent(chartYaml(this.config.uuid, this.config.description || "")));
+      await fs.writeFile(
+        chartPath,
+        dedent(chartYaml(this.assetsConfig.config.uuid, this.assetsConfig.config.description || "")),
+      );
 
       // create the namespace.yaml in templates
       await fs.writeFile(nsPath, dedent(nsTemplate()));
 
-      const code = await fs.readFile(this.path);
+      const code = await fs.readFile(this.assetsConfig.path);
 
-      await fs.writeFile(watcherSVCPath, dumpYaml(watcherService(this.name), { noRefs: true }));
-      await fs.writeFile(admissionSVCPath, dumpYaml(service(this.name), { noRefs: true }));
-      await fs.writeFile(tlsSecretPath, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
-      await fs.writeFile(apiTokenSecretPath, dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }));
-      await fs.writeFile(moduleSecretPath, dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }));
-      await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.name), { noRefs: true }));
-      await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
+      await fs.writeFile(watcherSVCPath, dumpYaml(watcherService(this.assetsConfig.name), { noRefs: true }));
+      await fs.writeFile(admissionSVCPath, dumpYaml(service(this.assetsConfig.name), { noRefs: true }));
+      await fs.writeFile(
+        tlsSecretPath,
+        dumpYaml(tlsSecret(this.assetsConfig.name, this.assetsConfig.tls), { noRefs: true }),
+      );
+      await fs.writeFile(
+        apiTokenSecretPath,
+        dumpYaml(apiTokenSecret(this.assetsConfig.name, this.assetsConfig.apiToken), { noRefs: true }),
+      );
+      await fs.writeFile(
+        moduleSecretPath,
+        dumpYaml(moduleSecret(this.assetsConfig.name, code, this.assetsConfig.hash), { noRefs: true }),
+      );
+      await fs.writeFile(storeRolePath, dumpYaml(storeRole(this.assetsConfig.name), { noRefs: true }));
+      await fs.writeFile(storeRoleBindingPath, dumpYaml(storeRoleBinding(this.assetsConfig.name), { noRefs: true }));
       await fs.writeFile(clusterRolePath, dedent(clusterRoleTemplate()));
-      await fs.writeFile(clusterRoleBindingPath, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.name), { noRefs: true }));
+      await fs.writeFile(
+        clusterRoleBindingPath,
+        dumpYaml(clusterRoleBinding(this.assetsConfig.name), { noRefs: true }),
+      );
+      await fs.writeFile(serviceAccountPath, dumpYaml(serviceAccount(this.assetsConfig.name), { noRefs: true }));
 
-      const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
-      const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
-      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
+      const mutateWebhook = await webhookConfig(this.assetsConfig, "mutate", this.assetsConfig.config.webhookTimeout);
+      const validateWebhook = await webhookConfig(
+        this.assetsConfig,
+        "validate",
+        this.assetsConfig.config.webhookTimeout,
+      );
+      const watchDeployment = watcher(this.assetsConfig, this.assetsConfig.hash, this.assetsConfig.buildTimestamp);
 
       if (validateWebhook || mutateWebhook) {
-        await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.buildTimestamp)));
+        await fs.writeFile(admissionDeployPath, dedent(admissionDeployTemplate(this.assetsConfig.buildTimestamp)));
         await fs.writeFile(admissionServiceMonitorPath, dedent(serviceMonitorTemplate("admission")));
       }
 
@@ -156,11 +140,11 @@ export class Assets {
         const yamlMutateWebhook = dumpYaml(mutateWebhook, { noRefs: true });
         const mutateWebhookTemplate = replaceString(
           replaceString(
-            replaceString(yamlMutateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
+            replaceString(yamlMutateWebhook, this.assetsConfig.name, "{{ .Values.uuid }}"),
+            this.assetsConfig.config.onError === "reject" ? "Fail" : "Ignore",
             "{{ .Values.admission.failurePolicy }}",
           ),
-          `${this.config.webhookTimeout}` || "10",
+          `${this.assetsConfig.config.webhookTimeout}` || "10",
           "{{ .Values.admission.webhookTimeout }}",
         );
         await fs.writeFile(mutationWebhookPath, mutateWebhookTemplate);
@@ -170,18 +154,18 @@ export class Assets {
         const yamlValidateWebhook = dumpYaml(validateWebhook, { noRefs: true });
         const validateWebhookTemplate = replaceString(
           replaceString(
-            replaceString(yamlValidateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
+            replaceString(yamlValidateWebhook, this.assetsConfig.name, "{{ .Values.uuid }}"),
+            this.assetsConfig.config.onError === "reject" ? "Fail" : "Ignore",
             "{{ .Values.admission.failurePolicy }}",
           ),
-          `${this.config.webhookTimeout}` || "10",
+          `${this.assetsConfig.config.webhookTimeout}` || "10",
           "{{ .Values.admission.webhookTimeout }}",
         );
         await fs.writeFile(validationWebhookPath, validateWebhookTemplate);
       }
 
       if (watchDeployment) {
-        await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.buildTimestamp)));
+        await fs.writeFile(watcherDeployPath, dedent(watcherDeployTemplate(this.assetsConfig.buildTimestamp)));
         await fs.writeFile(watcherServiceMonitorPath, dedent(serviceMonitorTemplate("watcher")));
       }
     } catch (err) {
@@ -189,4 +173,4 @@ export class Assets {
       process.exit(1);
     }
   };
-} */
+}

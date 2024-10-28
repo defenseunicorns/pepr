@@ -3,7 +3,8 @@
 
 import prompt from "prompts";
 
-import { Assets } from "../lib/assets";
+import { AssetsConfig } from "../lib/assets/assetsConfig";
+import { AssetsDeployer } from "../lib/assets/assetsDeployer";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 import { validateCapabilityNames, namespaceDeploymentsReady } from "../lib/helpers";
@@ -74,26 +75,36 @@ export default function (program: RootCmd) {
       // Build the module
       const { cfg, path } = await buildModule();
 
-      // Generate a secret for the module
-      const webhook = new Assets(
+      // Initialize AssetsConfig and AssetsDeployer
+      const assetsConfig = new AssetsConfig(
         {
           ...cfg.pepr,
           description: cfg.description,
         },
         path,
       );
+      const assetsDeployer = new AssetsDeployer(assetsConfig);
+
+      /* // Generate a secret for the module
+      const webhook = new Assets(
+        {
+          ...cfg.pepr,
+          description: cfg.description,
+        },
+        path,
+      ); */
 
       if (opts.image) {
-        webhook.image = opts.image;
+        assetsConfig.image = opts.image;
       }
 
       // Identify conf'd webhookTimeout to give to deploy call
       const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
 
       try {
-        await webhook.deploy(opts.force, timeout);
+        await assetsDeployer.deploy(opts.force, timeout);
         // wait for capabilities to be loaded and test names
-        validateCapabilityNames(webhook.capabilities);
+        validateCapabilityNames(assetsConfig.capabilities);
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);

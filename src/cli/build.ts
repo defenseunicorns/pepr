@@ -6,7 +6,8 @@ import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { createDockerfile } from "../lib/included-files";
-import { Assets } from "../lib/assets";
+import { AssetsConfig } from "../lib/assets/assetsConfig";
+import { AssetsDeployer } from "../lib/assets/assetsDeployer";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
@@ -128,7 +129,7 @@ export default function (program: RootCmd) {
       }
 
       // Generate a secret for the module
-      const assets = new Assets(
+      const assetsConfig = new AssetsConfig(
         {
           ...cfg.pepr,
           appVersion: cfg.version,
@@ -137,6 +138,8 @@ export default function (program: RootCmd) {
         },
         path,
       );
+
+      const assets = new AssetsDeployer(assetsConfig);
 
       // If registry is set to Iron Bank, use Iron Bank image
       if (opts?.registry === "Iron Bank") {
@@ -148,7 +151,7 @@ export default function (program: RootCmd) {
 
       // if image is a custom image, use that instead of the default
       if (image !== "") {
-        assets.image = image;
+        assetsConfig.image = image;
       }
 
       // Ensure imagePullSecret is valid
@@ -169,7 +172,7 @@ export default function (program: RootCmd) {
 
       try {
         // wait for capabilities to be loaded and test names
-        validateCapabilityNames(assets.capabilities);
+        validateCapabilityNames(assetsConfig.capabilities);
       } catch (e) {
         console.error(`Error loading capability:`, e);
         process.exit(1);
@@ -179,9 +182,9 @@ export default function (program: RootCmd) {
 
       let zarf = "";
       if (opts.zarf === "chart") {
-        zarf = assets.zarfYamlChart(chartPath);
+        zarf = await assets.zarfYamlChart(chartPath);
       } else {
-        zarf = assets.zarfYaml(yamlFile);
+        zarf = await assets.zarfYaml(yamlFile);
       }
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);

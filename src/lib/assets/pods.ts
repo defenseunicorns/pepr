@@ -5,7 +5,7 @@ import { V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
-import { Assets } from ".";
+import { AssetsConfig } from "./assetsConfig";
 import { ModuleConfig } from "../module";
 import { Binding } from "../types";
 
@@ -31,7 +31,7 @@ export function namespace(namespaceLabels?: Record<string, string>) {
   }
 }
 
-export function watcher(assets: Assets, hash: string, buildTimestamp: string, imagePullSecret?: string) {
+export function watcher(assets: AssetsConfig, hash: string, buildTimestamp: string, imagePullSecret?: string) {
   const { name, image, capabilities, config } = assets;
 
   let hasSchedule = false;
@@ -187,7 +187,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
 }
 
 export function deployment(
-  assets: Assets,
+  assets: AssetsConfig,
   hash: string,
   buildTimestamp: string,
   imagePullSecret?: string,

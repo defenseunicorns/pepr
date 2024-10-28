@@ -4,7 +4,7 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import crypto from "crypto";
 import { promises as fs } from "fs";
-import { Assets } from ".";
+import { AssetsConfig } from "./assetsConfig";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
@@ -12,7 +12,7 @@ import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
 
 // Helm Chart overrides file (values.yaml) generated from assets
-export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
+export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: AssetsConfig, path: string) {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
 
   const overrides = {
@@ -166,7 +166,7 @@ export async function overridesFile({ hash, name, image, config, apiToken, capab
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
-export function zarfYaml({ name, image, config }: Assets, path: string) {
+export function zarfYaml({ name, image, config }: AssetsConfig, path: string) {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -194,7 +194,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export function zarfYamlChart({ name, image, config }: Assets, path: string) {
+export function zarfYamlChart({ name, image, config }: AssetsConfig, path: string) {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -223,7 +223,7 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, imagePullSecret?: string) {
+export async function allYaml(assets: AssetsConfig, imagePullSecret?: string) {
   const { name, tls, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
 

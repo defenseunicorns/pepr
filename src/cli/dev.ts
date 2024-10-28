@@ -5,7 +5,8 @@ import { ChildProcess, fork } from "child_process";
 import { promises as fs } from "fs";
 import prompt from "prompts";
 import { validateCapabilityNames } from "../lib/helpers";
-import { Assets } from "../lib/assets";
+import { AssetsConfig } from "../lib/assets/assetsConfig";
+import { AssetsDeployer } from "../lib/assets/assetsDeployer";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 import { K8s, kind } from "kubernetes-fluent-client";
@@ -34,8 +35,8 @@ export default function (program: RootCmd) {
       // Build the module
       const { cfg, path } = await loadModule();
 
-      // Generate a secret for the module
-      const webhook = new Assets(
+      // Initialize AssetsConfig with the configuration and path
+      const assetsConfig = new AssetsConfig(
         {
           ...cfg.pepr,
           description: cfg.description,
@@ -44,9 +45,12 @@ export default function (program: RootCmd) {
         opts.host,
       );
 
+      // Create an instance of AssetsDeployer
+      const assetsDeployer = new AssetsDeployer(assetsConfig);
+
       // Write the TLS cert and key to disk
-      await fs.writeFile("insecure-tls.crt", webhook.tls.pem.crt);
-      await fs.writeFile("insecure-tls.key", webhook.tls.pem.key);
+      await fs.writeFile("insecure-tls.crt", assetsConfig.tls.pem.crt);
+      await fs.writeFile("insecure-tls.key", assetsConfig.tls.pem.key);
 
       try {
         let program: ChildProcess;
@@ -59,11 +63,11 @@ export default function (program: RootCmd) {
           console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
-          await webhook.deploy(false, 30);
+          await assetsDeployer.deploy(false, 30);
 
           try {
             // wait for capabilities to be loaded and test names
-            validateCapabilityNames(webhook.capabilities);
+            validateCapabilityNames(assetsConfig.capabilities);
           } catch (e) {
             console.error(`Error validating capability names:`, e);
             process.exit(1);
@@ -74,7 +78,7 @@ export default function (program: RootCmd) {
               ...process.env,
               LOG_LEVEL: "debug",
               PEPR_MODE: "dev",
-              PEPR_API_TOKEN: webhook.apiToken,
+              PEPR_API_TOKEN: assetsConfig.apiToken,
               PEPR_PRETTY_LOGS: "true",
               SSL_KEY_PATH: "insecure-tls.key",
               SSL_CERT_PATH: "insecure-tls.crt",

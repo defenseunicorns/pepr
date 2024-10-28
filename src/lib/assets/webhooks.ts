@@ -9,7 +9,7 @@ import {
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
-import { Assets } from ".";
+import { AssetsConfig } from "./assetsConfig";
 import { Event } from "../enums";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
@@ -20,7 +20,7 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
 
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean) {
+export async function generateWebhookRules(assets: AssetsConfig, isMutateWebhook: boolean) {
   const { config, capabilities } = assets;
   const rules: V1RuleWithOperations[] = [];
 
@@ -75,7 +75,7 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
 }
 
 export async function webhookConfig(
-  assets: Assets,
+  assets: AssetsConfig,
   mutateOrValidate: "mutate" | "validate",
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
