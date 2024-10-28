@@ -429,6 +429,92 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
   });
 
+  it("should use user-provided alias for finalizer with reconcile", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update, phase, logger: typeof Log = mockLog) => {
+        logger.info("external api call (reconcile-create-alias): reconcile/callback");
+      },
+    );
+
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
+      async (update: V1Pod, logger: typeof Log = mockLog) => {
+        logger.info("Finalize action log");
+      },
+    );
+
+    // Set up a When binding with a user-provided alias and Finalize
+    // Chain .Reconcile() with the correct function signature before .Finalize()
+    capability
+      .When(a.Pod)
+      .IsCreatedOrUpdated()
+      .Alias("custom-finalizer-alias")
+      .Reconcile(mockReconcileCallback)
+      .Finalize(mockFinalizeCallback);
+
+    // Find the finalize binding
+    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+
+    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
+
+    // Simulate calling the finalize action
+    const testPod = new V1Pod();
+
+    if (finalizeBinding?.finalizeCallback) {
+      await finalizeBinding.finalizeCallback(testPod);
+    }
+
+    // Assertions to ensure the user-provided alias is used in the logger
+    expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: custom-finalizer-alias");
+    expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
+  });
+
+  it("should use user-provided alias for finalizer with watch", async () => {
+    const capability = new Capability(capabilityConfig);
+
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      async (update, phase, logger: typeof Log = mockLog) => {
+        logger.info("external api call (watch-create-alias): watch/callback");
+      },
+    );
+
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
+      async (update: V1Pod, logger: typeof Log = mockLog) => {
+        logger.info("Finalize action log");
+      },
+    );
+
+    // Set up a When binding with a user-provided alias and Finalize
+    // Chain .Watch() with the correct function signature before .Finalize()
+    capability
+      .When(a.Pod)
+      .IsCreatedOrUpdated()
+      .Alias("custom-finalizer-alias")
+      .Watch(mockWatchCallback)
+      .Finalize(mockFinalizeCallback);
+
+    // Find the finalize binding
+    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+
+    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
+
+    // Simulate calling the finalize action
+    const testPod = new V1Pod();
+
+    if (finalizeBinding?.finalizeCallback) {
+      await finalizeBinding.finalizeCallback(testPod);
+    }
+
+    // Assertions to ensure the user-provided alias is used in the logger
+    expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
+    expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
+    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: custom-finalizer-alias");
+    expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
+  });
+
   it("should use child logger for finalize callback", async () => {
     const capability = new Capability(capabilityConfig);
 
