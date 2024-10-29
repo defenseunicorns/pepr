@@ -20,7 +20,7 @@ import { FilterInput, FilterParams } from "../types";
 import {
   arrayKubernetesObjectLogMessage,
   bindingAdmissionRequestLogMessage,
-  bindingKubernetesObjectLogMessage,
+  commonLogMessage,
   bindingLogMessage,
 } from "./logMessages";
 
@@ -45,64 +45,63 @@ export const mismatchedNameFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedName(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("name", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("name", binding, kubernetesObject),
 );
 
 export const mismatchedNameRegexFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedNameRegex(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("name regex", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("name regex", binding, kubernetesObject),
 );
 
 export const mismatchedNamespaceRegexFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedNamespaceRegex(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("namespace regexes", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("namespace regexes", binding, kubernetesObject),
 );
 
 export const mismatchedNamespaceFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedNamespace(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("namespaces", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("namespaces", binding, kubernetesObject),
 );
 
 export const mismatchedAnnotationsFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedAnnotations(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("annotations", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("annotations", binding, kubernetesObject),
 );
 
 export const mismatchedLabelsFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedLabels(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("labels", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("labels", binding, kubernetesObject),
 );
 
 export const mismatchedKindFilter = createFilter(
   data => data.binding,
   data => data.request,
   (binding, request) => mismatchedKind(binding, request),
-  (binding, request) => bindingAdmissionRequestLogMessage("kind", binding, request),
+  (binding, request) => commonLogMessage("kind", binding, request),
 );
 
 export const mismatchedVersionFilter = createFilter(
   data => data.binding,
   data => data.request,
   (binding, request) => mismatchedVersion(binding, request),
-  (binding, request) => bindingAdmissionRequestLogMessage("version", binding, request),
+  (binding, request) => commonLogMessage("version", binding, request),
 );
 
 export const carriesIgnoredNamespaceFilter = createFilter(
   data => data.ignoredNamespaces,
   data => getAdmissionRequest(data),
   (ignoreArray, kubernetesObject) => carriesIgnoredNamespace(ignoreArray, kubernetesObject),
-  (ignoreArray, kubernetesObject) =>
-    arrayKubernetesObjectLogMessage("ignored namespaces", ignoreArray, kubernetesObject),
+  (ignoreArray, kubernetesObject) => commonLogMessage("ignored namespaces", ignoreArray, kubernetesObject),
 );
 
 export const uncarryableNamespaceFilter = createFilter(
@@ -124,14 +123,14 @@ export const mismatchedGroupFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedGroup(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("group", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("group", binding, kubernetesObject),
 );
 
 export const mismatchedDeletionTimestampFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedDeletionTimestamp(binding, kubernetesObject),
-  (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("deletionTimestamp", binding, kubernetesObject),
+  (binding, kubernetesObject) => commonLogMessage("deletionTimestamp", binding, kubernetesObject),
 );
 
 export const misboundDeleteWithDeletionTimestampFilter = createFilter(
