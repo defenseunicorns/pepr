@@ -35,8 +35,8 @@ export const bindingAdmissionRequestLogMessage = (subject: string, binding: Filt
 
 export const arrayKubernetesObjectLogMessage = (
   subject: string,
-  filterCriteria?: FilterInput,
   filterInput?: FilterInput,
+  filterCriteria?: FilterInput,
 ): string => {
   return `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
 };
