@@ -232,7 +232,7 @@ describe("when a pod is deleted", () => {
   });
 
   it("should reject when namespace is ignored", () => {
-    const filters = { ...defaultFilters, namespaces: [] };
+    const filters = { ...defaultFilters, regexName: "", namespaces: [] };
     const binding = {
       ...defaultBinding,
       filters,

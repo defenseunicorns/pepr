@@ -1,8 +1,6 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
   carriesIgnoredNamespace,
-  declaredOperation,
-  definedEvent,
   misboundDeleteWithDeletionTimestamp,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
@@ -23,7 +21,7 @@ import {
   arrayKubernetesObjectLogMessage,
   bindingAdmissionRequestLogMessage,
   bindingKubernetesObjectLogMessage,
-  ignoreArrayKubernetesObjectLogMessage,
+  bindingLogMessage,
 } from "./logMessages";
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
@@ -103,7 +101,8 @@ export const carriesIgnoredNamespaceFilter = createFilter(
   data => data.ignoredNamespaces,
   data => getAdmissionRequest(data),
   (ignoreArray, kubernetesObject) => carriesIgnoredNamespace(ignoreArray, kubernetesObject),
-  (ignoreArray, kubernetesObject) => ignoreArrayKubernetesObjectLogMessage("namespace", ignoreArray, kubernetesObject),
+  (ignoreArray, kubernetesObject) =>
+    arrayKubernetesObjectLogMessage("ignored namespaces", ignoreArray, kubernetesObject),
 );
 
 export const uncarryableNamespaceFilter = createFilter(
@@ -142,13 +141,12 @@ export const misboundDeleteWithDeletionTimestampFilter = createFilter(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   (binding, unused) => misboundDeleteWithDeletionTimestamp(binding),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (binding, unused) => `Cannot use deletionTimestamp filter on a DELETE operation.`,
+  (binding, unused) => bindingLogMessage("deletionTimestamp"),
 );
 
 export const mismatchedEventFilter = createFilter(
   data => data.binding,
   data => data.request,
   (binding, request) => mismatchedEvent(binding, request),
-  (binding, request) =>
-    `Binding defines event '${definedEvent(binding)}' but Request declares '${declaredOperation(request)}'.`,
+  (binding, request) => bindingAdmissionRequestLogMessage("event", binding, request),
 );
