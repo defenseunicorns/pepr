@@ -6,8 +6,7 @@ import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, zarfYamlChart, overridesFile } from "./yaml";
 import { dumpYaml } from "@kubernetes/client-node";
-import { namespaceComplianceValidator, replaceString } from "../helpers";
-import { createDirectoryIfNotExists, dedent } from "../helpers";
+import { createDirectoryIfNotExists, dedent, namespaceComplianceValidator, replaceString } from "../helpers";
 import { resolve } from "path";
 import {
   chartYaml,
