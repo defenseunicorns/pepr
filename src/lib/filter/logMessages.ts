@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { FilterInput } from "../types";
 import {
   carriedName,
@@ -15,26 +14,27 @@ import {
 
 const prefix = "Ignoring Admission Callback:";
 
+const bindingKubernetesObjectCases = [
+  "annotations",
+  "deletionTimestamp",
+  "labels",
+  "name regex",
+  "name",
+  "namespace array",
+  "namespace regexes",
+  "namespaces",
+];
+const bindingAdmissionRequestCases = ["event", "group", "kind", "version"];
+
 export const commonLogMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput): string => {
-  switch (subject) {
-    case "annotations":
-    case "deletionTimestamp":
-    case "labels":
-    case "name regex":
-    case "name":
-    case "namespace array":
-    case "namespace regexes":
-    case "namespaces":
-      return bindingKubernetesObjectMessages(subject, filterInput, filterCriteria);
-    case "event":
-    case "group":
-    case "kind":
-    case "version":
-      return bindingAdmissionRequestMessages(subject, filterInput, filterCriteria);
-    case "ignored namespaces":
-      return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
-    default:
-      return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
+  if (bindingKubernetesObjectCases.includes(subject)) {
+    return bindingKubernetesObjectMessages(subject, filterInput, filterCriteria);
+  } else if (bindingAdmissionRequestCases.includes(subject)) {
+    return bindingAdmissionRequestMessages(subject, filterInput, filterCriteria);
+  } else if (subject === "ignored namespaces") {
+    return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
+  } else {
+    return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
   }
 };
 
