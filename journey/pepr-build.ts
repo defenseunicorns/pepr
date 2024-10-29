@@ -35,7 +35,7 @@ export function peprBuild() {
   });
 
   it("should generate a scoped ClusterRole", async () => {
-    await validateClusterRoleYaml();
+    await validateClusterRoleYaml(false);
   });
 
   it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {
@@ -100,7 +100,7 @@ export function peprBuild() {
   });
 }
 
-export async function validateClusterRoleYaml(validateChart = false) {
+export async function validateClusterRoleYaml(validateChart: boolean = false) {
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(
     resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
