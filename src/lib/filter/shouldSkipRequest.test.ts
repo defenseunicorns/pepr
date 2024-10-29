@@ -537,3 +537,8 @@ it("should reject when deletionTimestamp is not present on pod", () => {
     /Ignoring Admission Callback: Binding defines deletionTimestamp but Object does not carry it./,
   );
 });
+
+describe("when multiple filtuers are triggered", () => {
+  it("should display the failure message for the first matching filter", () => {});
+  it("should NOT display the failure message for the second matching filter", () => {});
+});
