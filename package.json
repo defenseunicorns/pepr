@@ -44,6 +44,7 @@
     "express": "4.21.1",
     "fast-json-patch": "3.1.1",
     "follow-redirects": "1.15.9",
+    "http-status-codes": "^2.3.0",
     "json-pointer": "^0.6.2",
     "kubernetes-fluent-client": "3.2.1",
     "pino": "9.5.0",
