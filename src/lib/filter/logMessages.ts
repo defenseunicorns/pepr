@@ -17,33 +17,71 @@ const prefix = "Ignoring Admission Callback:";
 
 export const commonLogMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput): string => {
   switch (subject) {
+    case "annotations":
+    case "deletionTimestamp":
+    case "labels":
+    case "name regex":
+    case "name":
+    case "namespace array":
+    case "namespace regexes":
+    case "namespaces":
+      return bindingKubernetesObjectMessages(subject, filterInput, filterCriteria);
+    case "event":
+    case "group":
+    case "kind":
+    case "version":
+      return bindingAdmissionRequestMessages(subject, filterInput, filterCriteria);
+    case "ignored namespaces":
+      return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
+    default:
+      return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
+  }
+};
+
+const bindingAdmissionRequestMessages = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
+  switch (subject) {
     case "group":
       return `${prefix} Binding defines ${subject} '${definedGroup(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
-    case "deletionTimestamp":
-      return getDeletionTimestampLogMessage(filterInput, filterCriteria);
+    case "event":
+      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
     case "version":
       return `${prefix} Binding defines ${subject} '${definedVersion(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
     case "kind":
       return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
-    case "ignored namespaces":
-      return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
+    default:
+      return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
+  }
+};
+
+const bindingKubernetesObjectMessages = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
+  switch (subject) {
     case "namespaces":
       return `${prefix} Binding defines ${subject} '${definedNamespaces(filterInput)}' but Object carries '${carriedNamespace(filterCriteria)}'.`;
-    case "event":
-      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
     case "annotations":
       return `${prefix} Binding defines ${subject} '${definedAnnotations(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
     case "labels":
       return `${prefix} Binding defines ${subject} '${definedLabels(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
     case "name":
       return `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "namespace array":
+      return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but namespaces allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
     case "name regex":
       return `${prefix} Binding defines ${subject} '${definedNameRegex(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
     case "namespace regexes":
       return `${prefix} Binding defines ${subject} '${definedNameRegex(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "deletionTimestamp":
+      return getDeletionTimestampLogMessage(filterInput, filterCriteria);
     default:
-      return `${prefix} An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
+      return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
   }
+};
+
+const getUndefinedLoggingConditionMessage = (
+  subject: string,
+  filterInput: FilterInput,
+  filterCriteria: FilterInput,
+) => {
+  return `${prefix} An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
 };
 
 const getDeletionTimestampLogMessage = (filterInput: FilterInput, filterCriteria: FilterInput) => {
@@ -54,12 +92,4 @@ const getDeletionTimestampLogMessage = (filterInput: FilterInput, filterCriteria
 };
 export const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput): string => {
   return `${prefix} Binding defines ${subject} '${definedKind(binding)}' but Request does not declare it.`;
-};
-
-export const arrayKubernetesObjectLogMessage = (
-  subject: string,
-  filterInput?: FilterInput,
-  filterCriteria?: FilterInput,
-): string => {
-  return `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
 };

@@ -17,7 +17,7 @@ import {
 } from "./adjudicators";
 import { Operation } from "../mutate-types";
 import { FilterInput, FilterParams } from "../types";
-import { arrayKubernetesObjectLogMessage, bindingAdmissionRequestLogMessage, commonLogMessage } from "./logMessages";
+import { bindingAdmissionRequestLogMessage, commonLogMessage } from "./logMessages";
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
@@ -142,5 +142,5 @@ export const uncarryableNamespaceFilter = createFilter(
   data => getAdmissionRequest(data),
   (capabilityNamespaces, kubernetesObject) => uncarryableNamespace(capabilityNamespaces, kubernetesObject),
   (capabilityNamespaces, kubernetesObject) =>
-    arrayKubernetesObjectLogMessage("namespace", kubernetesObject, capabilityNamespaces),
+    commonLogMessage("namespace array", kubernetesObject, capabilityNamespaces),
 );
