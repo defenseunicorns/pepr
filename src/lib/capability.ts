@@ -141,10 +141,8 @@ export class Capability implements CapabilityExport {
 
   /**
    * Register the store with the capability. This is called automatically by the Pepr controller.
-   *
-   * @param store
    */
-  registerScheduleStore = () => {
+  registerScheduleStore = (): Storage => {
     Log.info(`Registering schedule store for ${this.#name}`);
 
     if (this.#scheduleRegistered) {
@@ -154,9 +152,7 @@ export class Capability implements CapabilityExport {
     this.#scheduleRegistered = true;
 
     // Pass back any ready callback to the controller
-    return {
-      scheduleStore: this.#scheduleStore,
-    };
+    return this.#scheduleStore;
   };
 
   /**
@@ -164,7 +160,7 @@ export class Capability implements CapabilityExport {
    *
    * @param store
    */
-  registerStore = () => {
+  registerStore = (): Storage => {
     Log.info(`Registering store for ${this.#name}`);
 
     if (this.#registered) {
@@ -174,9 +170,7 @@ export class Capability implements CapabilityExport {
     this.#registered = true;
 
     // Pass back any ready callback to the controller
-    return {
-      store: this.#store,
-    };
+    return this.#store;
   };
 
   /**
@@ -347,7 +341,7 @@ export class Capability implements CapabilityExport {
           event: Event.Update,
           finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
             Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
-            await finalizeCallback(update, logger);
+            return await finalizeCallback(update, logger);
           },
         };
         bindings.push(watchBinding);

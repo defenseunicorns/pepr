@@ -10,7 +10,7 @@ import { AssetsDeployer } from "../lib/assets/assetsDeployer";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 import { K8s, kind } from "kubernetes-fluent-client";
-import { PeprStore } from "../lib/k8s";
+import { Store } from "../lib/k8s";
 export default function (program: RootCmd) {
   program
     .command("dev")
@@ -90,8 +90,8 @@ export default function (program: RootCmd) {
             await Promise.all([
               K8s(kind.MutatingWebhookConfiguration).Delete(name),
               K8s(kind.ValidatingWebhookConfiguration).Delete(name),
-              K8s(PeprStore).InNamespace("pepr-system").Delete(scheduleStore),
-              K8s(PeprStore).InNamespace("pepr-system").Delete(store),
+              K8s(Store).InNamespace("pepr-system").Delete(scheduleStore),
+              K8s(Store).InNamespace("pepr-system").Delete(store),
             ]);
           });
 
