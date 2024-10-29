@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 import { Capability } from "./capability";
 import Log from "./logger";
 import { AdmissionRequest, CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";

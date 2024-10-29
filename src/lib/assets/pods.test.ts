@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import { namespace, watcher, deployment, moduleSecret, genEnv } from "./pods";
 import { expect, describe, test, jest, afterEach } from "@jest/globals";
 import { AssetsConfig } from "./assetsConfig";

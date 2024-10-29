@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -24,7 +23,7 @@ import {
   WhenSelector,
 } from "./types";
 import { Event } from "./enums";
-import { PeprMutateRequest } from "./mutate-request";
+import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -313,20 +312,12 @@ export class Capability implements CapabilityExport {
 
       // Add binding to inject Pepr finalizer during admission (Mutate)
       if (registerAdmission) {
-        const mutateBinding: Binding = {
+        const mutateBinding = {
           ...binding,
           isMutate: true,
           isFinalize: true,
           event: Event.Any,
-          mutateCallback: async (req, logger) => {
-            // Wrap req as IPeprMutateRequest
-            const peprRequest = new PeprMutateRequest(req.Request) as PeprMutateRequest<typeof req.Raw>;
-
-            // Ensure the original mutate callback is called with the wrapped request
-            if (binding.mutateCallback) {
-              await binding.mutateCallback(peprRequest, logger);
-            }
-          },
+          mutateCallback: addFinalizer,
         };
         bindings.push(mutateBinding);
       }
