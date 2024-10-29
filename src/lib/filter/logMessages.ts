@@ -1,5 +1,16 @@
+/* eslint-disable complexity */
 import { FilterInput } from "../types";
-import { carriedName, carriedNamespace, definedGroup, definedKind, definedName } from "./adjudicators";
+import {
+  carriedName,
+  carriedNamespace,
+  definedAnnotations,
+  definedGroup,
+  definedKind,
+  definedLabels,
+  definedName,
+  definedNameRegex,
+  definedVersion,
+} from "./adjudicators";
 
 const prefix = "Ignoring Admission Callback:";
 
@@ -10,16 +21,27 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
     case "deletionTimestamp":
       return getDeletionTimestampLogMessage(filterInput, filterCriteria);
     case "version":
+      return `${prefix} Binding defines ${subject} '${definedVersion(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
     case "kind":
-      return `${prefix} Binding defines ${subject} '${carriedName(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
+      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
     case "ignored namespaces":
       return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
-    case "namespace":
-      return `${prefix} Binding defines ${subject} '${carriedNamespace(filterInput)}' but Request declares '${carriedNamespace(filterCriteria)}'.`;
+    case "namespaces":
+      return `${prefix} Binding defines ${subject} '${carriedNamespace(filterInput)}' but Object carries '${carriedNamespace(filterCriteria)}'.`;
     case "event":
       return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
-    default:
+    case "annotations":
+      return `${prefix} Binding defines ${subject} '${definedAnnotations(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "labels":
+      return `${prefix} Binding defines ${subject} '${definedLabels(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "name":
       return `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "name regex":
+      return `${prefix} Binding defines ${subject} '${definedNameRegex(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    case "namespace regexes":
+      return `${prefix} Binding defines ${subject} '${definedNameRegex(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
+    default:
+      return `An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
   }
 };
 

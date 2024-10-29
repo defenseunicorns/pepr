@@ -17,7 +17,7 @@ import {
 } from "./adjudicators";
 import { Operation } from "../mutate-types";
 import { FilterInput, FilterParams } from "../types";
-import { arrayKubernetesObjectLogMessage, commonLogMessage } from "./logMessages";
+import { arrayKubernetesObjectLogMessage, bindingAdmissionRequestLogMessage, commonLogMessage } from "./logMessages";
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
@@ -99,19 +99,12 @@ export const carriesIgnoredNamespaceFilter = createFilter(
   (ignoreArray, kubernetesObject) => commonLogMessage("ignored namespaces", kubernetesObject, ignoreArray),
 );
 
-export const uncarryableNamespaceFilter = createFilter(
-  data => data.capabilityNamespaces,
-  data => getAdmissionRequest(data),
-  (capabilityNamespaces, kubernetesObject) => uncarryableNamespace(capabilityNamespaces, kubernetesObject),
-  (capabilityNamespaces, kubernetesObject) =>
-    arrayKubernetesObjectLogMessage("namespace", kubernetesObject, capabilityNamespaces),
-);
-
 export const unbindableNamespacesFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, request) => uncarryableNamespace(binding, request),
-  (binding, request) => commonLogMessage("namespace", binding, request),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (binding, request) => bindingAdmissionRequestLogMessage("namespaces", binding),
 );
 
 export const mismatchedGroupFilter = createFilter(
@@ -142,4 +135,12 @@ export const mismatchedEventFilter = createFilter(
   data => data.request,
   (binding, request) => mismatchedEvent(binding, request),
   (binding, request) => commonLogMessage("event", binding, request),
+);
+
+export const uncarryableNamespaceFilter = createFilter(
+  data => data.capabilityNamespaces,
+  data => getAdmissionRequest(data),
+  (capabilityNamespaces, kubernetesObject) => uncarryableNamespace(capabilityNamespaces, kubernetesObject),
+  (capabilityNamespaces, kubernetesObject) =>
+    arrayKubernetesObjectLogMessage("namespace", kubernetesObject, capabilityNamespaces),
 );
