@@ -127,7 +127,7 @@ Below are the available configurations through `package.json`.
 |------------------|----------------------------------------|---------------------------------|
 | `uuid`           | Unique identifier for the module       | `hub-operator`                  |
 | `onError`        | Behavior of the webhook failure policy | `reject`, `ignore`              |
-| `rbacMode`       | Configures module to build with least privilege necessary for bindings if set to scoped | `scoped`, `admin` |
+| `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
 | `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`  |

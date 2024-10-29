@@ -139,7 +139,7 @@ export default function (program: RootCmd) {
           appVersion: cfg.version,
           description: cfg.description,
           // Can override the rbacMode with the CLI option
-          rbacMode: determineRbacMode(opts.rbacMode, cfg.pepr.rbacMode),
+          rbacMode: determineRbacMode(opts, cfg),
         },
         path,
       );
