@@ -126,7 +126,7 @@ describe("when a pod is created", () => {
   it("should reject when regex name does not match", () => {
     const pod = CreatePod();
     expect(shouldSkipRequest(defaultBinding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name regex '.+' but Object carries '.+'./,
     );
   });
 
@@ -154,7 +154,7 @@ describe("when a pod is created", () => {
     const binding = { ...defaultBinding, filters };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespace regexes '.+' but Object carries '.+'./,
     );
   });
   it("should not reject when namespace is not ignored", () => {
@@ -168,7 +168,7 @@ describe("when a pod is created", () => {
     const binding = { ...defaultBinding, filters };
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
-      /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+      /Ignoring Admission Callback: Object carries namespace '.+' but ignored namespaces include '.+'./,
     );
   });
 });
@@ -179,7 +179,7 @@ describe("when a pod is deleted", () => {
     const binding = { ...defaultBinding, filters };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name regex '.+' but Object carries '.+'./,
     );
   });
 
@@ -198,7 +198,7 @@ describe("when a pod is deleted", () => {
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespace regexes '.+' but Object carries '.+'./,
     );
   });
 
@@ -227,7 +227,7 @@ describe("when a pod is deleted", () => {
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name '.+' but Object carries '.+'./,
     );
   });
 
@@ -239,7 +239,7 @@ describe("when a pod is deleted", () => {
     };
     const pod = DeletePod();
     expect(shouldSkipRequest(binding, pod, [], ["helm-releasename"])).toMatch(
-      /Ignoring Admission Callback: Object carries namespace '.*' but ignored namespaces include '.*'./,
+      /Ignoring Admission Callback: Object carries namespace '.+' but ignored namespaces include '.+'./,
     );
   });
 
@@ -270,7 +270,7 @@ it("should reject when kind does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines kind '.*' but Request declares '.*'./,
+    /Ignoring Admission Callback: Binding defines kind '.+' but Request declares 'not set'./,
   );
 });
 
@@ -289,7 +289,7 @@ it("should reject when group does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines group '.*' but Request declares '.*'./,
+    /Ignoring Admission Callback: Binding defines group '.+' but Request declares '.+'./,
   );
 });
 
@@ -308,7 +308,7 @@ it("should reject when version does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines version '.*' but Request declares '.*'./,
+    /Ignoring Admission Callback: Binding defines version '.+' but Request declares '.+'./,
   );
 });
 
@@ -338,7 +338,7 @@ it("should reject when the capability namespace does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
-    /Ignoring Admission Callback: Object carries namespace '.*' but namespaces allowed by Capability are '.*'./,
+    /Ignoring Admission Callback: Object carries namespace '.+' but namespaces allowed by Capability are '.+'./,
   );
 });
 
@@ -348,7 +348,7 @@ it("should reject when namespace does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines namespaces '.*' but Object carries '.*'./,
+    /Ignoring Admission Callback: Binding defines namespaces '.+' but Object carries '.+'./,
   );
 });
 
@@ -385,7 +385,7 @@ it("should reject when label does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines labels '.*' but Object carries '.*'./,
+    /Ignoring Admission Callback: Binding defines labels '.+' but Object carries '.+'./,
   );
 });
 
@@ -429,7 +429,7 @@ it("should reject when annotation does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines annotations '.*' but Object carries '.*'./,
+    /Ignoring Admission Callback: Binding defines annotations '.+' but Object carries '.+'./,
   );
 });
 
@@ -549,13 +549,13 @@ describe("when multiple filters are triggered", () => {
   it("should display the failure message for the first matching filter", () => {
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name 'not-a-match' but Object carries '.*'/,
+      /Ignoring Admission Callback: Binding defines name 'not-a-match' but Object carries '.+'./,
     );
   });
   it("should NOT display the failure message for the second matching filter", () => {
     const pod = CreatePod();
     expect(shouldSkipRequest(binding, pod, [])).not.toMatch(
-      /Ignoring Admission Callback: Binding defines namespaces 'not-allowed,also-not-matching' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespaces 'not-allowed,also-not-matching' but Object carries '.+'./,
     );
   });
   it("should NOT display the failure message for the third matching filter", () => {

@@ -1,7 +1,9 @@
 import { FilterInput } from "../types";
 import {
+  carriedKind,
   carriedName,
   carriedNamespace,
+  carriedVersion,
   definedAnnotations,
   definedGroup,
   definedKind,
@@ -45,9 +47,9 @@ const getBindingAdmissionRequestMessage = (subject: string, filterInput: FilterI
     case "event":
       return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
     case "version":
-      return `${prefix} Binding defines ${subject} '${definedVersion(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
+      return `${prefix} Binding defines ${subject} '${definedVersion(filterInput)}' but Request declares '${carriedVersion(filterCriteria)}'.`;
     case "kind":
-      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
+      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request declares '${carriedKind(filterCriteria)}'.`;
     default:
       return getUndefinedLoggingConditionMessage(subject, filterInput, filterCriteria);
   }

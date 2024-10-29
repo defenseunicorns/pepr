@@ -45,6 +45,8 @@ export const carriesDeletionTimestamp = pipe(
 );
 export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
 
+export const carriedKind = pipe(kubernetesObject => kubernetesObject?.metadata?.kind, defaultTo("not set"));
+export const carriedVersion = pipe(kubernetesObject => kubernetesObject?.metadata?.version, defaultTo("not set"));
 export const carriedName = pipe(kubernetesObject => kubernetesObject?.metadata?.name, defaultTo(""));
 export const carriesName = pipe(carriedName, equals(""), not);
 export const missingName = complement(carriesName);
