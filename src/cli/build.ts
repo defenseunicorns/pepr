@@ -11,7 +11,12 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
-import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
+import {
+  createDirectoryIfNotExists,
+  validateCapabilityNames,
+  parseTimeout,
+  determineRbacMode,
+} from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 
 const peprTS = "pepr.ts";
@@ -134,9 +139,7 @@ export default function (program: RootCmd) {
           appVersion: cfg.version,
           description: cfg.description,
           // Can override the rbacMode with the CLI option
-          rbacMode:
-            opts.rbacMode ??
-            (cfg.pepr.rbacMode && cfg.pepr.rbacMode !== "scoped" ? "admin" : cfg.pepr.rbacMode),
+          rbacMode: determineRbacMode(opts.rbacMode, cfg.pepr.rbacMode),
         },
         path,
       );
