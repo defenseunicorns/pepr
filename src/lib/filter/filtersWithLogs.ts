@@ -17,12 +17,7 @@ import {
 } from "./adjudicators";
 import { Operation } from "../mutate-types";
 import { FilterInput, FilterParams } from "../types";
-import {
-  arrayKubernetesObjectLogMessage,
-  bindingAdmissionRequestLogMessage,
-  commonLogMessage,
-  bindingLogMessage,
-} from "./logMessages";
+import { arrayKubernetesObjectLogMessage, commonLogMessage } from "./logMessages";
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
@@ -116,7 +111,7 @@ export const unbindableNamespacesFilter = createFilter(
   data => data.binding,
   data => getAdmissionRequest(data),
   (binding, request) => uncarryableNamespace(binding, request),
-  (binding, request) => bindingAdmissionRequestLogMessage("namespace", binding, request),
+  (binding, request) => commonLogMessage("namespace", binding, request),
 );
 
 export const mismatchedGroupFilter = createFilter(
@@ -140,12 +135,11 @@ export const misboundDeleteWithDeletionTimestampFilter = createFilter(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   (binding, unused) => misboundDeleteWithDeletionTimestamp(binding),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (binding, unused) => bindingLogMessage("deletionTimestamp"),
+  (binding, unused) => commonLogMessage("deletionTimestamp", undefined, undefined),
 );
-
 export const mismatchedEventFilter = createFilter(
   data => data.binding,
   data => data.request,
   (binding, request) => mismatchedEvent(binding, request),
-  (binding, request) => bindingAdmissionRequestLogMessage("event", binding, request),
+  (binding, request) => commonLogMessage("event", binding, request),
 );

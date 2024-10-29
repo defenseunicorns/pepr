@@ -8,7 +8,7 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
     case "group":
       return `${prefix} Binding defines ${subject} '${definedGroup(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
     case "deletionTimestamp":
-      return `${prefix} Binding defines ${subject} but Object does not carry it.`;
+      return getDeletionTimestampLogMessage(filterInput, filterCriteria);
     case "version":
     case "kind":
       return `${prefix} Binding defines ${subject} '${carriedName(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
@@ -16,23 +16,21 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
       return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
     case "namespace":
       return `${prefix} Binding defines ${subject} '${carriedNamespace(filterInput)}' but Request declares '${carriedNamespace(filterCriteria)}'.`;
+    case "event":
+      return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
     default:
       return `${prefix} Binding defines ${subject} '${definedName(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
   }
 };
 
-export const bindingAdmissionRequestLogMessage = (
-  subject: string,
-  binding: FilterInput,
-  request?: FilterInput,
-): string => {
-  switch (subject) {
-    case "name":
-    case "kind":
-      return `${prefix} Binding defines ${subject} '${carriedName(binding)}' but Request declares '${carriedName(request)}'.`;
-    default:
-      return `${prefix} Binding defines ${subject} '${definedKind(binding)}' but Request does not declare it.`;
+const getDeletionTimestampLogMessage = (filterInput: FilterInput, filterCriteria: FilterInput) => {
+  if (filterInput === undefined && filterCriteria === undefined) {
+    return `${prefix} Cannot use deletionTimestamp filter on a DELETE operation.`;
   }
+  return `${prefix} Binding defines deletionTimestamp but Object does not carry it.`;
+};
+export const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput): string => {
+  return `${prefix} Binding defines ${subject} '${definedKind(binding)}' but Request does not declare it.`;
 };
 
 export const arrayKubernetesObjectLogMessage = (
@@ -40,18 +38,5 @@ export const arrayKubernetesObjectLogMessage = (
   filterCriteria?: FilterInput,
   filterInput?: FilterInput,
 ): string => {
-  let logMessage: string = "";
-  switch (subject) {
-    case "namespace":
-      logMessage = `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
-      break;
-    case "ignored namespaces":
-      logMessage = `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
-      break;
-    default:
-      break;
-  }
-  return logMessage;
+  return `${prefix} Object carries ${subject} '${carriedNamespace(filterInput)}' but ${subject}s allowed by Capability are '${JSON.stringify(filterCriteria)}'.`;
 };
-
-export const bindingLogMessage = (subject: string) => `${prefix} Cannot use ${subject} filter on a DELETE operation.`;
