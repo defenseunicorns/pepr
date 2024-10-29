@@ -103,10 +103,7 @@ async function validateClusterRoleYaml(validateChart: boolean = false) {
   expect(k8sYaml.includes(cr)).toEqual(true);
 
   if (validateChart) {
-    const yamlChartRBAC = await fs.readFile(
-      resolve("journey", "resources", "static-test-chart", "values.yaml"),
-      "utf8",
-    );
+    const yamlChartRBAC = await fs.readFile(resolve("journey", "resources", "values.yaml"), "utf8");
     const expectedYamlChartRBAC = await fs.readFile(
       resolve("journey", "resources", "values.yaml"),
       "utf8",
