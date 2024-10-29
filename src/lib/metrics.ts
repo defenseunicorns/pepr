@@ -173,9 +173,7 @@ export class MetricsCollector {
 
     if (maxCacheMissWindows !== undefined && this.#cacheMissWindows.size >= maxCacheMissWindows) {
       const firstKey = this.#cacheMissWindows.keys().next().value;
-      if (firstKey !== undefined) {
-        this.#cacheMissWindows.delete(firstKey);
-      }
+      this.#cacheMissWindows.delete(firstKey);
       this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.remove({ window: firstKey });
     }
   };
