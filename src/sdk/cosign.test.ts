@@ -11,9 +11,6 @@ import { chmodSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as crypto from "node:crypto";
-import { toSignedEntity, toTrustMaterial, Verifier } from "@sigstore/verify";
-import { PublicKeyDetails, TrustedRoot } from "@sigstore/protobuf-specs";
-import { bundleFromJSON } from "@sigstore/bundle";
 import { heredoc } from "./heredoc";
 
 import * as sut from "./cosign";
@@ -249,9 +246,12 @@ async function stopZotRegistry() {
 */
 // describe("Zot Registry", () => {
 //   let workdir: string;
+//   let tlsKey: string;
+//   let tlsCrt: string;
 
 //   beforeAll(async () => {
 //     workdir = await createWorkdir();
+//     ({ key: tlsKey, crt: tlsCrt } = await genTlsCrt(workdir));
 //   });
 
 //   afterAll(async () => {
@@ -261,13 +261,124 @@ async function stopZotRegistry() {
 //   it(
 //     "works",
 //     async () => {
-//       await startZotRegistry(workdir);
+//       await startZotRegistry(workdir, tlsKey, tlsCrt);
 
 //       const containerName = `${basename(__filename)}.zot`;
 //       const cmd = `docker ps --filter name=${containerName} --quiet`;
 //       const containerId = await cmdStdout(cmd);
 
 //       await stopZotRegistry();
+
+//       expect(containerId).not.toBe("");
+//     },
+//     mins(1),
+//   );
+// });
+
+async function startDockerRegistry(workdir: string, tlsKey: string, tlsCrt: string) {
+  const innerKey = `/${basename(tlsKey)}`;
+  const innerCrt = `/${basename(tlsCrt)}`;
+
+  // https://distribution.github.io/distribution/about/configuration/
+  const containerName = `${basename(__filename)}.dkr`;
+
+  const imageRef = "docker.io/library/registry:latest";
+
+  const outerData = `${workdir}/data`;
+  const innerData = "/var/lib/registry";
+
+  const outerPort = "50001";
+  const innerPort = "443";
+
+  const outerConf = `${workdir}/dkr-config.yaml`;
+  const innerConf = "/etc/docker/registry/config.yml";
+
+  await mkdir(outerData);
+  chmodSync(outerData, 0o777);
+
+  const yaml = heredoc`
+    version: 0.1
+    log:
+      level: debug
+      fields:
+        service: registry
+    storage:
+      cache:
+        blobdescriptor: inmemory
+      filesystem:
+        rootdirectory: ${innerData}
+    http:
+      relativeurls: true
+      addr: :${innerPort}
+      host: https://localhost:${outerPort}
+      headers:
+        X-Content-Type-Options: [nosniff]
+      tls:
+        certificate: ${innerCrt}
+        key: ${innerKey}
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+  `;
+  await writeFile(outerConf, yaml);
+
+  const command = `
+    docker run --rm --detach
+      --name "${containerName}"
+      --user $(id -u):$(id -g)
+      --publish ${outerPort}:${innerPort}
+      --volume ${tlsKey}:${innerKey}
+      --volume ${tlsCrt}:${innerCrt}
+      --volume "${outerConf}":${innerConf}
+      --volume "${outerData}":${innerData}
+      ${imageRef}
+  `
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  await cmdStdout(command, { cwd: workdir });
+}
+
+async function stopDockerRegistry() {
+  const containerName = `${basename(__filename)}.dkr`;
+
+  let cmd = `docker ps --filter name=${containerName} --quiet`;
+  const containerId = await cmdStdout(cmd);
+
+  cmd = `docker kill ${containerId}`;
+  await cmdStdout(cmd);
+}
+
+/*
+  Useful during dev but commented out for speed & network reasons
+*/
+// describe("Docker Registry", () => {
+//   let workdir: string;
+//   let tlsKey: string;
+//   let tlsCrt: string;
+
+//   beforeAll(async () => {
+//     workdir = await createWorkdir();
+//     ({ key: tlsKey, crt: tlsCrt } = await genTlsCrt(workdir));
+//   });
+
+//   afterAll(async () => {
+//     await cleanWorkdirs();
+//   });
+
+//   it(
+//     "works",
+//     async () => {
+//       await startDockerRegistry(workdir, tlsKey, tlsCrt);
+
+//       const containerName = `${basename(__filename)}.dkr`;
+//       const cmd = `docker ps --filter name=${containerName} --quiet`;
+//       const containerId = await cmdStdout(cmd);
+
+//       await stopDockerRegistry();
 
 //       expect(containerId).not.toBe("");
 //     },
@@ -283,12 +394,6 @@ const timed = async (msg: string, func: () => Promise<any>) => {
   return result;
 };
 
-const indent = (msg: string) =>
-  msg
-    .split("\n")
-    .map(m => `  ${m}`)
-    .join("\n");
-
 async function builderExists(name: string) {
   const resultRaw = await cmdStdout(`docker buildx ls --format json`);
   const result = resultRaw.split("\n").map(m => JSON.parse(m));
@@ -297,7 +402,7 @@ async function builderExists(name: string) {
   return !!found;
 }
 
-describe("cosign CLI - pub/prv keys", () => {
+describe("cosign CLI - ttl.sh - pub/prv keys", () => {
   let cosign: string;
   let workdir: string;
 
@@ -309,31 +414,26 @@ describe("cosign CLI - pub/prv keys", () => {
   const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
   beforeAll(async () => {
+    workdir = await timed("creating workdir", createWorkdir);
+
     cosign = await timed(
       "getting cosign CLI binary",
       async () => await downloadCosign(workdir, "cosign"),
     );
-    console.log(`  cosign: ${cosign}`);
 
-    workdir = await timed("creating workdir", createWorkdir);
-    console.log(`  workdir: ${workdir}`);
-
-    let result;
-    result = await timed(`generating keypair: ${prefix}.*`, async () =>
+    await timed(`generating signing keypair: ${prefix}.*`, async () =>
       cmdStderr(`${cosign} generate-key-pair --output-key-prefix=${prefix}`, {
         cwd: workdir,
         env: { COSIGN_PASSWORD: passwd },
       }),
     );
-    console.log(indent(result));
 
     await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
-    result = await timed(`uploading container image: ${iref}`, async () =>
+    await timed(`uploading container image: ${iref}`, async () =>
       cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
     );
-    console.log(indent(result));
 
-    result = await timed(`signing image: ${iref}`, async () =>
+    await timed(`signing image: ${iref}`, async () =>
       cmdStderr(`${cosign} sign --tlog-upload=false --key=${prvkey} ${iref}`, {
         cwd: workdir,
         env: { COSIGN_PASSWORD: passwd },
@@ -353,232 +453,6 @@ describe("cosign CLI - pub/prv keys", () => {
     expect(result).toContain("signatures were verified");
   });
 });
-
-describe("sigstore-js - pub/prv keys", () => {
-  let cosign: string;
-  let workdir: string;
-
-  const passwd = "password";
-  const prefix = "signing";
-  const rawPrvkey = `${prefix}-raw.key`;
-  const rawPubkey = `${prefix}-raw.pub`;
-  const cosPrvkey = `${prefix}-cos.key`;
-  // const cosPubkey = `${prefix}-cos.pub`;
-
-  const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
-
-  beforeAll(async () => {
-    // result = await cmdStdout("npm root");
-    // const local = `${result}/.bin/cosign`;
-    cosign = await timed(
-      "getting cosign CLI binary",
-      async () => await downloadCosign(workdir, "cosign"),
-    );
-    console.log(`  cosign: ${cosign}`);
-
-    workdir = await timed("creating workdir", createWorkdir);
-    console.log(`  workdir: ${workdir}`);
-
-    let result;
-    result = await timed(`generating signing keypair: ${prefix}.*`, async () => {
-      const keypair = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" });
-
-      await writeFile(
-        `${workdir}/${rawPubkey}`,
-        keypair.publicKey.export({ format: "pem", type: "spki" }).toString("ascii"),
-      );
-      chmodSync(`${workdir}/${rawPubkey}`, 0o644);
-
-      await writeFile(
-        `${workdir}/${rawPrvkey}`,
-        keypair.privateKey.export({ format: "pem", type: "pkcs8" }).toString("ascii"),
-      );
-      chmodSync(`${workdir}/${rawPrvkey}`, 0o600);
-    });
-    console.log(indent(`Public key written to ${rawPubkey}`));
-    console.log(indent(`Private key written to ${rawPrvkey}`));
-
-    result = await timed(`converting ${rawPrvkey} to ${cosPrvkey}`, async () =>
-      cmdStderr(
-        `${cosign} import-key-pair --key=${rawPrvkey} --output-key-prefix=${basename(cosPrvkey, ".key")}`,
-        {
-          cwd: workdir,
-          env: { COSIGN_PASSWORD: passwd },
-        },
-      ),
-    );
-
-    await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
-    result = await timed(`uploading container image: ${iref}`, async () =>
-      cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
-    );
-    console.log(indent(result));
-
-    result = await timed(`signing image: ${iref}`, async () =>
-      cmdStderr(`${cosign} sign --tlog-upload=false --key=${cosPrvkey} ${iref}`, {
-        cwd: workdir,
-        env: { COSIGN_PASSWORD: passwd },
-      }),
-    );
-  }, mins(1));
-
-  afterAll(async () => await cleanWorkdirs());
-
-  it("can be verified via sigstore-js", async () => {
-    const imgDigest = await cmdStdout(`crane digest ${iref}`, {
-      cwd: workdir,
-      env: { COSIGN_PASSWORD: passwd },
-    });
-    console.log("crane digest:", imgDigest);
-
-    const imgManifest = await cmdStdout(`crane manifest ${iref}`, {
-      cwd: workdir,
-      env: { COSIGN_PASSWORD: passwd },
-    });
-    console.log("crane manifest:", imgManifest);
-
-    const dotSig = await cmdStdout(`${cosign} triangulate ${iref}`, {
-      cwd: workdir,
-      env: { COSIGN_PASSWORD: passwd },
-    });
-    console.log("cosign triangulate:", dotSig);
-
-    const sigManifest = await cmdStdout(`crane manifest ${dotSig}`, {
-      cwd: workdir,
-      env: { COSIGN_PASSWORD: passwd },
-    });
-    console.log("crane manifest (dotSig):", JSON.stringify(JSON.parse(sigManifest), null, 2));
-
-    // https://github.com/sigstore/sigstore-js/blob/main/packages/verify/src/__tests__/verifier.test.ts
-    const pubKeyRaw = await readFile(`${workdir}/${rawPubkey}`, { encoding: "utf8" });
-    const pubKey = crypto.createPublicKey({
-      key: pubKeyRaw,
-      format: "pem",
-      encoding: "utf-8",
-    });
-
-    const trustedRoot = {
-      tlogs: [],
-      ctlogs: [],
-      timestampAuthorities: [],
-      certificateAuthorities: [],
-    } as unknown as TrustedRoot;
-
-    const keys = {
-      hint: {
-        rawBytes: pubKey.export({ type: "spki", format: "der" }),
-        keyDetails: PublicKeyDetails.PKIX_ECDSA_P256_SHA_256,
-      },
-    };
-    const trustMaterial = toTrustMaterial(trustedRoot, keys);
-
-    const subject = new Verifier(trustMaterial, {
-      ctlogThreshold: 0,
-      tlogThreshold: 0,
-      tsaThreshold: 0,
-    });
-
-    const sig = JSON.parse(sigManifest).layers[0].annotations["dev.cosignproject.cosign/signature"];
-    console.log("sig (enc):", sig);
-    console.log("sig (dec):", Buffer.from(sig, "base64").toString("utf8"));
-
-    // host     /name               :tag
-    // docker.io/library/hello-world:latest
-
-    // host  /name                                :tag
-    // ttl.sh/5dad3c9b-7ccc-4115-be27-c9244e7c0e06:2m
-
-    const irefHost = iref.split("/")[0];
-    const irefImage = iref.replace(`${irefHost}/`, "");
-    const irefTag = irefImage.split(":").at(-1);
-    const irefName = irefImage.replace(`:${irefTag}`, "");
-
-    const manifestUrl = `https://${irefHost}/v2/${irefName}/manifests/${irefTag}`;
-    console.log("manifestUrl", manifestUrl);
-
-    const supportsMediaType = async (url: string, mediaType: string) => {
-      return (await sut.head(url, mediaType))["content-type"] === mediaType;
-    };
-
-    const canOciV1Manifest = async (manifestUrl: string) => {
-      return supportsMediaType(manifestUrl, sut.MediaTypeOciV1.Manifest);
-    };
-
-    const canDockerV2Manifest = async (manifestUrl: string) => {
-      return supportsMediaType(manifestUrl, sut.MediaTypeDockerV2.Manifest);
-    };
-
-    // { head: {}, body: "" }
-    // prettier-ignore
-    const imageManifest = 
-      await canOciV1Manifest(manifestUrl) ? await sut.get(manifestUrl, sut.MediaTypeOciV1.Manifest) :
-      await canDockerV2Manifest(manifestUrl) ? await sut.get(manifestUrl, sut.MediaTypeDockerV2.Manifest) :
-      (() => { throw "Can't pull image manifest with supported MediaType." })();
-    console.log("imageManifest", imageManifest);
-
-    const imageDigest = `sha256:${crypto
-      .createHash("sha256")
-      .update(imageManifest.body)
-      .digest("hex")
-      .toString()}`;
-    console.log("imageDigest", imageDigest);
-
-    const sigTag = `${imageDigest.replace(":", "-")}.sig`;
-    console.log("sigTag", sigTag);
-
-    const triangulated = `${irefHost}/${irefName}:${sigTag}`;
-    console.log("triangulated", triangulated);
-
-    const sigImageUrl = `https://${irefHost}/v2/${irefName}/manifests/${sigTag}`;
-    console.log("sigImageUrl", sigImageUrl);
-
-    const sigImageManifestResp = await sut.get(sigImageUrl, sut.MediaTypeOciV1.Manifest);
-    const sigImageManifest = JSON.parse(sigImageManifestResp.body);
-    console.log("sigImageManifest", sigImageManifest);
-
-    const sigBlobDigest = sigImageManifest.layers.at(0).digest;
-    console.log("sigBlobDigest", sigBlobDigest);
-
-    const sigBlobUrl = `https://${irefHost}/v2/${irefName}/blobs/${sigBlobDigest}`;
-    console.log("sigBlobUrl", sigBlobUrl);
-
-    const sigBlobResp = await sut.get(sigBlobUrl, "application/octet-stream");
-    const sigBlob = sigBlobResp.body;
-    console.log("sigBlob", sigBlob);
-
-    console.log("iref", iref);
-
-    const bundle = bundleFromJSON({
-      mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
-      verificationMaterial: {
-        publicKey: {
-          hint: "hint",
-        },
-        tlogEntries: [],
-        timestampVerificationData: {
-          rfc3161Timestamps: [],
-        },
-      },
-      messageSignature: {
-        messageDigest: {
-          algorithm: "SHA2_256",
-          digest: crypto.createHash("sha256").update(sigBlob).digest().toString(),
-        },
-        signature: sig,
-      },
-    });
-
-    // const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob + "nope!"));
-    const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob));
-
-    subject.verify(signedEntity);
-  }, 10000);
-});
-
-// TODO
-// describe("sigstore-js - registry (Docker) - pub/prv keys", () => {
-
-// }
 
 describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
   let workdir: string;
@@ -714,7 +588,7 @@ describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
     await cleanWorkdirs();
   });
 
-  it("can be verified via sigstore-js", async () => {
+  it("verifies successfully", async () => {
     const tlsCrts = [await readFile(tlsCrt, { encoding: "utf-8" })];
 
     const verified = await sut.verifyImage(iref, [`${workdir}/${rawPubkey}`], tlsCrts);
@@ -723,14 +597,110 @@ describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
   });
 });
 
-// describe.skip("verifyImage()", () => {
-//   let iref: string;
-//   let pubkeys: string[];
+describe("sigstore-js - registry (Docker) - pub/prv keys", () => {
+  let workdir: string;
+  let tlsKey: string;
+  let tlsCrt: string;
 
-//   it("can be verified via new helper", () => {
-//     //
-//     // TODO: come back once you figure out how to use sigstore-js!
-//     //
-//     expect(sut.verifyImage(iref, pubkeys)).toBe("???");
-//   });
-// });
+  let cosign: string;
+  let crane: string;
+
+  const passwd = "password";
+  const prefix = "signing";
+  const rawPrvkey = `${prefix}-raw.key`;
+  const rawPubkey = `${prefix}-raw.pub`;
+  const cosPrvkey = `${prefix}-cos.key`;
+  // const cosPubkey = `${prefix}-cos.pub`;
+
+  const iref = `localhost:50001/${crypto.randomUUID()}:latest`;
+
+  beforeAll(async () => {
+    workdir = await timed("creating workdir", createWorkdir);
+
+    await timed("generating TLS certificate", async () => {
+      ({ key: tlsKey, crt: tlsCrt } = await genTlsCrt(workdir));
+    });
+
+    await timed("starting Docker container registry", async () => {
+      await startDockerRegistry(workdir, tlsKey, tlsCrt);
+    });
+
+    const npmBin = `${await cmdStdout("npm root")}/.bin`;
+    cosign = await timed(
+      "getting cosign CLI binary",
+      async () => await downloadCosign(npmBin, "cosign"),
+    );
+
+    crane = await timed(
+      "getting crane CLI binary",
+      async () => await downloadCrane(npmBin, "crane"),
+    );
+
+    await timed(`generating signing keypair: ${prefix}.*`, async () => {
+      const keypair = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" });
+
+      await writeFile(
+        `${workdir}/${rawPubkey}`,
+        keypair.publicKey.export({ format: "pem", type: "spki" }).toString("ascii"),
+      );
+      chmodSync(`${workdir}/${rawPubkey}`, 0o644);
+
+      await writeFile(
+        `${workdir}/${rawPrvkey}`,
+        keypair.privateKey.export({ format: "pem", type: "pkcs8" }).toString("ascii"),
+      );
+      chmodSync(`${workdir}/${rawPrvkey}`, 0o600);
+    });
+
+    await timed(
+      `converting ${rawPrvkey} (node crypto) to ${cosPrvkey} (cosign native)`,
+      async () =>
+        await cmdStderr(
+          `${cosign} import-key-pair --key=${rawPrvkey} --output-key-prefix=${basename(cosPrvkey, ".key")}`,
+          {
+            cwd: workdir,
+            env: { COSIGN_PASSWORD: passwd },
+          },
+        ),
+    );
+
+    await timed(
+      "generating test dockerfile",
+      async () => await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world"),
+    );
+
+    await timed(`uploading test container image: ${iref}`, async () => {
+      let command = `docker build --tag ${iref} --output type=docker .`;
+      await cmd(command, { cwd: workdir });
+
+      const tar = `${workdir}/image.tar`;
+      command = `docker save --output ${tar} ${iref}`;
+      await cmd(command);
+
+      await cmd(`${crane} push --insecure ${tar} ${iref}`);
+    });
+
+    await timed(`cosign signing image: ${iref}`, async () =>
+      cmdStderr(
+        `${cosign} sign --allow-insecure-registry=true --tlog-upload=false --key=${cosPrvkey} ${iref}`,
+        {
+          cwd: workdir,
+          env: { COSIGN_PASSWORD: passwd },
+        },
+      ),
+    );
+  }, mins(2));
+
+  afterAll(async () => {
+    await stopDockerRegistry();
+    await cleanWorkdirs();
+  });
+
+  it("verifies successfully", async () => {
+    const tlsCrts = [await readFile(tlsCrt, { encoding: "utf-8" })];
+
+    const verified = await sut.verifyImage(iref, [`${workdir}/${rawPubkey}`], tlsCrts);
+
+    expect(verified).toBe(true);
+  });
+});
