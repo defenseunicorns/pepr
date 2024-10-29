@@ -107,6 +107,8 @@ export async function validateClusterRoleYaml(validateChart = false) {
     "utf8",
   );
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+  expect(k8sYaml.includes(cr)).toEqual(true);
+
   if (validateChart) {
     const yamlChartRBAC = await fs.readFile(
       resolve("journey", "resources", "static-test-chart", "values.yaml"),
@@ -121,8 +123,6 @@ export async function validateClusterRoleYaml(validateChart = false) {
 
     expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
   }
-
-  expect(k8sYaml.includes(cr)).toEqual(true);
 }
 
 async function validateHelmChart() {

@@ -40,15 +40,6 @@ export function peprBuild() {
   });
 }
 
-// Set rbacMode in the Pepr Module Config and write it back to disk
-async function addScopedRbacMode() {
-  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
-  const packageJsonObj = JSON.parse(packageJson);
-  console.log(JSON.stringify(packageJsonObj.pepr));
-  packageJsonObj.pepr.rbacMode = "scoped";
-  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
-}
-
 async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
@@ -91,4 +82,13 @@ async function validateZarfYaml() {
   // Check the generated zarf yaml
   const actualZarfYaml = loadYaml(zarfYAML);
   expect(actualZarfYaml).toEqual(expectedZarfYaml);
+}
+
+// Set rbacMode in the Pepr Module Config and write it back to disk
+async function addScopedRbacMode() {
+  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
+  const packageJsonObj = JSON.parse(packageJson);
+  console.log(JSON.stringify(packageJsonObj.pepr));
+  packageJsonObj.pepr.rbacMode = "scoped";
+  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
