@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { ValidateActionResponse, AdmissionRequest } from "./types";
-import { Operation } from "./mutate-types";
+import { Operation } from "./enums";
 import { PeprValidateRequest } from "./validate-request";
 describe("PeprValidateRequest", () => {
   let mockRequest: AdmissionRequest<KubernetesObject>;

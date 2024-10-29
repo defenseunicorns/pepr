@@ -6,7 +6,7 @@ import { addFinalizer, removeFinalizer } from "./finalizer";
 import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { AdmissionRequest } from "./types";
-import { Operation } from "./mutate-types";
+import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
 import { Binding } from "./types";
 

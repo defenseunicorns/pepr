@@ -3,7 +3,6 @@
 
 import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
-import { a } from "../lib";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
@@ -16,7 +15,7 @@ import Log from "../lib/logger";
  * @returns the list of containers in the pod
  */
 export function containers(
-  request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>,
+  request: PeprValidateRequest<kind.Pod> | PeprMutateRequest<kind.Pod>,
   containerType?: "containers" | "initContainers" | "ephemeralContainers",
 ) {
   const containers = request.Raw.spec?.containers || [];

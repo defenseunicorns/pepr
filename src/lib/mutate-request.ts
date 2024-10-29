@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Operation, AdmissionRequest, DeepPartial } from "./mutate-types";
+import { AdmissionRequest, DeepPartial } from "./types";
+import { Operation } from "./enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { clone, mergeDeepRight } from "ramda";
 import { Logger } from "pino";
