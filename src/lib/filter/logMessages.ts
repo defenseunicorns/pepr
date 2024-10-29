@@ -28,9 +28,9 @@ const bindingAdmissionRequestCases = ["event", "group", "kind", "version"];
 
 export const commonLogMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput): string => {
   if (bindingKubernetesObjectCases.includes(subject)) {
-    return bindingKubernetesObjectMessages(subject, filterInput, filterCriteria);
+    return getBindingKubernetesObjectMessage(subject, filterInput, filterCriteria);
   } else if (bindingAdmissionRequestCases.includes(subject)) {
-    return bindingAdmissionRequestMessages(subject, filterInput, filterCriteria);
+    return getBindingAdmissionRequestMessage(subject, filterInput, filterCriteria);
   } else if (subject === "ignored namespaces") {
     return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
   } else {
@@ -38,7 +38,7 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
   }
 };
 
-const bindingAdmissionRequestMessages = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
+const getBindingAdmissionRequestMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
   switch (subject) {
     case "group":
       return `${prefix} Binding defines ${subject} '${definedGroup(filterInput)}' but Request declares '${carriedName(filterCriteria)}'.`;
@@ -53,7 +53,7 @@ const bindingAdmissionRequestMessages = (subject: string, filterInput: FilterInp
   }
 };
 
-const bindingKubernetesObjectMessages = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
+const getBindingKubernetesObjectMessage = (subject: string, filterInput: FilterInput, filterCriteria?: FilterInput) => {
   switch (subject) {
     case "namespaces":
       return `${prefix} Binding defines ${subject} '${definedNamespaces(filterInput)}' but Object carries '${carriedNamespace(filterCriteria)}'.`;
@@ -81,7 +81,7 @@ const getUndefinedLoggingConditionMessage = (
   filterInput: FilterInput,
   filterCriteria: FilterInput,
 ) => {
-  return `${prefix} An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
+  return `${prefix} An undefined logging condition occurred. Filter input was '${JSON.stringify(filterInput)}' and Filter criteria was '${JSON.stringify(filterCriteria)}'`;
 };
 
 const getDeletionTimestampLogMessage = (filterInput: FilterInput, filterCriteria: FilterInput) => {
@@ -89,7 +89,4 @@ const getDeletionTimestampLogMessage = (filterInput: FilterInput, filterCriteria
     return `${prefix} Cannot use deletionTimestamp filter on a DELETE operation.`;
   }
   return `${prefix} Binding defines deletionTimestamp but Object does not carry it.`;
-};
-export const bindingAdmissionRequestLogMessage = (subject: string, binding: FilterInput): string => {
-  return `${prefix} Binding defines ${subject} '${definedKind(binding)}' but Request does not declare it.`;
 };

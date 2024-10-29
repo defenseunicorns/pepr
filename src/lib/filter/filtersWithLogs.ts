@@ -17,7 +17,7 @@ import {
 } from "./adjudicators";
 import { Operation } from "../mutate-types";
 import { FilterInput, FilterParams } from "../types";
-import { bindingAdmissionRequestLogMessage, commonLogMessage } from "./logMessages";
+import { commonLogMessage } from "./logMessages";
 
 const getAdmissionRequest = (data: FilterParams): KubernetesObject | undefined => {
   return data.request.operation === Operation.DELETE ? data.request.oldObject : data.request.object;
@@ -104,7 +104,7 @@ export const unbindableNamespacesFilter = createFilter(
   data => getAdmissionRequest(data),
   (binding, request) => uncarryableNamespace(binding, request),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (binding, request) => bindingAdmissionRequestLogMessage("namespaces", binding),
+  (binding, request) => commonLogMessage("namespaces", binding),
 );
 
 export const mismatchedGroupFilter = createFilter(
