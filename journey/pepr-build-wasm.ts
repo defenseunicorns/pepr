@@ -6,7 +6,7 @@ import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { validateClusterRoleYaml } from "./pepr-build";
+import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
 
 // test npx pepr build -o dst
@@ -91,4 +91,29 @@ async function addScopedRbacMode() {
   console.log(JSON.stringify(packageJsonObj.pepr));
   packageJsonObj.pepr.rbacMode = "scoped";
   await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
+}
+
+async function validateClusterRoleYaml(validateChart: boolean = false) {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+  expect(k8sYaml.includes(cr)).toEqual(true);
+
+  if (validateChart) {
+    const yamlChartRBAC = await fs.readFile(
+      resolve("journey", "resources", "static-test-chart", "values.yaml"),
+      "utf8",
+    );
+    const expectedYamlChartRBAC = await fs.readFile(
+      resolve("journey", "resources", "values.yaml"),
+      "utf8",
+    );
+    const jsonChartRBAC = yaml.load(yamlChartRBAC) as Record<string, PolicyRule[]>;
+    const expectedJsonChartRBAC = yaml.load(expectedYamlChartRBAC) as Record<string, PolicyRule[]>;
+
+    expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
+  }
 }
