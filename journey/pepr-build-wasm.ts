@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, it } from "@jest/globals";
-import { loadYaml } from "@kubernetes/client-node";
+import { loadYaml, V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
