@@ -1,8 +1,12 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
   carriesIgnoredNamespace,
+  declaredOperation,
+  definedEvent,
+  misboundDeleteWithDeletionTimestamp,
   mismatchedAnnotations,
   mismatchedDeletionTimestamp,
+  mismatchedEvent,
   mismatchedGroup,
   mismatchedKind,
   mismatchedLabels,
@@ -95,7 +99,7 @@ export const mismatchedVersionFilter = createFilter(
   (binding, request) => bindingAdmissionRequestLogMessage("version", binding, request),
 );
 
-export const carriesIgnoredNamespacesFilter = createFilter(
+export const carriesIgnoredNamespaceFilter = createFilter(
   data => data.ignoredNamespaces,
   data => getAdmissionRequest(data),
   (ignoreArray, kubernetesObject) => carriesIgnoredNamespace(ignoreArray, kubernetesObject),
@@ -129,4 +133,22 @@ export const mismatchedDeletionTimestampFilter = createFilter(
   data => getAdmissionRequest(data),
   (binding, kubernetesObject) => mismatchedDeletionTimestamp(binding, kubernetesObject),
   (binding, kubernetesObject) => bindingKubernetesObjectLogMessage("deletionTimestamp", binding, kubernetesObject),
+);
+
+export const misboundDeleteWithDeletionTimestampFilter = createFilter(
+  data => data.binding,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  data => undefined,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (binding, unused) => misboundDeleteWithDeletionTimestamp(binding),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (binding, unused) => `Cannot use deletionTimestamp filter on a DELETE operation.`,
+);
+
+export const mismatchedEventFilter = createFilter(
+  data => data.binding,
+  data => data.request,
+  (binding, request) => mismatchedEvent(binding, request),
+  (binding, request) =>
+    `Binding defines event '${definedEvent(binding)}' but Request declares '${declaredOperation(request)}'.`,
 );

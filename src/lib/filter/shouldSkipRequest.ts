@@ -3,9 +3,11 @@
 
 import { AdmissionRequest, Binding } from "../types";
 import {
-  carriesIgnoredNamespacesFilter,
+  carriesIgnoredNamespaceFilter,
+  misboundDeleteWithDeletionTimestampFilter,
   mismatchedAnnotationsFilter,
   mismatchedDeletionTimestampFilter,
+  mismatchedEventFilter,
   mismatchedGroupFilter,
   mismatchedKindFilter,
   mismatchedLabelsFilter,
@@ -35,19 +37,21 @@ export const shouldSkipRequest = (
   const filterChain = new FilterChain();
 
   filterChain
-    .addFilter(mismatchedNameRegexFilter)
-    .addFilter(mismatchedNamespaceFilter)
-    .addFilter(mismatchedNamespaceRegexFilter)
-    .addFilter(uncarryableNamespaceFilter)
+    .addFilter(misboundDeleteWithDeletionTimestampFilter)
     .addFilter(mismatchedDeletionTimestampFilter)
-    .addFilter(mismatchedAnnotationsFilter)
-    .addFilter(mismatchedLabelsFilter)
-    .addFilter(mismatchedKindFilter)
+    .addFilter(mismatchedEventFilter)
+    .addFilter(mismatchedNameFilter)
     .addFilter(mismatchedGroupFilter)
     .addFilter(mismatchedVersionFilter)
-    .addFilter(mismatchedNameFilter)
-    .addFilter(carriesIgnoredNamespacesFilter)
-    .addFilter(unbindableNamespacesFilter);
+    .addFilter(mismatchedKindFilter)
+    .addFilter(unbindableNamespacesFilter)
+    .addFilter(uncarryableNamespaceFilter)
+    .addFilter(mismatchedNamespaceFilter)
+    .addFilter(mismatchedLabelsFilter)
+    .addFilter(mismatchedAnnotationsFilter)
+    .addFilter(mismatchedNamespaceRegexFilter)
+    .addFilter(mismatchedNameRegexFilter)
+    .addFilter(carriesIgnoredNamespaceFilter);
 
   const admissionFilterMessage = filterChain.execute({
     binding,
