@@ -1,16 +1,7 @@
 /* eslint-disable max-statements */
 import { Capability } from "./capability";
 import Log from "./logger";
-import {
-  AdmissionRequest,
-  CapabilityCfg,
-  FinalizeAction,
-  IPeprMutateRequest,
-  IPeprValidateRequest,
-  MutateAction,
-  ValidateAction,
-  WatchLogAction,
-} from "./types";
+import { AdmissionRequest, CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
@@ -136,7 +127,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -171,7 +162,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -209,7 +200,7 @@ describe("Capability", () => {
     const capability = new Capability(complexCapabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -248,13 +239,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
 
     const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -292,7 +283,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -326,7 +317,7 @@ describe("Capability", () => {
 
     // Mock the validate callback
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -558,7 +549,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -574,7 +565,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -590,7 +581,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -606,7 +597,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },
@@ -622,7 +613,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: IPeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
         logger.info("Validate action log");
         return { allowed: true };
       },

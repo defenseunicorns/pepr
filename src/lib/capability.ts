@@ -22,7 +22,6 @@ import {
   FinalizeAction,
   FinalizeActionChain,
   WhenSelector,
-  IPeprMutateRequest,
 } from "./types";
 import { Event } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
@@ -321,7 +320,7 @@ export class Capability implements CapabilityExport {
           event: Event.Any,
           mutateCallback: async (req, logger) => {
             // Wrap req as IPeprMutateRequest
-            const peprRequest = new PeprMutateRequest(req.Request) as IPeprMutateRequest<typeof req.Raw>;
+            const peprRequest = new PeprMutateRequest(req.Request) as PeprMutateRequest<typeof req.Raw>;
 
             // Ensure the original mutate callback is called with the wrapped request
             if (binding.mutateCallback) {

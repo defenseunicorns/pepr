@@ -6,6 +6,8 @@ import { Event, Operation } from "./enums";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { PeprValidateRequest } from "./validate-request";
+import { PeprMutateRequest } from "./mutate-request";
 
 // DeepPartial utility type for deep optional properties
 export type DeepPartial<T> = {
@@ -221,42 +223,13 @@ export type MutateActionChain<T extends GenericClass> = ValidateActionChain<T> &
   Validate: (action: ValidateAction<T, InstanceType<T>>) => ValidateActionChain<T>;
 };
 
-// Interface for PeprMutateRequest
-export interface IPeprMutateRequest<T extends KubernetesObject> {
-  Raw: T;
-  PermitSideEffects: boolean;
-  readonly IsDryRun: boolean | undefined;
-  OldResource: T | undefined;
-  Request: AdmissionRequest<T>;
-
-  Merge(obj: DeepPartial<T>): void;
-  SetLabel(key: string, value: string): this;
-  SetAnnotation(key: string, value: string): this;
-  RemoveLabel(key: string): this;
-  RemoveAnnotation(key: string): this;
-  HasLabel(key: string): boolean;
-  HasAnnotation(key: string): boolean;
-}
-
-// Interface for PeprValidateRequest
-export interface IPeprValidateRequest<T extends KubernetesObject> {
-  Raw: T;
-  OldResource: T | undefined;
-  Request: AdmissionRequest<T>;
-
-  HasLabel(key: string): boolean;
-  HasAnnotation(key: string): boolean;
-  Approve(): ValidateActionResponse;
-  Deny(statusMessage?: string, statusCode?: number): ValidateActionResponse;
-}
-
 export type MutateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: IPeprMutateRequest<K>,
+  req: PeprMutateRequest<K>,
   logger?: Logger,
-) => Promise<void> | void | Promise<IPeprMutateRequest<K>> | IPeprMutateRequest<K>;
+) => Promise<void> | void | Promise<PeprMutateRequest<K>> | PeprMutateRequest<K>;
 
 export type ValidateAction<T extends GenericClass, K extends KubernetesObject = InstanceType<T>> = (
-  req: IPeprValidateRequest<K>,
+  req: PeprValidateRequest<K>,
   logger?: Logger,
 ) => Promise<ValidateActionResponse> | ValidateActionResponse;
 
