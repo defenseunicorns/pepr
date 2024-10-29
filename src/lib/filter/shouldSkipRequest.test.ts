@@ -538,7 +538,30 @@ it("should reject when deletionTimestamp is not present on pod", () => {
   );
 });
 
-describe("when multiple filtuers are triggered", () => {
-  it("should display the failure message for the first matching filter", () => {});
-  it("should NOT display the failure message for the second matching filter", () => {});
+describe("when multiple filters are triggered", () => {
+  const filters = {
+    ...defaultFilters,
+    regexName: "asdf",
+    name: "not-a-match",
+    namespaces: ["not-allowed", "also-not-matching"],
+  };
+  const binding = { ...defaultBinding, filters };
+  it("should display the failure message for the first matching filter", () => {
+    const pod = CreatePod();
+    expect(shouldSkipRequest(binding, pod, [])).toMatch(
+      /Ignoring Admission Callback: Binding defines name 'not-a-match' but Object carries '.*'/,
+    );
+  });
+  it("should NOT display the failure message for the second matching filter", () => {
+    const pod = CreatePod();
+    expect(shouldSkipRequest(binding, pod, [])).not.toMatch(
+      /Ignoring Admission Callback: Binding defines namespaces 'not-allowed,also-not-matching' but Object carries '.*'./,
+    );
+  });
+  it("should NOT display the failure message for the third matching filter", () => {
+    const pod = CreatePod();
+    expect(shouldSkipRequest(binding, pod, [])).not.toMatch(
+      /Ignoring Admission Callback: Binding defines name regex 'asdf' but Object carries '.*./,
+    );
+  });
 });

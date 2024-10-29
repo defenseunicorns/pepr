@@ -9,6 +9,7 @@ import {
   definedLabels,
   definedName,
   definedNameRegex,
+  definedNamespaces,
   definedVersion,
 } from "./adjudicators";
 
@@ -27,7 +28,7 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
     case "ignored namespaces":
       return `${prefix} Object carries namespace '${carriedNamespace(filterInput)}' but ${subject} include '${JSON.stringify(filterCriteria)}'.`;
     case "namespaces":
-      return `${prefix} Binding defines ${subject} '${carriedNamespace(filterInput)}' but Object carries '${carriedNamespace(filterCriteria)}'.`;
+      return `${prefix} Binding defines ${subject} '${definedNamespaces(filterInput)}' but Object carries '${carriedNamespace(filterCriteria)}'.`;
     case "event":
       return `${prefix} Binding defines ${subject} '${definedKind(filterInput)}' but Request does not declare it.`;
     case "annotations":
@@ -41,7 +42,7 @@ export const commonLogMessage = (subject: string, filterInput: FilterInput, filt
     case "namespace regexes":
       return `${prefix} Binding defines ${subject} '${definedNameRegex(filterInput)}' but Object carries '${carriedName(filterCriteria)}'.`;
     default:
-      return `An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
+      return `${prefix} An undefined logging condition occurred. Filter input was '${definedName(filterInput)}' and Filter criteria was '${carriedName(filterCriteria)}`;
   }
 };
 
