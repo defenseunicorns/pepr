@@ -6,175 +6,20 @@ import { describe, it } from "@jest/globals";
 import { promisify } from "node:util";
 import * as child_process from "node:child_process";
 const exec = promisify(child_process.exec);
-import { https } from "follow-redirects";
-import { access, mkdir, mkdtemp, readFile, rm, writeFile, unlink } from "node:fs/promises";
-import { chmodSync, createWriteStream, readdirSync } from "node:fs";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmodSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as crypto from "node:crypto";
-import { toTrustMaterial, Verifier } from "@sigstore/verify";
+import { toSignedEntity, toTrustMaterial, Verifier } from "@sigstore/verify";
 import { PublicKeyDetails, TrustedRoot } from "@sigstore/protobuf-specs";
 import { bundleFromJSON } from "@sigstore/bundle";
-import { toSignedEntity } from "@sigstore/verify";
 import { heredoc } from "./heredoc";
 
-// import * as sut from "./cosign";
+import * as sut from "./cosign";
 
 const secs = (s: number) => s * 1000;
 const mins = (m: number) => m * secs(60);
-
-enum MediaTypeDockerV2 {
-  Manifest = "application/vnd.docker.distribution.manifest.v2+json",
-}
-
-enum MediaTypeOciV1 {
-  Manifest = "application/vnd.oci.image.manifest.v1+json",
-  Index = "application/vnd.oci.image.index.v1+json",
-  Package = "application/vnd.zarf.config.v1+json",
-}
-
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-async function head(rawUrl: string, mediaType: string): Promise<any> {
-  const url = new URL(rawUrl);
-
-  return new Promise((resolve, reject) => {
-    const opts = {
-      protocol: url.protocol,
-      hostname: url.hostname,
-      port: url.port,
-      path: url.pathname,
-      method: "HEAD",
-      headers: { Accept: mediaType },
-    };
-
-    https
-      .request(opts, resp => {
-        const { statusCode } = resp;
-
-        let error;
-        if (!statusCode?.toString().startsWith("2") && !statusCode?.toString().startsWith("3")) {
-          reject(new Error(`err: status code: ${statusCode}: expected 2xx|3xx`));
-          error = true;
-        }
-
-        if (error) {
-          resp.resume();
-          return;
-        }
-
-        resp.setEncoding("utf8");
-
-        resp.on("data", () => {});
-
-        resp.on("end", () => {
-          resolve(resp.headers);
-        });
-      })
-      .on("error", e => reject(e))
-      .end();
-  });
-}
-
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-async function get(rawUrl: string, mediaType: string): Promise<any> {
-  const url = new URL(rawUrl);
-
-  return new Promise((resolve, reject) => {
-    const opts = {
-      protocol: url.protocol,
-      hostname: url.hostname,
-      port: url.port,
-      path: url.pathname,
-      method: "GET",
-      headers: {
-        "User-Agent": "node",
-        Accept: mediaType,
-      },
-    };
-
-    https
-      .request(opts, resp => {
-        const { statusCode } = resp;
-
-        let error;
-
-        if (!statusCode?.toString().startsWith("2") && !statusCode?.toString().startsWith("3")) {
-          console.log(resp.headers);
-          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
-          error = true;
-        }
-
-        if (error) {
-          resp.resume();
-          return;
-        }
-
-        resp.setEncoding("utf8");
-
-        let raw = "";
-        resp.on("data", chunk => {
-          raw += chunk;
-        });
-        resp.on("end", () => {
-          try {
-            resolve({ head: resp.headers, body: raw });
-          } catch (e) {
-            reject(e);
-          }
-        });
-      })
-      .on("error", e => reject(e))
-      .end();
-  });
-}
-
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-async function download(rawUrl: string, localPath: string): Promise<void> {
-  const url = new URL(rawUrl);
-
-  return new Promise((resolve, reject) => {
-    const opts = {
-      protocol: url.protocol,
-      hostname: url.hostname,
-      port: url.port,
-      path: url.pathname,
-      method: "GET",
-      headers: {
-        "User-Agent": "node",
-        Accept: "application/octet-stream",
-      },
-    };
-
-    https
-      .request(opts, resp => {
-        const { statusCode } = resp;
-
-        let error;
-
-        if (!statusCode?.toString().startsWith("2") && !statusCode?.toString().startsWith("3")) {
-          console.log(resp.headers);
-          reject(new Error(`err: status code: ${statusCode}: expected 2xx`));
-          error = true;
-        }
-
-        if (error) {
-          resp.resume();
-          return;
-        }
-
-        const ws = createWriteStream(localPath).on("finish", () => {
-          ws.close(() => resolve());
-        });
-
-        resp.pipe(ws);
-      })
-      .on("error", async err => {
-        await unlink(localPath);
-        reject(err);
-      })
-      .end();
-  });
-}
 
 const cmd = async (command: string, opts = {}) => await exec(command, opts);
 const cmdStdout = async (command: string, opts = {}) => (await cmd(command, opts)).stdout.trim();
@@ -234,14 +79,14 @@ async function downloadCosign(path: string, fname: string) {
   let arch = await sniffArch();
   arch = arch === Arch.x86_64 ? "amd64" : arch;
 
-  const got = await get(
+  const got = await sut.get(
     "https://api.github.com/repos/sigstore/cosign/releases/latest",
     "application/json",
   );
   const ver = JSON.parse(got.body)["tag_name"];
 
   const remote = `https://github.com/sigstore/cosign/releases/download/${ver}/cosign-${os}-${arch}`;
-  await download(remote, local);
+  await sut.download(remote, local);
   chmodSync(local, 0o777);
 
   return local;
@@ -279,14 +124,14 @@ async function downloadCrane(path: string, fname: string) {
   const os = await sniffOS();
   const arch = await sniffArch();
 
-  const got = await get(
+  const got = await sut.get(
     "https://api.github.com/repos/google/go-containerregistry/releases/latest",
     "application/json",
   );
   const ver = JSON.parse(got.body)["tag_name"];
 
   const remote = `https://github.com/google/go-containerregistry/releases/download/${ver}/go-containerregistry_${os}_${arch}.tar.gz`;
-  await download(remote, localTgz);
+  await sut.download(remote, localTgz);
 
   await cmdStdout(`tar -zxvf ${localTgz} ${fname}`, { cwd: path });
   chmodSync(local, 0o777);
@@ -315,7 +160,31 @@ async function downloadCrane(path: string, fname: string) {
 //   });
 // });
 
-async function startZotRegistry(workdir: string) {
+async function genTlsCrt(workdir: string) {
+  const tlsKey = `${workdir}/tls-key.pem`;
+  const tlsCsr = `${workdir}/tls-csr.pem`;
+  const tlsCrt = `${workdir}/tls-crt.pem`;
+
+  let command = `openssl genrsa -out ${tlsKey} 1024`;
+  await cmd(command);
+
+  command =
+    `openssl req -new -key ${tlsKey} -out ${tlsCsr}` +
+    ` -subj "/C=US/ST=Colorado/L=Colorado Springs/O=Defense Unicorns/CN=localhost"` +
+    ` -addext "subjectAltName = DNS:localhost"`;
+  await cmd(command);
+
+  command =
+    `openssl x509 -req -in ${tlsCsr} -key ${tlsKey} -out ${tlsCrt}` + ` -copy_extensions copyall`;
+  await cmd(command);
+
+  return { key: tlsKey, crt: tlsCrt };
+}
+
+async function startZotRegistry(workdir: string, tlsKey: string, tlsCrt: string) {
+  const innerKey = `/${basename(tlsKey)}`;
+  const innerCrt = `/${basename(tlsCrt)}`;
+
   // https://images.chainguard.dev/directory/image/zot/overview
   const containerName = `${basename(__filename)}.zot`;
 
@@ -324,7 +193,7 @@ async function startZotRegistry(workdir: string) {
   const outerData = `${workdir}/data`;
   const innerData = "/var/lib/zot/data";
 
-  const outerPort = "54321";
+  const outerPort = "50000";
   const innerPort = "5000";
 
   const outerConf = `${workdir}/zot-config.yaml`;
@@ -338,16 +207,21 @@ async function startZotRegistry(workdir: string) {
     http:
       address: 0.0.0.0
       port: ${innerPort}
+      tls:
+        key: ${innerKey}
+        cert: ${innerCrt}
     storage:
       rootdirectory: ${innerData}
   `;
   await writeFile(outerConf, yaml);
 
-  const cmd = `
+  const command = `
     docker run --rm --detach
       --name "${containerName}"
       --user $(id -u):$(id -g)
       --publish ${outerPort}:${innerPort}
+      --volume ${tlsKey}:${innerKey}
+      --volume ${tlsCrt}:${innerCrt}
       --volume "${outerConf}":${innerConf}
       --volume "${outerData}":${innerData}
       ${imageRef}
@@ -357,7 +231,7 @@ async function startZotRegistry(workdir: string) {
     .replace(/\s+/g, " ")
     .trim();
 
-  await cmdStdout(cmd, { cwd: workdir });
+  await cmdStdout(command, { cwd: workdir });
 }
 
 async function stopZotRegistry() {
@@ -415,6 +289,14 @@ const indent = (msg: string) =>
     .map(m => `  ${m}`)
     .join("\n");
 
+async function builderExists(name: string) {
+  const resultRaw = await cmdStdout(`docker buildx ls --format json`);
+  const result = resultRaw.split("\n").map(m => JSON.parse(m));
+  const found = result.filter(f => f.Name === name).length;
+
+  return !!found;
+}
+
 describe("cosign CLI - pub/prv keys", () => {
   let cosign: string;
   let workdir: string;
@@ -427,8 +309,6 @@ describe("cosign CLI - pub/prv keys", () => {
   const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
   beforeAll(async () => {
-    // result = await cmdStdout("npm root");
-    // const local = `${result}/.bin/cosign`;
     cosign = await timed(
       "getting cosign CLI binary",
       async () => await downloadCosign(workdir, "cosign"),
@@ -500,7 +380,7 @@ describe("sigstore-js - pub/prv keys", () => {
     console.log(`  workdir: ${workdir}`);
 
     let result;
-    result = await timed(`generating keypair: ${prefix}.*`, async () => {
+    result = await timed(`generating signing keypair: ${prefix}.*`, async () => {
       const keypair = crypto.generateKeyPairSync("ec", { namedCurve: "P-256" });
 
       await writeFile(
@@ -617,22 +497,22 @@ describe("sigstore-js - pub/prv keys", () => {
     console.log("manifestUrl", manifestUrl);
 
     const supportsMediaType = async (url: string, mediaType: string) => {
-      return (await head(url, mediaType))["content-type"] === mediaType;
+      return (await sut.head(url, mediaType))["content-type"] === mediaType;
     };
 
     const canOciV1Manifest = async (manifestUrl: string) => {
-      return supportsMediaType(manifestUrl, MediaTypeOciV1.Manifest);
+      return supportsMediaType(manifestUrl, sut.MediaTypeOciV1.Manifest);
     };
 
     const canDockerV2Manifest = async (manifestUrl: string) => {
-      return supportsMediaType(manifestUrl, MediaTypeDockerV2.Manifest);
+      return supportsMediaType(manifestUrl, sut.MediaTypeDockerV2.Manifest);
     };
 
     // { head: {}, body: "" }
     // prettier-ignore
     const imageManifest = 
-      await canOciV1Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeOciV1.Manifest) :
-      await canDockerV2Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeDockerV2.Manifest) :
+      await canOciV1Manifest(manifestUrl) ? await sut.get(manifestUrl, sut.MediaTypeOciV1.Manifest) :
+      await canDockerV2Manifest(manifestUrl) ? await sut.get(manifestUrl, sut.MediaTypeDockerV2.Manifest) :
       (() => { throw "Can't pull image manifest with supported MediaType." })();
     console.log("imageManifest", imageManifest);
 
@@ -652,7 +532,7 @@ describe("sigstore-js - pub/prv keys", () => {
     const sigImageUrl = `https://${irefHost}/v2/${irefName}/manifests/${sigTag}`;
     console.log("sigImageUrl", sigImageUrl);
 
-    const sigImageManifestResp = await get(sigImageUrl, MediaTypeOciV1.Manifest);
+    const sigImageManifestResp = await sut.get(sigImageUrl, sut.MediaTypeOciV1.Manifest);
     const sigImageManifest = JSON.parse(sigImageManifestResp.body);
     console.log("sigImageManifest", sigImageManifest);
 
@@ -662,7 +542,7 @@ describe("sigstore-js - pub/prv keys", () => {
     const sigBlobUrl = `https://${irefHost}/v2/${irefName}/blobs/${sigBlobDigest}`;
     console.log("sigBlobUrl", sigBlobUrl);
 
-    const sigBlobResp = await get(sigBlobUrl, "application/octet-stream");
+    const sigBlobResp = await sut.get(sigBlobUrl, "application/octet-stream");
     const sigBlob = sigBlobResp.body;
     console.log("sigBlob", sigBlob);
 
@@ -695,21 +575,16 @@ describe("sigstore-js - pub/prv keys", () => {
   }, 10000);
 });
 
-async function builderExists(name: string) {
-  const resultRaw = await cmdStdout(`docker buildx ls --format json`);
-  const result = resultRaw.split("\n").map(m => JSON.parse(m));
-  const found = result.filter(f => f.Name === name).length;
-
-  return !!found;
-}
-
 // TODO
 // describe("sigstore-js - registry (Docker) - pub/prv keys", () => {
 
 // }
 
-describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
+describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
   let workdir: string;
+  let tlsKey: string;
+  let tlsCrt: string;
+
   let cosign: string;
   let crane: string;
 
@@ -720,12 +595,18 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
   const cosPrvkey = `${prefix}-cos.key`;
   // const cosPubkey = `${prefix}-cos.pub`;
 
-  const iref = `localhost:54321/${crypto.randomUUID()}:latest`;
+  const iref = `localhost:50000/${crypto.randomUUID()}:latest`;
 
   beforeAll(async () => {
     workdir = await timed("creating workdir", createWorkdir);
 
-    await timed("starting Zot container registry", async () => await startZotRegistry(workdir));
+    await timed("generating TLS certificate", async () => {
+      ({ key: tlsKey, crt: tlsCrt } = await genTlsCrt(workdir));
+    });
+
+    await timed("starting Zot container registry", async () => {
+      await startZotRegistry(workdir, tlsKey, tlsCrt);
+    });
 
     const npmBin = `${await cmdStdout("npm root")}/.bin`;
     cosign = await timed(
@@ -754,14 +635,16 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
       chmodSync(`${workdir}/${rawPrvkey}`, 0o600);
     });
 
-    await timed(`converting ${rawPrvkey} to ${cosPrvkey}`, async () =>
-      cmdStderr(
-        `${cosign} import-key-pair --key=${rawPrvkey} --output-key-prefix=${basename(cosPrvkey, ".key")}`,
-        {
-          cwd: workdir,
-          env: { COSIGN_PASSWORD: passwd },
-        },
-      ),
+    await timed(
+      `converting ${rawPrvkey} (node crypto) to ${cosPrvkey} (cosign native)`,
+      async () =>
+        await cmdStderr(
+          `${cosign} import-key-pair --key=${rawPrvkey} --output-key-prefix=${basename(cosPrvkey, ".key")}`,
+          {
+            cwd: workdir,
+            env: { COSIGN_PASSWORD: passwd },
+          },
+        ),
     );
 
     await timed(
@@ -805,7 +688,7 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
         .trim();
 
       await cmd(command, { cwd: workdir });
-      await cmd(`${crane} push ${dir} ${iref}`);
+      await cmd(`${crane} --insecure push ${dir} ${iref}`);
     });
 
     await timed(`removing docker buildx oci builder (${builder})`, async () => {
@@ -816,10 +699,13 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
     });
 
     await timed(`cosign signing image: ${iref}`, async () =>
-      cmdStderr(`${cosign} sign --tlog-upload=false --key=${cosPrvkey} ${iref}`, {
-        cwd: workdir,
-        env: { COSIGN_PASSWORD: passwd },
-      }),
+      cmdStderr(
+        `${cosign} sign --allow-insecure-registry=true --tlog-upload=false --key=${cosPrvkey} ${iref}`,
+        {
+          cwd: workdir,
+          env: { COSIGN_PASSWORD: passwd },
+        },
+      ),
     );
   }, mins(2));
 
@@ -829,155 +715,11 @@ describe.only("sigstore-js - zot (OCI) - pub/prv keys", () => {
   });
 
   it("can be verified via sigstore-js", async () => {
-    console.log("yep");
+    const tlsCrts = [await readFile(tlsCrt, { encoding: "utf-8" })];
 
-    // const imgDigest = await cmdStdout(`crane digest ${iref}`, {
-    //   cwd: workdir,
-    //   env: { COSIGN_PASSWORD: passwd },
-    // });
-    // console.log("crane digest:", imgDigest);
+    const verified = await sut.verifyImage(iref, [`${workdir}/${rawPubkey}`], tlsCrts);
 
-    // const imgManifest = await cmdStdout(`crane manifest ${iref}`, {
-    //   cwd: workdir,
-    //   env: { COSIGN_PASSWORD: passwd },
-    // });
-    // console.log("crane manifest:", imgManifest);
-
-    // const dotSig = await cmdStdout(`${cosign} triangulate ${iref}`, {
-    //   cwd: workdir,
-    //   env: { COSIGN_PASSWORD: passwd },
-    // });
-    // console.log("cosign triangulate:", dotSig);
-
-    // const sigManifest = await cmdStdout(`crane manifest ${dotSig}`, {
-    //   cwd: workdir,
-    //   env: { COSIGN_PASSWORD: passwd },
-    // });
-    // console.log("crane manifest (dotSig):", JSON.stringify(JSON.parse(sigManifest), null, 2));
-
-    // // https://github.com/sigstore/sigstore-js/blob/main/packages/verify/src/__tests__/verifier.test.ts
-    // const pubKeyRaw = await readFile(`${workdir}/${rawPubkey}`, { encoding: "utf8" });
-    // const pubKey = crypto.createPublicKey({
-    //   key: pubKeyRaw,
-    //   format: "pem",
-    //   encoding: "utf-8",
-    // });
-
-    // const trustedRoot = {
-    //   tlogs: [],
-    //   ctlogs: [],
-    //   timestampAuthorities: [],
-    //   certificateAuthorities: [],
-    // } as unknown as TrustedRoot;
-
-    // const keys = {
-    //   hint: {
-    //     rawBytes: pubKey.export({ type: "spki", format: "der" }),
-    //     keyDetails: PublicKeyDetails.PKIX_ECDSA_P256_SHA_256,
-    //   },
-    // };
-    // const trustMaterial = toTrustMaterial(trustedRoot, keys);
-
-    // const subject = new Verifier(trustMaterial, {
-    //   ctlogThreshold: 0,
-    //   tlogThreshold: 0,
-    //   tsaThreshold: 0,
-    // });
-
-    // const sig = JSON.parse(sigManifest).layers[0].annotations["dev.cosignproject.cosign/signature"];
-    // console.log("sig (enc):", sig);
-    // console.log("sig (dec):", Buffer.from(sig, "base64").toString("utf8"));
-
-    // // host     /name               :tag
-    // // docker.io/library/hello-world:latest
-
-    // // host  /name                                :tag
-    // // ttl.sh/5dad3c9b-7ccc-4115-be27-c9244e7c0e06:2m
-
-    // const irefHost = iref.split("/")[0];
-    // const irefImage = iref.replace(`${irefHost}/`, "");
-    // const irefTag = irefImage.split(":").at(-1);
-    // const irefName = irefImage.replace(`:${irefTag}`, "");
-
-    // const manifestUrl = `https://${irefHost}/v2/${irefName}/manifests/${irefTag}`;
-    // console.log("manifestUrl", manifestUrl);
-
-    // const supportsMediaType = async (url: string, mediaType: string) => {
-    //   return (await head(url, mediaType))["content-type"] === mediaType;
-    // };
-
-    // const canOciV1Manifest = async (manifestUrl: string) => {
-    //   return supportsMediaType(manifestUrl, MediaTypeOciV1.Manifest);
-    // };
-
-    // const canDockerV2Manifest = async (manifestUrl: string) => {
-    //   return supportsMediaType(manifestUrl, MediaTypeDockerV2.Manifest);
-    // };
-
-    // // { head: {}, body: "" }
-    // // prettier-ignore
-    // const imageManifest =
-    //   await canOciV1Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeOciV1.Manifest) :
-    //   await canDockerV2Manifest(manifestUrl) ? await get(manifestUrl, MediaTypeDockerV2.Manifest) :
-    //   (() => { throw "Can't pull image manifest with supported MediaType." })();
-    // console.log("imageManifest", imageManifest);
-
-    // const imageDigest = `sha256:${crypto
-    //   .createHash("sha256")
-    //   .update(imageManifest.body)
-    //   .digest("hex")
-    //   .toString()}`;
-    // console.log("imageDigest", imageDigest);
-
-    // const sigTag = `${imageDigest.replace(":", "-")}.sig`;
-    // console.log("sigTag", sigTag);
-
-    // const triangulated = `${irefHost}/${irefName}:${sigTag}`;
-    // console.log("triangulated", triangulated);
-
-    // const sigImageUrl = `https://${irefHost}/v2/${irefName}/manifests/${sigTag}`;
-    // console.log("sigImageUrl", sigImageUrl);
-
-    // const sigImageManifestResp = await get(sigImageUrl, MediaTypeOciV1.Manifest);
-    // const sigImageManifest = JSON.parse(sigImageManifestResp.body);
-    // console.log("sigImageManifest", sigImageManifest);
-
-    // const sigBlobDigest = sigImageManifest.layers.at(0).digest;
-    // console.log("sigBlobDigest", sigBlobDigest);
-
-    // const sigBlobUrl = `https://${irefHost}/v2/${irefName}/blobs/${sigBlobDigest}`;
-    // console.log("sigBlobUrl", sigBlobUrl);
-
-    // const sigBlobResp = await get(sigBlobUrl, "application/octet-stream");
-    // const sigBlob = sigBlobResp.body;
-    // console.log("sigBlob", sigBlob);
-
-    // console.log("iref", iref);
-
-    // const bundle = bundleFromJSON({
-    //   mediaType: "application/vnd.dev.sigstore.bundle+json;version=0.1",
-    //   verificationMaterial: {
-    //     publicKey: {
-    //       hint: "hint",
-    //     },
-    //     tlogEntries: [],
-    //     timestampVerificationData: {
-    //       rfc3161Timestamps: [],
-    //     },
-    //   },
-    //   messageSignature: {
-    //     messageDigest: {
-    //       algorithm: "SHA2_256",
-    //       digest: crypto.createHash("sha256").update(sigBlob).digest().toString(),
-    //     },
-    //     signature: sig,
-    //   },
-    // });
-
-    // // const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob + "nope!"));
-    // const signedEntity = toSignedEntity(bundle, Buffer.from(sigBlob));
-
-    // subject.verify(signedEntity);
+    expect(verified).toBe(true);
   });
 });
 
