@@ -105,18 +105,28 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
           Log.debug(filterMatch);
           return;
         }
+        if (binding.isFinalize) {
+          if (!obj.metadata?.deletionTimestamp) {
+            return;
+          }
+          let shouldRemoveFinalizer: boolean | void | undefined = true;
+          try {
+            shouldRemoveFinalizer = await binding.finalizeCallback?.(obj);
 
-        if (!binding.isFinalize) {
+            // if not opt'ed out of / if in error state, remove pepr finalizer
+          } finally {
+            const peprFinal = "pepr.dev/finalizer";
+            const meta = obj.metadata!;
+            const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
+
+            // [ true, void, undefined ] SHOULD remove finalizer
+            // [ false ] should NOT remove finalizer
+            shouldRemoveFinalizer === false
+              ? Log.debug({ obj }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
+              : await removeFinalizer(binding, obj);
+          }
+        } else {
           await binding.watchCallback?.(obj, phase);
-          return;
-        }
-
-        if (!obj.metadata?.deletionTimestamp) return;
-
-        try {
-          await binding.finalizeCallback?.(obj);
-        } finally {
-          await removeFinalizer(binding, obj);
         }
       } catch (e) {
         // Errors in the watch callback should not crash the controller

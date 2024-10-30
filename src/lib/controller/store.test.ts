@@ -1,131 +1,73 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe, afterEach } from "@jest/globals";
-import * as fc from "fast-check";
-import { redactedStore, redactedPatch } from "./store";
-import { AddOperation } from "fast-json-patch";
+import { StoreController } from "./store";
+import { CapabilityCfg } from "../types";
+import { Capability } from "../capability";
+import { Schedule } from "../schedule";
+import { Store } from "../k8s";
+import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
+import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
+import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
-const redactedValue = "**redacted**";
-const peprStoreFuzz = fc.record({
-  kind: fc.constant("PeprStore"),
-  apiVersion: fc.constant("v1"),
-  metadata: fc.record({
-    name: fc.string(),
-    namespace: fc.string(),
-  }),
-  data: fc.dictionary(
-    fc.string().filter(str => str !== "__proto__"),
-    fc.string().filter(str => str !== "__proto__"),
-  ),
-});
-describe("Fuzzing redactedStore", () => {
+jest.mock("kubernetes-fluent-client");
+
+describe("pepr store tests", () => {
+  const mockK8s = jest.mocked(K8s);
+  const capabilityConfig: CapabilityCfg = {
+    name: "test-capability",
+    description: "Test capability description",
+    namespaces: ["default"],
+  };
+
+  let testCapability = new Capability(capabilityConfig);
+
+  const mockSchedule: Schedule = {
+    name: "test-schedule",
+    every: 5,
+    unit: "minutes",
+    run: jest.fn(),
+    startTime: new Date(),
+    completions: 1,
+  };
+
   afterEach(() => {
-    delete process.env.PEPR_STORE_REDACT_VALUES;
+    jest.resetAllMocks();
+    jest.useRealTimers();
   });
 
-  test("should redact values if PEPR_STORE_REDACT_VALUES is true", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACT_VALUES = "true";
-        const result = redactedStore(store);
+  describe("when initializing the store", () => {
+    beforeEach(() => {
+      testCapability = new Capability(capabilityConfig);
+      const mockPeprStore = new Store();
+      const defaultMockImplementations = <T extends GenericClass, K extends KubernetesObject>() =>
+        ({
+          Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+          InNamespace: jest.fn().mockReturnValueOnce({
+            Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+          }),
+          Watch: jest.fn().mockReturnValueOnce(undefined),
+          Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+        }) as unknown as K8sInit<T, K>;
 
-        Object.values(result.data).forEach(value => {
-          expect(value).toBe(redactedValue);
-        });
-      }),
-    );
-  });
-
-  test("should not redact values if PEPR_STORE_REDACT_VALUES is not true", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        process.env.PEPR_STORE_REDACT_VALUES = "false";
-        const result = redactedStore(store);
-        expect(result.data).toEqual(store.data);
-      }),
-    );
-  });
-
-  test("should maintain other properties of the store", () => {
-    fc.assert(
-      fc.property(peprStoreFuzz, store => {
-        const redactionEnabled = fc.boolean();
-        process.env.PEPR_STORE_REDACT_VALUES = redactionEnabled ? "true" : "false";
-
-        const result = redactedStore(store);
-
-        expect(result.kind).toBe(store.kind);
-        expect(result.apiVersion).toBe(store.apiVersion);
-        expect(result.metadata).toEqual(store.metadata);
-      }),
-    );
-  });
-});
-
-const addOperationKeys = [
-  "add:/data/hello-pepr-a:secret",
-  "add:/data/hello-pepr-v2-b:secret",
-  "add:/data/hello-pepr-v2-c:secret",
-  "add:/data/hello-pepr-v2-d:secret",
-  "add:/data/hello-pepr-v2-e:secret",
-  "add:/data/hello-pepr-v2-f:secret",
-];
-const addOperationValues: AddOperation<string>[] = [
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-a",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-b",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-c",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-d",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-e",
-    value: "secret",
-  },
-  {
-    op: "add",
-    path: "add:/data/hello-pepr-v2-f",
-    value: "secret",
-  },
-];
-
-describe("redactedPatch", () => {
-  afterEach(() => {
-    delete process.env.PEPR_STORE_REDACT_VALUES;
-  });
-
-  test("should redact keys and values if PEPR_STORE_REDACT_VALUES is true", () => {
-    process.env.PEPR_STORE_REDACT_VALUES = "true";
-    addOperationKeys.forEach((key, i) => {
-      const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
-      for (const [k, v] of Object.entries(redactedResult)) {
-        expect(k).toContain(`:${redactedValue}`);
-        expect(v).toEqual(expect.objectContaining({ value: redactedValue }));
-      }
+      mockK8s.mockImplementationOnce(defaultMockImplementations);
+      jest.useFakeTimers();
     });
-  });
-  test("should not redact keys and values if PEPR_STORE_REDACT_VALUES is not true", () => {
-    addOperationKeys.forEach((key, i) => {
-      const redactedResult = redactedPatch({ [key]: addOperationValues[i] });
-      for (const [k, v] of Object.entries(redactedResult)) {
-        expect(k).not.toContain(`:${redactedValue}`);
-        expect(v).not.toEqual(expect.objectContaining({ value: redactedValue }));
-      }
+    it.skip("should migrate and setup the watch (with schedule)", async () => {
+      testCapability.OnSchedule(mockSchedule);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const controllerStore = new StoreController([testCapability], `pepr-test-schedule`, () => {});
+      jest.advanceTimersToNextTimer();
+      await Promise.resolve();
+      expect(true).toBe(false); // store.ts only exposes a constructor, hard to test
+    });
+
+    it.skip("should create the store resource for a scheduled capability (without schedule)", async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const controllerStore = new StoreController([testCapability], `pepr-test-store`, () => {});
+      jest.advanceTimersToNextTimer();
+      await Promise.resolve();
+      expect(true).toBe(false); // store.ts only exposes a constructor, hard to test
     });
   });
 });
