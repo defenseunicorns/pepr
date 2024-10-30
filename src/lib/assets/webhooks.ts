@@ -10,7 +10,7 @@ import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
-import { Event } from "../types";
+import { Event } from "../enums";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
   key: "pepr.dev",
