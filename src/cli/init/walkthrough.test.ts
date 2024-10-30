@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import prompts from "prompts";
 import {
   walkthrough,
@@ -13,6 +13,19 @@ import {
 } from "./walkthrough";
 
 describe("when processing input", () => {
+  let consoleLog: jest.Spied<typeof console.log>;
+  let consoleError: jest.Spied<typeof console.error>;
+
+  beforeAll(() => {
+    consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleLog.mockRestore();
+    consoleError.mockRestore();
+  });
+
   describe("walkthough() returns expected results", () => {
     it.each([
       //Test flag combinations with [["$FLAG", ...]]

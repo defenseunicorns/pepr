@@ -358,9 +358,6 @@ describe("Capability", () => {
     // Chain the When and Watch methods
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
 
-    // Log the bindings to ensure they are being added
-    console.log("Bindings after watch registration: ", capability.bindings);
-
     // Retrieve the registered binding
     const binding = capability.bindings.find(b => b.isWatch === true);
 
