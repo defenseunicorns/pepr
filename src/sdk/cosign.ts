@@ -16,7 +16,6 @@ export enum MediaTypeDockerV2 {
 export enum MediaTypeOciV1 {
   Manifest = "application/vnd.oci.image.manifest.v1+json",
   Index = "application/vnd.oci.image.index.v1+json",
-  Package = "application/vnd.zarf.config.v1+json",
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
