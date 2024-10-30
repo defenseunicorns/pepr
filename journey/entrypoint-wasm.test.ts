@@ -6,6 +6,7 @@ import { promises as fs } from "fs";
 import { peprBuild } from "./pepr-build-wasm";
 import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
+import { exec } from "child_process";
 
 // Unmock unit test things
 jest.deepUnmock("pino");
@@ -14,6 +15,7 @@ jest.deepUnmock("pino");
 jest.setTimeout(1000 * 60 * 5);
 export const outputDir = "dist/pepr-test-module/child/folder";
 beforeAll(async () => {
+  const dir = resolve(cwd);
   await fs.mkdir(outputDir, { recursive: true });
   await addScopedRbacMode();
 });
@@ -24,9 +26,9 @@ describe(
 
 // Set rbacMode in the Pepr Module Config and write it back to disk
 async function addScopedRbacMode() {
+  exec("ls -la", { cwd });
   const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
   const packageJsonObj = JSON.parse(packageJson);
-  console.log(JSON.stringify(packageJsonObj.pepr));
   packageJsonObj.pepr.rbacMode = "scoped";
   await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
