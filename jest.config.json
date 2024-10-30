@@ -3,5 +3,6 @@
   "testEnvironment": "node",
   "collectCoverage": true,
   "coverageReporters": ["json", "lcov", "text", "clover"],
+  "coveragePathIgnorePatterns": ["<rootDir>/src/cli/"],
   "forceExit": true
 }

@@ -8,17 +8,10 @@ import { promises as fs } from "fs";
 import { resolve } from "path";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
+import { outputDir } from "./entrypoint-wasm.test";
 
-// test npx pepr build -o dst
-const outputDir = "dist/pepr-test-module/child/folder";
 export function peprBuild() {
-  it("should build artifacts in the dst folder", async () => {
-    await fs.mkdir(outputDir, { recursive: true });
-  });
-
   it("should successfully build the Pepr project with arguments and rbacMode scoped", async () => {
-    // Set rbacMode in the Pepr Module Config of the package.json.
-    await addScopedRbacMode();
     execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
       cwd: cwd,
       stdio: "inherit",
@@ -82,15 +75,6 @@ async function validateZarfYaml() {
   // Check the generated zarf yaml
   const actualZarfYaml = loadYaml(zarfYAML);
   expect(actualZarfYaml).toEqual(expectedZarfYaml);
-}
-
-// Set rbacMode in the Pepr Module Config and write it back to disk
-async function addScopedRbacMode() {
-  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
-  const packageJsonObj = JSON.parse(packageJson);
-  console.log(JSON.stringify(packageJsonObj.pepr));
-  packageJsonObj.pepr.rbacMode = "scoped";
-  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
 
 async function validateClusterRoleYaml(validateChart: boolean = false) {

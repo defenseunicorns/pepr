@@ -11,14 +11,9 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { peprFormat } from "./format";
 import { Option } from "commander";
-import {
-  createDirectoryIfNotExists,
-  validateCapabilityNames,
-  parseTimeout,
-  determineRbacMode,
-} from "../lib/helpers";
+import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
-
+import { determineRbacMode } from "../lib/cli-helpers/build";
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
