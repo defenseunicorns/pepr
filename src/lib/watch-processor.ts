@@ -7,7 +7,8 @@ import { filterNoMatchReason } from "./helpers";
 import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
-import { Binding, Event } from "./types";
+import { Binding } from "./types";
+import { Event } from "./enums";
 import { metricsCollector } from "./metrics";
 
 // stores Queue instances
