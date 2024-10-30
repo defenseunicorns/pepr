@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Event } from "./types";
-import { Operation } from "./mutate-types";
+import { Event } from "../types";
+import { Operation } from "../mutate-types";
 import {
   __,
   allPass,
@@ -23,7 +23,7 @@ import {
 /*
   Naming scheme:
   - AdmissionRequest - "declares" / "neglects"
-  - KubernetesObject - "carries" / "missing"
+  - KuberneteskubernetesObjectect - "carries" / "missing"
   - Binding - "defines" / "ignores"
 */
 
@@ -37,27 +37,33 @@ export const declaredKind = pipe(request => request?.kind?.kind, defaultTo(""));
 export const declaredUid = pipe(request => request?.uid, defaultTo(""));
 
 /*
-  KubernetesObject collectors
+  KuberneteskubernetesObjectect collectors
 */
-export const carriesDeletionTimestamp = pipe(obj => !!obj.metadata?.deletionTimestamp, defaultTo(false));
+export const carriesDeletionTimestamp = pipe(
+  kubernetesObject => !!kubernetesObject.metadata?.deletionTimestamp,
+  defaultTo(false),
+);
 export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
 
-export const carriedName = pipe(obj => obj?.metadata?.name, defaultTo(""));
+export const carriedKind = pipe(kubernetesObject => kubernetesObject?.metadata?.kind, defaultTo("not set"));
+export const carriedVersion = pipe(kubernetesObject => kubernetesObject?.metadata?.version, defaultTo("not set"));
+export const carriedName = pipe(kubernetesObject => kubernetesObject?.metadata?.name, defaultTo(""));
 export const carriesName = pipe(carriedName, equals(""), not);
 export const missingName = complement(carriesName);
 
-export const carriedNamespace = pipe(obj => obj?.metadata?.namespace, defaultTo(""));
+export const carriedNamespace = pipe(kubernetesObject => kubernetesObject?.metadata?.namespace, defaultTo(""));
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
 
-export const carriedAnnotations = pipe(obj => obj?.metadata?.annotations, defaultTo({}));
+export const carriedAnnotations = pipe(kubernetesObject => kubernetesObject?.metadata?.annotations, defaultTo({}));
 export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
 
-export const carriedLabels = pipe(obj => obj?.metadata?.labels, defaultTo({}));
+export const carriedLabels = pipe(kubernetesObject => kubernetesObject?.metadata?.labels, defaultTo({}));
 export const carriesLabels = pipe(carriedLabels, equals({}), not);
 
 /*
   Binding collectors
 */
+
 export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
@@ -113,7 +119,7 @@ export const definedCallback = pipe(binding => {
     null
   );
 });
-export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), cb => cb.name);
+export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), callback => callback.name);
 
 /*
   post-collection comparitors
@@ -125,32 +131,32 @@ export const mismatchedDeletionTimestamp = allPass([
 
 export const mismatchedName = allPass([
   pipe(nthArg(0), definesName),
-  pipe((bnd, obj) => definedName(bnd) !== carriedName(obj)),
+  pipe((binding, kubernetesObject) => definedName(binding) !== carriedName(kubernetesObject)),
 ]);
 
 export const mismatchedNameRegex = allPass([
   pipe(nthArg(0), definesNameRegex),
-  pipe((bnd, obj) => new RegExp(definedNameRegex(bnd)).test(carriedName(obj)), not),
+  pipe((binding, kubernetesObject) => new RegExp(definedNameRegex(binding)).test(carriedName(kubernetesObject)), not),
 ]);
 
 export const bindsToKind = curry(
-  allPass([pipe(nthArg(0), definedKind, equals(""), not), pipe((bnd, knd) => definedKind(bnd) === knd)]),
+  allPass([pipe(nthArg(0), definedKind, equals(""), not), pipe((binding, kind) => definedKind(binding) === kind)]),
 );
 export const bindsToNamespace = curry(pipe(bindsToKind(__, "Namespace")));
 export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
 
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
-  pipe((bnd, obj) => definedNamespaces(bnd).includes(carriedNamespace(obj)), not),
+  pipe((binding, kubernetesObject) => definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)), not),
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
   pipe(nthArg(0), definesNamespaceRegexes),
-  pipe((bnd, obj) =>
+  pipe((binding, kubernetesObject) =>
     pipe(
-      any((rex: string) => new RegExp(rex).test(carriedNamespace(obj))),
+      any((regEx: string) => new RegExp(regEx).test(carriedNamespace(kubernetesObject))),
       not,
-    )(definedNamespaceRegexes(bnd)),
+    )(definedNamespaceRegexes(binding)),
   ),
 ]);
 
@@ -159,18 +165,18 @@ export const metasMismatch = pipe(
     const result = { defined, carried, unalike: {} };
 
     result.unalike = Object.entries(result.defined)
-      .map(([key, val]) => {
+      .map(([key, value]) => {
         const keyMissing = !Object.hasOwn(result.carried, key);
-        const noValue = !val;
+        const noValue = !value;
         const valMissing = !result.carried[key];
         const valDiffers = result.carried[key] !== result.defined[key];
 
         // prettier-ignore
         return (
-          keyMissing ? { [key]: val } :
+          keyMissing ? { [key]: value } :
           noValue ? {} :
-          valMissing ? { [key]: val } :
-          valDiffers ? { [key]: val } :
+          valMissing ? { [key]: value } :
+          valDiffers ? { [key]: value } :
           {}
         )
       })
@@ -183,38 +189,43 @@ export const metasMismatch = pipe(
 
 export const mismatchedAnnotations = allPass([
   pipe(nthArg(0), definesAnnotations),
-  pipe((bnd, obj) => metasMismatch(definedAnnotations(bnd), carriedAnnotations(obj))),
+  pipe((binding, kubernetesObject) => metasMismatch(definedAnnotations(binding), carriedAnnotations(kubernetesObject))),
 ]);
 
 export const mismatchedLabels = allPass([
   pipe(nthArg(0), definesLabels),
-  pipe((bnd, obj) => metasMismatch(definedLabels(bnd), carriedLabels(obj))),
+  pipe((binding, kubernetesObject) => metasMismatch(definedLabels(binding), carriedLabels(kubernetesObject))),
 ]);
 
 export const uncarryableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe(nthArg(1), carriesNamespace),
-  pipe((nss, obj) => nss.includes(carriedNamespace(obj)), not),
+  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject)), not),
 ]);
 
 export const carriesIgnoredNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe(nthArg(1), carriesNamespace),
-  pipe((nss, obj) => nss.includes(carriedNamespace(obj))),
+  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject))),
 ]);
 
 export const unbindableNamespaces = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe(nthArg(1), definesNamespaces),
-  pipe((nss, bnd) => difference(definedNamespaces(bnd), nss), length, equals(0), not),
+  pipe(
+    (namespaceSelector, binding) => difference(definedNamespaces(binding), namespaceSelector),
+    length,
+    equals(0),
+    not,
+  ),
 ]);
 
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
 
 export const operationMatchesEvent = anyPass([
   pipe(nthArg(1), equals(Event.Any)),
-  pipe((op, evt) => op === evt),
-  pipe((op, evt) => (op ? evt.includes(op) : false)),
+  pipe((operation, event) => operation === event),
+  pipe((operation, event) => (operation ? event.includes(operation) : false)),
 ]);
 
 export const mismatchedEvent = pipe(
