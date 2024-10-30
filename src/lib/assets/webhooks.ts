@@ -8,7 +8,6 @@ import {
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
-
 import { AssetsConfig } from "./assetsConfig";
 import { Event } from "../enums";
 

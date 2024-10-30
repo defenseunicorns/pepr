@@ -41,5 +41,6 @@ jobs:
             exit 1
           else
             echo "circular-deps.log has 6 or fewer circular dependencies."
+
             exit 0
           fi

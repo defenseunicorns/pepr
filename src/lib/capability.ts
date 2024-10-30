@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -7,6 +8,7 @@ import Log from "./logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import { OnSchedule, Schedule } from "./schedule";
+import { Event } from "./enums";
 import {
   Binding,
   BindingFilter,

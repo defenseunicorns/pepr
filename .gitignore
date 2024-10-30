@@ -25,7 +25,7 @@ pepr-test-module
 pepr-upgrade-test
 *.tgz
 coverage/
-src/.DS_Store
+.DS_Store
 # Test binary, build with `go test -c`
 *.test
 
