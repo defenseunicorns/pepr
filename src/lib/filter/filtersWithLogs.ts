@@ -15,7 +15,7 @@ import {
   mismatchedVersion,
   uncarryableNamespace,
 } from "./adjudicators";
-import { Operation } from "../mutate-types";
+import { Operation } from "../enums";
 import { FilterInput, FilterParams } from "../types";
 import { commonLogMessage } from "./logMessages";
 

@@ -6,7 +6,8 @@ import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../../fixtures/loader";
 import { shouldSkipRequest } from "./shouldSkipRequest";
-import { AdmissionRequest, Binding, Event } from "../types";
+import { AdmissionRequest, Binding } from "../types";
+import { Event } from "../enums";
 
 export const callback = () => undefined;
 
