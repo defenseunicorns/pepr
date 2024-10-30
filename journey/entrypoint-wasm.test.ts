@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { peprBuild } from "./pepr-build-wasm";
 import { resolve } from "path";
 import { cwd } from "./entrypoint.test";
-import { exec } from "child_process";
+import { execSync } from "child_process";
 
 // Unmock unit test things
 jest.deepUnmock("pino");
@@ -26,7 +26,8 @@ describe(
 
 // Set rbacMode in the Pepr Module Config and write it back to disk
 async function addScopedRbacMode() {
-  exec("ls -la", { cwd });
+  const dir = execSync("ls -la", { cwd, stdio: "inherit" }).toString().trim();
+  console.log("DIR", dir);
   const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
   const packageJsonObj = JSON.parse(packageJson);
   packageJsonObj.pepr.rbacMode = "scoped";
