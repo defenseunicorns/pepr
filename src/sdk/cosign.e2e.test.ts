@@ -49,6 +49,22 @@ async function cleanWorkdirs() {
   await Promise.all(workdirs.map(m => rm(m, { recursive: true, force: true })));
 }
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+const timed = async (msg: string, func: () => Promise<any>) => {
+  console.time(msg);
+  const result = await func();
+  console.timeEnd(msg);
+  return result;
+};
+
+async function builderExists(name: string) {
+  const resultRaw = await cmdStdout(`docker buildx ls --format json`);
+  const result = resultRaw.split("\n").map(m => JSON.parse(m));
+  const found = result.filter(f => f.Name === name).length;
+
+  return !!found;
+}
+
 enum OS {
   Linux = "Linux",
   Mac = "Darwin",
@@ -386,73 +402,61 @@ async function stopDockerRegistry() {
 //   );
 // });
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-const timed = async (msg: string, func: () => Promise<any>) => {
-  console.time(msg);
-  const result = await func();
-  console.timeEnd(msg);
-  return result;
-};
+/*
+  "Gold standard" -- uses cosign CLI to do what we want to do in JS
+    useful during dev but commented out for speed & network reasons
+*/
+// describe("cosign CLI - ttl.sh - pub/prv keys", () => {
+//   let cosign: string;
+//   let workdir: string;
 
-async function builderExists(name: string) {
-  const resultRaw = await cmdStdout(`docker buildx ls --format json`);
-  const result = resultRaw.split("\n").map(m => JSON.parse(m));
-  const found = result.filter(f => f.Name === name).length;
+//   const passwd = "password";
+//   const prefix = "signing";
+//   const pubkey = `${prefix}.pub`;
+//   const prvkey = `${prefix}.key`;
 
-  return !!found;
-}
+//   const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
 
-describe("cosign CLI - ttl.sh - pub/prv keys", () => {
-  let cosign: string;
-  let workdir: string;
+//   beforeAll(async () => {
+//     workdir = await timed("creating workdir", createWorkdir);
 
-  const passwd = "password";
-  const prefix = "signing";
-  const pubkey = `${prefix}.pub`;
-  const prvkey = `${prefix}.key`;
+//     cosign = await timed(
+//       "getting cosign CLI binary",
+//       async () => await downloadCosign(workdir, "cosign"),
+//     );
 
-  const iref = `ttl.sh/${crypto.randomUUID()}:2m`;
+//     await timed(`generating signing keypair: ${prefix}.*`, async () =>
+//       cmdStderr(`${cosign} generate-key-pair --output-key-prefix=${prefix}`, {
+//         cwd: workdir,
+//         env: { COSIGN_PASSWORD: passwd },
+//       }),
+//     );
 
-  beforeAll(async () => {
-    workdir = await timed("creating workdir", createWorkdir);
+//     await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
+//     await timed(`uploading container image: ${iref}`, async () =>
+//       cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
+//     );
 
-    cosign = await timed(
-      "getting cosign CLI binary",
-      async () => await downloadCosign(workdir, "cosign"),
-    );
+//     await timed(`signing image: ${iref}`, async () =>
+//       cmdStderr(`${cosign} sign --tlog-upload=false --key=${prvkey} ${iref}`, {
+//         cwd: workdir,
+//         env: { COSIGN_PASSWORD: passwd },
+//       }),
+//     );
+//   }, mins(1));
 
-    await timed(`generating signing keypair: ${prefix}.*`, async () =>
-      cmdStderr(`${cosign} generate-key-pair --output-key-prefix=${prefix}`, {
-        cwd: workdir,
-        env: { COSIGN_PASSWORD: passwd },
-      }),
-    );
+//   afterAll(async () => await cleanWorkdirs());
 
-    await writeFile(`${workdir}/Dockerfile`, "FROM docker.io/library/hello-world");
-    await timed(`uploading container image: ${iref}`, async () =>
-      cmdStderr(`docker build --tag ${iref} --push .`, { cwd: workdir }),
-    );
+//   it("can be verified via CLI", async () => {
+//     const result = await cmdStderr(
+//       `${cosign} verify --insecure-ignore-tlog=true --key=${pubkey} ${iref}`,
+//       { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
+//     );
 
-    await timed(`signing image: ${iref}`, async () =>
-      cmdStderr(`${cosign} sign --tlog-upload=false --key=${prvkey} ${iref}`, {
-        cwd: workdir,
-        env: { COSIGN_PASSWORD: passwd },
-      }),
-    );
-  }, mins(1));
-
-  afterAll(async () => await cleanWorkdirs());
-
-  it("can be verified via CLI", async () => {
-    const result = await cmdStderr(
-      `${cosign} verify --insecure-ignore-tlog=true --key=${pubkey} ${iref}`,
-      { cwd: workdir, env: { COSIGN_PASSWORD: passwd } },
-    );
-
-    expect(result).not.toContain("no matching signatures");
-    expect(result).toContain("signatures were verified");
-  });
-});
+//     expect(result).not.toContain("no matching signatures");
+//     expect(result).toContain("signatures were verified");
+//   });
+// });
 
 describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
   let workdir: string;
