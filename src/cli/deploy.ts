@@ -73,7 +73,9 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule();
+      const buildModuleResult = await buildModule();
+      if (buildModuleResult?.cfg && buildModuleResult?.path) {
+        const { cfg, path } = buildModuleResult;
 
       // Initialize AssetsConfig and AssetsDeployer
       const assetsConfig = new AssetsConfig(
@@ -98,8 +100,9 @@ export default function (program: RootCmd) {
         assetsConfig.image = opts.image;
       }
 
-      // Identify conf'd webhookTimeout to give to deploy call
-      const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
+
+        // Identify conf'd webhookTimeout to give to deploy call
+        const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
 
       try {
         await assetsDeployer.deploy(opts.force, timeout);
@@ -111,6 +114,7 @@ export default function (program: RootCmd) {
       } catch (e) {
         console.error(`Error deploying module:`, e);
         process.exit(1);
+
       }
     });
 }
