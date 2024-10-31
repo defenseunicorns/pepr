@@ -14,7 +14,7 @@ import { peprFormat } from "./format";
 import { Option } from "commander";
 import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
-
+import { determineRbacMode } from "./build.helpers";
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
@@ -67,9 +67,9 @@ export default function (program: RootCmd) {
         .default("manifest"),
     )
     .addOption(
-      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
-        .choices(["admin", "scoped"])
-        .default("admin"),
+      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)").choices(
+        ["admin", "scoped"],
+      ),
     )
     .action(async opts => {
       // assign custom output directory if provided
@@ -134,7 +134,8 @@ export default function (program: RootCmd) {
           ...cfg.pepr,
           appVersion: cfg.version,
           description: cfg.description,
-          rbacMode: opts.rbacMode,
+          // Can override the rbacMode with the CLI option
+          rbacMode: determineRbacMode(opts, cfg),
         },
         path,
       );
