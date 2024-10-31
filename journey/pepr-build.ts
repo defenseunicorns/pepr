@@ -108,6 +108,7 @@ async function validateClusterRoleYaml() {
   );
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
 
+
   expect(k8sYaml.includes(cr)).toEqual(true);
 }
 

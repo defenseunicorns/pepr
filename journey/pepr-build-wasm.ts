@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, beforeAll } from "@jest/globals";
-import { loadYaml, V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { expect, it } from "@jest/globals";
+import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import yaml from "js-yaml";
+
 import { cwd } from "./entrypoint.test";
 
-export const outputDir = "dist/pepr-test-module/child/folder";
-
+// test npx pepr build -o dst
+const outputDir = "dist/pepr-test-module/child/folder";
 export function peprBuild() {
-  beforeAll(async () => {
-    const dir = resolve(cwd);
+  it("should build artifacts in the dst folder", async () => {
     await fs.mkdir(outputDir, { recursive: true });
-    await addScopedRbacMode();
   });
-  it("should successfully build the Pepr project with arguments and rbacMode scoped", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
+
+  it("should successfully build the Pepr project with arguments", async () => {
+    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
       cwd: cwd,
       stdio: "inherit",
     });
@@ -34,9 +33,19 @@ export function peprBuild() {
   });
 
   it("should generate a scoped ClusterRole", async () => {
-    const validateHelmChart = true;
-    await validateClusterRoleYaml(validateHelmChart);
+    await validateClusterRoleYaml();
   });
+}
+
+async function validateClusterRoleYaml() {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+
+  expect(k8sYaml.includes(cr)).toEqual(true);
 }
 
 async function validateZarfYaml() {
@@ -81,34 +90,4 @@ async function validateZarfYaml() {
   // Check the generated zarf yaml
   const actualZarfYaml = loadYaml(zarfYAML);
   expect(actualZarfYaml).toEqual(expectedZarfYaml);
-}
-
-async function validateClusterRoleYaml(validateChart: boolean = false) {
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
-  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
-  expect(k8sYaml.includes(cr)).toEqual(true);
-
-  if (validateChart) {
-    const yamlChartRBAC = await fs.readFile(resolve("journey", "resources", "values.yaml"), "utf8");
-    const expectedYamlChartRBAC = await fs.readFile(
-      resolve("journey", "resources", "values.yaml"),
-      "utf8",
-    );
-    const jsonChartRBAC = yaml.load(yamlChartRBAC) as Record<string, PolicyRule[]>;
-    const expectedJsonChartRBAC = yaml.load(expectedYamlChartRBAC) as Record<string, PolicyRule[]>;
-
-    expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
-  }
-}
-
-// Set rbacMode in the Pepr Module Config and write it back to disk
-async function addScopedRbacMode() {
-  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
-  const packageJsonObj = JSON.parse(packageJson);
-  packageJsonObj.pepr.rbacMode = "scoped";
-  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
