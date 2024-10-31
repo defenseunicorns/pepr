@@ -385,7 +385,7 @@ export function dedent(file: string) {
 }
 
 export function replaceString(str: string, stringA: string, stringB: string) {
-  //eslint-disable-next-line
+  // eslint-disable-next-line no-useless-escape
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);
