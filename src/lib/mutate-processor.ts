@@ -5,11 +5,10 @@ import jsonPatch from "fast-json-patch";
 import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
-import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/shouldSkipRequest";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import Log, { processMutateError } from "./logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
@@ -40,7 +39,7 @@ export async function mutateProcessor(
   }
 
   Log.info(reqMetadata, `Processing request`);
-
+  let processedResponse = response;
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
     for (const action of bindings) {
@@ -87,51 +86,23 @@ export async function mutateProcessor(
         updateStatus("succeeded");
       } catch (e) {
         updateStatus("warning");
-        response.warnings = response.warnings || [];
-
-        let errorMessage = "";
-
-        try {
-          if (e.message && e.message !== "[object Object]") {
-            errorMessage = e.message;
-          } else {
-            throw new Error("An error occurred in the mutate action.");
-          }
-        } catch (e) {
-          errorMessage = "An error occurred with the mutate action.";
-        }
-
-        // Log on failure
-        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-        response.warnings.push(`Action failed: ${errorMessage}`);
-
-        switch (config.onError) {
-          case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-            response.result = "Pepr module configured to reject on error";
-            return response;
-
-          case Errors.audit:
-            response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
-            break;
-        }
+        processedResponse = processMutateError(actionMetadata, e, response, config.onError);
       }
     }
   }
 
   // If we've made it this far, the request is allowed
-  response.allowed = true;
+  processedResponse.allowed = true;
 
   // If no capability matched the request, exit early
   if (!matchedAction) {
     Log.info(reqMetadata, `No matching actions found`);
-    return response;
+    return processedResponse;
   }
 
   // delete operations can't be mutate, just return before the transformation
   if (req.operation === "DELETE") {
-    return response;
+    return processedResponse;
   }
 
   const transformed = wrapped.Raw;
@@ -146,18 +117,18 @@ export async function mutateProcessor(
 
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
-    response.patchType = "JSONPatch";
+    processedResponse.patchType = "JSONPatch";
     // Webhook must be base64-encoded
-    // https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
-    response.patch = base64Encode(JSON.stringify(patches));
+    // https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#processedResponse
+    processedResponse.patch = base64Encode(JSON.stringify(patches));
   }
 
   // Remove the warnings array if it's empty
-  if (response.warnings && response.warnings.length < 1) {
-    delete response.warnings;
+  if (processedResponse.warnings && processedResponse.warnings.length < 1) {
+    delete processedResponse.warnings;
   }
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
 
-  return response;
+  return processedResponse;
 }

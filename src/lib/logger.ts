@@ -3,7 +3,8 @@
 
 import { Operation } from "fast-json-patch";
 import { pino, stdTimeFunctions } from "pino";
-import { Store } from "./k8s";
+import { MutateResponse, Store } from "./k8s";
+import { Errors } from "./errors";
 
 const isPrettyLog = process.env.PEPR_PRETTY_LOGS === "true";
 const redactedValue = "**redacted**";
@@ -64,5 +65,43 @@ export function redactedPatch(patch: Record<string, Operation> = {}): Record<str
 
   return redactedCache;
 }
+
+const logMutateError = (e: Error): string => {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+};
+
+export const processMutateError = (
+  actionMetadata: { name: string },
+  error: Error,
+  mutateResponse: MutateResponse,
+  errorType: string | undefined,
+): MutateResponse => {
+  const errorMessage = logMutateError(error);
+
+  mutateResponse.warnings = mutateResponse.warnings || [];
+  Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+  mutateResponse.warnings.push(`Action failed: ${errorMessage}`);
+
+  switch (errorType) {
+    case Errors.reject:
+      Log.error(actionMetadata, `Action failed: ${errorMessage}`);
+      mutateResponse.result = "Pepr module configured to reject on error";
+      return mutateResponse;
+    case Errors.audit:
+      mutateResponse.auditAnnotations = mutateResponse.auditAnnotations || {};
+      mutateResponse.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
+      return mutateResponse;
+    default:
+      return mutateResponse;
+  }
+};
 
 export default Log;
