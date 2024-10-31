@@ -9,7 +9,7 @@ import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/shouldSkipRequest";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import Log, { logMutateErrorMessage } from "./logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
@@ -89,22 +89,13 @@ export async function mutateProcessor(
         updateStatus("warning");
         response.warnings = response.warnings || [];
 
-        let errorMessage = "";
-
-        try {
-          if (e.message && e.message !== "[object Object]") {
-            errorMessage = e.message;
-          } else {
-            throw new Error("An error occurred in the mutate action.");
-          }
-        } catch (e) {
-          errorMessage = "An error occurred with the mutate action.";
-        }
+        const errorMessage = logMutateErrorMessage(e);
 
         // Log on failure
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
+        // eslint-disable-next-line max-depth
         switch (config.onError) {
           case Errors.reject:
             Log.error(actionMetadata, `Action failed: ${errorMessage}`);
