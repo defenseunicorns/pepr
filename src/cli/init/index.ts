@@ -74,7 +74,25 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
 
           if (!opts.skipPostInit) {
-            doPostInitActions(dirName);
+            // run npm install from the new directory
+            process.chdir(dirName);
+            execSync("npm install", {
+              stdio: "inherit",
+            });
+
+            // setup git
+            execSync("git init --initial-branch=main", {
+              stdio: "inherit",
+            });
+
+            // try to open vscode
+            try {
+              execSync("code .", {
+                stdio: "inherit",
+              });
+            } catch (e) {
+              // vscode not found, do nothing
+            }
           }
 
           console.log(`New Pepr module created at ${dirName}`);
@@ -88,25 +106,3 @@ export default function (program: RootCmd) {
       }
     });
 }
-
-const doPostInitActions = (dirName: string): void => {
-  // run npm install from the new directory
-  process.chdir(dirName);
-  execSync("npm install", {
-    stdio: "inherit",
-  });
-
-  // setup git
-  execSync("git init --initial-branch=main", {
-    stdio: "inherit",
-  });
-
-  // try to open vscode
-  try {
-    execSync("code .", {
-      stdio: "inherit",
-    });
-  } catch (e) {
-    // vscode not found, do nothing
-  }
-};
