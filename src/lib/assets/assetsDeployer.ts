@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -128,6 +130,9 @@ export class AssetsDeployer {
         "validate",
         this.assetsConfig.config.webhookTimeout,
       );
+      console.log("Inside generateHelmChart - mutateWebhook:", mutateWebhook);
+      console.log("Inside generateHelmChart - validateWebhook:", validateWebhook);
+
       const watchDeployment = watcher(this.assetsConfig, this.assetsConfig.hash, this.assetsConfig.buildTimestamp);
 
       if (validateWebhook || mutateWebhook) {
