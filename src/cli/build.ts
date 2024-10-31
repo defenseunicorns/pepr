@@ -13,7 +13,7 @@ import { peprFormat } from "./format";
 import { Option } from "commander";
 import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
-import { determineRbacMode } from "../lib/cli-helpers/build";
+import { determineRbacMode } from "./build.helpers";
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
