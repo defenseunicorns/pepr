@@ -58,11 +58,8 @@ const timed = async (msg: string, func: () => Promise<any>) => {
 };
 
 async function builderExists(name: string) {
-  const resultRaw = await cmdStdout(`docker buildx ls --format json`);
-  const result = resultRaw.split("\n").map(m => JSON.parse(m));
-  const found = result.filter(f => f.Name === name).length;
-
-  return !!found;
+  const resultRaw = await cmdStdout(`docker buildx ls`);
+  return resultRaw.includes(name);
 }
 
 enum OS {
