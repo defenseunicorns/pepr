@@ -13,7 +13,6 @@ jest.mock("./assetsDeployer");
 
 describe("createAssets", () => {
   const mockConfig = {
-    // Populate with necessary mock properties
   } as ModuleConfig;
   const mockPath = "test/path";
   const mockHost = "localhost";
