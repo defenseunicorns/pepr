@@ -77,44 +77,34 @@ export default function (program: RootCmd) {
       if (buildModuleResult?.cfg && buildModuleResult?.path) {
         const { cfg, path } = buildModuleResult;
 
-      // Initialize AssetsConfig and AssetsDeployer
-      const assetsConfig = new AssetsConfig(
-        {
-          ...cfg.pepr,
-          description: cfg.description,
-        },
-        path,
-      );
-      const assetsDeployer = new AssetsDeployer(assetsConfig);
+        // Initialize AssetsConfig and AssetsDeployer
+        const assetsConfig = new AssetsConfig(
+          {
+            ...cfg.pepr,
+            description: cfg.description,
+          },
+          path,
+        );
+        const assetsDeployer = new AssetsDeployer(assetsConfig);
 
-      /* // Generate a secret for the module
-      const webhook = new Assets(
-        {
-          ...cfg.pepr,
-          description: cfg.description,
-        },
-        path,
-      ); */
-
-      if (opts.image) {
-        assetsConfig.image = opts.image;
-      }
-
+        if (opts.image) {
+          assetsConfig.image = opts.image;
+        }
 
         // Identify conf'd webhookTimeout to give to deploy call
         const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
 
-      try {
-        await assetsDeployer.deploy(opts.force, timeout);
-        // wait for capabilities to be loaded and test names
-        validateCapabilityNames(assetsConfig.capabilities);
-        // Wait for the pepr-system resources to be fully up
-        await namespaceDeploymentsReady();
-        console.info(`✅ Module deployed successfully`);
-      } catch (e) {
-        console.error(`Error deploying module:`, e);
-        process.exit(1);
-
+        try {
+          await assetsDeployer.deploy(opts.force, timeout);
+          // wait for capabilities to be loaded and test names
+          validateCapabilityNames(assetsConfig.capabilities);
+          // Wait for the pepr-system resources to be fully up
+          await namespaceDeploymentsReady();
+          console.info(`✅ Module deployed successfully`);
+        } catch (e) {
+          console.error(`Error deploying module:`, e);
+          process.exit(1);
+        }
       }
     });
 }

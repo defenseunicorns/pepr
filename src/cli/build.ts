@@ -132,7 +132,7 @@ export default function (program: RootCmd) {
         }
 
         // Generate a secret for the module
-        const assets = new Assets(
+        const assetsConfig = new AssetsConfig(
           {
             ...cfg.pepr,
             appVersion: cfg.version,
@@ -143,33 +143,20 @@ export default function (program: RootCmd) {
           path,
         );
 
+        const assets = new AssetsDeployer(assetsConfig);
 
-      // Generate a secret for the module
-      const assetsConfig = new AssetsConfig(
-        {
-          ...cfg.pepr,
-          appVersion: cfg.version,
-          description: cfg.description,
-          // Can override the rbacMode with the CLI option
-          rbacMode: determineRbacMode(opts, cfg),
-        },
-        path,
-      );
+        // If registry is set to Iron Bank, use Iron Bank image
+        if (opts?.registry === "Iron Bank") {
+          console.info(
+            `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
+          );
+          image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
+        }
 
-      const assets = new AssetsDeployer(assetsConfig);
-
-      // If registry is set to Iron Bank, use Iron Bank image
-      if (opts?.registry === "Iron Bank") {
-        console.info(
-          `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
-        );
-        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
-      }
-
-      // if image is a custom image, use that instead of the default
-      if (image !== "") {
-        assetsConfig.image = image;
-      }
+        // if image is a custom image, use that instead of the default
+        if (image !== "") {
+          assetsConfig.image = image;
+        }
 
         // Ensure imagePullSecret is valid
         if (opts.withPullSecret) {
@@ -189,7 +176,7 @@ export default function (program: RootCmd) {
 
         try {
           // wait for capabilities to be loaded and test names
-          validateCapabilityNames(assets.capabilities);
+          validateCapabilityNames(assetsConfig.capabilities);
         } catch (e) {
           console.error(`Error loading capability:`, e);
           process.exit(1);
@@ -197,14 +184,14 @@ export default function (program: RootCmd) {
 
         const zarfPath = resolve(outputDir, "zarf.yaml");
 
-      let zarf = "";
-      if (opts.zarf === "chart") {
-        zarf = await assets.zarfYamlChart(chartPath);
-      } else {
-        zarf = await assets.zarfYaml(yamlFile);
-      }
-      await fs.writeFile(yamlPath, yaml);
-      await fs.writeFile(zarfPath, zarf);
+        let zarf = "";
+        if (opts.zarf === "chart") {
+          zarf = await assets.zarfYamlChart(chartPath);
+        } else {
+          zarf = await assets.zarfYaml(yamlFile);
+        }
+        await fs.writeFile(yamlPath, yaml);
+        await fs.writeFile(zarfPath, zarf);
 
         await assets.generateHelmChart(outputDir);
 

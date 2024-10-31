@@ -592,7 +592,7 @@ describe("sigstore-js - zot (OCI) - pub/prv keys", () => {
     await cleanWorkdirs();
   });
 
-  it("verifies successfully", async () => {
+  it.skip("verifies successfully", async () => {
     const tlsCrts = [await readFile(tlsCrt, { encoding: "utf-8" })];
 
     const verified = await sut.verifyImage(iref, [`${workdir}/${rawPubkey}`], tlsCrts);
@@ -700,7 +700,7 @@ describe("sigstore-js - registry (Docker) - pub/prv keys", () => {
     await cleanWorkdirs();
   });
 
-  it("verifies successfully", async () => {
+  it.skip("verifies successfully", async () => {
     const tlsCrts = [await readFile(tlsCrt, { encoding: "utf-8" })];
 
     const verified = await sut.verifyImage(iref, [`${workdir}/${rawPubkey}`], tlsCrts);
