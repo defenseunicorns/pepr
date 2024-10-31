@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it } from "@jest/globals";
+import { expect, it, beforeAll } from "@jest/globals";
 import { loadYaml, V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
-import { outputDir } from "./entrypoint-wasm.test";
+
+export const outputDir = "dist/pepr-test-module/child/folder";
 
 export function peprBuild() {
+  beforeAll(async () => {
+    const dir = resolve(cwd);
+    await fs.mkdir(outputDir, { recursive: true });
+    await addScopedRbacMode();
+  });
   it("should successfully build the Pepr project with arguments and rbacMode scoped", async () => {
     execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
       cwd: cwd,
@@ -97,4 +103,12 @@ async function validateClusterRoleYaml(validateChart: boolean = false) {
 
     expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
   }
+}
+
+// Set rbacMode in the Pepr Module Config and write it back to disk
+async function addScopedRbacMode() {
+  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
+  const packageJsonObj = JSON.parse(packageJson);
+  packageJsonObj.pepr.rbacMode = "scoped";
+  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }

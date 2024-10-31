@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
-import { beforeAll, expect, it } from "@jest/globals";
+import { expect, it } from "@jest/globals";
 import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
@@ -13,11 +13,6 @@ import { cwd } from "./entrypoint.test";
 const outputDir = "dist/pepr-test-module/child/folder";
 
 export function peprBuild() {
-  beforeAll(async () => {
-    const dir = resolve(cwd);
-    await fs.mkdir(outputDir, { recursive: true });
-    await addScopedRbacMode();
-  });
   it("should successfully build the Pepr project", async () => {
     execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
@@ -201,12 +196,4 @@ function sortKubernetesObjects(objects: KubernetesObject[]): KubernetesObject[] 
       (b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? "",
     );
   });
-}
-
-// Set rbacMode in the Pepr Module Config and write it back to disk
-async function addScopedRbacMode() {
-  const packageJson = await fs.readFile(resolve(cwd, "package.json"), "utf8");
-  const packageJsonObj = JSON.parse(packageJson);
-  packageJsonObj.pepr.rbacMode = "scoped";
-  await fs.writeFile(resolve(cwd, "package.json"), JSON.stringify(packageJsonObj, null, 2));
 }
