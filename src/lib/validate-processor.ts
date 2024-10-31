@@ -55,18 +55,13 @@ export async function validateProcessor(
 
       try {
         // Run the validation callback, if it fails set allowed to false
-        const resp = await action.validateCallback(wrapped);
-        localResponse.allowed = resp.allowed;
+        const { allowed, statusCode, statusMessage } = await action.validateCallback(wrapped);
+        localResponse.allowed = allowed;
 
         // If the validation callback returned a status code or message, set it in the Response
-        if (resp.statusCode || resp.statusMessage) {
-          localResponse.status = {
-            code: resp.statusCode || 400,
-            message: resp.statusMessage || `Validation failed for ${name}`,
-          };
-        }
+        localResponse.status = buildStatusProps(statusCode, statusMessage);
 
-        Log.info(actionMetadata, `Validation action complete (${label}): ${resp.allowed ? "allowed" : "denied"}`);
+        Log.info(actionMetadata, `Validation action complete (${label}): ${allowed ? "allowed" : "denied"}`);
       } catch (e) {
         // If any validation throws an error, note the failure in the Response
         Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
@@ -83,3 +78,10 @@ export async function validateProcessor(
 
   return response;
 }
+
+const buildStatusProps = (statusCode?: number, message?: string): { code: number; message: string } => {
+  return {
+    code: statusCode ? statusCode : 400,
+    message: message ? message : `Validation failed for ${name}`,
+  };
+};
