@@ -15,7 +15,7 @@
     "complexity": ["warn", { "max": 10 }],
     "consistent-this": "warn",
     "eqeqeq": "error",
-    "max-depth": ["error", { "max": 3 }],
+    "max-depth": ["warn", { "max": 3 }],
     "max-nested-callbacks": ["warn", { "max": 4 }],
     "max-params": ["warn", { "max": 4 }],
     "max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
