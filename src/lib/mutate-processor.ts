@@ -95,7 +95,6 @@ export async function mutateProcessor(
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
-        // eslint-disable-next-line max-depth
         switch (config.onError) {
           case Errors.reject:
             Log.error(actionMetadata, `Action failed: ${errorMessage}`);
