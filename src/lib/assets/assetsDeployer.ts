@@ -130,8 +130,6 @@ export class AssetsDeployer {
         "validate",
         this.assetsConfig.config.webhookTimeout,
       );
-      console.log("Inside generateHelmChart - mutateWebhook:", mutateWebhook);
-      console.log("Inside generateHelmChart - validateWebhook:", validateWebhook);
 
       const watchDeployment = watcher(this.assetsConfig, this.assetsConfig.hash, this.assetsConfig.buildTimestamp);
 

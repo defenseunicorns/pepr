@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+// SPDX-License-IdentifierText: 2023-Present The Pepr Authors
 
 import crypto from "crypto";
 import { genTLS, TLSOut } from "../tls";
@@ -14,16 +14,16 @@ jest.mock("../tls");
 
 describe("AssetsConfig", () => {
   const mockUUID = "test-uuid";
-  const mockAlwaysIgnore: WebhookIgnore = {}; // Adjust as per actual type
+  const mockAlwaysIgnore: WebhookIgnore = {};
   const mockPeprVersion = "1.0.0";
+  const mockPath = "/path/to/module";
+  const mockHost = "example.com";
   const mockConfig: ModuleConfig = {
     uuid: mockUUID,
     alwaysIgnore: mockAlwaysIgnore,
     peprVersion: mockPeprVersion,
   };
 
-  const mockPath = "/path/to/module";
-  const mockHost = "example.com";
   const mockTLS: TLSOut = {
     crt: "mockCert",
     key: "mockKey",
@@ -38,58 +38,62 @@ describe("AssetsConfig", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     (genTLS as jest.Mock).mockReturnValue(mockTLS);
-    (crypto.randomBytes as jest.Mock).mockReturnValue({
-      toString: () => "mockApiToken",
+    (crypto.randomBytes as jest.Mock).mockReturnValue({ toString: () => "mockApiToken" });
+  });
+
+  describe("Initialization", () => {
+    it("should initialize with correct values", () => {
+      const assetsConfig = new AssetsConfig(mockConfig, mockPath, mockHost);
+
+      expect(assetsConfig.name).toBe(`pepr-${mockUUID}`);
+      expect(assetsConfig.buildTimestamp).toMatch(/^\d+$/);
+      expect(assetsConfig.alwaysIgnore).toBe(mockAlwaysIgnore);
+      expect(assetsConfig.image).toBe(`ghcr.io/defenseunicorns/pepr/controller:v${mockPeprVersion}`);
+      expect(assetsConfig.tls).toEqual(mockTLS);
+      expect(assetsConfig.apiToken).toBe("mockApiToken");
+    });
+
+    it("should handle undefined host by defaulting to cluster internal URL", () => {
+      const assetsConfig = new AssetsConfig(mockConfig, mockPath);
+
+      expect(assetsConfig.tls).toEqual(mockTLS);
+      expect(genTLS).toHaveBeenCalledWith("pepr-test-uuid.pepr-system.svc");
     });
   });
 
-  it("should initialize with correct values", () => {
-    const assetsConfig = new AssetsConfig(mockConfig, mockPath, mockHost);
+  describe("Setting Properties", () => {
+    it("should set hash correctly", () => {
+      const assetsConfig = new AssetsConfig(mockConfig, mockPath);
+      const testHash = "test-hash";
 
-    expect(assetsConfig.name).toBe(`pepr-${mockUUID}`);
-    expect(assetsConfig.buildTimestamp).toMatch(/^\d+$/);
-    expect(assetsConfig.alwaysIgnore).toBe(mockAlwaysIgnore);
-    expect(assetsConfig.image).toBe(`ghcr.io/defenseunicorns/pepr/controller:v${mockPeprVersion}`);
-    expect(assetsConfig.tls).toEqual(mockTLS);
-    expect(assetsConfig.apiToken).toBe("mockApiToken");
+      assetsConfig.setHash(testHash);
+
+      expect(assetsConfig.hash).toBe(testHash);
+    });
+
+    it("should allow setting capabilities", () => {
+      const assetsConfig = new AssetsConfig(mockConfig, mockPath);
+      const mockCapabilities: CapabilityExport[] = [
+        {
+          name: "test",
+          description: "test",
+          namespaces: [],
+          bindings: [],
+          hasSchedule: false,
+        },
+      ];
+
+      assetsConfig.capabilities = mockCapabilities;
+
+      expect(assetsConfig.capabilities).toBe(mockCapabilities);
+    });
   });
 
-  it("should set hash correctly", () => {
-    const assetsConfig = new AssetsConfig(mockConfig, mockPath);
-    const testHash = "test-hash";
+  describe("Capabilities", () => {
+    it("should have capabilities as undefined initially", () => {
+      const assetsConfig = new AssetsConfig(mockConfig, mockPath);
 
-    assetsConfig.setHash(testHash);
-
-    expect(assetsConfig.hash).toBe(testHash);
-  });
-
-  it("should handle undefined host", () => {
-    const assetsConfig = new AssetsConfig(mockConfig, mockPath);
-
-    expect(assetsConfig.tls).toEqual(mockTLS);
-    expect(genTLS).toHaveBeenCalledWith("pepr-test-uuid.pepr-system.svc");
-  });
-
-  it("should have capabilities as undefined initially", () => {
-    const assetsConfig = new AssetsConfig(mockConfig, mockPath);
-
-    expect(assetsConfig.capabilities).toBeUndefined();
-  });
-
-  it("should allow setting capabilities", () => {
-    const assetsConfig = new AssetsConfig(mockConfig, mockPath);
-    const mockCapabilities: CapabilityExport[] = [
-      {
-        name: "test",
-        description: "test",
-        namespaces: [],
-        bindings: [],
-        hasSchedule: false,
-      },
-    ];
-
-    assetsConfig.capabilities = mockCapabilities;
-
-    expect(assetsConfig.capabilities).toBe(mockCapabilities);
+      expect(assetsConfig.capabilities).toBeUndefined();
+    });
   });
 });
