@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, describe, jest } from "@jest/globals";
+import { describe, jest } from "@jest/globals";
 import { promises as fs } from "fs";
 import { peprBuild } from "./pepr-build-wasm";
 import { resolve } from "path";
@@ -14,11 +14,7 @@ jest.deepUnmock("pino");
 // Allow 5 minutes for the tests to run
 jest.setTimeout(1000 * 60 * 5);
 export const outputDir = "dist/pepr-test-module/child/folder";
-beforeAll(async () => {
-  const dir = resolve(cwd);
-  await fs.mkdir(outputDir, { recursive: true });
-  await addScopedRbacMode();
-});
+
 describe(
   "Journey: `npx pepr build -r gchr.io/defenseunicorns -o dist/pepr-test-module/child/folder`",
   peprBuild,
