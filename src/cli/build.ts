@@ -89,6 +89,15 @@ export default function (program: RootCmd) {
 
       let image: string = "";
 
+      // Build Kubernetes manifests with custom image
+      if (opts.customImage) {
+        if (opts.registry) {
+          console.error(`Custom Image and registry cannot be used together.`);
+          process.exit(1);
+        }
+        image = opts.customImage;
+      }
+
       // Check if there is a custom timeout defined
       if (opts.timeout !== undefined) {
         cfg.pepr.webhookTimeout = opts.timeout;
@@ -103,9 +112,7 @@ export default function (program: RootCmd) {
         // only actually build/push if there are files to include
         if (includedFiles.length > 0) {
           await createDockerfile(cfg.pepr.peprVersion, cfg.description, includedFiles);
-          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, {
-            stdio: "inherit",
-          });
+          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
           execSync(`docker push ${image}`, { stdio: "inherit" });
         }
       }
@@ -176,9 +183,9 @@ export default function (program: RootCmd) {
 
       let zarf = "";
       if (opts.zarf === "chart") {
-        zarf = await assets.zarfYamlChart(chartPath);
+        zarf = assets.zarfYamlChart(chartPath);
       } else {
-        zarf = await assets.zarfYaml(yamlFile);
+        zarf = assets.zarfYaml(yamlFile);
       }
       await fs.writeFile(yamlPath, yaml);
       await fs.writeFile(zarfPath, zarf);

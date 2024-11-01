@@ -43,11 +43,11 @@ export class AssetsDeployer {
     return allYaml(this.assetsConfig, imagePullSecret);
   }
 
-  async zarfYaml(path: string) {
+  zarfYaml(path: string) {
     return zarfYaml(this.assetsConfig, path);
   }
 
-  async zarfYamlChart(path: string) {
+  zarfYamlChart(path: string) {
     return zarfYamlChart(this.assetsConfig, path);
   }
 

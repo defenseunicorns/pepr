@@ -26,9 +26,6 @@ export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequ
   }
 
   request.Merge({ metadata: { finalizers } } as DeepPartial<K>);
-
-  // Log the addition of a finalizer with the alias
-  Log.info({ alias: request.Request.name }, `Added finalizer '${peprFinal}' to ${request.Raw.metadata?.name}`);
 }
 
 export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
