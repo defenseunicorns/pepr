@@ -89,17 +89,7 @@ export async function mutateProcessor(
         updateStatus("warning");
         response.warnings = response.warnings || [];
 
-        let errorMessage = "";
-
-        try {
-          if (e.message && e.message !== "[object Object]") {
-            errorMessage = e.message;
-          } else {
-            throw new Error("An error occurred in the mutate action.");
-          }
-        } catch (e) {
-          errorMessage = "An error occurred with the mutate action.";
-        }
+        const errorMessage = logMutateErrorMessage(e);
 
         // Log on failure
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
@@ -161,3 +151,15 @@ export async function mutateProcessor(
 
   return response;
 }
+
+const logMutateErrorMessage = (e: Error): string => {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+};
