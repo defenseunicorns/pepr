@@ -6,7 +6,7 @@
 # Any other changes to Dockerfile should be reflected in Publish
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
-FROM cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a AS build
+FROM cgr.dev/chainguard/node:latest-dev@sha256:8a604e50086fdfa5c6298722bdf86bfbffd82e64e3ecc736b133bc0dbcb9d121 AS build
 
 WORKDIR /app
 
@@ -21,7 +21,9 @@ COPY --chown=node:node ./hack/ ./hack/
 COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
-
+COPY --chown=node:node kfc/ ./kfc/
+COPY --chown=node:node ./kfc/src ./node_modules/kubernetes-fluent-client/src
+COPY --chown=node:node ./kfc/dist ./node_modules/kubernetes-fluent-client/dist
 RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
     npm cache clean --force && \
@@ -30,16 +32,19 @@ RUN npm run build && \
     # Remove Ramda unused Ramda files
     rm -rf node_modules/ramda/dist && \
     rm -rf node_modules/ramda/es && \
+    rm -rf node_modules/kubernetes-fluent-client/src && \
+    rm -rf node_modules/kubernetes-fluent-client/dist && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
+    cp -r kfc/dist node_modules/kubernetes-fluent-client/dist && \
+    cp -r kfc/src node_modules/kubernetes-fluent-client/src && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
 
 # crane digest cgr.dev/chainguard/node-lts:latest
-FROM cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
+FROM cgr.dev/chainguard/node:latest@sha256:2ec55b47bddaa173fbcd6283d492b10e903da51dc7da12988024829ad0454dd7
 
 WORKDIR /app
-
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/

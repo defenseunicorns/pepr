@@ -28,7 +28,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -37,7 +37,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: 20
           cache: "npm"
@@ -52,6 +52,11 @@ jobs:
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
+          ls -la
+          rm -rf node_modules/kubernetes-fluent-client/src
+          rm -rf node_modules/kubernetes-fluent-client/dist
+          cp -r kfc/src node_modules/kubernetes-fluent-client/src
+          cp -r kfc/dist node_modules/kubernetes-fluent-client/dist
           npm run build:image
   
       - name: build kfc pepr image
@@ -85,7 +90,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
       - name: "install k3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
@@ -170,13 +175,16 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..27}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..70}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event memory_usage received."))' || true 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_end received."))' || true 
+              # kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system --tail=6  | jq 'select(.msg | contains("Watch event http2_request_close received."))' || true 
               kubectl get pods -n pepr-demo 
               kubectl top po -n pepr-system
               kubectl get po -n pepr-system
