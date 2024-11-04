@@ -314,8 +314,6 @@ spec:
               value: '60'
             - name: PEPR_WATCH_MODE
               value: 'true'
-            - name: PEPR_HTTP2_WATCH
-              value: 'true'
             - name: PEPR_PRETTY_LOG
               value: 'false'
             - name: LOG_LEVEL
