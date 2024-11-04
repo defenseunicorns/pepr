@@ -65,16 +65,4 @@ export function redactedPatch(patch: Record<string, Operation> = {}): Record<str
   return redactedCache;
 }
 
-export const logMutateErrorMessage = (e: Error): string => {
-  try {
-    if (e.message && e.message !== "[object Object]") {
-      return e.message;
-    } else {
-      throw new Error("An error occurred in the mutate action.");
-    }
-  } catch (e) {
-    return "An error occurred with the mutate action.";
-  }
-};
-
 export default Log;

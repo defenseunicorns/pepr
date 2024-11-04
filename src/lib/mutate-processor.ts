@@ -9,7 +9,7 @@ import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/shouldSkipRequest";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
-import Log, { logMutateErrorMessage } from "./logger";
+import Log from "./logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
@@ -151,3 +151,15 @@ export async function mutateProcessor(
 
   return response;
 }
+
+const logMutateErrorMessage = (e: Error): string => {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+};
