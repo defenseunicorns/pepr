@@ -32,9 +32,9 @@ export async function validateProcessor(
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
 
-    for (const action of bindings) {
+    for (const binding of bindings) {
       // Skip this action if it's not a validation action
-      if (!action.validateCallback) {
+      if (!binding.validateCallback) {
         continue;
       }
 
@@ -44,18 +44,18 @@ export async function validateProcessor(
       };
 
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
       }
 
-      const label = action.validateCallback.name;
+      const label = binding.validateCallback.name;
       Log.info(actionMetadata, `Processing validation action (${label})`);
 
       try {
         // Run the validation callback, if it fails set allowed to false
-        const resp = await action.validateCallback(wrapped);
+        const resp = await binding.validateCallback(wrapped);
         localResponse.allowed = resp.allowed;
 
         // If the validation callback returned a status code or message, set it in the Response
