@@ -2,33 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { promises as fs } from "fs";
-import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
+import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import {
-  carriedAnnotations,
-  carriedLabels,
-  carriedName,
-  carriedNamespace,
-  carriesIgnoredNamespace,
-  definedAnnotations,
-  definedLabels,
-  definedName,
-  definedNameRegex,
-  definedNamespaces,
-  definedNamespaceRegexes,
-  misboundNamespace,
-  mismatchedAnnotations,
-  mismatchedDeletionTimestamp,
-  mismatchedLabels,
-  mismatchedName,
-  mismatchedNameRegex,
-  mismatchedNamespace,
-  mismatchedNamespaceRegex,
-  unbindableNamespaces,
-  uncarryableNamespace,
-} from "./filter/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
@@ -67,81 +44,6 @@ export type RBACMap = {
     plural: string;
   };
 };
-
-/**
- * Decide to run callback after the event comes back from API Server
- **/
-export function filterNoMatchReason(
-  binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
-  capabilityNamespaces: string[],
-  ignoredNamespaces?: string[],
-): string {
-  const prefix = "Ignoring Watch Callback:";
-
-  // prettier-ignore
-  return (
-    mismatchedDeletionTimestamp(binding, obj) ?
-      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
-
-    mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
-
-    misboundNamespace(binding) ?
-      `${prefix} Cannot use namespace filter on a namespace object.` :
-
-    mismatchedLabels(binding, obj) ?
-      (
-        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
-      ) :
-
-    mismatchedAnnotations(binding, obj) ?
-      (
-        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
-      ) :
-
-    uncarryableNamespace(capabilityNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    unbindableNamespaces(capabilityNamespaces, binding) ?
-      (
-        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    mismatchedNamespace(binding, obj) ?
-      (
-        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
-
-    mismatchedNamespaceRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines namespace regexes ` +
-        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
-
-    mismatchedNameRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
-      ) :
-
-    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
-      ) :
-
-    ""
-  );
-}
 
 export function addVerbIfNotExists(verbs: string[], verb: string) {
   if (!verbs.includes(verb)) {
