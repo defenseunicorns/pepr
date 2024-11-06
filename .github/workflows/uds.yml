@@ -125,12 +125,6 @@ jobs:
         run: |
           docker image load --input "$PEPR_IMG"
 
-      - name: swap-in HTTP2-based watcher
-        run: |
-          cd "$UDS_CORE"
-          node "$PEPR/.github/workflows/uds-http2-watcher.js" ./package.json
-          cat ./package.json
-
       - name: uds run
         run: |
           cd "$UDS_CORE"
