@@ -28,7 +28,7 @@ import {
   mismatchedNamespaceRegex,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./adjudicators";
+} from "./filter/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case

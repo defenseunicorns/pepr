@@ -4,10 +4,10 @@
 import { expect, test, describe } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
-import { CreatePod, DeletePod } from "../fixtures/loader";
+import { CreatePod, DeletePod } from "../../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
-import { AdmissionRequest, Binding } from "./types";
-import { Event } from "./enums";
+import { AdmissionRequest, Binding } from "../types";
+import { Event } from "../enums";
 
 export const callback = () => undefined;
 
