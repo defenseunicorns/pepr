@@ -96,7 +96,7 @@ export const carriesIgnoredNamespaceFilter = createFilter(
   data => data.ignoredNamespaces,
   data => getAdmissionRequest(data),
   (ignoreArray, kubernetesObject) => carriesIgnoredNamespace(ignoreArray, kubernetesObject),
-  (ignoreArray, kubernetesObject) => commonLogMessage("ignored namespaces", kubernetesObject, ignoreArray),
+  (ignoreArray, kubernetesObject) => commonLogMessage("ignored namespaces", ignoreArray, kubernetesObject),
 );
 
 export const unbindableNamespacesFilter = createFilter(
@@ -142,5 +142,5 @@ export const uncarryableNamespaceFilter = createFilter(
   data => getAdmissionRequest(data),
   (capabilityNamespaces, kubernetesObject) => uncarryableNamespace(capabilityNamespaces, kubernetesObject),
   (capabilityNamespaces, kubernetesObject) =>
-    commonLogMessage("namespace array", kubernetesObject, capabilityNamespaces),
+    commonLogMessage("uncarryable namespace", capabilityNamespaces, kubernetesObject ),
 );

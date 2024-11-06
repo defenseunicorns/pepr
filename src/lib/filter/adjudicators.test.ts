@@ -178,9 +178,9 @@ describe("carriedName", () => {
     [{ metadata: { name: null } }, ""],
     [{ metadata: { name: "name" } }, "name"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriedName(binding);
+    const result = sut.carriedName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -194,9 +194,9 @@ describe("carriesName", () => {
     [{ metadata: { name: null } }, false],
     [{ metadata: { name: "name" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriesName(binding);
+    const result = sut.carriesName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -210,9 +210,9 @@ describe("missingName", () => {
     [{ metadata: { name: null } }, true],
     [{ metadata: { name: "name" } }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.missingName(binding);
+    const result = sut.missingName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -377,9 +377,9 @@ describe("carriedNamespace", () => {
     [{ metadata: { namespace: "" } }, ""],
     [{ metadata: { namespace: "namespace" } }, "namespace"],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const object = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriedNamespace(binding);
+    const result = sut.carriedNamespace(object);
 
     expect(result).toEqual(expected);
   });
@@ -394,9 +394,9 @@ describe("carriesNamespace", () => {
     [{ metadata: { namespace: "" } }, false],
     [{ metadata: { namespace: "namespace" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const object = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriesNamespace(binding);
+    const result = sut.carriesNamespace(object);
 
     expect(result).toBe(expected);
   });
@@ -412,7 +412,7 @@ describe("mismatchedNamespace", () => {
     [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "namespace" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedNamespace(binding, object);
 
@@ -443,7 +443,7 @@ describe("mismatchedNamespaceRegex", () => {
     ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedNamespaceRegex(binding, object);
 
@@ -513,9 +513,9 @@ describe("carriedAnnotations", () => {
     [{ metadata: { annotations: { annotation: "" } } }, { annotation: "" }],
     [{ metadata: { annotations: { anno: "tation" } } }, { anno: "tation" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const object = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriedAnnotations(binding);
+    const result = sut.carriedAnnotations(object);
 
     expect(result).toEqual(expected);
   });
@@ -531,9 +531,9 @@ describe("carriesAnnotations", () => {
     [{ metadata: { annotations: { annotation: "" } } }, true],
     [{ metadata: { annotations: { anno: "tation" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const object = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriesAnnotations(binding);
+    const result = sut.carriesAnnotations(object);
 
     expect(result).toBe(expected);
   });
@@ -591,7 +591,7 @@ describe("mismatchedAnnotations", () => {
     ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedAnnotations(binding, object);
 
@@ -645,9 +645,9 @@ describe("carriedLabels", () => {
     [{ metadata: { labels: { label: "" } } }, { label: "" }],
     [{ metadata: { labels: { lab: "el" } } }, { lab: "el" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const obj = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriedLabels(binding);
+    const result = sut.carriedLabels(obj);
 
     expect(result).toEqual(expected);
   });
@@ -663,9 +663,9 @@ describe("carriesLabels", () => {
     [{ metadata: { labels: { label: "" } } }, true],
     [{ metadata: { labels: { lab: "el" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const obj = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriesLabels(binding);
+    const result = sut.carriesLabels(obj);
 
     expect(result).toBe(expected);
   });
@@ -691,7 +691,7 @@ describe("mismatchedLabels", () => {
     [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedLabels(binding, object);
 
@@ -720,7 +720,7 @@ describe("uncarryableNamespace", () => {
     [["name", "space"], { metadata: { namespace: "name" } }, false],
     [["name", "space"], { metadata: { namespace: "space" } }, false],
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.uncarryableNamespace(nss, object);
 
@@ -749,7 +749,7 @@ describe("carriesIgnoredNamespace", () => {
     [["ign", "ored"], { metadata: { namespace: "ored" } }, true],
     [["ign", "ored"], { metadata: { namespace: "namespace" } }, false],
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
-    const object = obj as DeepPartial<Binding>;
+    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.carriesIgnoredNamespace(nss, object);
 

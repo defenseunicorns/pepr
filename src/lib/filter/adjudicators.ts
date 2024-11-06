@@ -18,7 +18,8 @@ import {
   nthArg,
   pipe,
 } from "ramda";
-
+import { AdmissionRequest } from "../types";
+import { KubernetesObject } from "kubernetes-fluent-client";
 /*
   Naming scheme:
   - AdmissionRequest - "declares" / "neglects"
@@ -29,34 +30,34 @@ import {
 /*
   AdmissionRequest collectors
 */
-export const declaredOperation = pipe(request => request?.operation, defaultTo(""));
-export const declaredGroup = pipe(request => request?.kind?.group, defaultTo(""));
-export const declaredVersion = pipe(request => request?.kind?.version, defaultTo(""));
-export const declaredKind = pipe(request => request?.kind?.kind, defaultTo(""));
-export const declaredUid = pipe(request => request?.uid, defaultTo(""));
+export const declaredOperation = pipe((request: AdmissionRequest) => request?.operation, defaultTo(""));
+export const declaredGroup = pipe((request: AdmissionRequest) => request?.kind?.group, defaultTo(""));
+export const declaredVersion = pipe((request: AdmissionRequest) => request?.kind?.version, defaultTo(""));
+export const declaredKind = pipe((request: AdmissionRequest) => request?.kind?.kind, defaultTo(""));
+export const declaredUid = pipe((request: AdmissionRequest) => request?.uid, defaultTo(""));
 
 /*
   KuberneteskubernetesObjectect collectors
 */
 export const carriesDeletionTimestamp = pipe(
-  kubernetesObject => !!kubernetesObject.metadata?.deletionTimestamp,
+  (kubernetesObject: KubernetesObject) => !!kubernetesObject.metadata?.deletionTimestamp,
   defaultTo(false),
 );
 export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
 
-export const carriedKind = pipe(kubernetesObject => kubernetesObject?.metadata?.kind, defaultTo("not set"));
-export const carriedVersion = pipe(kubernetesObject => kubernetesObject?.metadata?.version, defaultTo("not set"));
-export const carriedName = pipe(kubernetesObject => kubernetesObject?.metadata?.name, defaultTo(""));
+export const carriedKind = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.kind, defaultTo("not set"));
+export const carriedAPIVersion = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.apiVersion, defaultTo("not set"));
+export const carriedName = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.name, defaultTo(""));
 export const carriesName = pipe(carriedName, equals(""), not);
 export const missingName = complement(carriesName);
 
-export const carriedNamespace = pipe(kubernetesObject => kubernetesObject?.metadata?.namespace, defaultTo(""));
+export const carriedNamespace = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.namespace, defaultTo(""));
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
 
-export const carriedAnnotations = pipe(kubernetesObject => kubernetesObject?.metadata?.annotations, defaultTo({}));
+export const carriedAnnotations = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.annotations, defaultTo({}));
 export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
 
-export const carriedLabels = pipe(kubernetesObject => kubernetesObject?.metadata?.labels, defaultTo({}));
+export const carriedLabels = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.labels, defaultTo({}));
 export const carriesLabels = pipe(carriedLabels, equals({}), not);
 
 /*
