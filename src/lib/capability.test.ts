@@ -4,12 +4,11 @@ import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAc
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
-import { Operation } from "./mutate-types";
+import { Event, Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { AdmissionRequest } from "./types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-import { Event } from "./types";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
 import { OnSchedule } from "./schedule";
@@ -357,9 +356,6 @@ describe("Capability", () => {
 
     // Chain the When and Watch methods
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
-
-    // Log the bindings to ensure they are being added
-    console.log("Bindings after watch registration: ", capability.bindings);
 
     // Retrieve the registered binding
     const binding = capability.bindings.find(b => b.isWatch === true);

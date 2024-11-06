@@ -7,7 +7,8 @@ import { filterNoMatchReason } from "./helpers";
 import { removeFinalizer } from "./finalizer";
 import Log from "./logger";
 import { Queue } from "./queue";
-import { Binding, Event } from "./types";
+import { Binding } from "./types";
+import { Event } from "./enums";
 import { metricsCollector } from "./metrics";
 
 // stores Queue instances
@@ -95,44 +96,47 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   // The watch callback is run when an object is received or dequeued
   Log.debug({ watchCfg }, "Effective WatchConfig");
 
-  const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
+  const watchCallback = async (kubernetesObject: KubernetesObject, phase: WatchPhase) => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
-        const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces, ignoredNamespaces);
-        if (filterMatch === "") {
-          if (binding.isFinalize) {
-            if (!obj.metadata?.deletionTimestamp) {
-              return;
-            }
-
-            let shouldRemoveFinalizer: boolean | void | undefined = true;
-            try {
-              shouldRemoveFinalizer = await binding.finalizeCallback?.(obj);
-
-              // if not opt'ed out of / if in error state, remove pepr finalizer
-            } finally {
-              const peprFinal = "pepr.dev/finalizer";
-              const meta = obj.metadata!;
-              const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
-
-              // [ true, void, undefined ] SHOULD remove finalizer
-              // [ false ] should NOT remove finalizer
-              shouldRemoveFinalizer === false
-                ? Log.debug({ obj }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
-                : await removeFinalizer(binding, obj);
-            }
-          } else {
-            await binding.watchCallback?.(obj, phase);
-          }
-        } else {
+        const filterMatch = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces, ignoredNamespaces);
+        if (filterMatch !== "") {
           Log.debug(filterMatch);
+          return;
+        }
+        if (binding.isFinalize) {
+          await handleFinalizerRemoval(kubernetesObject);
+        } else {
+          await binding.watchCallback?.(kubernetesObject, phase);
         }
       } catch (e) {
         // Errors in the watch callback should not crash the controller
         Log.error(e, "Error executing watch callback");
       }
+    }
+  };
+
+  const handleFinalizerRemoval = async (kubernetesObject: KubernetesObject) => {
+    if (!kubernetesObject.metadata?.deletionTimestamp) {
+      return;
+    }
+    let shouldRemoveFinalizer: boolean | void | undefined = true;
+    try {
+      shouldRemoveFinalizer = await binding.finalizeCallback?.(kubernetesObject);
+
+      // if not opt'ed out of / if in error state, remove pepr finalizer
+    } finally {
+      const peprFinal = "pepr.dev/finalizer";
+      const meta = kubernetesObject.metadata!;
+      const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
+
+      // [ true, void, undefined ] SHOULD remove finalizer
+      // [ false ] should NOT remove finalizer
+      shouldRemoveFinalizer === false
+        ? Log.debug({ obj: kubernetesObject }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
+        : await removeFinalizer(binding, kubernetesObject);
     }
   };
 

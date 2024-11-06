@@ -129,10 +129,11 @@ Below are the available configurations through `package.json`.
 | `onError`        | Behavior of the webhook failure policy | `reject`, `ignore`              |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
-| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`  |
+| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`              |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]   |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`           |
-| `rbac`          | Custom RBAC rules                    | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)            | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 
 These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
 

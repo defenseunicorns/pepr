@@ -72,34 +72,37 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path } = await buildModule();
+      const buildModuleResult = await buildModule();
+      if (buildModuleResult?.cfg && buildModuleResult?.path) {
+        const { cfg, path } = buildModuleResult;
 
-      // Generate a secret for the module
-      const webhook = new Assets(
-        {
-          ...cfg.pepr,
-          description: cfg.description,
-        },
-        path,
-      );
+        // Generate a secret for the module
+        const webhook = new Assets(
+          {
+            ...cfg.pepr,
+            description: cfg.description,
+          },
+          path,
+        );
 
-      if (opts.image) {
-        webhook.image = opts.image;
-      }
+        if (opts.image) {
+          webhook.image = opts.image;
+        }
 
-      // Identify conf'd webhookTimeout to give to deploy call
-      const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
+        // Identify conf'd webhookTimeout to give to deploy call
+        const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
 
-      try {
-        await webhook.deploy(opts.force, timeout);
-        // wait for capabilities to be loaded and test names
-        validateCapabilityNames(webhook.capabilities);
-        // Wait for the pepr-system resources to be fully up
-        await namespaceDeploymentsReady();
-        console.info(`✅ Module deployed successfully`);
-      } catch (e) {
-        console.error(`Error deploying module:`, e);
-        process.exit(1);
+        try {
+          await webhook.deploy(opts.force, timeout);
+          // wait for capabilities to be loaded and test names
+          validateCapabilityNames(webhook.capabilities);
+          // Wait for the pepr-system resources to be fully up
+          await namespaceDeploymentsReady();
+          console.info(`✅ Module deployed successfully`);
+        } catch (e) {
+          console.error(`Error deploying module:`, e);
+          process.exit(1);
+        }
       }
     });
 }

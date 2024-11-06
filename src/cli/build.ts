@@ -13,7 +13,7 @@ import { peprFormat } from "./format";
 import { Option } from "commander";
 import { createDirectoryIfNotExists, validateCapabilityNames, parseTimeout } from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
-
+import { determineRbacMode } from "./build.helpers";
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
@@ -66,9 +66,9 @@ export default function (program: RootCmd) {
         .default("manifest"),
     )
     .addOption(
-      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)")
-        .choices(["admin", "scoped"])
-        .default("admin"),
+      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)").choices(
+        ["admin", "scoped"],
+      ),
     )
     .action(async opts => {
       // assign custom output directory if provided
@@ -81,114 +81,119 @@ export default function (program: RootCmd) {
       }
 
       // Build the module
-      const { cfg, path, uuid } = await buildModule(undefined, opts.entryPoint, opts.embed);
+      const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
+      if (buildModuleResult?.cfg && buildModuleResult.path && buildModuleResult.uuid) {
+        const { cfg, path, uuid } = buildModuleResult;
+        // Files to include in controller image for WASM support
+        const { includedFiles } = cfg.pepr;
 
-      // Files to include in controller image for WASM support
-      const { includedFiles } = cfg.pepr;
+        let image: string = "";
 
-      let image: string = "";
-
-      // Build Kubernetes manifests with custom image
-      if (opts.customImage) {
-        if (opts.registry) {
-          console.error(`Custom Image and registry cannot be used together.`);
-          process.exit(1);
+        // Build Kubernetes manifests with custom image
+        if (opts.customImage) {
+          if (opts.registry) {
+            console.error(`Custom Image and registry cannot be used together.`);
+            process.exit(1);
+          }
+          image = opts.customImage;
         }
-        image = opts.customImage;
-      }
 
-      // Check if there is a custom timeout defined
-      if (opts.timeout !== undefined) {
-        cfg.pepr.webhookTimeout = opts.timeout;
-      }
-
-      if (opts.registryInfo !== undefined) {
-        console.info(`Including ${includedFiles.length} files in controller image.`);
-
-        // for journey test to make sure the image is built
-        image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
-
-        // only actually build/push if there are files to include
-        if (includedFiles.length > 0) {
-          await createDockerfile(cfg.pepr.peprVersion, cfg.description, includedFiles);
-          execSync(`docker build --tag ${image} -f Dockerfile.controller .`, { stdio: "inherit" });
-          execSync(`docker push ${image}`, { stdio: "inherit" });
+        // Check if there is a custom timeout defined
+        if (opts.timeout !== undefined) {
+          cfg.pepr.webhookTimeout = opts.timeout;
         }
-      }
 
-      // If building without embedding, exit after building
-      if (!opts.embed) {
-        console.info(`✅ Module built successfully at ${path}`);
-        return;
-      }
+        if (opts.registryInfo !== undefined) {
+          console.info(`Including ${includedFiles.length} files in controller image.`);
 
-      // set the image version if provided
-      if (opts.version) {
-        cfg.pepr.peprVersion = opts.version;
-      }
+          // for journey test to make sure the image is built
+          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
-      // Generate a secret for the module
-      const assets = new Assets(
-        {
-          ...cfg.pepr,
-          appVersion: cfg.version,
-          description: cfg.description,
-          rbacMode: opts.rbacMode,
-        },
-        path,
-      );
+          // only actually build/push if there are files to include
+          if (includedFiles.length > 0) {
+            await createDockerfile(cfg.pepr.peprVersion, cfg.description, includedFiles);
+            execSync(`docker build --tag ${image} -f Dockerfile.controller .`, {
+              stdio: "inherit",
+            });
+            execSync(`docker push ${image}`, { stdio: "inherit" });
+          }
+        }
 
-      // If registry is set to Iron Bank, use Iron Bank image
-      if (opts?.registry === "Iron Bank") {
-        console.info(
-          `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
+        // If building without embedding, exit after building
+        if (!opts.embed) {
+          console.info(`✅ Module built successfully at ${path}`);
+          return;
+        }
+
+        // set the image version if provided
+        if (opts.version) {
+          cfg.pepr.peprVersion = opts.version;
+        }
+
+        // Generate a secret for the module
+        const assets = new Assets(
+          {
+            ...cfg.pepr,
+            appVersion: cfg.version,
+            description: cfg.description,
+            // Can override the rbacMode with the CLI option
+            rbacMode: determineRbacMode(opts, cfg),
+          },
+          path,
         );
-        image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
-      }
 
-      // if image is a custom image, use that instead of the default
-      if (image !== "") {
-        assets.image = image;
-      }
-
-      // Ensure imagePullSecret is valid
-      if (opts.withPullSecret) {
-        if (sanitizeResourceName(opts.withPullSecret) !== opts.withPullSecret) {
-          // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
-          console.error(
-            "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+        // If registry is set to Iron Bank, use Iron Bank image
+        if (opts?.registry === "Iron Bank") {
+          console.info(
+            `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
           );
+          image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
+        }
+
+        // if image is a custom image, use that instead of the default
+        if (image !== "") {
+          assets.image = image;
+        }
+
+        // Ensure imagePullSecret is valid
+        if (opts.withPullSecret) {
+          if (sanitizeResourceName(opts.withPullSecret) !== opts.withPullSecret) {
+            // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+            console.error(
+              "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+            );
+            process.exit(1);
+          }
+        }
+
+        const yamlFile = `pepr-module-${uuid}.yaml`;
+        const chartPath = `${uuid}-chart`;
+        const yamlPath = resolve(outputDir, yamlFile);
+        const yaml = await assets.allYaml(opts.withPullSecret);
+
+        try {
+          // wait for capabilities to be loaded and test names
+          validateCapabilityNames(assets.capabilities);
+        } catch (e) {
+          console.error(`Error loading capability:`, e);
           process.exit(1);
         }
+
+        const zarfPath = resolve(outputDir, "zarf.yaml");
+
+        let zarf = "";
+        if (opts.zarf === "chart") {
+          zarf = assets.zarfYamlChart(chartPath);
+        } else {
+          zarf = assets.zarfYaml(yamlFile);
+        }
+        await fs.writeFile(yamlPath, yaml);
+        await fs.writeFile(zarfPath, zarf);
+
+        await assets.generateHelmChart(outputDir);
+
+        console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
       }
-
-      const yamlFile = `pepr-module-${uuid}.yaml`;
-      const chartPath = `${uuid}-chart`;
-      const yamlPath = resolve(outputDir, yamlFile);
-      const yaml = await assets.allYaml(opts.withPullSecret);
-
-      try {
-        // wait for capabilities to be loaded and test names
-        validateCapabilityNames(assets.capabilities);
-      } catch (e) {
-        console.error(`Error loading capability:`, e);
-        process.exit(1);
-      }
-
-      const zarfPath = resolve(outputDir, "zarf.yaml");
-
-      let zarf = "";
-      if (opts.zarf === "chart") {
-        zarf = assets.zarfYamlChart(chartPath);
-      } else {
-        zarf = assets.zarfYaml(yamlFile);
-      }
-      await fs.writeFile(yamlPath, yaml);
-      await fs.writeFile(zarfPath, zarf);
-
-      await assets.generateHelmChart(outputDir);
-
-      console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
     });
 }
 
@@ -331,41 +336,38 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
   } catch (e) {
     console.error(`Error building module:`, e);
 
-    if (e.stdout) {
-      const out = e.stdout.toString() as string;
-      const err = e.stderr.toString();
+    if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
 
-      console.log(out);
-      console.error(err);
+    const out = e.stdout.toString() as string;
+    const err = e.stderr.toString();
 
-      // Check for version conflicts
-      if (out.includes("Types have separate declarations of a private property '_name'.")) {
-        // Try to find the conflicting package
-        const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
-        out.matchAll(pgkErrMatch);
+    console.log(out);
+    console.error(err);
 
-        // Look for package conflict errors
-        const conflicts = [...out.matchAll(pgkErrMatch)];
+    // Check for version conflicts
+    if (out.includes("Types have separate declarations of a private property '_name'.")) {
+      // Try to find the conflicting package
+      const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
+      out.matchAll(pgkErrMatch);
 
-        // If the regex didn't match, leave a generic error
-        if (conflicts.length < 1) {
-          console.info(
-            `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
-            "Version Conflict",
-          );
-        }
+      // Look for package conflict errors
+      const conflicts = [...out.matchAll(pgkErrMatch)];
 
-        // Otherwise, loop through each conflicting package and print an error
-        conflicts.forEach(match => {
-          console.info(
-            `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
-            "Version Conflict",
-          );
-        });
+      // If the regex didn't match, leave a generic error
+      if (conflicts.length < 1) {
+        console.info(
+          `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
+          "Version Conflict",
+        );
       }
-    }
 
-    // On any other error, exit with a non-zero exit code
-    process.exit(1);
+      // Otherwise, loop through each conflicting package and print an error
+      conflicts.forEach(match => {
+        console.info(
+          `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
+          "Version Conflict",
+        );
+      });
+    }
   }
 }

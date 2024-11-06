@@ -275,12 +275,9 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
   ) {
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
-      for (const capabilityNamespace of capabilityNamespaces) {
-        if (regexNamespace !== "" && matchesRegex(regexNamespace, capabilityNamespace)) {
-          matches = true;
-          break;
-        }
-      }
+      matches =
+        regexNamespace !== "" &&
+        capabilityNamespaces.some(capabilityNamespace => matchesRegex(regexNamespace, capabilityNamespace));
       if (!matches) {
         throw new Error(
           `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`,
@@ -296,12 +293,11 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     ignoredNamespaces.length > 0
   ) {
     for (const regexNamespace of bindingRegexNamespaces) {
-      for (const ignoredNS of ignoredNamespaces) {
-        if (matchesRegex(regexNamespace, ignoredNS)) {
-          throw new Error(
-            `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${ignoredNS}.`,
-          );
-        }
+      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
+      if (matchedNS) {
+        throw new Error(
+          `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${matchedNS}.`,
+        );
       }
     }
   }
@@ -389,7 +385,7 @@ export function dedent(file: string) {
 }
 
 export function replaceString(str: string, stringA: string, stringB: string) {
-  //eslint-disable-next-line
+  // eslint-disable-next-line no-useless-escape
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
-import { Operation } from "./mutate-types";
+import { Event, Operation } from "./enums";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Logger } from "pino";
 import { PeprMutateRequest } from "./mutate-request";
@@ -32,17 +32,6 @@ export interface ResponseItem {
   status: {
     message: string;
   };
-}
-
-/**
- * The type of Kubernetes mutating webhook event that the action is registered for.
- */
-export enum Event {
-  Create = "CREATE",
-  Update = "UPDATE",
-  Delete = "DELETE",
-  CreateOrUpdate = "CREATEORUPDATE",
-  Any = "*",
 }
 
 export interface CapabilityCfg {
@@ -361,3 +350,7 @@ export interface GroupVersionResource {
   readonly version: string;
   readonly resource: string;
 }
+// DeepPartial utility type for deep optional properties
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
