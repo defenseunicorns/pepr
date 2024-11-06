@@ -5,7 +5,7 @@ import { expect, describe, it } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { CreatePod, DeletePod } from "../../fixtures/loader";
-import { shouldSkipRequest } from "./shouldSkipRequest";
+import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
 
@@ -271,7 +271,7 @@ it("should reject when kind does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines kind '.+' but Request declares 'not set'./,
+    /Ignoring Admission Callback: Binding defines kind '.+' but Request declares 'Pod'./,
   );
 });
 
@@ -290,7 +290,7 @@ it("should reject when group does not match", () => {
   const pod = CreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
-    /Ignoring Admission Callback: Binding defines group '.+' but Request declares '.+'./,
+    /Ignoring Admission Callback: Binding defines group '.+' but Request declares ''./,
   );
 });
 
