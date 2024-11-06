@@ -31,13 +31,13 @@ jobs:
       - name: Build Pepr Controller Image
         run: npm run build:image
       - name: Vulnerability Scan
-        uses: anchore/scan-action@5ed195cc06065322983cae4bb31e2a751feb86fd # v5.2.0
+        uses: anchore/scan-action@f2ba85e044c8f5e5014c9a539328a9c78d3bfa49 # v5.2.1
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
       - name: Generate SBOM
-        uses: anchore/sbom-action@251a468eed47e5082b105c3ba6ee500c0e65a764 # v0.17.6
+        uses: anchore/sbom-action@fc46e51fd3cb168ffb36c6d1915723c47db58abb # v0.17.7
         with:
           image: pepr:dev
           upload-artifact: true

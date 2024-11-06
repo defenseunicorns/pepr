@@ -350,16 +350,6 @@ export interface GroupVersionResource {
   readonly version: string;
   readonly resource: string;
 }
-
-export type FilterParams = {
-  binding: Binding;
-  request: AdmissionRequest;
-  capabilityNamespaces: string[];
-  ignoredNamespaces?: string[];
-};
-
-export type FilterInput = Binding | KubernetesObject | AdmissionRequest | string[] | undefined;
-
 // DeepPartial utility type for deep optional properties
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
