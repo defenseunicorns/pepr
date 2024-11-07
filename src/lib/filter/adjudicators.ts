@@ -32,16 +32,22 @@ import { KubernetesObject } from "kubernetes-fluent-client";
   AdmissionRequest collectors
 */
 export const declaredOperation = pipe(
-  (request: AdmissionRequest<KubernetesObject>) => request?.operation,
+  (request: AdmissionRequest<KubernetesObject>): Operation => request?.operation,
   defaultTo(""),
 );
-export const declaredGroup = pipe((request: AdmissionRequest<KubernetesObject>) => request?.kind?.group, defaultTo(""));
+export const declaredGroup = pipe(
+  (request: AdmissionRequest<KubernetesObject>): string => request?.kind?.group,
+  defaultTo(""),
+);
 export const declaredVersion = pipe(
-  (request: AdmissionRequest<KubernetesObject>) => request?.kind?.version,
+  (request: AdmissionRequest<KubernetesObject>): string | undefined => request?.kind?.version,
   defaultTo(""),
 );
-export const declaredKind = pipe((request: AdmissionRequest<KubernetesObject>) => request?.kind?.kind, defaultTo(""));
-export const declaredUid = pipe((request: AdmissionRequest<KubernetesObject>) => request?.uid, defaultTo(""));
+export const declaredKind = pipe(
+  (request: AdmissionRequest<KubernetesObject>): string => request?.kind?.kind,
+  defaultTo(""),
+);
+export const declaredUid = pipe((request: AdmissionRequest<KubernetesObject>): string => request?.uid, defaultTo(""));
 
 /*
   KubernetesObject collectors
