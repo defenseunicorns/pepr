@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr
+          ref: "1370"
           path: pepr
 
       - name: "set env: PEPR"
@@ -75,3 +76,32 @@ jobs:
           grep "stdin-module" $RESULT_FILE
           grep "Set by flag" $RESULT_FILE
           grep "reject" $RESULT_FILE
+
+      - name: pepr build --custom-image - generates Kubernetes manifest with a custom image
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          npx pepr@latest init \
+            --name=custom-image \
+            --description="custom image test" \
+            --errorBehavior=reject \
+            --skip-post-init \
+            --confirm
+          cd custom-image
+          npm i
+          npx ts-node "$PEPR"/src/cli.ts build --custom-image pepr:dev
+          UUID=$(cat package.json | jq .pepr.uuid)
+          count=$(cat dist/$UUID-chart/values.yaml | egrep "image: 'pepr:dev'" | wc -l)
+          if [ "$count" -eq 2 ]; then
+            echo "Generated correct images for helm values."
+          else
+            echo "Generated incorrect images for helm values."
+            exit 1
+          fi
+          count=$(cat dist/pepr-module-$UUID.yaml | egrep "pepr:dev" | wc -l)
+          if [ "$count" -eq 3 ]; then
+            echo "Generated correct images for manifests."
+          else
+            echo "Generated correct images for manifests."
+            exit 1
+          fi
+
