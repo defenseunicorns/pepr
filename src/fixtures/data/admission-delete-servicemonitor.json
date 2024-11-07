@@ -1,0 +1,119 @@
+{
+  "uid": "da24bce0-5c47-4738-81e4-9d24cb7aa5a6",
+  "namespace": "helm-releasename",
+  "request": {
+    "uid": "da24bce0-5c47-4738-81e4-9d24cb7aa5a6",
+    "kind": {
+      "group": "monitoring.coreos.com",
+      "version": "v1",
+      "kind": "ServiceMonitor"
+    },
+    "resource": {
+      "group": "monitoring.coreos.com",
+      "version": "v1",
+      "resource": "servicemonitors"
+    },
+    "requestKind": {
+      "group": "monitoring.coreos.com",
+      "version": "v1",
+      "kind": "ServiceMonitor"
+    },
+    "requestResource": {
+      "group": "monitoring.coreos.com",
+      "version": "v1",
+      "resource": "servicemonitors"
+    },
+    "name": "watcher",
+    "namespace": "helm-releasename",
+    "operation": "DELETE",
+    "userInfo": {
+      "username": "system:admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "object": null,
+    "oldObject": {
+      "apiVersion": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"monitoring.coreos.com/v1\",\"kind\":\"ServiceMonitor\",\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"watcher\",\"namespace\":\"helm-releasename\"},\"spec\":{\"endpoints\":[{\"scheme\":\"https\",\"targetPort\":3000,\"tlsConfig\":{\"insecureSkipVerify\":true}}],\"namespaceSelector\":{\"matchNames\":[\"pepr-system\"]},\"selector\":{\"matchLabels\":{\"pepr.dev/controller\":\"watcher\"}}}}\n"
+        },
+        "creationTimestamp": "2024-11-07T19:39:48Z",
+        "generation": 1,
+        "labels": {
+          "thing": "one"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                }
+              },
+              "f:spec": {
+                ".": {},
+                "f:endpoints": {},
+                "f:namespaceSelector": {
+                  ".": {},
+                  "f:matchNames": {}
+                },
+                "f:selector": {}
+              }
+            },
+            "manager": "kubectl-client-side-apply",
+            "operation": "Update",
+            "time": "2024-11-07T19:39:48Z"
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:labels": {
+                  ".": {},
+                  "f:thing": {}
+                }
+              }
+            },
+            "manager": "kubectl-label",
+            "operation": "Update",
+            "time": "2024-11-07T19:40:40Z"
+          }
+        ],
+        "name": "watcher",
+        "namespace": "helm-releasename",
+        "resourceVersion": "1543",
+        "uid": "ee7d981b-68fd-4875-b9f6-0c8a8995fd4f"
+      },
+      "spec": {
+        "endpoints": [
+          {
+            "scheme": "https",
+            "targetPort": 3000,
+            "tlsConfig": {
+              "insecureSkipVerify": true
+            }
+          }
+        ],
+        "namespaceSelector": {
+          "matchNames": ["pepr-system"]
+        },
+        "selector": {
+          "matchLabels": {
+            "pepr.dev/controller": "watcher"
+          }
+        }
+      }
+    },
+    "dryRun": false,
+    "options": {
+      "kind": "DeleteOptions",
+      "apiVersion": "meta.k8s.io/v1",
+      "propagationPolicy": "Background"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "uid": "e1e0241d-30af-4d39-9153-79352d59a685",
+  "namespace": "",
+  "request": {
+    "uid": "e1e0241d-30af-4d39-9153-79352d59a685",
+    "kind": {
+      "group": "rbac.authorization.k8s.io",
+      "version": "v1",
+      "kind": "ClusterRole"
+    },
+    "resource": {
+      "group": "rbac.authorization.k8s.io",
+      "version": "v1",
+      "resource": "clusterroles"
+    },
+    "requestKind": {
+      "group": "rbac.authorization.k8s.io",
+      "version": "v1",
+      "kind": "ClusterRole"
+    },
+    "requestResource": {
+      "group": "rbac.authorization.k8s.io",
+      "version": "v1",
+      "resource": "clusterroles"
+    },
+    "name": "pod-creator",
+    "operation": "UPDATE",
+    "userInfo": {
+      "username": "system:admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "object": {
+      "kind": "ClusterRole",
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "metadata": {
+        "name": "pod-creator",
+        "uid": "30de7232-d21b-4dd9-9563-5d2996b0e978",
+        "resourceVersion": "973",
+        "creationTimestamp": "2024-11-07T19:34:32Z",
+        "labels": {
+          "hello": "world",
+          "thing": "pod"
+        },
+        "annotations": {
+          "static-test.pepr.dev/hello-pepr": "succeeded"
+        },
+        "managedFields": [
+          {
+            "manager": "kubectl-create",
+            "operation": "Update",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "time": "2024-11-07T19:34:32Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:rules": {}
+            }
+          },
+          {
+            "manager": "kubectl-label",
+            "operation": "Update",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "time": "2024-11-07T19:35:47Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:labels": {
+                  "f:thing": {}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "rules": [
+        {
+          "verbs": ["create", "update", "patch"],
+          "apiGroups": [""],
+          "resources": ["pods"]
+        }
+      ]
+    },
+    "oldObject": {
+      "kind": "ClusterRole",
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "metadata": {
+        "name": "pod-creator",
+        "uid": "30de7232-d21b-4dd9-9563-5d2996b0e978",
+        "resourceVersion": "973",
+        "creationTimestamp": "2024-11-07T19:34:32Z",
+        "labels": {
+          "hello": "world"
+        },
+        "annotations": {
+          "static-test.pepr.dev/hello-pepr": "succeeded"
+        },
+        "managedFields": [
+          {
+            "manager": "kubectl-create",
+            "operation": "Update",
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "time": "2024-11-07T19:34:32Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:rules": {}
+            }
+          }
+        ]
+      },
+      "rules": [
+        {
+          "verbs": ["create", "update", "patch"],
+          "apiGroups": [""],
+          "resources": ["pods"]
+        }
+      ]
+    },
+    "dryRun": false,
+    "options": {
+      "kind": "UpdateOptions",
+      "apiVersion": "meta.k8s.io/v1",
+      "fieldManager": "kubectl-label"
+    }
+  }
+}
