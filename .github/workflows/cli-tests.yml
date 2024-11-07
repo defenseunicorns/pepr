@@ -101,7 +101,7 @@ jobs:
           if [ "$count" -eq 3 ]; then
             echo "Generated correct images for manifests."
           else
-            echo "Generated correct images for manifests."
+            echo "Generated incorrect images for manifests."
             exit 1
           fi
 
