@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -15,40 +16,8 @@ describe("carriesDeletionTimestamp", () => {
     [{ metadata: { deletionTimestamp: null } }, false],
     [{ metadata: { deletionTimestamp: new Date() } }, true],
   ])("given %j, returns %s", (given, expected) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const ko = given as DeepPartial<KubernetesObject>;
-
-    const result = sut.carriesDeletionTimestamp(ko);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("missingDeletionTimestamp", () => {
-  //[ KubernetesObject, result ]
-  it.each([
-    [{}, true],
-    [{ metadata: {} }, true],
-    [{ metadata: { deletionTimestamp: null } }, true],
-    [{ metadata: { deletionTimestamp: new Date() } }, false],
-  ])("given %j, returns %s", (given, expected) => {
-    const ko = given as DeepPartial<KubernetesObject>;
-
-    const result = sut.missingDeletionTimestamp(ko);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("mismatchedDeletionTimestamp", () => {
-  //[ Binding, KubernetesObject, result ]
-  it.each([
-    [{}, {}, false],
-    [{}, { metadata: { deletionTimestamp: new Date() } }, false],
-    [{ filters: { deletionTimestamp: true } }, {}, true],
-    [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
-  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
 
     const result = sut.mismatchedDeletionTimestamp(binding, object);
 

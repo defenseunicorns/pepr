@@ -70,6 +70,17 @@ export interface RegExpFilter {
   obj: RegExp;
   source: string;
 }
+
+export type Filters = {
+  annotations: Record<string, string>;
+  deletionTimestamp: boolean;
+  labels: Record<string, string>;
+  name: string;
+  namespaces: string[];
+  regexName: string;
+  regexNamespaces: string[];
+};
+
 export type Binding = {
   event: Event;
   isMutate?: boolean;
@@ -79,15 +90,7 @@ export type Binding = {
   isFinalize?: boolean;
   readonly model: GenericClass;
   readonly kind: GroupVersionKind;
-  readonly filters: {
-    name: string;
-    regexName: string;
-    namespaces: string[];
-    regexNamespaces: string[];
-    labels: Record<string, string>;
-    annotations: Record<string, string>;
-    deletionTimestamp: boolean;
-  };
+  readonly filters: Filters;
   alias?: string;
   readonly mutateCallback?: MutateAction<GenericClass, InstanceType<GenericClass>>;
   readonly validateCallback?: ValidateAction<GenericClass, InstanceType<GenericClass>>;

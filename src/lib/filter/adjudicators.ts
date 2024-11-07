@@ -97,46 +97,64 @@ export const carriesLabels = pipe(carriedLabels, equals({}), not);
 */
 
 export const definesDeletionTimestamp = pipe(
-  (binding: Binding): boolean => binding?.filters?.deletionTimestamp,
+  (binding: Binding): boolean | undefined => binding?.filters?.deletionTimestamp ?? undefined,
   defaultTo(false),
 );
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
-export const definedName = pipe((binding: Binding): string => binding?.filters?.name, defaultTo(""));
+export const definedName = pipe(
+  (binding: Partial<Binding>): string | undefined => binding?.filters?.name,
+  defaultTo(""),
+);
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
-export const definedNameRegex = pipe((binding: Binding): string => binding?.filters?.regexName, defaultTo(""));
+export const definedNameRegex = pipe(
+  (binding: Partial<Binding>): string | undefined => binding?.filters?.regexName,
+  defaultTo(""),
+);
 export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 
-export const definedNamespaces = pipe((binding: Binding): string[] => binding?.filters?.namespaces, defaultTo([]));
+export const definedNamespaces = pipe(
+  (binding: Partial<Binding>): string[] | undefined => binding?.filters?.namespaces,
+  defaultTo([]),
+);
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
 export const definedNamespaceRegexes = pipe(
-  (binding: Binding): string[] => binding?.filters?.regexNamespaces,
+  (binding: Partial<Binding>): string[] | undefined => binding?.filters?.regexNamespaces,
   defaultTo([]),
 );
 export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
-export const definedAnnotations = pipe((binding: Binding) => binding?.filters?.annotations, defaultTo({}));
+export const definedAnnotations = pipe((binding: Partial<Binding>) => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
 
-export const definedLabels = pipe((binding: Binding) => binding?.filters?.labels, defaultTo({}));
+export const definedLabels = pipe((binding: Partial<Binding>) => binding?.filters?.labels, defaultTo({}));
 export const definesLabels = pipe(definedLabels, equals({}), not);
 
-export const definedEvent = pipe((binding: Binding): Event => binding?.event, defaultTo(""));
+export const definedEvent = pipe((binding: Partial<Binding>): Event => {
+  if (binding.event) {
+    return binding.event;
+  } else {
+    throw TypeError("binding.event was undefined");
+  }
+}, defaultTo(""));
 export const definesDelete = pipe(definedEvent, equals(Event.DELETE));
 
-export const definedGroup = pipe((binding: Binding): string => binding?.kind?.group, defaultTo(""));
+export const definedGroup = pipe((binding: Partial<Binding>): string => binding?.kind?.group, defaultTo(""));
 export const definesGroup = pipe(definedGroup, equals(""), not);
 
-export const definedVersion = pipe((binding: Binding): string | undefined => binding?.kind?.version, defaultTo(""));
+export const definedVersion = pipe(
+  (binding: Partial<Binding>): string | undefined => binding?.kind?.version,
+  defaultTo(""),
+);
 export const definesVersion = pipe(definedVersion, equals(""), not);
 
-export const definedKind = pipe((binding: Binding): string => binding?.kind?.kind, defaultTo(""));
+export const definedKind = pipe((binding: Partial<Binding>): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
-export const definedCategory = pipe((binding: Binding) => {
+export const definedCategory = pipe((binding: Partial<Binding>) => {
   // prettier-ignore
   return (
     binding.isFinalize ? "Finalize" :
@@ -147,7 +165,7 @@ export const definedCategory = pipe((binding: Binding) => {
   );
 });
 
-export const definedCallback = pipe((binding: Binding) => {
+export const definedCallback = pipe((binding: Partial<Binding>) => {
   // prettier-ignore
   return (
     binding.isFinalize ? binding.finalizeCallback :
@@ -185,7 +203,11 @@ export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
 
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
-  pipe((binding, kubernetesObject) => definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)), not),
+  pipe(
+    (binding: Binding, kubernetesObject: KubernetesObject) =>
+      definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)),
+    not,
+  ),
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
