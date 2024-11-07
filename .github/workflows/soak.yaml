@@ -170,7 +170,7 @@ jobs:
           }
 
           # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..27}; do  # 27 iterations cover 135 minutes (2 hours and 15 minutes)
+          for i in {1..70}; do  # 70 iterations cover 350 minutes (5 hours and 50 minutes)
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt

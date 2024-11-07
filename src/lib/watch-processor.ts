@@ -50,7 +50,7 @@ export function getOrCreateQueue(obj: KubernetesObject) {
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
+  useLegacyWatch: process.env.PEPR_USE_LEGACY_WATCH === "true",
   resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
   resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10) : 5,
   lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
