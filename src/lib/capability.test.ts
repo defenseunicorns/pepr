@@ -606,7 +606,7 @@ describe("Capability", () => {
     capability.When(a.Pod).IsUpdated().InNamespace("default").Validate(mockValidateCallback);
 
     expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].event).toBe(Event.Update);
+    expect(capability.bindings[0].event).toBe(Event.UPDATE);
   });
 
   it("should bind a delete event", async () => {
@@ -624,7 +624,7 @@ describe("Capability", () => {
     expect(capability.bindings).toHaveLength(1);
 
     expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].event).toBe(Event.Delete);
+    expect(capability.bindings[0].event).toBe(Event.DELETE);
   });
 
   it("should throw an error if neither matchedKind nor kind is provided", () => {

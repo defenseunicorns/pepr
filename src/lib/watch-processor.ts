@@ -62,11 +62,11 @@ const watchCfg: WatchCfg = {
 
 // Map the event to the watch phase
 const eventToPhaseMap = {
-  [Event.Create]: [WatchPhase.Added],
-  [Event.Update]: [WatchPhase.Modified],
-  [Event.CreateOrUpdate]: [WatchPhase.Added, WatchPhase.Modified],
-  [Event.Delete]: [WatchPhase.Deleted],
-  [Event.Any]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
+  [Event.CREATE]: [WatchPhase.Added],
+  [Event.UPDATE]: [WatchPhase.Modified],
+  [Event.CREATE_OR_UPDATE]: [WatchPhase.Added, WatchPhase.Modified],
+  [Event.DELETE]: [WatchPhase.Deleted],
+  [Event.ANY]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
 };
 
 /**
@@ -90,7 +90,7 @@ export function setupWatch(capabilities: Capability[], ignoredNamespaces?: strin
  */
 async function runBinding(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
   // Get the phases to match, fallback to any
-  const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
+  const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.ANY];
 
   // The watch callback is run when an object is received or dequeued
   Log.debug({ watchCfg }, "Effective WatchConfig");

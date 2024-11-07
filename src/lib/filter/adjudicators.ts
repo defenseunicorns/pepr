@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Event, Operation } from "../enums";
-import { AdmissionRequest } from "../../lib/types";
+import { AdmissionRequest, Binding } from "../../lib/types";
 import {
   __,
   allPass,
@@ -96,41 +96,47 @@ export const carriesLabels = pipe(carriedLabels, equals({}), not);
   Binding collectors
 */
 
-export const definesDeletionTimestamp = pipe(binding => binding?.filters?.deletionTimestamp, defaultTo(false));
+export const definesDeletionTimestamp = pipe(
+  (binding: Binding): boolean => binding?.filters?.deletionTimestamp,
+  defaultTo(false),
+);
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
-export const definedName = pipe(binding => binding?.filters?.name, defaultTo(""));
+export const definedName = pipe((binding: Binding): string => binding?.filters?.name, defaultTo(""));
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
-export const definedNameRegex = pipe(binding => binding?.filters?.regexName, defaultTo(""));
+export const definedNameRegex = pipe((binding: Binding): string => binding?.filters?.regexName, defaultTo(""));
 export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 
-export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
+export const definedNamespaces = pipe((binding: Binding): string[] => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
-export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
+export const definedNamespaceRegexes = pipe(
+  (binding: Binding): string[] => binding?.filters?.regexNamespaces,
+  defaultTo([]),
+);
 export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
-export const definedAnnotations = pipe(binding => binding?.filters?.annotations, defaultTo({}));
+export const definedAnnotations = pipe((binding: Binding) => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
 
-export const definedLabels = pipe(binding => binding?.filters?.labels, defaultTo({}));
+export const definedLabels = pipe((binding: Binding) => binding?.filters?.labels, defaultTo({}));
 export const definesLabels = pipe(definedLabels, equals({}), not);
 
-export const definedEvent = pipe(binding => binding?.event, defaultTo(""));
-export const definesDelete = pipe(definedEvent, equals(Operation.DELETE));
+export const definedEvent = pipe((binding: Binding): Event => binding?.event, defaultTo(""));
+export const definesDelete = pipe(definedEvent, equals(Event.DELETE));
 
-export const definedGroup = pipe(binding => binding?.kind?.group, defaultTo(""));
+export const definedGroup = pipe((binding: Binding): string => binding?.kind?.group, defaultTo(""));
 export const definesGroup = pipe(definedGroup, equals(""), not);
 
-export const definedVersion = pipe(binding => binding?.kind?.version, defaultTo(""));
+export const definedVersion = pipe((binding: Binding): string | undefined => binding?.kind?.version, defaultTo(""));
 export const definesVersion = pipe(definedVersion, equals(""), not);
 
-export const definedKind = pipe(binding => binding?.kind?.kind, defaultTo(""));
+export const definedKind = pipe((binding: Binding): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
-export const definedCategory = pipe(binding => {
+export const definedCategory = pipe((binding: Binding) => {
   // prettier-ignore
   return (
     binding.isFinalize ? "Finalize" :
@@ -141,7 +147,7 @@ export const definedCategory = pipe(binding => {
   );
 });
 
-export const definedCallback = pipe(binding => {
+export const definedCallback = pipe((binding: Binding) => {
   // prettier-ignore
   return (
     binding.isFinalize ? binding.finalizeCallback :
@@ -264,7 +270,7 @@ export const unbindableNamespaces = allPass([
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
 
 export const operationMatchesEvent = anyPass([
-  pipe(nthArg(1), equals(Event.Any)),
+  pipe(nthArg(1), equals(Event.ANY)),
   pipe((operation, event) => operation === event),
   pipe((operation, event) => (operation ? event.includes(operation) : false)),
 ]);

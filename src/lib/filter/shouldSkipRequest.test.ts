@@ -31,7 +31,7 @@ const defaultFilters = {
 };
 const defaultBinding = {
   callback,
-  event: Event.Any,
+  event: Event.ANY,
   filters: defaultFilters,
   kind: podKind,
   model: kind.Pod,
