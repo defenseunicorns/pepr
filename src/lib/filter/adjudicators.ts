@@ -58,19 +58,34 @@ export const carriesDeletionTimestamp = pipe(
 );
 export const missingDeletionTimestamp = complement(carriesDeletionTimestamp);
 
-export const carriedKind = pipe(kubernetesObject => kubernetesObject?.metadata?.kind, defaultTo("not set"));
-export const carriedVersion = pipe(kubernetesObject => kubernetesObject?.metadata?.version, defaultTo("not set"));
-export const carriedName = pipe(kubernetesObject => kubernetesObject?.metadata?.name, defaultTo(""));
+export const carriedKind = pipe((kubernetesObject: KubernetesObject) => kubernetesObject?.kind, defaultTo("not set"));
+export const carriedVersion = pipe(
+  (kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.resourceVersion,
+  defaultTo("not set"),
+);
+export const carriedName = pipe(
+  (kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.name,
+  defaultTo(""),
+);
 export const carriesName = pipe(carriedName, equals(""), not);
 export const missingName = complement(carriesName);
 
-export const carriedNamespace = pipe(kubernetesObject => kubernetesObject?.metadata?.namespace, defaultTo(""));
+export const carriedNamespace = pipe(
+  (kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.namespace,
+  defaultTo(""),
+);
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
 
-export const carriedAnnotations = pipe(kubernetesObject => kubernetesObject?.metadata?.annotations, defaultTo({}));
+export const carriedAnnotations = pipe(
+  (kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.annotations,
+  defaultTo({}),
+);
 export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
 
-export const carriedLabels = pipe(kubernetesObject => kubernetesObject?.metadata?.labels, defaultTo({}));
+export const carriedLabels = pipe(
+  (kubernetesObject: KubernetesObject) => kubernetesObject?.metadata?.labels,
+  defaultTo({}),
+);
 export const carriesLabels = pipe(carriedLabels, equals({}), not);
 
 /*
