@@ -92,16 +92,23 @@ jobs:
           UUID=$(cat package.json | jq -r .pepr.uuid)
           count=$(cat dist/$UUID-chart/values.yaml | egrep "image: 'pepr:dev'" | wc -l)
           if [ "$count" -eq 2 ]; then
-            echo "Generated correct images for helm values."
+            echo "✅ Generated correct image for helm values."
           else
-            echo "Generated incorrect images for helm values."
+            echo "❌ Generated incorrect image for helm values."
             exit 1
           fi
           count=$(cat dist/pepr-module-$UUID.yaml | egrep "pepr:dev" | wc -l)
-          if [ "$count" -eq 3 ]; then
-            echo "Generated correct images for manifests."
+          if [ "$count" -eq 2 ]; then
+            echo "✅ Generated correct image for Pepr manifest."
           else
-            echo "Generated incorrect images for manifests."
+            echo "❌ Generated incorrect image for Pepr manifest."
+            exit 1
+          fi
+          count=$(cat dist/zarf.yaml | egrep "pepr:dev" | wc -l)
+          if [ "$count" -eq 1 ]; then
+            echo "✅ Generated correct image for Zarf manifest."
+          else
+            echo "❌ Generated incorrect image for Zarf manifest."
             exit 1
           fi
 
