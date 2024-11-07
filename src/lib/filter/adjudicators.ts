@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Event, Operation } from "../enums";
+import { AdmissionRequest } from "../../lib/types";
 import {
   __,
   allPass,
@@ -18,6 +19,7 @@ import {
   nthArg,
   pipe,
 } from "ramda";
+import { KubernetesObject } from "kubernetes-fluent-client";
 
 /*
   Naming scheme:
@@ -29,11 +31,17 @@ import {
 /*
   AdmissionRequest collectors
 */
-export const declaredOperation = pipe(request => request?.operation, defaultTo(""));
-export const declaredGroup = pipe(request => request?.kind?.group, defaultTo(""));
-export const declaredVersion = pipe(request => request?.kind?.version, defaultTo(""));
-export const declaredKind = pipe(request => request?.kind?.kind, defaultTo(""));
-export const declaredUid = pipe(request => request?.uid, defaultTo(""));
+export const declaredOperation = pipe(
+  (request: AdmissionRequest<KubernetesObject>) => request?.operation,
+  defaultTo(""),
+);
+export const declaredGroup = pipe((request: AdmissionRequest<KubernetesObject>) => request?.kind?.group, defaultTo(""));
+export const declaredVersion = pipe(
+  (request: AdmissionRequest<KubernetesObject>) => request?.kind?.version,
+  defaultTo(""),
+);
+export const declaredKind = pipe((request: AdmissionRequest<KubernetesObject>) => request?.kind?.kind, defaultTo(""));
+export const declaredUid = pipe((request: AdmissionRequest<KubernetesObject>) => request?.uid, defaultTo(""));
 
 /*
   KuberneteskubernetesObjectect collectors
