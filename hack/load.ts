@@ -4,7 +4,6 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 
-// start - pepr-excellent-examples/_helpers/src/Cmd.ts - start //
 interface Spec {
   cmd: string;
   stdin?: string[];
@@ -77,19 +76,22 @@ class Cmd {
     });
   }
 }
-// end - pepr-excellent-examples/_helpers/src/Cmd.ts - end //
 
 const fileAccessible = async (path: string) =>
   fs
     .access(path, fs.constants.R_OK)
     .then(() => true)
     .catch(() => false);
+
 const fileInaccessible = async (path: string) => !(await fileAccessible(path));
+
 const workdirPrefix = () => path.join(os.tmpdir(), `${path.basename(__filename)}-`);
+
 const createWorkdir = async () => {
   const prefix = workdirPrefix();
   return await fs.mkdtemp(prefix);
 };
+
 const cleanWorkdirs = async () => {
   const prefix = workdirPrefix();
   const dir = path.dirname(prefix);
@@ -101,14 +103,18 @@ const cleanWorkdirs = async () => {
 
   await Promise.all(workdirs.map(m => fs.rm(m, { recursive: true, force: true })));
 };
+
 const availableClusters = async () => {
   let result = await new Cmd({ cmd: `k3d cluster list --no-headers` }).run();
   return result.stdout.filter(f => f).map(m => m.split(/\s+/).at(0));
 };
+
 const createCluster = async (name: string) =>
   await new Cmd({ cmd: `k3d cluster create ${name}` }).run();
+
 const deleteCluster = async (name: string) =>
   await new Cmd({ cmd: `k3d cluster delete ${name}` }).run();
+
 const getKubeconfig = async (name: string) =>
   await new Cmd({ cmd: `k3d kubeconfig write ${name}` }).run();
 
@@ -120,11 +126,57 @@ program
   .version("0.0.1");
 
 program
+  .command("prep")
+  .description("Create testable artifacts")
+  .argument("<src>", "path to Pepr project source")
+  .action(async src => {
+    //
+    // sanitize / validate args
+    //
+
+    const args = { src: "" };
+
+    const srcTrim = src.trim();
+    if (srcTrim === "") {
+      console.error(`Invalid "src" argument: "${src}". Cannot be empty / all whitespace.`);
+      process.exit(1);
+    }
+    const srcAbs = path.resolve(srcTrim);
+    if (await fileInaccessible(srcAbs)) {
+      console.error(`Invalid "src" argument: "${srcAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    args.src = srcAbs;
+
+    //
+    // create artifacts
+    //
+
+    const pkg = `pepr-0.0.0-development.tgz`;
+    const tag = `pepr:dev`;
+    const img = `pepr-dev.tar`;
+
+    console.log(`Install build dependencies (${args.src})`);
+    let result = await new Cmd({ cmd: `npm ci`, cwd: args.src }).run();
+    console.log(result.stdout.join("\n"));
+
+    console.log(`Build Pepr package artifact (${pkg}) and controller image (${tag})`);
+    result = await new Cmd({ cmd: `npm run build:image`, cwd: args.src }).run();
+    console.log(result.stdout.join("\n"));
+    console.log(result.stderr.join("\n"));
+
+    console.log(`Export Pepr controller image artifact (${img})`);
+    result = await new Cmd({ cmd: `docker save --output ${img} ${tag}`, cwd: args.src }).run();
+    console.log(result.stdout.join("\n"));
+    console.log(result.stderr.join("\n"));
+  });
+
+program
   .command("run")
+  .description("Run a load test")
   .argument("<tgz>", "path to Pepr package tgz")
   .argument("<img>", "tag for Pepr controller img")
   .argument("<module>", "path to Pepr module under test")
-  .description("Run a load test")
   .option("-a, --cluster-auto", "create k3d cluster before test, cleanup after")
   .option("-n, --cluster-name [name]", "name of cluster to run within", "pepr-load")
   .action(async (tgz, img, module, opts) => {
@@ -242,10 +294,6 @@ program
 
       // KUBECONFIG=$(k3d kubeconfig write pepr-load) npx --yes pepr-0.0.0-development.tgz deploy --image pepr:dev
       // TODO:
-      // - make another command "prep", to be run before "run"
-      //  - should make local system ready to "run"
-      //    - <pepr> npm run build:image
-      //    - <pepr> <package pepr:dev into image archive>
       // - update "run" script to take an img tarball (as CI would), rather than a tag
       // - write the command to loads the custom pepr image into the k3d cluster
     } finally {

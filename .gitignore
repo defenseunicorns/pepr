@@ -23,6 +23,7 @@ stats.html
 insecure-tls*
 pepr-test-module
 pepr-upgrade-test
+*.tar
 *.tgz
 coverage/
 .DS_Store
