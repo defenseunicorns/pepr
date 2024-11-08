@@ -1,12 +1,16 @@
-// npx ts-node hack/load.ts prep ./
-// npx ts-node hack/load.ts run ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
+// From within Pepr project dir / next to Pexex project dir:
+//  npx ts-node hack/load.ts prep ./
+//  npx ts-node hack/load.ts run ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
 
 import { Command } from "commander";
 import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import * as util from "node:util";
+
+const PEPR_PKG = `pepr-0.0.0-development.tgz`;
+const PEPR_IMG = `pepr-dev.tar`;
+const PEPR_TAG = `pepr:dev`;
 
 interface Spec {
   cmd: string;
@@ -121,15 +125,6 @@ const availableClusters = async () => {
   return result.stdout.filter(f => f).map(m => m.split(/\s+/).at(0));
 };
 
-const createCluster = async (name: string) =>
-  await new Cmd({ cmd: `k3d cluster create ${name}` }).run();
-
-const deleteCluster = async (name: string) =>
-  await new Cmd({ cmd: `k3d cluster delete ${name}` }).run();
-
-const getKubeconfig = async (name: string) =>
-  await new Cmd({ cmd: `k3d kubeconfig write ${name}` }).run();
-
 const program = new Command();
 
 program
@@ -164,10 +159,6 @@ program
     // create artifacts
     //
 
-    const pkg = `pepr-0.0.0-development.tgz`;
-    const tag = `pepr:dev`;
-    const img = `pepr-dev.tar`;
-
     try {
       let cmd: Cmd;
 
@@ -182,7 +173,7 @@ program
       log(await cmd.run(), "");
 
       log(`Export Pepr controller image artifact`);
-      cmd = new Cmd({ cmd: `docker save --output ${img} ${tag}`, cwd: args.src });
+      cmd = new Cmd({ cmd: `docker save --output ${PEPR_IMG} ${PEPR_TAG}`, cwd: args.src });
       log({ cmd: cmd.cmd, cwd: cmd.cwd });
       log(await cmd.run(), "");
     } catch (e) {
@@ -245,101 +236,118 @@ program
     // setup testable module
     //
 
+    log(`Remove old working directories (if there are any)`);
     await cleanWorkdirs();
+    log("");
 
-    console.log(`Setup working directory:`);
+    log(`Create working directory`);
     let workdir = await createWorkdir();
+    log(`  workdir: ${workdir}`, "");
 
-    process.stdout.write(`  copy module (${args.module}) into workdir (${workdir})...`);
+    log(`Copy module content into working directory`);
     await fs.cp(args.module, workdir, { recursive: true });
-    await Promise.all(
-      (await fs.readdir(args.module, { recursive: true }))
-        .filter(f => /\.test\./.test(f))
-        .map(f => fs.rm(`${workdir}/${f}`)),
+    let tests = (await fs.readdir(args.module, { recursive: true })).filter(f =>
+      /\.test\./.test(f),
     );
-    console.log(` done!\n`);
+    await Promise.all(tests.map(f => fs.rm(`${workdir}/${f}`)));
 
+    let cmd = new Cmd({ cmd: `ls -lahR`, cwd: workdir });
+    log({ cmd: cmd.cmd, cwd: cmd.cwd });
+    log(await cmd.run(), "");
+
+    log(`Copy package artifact into working directory`);
     let worktgz = `${workdir}/${path.basename(args.tgz)}`;
-    process.stdout.write(`  copy tgz (${args.tgz}) into workdir (${worktgz})...`);
     await fs.cp(args.tgz, worktgz);
-    console.log(` done!\n`);
+    cmd = new Cmd({ cmd: `ls -lah ${worktgz}` });
+    log({ cmd: cmd.cmd });
+    log(await cmd.run(), "");
 
-    process.stdout.write(
-      `  install tgz (${args.tgz}) into workdir package.json (${workdir}/package.json)...`,
-    );
-    await new Cmd({ cmd: `npm install ${path.basename(worktgz)}`, cwd: workdir }).run();
-    console.log(" done!\n");
+    log(`Install package artifact into working directory module`);
+    cmd = new Cmd({ cmd: `npm install ${path.basename(worktgz)}`, cwd: workdir });
+    log({ cmd: cmd.cmd, cwd: cmd.cwd });
+    log(await cmd.run(), "");
 
     //
     // run test
     //
 
-    let result = await new Cmd({
-      cmd: `npx --yes ${path.basename(worktgz)} --version`,
-      cwd: workdir,
-    }).run();
-    let peprVer = result.stdout.join("\n");
-    console.log(`Pepr CLI version ${peprVer} (${worktgz})\n`);
+    log(`Pepr CLI version`);
+    cmd = new Cmd({ cmd: `npx --yes ${path.basename(worktgz)} --version`, cwd: workdir });
+    log({ cmd: cmd.cmd, cwd: cmd.cwd });
+    log(await cmd.run(), "");
 
-    result = await new Cmd({ cmd: `k3d --version` }).run();
-    console.log(result.stdout.join("\n"));
+    log(`K3D CLI version`);
+    cmd = new Cmd({ cmd: `k3d --version` });
+    log({ cmd: cmd.cmd });
+    log(await cmd.run(), "");
 
     try {
-      if (opts.clusterAuto) {
-        let clusters = await availableClusters();
-        if (clusters.includes(opts.clusterName)) {
-          console.log(
-            `Cluster "${opts.clusterName}" found in ` +
-              `available clusters: ${JSON.stringify(clusters)}. Continuing!\n`,
-          );
+      let clusters = await availableClusters();
+      let found = clusters.includes(opts.clusterName);
+      let missing = !found;
+      log(
+        `Test K3D cluster:`,
+        `  desired:   ${opts.clusterName}`,
+        `  available: ${JSON.stringify(clusters)}`,
+        `  found:     ${found}`,
+        `  create?:   ${opts.clusterAuto}`,
+        "",
+      );
+
+      if (missing) {
+        if (opts.clusterAuto) {
+          log(`Create test K3D cluster "${opts.clusterName}"`);
+          cmd = new Cmd({ cmd: `k3d cluster create ${opts.clusterName}` });
+          log({ cmd: cmd.cmd });
+          log(await cmd.run(), "");
         } else {
-          process.stdout.write(
-            `Cluster "${opts.clusterName}" not in ` +
-              `available clusters: ${JSON.stringify(clusters)}. Creating...`,
-          );
-          await createCluster(opts.clusterName);
-          console.log(" done!\n");
+          console.error(`Can't find test K3D cluster. Quitting!`);
+          process.exit(1);
         }
       }
 
-      let clusters = await availableClusters();
-      console.log(`Available clusters: ${JSON.stringify(clusters)}\n`);
+      log(`Load Pepr controller image artifact into test cluster`);
+      cmd = new Cmd({ cmd: `k3d image import '${args.img}' --cluster '${opts.clusterName}'` });
+      log({ cmd: cmd.cmd });
+      log(await cmd.run(), "");
 
-      if (!clusters.includes(opts.clusterName)) {
-        console.error(
-          `Cluster "${opts.clusterName}" not in ` +
-            `available clusters: ${JSON.stringify(clusters)}. Quitting!`,
-        );
-        process.exit(1);
-      }
+      log(`Get test cluster credential`);
+      cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
+      log({ cmd: cmd.cmd });
+      let result = await cmd.run();
+      let KUBECONFIG = result.stdout.join("").trim();
+      log(result, "");
 
-      process.stdout.write(`Load "${args.img}" into "${opts.clusterName}" cluster...`);
-      await new Cmd({ cmd: `k3d image import "${img}" --cluster "${opts.clusterName}"` }).run();
-      console.log(" done!\n");
-
-      // let kubeConfig = (await getKubeconfig(opts.clusterName)).stdout.join("").trim();
-      // result = await new Cmd({
-      //   cmd: `kubectl get namespaces --all-namespaces --output=json`,
-      //   env: { KUBECONFIG: kubeConfig }
-      // }).run();
-      // console.log(JSON.parse(result.stdout.join("")));
-
-      // KUBECONFIG=$(k3d kubeconfig write pepr-load) npx --yes pepr-0.0.0-development.tgz deploy --image pepr:dev --confirm
-
-      // Just log Result objs..?
-      // console.log intention message
-      // console.log cmd
-      // console.log Result
+      log(`Deploy Pepr controller into test cluster`);
+      let env = { KUBECONFIG };
+      cmd = new Cmd({
+        cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --confirm`,
+        cwd: workdir,
+        env,
+      });
+      log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
+      log(await cmd.run(), "");
     } finally {
       await cleanWorkdirs();
-      if (opts.clusterAuto) {
-        let clusters = await availableClusters();
-        process.stdout.write(
-          `Cluster "${opts.clusterName}" found in ` +
-            `available clusters: ${JSON.stringify(clusters)}. Cleaning up...`,
-        );
-        await deleteCluster(opts.clusterName);
-        console.log(" done!\n");
+
+      let clusters = await availableClusters();
+      let found = clusters.includes(opts.clusterName);
+      log(
+        `Test K3D cluster:`,
+        `  desired:   ${opts.clusterName}`,
+        `  available: ${JSON.stringify(clusters)}`,
+        `  found:     ${found}`,
+        `  remove?:   ${opts.clusterAuto}`,
+        "",
+      );
+
+      if (found) {
+        if (opts.clusterAuto) {
+          log(`Delete test K3D cluster "${opts.clusterName}"`);
+          cmd = new Cmd({ cmd: `k3d cluster delete ${opts.clusterName}` });
+          log({ cmd: cmd.cmd });
+          log(await cmd.run(), "");
+        }
       }
     }
   });
