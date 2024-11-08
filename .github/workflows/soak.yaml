@@ -144,6 +144,7 @@ jobs:
 
       - name: Run the soak test and collect metrics
         run: |
+          kubectl get po -n pepr-system -oyaml
           # Initialize the map to store pod counts
           declare -A pod_map
           
