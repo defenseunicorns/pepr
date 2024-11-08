@@ -1,3 +1,6 @@
+// npx ts-node hack/load.ts prep ./
+// npx ts-node hack/load.ts run -a "./pepr-0.0.0-development.tgz" "./pepr-dev.tar" "../pepr-excellent-examples/hello-pepr-soak-ci"
+
 import { Command } from "commander";
 import { spawn } from "child_process";
 import * as os from "node:os";
@@ -175,7 +178,7 @@ program
   .command("run")
   .description("Run a load test")
   .argument("<tgz>", "path to Pepr package tgz")
-  .argument("<img>", "tag for Pepr controller img")
+  .argument("<img>", "path to Pepr controller img tar")
   .argument("<module>", "path to Pepr module under test")
   .option("-a, --cluster-auto", "create k3d cluster before test, cleanup after")
   .option("-n, --cluster-name [name]", "name of cluster to run within", "pepr-load")
@@ -198,19 +201,30 @@ program
     }
     args.tgz = tgzAbs;
 
-    const imgTrim = tgz.trim();
+    const imgTrim = img.trim();
     if (imgTrim === "") {
       console.error(`Invalid "img" argument: "${img}". Cannot be empty / all whitespace.`);
       process.exit(1);
     }
-    args.img = imgTrim;
+    const imgAbs = path.resolve(imgTrim);
+    if (await fileInaccessible(imgAbs)) {
+      console.error(`Invalid "img" argument: "${imgAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    args.img = imgAbs;
 
     const modTrim = module.trim();
     if (modTrim === "") {
       console.error(`Invalid "module" argument: "${module}"`);
       process.exit(1);
     }
-    args.module = path.resolve(modTrim);
+    const modAbs = path.resolve(modTrim);
+    if (await fileInaccessible(modAbs)) {
+      console.error(`Invalid "module" argument: "${modAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    args.module = path.resolve(modAbs);
+
     console.log("Args:", args, "\n");
 
     //
@@ -293,9 +307,11 @@ program
       // console.log(JSON.parse(result.stdout.join("")));
 
       // KUBECONFIG=$(k3d kubeconfig write pepr-load) npx --yes pepr-0.0.0-development.tgz deploy --image pepr:dev
+
       // TODO:
-      // - update "run" script to take an img tarball (as CI would), rather than a tag
       // - write the command to loads the custom pepr image into the k3d cluster
+
+      // Just log Result objs..?
     } finally {
       // await cleanWorkdirs();
       // if (opts.clusterAuto) {
