@@ -1,11 +1,12 @@
 // npx ts-node hack/load.ts prep ./
-// npx ts-node hack/load.ts run -a "./pepr-0.0.0-development.tgz" "./pepr-dev.tar" "../pepr-excellent-examples/hello-pepr-soak-ci"
+// npx ts-node hack/load.ts run ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
 
 import { Command } from "commander";
 import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as util from "node:util";
 
 interface Spec {
   cmd: string;
@@ -79,6 +80,14 @@ class Cmd {
     });
   }
 }
+
+type Loggable = string | object;
+
+const log = (...items: Loggable[]) => {
+  for (let item of items) {
+    console.log(typeof item === "object" ? JSON.stringify(item, null, 2) : item);
+  }
+};
 
 const fileAccessible = async (path: string) =>
   fs
@@ -159,19 +168,26 @@ program
     const tag = `pepr:dev`;
     const img = `pepr-dev.tar`;
 
-    console.log(`Install build dependencies (${args.src})`);
-    let result = await new Cmd({ cmd: `npm ci`, cwd: args.src }).run();
-    console.log(result.stdout.join("\n"));
+    try {
+      let cmd: Cmd;
 
-    console.log(`Build Pepr package artifact (${pkg}) and controller image (${tag})`);
-    result = await new Cmd({ cmd: `npm run build:image`, cwd: args.src }).run();
-    console.log(result.stdout.join("\n"));
-    console.log(result.stderr.join("\n"));
+      log(`Install Pepr build dependencies`);
+      cmd = new Cmd({ cmd: `npm ci`, cwd: args.src });
+      log({ cmd: cmd.cmd, cwd: cmd.cwd });
+      log(await cmd.run(), "");
 
-    console.log(`Export Pepr controller image artifact (${img})`);
-    result = await new Cmd({ cmd: `docker save --output ${img} ${tag}`, cwd: args.src }).run();
-    console.log(result.stdout.join("\n"));
-    console.log(result.stderr.join("\n"));
+      log(`Build Pepr package artifact and controller image`);
+      cmd = new Cmd({ cmd: `npm run build:image`, cwd: args.src });
+      log({ cmd: cmd.cmd, cwd: cmd.cwd });
+      log(await cmd.run(), "");
+
+      log(`Export Pepr controller image artifact`);
+      cmd = new Cmd({ cmd: `docker save --output ${img} ${tag}`, cwd: args.src });
+      log({ cmd: cmd.cmd, cwd: cmd.cwd });
+      log(await cmd.run(), "");
+    } catch (e) {
+      console.error(e);
+    }
   });
 
 program
@@ -224,8 +240,6 @@ program
       process.exit(1);
     }
     args.module = path.resolve(modAbs);
-
-    console.log("Args:", args, "\n");
 
     //
     // setup testable module
