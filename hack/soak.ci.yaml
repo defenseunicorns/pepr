@@ -311,7 +311,7 @@ spec:
               readOnly: true
           env:
             - name: PEPR_LAST_SEEN_LIMIT_SECONDS
-              value: '300'
+              value: '86400' # 24 hours
             - name: PEPR_WATCH_MODE
               value: 'true'
             - name: PEPR_PRETTY_LOG
