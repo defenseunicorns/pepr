@@ -3,7 +3,7 @@
 
 import { expect, describe, it } from "@jest/globals";
 import * as sut from "./adjudicators";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
 import { AdmissionRequest, Binding, DeepPartial } from "../types";
 import { Event, Operation } from "../enums";
 
@@ -885,6 +885,15 @@ describe("operationMatchesEvent", () => {
 });
 
 describe("declaredOperation", () => {
+  const defaultAdmissionRequest = {
+    uid: "some-uid",
+    kind: { kind: "a-kind", group: "a-group" },
+    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+    operation: undefined,
+    name: "some-name",
+    userInfo: {},
+    object: {},
+  };
   //[ AdmissionRequest, result ]
   it.each([
     [{}, ""],
@@ -896,8 +905,10 @@ describe("declaredOperation", () => {
     [{ operation: Operation.UPDATE }, Operation.UPDATE],
     [{ operation: Operation.DELETE }, Operation.DELETE],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
-
+    const request = {
+      ...defaultAdmissionRequest,
+      operation: ("operation" in given ? given.operation : (undefined as unknown as string)) as Operation,
+    };
     const result = sut.declaredOperation(request);
 
     expect(result).toEqual(expected);
@@ -981,6 +992,17 @@ describe("definesGroup", () => {
 });
 
 describe("declaredGroup", () => {
+  const defaultAdmissionRequest = {
+    uid: "some-uid",
+    kind: undefined,
+    group: "a-group",
+    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+    operation: Operation.CONNECT,
+    name: "some-name",
+    userInfo: {},
+    object: {},
+  };
+
   //[ AdmissionRequest, result ]
   it.each([
     [{}, ""],
@@ -990,7 +1012,10 @@ describe("declaredGroup", () => {
     [{ kind: { group: "" } }, ""],
     [{ kind: { group: "group" } }, "group"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
+    const request = {
+      ...defaultAdmissionRequest,
+      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+    };
 
     const result = sut.declaredGroup(request);
 
@@ -1053,6 +1078,16 @@ describe("definesVersion", () => {
 });
 
 describe("declaredVersion", () => {
+  const defaultAdmissionRequest = {
+    uid: "some-uid",
+    kind: undefined,
+    group: "a-group",
+    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+    operation: Operation.CONNECT,
+    name: "some-name",
+    userInfo: {},
+    object: {},
+  };
   //[ AdmissionRequest, result ]
   it.each([
     [{}, ""],
@@ -1062,7 +1097,10 @@ describe("declaredVersion", () => {
     [{ kind: { version: "" } }, ""],
     [{ kind: { version: "version" } }, "version"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
+    const request = {
+      ...defaultAdmissionRequest,
+      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+    };
 
     const result = sut.declaredVersion(request);
 
@@ -1125,6 +1163,17 @@ describe("definesKind", () => {
 });
 
 describe("declaredKind", () => {
+  const defaultAdmissionRequest = {
+    uid: "some-uid",
+    kind: undefined,
+    group: "a-group",
+    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+    operation: Operation.CONNECT,
+    name: "some-name",
+    userInfo: {},
+    object: {},
+  };
+
   //[ AdmissionRequest, result ]
   it.each([
     [{}, ""],
@@ -1134,7 +1183,10 @@ describe("declaredKind", () => {
     [{ kind: { kind: "" } }, ""],
     [{ kind: { kind: "kind" } }, "kind"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
+    const request = {
+      ...defaultAdmissionRequest,
+      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+    };
 
     const result = sut.declaredKind(request);
 
@@ -1222,13 +1274,26 @@ describe("definedCallbackName", () => {
 });
 
 describe("declaredUid", () => {
+  const defaultAdmissionRequest = {
+    uid: undefined,
+    kind: { kind: "a-kind", group: "a-group" },
+    group: "a-group",
+    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+    operation: Operation.CONNECT,
+    name: "some-name",
+    userInfo: {},
+    object: {},
+  };
   //[ AdmissionRequest, result ]
   it.each([
     [{}, ""],
     [{ uid: null }, ""],
     [{ uid: "uid" }, "uid"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = given as DeepPartial<AdmissionRequest>;
+    const request = {
+      ...defaultAdmissionRequest,
+      uid: ("uid" in given ? given.uid : (undefined as unknown as string)) as string,
+    };
 
     const result = sut.declaredUid(request);
 
