@@ -180,7 +180,7 @@ program
   .argument("<tgz>", "path to Pepr package tgz")
   .argument("<img>", "path to Pepr controller img tar")
   .argument("<module>", "path to Pepr module under test")
-  .option("-a, --cluster-auto", "create k3d cluster before test, cleanup after")
+  .option("-a, --no-cluster-auto", "create k3d cluster before test, cleanup after")
   .option("-n, --cluster-name [name]", "name of cluster to run within", "pepr-load")
   .action(async (tgz, img, module, opts) => {
     //
@@ -299,6 +299,10 @@ program
         process.exit(1);
       }
 
+      process.stdout.write(`Load "${args.img}" into "${opts.clusterName}" cluster...`);
+      await new Cmd({ cmd: `k3d image import "${img}" --cluster "${opts.clusterName}"` }).run();
+      console.log(" done!\n");
+
       // let kubeConfig = (await getKubeconfig(opts.clusterName)).stdout.join("").trim();
       // result = await new Cmd({
       //   cmd: `kubectl get namespaces --all-namespaces --output=json`,
@@ -306,23 +310,23 @@ program
       // }).run();
       // console.log(JSON.parse(result.stdout.join("")));
 
-      // KUBECONFIG=$(k3d kubeconfig write pepr-load) npx --yes pepr-0.0.0-development.tgz deploy --image pepr:dev
-
-      // TODO:
-      // - write the command to loads the custom pepr image into the k3d cluster
+      // KUBECONFIG=$(k3d kubeconfig write pepr-load) npx --yes pepr-0.0.0-development.tgz deploy --image pepr:dev --confirm
 
       // Just log Result objs..?
+      // console.log intention message
+      // console.log cmd
+      // console.log Result
     } finally {
-      // await cleanWorkdirs();
-      // if (opts.clusterAuto) {
-      //   let clusters = await availableClusters();
-      //   process.stdout.write(
-      //     `Cluster "${opts.clusterName}" found in ` +
-      //       `available clusters: ${JSON.stringify(clusters)}. Cleaning up...`
-      //   );
-      //   await deleteCluster(opts.clusterName);
-      //   console.log(" done!\n");
-      // }
+      await cleanWorkdirs();
+      if (opts.clusterAuto) {
+        let clusters = await availableClusters();
+        process.stdout.write(
+          `Cluster "${opts.clusterName}" found in ` +
+            `available clusters: ${JSON.stringify(clusters)}. Cleaning up...`,
+        );
+        await deleteCluster(opts.clusterName);
+        console.log(" done!\n");
+      }
     }
   });
 
