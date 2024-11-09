@@ -1,12 +1,22 @@
 // From within Pepr project dir / next to Pexex project dir:
 //  npx ts-node hack/load.ts prep ./
-//  npx ts-node hack/load.ts run ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
+//  npx ts-node hack/load.ts cluster up
+//  npx ts-node hack/load.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
 
-import { Command } from "commander";
+//  npx ts-node hack/load.ts run --prefix "now" (defaults to `${Date.now()}`)
+//    `${--prefix}.load.json` --> { injects: [], measures: [] }
+
+//  npx ts-node hack/load.ts graph ./now.load.json ./now.load.graph
+//  npx ts-node hack/load.ts cluster down
+
+import { Command, Option } from "commander";
 import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+
+const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
+const TEST_CLUSTER_NAME_DEFAULT = "cluster";
 
 const PEPR_PKG = `pepr-0.0.0-development.tgz`;
 const PEPR_IMG = `pepr-dev.tar`;
@@ -120,9 +130,12 @@ const cleanWorkdirs = async () => {
   await Promise.all(workdirs.map(m => fs.rm(m, { recursive: true, force: true })));
 };
 
-const availableClusters = async () => {
+const testClusters = async () => {
   let result = await new Cmd({ cmd: `k3d cluster list --no-headers` }).run();
-  return result.stdout.filter(f => f).map(m => m.split(/\s+/).at(0));
+  return result.stdout
+    .filter(f => f)
+    .map(m => m.split(/\s+/).at(0))
+    .filter(f => f?.startsWith(TEST_CLUSTER_NAME_PREFIX));
 };
 
 const program = new Command();
@@ -181,19 +194,152 @@ program
     }
   });
 
+const cluster = new Command();
+cluster.name("cluster").description("test cluster controls");
+
+cluster
+  .command("up")
+  .description("bring up a test cluster")
+  .option("-n, --name [name]", "name of test cluster", TEST_CLUSTER_NAME_DEFAULT)
+  .action(async rawOpts => {
+    //
+    // sanitize & validate opts / args
+    //
+    const opts = { name: "" };
+
+    const nameTrim = rawOpts.name.trim();
+    if (nameTrim === "") {
+      console.error(
+        `Invalid "--name" option: "${rawOpts.name}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+
+    // https://github.com/rancher/rancher/issues/37535
+    const MAX_CLUSTER_NAME_LENGTH = 63;
+    const SEP = "-";
+    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
+    if (nameTrim.length > maxLen) {
+      console.error(
+        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+      );
+      process.exit(1);
+    }
+    opts.name = nameTrim;
+
+    //
+    // do
+    //
+    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.name}`;
+
+    const clusters = await testClusters();
+    const found = clusters.includes(clusterName);
+    if (found) {
+      console.error(`K3D test cluster "${clusterName}" already exists. Quitting!`);
+      process.exit(1);
+    }
+
+    log(`Create test K3D cluster "${clusterName}"`);
+    let cmd = new Cmd({ cmd: `k3d cluster create ${clusterName}` });
+    log({ cmd: cmd.cmd });
+    log(await cmd.run(), "");
+  });
+
+cluster
+  .command("down")
+  .description("bring down a test cluster")
+  .option("-n, --name [name]", "name of test cluster", TEST_CLUSTER_NAME_DEFAULT)
+  .addOption(
+    new Option("-a, --all", "bring down all test clusters").default(false).conflicts("name"),
+  )
+  .action(async rawOpts => {
+    //
+    // sanitize & validate opts / args
+    //
+    const opts = { name: "", all: rawOpts.all };
+
+    const nameTrim = rawOpts.name.trim();
+    if (nameTrim === "") {
+      console.error(
+        `Invalid "--name" option: "${rawOpts.name}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+
+    // https://github.com/rancher/rancher/issues/37535
+    const MAX_CLUSTER_NAME_LENGTH = 63;
+    const SEP = "-";
+    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
+    if (nameTrim.length > maxLen) {
+      console.error(
+        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+      );
+      process.exit(1);
+    }
+    opts.name = nameTrim;
+
+    //
+    // do
+    //
+    const clusters = await testClusters();
+
+    if (opts.all) {
+      const list = clusters.join(" ").trim();
+
+      if (list === "") {
+        log(`No test clusters found`, "");
+        return;
+      }
+
+      log(`Delete ALL test K3D clusters (all of them!)`);
+      let cmd = new Cmd({ cmd: `k3d cluster delete ${list}` });
+      log({ cmd: cmd.cmd });
+      log(await cmd.run(), "");
+      return;
+    }
+
+    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.name}`;
+    const missing = !clusters.includes(clusterName);
+    if (missing) {
+      console.error(`K3D test cluster "${clusterName}" not found. Quitting!`);
+      process.exit(1);
+    }
+
+    log(`Delete test K3D cluster "${clusterName}"`);
+    let cmd = new Cmd({ cmd: `k3d cluster delete ${clusterName}` });
+    log({ cmd: cmd.cmd });
+    log(await cmd.run(), "");
+  });
+
+cluster
+  .command("list")
+  .description("list test clusters")
+  .action(async () => {
+    log(`List K3D test clusters`);
+    let cmd = new Cmd({ cmd: `k3d cluster list --output json` });
+    log({ cmd: cmd.cmd });
+
+    let result = await cmd.run();
+    let clusters = JSON.parse(result.stdout.join("").trim())
+      .filter((f: any) => f.name.startsWith(TEST_CLUSTER_NAME_PREFIX))
+      .map((m: any) => ({ name: m.name }));
+
+    log(clusters, "");
+  });
+
+program.addCommand(cluster);
+
 program
-  .command("run")
-  .description("Run a load test")
+  .command("deploy")
+  .description("deploy a Pepr module for testing")
   .argument("<tgz>", "path to Pepr package tgz")
   .argument("<img>", "path to Pepr controller img tar")
   .argument("<module>", "path to Pepr module under test")
-  .option("-a, --no-cluster-auto", "create k3d cluster before test, cleanup after")
-  .option("-n, --cluster-name [name]", "name of cluster to run within", "pepr-load")
-  .action(async (tgz, img, module, opts) => {
+  .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
+  .action(async (tgz, img, module, rawOpts) => {
     //
     // sanitize / validate args
     //
-
     const args = { tgz: "", img: "", module: "" };
 
     const tgzTrim = tgz.trim();
@@ -232,9 +378,31 @@ program
     }
     args.module = path.resolve(modAbs);
 
+    const opts = { clusterName: "" };
+    const nameTrim = rawOpts.clusterName.trim();
+    if (nameTrim === "") {
+      console.error(
+        `Invalid "--name" option: "${rawOpts.clusterName}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+
+    // https://github.com/rancher/rancher/issues/37535
+    const MAX_CLUSTER_NAME_LENGTH = 63;
+    const SEP = "-";
+    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
+    if (nameTrim.length > maxLen) {
+      console.error(
+        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+      );
+      process.exit(1);
+    }
+    opts.clusterName = nameTrim;
+
     //
     // setup testable module
     //
+    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.clusterName}`;
 
     log(`Remove old working directories (if there are any)`);
     await cleanWorkdirs();
@@ -281,75 +449,107 @@ program
     log({ cmd: cmd.cmd });
     log(await cmd.run(), "");
 
-    try {
-      let clusters = await availableClusters();
-      let found = clusters.includes(opts.clusterName);
-      let missing = !found;
-      log(
-        `Test K3D cluster:`,
-        `  desired:   ${opts.clusterName}`,
-        `  available: ${JSON.stringify(clusters)}`,
-        `  found:     ${found}`,
-        `  create?:   ${opts.clusterAuto}`,
-        "",
-      );
-
-      if (missing) {
-        if (opts.clusterAuto) {
-          log(`Create test K3D cluster "${opts.clusterName}"`);
-          cmd = new Cmd({ cmd: `k3d cluster create ${opts.clusterName}` });
-          log({ cmd: cmd.cmd });
-          log(await cmd.run(), "");
-        } else {
-          console.error(`Can't find test K3D cluster. Quitting!`);
-          process.exit(1);
-        }
-      }
-
-      log(`Load Pepr controller image artifact into test cluster`);
-      cmd = new Cmd({ cmd: `k3d image import '${args.img}' --cluster '${opts.clusterName}'` });
-      log({ cmd: cmd.cmd });
-      log(await cmd.run(), "");
-
-      log(`Get test cluster credential`);
-      cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
-      log({ cmd: cmd.cmd });
-      let result = await cmd.run();
-      let KUBECONFIG = result.stdout.join("").trim();
-      log(result, "");
-
-      log(`Deploy Pepr controller into test cluster`);
-      let env = { KUBECONFIG };
-      cmd = new Cmd({
-        cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --confirm`,
-        cwd: workdir,
-        env,
-      });
-      log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
-      log(await cmd.run(), "");
-    } finally {
-      await cleanWorkdirs();
-
-      let clusters = await availableClusters();
-      let found = clusters.includes(opts.clusterName);
-      log(
-        `Test K3D cluster:`,
-        `  desired:   ${opts.clusterName}`,
-        `  available: ${JSON.stringify(clusters)}`,
-        `  found:     ${found}`,
-        `  remove?:   ${opts.clusterAuto}`,
-        "",
-      );
-
-      if (found) {
-        if (opts.clusterAuto) {
-          log(`Delete test K3D cluster "${opts.clusterName}"`);
-          cmd = new Cmd({ cmd: `k3d cluster delete ${opts.clusterName}` });
-          log({ cmd: cmd.cmd });
-          log(await cmd.run(), "");
-        }
-      }
+    let clusters = await testClusters();
+    let missing = !clusters.includes(clusterName);
+    if (missing) {
+      console.error(`Can't find test cluster "${clusterName}". Quitting!`);
+      process.exit(1);
     }
+
+    log(`Load Pepr controller image artifact into test cluster`);
+    cmd = new Cmd({ cmd: `k3d image import '${args.img}' --cluster '${clusterName}'` });
+    log({ cmd: cmd.cmd });
+    log(await cmd.run(), "");
+
+    log(`Get test cluster credential`);
+    cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
+    log({ cmd: cmd.cmd });
+    let result = await cmd.run();
+    let KUBECONFIG = result.stdout.join("").trim();
+    log(result, "");
+
+    log(`Deploy Pepr controller into test cluster`);
+    let env = { KUBECONFIG };
+    cmd = new Cmd({
+      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --confirm`,
+      cwd: workdir,
+      env,
+    });
+    log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
+    log(await cmd.run(), "");
+
+    // kick-off interval to grab measurements:
+    // KUBECONFIG=$(k3d kubeconfig write pepr-load) kubectl top --namespace pepr-system pod --no-headers
+    //
+    // pepr-soak-ci-76ccb8fb69-4x66n          2m    105Mi
+    // pepr-soak-ci-76ccb8fb69-lqkpd          3m    104Mi
+    // pepr-soak-ci-watcher-6b777c6cc-wtsh9   3m    122Mi
+
+    // kick-off interval to inject activity:
+    // ...
+
+    // aggregate measurements (for a while)
+    // ...
+
+    // clear intervals
+    // ...
+
+    // and then...
+
+    // TODO:
+    //  - add "run" cmd (to start injecting activity / scraping measurements / writing to file)
+    //  - add "graph" cmd (to convert metrics file into graph image)
+  });
+
+program
+  .command("run")
+  .description("run a load test")
+  .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
+  .option("-d, --duration [minutes]", "duration of load test", "30")
+  .action(async rawOpts => {
+    //
+    // sanitize / validate args
+    //
+    const opts = { clusterName: "", duration: "" };
+
+    const durTrim = rawOpts.duration.trim();
+    if (durTrim === "") {
+      console.error(
+        `Invalid "duration" argument: "${rawOpts.duration}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    const durNum = +durTrim;
+    if (isNaN(durNum)) {
+      console.error(`Invalid "duration" argument: "${durTrim}". Must be a valid number.`);
+      process.exit(1);
+    }
+
+    const nameTrim = rawOpts.clusterName.trim();
+    if (nameTrim === "") {
+      console.error(
+        `Invalid "--name" option: "${rawOpts.clusterName}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+
+    // https://github.com/rancher/rancher/issues/37535
+    const MAX_CLUSTER_NAME_LENGTH = 63;
+    const SEP = "-";
+    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
+    if (nameTrim.length > maxLen) {
+      console.error(
+        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+      );
+      process.exit(1);
+    }
+    opts.clusterName = nameTrim;
+
+    //
+    // setup testable module
+    //
+    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.clusterName}`;
+    console.log(clusterName);
   });
 
 program.parse(process.argv);

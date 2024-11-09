@@ -25,6 +25,8 @@ pepr-test-module
 pepr-upgrade-test
 *.tar
 *.tgz
+*.load.json
+*.load.graph
 coverage/
 .DS_Store
 # Test binary, build with `go test -c`
