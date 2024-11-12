@@ -205,7 +205,8 @@ export class Controller {
       try {
         // Get the request from the body or create an empty request
         const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
-
+        console.log("HEYY");
+        console.log(JSON.stringify(request, null, 2));
         // Run the before hook if it exists
         this.#beforeHook && this.#beforeHook(request || {});
 

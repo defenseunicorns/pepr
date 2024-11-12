@@ -1,5 +1,5 @@
 {
-  "uid": "cc690fb6-9152-451b-8f89-508264e1ddbe",
+  "uid": "2ac28f03-c045-4af6-86f1-aa0007571863",
   "kind": {
     "group": "rbac.authorization.k8s.io",
     "version": "v1",
@@ -37,7 +37,7 @@
           "manager": "kubectl-create",
           "operation": "Update",
           "apiVersion": "rbac.authorization.k8s.io/v1",
-          "time": "2024-11-07T19:34:32Z",
+          "time": "2024-11-08T16:39:03Z",
           "fieldsType": "FieldsV1",
           "fieldsV1": {
             "f:rules": {}

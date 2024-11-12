@@ -53,7 +53,8 @@ export function shouldSkipRequest(
   ignoredNamespaces?: string[],
 ): string {
   const prefix = "Ignoring Admission Callback:";
-  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+  // non-null assertion
+  const obj = (req.operation === Operation.DELETE ? req.oldObject : req.object)!;
 
   // prettier-ignore
   return (

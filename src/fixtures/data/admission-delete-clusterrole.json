@@ -1,90 +1,83 @@
 {
-  "uid": "6884c407-3b26-485c-b62d-ff13782deb24",
-  "namespace": "",
-  "request": {
-    "uid": "6884c407-3b26-485c-b62d-ff13782deb24",
-    "kind": {
-      "group": "rbac.authorization.k8s.io",
-      "version": "v1",
-      "kind": "ClusterRole"
-    },
-    "resource": {
-      "group": "rbac.authorization.k8s.io",
-      "version": "v1",
-      "resource": "clusterroles"
-    },
-    "requestKind": {
-      "group": "rbac.authorization.k8s.io",
-      "version": "v1",
-      "kind": "ClusterRole"
-    },
-    "requestResource": {
-      "group": "rbac.authorization.k8s.io",
-      "version": "v1",
-      "resource": "clusterroles"
-    },
-    "name": "pod-creator",
-    "operation": "DELETE",
-    "userInfo": {
-      "username": "system:admin",
-      "groups": ["system:masters", "system:authenticated"]
-    },
-    "object": null,
-    "oldObject": {
-      "kind": "ClusterRole",
-      "apiVersion": "rbac.authorization.k8s.io/v1",
-      "metadata": {
-        "name": "pod-creator",
-        "uid": "30de7232-d21b-4dd9-9563-5d2996b0e978",
-        "resourceVersion": "996",
-        "creationTimestamp": "2024-11-07T19:34:32Z",
-        "labels": {
-          "hello": "world",
-          "thing": "pod"
+  "uid": "ee2e5e8f-9064-440f-87c2-c4c70e35feae",
+  "kind": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "kind": "ClusterRole"
+  },
+  "resource": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "resource": "clusterroles"
+  },
+  "requestKind": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "kind": "ClusterRole"
+  },
+  "requestResource": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "resource": "clusterroles"
+  },
+  "name": "pod-creator",
+  "operation": "DELETE",
+  "userInfo": {
+    "username": "system:admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": null,
+  "oldObject": {
+    "kind": "ClusterRole",
+    "apiVersion": "rbac.authorization.k8s.io/v1",
+    "metadata": {
+      "name": "pod-creator",
+      "uid": "89460239-58f7-42c3-8b65-49d405d62a5f",
+      "resourceVersion": "1133",
+      "creationTimestamp": "2024-11-08T16:39:03Z",
+      "labels": {
+        "color": "blue"
+      },
+      "managedFields": [
+        {
+          "manager": "kubectl-create",
+          "operation": "Update",
+          "apiVersion": "rbac.authorization.k8s.io/v1",
+          "time": "2024-11-08T16:39:03Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:rules": {}
+          }
         },
-        "annotations": {
-          "static-test.pepr.dev/hello-pepr": "succeeded"
-        },
-        "managedFields": [
-          {
-            "manager": "kubectl-create",
-            "operation": "Update",
-            "apiVersion": "rbac.authorization.k8s.io/v1",
-            "time": "2024-11-07T19:34:32Z",
-            "fieldsType": "FieldsV1",
-            "fieldsV1": {
-              "f:rules": {}
-            }
-          },
-          {
-            "manager": "kubectl-label",
-            "operation": "Update",
-            "apiVersion": "rbac.authorization.k8s.io/v1",
-            "time": "2024-11-07T19:35:47Z",
-            "fieldsType": "FieldsV1",
-            "fieldsV1": {
-              "f:metadata": {
-                "f:labels": {
-                  "f:thing": {}
-                }
+        {
+          "manager": "kubectl-label",
+          "operation": "Update",
+          "apiVersion": "rbac.authorization.k8s.io/v1",
+          "time": "2024-11-08T16:39:46Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:labels": {
+                ".": {},
+                "f:color": {}
               }
             }
           }
-        ]
-      },
-      "rules": [
-        {
-          "verbs": ["create", "update", "patch"],
-          "apiGroups": [""],
-          "resources": ["pods"]
         }
       ]
     },
-    "dryRun": false,
-    "options": {
-      "kind": "DeleteOptions",
-      "apiVersion": "meta.k8s.io/v1",
-      "propagationPolicy": "Background"
-    }
+    "rules": [
+      {
+        "verbs": ["create", "update", "patch"],
+        "apiGroups": [""],
+        "resources": ["pods"]
+      }
+    ]
+  },
+  "dryRun": false,
+  "options": {
+    "kind": "DeleteOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "propagationPolicy": "Background"
   }
 }
