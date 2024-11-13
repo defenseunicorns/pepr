@@ -482,28 +482,6 @@ program
     });
     log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
     log(await cmd.run(), "");
-
-    // kick-off interval to grab measurements:
-    // KUBECONFIG=$(k3d kubeconfig write pepr-load) kubectl top --namespace pepr-system pod --no-headers
-    //
-    // pepr-soak-ci-76ccb8fb69-4x66n          2m    105Mi
-    // pepr-soak-ci-76ccb8fb69-lqkpd          3m    104Mi
-    // pepr-soak-ci-watcher-6b777c6cc-wtsh9   3m    122Mi
-
-    // kick-off interval to inject activity:
-    // ...
-
-    // aggregate measurements (for a while)
-    // ...
-
-    // clear intervals
-    // ...
-
-    // and then...
-
-    // TODO:
-    //  - add "run" cmd (to start injecting activity / scraping measurements / writing to file)
-    //  - add "graph" cmd (to convert metrics file into graph image)
   });
 
 program
@@ -558,6 +536,28 @@ program
     const omega = alpha + opts.duration * 60 * 1000;
 
     console.log(alpha, omega);
+
+    // kick-off interval to grab measurements:
+    // KUBECONFIG=$(k3d kubeconfig write pepr-load) kubectl top --namespace pepr-system pod --no-headers
+    //
+    // pepr-soak-ci-76ccb8fb69-4x66n          2m    105Mi
+    // pepr-soak-ci-76ccb8fb69-lqkpd          3m    104Mi
+    // pepr-soak-ci-watcher-6b777c6cc-wtsh9   3m    122Mi
+
+    // kick-off interval to inject activity:
+    // ...
+
+    // aggregate measurements (for a while)
+    // ...
+
+    // clear intervals
+    // ...
+
+    // and then...
+
+    // TODO:
+    //  - add "run" cmd (to start injecting activity / scraping measurements / writing to file)
+    //  - add "graph" cmd (to convert metrics file into graph image)
   });
 
 program.parse(process.argv);
