@@ -254,6 +254,35 @@ describe("mismatchedLabels", () => {
   });
 });
 
+describe("missingCarriableNamespace", () => {
+  //[ capa ns's, KubernetesObject, result ]
+  it.each([
+    [[], {}, false],
+    [[], { metadata: { namespace: "namespace" } }, false],
+
+    [["namespace"], {}, true],
+    [["namespace"], { metadata: {} }, true],
+    [["namespace"], { metadata: { namespace: null } }, true],
+    [["namespace"], { metadata: { namespace: "" } }, true],
+    [["namespace"], { metadata: { namespace: "incorrect" } }, false],
+    [["namespace"], { metadata: { namespace: "namespace" } }, false],
+
+    [["name", "space"], {}, true],
+    [["name", "space"], { metadata: {} }, true],
+    [["name", "space"], { metadata: { namespace: null } }, true],
+    [["name", "space"], { metadata: { namespace: "" } }, true],
+    [["name", "space"], { metadata: { namespace: "incorrect" } }, false],
+    [["name", "space"], { metadata: { namespace: "name" } }, false],
+    [["name", "space"], { metadata: { namespace: "space" } }, false],
+  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
+    const object = obj as DeepPartial<KubernetesObject>;
+
+    const result = sut.missingCarriableNamespace(nss, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("uncarryableNamespace", () => {
   //[ capa ns's, KubernetesObject, result ]
   it.each([

@@ -35,6 +35,7 @@ import {
   mismatchedGroup,
   mismatchedVersion,
   mismatchedKind,
+  missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
@@ -53,7 +54,7 @@ export function shouldSkipRequest(
   ignoredNamespaces?: string[],
 ): string {
   const prefix = "Ignoring Admission Callback:";
-const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
 
   // prettier-ignore
   return (
@@ -137,6 +138,12 @@ const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
       (
         `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+      ) :
+
+    missingCarriableNamespace(capabilityNamespaces, obj) ? 
+      (
+        `${prefix} Object does not carry a namespace ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     ""
