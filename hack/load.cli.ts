@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 // From within Pepr project dir / next to Pexex project dir:
 //  npx ts-node hack/load.ts prep ./
 //  npx ts-node hack/load.ts cluster up
@@ -14,9 +17,11 @@ import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as lib from "./load.lib";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
+const TEST_CLUSTER_NAME_MAX_LENGTH = 32;
 
 const PEPR_PKG = `pepr-0.0.0-development.tgz`;
 const PEPR_IMG = `pepr-dev.tar`;
@@ -138,6 +143,12 @@ const testClusters = async () => {
     .filter(f => f?.startsWith(TEST_CLUSTER_NAME_PREFIX));
 };
 
+const fullClusterName = (name: string) => `${TEST_CLUSTER_NAME_PREFIX}-${name}`;
+
+export function toMs(human: string) {
+  return 0;
+}
+
 const program = new Command();
 
 program
@@ -215,13 +226,12 @@ cluster
       process.exit(1);
     }
 
+    const clusterName = fullClusterName(nameTrim);
     // https://github.com/rancher/rancher/issues/37535
-    const MAX_CLUSTER_NAME_LENGTH = 63;
-    const SEP = "-";
-    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
-    if (nameTrim.length > maxLen) {
+    if (nameTrim.length > TEST_CLUSTER_NAME_MAX_LENGTH) {
       console.error(
-        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+        `Invalid "--name" option: "${nameTrim}".` +
+          ` Resulting cluster name "${clusterName}" must not be longer than ${TEST_CLUSTER_NAME_MAX_LENGTH} characters.`,
       );
       process.exit(1);
     }
@@ -230,7 +240,6 @@ cluster
     //
     // do
     //
-    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.name}`;
 
     const clusters = await testClusters();
     const found = clusters.includes(clusterName);
@@ -266,13 +275,12 @@ cluster
       process.exit(1);
     }
 
+    const clusterName = fullClusterName(nameTrim);
     // https://github.com/rancher/rancher/issues/37535
-    const MAX_CLUSTER_NAME_LENGTH = 63;
-    const SEP = "-";
-    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
-    if (nameTrim.length > maxLen) {
+    if (nameTrim.length > TEST_CLUSTER_NAME_MAX_LENGTH) {
       console.error(
-        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+        `Invalid "--name" option: "${nameTrim}".` +
+          ` Resulting cluster name "${clusterName}" must not be longer than ${TEST_CLUSTER_NAME_MAX_LENGTH} characters.`,
       );
       process.exit(1);
     }
@@ -298,7 +306,6 @@ cluster
       return;
     }
 
-    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.name}`;
     const missing = !clusters.includes(clusterName);
     if (missing) {
       console.error(`K3D test cluster "${clusterName}" not found. Quitting!`);
@@ -387,13 +394,12 @@ program
       process.exit(1);
     }
 
+    const clusterName = fullClusterName(nameTrim);
     // https://github.com/rancher/rancher/issues/37535
-    const MAX_CLUSTER_NAME_LENGTH = 63;
-    const SEP = "-";
-    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
-    if (nameTrim.length > maxLen) {
+    if (nameTrim.length > TEST_CLUSTER_NAME_MAX_LENGTH) {
       console.error(
-        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+        `Invalid "--cluster-name" option: "${nameTrim}".` +
+          ` Resulting cluster name "${clusterName}" must not be longer than ${TEST_CLUSTER_NAME_MAX_LENGTH} characters.`,
       );
       process.exit(1);
     }
@@ -402,7 +408,6 @@ program
     //
     // setup testable module
     //
-    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.clusterName}`;
 
     log(`Remove old working directories (if there are any)`);
     await cleanWorkdirs();
@@ -510,7 +515,7 @@ program
     //
     // sanitize / validate args
     //
-    const opts = { clusterName: "", duration: "" };
+    const opts = { clusterName: "", duration: 0 };
 
     const durTrim = rawOpts.duration.trim();
     if (durTrim === "") {
@@ -524,6 +529,7 @@ program
       console.error(`Invalid "duration" argument: "${durTrim}". Must be a valid number.`);
       process.exit(1);
     }
+    opts.duration = durNum;
 
     const nameTrim = rawOpts.clusterName.trim();
     if (nameTrim === "") {
@@ -533,23 +539,25 @@ program
       process.exit(1);
     }
 
+    const clusterName = fullClusterName(nameTrim);
     // https://github.com/rancher/rancher/issues/37535
-    const MAX_CLUSTER_NAME_LENGTH = 63;
-    const SEP = "-";
-    const maxLen = MAX_CLUSTER_NAME_LENGTH - SEP.length - TEST_CLUSTER_NAME_PREFIX.length;
-    if (nameTrim.length > maxLen) {
+    if (nameTrim.length > TEST_CLUSTER_NAME_MAX_LENGTH) {
       console.error(
-        `Invalid "--name" option: "${nameTrim}". Must not be longer than ${maxLen} characters.`,
+        `Invalid "--cluster-name" option: "${nameTrim}".` +
+          ` Resulting cluster name "${clusterName}" must not be longer than ${TEST_CLUSTER_NAME_MAX_LENGTH} characters.`,
       );
       process.exit(1);
     }
     opts.clusterName = nameTrim;
 
     //
-    // setup testable module
+    // run
     //
-    const clusterName = `${TEST_CLUSTER_NAME_PREFIX}${SEP}${opts.clusterName}`;
-    console.log(clusterName);
+
+    const alpha = Date.now();
+    const omega = alpha + opts.duration * 60 * 1000;
+
+    console.log(alpha, omega);
   });
 
 program.parse(process.argv);
