@@ -165,8 +165,25 @@ describe("when a binding contains a group scoped object", () => {
     expect(shouldSkipRequest(groupBindingNoRegex, admissionRequestDeployment, [])).toMatch("");
   });
 });
+
+describe("when a capability defines namespaces and the binding contains a ClusterScoped Object",()=>{
+  const capabilityNamespaces = ["monitoring"]
+  const admissionRequestCreateClusterRole = AdmissionRequestCreateClusterRole();
+  it("should skip request when the capability namespace does not exist on the object",()=>{
+    const binding = {
+      ...clusterScopedBinding,
+      event: Event.Create,
+      filters: {
+        ...clusterScopedBinding.filters,
+        regexName: ""
+      },
+    };
+
+    expect(shouldSkipRequest(binding, admissionRequestCreateClusterRole, capabilityNamespaces)).toMatch(/Ignoring Admission Callback: Object carries namespace '' but namespaces allowed by Capability are '.+'./)
+  })  
+})
 describe("when a binding contains a cluster scoped object", () => {
-  const admissionRequestClusterRole = AdmissionRequestCreateClusterRole();
+  const admissionRequestCreateClusterRole = AdmissionRequestCreateClusterRole();
 
   it("should skip request when the binding defines a namespace on a cluster scoped object", () => {
     const clusterScopedBindingWithNamespace = {
@@ -177,7 +194,7 @@ describe("when a binding contains a cluster scoped object", () => {
         namespaces: ["namespace"],
       },
     };
-    expect(shouldSkipRequest(clusterScopedBindingWithNamespace, admissionRequestClusterRole, [])).toMatch(
+    expect(shouldSkipRequest(clusterScopedBindingWithNamespace, admissionRequestCreateClusterRole, [])).toMatch(
       /Ignoring Admission Callback: Binding defines namespaces '.+' but Object carries ''./,
     );
   });
