@@ -2,15 +2,15 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 // From within Pepr project dir / next to Pexex project dir:
-//  npx ts-node hack/load.ts prep ./
-//  npx ts-node hack/load.ts cluster up
-//  npx ts-node hack/load.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
+//  npx ts-node hack/load.cli.ts prep ./
+//  npx ts-node hack/load.cli.ts cluster up
+//  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
 
-//  npx ts-node hack/load.ts run --prefix "now" (defaults to `${Date.now()}`)
+//  npx ts-node hack/load.cli.ts run --prefix "now" (defaults to `${Date.now()}`)
 //    `${--prefix}.load.json` --> { injects: [], measures: [] }
 
-//  npx ts-node hack/load.ts graph ./now.load.json ./now.load.graph
-//  npx ts-node hack/load.ts cluster down
+//  npx ts-node hack/load.cli.ts graph ./now.load.json ./now.load.graph
+//  npx ts-node hack/load.cli.ts cluster down
 
 import { Command, Option } from "commander";
 import { spawn } from "child_process";
@@ -18,6 +18,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as lib from "./load.lib";
+import { heredoc } from "../src/sdk/heredoc";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
@@ -108,13 +109,23 @@ const log = (...items: Loggable[]) => {
   }
 };
 
-const fileAccessible = async (path: string) =>
+const nap = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fileReadable = async (path: string) =>
   fs
     .access(path, fs.constants.R_OK)
     .then(() => true)
     .catch(() => false);
 
-const fileInaccessible = async (path: string) => !(await fileAccessible(path));
+const fileUnreadable = async (path: string) => !(await fileReadable(path));
+
+const fileWriteable = async (path: string) =>
+  fs
+    .access(path, fs.constants.W_OK)
+    .then(() => true)
+    .catch(() => false);
+
+const fileUnwriteable = async (path: string) => !(await fileWriteable(path));
 
 const workdirPrefix = () => path.join(os.tmpdir(), `${path.basename(__filename)}-`);
 
@@ -145,10 +156,6 @@ const testClusters = async () => {
 
 const fullClusterName = (name: string) => `${TEST_CLUSTER_NAME_PREFIX}-${name}`;
 
-export function toMs(human: string) {
-  return 0;
-}
-
 const program = new Command();
 
 program
@@ -173,7 +180,7 @@ program
       process.exit(1);
     }
     const srcAbs = path.resolve(srcTrim);
-    if (await fileInaccessible(srcAbs)) {
+    if (await fileUnreadable(srcAbs)) {
       console.error(`Invalid "src" argument: "${srcAbs}". Cannot access (read).`);
       process.exit(1);
     }
@@ -355,7 +362,7 @@ program
       process.exit(1);
     }
     const tgzAbs = path.resolve(tgzTrim);
-    if (await fileInaccessible(tgzAbs)) {
+    if (await fileUnreadable(tgzAbs)) {
       console.error(`Invalid "tgz" argument: "${tgzAbs}". Cannot access (read).`);
       process.exit(1);
     }
@@ -367,7 +374,7 @@ program
       process.exit(1);
     }
     const imgAbs = path.resolve(imgTrim);
-    if (await fileInaccessible(imgAbs)) {
+    if (await fileUnreadable(imgAbs)) {
       console.error(`Invalid "img" argument: "${imgAbs}". Cannot access (read).`);
       process.exit(1);
     }
@@ -379,7 +386,7 @@ program
       process.exit(1);
     }
     const modAbs = path.resolve(modTrim);
-    if (await fileInaccessible(modAbs)) {
+    if (await fileUnreadable(modAbs)) {
       console.error(`Invalid "module" argument: "${modAbs}". Cannot access (read).`);
       process.exit(1);
     }
@@ -487,13 +494,29 @@ program
 program
   .command("run")
   .description("run a load test")
+  .argument("<module>", "path to Pepr module under test")
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
   .option("-d, --duration [minutes]", "duration of load test", "30")
-  .action(async rawOpts => {
+  .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
+  .action(async (module, rawOpts) => {
     //
     // sanitize / validate args
     //
-    const opts = { clusterName: "", duration: 0 };
+    const args = { module: "" };
+
+    const modTrim = module.trim();
+    if (modTrim === "") {
+      console.error(`Invalid "module" argument: "${module}"`);
+      process.exit(1);
+    }
+    const modAbs = path.resolve(modTrim);
+    if (await fileUnreadable(modAbs)) {
+      console.error(`Invalid "module" argument: "${modAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    args.module = path.resolve(modAbs);
+
+    const opts = { clusterName: "", duration: 0, outputDir: "" };
 
     const durTrim = rawOpts.duration.trim();
     if (durTrim === "") {
@@ -528,14 +551,116 @@ program
     }
     opts.clusterName = nameTrim;
 
+    const outTrim = rawOpts.outputDir.trim();
+    if (outTrim === "") {
+      console.error(
+        `Invalid "--output-dir" option: "${rawOpts.outputDir}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    const outAbs = path.resolve(outTrim);
+    const outBase = path.dirname(outAbs);
+    if (await fileUnwriteable(outAbs)) {
+      if (await fileUnwriteable(outBase)) {
+        console.error(
+          `Invalid "--output-dir" argument: "${outAbs} (or parent)". Cannot access (write).`,
+        );
+        process.exit(1);
+      }
+    }
+    opts.outputDir = path.resolve(outAbs);
+
     //
     // run
     //
+    if (await fileUnreadable(opts.outputDir)) {
+      log(`Create output directory`);
+      await fs.mkdir(opts.outputDir);
+      log(`  outdir: ${opts.outputDir}`, "");
+    }
+
+    log(`Get test cluster credential`);
+    let cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
+    log({ cmd: cmd.cmd });
+    let result = await cmd.run();
+    let KUBECONFIG = result.stdout.join("").trim();
+    log(result, "");
 
     const alpha = Date.now();
-    const omega = alpha + opts.duration * 60 * 1000;
+    log(`Load test start: ${new Date(alpha).toISOString()}`, "");
 
-    console.log(alpha, omega);
+    const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
+      encoding: "utf-8",
+    });
+    let stdin = scenario.split("\n");
+    let env = { KUBECONFIG };
+
+    cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
+    log({ cmd: cmd.cmd, stdin, env });
+    log(await cmd.run(), "");
+
+    const loadTmpl = await fs.readFile(`${args.module}/capabilities/load.yaml`, {
+      encoding: "utf-8",
+    });
+
+    const actress = setInterval(async () => {
+      process.stdout.write("↑");
+
+      let load = loadTmpl.replace("UNIQUIFY-ME", Date.now().toString());
+      let stdin = load.split("\n");
+      let env = { KUBECONFIG };
+
+      cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
+      let req = { cmd: cmd.cmd, stdin, env };
+      let res = await cmd.run();
+      // log(req, res, "");
+
+      let outfile = `${opts.outputDir}/actress-${alpha}.log`;
+      let outline = `${Date.now()}\t${res.stdout.join("").trim()}\n`;
+      await fs.appendFile(outfile, outline);
+    }, lib.toMs("10s"));
+
+    await nap(lib.toMs("5s")); // stagger intervals
+
+    const auds: Result[] = [];
+    const audience = setInterval(async () => {
+      process.stdout.write("↓");
+
+      let env = { KUBECONFIG };
+
+      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+      let req = { cmd: cmd.cmd, env };
+      let res = await cmd.run();
+      // log(req, res, "");
+
+      let outfile = `${opts.outputDir}/audience-${alpha}.log`;
+      let outlines = res.stdout
+        .filter(f => f)
+        .map(m => `${Date.now()}\t${m}`)
+        .join("\n")
+        .concat("\n");
+      await fs.appendFile(outfile, outlines);
+    }, lib.toMs("10s"));
+
+    const runtime = lib.toMs("2m");
+    const omega = alpha + runtime;
+    await nap(runtime);
+    log(`Load test end: ${new Date(omega).toISOString()}`, "");
+
+    clearInterval(actress);
+    clearInterval(audience);
+
+    console.log(auds, auds.length);
+
+    // const sleep = (seconds: number) => {
+    //   return new Promise(resolve => setTimeout(resolve, lib.toMs(`${seconds}s`)));
+    // }
+
+    // TODO:
+    //  - run simple scrape for to get real data back
+    //  - use real data to generate test dataset (in test!)
+    //  - use test dataset to TDD post-processing & datafile output
+    //  - use test dataset to TDD the graph datafile output
 
     // kick-off interval to grab measurements:
     // KUBECONFIG=$(k3d kubeconfig write pepr-load) kubectl top --namespace pepr-system pod --no-headers
