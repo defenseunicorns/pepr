@@ -603,7 +603,7 @@ const nonNsViolation: CapabilityExport[] = JSON.parse(`[
 describe("namespaceComplianceValidator", () => {
   let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => { });
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -1174,12 +1174,6 @@ describe("filterNoMatchReason", () => {
   test("returns namespace uncarryableNamespace filter error for cluster-scoped objects when capability namespaces are present", () => {
     const binding = {
       kind: { kind: "ClusterRole" },
-      filters: { namespaces: ["ns1"] },
-    };
-  })
-  test("returns mismatchedNamespace filter error for clusterScoped objects with namespace filters", () => {
-    const binding = {
-      kind: { kind: "ClusterRole" }
     };
     const obj = {
       kind: "ClusterRole",
@@ -1192,7 +1186,9 @@ describe("filterNoMatchReason", () => {
       obj as unknown as Partial<KubernetesObject>,
       capabilityNamespaces,
     );
-    expect(result).toEqual("Ignoring Watch Callback: Object carries namespace '' but namespaces allowed by Capability are '[\"monitoring\"]'.");
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Object carries namespace '' but namespaces allowed by Capability are '[\"monitoring\"]'.",
+    );
   });
 
   test("returns namespace filter error for namespace objects with namespace filters", () => {
