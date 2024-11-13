@@ -36,64 +36,7 @@
       "creationTimestamp": null,
       "labels": {
         "app": "lower"
-      },
-      "managedFields": [
-        {
-          "manager": "kubectl-create",
-          "operation": "Update",
-          "apiVersion": "apps/v1",
-          "time": "2024-11-08T16:35:13Z",
-          "fieldsType": "FieldsV1",
-          "fieldsV1": {
-            "f:metadata": {
-              "f:labels": {
-                ".": {},
-                "f:app": {}
-              }
-            },
-            "f:spec": {
-              "f:progressDeadlineSeconds": {},
-              "f:replicas": {},
-              "f:revisionHistoryLimit": {},
-              "f:selector": {},
-              "f:strategy": {
-                "f:rollingUpdate": {
-                  ".": {},
-                  "f:maxSurge": {},
-                  "f:maxUnavailable": {}
-                },
-                "f:type": {}
-              },
-              "f:template": {
-                "f:metadata": {
-                  "f:labels": {
-                    ".": {},
-                    "f:app": {}
-                  }
-                },
-                "f:spec": {
-                  "f:containers": {
-                    "k:{\"name\":\"nginx\"}": {
-                      ".": {},
-                      "f:image": {},
-                      "f:imagePullPolicy": {},
-                      "f:name": {},
-                      "f:resources": {},
-                      "f:terminationMessagePath": {},
-                      "f:terminationMessagePolicy": {}
-                    }
-                  },
-                  "f:dnsPolicy": {},
-                  "f:restartPolicy": {},
-                  "f:schedulerName": {},
-                  "f:securityContext": {},
-                  "f:terminationGracePeriodSeconds": {}
-                }
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     "spec": {
       "replicas": 3,
