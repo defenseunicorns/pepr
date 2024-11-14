@@ -218,18 +218,11 @@ export const uncarryableNamespace = allPass([
 
 export const missingCarriableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), kubernetesObject => {
-    if (kubernetesObject.kind === "Namespace") {
-      return true;
-    }
-    return !carriesNamespace(kubernetesObject);
-  }),
-  pipe((namespaceSelector, kubernetesObject) => {
-    if (kubernetesObject.kind === "Namespace") {
-      return !namespaceSelector.includes(kubernetesObject.metadata.name);
-    }
-    return true;
-  }),
+  pipe((namespaceSelector: string[], kubernetesObject: KubernetesObject): boolean =>
+    kubernetesObject.kind === "Namespace"
+      ? !namespaceSelector.includes(kubernetesObject.metadata!.name!)
+      : !carriesNamespace(kubernetesObject),
+  ),
 ]);
 
 export const carriesIgnoredNamespace = allPass([

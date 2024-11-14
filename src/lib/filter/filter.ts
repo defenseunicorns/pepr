@@ -140,7 +140,7 @@ export function shouldSkipRequest(
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 
-    missingCarriableNamespace(capabilityNamespaces, obj) ? 
+    missingCarriableNamespace(capabilityNamespaces, obj!) ? 
       (
         `${prefix} Object does not carry a namespace ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
