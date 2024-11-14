@@ -4,7 +4,7 @@
 // From within Pepr project dir / next to Pexex project dir:
 //  npx ts-node hack/load.cli.ts prep ./
 //  npx ts-node hack/load.cli.ts cluster up
-//  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-soak-ci
+//  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load
 
 //  npx ts-node hack/load.cli.ts run --prefix "now" (defaults to `${Date.now()}`)
 //    `${--prefix}.load.json` --> { injects: [], measures: [] }
@@ -18,7 +18,6 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as lib from "./load.lib";
-import { heredoc } from "../src/sdk/heredoc";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
@@ -306,7 +305,7 @@ cluster
         return;
       }
 
-      log(`Delete ALL test K3D clusters (all of them!)`);
+      log(`Delete all test K3D clusters`);
       let cmd = new Cmd({ cmd: `k3d cluster delete ${list}` });
       log({ cmd: cmd.cmd });
       log(await cmd.run(), "");
@@ -596,17 +595,27 @@ program
     let env = { KUBECONFIG };
 
     cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
-    log({ cmd: cmd.cmd, stdin, env });
-    log(await cmd.run(), "");
+    let req = { cmd: cmd.cmd, stdin, env };
+    let res = await cmd.run();
+    // log(req, res, "");
 
     const loadTmpl = await fs.readFile(`${args.module}/capabilities/load.yaml`, {
       encoding: "utf-8",
     });
 
+    const LOAD_RUNTIME = lib.toMs("5m");
+    const ACTRESS_INTERVAL = lib.toMs("1m");
+    const AUDIENCE_INTERVAL = lib.toMs("10s");
+
     const actress = setInterval(async () => {
       process.stdout.write("↑");
 
-      let load = loadTmpl.replace("UNIQUIFY-ME", Date.now().toString());
+      // let load = loadTmpl.replace("UNIQUIFY-ME", Date.now().toString());
+      let load = "";
+      for (let i = 0; i < 10; i++) {
+        load += loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
+      }
+
       let stdin = load.split("\n");
       let env = { KUBECONFIG };
 
@@ -615,12 +624,15 @@ program
       let res = await cmd.run();
       // log(req, res, "");
 
-      let outfile = `${opts.outputDir}/actress-${alpha}.log`;
-      let outline = `${Date.now()}\t${res.stdout.join("").trim()}\n`;
+      let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
+      let ts = Date.now();
+      let outlines = splits.map(m => `${ts}\t${m.trim()}`);
+      let outline = outlines.join("\n").concat("\n");
+      let outfile = `${opts.outputDir}/${alpha}-actress.log`;
       await fs.appendFile(outfile, outline);
-    }, lib.toMs("10s"));
+    }, ACTRESS_INTERVAL);
 
-    await nap(lib.toMs("5s")); // stagger intervals
+    await nap(lib.toMs("15s")); // stagger interval starts
 
     const auds: Result[] = [];
     const audience = setInterval(async () => {
@@ -633,31 +645,35 @@ program
       let res = await cmd.run();
       // log(req, res, "");
 
-      let outfile = `${opts.outputDir}/audience-${alpha}.log`;
+      let outfile = `${opts.outputDir}/${alpha}-audience.log`;
       let outlines = res.stdout
         .filter(f => f)
         .map(m => `${Date.now()}\t${m}`)
         .join("\n")
         .concat("\n");
       await fs.appendFile(outfile, outlines);
-    }, lib.toMs("10s"));
+    }, AUDIENCE_INTERVAL);
 
-    const runtime = lib.toMs("2m");
+    const runtime = LOAD_RUNTIME;
     const omega = alpha + runtime;
     await nap(runtime);
+
+    log("", "");
     log(`Load test end: ${new Date(omega).toISOString()}`, "");
+
+    // const duration = {
+    //   hours: 1,
+    //   minutes: 46,
+    //   seconds: 40,
+    // };
+
+    // // With style set to "short" and locale "en"
+    // new Intl.DurationFormat("en", { style: "short" }).format(duration);
 
     clearInterval(actress);
     clearInterval(audience);
 
-    console.log(auds, auds.length);
-
-    // const sleep = (seconds: number) => {
-    //   return new Promise(resolve => setTimeout(resolve, lib.toMs(`${seconds}s`)));
-    // }
-
     // TODO:
-    //  - run simple scrape for to get real data back
     //  - use real data to generate test dataset (in test!)
     //  - use test dataset to TDD post-processing & datafile output
     //  - use test dataset to TDD the graph datafile output

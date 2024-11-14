@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { describe, it, expect } from "@jest/globals";
-import { toMs } from "./load.lib";
+import { heredoc } from "../src/sdk/heredoc";
+import * as sut from "./load.lib";
 
 describe("toMs", () => {
   it.each([
@@ -30,7 +31,7 @@ describe("toMs", () => {
     ["1y1mo1w1d1h1m1s1ms", 34822861001],
     ["1ms1s1m1h1d1w1mo1y", 34822861001],
   ])("given duration '%s', returns '%s' ms", (human, ms) => {
-    const result = toMs(human);
+    const result = sut.toMs(human);
     expect(result).toBe(ms);
   });
 
@@ -39,6 +40,51 @@ describe("toMs", () => {
     ["h1m1s", /Unrecognized number .* while parsing/],
     ["1z", /Unrecognized unit .* while parsing/],
   ])("given duration '%s', throws error matching '%s'", (human, err) => {
-    expect(() => toMs(human)).toThrow(err);
+    expect(() => sut.toMs(human)).toThrow(err);
+  });
+});
+
+describe("generateAudienceData()", () => {
+  it("creates 'random' datasets", () => {
+    let numSamples = 2;
+    let result = sut.generateAudienceData("random", numSamples);
+
+    let numRows = numSamples * 3; // 2 admission & 1 watch pods
+    expect(result).toHaveLength(numRows);
+  });
+
+  // it.skip("creates 'increasing' datasets", () => {});
+  // it.skip("creates 'decreasing' datasets", () => {});
+});
+
+describe("parseAudienceData", () => {
+  const audienceData = heredoc`
+    1731525754189	pepr-pepr-load-aaaa0bbbb-aaaaa           2m    102Mi   
+    1731525754189	pepr-pepr-load-aaaa0bbbb-bbbbb           3m    103Mi   
+    1731525754189	pepr-pepr-load-watcher-ccccccccc-ccccc   23m   123Mi   
+    1731525814222	pepr-pepr-load-aaaa0bbbb-aaaaa           4m    104Mi   
+    1731525814222	pepr-pepr-load-aaaa0bbbb-bbbbb           5m    105Mi   
+    1731525814222	pepr-pepr-load-watcher-ccccccccc-ccccc   45m   145Mi   
+  `;
+
+  it("converts logged data into per-pod datasets", () => {
+    let expected = {
+      "pepr-pepr-load-aaaa0bbbb-aaaaa": [
+        { ts: "1731525754189", cpu: "2m", mem: "102Mi" },
+        { ts: "1731525814222", cpu: "4m", mem: "104Mi" },
+      ],
+      "pepr-pepr-load-aaaa0bbbb-bbbbb": [
+        { ts: "1731525754189", cpu: "3m", mem: "103Mi" },
+        { ts: "1731525814222", cpu: "5m", mem: "105Mi" },
+      ],
+      "pepr-pepr-load-watcher-ccccccccc-ccccc": [
+        { ts: "1731525754189", cpu: "23m", mem: "123Mi" },
+        { ts: "1731525814222", cpu: "45m", mem: "145Mi" },
+      ],
+    };
+
+    let result = sut.parseAudienceData(audienceData);
+
+    expect(result).toEqual(expected);
   });
 });
