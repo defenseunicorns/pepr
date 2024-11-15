@@ -22,7 +22,6 @@ export function clusterRole(
 ): kind.ClusterRole {
   // Create the RBAC map from capabilities
   const rbacMap = createRBACMap(capabilities);
-
   // Generate scoped rules from rbacMap
   const scopedRules = Object.keys(rbacMap).map(key => {
     let group: string;
