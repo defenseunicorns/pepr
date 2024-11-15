@@ -54,7 +54,7 @@ export function shouldSkipRequest(
   ignoredNamespaces?: string[],
 ): string {
   const prefix = "Ignoring Admission Callback:";
-  const obj = req.operation === Operation.DELETE ? req.oldObject : req.object;
+  const obj = (req.operation === Operation.DELETE ? req.oldObject : req.object)!;
 
   // prettier-ignore
   return (
@@ -140,7 +140,7 @@ export function shouldSkipRequest(
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 
-    missingCarriableNamespace(capabilityNamespaces, obj!) ? 
+    missingCarriableNamespace(capabilityNamespaces, obj) ? 
       (
         `${prefix} Object does not carry a namespace ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
