@@ -5,6 +5,26 @@ import { describe, it, expect } from "@jest/globals";
 import { heredoc } from "../src/sdk/heredoc";
 import * as sut from "./load.lib";
 
+describe("toHuman", () => {
+  it.each([
+    // simple
+    [1, "1ms"],
+    [1000, "1s"],
+    [60000, "1m"],
+    [3600000, "1h"],
+    [86400000, "1d"],
+    [604800000, "1w"],
+    [2592000000, "1mo"],
+    [31536000000, "1y"],
+
+    // combined
+    [34822861001, "1y1mo1w1d1h1m1s1ms"],
+  ])("given ms '%s', returns '%s' duration", (ms, human) => {
+    const result = sut.toHuman(ms);
+    expect(result).toBe(human);
+  });
+});
+
 describe("toMs", () => {
   it.each([
     // simple
@@ -57,6 +77,8 @@ describe("generateAudienceData()", () => {
   // it.skip("creates 'decreasing' datasets", () => {});
 });
 
+// describe("parseActressData", () => {});
+
 describe("parseAudienceData", () => {
   let audienceData = heredoc`
     1731525754189	pepr-pepr-load-aaaa0bbbb-aaaaa           2m    102Mi   
@@ -71,16 +93,16 @@ describe("parseAudienceData", () => {
   it("converts logged data into per-pod datasets", () => {
     let expected = {
       "pepr-pepr-load-aaaa0bbbb-aaaaa": [
-        [1731525754189, 2, "m", 102, "Mi"],
-        [1731525814222, 4, "m", 104, "Mi"],
+        [1731525754189, 2, "m", 106954752, "B"],
+        [1731525814222, 4, "m", 109051904, "B"],
       ],
       "pepr-pepr-load-aaaa0bbbb-bbbbb": [
-        [1731525754189, 3, "m", 103, "Mi"],
-        [1731525814222, 5, "m", 105, "Mi"],
+        [1731525754189, 3, "m", 108003328, "B"],
+        [1731525814222, 5, "m", 110100480, "B"],
       ],
       "pepr-pepr-load-watcher-ccccccccc-ccccc": [
-        [1731525754189, 23, "m", 123, "Mi"],
-        [1731525814222, 45, "m", 145, "Mi"],
+        [1731525754189, 23, "m", 128974848, "B"],
+        [1731525814222, 45, "m", 152043520, "B"],
       ],
     };
 

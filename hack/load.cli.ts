@@ -540,7 +540,7 @@ program
     }
     args.manifest = maniAbs;
 
-    const opts = {
+    const opts: Record<string, any> = {
       actInterval: 0,
       actIntensity: 0,
       audInterval: 0,
@@ -692,7 +692,26 @@ program
 
     log(`Load test start: ${new Date(alpha).toISOString()}`);
     log(args);
-    log(opts, "");
+    const prettyOpts = Object.keys(opts).reduce(
+      (acc, key) => {
+        switch (key) {
+          case "actInterval":
+          case "actIntensity":
+          case "audInterval":
+          case "duration":
+          case "settle":
+          case "stagger":
+            acc[key] = lib.toHuman(opts[key]);
+            break;
+          default:
+            acc[key] = opts[key];
+            break;
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+    log(prettyOpts, "");
 
     const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
       encoding: "utf-8",
@@ -779,12 +798,13 @@ program
   .command("post")
   .description("post-process load test log")
   .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
-  .option("-l, --log-file [name]", "name of result log to process", "<latest>-audience.log")
+  .option("-c, --act-file [name]", "name of result act log to process", "<latest>-actress.log")
+  .option("-d, --aud-file [name]", "name of result aud log to process", "<latest>-audience.log")
   .action(async rawOpts => {
     //
     // sanitize / validate args
     //
-    const opts = { outputDir: "", logFile: "" };
+    const opts = { outputDir: "", actFile: "", audFile: "" };
 
     const outTrim = rawOpts.outputDir.trim();
     if (outTrim === "") {
@@ -800,53 +820,72 @@ program
     }
     opts.outputDir = path.resolve(outAbs);
 
-    let logTrim = rawOpts.logFile.trim();
-    if (logTrim === "") {
+    let actTrim = rawOpts.actFile.trim();
+    if (actTrim === "") {
       console.error(
-        `Invalid "--output-dir" option: "${rawOpts.logFile}". Cannot be empty / all whitespace.`,
+        `Invalid "--act-file" option: "${rawOpts.actFile}". Cannot be empty / all whitespace.`,
       );
       process.exit(1);
     }
+    let actAbs = path.resolve(`${opts.outputDir}/${actTrim}`);
+    if (path.basename(actAbs).endsWith("<latest>-actress.log")) {
+      const files = await fs.readdir(path.dirname(actAbs));
+      const log = files
+        .filter(f => f.endsWith("-actress.log"))
+        .sort()
+        .at(-1)!;
+      actTrim = log;
+      actAbs = `${path.dirname(actAbs)}/${actTrim}`;
+    }
+    if (await fileUnreadable(actAbs)) {
+      console.error(`Invalid "--act-file" option: "${actAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.actFile = actAbs;
 
-    let logAbs = path.resolve(`${opts.outputDir}/${logTrim}`);
-    if (path.basename(logAbs).endsWith("<latest>-audience.log")) {
-      const files = await fs.readdir(path.dirname(logAbs));
+    let audTrim = rawOpts.audFile.trim();
+    if (audTrim === "") {
+      console.error(
+        `Invalid "--aud-file" option: "${rawOpts.audFile}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    let audAbs = path.resolve(`${opts.outputDir}/${audTrim}`);
+    if (path.basename(audAbs).endsWith("<latest>-audience.log")) {
+      const files = await fs.readdir(path.dirname(audAbs));
       const log = files
         .filter(f => f.endsWith("-audience.log"))
         .sort()
         .at(-1)!;
-      logTrim = log;
-      logAbs = `${path.dirname(logAbs)}/${logTrim}`;
+      audTrim = log;
+      audAbs = `${path.dirname(audAbs)}/${audTrim}`;
     }
-
-    if (await fileUnreadable(logAbs)) {
-      console.error(`Invalid "--log-file" option: "${logAbs}". Cannot access (read).`);
+    if (await fileUnreadable(audAbs)) {
+      console.error(`Invalid "--aud-file" option: "${audAbs}". Cannot access (read).`);
       process.exit(1);
     }
-    opts.logFile = logAbs;
+    opts.audFile = audAbs;
 
     //
     // run
     //
-    const logs = await fs.readFile(opts.logFile, { encoding: "utf-8" });
-    const json = lib.parseAudienceData(logs);
-    const outfile = `${opts.logFile.replace(".log", ".json")}`;
+    const actLogs = await fs.readFile(opts.actFile, { encoding: "utf-8" });
+    // const actJson = lib.parseAudienceData(actLogs);
+    const actFile = `${opts.actFile.replace(".log", ".json")}`;
 
-    interface Analysis {
-      samples: number;
-      cpu: {
-        start: number;
-        min: number;
-        max: number;
-        end: number;
-      };
-      mem: {
-        start: number;
-        min: number;
-        max: number;
-        end: number;
-      };
-    }
+    const audLogs = await fs.readFile(opts.audFile, { encoding: "utf-8" });
+    const audJson = lib.parseAudienceData(audLogs);
+    const audFile = `${opts.actFile.replace(".log", ".json")}`;
+
+    console.log(opts);
+
+    // console.log(actLogs)
+    console.log(actFile);
+
+    // console.log(audLogs)
+    console.log(audFile);
+
+    // TODO: here!
 
     // await fs.writeFile(outfile, pretty);
   });
