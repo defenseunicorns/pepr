@@ -725,50 +725,54 @@ program
         .concat("\n");
       await fs.appendFile(outfile, outlines);
     };
-    // run immediately, then on schedule
-    audience();
+    audience(); // run immediately, then on schedule
     const ticket = setInterval(audience, opts.audInterval);
 
     await nap(opts.stagger); // stagger interval starts
 
-    const actress = async () => {
+    const abort = new AbortController();
+
+    const actress = async (abort?: AbortController) => {
       process.stdout.write("↑");
 
-      let load = "";
       for (let i = 0; i < opts.actIntensity; i++) {
-        load += loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
+        if (abort?.signal.aborted) {
+          return;
+        }
+
+        let load = loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
+
+        let stdin = load.split("\n");
+        let env = { KUBECONFIG };
+
+        cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
+        let req = { cmd: cmd.cmd, stdin, env };
+        let res = await cmd.run();
+
+        let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
+        let ts = Date.now();
+        let outlines = splits.map(m => `${ts}\t${m.trim()}`);
+        let outline = outlines.join("\n").concat("\n");
+        let outfile = `${opts.outputDir}/${alpha}-actress.log`;
+        await fs.appendFile(outfile, outline);
       }
-
-      let stdin = load.split("\n");
-      let env = { KUBECONFIG };
-
-      cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
-      let req = { cmd: cmd.cmd, stdin, env };
-      let res = await cmd.run();
-
-      let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
-      let ts = Date.now();
-      let outlines = splits.map(m => `${ts}\t${m.trim()}`);
-      let outline = outlines.join("\n").concat("\n");
-      let outfile = `${opts.outputDir}/${alpha}-actress.log`;
-      await fs.appendFile(outfile, outline);
     };
-    // run immediately, then on schedule
-    actress();
-    const backstagePass = setInterval(actress, opts.actInterval);
+    actress(); // run immediately, then on schedule
+    const backstagePass = setInterval(() => actress(abort), opts.actInterval);
 
     // wait until total duration has elapsed
     const startWait = Date.now();
     await nap(opts.duration - (startWait - alpha));
     const endWait = Date.now();
 
+    abort.abort();
     clearInterval(backstagePass);
     clearInterval(ticket);
 
     log("", "");
-    log(`Load test complete: ${new Date(endWait).toISOString()}`);
+    log(`Load test complete: ${new Date(endWait).toISOString()}`, "");
 
-    log("Waiting for final actions to finish...", "");
+    log("  Waiting for final actions to complete...", "");
   });
 
 program
