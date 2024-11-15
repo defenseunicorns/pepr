@@ -77,7 +77,32 @@ describe("generateAudienceData()", () => {
   // it.skip("creates 'decreasing' datasets", () => {});
 });
 
-// describe("parseActressData", () => {});
+describe("parseActressData", () => {
+  let actressData = heredoc`
+    1731682427803	configmap/cm-1731682427524-0 created
+    1731682428102	configmap/cm-1731682427805-1 created
+    1731682428365	configmap/cm-1731682428103-2 created
+    1731682428668	configmap/cm-1731682428366-3 created
+    1731682428978	configmap/cm-1731682428669-4 created
+    1731682429300	configmap/cm-1731682428979-5 created
+  `;
+  actressData += "\n";
+
+  it("converts logged data appropriately split lines", () => {
+    let expected = [
+      [1731682427803, "configmap/cm-1731682427524-0 created"],
+      [1731682428102, "configmap/cm-1731682427805-1 created"],
+      [1731682428365, "configmap/cm-1731682428103-2 created"],
+      [1731682428668, "configmap/cm-1731682428366-3 created"],
+      [1731682428978, "configmap/cm-1731682428669-4 created"],
+      [1731682429300, "configmap/cm-1731682428979-5 created"],
+    ];
+
+    let result = sut.parseActressData(actressData);
+
+    expect(result).toEqual(expected);
+  });
+});
 
 describe("parseAudienceData", () => {
   let audienceData = heredoc`

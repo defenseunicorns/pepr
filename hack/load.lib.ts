@@ -251,6 +251,17 @@ export function parseAudienceData(logs: string) {
   return parsed;
 }
 
+export function parseActressData(logs: string) {
+  const lines = logs.split("\n").filter(f => f);
+  let parsed: [number, string][] = [];
+  for (let line of lines) {
+    const [ts, rest] = line.split("\t").map(m => m.trim());
+    const tsNum = Number(ts);
+    parsed.push([tsNum, rest]);
+  }
+  return parsed;
+}
+
 // let expected = {
 //   "pepr-pepr-load-aaaa0bbbb-aaaaa": [
 //     [1731525754189, 2, "m", 106954752, "B"],
@@ -266,23 +277,32 @@ export function parseAudienceData(logs: string) {
 //   ],
 // };
 
-interface Analysis {
-  inputs: {
-    count: number;
-  };
-  samples: {
-    count: number;
-  };
-  cpu: {
+namespace Analysis {
+  interface Actress {
+    injectsTotal: number;
+    injectsPerSec: number;
+  }
+
+  interface Measureable {
     start: number;
     min: number;
     max: number;
     end: number;
-  };
-  mem: {
-    start: number;
-    min: number;
-    max: number;
-    end: number;
-  };
+  }
+
+  interface Target {
+    name: string;
+    cpu: Measureable;
+    mem: Measureable;
+  }
+
+  interface Audience {
+    samples: number;
+    targets: Target[];
+  }
+
+  interface Summary {
+    actress: Actress;
+    audience: Audience;
+  }
 }
