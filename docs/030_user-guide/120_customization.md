@@ -62,7 +62,6 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | `PEPR_RETRY_DELAY_SECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
 | `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch | default: `"300"` (5 mins)       |
 | `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources  | default: `"600"` (10 mins)       |
-| `PEPR_USE_LEGACY_WATCH` | Configure the Kubernetes Fluent Client to use legacy node-fetch watcher  | default: `"undefined"` |
 
 ## Configuring Reconcile
 
@@ -115,7 +114,7 @@ Below are the available Helm override configurations after you have built your P
 | `affinity`                                   | Node scheduling options                                             |
 | `terminationGracePeriodSeconds`              | Optional duration in seconds the pod needs to terminate gracefully  |
 
-Note: Replace `*` with `admission` or `watcher` as needed to apply settings specifically for each part.
+Note: Replace `*` within `admission.*` or `watcher.*` to apply settings specific to the desired subparameter (e.g. `admission.failurePolicy`).
 
 ## Customizing with package.json
 

@@ -75,3 +75,39 @@ jobs:
           grep "stdin-module" $RESULT_FILE
           grep "Set by flag" $RESULT_FILE
           grep "reject" $RESULT_FILE
+
+      - name: pepr build --custom-image - generates Kubernetes manifest with a custom image
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          npx pepr@latest init \
+            --name=custom-image \
+            --description="custom image test" \
+            --errorBehavior=reject \
+            --skip-post-init \
+            --confirm
+          cd custom-image
+          npm i
+          npx ts-node ../pepr/src/cli.ts build --custom-image pepr:dev
+          UUID=$(cat package.json | jq -r .pepr.uuid)
+          count=$(cat dist/$UUID-chart/values.yaml | egrep "image: 'pepr:dev'" | wc -l)
+          if [ "$count" -eq 2 ]; then
+            echo "✅ Generated correct image for helm values."
+          else
+            echo "❌ Generated incorrect image for helm values."
+            exit 1
+          fi
+          count=$(cat dist/pepr-module-$UUID.yaml | egrep "pepr:dev" | wc -l)
+          if [ "$count" -eq 2 ]; then
+            echo "✅ Generated correct image for Pepr manifest."
+          else
+            echo "❌ Generated incorrect image for Pepr manifest."
+            exit 1
+          fi
+          count=$(cat dist/zarf.yaml | egrep "pepr:dev" | wc -l)
+          if [ "$count" -eq 1 ]; then
+            echo "✅ Generated correct image for Zarf manifest."
+          else
+            echo "❌ Generated incorrect image for Zarf manifest."
+            exit 1
+          fi
+
