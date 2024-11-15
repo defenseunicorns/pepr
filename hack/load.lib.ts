@@ -45,6 +45,8 @@ export function toMs(human: string) {
   return milliseconds;
 }
 
+// export function toHuman(ms: number) {}
+
 interface PodResourceRange {
   cpu: [number, number];
   mem: [number, number];
@@ -142,15 +144,27 @@ export function generateAudienceData(
 }
 
 export function parseAudienceData(logs: string) {
-  const lines = logs.split("\n");
-  let parsed: Record<string, { ts: string; cpu: string; mem: string }[]> = {};
+  const lines = logs.split("\n").filter(f => f);
+  let parsed: Record<string, [number, number, string, number, string][]> = {};
   for (let line of lines) {
-    let [ts, rest] = line.split("\t").map(m => m.trim());
-    let [name, cpu, mem] = rest.split(/\s+/).map(m => m.trim());
+    const [ts, rest] = line.split("\t").map(m => m.trim());
+    const tsNum = Number(ts);
+    const [name, cpu, mem] = rest.split(/\s+/).map(m => m.trim());
+
+    const separate = (measure: string): [number, string] => {
+      const num = Number(measure.match(/^[0-9]+/)![0]);
+      const unit = measure.match(/[a-zA-Z]+$/)![0];
+
+      // convert Mi --> 1024B..?
+
+      return [num, unit];
+    };
+    const [cpuNum, cpuUnit] = separate(cpu);
+    const [memNum, memUnit] = separate(mem);
 
     Object.hasOwn(parsed, name)
-      ? parsed[name].push({ ts, cpu, mem })
-      : (parsed[name] = [{ ts, cpu, mem }]);
+      ? parsed[name].push([tsNum, cpuNum, cpuUnit, memNum, memUnit])
+      : (parsed[name] = [[tsNum, cpuNum, cpuUnit, memNum, memUnit]]);
   }
   return parsed;
 }

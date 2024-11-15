@@ -5,11 +5,14 @@
 //  npx ts-node hack/load.cli.ts prep ./
 //  npx ts-node hack/load.cli.ts cluster up
 //  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load
+//  npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load
 
-//  npx ts-node hack/load.cli.ts run --prefix "now" (defaults to `${Date.now()}`)
-//    `${--prefix}.load.json` --> { injects: [], measures: [] }
+//  npx ts-node hack/load.cli.ts post
+//  --output-dir (default: ./load)
+//  --logfile (default: most recent *-audience.log in --output-dir)
+//  (outputs --logfile *.log --> .json)
 
-//  npx ts-node hack/load.cli.ts graph ./now.load.json ./now.load.graph
+//  npx ts-node hack/load.cli.ts graph ./now.load.json ./now.load.graph // next story
 //  npx ts-node hack/load.cli.ts cluster down
 
 import { Command, Option } from "commander";
@@ -494,18 +497,24 @@ program
   .command("run")
   .description("run a load test")
   .argument("<module>", "path to Pepr module under test")
+  .argument("<manifest>", "sub-path to resource manifest to apply as load")
+  .option("--act-interval [duration]", "how often load is applied to cluster", "1m")
+  .option("--act-intensity [number]", "how many resources are applied during an interval", "1000")
+  .option("--aud-interval [duration]", "how often resources are scraped from cluster", "5s")
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
-  .option("-d, --duration [minutes]", "duration of load test", "30")
+  .option("-d, --duration [duration]", "duration of load test", "5m")
   .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
-  .action(async (module, rawOpts) => {
+  .option("--settle [duration]", "how long to pause before applying load", "5s")
+  .option("--stagger [duration]", "how long to pause between starting act and aud", "5s")
+  .action(async (module, manifest, rawOpts) => {
     //
     // sanitize / validate args
     //
-    const args = { module: "" };
+    const args = { module: "", manifest: "" };
 
     const modTrim = module.trim();
     if (modTrim === "") {
-      console.error(`Invalid "module" argument: "${module}"`);
+      console.error(`Invalid "module" argument: "${module}".  Cannot be empty / all whitespace.`);
       process.exit(1);
     }
     const modAbs = path.resolve(modTrim);
@@ -513,23 +522,76 @@ program
       console.error(`Invalid "module" argument: "${modAbs}". Cannot access (read).`);
       process.exit(1);
     }
-    args.module = path.resolve(modAbs);
+    args.module = modAbs;
 
-    const opts = { clusterName: "", duration: 0, outputDir: "" };
-
-    const durTrim = rawOpts.duration.trim();
-    if (durTrim === "") {
+    const maniTrim = manifest.trim();
+    if (maniTrim === "") {
       console.error(
-        `Invalid "duration" argument: "${rawOpts.duration}". Cannot be empty / all whitespace.`,
+        `Invalid "manifest" argument: "${manifest}".  Cannot be empty / all whitespace.`,
       );
       process.exit(1);
     }
-    const durNum = +durTrim;
-    if (isNaN(durNum)) {
-      console.error(`Invalid "duration" argument: "${durTrim}". Must be a valid number.`);
+    const maniAbs = path.resolve(`${args.module}/${maniTrim}`);
+    if (await fileUnreadable(maniAbs)) {
+      console.error(
+        `Invalid "manifest" argument: (${args.module}) "${maniTrim}". Cannot access (read).`,
+      );
       process.exit(1);
     }
-    opts.duration = durNum;
+    args.manifest = maniAbs;
+
+    const opts = {
+      actInterval: 0,
+      actIntensity: 0,
+      audInterval: 0,
+      clusterName: "",
+      duration: 0,
+      outputDir: "",
+      settle: 0,
+      stagger: 0,
+    };
+
+    const actIntvTrim = rawOpts.actInterval.trim();
+    if (actIntvTrim === "") {
+      console.error(
+        `Invalid "--act-interval" option: "${rawOpts.actInterval}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.actInterval = lib.toMs(actIntvTrim);
+    } catch (e) {
+      console.error(`Invalid "--act-interval" option: "${actIntvTrim}". ${e}.`);
+      process.exit(1);
+    }
+
+    const actIntyTrim = rawOpts.actIntensity.trim();
+    if (actIntyTrim === "") {
+      console.error(
+        `Invalid "--act-intensity" option: "${rawOpts.actIntensity}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    const actIntyNum = Number(actIntyTrim);
+    if (isNaN(actIntyNum)) {
+      console.error(`Invalid "--act-intensity" option: "${actIntyTrim}". Must be a number.`);
+      process.exit(1);
+    }
+    opts.actIntensity = actIntyNum;
+
+    const audIntTrim = rawOpts.audInterval.trim();
+    if (audIntTrim === "") {
+      console.error(
+        `Invalid "--aud-interval" option: "${rawOpts.actInterval}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.audInterval = lib.toMs(audIntTrim);
+    } catch (e) {
+      console.error(`Invalid "--aud-interval" option: "${audIntTrim}". ${e}.`);
+      process.exit(1);
+    }
 
     const nameTrim = rawOpts.clusterName.trim();
     if (nameTrim === "") {
@@ -538,7 +600,6 @@ program
       );
       process.exit(1);
     }
-
     const clusterName = fullClusterName(nameTrim);
     // https://github.com/rancher/rancher/issues/37535
     if (nameTrim.length > TEST_CLUSTER_NAME_MAX_LENGTH) {
@@ -548,7 +609,21 @@ program
       );
       process.exit(1);
     }
-    opts.clusterName = nameTrim;
+    opts.clusterName = clusterName;
+
+    const durTrim = rawOpts.duration.trim();
+    if (durTrim === "") {
+      console.error(
+        `Invalid "duration" argument: "${rawOpts.duration}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.duration = lib.toMs(durTrim);
+    } catch (e) {
+      console.error(`Invalid "duration" argument: "${durTrim}". ${e}.`);
+      process.exit(1);
+    }
 
     const outTrim = rawOpts.outputDir.trim();
     if (outTrim === "") {
@@ -569,6 +644,34 @@ program
     }
     opts.outputDir = path.resolve(outAbs);
 
+    const setTrim = rawOpts.settle?.trim();
+    if (setTrim === "") {
+      console.error(
+        `Invalid "settle" argument: "${rawOpts.settle}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.settle = lib.toMs(setTrim);
+    } catch (e) {
+      console.error(`Invalid "settle" argument: "${setTrim}". ${e}.`);
+      process.exit(1);
+    }
+
+    const stagTrim = rawOpts.stagger.trim();
+    if (stagTrim === "") {
+      console.error(
+        `Invalid "stagger" argument: "${rawOpts.stagger}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.stagger = lib.toMs(stagTrim);
+    } catch (e) {
+      console.error(`Invalid "stagger" argument: "${stagTrim}". ${e}.`);
+      process.exit(1);
+    }
+
     //
     // run
     //
@@ -579,14 +682,17 @@ program
     }
 
     log(`Get test cluster credential`);
-    let cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
+    let cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
     log({ cmd: cmd.cmd });
     let result = await cmd.run();
     let KUBECONFIG = result.stdout.join("").trim();
     log(result, "");
 
     const alpha = Date.now();
-    log(`Load test start: ${new Date(alpha).toISOString()}`, "");
+
+    log(`Load test start: ${new Date(alpha).toISOString()}`);
+    log(args);
+    log(opts, "");
 
     const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
       encoding: "utf-8",
@@ -597,22 +703,39 @@ program
     cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
     let req = { cmd: cmd.cmd, stdin, env };
     let res = await cmd.run();
-    // log(req, res, "");
 
-    const loadTmpl = await fs.readFile(`${args.module}/capabilities/load.yaml`, {
-      encoding: "utf-8",
-    });
+    const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
 
-    const LOAD_RUNTIME = lib.toMs("5m");
-    const ACTRESS_INTERVAL = lib.toMs("1m");
-    const AUDIENCE_INTERVAL = lib.toMs("10s");
+    await nap(opts.settle); // let cluster settle a bit after startup
 
-    const actress = setInterval(async () => {
+    const audience = async () => {
+      process.stdout.write("↓");
+
+      let env = { KUBECONFIG };
+
+      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+      let req = { cmd: cmd.cmd, env };
+      let res = await cmd.run();
+
+      let outfile = `${opts.outputDir}/${alpha}-audience.log`;
+      let outlines = res.stdout
+        .filter(f => f)
+        .map(m => `${Date.now()}\t${m}`)
+        .join("\n")
+        .concat("\n");
+      await fs.appendFile(outfile, outlines);
+    };
+    // run immediately, then on schedule
+    audience();
+    const ticket = setInterval(audience, opts.audInterval);
+
+    await nap(opts.stagger); // stagger interval starts
+
+    const actress = async () => {
       process.stdout.write("↑");
 
-      // let load = loadTmpl.replace("UNIQUIFY-ME", Date.now().toString());
       let load = "";
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < opts.actIntensity; i++) {
         load += loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
       }
 
@@ -622,7 +745,6 @@ program
       cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
       let req = { cmd: cmd.cmd, stdin, env };
       let res = await cmd.run();
-      // log(req, res, "");
 
       let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
       let ts = Date.now();
@@ -630,75 +752,99 @@ program
       let outline = outlines.join("\n").concat("\n");
       let outfile = `${opts.outputDir}/${alpha}-actress.log`;
       await fs.appendFile(outfile, outline);
-    }, ACTRESS_INTERVAL);
+    };
+    // run immediately, then on schedule
+    actress();
+    const backstagePass = setInterval(actress, opts.actInterval);
 
-    await nap(lib.toMs("15s")); // stagger interval starts
+    // wait until total duration has elapsed
+    const startWait = Date.now();
+    await nap(opts.duration - (startWait - alpha));
+    const endWait = Date.now();
 
-    const auds: Result[] = [];
-    const audience = setInterval(async () => {
-      process.stdout.write("↓");
-
-      let env = { KUBECONFIG };
-
-      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-      let req = { cmd: cmd.cmd, env };
-      let res = await cmd.run();
-      // log(req, res, "");
-
-      let outfile = `${opts.outputDir}/${alpha}-audience.log`;
-      let outlines = res.stdout
-        .filter(f => f)
-        .map(m => `${Date.now()}\t${m}`)
-        .join("\n")
-        .concat("\n");
-      await fs.appendFile(outfile, outlines);
-    }, AUDIENCE_INTERVAL);
-
-    const runtime = LOAD_RUNTIME;
-    const omega = alpha + runtime;
-    await nap(runtime);
+    clearInterval(backstagePass);
+    clearInterval(ticket);
 
     log("", "");
-    log(`Load test end: ${new Date(omega).toISOString()}`, "");
+    log(`Load test complete: ${new Date(endWait).toISOString()}`);
 
-    // const duration = {
-    //   hours: 1,
-    //   minutes: 46,
-    //   seconds: 40,
-    // };
+    log("Waiting for final actions to finish...", "");
+  });
 
-    // // With style set to "short" and locale "en"
-    // new Intl.DurationFormat("en", { style: "short" }).format(duration);
-
-    clearInterval(actress);
-    clearInterval(audience);
-
-    // TODO:
-    //  - use real data to generate test dataset (in test!)
-    //  - use test dataset to TDD post-processing & datafile output
-    //  - use test dataset to TDD the graph datafile output
-
-    // kick-off interval to grab measurements:
-    // KUBECONFIG=$(k3d kubeconfig write pepr-load) kubectl top --namespace pepr-system pod --no-headers
+program
+  .command("post")
+  .description("post-process load test log")
+  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
+  .option("-l, --log-file [name]", "name of result log to process", "<latest>-audience.log")
+  .action(async rawOpts => {
     //
-    // pepr-soak-ci-76ccb8fb69-4x66n          2m    105Mi
-    // pepr-soak-ci-76ccb8fb69-lqkpd          3m    104Mi
-    // pepr-soak-ci-watcher-6b777c6cc-wtsh9   3m    122Mi
+    // sanitize / validate args
+    //
+    const opts = { outputDir: "", logFile: "" };
 
-    // kick-off interval to inject activity:
-    // ...
+    const outTrim = rawOpts.outputDir.trim();
+    if (outTrim === "") {
+      console.error(
+        `Invalid "--output-dir" option: "${rawOpts.outputDir}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    const outAbs = path.resolve(outTrim);
+    if (await fileUnreadable(outAbs)) {
+      console.error(`Invalid "--output-dir" option: "${outAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.outputDir = path.resolve(outAbs);
 
-    // aggregate measurements (for a while)
-    // ...
+    let logTrim = rawOpts.logFile.trim();
+    if (logTrim === "") {
+      console.error(
+        `Invalid "--output-dir" option: "${rawOpts.logFile}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
 
-    // clear intervals
-    // ...
+    let logAbs = path.resolve(`${opts.outputDir}/${logTrim}`);
+    if (path.basename(logAbs).endsWith("<latest>-audience.log")) {
+      const files = await fs.readdir(path.dirname(logAbs));
+      const log = files
+        .filter(f => f.endsWith("-audience.log"))
+        .sort()
+        .at(-1)!;
+      logTrim = log;
+      logAbs = `${path.dirname(logAbs)}/${logTrim}`;
+    }
 
-    // and then...
+    if (await fileUnreadable(logAbs)) {
+      console.error(`Invalid "--log-file" option: "${logAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.logFile = logAbs;
 
-    // TODO:
-    //  - add "run" cmd (to start injecting activity / scraping measurements / writing to file)
-    //  - add "graph" cmd (to convert metrics file into graph image)
+    //
+    // run
+    //
+    const logs = await fs.readFile(opts.logFile, { encoding: "utf-8" });
+    const json = lib.parseAudienceData(logs);
+    const outfile = `${opts.logFile.replace(".log", ".json")}`;
+
+    interface Analysis {
+      samples: number;
+      cpu: {
+        start: number;
+        min: number;
+        max: number;
+        end: number;
+      };
+      mem: {
+        start: number;
+        min: number;
+        max: number;
+        end: number;
+      };
+    }
+
+    // await fs.writeFile(outfile, pretty);
   });
 
 program.parse(process.argv);

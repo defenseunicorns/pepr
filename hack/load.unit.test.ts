@@ -58,7 +58,7 @@ describe("generateAudienceData()", () => {
 });
 
 describe("parseAudienceData", () => {
-  const audienceData = heredoc`
+  let audienceData = heredoc`
     1731525754189	pepr-pepr-load-aaaa0bbbb-aaaaa           2m    102Mi   
     1731525754189	pepr-pepr-load-aaaa0bbbb-bbbbb           3m    103Mi   
     1731525754189	pepr-pepr-load-watcher-ccccccccc-ccccc   23m   123Mi   
@@ -66,20 +66,21 @@ describe("parseAudienceData", () => {
     1731525814222	pepr-pepr-load-aaaa0bbbb-bbbbb           5m    105Mi   
     1731525814222	pepr-pepr-load-watcher-ccccccccc-ccccc   45m   145Mi   
   `;
+  audienceData += "\n";
 
   it("converts logged data into per-pod datasets", () => {
     let expected = {
       "pepr-pepr-load-aaaa0bbbb-aaaaa": [
-        { ts: "1731525754189", cpu: "2m", mem: "102Mi" },
-        { ts: "1731525814222", cpu: "4m", mem: "104Mi" },
+        [1731525754189, 2, "m", 102, "Mi"],
+        [1731525814222, 4, "m", 104, "Mi"],
       ],
       "pepr-pepr-load-aaaa0bbbb-bbbbb": [
-        { ts: "1731525754189", cpu: "3m", mem: "103Mi" },
-        { ts: "1731525814222", cpu: "5m", mem: "105Mi" },
+        [1731525754189, 3, "m", 103, "Mi"],
+        [1731525814222, 5, "m", 105, "Mi"],
       ],
       "pepr-pepr-load-watcher-ccccccccc-ccccc": [
-        { ts: "1731525754189", cpu: "23m", mem: "123Mi" },
-        { ts: "1731525814222", cpu: "45m", mem: "145Mi" },
+        [1731525754189, 23, "m", 123, "Mi"],
+        [1731525814222, 45, "m", 145, "Mi"],
       ],
     };
 
