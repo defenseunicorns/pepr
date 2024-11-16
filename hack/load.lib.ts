@@ -262,21 +262,6 @@ export function parseActressData(logs: string) {
   return parsed;
 }
 
-// let expected = {
-//   "pepr-pepr-load-aaaa0bbbb-aaaaa": [
-//     [1731525754189, 2, "m", 106954752, "B"],
-//     [1731525814222, 4, "m", 109051904, "B"],
-//   ],
-//   "pepr-pepr-load-aaaa0bbbb-bbbbb": [
-//     [1731525754189, 3, "m", 108003328, "B"],
-//     [1731525814222, 5, "m", 110100480, "B"],
-//   ],
-//   "pepr-pepr-load-watcher-ccccccccc-ccccc": [
-//     [1731525754189, 23, "m", 128974848, "B"],
-//     [1731525814222, 45, "m", 152043520, "B"],
-//   ],
-// };
-
 namespace Analysis {
   interface Actress {
     injectsTotal: number;

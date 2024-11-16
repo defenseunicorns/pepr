@@ -502,7 +502,7 @@ program
   .option("--act-intensity [number]", "how many resources are applied during an interval", "1000")
   .option("--aud-interval [duration]", "how often resources are scraped from cluster", "5s")
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
-  .option("-d, --duration [duration]", "duration of load test", "5m")
+  .option("-d, --duration [duration]", "duration of load test", "15m")
   .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
   .option("--settle [duration]", "how long to pause before applying load", "5s")
   .option("--stagger [duration]", "how long to pause between starting act and aud", "5s")
@@ -870,7 +870,7 @@ program
     // run
     //
     const actLogs = await fs.readFile(opts.actFile, { encoding: "utf-8" });
-    // const actJson = lib.parseAudienceData(actLogs);
+    const actJson = lib.parseActressData(actLogs);
     const actFile = `${opts.actFile.replace(".log", ".json")}`;
 
     const audLogs = await fs.readFile(opts.audFile, { encoding: "utf-8" });
@@ -879,11 +879,11 @@ program
 
     console.log(opts);
 
-    // console.log(actLogs)
     console.log(actFile);
+    console.log(actJson);
 
-    // console.log(audLogs)
     console.log(audFile);
+    console.log(audJson);
 
     // TODO: here!
 
