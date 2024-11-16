@@ -500,7 +500,7 @@ program
   .argument("<manifest>", "sub-path to resource manifest to apply as load")
   .option("--act-interval [duration]", "how often load is applied to cluster", "1m")
   .option("--act-intensity [number]", "how many resources are applied during an interval", "1000")
-  .option("--aud-interval [duration]", "how often resources are scraped from cluster", "5s")
+  .option("--aud-interval [duration]", "how often resources are scraped from cluster", "1s")
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
   .option("-d, --duration [duration]", "duration of load test", "15m")
   .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
@@ -770,11 +770,6 @@ program
         let req = { cmd: cmd.cmd, stdin, env };
         let res = await cmd.run();
 
-        // let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
-        // let ts = Date.now();
-        // let outlines = splits.map(m => `${ts}\t${m.trim()}`);
-        // let outline = outlines.join("\n").concat("\n");
-
         await fs.appendFile(actFile, Date.now().toString() + "\n");
       }
     };
@@ -879,13 +874,50 @@ program
     const audJson = lib.parseAudienceData(audLogs);
     const audFile = `${opts.actFile.replace(".log", ".json")}`;
 
-    console.log(opts);
+    // console.log(opts);
 
-    console.log(actFile);
-    console.log(actJson);
+    // console.log(actFile);
+    // console.log(actJson);
+    const actAnalysis: lib.Analysis.Actress = {
+      load: actJson.load,
+      injects: actJson.injects.length,
+    };
+    console.log(actAnalysis);
 
-    console.log(audFile);
-    console.log(audJson);
+    // console.log(audFile);
+    // console.log(audJson);
+    const getTime = (row: [number, number, string, number, string]) => row[0];
+    const getCpuN = (row: [number, number, string, number, string]) => row[1];
+    const getCpuU = (row: [number, number, string, number, string]) => row[2];
+    const getMemN = (row: [number, number, string, number, string]) => row[3];
+    const getMemU = (row: [number, number, string, number, string]) => row[4];
+
+    const audAnalysis: lib.Analysis.Audience = { targets: [] };
+    Object.entries(audJson).forEach(([key, val]) => {
+      const name = key;
+      const samples = val.length;
+      const cpu: lib.Analysis.Measureable = {
+        start: getCpuN(val.at(0)!),
+        min: val.map(m => getCpuN(m)).reduce((acc, cur) => (cur < acc ? cur : acc), Infinity),
+        max: val.map(m => getCpuN(m)).reduce((acc, cur) => (cur > acc ? cur : acc), -Infinity),
+        end: getCpuN(val.at(-1)!),
+      };
+      const mem: lib.Analysis.Measureable = {
+        start: getMemN(val.at(0)!),
+        min: val.map(m => getMemN(m)).reduce((acc, cur) => (cur < acc ? cur : acc), Infinity),
+        max: val.map(m => getMemN(m)).reduce((acc, cur) => (cur > acc ? cur : acc), -Infinity),
+        end: getMemN(val.at(-1)!),
+      };
+
+      const target: lib.Analysis.Target = { name, samples, cpu, mem };
+      audAnalysis.targets.push(target);
+    });
+    console.log(JSON.stringify(audAnalysis, null, 2));
+
+    // const summary: lib.Analysis.Summary = {
+    //   actress: actAnalysis,
+    //   audience: audAnalysis,
+    // }
 
     // TODO: here!
 

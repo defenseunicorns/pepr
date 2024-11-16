@@ -79,7 +79,7 @@ describe("generateAudienceData()", () => {
 
 describe("parseActressData", () => {
   let actressData = heredoc`
-    ---\\napiVersion: v1\\nkind: ConfigMap\\nmetadata:\\n  namespace: hello-pepr-load\\n  name: cm-UNIQUIFY-ME\\n  labels:\\n    test-transient: hello-pepr-load\\ndata: {}\\n
+    ---\\\\napiVersion: v1\\\\nkind: ConfigMap\\\\nmetadata:\\\\n  namespace: hello-pepr-load\\\\n  name: cm-UNIQUIFY-ME\\\\n  labels:\\\\n    test-transient: hello-pepr-load\\\\ndata: {}\\\\n
     1731682427803	configmap/cm-1731682427524-0 created
     1731682428102	configmap/cm-1731682427805-1 created
     1731682428365	configmap/cm-1731682428103-2 created

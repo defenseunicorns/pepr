@@ -255,7 +255,7 @@ export function parseActressData(logs: string) {
   const lines = logs.split("\n").filter(f => f);
 
   let parsed: { load: string; injects: number[] } = { load: "", injects: [] };
-  parsed.load = lines.shift()!.replace(/\\n/g, "\n");
+  parsed.load = lines.shift()!.replaceAll("\\\\n", "\n");
 
   for (let line of lines) {
     const ts = line.split("\t").at(0)!.trim();
@@ -266,31 +266,31 @@ export function parseActressData(logs: string) {
   return parsed;
 }
 
-namespace Analysis {
-  interface Actress {
-    injectsTotal: number;
-    injectsPerSec: number;
+export namespace Analysis {
+  export interface Actress {
+    load: string;
+    injects: number;
   }
 
-  interface Measureable {
+  export interface Measureable {
     start: number;
     min: number;
     max: number;
     end: number;
   }
 
-  interface Target {
+  export interface Target {
     name: string;
+    samples: number;
     cpu: Measureable;
     mem: Measureable;
   }
 
-  interface Audience {
-    samples: number;
+  export interface Audience {
     targets: Target[];
   }
 
-  interface Summary {
+  export interface Summary {
     actress: Actress;
     audience: Audience;
   }
