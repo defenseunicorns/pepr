@@ -253,12 +253,16 @@ export function parseAudienceData(logs: string) {
 
 export function parseActressData(logs: string) {
   const lines = logs.split("\n").filter(f => f);
-  let parsed: [number, string][] = [];
+
+  let parsed: { load: string; injects: number[] } = { load: "", injects: [] };
+  parsed.load = lines.shift()!.replace(/\\n/g, "\n");
+
   for (let line of lines) {
-    const [ts, rest] = line.split("\t").map(m => m.trim());
+    const ts = line.split("\t").at(0)!.trim();
     const tsNum = Number(ts);
-    parsed.push([tsNum, rest]);
+    parsed.injects.push(tsNum);
   }
+
   return parsed;
 }
 

@@ -79,6 +79,7 @@ describe("generateAudienceData()", () => {
 
 describe("parseActressData", () => {
   let actressData = heredoc`
+    ---\\napiVersion: v1\\nkind: ConfigMap\\nmetadata:\\n  namespace: hello-pepr-load\\n  name: cm-UNIQUIFY-ME\\n  labels:\\n    test-transient: hello-pepr-load\\ndata: {}\\n
     1731682427803	configmap/cm-1731682427524-0 created
     1731682428102	configmap/cm-1731682427805-1 created
     1731682428365	configmap/cm-1731682428103-2 created
@@ -89,14 +90,12 @@ describe("parseActressData", () => {
   actressData += "\n";
 
   it("converts logged data appropriately split lines", () => {
-    let expected = [
-      [1731682427803, "configmap/cm-1731682427524-0 created"],
-      [1731682428102, "configmap/cm-1731682427805-1 created"],
-      [1731682428365, "configmap/cm-1731682428103-2 created"],
-      [1731682428668, "configmap/cm-1731682428366-3 created"],
-      [1731682428978, "configmap/cm-1731682428669-4 created"],
-      [1731682429300, "configmap/cm-1731682428979-5 created"],
-    ];
+    let expected = {
+      load: `---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  namespace: hello-pepr-load\n  name: cm-UNIQUIFY-ME\n  labels:\n    test-transient: hello-pepr-load\ndata: {}\n`,
+      injects: [
+        1731682427803, 1731682428102, 1731682428365, 1731682428668, 1731682428978, 1731682429300,
+      ],
+    };
 
     let result = sut.parseActressData(actressData);
 

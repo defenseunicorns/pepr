@@ -696,7 +696,6 @@ program
       (acc, key) => {
         switch (key) {
           case "actInterval":
-          case "actIntensity":
           case "audInterval":
           case "duration":
           case "settle":
@@ -724,6 +723,10 @@ program
     let res = await cmd.run();
 
     const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
+    let actFile = `${opts.outputDir}/${alpha}-actress.log`;
+    await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
+
+    let audFile = `${opts.outputDir}/${alpha}-audience.log`;
 
     await nap(opts.settle); // let cluster settle a bit after startup
 
@@ -736,13 +739,12 @@ program
       let req = { cmd: cmd.cmd, env };
       let res = await cmd.run();
 
-      let outfile = `${opts.outputDir}/${alpha}-audience.log`;
       let outlines = res.stdout
         .filter(f => f)
         .map(m => `${Date.now()}\t${m}`)
         .join("\n")
         .concat("\n");
-      await fs.appendFile(outfile, outlines);
+      await fs.appendFile(audFile, outlines);
     };
     audience(); // run immediately, then on schedule
     const ticket = setInterval(audience, opts.audInterval);
@@ -768,12 +770,12 @@ program
         let req = { cmd: cmd.cmd, stdin, env };
         let res = await cmd.run();
 
-        let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
-        let ts = Date.now();
-        let outlines = splits.map(m => `${ts}\t${m.trim()}`);
-        let outline = outlines.join("\n").concat("\n");
-        let outfile = `${opts.outputDir}/${alpha}-actress.log`;
-        await fs.appendFile(outfile, outline);
+        // let splits = res.stdout.flatMap(f => f.split(/(?:created)\s+/)).filter(f => f);
+        // let ts = Date.now();
+        // let outlines = splits.map(m => `${ts}\t${m.trim()}`);
+        // let outline = outlines.join("\n").concat("\n");
+
+        await fs.appendFile(actFile, Date.now().toString() + "\n");
       }
     };
     actress(); // run immediately, then on schedule
