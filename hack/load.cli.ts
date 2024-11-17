@@ -17,6 +17,7 @@ import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
@@ -917,109 +918,133 @@ program
     await fs.writeFile(outfile, JSON.stringify(summary, null, 2));
   });
 
-// program
-//   .command("graph")
-//   .description("generate a graph of load test results")
-//   .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
-//   .option("-d, --aud-file [name]", "name of result aud log to process", "<latest>-audience.log")
-//   .action(async rawOpts => {
-//     //
-//     // sanitize / validate args
-//     //
-//     const opts = { outputDir: "", audFile: "" };
+program
+  .command("graph")
+  .description("generate a graph of load test results")
+  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
+  .option("-d, --aud-json [name]", "name of result aud json to process", "<latest>-audience.json")
+  .action(async rawOpts => {
+    //
+    // sanitize / validate args
+    //
+    const opts = { outputDir: "", audJson: "" };
 
-//     const outTrim = rawOpts.outputDir.trim();
-//     if (outTrim === "") {
-//       console.error(
-//         `Invalid "--output-dir" option: "${rawOpts.outputDir}". Cannot be empty / all whitespace.`,
-//       );
-//       process.exit(1);
-//     }
-//     const outAbs = path.resolve(outTrim);
-//     if (await fileUnreadable(outAbs)) {
-//       console.error(`Invalid "--output-dir" option: "${outAbs}". Cannot access (read).`);
-//       process.exit(1);
-//     }
-//     opts.outputDir = path.resolve(outAbs);
+    const outTrim = rawOpts.outputDir.trim();
+    if (outTrim === "") {
+      console.error(
+        `Invalid "--output-dir" option: "${rawOpts.outputDir}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    const outAbs = path.resolve(outTrim);
+    if (await fileUnreadable(outAbs)) {
+      console.error(`Invalid "--output-dir" option: "${outAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.outputDir = path.resolve(outAbs);
 
-//     let audTrim = rawOpts.audFile.trim();
-//     if (audTrim === "") {
-//       console.error(
-//         `Invalid "--aud-file" option: "${rawOpts.audFile}". Cannot be empty / all whitespace.`,
-//       );
-//       process.exit(1);
-//     }
-//     let audAbs = path.resolve(`${opts.outputDir}/${audTrim}`);
-//     if (path.basename(audAbs).endsWith("<latest>-audience.log")) {
-//       const files = await fs.readdir(path.dirname(audAbs));
-//       const log = files
-//         .filter(f => f.endsWith("-audience.log"))
-//         .sort()
-//         .at(-1)!;
-//       audTrim = log;
-//       audAbs = `${path.dirname(audAbs)}/${audTrim}`;
-//     }
-//     if (await fileUnreadable(audAbs)) {
-//       console.error(`Invalid "--aud-file" option: "${audAbs}". Cannot access (read).`);
-//       process.exit(1);
-//     }
-//     opts.audFile = audAbs;
+    let audTrim = rawOpts.audJson.trim();
+    if (audTrim === "") {
+      console.error(
+        `Invalid "--aud-json" option: "${rawOpts.audJson}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    let audAbs = path.resolve(`${opts.outputDir}/${audTrim}`);
+    if (path.basename(audAbs).endsWith("<latest>-audience.json")) {
+      const files = await fs.readdir(path.dirname(audAbs));
+      const log = files
+        .filter(f => f.endsWith("-audience.json"))
+        .sort()
+        .at(-1)!;
+      audTrim = log;
+      audAbs = `${path.dirname(audAbs)}/${audTrim}`;
+    }
+    if (await fileUnreadable(audAbs)) {
+      console.error(`Invalid "--aud-json" option: "${audAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.audJson = audAbs;
 
-//     //
-//     // run
-//     //
-//     const actLogs = await fs.readFile(opts.actFile, { encoding: "utf-8" });
-//     const actJson = lib.parseActressData(actLogs);
-//     const actFile = `${opts.actFile.replace(".log", ".json")}`;
+    //
+    // run
+    //
+    const audJson = JSON.parse(await fs.readFile(opts.audJson, { encoding: "utf-8" }));
 
-//     const audLogs = await fs.readFile(opts.audFile, { encoding: "utf-8" });
-//     const audJson = lib.parseAudienceData(audLogs);
-//     const audFile = `${opts.actFile.replace(".log", ".json")}`;
+    log(`Determine current system user`);
+    let cmd = new Cmd({ cmd: `echo "$(id -u):$(id -g)"` });
+    log({ cmd: cmd.cmd });
+    let result = await cmd.run();
+    log(result, "");
+    const user = result.stdout.join("").trim();
 
-//     const actAnalysis: lib.Analysis.Actress = {
-//       load: actJson.load,
-//       injects: actJson.injects.length,
-//     };
+    let audAll = JSON.parse(await fs.readFile(opts.audJson, { encoding: "utf8" }));
+    let watcherName = Object.keys(audAll)
+      .filter(f => f.includes("watcher"))
+      .at(0)!;
+    let watcher: [number, number, string, number, string][] = audAll[watcherName];
 
-//     const getTime = (row: [number, number, string, number, string]) => row[0];
-//     const getCpuN = (row: [number, number, string, number, string]) => row[1];
-//     const getCpuU = (row: [number, number, string, number, string]) => row[2];
-//     const getMemN = (row: [number, number, string, number, string]) => row[3];
-//     const getMemU = (row: [number, number, string, number, string]) => row[4];
+    let watcherMem: [number, number][] = watcher.map(m => [m[0], m[3]]);
+    let start = watcherMem[0][0];
+    watcherMem = watcherMem.map(([ts, b]) => [(ts - start) / 1000 / 60, b / 1024 / 1024]);
+    let watcherGraph = path.basename(opts.audJson).replace("audience.json", watcherName);
 
-//     const audAnalysis: lib.Analysis.Audience = { targets: [] };
-//     Object.entries(audJson).forEach(([key, val]) => {
-//       const name = key;
-//       const samples = val.length;
-//       const cpu: lib.Analysis.Measureable = {
-//         start: getCpuN(val.at(0)!),
-//         min: val.map(m => getCpuN(m)).reduce((acc, cur) => (cur < acc ? cur : acc), Infinity),
-//         max: val.map(m => getCpuN(m)).reduce((acc, cur) => (cur > acc ? cur : acc), -Infinity),
-//         end: getCpuN(val.at(-1)!),
-//       };
-//       const mem: lib.Analysis.Measureable = {
-//         start: getMemN(val.at(0)!),
-//         min: val.map(m => getMemN(m)).reduce((acc, cur) => (cur < acc ? cur : acc), Infinity),
-//         max: val.map(m => getMemN(m)).reduce((acc, cur) => (cur > acc ? cur : acc), -Infinity),
-//         end: getMemN(val.at(-1)!),
-//       };
+    interface Plottable {
+      x: number[];
+      y: number[];
+      xLabel: string;
+      yLabel: string;
+      title: string;
+      fname: string;
+    }
 
-//       const target: lib.Analysis.Target = { name, samples, cpu, mem };
-//       audAnalysis.targets.push(target);
-//     });
+    let plottable: Plottable = {
+      x: [],
+      y: [],
+      xLabel: "mins",
+      yLabel: "MiB",
+      title: watcherName,
+      fname: watcherGraph,
+    };
+    watcherMem.forEach(w => {
+      plottable.x.push(w[0]);
+      plottable.y.push(w[1]);
+    });
 
-//     const summary: lib.Analysis.Summary = {
-//       actress: actAnalysis,
-//       audience: audAnalysis,
-//     }
+    log(`Write graphing script output dir`);
+    const octaveScript = heredoc`
+      StrData = fread(stdin, 'char') ;
+      StrData = char( StrData.' ) ;
+      JsonData = jsondecode(StrData) ;
+      fname = [ JsonData.fname ".png" ] ;
+      plot(JsonData.x, JsonData.y) ;
+      xlabel (JsonData.xLabel) ;
+      ylabel (JsonData.yLabel) ;
+      title (JsonData.title) ;
+      print ("-dpng", fname) ;
+    `;
+    let octaveFile = `${opts.outputDir}/graph.m`;
+    await fs.writeFile(octaveFile, octaveScript);
+    log(`  script: ${octaveFile}`, "");
 
-//     const ts = path.basename(audFile).split("-").at(0)!;
-//     const outfile = `${opts.outputDir}/${ts}-summary.json`;
-//     await fs.writeFile(outfile, JSON.stringify(summary, null, 2));
-
-//     // echo -e "[[1,2,3],[4,5,6],[7,8,9]]" | \
-//     //  docker run -i -v"$(pwd)/hack/load":"/workdir" --rm --user "$(id -u):$(id -g)" \
-//     //    gnuoctave/octave:9.2.0 bash -c 'octave asdf.m'
-//   });
+    log(`Generate graph`);
+    let strCmd = [
+      `docker run `,
+      `--interactive `,
+      `--user ${user} `,
+      `--volume ${opts.outputDir}:/workdir `,
+      `gnuoctave/octave:9.2.0 `,
+      `bash -c 'octave ${path.basename(octaveFile)}'`,
+    ].join(" ");
+    let stdin = [JSON.stringify(plottable)];
+    cmd = new Cmd({ cmd: strCmd, stdin });
+    log({ cmd: cmd.cmd });
+    try {
+      result = await cmd.run();
+    } catch (e) {
+      console.error(e);
+    }
+    log(result, "");
+  });
 
 program.parse(process.argv);
