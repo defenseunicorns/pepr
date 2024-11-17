@@ -7,10 +7,10 @@
 //  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load
 //  npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load
 //  npx ts-node hack/load.cli.ts post
-
 //  npx ts-node hack/load.cli.ts graph
-
 //  npx ts-node hack/load.cli.ts cluster down
+//
+//  npx ts-node hack/load.cli.ts prep ./ ; npx ts-node hack/load.cli.ts cluster up ; npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts post ; npx ts-node hack/load.cli.ts graph ; npx ts-node hack/load.cli.ts cluster down
 
 import { Command, Option } from "commander";
 import { spawn } from "child_process";
@@ -502,7 +502,7 @@ program
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
   .option("-d, --duration [duration]", "duration of load test", "15m")
   .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
-  .option("--settle [duration]", "how long to aud after load stops", "30m")
+  .option("--settle [duration]", "how long to aud after load stops", "45m")
   .option("--stagger [duration]", "how long to pause between starting act and aud", "5s")
   .action(async (module, manifest, rawOpts) => {
     //
