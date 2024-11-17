@@ -504,7 +504,7 @@ program
   .option("-n, --cluster-name [name]", "name of cluster to run within", TEST_CLUSTER_NAME_DEFAULT)
   .option("-d, --duration [duration]", "duration of load test", "15m")
   .option("-o, --output-dir [path]", "path to folder to place result files", "./load")
-  .option("--settle [duration]", "how long to pause before applying load", "5s")
+  .option("--settle [duration]", "how long to aud after load stops", "30m")
   .option("--stagger [duration]", "how long to pause between starting act and aud", "5s")
   .action(async (module, manifest, rawOpts) => {
     //
@@ -614,14 +614,14 @@ program
     const durTrim = rawOpts.duration.trim();
     if (durTrim === "") {
       console.error(
-        `Invalid "duration" argument: "${rawOpts.duration}". Cannot be empty / all whitespace.`,
+        `Invalid "--duration" option: "${rawOpts.duration}". Cannot be empty / all whitespace.`,
       );
       process.exit(1);
     }
     try {
       opts.duration = lib.toMs(durTrim);
     } catch (e) {
-      console.error(`Invalid "duration" argument: "${durTrim}". ${e}.`);
+      console.error(`Invalid "--duration" option: "${durTrim}". ${e}.`);
       process.exit(1);
     }
 
@@ -637,7 +637,7 @@ program
     if (await fileUnwriteable(outAbs)) {
       if (await fileUnwriteable(outBase)) {
         console.error(
-          `Invalid "--output-dir" argument: "${outAbs} (or parent)". Cannot access (write).`,
+          `Invalid "--output-dir" option: "${outAbs} (or parent)". Cannot access (write).`,
         );
         process.exit(1);
       }
@@ -647,28 +647,28 @@ program
     const setTrim = rawOpts.settle?.trim();
     if (setTrim === "") {
       console.error(
-        `Invalid "settle" argument: "${rawOpts.settle}". Cannot be empty / all whitespace.`,
+        `Invalid "--settle" option: "${rawOpts.settle}". Cannot be empty / all whitespace.`,
       );
       process.exit(1);
     }
     try {
       opts.settle = lib.toMs(setTrim);
     } catch (e) {
-      console.error(`Invalid "settle" argument: "${setTrim}". ${e}.`);
+      console.error(`Invalid "--settle" argument: "${setTrim}". ${e}.`);
       process.exit(1);
     }
 
     const stagTrim = rawOpts.stagger.trim();
     if (stagTrim === "") {
       console.error(
-        `Invalid "stagger" argument: "${rawOpts.stagger}". Cannot be empty / all whitespace.`,
+        `Invalid "--stagger" option: "${rawOpts.stagger}". Cannot be empty / all whitespace.`,
       );
       process.exit(1);
     }
     try {
       opts.stagger = lib.toMs(stagTrim);
     } catch (e) {
-      console.error(`Invalid "stagger" argument: "${stagTrim}". ${e}.`);
+      console.error(`Invalid "--stagger" option: "${stagTrim}". ${e}.`);
       process.exit(1);
     }
 
@@ -728,8 +728,6 @@ program
 
     let audFile = `${opts.outputDir}/${alpha}-audience.log`;
 
-    await nap(opts.settle); // let cluster settle a bit after startup
-
     const audience = async () => {
       process.stdout.write("↓");
 
@@ -781,8 +779,12 @@ program
     await nap(opts.duration - (startWait - alpha));
     const endWait = Date.now();
 
+    // stop adding load
     abort.abort();
     clearInterval(backstagePass);
+
+    // let cluster settle after load stops
+    await nap(opts.settle);
     clearInterval(ticket);
 
     log("", "");
