@@ -1,17 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-// From within Pepr project dir / next to Pexex project dir:
-//  npx ts-node hack/load.cli.ts prep ./
-//  npx ts-node hack/load.cli.ts cluster up
-//  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load
-//  npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load capabilities/configmap.yaml
-//  npx ts-node hack/load.cli.ts post
-//  npx ts-node hack/load.cli.ts graph
-//  npx ts-node hack/load.cli.ts cluster down
-//
-//  npx ts-node hack/load.cli.ts prep ./ ; npx ts-node hack/load.cli.ts cluster up ; npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load capabilities/configmap.yaml ; npx ts-node hack/load.cli.ts post ; npx ts-node hack/load.cli.ts graph ; npx ts-node hack/load.cli.ts cluster down
-
 import { Command, Option } from "commander";
 import { spawn } from "child_process";
 import * as os from "node:os";
