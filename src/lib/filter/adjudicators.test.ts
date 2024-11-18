@@ -19,7 +19,7 @@ describe("carriesDeletionTimestamp", () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const ko = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedDeletionTimestamp(binding, object);
+    const result = sut.mismatchedDeletionTimestamp(ko);
 
     expect(result).toBe(expected);
   });

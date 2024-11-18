@@ -115,16 +115,10 @@ export const definedNameRegex = pipe(
 );
 export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 
-export const definedNamespaces = pipe(
-  (binding: Partial<Binding>): string[] | undefined => binding?.filters?.namespaces,
-  defaultTo([]),
-);
+export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
-export const definedNamespaceRegexes = pipe(
-  (binding: Partial<Binding>): string[] | undefined => binding?.filters?.regexNamespaces,
-  defaultTo([]),
-);
+export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
 export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
 export const definedAnnotations = pipe((binding: Partial<Binding>) => binding?.filters?.annotations, defaultTo({}));
@@ -142,7 +136,7 @@ export const definedEvent = pipe((binding: Partial<Binding>): Event => {
 }, defaultTo(""));
 export const definesDelete = pipe(definedEvent, equals(Event.DELETE));
 
-export const definedGroup = pipe((binding: Partial<Binding>): string => binding?.kind?.group, defaultTo(""));
+export const definedGroup = pipe((binding): string => binding?.kind?.group, defaultTo(""));
 export const definesGroup = pipe(definedGroup, equals(""), not);
 
 export const definedVersion = pipe(
@@ -151,7 +145,7 @@ export const definedVersion = pipe(
 );
 export const definesVersion = pipe(definedVersion, equals(""), not);
 
-export const definedKind = pipe((binding: Partial<Binding>): string => binding?.kind?.kind, defaultTo(""));
+export const definedKind = pipe((binding): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
 export const definedCategory = pipe((binding: Partial<Binding>) => {
@@ -203,11 +197,7 @@ export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
 
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
-  pipe(
-    (binding: Binding, kubernetesObject: KubernetesObject) =>
-      definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)),
-    not,
-  ),
+  pipe((binding, kubernetesObject) => definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)), not),
 ]);
 
 export const mismatchedNamespaceRegex = allPass([

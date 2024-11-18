@@ -75,7 +75,7 @@ export type RBACMap = {
  **/
 export function filterNoMatchReason(
   binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
+  object: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
@@ -83,30 +83,30 @@ export function filterNoMatchReason(
 
   // prettier-ignore
   return (
-    mismatchedDeletionTimestamp(binding, obj) ?
+    mismatchedDeletionTimestamp(binding, object) ?
       `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
 
-    mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
+    mismatchedName(binding, object) ?
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(object)}'.` :
 
     misboundNamespace(binding) ?
       `${prefix} Cannot use namespace filter on a namespace object.` :
 
-    mismatchedLabels(binding, obj) ?
+    mismatchedLabels(binding, object) ?
       (
         `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
+        `but Object carries '${JSON.stringify(carriedLabels(object))}'.`
       ) :
 
-    mismatchedAnnotations(binding, obj) ?
+    mismatchedAnnotations(binding, object) ?
       (
         `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+        `but Object carries '${JSON.stringify(carriedAnnotations(object))}'.`
       ) :
 
-    uncarryableNamespace(capabilityNamespaces, obj) ?
+    uncarryableNamespace(capabilityNamespaces, object) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(object)}' ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
@@ -116,32 +116,32 @@ export function filterNoMatchReason(
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
-    mismatchedNamespace(binding, obj) ?
+    mismatchedNamespace(binding, object) ?
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
+        `but Object carries '${carriedNamespace(object)}'.`
       ) :
 
-    mismatchedNamespaceRegex(binding, obj) ?
+    mismatchedNamespaceRegex(binding, object) ?
       (
         `${prefix} Binding defines namespace regexes ` +
         `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
+        `but Object carries '${carriedNamespace(object)}'.`
       ) :
 
-    mismatchedNameRegex(binding, obj) ?
+    mismatchedNameRegex(binding, object) ?
       (
         `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
+        `but Object carries '${carriedName(object)}'.`
       ) :
 
-    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
+    carriesIgnoredNamespace(ignoredNamespaces, object) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(object)}' ` +
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 
-    missingCarriableNamespace(capabilityNamespaces, obj) ? 
+    missingCarriableNamespace(capabilityNamespaces, object) ? 
       (
         `${prefix} Object does not carry a namespace ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`

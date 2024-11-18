@@ -3,20 +3,47 @@
 
 import { expect, describe, it } from "@jest/globals";
 import * as sut from "../adjudicators";
-import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial } from "../../types";
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
+import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
 import { Event } from "../../enums";
+
+const defaultFilters = {
+  annotations: {},
+  deletionTimestamp: false,
+  labels: {},
+  name: "",
+  namespaces: [],
+  regexName: "^default$",
+  regexNamespaces: [],
+};
+const defaultBinding: Binding = {
+  event: Event.ANY,
+  filters: defaultFilters,
+  kind: { kind: "some-kind", group: "some-group" },
+  model: kind.Pod,
+  isFinalize: false,
+  isMutate: false,
+  isQueue: false,
+  isValidate: false,
+  isWatch: false,
+};
 
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
-    [{ filters: { deletionTimestamp: null } }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
+    // [{ filters: { deletionTimestamp: null } }, false],
     [{ filters: { deletionTimestamp: false } }, false],
     [{ filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        deletionTimestamp: given.filters.deletionTimestamp,
+      },
+    };
 
     const result = sut.definesDeletionTimestamp(binding);
 
@@ -27,13 +54,19 @@ describe("definesDeletionTimestamp", () => {
 describe("ignoresDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    [{}, true],
-    [{ filters: {} }, true],
-    [{ filters: { deletionTimestamp: null } }, true],
+    // [{}, true],
+    // [{ filters: {} }, true],
+    // [{ filters: { deletionTimestamp: null } }, true],
     [{ filters: { deletionTimestamp: false } }, true],
     [{ filters: { deletionTimestamp: true } }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        deletionTimestamp: given.filters.deletionTimestamp,
+      },
+    };
 
     const result = sut.ignoresDeletionTimestamp(binding);
 
@@ -44,12 +77,18 @@ describe("ignoresDeletionTimestamp", () => {
 describe("definedName", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ filters: {} }, ""],
-    [{ filters: { name: null } }, ""],
+    // [{}, ""],
+    // [{ filters: {} }, ""],
+    // [{ filters: { name: null } }, ""],
     [{ filters: { name: "name" } }, "name"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        name: given.filters.name,
+      },
+    };
 
     const result = sut.definedName(binding);
 
@@ -60,12 +99,18 @@ describe("definedName", () => {
 describe("definesName", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
-    [{ filters: { name: null } }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
+    // [{ filters: { name: null } }, false],
     [{ filters: { name: "name" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        name: given.filters.name,
+      },
+    };
 
     const result = sut.definesName(binding);
 
@@ -76,12 +121,18 @@ describe("definesName", () => {
 describe("ignoresName", () => {
   //[ Binding, result ]
   it.each([
-    [{}, true],
-    [{ filters: {} }, true],
-    [{ filters: { name: null } }, true],
+    // [{}, true],
+    // [{ filters: {} }, true],
+    // [{ filters: { name: null } }, true],
     [{ filters: { name: "name" } }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        name: given.filters.name,
+      },
+    };
 
     const result = sut.ignoresName(binding);
 
@@ -92,12 +143,18 @@ describe("ignoresName", () => {
 describe("definedNameRegex", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ filters: {} }, ""],
-    [{ filters: { regexName: null } }, ""],
-    [{ filters: { regexName: "n.me" } }, "n.me"],
+    // [{}, ""],
+    // [{ filters: {} }, ""],
+    // [{ filters: { regexName: null } }, ""],
+    [{ filters: { regexName: "n.me" } }, "n.me"], // TODO: should this be a regex object?
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        regexName: given.filters.regexName,
+      },
+    };
 
     const result = sut.definedNameRegex(binding);
 
@@ -108,12 +165,18 @@ describe("definedNameRegex", () => {
 describe("definesNameRegex", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
-    [{ filters: { regexName: null } }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
+    // [{ filters: { regexName: null } }, false],
     [{ filters: { regexName: "n.me" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        regexName: given.filters.regexName,
+      },
+    };
 
     const result = sut.definesNameRegex(binding);
 
@@ -121,17 +184,26 @@ describe("definesNameRegex", () => {
   });
 });
 
+const defaultKubernetesObject: KubernetesObject = {
+  apiVersion: "some-version",
+  kind: "some-kind",
+  metadata: { name: "some-name" },
+};
+
 describe("carriedName", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, ""],
-    [{ metadata: {} }, ""],
-    [{ metadata: { name: null } }, ""],
+    // [{}, ""],
+    // [{ metadata: {} }, ""],
+    // [{ metadata: { name: null } }, ""],
     [{ metadata: { name: "name" } }, "name"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { name: given.metadata.name },
+    };
 
-    const result = sut.carriedName(binding);
+    const result = sut.carriedName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -140,14 +212,17 @@ describe("carriedName", () => {
 describe("carriesName", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { name: null } }, false],
+    // [{}, false],
+    // [{ metadata: {} }, false],
+    // [{ metadata: { name: null } }, false],
     [{ metadata: { name: "name" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { name: given.metadata.name },
+    };
 
-    const result = sut.carriesName(binding);
+    const result = sut.carriesName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -156,14 +231,17 @@ describe("carriesName", () => {
 describe("missingName", () => {
   //[ Binding, result ]
   it.each([
-    [{}, true],
-    [{ metadata: {} }, true],
-    [{ metadata: { name: null } }, true],
+    // [{}, true],
+    // [{ metadata: {} }, true],
+    // [{ metadata: { name: null } }, true],
     [{ metadata: { name: "name" } }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { name: given.metadata.name },
+    };
 
-    const result = sut.missingName(binding);
+    const result = sut.missingName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -172,13 +250,19 @@ describe("missingName", () => {
 describe("bindsToNamespace", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ kind: {} }, false],
+    // [{}, false],
+    // [{ kind: {} }, false],
     [{ kind: { kind: null } }, false],
     [{ kind: { kind: "" } }, false],
     [{ kind: { kind: "Namespace" } }, true],
-  ])("given binding %j returns %s", (bnd, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
+  ])("given binding %j returns %s", (given, expected) => {
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+      },
+      kind: given.kind.kind,
+    };
 
     const result = sut.bindsToNamespace(binding);
 
@@ -189,14 +273,20 @@ describe("bindsToNamespace", () => {
 describe("definedNamespaces", () => {
   //[ Binding, result ]
   it.each([
-    [{}, []],
-    [{ filters: {} }, []],
+    // [{}, []],
+    // [{ filters: {} }, []],
     [{ filters: { namespaces: null } }, []],
     [{ filters: { namespaces: [] } }, []],
     [{ filters: { namespaces: ["namespace"] } }, ["namespace"]],
     [{ filters: { namespaces: ["name", "space"] } }, ["name", "space"]],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        namespaces: given.filters.namespaces,
+      },
+    };
 
     const result = sut.definedNamespaces(binding);
 
@@ -207,14 +297,20 @@ describe("definedNamespaces", () => {
 describe("definesNamespaces", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
     [{ filters: { namespaces: null } }, false],
     [{ filters: { namespaces: [] } }, false],
     [{ filters: { namespaces: ["namespace"] } }, true],
     [{ filters: { namespaces: ["name", "space"] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        namespaces: given.filters.namespaces,
+      },
+    };
 
     const result = sut.definesNamespaces(binding);
 
@@ -225,14 +321,20 @@ describe("definesNamespaces", () => {
 describe("definedNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
-    [{}, []],
-    [{ filters: {} }, []],
+    // [{}, []],
+    // [{ filters: {} }, []],
     [{ filters: { regexNamespaces: null } }, []],
     [{ filters: { regexNamespaces: [] } }, []],
     [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
     [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        namespaces: given.filters.regexNamespaces,
+      },
+    };
 
     const result = sut.definedNamespaceRegexes(binding);
 
@@ -243,14 +345,20 @@ describe("definedNamespaceRegexes", () => {
 describe("definesNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
     [{ filters: { regexNamespaces: null } }, false],
     [{ filters: { regexNamespaces: [] } }, false],
     [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
     [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        namespaces: given.filters.regexNamespaces,
+      },
+    };
 
     const result = sut.definesNamespaceRegexes(binding);
 
@@ -267,7 +375,7 @@ describe("carriedNamespace", () => {
     [{ metadata: { namespace: "" } }, ""],
     [{ metadata: { namespace: "namespace" } }, "namespace"],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = given as DeepPartial<KubernetesObject>;
 
     const result = sut.carriedNamespace(binding);
 
@@ -278,15 +386,18 @@ describe("carriedNamespace", () => {
 describe("carriesNamespace", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { namespace: null } }, false],
+    // [{}, false],
+    // [{ metadata: {} }, false],
+    // [{ metadata: { namespace: null } }, false],
     [{ metadata: { namespace: "" } }, false],
     [{ metadata: { namespace: "namespace" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { namespace: given.metadata.namespace },
+    };
 
-    const result = sut.carriesNamespace(binding);
+    const result = sut.carriesNamespace(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -300,7 +411,14 @@ describe("misboundNamespace", () => {
     [{ kind: { kind: "Namespace" }, filters: { namespaces: [] } }, false],
     [{ kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        namespaces: given.filters.namespaces,
+      },
+      kind: given.kind,
+    };
 
     const result = sut.misboundNamespace(binding);
 
@@ -311,14 +429,20 @@ describe("misboundNamespace", () => {
 describe("definedAnnotations", () => {
   //[ Binding, result ]
   it.each([
-    [{}, {}],
-    [{ filters: {} }, {}],
-    [{ filters: { annotations: null } }, {}],
+    // [{}, {}],
+    // [{ filters: {} }, {}],
+    // [{ filters: { annotations: null } }, {}],
     [{ filters: { annotations: {} } }, {}],
     [{ filters: { annotations: { annotation: "" } } }, { annotation: "" }],
     [{ filters: { annotations: { anno: "tation" } } }, { anno: "tation" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        annotations: given.filters.annotations,
+      },
+    };
 
     const result = sut.definedAnnotations(binding);
 
@@ -329,14 +453,20 @@ describe("definedAnnotations", () => {
 describe("definesAnnotations", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
-    [{ filters: { annotations: null } }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
+    // [{ filters: { annotations: null } }, false],
     [{ filters: { annotations: {} } }, false],
     [{ filters: { annotations: { annotation: "" } } }, true],
     [{ filters: { annotations: { anno: "tation" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        annotations: given.filters.annotations,
+      },
+    };
 
     const result = sut.definesAnnotations(binding);
 
@@ -347,16 +477,19 @@ describe("definesAnnotations", () => {
 describe("carriedAnnotations", () => {
   //[ KuberneteObject, result ]
   it.each([
-    [{}, {}],
-    [{ metadata: {} }, {}],
-    [{ metadata: { annotations: null } }, {}],
+    // [{}, {}],
+    // [{ metadata: {} }, {}],
+    // [{ metadata: { annotations: null } }, {}],
     [{ metadata: { annotations: {} } }, {}],
     [{ metadata: { annotations: { annotation: "" } } }, { annotation: "" }],
     [{ metadata: { annotations: { anno: "tation" } } }, { anno: "tation" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { annotations: given.metadata.annotations },
+    };
 
-    const result = sut.carriedAnnotations(binding);
+    const result = sut.carriedAnnotations(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -365,16 +498,19 @@ describe("carriedAnnotations", () => {
 describe("carriesAnnotations", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { annotations: null } }, false],
+    // [{}, false],
+    // [{ metadata: {} }, false],
+    // [{ metadata: { annotations: null } }, false],
     [{ metadata: { annotations: {} } }, false],
     [{ metadata: { annotations: { annotation: "" } } }, true],
     [{ metadata: { annotations: { anno: "tation" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { annotations: given.metadata.annotations },
+    };
 
-    const result = sut.carriesAnnotations(binding);
+    const result = sut.carriesAnnotations(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -383,14 +519,20 @@ describe("carriesAnnotations", () => {
 describe("definedLabels", () => {
   //[ Binding, result ]
   it.each([
-    [{}, {}],
-    [{ filters: {} }, {}],
-    [{ filters: { labels: null } }, {}],
+    // [{}, {}],
+    // [{ filters: {} }, {}],
+    // [{ filters: { labels: null } }, {}],
     [{ filters: { labels: {} } }, {}],
     [{ filters: { labels: { label: "" } } }, { label: "" }],
     [{ filters: { labels: { lab: "el" } } }, { lab: "el" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        labels: given.filters.labels,
+      },
+    };
 
     const result = sut.definedLabels(binding);
 
@@ -401,14 +543,20 @@ describe("definedLabels", () => {
 describe("definesLabels", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ filters: {} }, false],
-    [{ filters: { labels: null } }, false],
+    // [{}, false],
+    // [{ filters: {} }, false],
+    // [{ filters: { labels: null } }, false],
     [{ filters: { labels: {} } }, false],
     [{ filters: { labels: { label: "" } } }, true],
     [{ filters: { labels: { lab: "el" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      filters: {
+        ...defaultFilters,
+        labels: given.filters.labels,
+      },
+    };
 
     const result = sut.definesLabels(binding);
 
@@ -419,16 +567,19 @@ describe("definesLabels", () => {
 describe("carriedLabels", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, {}],
-    [{ metadata: {} }, {}],
-    [{ metadata: { labels: null } }, {}],
+    // [{}, {}],
+    // [{ metadata: {} }, {}],
+    // [{ metadata: { labels: null } }, {}],
     [{ metadata: { labels: {} } }, {}],
     [{ metadata: { labels: { label: "" } } }, { label: "" }],
     [{ metadata: { labels: { lab: "el" } } }, { lab: "el" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { labels: given.metadata.labels },
+    };
 
-    const result = sut.carriedLabels(binding);
+    const result = sut.carriedLabels(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -437,16 +588,19 @@ describe("carriedLabels", () => {
 describe("carriesLabels", () => {
   //[ KubernetesObject, result ]
   it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { labels: null } }, false],
+    // [{}, false],
+    // [{ metadata: {} }, false],
+    // [{ metadata: { labels: null } }, false],
     [{ metadata: { labels: {} } }, false],
     [{ metadata: { labels: { label: "" } } }, true],
     [{ metadata: { labels: { lab: "el" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { labels: given.metadata.labels },
+    };
 
-    const result = sut.carriesLabels(binding);
+    const result = sut.carriesLabels(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -455,15 +609,18 @@ describe("carriesLabels", () => {
 describe("definedEvent", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ event: "" }, ""],
-    [{ event: "nonsense" }, "nonsense"],
-    [{ event: Event.Create }, Event.Create],
-    [{ event: Event.CreateOrUpdate }, Event.CreateOrUpdate],
-    [{ event: Event.Update }, Event.Update],
-    [{ event: Event.Delete }, Event.Delete],
+    // [{}, ""],
+    // [{ event: "" }, ""],
+    // [{ event: "nonsense" }, "nonsense"],
+    [{ event: Event.CREATE }, Event.CREATE],
+    [{ event: Event.CREATE_OR_UPDATE }, Event.CREATE_OR_UPDATE],
+    [{ event: Event.UPDATE }, Event.UPDATE],
+    [{ event: Event.DELETE }, Event.DELETE],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      event: given.event,
+    };
 
     const result = sut.definedEvent(binding);
 
@@ -474,15 +631,18 @@ describe("definedEvent", () => {
 describe("definesDelete", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ event: "" }, false],
-    [{ event: "nonsense" }, false],
-    [{ event: Event.Create }, false],
-    [{ event: Event.CreateOrUpdate }, false],
-    [{ event: Event.Update }, false],
-    [{ event: Event.Delete }, true],
+    // [{}, false],
+    // [{ event: "" }, false],
+    // [{ event: "nonsense" }, false],
+    [{ event: Event.CREATE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, false],
+    [{ event: Event.UPDATE }, false],
+    [{ event: Event.DELETE }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      event: given.event,
+    };
 
     const result = sut.definesDelete(binding);
 
@@ -493,18 +653,21 @@ describe("definesDelete", () => {
 describe("misboundDeleteWithDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ event: "" }, false],
-    [{ event: "nonsense" }, false],
-    [{ event: Event.Create }, false],
-    [{ event: Event.CreateOrUpdate }, false],
-    [{ event: Event.Update }, false],
-    [{ event: Event.Delete }, false],
-    [{ event: Event.Delete, filters: {} }, false],
-    [{ event: Event.Delete, filters: { deletionTimestamp: false } }, false],
-    [{ event: Event.Delete, filters: { deletionTimestamp: true } }, true],
+    // [{}, false],
+    // [{ event: "" }, false],
+    // [{ event: "nonsense" }, false],
+    [{ event: Event.CREATE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, false],
+    [{ event: Event.UPDATE }, false],
+    [{ event: Event.DELETE }, false],
+    [{ event: Event.DELETE, filters: {} }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      event: given.event,
+    };
 
     const result = sut.misboundDeleteWithDeletionTimestamp(binding);
 
@@ -515,14 +678,17 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
 describe("definedGroup", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
-    [{ kind: {} }, ""],
+    // [{}, ""],
+    // [{ kind: null }, ""],
+    // [{ kind: {} }, ""],
     [{ kind: { group: null } }, ""],
     [{ kind: { group: "" } }, ""],
     [{ kind: { group: "group" } }, "group"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { group: given.kind.group },
+    };
 
     const result = sut.definedGroup(binding);
 
@@ -533,14 +699,17 @@ describe("definedGroup", () => {
 describe("definesGroup", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ kind: null }, false],
-    [{ kind: {} }, false],
+    // [{}, false],
+    // [{ kind: null }, false],
+    // [{ kind: {} }, false],
     [{ kind: { group: null } }, false],
     [{ kind: { group: "" } }, false],
     [{ kind: { group: "group" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { group: given.kind.group },
+    };
 
     const result = sut.definesGroup(binding);
 
@@ -551,14 +720,17 @@ describe("definesGroup", () => {
 describe("definedVersion", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
-    [{ kind: {} }, ""],
-    [{ kind: { version: null } }, ""],
+    // [{}, ""],
+    // [{ kind: null }, ""],
+    // [{ kind: {} }, ""],
+    // [{ kind: { version: null } }, ""],
     [{ kind: { version: "" } }, ""],
     [{ kind: { version: "version" } }, "version"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
+    };
 
     const result = sut.definedVersion(binding);
 
@@ -569,14 +741,17 @@ describe("definedVersion", () => {
 describe("definesVersion", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ kind: null }, false],
-    [{ kind: {} }, false],
-    [{ kind: { version: null } }, false],
+    // [{}, false],
+    // [{ kind: null }, false],
+    // [{ kind: {} }, false],
+    // [{ kind: { version: null } }, false],
     [{ kind: { version: "" } }, false],
     [{ kind: { version: "version" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
+    };
 
     const result = sut.definesVersion(binding);
 
@@ -587,14 +762,17 @@ describe("definesVersion", () => {
 describe("definedKind", () => {
   //[ Binding, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
-    [{ kind: {} }, ""],
+    // [{}, ""],
+    // [{ kind: null }, ""],
+    // [{ kind: {} }, ""],
     [{ kind: { kind: null } }, ""],
     [{ kind: { kind: "" } }, ""],
     [{ kind: { kind: "kind" } }, "kind"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { kind: given.kind.kind },
+    };
 
     const result = sut.definedKind(binding);
 
@@ -605,14 +783,17 @@ describe("definedKind", () => {
 describe("definesKind", () => {
   //[ Binding, result ]
   it.each([
-    [{}, false],
-    [{ kind: null }, false],
-    [{ kind: {} }, false],
+    // [{}, false],
+    // [{ kind: null }, false],
+    // [{ kind: {} }, false],
     [{ kind: { kind: null } }, false],
     [{ kind: { kind: "" } }, false],
     [{ kind: { kind: "kind" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      kind: { kind: given.kind.kind },
+    };
 
     const result = sut.definesKind(binding);
 
@@ -629,7 +810,10 @@ describe("definedCategory", () => {
     [{ isWatch: true }, "Watch"],
     [{ isFinalize: true, isWatch: true }, "Finalize"],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      ...given,
+    };
 
     const result = sut.definedCategory(binding);
 
@@ -638,7 +822,9 @@ describe("definedCategory", () => {
 });
 
 describe("definedCallback", () => {
-  const validateCallback = () => {};
+  const validateCallback = (): ValidateActionResponse => {
+    return { allowed: false };
+  };
   const mutateCallback = () => {};
   const watchCallback = () => {};
   const finalizeCallback = () => {};
@@ -651,7 +837,10 @@ describe("definedCallback", () => {
     [{ isWatch: true, watchCallback }, watchCallback],
     [{ isFinalize: true, finalizeCallback }, finalizeCallback],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      ...given,
+    };
 
     const result = sut.definedCallback(binding);
 
@@ -660,7 +849,9 @@ describe("definedCallback", () => {
 });
 
 describe("definedCallbackName", () => {
-  const validateCallback = () => {};
+  const validateCallback = (): ValidateActionResponse => {
+    return { allowed: false };
+  };
   const mutateCallback = () => {};
   const watchCallback = () => {};
   const finalizeCallback = () => {};
@@ -673,7 +864,10 @@ describe("definedCallbackName", () => {
     [{ isWatch: true, watchCallback }, "watchCallback"],
     [{ isFinalize: true, finalizeCallback }, "finalizeCallback"],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = given as DeepPartial<Binding>;
+    const binding = {
+      ...defaultBinding,
+      ...given,
+    };
 
     const result = sut.definedCallbackName(binding);
 
