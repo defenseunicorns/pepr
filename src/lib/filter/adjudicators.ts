@@ -283,8 +283,8 @@ export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, defin
 
 export const operationMatchesEvent = anyPass([
   pipe(nthArg(1), equals(Event.ANY)),
-  pipe((operation, event) => operation === event),
-  pipe((operation, event) => (operation ? event.includes(operation) : false)),
+  pipe((operation: Operation, event: Event): boolean => operation.valueOf() === event.valueOf()),
+  pipe((operation: Operation, event: Event): boolean => (operation ? event.includes(operation) : false)),
 ]);
 
 export const mismatchedEvent = pipe(
