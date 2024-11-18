@@ -45,6 +45,11 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
+      - name: install load script deps
+        run: |
+          cd "$PEPR"
+          npm ci
+
       - name: "load.cli.ts prep"
         run: |
           cd "$PEPR"
