@@ -1025,6 +1025,7 @@ program
       `--interactive `,
       `--user ${user} `,
       `--volume ${opts.outputDir}:/workdir `,
+      `--platform linux/amd64 `,
       `gnuoctave/octave:9.2.0 `,
       `bash -c 'octave ${path.basename(octaveFile)}'`,
     ].join(" ");
