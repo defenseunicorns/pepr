@@ -8,10 +8,6 @@ on:
         description: 'Branch to run the workflow on'
         required: true
         default: 'main'
-      http2:
-        description: 'use http2 watcher'
-        required: false
-        default: 'false'
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
 
@@ -121,14 +117,8 @@ jobs:
         run: mkdir -p logs
 
       - name: Deploy Pepr 
-        if: ${{ (github.event.inputs.http2 || 'none') != 'true' }}
         run: |
           kubectl apply -f hack/soak.ci.yaml
-
-      - name: Deploy http2 Pepr
-        if: ${{ (github.event.inputs.http2 || 'none') == 'true' }}
-        run: |
-          kubectl apply -f hack/soak-http2.ci.yaml
 
       - name: Deploy applications
         run: |

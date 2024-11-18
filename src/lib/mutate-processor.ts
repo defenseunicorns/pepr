@@ -6,7 +6,7 @@ import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
-import { shouldSkipRequest } from "./filter/shouldSkipRequest";
+import { shouldSkipRequest } from "./filter/filter";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
 import Log from "./logger";
