@@ -5,12 +5,12 @@
 //  npx ts-node hack/load.cli.ts prep ./
 //  npx ts-node hack/load.cli.ts cluster up
 //  npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load
-//  npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load
+//  npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load capabilities/configmap.yaml
 //  npx ts-node hack/load.cli.ts post
 //  npx ts-node hack/load.cli.ts graph
 //  npx ts-node hack/load.cli.ts cluster down
 //
-//  npx ts-node hack/load.cli.ts prep ./ ; npx ts-node hack/load.cli.ts cluster up ; npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts post ; npx ts-node hack/load.cli.ts graph ; npx ts-node hack/load.cli.ts cluster down
+//  npx ts-node hack/load.cli.ts prep ./ ; npx ts-node hack/load.cli.ts cluster up ; npx ts-node hack/load.cli.ts deploy ./pepr-0.0.0-development.tgz ./pepr-dev.tar ../pepr-excellent-examples/hello-pepr-load ; npx ts-node hack/load.cli.ts run ../pepr-excellent-examples/hello-pepr-load capabilities/configmap.yaml ; npx ts-node hack/load.cli.ts post ; npx ts-node hack/load.cli.ts graph ; npx ts-node hack/load.cli.ts cluster down
 
 import { Command, Option } from "commander";
 import { spawn } from "child_process";
@@ -632,6 +632,9 @@ program
     }
     const outAbs = path.resolve(outTrim);
     const outBase = path.dirname(outAbs);
+    if (await fileUnreadable(outBase)) {
+      await fs.mkdir(outBase);
+    }
     if (await fileUnwriteable(outAbs)) {
       if (await fileUnwriteable(outBase)) {
         console.error(
