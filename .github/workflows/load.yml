@@ -56,7 +56,7 @@ jobs:
           name: tgz
           path: pepr-0.0.0-development.tgz
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: upload pepr controller image artifact (.tar)
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
@@ -64,7 +64,7 @@ jobs:
           name: tar
           path: pepr-dev.tar
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: "load.cli.ts cluster up"
         run: |
@@ -92,7 +92,7 @@ jobs:
           name: actress.log
           path: load/*-actress.log
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: upload raw test sample log (audience)
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
@@ -100,7 +100,7 @@ jobs:
           name: audience.log
           path: load/*-audience.log
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: "load.cli.ts post"
         run: |
@@ -113,7 +113,7 @@ jobs:
           name: actress.json
           path: load/*-actress.json
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: upload parsed sample log (audience)
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
@@ -121,7 +121,7 @@ jobs:
           name: audience.json
           path: load/*-audience.json
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: upload load test summary
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
@@ -129,7 +129,7 @@ jobs:
           name: summary.json
           path: load/*-summary.json
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
 
       - name: "load.cli.ts graph"
         run: |
@@ -142,4 +142,4 @@ jobs:
           name: watcher.png
           path: load/*.png
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 30
