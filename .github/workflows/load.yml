@@ -45,7 +45,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: install load script deps
+      - name: install load script run dependencies
         run: |
           cd "$PEPR"
           npm ci
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: tgz
-          path: pepr-0.0.0-development.tgz
+          path: "**/pepr-0.0.0-development.tgz"
           if-no-files-found: error
           retention-days: 30
 
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: tar
-          path: pepr-dev.tar
+          path: "**/pepr-dev.tar"
           if-no-files-found: error
           retention-days: 30
 
@@ -95,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: actress.log
-          path: load/*-actress.log
+          path: "**/load/*-actress.log"
           if-no-files-found: error
           retention-days: 30
 
@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: audience.log
-          path: load/*-audience.log
+          path: "**/load/*-audience.log"
           if-no-files-found: error
           retention-days: 30
 
@@ -116,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: actress.json
-          path: load/*-actress.json
+          path: "**/load/*-actress.json"
           if-no-files-found: error
           retention-days: 30
 
@@ -124,7 +124,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: audience.json
-          path: load/*-audience.json
+          path: "**/load/*-audience.json"
           if-no-files-found: error
           retention-days: 30
 
@@ -132,7 +132,7 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: summary.json
-          path: load/*-summary.json
+          path: "**/load/*-summary.json"
           if-no-files-found: error
           retention-days: 30
 
@@ -145,6 +145,6 @@ jobs:
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: watcher.png
-          path: load/*.png
+          path: "**/load/*.png"
           if-no-files-found: error
           retention-days: 30
