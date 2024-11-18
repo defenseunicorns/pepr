@@ -23,7 +23,9 @@ stats.html
 insecure-tls*
 pepr-test-module
 pepr-upgrade-test
+*.tar
 *.tgz
+load/
 coverage/
 .DS_Store
 # Test binary, build with `go test -c`
