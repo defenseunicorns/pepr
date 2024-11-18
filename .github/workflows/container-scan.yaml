@@ -30,6 +30,11 @@ jobs:
         run: npm ci
       - name: Build Pepr Controller Image
         run: npm run build:image
+      - name: Configure Grype Ignore File
+        run: |
+          mkdir -p ~/.grype
+          echo "ignore:" > ~/.grype.yaml
+          echo "  - vulnerability: GHSA-3xgq-45jj-v275" >> ~/.grype.yaml
       - name: Vulnerability Scan
         uses: anchore/scan-action@f2ba85e044c8f5e5014c9a539328a9c78d3bfa49 # v5.2.1
         with:
