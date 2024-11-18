@@ -4,7 +4,7 @@
 import { expect, test, describe } from "@jest/globals";
 import { kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
-import { CreatePod, DeletePod } from "../../fixtures/loader";
+import { AdmissionRequestCreatePod, AdmissionRequestDeletePod } from "../../fixtures/loader";
 import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
@@ -122,7 +122,7 @@ test("create: should reject when regex name does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
   );
@@ -144,7 +144,7 @@ test("create: should not reject when regex name does match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
@@ -164,7 +164,7 @@ test("delete: should reject when regex name does not match", () => {
     },
     callback,
   };
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
   );
@@ -186,7 +186,7 @@ test("delete: should not reject when regex name does match", () => {
     },
     callback,
   };
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
@@ -206,7 +206,7 @@ test("create: should not reject when regex namespace does match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
@@ -226,7 +226,7 @@ test("create: should reject when regex namespace does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
   );
@@ -248,7 +248,7 @@ test("delete: should reject when regex namespace does not match", () => {
     },
     callback,
   };
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
   );
@@ -270,7 +270,7 @@ test("delete: should not reject when regex namespace does match", () => {
     },
     callback,
   };
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
 
@@ -290,7 +290,7 @@ test("delete: should reject when name does not match", () => {
     },
     callback,
   };
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines name '.*' but Object carries '.*'./,
   );
@@ -316,7 +316,7 @@ test("should reject when kind does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines kind '.*' but Request declares '.*'./,
@@ -343,7 +343,7 @@ test("should reject when group does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines group '.*' but Request declares '.*'./,
@@ -370,7 +370,7 @@ test("should reject when version does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines version '.*' but Request declares '.*'./,
@@ -393,7 +393,7 @@ test("should allow when group, version, and kind match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
@@ -418,7 +418,7 @@ test("should allow when kind match and others are empty", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
@@ -439,7 +439,7 @@ test("should reject when the capability namespace does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
     /Ignoring Admission Callback: Object carries namespace '.*' but namespaces allowed by Capability are '.*'./,
@@ -462,7 +462,7 @@ test("should reject when namespace does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines namespaces '.*' but Object carries '.*'./,
@@ -485,7 +485,7 @@ test("should allow when namespace is match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
@@ -508,7 +508,7 @@ test("should reject when label does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines labels '.*' but Object carries '.*'./,
@@ -535,7 +535,7 @@ test("should allow when label is match", () => {
     callback,
   };
 
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.labels = {
     foo: "bar",
@@ -564,7 +564,7 @@ test("should reject when annotation does not match", () => {
     },
     callback,
   };
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toMatch(
     /Ignoring Admission Callback: Binding defines annotations '.*' but Object carries '.*'./,
@@ -591,7 +591,7 @@ test("should allow when annotation is match", () => {
     callback,
   };
 
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.annotations = {
     foo: "bar",
@@ -621,7 +621,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
     callback,
   };
 
-  const pod = DeletePod();
+  const pod = AdmissionRequestDeletePod();
 
   expect(shouldSkipRequest(binding, pod, [])).toBe("");
 });
@@ -646,7 +646,7 @@ test("should allow when deletionTimestamp is present on pod", () => {
     callback,
   };
 
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata!.deletionTimestamp = new Date("2021-09-01T00:00:00Z");
   pod.object.metadata.annotations = {
@@ -678,7 +678,7 @@ test("should reject when deletionTimestamp is not present on pod", () => {
     callback,
   };
 
-  const pod = CreatePod();
+  const pod = AdmissionRequestCreatePod();
   pod.object.metadata = pod.object.metadata || {};
   pod.object.metadata.annotations = {
     foo: "bar",
