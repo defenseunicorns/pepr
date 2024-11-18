@@ -9,9 +9,9 @@ import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
 
-export const callback = () => undefined;
+const callback = () => undefined;
 
-export const podKind = modelToGroupVersionKind(kind.Pod.name);
+const podKind = modelToGroupVersionKind(kind.Pod.name);
 
 describe("Fuzzing shouldSkipRequest", () => {
   test("should handle random inputs without crashing", () => {

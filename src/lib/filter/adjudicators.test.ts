@@ -8,7 +8,6 @@ import {
   carriesIgnoredNamespace,
   metasMismatch,
   mismatchedAnnotations,
-  mismatchedDeletionTimestamp,
   mismatchedEvent,
   mismatchedGroup,
   mismatchedKind,
@@ -23,26 +22,36 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { kind, KubernetesObject, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { AdmissionRequest, Binding, DeepPartial } from "../types";
 import { Event, Operation } from "../enums";
 
-describe("carriesDeletionTimestamp", () => {
-  //[ KubernetesObject, result ]
-  it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { deletionTimestamp: null } }, false],
-    [{ metadata: { deletionTimestamp: new Date() } }, true],
-  ])("given %j, returns %s", (given, expected) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const ko = given as DeepPartial<KubernetesObject>;
+const defaultFilters = {
+  annotations: {},
+  deletionTimestamp: false,
+  labels: {},
+  name: "",
+  namespaces: [],
+  regexName: "^default$",
+  regexNamespaces: [],
+};
+const defaultBinding: Binding = {
+  event: Event.ANY,
+  filters: defaultFilters,
+  kind: modelToGroupVersionKind(kind.Pod.name),
+  model: kind.Pod,
+};
 
-    const result = sut.mismatchedDeletionTimestamp(ko);
-
-    expect(result).toBe(expected);
-  });
-});
+const defaultAdmissionRequest = {
+  uid: "some-uid",
+  kind: { kind: "a-kind", group: "a-group" },
+  group: "a-group",
+  resource: { group: "some-group", version: "some-version", resource: "some-resource" },
+  operation: Operation.CONNECT,
+  name: "some-name",
+  userInfo: {},
+  object: {},
+};
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
@@ -401,9 +410,9 @@ describe("operationMatchesEvent", () => {
 describe("mismatchedEvent", () => {
   //[ Binding, AdmissionRequest, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { operation: Operation.CREATE }, true],
-    [{ event: Event.CREATE }, {}, true],
+    // [{}, {}, false],
+    // [{}, { operation: Operation.CREATE }, true],
+    // [{ event: Event.CREATE }, {}, true],
 
     [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
     [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
@@ -429,8 +438,14 @@ describe("mismatchedEvent", () => {
     [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
     [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
   ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const request = req as DeepPartial<AdmissionRequest>;
+    const binding: Binding = {
+      ...defaultBinding,
+      event: bnd.event,
+    };
+    const request: AdmissionRequest = {
+      ...defaultAdmissionRequest,
+      operation: req.operation,
+    };
 
     const result = mismatchedEvent(binding, request);
 

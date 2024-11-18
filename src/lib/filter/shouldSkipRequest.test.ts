@@ -14,7 +14,7 @@ import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
 
-export const callback = () => undefined;
+const callback = () => undefined;
 
 export const podKind = modelToGroupVersionKind(kind.Pod.name);
 export const deploymentKind = modelToGroupVersionKind(kind.Deployment.name);

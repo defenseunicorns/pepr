@@ -288,7 +288,8 @@ export const operationMatchesEvent = anyPass([
 ]);
 
 export const mismatchedEvent = pipe(
-  (binding, request) => operationMatchesEvent(declaredOperation(request), definedEvent(binding)),
+  (binding: Binding, request: AdmissionRequest): boolean =>
+    operationMatchesEvent(declaredOperation(request), definedEvent(binding)),
   not,
 );
 
