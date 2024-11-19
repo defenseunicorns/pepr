@@ -90,9 +90,6 @@ describe("definesDeletionTimestamp", () => {
 describe("ignoresDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, true],
-    // [{ filters: {} }, true],
-    // [{ filters: { deletionTimestamp: null } }, true],
     [{ filters: { deletionTimestamp: false } }, true],
     [{ filters: { deletionTimestamp: true } }, false],
   ])("given %j, returns %s", (given, expected) => {
@@ -112,12 +109,7 @@ describe("ignoresDeletionTimestamp", () => {
 
 describe("definedName", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, ""],
-    // [{ filters: {} }, ""],
-    // [{ filters: { name: null } }, ""],
-    [{ filters: { name: "name" } }, "name"],
-  ])("given %j, returns '%s'", (given, expected) => {
+  it.each([[{ filters: { name: "name" } }, "name"]])("given %j, returns '%s'", (given, expected) => {
     const binding = {
       ...defaultBinding,
       filters: {

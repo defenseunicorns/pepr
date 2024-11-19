@@ -102,10 +102,9 @@ export const definesDeletionTimestamp = pipe(
 );
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
-export const definedName = pipe(
-  (binding: Partial<Binding>): string | undefined => binding?.filters?.name,
-  defaultTo(""),
-);
+export const definedName = pipe((binding: Binding): string => {
+  return "name" in binding.filters ? binding.filters.name : "";
+}, defaultTo(""));
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
