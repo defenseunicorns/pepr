@@ -87,7 +87,7 @@ jobs:
       - name: "load.cli.ts run"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts run \
+          npx ts-node hack/load.cli.ts run --act-intensity=2000 \
             ${PEXEX}/hello-pepr-load \
             capabilities/configmap.yaml
 
