@@ -2,10 +2,49 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import * as sut from "../adjudicators";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
 import { Event } from "../../enums";
+import {
+  bindsToNamespace,
+  carriedAnnotations,
+  carriedLabels,
+  carriedName,
+  carriedNamespace,
+  carriesAnnotations,
+  carriesLabels,
+  carriesName,
+  carriesNamespace,
+  definedAnnotations,
+  definedCallback,
+  definedCallbackName,
+  definedCategory,
+  definedEvent,
+  definedGroup,
+  definedKind,
+  definedLabels,
+  definedName,
+  definedNameRegex,
+  definedNamespaceRegexes,
+  definedNamespaces,
+  definedVersion,
+  definesAnnotations,
+  definesDelete,
+  definesDeletionTimestamp,
+  definesGroup,
+  definesKind,
+  definesLabels,
+  definesName,
+  definesNameRegex,
+  definesNamespaceRegexes,
+  definesNamespaces,
+  definesVersion,
+  ignoresDeletionTimestamp,
+  ignoresName,
+  misboundDeleteWithDeletionTimestamp,
+  misboundNamespace,
+  missingName,
+} from "../adjudicators";
 
 const defaultFilters = {
   annotations: {},
@@ -45,7 +84,7 @@ describe("definesDeletionTimestamp", () => {
       },
     };
 
-    const result = sut.definesDeletionTimestamp(binding);
+    const result = definesDeletionTimestamp(binding);
 
     expect(result).toBe(expected);
   });
@@ -68,7 +107,7 @@ describe("ignoresDeletionTimestamp", () => {
       },
     };
 
-    const result = sut.ignoresDeletionTimestamp(binding);
+    const result = ignoresDeletionTimestamp(binding);
 
     expect(result).toBe(expected);
   });
@@ -90,7 +129,7 @@ describe("definedName", () => {
       },
     };
 
-    const result = sut.definedName(binding);
+    const result = definedName(binding);
 
     expect(result).toBe(expected);
   });
@@ -112,7 +151,7 @@ describe("definesName", () => {
       },
     };
 
-    const result = sut.definesName(binding);
+    const result = definesName(binding);
 
     expect(result).toBe(expected);
   });
@@ -134,7 +173,7 @@ describe("ignoresName", () => {
       },
     };
 
-    const result = sut.ignoresName(binding);
+    const result = ignoresName(binding);
 
     expect(result).toBe(expected);
   });
@@ -156,7 +195,7 @@ describe("definedNameRegex", () => {
       },
     };
 
-    const result = sut.definedNameRegex(binding);
+    const result = definedNameRegex(binding);
 
     expect(result).toBe(expected);
   });
@@ -178,7 +217,7 @@ describe("definesNameRegex", () => {
       },
     };
 
-    const result = sut.definesNameRegex(binding);
+    const result = definesNameRegex(binding);
 
     expect(result).toBe(expected);
   });
@@ -203,7 +242,7 @@ describe("carriedName", () => {
       metadata: { name: given.metadata.name },
     };
 
-    const result = sut.carriedName(kubernetesObject);
+    const result = carriedName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -222,7 +261,7 @@ describe("carriesName", () => {
       metadata: { name: given.metadata.name },
     };
 
-    const result = sut.carriesName(kubernetesObject);
+    const result = carriesName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -241,7 +280,7 @@ describe("missingName", () => {
       metadata: { name: given.metadata.name },
     };
 
-    const result = sut.missingName(kubernetesObject);
+    const result = missingName(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -264,7 +303,7 @@ describe("bindsToNamespace", () => {
       kind: { kind: given.kind.kind },
     };
 
-    const result = sut.bindsToNamespace(binding);
+    const result = bindsToNamespace(binding);
 
     expect(result).toBe(expected);
   });
@@ -288,7 +327,7 @@ describe("definedNamespaces", () => {
       },
     };
 
-    const result = sut.definedNamespaces(binding);
+    const result = definedNamespaces(binding);
 
     expect(result).toEqual(expected);
   });
@@ -312,7 +351,7 @@ describe("definesNamespaces", () => {
       },
     };
 
-    const result = sut.definesNamespaces(binding);
+    const result = definesNamespaces(binding);
 
     expect(result).toBe(expected);
   });
@@ -336,7 +375,7 @@ describe("definedNamespaceRegexes", () => {
       },
     };
 
-    const result = sut.definedNamespaceRegexes(binding);
+    const result = definedNamespaceRegexes(binding);
 
     expect(result).toEqual(expected);
   });
@@ -360,7 +399,7 @@ describe("definesNamespaceRegexes", () => {
       },
     };
 
-    const result = sut.definesNamespaceRegexes(binding);
+    const result = definesNamespaceRegexes(binding);
 
     expect(result).toBe(expected);
   });
@@ -377,7 +416,7 @@ describe("carriedNamespace", () => {
   ])("given %j, returns %j", (given, expected) => {
     const binding = given as DeepPartial<KubernetesObject>;
 
-    const result = sut.carriedNamespace(binding);
+    const result = carriedNamespace(binding);
 
     expect(result).toEqual(expected);
   });
@@ -397,7 +436,7 @@ describe("carriesNamespace", () => {
       metadata: { namespace: given.metadata.namespace },
     };
 
-    const result = sut.carriesNamespace(kubernetesObject);
+    const result = carriesNamespace(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -420,7 +459,7 @@ describe("misboundNamespace", () => {
       kind: given.kind,
     };
 
-    const result = sut.misboundNamespace(binding);
+    const result = misboundNamespace(binding);
 
     expect(result).toBe(expected);
   });
@@ -444,7 +483,7 @@ describe("definedAnnotations", () => {
       },
     };
 
-    const result = sut.definedAnnotations(binding);
+    const result = definedAnnotations(binding);
 
     expect(result).toEqual(expected);
   });
@@ -468,7 +507,7 @@ describe("definesAnnotations", () => {
       },
     };
 
-    const result = sut.definesAnnotations(binding);
+    const result = definesAnnotations(binding);
 
     expect(result).toBe(expected);
   });
@@ -489,7 +528,7 @@ describe("carriedAnnotations", () => {
       metadata: { annotations: given.metadata.annotations },
     };
 
-    const result = sut.carriedAnnotations(kubernetesObject);
+    const result = carriedAnnotations(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -510,7 +549,7 @@ describe("carriesAnnotations", () => {
       metadata: { annotations: given.metadata.annotations },
     };
 
-    const result = sut.carriesAnnotations(kubernetesObject);
+    const result = carriesAnnotations(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -534,7 +573,7 @@ describe("definedLabels", () => {
       },
     };
 
-    const result = sut.definedLabels(binding);
+    const result = definedLabels(binding);
 
     expect(result).toEqual(expected);
   });
@@ -558,7 +597,7 @@ describe("definesLabels", () => {
       },
     };
 
-    const result = sut.definesLabels(binding);
+    const result = definesLabels(binding);
 
     expect(result).toBe(expected);
   });
@@ -579,7 +618,7 @@ describe("carriedLabels", () => {
       metadata: { labels: given.metadata.labels },
     };
 
-    const result = sut.carriedLabels(kubernetesObject);
+    const result = carriedLabels(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -600,7 +639,7 @@ describe("carriesLabels", () => {
       metadata: { labels: given.metadata.labels },
     };
 
-    const result = sut.carriesLabels(kubernetesObject);
+    const result = carriesLabels(kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -622,7 +661,7 @@ describe("definedEvent", () => {
       event: given.event,
     };
 
-    const result = sut.definedEvent(binding);
+    const result = definedEvent(binding);
 
     expect(result).toEqual(expected);
   });
@@ -644,7 +683,7 @@ describe("definesDelete", () => {
       event: given.event,
     };
 
-    const result = sut.definesDelete(binding);
+    const result = definesDelete(binding);
 
     expect(result).toEqual(expected);
   });
@@ -667,7 +706,7 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
         event: given.event,
       };
 
-      const result = sut.misboundDeleteWithDeletionTimestamp(binding);
+      const result = misboundDeleteWithDeletionTimestamp(binding);
 
       expect(result).toEqual(expected);
     });
@@ -687,7 +726,7 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
         event: given.event,
       };
 
-      const result = sut.misboundDeleteWithDeletionTimestamp(binding);
+      const result = misboundDeleteWithDeletionTimestamp(binding);
 
       expect(result).toEqual(expected);
     });
@@ -709,7 +748,7 @@ describe("definedGroup", () => {
       kind: { group: given.kind.group },
     };
 
-    const result = sut.definedGroup(binding);
+    const result = definedGroup(binding);
 
     expect(result).toEqual(expected);
   });
@@ -730,7 +769,7 @@ describe("definesGroup", () => {
       kind: { group: given.kind.group },
     };
 
-    const result = sut.definesGroup(binding);
+    const result = definesGroup(binding);
 
     expect(result).toEqual(expected);
   });
@@ -751,7 +790,7 @@ describe("definedVersion", () => {
       kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
     };
 
-    const result = sut.definedVersion(binding);
+    const result = definedVersion(binding);
 
     expect(result).toEqual(expected);
   });
@@ -772,7 +811,7 @@ describe("definesVersion", () => {
       kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
     };
 
-    const result = sut.definesVersion(binding);
+    const result = definesVersion(binding);
 
     expect(result).toEqual(expected);
   });
@@ -793,7 +832,7 @@ describe("definedKind", () => {
       kind: { kind: given.kind.kind },
     };
 
-    const result = sut.definedKind(binding);
+    const result = definedKind(binding);
 
     expect(result).toEqual(expected);
   });
@@ -814,7 +853,7 @@ describe("definesKind", () => {
       kind: { kind: given.kind.kind },
     };
 
-    const result = sut.definesKind(binding);
+    const result = definesKind(binding);
 
     expect(result).toEqual(expected);
   });
@@ -834,7 +873,7 @@ describe("definedCategory", () => {
       ...given,
     };
 
-    const result = sut.definedCategory(binding);
+    const result = definedCategory(binding);
 
     expect(result).toEqual(expected);
   });
@@ -861,7 +900,7 @@ describe("definedCallback", () => {
       ...given,
     };
 
-    const result = sut.definedCallback(binding);
+    const result = definedCallback(binding);
 
     expect(result).toEqual(expected);
   });
@@ -888,7 +927,7 @@ describe("definedCallbackName", () => {
       ...given,
     };
 
-    const result = sut.definedCallbackName(binding);
+    const result = definedCallbackName(binding);
 
     expect(result).toEqual(expected);
   });
