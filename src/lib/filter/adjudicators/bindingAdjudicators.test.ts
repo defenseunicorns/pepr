@@ -70,9 +70,6 @@ const defaultBinding: Binding = {
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { deletionTimestamp: null } }, false],
     [{ filters: { deletionTimestamp: false } }, false],
     [{ filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {

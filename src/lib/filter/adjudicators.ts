@@ -97,7 +97,7 @@ export const carriesLabels = pipe(carriedLabels, equals({}), not);
 */
 
 export const definesDeletionTimestamp = pipe(
-  (binding: Binding): boolean | undefined => binding?.filters?.deletionTimestamp ?? undefined,
+  (binding: Binding): boolean => binding?.filters?.deletionTimestamp ?? false,
   defaultTo(false),
 );
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
