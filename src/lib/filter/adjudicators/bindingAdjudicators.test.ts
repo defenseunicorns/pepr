@@ -67,6 +67,12 @@ const defaultBinding: Binding = {
   isWatch: false,
 };
 
+const defaultKubernetesObject: KubernetesObject = {
+  apiVersion: "some-version",
+  kind: "some-kind",
+  metadata: { name: "some-name" },
+};
+
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
@@ -126,12 +132,7 @@ describe("definedName", () => {
 
 describe("definesName", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { name: null } }, false],
-    [{ filters: { name: "name" } }, true],
-  ])("given %j, returns %s", (given, expected) => {
+  it.each([[{ filters: { name: "name" } }, true]])("given %j, returns %s", (given, expected) => {
     const binding = {
       ...defaultBinding,
       filters: {
@@ -211,12 +212,6 @@ describe("definesNameRegex", () => {
     expect(result).toBe(expected);
   });
 });
-
-const defaultKubernetesObject: KubernetesObject = {
-  apiVersion: "some-version",
-  kind: "some-kind",
-  metadata: { name: "some-name" },
-};
 
 describe("carriedName", () => {
   //[ KubernetesObject, result ]

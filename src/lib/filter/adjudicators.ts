@@ -109,7 +109,8 @@ export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
 export const definedNameRegex = pipe(
-  (binding: Partial<Binding>): string | undefined => binding?.filters?.regexName,
+  (binding: Partial<Binding>): string | undefined =>
+    typeof binding.filters?.regexName === "string" ? binding.filters.regexName : binding.filters?.regexName.source,
   defaultTo(""),
 );
 export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
@@ -117,8 +118,12 @@ export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
-export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
-export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
+export const definedNamespaceRegexes = pipe(
+  (binding: Binding): string[] =>
+    binding.filters.regexNamespaces.map(regex => regex.toString().replace(/^\/|\/$/g, "")),
+  defaultTo<string[]>([]),
+);
+export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([] as string[]), not);
 
 export const definedAnnotations = pipe((binding: Partial<Binding>) => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
@@ -200,13 +205,17 @@ export const mismatchedNamespace = allPass([
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
+  // Check if `definesNamespaceRegexes` returns true
   pipe(nthArg(0), definesNamespaceRegexes),
-  pipe((binding, kubernetesObject) =>
-    pipe(
-      any((regEx: string) => new RegExp(regEx).test(carriedNamespace(kubernetesObject))),
-      not,
-    )(definedNamespaceRegexes(binding)),
-  ),
+
+  // Check if no regex matches
+  (binding: Binding, kubernetesObject: KubernetesObject) => {
+    // Convert definedNamespaceRegexes(binding) from string[] to RegExp[]
+    const regexArray = definedNamespaceRegexes(binding).map(regexStr => new RegExp(regexStr));
+
+    // Check if no regex matches the namespace of the Kubernetes object
+    return not(any((regEx: RegExp) => regEx.test(carriedNamespace(kubernetesObject)), regexArray));
+  },
 ]);
 
 export const metasMismatch = pipe(

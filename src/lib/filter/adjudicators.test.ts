@@ -53,6 +53,12 @@ const defaultAdmissionRequest = {
   object: {},
 };
 
+const defaultKubernetesObject: KubernetesObject = {
+  apiVersion: "some-version",
+  kind: "some-kind",
+  metadata: { name: "some-name" },
+};
+
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
@@ -61,10 +67,17 @@ describe("mismatchedName", () => {
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: "filters" in bnd ? { ...defaultFilters, name: bnd.filters.name } : { ...defaultFilters },
+    };
 
-    const result = mismatchedName(binding, object);
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
+
+    const result = mismatchedName(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });

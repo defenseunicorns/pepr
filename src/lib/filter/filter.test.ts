@@ -198,7 +198,7 @@ test("create: should not reject when regex namespace does match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [RegExp("^helm")],
       regexName: "",
       labels: {},
       annotations: {},
@@ -218,7 +218,7 @@ test("create: should reject when regex namespace does not match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^argo"],
+      regexNamespaces: [RegExp("^argo")],
       regexName: "",
       labels: {},
       annotations: {},
@@ -240,7 +240,7 @@ test("delete: should reject when regex namespace does not match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^argo"],
+      regexNamespaces: [RegExp("^argo")],
       regexName: "",
       labels: {},
       annotations: {},
@@ -262,7 +262,7 @@ test("delete: should not reject when regex namespace does match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [RegExp("^helm")],
       regexName: "",
       labels: {},
       annotations: {},

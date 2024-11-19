@@ -32,7 +32,7 @@ import {
   uncarryableNamespace,
 } from "./filter/adjudicators";
 
-export function matchesRegex(pattern: string, testString: string): boolean {
+export function matchesRegex(pattern: RegExp, testString: string): boolean {
   // edge-case
   if (!pattern) {
     return false;
@@ -74,7 +74,7 @@ export type RBACMap = {
  * Decide to run callback after the event comes back from API Server
  **/
 export function filterNoMatchReason(
-  binding: Partial<Binding>,
+  binding: Binding,
   object: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
@@ -256,7 +256,7 @@ export function generateWatchNamespaceError(
   return err.replace(/\.([^ ])/g, ". $1");
 }
 
-// namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
+// namespaceComplianceValidator ensures that capability binds respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
@@ -284,7 +284,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       matches =
-        regexNamespace !== "" &&
+        regexNamespace.source !== "" &&
         capabilityNamespaces.some(capabilityNamespace => matchesRegex(regexNamespace, capabilityNamespace));
       if (!matches) {
         throw new Error(

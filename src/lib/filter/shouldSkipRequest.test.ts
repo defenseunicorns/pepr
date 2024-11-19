@@ -220,7 +220,7 @@ describe("when a pod is created", () => {
   it("should not reject when regex namespace does match", () => {
     const filters = {
       ...defaultFilters,
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [RegExp("^helm")],
       regexName: "",
     };
 
@@ -230,7 +230,7 @@ describe("when a pod is created", () => {
   });
 
   it("should reject when regex namespace does not match", () => {
-    const filters = { ...defaultFilters, regexNamespaces: ["^argo"] };
+    const filters = { ...defaultFilters, regexNamespaces: [RegExp("^argo")] };
     const binding = { ...defaultBinding, filters };
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -271,7 +271,7 @@ describe("when a pod is deleted", () => {
   });
 
   it("should reject when regex namespace does not match", () => {
-    const filters = { ...defaultFilters, regexNamespaces: ["^argo"] };
+    const filters = { ...defaultFilters, regexNamespaces: [RegExp("^argo")] };
     const binding = {
       ...defaultBinding,
       filters,
@@ -285,7 +285,7 @@ describe("when a pod is deleted", () => {
   it("should not reject when regex namespace does match", () => {
     const filters = {
       ...defaultFilters,
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [RegExp("^helm")],
       regexName: "",
       labels: {},
       annotations: {},

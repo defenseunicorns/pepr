@@ -4,8 +4,36 @@
 
 import { expect, describe, it } from "@jest/globals";
 import * as sut from "../adjudicators";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, DeepPartial } from "../../types";
+import { Event } from "../../enums";
+
+const defaultFilters = {
+  annotations: {},
+  deletionTimestamp: false,
+  labels: {},
+  name: "",
+  namespaces: [],
+  regexName: "^default$",
+  regexNamespaces: [],
+};
+const defaultBinding: Binding = {
+  event: Event.ANY,
+  filters: defaultFilters,
+  kind: { kind: "some-kind", group: "some-group" },
+  model: kind.Pod,
+  isFinalize: false,
+  isMutate: false,
+  isQueue: false,
+  isValidate: false,
+  isWatch: false,
+};
+
+const defaultKubernetesObject: KubernetesObject = {
+  apiVersion: "some-version",
+  kind: "some-kind",
+  metadata: { name: "some-name" },
+};
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
@@ -15,8 +43,14 @@ describe("mismatchedName", () => {
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const binding = {
+      ...defaultBinding,
+      filters: "filters" in bnd ? { ...defaultFilters, name: bnd.filters.name } : { ...defaultFilters },
+    };
+    const object = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
 
     const result = sut.mismatchedName(binding, object);
 

@@ -77,8 +77,8 @@ export type Filters = {
   labels: Record<string, string>;
   name: string;
   namespaces: string[];
-  regexName: string;
-  regexNamespaces: string[];
+  regexName: string | RegExp;
+  regexNamespaces: RegExp[]; // TODO: Test the Regexp path??
 };
 
 export type Binding = {
