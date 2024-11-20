@@ -214,7 +214,8 @@ export const mismatchedNamespaceRegex = allPass([
     const regexArray = definedNamespaceRegexes(binding).map(regexStr => new RegExp(regexStr));
 
     // Check if no regex matches the namespace of the Kubernetes object
-    return not(any((regEx: RegExp) => regEx.test(carriedNamespace(kubernetesObject)), regexArray));
+    const result = not(any((regEx: RegExp) => regEx.test(carriedNamespace(kubernetesObject)), regexArray));
+    return result;
   },
 ]);
 
