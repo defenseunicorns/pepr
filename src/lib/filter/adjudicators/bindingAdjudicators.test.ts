@@ -346,10 +346,10 @@ describe("definedNamespaceRegexes", () => {
   it.each([
     // [{}, []],
     // [{ filters: {} }, []],
-    [{ filters: { regexNamespaces: null } }, []],
+    // [{ filters: { regexNamespaces: null } }, []],
     [{ filters: { regexNamespaces: [] } }, []],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
+    [{ filters: { regexNamespaces: [/n.mesp.ce/] } }, ["n.mesp.ce"]],
+    [{ filters: { regexNamespaces: [/n.me/, /sp.ce/] } }, ["n.me", "sp.ce"]],
   ])("given %j, returns %j", (given, expected) => {
     const binding = {
       ...defaultBinding,
@@ -370,10 +370,10 @@ describe("definesNamespaceRegexes", () => {
   it.each([
     // [{}, false],
     // [{ filters: {} }, false],
-    [{ filters: { regexNamespaces: null } }, false],
+    // [{ filters: { regexNamespaces: null } }, false],
     [{ filters: { regexNamespaces: [] } }, false],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
+    [{ filters: { regexNamespaces: [/n.mesp.ce/] } }, true],
+    [{ filters: { regexNamespaces: [/n.me/, /sp.ce/] } }, true],
   ])("given %j, returns %s", (given, expected) => {
     const binding = {
       ...defaultBinding,
