@@ -22,42 +22,15 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators";
-import { kind, KubernetesObject, modelToGroupVersionKind } from "kubernetes-fluent-client";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { AdmissionRequest, Binding, DeepPartial } from "../types";
 import { Event, Operation } from "../enums";
-
-const defaultFilters = {
-  annotations: {},
-  deletionTimestamp: false,
-  labels: {},
-  name: "",
-  namespaces: [],
-  regexName: "^default$",
-  regexNamespaces: [],
-};
-const defaultBinding: Binding = {
-  event: Event.ANY,
-  filters: defaultFilters,
-  kind: modelToGroupVersionKind(kind.Pod.name),
-  model: kind.Pod,
-};
-
-const defaultAdmissionRequest = {
-  uid: "some-uid",
-  kind: { kind: "a-kind", group: "a-group" },
-  group: "a-group",
-  resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-  operation: Operation.CONNECT,
-  name: "some-name",
-  userInfo: {},
-  object: {},
-};
-
-const defaultKubernetesObject: KubernetesObject = {
-  apiVersion: "some-version",
-  kind: "some-kind",
-  metadata: { name: "some-name" },
-};
+import {
+  defaultAdmissionRequest,
+  defaultBinding,
+  defaultFilters,
+  defaultKubernetesObject,
+} from "./adjudicators/defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
