@@ -31,7 +31,7 @@ const defaultFilters = {
 };
 const defaultBinding = {
   callback,
-  event: Event.Any,
+  event: Event.ANY,
   filters: defaultFilters,
   kind: podKind,
   model: kind.Pod,
@@ -39,7 +39,7 @@ const defaultBinding = {
 
 export const groupBinding = {
   callback,
-  event: Event.Create,
+  event: Event.CREATE,
   filters: defaultFilters,
   kind: deploymentKind,
   model: kind.Deployment,
@@ -47,7 +47,7 @@ export const groupBinding = {
 
 export const clusterScopedBinding = {
   callback,
-  event: Event.Delete,
+  event: Event.DELETE,
   filters: defaultFilters,
   kind: clusterRoleKind,
   model: kind.ClusterRole,
@@ -172,7 +172,7 @@ describe("when a capability defines namespaces and the admission request object 
   it("should skip request when the capability namespace does not exist on the object", () => {
     const binding = {
       ...clusterScopedBinding,
-      event: Event.Create,
+      event: Event.CREATE,
       filters: {
         ...clusterScopedBinding.filters,
         regexName: "",
@@ -190,7 +190,7 @@ describe("when a binding contains a cluster scoped object", () => {
   it("should skip request when the binding defines a namespace on a cluster scoped object", () => {
     const clusterScopedBindingWithNamespace = {
       ...clusterScopedBinding,
-      event: Event.Create,
+      event: Event.CREATE,
       filters: {
         ...clusterScopedBinding.filters,
         namespaces: ["namespace"],

@@ -245,7 +245,7 @@ export const unbindableNamespaces = allPass([
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
 
 export const operationMatchesEvent = anyPass([
-  pipe(nthArg(1), equals(Event.Any)),
+  pipe(nthArg(1), equals(Event.ANY)),
   pipe((operation, event) => operation === event),
   pipe((operation, event) => (operation ? event.includes(operation) : false)),
 ]);

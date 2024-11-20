@@ -1331,7 +1331,7 @@ describe("filterNoMatchReason", () => {
   test("returns capability namespace error when object is not in capability namespaces", () => {
     const binding = {
       model: kind.Pod,
-      event: Event.Any,
+      event: Event.ANY,
       kind: {
         group: "",
         version: "v1",
