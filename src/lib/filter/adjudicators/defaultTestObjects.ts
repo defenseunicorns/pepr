@@ -16,6 +16,11 @@ export const defaultBinding: Binding = {
   filters: defaultFilters,
   kind: modelToGroupVersionKind(kind.Pod.name),
   model: kind.Pod,
+  isFinalize: false, //Lots of optionals that maybe don't belong here. Would be nice to choose to include
+  isMutate: false,
+  isQueue: false,
+  isValidate: false,
+  isWatch: false,
 };
 
 export const defaultAdmissionRequest = {
