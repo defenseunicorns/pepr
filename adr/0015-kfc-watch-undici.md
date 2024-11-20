@@ -66,11 +66,11 @@ Adopting Undici had the following consequences:
 
 ##### Pros
 
--	Requires minimal new code to implement.
+- Requires minimal new code to implement.
 
--	Actively maintained and widely used.
+- Actively maintained and widely used.
 
--	Offers a simple, well-documented API.
+- Offers a simple, well-documented API.
 
 
 ##### Cons
