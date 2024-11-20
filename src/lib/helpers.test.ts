@@ -1105,9 +1105,12 @@ describe("filterNoMatchReason", () => {
   ])(
     "given %j, it returns regex namespace filter error for Pods whose namespace does not match the regex",
     (obj: KubernetesObject) => {
-      const object: KubernetesObject = obj.metadata
-        ? { ...defaultKubernetesObject, metadata: { ...defaultKubernetesObject, namespace: obj.metadata.namespace } }
-        : defaultKubernetesObject;
+      const kubernetesObject: KubernetesObject = obj.metadata
+        ? {
+            ...defaultKubernetesObject,
+            metadata: { ...defaultKubernetesObject.metadata, namespace: obj.metadata.namespace },
+          }
+        : { ...defaultKubernetesObject, metadata: obj as unknown as undefined };
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
@@ -1115,9 +1118,12 @@ describe("filterNoMatchReason", () => {
       };
 
       const capabilityNamespaces: string[] = [];
-      const result = filterNoMatchReason(binding, object, capabilityNamespaces);
+      const expectedErrorMessage = `Ignoring Watch Callback: Binding defines namespace regexes '["(.*)-system"]' but Object carries`;
+      const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces);
       expect(result).toEqual(
-        `Ignoring Watch Callback: Binding defines namespace regexes '["(.*)-system"]' but Object carries '${object.metadata?.namespace}'.`,
+        typeof kubernetesObject.metadata === "object" && obj !== null && Object.keys(obj).length > 0
+          ? `${expectedErrorMessage} '${kubernetesObject.metadata.namespace}'.`
+          : `${expectedErrorMessage} ''.`,
       );
     },
   );
