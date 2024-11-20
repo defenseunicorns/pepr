@@ -11,20 +11,8 @@ export async function removeFolder(folderPath: string): Promise<void> {
   const dir = resolve(folderPath);
 
   try {
-    const stats = await fs.lstat(folderPath);
-
-    if (stats.isDirectory()) {
-      const files = await fs.readdir(folderPath);
-
-      for (const file of files) {
-        const fullPath = join(folderPath, file);
-        await removeFolder(fullPath);
-      }
-
-      await fs.rmdir(folderPath);
-    } else {
-      await fs.unlink(folderPath);
-    }
+    await fs.access(dir);
+    await fs.rm(dir, { recursive: true, force: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       // Folder is not there, do nothing
