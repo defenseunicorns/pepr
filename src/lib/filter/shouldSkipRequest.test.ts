@@ -13,44 +13,18 @@ import {
 import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
+import { clusterScopedBinding, defaultFilters, groupBinding } from "./adjudicators/defaultTestObjects";
 
 const callback = () => undefined;
 
 export const podKind = modelToGroupVersionKind(kind.Pod.name);
-export const deploymentKind = modelToGroupVersionKind(kind.Deployment.name);
-export const clusterRoleKind = modelToGroupVersionKind(kind.ClusterRole.name);
 
-const defaultFilters = {
-  annotations: {},
-  deletionTimestamp: false,
-  labels: {},
-  name: "",
-  namespaces: [],
-  regexName: "^default$",
-  regexNamespaces: [],
-};
 const defaultBinding = {
   callback,
   event: Event.ANY,
   filters: defaultFilters,
   kind: podKind,
   model: kind.Pod,
-};
-
-export const groupBinding = {
-  callback,
-  event: Event.CREATE,
-  filters: defaultFilters,
-  kind: deploymentKind,
-  model: kind.Deployment,
-};
-
-export const clusterScopedBinding = {
-  callback,
-  event: Event.DELETE,
-  filters: defaultFilters,
-  kind: clusterRoleKind,
-  model: kind.ClusterRole,
 };
 
 describe("when fuzzing shouldSkipRequest", () => {

@@ -3,9 +3,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import { kind, KubernetesObject } from "kubernetes-fluent-client";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, DeepPartial } from "../../types";
-import { Event } from "../../enums";
 import {
   mismatchedName,
   mismatchedDeletionTimestamp,
@@ -16,33 +15,7 @@ import {
   mismatchedLabels,
   metasMismatch,
 } from "../adjudicators";
-
-const defaultFilters = {
-  annotations: {},
-  deletionTimestamp: false,
-  labels: {},
-  name: "",
-  namespaces: [],
-  regexName: "^default$",
-  regexNamespaces: [],
-};
-const defaultBinding: Binding = {
-  event: Event.ANY,
-  filters: defaultFilters,
-  kind: { kind: "some-kind", group: "some-group" },
-  model: kind.Pod,
-  isFinalize: false,
-  isMutate: false,
-  isQueue: false,
-  isValidate: false,
-  isWatch: false,
-};
-
-const defaultKubernetesObject: KubernetesObject = {
-  apiVersion: "some-version",
-  kind: "some-kind",
-  metadata: { name: "some-name" },
-};
+import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]

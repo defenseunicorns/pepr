@@ -32,6 +32,7 @@ import { promises as fs } from "fs";
 import { SpiedFunction } from "jest-mock";
 import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./filter/adjudicators/defaultTestObjects";
 
 export const callback = () => undefined;
 
@@ -50,27 +51,6 @@ jest.mock("fs", () => {
     },
   };
 });
-
-const defaultFilters = {
-  annotations: {},
-  deletionTimestamp: false,
-  labels: {},
-  name: "",
-  namespaces: [],
-  regexName: "",
-  regexNamespaces: [],
-};
-const defaultBinding: Binding = {
-  event: Event.ANY,
-  filters: defaultFilters,
-  kind: { kind: "some-kind", group: "some-group" },
-  model: kind.Pod,
-  isFinalize: false,
-  isMutate: false,
-  isQueue: false,
-  isValidate: false,
-  isWatch: false,
-};
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -1091,11 +1071,6 @@ describe("replaceString", () => {
 });
 
 describe("filterNoMatchReason", () => {
-  const defaultKubernetesObject: KubernetesObject = {
-    apiVersion: "some-version",
-    kind: "some-kind",
-    metadata: { name: "some-name" },
-  };
   it.each([
     [{}],
     [{ metadata: { namespace: "pepr-uds" } }],
