@@ -675,45 +675,43 @@ describe("definesDelete", () => {
 
 describe("misboundDeleteWithDeletionTimestamp", () => {
   //[ Binding, result ]
-  describe("when filters are set", () => {
-    it.each([
-      [{ event: Event.DELETE, filters: {} }, false],
-      [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
-      [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
-    ])("given %j, returns %s", (given, expected) => {
-      const binding = {
-        ...defaultBinding,
-        filters:
-          "deletionTimestamp" in given.filters
-            ? { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp }
-            : defaultFilters,
-        event: given.event,
-      };
+  it.each([
+    [{ event: Event.DELETE, filters: {} }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = {
+      ...defaultBinding,
+      filters:
+        "deletionTimestamp" in given.filters
+          ? { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp }
+          : defaultFilters,
+      event: given.event,
+    };
 
-      const result = misboundDeleteWithDeletionTimestamp(binding);
+    const result = misboundDeleteWithDeletionTimestamp(binding);
 
-      expect(result).toEqual(expected);
-    });
+    expect(result).toEqual(expected);
   });
-  describe("when filters are not set", () => {
-    it.each([
-      // [{}, false],
-      // [{ event: "" }, false],
-      // [{ event: "nonsense" }, false],
-      [{ event: Event.CREATE }, false],
-      [{ event: Event.CREATE_OR_UPDATE }, false],
-      [{ event: Event.UPDATE }, false],
-      [{ event: Event.DELETE }, false],
-    ])("given %j, returns %s", (given, expected) => {
-      const binding = {
-        ...defaultBinding,
-        event: given.event,
-      };
+});
+describe("when filters are not set", () => {
+  it.each([
+    // [{}, false],
+    // [{ event: "" }, false],
+    // [{ event: "nonsense" }, false],
+    [{ event: Event.CREATE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, false],
+    [{ event: Event.UPDATE }, false],
+    [{ event: Event.DELETE }, false],
+  ])("given %j, returns %s", (given, expected) => {
+    const binding = {
+      ...defaultBinding,
+      event: given.event,
+    };
 
-      const result = misboundDeleteWithDeletionTimestamp(binding);
+    const result = misboundDeleteWithDeletionTimestamp(binding);
 
-      expect(result).toEqual(expected);
-    });
+    expect(result).toEqual(expected);
   });
 });
 
