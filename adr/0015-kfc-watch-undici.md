@@ -41,8 +41,6 @@ We assessed the technologies based on the following criteria:
 
 - **Issue:** Using v8Go would require re-implementing large parts of the Node.js standard library manually. For example, console.log did not work natively and required creating a wrapper in Go to pass into the Node.js context. The significant implementation and maintenance effort made this option unviable.
 
-v8Go would have required us to re-emplement by hand the node native Node.js library. For instance, `console.log` did not work and we needed to make a wrapper in Go and pass it into the Node.js context. Due to the amount of work it would have required to implement and maintain v8Go, it was not a viable option.
-
 **HTTP2**
 
 - **Evaluation:** While HTTP2 could handle the load and capture events, it suffered from a persistent memory leak. Despite implementing exponential backoffs and cleaning up the client after each request, the memory usage persistently rose causing crashes. We suspect the root cause lies in the HTTP2 library’s underlying [C++ implementation](https://github.com/nghttp2/nghttp2/issues/1065).
