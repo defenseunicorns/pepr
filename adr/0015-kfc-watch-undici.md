@@ -27,9 +27,9 @@ Our CTO tasked us with evaluating four technologies to improve the situation:
 
 We assessed the technologies based on the following criteria:
 
-1.	Performance and Stability: Can the solution handle the UDS Operator’s load without missing events?
-2.	Resource Utilization: How much memory and CPU does the solution consume?
-3.	Ease of Use: How easy is the solution to implement and maintain?
+1. Performance and Stability: Can the solution handle the UDS Operator’s load without missing events?
+2. Resource Utilization: How much memory and CPU does the solution consume?
+3. Ease of Use: How easy is the solution to implement and maintain?
 
 ### Decision ###
 
@@ -51,9 +51,12 @@ v8Go would have required us to re-emplement by hand the node native Node.js libr
 **Undici**
 
 - **Decision:** The team selected Undici because it was the most performant and stable among the four options. After over 100 hours of soak testing with a Pepr Undici release candidate:
-	•	`UDSPackages` were consistently reconciled.
-	•	Resource utilization remained steady.
-	•	No events were missed.
+
+- `UDSPackages` were consistently reconciled.
+
+- Resource utilization remained steady.
+
+- No events were missed.
 
 
 
@@ -61,8 +64,8 @@ v8Go would have required us to re-emplement by hand the node native Node.js libr
 
 Adopting Undici had the following consequences:  
 
-1.	Test Rewrites: Since Undici does not respect nock, we had to rewrite our tests using its native Mock Agent.
-2.	Manual Trust Establishment: Unlike node-fetch, Undici required us to implement the logic for establishing trust with the Kubernetes API server manually. This would have been necessary for HTTP2 or Native Fetch as well.
+1. Test Rewrites: Since Undici does not respect nock, we had to rewrite our tests using its native Mock Agent.
+2. Manual Trust Establishment: Unlike node-fetch, Undici required us to implement the logic for establishing trust with the Kubernetes API server manually. This would have been necessary for HTTP2 or Native Fetch as well.
 
 ##### Pros
 
