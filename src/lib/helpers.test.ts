@@ -1344,7 +1344,13 @@ it("return watch violation message when object is in an ignored namespace", () =
 it("returns empty string when all checks pass", () => {
   const binding: Binding = {
     ...defaultBinding,
-    filters: { ...defaultFilters, namespaces: ["ns1"], labels: { key: "value" }, annotations: { key: "value" } },
+    filters: {
+      ...defaultFilters,
+      regexName: "",
+      namespaces: ["ns1"],
+      labels: { key: "value" },
+      annotations: { key: "value" },
+    },
   };
   const obj = {
     metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
