@@ -13,7 +13,8 @@ import {
 import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding, Filters } from "../types";
 import { Event } from "../enums";
-import { clusterScopedBinding, defaultFilters, groupBinding, podKind } from "./adjudicators/defaultTestObjects";
+import { defaultFilters } from "./adjudicators/defaultTestObjects";
+import { clusterScopedBinding, groupBinding, podKind } from "../helpers.test";
 
 const defaultBinding: Binding = {
   event: Event.ANY,

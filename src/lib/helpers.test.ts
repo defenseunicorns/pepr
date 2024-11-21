@@ -30,12 +30,30 @@ import * as fc from "fast-check";
 import { expect, describe, test, jest, beforeEach, afterEach, it } from "@jest/globals";
 import { promises as fs } from "fs";
 import { SpiedFunction } from "jest-mock";
-import { K8s, GenericClass, KubernetesObject, kind } from "kubernetes-fluent-client";
+import { K8s, GenericClass, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./filter/adjudicators/defaultTestObjects";
+import { defaultFilters, defaultKubernetesObject, defaultBinding } from "./filter/adjudicators/defaultTestObjects";
+// import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./filter/adjudicators/defaultTestObjects";
 
 export const callback = () => undefined;
 
+export const podKind = modelToGroupVersionKind(kind.Pod.name);
+export const deploymentKind = modelToGroupVersionKind(kind.Deployment.name);
+export const clusterRoleKind = modelToGroupVersionKind(kind.ClusterRole.name);
+
+export const groupBinding: Binding = {
+  event: Event.CREATE,
+  filters: defaultFilters,
+  kind: deploymentKind,
+  model: kind.Deployment,
+};
+
+export const clusterScopedBinding: Binding = {
+  event: Event.DELETE,
+  filters: defaultFilters,
+  kind: clusterRoleKind,
+  model: kind.ClusterRole,
+};
 jest.mock("kubernetes-fluent-client", () => {
   return {
     K8s: jest.fn(),
@@ -1430,21 +1448,21 @@ describe("validateHash", () => {
 
 describe("matchesRegex", () => {
   test("should return true for a valid pattern that matches the string", () => {
-    const pattern = /abc/;
+    const pattern = "abc";
     const testString = "abc123";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for a valid pattern that does not match the string", () => {
-    const pattern = /xyz/;
+    const pattern = "xyz";
     const testString = "abc123";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
 
   test("should return false for an invalid regex pattern", () => {
-    const invalidPattern = new RegExp(/^p/); // Invalid regex with unclosed bracket
+    const invalidPattern = "^p"; // Invalid regex with unclosed bracket
     const testString = "test";
     const result = matchesRegex(invalidPattern, testString);
     expect(result).toBe(false);
@@ -1461,30 +1479,30 @@ describe("matchesRegex", () => {
   });
 
   test("should return true for an empty string matching an empty regex", () => {
-    const pattern = new RegExp("");
+    const pattern = "";
     const testString = "";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for an empty string and a non-empty regex", () => {
-    const pattern = new RegExp("abc");
+    const pattern = "abc";
     const testString = "";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
 
   test("should return true for a complex valid regex that matches", () => {
-    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const pattern = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[A-Za-z]+$";
     const testString = "test@example.com";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(true);
   });
 
   test("should return false for a complex valid regex that does not match", () => {
-    const pattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/;
+    const pattern = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[A-Za-z]+$";
     const testString = "invalid-email.com";
-    const result = matchesRegex(new RegExp(pattern), testString);
+    const result = matchesRegex(pattern, testString);
     expect(result).toBe(false);
   });
 });

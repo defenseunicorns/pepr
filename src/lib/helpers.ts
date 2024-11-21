@@ -32,7 +32,7 @@ import {
   uncarryableNamespace,
 } from "./filter/adjudicators";
 
-export function matchesRegex(pattern: RegExp, testString: string): boolean {
+export function matchesRegex(pattern: string, testString: string): boolean {
   // edge-case
   if (!pattern) {
     return false;
@@ -287,7 +287,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       let matches = false;
       matches =
         regexNamespace !== "" &&
-        capabilityNamespaces.some(capabilityNamespace => matchesRegex(new RegExp(regexNamespace), capabilityNamespace));
+        capabilityNamespaces.some(capabilityNamespace => matchesRegex(regexNamespace, capabilityNamespace));
       if (!matches) {
         throw new Error(
           `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`,
@@ -303,7 +303,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     ignoredNamespaces.length > 0
   ) {
     for (const regexNamespace of bindingRegexNamespaces) {
-      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(new RegExp(regexNamespace), ignoredNS));
+      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
       if (matchedNS) {
         throw new Error(
           `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${matchedNS}.`,

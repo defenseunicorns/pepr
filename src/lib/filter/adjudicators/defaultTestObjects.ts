@@ -1,4 +1,4 @@
-import { modelToGroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Event, Operation } from "../../enums";
 import { Binding } from "../../types";
 
@@ -38,22 +38,4 @@ export const defaultKubernetesObject: KubernetesObject = {
   apiVersion: "some-version",
   kind: "some-kind",
   metadata: { name: "some-name" },
-};
-
-export const podKind = modelToGroupVersionKind("V1Pod");
-export const deploymentKind = modelToGroupVersionKind("V1Deployment");
-export const clusterRoleKind = modelToGroupVersionKind("V1ClusterRole");
-
-export const groupBinding: Binding = {
-  event: Event.CREATE,
-  filters: defaultFilters,
-  kind: deploymentKind,
-  model: kind.Deployment,
-};
-
-export const clusterScopedBinding: Binding = {
-  event: Event.DELETE,
-  filters: defaultFilters,
-  kind: clusterRoleKind,
-  model: kind.ClusterRole,
 };
