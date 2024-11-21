@@ -5,7 +5,7 @@ import { describe, it, expect } from "@jest/globals";
 import { heredoc } from "../src/sdk/heredoc";
 import * as sut from "./load.lib";
 
-describe("toHuman", () => {
+describe("toHuman()", () => {
   it.each([
     // simple
     [1, "1ms"],
@@ -25,7 +25,7 @@ describe("toHuman", () => {
   });
 });
 
-describe("toMs", () => {
+describe("toMs()", () => {
   it.each([
     // simple
     ["1ms", 1],
@@ -77,7 +77,7 @@ describe("generateAudienceData()", () => {
   // it.skip("creates 'decreasing' datasets", () => {});
 });
 
-describe("parseActressData", () => {
+describe("parseActressData()", () => {
   let actressData = heredoc`
     ---\\\\napiVersion: v1\\\\nkind: ConfigMap\\\\nmetadata:\\\\n  namespace: hello-pepr-load\\\\n  name: cm-UNIQUIFY-ME\\\\n  labels:\\\\n    test-transient: hello-pepr-load\\\\ndata: {}\\\\n
     1731682427803	configmap/cm-1731682427524-0 created
@@ -103,7 +103,7 @@ describe("parseActressData", () => {
   });
 });
 
-describe("parseAudienceData", () => {
+describe("parseAudienceData()", () => {
   let audienceData = heredoc`
     1731525754189	pepr-pepr-load-aaaa0bbbb-aaaaa           2m    102Mi   
     1731525754189	pepr-pepr-load-aaaa0bbbb-bbbbb           3m    103Mi   
@@ -131,6 +131,26 @@ describe("parseAudienceData", () => {
     };
 
     let result = sut.parseAudienceData(audienceData);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("injectsToRps()", () => {
+  it("converts list of timestamps into list of counts of injects within second prior", () => {
+    const expected = [
+      [1732042820001, 1],
+      [1732042820002, 2],
+      [1732042820003, 3],
+      [1732042821001, 4],
+      [1732042821002, 4],
+      [1732042821003, 4],
+      [1732042825001, 1],
+    ];
+    const injects = expected.map(m => m[0]);
+
+    const result = sut.injectsToRps(injects);
+    console.log(result);
 
     expect(result).toEqual(expected);
   });
