@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
@@ -727,13 +728,6 @@ describe("checkDeploymentStatus", () => {
       ],
     };
 
-    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-      return {
-        InNamespace: jest.fn().mockReturnThis(),
-        Get: () => deployments,
-      } as unknown as K8sInit<T, K>;
-    });
-
     const expected = true;
     const result = await checkDeploymentStatus("pepr-system");
     expect(result).toBe(expected);
@@ -768,13 +762,6 @@ describe("checkDeploymentStatus", () => {
         },
       ],
     };
-
-    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-      return {
-        InNamespace: jest.fn().mockReturnThis(),
-        Get: () => deployments,
-      } as unknown as K8sInit<T, K>;
-    });
 
     const expected = false;
     const result = await checkDeploymentStatus("pepr-system");
@@ -823,13 +810,6 @@ describe("namespaceDeploymentsReady", () => {
         },
       ],
     };
-
-    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-      return {
-        InNamespace: jest.fn().mockReturnThis(),
-        Get: () => deployments,
-      } as unknown as K8sInit<T, K>;
-    });
 
     const expected = true;
     const result = await namespaceDeploymentsReady();
@@ -894,20 +874,6 @@ describe("namespaceDeploymentsReady", () => {
         },
       ],
     };
-
-    mockK8s
-      .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-        return {
-          InNamespace: jest.fn().mockReturnThis(),
-          Get: () => deployments,
-        } as unknown as K8sInit<T, K>;
-      })
-      .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-        return {
-          InNamespace: jest.fn().mockReturnThis(),
-          Get: () => deployments2,
-        } as unknown as K8sInit<T, K>;
-      });
 
     const expected = true;
     const result = await namespaceDeploymentsReady();
