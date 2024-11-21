@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { promises as fs } from "fs";
 import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
@@ -190,18 +189,6 @@ export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
 
     return acc;
   }, {});
-}
-
-export async function createDirectoryIfNotExists(path: string) {
-  try {
-    await fs.access(path);
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      await fs.mkdir(path, { recursive: true });
-    } else {
-      throw error;
-    }
-  }
 }
 
 export function hasEveryOverlap<T>(array1: T[], array2: T[]): boolean {

@@ -6,7 +6,6 @@ import { Event } from "./enums";
 import {
   addVerbIfNotExists,
   bindingAndCapabilityNSConflict,
-  createDirectoryIfNotExists,
   createRBACMap,
   checkDeploymentStatus,
   filterNoMatchReason,
@@ -28,7 +27,6 @@ import {
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
 import { expect, describe, test, jest, beforeEach, afterEach, it } from "@jest/globals";
-import { promises as fs } from "fs";
 import { SpiedFunction } from "jest-mock";
 import { K8s, GenericClass, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -58,15 +56,6 @@ jest.mock("kubernetes-fluent-client", () => {
   return {
     K8s: jest.fn(),
     kind: jest.fn(),
-  };
-});
-
-jest.mock("fs", () => {
-  return {
-    promises: {
-      access: jest.fn(),
-      mkdir: jest.fn(),
-    },
   };
 });
 
@@ -390,45 +379,6 @@ describe("addVerbIfNotExists", () => {
     const verbs = ["get", "list", "watch"];
     addVerbIfNotExists(verbs, "get");
     expect(verbs).toEqual(["get", "list", "watch"]); // The array remains unchanged
-  });
-});
-
-describe("createDirectoryIfNotExists function", () => {
-  test("should create a directory if it doesn't exist", async () => {
-    (fs.access as jest.Mock).mockRejectedValue({ code: "ENOENT" } as never);
-    (fs.mkdir as jest.Mock).mockResolvedValue(undefined as never);
-
-    const directoryPath = "/pepr/pepr-test-module/asdf";
-
-    await createDirectoryIfNotExists(directoryPath);
-
-    expect(fs.access).toHaveBeenCalledWith(directoryPath);
-    expect(fs.mkdir).toHaveBeenCalledWith(directoryPath, { recursive: true });
-  });
-
-  test("should not create a directory if it already exists", async () => {
-    jest.resetAllMocks();
-    (fs.access as jest.Mock).mockResolvedValue(undefined as never);
-
-    const directoryPath = "/pepr/pepr-test-module/asdf";
-
-    await createDirectoryIfNotExists(directoryPath);
-
-    expect(fs.access).toHaveBeenCalledWith(directoryPath);
-    expect(fs.mkdir).not.toHaveBeenCalled();
-  });
-
-  test("should throw an error for other fs.access errors", async () => {
-    jest.resetAllMocks();
-    (fs.access as jest.Mock).mockRejectedValue({ code: "ERROR" } as never);
-
-    const directoryPath = "/pepr/pepr-test-module/asdf";
-
-    try {
-      await createDirectoryIfNotExists(directoryPath);
-    } catch (error) {
-      expect(error.code).toEqual("ERROR");
-    }
   });
 });
 
