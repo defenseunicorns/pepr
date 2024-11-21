@@ -7,11 +7,7 @@ on:
   pull_request:
     branches: [main]
     types: [opened, edited, synchronize]
-  merge_group:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
-    - "**.md"
+
 jobs:
   title_check:
     runs-on: ubuntu-latest
