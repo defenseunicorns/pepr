@@ -1095,21 +1095,24 @@ it("returns no regex name filter error for Pods whos name does match the regex",
   });
 });
 
-it("returns missingCarriableNamespace filter error for cluster-scoped objects when capability namespaces are present", () => {
-  const binding: Binding = {
-    ...defaultBinding,
-    kind: { kind: "ClusterRole", group: "some-group" },
-  };
-  const obj = {
-    kind: "ClusterRole",
-    apiVersion: "rbac.authorization.k8s.io/v1",
-    metadata: { name: "clusterrole1" },
-  };
-  const capabilityNamespaces: string[] = ["monitoring"];
-  const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-  expect(result).toEqual(
-    "Ignoring Watch Callback: Object does not carry a namespace but namespaces allowed by Capability are '[\"monitoring\"]'.",
-  );
+describe("when capability namespaces are present", () => {
+  it("should return missingCarriableNamespace filter error for cluster-scoped objects", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexName: "" },
+      kind: { kind: "ClusterRole", group: "some-group" },
+    };
+    const obj: KubernetesObject = {
+      kind: "ClusterRole",
+      apiVersion: "rbac.authorization.k8s.io/v1",
+      metadata: { name: "clusterrole1" },
+    };
+    const capabilityNamespaces: string[] = ["monitoring"];
+    const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Object does not carry a namespace but namespaces allowed by Capability are '[\"monitoring\"]'.",
+    );
+  });
 });
 
 it("returns mismatchedNamespace filter error for clusterScoped objects with namespace filters", () => {
