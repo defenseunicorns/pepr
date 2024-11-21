@@ -1066,25 +1066,21 @@ describe("filterNoMatchReason", () => {
   );
 });
 
-it("returns no regex namespace filter error for Pods whos namespace does match the regex", () => {
-  const binding: Binding = {
-    ...defaultBinding,
-    kind: { kind: "Pod", group: "some-group" },
-    filters: { ...defaultFilters, regexNamespaces: ["(.*)-system"], namespaces: [] },
-  };
-  const obj = { metadata: { namespace: "pepr-demo" } };
-  const objArray = [
-    { ...obj, metadata: { namespace: "pepr-system" } },
-    { ...obj, metadata: { namespace: "pepr-uds-system" } },
-    { ...obj, metadata: { namespace: "uds-system" } },
-    { ...obj, metadata: { namespace: "some-thing-that-is-a-system" } },
-    { ...obj, metadata: { namespace: "your-system" } },
-  ];
-  const capabilityNamespaces: string[] = [];
-  objArray.map(object => {
-    const result = filterNoMatchReason(binding, object as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual(``);
-  });
+describe("when pod namespace matches the namespace regex", () => {
+  it.each([["pepr-system"], ["pepr-uds-system"], ["uds-system"], ["some-thing-that-is-a-system"], ["your-system"]])(
+    "should not return an error message (namespace: '%s')",
+    namespace => {
+      const binding: Binding = {
+        ...defaultBinding,
+        kind: { kind: "Pod", group: "some-group" },
+        filters: { ...defaultFilters, regexName: "", regexNamespaces: ["(.*)-system"], namespaces: [] },
+      };
+      const kubernetesObject: KubernetesObject = { ...defaultKubernetesObject, metadata: { namespace: namespace } };
+      const capabilityNamespaces: string[] = [];
+      const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces);
+      expect(result).toEqual("");
+    },
+  );
 });
 
 // Names Fail

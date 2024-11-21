@@ -364,7 +364,7 @@ export const parseTimeout = (value: string, previous: unknown): number => {
 };
 
 // Remove leading whitespace while keeping format of file
-export function dedent(file: string) {
+export function dedent(file: string): string {
   // Check if the first line is empty and remove it
   const lines = file.split("\n");
   if (lines[0].trim() === "") {
@@ -381,7 +381,7 @@ export function dedent(file: string) {
   return file;
 }
 
-export function replaceString(str: string, stringA: string, stringB: string) {
+export function replaceString(str: string, stringA: string, stringB: string): string {
   // eslint-disable-next-line no-useless-escape
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
