@@ -26,3 +26,17 @@ export async function checkDeploymentStatus(namespace: string): Promise<boolean>
   }
   return status;
 }
+
+// wait for all deployments in the pepr-system namespace to be ready
+export async function namespaceDeploymentsReady(namespace: string = "pepr-system") {
+  Log.info(`Checking ${namespace} deployments status...`);
+  let ready = false;
+  while (!ready) {
+    ready = await checkDeploymentStatus(namespace);
+    if (ready) {
+      return ready;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  Log.info(`All ${namespace} deployments are ready`);
+}

@@ -6,6 +6,7 @@ import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
 
@@ -913,13 +914,33 @@ program
 program
   .command("graph")
   .description("generate a graph of load test results")
-  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
+  .option(
+    "-b, --bucket [duration]",
+    "group events into time buckets given length before graphing",
+    "5m",
+  )
+  .option("-c, --act-json [name]", "name of inject act json to process", "<latest>-actress.json")
   .option("-d, --aud-json [name]", "name of result aud json to process", "<latest>-audience.json")
+  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
   .action(async rawOpts => {
     //
     // sanitize / validate args
     //
-    const opts = { outputDir: "", audJson: "" };
+    const opts = { bucket: 0, actJson: "", audJson: "", outputDir: "" };
+
+    const bukTrim = rawOpts.bucket.trim();
+    if (bukTrim === "") {
+      console.error(
+        `Invalid "--bucket" option: "${rawOpts.bucket}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.bucket = lib.toMs(bukTrim);
+    } catch (e) {
+      console.error(`Invalid "--bucket" option: "${bukTrim}". ${e}.`);
+      process.exit(1);
+    }
 
     const outTrim = rawOpts.outputDir.trim();
     if (outTrim === "") {
@@ -934,6 +955,29 @@ program
       process.exit(1);
     }
     opts.outputDir = path.resolve(outAbs);
+
+    let actTrim = rawOpts.actJson.trim();
+    if (actTrim === "") {
+      console.error(
+        `Invalid "--act-json" option: "${rawOpts.actJson}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    let actAbs = path.resolve(`${opts.outputDir}/${actTrim}`);
+    if (path.basename(actAbs).endsWith("<latest>-actress.json")) {
+      const files = await fs.readdir(path.dirname(actAbs));
+      const log = files
+        .filter(f => f.endsWith("-actress.json"))
+        .sort()
+        .at(-1)!;
+      actTrim = log;
+      actAbs = `${path.dirname(actAbs)}/${actTrim}`;
+    }
+    if (await fileUnreadable(actAbs)) {
+      console.error(`Invalid "--act-json" option: "${actAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.actJson = actAbs;
 
     let audTrim = rawOpts.audJson.trim();
     if (audTrim === "") {
@@ -976,43 +1020,113 @@ program
       .at(0)!;
     let watcher: [number, number, string, number, string][] = audAll[watcherName];
 
-    let watcherMem: [number, number][] = watcher.map(m => [m[0], m[3]]);
-    let start = watcherMem[0][0];
-    watcherMem = watcherMem.map(([ts, b]) => [(ts - start) / 1000 / 60, b / 1024 / 1024]);
-    let watcherGraph = path.basename(opts.audJson).replace("audience.json", watcherName);
+    let mem: [number, number][] = watcher.map(m => [m[0], m[3]]);
+    mem = mem.map(([ts, b]) => [ts, b / 1024 / 1024]);
+
+    let actAll = JSON.parse(await fs.readFile(opts.actJson, { encoding: "utf8" }));
+    let rps = lib.injectsToRps(actAll.injects);
+
+    let memLimits = watcher.reduce(
+      (acc, cur) => {
+        return [cur[0] < acc[0] ? cur[0] : acc[0], cur[0] > acc[1] ? cur[0] : acc[1]];
+      },
+      [Infinity, -Infinity],
+    );
+
+    let rpsLimits = rps.reduce(
+      (acc, cur) => {
+        return [cur[0] < acc[0] ? cur[0] : acc[0], cur[0] > acc[1] ? cur[0] : acc[1]];
+      },
+      [Infinity, -Infinity],
+    );
+
+    let xMin = Math.min(memLimits[0], rpsLimits[0]);
+    xMin = xMin - (xMin % opts.bucket);
+
+    let xMax = Math.max(memLimits[1], rpsLimits[1]);
+    xMax = xMax - (xMax % opts.bucket) + (opts.bucket - 1);
+
+    let unifiedX: number[] = [];
+    for (let x = xMin; x <= xMax; x = x + opts.bucket) {
+      unifiedX.push(x);
+    }
+
+    let memY: [number, number][] = [];
+    unifiedX.forEach((val, idx, arr) => {
+      const nextVal = arr[idx + 1];
+      const min = val;
+      const max = nextVal ? nextVal - 1 : xMax;
+
+      const group = mem.filter(([t, y]) => t >= min && t <= max);
+      const ys = group.map<number>(([t, y]) => y);
+      const avg = Math.round(R.sum(ys) / ys.length);
+
+      memY.push([val, avg]);
+    });
+
+    let rpsY: [number, number][] = [];
+    unifiedX.forEach((val, idx, arr) => {
+      const nextVal = arr[idx + 1];
+      const min = val;
+      const max = nextVal ? nextVal - 1 : xMax;
+
+      const group = rps.filter(([t, y]) => t >= min && t <= max);
+      const ys = group.map<number>(([t, y]) => y);
+      const avg = Math.round(R.sum(ys) / ys.length);
+
+      rpsY.push([val, avg]);
+    });
+
+    let graph = path.basename(opts.audJson).replace("audience.json", watcherName);
 
     interface Plottable {
-      x: number[];
-      y: number[];
-      xLabel: string;
-      yLabel: string;
+      mem: {
+        y: number[];
+        label: string;
+      };
+      rps: {
+        y: number[];
+        label: string;
+      };
       title: string;
+      x: number[];
+      label: string;
       fname: string;
     }
 
     let plottable: Plottable = {
-      x: [],
-      y: [],
-      xLabel: "mins",
-      yLabel: "MiB",
+      mem: {
+        y: memY.map(m => m[1]),
+        label: "MiB",
+      },
+      rps: {
+        y: rpsY.map(m => m[1]),
+        label: "injects/sec",
+      },
       title: watcherName,
-      fname: watcherGraph,
+      x: unifiedX.map((val, idx, arr) => (val - arr[0]) / 1000 / 60),
+      label: `runtime (minutes) - buckets (${lib.toHuman(opts.bucket)})`,
+      fname: graph,
     };
-    watcherMem.forEach(w => {
-      plottable.x.push(w[0]);
-      plottable.y.push(w[1]);
-    });
 
     log(`Write graphing script output dir`);
     const octaveScript = heredoc`
       StrData = fread(stdin, 'char') ;
       StrData = char( StrData.' ) ;
       JsonData = jsondecode(StrData) ;
-      fname = [ JsonData.fname ".png" ] ;
-      plot(JsonData.x, JsonData.y) ;
-      xlabel (JsonData.xLabel) ;
-      ylabel (JsonData.yLabel) ;
+
+      ax = plotyy (JsonData.x, JsonData.mem.y, JsonData.x, JsonData.rps.y) ;
+
+      xlabel (JsonData.label) ;
+
+      ylim (ax(1), "padded") ;
+      ylabel (ax(1), JsonData.mem.label) ;
+
+      ylim (ax(2), "padded") ;
+      ylabel (ax(2), JsonData.rps.label) ;
+
       title (JsonData.title) ;
+      fname = [ JsonData.fname ".png" ] ;
       print ("-dpng", fname) ;
     `;
     let octaveFile = `${opts.outputDir}/graph.m`;
