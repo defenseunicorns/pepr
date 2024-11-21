@@ -3,7 +3,6 @@
 import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "./logger";
 
-// returns true if all deployments are ready, false otherwise
 export async function checkDeploymentStatus(namespace: string): Promise<boolean> {
   const deployments = await K8s(kind.Deployment).InNamespace(namespace).Get();
   let status = false;
