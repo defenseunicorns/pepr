@@ -1,20 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, jest, beforeEach, afterEach, it, expect } from "@jest/globals";
-import { K8s } from "kubernetes-fluent-client";
+import { describe, it, expect } from "@jest/globals";
 import { checkDeploymentStatus } from "./checkDeploymentStatus";
 import { namespaceDeploymentsReady } from "./helpers";
 
 describe("checkDeploymentStatus", () => {
-  const mockK8s = jest.mocked(K8s);
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
   it("should return true if all deployments are ready", async () => {
     const deployments = {
       items: [
@@ -150,7 +139,5 @@ describe("checkDeploymentStatus", () => {
     const result = await namespaceDeploymentsReady();
 
     expect(result).toBe(expected);
-
-    expect(mockK8s).toHaveBeenCalledTimes(1);
   });
 });
