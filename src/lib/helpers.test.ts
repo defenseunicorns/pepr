@@ -8,7 +8,6 @@ import {
   addVerbIfNotExists,
   bindingAndCapabilityNSConflict,
   createRBACMap,
-  checkDeploymentStatus,
   filterNoMatchReason,
   dedent,
   generateWatchNamespaceError,
@@ -29,8 +28,7 @@ import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
 import { expect, describe, jest, beforeEach, afterEach, it } from "@jest/globals";
 import { SpiedFunction } from "jest-mock";
-import { K8s, GenericClass, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8s, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { defaultFilters, defaultKubernetesObject, defaultBinding } from "./filter/adjudicators/defaultTestObjects";
 // import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./filter/adjudicators/defaultTestObjects";
 
@@ -684,157 +682,6 @@ describe("namespaceComplianceValidator", () => {
         "Error in test-capability-namespaces capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: Binding uses a Pepr ignored namespace: ignoredNamespaces: [new york] bindingNamespaces: [new york].",
       );
     }
-  });
-});
-
-describe("checkDeploymentStatus", () => {
-  const mockK8s = jest.mocked(K8s);
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
-  it("should return true if all deployments are ready", async () => {
-    const deployments = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 1,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 2,
-          },
-        },
-      ],
-    };
-
-    const expected = true;
-    const result = await checkDeploymentStatus("pepr-system");
-    expect(result).toBe(expected);
-  });
-
-  describe("when any deployments are not ready", () => {
-    it("should return false", async () => {
-      const deployments = {
-        items: [
-          {
-            metadata: {
-              name: "watcher",
-              namespace: "pepr-system",
-            },
-            spec: {
-              replicas: 1,
-            },
-            status: {
-              readyReplicas: 1,
-            },
-          },
-          {
-            metadata: {
-              name: "admission",
-              namespace: "pepr-system",
-            },
-            spec: {
-              replicas: 2,
-            },
-            status: {
-              readyReplicas: 1,
-            },
-          },
-        ],
-      };
-
-      const expected = false;
-      const result = await checkDeploymentStatus("pepr-system");
-      expect(result).toBe(expected);
-    });
-  });
-
-  it("should call checkDeploymentStatus", async () => {
-    const deployments = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 1,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-      ],
-    };
-
-    const deployments2 = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 1,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 2,
-          },
-        },
-      ],
-    };
-
-    const expected = true;
-    const result = await namespaceDeploymentsReady();
-
-    expect(result).toBe(expected);
-
-    expect(mockK8s).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import Log from "./logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
@@ -30,6 +30,7 @@ import {
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./filter/adjudicators";
+import { checkDeploymentStatus } from "./checkDeploymentStatus";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);
@@ -292,32 +293,6 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       }
     }
   }
-}
-
-// check to see if all replicas are ready for all deployments in the pepr-system namespace
-// returns true if all deployments are ready, false otherwise
-export async function checkDeploymentStatus(namespace: string) {
-  const deployments = await K8s(kind.Deployment).InNamespace(namespace).Get();
-  let status = false;
-  let readyCount = 0;
-
-  for (const deployment of deployments.items) {
-    const readyReplicas = deployment.status?.readyReplicas ? deployment.status?.readyReplicas : 0;
-    if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
-      Log.info(
-        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
-      );
-    } else {
-      Log.info(
-        `Deployment ${deployment.metadata?.name} rolled out: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
-      );
-      readyCount++;
-    }
-  }
-  if (readyCount === deployments.items.length) {
-    status = true;
-  }
-  return status;
 }
 
 // wait for all deployments in the pepr-system namespace to be ready
