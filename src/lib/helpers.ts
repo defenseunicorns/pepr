@@ -32,13 +32,7 @@ import {
 } from "./filter/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
-  // edge-case
-  if (!pattern) {
-    return false;
-  }
-
-  const regex = new RegExp(pattern);
-  return regex.test(testString);
+  return new RegExp(pattern).test(testString);
 }
 
 export class ValidationError extends Error {}
