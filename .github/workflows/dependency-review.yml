@@ -9,9 +9,6 @@
 name: 'Dependency Review'
 on: 
   pull_request:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
   merge_group:
     paths-ignore:
     - "LICENSE"
