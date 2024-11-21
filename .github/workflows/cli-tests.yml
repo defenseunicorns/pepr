@@ -6,6 +6,20 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  merge_group:
+    paths-ignore:
+    - "**.md"
+    - "**.yml"
+    - "**.yaml"
+    - "**.toml"
+    - "docs/**"
+    - "hack/**"
+    - "journey/**"
+    - "LICENSE"
+    - "CODEOWNERS"
+    - "Dockerfile"
+    - "Dockerfile.controller"
+    - "Dockerfile.kfc"
 
 jobs:
   pepr-build:
