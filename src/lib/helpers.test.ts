@@ -15,7 +15,6 @@ import {
   hasEveryOverlap,
   ignoredNamespaceConflict,
   matchesRegex,
-  namespaceDeploymentsReady,
   namespaceComplianceValidator,
   parseTimeout,
   replaceString,
@@ -30,6 +29,7 @@ import { expect, describe, jest, beforeEach, afterEach, it } from "@jest/globals
 import { SpiedFunction } from "jest-mock";
 import { K8s, KubernetesObject, kind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { defaultFilters, defaultKubernetesObject, defaultBinding } from "./filter/adjudicators/defaultTestObjects";
+import { namespaceDeploymentsReady } from "./deploymentChecks";
 // import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./filter/adjudicators/defaultTestObjects";
 
 export const callback = () => undefined;

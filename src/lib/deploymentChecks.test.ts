@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, jest, beforeEach, afterEach, it, expect } from "@jest/globals";
-import { checkDeploymentStatus } from "./deploymentChecks";
-import { namespaceDeploymentsReady } from "./helpers";
+import { checkDeploymentStatus, namespaceDeploymentsReady } from "./deploymentChecks";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
