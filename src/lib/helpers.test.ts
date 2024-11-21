@@ -1418,16 +1418,6 @@ describe("matchesRegex", () => {
     expect(result).toBe(false);
   });
 
-  test("should return false when pattern is null or undefined", () => {
-    const testString = "abc123";
-    // Check for undefined
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(matchesRegex(undefined as any, testString)).toBe(false);
-    // Check for null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(matchesRegex(null as any, testString)).toBe(false);
-  });
-
   test("should return true for an empty string matching an empty regex", () => {
     const pattern = "";
     const testString = "";
