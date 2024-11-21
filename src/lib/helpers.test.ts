@@ -733,90 +733,44 @@ describe("checkDeploymentStatus", () => {
     expect(result).toBe(expected);
   });
 
-  it("should return false if any deployments are not ready", async () => {
-    const deployments = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
+  describe("when any deployments are not ready", () => {
+    it("should return false", async () => {
+      const deployments = {
+        items: [
+          {
+            metadata: {
+              name: "watcher",
+              namespace: "pepr-system",
+            },
+            spec: {
+              replicas: 1,
+            },
+            status: {
+              readyReplicas: 1,
+            },
           },
-          spec: {
-            replicas: 1,
+          {
+            metadata: {
+              name: "admission",
+              namespace: "pepr-system",
+            },
+            spec: {
+              replicas: 2,
+            },
+            status: {
+              readyReplicas: 1,
+            },
           },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-      ],
-    };
+        ],
+      };
 
-    const expected = false;
-    const result = await checkDeploymentStatus("pepr-system");
-    expect(result).toBe(expected);
-  });
-});
-
-describe("namespaceDeploymentsReady", () => {
-  const mockK8s = jest.mocked(K8s);
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
+      const expected = false;
+      const result = await checkDeploymentStatus("pepr-system");
+      expect(result).toBe(expected);
+    });
   });
 
-  it("should return true if all deployments are ready", async () => {
-    const deployments = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 1,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 2,
-          },
-        },
-      ],
-    };
-
-    const expected = true;
-    const result = await namespaceDeploymentsReady();
-    expect(result).toBe(expected);
-  });
-
-  it("should call checkDeploymentStatus if any deployments are not ready", async () => {
+  it("should call checkDeploymentStatus", async () => {
     const deployments = {
       items: [
         {
@@ -884,6 +838,53 @@ describe("namespaceDeploymentsReady", () => {
   });
 });
 
+describe("namespaceDeploymentsReady", () => {
+  const mockK8s = jest.mocked(K8s);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  });
+
+  it("should return true if all deployments are ready", async () => {
+    const deployments = {
+      items: [
+        {
+          metadata: {
+            name: "watcher",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 1,
+          },
+          status: {
+            readyReplicas: 1,
+          },
+        },
+        {
+          metadata: {
+            name: "admission",
+            namespace: "pepr-system",
+          },
+          spec: {
+            replicas: 2,
+          },
+          status: {
+            readyReplicas: 2,
+          },
+        },
+      ],
+    };
+
+    const expected = true;
+    const result = await namespaceDeploymentsReady();
+    expect(result).toBe(expected);
+  });
+});
 describe("parseTimeout", () => {
   const PREV = "a";
   it("should return a number when a valid string number between 1 and 30 is provided", () => {
