@@ -1188,17 +1188,20 @@ it("return an Ignoring Watch Callback string if the binding name and object name
   const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
   expect(result).toEqual(`Ignoring Watch Callback: Binding defines name 'pepr' but Object carries 'not-pepr'.`);
 });
-it("returns no Ignoring Watch Callback string if the binding name and object name are the same", () => {
-  const binding: Binding = {
-    ...defaultBinding,
-    filters: { ...defaultFilters, name: "pepr" },
-  };
-  const obj = {
-    metadata: { name: "pepr" },
-  };
-  const capabilityNamespaces: string[] = [];
-  const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-  expect(result).toEqual("");
+
+describe("when the binding name and KubernetesObject name are the same", () => {
+  it("should not return an Ignoring Watch Callback message", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexName: "", name: "pepr" },
+    };
+    const obj: KubernetesObject = {
+      metadata: { name: "pepr" },
+    };
+    const capabilityNamespaces: string[] = [];
+    const result = filterNoMatchReason(binding, obj, capabilityNamespaces);
+    expect(result).toEqual("");
+  });
 });
 
 it("return deletionTimestamp error when there is no deletionTimestamp in the object", () => {
