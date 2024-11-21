@@ -52,12 +52,6 @@ export const clusterScopedBinding: Binding = {
   kind: clusterRoleKind,
   model: kind.ClusterRole,
 };
-jest.mock("kubernetes-fluent-client", () => {
-  return {
-    K8s: jest.fn(),
-    kind: jest.fn(),
-  };
-});
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
