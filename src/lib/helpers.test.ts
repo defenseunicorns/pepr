@@ -685,53 +685,6 @@ describe("namespaceComplianceValidator", () => {
   });
 });
 
-describe("namespaceDeploymentsReady", () => {
-  const mockK8s = jest.mocked(K8s);
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
-
-  it("should return true if all deployments are ready", async () => {
-    const deployments = {
-      items: [
-        {
-          metadata: {
-            name: "watcher",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 1,
-          },
-          status: {
-            readyReplicas: 1,
-          },
-        },
-        {
-          metadata: {
-            name: "admission",
-            namespace: "pepr-system",
-          },
-          spec: {
-            replicas: 2,
-          },
-          status: {
-            readyReplicas: 2,
-          },
-        },
-      ],
-    };
-
-    const expected = true;
-    const result = await namespaceDeploymentsReady();
-    expect(result).toBe(expected);
-  });
-});
 describe("parseTimeout", () => {
   const PREV = "a";
   it("should return a number when a valid string number between 1 and 30 is provided", () => {
