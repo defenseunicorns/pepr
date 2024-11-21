@@ -118,8 +118,7 @@ export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, d
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
 export const definedNamespaceRegexes = pipe(
-  (binding: Binding): string[] =>
-    binding.filters.regexNamespaces.map(regex => regex.toString().replace(/^\/|\/$/g, "")),
+  (binding: Binding): string[] => binding.filters.regexNamespaces,
   defaultTo<string[]>([]),
 );
 export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([] as string[]), not);
