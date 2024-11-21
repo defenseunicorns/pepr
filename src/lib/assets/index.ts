@@ -11,7 +11,7 @@ import { deploy } from "./deploy";
 import { loadCapabilities } from "./loader";
 import { allYaml, zarfYaml, overridesFile, zarfYamlChart } from "./yaml";
 import { namespaceComplianceValidator, replaceString } from "../helpers";
-import { createDirectoryIfNotExists, dedent } from "../helpers";
+import { dedent } from "../helpers";
 import { resolve } from "path";
 import {
   chartYaml,
@@ -27,6 +27,7 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { watcher, moduleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import { createDirectoryIfNotExists } from "../filesystemHelpers";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
