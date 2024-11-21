@@ -13,9 +13,9 @@ export enum Operation {
  * The type of Kubernetes mutating webhook event that the action is registered for.
  */
 export enum Event {
-  Create = "CREATE",
-  Update = "UPDATE",
-  Delete = "DELETE",
-  CreateOrUpdate = "CREATEORUPDATE",
-  Any = "*",
+  CREATE = "CREATE",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  CREATE_OR_UPDATE = "CREATEORUPDATE",
+  ANY = "*",
 }

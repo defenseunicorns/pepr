@@ -9,6 +9,11 @@ on:
         required: false
         type: string
         default: 'none'
+  merge_group:
+    paths-ignore:
+    - "LICENSE"
+    - "CODEOWNERS"
+    - "**.md"
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
