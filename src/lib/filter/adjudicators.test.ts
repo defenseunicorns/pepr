@@ -120,13 +120,13 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
-  const testRegex1 = /^n[aeiou]mespace$/;
-  const testRegex2 = /^n[aeiou]me$/;
-  const testRegex3 = /^sp[aeiou]ce$/;
+  const testRegex1 = "^n[aeiou]mespace$";
+  const testRegex2 = "^n[aeiou]me$";
+  const testRegex3 = "^sp[aeiou]ce$";
   it.each([
     // [{}, {}, false],
     // [{}, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n.mespace$/] } }, {}, true],
+    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
 
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "namespace" } }, false],
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nemespace" } }, false],

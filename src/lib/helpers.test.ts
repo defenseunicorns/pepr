@@ -619,7 +619,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [new RegExp(/^system/)],
+          regexNamespaces: ["^system"],
         },
       })),
     };
@@ -637,7 +637,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [new RegExp(/^mia/)],
+          regexNamespaces: ["^mia"],
         },
       })),
     };
@@ -653,7 +653,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [new RegExp(/^mia/)],
+          regexNamespaces: ["^mia"],
         },
       })),
     };
@@ -671,7 +671,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: [new RegExp(/^mia/)],
+          regexNamespaces: ["^mia"],
         },
       })),
     };
@@ -1089,7 +1089,7 @@ describe("filterNoMatchReason", () => {
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
-        filters: { ...defaultFilters, regexNamespaces: [RegExp("(.*)-system")] },
+        filters: { ...defaultFilters, regexNamespaces: ["(.*)-system"] },
       };
 
       const capabilityNamespaces: string[] = [];
@@ -1108,7 +1108,7 @@ test("returns no regex namespace filter error for Pods whos namespace does match
   const binding: Binding = {
     ...defaultBinding,
     kind: { kind: "Pod", group: "some-group" },
-    filters: { ...defaultFilters, regexNamespaces: [/(.*)-system/], namespaces: [] },
+    filters: { ...defaultFilters, regexNamespaces: ["(.*)-system"], namespaces: [] },
   };
   const obj = { metadata: { namespace: "pepr-demo" } };
   const objArray = [
@@ -1130,7 +1130,7 @@ test("returns regex name filter error for Pods whos name does not match the rege
   const binding: Binding = {
     ...defaultBinding,
     kind: { kind: "Pod", group: "some-group" },
-    filters: { ...defaultFilters, regexName: /^system/, namespaces: [] },
+    filters: { ...defaultFilters, regexName: "^system", namespaces: [] },
   };
   const obj = { metadata: { name: "pepr-demo" } };
   const objArray = [
@@ -1154,7 +1154,7 @@ test("returns no regex name filter error for Pods whos name does match the regex
   const binding: Binding = {
     ...defaultBinding,
     kind: { kind: "Pod", group: "some-group" },
-    filters: { ...defaultFilters, regexName: /^system/ },
+    filters: { ...defaultFilters, regexName: "^system" },
   };
   const obj = { metadata: { name: "pepr-demo" } };
   const objArray = [

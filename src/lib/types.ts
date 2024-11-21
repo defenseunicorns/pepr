@@ -77,8 +77,8 @@ export type Filters = {
   labels: Record<string, string>;
   name: string;
   namespaces: string[];
-  regexName: string | RegExp;
-  regexNamespaces: RegExp[]; // TODO: Test the Regexp path??
+  regexName: string;
+  regexNamespaces: string[];
 };
 
 export type Binding = {
@@ -143,14 +143,14 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
   /** Only apply the action if the resource name matches the specified regex name. */
-  WithNameRegex: (name: RegExp) => BindingFilter<T>;
+  WithNameRegex: (name: string) => BindingFilter<T>;
 };
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
   /** Only apply the action if the resource is in one of the specified regex namespaces.*/
-  InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+  InNamespaceRegex: (...namespaces: string[]) => BindingWithName<T>;
 };
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {

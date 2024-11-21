@@ -109,8 +109,7 @@ export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
 
 export const definedNameRegex = pipe(
-  (binding: Partial<Binding>): string | undefined =>
-    typeof binding.filters?.regexName === "string" ? binding.filters.regexName : binding.filters?.regexName.source,
+  (binding: Partial<Binding>): string | undefined => binding.filters?.regexName,
   defaultTo(""),
 );
 export const definesNameRegex = pipe(definedNameRegex, equals(""), not);

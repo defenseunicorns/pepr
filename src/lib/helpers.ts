@@ -259,8 +259,10 @@ export function generateWatchNamespaceError(
 // namespaceComplianceValidator ensures that capability binds respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
-  const bindingRegexNamespaces = bindings.flatMap((binding: Binding) => binding.filters.regexNamespaces || []);
+  const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
+  const bindingRegexNamespaces: string[] = bindings.flatMap(
+    (binding: Binding) => binding.filters.regexNamespaces || [],
+  );
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
@@ -284,8 +286,8 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       matches =
-        regexNamespace.source !== "" &&
-        capabilityNamespaces.some(capabilityNamespace => matchesRegex(regexNamespace, capabilityNamespace));
+        regexNamespace !== "" &&
+        capabilityNamespaces.some(capabilityNamespace => matchesRegex(new RegExp(regexNamespace), capabilityNamespace));
       if (!matches) {
         throw new Error(
           `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`,
@@ -301,7 +303,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
     ignoredNamespaces.length > 0
   ) {
     for (const regexNamespace of bindingRegexNamespaces) {
-      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
+      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(new RegExp(regexNamespace), ignoredNS));
       if (matchedNS) {
         throw new Error(
           `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${matchedNS}.`,

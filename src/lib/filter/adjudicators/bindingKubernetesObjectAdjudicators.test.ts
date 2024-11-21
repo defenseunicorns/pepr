@@ -99,25 +99,26 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
+  const testRegex1 = "^n.mespace$";
+  const testRegex2 = "^n[aeiou]mespace$";
+  const testRegex3 = "^n[aeiou]me$";
+  const testRegex4 = "^sp[aeiou]ce$";
+
   it.each([
     // [{}, {}, false],
     // [{}, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n.mespace$/] } }, {}, true],
+    [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
 
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "nemespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "nimespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "nomespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "numespace" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]mespace$/] } }, { metadata: { namespace: "n3mespace" } }, true],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "n3mespace" } }, true],
 
-    [{ filters: { regexNamespaces: [/^n[aeiou]me$/, /^sp[aeiou]ce$/] } }, { metadata: { namespace: "name" } }, false],
-    [{ filters: { regexNamespaces: [/^n[aeiou]me$/, /^sp[aeiou]ce$/] } }, { metadata: { namespace: "space" } }, false],
-    [
-      { filters: { regexNamespaces: [/^n[aeiou]me$/, /^sp[aeiou]ce$/] } },
-      { metadata: { namespace: "namespace" } },
-      true,
-    ],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "space" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "namespace" } }, true],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding: Binding = {
       ...defaultBinding,

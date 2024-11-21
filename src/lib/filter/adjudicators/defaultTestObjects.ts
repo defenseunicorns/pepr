@@ -9,13 +9,12 @@ export const defaultFilters = {
   name: "",
   namespaces: [],
   regexName: "^default$",
-  regexNamespaces: [],
+  regexNamespaces: [] as string[],
 };
 export const defaultBinding: Binding = {
   event: Event.ANY,
   filters: defaultFilters,
-  //   kind: { kind: "some-kind", group: "some-group" }, // Should it be this instead?? Used elsewhere.
-  kind: modelToGroupVersionKind(kind.Pod.name),
+  kind: { kind: "some-kind", group: "some-group" }, // Should it be this instead?? Used elsewhere.
   model: kind.Pod,
   isFinalize: false, //Lots of optionals that maybe don't belong here. Would be nice to choose to include
   isMutate: false,
@@ -41,21 +40,18 @@ export const defaultKubernetesObject: KubernetesObject = {
   metadata: { name: "some-name" },
 };
 
-const callback = () => undefined;
-// const podKind = modelToGroupVersionKind(kind.Pod.name);
-const deploymentKind = modelToGroupVersionKind(kind.Deployment.name);
-const clusterRoleKind = modelToGroupVersionKind(kind.ClusterRole.name);
+export const podKind = modelToGroupVersionKind("V1Pod");
+export const deploymentKind = modelToGroupVersionKind("V1Deployment");
+export const clusterRoleKind = modelToGroupVersionKind("V1ClusterRole");
 
-export const groupBinding = {
-  callback,
+export const groupBinding: Binding = {
   event: Event.CREATE,
   filters: defaultFilters,
   kind: deploymentKind,
   model: kind.Deployment,
 };
 
-export const clusterScopedBinding = {
-  callback,
+export const clusterScopedBinding: Binding = {
   event: Event.DELETE,
   filters: defaultFilters,
   kind: clusterRoleKind,
