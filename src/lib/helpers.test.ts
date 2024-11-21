@@ -1320,25 +1320,23 @@ it("returns binding and object namespace error when they do not overlap", () => 
   expect(result).toEqual(`Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`);
 });
 
-it("return watch violation message when object is in an ignored namespace", () => {
-  const binding: Binding = {
-    ...defaultBinding,
-    filters: { ...defaultFilters, namespaces: ["ns3"] },
-  };
-  const obj = {
-    metadata: { namespace: "ns3" },
-  };
-  const capabilityNamespaces = ["ns3"];
-  const ignoredNamespaces = ["ns3"];
-  const result = filterNoMatchReason(
-    binding,
-    obj as unknown as Partial<KubernetesObject>,
-    capabilityNamespaces,
-    ignoredNamespaces,
-  );
-  expect(result).toEqual(
-    `Ignoring Watch Callback: Object carries namespace 'ns3' but ignored namespaces include '["ns3"]'.`,
-  );
+describe("when a KubernetesObject is in an ingnored namespace", () => {
+  it("should return a watch violation message", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexName: "", namespaces: ["ns3"] },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { namespace: "ns3" },
+    };
+    const capabilityNamespaces = ["ns3"];
+    const ignoredNamespaces = ["ns3"];
+    const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces, ignoredNamespaces);
+    expect(result).toEqual(
+      `Ignoring Watch Callback: Object carries namespace 'ns3' but ignored namespaces include '["ns3"]'.`,
+    );
+  });
 });
 
 it("returns empty string when all checks pass", () => {
