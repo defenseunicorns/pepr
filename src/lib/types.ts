@@ -143,14 +143,14 @@ export type BindingWithName<T extends GenericClass> = BindingFilter<T> & {
   /** Only apply the action if the resource name matches the specified name. */
   WithName: (name: string) => BindingFilter<T>;
   /** Only apply the action if the resource name matches the specified regex name. */
-  WithNameRegex: (name: string) => BindingFilter<T>;
+  WithNameRegex: (name: RegExp) => BindingFilter<T>;
 };
 
 export type BindingAll<T extends GenericClass> = BindingWithName<T> & {
   /** Only apply the action if the resource is in one of the specified namespaces.*/
   InNamespace: (...namespaces: string[]) => BindingWithName<T>;
   /** Only apply the action if the resource is in one of the specified regex namespaces.*/
-  InNamespaceRegex: (...namespaces: string[]) => BindingWithName<T>;
+  InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
 };
 
 export type CommonActionChain<T extends GenericClass> = MutateActionChain<T> & {

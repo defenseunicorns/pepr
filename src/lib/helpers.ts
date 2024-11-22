@@ -237,7 +237,7 @@ export function generateWatchNamespaceError(
   return err.replace(/\.([^ ])/g, ". $1");
 }
 
-// namespaceComplianceValidator ensures that capability binds respect ignored and capability namespaces
+// namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);

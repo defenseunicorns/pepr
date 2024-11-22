@@ -345,9 +345,9 @@ export class Capability implements CapabilityExport {
       return { ...commonChain, WithName, WithNameRegex };
     }
 
-    function InNamespaceRegex(...namespaces: string[]): BindingWithName<T> {
+    function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
       Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
-      binding.filters.regexNamespaces.push(...namespaces);
+      binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
       return { ...commonChain, WithName, WithNameRegex };
     }
 
@@ -357,9 +357,9 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
-    function WithNameRegex(regexName: string): BindingFilter<T> {
+    function WithNameRegex(regexName: RegExp): BindingFilter<T> {
       Log.debug(`Add regex name filter ${regexName}`, prefix);
-      binding.filters.regexName = regexName;
+      binding.filters.regexName = regexName.source;
       return commonChain;
     }
 
