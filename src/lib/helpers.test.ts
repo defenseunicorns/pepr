@@ -37,15 +37,6 @@ jest.mock("kubernetes-fluent-client", () => {
   };
 });
 
-jest.mock("fs", () => {
-  return {
-    promises: {
-      access: jest.fn(),
-      mkdir: jest.fn(),
-    },
-  };
-});
-
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
         "name": "hello-pepr",
