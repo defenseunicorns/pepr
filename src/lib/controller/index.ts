@@ -18,6 +18,49 @@ import { ResponseItem, AdmissionRequest } from "../types";
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
+
+interface KubeAdmissionResponse {
+  apiVersion: string;
+  kind: string;
+  response: ValidateResponse[] | MutateResponse | ResponseItem;
+}
+
+function karForMutate(mr: MutateResponse): KubeAdmissionResponse {
+  return {
+    apiVersion: "admission.k8s.io/v1",
+    kind: "AdmissionReview",
+    response: mr,
+  };
+}
+
+function karForValidate(ar: AdmissionRequest, vr: ValidateResponse[]): KubeAdmissionResponse {
+  const isAllowed = vr.filter(r => !r.allowed).length === 0;
+
+  const resp: ValidateResponse =
+    vr.length === 0
+      ? {
+          uid: ar.uid,
+          allowed: true,
+          status: { code: 200, message: "no in-scope validations -- allowed!" },
+        }
+      : {
+          uid: vr[0].uid,
+          allowed: isAllowed,
+          status: {
+            code: isAllowed ? 200 : 422,
+            message: vr
+              .filter(rl => !rl.allowed)
+              .map(curr => curr.status?.message)
+              .join("; "),
+          },
+        };
+  return {
+    apiVersion: "admission.k8s.io/v1",
+    kind: "AdmissionReview",
+    response: resp,
+  };
+}
+
 export class Controller {
   // Track whether the server is running
   #running = false;
@@ -206,77 +249,37 @@ export class Controller {
         // Get the request from the body or create an empty request
         const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
 
-        // Run the before hook if it exists
-        this.#beforeHook && this.#beforeHook(request || {});
-
-        // Setup identifiers for logging
-        const name = request?.name ? `/${request.name}` : "";
-        const namespace = request?.namespace || "";
-        const gvk = request?.kind || { group: "", version: "", kind: "" };
-
-        const reqMetadata = {
-          uid: request.uid,
-          namespace,
-          name,
+        const { name, namespace, gvk } = {
+          name: request?.name ? `/${request.name}` : "",
+          namespace: request?.namespace || "",
+          gvk: request?.kind || { group: "", version: "", kind: "" },
         };
 
+        const reqMetadata = { uid: request.uid, namespace, name };
         Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
-        // Process the request
-        let response: MutateResponse | ValidateResponse[];
+        // Run the before hook if it exists
+        this.#beforeHook && this.#beforeHook(request || {});
 
-        // Call mutate or validate based on the admission kind
-        if (admissionKind === "Mutate") {
-          response = await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata);
-        } else {
-          response = await validateProcessor(this.#config, this.#capabilities, request, reqMetadata);
-        }
+        // Process the request
+        const response: MutateResponse | ValidateResponse[] =
+          admissionKind === "Mutate"
+            ? await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata)
+            : await validateProcessor(this.#config, this.#capabilities, request, reqMetadata);
 
         // Run the after hook if it exists
-        const responseList: ValidateResponse[] | MutateResponse[] = Array.isArray(response) ? response : [response];
-        responseList.map(res => {
+        [response].flat().map(res => {
           this.#afterHook && this.#afterHook(res);
-          // Log the response
-          Log.info({ ...reqMetadata, res }, "Check response");
         });
 
-        let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;
+        const kar: KubeAdmissionResponse =
+          admissionKind === "Mutate"
+            ? karForMutate(response as MutateResponse)
+            : karForValidate(request, response as ValidateResponse[]);
 
-        if (admissionKind === "Mutate") {
-          kubeAdmissionResponse = response;
-          Log.debug({ ...reqMetadata, response }, "Outgoing response");
-          res.send({
-            apiVersion: "admission.k8s.io/v1",
-            kind: "AdmissionReview",
-            response: kubeAdmissionResponse,
-          });
-        } else {
-          kubeAdmissionResponse =
-            responseList.length === 0
-              ? {
-                  uid: request.uid,
-                  allowed: true,
-                  status: { message: "no in-scope validations -- allowed!" },
-                }
-              : {
-                  uid: responseList[0].uid,
-                  allowed: responseList.filter(r => !r.allowed).length === 0,
-                  status: {
-                    message: (responseList as ValidateResponse[])
-                      .filter(rl => !rl.allowed)
-                      .map(curr => curr.status?.message)
-                      .join("; "),
-                  },
-                };
-          res.send({
-            apiVersion: "admission.k8s.io/v1",
-            kind: "AdmissionReview",
-            response: kubeAdmissionResponse,
-          });
-        }
-
-        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
+        Log.debug({ ...reqMetadata, kar }, "Outgoing response");
+        res.send(kar);
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
