@@ -40,13 +40,13 @@ jobs:
           echo "ignore:" > ~/.grype.yaml
           echo "  - vulnerability: GHSA-3xgq-45jj-v275" >> ~/.grype.yaml
       - name: Vulnerability Scan
-        uses: anchore/scan-action@f2ba85e044c8f5e5014c9a539328a9c78d3bfa49 # v5.2.1
+        uses: anchore/scan-action@869c549e657a088dc0441b08ce4fc0ecdac2bb65 # v5.3.0
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
       - name: Generate SBOM
-        uses: anchore/sbom-action@fc46e51fd3cb168ffb36c6d1915723c47db58abb # v0.17.7
+        uses: anchore/sbom-action@55dc4ee22412511ee8c3142cbea40418e6cec693 # v0.17.8
         with:
           image: pepr:dev
           upload-artifact: true

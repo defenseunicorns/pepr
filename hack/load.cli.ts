@@ -6,6 +6,7 @@ import { spawn } from "child_process";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
 
@@ -665,122 +666,127 @@ program
     //
     // run
     //
-    if (await fileUnreadable(opts.outputDir)) {
-      log(`Create output directory`);
-      await fs.mkdir(opts.outputDir);
-      log(`  outdir: ${opts.outputDir}`, "");
-    }
+    try {
+      if (await fileUnreadable(opts.outputDir)) {
+        log(`Create output directory`);
+        await fs.mkdir(opts.outputDir);
+        log(`  outdir: ${opts.outputDir}`, "");
+      }
 
-    log(`Get test cluster credential`);
-    let cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
-    log({ cmd: cmd.cmd });
-    let result = await cmd.run();
-    let KUBECONFIG = result.stdout.join("").trim();
-    log(result, "");
+      log(`Get test cluster credential`);
+      let cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
+      log({ cmd: cmd.cmd });
+      let result = await cmd.run();
+      let KUBECONFIG = result.stdout.join("").trim();
+      log(result, "");
 
-    const alpha = Date.now();
+      const alpha = Date.now();
 
-    log(`Load test start: ${new Date(alpha).toISOString()}`);
-    log(args);
-    const prettyOpts = Object.keys(opts).reduce(
-      (acc, key) => {
-        switch (key) {
-          case "actInterval":
-          case "audInterval":
-          case "duration":
-          case "settle":
-          case "stagger":
-            acc[key] = lib.toHuman(opts[key]);
-            break;
-          default:
-            acc[key] = opts[key];
-            break;
-        }
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-    log(prettyOpts, "");
+      log(`Load test start: ${new Date(alpha).toISOString()}`);
+      log(args);
+      const prettyOpts = Object.keys(opts).reduce(
+        (acc, key) => {
+          switch (key) {
+            case "actInterval":
+            case "audInterval":
+            case "duration":
+            case "settle":
+            case "stagger":
+              acc[key] = lib.toHuman(opts[key]);
+              break;
+            default:
+              acc[key] = opts[key];
+              break;
+          }
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+      log(prettyOpts, "");
 
-    const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
-      encoding: "utf-8",
-    });
-    let stdin = scenario.split("\n");
-    let env = { KUBECONFIG };
-
-    cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
-    let req = { cmd: cmd.cmd, stdin, env };
-    let res = await cmd.run();
-
-    const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
-    let actFile = `${opts.outputDir}/${alpha}-actress.log`;
-    await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
-
-    let audFile = `${opts.outputDir}/${alpha}-audience.log`;
-
-    const audience = async () => {
-      process.stdout.write("↓");
-
+      const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
+        encoding: "utf-8",
+      });
+      let stdin = scenario.split("\n");
       let env = { KUBECONFIG };
 
-      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-      let req = { cmd: cmd.cmd, env };
+      cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
+      let req = { cmd: cmd.cmd, stdin, env };
       let res = await cmd.run();
 
-      let outlines = res.stdout
-        .filter(f => f)
-        .map(m => `${Date.now()}\t${m}`)
-        .join("\n")
-        .concat("\n");
-      await fs.appendFile(audFile, outlines);
-    };
-    audience(); // run immediately, then on schedule
-    const ticket = setInterval(audience, opts.audInterval);
+      const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
+      let actFile = `${opts.outputDir}/${alpha}-actress.log`;
+      await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
 
-    await nap(opts.stagger); // stagger interval starts
+      let audFile = `${opts.outputDir}/${alpha}-audience.log`;
 
-    const abort = new AbortController();
+      const audience = async () => {
+        process.stdout.write("↓");
 
-    const actress = async (abort?: AbortController) => {
-      process.stdout.write("↑");
-
-      for (let i = 0; i < opts.actIntensity; i++) {
-        if (abort?.signal.aborted) {
-          return;
-        }
-
-        let load = loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
-
-        let stdin = load.split("\n");
         let env = { KUBECONFIG };
 
-        cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
-        let req = { cmd: cmd.cmd, stdin, env };
+        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+        let req = { cmd: cmd.cmd, env };
         let res = await cmd.run();
 
-        await fs.appendFile(actFile, Date.now().toString() + "\n");
-      }
-    };
-    actress(); // run immediately, then on schedule
-    const backstagePass = setInterval(() => actress(abort), opts.actInterval);
+        let outlines = res.stdout
+          .filter(f => f)
+          .map(m => `${Date.now()}\t${m}`)
+          .join("\n")
+          .concat("\n");
+        await fs.appendFile(audFile, outlines);
+      };
+      audience(); // run immediately, then on schedule
+      const ticket = setInterval(audience, opts.audInterval);
 
-    // wait until total duration has elapsed
-    const startWait = Date.now();
-    await nap(opts.duration - (startWait - alpha));
-    const endWait = Date.now();
+      await nap(opts.stagger); // stagger interval starts
 
-    // stop adding load
-    abort.abort();
-    clearInterval(backstagePass);
+      const abort = new AbortController();
 
-    // let cluster settle after load stops
-    await nap(opts.settle);
-    clearInterval(ticket);
+      const actress = async (abort?: AbortController) => {
+        process.stdout.write("↑");
 
-    log("", "");
-    log(`Load test complete: ${new Date(endWait).toISOString()}`, "");
+        for (let i = 0; i < opts.actIntensity; i++) {
+          if (abort?.signal.aborted) {
+            return;
+          }
 
-    log("  Waiting for final actions to complete...", "");
+          let load = loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
+
+          let stdin = load.split("\n");
+          let env = { KUBECONFIG };
+
+          cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
+          let req = { cmd: cmd.cmd, stdin, env };
+          let res = await cmd.run();
+
+          await fs.appendFile(actFile, Date.now().toString() + "\n");
+        }
+      };
+      actress(); // run immediately, then on schedule
+      const backstagePass = setInterval(() => actress(abort), opts.actInterval);
+
+      // wait until total duration has elapsed
+      const startWait = Date.now();
+      await nap(opts.duration - (startWait - alpha));
+      const endWait = Date.now();
+
+      // stop adding load
+      abort.abort();
+      clearInterval(backstagePass);
+
+      // let cluster settle after load stops
+      await nap(opts.settle);
+      clearInterval(ticket);
+
+      log("", "");
+      log(`Load test complete: ${new Date(endWait).toISOString()}`, "");
+
+      log("  Waiting for final actions to complete...", "");
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
   });
 
 program
@@ -913,13 +919,33 @@ program
 program
   .command("graph")
   .description("generate a graph of load test results")
-  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
+  .option(
+    "-b, --bucket [duration]",
+    "group events into time buckets given length before graphing",
+    "5m",
+  )
+  .option("-c, --act-json [name]", "name of inject act json to process", "<latest>-actress.json")
   .option("-d, --aud-json [name]", "name of result aud json to process", "<latest>-audience.json")
+  .option("-o, --output-dir [path]", "path to folder containing result files", "./load")
   .action(async rawOpts => {
     //
     // sanitize / validate args
     //
-    const opts = { outputDir: "", audJson: "" };
+    const opts = { bucket: 0, actJson: "", audJson: "", outputDir: "" };
+
+    const bukTrim = rawOpts.bucket.trim();
+    if (bukTrim === "") {
+      console.error(
+        `Invalid "--bucket" option: "${rawOpts.bucket}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    try {
+      opts.bucket = lib.toMs(bukTrim);
+    } catch (e) {
+      console.error(`Invalid "--bucket" option: "${bukTrim}". ${e}.`);
+      process.exit(1);
+    }
 
     const outTrim = rawOpts.outputDir.trim();
     if (outTrim === "") {
@@ -934,6 +960,29 @@ program
       process.exit(1);
     }
     opts.outputDir = path.resolve(outAbs);
+
+    let actTrim = rawOpts.actJson.trim();
+    if (actTrim === "") {
+      console.error(
+        `Invalid "--act-json" option: "${rawOpts.actJson}". Cannot be empty / all whitespace.`,
+      );
+      process.exit(1);
+    }
+    let actAbs = path.resolve(`${opts.outputDir}/${actTrim}`);
+    if (path.basename(actAbs).endsWith("<latest>-actress.json")) {
+      const files = await fs.readdir(path.dirname(actAbs));
+      const log = files
+        .filter(f => f.endsWith("-actress.json"))
+        .sort()
+        .at(-1)!;
+      actTrim = log;
+      actAbs = `${path.dirname(actAbs)}/${actTrim}`;
+    }
+    if (await fileUnreadable(actAbs)) {
+      console.error(`Invalid "--act-json" option: "${actAbs}". Cannot access (read).`);
+      process.exit(1);
+    }
+    opts.actJson = actAbs;
 
     let audTrim = rawOpts.audJson.trim();
     if (audTrim === "") {
@@ -976,43 +1025,113 @@ program
       .at(0)!;
     let watcher: [number, number, string, number, string][] = audAll[watcherName];
 
-    let watcherMem: [number, number][] = watcher.map(m => [m[0], m[3]]);
-    let start = watcherMem[0][0];
-    watcherMem = watcherMem.map(([ts, b]) => [(ts - start) / 1000 / 60, b / 1024 / 1024]);
-    let watcherGraph = path.basename(opts.audJson).replace("audience.json", watcherName);
+    let mem: [number, number][] = watcher.map(m => [m[0], m[3]]);
+    mem = mem.map(([ts, b]) => [ts, b / 1024 / 1024]);
+
+    let actAll = JSON.parse(await fs.readFile(opts.actJson, { encoding: "utf8" }));
+    let rps = lib.injectsToRps(actAll.injects);
+
+    let memLimits = watcher.reduce(
+      (acc, cur) => {
+        return [cur[0] < acc[0] ? cur[0] : acc[0], cur[0] > acc[1] ? cur[0] : acc[1]];
+      },
+      [Infinity, -Infinity],
+    );
+
+    let rpsLimits = rps.reduce(
+      (acc, cur) => {
+        return [cur[0] < acc[0] ? cur[0] : acc[0], cur[0] > acc[1] ? cur[0] : acc[1]];
+      },
+      [Infinity, -Infinity],
+    );
+
+    let xMin = Math.min(memLimits[0], rpsLimits[0]);
+    xMin = xMin - (xMin % opts.bucket);
+
+    let xMax = Math.max(memLimits[1], rpsLimits[1]);
+    xMax = xMax - (xMax % opts.bucket) + (opts.bucket - 1);
+
+    let unifiedX: number[] = [];
+    for (let x = xMin; x <= xMax; x = x + opts.bucket) {
+      unifiedX.push(x);
+    }
+
+    let memY: [number, number][] = [];
+    unifiedX.forEach((val, idx, arr) => {
+      const nextVal = arr[idx + 1];
+      const min = val;
+      const max = nextVal ? nextVal - 1 : xMax;
+
+      const group = mem.filter(([t, y]) => t >= min && t <= max);
+      const ys = group.map<number>(([t, y]) => y);
+      const avg = Math.round(R.sum(ys) / ys.length);
+
+      memY.push([val, avg]);
+    });
+
+    let rpsY: [number, number][] = [];
+    unifiedX.forEach((val, idx, arr) => {
+      const nextVal = arr[idx + 1];
+      const min = val;
+      const max = nextVal ? nextVal - 1 : xMax;
+
+      const group = rps.filter(([t, y]) => t >= min && t <= max);
+      const ys = group.map<number>(([t, y]) => y);
+      const avg = Math.round(R.sum(ys) / ys.length);
+
+      rpsY.push([val, avg]);
+    });
+
+    let graph = path.basename(opts.audJson).replace("audience.json", watcherName);
 
     interface Plottable {
-      x: number[];
-      y: number[];
-      xLabel: string;
-      yLabel: string;
+      mem: {
+        y: number[];
+        label: string;
+      };
+      rps: {
+        y: number[];
+        label: string;
+      };
       title: string;
+      x: number[];
+      label: string;
       fname: string;
     }
 
     let plottable: Plottable = {
-      x: [],
-      y: [],
-      xLabel: "mins",
-      yLabel: "MiB",
+      mem: {
+        y: memY.map(m => m[1]),
+        label: "MiB",
+      },
+      rps: {
+        y: rpsY.map(m => m[1]),
+        label: "injects/sec",
+      },
       title: watcherName,
-      fname: watcherGraph,
+      x: unifiedX.map((val, idx, arr) => (val - arr[0]) / 1000 / 60),
+      label: `runtime (minutes) - buckets (${lib.toHuman(opts.bucket)})`,
+      fname: graph,
     };
-    watcherMem.forEach(w => {
-      plottable.x.push(w[0]);
-      plottable.y.push(w[1]);
-    });
 
     log(`Write graphing script output dir`);
     const octaveScript = heredoc`
       StrData = fread(stdin, 'char') ;
       StrData = char( StrData.' ) ;
       JsonData = jsondecode(StrData) ;
-      fname = [ JsonData.fname ".png" ] ;
-      plot(JsonData.x, JsonData.y) ;
-      xlabel (JsonData.xLabel) ;
-      ylabel (JsonData.yLabel) ;
+
+      ax = plotyy (JsonData.x, JsonData.mem.y, JsonData.x, JsonData.rps.y) ;
+
+      xlabel (JsonData.label) ;
+
+      ylim (ax(1), "padded") ;
+      ylabel (ax(1), JsonData.mem.label) ;
+
+      ylim (ax(2), "padded") ;
+      ylabel (ax(2), JsonData.rps.label) ;
+
       title (JsonData.title) ;
+      fname = [ JsonData.fname ".png" ] ;
       print ("-dpng", fname) ;
     `;
     let octaveFile = `${opts.outputDir}/graph.m`;
