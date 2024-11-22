@@ -46,7 +46,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
       - name: Generate SBOM
-        uses: anchore/sbom-action@fc46e51fd3cb168ffb36c6d1915723c47db58abb # v0.17.7
+        uses: anchore/sbom-action@55dc4ee22412511ee8c3142cbea40418e6cec693 # v0.17.8
         with:
           image: pepr:dev
           upload-artifact: true
