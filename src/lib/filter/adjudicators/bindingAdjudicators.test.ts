@@ -458,10 +458,10 @@ describe("definedEvent", () => {
     [{}, ""],
     [{ event: "" }, ""],
     [{ event: "nonsense" }, "nonsense"],
-    [{ event: Event.Create }, Event.Create],
-    [{ event: Event.CreateOrUpdate }, Event.CreateOrUpdate],
-    [{ event: Event.Update }, Event.Update],
-    [{ event: Event.Delete }, Event.Delete],
+    [{ event: Event.CREATE }, Event.CREATE],
+    [{ event: Event.CREATE_OR_UPDATE }, Event.CREATE_OR_UPDATE],
+    [{ event: Event.UPDATE }, Event.UPDATE],
+    [{ event: Event.DELETE }, Event.DELETE],
   ])("given %j, returns '%s'", (given, expected) => {
     const binding = given as DeepPartial<Binding>;
 
@@ -477,10 +477,10 @@ describe("definesDelete", () => {
     [{}, false],
     [{ event: "" }, false],
     [{ event: "nonsense" }, false],
-    [{ event: Event.Create }, false],
-    [{ event: Event.CreateOrUpdate }, false],
-    [{ event: Event.Update }, false],
-    [{ event: Event.Delete }, true],
+    [{ event: Event.CREATE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, false],
+    [{ event: Event.UPDATE }, false],
+    [{ event: Event.DELETE }, true],
   ])("given %j, returns %s", (given, expected) => {
     const binding = given as DeepPartial<Binding>;
 
@@ -496,13 +496,13 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
     [{}, false],
     [{ event: "" }, false],
     [{ event: "nonsense" }, false],
-    [{ event: Event.Create }, false],
-    [{ event: Event.CreateOrUpdate }, false],
-    [{ event: Event.Update }, false],
-    [{ event: Event.Delete }, false],
-    [{ event: Event.Delete, filters: {} }, false],
-    [{ event: Event.Delete, filters: { deletionTimestamp: false } }, false],
-    [{ event: Event.Delete, filters: { deletionTimestamp: true } }, true],
+    [{ event: Event.CREATE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, false],
+    [{ event: Event.UPDATE }, false],
+    [{ event: Event.DELETE }, false],
+    [{ event: Event.DELETE, filters: {} }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
+    [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
     const binding = given as DeepPartial<Binding>;
 

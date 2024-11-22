@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, describe, jest } from "@jest/globals";
+import { beforeAll, afterAll, describe, jest } from "@jest/globals";
 
 import { before } from "./before";
 import { peprBuild } from "./pepr-build";
@@ -9,7 +9,8 @@ import { peprDeploy } from "./pepr-deploy";
 import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
-
+import { removeFolder } from "./utils";
+import { outputDir } from "./pepr-build-wasm";
 // Unmock unit test things
 jest.deepUnmock("pino");
 
@@ -20,7 +21,9 @@ jest.setTimeout(1000 * 60 * 5);
 
 // Configure the test environment before running the tests
 beforeAll(before);
-
+afterAll(async () => {
+  await removeFolder(outputDir);
+});
 describe("Journey: `npx pepr init`", peprInit);
 
 describe("Journey: `npx pepr format`", peprFormat);

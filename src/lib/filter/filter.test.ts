@@ -109,7 +109,7 @@ describe("Property-Based Testing shouldSkipRequest", () => {
 test("create: should reject when regex name does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -131,7 +131,7 @@ test("create: should reject when regex name does not match", () => {
 test("create: should not reject when regex name does match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -151,7 +151,7 @@ test("create: should not reject when regex name does match", () => {
 test("delete: should reject when regex name does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -173,7 +173,7 @@ test("delete: should reject when regex name does not match", () => {
 test("delete: should not reject when regex name does match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -193,7 +193,7 @@ test("delete: should not reject when regex name does match", () => {
 test("create: should not reject when regex namespace does match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -213,7 +213,7 @@ test("create: should not reject when regex namespace does match", () => {
 test("create: should reject when regex namespace does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -235,7 +235,7 @@ test("create: should reject when regex namespace does not match", () => {
 test("delete: should reject when regex namespace does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -257,7 +257,7 @@ test("delete: should reject when regex namespace does not match", () => {
 test("delete: should not reject when regex namespace does match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -277,7 +277,7 @@ test("delete: should not reject when regex namespace does match", () => {
 test("delete: should reject when name does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "bleh",
@@ -299,7 +299,7 @@ test("delete: should reject when name does not match", () => {
 test("should reject when kind does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: {
       group: "",
       version: "v1",
@@ -326,7 +326,7 @@ test("should reject when kind does not match", () => {
 test("should reject when group does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: {
       group: "Nope",
       version: "v1",
@@ -353,7 +353,7 @@ test("should reject when group does not match", () => {
 test("should reject when version does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: {
       group: "",
       version: "Nope",
@@ -380,7 +380,7 @@ test("should reject when version does not match", () => {
 test("should allow when group, version, and kind match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -401,7 +401,7 @@ test("should allow when group, version, and kind match", () => {
 test("should allow when kind match and others are empty", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: {
       group: "",
       version: "",
@@ -426,7 +426,7 @@ test("should allow when kind match and others are empty", () => {
 test("should reject when the capability namespace does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -449,7 +449,7 @@ test("should reject when the capability namespace does not match", () => {
 test("should reject when namespace does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -472,7 +472,7 @@ test("should reject when namespace does not match", () => {
 test("should allow when namespace is match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -493,7 +493,7 @@ test("should allow when namespace is match", () => {
 test("should reject when label does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -518,7 +518,7 @@ test("should reject when label does not match", () => {
 test("should allow when label is match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -549,7 +549,7 @@ test("should allow when label is match", () => {
 test("should reject when annotation does not match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -574,7 +574,7 @@ test("should reject when annotation does not match", () => {
 test("should allow when annotation is match", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -605,7 +605,7 @@ test("should allow when annotation is match", () => {
 test("should use `oldObject` when the operation is `DELETE`", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Delete,
+    event: Event.DELETE,
     kind: podKind,
     filters: {
       name: "",
@@ -629,7 +629,7 @@ test("should use `oldObject` when the operation is `DELETE`", () => {
 test("should allow when deletionTimestamp is present on pod", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",
@@ -661,7 +661,7 @@ test("should allow when deletionTimestamp is present on pod", () => {
 test("should reject when deletionTimestamp is not present on pod", () => {
   const binding = {
     model: kind.Pod,
-    event: Event.Any,
+    event: Event.ANY,
     kind: podKind,
     filters: {
       name: "",

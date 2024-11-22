@@ -295,3 +295,20 @@ export namespace Analysis {
     audience: Audience;
   }
 }
+
+export function injectsToRps(injects: number[]): [number, number][] {
+  let rps = injects.map<[number, number]>((val, idx, arr) => {
+    // look backward to find injects within prior second
+    const pertinent: number[] = [];
+    for (let i = idx; i >= 0; i--) {
+      const candidate = arr[i];
+      if (val - candidate > 1000) {
+        break;
+      }
+      pertinent.push(candidate);
+    }
+    return [val, pertinent.length];
+  });
+
+  return rps;
+}

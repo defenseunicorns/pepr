@@ -4,7 +4,7 @@ Date: 2024-07-17
 
 ## Status
 
-Proposed
+Accepted
 
 Supercedes [9. End-to-end (E2E) Testing](./0009-e2e-testing.md)
 

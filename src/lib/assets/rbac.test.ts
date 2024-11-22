@@ -22,7 +22,7 @@ const mockCapabilities: CapabilityExport[] = [
       {
         kind: { group: "pepr.dev", version: "v1", kind: "peprstore", plural: "peprstores" },
         isWatch: false,
-        event: Event.Create,
+        event: Event.CREATE,
         model: {} as GenericClass,
         filters: {
           name: "",
@@ -57,7 +57,7 @@ const mockCapabilities: CapabilityExport[] = [
         },
         isWatch: false,
         isFinalize: false,
-        event: Event.Create,
+        event: Event.CREATE,
         model: {} as GenericClass,
         filters: {
           name: "",
@@ -87,7 +87,7 @@ const mockCapabilities: CapabilityExport[] = [
         kind: { group: "", version: "v1", kind: "namespace", plural: "namespaces" },
         isWatch: true,
         isFinalize: false,
-        event: Event.Create,
+        event: Event.CREATE,
         model: {} as GenericClass,
         filters: {
           name: "",
@@ -117,7 +117,7 @@ const mockCapabilities: CapabilityExport[] = [
         kind: { group: "", version: "v1", kind: "configmap", plural: "configmaps" },
         isWatch: true,
         isFinalize: false,
-        event: Event.Create,
+        event: Event.CREATE,
         model: {} as GenericClass,
         filters: {
           name: "",
@@ -211,7 +211,7 @@ describe("RBAC generation", () => {
             kind: { group: "pepr.dev", version: "v1", kind: "peprstore", plural: "peprstores" },
             isWatch: false,
             isFinalize: true,
-            event: Event.Create,
+            event: Event.CREATE,
             model: {} as GenericClass,
             filters: {
               name: "",
@@ -265,7 +265,7 @@ describe("RBAC generation", () => {
           {
             kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
             isWatch: false,
-            event: Event.Create,
+            event: Event.CREATE,
             model: {} as GenericClass,
             filters: {
               name: "",
@@ -294,7 +294,7 @@ describe("RBAC generation", () => {
           {
             kind: { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
             isWatch: false,
-            event: Event.Create,
+            event: Event.CREATE,
             model: {} as GenericClass,
             filters: {
               name: "",
@@ -526,7 +526,7 @@ describe("clusterRole", () => {
           {
             kind: { group: "", version: "v1", kind: "node", plural: "nodes" },
             isWatch: false,
-            event: Event.Create,
+            event: Event.CREATE,
             model: {} as GenericClass,
             filters: {
               name: "",
@@ -582,7 +582,7 @@ describe("clusterRole", () => {
           {
             kind: { group: "apps", version: "v1", kind: "deployment", plural: "deployments" },
             isWatch: false,
-            event: Event.Create,
+            event: Event.CREATE,
             model: {} as GenericClass,
             filters: {
               name: "",

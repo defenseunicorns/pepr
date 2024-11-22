@@ -193,7 +193,7 @@ export class Capability implements CapabilityExport {
       model,
       // If the kind is not specified, use the matched kind from the model
       kind: kind || matchedKind,
-      event: Event.Any,
+      event: Event.ANY,
       filters: {
         name: "",
         namespaces: [],
@@ -317,7 +317,7 @@ export class Capability implements CapabilityExport {
           ...binding,
           isMutate: true,
           isFinalize: true,
-          event: Event.Any,
+          event: Event.ANY,
           mutateCallback: addFinalizer,
         };
         bindings.push(mutateBinding);
@@ -329,7 +329,7 @@ export class Capability implements CapabilityExport {
           ...binding,
           isWatch: true,
           isFinalize: true,
-          event: Event.Update,
+          event: Event.UPDATE,
           finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
             Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
             return await finalizeCallback(update, logger);
@@ -401,10 +401,10 @@ export class Capability implements CapabilityExport {
     }
 
     return {
-      IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
-      IsCreated: () => bindEvent(Event.Create),
-      IsUpdated: () => bindEvent(Event.Update),
-      IsDeleted: () => bindEvent(Event.Delete),
+      IsCreatedOrUpdated: () => bindEvent(Event.CREATE_OR_UPDATE),
+      IsCreated: () => bindEvent(Event.CREATE),
+      IsUpdated: () => bindEvent(Event.UPDATE),
+      IsDeleted: () => bindEvent(Event.DELETE),
     };
   };
 }

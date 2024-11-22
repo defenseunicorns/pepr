@@ -44,8 +44,8 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
       const operations: string[] = [];
 
       // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
-      if (event === Event.CreateOrUpdate) {
-        operations.push(Event.Create, Event.Update);
+      if (event === Event.CREATE_OR_UPDATE) {
+        operations.push(Event.CREATE, Event.UPDATE);
       } else {
         operations.push(event);
       }

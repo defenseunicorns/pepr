@@ -65,7 +65,6 @@ export function peprDev() {
 
       // Convert buffer to string
       const strData = data.toString();
-      console.log(strData);
 
       // Check if any expected lines are found
       expectedLines = expectedLines.filter(expectedLine => {
@@ -73,11 +72,10 @@ export function peprDev() {
         return !strData.replace(/\s+/g, " ").includes(expectedLine);
       });
 
-      console.info(`Expected lines remaining: ${expectedLines.length}`);
-      console.debug(`Remaining expected lines: ${expectedLines}`);
-
       // If all expected lines are found, resolve the promise
-      if (expectedLines.length < 1) {
+      if (expectedLines.length > 0) {
+        console.log(`still waiting on ${expectedLines.length} lines...`);
+      } else {
         // Abort all further processing
         success = true;
 

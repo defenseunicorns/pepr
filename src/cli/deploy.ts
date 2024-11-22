@@ -6,10 +6,11 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
-import { validateCapabilityNames, namespaceDeploymentsReady } from "../lib/helpers";
+import { validateCapabilityNames } from "../lib/helpers";
 import { ImagePullSecret } from "../lib/types";
 import { sanitizeName } from "./init/utils";
 import { deployImagePullSecret } from "../lib/assets/deploy";
+import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 
 export default function (program: RootCmd) {
   program
