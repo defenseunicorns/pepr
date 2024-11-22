@@ -666,122 +666,127 @@ program
     //
     // run
     //
-    if (await fileUnreadable(opts.outputDir)) {
-      log(`Create output directory`);
-      await fs.mkdir(opts.outputDir);
-      log(`  outdir: ${opts.outputDir}`, "");
-    }
+    try {
+      if (await fileUnreadable(opts.outputDir)) {
+        log(`Create output directory`);
+        await fs.mkdir(opts.outputDir);
+        log(`  outdir: ${opts.outputDir}`, "");
+      }
 
-    log(`Get test cluster credential`);
-    let cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
-    log({ cmd: cmd.cmd });
-    let result = await cmd.run();
-    let KUBECONFIG = result.stdout.join("").trim();
-    log(result, "");
+      log(`Get test cluster credential`);
+      let cmd = new Cmd({ cmd: `k3d kubeconfig write ${opts.clusterName}` });
+      log({ cmd: cmd.cmd });
+      let result = await cmd.run();
+      let KUBECONFIG = result.stdout.join("").trim();
+      log(result, "");
 
-    const alpha = Date.now();
+      const alpha = Date.now();
 
-    log(`Load test start: ${new Date(alpha).toISOString()}`);
-    log(args);
-    const prettyOpts = Object.keys(opts).reduce(
-      (acc, key) => {
-        switch (key) {
-          case "actInterval":
-          case "audInterval":
-          case "duration":
-          case "settle":
-          case "stagger":
-            acc[key] = lib.toHuman(opts[key]);
-            break;
-          default:
-            acc[key] = opts[key];
-            break;
-        }
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-    log(prettyOpts, "");
+      log(`Load test start: ${new Date(alpha).toISOString()}`);
+      log(args);
+      const prettyOpts = Object.keys(opts).reduce(
+        (acc, key) => {
+          switch (key) {
+            case "actInterval":
+            case "audInterval":
+            case "duration":
+            case "settle":
+            case "stagger":
+              acc[key] = lib.toHuman(opts[key]);
+              break;
+            default:
+              acc[key] = opts[key];
+              break;
+          }
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+      log(prettyOpts, "");
 
-    const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
-      encoding: "utf-8",
-    });
-    let stdin = scenario.split("\n");
-    let env = { KUBECONFIG };
-
-    cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
-    let req = { cmd: cmd.cmd, stdin, env };
-    let res = await cmd.run();
-
-    const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
-    let actFile = `${opts.outputDir}/${alpha}-actress.log`;
-    await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
-
-    let audFile = `${opts.outputDir}/${alpha}-audience.log`;
-
-    const audience = async () => {
-      process.stdout.write("↓");
-
+      const scenario = await fs.readFile(`${args.module}/capabilities/scenario.yaml`, {
+        encoding: "utf-8",
+      });
+      let stdin = scenario.split("\n");
       let env = { KUBECONFIG };
 
-      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-      let req = { cmd: cmd.cmd, env };
+      cmd = new Cmd({ cmd: `kubectl apply -f -`, stdin, env });
+      let req = { cmd: cmd.cmd, stdin, env };
       let res = await cmd.run();
 
-      let outlines = res.stdout
-        .filter(f => f)
-        .map(m => `${Date.now()}\t${m}`)
-        .join("\n")
-        .concat("\n");
-      await fs.appendFile(audFile, outlines);
-    };
-    audience(); // run immediately, then on schedule
-    const ticket = setInterval(audience, opts.audInterval);
+      const loadTmpl = await fs.readFile(args.manifest, { encoding: "utf-8" });
+      let actFile = `${opts.outputDir}/${alpha}-actress.log`;
+      await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
 
-    await nap(opts.stagger); // stagger interval starts
+      let audFile = `${opts.outputDir}/${alpha}-audience.log`;
 
-    const abort = new AbortController();
+      const audience = async () => {
+        process.stdout.write("↓");
 
-    const actress = async (abort?: AbortController) => {
-      process.stdout.write("↑");
-
-      for (let i = 0; i < opts.actIntensity; i++) {
-        if (abort?.signal.aborted) {
-          return;
-        }
-
-        let load = loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
-
-        let stdin = load.split("\n");
         let env = { KUBECONFIG };
 
-        cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
-        let req = { cmd: cmd.cmd, stdin, env };
+        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+        let req = { cmd: cmd.cmd, env };
         let res = await cmd.run();
 
-        await fs.appendFile(actFile, Date.now().toString() + "\n");
-      }
-    };
-    actress(); // run immediately, then on schedule
-    const backstagePass = setInterval(() => actress(abort), opts.actInterval);
+        let outlines = res.stdout
+          .filter(f => f)
+          .map(m => `${Date.now()}\t${m}`)
+          .join("\n")
+          .concat("\n");
+        await fs.appendFile(audFile, outlines);
+      };
+      audience(); // run immediately, then on schedule
+      const ticket = setInterval(audience, opts.audInterval);
 
-    // wait until total duration has elapsed
-    const startWait = Date.now();
-    await nap(opts.duration - (startWait - alpha));
-    const endWait = Date.now();
+      await nap(opts.stagger); // stagger interval starts
 
-    // stop adding load
-    abort.abort();
-    clearInterval(backstagePass);
+      const abort = new AbortController();
 
-    // let cluster settle after load stops
-    await nap(opts.settle);
-    clearInterval(ticket);
+      const actress = async (abort?: AbortController) => {
+        process.stdout.write("↑");
 
-    log("", "");
-    log(`Load test complete: ${new Date(endWait).toISOString()}`, "");
+        for (let i = 0; i < opts.actIntensity; i++) {
+          if (abort?.signal.aborted) {
+            return;
+          }
 
-    log("  Waiting for final actions to complete...", "");
+          let load = loadTmpl.replace("UNIQUIFY-ME", `${Date.now().toString()}-${i}`);
+
+          let stdin = load.split("\n");
+          let env = { KUBECONFIG };
+
+          cmd = new Cmd({ cmd: `kubectl apply -f -`, env, stdin });
+          let req = { cmd: cmd.cmd, stdin, env };
+          let res = await cmd.run();
+
+          await fs.appendFile(actFile, Date.now().toString() + "\n");
+        }
+      };
+      actress(); // run immediately, then on schedule
+      const backstagePass = setInterval(() => actress(abort), opts.actInterval);
+
+      // wait until total duration has elapsed
+      const startWait = Date.now();
+      await nap(opts.duration - (startWait - alpha));
+      const endWait = Date.now();
+
+      // stop adding load
+      abort.abort();
+      clearInterval(backstagePass);
+
+      // let cluster settle after load stops
+      await nap(opts.settle);
+      clearInterval(ticket);
+
+      log("", "");
+      log(`Load test complete: ${new Date(endWait).toISOString()}`, "");
+
+      log("  Waiting for final actions to complete...", "");
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
   });
 
 program
