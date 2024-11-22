@@ -14,7 +14,7 @@ import { Option } from "commander";
 import { validateCapabilityNames, parseTimeout } from "../lib/helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import { determineRbacMode } from "./build.helpers";
-import { createDirectoryIfNotExists } from "../lib/filesystemHelpers";
+import { createDirectoryIfNotExists } from "../lib/filesystemService";
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;

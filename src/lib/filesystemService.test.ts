@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import { describe, jest, expect, it } from "@jest/globals";
-import { createDirectoryIfNotExists } from "./filesystemHelpers";
+import { createDirectoryIfNotExists } from "./filesystemService";
 import { promises as fs } from "fs";
 
 jest.mock("fs", () => {

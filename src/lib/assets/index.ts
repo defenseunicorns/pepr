@@ -27,7 +27,7 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { watcher, moduleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
-import { createDirectoryIfNotExists } from "../filesystemHelpers";
+import { createDirectoryIfNotExists } from "../filesystemService";
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
