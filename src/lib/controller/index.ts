@@ -271,6 +271,7 @@ export class Controller {
         // Run the after hook if it exists
         [response].flat().map(res => {
           this.#afterHook && this.#afterHook(res);
+          Log.info({ ...reqMetadata, res }, "Check response");
         });
 
         const kar: KubeAdmissionResponse =
