@@ -13,52 +13,11 @@ import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { StoreController } from "./store";
-import { ResponseItem, AdmissionRequest } from "../types";
+import { AdmissionRequest } from "../types";
+import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
-}
-
-interface KubeAdmissionReview {
-  apiVersion: string;
-  kind: string;
-  response: ValidateResponse[] | MutateResponse | ResponseItem;
-}
-
-function karForMutate(mr: MutateResponse): KubeAdmissionReview {
-  return {
-    apiVersion: "admission.k8s.io/v1",
-    kind: "AdmissionReview",
-    response: mr,
-  };
-}
-
-function karForValidate(ar: AdmissionRequest, vr: ValidateResponse[]): KubeAdmissionReview {
-  const isAllowed = vr.filter(r => !r.allowed).length === 0;
-
-  const resp: ValidateResponse =
-    vr.length === 0
-      ? {
-          uid: ar.uid,
-          allowed: true,
-          status: { code: 200, message: "no in-scope validations -- allowed!" },
-        }
-      : {
-          uid: vr[0].uid,
-          allowed: isAllowed,
-          status: {
-            code: isAllowed ? 200 : 422,
-            message: vr
-              .filter(rl => !rl.allowed)
-              .map(curr => curr.status?.message)
-              .join("; "),
-          },
-        };
-  return {
-    apiVersion: "admission.k8s.io/v1",
-    kind: "AdmissionReview",
-    response: resp,
-  };
 }
 
 export class Controller {
