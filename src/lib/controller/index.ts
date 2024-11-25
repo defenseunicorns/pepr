@@ -19,13 +19,13 @@ if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
 
-interface KubeAdmissionResponse {
+interface KubeAdmissionReview {
   apiVersion: string;
   kind: string;
   response: ValidateResponse[] | MutateResponse | ResponseItem;
 }
 
-function karForMutate(mr: MutateResponse): KubeAdmissionResponse {
+function karForMutate(mr: MutateResponse): KubeAdmissionReview {
   return {
     apiVersion: "admission.k8s.io/v1",
     kind: "AdmissionReview",
@@ -33,7 +33,7 @@ function karForMutate(mr: MutateResponse): KubeAdmissionResponse {
   };
 }
 
-function karForValidate(ar: AdmissionRequest, vr: ValidateResponse[]): KubeAdmissionResponse {
+function karForValidate(ar: AdmissionRequest, vr: ValidateResponse[]): KubeAdmissionReview {
   const isAllowed = vr.filter(r => !r.allowed).length === 0;
 
   const resp: ValidateResponse =
@@ -274,12 +274,12 @@ export class Controller {
           Log.info({ ...reqMetadata, res }, "Check response");
         });
 
-        const kar: KubeAdmissionResponse =
+        const kar: KubeAdmissionReview =
           admissionKind === "Mutate"
             ? karForMutate(response as MutateResponse)
             : karForValidate(request, response as ValidateResponse[]);
 
-        Log.debug({ ...reqMetadata, kar }, "Outgoing response");
+        Log.debug({ ...reqMetadata, kubeAdmissionResponse: kar.response }, "Outgoing response");
         res.send(kar);
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
