@@ -60,7 +60,8 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 ### Run Tests Locally
 
-> ⚠️ **Warning: Be cautious when creating test cases in `journey/`!**
+> [!WARNING]
+> Be cautious when creating test cases in `journey/`!**
 >
 > - Test cases that capture end-to-end/journey behavior are usually stored in [pepr-excellent-examples](https://github.com/defenseunicorns/pepr-excellent-examples) or run as a Github workflow (`.github/workflows`).
 > - Journey tests established in `journey/` are from an earlier time in project history.
@@ -72,6 +73,20 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 1. Run `npm test` and wait for completion.
 2. Change to the test module directory: `cd pepr-test-module`.
 3. You can now run any of the `npx pepr` commands.
+
+### Running Development Version Locally
+
+1. Run `npm run build` to build the package.
+2. For running modified pepr, you have two options:
+  - Using `npx ts-node ./src/cli.ts init` to run the modified code directly, without installing it locally.
+    You'll need to also run `npx link <your_dev_pepr_location>` inside your pepr module, to link to the
+    development version of pepr.
+  - Install the pre-build package with `npm install pepr-0.0.0-development.tgz`.
+    You'll need to re-run the installation after every build, though.
+3. Run `npx pepr dev` inside your module's directory to run the modified version of pepr.
+
+> [!TIP]
+> Make sure to re-run `npm run build` after you modify any of the pepr source files.
 
 ## Contact
 

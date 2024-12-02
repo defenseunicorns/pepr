@@ -95,16 +95,22 @@ When(a.ConfigMap)
 # Create a new Pepr Module
 npx pepr init
 
-# If you already have a Kind or K3d cluster you want to use, skip this step
+# If you already have a K3d cluster you want to use, skip this step
 npm run k3d-setup
 
-# Start playing with Pepr now
-# If using another local K8s distro instead of k3d, run `npx pepr dev --host host.docker.internal`
+# Start playing with Pepr now!
+# If using Kind, or another local k8s distro instead,
+# run `npx pepr dev --host <your_hostname>`
 npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
 
-# Be amazed and ⭐️ this repo
+# Be amazed and ⭐️ this repo!
 ```
+
+> [!TIP]
+> Don't use IP as your `--host`, it's not supported. Make sure to check your
+> local k8s distro documentation how to reach your localhost, which is where
+> `pepr dev` is serving the code from.
 
 https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4
 
