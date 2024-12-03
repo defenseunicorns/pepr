@@ -28,6 +28,12 @@ import { watcher, moduleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { createDirectoryIfNotExists } from "../filesystemService";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toYaml(obj: any): string {
+  return dumpYaml(obj, { noRefs: true });
+}
+
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
@@ -123,28 +129,25 @@ export class Assets {
           .map(async dir => await createDirectoryIfNotExists(dir)),
       );
 
-      await overridesFile(this, helm.files.valuesYaml);
-      await fs.writeFile(helm.files.chartYaml, dedent(chartYaml(this.config.uuid, this.config.description || "")));
-      await fs.writeFile(helm.files.namespaceYaml, dedent(nsTemplate()));
-
       const code = await fs.readFile(this.path);
 
-      await fs.writeFile(helm.files.watcherServiceYaml, dumpYaml(watcherService(this.name), { noRefs: true }));
-      await fs.writeFile(helm.files.admissionServiceYaml, dumpYaml(service(this.name), { noRefs: true }));
-      await fs.writeFile(helm.files.tlsSecretYaml, dumpYaml(tlsSecret(this.name, this.tls), { noRefs: true }));
-      await fs.writeFile(
-        helm.files.apiTokenSecretYaml,
-        dumpYaml(apiTokenSecret(this.name, this.apiToken), { noRefs: true }),
-      );
-      await fs.writeFile(
-        helm.files.moduleSecretYaml,
-        dumpYaml(moduleSecret(this.name, code, this.hash), { noRefs: true }),
-      );
-      await fs.writeFile(helm.files.storeRoleYaml, dumpYaml(storeRole(this.name), { noRefs: true }));
-      await fs.writeFile(helm.files.storeRoleBindingYaml, dumpYaml(storeRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(helm.files.clusterRoleYaml, dedent(clusterRoleTemplate()));
-      await fs.writeFile(helm.files.clusterRoleBindingYaml, dumpYaml(clusterRoleBinding(this.name), { noRefs: true }));
-      await fs.writeFile(helm.files.serviceAccountYaml, dumpYaml(serviceAccount(this.name), { noRefs: true }));
+      const pairs: [string, () => string][] = [
+        [helm.files.chartYaml, () => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
+        [helm.files.namespaceYaml, () => dedent(nsTemplate())],
+        [helm.files.watcherServiceYaml, () => toYaml(watcherService(this.name))],
+        [helm.files.admissionServiceYaml, () => toYaml(service(this.name))],
+        [helm.files.tlsSecretYaml, () => toYaml(tlsSecret(this.name, this.tls))],
+        [helm.files.apiTokenSecretYaml, () => toYaml(apiTokenSecret(this.name, this.apiToken))],
+        [helm.files.storeRoleYaml, () => toYaml(storeRole(this.name))],
+        [helm.files.storeRoleBindingYaml, () => toYaml(storeRoleBinding(this.name))],
+        [helm.files.clusterRoleYaml, () => dedent(clusterRoleTemplate())],
+        [helm.files.clusterRoleBindingYaml, () => toYaml(clusterRoleBinding(this.name))],
+        [helm.files.serviceAccountYaml, () => toYaml(serviceAccount(this.name))],
+        [helm.files.moduleSecretYaml, () => toYaml(moduleSecret(this.name, code, this.hash))],
+      ];
+      await Promise.all(pairs.map(async ([file, getContent]) => await fs.writeFile(file, getContent())));
+
+      await overridesFile(this, helm.files.valuesYaml);
 
       const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
       const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
@@ -156,7 +159,7 @@ export class Assets {
       }
 
       if (mutateWebhook) {
-        const yamlMutateWebhook = dumpYaml(mutateWebhook, { noRefs: true });
+        const yamlMutateWebhook = toYaml(mutateWebhook);
         const mutateWebhookTemplate = replaceString(
           replaceString(
             replaceString(yamlMutateWebhook, this.name, "{{ .Values.uuid }}"),
@@ -170,7 +173,7 @@ export class Assets {
       }
 
       if (validateWebhook) {
-        const yamlValidateWebhook = dumpYaml(validateWebhook, { noRefs: true });
+        const yamlValidateWebhook = toYaml(validateWebhook);
         const validateWebhookTemplate = replaceString(
           replaceString(
             replaceString(yamlValidateWebhook, this.name, "{{ .Values.uuid }}"),
