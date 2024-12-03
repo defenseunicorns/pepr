@@ -3,17 +3,23 @@
 
 import { afterAll, expect, it } from "@jest/globals";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { Agent } from "https";
 import { fetch } from "kubernetes-fluent-client";
-import { RequestInit } from "node-fetch";
+import { RequestInit, Agent } from "undici";
 import { cwd } from "./entrypoint.test";
 import { sleep } from "./k8s";
 
 const fetchBaseUrl = "https://localhost:3000";
 const fetchOpts: RequestInit = {
-  agent: new Agent({
-    // Avoid tls issues for self-signed certs
-    rejectUnauthorized: false,
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json; charset=UTF-8",
+  },
+  dispatcher: new Agent({
+    // disable keep-alive https://github.com/nodejs/undici/issues/2522#issuecomment-1859213319
+    pipelining: 0,
+    connect: {
+      rejectUnauthorized: false,
+    },
   }),
 };
 
@@ -78,7 +84,6 @@ export function peprDev() {
       } else {
         // Abort all further processing
         success = true;
-
         // Finish the test
         done();
       }
