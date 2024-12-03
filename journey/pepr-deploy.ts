@@ -302,7 +302,7 @@ function testStore() {
     // Should have a key from the joke url and getItem should have worked
     const key3 = await waitForPeprStoreKey(
       "pepr-static-test-store",
-      `hello-pepr-v2-https://icanhazdadjoke.com/`,
+      `hello-pepr-v2-https://icanhazdadjoke.com`,
     );
     expect(key3).toBeTruthy();
 
