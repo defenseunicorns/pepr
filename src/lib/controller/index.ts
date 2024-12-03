@@ -185,6 +185,8 @@ export class Controller {
    */
   #metrics = async (req: express.Request, res: express.Response) => {
     try {
+      // https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#basic-info
+      res.set("Content-Type", "text/plain; version=0.0.4");
       res.send(await this.#metricsCollector.getMetrics());
     } catch (err) {
       Log.error(err, `Error getting metrics`);
