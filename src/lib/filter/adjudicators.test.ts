@@ -390,45 +390,43 @@ describe("operationMatchesEvent", () => {
 
 describe("mismatchedEvent", () => {
   //[ Binding, AdmissionRequest, result ]
-  describe("when called with supported Event AND Operation types", () => {
-    it.each([
-      [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
-      [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
-      [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CREATE }, false],
-      [{ event: Event.ANY }, { operation: Operation.CREATE }, false],
+  it.each([
+    [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.CREATE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.UPDATE }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.UPDATE }, false],
-      [{ event: Event.DELETE }, { operation: Operation.UPDATE }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.UPDATE }, false],
-      [{ event: Event.ANY }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.CREATE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.DELETE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.UPDATE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.DELETE }, { operation: Operation.DELETE }, false],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.ANY }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CREATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.ANY }, { operation: Operation.DELETE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.DELETE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
-    ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
-      const binding: Binding = {
-        ...defaultBinding,
-        event: bnd.event,
-      };
-      const request: AdmissionRequest = {
-        ...defaultAdmissionRequest,
-        operation: req.operation,
-      };
+    [{ event: Event.CREATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding: Binding = {
+      ...defaultBinding,
+      event: bnd.event,
+    };
+    const request: AdmissionRequest = {
+      ...defaultAdmissionRequest,
+      operation: req.operation,
+    };
 
-      const result = mismatchedEvent(binding, request);
+    const result = mismatchedEvent(binding, request);
 
-      expect(result).toEqual(expected);
-    });
+    expect(result).toEqual(expected);
   });
 });
 
