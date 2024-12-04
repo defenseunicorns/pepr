@@ -22,7 +22,7 @@ export const defaultBinding: Binding = {
   filters: defaultFilters,
   kind: defaultGroupVersionKind,
   model: kind.Pod,
-  isFinalize: false, //Lots of optionals that maybe don't belong here. Would be nice to choose to include
+  isFinalize: false,
   isMutate: false,
   isQueue: false,
   isValidate: false,

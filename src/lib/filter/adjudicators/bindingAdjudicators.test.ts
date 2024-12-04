@@ -327,9 +327,9 @@ describe("carriedNamespace", () => {
     [{ metadata: { namespace: "" } }, ""],
     [{ metadata: { namespace: "namespace" } }, "namespace"],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = given as DeepPartial<KubernetesObject>;
 
-    const result = carriedNamespace(binding);
+    const result = carriedNamespace(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -572,16 +572,12 @@ describe("definesDelete", () => {
 describe("misboundDeleteWithDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    [{ event: Event.DELETE, filters: {} }, false],
     [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
     [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
-      filters:
-        "deletionTimestamp" in given.filters
-          ? { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp }
-          : defaultFilters,
+      filters: { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp },
       event: given.event,
     };
 

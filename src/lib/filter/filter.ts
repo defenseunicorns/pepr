@@ -71,7 +71,7 @@ export function shouldSkipRequest(
       ) :
 
     mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj ?? {})}'.` :
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
 
     mismatchedGroup(binding, req) ?
       (
@@ -99,44 +99,44 @@ export function shouldSkipRequest(
 
     uncarryableNamespace(capabilityNamespaces, obj) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj ?? {})}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
     mismatchedNamespace(binding, obj) ?
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj ?? {})}'.`
+        `but Object carries '${carriedNamespace(obj)}'.`
       ) :
 
     mismatchedLabels(binding, obj) ?
       (
         `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj ?? {}))}'.`
+        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
       ) :
 
     mismatchedAnnotations(binding, obj) ?
       (
         `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj ?? {}))}'.`
+        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
       ) :
 
     mismatchedNamespaceRegex(binding, obj) ?
       (
         `${prefix} Binding defines namespace regexes ` +
         `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj ?? {})}'.`
+        `but Object carries '${carriedNamespace(obj)}'.`
       ) :
 
     mismatchedNameRegex(binding, obj) ?
       (
         `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj ?? {})}'.`
+        `but Object carries '${carriedName(obj)}'.`
       ) :
 
     carriesIgnoredNamespace(ignoredNamespaces, obj) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj ?? {})}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 

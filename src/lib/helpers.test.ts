@@ -1054,11 +1054,7 @@ it("returns capability namespace error when object is not in capability namespac
     metadata: { namespace: "ns2", name: "bleh" },
   };
   const capabilityNamespaces = ["ns1"];
-  const result = filterNoMatchReason(
-    binding as Binding,
-    obj as unknown as Partial<KubernetesObject>,
-    capabilityNamespaces,
-  );
+  const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
   expect(result).toEqual(
     `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'.`,
   );
