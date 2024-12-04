@@ -96,10 +96,10 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
-  const testRegex1 = "^n.mespace$";
-  const testRegex2 = "^n[aeiou]mespace$";
-  const testRegex3 = "^n[aeiou]me$";
-  const testRegex4 = "^sp[aeiou]ce$";
+  const testRegex1 = "^n.mespace$"; //regexr.com/89l8u
+  const testRegex2 = "^n[aeiou]mespace$"; //regexr.com/89l8f
+  const testRegex3 = "^n[aeiou]me$"; //regexr.com/89l8l
+  const testRegex4 = "^sp[aeiou]ce$"; //regexr.com/89l8o
 
   it.each([
     [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
