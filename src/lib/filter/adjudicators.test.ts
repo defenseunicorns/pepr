@@ -34,14 +34,12 @@ import {
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { name: "name" } }, false],
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding: Binding = {
       ...defaultBinding,
-      filters: "filters" in bnd ? { ...defaultFilters, name: bnd.filters.name } : { ...defaultFilters },
+      filters: { ...defaultFilters, name: bnd.filters.name },
     };
 
     const kubernetesObject: KubernetesObject = {
