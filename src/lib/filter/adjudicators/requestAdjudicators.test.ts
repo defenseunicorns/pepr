@@ -8,16 +8,6 @@ import { defaultAdmissionRequest } from "./defaultTestObjects";
 import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "../adjudicators";
 
 describe("declaredUid", () => {
-  const defaultAdmissionRequest = {
-    uid: undefined,
-    kind: { kind: "a-kind", group: "a-group" },
-    group: "a-group",
-    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-    operation: Operation.CONNECT,
-    name: "some-name",
-    userInfo: {},
-    object: {},
-  };
   //[ AdmissionRequest, result ]
   it.each([[{ uid: "uid" }, "uid"]])("given %j, returns '%s'", (given, expected) => {
     const admissionRequest: AdmissionRequest = {
