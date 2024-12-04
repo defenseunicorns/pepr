@@ -33,7 +33,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/030_user-guide/030_actions.md) section.
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/030_user-guide/030_actions/) section.
 
 ```ts
 When(a.ConfigMap)
