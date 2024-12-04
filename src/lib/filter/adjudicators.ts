@@ -148,25 +148,27 @@ export const definedKind = pipe((binding): string => binding?.kind?.kind, defaul
 export const definesKind = pipe(definedKind, equals(""), not);
 
 export const definedCategory = pipe((binding: Partial<Binding>) => {
-  // prettier-ignore
-  return (
-    binding.isFinalize ? "Finalize" :
-    binding.isWatch ? "Watch" :
-    binding.isMutate ? "Mutate" :
-    binding.isValidate ? "Validate" :
-    ""
-  );
+  return binding.isFinalize
+    ? "Finalize"
+    : binding.isWatch
+      ? "Watch"
+      : binding.isMutate
+        ? "Mutate"
+        : binding.isValidate
+          ? "Validate"
+          : "";
 });
 
 export const definedCallback = pipe((binding: Partial<Binding>) => {
-  // prettier-ignore
-  return (
-    binding.isFinalize ? binding.finalizeCallback :
-    binding.isWatch ? binding.watchCallback :
-    binding.isMutate ? binding.mutateCallback :
-    binding.isValidate ? binding.validateCallback:
-    null
-  );
+  return binding.isFinalize
+    ? binding.finalizeCallback
+    : binding.isWatch
+      ? binding.watchCallback
+      : binding.isMutate
+        ? binding.mutateCallback
+        : binding.isValidate
+          ? binding.validateCallback
+          : null;
 });
 export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), callback => callback.name);
 
