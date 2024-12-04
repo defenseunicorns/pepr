@@ -46,7 +46,7 @@
     "follow-redirects": "1.15.9",
     "http-status-codes": "^2.3.0",
     "json-pointer": "^0.6.2",
-    "kubernetes-fluent-client": "3.3.6",
+    "kubernetes-fluent-client": "3.3.7",
     "pino": "9.5.0",
     "pino-pretty": "13.0.0",
     "prom-client": "15.1.3",
