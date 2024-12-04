@@ -202,7 +202,6 @@ export const mismatchedNamespace = allPass([
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
-  // Check if `definesNamespaceRegexes` returns true
   pipe(nthArg(0), definesNamespaceRegexes),
   pipe((binding, kubernetesObject) =>
     pipe(
