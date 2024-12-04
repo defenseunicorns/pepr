@@ -9,6 +9,7 @@ import Log from "./logger";
 
 const loggingPrefix = "MetricsCollector";
 
+type MetricsCollectorInstance = InstanceType<typeof MetricsCollector>;
 interface MetricNames {
   errors: string;
   alerts: string;
@@ -60,7 +61,7 @@ export class MetricsCollector {
     this.addGauge(this.#metricNames.resyncFailureCount, "Number of failures per resync operation", ["count"]);
   }
 
-  #getMetricName = (name: string) => `${this.#prefix}_${name}`;
+  #getMetricName = (name: string): string => `${this.#prefix}_${name}`;
 
   #addMetric = <T extends Counter<string> | Gauge<string> | Summary<string>>(
     collection: Map<string, T>,
@@ -68,7 +69,7 @@ export class MetricsCollector {
     name: string,
     help: string,
     labelNames?: string[],
-  ) => {
+  ): void => {
     if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
       return;
@@ -84,42 +85,42 @@ export class MetricsCollector {
     collection.set(this.#getMetricName(name), metric);
   };
 
-  addCounter = (name: string, help: string) => {
+  addCounter = (name: string, help: string): void => {
     this.#addMetric(this.#counters, promClient.Counter, name, help, []);
   };
 
-  addSummary = (name: string, help: string) => {
+  addSummary = (name: string, help: string): void => {
     this.#addMetric(this.#summaries, promClient.Summary, name, help, []);
   };
 
-  addGauge = (name: string, help: string, labelNames?: string[]) => {
+  addGauge = (name: string, help: string, labelNames?: string[]): void => {
     this.#addMetric(this.#gauges, promClient.Gauge, name, help, labelNames);
   };
 
-  incCounter = (name: string) => {
+  incCounter = (name: string): void => {
     this.#counters.get(this.#getMetricName(name))?.inc();
   };
 
-  incGauge = (name: string, labels?: Record<string, string>, value: number = 1) => {
+  incGauge = (name: string, labels?: Record<string, string>, value: number = 1): void => {
     this.#gauges.get(this.#getMetricName(name))?.inc(labels || {}, value);
   };
 
   /**
    * Increments the error counter.
    */
-  error = () => this.incCounter(this.#metricNames.errors);
+  error = (): void => this.incCounter(this.#metricNames.errors);
 
   /**
    * Increments the alerts counter.
    */
-  alert = () => this.incCounter(this.#metricNames.alerts);
+  alert = (): void => this.incCounter(this.#metricNames.alerts);
 
   /**
    * Observes the duration since the provided start time and updates the summary.
    * @param startTime - The start time.
    * @param name - The metrics summary to increment.
    */
-  observeEnd = (startTime: number, name: string = this.#metricNames.mutate) => {
+  observeEnd = (startTime: number, name: string = this.#metricNames.mutate): void => {
     this.#summaries.get(this.#getMetricName(name))?.observe(performance.now() - startTime);
   };
 
@@ -127,13 +128,13 @@ export class MetricsCollector {
    * Fetches the current metrics from the registry.
    * @returns The metrics.
    */
-  getMetrics = () => this.#registry.metrics();
+  getMetrics = (): Promise<string> => this.#registry.metrics();
 
   /**
    * Returns the current timestamp from performance.now() method. Useful for start timing an operation.
    * @returns The timestamp.
    */
-  static observeStart() {
+  static observeStart(): number {
     return performance.now();
   }
 
@@ -141,7 +142,7 @@ export class MetricsCollector {
    * Increments the cache miss gauge for a given label.
    * @param label - The label for the cache miss.
    */
-  incCacheMiss = (window: string) => {
+  incCacheMiss = (window: string): void => {
     this.incGauge(this.#metricNames.cacheMiss, { window });
   };
 
@@ -149,7 +150,7 @@ export class MetricsCollector {
    * Increments the retry count gauge.
    * @param count - The count to increment by.
    */
-  incRetryCount = (count: string) => {
+  incRetryCount = (count: string): void => {
     this.incGauge(this.#metricNames.resyncFailureCount, { count });
   };
 
@@ -157,7 +158,7 @@ export class MetricsCollector {
    * Initializes the cache miss gauge for a given label.
    * @param label - The label for the cache miss.
    */
-  initCacheMissWindow = (window: string) => {
+  initCacheMissWindow = (window: string): void => {
     this.#rollCacheMissWindows();
     this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.set({ window }, 0);
     this.#cacheMissWindows.set(window, 0);
@@ -166,7 +167,7 @@ export class MetricsCollector {
   /**
    * Manages the size of the cache miss gauge map.
    */
-  #rollCacheMissWindows = () => {
+  #rollCacheMissWindows = (): void => {
     const maxCacheMissWindows = process.env.PEPR_MAX_CACHE_MISS_WINDOWS
       ? parseInt(process.env.PEPR_MAX_CACHE_MISS_WINDOWS, 10)
       : undefined;
@@ -181,4 +182,4 @@ export class MetricsCollector {
   };
 }
 
-export const metricsCollector = new MetricsCollector("pepr");
+export const metricsCollector: MetricsCollectorInstance = new MetricsCollector("pepr");
