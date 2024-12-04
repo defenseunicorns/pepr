@@ -142,6 +142,7 @@ export class Assets {
     return allYaml(this, imagePullSecret);
   };
 
+  /* eslint max-statements: ["warn", 21] */
   generateHelmChart = async (basePath: string) => {
     const helm = helmLayout(basePath, this.config.uuid);
 
