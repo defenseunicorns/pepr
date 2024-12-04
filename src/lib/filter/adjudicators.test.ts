@@ -121,7 +121,7 @@ describe("mismatchedNamespaceRegex", () => {
   const testRegex2 = "^n[aeiou]me$";
   const testRegex3 = "^sp[aeiou]ce$";
   it.each([
-    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+    [{ filters: { regexNamespaces: [new RegExp("^n.mespace$").source] } }, {}, true],
 
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "namespace" } }, false],
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nemespace" } }, false],

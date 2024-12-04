@@ -280,8 +280,8 @@ describe("definedNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
     [{ filters: { regexNamespaces: [] } }, []],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
+    [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, ["n.mesp.ce"]],
+    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, ["n.me", "sp.ce"]],
   ])("given %j, returns %j", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
@@ -301,8 +301,8 @@ describe("definesNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
     [{ filters: { regexNamespaces: [] } }, false],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
+    [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, true],
+    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, true],
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,

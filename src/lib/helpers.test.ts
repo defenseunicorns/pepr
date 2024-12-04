@@ -577,7 +577,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^system"],
+          regexNamespaces: [new RegExp("^system").source],
         },
       })),
     };
@@ -595,7 +595,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -611,7 +611,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -629,7 +629,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -815,7 +815,7 @@ describe("filterNoMatchReason", () => {
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
-        filters: { ...defaultFilters, regexNamespaces: ["(.*)-system"] },
+        filters: { ...defaultFilters, regexNamespaces: [new RegExp("(.*)-system").source] },
       };
 
       const capabilityNamespaces: string[] = [];
@@ -837,7 +837,12 @@ describe("when pod namespace matches the namespace regex", () => {
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
-        filters: { ...defaultFilters, regexName: "", regexNamespaces: ["(.*)-system"], namespaces: [] },
+        filters: {
+          ...defaultFilters,
+          regexName: "",
+          regexNamespaces: [new RegExp("(.*)-system").source],
+          namespaces: [],
+        },
       };
       const kubernetesObject: KubernetesObject = { ...defaultKubernetesObject, metadata: { namespace: namespace } };
       const capabilityNamespaces: string[] = [];
