@@ -24,16 +24,16 @@ describe("mismatchedName", () => {
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: "filters" in bnd ? { ...defaultFilters, name: bnd.filters.name } : { ...defaultFilters },
     };
-    const object = {
+    const kubernetesObject: KubernetesObject = {
       ...defaultKubernetesObject,
       metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
     };
 
-    const result = mismatchedName(binding, object);
+    const result = mismatchedName(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -48,9 +48,9 @@ describe("mismatchedDeletionTimestamp", () => {
     [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = mismatchedDeletionTimestamp(binding, object);
+    const result = mismatchedDeletionTimestamp(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -70,9 +70,9 @@ describe("mismatchedNameRegex", () => {
     [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "n3me" } }, true],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = mismatchedNameRegex(binding, object);
+    const result = mismatchedNameRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -88,9 +88,9 @@ describe("mismatchedNamespace", () => {
     [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "namespace" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = mismatchedNamespace(binding, object);
+    const result = mismatchedNamespace(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -104,8 +104,6 @@ describe("mismatchedNamespaceRegex", () => {
   const testRegex4 = "^sp[aeiou]ce$";
 
   it.each([
-    // [{}, {}, false],
-    // [{}, { metadata: { namespace: "namespace" } }, false],
     [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
 
     [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "namespace" } }, false],
@@ -123,12 +121,12 @@ describe("mismatchedNamespaceRegex", () => {
       ...defaultBinding,
       filters: { ...defaultFilters, regexNamespaces: bnd.filters.regexNamespaces },
     };
-    const object: KubernetesObject = {
+    const kubernetesObject: KubernetesObject = {
       ...defaultKubernetesObject,
       metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
     };
 
-    const result = mismatchedNamespaceRegex(binding, object);
+    const result = mismatchedNamespaceRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -160,9 +158,9 @@ describe("mismatchedAnnotations", () => {
     ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = mismatchedAnnotations(binding, object);
+    const result = mismatchedAnnotations(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -188,9 +186,9 @@ describe("mismatchedLabels", () => {
     [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = mismatchedLabels(binding, object);
+    const result = mismatchedLabels(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });

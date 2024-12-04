@@ -1,8 +1,8 @@
-import { kind, KubernetesObject } from "kubernetes-fluent-client";
+import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Event, Operation } from "../../enums";
-import { Binding } from "../../types";
+import { AdmissionRequest, Binding, Filters } from "../../types";
 
-export const defaultFilters = {
+export const defaultFilters: Filters = {
   annotations: {},
   deletionTimestamp: false,
   labels: {},
@@ -11,10 +11,16 @@ export const defaultFilters = {
   regexName: "^default$",
   regexNamespaces: [] as string[],
 };
+
+const defaultGroupVersionKind: GroupVersionKind = {
+  kind: "some-kind",
+  group: "some-group",
+};
+
 export const defaultBinding: Binding = {
   event: Event.ANY,
   filters: defaultFilters,
-  kind: { kind: "some-kind", group: "some-group" }, // Should it be this instead?? Used elsewhere.
+  kind: defaultGroupVersionKind,
   model: kind.Pod,
   isFinalize: false, //Lots of optionals that maybe don't belong here. Would be nice to choose to include
   isMutate: false,
@@ -23,10 +29,9 @@ export const defaultBinding: Binding = {
   isWatch: false,
 };
 
-export const defaultAdmissionRequest = {
+export const defaultAdmissionRequest: AdmissionRequest = {
   uid: "some-uid",
   kind: { kind: "a-kind", group: "a-group" },
-  group: "a-group",
   resource: { group: "some-group", version: "some-version", resource: "some-resource" },
   operation: Operation.CONNECT,
   name: "some-name",
