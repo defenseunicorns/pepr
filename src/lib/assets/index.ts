@@ -3,6 +3,7 @@
 
 import crypto from "crypto";
 import { dumpYaml } from "@kubernetes/client-node";
+import { kind } from "kubernetes-fluent-client";
 import { ModuleConfig } from "../module";
 import { TLSOut, genTLS } from "../tls";
 import { CapabilityExport } from "../types";
@@ -32,6 +33,62 @@ import { createDirectoryIfNotExists } from "../filesystemService";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
+}
+
+function webhookYaml(
+  assets: Assets,
+  whc: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
+): string {
+  const yaml = toYaml(whc);
+  return replaceString(
+    replaceString(
+      replaceString(yaml, assets.name, "{{ .Values.uuid }}"),
+      assets.config.onError === "reject" ? "Fail" : "Ignore",
+      "{{ .Values.admission.failurePolicy }}",
+    ),
+    `${assets.config.webhookTimeout}` || "10",
+    "{{ .Values.admission.webhookTimeout }}",
+  );
+}
+
+function helmLayout(basePath: string, unique: string) {
+  const helm: Record<string, Record<string, string>> = {
+    dirs: {
+      chart: resolve(`${basePath}/${unique}-chart`),
+    },
+    files: {},
+  };
+
+  helm.dirs = {
+    ...helm.dirs,
+    charts: `${helm.dirs.chart}/charts`,
+    tmpls: `${helm.dirs.chart}/templates`,
+  };
+
+  helm.files = {
+    ...helm.files,
+    valuesYaml: `${helm.dirs.chart}/values.yaml`,
+    chartYaml: `${helm.dirs.chart}/Chart.yaml`,
+    namespaceYaml: `${helm.dirs.tmpls}/namespace.yaml`,
+    watcherServiceYaml: `${helm.dirs.tmpls}/watcher-service.yaml`,
+    admissionServiceYaml: `${helm.dirs.tmpls}/admission-service.yaml`,
+    mutationWebhookYaml: `${helm.dirs.tmpls}/mutation-webhook.yaml`,
+    validationWebhookYaml: `${helm.dirs.tmpls}/validation-webhook.yaml`,
+    admissionDeploymentYaml: `${helm.dirs.tmpls}/admission-deployment.yaml`,
+    admissionServiceMonitorYaml: `${helm.dirs.tmpls}/admission-service-monitor.yaml`,
+    watcherDeploymentYaml: `${helm.dirs.tmpls}/watcher-deployment.yaml`,
+    watcherServiceMonitorYaml: `${helm.dirs.tmpls}/watcher-service-monitor.yaml`,
+    tlsSecretYaml: `${helm.dirs.tmpls}/tls-secret.yaml`,
+    apiTokenSecretYaml: `${helm.dirs.tmpls}/api-token-secret.yaml`,
+    moduleSecretYaml: `${helm.dirs.tmpls}/module-secret.yaml`,
+    storeRoleYaml: `${helm.dirs.tmpls}/store-role.yaml`,
+    storeRoleBindingYaml: `${helm.dirs.tmpls}/store-role-binding.yaml`,
+    clusterRoleYaml: `${helm.dirs.tmpls}/cluster-role.yaml`,
+    clusterRoleBindingYaml: `${helm.dirs.tmpls}/cluster-role-binding.yaml`,
+    serviceAccountYaml: `${helm.dirs.tmpls}/service-account.yaml`,
+  };
+
+  return helm;
 }
 
 export class Assets {
@@ -86,41 +143,7 @@ export class Assets {
   };
 
   generateHelmChart = async (basePath: string) => {
-    const helm: Record<string, Record<string, string>> = {
-      dirs: {
-        chart: resolve(`${basePath}/${this.config.uuid}-chart`),
-      },
-      files: {},
-    };
-
-    helm.dirs = {
-      ...helm.dirs,
-      charts: `${helm.dirs.chart}/charts`,
-      tmpls: `${helm.dirs.chart}/templates`,
-    };
-
-    helm.files = {
-      ...helm.files,
-      valuesYaml: `${helm.dirs.chart}/values.yaml`,
-      chartYaml: `${helm.dirs.chart}/Chart.yaml`,
-      namespaceYaml: `${helm.dirs.tmpls}/namespace.yaml`,
-      watcherServiceYaml: `${helm.dirs.tmpls}/watcher-service.yaml`,
-      admissionServiceYaml: `${helm.dirs.tmpls}/admission-service.yaml`,
-      mutationWebhookYaml: `${helm.dirs.tmpls}/mutation-webhook.yaml`,
-      validationWebhookYaml: `${helm.dirs.tmpls}/validation-webhook.yaml`,
-      admissionDeploymentYaml: `${helm.dirs.tmpls}/admission-deployment.yaml`,
-      admissionServiceMonitorYaml: `${helm.dirs.tmpls}/admission-service-monitor.yaml`,
-      watcherDeploymentYaml: `${helm.dirs.tmpls}/watcher-deployment.yaml`,
-      watcherServiceMonitorYaml: `${helm.dirs.tmpls}/watcher-service-monitor.yaml`,
-      tlsSecretYaml: `${helm.dirs.tmpls}/tls-secret.yaml`,
-      apiTokenSecretYaml: `${helm.dirs.tmpls}/api-token-secret.yaml`,
-      moduleSecretYaml: `${helm.dirs.tmpls}/module-secret.yaml`,
-      storeRoleYaml: `${helm.dirs.tmpls}/store-role.yaml`,
-      storeRoleBindingYaml: `${helm.dirs.tmpls}/store-role-binding.yaml`,
-      clusterRoleYaml: `${helm.dirs.tmpls}/cluster-role.yaml`,
-      clusterRoleBindingYaml: `${helm.dirs.tmpls}/cluster-role-binding.yaml`,
-      serviceAccountYaml: `${helm.dirs.tmpls}/service-account.yaml`,
-    };
+    const helm = helmLayout(basePath, this.config.uuid);
 
     try {
       await Promise.all(
@@ -145,13 +168,14 @@ export class Assets {
         [helm.files.serviceAccountYaml, () => toYaml(serviceAccount(this.name))],
         [helm.files.moduleSecretYaml, () => toYaml(moduleSecret(this.name, code, this.hash))],
       ];
-      await Promise.all(pairs.map(async ([file, getContent]) => await fs.writeFile(file, getContent())));
+      await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
       await overridesFile(this, helm.files.valuesYaml);
 
-      const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
-      const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
-      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
+      const [mutateWebhook, validateWebhook] = await Promise.all([
+        webhookConfig(this, "mutate", this.config.webhookTimeout),
+        webhookConfig(this, "validate", this.config.webhookTimeout),
+      ]);
 
       if (validateWebhook || mutateWebhook) {
         await fs.writeFile(helm.files.admissionDeploymentYaml, dedent(admissionDeployTemplate(this.buildTimestamp)));
@@ -159,33 +183,14 @@ export class Assets {
       }
 
       if (mutateWebhook) {
-        const yamlMutateWebhook = toYaml(mutateWebhook);
-        const mutateWebhookTemplate = replaceString(
-          replaceString(
-            replaceString(yamlMutateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
-            "{{ .Values.admission.failurePolicy }}",
-          ),
-          `${this.config.webhookTimeout}` || "10",
-          "{{ .Values.admission.webhookTimeout }}",
-        );
-        await fs.writeFile(helm.files.mutationWebhookYaml, mutateWebhookTemplate);
+        await fs.writeFile(helm.files.mutationWebhookYaml, webhookYaml(this, mutateWebhook));
       }
 
       if (validateWebhook) {
-        const yamlValidateWebhook = toYaml(validateWebhook);
-        const validateWebhookTemplate = replaceString(
-          replaceString(
-            replaceString(yamlValidateWebhook, this.name, "{{ .Values.uuid }}"),
-            this.config.onError === "reject" ? "Fail" : "Ignore",
-            "{{ .Values.admission.failurePolicy }}",
-          ),
-          `${this.config.webhookTimeout}` || "10",
-          "{{ .Values.admission.webhookTimeout }}",
-        );
-        await fs.writeFile(helm.files.validationWebhookYaml, validateWebhookTemplate);
+        await fs.writeFile(helm.files.validationWebhookYaml, webhookYaml(this, validateWebhook));
       }
 
+      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
       if (watchDeployment) {
         await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
         await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));
