@@ -9,6 +9,15 @@
     "project": ["tsconfig.json"],
     "ecmaVersion": 2022
   },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "excludedFiles": "*.test.ts",
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "warn"
+      }
+    }
+  ],
   "rules": {
     "@typescript-eslint/no-floating-promises": "warn",
     "class-methods-use-this": "warn",
