@@ -103,7 +103,7 @@ export const definesDeletionTimestamp = pipe(
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
 export const definedName = pipe((binding: Binding): string => {
-  return binding.filters.name; //TODO: Weird
+  return binding.filters.name;
 }, defaultTo(""));
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
