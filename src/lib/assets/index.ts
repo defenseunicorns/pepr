@@ -35,11 +35,11 @@ function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
-function webhookYaml(
+function createWebhookYaml(
   assets: Assets,
-  whc: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
+  webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
-  const yaml = toYaml(whc);
+  const yaml = toYaml(webhookConfiguration);
   return replaceString(
     replaceString(
       replaceString(yaml, assets.name, "{{ .Values.uuid }}"),
@@ -184,11 +184,11 @@ export class Assets {
       }
 
       if (mutateWebhook) {
-        await fs.writeFile(helm.files.mutationWebhookYaml, webhookYaml(this, mutateWebhook));
+        await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this, mutateWebhook));
       }
 
       if (validateWebhook) {
-        await fs.writeFile(helm.files.validationWebhookYaml, webhookYaml(this, validateWebhook));
+        await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this, validateWebhook));
       }
 
       const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
