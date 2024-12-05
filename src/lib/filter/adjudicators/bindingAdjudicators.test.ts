@@ -44,7 +44,7 @@ import {
   misboundDeleteWithDeletionTimestamp,
   misboundNamespace,
   missingName,
-} from "../adjudicators";
+} from "./adjudicators";
 import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("definesDeletionTimestamp", () => {
