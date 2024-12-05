@@ -87,7 +87,7 @@ jobs:
       - name: deploy pepr module
         run: |
           cd "$MOD_PATH"
-          helm install "$MOD_NAME" "./dist/$(MOD_NAME)-chart" --kubeconfig "$KUBECONFIG"
+          helm install "$MOD_NAME" "./dist/${MOD_NAME}-chart" --kubeconfig "$KUBECONFIG"
 
       - name: wait to win
         timeout-minutes: 5
