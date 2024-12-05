@@ -3,10 +3,8 @@
 
 import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
-import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericKind } from "kubernetes-fluent-client";
-import { K8s, kind } from "kubernetes-fluent-client";
-import Log from "../lib/logger";
+import { V1OwnerReference, V1Container } from "@kubernetes/client-node";
+import { GenericKind, K8s, kind } from "kubernetes-fluent-client";
 
 /**
  * Returns all containers in a pod
@@ -17,7 +15,7 @@ import Log from "../lib/logger";
 export function containers(
   request: PeprValidateRequest<kind.Pod> | PeprMutateRequest<kind.Pod>,
   containerType?: "containers" | "initContainers" | "ephemeralContainers",
-) {
+): V1Container[] {
   const containers = request.Raw.spec?.containers || [];
   const initContainers = request.Raw.spec?.initContainers || [];
   const ephemeralContainers = request.Raw.spec?.ephemeralContainers || [];
@@ -44,6 +42,7 @@ export function containers(
  * @param reportingComponent The component that is reporting the event, for example "uds.dev/operator"
  * @param reportingInstance The instance of the component that is reporting the event, for example process.env.HOSTNAME
  */
+
 export async function writeEvent(
   cr: GenericKind,
   event: Partial<kind.CoreEvent>,
@@ -51,9 +50,7 @@ export async function writeEvent(
   eventReason: string,
   reportingComponent: string,
   reportingInstance: string,
-) {
-  Log.debug(cr.metadata, `Writing event: ${event.message}`);
-
+): Promise<void> {
   await K8s(kind.CoreEvent).Create({
     type: eventType,
     reason: eventReason,
@@ -109,7 +106,7 @@ export function getOwnerRefFrom(
  * @param name the name of the resource to sanitize
  * @returns the sanitized resource name
  */
-export function sanitizeResourceName(name: string) {
+export function sanitizeResourceName(name: string): string {
   return (
     name
       // The name must be lowercase

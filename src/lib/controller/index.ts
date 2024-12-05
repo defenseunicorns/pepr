@@ -7,8 +7,8 @@ import https from "https";
 
 import { Capability } from "../capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
-import Log from "../logger";
-import { metricsCollector, MetricsCollector } from "../metrics";
+import Log from "../telemetry/logger";
+import { metricsCollector, MetricsCollector } from "../telemetry/metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
@@ -265,6 +265,11 @@ export class Controller {
     const startTime = Date.now();
 
     res.on("finish", () => {
+      const excludedRoutes = ["/healthz", "/metrics"];
+      if (excludedRoutes.includes(req.originalUrl)) {
+        return;
+      }
+
       const elapsedTime = Date.now() - startTime;
       const message = {
         uid: req.body?.request?.uid,
