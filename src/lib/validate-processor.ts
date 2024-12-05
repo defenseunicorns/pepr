@@ -7,7 +7,7 @@ import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter/filter";
 import { ValidateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
 import { ModuleConfig } from "./module";

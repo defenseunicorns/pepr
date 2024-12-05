@@ -1,5 +1,5 @@
 import { Capability } from "./capability";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
 import { a } from "../lib";
 import { V1Pod } from "@kubernetes/client-node";
@@ -21,7 +21,7 @@ jest.mock("./module", () => ({
 }));
 
 // Mock logger globally
-jest.mock("./logger", () => ({
+jest.mock("./telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

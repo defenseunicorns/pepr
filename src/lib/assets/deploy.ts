@@ -7,7 +7,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 import { Assets } from ".";
-import Log from "../logger";
+import Log from "../telemetry/logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { deployment, moduleSecret, namespace, watcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";

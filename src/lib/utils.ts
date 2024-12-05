@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import Log from "./logger";
+import Log from "./telemetry/logger";
 
 /** Test if a string is ascii or not */
 export const isAscii = /^[\s\x20-\x7E]*$/;

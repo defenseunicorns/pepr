@@ -2,7 +2,7 @@ import { K8s, RegisterKind, kind as a, fetch, fetchStatus, kind } from "kubernet
 import * as R from "ramda";
 
 import { Capability } from "./lib/capability";
-import Log from "./lib/logger";
+import Log from "./lib/telemetry/logger";
 import { PeprModule } from "./lib/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";

@@ -6,20 +6,20 @@ import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types"
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "./capability";
 import { setupWatch, logEvent, queueKey, getOrCreateQueue } from "./watch-processor";
-import Log from "./logger";
-import { metricsCollector } from "./metrics";
+import Log from "./telemetry/logger";
+import { metricsCollector } from "./telemetry/metrics";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
 // Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
-jest.mock("./logger", () => ({
+jest.mock("./telemetry/logger", () => ({
   debug: jest.fn(),
   error: jest.fn(),
 }));
 
-jest.mock("./metrics", () => ({
+jest.mock("./telemetry/metrics", () => ({
   metricsCollector: {
     initCacheMissWindow: jest.fn(),
     incCacheMiss: jest.fn(),

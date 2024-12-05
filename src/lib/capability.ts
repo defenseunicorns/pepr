@@ -3,7 +3,7 @@
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { pickBy } from "ramda";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import { OnSchedule, Schedule } from "./schedule";
