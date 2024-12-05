@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { KubernetesObject } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 import {

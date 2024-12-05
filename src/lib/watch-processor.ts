@@ -5,11 +5,11 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
 import { removeFinalizer } from "./finalizer";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Queue } from "./queue";
 import { Binding } from "./types";
 import { Event } from "./enums";
-import { metricsCollector } from "./metrics";
+import { metricsCollector } from "./telemetry/metrics";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
