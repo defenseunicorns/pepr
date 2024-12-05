@@ -19,7 +19,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     return this.#input.dryRun;
   }
 
-  get OldResource(): T | undefined {
+  get OldResource(): KubernetesObject | undefined {
     return this.#input.oldObject;
   }
 
