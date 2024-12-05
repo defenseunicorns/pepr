@@ -28,7 +28,7 @@ import {
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./filter/adjudicators";
+} from "./filter/adjudicators/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);

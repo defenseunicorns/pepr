@@ -22,14 +22,9 @@ import {
   uncarryableNamespace,
 } from "./adjudicators";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial } from "../types";
-import { Event, Operation } from "../enums";
-import {
-  defaultAdmissionRequest,
-  defaultBinding,
-  defaultFilters,
-  defaultKubernetesObject,
-} from "./adjudicators/defaultTestObjects";
+import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+import { Event, Operation } from "../../enums";
+import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
