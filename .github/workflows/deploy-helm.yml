@@ -27,18 +27,18 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-      - name: setup node
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
-        with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: pepr
-
       - name: clone pepr
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: defenseunicorns/pepr
           path: pepr
+
+      - name: setup node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: pepr
 
       - name: "set env: PEPR"
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
