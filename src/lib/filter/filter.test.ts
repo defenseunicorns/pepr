@@ -9,9 +9,9 @@ import { shouldSkipRequest } from "./filter";
 import { AdmissionRequest, Binding } from "../types";
 import { Event } from "../enums";
 
-export const callback = () => undefined;
+const callback = () => undefined;
 
-export const podKind = modelToGroupVersionKind(kind.Pod.name);
+const podKind = modelToGroupVersionKind(kind.Pod.name);
 
 describe("Fuzzing shouldSkipRequest", () => {
   test("should handle random inputs without crashing", () => {
@@ -198,7 +198,7 @@ test("create: should not reject when regex namespace does match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [new RegExp("^helm").source],
       regexName: "",
       labels: {},
       annotations: {},
@@ -218,7 +218,7 @@ test("create: should reject when regex namespace does not match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^argo"],
+      regexNamespaces: [new RegExp("^argo").source],
       regexName: "",
       labels: {},
       annotations: {},
@@ -240,7 +240,7 @@ test("delete: should reject when regex namespace does not match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^argo"],
+      regexNamespaces: [new RegExp("^argo").source],
       regexName: "",
       labels: {},
       annotations: {},
@@ -262,7 +262,7 @@ test("delete: should not reject when regex namespace does match", () => {
     filters: {
       name: "",
       namespaces: [],
-      regexNamespaces: ["^helm"],
+      regexNamespaces: [new RegExp("^helm").source],
       regexName: "",
       labels: {},
       annotations: {},

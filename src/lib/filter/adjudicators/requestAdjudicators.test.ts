@@ -2,126 +2,75 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import * as sut from "../adjudicators";
 import { Operation } from "../../enums";
-import { GroupVersionKind } from "kubernetes-fluent-client";
+import { AdmissionRequest } from "../../types";
+import { defaultAdmissionRequest } from "./defaultTestObjects";
+import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "../adjudicators";
 
 describe("declaredUid", () => {
-  const defaultAdmissionRequest = {
-    uid: undefined,
-    kind: { kind: "a-kind", group: "a-group" },
-    group: "a-group",
-    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-    operation: Operation.CONNECT,
-    name: "some-name",
-    userInfo: {},
-    object: {},
-  };
   //[ AdmissionRequest, result ]
-  it.each([
-    [{}, ""],
-    [{ uid: null }, ""],
-    [{ uid: "uid" }, "uid"],
-  ])("given %j, returns '%s'", (given, expected) => {
-    const request = {
+  it.each([[{ uid: "uid" }, "uid"]])("given %j, returns '%s'", (given, expected) => {
+    const admissionRequest: AdmissionRequest = {
       ...defaultAdmissionRequest,
-      uid: ("uid" in given ? given.uid : (undefined as unknown as string)) as string,
+      uid: given.uid,
     };
 
-    const result = sut.declaredUid(request);
+    const result = declaredUid(admissionRequest);
 
     expect(result).toEqual(expected);
   });
 });
 
 describe("declaredKind", () => {
-  const defaultAdmissionRequest = {
-    uid: "some-uid",
-    kind: undefined,
-    group: "a-group",
-    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-    operation: Operation.CONNECT,
-    name: "some-name",
-    userInfo: {},
-    object: {},
-  };
   //[ AdmissionRequest, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
-    [{ kind: {} }, ""],
-    [{ kind: { kind: null } }, ""],
     [{ kind: { kind: "" } }, ""],
     [{ kind: { kind: "kind" } }, "kind"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = {
+    const admissionRequest: AdmissionRequest = {
       ...defaultAdmissionRequest,
-      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+      kind: { kind: given.kind.kind, group: defaultAdmissionRequest.kind.group },
     };
 
-    const result = sut.declaredKind(request);
+    const result = declaredKind(admissionRequest);
 
     expect(result).toEqual(expected);
   });
 });
 
 describe("declaredVersion", () => {
-  const defaultAdmissionRequest = {
-    uid: "some-uid",
-    kind: undefined,
-    group: "a-group",
-    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-    operation: Operation.CONNECT,
-    name: "some-name",
-    userInfo: {},
-    object: {},
-  };
   //[ AdmissionRequest, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
     [{ kind: {} }, ""],
-    [{ kind: { version: null } }, ""],
     [{ kind: { version: "" } }, ""],
     [{ kind: { version: "version" } }, "version"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = {
+    const admissionRequest: AdmissionRequest = {
       ...defaultAdmissionRequest,
-      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+      kind:
+        "version" in given.kind
+          ? { ...defaultAdmissionRequest.kind, version: given.kind.version }
+          : defaultAdmissionRequest.kind,
     };
 
-    const result = sut.declaredVersion(request);
+    const result = declaredVersion(admissionRequest);
 
     expect(result).toEqual(expected);
   });
 });
 
 describe("declaredGroup", () => {
-  const defaultAdmissionRequest = {
-    uid: "some-uid",
-    kind: undefined,
-    group: "a-group",
-    resource: { group: "some-group", version: "some-version", resource: "some-resource" },
-    operation: Operation.CONNECT,
-    name: "some-name",
-    userInfo: {},
-    object: {},
-  };
   //[ AdmissionRequest, result ]
   it.each([
-    [{}, ""],
-    [{ kind: null }, ""],
-    [{ kind: {} }, ""],
-    [{ kind: { group: null } }, ""],
     [{ kind: { group: "" } }, ""],
     [{ kind: { group: "group" } }, "group"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const request = {
+    const admissionRequest: AdmissionRequest = {
       ...defaultAdmissionRequest,
-      kind: ("kind" in given ? given.kind : (undefined as unknown as string)) as GroupVersionKind,
+      kind: { ...defaultAdmissionRequest.kind, group: given.kind.group },
     };
 
-    const result = sut.declaredGroup(request);
+    const result = declaredGroup(admissionRequest);
 
     expect(result).toEqual(expected);
   });
@@ -139,10 +88,6 @@ describe("declaredOperation", () => {
   };
   //[ AdmissionRequest, result ]
   it.each([
-    [{}, ""],
-    [{ operation: null }, ""],
-    [{ operation: "" }, ""],
-    [{ operation: "operation" }, "operation"],
     [{ operation: Operation.CONNECT }, Operation.CONNECT],
     [{ operation: Operation.CREATE }, Operation.CREATE],
     [{ operation: Operation.UPDATE }, Operation.UPDATE],
@@ -150,10 +95,10 @@ describe("declaredOperation", () => {
   ])("given %j, returns '%s'", (given, expected) => {
     const request = {
       ...defaultAdmissionRequest,
-      operation: ("operation" in given ? given.operation : (undefined as unknown as string)) as Operation,
+      operation: given.operation,
     };
 
-    const result = sut.declaredOperation(request);
+    const result = declaredOperation(request);
 
     expect(result).toEqual(expected);
   });

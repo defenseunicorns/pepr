@@ -2,72 +2,52 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import * as sut from "./adjudicators";
+import {
+  bindsToKind,
+  carriesIgnoredNamespace,
+  metasMismatch,
+  mismatchedAnnotations,
+  mismatchedEvent,
+  mismatchedGroup,
+  mismatchedKind,
+  mismatchedLabels,
+  mismatchedName,
+  mismatchedNameRegex,
+  mismatchedNamespace,
+  mismatchedNamespaceRegex,
+  mismatchedVersion,
+  missingCarriableNamespace,
+  operationMatchesEvent,
+  unbindableNamespaces,
+  uncarryableNamespace,
+} from "./adjudicators";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { AdmissionRequest, Binding, DeepPartial } from "../types";
 import { Event, Operation } from "../enums";
-
-describe("carriesDeletionTimestamp", () => {
-  //[ KubernetesObject, result ]
-  it.each([
-    [{}, false],
-    [{ metadata: {} }, false],
-    [{ metadata: { deletionTimestamp: null } }, false],
-    [{ metadata: { deletionTimestamp: new Date() } }, true],
-  ])("given %j, returns %s", (given, expected) => {
-    const ko = given as DeepPartial<KubernetesObject>;
-
-    const result = sut.carriesDeletionTimestamp(ko);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("missingDeletionTimestamp", () => {
-  //[ KubernetesObject, result ]
-  it.each([
-    [{}, true],
-    [{ metadata: {} }, true],
-    [{ metadata: { deletionTimestamp: null } }, true],
-    [{ metadata: { deletionTimestamp: new Date() } }, false],
-  ])("given %j, returns %s", (given, expected) => {
-    const ko = given as DeepPartial<KubernetesObject>;
-
-    const result = sut.missingDeletionTimestamp(ko);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("mismatchedDeletionTimestamp", () => {
-  //[ Binding, KubernetesObject, result ]
-  it.each([
-    [{}, {}, false],
-    [{}, { metadata: { deletionTimestamp: new Date() } }, false],
-    [{ filters: { deletionTimestamp: true } }, {}, true],
-    [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
-  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
-
-    const result = sut.mismatchedDeletionTimestamp(binding, object);
-
-    expect(result).toBe(expected);
-  });
-});
+import {
+  defaultAdmissionRequest,
+  defaultBinding,
+  defaultFilters,
+  defaultKubernetesObject,
+} from "./adjudicators/defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { name: "name" } }, false],
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, name: bnd.filters.name },
+    };
 
-    const result = sut.mismatchedName(binding, object);
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
+
+    const result = mismatchedName(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -89,7 +69,7 @@ describe("mismatchedNameRegex", () => {
     const binding = bnd as DeepPartial<Binding>;
     const object = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedNameRegex(binding, object);
+    const result = mismatchedNameRegex(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -111,7 +91,7 @@ describe("bindsToKind", () => {
     const binding = bnd as DeepPartial<Binding>;
     const kind = knd as string;
 
-    const result = sut.bindsToKind(binding, kind);
+    const result = bindsToKind(binding, kind);
 
     expect(result).toBe(expected);
   });
@@ -129,7 +109,7 @@ describe("mismatchedNamespace", () => {
     const binding = bnd as DeepPartial<Binding>;
     const object = obj as DeepPartial<Binding>;
 
-    const result = sut.mismatchedNamespace(binding, object);
+    const result = mismatchedNamespace(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -137,30 +117,32 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
+  const testRegex1 = "^n[aeiou]mespace$"; //regexr.com/89l8f
+  const testRegex2 = "^n[aeiou]me$"; //regexr.com/89l8l
+  const testRegex3 = "^sp[aeiou]ce$"; //regexr.com/89l8o
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+    [{ filters: { regexNamespaces: [new RegExp("^n.mespace$").source] } }, {}, true],
 
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nemespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nimespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nomespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "numespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "n3mespace" } }, true],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "n3mespace" } }, true],
 
-    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "name" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "space" } }, false],
-    [
-      { filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } },
-      { metadata: { namespace: "namespace" } },
-      true,
-    ],
+    [{ filters: { regexNamespaces: [testRegex2, testRegex3] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2, testRegex3] } }, { metadata: { namespace: "space" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2, testRegex3] } }, { metadata: { namespace: "namespace" } }, true],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
-
-    const result = sut.mismatchedNamespaceRegex(binding, object);
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: bnd.filters.regexNamespaces },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
+    const result = mismatchedNamespaceRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -186,7 +168,7 @@ describe("metasMismatch", () => {
     [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
     [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
   ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
-    const result = sut.metasMismatch(bnd, obj);
+    const result = metasMismatch(bnd, obj);
 
     expect(result).toBe(expected);
   });
@@ -220,7 +202,7 @@ describe("mismatchedAnnotations", () => {
     const binding = bnd as DeepPartial<Binding>;
     const object = obj as DeepPartial<Binding>;
 
-    const result = sut.mismatchedAnnotations(binding, object);
+    const result = mismatchedAnnotations(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -248,7 +230,7 @@ describe("mismatchedLabels", () => {
     const binding = bnd as DeepPartial<Binding>;
     const object = obj as DeepPartial<Binding>;
 
-    const result = sut.mismatchedLabels(binding, object);
+    const result = mismatchedLabels(binding, object);
 
     expect(result).toBe(expected);
   });
@@ -279,7 +261,7 @@ describe("missingCarriableNamespace", () => {
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
     const object = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.missingCarriableNamespace(nss, object);
+    const result = missingCarriableNamespace(nss, object);
 
     expect(result).toBe(expected);
   });
@@ -308,7 +290,7 @@ describe("uncarryableNamespace", () => {
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
     const object = obj as DeepPartial<Binding>;
 
-    const result = sut.uncarryableNamespace(nss, object);
+    const result = uncarryableNamespace(nss, object);
 
     expect(result).toBe(expected);
   });
@@ -337,7 +319,7 @@ describe("carriesIgnoredNamespace", () => {
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
     const object = obj as DeepPartial<Binding>;
 
-    const result = sut.carriesIgnoredNamespace(nss, object);
+    const result = carriesIgnoredNamespace(nss, object);
 
     expect(result).toBe(expected);
   });
@@ -367,7 +349,7 @@ describe("unbindableNamespaces", () => {
   ])("given capabilityNamespaces %j and binding %j, returns %s", (nss, bnd, expected) => {
     const binding = bnd as DeepPartial<Binding>;
 
-    const result = sut.unbindableNamespaces(nss, binding);
+    const result = unbindableNamespaces(nss, binding);
 
     expect(result).toBe(expected);
   });
@@ -376,10 +358,6 @@ describe("unbindableNamespaces", () => {
 describe("operationMatchesEvent", () => {
   //[ Operation, Event, result ]
   it.each([
-    ["", "", true],
-    ["", Event.CREATE, false],
-    [Operation.CREATE, "", false],
-
     [Operation.CREATE, Event.CREATE, true],
     [Operation.CREATE, Event.UPDATE, false],
     [Operation.CREATE, Event.DELETE, false],
@@ -404,7 +382,7 @@ describe("operationMatchesEvent", () => {
     [Operation.CONNECT, Event.CREATE_OR_UPDATE, false],
     [Operation.CONNECT, Event.ANY, true],
   ])("given operation %s and event %s, returns %s", (op, evt, expected) => {
-    const result = sut.operationMatchesEvent(op, evt);
+    const result = operationMatchesEvent(op, evt);
 
     expect(result).toEqual(expected);
   });
@@ -413,10 +391,6 @@ describe("operationMatchesEvent", () => {
 describe("mismatchedEvent", () => {
   //[ Binding, AdmissionRequest, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { operation: Operation.CREATE }, true],
-    [{ event: Event.CREATE }, {}, true],
-
     [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
     [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
     [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
@@ -441,10 +415,16 @@ describe("mismatchedEvent", () => {
     [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
     [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
   ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const request = req as DeepPartial<AdmissionRequest>;
+    const binding: Binding = {
+      ...defaultBinding,
+      event: bnd.event,
+    };
+    const request: AdmissionRequest = {
+      ...defaultAdmissionRequest,
+      operation: req.operation,
+    };
 
-    const result = sut.mismatchedEvent(binding, request);
+    const result = mismatchedEvent(binding, request);
 
     expect(result).toEqual(expected);
   });
@@ -462,7 +442,7 @@ describe("mismatchedGroup", () => {
     const binding = bnd as DeepPartial<Binding>;
     const request = req as DeepPartial<AdmissionRequest>;
 
-    const result = sut.mismatchedGroup(binding, request);
+    const result = mismatchedGroup(binding, request);
 
     expect(result).toEqual(expected);
   });
@@ -480,7 +460,7 @@ describe("mismatchedVersion", () => {
     const binding = bnd as DeepPartial<Binding>;
     const request = req as DeepPartial<AdmissionRequest>;
 
-    const result = sut.mismatchedVersion(binding, request);
+    const result = mismatchedVersion(binding, request);
 
     expect(result).toEqual(expected);
   });
@@ -498,7 +478,7 @@ describe("mismatchedKind", () => {
     const binding = bnd as DeepPartial<Binding>;
     const request = req as DeepPartial<AdmissionRequest>;
 
-    const result = sut.mismatchedKind(binding, request);
+    const result = mismatchedKind(binding, request);
 
     expect(result).toEqual(expected);
   });

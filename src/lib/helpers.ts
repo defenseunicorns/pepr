@@ -31,13 +31,7 @@ import {
 } from "./filter/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
-  // edge-case
-  if (!pattern) {
-    return false;
-  }
-
-  const regex = new RegExp(pattern);
-  return regex.test(testString);
+  return new RegExp(pattern).test(testString);
 }
 
 export class ValidationError extends Error {}
@@ -72,8 +66,8 @@ export type RBACMap = {
  * Decide to run callback after the event comes back from API Server
  **/
 export function filterNoMatchReason(
-  binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
+  binding: Binding,
+  kubernetesObject: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
@@ -81,30 +75,30 @@ export function filterNoMatchReason(
 
   // prettier-ignore
   return (
-    mismatchedDeletionTimestamp(binding, obj) ?
+    mismatchedDeletionTimestamp(binding, kubernetesObject) ?
       `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
 
-    mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
+    mismatchedName(binding, kubernetesObject) ?
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(kubernetesObject)}'.` :
 
     misboundNamespace(binding) ?
       `${prefix} Cannot use namespace filter on a namespace object.` :
 
-    mismatchedLabels(binding, obj) ?
+    mismatchedLabels(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
+        `but Object carries '${JSON.stringify(carriedLabels(kubernetesObject))}'.`
       ) :
 
-    mismatchedAnnotations(binding, obj) ?
+    mismatchedAnnotations(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+        `but Object carries '${JSON.stringify(carriedAnnotations(kubernetesObject))}'.`
       ) :
 
-    uncarryableNamespace(capabilityNamespaces, obj) ?
+    uncarryableNamespace(capabilityNamespaces, kubernetesObject) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
@@ -114,32 +108,32 @@ export function filterNoMatchReason(
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
-    mismatchedNamespace(binding, obj) ?
+    mismatchedNamespace(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
       ) :
 
-    mismatchedNamespaceRegex(binding, obj) ?
+    mismatchedNamespaceRegex(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines namespace regexes ` +
         `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
       ) :
 
-    mismatchedNameRegex(binding, obj) ?
+    mismatchedNameRegex(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
+        `but Object carries '${carriedName(kubernetesObject)}'.`
       ) :
 
-    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
+    carriesIgnoredNamespace(ignoredNamespaces, kubernetesObject) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 
-    missingCarriableNamespace(capabilityNamespaces, obj) ? 
+    missingCarriableNamespace(capabilityNamespaces, kubernetesObject) ? 
       (
         `${prefix} Object does not carry a namespace ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
@@ -242,11 +236,13 @@ export function generateWatchNamespaceError(
   return err.replace(/\.([^ ])/g, ". $1");
 }
 
-// namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
+// namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
-  const bindingRegexNamespaces = bindings.flatMap((binding: Binding) => binding.filters.regexNamespaces || []);
+  const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
+  const bindingRegexNamespaces: string[] = bindings.flatMap(
+    (binding: Binding) => binding.filters.regexNamespaces || [],
+  );
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
@@ -321,7 +317,7 @@ export const parseTimeout = (value: string, previous: unknown): number => {
 };
 
 // Remove leading whitespace while keeping format of file
-export function dedent(file: string) {
+export function dedent(file: string): string {
   // Check if the first line is empty and remove it
   const lines = file.split("\n");
   if (lines[0].trim() === "") {
@@ -338,7 +334,7 @@ export function dedent(file: string) {
   return file;
 }
 
-export function replaceString(str: string, stringA: string, stringB: string) {
+export function replaceString(str: string, stringA: string, stringB: string): string {
   // eslint-disable-next-line no-useless-escape
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");

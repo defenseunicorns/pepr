@@ -1,24 +1,37 @@
-/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import * as sut from "../adjudicators";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, DeepPartial } from "../../types";
+import {
+  mismatchedName,
+  mismatchedDeletionTimestamp,
+  mismatchedNameRegex,
+  mismatchedNamespace,
+  mismatchedNamespaceRegex,
+  mismatchedAnnotations,
+  mismatchedLabels,
+  metasMismatch,
+} from "../adjudicators";
+import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { name: "name" } }, false],
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, name: bnd.filters.name },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
 
-    const result = sut.mismatchedName(binding, object);
+    const result = mismatchedName(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -33,9 +46,9 @@ describe("mismatchedDeletionTimestamp", () => {
     [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedDeletionTimestamp(binding, object);
+    const result = mismatchedDeletionTimestamp(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -55,9 +68,9 @@ describe("mismatchedNameRegex", () => {
     [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "n3me" } }, true],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<KubernetesObject>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedNameRegex(binding, object);
+    const result = mismatchedNameRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -73,9 +86,9 @@ describe("mismatchedNamespace", () => {
     [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "namespace" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedNamespace(binding, object);
+    const result = mismatchedNamespace(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -83,30 +96,35 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
+  const testRegex1 = "^n.mespace$"; //regexr.com/89l8u
+  const testRegex2 = "^n[aeiou]mespace$"; //regexr.com/89l8f
+  const testRegex3 = "^n[aeiou]me$"; //regexr.com/89l8l
+  const testRegex4 = "^sp[aeiou]ce$"; //regexr.com/89l8o
+
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+    [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
 
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nemespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nimespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "nomespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "numespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]mespace$"] } }, { metadata: { namespace: "n3mespace" } }, true],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "n3mespace" } }, true],
 
-    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "name" } }, false],
-    [{ filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } }, { metadata: { namespace: "space" } }, false],
-    [
-      { filters: { regexNamespaces: ["^n[aeiou]me$", "^sp[aeiou]ce$"] } },
-      { metadata: { namespace: "namespace" } },
-      true,
-    ],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "space" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "namespace" } }, true],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
-    const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: bnd.filters.regexNamespaces },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
 
-    const result = sut.mismatchedNamespaceRegex(binding, object);
+    const result = mismatchedNamespaceRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -138,9 +156,9 @@ describe("mismatchedAnnotations", () => {
     ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedAnnotations(binding, object);
+    const result = mismatchedAnnotations(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -166,9 +184,9 @@ describe("mismatchedLabels", () => {
     [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const object = obj as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = sut.mismatchedLabels(binding, object);
+    const result = mismatchedLabels(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -194,7 +212,7 @@ describe("metasMismatch", () => {
     [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
     [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
   ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
-    const result = sut.metasMismatch(bnd, obj);
+    const result = metasMismatch(bnd, obj);
 
     expect(result).toBe(expected);
   });
