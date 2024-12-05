@@ -51,7 +51,7 @@ function createWebhookYaml(
   );
 }
 
-function helmLayout(basePath: string, unique: string) {
+function helmLayout(basePath: string, unique: string): Record<string, Record<string, string>> {
   const helm: Record<string, Record<string, string>> = {
     dirs: {
       chart: resolve(`${basePath}/${unique}-chart`),
@@ -119,20 +119,20 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
-  setHash = (hash: string) => {
+  setHash = (hash: string): void => {
     this.hash = hash;
   };
 
-  deploy = async (force: boolean, webhookTimeout?: number) => {
+  deploy = async (force: boolean, webhookTimeout?: number): Promise<void> => {
     this.capabilities = await loadCapabilities(this.path);
     await deploy(this, force, webhookTimeout);
   };
 
-  zarfYaml = (path: string) => zarfYaml(this, path);
+  zarfYaml = (path: string): string => zarfYaml(this, path);
 
-  zarfYamlChart = (path: string) => zarfYamlChart(this, path);
+  zarfYamlChart = (path: string): string => zarfYamlChart(this, path);
 
-  allYaml = async (imagePullSecret?: string) => {
+  allYaml = async (imagePullSecret?: string): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
@@ -143,7 +143,7 @@ export class Assets {
   };
 
   /* eslint max-statements: ["warn", 21] */
-  generateHelmChart = async (basePath: string) => {
+  generateHelmChart = async (basePath: string): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
 
     try {
