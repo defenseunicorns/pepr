@@ -263,6 +263,11 @@ export class Controller {
     const startTime = Date.now();
 
     res.on("finish", () => {
+      const excludedRoutes = ["/healthz", "/metrics"];
+      if (excludedRoutes.includes(req.originalUrl)) {
+        return;
+      }
+
       const elapsedTime = Date.now() - startTime;
       const message = {
         uid: req.body?.request?.uid,
