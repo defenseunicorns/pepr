@@ -156,18 +156,18 @@ export class Assets {
       const code = await fs.readFile(this.path);
 
       const pairs: [string, () => string][] = [
-        [helm.files.chartYaml, () => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
-        [helm.files.namespaceYaml, () => dedent(nsTemplate())],
-        [helm.files.watcherServiceYaml, () => toYaml(watcherService(this.name))],
-        [helm.files.admissionServiceYaml, () => toYaml(service(this.name))],
-        [helm.files.tlsSecretYaml, () => toYaml(tlsSecret(this.name, this.tls))],
-        [helm.files.apiTokenSecretYaml, () => toYaml(apiTokenSecret(this.name, this.apiToken))],
-        [helm.files.storeRoleYaml, () => toYaml(storeRole(this.name))],
-        [helm.files.storeRoleBindingYaml, () => toYaml(storeRoleBinding(this.name))],
-        [helm.files.clusterRoleYaml, () => dedent(clusterRoleTemplate())],
-        [helm.files.clusterRoleBindingYaml, () => toYaml(clusterRoleBinding(this.name))],
-        [helm.files.serviceAccountYaml, () => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, () => toYaml(moduleSecret(this.name, code, this.hash))],
+        [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
+        [helm.files.namespaceYaml, (): string => dedent(nsTemplate())],
+        [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
+        [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
+        [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
+        [helm.files.apiTokenSecretYaml, (): string => toYaml(apiTokenSecret(this.name, this.apiToken))],
+        [helm.files.storeRoleYaml, (): string => toYaml(storeRole(this.name))],
+        [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
+        [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
+        [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
+        [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
+        [helm.files.moduleSecretYaml, (): string => toYaml(moduleSecret(this.name, code, this.hash))],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
