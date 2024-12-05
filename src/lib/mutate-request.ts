@@ -23,7 +23,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     return this.#input.oldObject;
   }
 
-  get Request(): AdmissionRequest<T> {
+  get Request(): AdmissionRequest<KubernetesObject> {
     return this.#input;
   }
 
