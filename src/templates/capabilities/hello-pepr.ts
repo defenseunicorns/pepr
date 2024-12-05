@@ -9,7 +9,7 @@ import {
   fetchStatus,
   kind,
 } from "pepr";
-import nock from "nock";
+import { MockAgent, setGlobalDispatcher } from "undici";
 
 /**
  *  The HelloPepr Capability is an example capability to demonstrate some general concepts of Pepr.
@@ -273,14 +273,24 @@ When(a.ConfigMap)
   .WithLabel("chuck-norris")
   .Mutate(cm => cm.SetLabel("got-jokes", "true"))
   .Watch(async cm => {
-    const jokeURL = "https://icanhazdadjoke.com/";
+    const jokeURL = "https://icanhazdadjoke.com";
 
-    // Set up Nock to mock the API calls globally with header matching
-    nock(jokeURL).get("/").reply(200, {
-      id: "R7UfaahVfFd",
-      joke: "Funny joke goes here.",
-      status: 200,
-    });
+    const mockAgent: MockAgent = new MockAgent();
+    setGlobalDispatcher(mockAgent);
+    const mockClient = mockAgent.get(jokeURL);
+    mockClient.intercept({ path: "/", method: "GET" }).reply(
+      200,
+      {
+        id: "R7UfaahVfFd",
+        joke: "Funny joke goes here.",
+        status: 200,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+      },
+    );
 
     // Try/catch is not needed as a response object will always be returned
     const response = await fetch<TheChuckNorrisJoke>(jokeURL, {
