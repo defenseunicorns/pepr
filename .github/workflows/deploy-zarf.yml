@@ -107,4 +107,4 @@ jobs:
       - name: Check Deployment Readiness
         timeout-minutes: 5
         run: |
-          ${PEPR}/.github/workflows/scripts/check-deployment-readiness.sh $MOD_NAME
+          ${PEPR}/.github/workflows/scripts/check-deployment-readiness.sh pepr-$MOD_NAME
