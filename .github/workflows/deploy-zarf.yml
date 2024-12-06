@@ -90,6 +90,7 @@ jobs:
       - name: Initialize Zarf
         run: |
           cd "$MOD_PATH"
+          zarf package pull init
           zarf init --confirm
 
       - name: Package Pepr Module with Zarf
