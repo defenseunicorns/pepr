@@ -29,11 +29,19 @@ export class Queue<K extends KubernetesObject> {
     this.#uid = `${Date.now()}-${randomBytes(2).toString("hex")}`;
   }
 
-  label() {
+  label(): { name: string; uid: string } {
     return { name: this.#name, uid: this.#uid };
   }
 
-  stats() {
+  stats(): {
+    queue: {
+      name: string;
+      uid: string;
+    };
+    stats: {
+      length: number;
+    };
+  } {
     return {
       queue: this.label(),
       stats: {
@@ -51,7 +59,7 @@ export class Queue<K extends KubernetesObject> {
    * @param reconcile The callback to enqueue for reconcile
    * @returns A promise that resolves when the object is reconciled
    */
-  enqueue(item: K, phase: WatchPhase, reconcile: WatchCallback) {
+  enqueue(item: K, phase: WatchPhase, reconcile: WatchCallback): Promise<void> {
     const note = {
       queue: this.label(),
       item: {
@@ -73,7 +81,7 @@ export class Queue<K extends KubernetesObject> {
    *
    * @returns A promise that resolves when the webapp is reconciled
    */
-  async #dequeue() {
+  async #dequeue(): Promise<false | undefined> {
     // If there is a pending promise, do nothing
     if (this.#pendingPromise) {
       Log.debug("Pending promise, not dequeuing");
