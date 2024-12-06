@@ -8,6 +8,13 @@ on:
   pull_request:
     branches: ["main"]
 
+
+env:
+  PEPR: ${GITHUB_WORKSPACE}/pepr
+  MOD_NAME: pepr-test-zarf
+  MOD_PATH: ${PEPR}/${MOD_NAME}
+  CLUSTER: $MOD_NAME
+
 jobs:
   zarf:
     name: deploy test
@@ -40,14 +47,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: "set envars"
-        run: |
-          echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
-          echo "MOD_NAME=pepr-test-zarf" >> "$GITHUB_ENV"
-          echo "MOD_PATH=${PEPR}/${MOD_NAME}" >> "$GITHUB_ENV"
-          echo "CLUSTER=$MOD_NAME" >> "$GITHUB_ENV"
-          echo "MOD_PATH is $MOD_PATH"
-          echo "MOD_NAME is $MOD_NAME"
+      - name: "verify envars"
+        run: env
 
       - name: Install Pepr Dependencies
         run: |
