@@ -90,8 +90,7 @@ jobs:
       - name: Initialize Zarf
         run: |
           cd "$MOD_PATH"
-          zarf package pull init
-          zarf init --confirm
+          zarf init --components k3s,git-server --nodeport 31337 --confirm
 
       - name: Package Pepr Module with Zarf
         run: |
