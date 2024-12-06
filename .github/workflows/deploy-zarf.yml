@@ -8,13 +8,6 @@ on:
   pull_request:
     branches: ["main"]
 
-
-env:
-  PEPR: ${GITHUB_WORKSPACE}/pepr
-  MOD_NAME: pepr-test-zarf
-  MOD_PATH: ${PEPR}/${MOD_NAME}
-  CLUSTER: $MOD_NAME
-
 jobs:
   zarf:
     name: deploy test
@@ -47,8 +40,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: "verify envars"
-        run: env
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: Install Pepr Dependencies
         run: |
@@ -60,17 +53,28 @@ jobs:
           cd "$PEPR"
           npm run build:image
 
+      - name: "set env: MOD_NAME"
+        run: |
+          echo "MOD_NAME=pepr-test-zarf" >> "$GITHUB_ENV"
+
+      - name: "set env: MOD_PATH"
+        run: |
+          echo "MOD_PATH=${PEPR}/${MOD_NAME}" >> "$GITHUB_ENV"
+
       - name: Init Pepr Module
         run: |
           cd "$PEPR"
           npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --skip-post-init --confirm
-          sed -i '' 's/uuid": ".*",/uuid": "$MOD_NAME",/g' "$MOD_PATH/package.json"
+          sed -i '' 's/uuid": ".*",/uuid": "'$MOD_NAME'",/g' "$MOD_PATH/package.json"
 
       - name: Build Pepr Module
         run: |
           cd "$MOD_PATH"
           npm install "${PEPR}/pepr-0.0.0-development.tgz"
           npx pepr build --custom-image pepr:dev
+
+      - name: "set env: CLUSTER"
+        run: echo "CLUSTER=$MOD_NAME" >> "$GITHUB_ENV"
 
       - name: Prepare Test Cluster
         run: |
