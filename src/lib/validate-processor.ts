@@ -12,6 +12,7 @@ import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
 import { ModuleConfig } from "./module";
 
+//TODO
 export async function validateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
