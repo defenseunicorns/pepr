@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
-
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter/filter";
 import { ValidateResponse } from "./k8s";
@@ -12,23 +11,22 @@ import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
 import { ModuleConfig } from "./module";
 
-async function processRequest(
-  req: AdmissionRequest,
+export async function processRequest(
   binding: Binding,
-  actMeta: Record<string, string>,
-  valReq: PeprValidateRequest<KubernetesObject>,
+  actionMetadata: Record<string, string>,
+  peprValidateRequest: PeprValidateRequest<KubernetesObject>,
 ): Promise<ValidateResponse> {
   const label = binding.validateCallback!.name;
-  Log.info(actMeta, `Processing validation action (${label})`);
+  Log.info(actionMetadata, `Processing validation action (${label})`);
 
   const valResp: ValidateResponse = {
-    uid: req.uid,
+    uid: peprValidateRequest.Request.uid,
     allowed: true, // Assume it's allowed until a validation check fails
   };
 
   try {
     // Run the validation callback, if it fails set allowed to false
-    const callbackResp = await binding.validateCallback!(valReq);
+    const callbackResp = await binding.validateCallback!(peprValidateRequest);
     valResp.allowed = callbackResp.allowed;
 
     // If the validation callback returned a status code or message, set it in the Response
@@ -39,11 +37,11 @@ async function processRequest(
       };
     }
 
-    Log.info(actMeta, `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`);
+    Log.info(actionMetadata, `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`);
     return valResp;
   } catch (e) {
     // If any validation throws an error, note the failure in the Response
-    Log.error(actMeta, `Action failed: ${JSON.stringify(e)}`);
+    Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
     valResp.allowed = false;
     valResp.status = {
       code: 500,
@@ -86,7 +84,7 @@ export async function validateProcessor(
         continue;
       }
 
-      const resp = await processRequest(req, binding, actionMetadata, wrapped);
+      const resp = await processRequest(binding, actionMetadata, wrapped);
       response.push(resp);
     }
   }
