@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { K8s, KubernetesObject, RegisterKind } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Binding, DeepPartial } from "./types";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";

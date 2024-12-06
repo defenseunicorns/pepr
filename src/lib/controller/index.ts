@@ -7,8 +7,8 @@ import https from "https";
 
 import { Capability } from "../capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
-import Log from "../logger";
-import { metricsCollector, MetricsCollector } from "../metrics";
+import Log from "../telemetry/logger";
+import { metricsCollector, MetricsCollector } from "../telemetry/metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
@@ -78,7 +78,7 @@ export class Controller {
   }
 
   /** Start the webhook server */
-  startServer = (port: number) => {
+  startServer = (port: number): void => {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
@@ -133,7 +133,7 @@ export class Controller {
     });
   };
 
-  #bindEndpoints = () => {
+  #bindEndpoints = (): void => {
     // Health check endpoint
     this.#app.get("/healthz", Controller.#healthz);
 
@@ -162,7 +162,7 @@ export class Controller {
    * @param next The next middleware function
    * @returns
    */
-  #validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
+  #validateToken = (req: express.Request, res: express.Response, next: NextFunction): void => {
     // Validate the token
     const { token } = req.params;
     if (token !== this.#token) {
@@ -183,7 +183,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  #metrics = async (req: express.Request, res: express.Response) => {
+  #metrics = async (req: express.Request, res: express.Response): Promise<void> => {
     try {
       // https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#basic-info
       res.set("Content-Type", "text/plain; version=0.0.4");
@@ -200,7 +200,9 @@ export class Controller {
    * @param admissionKind the type of admission request
    * @returns the request handler
    */
-  #admissionReq = (admissionKind: "Mutate" | "Validate") => {
+  #admissionReq = (
+    admissionKind: "Mutate" | "Validate",
+  ): ((req: express.Request, res: express.Response) => Promise<void>) => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
       // Start the metrics timer
@@ -259,7 +261,7 @@ export class Controller {
    * @param res the outgoing response
    * @param next the next middleware function
    */
-  static #logger(req: express.Request, res: express.Response, next: express.NextFunction) {
+  static #logger(req: express.Request, res: express.Response, next: express.NextFunction): void {
     const startTime = Date.now();
 
     res.on("finish", () => {
@@ -288,7 +290,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  static #healthz(req: express.Request, res: express.Response) {
+  static #healthz(req: express.Request, res: express.Response): void {
     try {
       res.send("OK");
     } catch (err) {

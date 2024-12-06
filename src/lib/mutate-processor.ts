@@ -9,7 +9,7 @@ import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/filter";
 import { MutateResponse } from "./k8s";
 import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";

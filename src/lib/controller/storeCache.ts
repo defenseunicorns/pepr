@@ -1,5 +1,5 @@
 import { DataOp } from "../storage";
-import Log from "../logger";
+import Log from "../telemetry/logger";
 import { K8s } from "kubernetes-fluent-client";
 import { Store } from "../k8s";
 import { StatusCodes } from "http-status-codes";
