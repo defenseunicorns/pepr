@@ -46,6 +46,8 @@ jobs:
           echo "MOD_NAME=pepr-test-zarf" >> "$GITHUB_ENV"
           echo "MOD_PATH=${PEPR}/${MOD_NAME}" >> "$GITHUB_ENV"
           echo "CLUSTER=$MOD_NAME" >> "$GITHUB_ENV"
+          echo "MOD_PATH is $MOD_PATH"
+          echo "MOD_NAME is $MOD_NAME"
 
       - name: Install Pepr Dependencies
         run: |
