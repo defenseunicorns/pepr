@@ -11,19 +11,19 @@ export class PeprMutateRequest<T extends KubernetesObject> {
   Raw: T;
   #input: AdmissionRequest<T>;
 
-  get PermitSideEffects() {
+  get PermitSideEffects(): boolean {
     return !this.#input.dryRun;
   }
 
-  get IsDryRun() {
+  get IsDryRun(): boolean | undefined {
     return this.#input.dryRun;
   }
 
-  get OldResource() {
+  get OldResource(): KubernetesObject | undefined {
     return this.#input.oldObject;
   }
 
-  get Request() {
+  get Request(): AdmissionRequest<KubernetesObject> {
     return this.#input;
   }
 
@@ -42,11 +42,11 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     }
   }
 
-  Merge = (obj: DeepPartial<T>) => {
+  Merge = (obj: DeepPartial<T>): void => {
     this.Raw = mergeDeepRight(this.Raw, obj) as unknown as T;
   };
 
-  SetLabel = (key: string, value: string) => {
+  SetLabel = (key: string, value: string): this => {
     const ref = this.Raw;
     ref.metadata = ref.metadata ?? {};
     ref.metadata.labels = ref.metadata.labels ?? {};
@@ -54,7 +54,7 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     return this;
   };
 
-  SetAnnotation = (key: string, value: string) => {
+  SetAnnotation = (key: string, value: string): this => {
     const ref = this.Raw;
     ref.metadata = ref.metadata ?? {};
     ref.metadata.annotations = ref.metadata.annotations ?? {};
@@ -62,25 +62,25 @@ export class PeprMutateRequest<T extends KubernetesObject> {
     return this;
   };
 
-  RemoveLabel = (key: string) => {
+  RemoveLabel = (key: string): this => {
     if (this.Raw.metadata?.labels?.[key]) {
       delete this.Raw.metadata.labels[key];
     }
     return this;
   };
 
-  RemoveAnnotation = (key: string) => {
+  RemoveAnnotation = (key: string): this => {
     if (this.Raw.metadata?.annotations?.[key]) {
       delete this.Raw.metadata.annotations[key];
     }
     return this;
   };
 
-  HasLabel = (key: string) => {
+  HasLabel = (key: string): boolean => {
     return this.Raw.metadata?.labels?.[key] !== undefined;
   };
 
-  HasAnnotation = (key: string) => {
+  HasAnnotation = (key: string): boolean => {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
   };
 }

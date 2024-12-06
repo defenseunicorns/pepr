@@ -21,7 +21,7 @@ node_modules/
 stats.html
 .vscode
 insecure-tls*
-pepr-test-module
+pepr-test-*
 pepr-upgrade-test
 *.tar
 *.tgz
