@@ -578,7 +578,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^system"],
+          regexNamespaces: [new RegExp("^system").source],
         },
       })),
     };
@@ -596,7 +596,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -612,7 +612,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -630,7 +630,7 @@ describe("namespaceComplianceValidator", () => {
         filters: {
           ...binding.filters,
           namespaces: [],
-          regexNamespaces: ["^mia"],
+          regexNamespaces: [new RegExp("^mia").source],
         },
       })),
     };
@@ -816,7 +816,7 @@ describe("filterNoMatchReason", () => {
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
-        filters: { ...defaultFilters, regexNamespaces: ["(.*)-system"] },
+        filters: { ...defaultFilters, regexNamespaces: [new RegExp("(.*)-system").source] },
       };
 
       const capabilityNamespaces: string[] = [];
@@ -838,7 +838,12 @@ describe("when pod namespace matches the namespace regex", () => {
       const binding: Binding = {
         ...defaultBinding,
         kind: { kind: "Pod", group: "some-group" },
-        filters: { ...defaultFilters, regexName: "", regexNamespaces: ["(.*)-system"], namespaces: [] },
+        filters: {
+          ...defaultFilters,
+          regexName: "",
+          regexNamespaces: [new RegExp("(.*)-system").source],
+          namespaces: [],
+        },
       };
       const kubernetesObject: KubernetesObject = { ...defaultKubernetesObject, metadata: { namespace: namespace } };
       const capabilityNamespaces: string[] = [];
@@ -1055,11 +1060,7 @@ it("returns capability namespace error when object is not in capability namespac
     metadata: { namespace: "ns2", name: "bleh" },
   };
   const capabilityNamespaces = ["ns1"];
-  const result = filterNoMatchReason(
-    binding as Binding,
-    obj as unknown as Partial<KubernetesObject>,
-    capabilityNamespaces,
-  );
+  const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
   expect(result).toEqual(
     `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'.`,
   );

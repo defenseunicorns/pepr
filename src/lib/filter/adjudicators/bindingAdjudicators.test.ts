@@ -3,7 +3,7 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { DeepPartial, ValidateActionResponse } from "../../types";
+import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
 import { Event } from "../../enums";
 import {
   bindsToNamespace,
@@ -44,7 +44,7 @@ import {
   misboundDeleteWithDeletionTimestamp,
   misboundNamespace,
   missingName,
-} from "../adjudicators";
+} from "./adjudicators";
 import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("definesDeletionTimestamp", () => {
@@ -53,7 +53,7 @@ describe("definesDeletionTimestamp", () => {
     [{ filters: { deletionTimestamp: false } }, false],
     [{ filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -73,7 +73,7 @@ describe("ignoresDeletionTimestamp", () => {
     [{ filters: { deletionTimestamp: false } }, true],
     [{ filters: { deletionTimestamp: true } }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -90,7 +90,7 @@ describe("ignoresDeletionTimestamp", () => {
 describe("definedName", () => {
   //[ Binding, result ]
   it.each([[{ filters: { name: "name" } }, "name"]])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -107,7 +107,7 @@ describe("definedName", () => {
 describe("definesName", () => {
   //[ Binding, result ]
   it.each([[{ filters: { name: "name" } }, true]])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -123,13 +123,8 @@ describe("definesName", () => {
 
 describe("ignoresName", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, true],
-    // [{ filters: {} }, true],
-    // [{ filters: { name: null } }, true],
-    [{ filters: { name: "name" } }, false],
-  ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+  it.each([[{ filters: { name: "name" } }, false]])("given %j, returns %s", (given, expected) => {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -145,13 +140,8 @@ describe("ignoresName", () => {
 
 describe("definedNameRegex", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, ""],
-    // [{ filters: {} }, ""],
-    // [{ filters: { regexName: null } }, ""],
-    [{ filters: { regexName: "n.me" } }, "n.me"], // TODO: should this be a regex object?
-  ])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+  it.each([[{ filters: { regexName: "n.me" } }, "n.me"]])("given %j, returns '%s'", (given, expected) => {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -167,13 +157,8 @@ describe("definedNameRegex", () => {
 
 describe("definesNameRegex", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { regexName: null } }, false],
-    [{ filters: { regexName: "n.me" } }, true],
-  ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+  it.each([[{ filters: { regexName: "n.me" } }, true]])("given %j, returns %s", (given, expected) => {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -189,12 +174,7 @@ describe("definesNameRegex", () => {
 
 describe("carriedName", () => {
   //[ KubernetesObject, result ]
-  it.each([
-    // [{}, ""],
-    // [{ metadata: {} }, ""],
-    // [{ metadata: { name: null } }, ""],
-    [{ metadata: { name: "name" } }, "name"],
-  ])("given %j, returns '%s'", (given, expected) => {
+  it.each([[{ metadata: { name: "name" } }, "name"]])("given %j, returns '%s'", (given, expected) => {
     const kubernetesObject = {
       ...defaultKubernetesObject,
       metadata: { name: given.metadata.name },
@@ -208,12 +188,7 @@ describe("carriedName", () => {
 
 describe("carriesName", () => {
   //[ KubernetesObject, result ]
-  it.each([
-    // [{}, false],
-    // [{ metadata: {} }, false],
-    // [{ metadata: { name: null } }, false],
-    [{ metadata: { name: "name" } }, true],
-  ])("given %j, returns %s", (given, expected) => {
+  it.each([[{ metadata: { name: "name" } }, true]])("given %j, returns %s", (given, expected) => {
     const kubernetesObject = {
       ...defaultKubernetesObject,
       metadata: { name: given.metadata.name },
@@ -227,12 +202,7 @@ describe("carriesName", () => {
 
 describe("missingName", () => {
   //[ Binding, result ]
-  it.each([
-    // [{}, true],
-    // [{ metadata: {} }, true],
-    // [{ metadata: { name: null } }, true],
-    [{ metadata: { name: "name" } }, false],
-  ])("given %j, returns %s", (given, expected) => {
+  it.each([[{ metadata: { name: "name" } }, false]])("given %j, returns %s", (given, expected) => {
     const kubernetesObject = {
       ...defaultKubernetesObject,
       metadata: { name: given.metadata.name },
@@ -247,18 +217,15 @@ describe("missingName", () => {
 describe("bindsToNamespace", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ kind: {} }, false],
-    [{ kind: { kind: null } }, false],
     [{ kind: { kind: "" } }, false],
     [{ kind: { kind: "Namespace" } }, true],
   ])("given binding %j returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
       },
-      kind: { kind: given.kind.kind },
+      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
     };
 
     const result = bindsToNamespace(binding);
@@ -270,14 +237,11 @@ describe("bindsToNamespace", () => {
 describe("definedNamespaces", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, []],
-    // [{ filters: {} }, []],
-    [{ filters: { namespaces: null } }, []],
     [{ filters: { namespaces: [] } }, []],
     [{ filters: { namespaces: ["namespace"] } }, ["namespace"]],
     [{ filters: { namespaces: ["name", "space"] } }, ["name", "space"]],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -294,14 +258,11 @@ describe("definedNamespaces", () => {
 describe("definesNamespaces", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    [{ filters: { namespaces: null } }, false],
     [{ filters: { namespaces: [] } }, false],
     [{ filters: { namespaces: ["namespace"] } }, true],
     [{ filters: { namespaces: ["name", "space"] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -318,14 +279,11 @@ describe("definesNamespaces", () => {
 describe("definedNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, []],
-    // [{ filters: {} }, []],
-    // [{ filters: { regexNamespaces: null } }, []],
     [{ filters: { regexNamespaces: [] } }, []],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, ["n.mesp.ce"]],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, ["n.me", "sp.ce"]],
+    [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, ["n.mesp.ce"]],
+    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, ["n.me", "sp.ce"]],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -342,14 +300,11 @@ describe("definedNamespaceRegexes", () => {
 describe("definesNamespaceRegexes", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { regexNamespaces: null } }, false],
     [{ filters: { regexNamespaces: [] } }, false],
-    [{ filters: { regexNamespaces: ["n.mesp.ce"] } }, true],
-    [{ filters: { regexNamespaces: ["n.me", "sp.ce"] } }, true],
+    [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, true],
+    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -372,9 +327,9 @@ describe("carriedNamespace", () => {
     [{ metadata: { namespace: "" } }, ""],
     [{ metadata: { namespace: "namespace" } }, "namespace"],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = given as DeepPartial<KubernetesObject>;
+    const kubernetesObject = given as DeepPartial<KubernetesObject>;
 
-    const result = carriedNamespace(binding);
+    const result = carriedNamespace(kubernetesObject);
 
     expect(result).toEqual(expected);
   });
@@ -383,9 +338,6 @@ describe("carriedNamespace", () => {
 describe("carriesNamespace", () => {
   //[ KubernetesObject, result ]
   it.each([
-    // [{}, false],
-    // [{ metadata: {} }, false],
-    // [{ metadata: { namespace: null } }, false],
     [{ metadata: { namespace: "" } }, false],
     [{ metadata: { namespace: "namespace" } }, true],
   ])("given %j, returns %s", (given, expected) => {
@@ -408,13 +360,13 @@ describe("misboundNamespace", () => {
     [{ kind: { kind: "Namespace" }, filters: { namespaces: [] } }, false],
     [{ kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"] } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
         namespaces: given.filters.namespaces,
       },
-      kind: given.kind,
+      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
     };
 
     const result = misboundNamespace(binding);
@@ -426,14 +378,11 @@ describe("misboundNamespace", () => {
 describe("definedAnnotations", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, {}],
-    // [{ filters: {} }, {}],
-    // [{ filters: { annotations: null } }, {}],
     [{ filters: { annotations: {} } }, {}],
     [{ filters: { annotations: { annotation: "" } } }, { annotation: "" }],
     [{ filters: { annotations: { anno: "tation" } } }, { anno: "tation" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -450,14 +399,11 @@ describe("definedAnnotations", () => {
 describe("definesAnnotations", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { annotations: null } }, false],
     [{ filters: { annotations: {} } }, false],
     [{ filters: { annotations: { annotation: "" } } }, true],
     [{ filters: { annotations: { anno: "tation" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -474,9 +420,6 @@ describe("definesAnnotations", () => {
 describe("carriedAnnotations", () => {
   //[ KuberneteObject, result ]
   it.each([
-    // [{}, {}],
-    // [{ metadata: {} }, {}],
-    // [{ metadata: { annotations: null } }, {}],
     [{ metadata: { annotations: {} } }, {}],
     [{ metadata: { annotations: { annotation: "" } } }, { annotation: "" }],
     [{ metadata: { annotations: { anno: "tation" } } }, { anno: "tation" }],
@@ -495,9 +438,6 @@ describe("carriedAnnotations", () => {
 describe("carriesAnnotations", () => {
   //[ KubernetesObject, result ]
   it.each([
-    // [{}, false],
-    // [{ metadata: {} }, false],
-    // [{ metadata: { annotations: null } }, false],
     [{ metadata: { annotations: {} } }, false],
     [{ metadata: { annotations: { annotation: "" } } }, true],
     [{ metadata: { annotations: { anno: "tation" } } }, true],
@@ -516,14 +456,11 @@ describe("carriesAnnotations", () => {
 describe("definedLabels", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, {}],
-    // [{ filters: {} }, {}],
-    // [{ filters: { labels: null } }, {}],
     [{ filters: { labels: {} } }, {}],
     [{ filters: { labels: { label: "" } } }, { label: "" }],
     [{ filters: { labels: { lab: "el" } } }, { lab: "el" }],
   ])("given %j, returns %j", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -540,14 +477,11 @@ describe("definedLabels", () => {
 describe("definesLabels", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ filters: {} }, false],
-    // [{ filters: { labels: null } }, false],
     [{ filters: { labels: {} } }, false],
     [{ filters: { labels: { label: "" } } }, true],
     [{ filters: { labels: { lab: "el" } } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
@@ -564,9 +498,6 @@ describe("definesLabels", () => {
 describe("carriedLabels", () => {
   //[ KubernetesObject, result ]
   it.each([
-    // [{}, {}],
-    // [{ metadata: {} }, {}],
-    // [{ metadata: { labels: null } }, {}],
     [{ metadata: { labels: {} } }, {}],
     [{ metadata: { labels: { label: "" } } }, { label: "" }],
     [{ metadata: { labels: { lab: "el" } } }, { lab: "el" }],
@@ -585,9 +516,6 @@ describe("carriedLabels", () => {
 describe("carriesLabels", () => {
   //[ KubernetesObject, result ]
   it.each([
-    // [{}, false],
-    // [{ metadata: {} }, false],
-    // [{ metadata: { labels: null } }, false],
     [{ metadata: { labels: {} } }, false],
     [{ metadata: { labels: { label: "" } } }, true],
     [{ metadata: { labels: { lab: "el" } } }, true],
@@ -606,15 +534,12 @@ describe("carriesLabels", () => {
 describe("definedEvent", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, ""],
-    // [{ event: "" }, ""],
-    // [{ event: "nonsense" }, "nonsense"],
     [{ event: Event.CREATE }, Event.CREATE],
     [{ event: Event.CREATE_OR_UPDATE }, Event.CREATE_OR_UPDATE],
     [{ event: Event.UPDATE }, Event.UPDATE],
     [{ event: Event.DELETE }, Event.DELETE],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       event: given.event,
     };
@@ -628,15 +553,12 @@ describe("definedEvent", () => {
 describe("definesDelete", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ event: "" }, false],
-    // [{ event: "nonsense" }, false],
     [{ event: Event.CREATE }, false],
     [{ event: Event.CREATE_OR_UPDATE }, false],
     [{ event: Event.UPDATE }, false],
     [{ event: Event.DELETE }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       event: given.event,
     };
@@ -650,16 +572,12 @@ describe("definesDelete", () => {
 describe("misboundDeleteWithDeletionTimestamp", () => {
   //[ Binding, result ]
   it.each([
-    [{ event: Event.DELETE, filters: {} }, false],
     [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
     [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
-      filters:
-        "deletionTimestamp" in given.filters
-          ? { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp }
-          : defaultFilters,
+      filters: { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp },
       event: given.event,
     };
 
@@ -670,15 +588,12 @@ describe("misboundDeleteWithDeletionTimestamp", () => {
 });
 describe("when filters are not set", () => {
   it.each([
-    // [{}, false],
-    // [{ event: "" }, false],
-    // [{ event: "nonsense" }, false],
     [{ event: Event.CREATE }, false],
     [{ event: Event.CREATE_OR_UPDATE }, false],
     [{ event: Event.UPDATE }, false],
     [{ event: Event.DELETE }, false],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       event: given.event,
     };
@@ -692,16 +607,12 @@ describe("when filters are not set", () => {
 describe("definedGroup", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, ""],
-    // [{ kind: null }, ""],
-    // [{ kind: {} }, ""],
-    [{ kind: { group: null } }, ""],
     [{ kind: { group: "" } }, ""],
     [{ kind: { group: "group" } }, "group"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
-      kind: { group: given.kind.group },
+      kind: { kind: defaultBinding.kind.kind, group: given.kind.group },
     };
 
     const result = definedGroup(binding);
@@ -713,16 +624,12 @@ describe("definedGroup", () => {
 describe("definesGroup", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ kind: null }, false],
-    // [{ kind: {} }, false],
-    [{ kind: { group: null } }, false],
     [{ kind: { group: "" } }, false],
     [{ kind: { group: "group" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
-      kind: { group: given.kind.group },
+      kind: { kind: defaultBinding.kind.kind, group: given.kind.group },
     };
 
     const result = definesGroup(binding);
@@ -734,14 +641,10 @@ describe("definesGroup", () => {
 describe("definedVersion", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, ""],
-    // [{ kind: null }, ""],
-    // [{ kind: {} }, ""],
-    // [{ kind: { version: null } }, ""],
     [{ kind: { version: "" } }, ""],
     [{ kind: { version: "version" } }, "version"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
     };
@@ -755,14 +658,10 @@ describe("definedVersion", () => {
 describe("definesVersion", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ kind: null }, false],
-    // [{ kind: {} }, false],
-    // [{ kind: { version: null } }, false],
     [{ kind: { version: "" } }, false],
     [{ kind: { version: "version" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       kind: { kind: "some-kind", group: "some-group", version: given.kind.version },
     };
@@ -776,16 +675,12 @@ describe("definesVersion", () => {
 describe("definedKind", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, ""],
-    // [{ kind: null }, ""],
-    // [{ kind: {} }, ""],
-    [{ kind: { kind: null } }, ""],
     [{ kind: { kind: "" } }, ""],
     [{ kind: { kind: "kind" } }, "kind"],
   ])("given %j, returns '%s'", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
-      kind: { kind: given.kind.kind },
+      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
     };
 
     const result = definedKind(binding);
@@ -797,16 +692,12 @@ describe("definedKind", () => {
 describe("definesKind", () => {
   //[ Binding, result ]
   it.each([
-    // [{}, false],
-    // [{ kind: null }, false],
-    // [{ kind: {} }, false],
-    [{ kind: { kind: null } }, false],
     [{ kind: { kind: "" } }, false],
     [{ kind: { kind: "kind" } }, true],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
-      kind: { kind: given.kind.kind },
+      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
     };
 
     const result = definesKind(binding);
@@ -824,7 +715,7 @@ describe("definedCategory", () => {
     [{ isWatch: true }, "Watch"],
     [{ isFinalize: true, isWatch: true }, "Finalize"],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       ...given,
     };
@@ -851,7 +742,7 @@ describe("definedCallback", () => {
     [{ isWatch: true, watchCallback }, watchCallback],
     [{ isFinalize: true, finalizeCallback }, finalizeCallback],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       ...given,
     };
@@ -878,7 +769,7 @@ describe("definedCallbackName", () => {
     [{ isWatch: true, watchCallback }, "watchCallback"],
     [{ isFinalize: true, finalizeCallback }, "finalizeCallback"],
   ])("given %j, returns %s", (given, expected) => {
-    const binding = {
+    const binding: Binding = {
       ...defaultBinding,
       ...given,
     };

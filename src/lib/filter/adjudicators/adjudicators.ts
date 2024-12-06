@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Event, Operation } from "../enums";
-import { AdmissionRequest, Binding } from "../../lib/types";
+import { Event, Operation } from "../../enums";
+import { AdmissionRequest, Binding } from "../../types";
 import {
   __,
   allPass,
@@ -103,7 +103,7 @@ export const definesDeletionTimestamp = pipe(
 export const ignoresDeletionTimestamp = complement(definesDeletionTimestamp);
 
 export const definedName = pipe((binding: Binding): string => {
-  return "name" in binding.filters ? binding.filters.name : "";
+  return binding.filters.name;
 }, defaultTo(""));
 export const definesName = pipe(definedName, equals(""), not);
 export const ignoresName = complement(definesName);
@@ -129,13 +129,10 @@ export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
 export const definedLabels = pipe((binding: Partial<Binding>) => binding?.filters?.labels, defaultTo({}));
 export const definesLabels = pipe(definedLabels, equals({}), not);
 
-export const definedEvent = pipe((binding: Partial<Binding>): Event => {
-  if (binding.event) {
-    return binding.event;
-  } else {
-    throw TypeError("binding.event was undefined");
-  }
-}, defaultTo(""));
+export const definedEvent = (binding: Binding): Event => {
+  return binding.event;
+};
+
 export const definesDelete = pipe(definedEvent, equals(Event.DELETE));
 
 export const definedGroup = pipe((binding): string => binding?.kind?.group, defaultTo(""));
@@ -150,27 +147,25 @@ export const definesVersion = pipe(definedVersion, equals(""), not);
 export const definedKind = pipe((binding): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
-export const definedCategory = pipe((binding: Partial<Binding>) => {
+export const definedCategory = (binding: Partial<Binding>) => {
+  // Ordering matters, finalize is a "watch"
   // prettier-ignore
-  return (
-    binding.isFinalize ? "Finalize" :
+  return binding.isFinalize ? "Finalize" :
     binding.isWatch ? "Watch" :
     binding.isMutate ? "Mutate" :
     binding.isValidate ? "Validate" :
-    ""
-  );
-});
+    "";
+};
 
-export const definedCallback = pipe((binding: Partial<Binding>) => {
+export const definedCallback = (binding: Partial<Binding>) => {
+  // Ordering matters, finalize is a "watch"
   // prettier-ignore
-  return (
-    binding.isFinalize ? binding.finalizeCallback :
+  return binding.isFinalize ? binding.finalizeCallback :
     binding.isWatch ? binding.watchCallback :
     binding.isMutate ? binding.mutateCallback :
-    binding.isValidate ? binding.validateCallback:
-    null
-  );
-});
+    binding.isValidate ? binding.validateCallback :
+    null;
+};
 export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), callback => callback.name);
 
 /*

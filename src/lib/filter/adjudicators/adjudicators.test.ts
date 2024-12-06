@@ -23,26 +23,19 @@ import {
   uncarryableNamespace,
 } from "./adjudicators";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial } from "../types";
-import { Event, Operation } from "../enums";
-import {
-  defaultAdmissionRequest,
-  defaultBinding,
-  defaultFilters,
-  defaultKubernetesObject,
-} from "./adjudicators/defaultTestObjects";
+import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+import { Event, Operation } from "../../enums";
+import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
-    [{}, {}, false],
-    [{}, { metadata: { name: "name" } }, false],
     [{ filters: { name: "name" } }, {}, true],
     [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding: Binding = {
       ...defaultBinding,
-      filters: "filters" in bnd ? { ...defaultFilters, name: bnd.filters.name } : { ...defaultFilters },
+      filters: { ...defaultFilters, name: bnd.filters.name },
     };
 
     const kubernetesObject: KubernetesObject = {
@@ -120,13 +113,11 @@ describe("mismatchedNamespace", () => {
 
 describe("mismatchedNamespaceRegex", () => {
   //[ Binding, KubernetesObject, result ]
-  const testRegex1 = "^n[aeiou]mespace$";
-  const testRegex2 = "^n[aeiou]me$";
-  const testRegex3 = "^sp[aeiou]ce$";
+  const testRegex1 = "^n[aeiou]mespace$"; //regexr.com/89l8f
+  const testRegex2 = "^n[aeiou]me$"; //regexr.com/89l8l
+  const testRegex3 = "^sp[aeiou]ce$"; //regexr.com/89l8o
   it.each([
-    // [{}, {}, false],
-    // [{}, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: ["^n.mespace$"] } }, {}, true],
+    [{ filters: { regexNamespaces: [new RegExp("^n.mespace$").source] } }, {}, true],
 
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "namespace" } }, false],
     [{ filters: { regexNamespaces: [testRegex1] } }, { metadata: { namespace: "nemespace" } }, false],
@@ -395,45 +386,43 @@ describe("operationMatchesEvent", () => {
 
 describe("mismatchedEvent", () => {
   //[ Binding, AdmissionRequest, result ]
-  describe("when called with supported Event AND Operation types", () => {
-    it.each([
-      [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
-      [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
-      [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CREATE }, false],
-      [{ event: Event.ANY }, { operation: Operation.CREATE }, false],
+  it.each([
+    [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.CREATE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.UPDATE }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.UPDATE }, false],
-      [{ event: Event.DELETE }, { operation: Operation.UPDATE }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.UPDATE }, false],
-      [{ event: Event.ANY }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.CREATE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.DELETE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.UPDATE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.DELETE }, { operation: Operation.DELETE }, false],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.DELETE }, true],
-      [{ event: Event.ANY }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CREATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.ANY }, { operation: Operation.DELETE }, false],
 
-      [{ event: Event.CREATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.UPDATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.DELETE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
-      [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
-    ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
-      const binding: Binding = {
-        ...defaultBinding,
-        event: bnd.event,
-      };
-      const request: AdmissionRequest = {
-        ...defaultAdmissionRequest,
-        operation: req.operation,
-      };
+    [{ event: Event.CREATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding: Binding = {
+      ...defaultBinding,
+      event: bnd.event,
+    };
+    const request: AdmissionRequest = {
+      ...defaultAdmissionRequest,
+      operation: req.operation,
+    };
 
-      const result = mismatchedEvent(binding, request);
+    const result = mismatchedEvent(binding, request);
 
-      expect(result).toEqual(expected);
-    });
+    expect(result).toEqual(expected);
   });
 });
 

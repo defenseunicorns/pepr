@@ -7,17 +7,19 @@ import https from "https";
 
 import { Capability } from "../capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
-import Log from "../logger";
-import { metricsCollector, MetricsCollector } from "../metrics";
+import Log from "../telemetry/logger";
+import { metricsCollector, MetricsCollector } from "../telemetry/metrics";
 import { ModuleConfig, isWatchMode } from "../module";
 import { mutateProcessor } from "../mutate-processor";
 import { validateProcessor } from "../validate-processor";
 import { StoreController } from "./store";
-import { ResponseItem, AdmissionRequest } from "../types";
+import { AdmissionRequest } from "../types";
+import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
+
 export class Controller {
   // Track whether the server is running
   #running = false;
@@ -76,7 +78,7 @@ export class Controller {
   }
 
   /** Start the webhook server */
-  startServer = (port: number) => {
+  startServer = (port: number): void => {
     if (this.#running) {
       throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
     }
@@ -131,7 +133,7 @@ export class Controller {
     });
   };
 
-  #bindEndpoints = () => {
+  #bindEndpoints = (): void => {
     // Health check endpoint
     this.#app.get("/healthz", Controller.#healthz);
 
@@ -160,7 +162,7 @@ export class Controller {
    * @param next The next middleware function
    * @returns
    */
-  #validateToken = (req: express.Request, res: express.Response, next: NextFunction) => {
+  #validateToken = (req: express.Request, res: express.Response, next: NextFunction): void => {
     // Validate the token
     const { token } = req.params;
     if (token !== this.#token) {
@@ -181,8 +183,10 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  #metrics = async (req: express.Request, res: express.Response) => {
+  #metrics = async (req: express.Request, res: express.Response): Promise<void> => {
     try {
+      // https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#basic-info
+      res.set("Content-Type", "text/plain; version=0.0.4");
       res.send(await this.#metricsCollector.getMetrics());
     } catch (err) {
       Log.error(err, `Error getting metrics`);
@@ -196,7 +200,9 @@ export class Controller {
    * @param admissionKind the type of admission request
    * @returns the request handler
    */
-  #admissionReq = (admissionKind: "Mutate" | "Validate") => {
+  #admissionReq = (
+    admissionKind: "Mutate" | "Validate",
+  ): ((req: express.Request, res: express.Response) => Promise<void>) => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
       // Start the metrics timer
@@ -206,77 +212,38 @@ export class Controller {
         // Get the request from the body or create an empty request
         const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
 
-        // Run the before hook if it exists
-        this.#beforeHook && this.#beforeHook(request || {});
-
-        // Setup identifiers for logging
-        const name = request?.name ? `/${request.name}` : "";
-        const namespace = request?.namespace || "";
-        const gvk = request?.kind || { group: "", version: "", kind: "" };
-
-        const reqMetadata = {
-          uid: request.uid,
-          namespace,
-          name,
+        const { name, namespace, gvk } = {
+          name: request?.name ? `/${request.name}` : "",
+          namespace: request?.namespace || "",
+          gvk: request?.kind || { group: "", version: "", kind: "" },
         };
 
+        const reqMetadata = { uid: request.uid, namespace, name };
         Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
-        // Process the request
-        let response: MutateResponse | ValidateResponse[];
+        // Run the before hook if it exists
+        this.#beforeHook && this.#beforeHook(request || {});
 
-        // Call mutate or validate based on the admission kind
-        if (admissionKind === "Mutate") {
-          response = await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata);
-        } else {
-          response = await validateProcessor(this.#config, this.#capabilities, request, reqMetadata);
-        }
+        // Process the request
+        const response: MutateResponse | ValidateResponse[] =
+          admissionKind === "Mutate"
+            ? await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata)
+            : await validateProcessor(this.#config, this.#capabilities, request, reqMetadata);
 
         // Run the after hook if it exists
-        const responseList: ValidateResponse[] | MutateResponse[] = Array.isArray(response) ? response : [response];
-        responseList.map(res => {
+        [response].flat().map(res => {
           this.#afterHook && this.#afterHook(res);
-          // Log the response
           Log.info({ ...reqMetadata, res }, "Check response");
         });
 
-        let kubeAdmissionResponse: ValidateResponse[] | MutateResponse | ResponseItem;
+        const kar: KubeAdmissionReview =
+          admissionKind === "Mutate"
+            ? karForMutate(response as MutateResponse)
+            : karForValidate(request, response as ValidateResponse[]);
 
-        if (admissionKind === "Mutate") {
-          kubeAdmissionResponse = response;
-          Log.debug({ ...reqMetadata, response }, "Outgoing response");
-          res.send({
-            apiVersion: "admission.k8s.io/v1",
-            kind: "AdmissionReview",
-            response: kubeAdmissionResponse,
-          });
-        } else {
-          kubeAdmissionResponse =
-            responseList.length === 0
-              ? {
-                  uid: request.uid,
-                  allowed: true,
-                  status: { message: "no in-scope validations -- allowed!" },
-                }
-              : {
-                  uid: responseList[0].uid,
-                  allowed: responseList.filter(r => !r.allowed).length === 0,
-                  status: {
-                    message: (responseList as ValidateResponse[])
-                      .filter(rl => !rl.allowed)
-                      .map(curr => curr.status?.message)
-                      .join("; "),
-                  },
-                };
-          res.send({
-            apiVersion: "admission.k8s.io/v1",
-            kind: "AdmissionReview",
-            response: kubeAdmissionResponse,
-          });
-        }
-
-        Log.debug({ ...reqMetadata, kubeAdmissionResponse }, "Outgoing response");
+        Log.debug({ ...reqMetadata, kubeAdmissionResponse: kar.response }, "Outgoing response");
+        res.send(kar);
 
         this.#metricsCollector.observeEnd(startTime, admissionKind);
       } catch (err) {
@@ -294,10 +261,15 @@ export class Controller {
    * @param res the outgoing response
    * @param next the next middleware function
    */
-  static #logger(req: express.Request, res: express.Response, next: express.NextFunction) {
+  static #logger(req: express.Request, res: express.Response, next: express.NextFunction): void {
     const startTime = Date.now();
 
     res.on("finish", () => {
+      const excludedRoutes = ["/healthz", "/metrics"];
+      if (excludedRoutes.includes(req.originalUrl)) {
+        return;
+      }
+
       const elapsedTime = Date.now() - startTime;
       const message = {
         uid: req.body?.request?.uid,
@@ -318,7 +290,7 @@ export class Controller {
    * @param req the incoming request
    * @param res the outgoing response
    */
-  static #healthz(req: express.Request, res: express.Response) {
+  static #healthz(req: express.Request, res: express.Response): void {
     try {
       res.send("OK");
     } catch (err) {

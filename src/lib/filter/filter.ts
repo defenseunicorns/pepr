@@ -39,7 +39,7 @@ import {
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./adjudicators";
+} from "./adjudicators/adjudicators";
 
 /**
  * shouldSkipRequest determines if a request should be skipped based on the binding filters.

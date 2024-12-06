@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { KubernetesObject } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 import {
@@ -29,7 +29,7 @@ import {
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./filter/adjudicators";
+} from "./filter/adjudicators/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);
@@ -68,7 +68,7 @@ export type RBACMap = {
  **/
 export function filterNoMatchReason(
   binding: Binding,
-  object: Partial<KubernetesObject>,
+  kubernetesObject: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
@@ -76,30 +76,30 @@ export function filterNoMatchReason(
 
   // prettier-ignore
   return (
-    mismatchedDeletionTimestamp(binding, object) ?
+    mismatchedDeletionTimestamp(binding, kubernetesObject) ?
       `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
 
-    mismatchedName(binding, object) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(object)}'.` :
+    mismatchedName(binding, kubernetesObject) ?
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(kubernetesObject)}'.` :
 
     misboundNamespace(binding) ?
       `${prefix} Cannot use namespace filter on a namespace object.` :
 
-    mismatchedLabels(binding, object) ?
+    mismatchedLabels(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(object))}'.`
+        `but Object carries '${JSON.stringify(carriedLabels(kubernetesObject))}'.`
       ) :
 
-    mismatchedAnnotations(binding, object) ?
+    mismatchedAnnotations(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(object))}'.`
+        `but Object carries '${JSON.stringify(carriedAnnotations(kubernetesObject))}'.`
       ) :
 
-    uncarryableNamespace(capabilityNamespaces, object) ?
+    uncarryableNamespace(capabilityNamespaces, kubernetesObject) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(object)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
@@ -109,32 +109,32 @@ export function filterNoMatchReason(
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
       ) :
 
-    mismatchedNamespace(binding, object) ?
+    mismatchedNamespace(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(object)}'.`
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
       ) :
 
-    mismatchedNamespaceRegex(binding, object) ?
+    mismatchedNamespaceRegex(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines namespace regexes ` +
         `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(object)}'.`
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
       ) :
 
-    mismatchedNameRegex(binding, object) ?
+    mismatchedNameRegex(binding, kubernetesObject) ?
       (
         `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(object)}'.`
+        `but Object carries '${carriedName(kubernetesObject)}'.`
       ) :
 
-    carriesIgnoredNamespace(ignoredNamespaces, object) ?
+    carriesIgnoredNamespace(ignoredNamespaces, kubernetesObject) ?
       (
-        `${prefix} Object carries namespace '${carriedNamespace(object)}' ` +
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
         `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
       ) :
 
-    missingCarriableNamespace(capabilityNamespaces, object) ? 
+    missingCarriableNamespace(capabilityNamespaces, kubernetesObject) ? 
       (
         `${prefix} Object does not carry a namespace ` +
         `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
@@ -237,7 +237,7 @@ export function generateWatchNamespaceError(
   return err.replace(/\.([^ ])/g, ". $1");
 }
 
-// namespaceComplianceValidator ensures that capability binds respect ignored and capability namespaces
+// namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);

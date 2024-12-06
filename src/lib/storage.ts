@@ -12,15 +12,15 @@ export type Unsubscribe = () => void;
 const MAX_WAIT_TIME = 15000;
 const STORE_VERSION_PREFIX = "v2";
 
-export function v2StoreKey(key: string) {
+export function v2StoreKey(key: string): string {
   return `${STORE_VERSION_PREFIX}-${pointer.escape(key)}`;
 }
 
-export function v2UnescapedStoreKey(key: string) {
+export function v2UnescapedStoreKey(key: string): string {
   return `${STORE_VERSION_PREFIX}-${key}`;
 }
 
-export function stripV2Prefix(key: string) {
+export function stripV2Prefix(key: string): string {
   return key.replace(/^v2-/, "");
 }
 export interface PeprStore {
@@ -80,11 +80,11 @@ export class Storage implements PeprStore {
   #subscriberId = 0;
   #readyHandlers: DataReceiver[] = [];
 
-  registerSender = (send: DataSender) => {
+  registerSender = (send: DataSender): void => {
     this.#send = send;
   };
 
-  receive = (data: DataStore) => {
+  receive = (data: DataStore): void => {
     this.#store = data || {};
 
     this.#onReady();
@@ -96,7 +96,7 @@ export class Storage implements PeprStore {
     }
   };
 
-  getItem = (key: string) => {
+  getItem = (key: string): string | null => {
     const result = this.#store[v2UnescapedStoreKey(key)] || null;
     if (result !== null && typeof result !== "function" && typeof result !== "object") {
       return result;
@@ -104,7 +104,7 @@ export class Storage implements PeprStore {
     return null;
   };
 
-  clear = () => {
+  clear = (): void => {
     Object.keys(this.#store).length > 0 &&
       this.#dispatchUpdate(
         "remove",
@@ -112,11 +112,11 @@ export class Storage implements PeprStore {
       );
   };
 
-  removeItem = (key: string) => {
+  removeItem = (key: string): void => {
     this.#dispatchUpdate("remove", [v2StoreKey(key)]);
   };
 
-  setItem = (key: string, value: string) => {
+  setItem = (key: string, value: string): void => {
     this.#dispatchUpdate("add", [v2StoreKey(key)], value);
   };
 
@@ -128,7 +128,7 @@ export class Storage implements PeprStore {
    * @param value - The value of the key
    * @returns
    */
-  setItemAndWait = (key: string, value: string) => {
+  setItemAndWait = (key: string, value: string): Promise<void> => {
     this.#dispatchUpdate("add", [v2StoreKey(key)], value);
 
     return new Promise<void>((resolve, reject) => {
@@ -154,7 +154,7 @@ export class Storage implements PeprStore {
    * @param key - The key to add into the store
    * @returns
    */
-  removeItemAndWait = (key: string) => {
+  removeItemAndWait = (key: string): Promise<void> => {
     this.#dispatchUpdate("remove", [v2StoreKey(key)]);
     return new Promise<void>((resolve, reject) => {
       const unsubscribe = this.subscribe(data => {
@@ -172,13 +172,13 @@ export class Storage implements PeprStore {
     });
   };
 
-  subscribe = (subscriber: DataReceiver) => {
+  subscribe = (subscriber: DataReceiver): (() => void) => {
     const idx = this.#subscriberId++;
     this.#subscribers[idx] = subscriber;
     return () => this.unsubscribe(idx);
   };
 
-  onReady = (callback: DataReceiver) => {
+  onReady = (callback: DataReceiver): void => {
     this.#readyHandlers.push(callback);
   };
 
@@ -186,18 +186,18 @@ export class Storage implements PeprStore {
    * Remove a subscriber from the list of subscribers.
    * @param idx - The index of the subscriber to remove.
    */
-  unsubscribe = (idx: number) => {
+  unsubscribe = (idx: number): void => {
     delete this.#subscribers[idx];
   };
 
-  #onReady = () => {
+  #onReady = (): void => {
     // Notify all ready handlers with a clone of the store
     for (const handler of this.#readyHandlers) {
       handler(clone(this.#store));
     }
 
     // Make this a noop so that it can't be called again
-    this.#onReady = () => {};
+    this.#onReady = (): void => {};
   };
 
   /**
@@ -206,7 +206,7 @@ export class Storage implements PeprStore {
    * @param  keys - The keys to update.
    * @param  [value] - The new value.
    */
-  #dispatchUpdate = (op: DataOp, keys: string[], value?: string) => {
+  #dispatchUpdate = (op: DataOp, keys: string[], value?: string): void => {
     this.#send(op, keys, value);
   };
 }

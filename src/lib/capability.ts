@@ -1,10 +1,9 @@
-/* eslint-disable max-statements */
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { pickBy } from "ramda";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import { OnSchedule, Schedule } from "./schedule";

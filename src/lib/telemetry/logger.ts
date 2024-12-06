@@ -3,7 +3,7 @@
 
 import { Operation } from "fast-json-patch";
 import { pino, stdTimeFunctions } from "pino";
-import { Store } from "./k8s";
+import { Store } from "../k8s";
 
 const isPrettyLog = process.env.PEPR_PRETTY_LOGS === "true";
 const redactedValue = "**redacted**";

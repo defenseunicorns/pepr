@@ -57,11 +57,11 @@ export class OnSchedule implements Schedule {
     this.startTime = schedule?.startTime;
     this.completions = schedule?.completions;
   }
-  setStore(store: PeprStore) {
+  setStore(store: PeprStore): void {
     this.store = store;
     this.startInterval();
   }
-  startInterval() {
+  startInterval(): void {
     this.checkStore();
     this.getDuration();
     this.setupInterval();
@@ -70,7 +70,7 @@ export class OnSchedule implements Schedule {
    * Checks the store for this schedule and sets the values if it exists
    * @returns
    */
-  checkStore() {
+  checkStore(): void {
     const result = this.store && this.store.getItem(this.name);
     if (result) {
       const storedSchedule = JSON.parse(result);
@@ -84,7 +84,7 @@ export class OnSchedule implements Schedule {
    * Saves the schedule to the store
    * @returns
    */
-  saveToStore() {
+  saveToStore(): void {
     const schedule = {
       completions: this.completions,
       startTime: this.startTime,
@@ -97,7 +97,7 @@ export class OnSchedule implements Schedule {
   /**
    * Gets the durations in milliseconds
    */
-  getDuration() {
+  getDuration(): void {
     switch (this.unit) {
       case "seconds":
         if (this.every < 10) throw new Error("10 Seconds in the smallest interval allowed");
@@ -119,7 +119,7 @@ export class OnSchedule implements Schedule {
   /**
    * Sets up the interval
    */
-  setupInterval() {
+  setupInterval(): void {
     const now = new Date();
     let delay: number | undefined;
 
@@ -146,7 +146,7 @@ export class OnSchedule implements Schedule {
   /**
    * Starts the interval
    */
-  start() {
+  start(): void {
     this.intervalId = setInterval(() => {
       if (this.completions === 0) {
         this.stop();
@@ -165,7 +165,7 @@ export class OnSchedule implements Schedule {
   /**
    * Stops the interval
    */
-  stop() {
+  stop(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;

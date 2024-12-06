@@ -7,12 +7,12 @@ import { startsWith } from "ramda";
 
 import { Capability } from "../capability";
 import { Store } from "../k8s";
-import Log, { redactedPatch, redactedStore } from "../logger";
+import Log, { redactedPatch, redactedStore } from "../telemetry/logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";
-export const debounceBackoff = 5000;
+export const debounceBackoff = 1000;
 
 export class StoreController {
   #name: string;
