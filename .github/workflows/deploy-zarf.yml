@@ -89,7 +89,7 @@ jobs:
       - name: Package Pepr Module with Zarf
         run: |
           cd "$MOD_PATH"
-          zarf package create "$MOD_NAME" "./dist/"
+          zarf package create "$MOD_NAME/dist/"
 
       - name: Deploy Pepr Module with Zarf
         run: |
