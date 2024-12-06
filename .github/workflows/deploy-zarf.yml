@@ -32,6 +32,8 @@ jobs:
 
       - name: Install The Latest Release Version of Zarf
         uses: defenseunicorns/setup-zarf@10e539efed02f75ec39eb8823e22a5c795f492ae #v1.0.1
+        with:
+          download-init-package: true
 
       - name: clone pepr
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -90,7 +92,7 @@ jobs:
       - name: Initialize Zarf
         run: |
           cd "$MOD_PATH"
-          zarf init --components k3s,git-server --nodeport 31337 --confirm
+          zarf init --confirm
 
       - name: Package Pepr Module with Zarf
         run: |
