@@ -94,8 +94,9 @@ jobs:
       - name: Deploy Pepr Module with Zarf
         run: |
           cd "$MOD_PATH"
+          ls -l 
           ls -l dist/
-          zarf package deploy --confirm "zarf-$MOD_NAME-arm64-0.0.1.tar.zst"
+          zarf package deploy --confirm zarf-package-pepr-pepr-test-zarf-amd64-0.0.1.tar.zst
 
       - name: Check Deployment Readiness
         timeout-minutes: 5
