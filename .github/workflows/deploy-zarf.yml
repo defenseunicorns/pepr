@@ -30,6 +30,9 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
+      - name: Install The Latest Release Version of Zarf
+        uses: defenseunicorns/setup-zarf@10e539efed02f75ec39eb8823e22a5c795f492ae #v1.0.1
+
       - name: clone pepr
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -83,12 +86,18 @@ jobs:
       - name: "set env: KUBECONFIG"
         run: echo "KUBECONFIG=$(k3d kubeconfig write "$CLUSTER")" >> "$GITHUB_ENV"
 
-      - name: Deploy Pepr Module
+      - name: Package Pepr Module with Zarf
         run: |
           cd "$MOD_PATH"
-          zarf install "$MOD_NAME" "./dist/${MOD_NAME}-chart" --kubeconfig "$KUBECONFIG"
+          zarf package create "$MOD_NAME" "./dist/"
+
+      - name: Deploy Pepr Module with Zarf
+        run: |
+          cd "$MOD_PATH"
+          ls -l dist/
+          zarf package deploy "zarf-$MOD_NAME-arm64-0.0.1.tar.zst"
 
       - name: Check Deployment Readiness
         timeout-minutes: 5
         run: |
-          ./scripts/check-deployment-readiness.sh
+          ./scripts/check-deployment-readiness.sh $MOD_NAME
