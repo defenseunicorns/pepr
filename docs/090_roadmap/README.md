@@ -74,25 +74,31 @@ _2025 Roadmap_
     - Eliminate circular dependencies, complexity, return statements, etc.
   - **Metric and Performance Baselining**:
     - Establish a baseline for performance and resource utilization metrics. Use this data to make informed decisions about the direction of the project in terms of Deno2
-  - **Experimentation with Deno2**:
-    - Experiment with Deno2 through Dash Days and see if it can be used in the project. Look into the performance improvements and new features that Deno2 brings to the table. Attempt to back the PeprStore through a Valkey Cache.
   - **OTEL Preparation**:
     - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core prespective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
+  - **Nightly Release**:
+    - Establish a nightly release process. This will help us to catch bugs early and ensure that the project is always in a releasable state.
 
 ## Phase 2: Durable Storage for Metrics and Performance Tests / Transactional Pepr Store
 
 - **Q2**:
+  - **Semantic Versioning**:
+    - Establish a clear versioning scheme and adhere to it. This will help users to understand the impact of changes and make it easier to upgrade.
   - **Professional Dashboard displaying metrics and performance tests originating from CI**:
     - Begin engaging with potential contributors and users through social media, Kubernetes/Cloud Native Computing Foundation (CNCF) meetups, and other channels. Monitor and participate in our Slack channel.
-  - **Transactional Pepr Store Planning and Implementation**:
+  - **Determine if a Transactional PeprStore makes sense**:
    - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
-  - **Deno2**:
-    - Depending on Q1, make a decision of whether or not to go with Deno2. If so, begin the migration process.
+  - **Experimentation with Deno2**:
+    - Experiment with Deno2 through Dash Days and see if it can be used in the project. Look into the performance improvements and new features that Deno2 brings to the table. 
 
 
 ## Phase 3: TBD
 
 - **Q3**:
+  - **Deno2 Implementation**:
+    - Move forward with migrating the project to Deno2. This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
+  - **Transactional PeprStore Implementation**:
+    - Begin integrating transactional functionality into PeprStore. The implementation will emphasize robust testing and clear documentation to support fast and reliable data operations in a transactional manner.
 
 ## Phase 4: TDB
 
