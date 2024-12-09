@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-// import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 // import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 // import { AdmissionRequest, Binding, Filters } from "./types";
 // import { Event, Operation } from "./enums";
@@ -50,6 +50,18 @@
 
 // export const testPeprValidateRequest = (admissionRequest: AdmissionRequest) =>
 //   new PeprValidateRequest<KubernetesObject>(admissionRequest);
+
+describe("updateStatus", () => {
+  it("does...", () => {
+    expect(true).toBe(true);
+  });
+});
+
+describe("logMutateErrorMessage", () => {
+  it("does...", () => {
+    expect(true).toBe(true);
+  });
+});
 
 // describe("processRequest", () => {
 //   let binding: Binding;
