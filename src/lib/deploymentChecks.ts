@@ -1,7 +1,7 @@
 // check to see if all replicas are ready for all deployments in the pepr-system namespace
 
 import { K8s, kind } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 
 // returns true if all deployments are ready, false otherwise
 export async function checkDeploymentStatus(namespace: string) {

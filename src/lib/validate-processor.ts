@@ -1,16 +1,55 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { kind } from "kubernetes-fluent-client";
-
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Capability } from "./capability";
 import { shouldSkipRequest } from "./filter/filter";
 import { ValidateResponse } from "./k8s";
-import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import { AdmissionRequest, Binding } from "./types";
+import Log from "./telemetry/logger";
 import { convertFromBase64Map } from "./utils";
 import { PeprValidateRequest } from "./validate-request";
 import { ModuleConfig } from "./module";
+
+export async function processRequest(
+  binding: Binding,
+  actionMetadata: Record<string, string>,
+  peprValidateRequest: PeprValidateRequest<KubernetesObject>,
+): Promise<ValidateResponse> {
+  const label = binding.validateCallback!.name;
+  Log.info(actionMetadata, `Processing validation action (${label})`);
+
+  const valResp: ValidateResponse = {
+    uid: peprValidateRequest.Request.uid,
+    allowed: true, // Assume it's allowed until a validation check fails
+  };
+
+  try {
+    // Run the validation callback, if it fails set allowed to false
+    const callbackResp = await binding.validateCallback!(peprValidateRequest);
+    valResp.allowed = callbackResp.allowed;
+
+    // If the validation callback returned a status code or message, set it in the Response
+    if (callbackResp.statusCode || callbackResp.statusMessage) {
+      valResp.status = {
+        code: callbackResp.statusCode || 400,
+        message: callbackResp.statusMessage || `Validation failed for ${name}`,
+      };
+    }
+
+    Log.info(actionMetadata, `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`);
+    return valResp;
+  } catch (e) {
+    // If any validation throws an error, note the failure in the Response
+    Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
+    valResp.allowed = false;
+    valResp.status = {
+      code: 500,
+      message: `Action failed with error: ${JSON.stringify(e)}`,
+    };
+    return valResp;
+  }
+}
 
 export async function validateProcessor(
   config: ModuleConfig,
@@ -32,52 +71,21 @@ export async function validateProcessor(
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
 
-    for (const action of bindings) {
+    for (const binding of bindings) {
       // Skip this action if it's not a validation action
-      if (!action.validateCallback) {
+      if (!binding.validateCallback) {
         continue;
       }
 
-      const localResponse: ValidateResponse = {
-        uid: req.uid,
-        allowed: true, // Assume it's allowed until a validation check fails
-      };
-
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
       }
 
-      const label = action.validateCallback.name;
-      Log.info(actionMetadata, `Processing validation action (${label})`);
-
-      try {
-        // Run the validation callback, if it fails set allowed to false
-        const resp = await action.validateCallback(wrapped);
-        localResponse.allowed = resp.allowed;
-
-        // If the validation callback returned a status code or message, set it in the Response
-        if (resp.statusCode || resp.statusMessage) {
-          localResponse.status = {
-            code: resp.statusCode || 400,
-            message: resp.statusMessage || `Validation failed for ${name}`,
-          };
-        }
-
-        Log.info(actionMetadata, `Validation action complete (${label}): ${resp.allowed ? "allowed" : "denied"}`);
-      } catch (e) {
-        // If any validation throws an error, note the failure in the Response
-        Log.error(actionMetadata, `Action failed: ${JSON.stringify(e)}`);
-        localResponse.allowed = false;
-        localResponse.status = {
-          code: 500,
-          message: `Action failed with error: ${JSON.stringify(e)}`,
-        };
-        return [localResponse];
-      }
-      response.push(localResponse);
+      const resp = await processRequest(binding, actionMetadata, wrapped);
+      response.push(resp);
     }
   }
 

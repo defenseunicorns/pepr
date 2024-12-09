@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { KubernetesObject } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
 import {
@@ -28,7 +28,7 @@ import {
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./filter/adjudicators";
+} from "./filter/adjudicators/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);

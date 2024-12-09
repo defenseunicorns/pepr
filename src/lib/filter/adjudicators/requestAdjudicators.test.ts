@@ -5,7 +5,7 @@ import { expect, describe, it } from "@jest/globals";
 import { Operation } from "../../enums";
 import { AdmissionRequest } from "../../types";
 import { defaultAdmissionRequest } from "./defaultTestObjects";
-import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "../adjudicators";
+import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "./adjudicators";
 
 describe("declaredUid", () => {
   //[ AdmissionRequest, result ]

@@ -212,15 +212,15 @@ export async function verifyImage(
     url: `https://${X.iref.host}/v2/${X.iref.name}/manifests/${X.iref.tag}`,
   };
 
-  const supportsMediaType = async (url: string, mediaType: string) => {
+  const supportsMediaType = async (url: string, mediaType: string): Promise<boolean> => {
     return (await head(url, mediaType, { ca: tlsCrts }))["content-type"] === mediaType;
   };
 
-  const canOciV1Manifest = async (manifestUrl: string) => {
+  const canOciV1Manifest = async (manifestUrl: string): Promise<boolean> => {
     return supportsMediaType(manifestUrl, MediaTypeOciV1.Manifest);
   };
 
-  const canDockerV2Manifest = async (manifestUrl: string) => {
+  const canDockerV2Manifest = async (manifestUrl: string): Promise<boolean> => {
     return supportsMediaType(manifestUrl, MediaTypeDockerV2.Manifest);
   };
 
@@ -228,7 +228,7 @@ export async function verifyImage(
   const manifestResp =
     await canOciV1Manifest(X.manifest.url) ? await get(X.manifest.url, MediaTypeOciV1.Manifest, {ca: tlsCrts}) :
     await canDockerV2Manifest(X.manifest.url) ? await get(X.manifest.url, MediaTypeDockerV2.Manifest, {ca: tlsCrts}) :
-    (() => { throw "Can't pull image manifest with supported MediaType." })();
+    (():never => { throw "Can't pull image manifest with supported MediaType." })();
   X.manifest.content = manifestResp.body;
 
   X.manifest.digest = `sha256:${crypto
