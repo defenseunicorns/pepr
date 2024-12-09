@@ -81,7 +81,7 @@ export function getK8sLogFromKubeConfig(): K8sLog {
   return new K8sLog(kc);
 }
 
-export function createLogStream(): stream.PassThrough {
+function createLogStream(): stream.PassThrough {
   const logStream = new stream.PassThrough();
 
   logStream.on("data", async chunk => {
@@ -97,7 +97,7 @@ export function createLogStream(): stream.PassThrough {
   return logStream;
 }
 
-export function processLogLine(line: string): void {
+function processLogLine(line: string): void {
   try {
     const payload: LogPayload = JSON.parse(line.trim());
     const isMutate = payload.res.patchType || payload.res.warnings;
