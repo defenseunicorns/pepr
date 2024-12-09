@@ -89,22 +89,7 @@ jobs:
           cd "$MOD_PATH"
           helm install "$MOD_NAME" "./dist/${MOD_NAME}-chart" --kubeconfig "$KUBECONFIG"
 
-      - name: wait to win
+      - name: Check Deployment Readiness
         timeout-minutes: 5
         run: |
-          while : ; do
-            kubectl get deploy -n pepr-system
-            ready=$(
-              kubectl get deploy pepr-${MOD_NAME} -n pepr-system -o jsonpath='{.status.readyReplicas}'
-            )
-            if [ "$ready"  = "2" ] ; then break ; fi
-            sleep 5
-          done
-          while : ; do
-            kubectl get deploy -n pepr-system
-            ready=$(
-              kubectl get deploy pepr-${MOD_NAME}-watcher -n pepr-system -o jsonpath='{.status.readyReplicas}'
-            )
-            if [ "$ready"  = "1" ] ; then break ; fi
-            sleep 5
-          done
+          ${PEPR}/.github/workflows/scripts/check-deployment-readiness.sh pepr-$MOD_NAME
