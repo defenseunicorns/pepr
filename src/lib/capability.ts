@@ -71,7 +71,7 @@ export class Capability implements CapabilityExport {
     }
   };
 
-  public getScheduleStore() {
+  public getScheduleStore(): Storage {
     return this.#scheduleStore;
   }
 
@@ -111,19 +111,19 @@ export class Capability implements CapabilityExport {
     onReady: this.#scheduleStore.onReady,
   };
 
-  get bindings() {
+  get bindings(): Binding[] {
     return this.#bindings;
   }
 
-  get name() {
+  get name(): string {
     return this.#name;
   }
 
-  get description() {
+  get description(): string {
     return this.#description;
   }
 
-  get namespaces() {
+  get namespaces(): string[] {
     return this.#namespaces || [];
   }
 
@@ -207,8 +207,19 @@ export class Capability implements CapabilityExport {
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
     const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile, Alias };
-    const isNotEmpty = (value: object) => Object.keys(value).length > 0;
-    const log = (message: string, cbString: string) => {
+
+    type CommonChainType = typeof commonChain;
+    type ExtendedCommonChainType = CommonChainType & {
+      Alias: (alias: string) => CommonChainType;
+      InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+      InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+      WithName: (name: string) => BindingFilter<T>;
+      WithNameRegex: (regexName: RegExp) => BindingFilter<T>;
+      WithDeletionTimestamp: () => BindingFilter<T>;
+    };
+
+    const isNotEmpty = (value: object): boolean => Object.keys(value).length > 0;
+    const log = (message: string, cbString: string): void => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
 
       Log.info(`${message} configured for ${binding.event}`, prefix);
@@ -329,7 +340,7 @@ export class Capability implements CapabilityExport {
           isWatch: true,
           isFinalize: true,
           event: Event.UPDATE,
-          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger) => {
+          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger): Promise<boolean | void> => {
             Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
             return await finalizeCallback(update, logger);
           },
@@ -380,13 +391,13 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
-    function Alias(alias: string) {
+    function Alias(alias: string): CommonChainType {
       Log.debug(`Adding prefix alias ${alias}`, prefix);
       binding.alias = alias;
       return commonChain;
     }
 
-    function bindEvent(event: Event) {
+    function bindEvent(event: Event): ExtendedCommonChainType {
       binding.event = event;
       return {
         ...commonChain,
