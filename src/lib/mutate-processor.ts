@@ -17,14 +17,13 @@ import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils"
 // Add annotations to the request to indicate that the capability started processing
 // this will allow tracking of failed mutations that were permitted to continue
 export function updateStatus(
-  req: AdmissionRequest,
   config: ModuleConfig,
   name: string,
   wrapped: PeprMutateRequest<KubernetesObject>,
   status: string,
 ): PeprMutateRequest<KubernetesObject> {
   // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
-  if (req.operation === "DELETE") {
+  if (wrapped.Request.operation === "DELETE") {
     return wrapped;
   }
   wrapped.SetAnnotation(`${config.uuid}.pepr.dev/${name}`, status);
@@ -90,7 +89,7 @@ export async function mutateProcessor(
       Log.info(actionMetadata, `Processing mutation action (${label})`);
       matchedAction = true;
 
-      wrapped = updateStatus(req, config, name, wrapped, "started");
+      wrapped = updateStatus(config, name, wrapped, "started");
 
       try {
         // Run the action
@@ -100,9 +99,9 @@ export async function mutateProcessor(
         Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
-        wrapped = updateStatus(req, config, name, wrapped, "succeeded");
+        wrapped = updateStatus(config, name, wrapped, "succeeded");
       } catch (e) {
-        wrapped = updateStatus(req, config, name, wrapped, "warning");
+        wrapped = updateStatus(config, name, wrapped, "warning");
         response.warnings = response.warnings || [];
 
         const errorMessage = logMutateErrorMessage(e);
