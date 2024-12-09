@@ -66,3 +66,35 @@ _2024 Roadmap_
     - Load test Pepr/KFC to identify bottlenecks and areas of improvement.
     - Ensure that Pepr/KFC can handle a large number of resources and events over a sustained period of time (nightly).
 
+_2025 Roadmap_  
+## Phase 1: Code Quality - Experimentation 
+
+- **Q1**:
+  - **Eliminate Circular Dependencies, Complexity, and strongly type return statements**:
+    - Turn on eslint settings to keep codebase clean, maintainable and standardized.
+  - **Metric and Performance Baselining**:
+    - Establish a baseline for performance and resource utilization metrics. Use this data to make informed decisions about the direction of the project in terms of Deno2
+  - **Experimentation with Deno2**:
+    - Experiment with Deno2 through Dash Days and see if it can be used in the project. Look into the performance improvements and new features that Deno2 brings to the table. Attempt to back the PeprStore through a Valkey Cache.
+  - **OTEL Preparation**:
+    - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core prespective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
+
+## Phase 2: Durable Storage for Metrics and Performance Tests / Transactional Pepr Store
+
+- **Q2**:
+  - **Professional Dashboard displaying metrics and performance tests originating from CI**:
+    - Begin engaging with potential contributors and users through social media, Kubernetes/Cloud Native Computing Foundation (CNCF) meetups, and other channels. Monitor and participate in our Slack channel.
+  - **Transactional Pepr Store Planning and Implementation**:
+   - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
+  - **Deno2**:
+    - Depending on Q1, make a decision of whether or not to go with Deno2. If so, begin the migration process.
+
+
+## Phase 3: TBD
+
+- **Q3**:
+
+## Phase 4: TDB
+
+- **Q4**:
+
