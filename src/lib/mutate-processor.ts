@@ -27,14 +27,7 @@ export function updateStatus(
   if (req.operation === "DELETE") {
     return wrapped;
   }
-
-  //
-  // Can this block be substituted for a call to wrapped.SetAnnotation()..?
-  //
-  const identifier = `${config.uuid}.pepr.dev/${name}`;
-  wrapped.Raw.metadata = wrapped.Raw.metadata || {};
-  wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
-  wrapped.Raw.metadata.annotations[identifier] = status;
+  wrapped.SetAnnotation(`${config.uuid}.pepr.dev/${name}`, status);
 
   return wrapped;
 }
