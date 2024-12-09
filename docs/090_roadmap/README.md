@@ -70,8 +70,8 @@ _2025 Roadmap_
 ## Phase 1: Code Quality - Experimentation 
 
 - **Q1**:
-  - **Eliminate Circular Dependencies, Complexity, and strongly type return statements**:
-    - Turn on eslint settings to keep codebase clean, maintainable and standardized.
+  - **Turn on eslint enforcement and configure settings and see no warnings**:
+    - Eliminate circular dependencies, complexity, return statements, etc.
   - **Metric and Performance Baselining**:
     - Establish a baseline for performance and resource utilization metrics. Use this data to make informed decisions about the direction of the project in terms of Deno2
   - **Experimentation with Deno2**:
