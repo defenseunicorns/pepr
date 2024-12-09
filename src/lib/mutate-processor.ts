@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
-import { kind } from "kubernetes-fluent-client";
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
@@ -14,14 +14,50 @@ import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
-//TODO
+// Add annotations to the request to indicate that the capability started processing
+// this will allow tracking of failed mutations that were permitted to continue
+export function updateStatus(
+  req: AdmissionRequest,
+  config: ModuleConfig,
+  name: string,
+  wrapped: PeprMutateRequest<KubernetesObject>,
+  status: string,
+): PeprMutateRequest<KubernetesObject> {
+  // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
+  if (req.operation === "DELETE") {
+    return wrapped;
+  }
+
+  //
+  // Can this block be substituted for a call to wrapped.SetAnnotation()..?
+  //
+  const identifier = `${config.uuid}.pepr.dev/${name}`;
+  wrapped.Raw.metadata = wrapped.Raw.metadata || {};
+  wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
+  wrapped.Raw.metadata.annotations[identifier] = status;
+
+  return wrapped;
+}
+
+export function logMutateErrorMessage(e: Error): string {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+}
+
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
-  const wrapped = new PeprMutateRequest(req);
+  let wrapped = new PeprMutateRequest(req);
   const response: MutateResponse = {
     uid: req.uid,
     warnings: [],
@@ -61,21 +97,7 @@ export async function mutateProcessor(
       Log.info(actionMetadata, `Processing mutation action (${label})`);
       matchedAction = true;
 
-      // Add annotations to the request to indicate that the capability started processing
-      // this will allow tracking of failed mutations that were permitted to continue
-      const updateStatus = (status: string) => {
-        // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
-        if (req.operation === "DELETE") {
-          return;
-        }
-
-        const identifier = `${config.uuid}.pepr.dev/${name}`;
-        wrapped.Raw.metadata = wrapped.Raw.metadata || {};
-        wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
-        wrapped.Raw.metadata.annotations[identifier] = status;
-      };
-
-      updateStatus("started");
+      wrapped = updateStatus(req, config, name, wrapped, "started");
 
       try {
         // Run the action
@@ -85,9 +107,9 @@ export async function mutateProcessor(
         Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
-        updateStatus("succeeded");
+        wrapped = updateStatus(req, config, name, wrapped, "succeeded");
       } catch (e) {
-        updateStatus("warning");
+        wrapped = updateStatus(req, config, name, wrapped, "warning");
         response.warnings = response.warnings || [];
 
         const errorMessage = logMutateErrorMessage(e);
@@ -152,15 +174,3 @@ export async function mutateProcessor(
 
   return response;
 }
-
-const logMutateErrorMessage = (e: Error): string => {
-  try {
-    if (e.message && e.message !== "[object Object]") {
-      return e.message;
-    } else {
-      throw new Error("An error occurred in the mutate action.");
-    }
-  } catch (e) {
-    return "An error occurred with the mutate action.";
-  }
-};
