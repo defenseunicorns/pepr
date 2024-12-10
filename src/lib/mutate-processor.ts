@@ -23,6 +23,11 @@ interface Bindable {
   actMeta: Record<string, string>;
 }
 
+interface Result {
+  wrapped: PeprMutateRequest<KubernetesObject>;
+  response: MutateResponse;
+}
+
 // Add annotations to the request to indicate that the capability started processing
 // this will allow tracking of failed mutations that were permitted to continue
 export function updateStatus(
@@ -56,10 +61,7 @@ async function processRequest(
   bindable: Bindable,
   wrapped: PeprMutateRequest<KubernetesObject>,
   response: MutateResponse,
-): Promise<{
-  wrapped: PeprMutateRequest<KubernetesObject>;
-  response: MutateResponse;
-}> {
+): Promise<Result> {
   const { binding, actMeta, name, config } = bindable;
 
   const label = binding.mutateCallback!.name;
@@ -157,7 +159,7 @@ export async function mutateProcessor(
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
-    if (config.onError === Errors.reject) {
+    if (config.onError === Errors.reject && response?.warnings!.length > 0) {
       return response;
     }
   }
