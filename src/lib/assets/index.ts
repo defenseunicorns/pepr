@@ -16,7 +16,7 @@ import { dedent } from "../helpers";
 import { resolve } from "path";
 import {
   chartYaml,
-  nsTemplate,
+  namespaceTemplate,
   admissionDeployTemplate,
   watcherDeployTemplate,
   clusterRoleTemplate,
@@ -157,7 +157,7 @@ export class Assets {
 
       const pairs: [string, () => string][] = [
         [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
-        [helm.files.namespaceYaml, (): string => dedent(nsTemplate())],
+        [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
         [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
         [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
