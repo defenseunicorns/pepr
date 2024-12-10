@@ -8,11 +8,18 @@ import { Capability } from "./capability";
 import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/filter";
 import { MutateResponse } from "./k8s";
-import { AdmissionRequest /*Binding*/ } from "./types";
+import { AdmissionRequest, Binding } from "./types";
 import Log from "./telemetry/logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
+
+interface Bindable {
+  name: string;
+  namespaces: string[];
+  binding: Binding;
+  actMeta: Record<string, string>;
+}
 
 // Add annotations to the request to indicate that the capability started processing
 // this will allow tracking of failed mutations that were permitted to continue
@@ -70,56 +77,62 @@ export async function mutateProcessor(
 
   Log.info(reqMetadata, `Processing request`);
 
-  for (const { name, bindings, namespaces } of capabilities) {
-    const actionMetadata = { ...reqMetadata, name };
-    for (const binding of bindings) {
-      // Skip this action if it's not a mutate action
-      if (!binding.mutateCallback) {
-        continue;
-      }
+  const bindables: Bindable[] = capabilities.flatMap(c =>
+    c.bindings.map(b => ({
+      name: c.name,
+      namespaces: c.namespaces,
+      binding: b,
+      actMeta: { ...reqMetadata, name: c.name },
+    })),
+  );
 
-      // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
-      if (shouldSkip !== "") {
-        Log.debug(shouldSkip);
-        continue;
-      }
+  for (const { name, namespaces, binding, actMeta } of bindables) {
+    // Skip this action if it's not a mutate action
+    if (!binding.mutateCallback) {
+      continue;
+    }
 
-      const label = binding.mutateCallback.name;
-      Log.info(actionMetadata, `Processing mutation action (${label})`);
-      matchedAction = true;
+    // Continue to the next action without doing anything if this one should be skipped
+    const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
+    if (shouldSkip !== "") {
+      Log.debug(shouldSkip);
+      continue;
+    }
 
-      wrapped = updateStatus(config, name, wrapped, "started");
+    const label = binding.mutateCallback.name;
+    Log.info(actMeta, `Processing mutation action (${label})`);
+    matchedAction = true;
 
-      try {
-        // Run the action
-        await binding.mutateCallback(wrapped);
+    wrapped = updateStatus(config, name, wrapped, "started");
 
-        // Log on success
-        Log.info(actionMetadata, `Mutation action succeeded (${label})`);
+    try {
+      // Run the action
+      await binding.mutateCallback(wrapped);
 
-        // Add annotations to the request to indicate that the capability succeeded
-        wrapped = updateStatus(config, name, wrapped, "succeeded");
-      } catch (e) {
-        wrapped = updateStatus(config, name, wrapped, "warning");
-        response.warnings = response.warnings || [];
+      // Log on success
+      Log.info(actMeta, `Mutation action succeeded (${label})`);
 
-        const errorMessage = logMutateErrorMessage(e);
+      // Add annotations to the request to indicate that the capability succeeded
+      wrapped = updateStatus(config, name, wrapped, "succeeded");
+    } catch (e) {
+      wrapped = updateStatus(config, name, wrapped, "warning");
+      response.warnings = response.warnings || [];
 
-        // Log on failure
-        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-        response.warnings.push(`Action failed: ${errorMessage}`);
+      const errorMessage = logMutateErrorMessage(e);
 
-        switch (config.onError) {
-          case Errors.reject:
-            response.result = "Pepr module configured to reject on error";
-            return response;
+      // Log on failure
+      Log.error(actMeta, `Action failed: ${errorMessage}`);
+      response.warnings.push(`Action failed: ${errorMessage}`);
 
-          case Errors.audit:
-            response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
-            break;
-        }
+      switch (config.onError) {
+        case Errors.reject:
+          response.result = "Pepr module configured to reject on error";
+          return response;
+
+        case Errors.audit:
+          response.auditAnnotations = response.auditAnnotations || {};
+          response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
+          break;
       }
     }
   }
