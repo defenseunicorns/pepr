@@ -15,6 +15,8 @@ import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
 interface Bindable {
+  req: AdmissionRequest;
+  config: ModuleConfig;
   name: string;
   namespaces: string[];
   binding: Binding;
@@ -63,9 +65,6 @@ export async function mutateProcessor(
     allowed: false,
   };
 
-  // Track whether any capability matched the request
-  let matchedAction = false;
-
   // Track data fields that should be skipped during decoding
   let skipDecode: string[] = [];
 
@@ -79,6 +78,8 @@ export async function mutateProcessor(
 
   let bindables: Bindable[] = capabilities.flatMap(c =>
     c.bindings.map(b => ({
+      req,
+      config,
       name: c.name,
       namespaces: c.namespaces,
       binding: b,
@@ -91,7 +92,7 @@ export async function mutateProcessor(
       return false;
     }
 
-    const shouldSkip = shouldSkipRequest(b.binding, req, b.namespaces, config?.alwaysIgnore?.namespaces);
+    const shouldSkip = shouldSkipRequest(b.binding, b.req, b.namespaces, b.config?.alwaysIgnore?.namespaces);
     if (shouldSkip !== "") {
       Log.debug(shouldSkip);
       return false;
@@ -103,7 +104,6 @@ export async function mutateProcessor(
   for (const { name, binding, actMeta } of bindables) {
     const label = binding.mutateCallback!.name;
     Log.info(actMeta, `Processing mutation action (${label})`);
-    matchedAction = true;
 
     wrapped = updateStatus(config, name, wrapped, "started");
 
@@ -143,7 +143,7 @@ export async function mutateProcessor(
   response.allowed = true;
 
   // If no capability matched the request, exit early
-  if (!matchedAction) {
+  if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
     return response;
   }
