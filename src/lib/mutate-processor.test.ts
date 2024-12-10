@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import * as sut from "./mutate-processor";
 import { AdmissionRequest } from "./types";
 import { Operation } from "./enums";
+import { convertFromBase64Map } from "./utils";
+
+jest.mock("./utils");
+const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -19,6 +23,7 @@ const defaultAdmissionRequest: AdmissionRequest = {
   kind: {
     kind: "kind",
     group: "group",
+    version: "version",
   },
   resource: {
     group: "group",
@@ -33,6 +38,10 @@ const defaultAdmissionRequest: AdmissionRequest = {
 
 const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
   new PeprMutateRequest(admissionRequest);
+
+beforeEach(() => {
+  jest.resetAllMocks();
+});
 
 describe("updateStatus", () => {
   describe("when given non-delete request", () => {
@@ -79,5 +88,47 @@ describe("logMutateErrorMessage", () => {
   ])("given error '%s', returns '%s'", (err, res) => {
     const result = sut.logMutateErrorMessage(new Error(err));
     expect(result).toBe(res);
+  });
+});
+
+describe("skipDecode", () => {
+  const skips = ["convert", "From", "Base64", "Maps"];
+
+  beforeEach(() => {
+    mockConvertFromBase64Map.mockImplementation(() => skips);
+  });
+
+  it("returns skipped content with given a Secret", () => {
+    const testAdmissionRequest = {
+      ...defaultAdmissionRequest,
+      kind: {
+        kind: "Secret",
+        version: "v1",
+        group: "",
+      },
+    };
+    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
+
+    const skipped = sut.skipDecode(testPeprMutateRequest);
+
+    expect(mockConvertFromBase64Map.mock.calls.length).toBe(1);
+    expect(skipped).toBe(skips);
+  });
+
+  it("returns nothing when given a non-Secret", () => {
+    const testAdmissionRequest = {
+      ...defaultAdmissionRequest,
+      kind: {
+        kind: "NotASecret",
+        version: "v1",
+        group: "",
+      },
+    };
+    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
+
+    const skipped = sut.skipDecode(testPeprMutateRequest);
+
+    expect(mockConvertFromBase64Map.mock.calls.length).toBe(0);
+    expect(skipped).toEqual([]);
   });
 });

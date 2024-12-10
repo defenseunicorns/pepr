@@ -58,7 +58,29 @@ export function logMutateErrorMessage(e: Error): string {
   }
 }
 
-async function processRequest(
+export function skipDecode(wrapped: PeprMutateRequest<KubernetesObject>): string[] {
+  let skipped: string[] = [];
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret) {
+    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
+  }
+
+  return skipped;
+}
+
+export function unskipRecode(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
+  const transformed = clone(wrapped.Raw);
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret && skipped.length > 0) {
+    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
+  }
+
+  return transformed;
+}
+
+export async function processRequest(
   bindable: Bindable,
   wrapped: PeprMutateRequest<KubernetesObject>,
   response: MutateResponse,
@@ -102,28 +124,6 @@ async function processRequest(
   }
 
   return { wrapped, response };
-}
-
-function skipDecode(wrapped: PeprMutateRequest<KubernetesObject>): string[] {
-  let skipped: string[] = [];
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret) {
-    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
-  }
-
-  return skipped;
-}
-
-function unskipRecode(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
-  const transformed = clone(wrapped.Raw);
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret && skipped.length > 0) {
-    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
-  }
-
-  return transformed;
 }
 
 /* eslint max-statements: ["warn", 25] */
