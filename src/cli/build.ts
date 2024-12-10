@@ -1,25 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { execSync, execFileSync } from "child_process";
-import { BuildOptions, BuildResult, analyzeMetafile, context } from "esbuild";
+import { execFileSync } from "child_process";
+import { BuildOptions, BuildResult, analyzeMetafile, BuildContext } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
-import { createDockerfile } from "../lib/included-files";
 import { Assets } from "../lib/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
-import { peprFormat } from "./format";
 import { Option } from "commander";
-import { validateCapabilityNames, parseTimeout } from "../lib/helpers";
-import { sanitizeResourceName } from "../sdk/sdk";
-import { determineRbacMode } from "./build.helpers";
-import { createDirectoryIfNotExists } from "../lib/filesystemService";
+import { parseTimeout } from "../lib/helpers";
+import { PackageJSON } from "../lib/module";
+import {
+  checkFormat,
+  watchForChanges,
+  determineRbacMode,
+  handleEmbedding,
+  handleCustomOutputDir,
+  handleValidCapabilityNames,
+  handleCustomImage,
+  handleCustomImageBuild,
+  checkIronBankImage,
+  validImagePullSecret,
+} from "./build.helpers";
+
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
@@ -73,13 +82,7 @@ export default function (program: RootCmd) {
     )
     .action(async opts => {
       // assign custom output directory if provided
-      if (opts.outputDir) {
-        outputDir = opts.outputDir;
-        createDirectoryIfNotExists(outputDir).catch(error => {
-          console.error(`Error creating output directory: ${error.message}`);
-          process.exit(1);
-        });
-      }
+      outputDir = await handleCustomOutputDir(opts.outputDir);
 
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
@@ -88,16 +91,7 @@ export default function (program: RootCmd) {
         // Files to include in controller image for WASM support
         const { includedFiles } = cfg.pepr;
 
-        let image: string = "";
-
-        // Build Kubernetes manifests with custom image
-        if (opts.customImage) {
-          if (opts.registry) {
-            console.error(`Custom Image and registry cannot be used together.`);
-            process.exit(1);
-          }
-          image = opts.customImage;
-        }
+        let image = handleCustomImage(opts.customImage, opts.registry);
 
         // Check if there is a custom timeout defined
         if (opts.timeout !== undefined) {
@@ -111,20 +105,11 @@ export default function (program: RootCmd) {
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
           // only actually build/push if there are files to include
-          if (includedFiles.length > 0) {
-            await createDockerfile(cfg.pepr.peprVersion, cfg.description, includedFiles);
-            execSync(`docker build --tag ${image} -f Dockerfile.controller .`, {
-              stdio: "inherit",
-            });
-            execSync(`docker push ${image}`, { stdio: "inherit" });
-          }
+          await handleCustomImageBuild(includedFiles, cfg.pepr.peprVersion, cfg.description, image);
         }
 
         // If building without embedding, exit after building
-        if (!opts.embed) {
-          console.info(`✅ Module built successfully at ${path}`);
-          return;
-        }
+        handleEmbedding(opts.embed, path);
 
         // set the image version if provided
         if (opts.version) {
@@ -135,7 +120,7 @@ export default function (program: RootCmd) {
         const assets = new Assets(
           {
             ...cfg.pepr,
-            appVersion: cfg.version,
+            appVersion: version,
             description: cfg.description,
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
@@ -144,41 +129,21 @@ export default function (program: RootCmd) {
         );
 
         // If registry is set to Iron Bank, use Iron Bank image
-        if (opts?.registry === "Iron Bank") {
-          console.info(
-            `\n\tThis command assumes the latest release. Pepr's Iron Bank image release cycle is dictated by renovate and is typically released a few days after the GitHub release.\n\tAs an alternative you may consider custom --custom-image to target a specific image and version.`,
-          );
-          image = `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${cfg.pepr.peprVersion}`;
-        }
+        image = checkIronBankImage(opts.registry, image, cfg.pepr.peprVersion);
 
         // if image is a custom image, use that instead of the default
-        if (image !== "") {
-          assets.image = image;
-        }
+        image !== "" ? (assets.image = image) : null;
 
         // Ensure imagePullSecret is valid
-        if (opts.withPullSecret) {
-          if (sanitizeResourceName(opts.withPullSecret) !== opts.withPullSecret) {
-            // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
-            console.error(
-              "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
-            );
-            process.exit(1);
-          }
-        }
+        validImagePullSecret(opts.withPullSecret);
 
+        // const { yamlFile, chartPath, yamlPath, yaml } = await generateYamlAndFiles(uuid, outputDir, opts.withPullSecret, assets.allYaml)
         const yamlFile = `pepr-module-${uuid}.yaml`;
         const chartPath = `${uuid}-chart`;
         const yamlPath = resolve(outputDir, yamlFile);
         const yaml = await assets.allYaml(opts.withPullSecret);
 
-        try {
-          // wait for capabilities to be loaded and test names
-          validateCapabilityNames(assets.capabilities);
-        } catch (e) {
-          console.error(`Error loading capability:`, e);
-          process.exit(1);
-        }
+        handleValidCapabilityNames(assets.capabilities);
 
         const zarfPath = resolve(outputDir, "zarf.yaml");
 
@@ -207,7 +172,14 @@ externalLibs.push("pepr");
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
 
-export async function loadModule(entryPoint = peprTS) {
+export async function loadModule(entryPoint = peprTS): Promise<{
+  cfg: PackageJSON;
+  entryPointPath: string;
+  modulePath: string;
+  name: string;
+  path: string;
+  uuid: string;
+}> {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);
   const modulePath = dirname(entryPointPath);
@@ -248,19 +220,23 @@ export async function loadModule(entryPoint = peprTS) {
   };
 }
 
-export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
+export async function buildModule(
+  reloader?: Reloader,
+  entryPoint = peprTS,
+  embed = true,
+): Promise<
+  | {
+      ctx: BuildContext<BuildOptions>;
+      path: string;
+      cfg: PackageJSON;
+      uuid: string;
+    }
+  | undefined
+> {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
-    const validFormat = await peprFormat(true);
-
-    if (!validFormat) {
-      console.log(
-        "\x1b[33m%s\x1b[0m",
-        "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
-      );
-    }
-
+    await checkFormat();
     // Resolve node_modules folder (in support of npm workspaces!)
     const npmRoot = execFileSync("npm", ["root"]).toString().trim();
 
@@ -282,7 +258,7 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
       plugins: [
         {
           name: "reload-server",
-          setup(build) {
+          setup(build): void | Promise<void> {
             build.onEnd(async r => {
               // Print the build size analysis
               if (r?.metafile) {
@@ -322,53 +298,53 @@ export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embe
       ctxCfg.treeShaking = false;
     }
 
-    const ctx = await context(ctxCfg);
-
-    // If the reloader function is defined, watch the module for changes
-    if (reloader) {
-      await ctx.watch();
-    } else {
-      // Otherwise, just build the module once
-      await ctx.rebuild();
-      await ctx.dispose();
-    }
+    const ctx = await watchForChanges(ctxCfg, reloader);
 
     return { ctx, path, cfg, uuid };
   } catch (e) {
-    console.error(`Error building module:`, e);
+    handleModuleBuildError(e);
+  }
+}
 
-    if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
+interface BuildModuleResult {
+  stdout?: Buffer;
+  stderr: Buffer;
+}
 
-    const out = e.stdout.toString() as string;
-    const err = e.stderr.toString();
+function handleModuleBuildError(e: BuildModuleResult): void {
+  console.error(`Error building module:`, e);
 
-    console.log(out);
-    console.error(err);
+  if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
 
-    // Check for version conflicts
-    if (out.includes("Types have separate declarations of a private property '_name'.")) {
-      // Try to find the conflicting package
-      const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
-      out.matchAll(pgkErrMatch);
+  const out = e.stdout.toString() as string;
+  const err = e.stderr.toString();
 
-      // Look for package conflict errors
-      const conflicts = [...out.matchAll(pgkErrMatch)];
+  console.log(out);
+  console.error(err);
 
-      // If the regex didn't match, leave a generic error
-      if (conflicts.length < 1) {
-        console.info(
-          `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
-          "Version Conflict",
-        );
-      }
+  // Check for version conflicts
+  if (out.includes("Types have separate declarations of a private property '_name'.")) {
+    // Try to find the conflicting package
+    const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
+    out.matchAll(pgkErrMatch);
 
-      // Otherwise, loop through each conflicting package and print an error
-      conflicts.forEach(match => {
-        console.info(
-          `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
-          "Version Conflict",
-        );
-      });
+    // Look for package conflict errors
+    const conflicts = [...out.matchAll(pgkErrMatch)];
+
+    // If the regex didn't match, leave a generic error
+    if (conflicts.length < 1) {
+      console.info(
+        `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
+        "Version Conflict",
+      );
     }
+
+    // Otherwise, loop through each conflicting package and print an error
+    conflicts.forEach(match => {
+      console.info(
+        `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
+        "Version Conflict",
+      );
+    });
   }
 }
