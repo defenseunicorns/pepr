@@ -1,4 +1,4 @@
-import { namespace, watcher, deployment, moduleSecret, genEnv } from "./pods";
+import { getNamespace, getWatcher, getDeployment, getModuleSecret, genEnv } from "./pods";
 import { expect, describe, test, jest, afterEach } from "@jest/globals";
 import { Assets } from ".";
 import { ModuleConfig } from "../module";
@@ -296,7 +296,7 @@ const assets: Assets = JSON.parse(`{
 }`);
 describe("namespace function", () => {
   test("should create a namespace object without labels if none are provided", () => {
-    const result = namespace();
+    const result = getNamespace();
     expect(result).toEqual({
       apiVersion: "v1",
       kind: "Namespace",
@@ -304,7 +304,7 @@ describe("namespace function", () => {
         name: "pepr-system",
       },
     });
-    const result1 = namespace({ one: "two" });
+    const result1 = getNamespace({ one: "two" });
     expect(result1).toEqual({
       apiVersion: "v1",
       kind: "Namespace",
@@ -318,20 +318,20 @@ describe("namespace function", () => {
   });
 
   test("should create a namespace object with empty labels if an empty object is provided", () => {
-    const result = namespace({});
+    const result = getNamespace({});
     expect(result.metadata.labels).toEqual({});
   });
 
   test("should create a namespace object with provided labels", () => {
     const labels = { "pepr.dev/controller": "admission", "istio-injection": "enabled" };
-    const result = namespace(labels);
+    const result = getNamespace(labels);
     expect(result.metadata.labels).toEqual(labels);
   });
 });
 
 describe("watcher function", () => {
   test("watcher with bindings", () => {
-    const result = watcher(assets, "test-hash", "test-timestamp");
+    const result = getWatcher(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeTruthy();
     expect(result!.metadata!.name).toBe("pepr-static-test-watcher");
@@ -339,14 +339,14 @@ describe("watcher function", () => {
 
   test("watcher without bindings", () => {
     assets.capabilities = [];
-    const result = watcher(assets, "test-hash", "test-timestamp");
+    const result = getWatcher(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeNull();
   });
 });
 describe("deployment function", () => {
   test("deployment", () => {
-    const result = deployment(assets, "test-hash", "test-timestamp");
+    const result = getDeployment(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeTruthy();
     expect(result!.metadata!.name).toBe("pepr-static-test");
@@ -368,7 +368,7 @@ describe("moduleSecret function", () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     jest.spyOn(require("../helpers"), "secretOverLimit").mockReturnValue(false);
 
-    const result = moduleSecret(name, data, hash);
+    const result = getModuleSecret(name, data, hash);
 
     expect(result).toEqual({
       apiVersion: "v1",
@@ -399,7 +399,7 @@ describe("moduleSecret function", () => {
       throw new Error("process.exit");
     });
 
-    expect(() => moduleSecret(name, data, hash)).toThrow("process.exit");
+    expect(() => getModuleSecret(name, data, hash)).toThrow("process.exit");
 
     expect(consoleErrorMock).toHaveBeenCalledWith(
       "Uncaught Exception:",

@@ -6,7 +6,7 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, watcher } from "./pods";
+import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
@@ -235,19 +235,19 @@ export async function allYaml(assets: Assets, imagePullSecret?: string): Promise
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
+  const watchDeployment = getWatcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
-    namespace(assets.config.customLabels?.namespace),
+    getNamespace(assets.config.customLabels?.namespace),
     clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
+    getDeployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
-    moduleSecret(name, code, assets.hash),
+    getModuleSecret(name, code, assets.hash),
     storeRole(name),
     storeRoleBinding(name),
   ];
