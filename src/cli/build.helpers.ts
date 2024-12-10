@@ -4,7 +4,6 @@ import { createDockerfile } from "../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
 import { validateCapabilityNames } from "../lib/helpers";
-import { peprFormat } from "./format";
 import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
 import { Assets } from "../lib/assets";
 import { resolve } from "path";
@@ -157,16 +156,6 @@ export function handleValidCapabilityNames(capabilities: CapabilityExport[]): vo
   }
 }
 
-export async function checkFormat() {
-  const validFormat = await peprFormat(true);
-
-  if (!validFormat) {
-    console.log(
-      "\x1b[33m%s\x1b[0m",
-      "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
-    );
-  }
-}
 /**
  * Watch for changes in the module
  * @param ctxCfg The build options

@@ -9,32 +9,6 @@ import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-interface CustomLabels {
-  namespace: Record<string, string>;
-}
-
-/**
- * The Pepr configuration object
- */
-export interface PeprConfig {
-  alwaysIgnore?: {
-    namespaces: string[];
-  };
-  customLabels?: CustomLabels;
-  env?: Record<string, string>;
-  includedFiles: string[];
-  onError: "audit" | "ignore" | "reject";
-  peprVersion: string;
-  rbac?: PolicyRule[];
-  rbacMode?: "admin" | "scoped";
-  uuid: string;
-  webhookTimeout?: number;
-}
-export interface ModuleConfig {
-  pepr: PeprConfig;
-  description: string;
-  version: string;
-}
 /**
  * Specifically for deploying images with a private registry
  */

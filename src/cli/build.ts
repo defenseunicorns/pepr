@@ -10,9 +10,8 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
-
+import { peprFormat } from "./format";
 import {
-  checkFormat,
   watchForChanges,
   determineRbacMode,
   handleEmbedding,
@@ -312,5 +311,16 @@ function handleModuleBuildError(e: BuildModuleResult): void {
         "Version Conflict",
       );
     });
+  }
+}
+
+export async function checkFormat() {
+  const validFormat = await peprFormat(true);
+
+  if (!validFormat) {
+    console.log(
+      "\x1b[33m%s\x1b[0m",
+      "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
+    );
   }
 }
