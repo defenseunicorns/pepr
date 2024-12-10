@@ -77,7 +77,7 @@ export async function mutateProcessor(
 
   Log.info(reqMetadata, `Processing request`);
 
-  const bindables: Bindable[] = capabilities.flatMap(c =>
+  let bindables: Bindable[] = capabilities.flatMap(c =>
     c.bindings.map(b => ({
       name: c.name,
       namespaces: c.namespaces,
@@ -86,20 +86,22 @@ export async function mutateProcessor(
     })),
   );
 
-  for (const { name, namespaces, binding, actMeta } of bindables) {
-    // Skip this action if it's not a mutate action
-    if (!binding.mutateCallback) {
-      continue;
+  bindables = bindables.filter(b => {
+    if (!b.binding.mutateCallback) {
+      return false;
     }
 
-    // Continue to the next action without doing anything if this one should be skipped
-    const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
+    const shouldSkip = shouldSkipRequest(b.binding, req, b.namespaces, config?.alwaysIgnore?.namespaces);
     if (shouldSkip !== "") {
       Log.debug(shouldSkip);
-      continue;
+      return false;
     }
 
-    const label = binding.mutateCallback.name;
+    return true;
+  });
+
+  for (const { name, binding, actMeta } of bindables) {
+    const label = binding.mutateCallback!.name;
     Log.info(actMeta, `Processing mutation action (${label})`);
     matchedAction = true;
 
@@ -107,7 +109,7 @@ export async function mutateProcessor(
 
     try {
       // Run the action
-      await binding.mutateCallback(wrapped);
+      await binding.mutateCallback!(wrapped);
 
       // Log on success
       Log.info(actMeta, `Mutation action succeeded (${label})`);
