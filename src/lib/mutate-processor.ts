@@ -3,6 +3,7 @@
 
 import jsonPatch from "fast-json-patch";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
+import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
@@ -103,6 +104,29 @@ async function processRequest(
   return { wrapped, response };
 }
 
+function skipDecode(wrapped: PeprMutateRequest<KubernetesObject>): string[] {
+  let skipped: string[] = [];
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret) {
+    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
+  }
+
+  return skipped;
+}
+
+function unskipRecode(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
+  const transformed = clone(wrapped.Raw);
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret && skipped.length > 0) {
+    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
+  }
+
+  return transformed;
+}
+
+/* eslint max-statements: ["warn", 25] */
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
@@ -116,14 +140,8 @@ export async function mutateProcessor(
     allowed: false,
   };
 
-  // Track data fields that should be skipped during decoding
-  let skipDecode: string[] = [];
-
-  // If the resource is a secret, decode the data
-  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
-  if (isSecret) {
-    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
-  }
+  // Track base64-encoded data fields that should be skipped during decoding
+  const skipped = skipDecode(wrapped);
 
   Log.info(reqMetadata, `Processing request`);
 
@@ -178,12 +196,8 @@ export async function mutateProcessor(
     return response;
   }
 
-  const transformed = wrapped.Raw;
-
-  // Post-process the Secret requests to convert it back to the original format
-  if (isSecret) {
-    convertToBase64Map(transformed as unknown as kind.Secret, skipDecode);
-  }
+  // unskip base64-encoded data fields that were skipDecode'd
+  const transformed = unskipRecode(wrapped, skipped);
 
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
