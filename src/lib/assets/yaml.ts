@@ -11,6 +11,7 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
 
+//TODO: Trigger lint
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
