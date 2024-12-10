@@ -8,7 +8,7 @@ import { Capability } from "./capability";
 import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/filter";
 import { MutateResponse } from "./k8s";
-import { AdmissionRequest } from "./types";
+import { AdmissionRequest /*Binding*/ } from "./types";
 import Log from "./telemetry/logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
@@ -72,20 +72,20 @@ export async function mutateProcessor(
 
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
-    for (const action of bindings) {
+    for (const binding of bindings) {
       // Skip this action if it's not a mutate action
-      if (!action.mutateCallback) {
+      if (!binding.mutateCallback) {
         continue;
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;
       }
 
-      const label = action.mutateCallback.name;
+      const label = binding.mutateCallback.name;
       Log.info(actionMetadata, `Processing mutation action (${label})`);
       matchedAction = true;
 
@@ -93,7 +93,7 @@ export async function mutateProcessor(
 
       try {
         // Run the action
-        await action.mutateCallback(wrapped);
+        await binding.mutateCallback(wrapped);
 
         // Log on success
         Log.info(actionMetadata, `Mutation action succeeded (${label})`);
@@ -112,7 +112,6 @@ export async function mutateProcessor(
 
         switch (config.onError) {
           case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
             response.result = "Pepr module configured to reject on error";
             return response;
 
