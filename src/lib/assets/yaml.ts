@@ -11,9 +11,11 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
 
-//TODO: Trigger lint
 // Helm Chart overrides file (values.yaml) generated from assets
-export async function overridesFile({ hash, name, image, config, apiToken, capabilities }: Assets, path: string) {
+export async function overridesFile(
+  { hash, name, image, config, apiToken, capabilities }: Assets,
+  path: string,
+): Promise<void> {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
 
   const overrides = {
@@ -167,7 +169,7 @@ export async function overridesFile({ hash, name, image, config, apiToken, capab
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
-export function zarfYaml({ name, image, config }: Assets, path: string) {
+export function zarfYaml({ name, image, config }: Assets, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -195,7 +197,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export function zarfYamlChart({ name, image, config }: Assets, path: string) {
+export function zarfYamlChart({ name, image, config }: Assets, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -224,7 +226,7 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, imagePullSecret?: string) {
+export async function allYaml(assets: Assets, imagePullSecret?: string): Promise<string> {
   const { name, tls, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
 
