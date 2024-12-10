@@ -8,10 +8,11 @@ import { PeprMutateRequest } from "./mutate-request";
 import * as sut from "./mutate-processor";
 import { AdmissionRequest } from "./types";
 import { Operation } from "./enums";
-import { convertFromBase64Map } from "./utils";
+import { convertFromBase64Map, convertToBase64Map } from "./utils";
 
 jest.mock("./utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
+const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -31,7 +32,11 @@ const defaultAdmissionRequest: AdmissionRequest = {
     resource: "resource",
   },
   name: "",
-  object: {},
+  object: {
+    metadata: {
+      name: "create-me",
+    },
+  },
   operation: Operation.CREATE,
   userInfo: {},
 };
@@ -92,7 +97,7 @@ describe("logMutateErrorMessage", () => {
 });
 
 describe("skipDecode", () => {
-  const skips = ["convert", "From", "Base64", "Maps"];
+  const skips = ["convert", "From", "Base64", "Map"];
 
   beforeEach(() => {
     mockConvertFromBase64Map.mockImplementation(() => skips);
@@ -112,6 +117,7 @@ describe("skipDecode", () => {
     const skipped = sut.skipDecode(testPeprMutateRequest);
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(1);
+    expect(mockConvertFromBase64Map.mock.calls[0].at(0)).toBe(testPeprMutateRequest.Raw);
     expect(skipped).toBe(skips);
   });
 
@@ -130,5 +136,63 @@ describe("skipDecode", () => {
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(0);
     expect(skipped).toEqual([]);
+  });
+});
+
+describe("unskipRecode", () => {
+  it("returns unchanged content when given non-secret", () => {
+    const skipped = ["convert", "To", "Base64", "Map"];
+    const testAdmissionRequest = {
+      ...defaultAdmissionRequest,
+      kind: {
+        kind: "NotASecret",
+        version: "v1",
+        group: "",
+      },
+    };
+    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
+
+    const transformed = sut.unskipRecode(testPeprMutateRequest, skipped);
+
+    expect(mockConvertToBase64Map.mock.calls.length).toBe(0);
+    expect(transformed).toEqual(testAdmissionRequest.object);
+  });
+
+  it("returns unchanged content when given a secret but no skips", () => {
+    const skipped: string[] = [];
+    const testAdmissionRequest = {
+      ...defaultAdmissionRequest,
+      kind: {
+        kind: "Secret",
+        version: "v1",
+        group: "",
+      },
+    };
+    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
+
+    const transformed = sut.unskipRecode(testPeprMutateRequest, skipped);
+
+    expect(mockConvertToBase64Map.mock.calls.length).toBe(0);
+    expect(transformed).toEqual(testAdmissionRequest.object);
+  });
+
+  it("returns modified content when given a secret and skips", () => {
+    const skipped = ["convert", "To", "Base64", "Map"];
+    const testAdmissionRequest = {
+      ...defaultAdmissionRequest,
+      kind: {
+        kind: "Secret",
+        version: "v1",
+        group: "",
+      },
+    };
+    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
+
+    const transformed = sut.unskipRecode(testPeprMutateRequest, skipped);
+
+    expect(mockConvertToBase64Map.mock.calls.length).toBe(1);
+    expect(mockConvertToBase64Map.mock.calls[0].at(0)).toEqual(testPeprMutateRequest.Raw);
+    expect(mockConvertToBase64Map.mock.calls[0].at(1)).toBe(skipped);
+    expect(transformed).toEqual(testPeprMutateRequest.Raw);
   });
 });
