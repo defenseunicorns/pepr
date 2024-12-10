@@ -6,6 +6,9 @@ import { CapabilityExport } from "../lib/types";
 import { validateCapabilityNames } from "../lib/helpers";
 import { peprFormat } from "./format";
 import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
+import { Assets } from "../lib/assets";
+import { resolve } from "path";
+import { promises as fs } from "fs";
 
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
@@ -186,4 +189,31 @@ export async function watchForChanges(
   }
 
   return ctx;
+}
+
+export async function generateYamlAndWriteToDisk(obj: {
+  uuid: string;
+  imagePullSecret: string;
+  outputDir: string;
+  assets: Assets;
+  zarf: string;
+}): Promise<void> {
+  const { uuid, imagePullSecret, outputDir, assets, zarf } = obj;
+  const yamlFile = `pepr-module-${uuid}.yaml`;
+  const chartPath = `${uuid}-chart`;
+  const yamlPath = resolve(outputDir, yamlFile);
+  const yaml = await assets.allYaml(imagePullSecret);
+  const zarfPath = resolve(outputDir, "zarf.yaml");
+
+  let localZarf = "";
+  if (zarf === "chart") {
+    localZarf = assets.zarfYamlChart(chartPath);
+  } else {
+    localZarf = assets.zarfYaml(yamlFile);
+  }
+  await fs.writeFile(yamlPath, yaml);
+  await fs.writeFile(zarfPath, localZarf);
+
+  await assets.generateHelmChart(outputDir);
+  console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildOptions, BuildResult, analyzeMetafile, BuildContext } from "esbuild";
+import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets";
@@ -10,7 +10,7 @@ import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
-import { PackageJSON } from "../lib/module";
+
 import {
   checkFormat,
   watchForChanges,
@@ -22,6 +22,7 @@ import {
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
+  generateYamlAndWriteToDisk,
 } from "./build.helpers";
 
 const peprTS = "pepr.ts";
@@ -112,15 +113,13 @@ export default function (program: RootCmd): void {
         handleEmbedding(opts.embed, path);
 
         // set the image version if provided
-        if (opts.version) {
-          cfg.pepr.peprVersion = opts.version;
-        }
+        opts.version ? (cfg.pepr.peprVersion = opts.version) : null;
 
         // Generate a secret for the module
         const assets = new Assets(
           {
             ...cfg.pepr,
-            appVersion: version,
+            appVersion: cfg.version,
             description: cfg.description,
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
@@ -137,28 +136,14 @@ export default function (program: RootCmd): void {
         // Ensure imagePullSecret is valid
         validImagePullSecret(opts.withPullSecret);
 
-        // const { yamlFile, chartPath, yamlPath, yaml } = await generateYamlAndFiles(uuid, outputDir, opts.withPullSecret, assets.allYaml)
-        const yamlFile = `pepr-module-${uuid}.yaml`;
-        const chartPath = `${uuid}-chart`;
-        const yamlPath = resolve(outputDir, yamlFile);
-        const yaml = await assets.allYaml(opts.withPullSecret);
-
         handleValidCapabilityNames(assets.capabilities);
-
-        const zarfPath = resolve(outputDir, "zarf.yaml");
-
-        let zarf = "";
-        if (opts.zarf === "chart") {
-          zarf = assets.zarfYamlChart(chartPath);
-        } else {
-          zarf = assets.zarfYaml(yamlFile);
-        }
-        await fs.writeFile(yamlPath, yaml);
-        await fs.writeFile(zarfPath, zarf);
-
-        await assets.generateHelmChart(outputDir);
-
-        console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
+        await generateYamlAndWriteToDisk({
+          uuid,
+          outputDir,
+          imagePullSecret: opts.withPullSecret,
+          zarf: opts.zarf,
+          assets,
+        });
       }
     });
 }
@@ -172,14 +157,7 @@ externalLibs.push("pepr");
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
 
-export async function loadModule(entryPoint = peprTS): Promise<{
-  cfg: PackageJSON;
-  entryPointPath: string;
-  modulePath: string;
-  name: string;
-  path: string;
-  uuid: string;
-}> {
+export async function loadModule(entryPoint = peprTS) {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);
   const modulePath = dirname(entryPointPath);
@@ -220,19 +198,7 @@ export async function loadModule(entryPoint = peprTS): Promise<{
   };
 }
 
-export async function buildModule(
-  reloader?: Reloader,
-  entryPoint = peprTS,
-  embed = true,
-): Promise<
-  | {
-      ctx: BuildContext<BuildOptions>;
-      path: string;
-      cfg: PackageJSON;
-      uuid: string;
-    }
-  | undefined
-> {
+export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
