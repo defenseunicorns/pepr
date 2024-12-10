@@ -69,3 +69,15 @@ describe("updateStatus", () => {
     });
   });
 });
+
+describe("logMutateErrorMessage", () => {
+  it.each([
+    // error msg, result string
+    ["oof", "oof"],
+    ["", "An error occurred with the mutate action."],
+    ["[object Object]", "An error occurred with the mutate action."],
+  ])("given error '%s', returns '%s'", (err, res) => {
+    const result = sut.logMutateErrorMessage(new Error(err));
+    expect(result).toBe(res);
+  });
+});
