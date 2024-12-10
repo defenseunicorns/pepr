@@ -319,13 +319,13 @@ describe("namespace function", () => {
 
   test("should create a namespace object with empty labels if an empty object is provided", () => {
     const result = getNamespace({});
-    expect(result.metadata.labels).toEqual({});
+    expect(result.metadata?.labels).toEqual({});
   });
 
   test("should create a namespace object with provided labels", () => {
     const labels = { "pepr.dev/controller": "admission", "istio-injection": "enabled" };
     const result = getNamespace(labels);
-    expect(result.metadata.labels).toEqual(labels);
+    expect(result.metadata?.labels).toEqual(labels);
   });
 });
 
