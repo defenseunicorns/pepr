@@ -52,6 +52,55 @@ export function logMutateErrorMessage(e: Error): string {
   }
 }
 
+async function processRequest(
+  bindable: Bindable,
+  wrapped: PeprMutateRequest<KubernetesObject>,
+  response: MutateResponse,
+): Promise<{
+  wrapped: PeprMutateRequest<KubernetesObject>;
+  response: MutateResponse;
+}> {
+  const { binding, actMeta, name, config } = bindable;
+
+  const label = binding.mutateCallback!.name;
+  Log.info(actMeta, `Processing mutation action (${label})`);
+
+  wrapped = updateStatus(config, name, wrapped, "started");
+
+  try {
+    // Run the action
+    await binding.mutateCallback!(wrapped);
+
+    // Log on success
+    Log.info(actMeta, `Mutation action succeeded (${label})`);
+
+    // Add annotations to the request to indicate that the capability succeeded
+    wrapped = updateStatus(config, name, wrapped, "succeeded");
+  } catch (e) {
+    wrapped = updateStatus(config, name, wrapped, "warning");
+    response.warnings = response.warnings || [];
+
+    const errorMessage = logMutateErrorMessage(e);
+
+    // Log on failure
+    Log.error(actMeta, `Action failed: ${errorMessage}`);
+    response.warnings.push(`Action failed: ${errorMessage}`);
+
+    switch (config.onError) {
+      case Errors.reject:
+        response.result = "Pepr module configured to reject on error";
+        break;
+
+      case Errors.audit:
+        response.auditAnnotations = response.auditAnnotations || {};
+        response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
+        break;
+    }
+  }
+
+  return { wrapped, response };
+}
+
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
@@ -59,7 +108,7 @@ export async function mutateProcessor(
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
   let wrapped = new PeprMutateRequest(req);
-  const response: MutateResponse = {
+  let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
     allowed: false,
@@ -76,23 +125,28 @@ export async function mutateProcessor(
 
   Log.info(reqMetadata, `Processing request`);
 
-  let bindables: Bindable[] = capabilities.flatMap(c =>
-    c.bindings.map(b => ({
+  let bindables: Bindable[] = capabilities.flatMap(capa =>
+    capa.bindings.map(bind => ({
       req,
       config,
-      name: c.name,
-      namespaces: c.namespaces,
-      binding: b,
-      actMeta: { ...reqMetadata, name: c.name },
+      name: capa.name,
+      namespaces: capa.namespaces,
+      binding: bind,
+      actMeta: { ...reqMetadata, name: capa.name },
     })),
   );
 
-  bindables = bindables.filter(b => {
-    if (!b.binding.mutateCallback) {
+  bindables = bindables.filter(bind => {
+    if (!bind.binding.mutateCallback) {
       return false;
     }
 
-    const shouldSkip = shouldSkipRequest(b.binding, b.req, b.namespaces, b.config?.alwaysIgnore?.namespaces);
+    const shouldSkip = shouldSkipRequest(
+      bind.binding,
+      bind.req,
+      bind.namespaces,
+      bind.config?.alwaysIgnore?.namespaces,
+    );
     if (shouldSkip !== "") {
       Log.debug(shouldSkip);
       return false;
@@ -101,41 +155,10 @@ export async function mutateProcessor(
     return true;
   });
 
-  for (const { name, binding, actMeta } of bindables) {
-    const label = binding.mutateCallback!.name;
-    Log.info(actMeta, `Processing mutation action (${label})`);
-
-    wrapped = updateStatus(config, name, wrapped, "started");
-
-    try {
-      // Run the action
-      await binding.mutateCallback!(wrapped);
-
-      // Log on success
-      Log.info(actMeta, `Mutation action succeeded (${label})`);
-
-      // Add annotations to the request to indicate that the capability succeeded
-      wrapped = updateStatus(config, name, wrapped, "succeeded");
-    } catch (e) {
-      wrapped = updateStatus(config, name, wrapped, "warning");
-      response.warnings = response.warnings || [];
-
-      const errorMessage = logMutateErrorMessage(e);
-
-      // Log on failure
-      Log.error(actMeta, `Action failed: ${errorMessage}`);
-      response.warnings.push(`Action failed: ${errorMessage}`);
-
-      switch (config.onError) {
-        case Errors.reject:
-          response.result = "Pepr module configured to reject on error";
-          return response;
-
-        case Errors.audit:
-          response.auditAnnotations = response.auditAnnotations || {};
-          response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
-          break;
-      }
+  for (const bindable of bindables) {
+    ({ wrapped, response } = await processRequest(bindable, wrapped, response));
+    if (config.onError === Errors.reject) {
+      return response;
     }
   }
 
