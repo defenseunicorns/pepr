@@ -12,7 +12,8 @@ import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";
-export const debounceBackoff = 1000;
+const debounceBackoffReceive = 1000;
+const debounceBackoffSend = 4000;
 
 export class StoreController {
   #name: string;
@@ -134,7 +135,7 @@ export class StoreController {
 
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
-    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
+    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoffReceive);
   };
 
   #send = (capabilityName: string): DataSender => {
@@ -151,7 +152,7 @@ export class StoreController {
         Log.debug(redactedPatch(storeCache), "Sending updates to Pepr store");
         void sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
       }
-    }, debounceBackoff);
+    }, debounceBackoffSend);
 
     return sender;
   };
