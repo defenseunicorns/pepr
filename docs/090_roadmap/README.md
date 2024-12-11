@@ -96,7 +96,7 @@ _2025 Roadmap_
 
 - **Q3**:
   - **Deno2 Implementation**:
-    - Move forward with migrating the project to Deno2. This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
+    - If determined to be advisable, move forward with migrating the project to Deno2 (starting with the kubernetes-fluent-client..?). This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
   - **Transactional PeprStore Implementation**:
     - Begin integrating transactional functionality into PeprStore. The implementation will emphasize robust testing and clear documentation to support fast and reliable data operations in a transactional manner.
 
