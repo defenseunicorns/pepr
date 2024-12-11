@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { V1EnvVar } from "@kubernetes/client-node";
+import { KubernetesObject, V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
@@ -10,7 +10,7 @@ import { ModuleConfig } from "../module";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */
-export function namespace(namespaceLabels?: Record<string, string>) {
+export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
   if (namespaceLabels) {
     return {
       apiVersion: "v1",
@@ -31,7 +31,12 @@ export function namespace(namespaceLabels?: Record<string, string>) {
   }
 }
 
-export function watcher(assets: Assets, hash: string, buildTimestamp: string, imagePullSecret?: string) {
+export function getWatcher(
+  assets: Assets,
+  hash: string,
+  buildTimestamp: string,
+  imagePullSecret?: string,
+): kind.Deployment | null {
   const { name, image, capabilities, config } = assets;
 
   let hasSchedule = false;
@@ -186,7 +191,7 @@ export function watcher(assets: Assets, hash: string, buildTimestamp: string, im
   return deploy;
 }
 
-export function deployment(
+export function getDeployment(
   assets: Assets,
   hash: string,
   buildTimestamp: string,
@@ -336,7 +341,7 @@ export function deployment(
   return deploy;
 }
 
-export function moduleSecret(name: string, data: Buffer, hash: string): kind.Secret {
+export function getModuleSecret(name: string, data: Buffer, hash: string): kind.Secret {
   // Compress the data
   const compressed = gzipSync(data);
   const path = `module-${hash}.js.gz`;
