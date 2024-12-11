@@ -117,11 +117,8 @@ export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
-export const definedNamespaceRegexes = pipe(
-  (binding: Binding): string[] => binding.filters.regexNamespaces,
-  defaultTo<string[]>([]),
-);
-export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([] as string[]), not);
+export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
+export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
 export const definedAnnotations = pipe((binding: Partial<Binding>) => binding?.filters?.annotations, defaultTo({}));
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
