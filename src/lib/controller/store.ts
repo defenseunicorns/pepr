@@ -25,7 +25,7 @@ export class StoreController {
 
     this.#name = name;
 
-    const setStorageInstance = (registrationFunction: () => Storage, name: string) => {
+    const setStorageInstance = (registrationFunction: () => Storage, name: string): void => {
       const scheduleStore = registrationFunction();
 
       // Bind the store sender to the capability
@@ -61,12 +61,12 @@ export class StoreController {
     );
   }
 
-  #setupWatch = () => {
+  #setupWatch = (): void => {
     const watcher = K8s(Store, { name: this.#name, namespace }).Watch(this.#receive);
     watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
   };
 
-  #migrateAndSetupWatch = async (store: Store) => {
+  #migrateAndSetupWatch = async (store: Store): Promise<void> => {
     Log.debug(redactedStore(store), "Pepr Store migration");
     const data: DataStore = store.data || {};
     let storeCache: Record<string, Operation> = {};
@@ -96,11 +96,11 @@ export class StoreController {
     this.#setupWatch();
   };
 
-  #receive = (store: Store) => {
+  #receive = (store: Store): void => {
     Log.debug(redactedStore(store), "Pepr Store update");
 
     // Wrap the update in a debounced function
-    const debounced = () => {
+    const debounced = (): void => {
       // Base64 decode the data
       const data: DataStore = store.data || {};
 
@@ -137,7 +137,7 @@ export class StoreController {
     this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
   };
 
-  #send = (capabilityName: string) => {
+  #send = (capabilityName: string): DataSender => {
     let storeCache: Record<string, Operation> = {};
 
     // Create a sender function for the capability to add/remove data from the store
@@ -156,7 +156,7 @@ export class StoreController {
     return sender;
   };
 
-  #createStoreResource = async (e: unknown) => {
+  #createStoreResource = async (e: unknown): Promise<void> => {
     Log.info(`Pepr store not found, creating...`);
     Log.debug(e);
 
