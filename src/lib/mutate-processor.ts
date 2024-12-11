@@ -15,7 +15,7 @@ import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
-interface Bindable {
+export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
   name: string;
@@ -24,7 +24,7 @@ interface Bindable {
   actMeta: Record<string, string>;
 }
 
-interface Result {
+export interface Result {
   wrapped: PeprMutateRequest<KubernetesObject>;
   response: MutateResponse;
 }
