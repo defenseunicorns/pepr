@@ -87,7 +87,7 @@ _2025 Roadmap_
   - **Professional Dashboard displaying metrics and performance tests originating from CI**:
     - Begin engaging with potential contributors and users through social media, Kubernetes/Cloud Native Computing Foundation (CNCF) meetups, and other channels. Monitor and participate in our Slack channel.
   - **Determine if a Transactional PeprStore makes sense**:
-   - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
+    - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
   - **Experimentation with Deno2**:
     - Experiment with Deno2 through Dash Days and see if it can be used in the project. Look into the performance improvements and new features that Deno2 brings to the table. 
 
