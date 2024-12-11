@@ -212,9 +212,9 @@ export class Capability implements CapabilityExport {
     type ExtendedCommonChainType = CommonChainType & {
       Alias: (alias: string) => CommonChainType;
       InNamespace: (...namespaces: string[]) => BindingWithName<T>;
-      InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+      InNamespaceRegex: (...namespaces: string[]) => BindingWithName<T>;
       WithName: (name: string) => BindingFilter<T>;
-      WithNameRegex: (regexName: RegExp) => BindingFilter<T>;
+      WithNameRegex: (regexName: string) => BindingFilter<T>;
       WithDeletionTimestamp: () => BindingFilter<T>;
     };
 
@@ -355,9 +355,9 @@ export class Capability implements CapabilityExport {
       return { ...commonChain, WithName, WithNameRegex };
     }
 
-    function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
+    function InNamespaceRegex(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
-      binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
+      binding.filters.regexNamespaces.push(...namespaces);
       return { ...commonChain, WithName, WithNameRegex };
     }
 
@@ -367,9 +367,9 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
-    function WithNameRegex(regexName: RegExp): BindingFilter<T> {
+    function WithNameRegex(regexName: string): BindingFilter<T> {
       Log.debug(`Add regex name filter ${regexName}`, prefix);
-      binding.filters.regexName = regexName.source;
+      binding.filters.regexName = regexName;
       return commonChain;
     }
 

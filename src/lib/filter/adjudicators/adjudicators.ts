@@ -195,13 +195,20 @@ export const mismatchedNamespace = allPass([
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
+  // Check if `definesNamespaceRegexes` returns true
   pipe(nthArg(0), definesNamespaceRegexes),
-  pipe((binding, kubernetesObject) =>
-    pipe(
-      any((regEx: string) => new RegExp(regEx).test(carriedNamespace(kubernetesObject))),
-      not,
-    )(definedNamespaceRegexes(binding)),
-  ),
+
+  // Check if no regex matches
+  (binding: Binding, kubernetesObject: KubernetesObject) => {
+    // Convert definedNamespaceRegexes(binding) from string[] to RegExp[]
+    const regexArray = definedNamespaceRegexes(binding).map(
+      (regexStr: string | RegExp): RegExp => new RegExp(regexStr),
+    );
+
+    // Check if no regex matches the namespace of the Kubernetes object
+    const result = not(any((regEx: RegExp) => regEx.test(carriedNamespace(kubernetesObject)), regexArray));
+    return result;
+  },
 ]);
 
 export const metasMismatch = pipe(
