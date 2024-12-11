@@ -16,7 +16,7 @@ import { dedent } from "../helpers";
 import { resolve } from "path";
 import {
   chartYaml,
-  nsTemplate,
+  namespaceTemplate,
   admissionDeployTemplate,
   watcherDeployTemplate,
   clusterRoleTemplate,
@@ -25,7 +25,7 @@ import {
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { watcher, moduleSecret } from "./pods";
+import { getWatcher, getModuleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { createDirectoryIfNotExists } from "../filesystemService";
@@ -157,7 +157,7 @@ export class Assets {
 
       const pairs: [string, () => string][] = [
         [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
-        [helm.files.namespaceYaml, (): string => dedent(nsTemplate())],
+        [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
         [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
         [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
@@ -167,7 +167,7 @@ export class Assets {
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
         [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
         [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, (): string => toYaml(moduleSecret(this.name, code, this.hash))],
+        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, this.hash))],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
@@ -191,7 +191,7 @@ export class Assets {
         await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this, validateWebhook));
       }
 
-      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
+      const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);
       if (watchDeployment) {
         await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
         await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));

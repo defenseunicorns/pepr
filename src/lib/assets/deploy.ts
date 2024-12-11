@@ -9,7 +9,7 @@ import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { Assets } from ".";
 import Log from "../telemetry/logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, watcher } from "./pods";
+import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
@@ -19,7 +19,7 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
   try {
     await K8s(kind.Namespace).Get("pepr-system");
   } catch {
-    await K8s(kind.Namespace).Apply(namespace());
+    await K8s(kind.Namespace).Apply(getNamespace());
   }
 
   try {
@@ -48,7 +48,7 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
   const { name, host, path } = assets;
 
   Log.info("Applying pepr-system namespace");
-  await K8s(kind.Namespace).Apply(namespace(assets.config.customLabels?.namespace));
+  await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
   const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
@@ -123,7 +123,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   const { name } = assets;
 
   Log.info("Applying module secret");
-  const mod = moduleSecret(name, code, hash);
+  const mod = getModuleSecret(name, code, hash);
   await K8s(kind.Secret).Apply(mod, { force });
 
   Log.info("Applying controller service");
@@ -139,14 +139,14 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   await K8s(kind.Secret).Apply(apiToken, { force });
 
   Log.info("Applying deployment");
-  const dep = deployment(assets, hash, assets.buildTimestamp);
+  const dep = getDeployment(assets, hash, assets.buildTimestamp);
   await K8s(kind.Deployment).Apply(dep, { force });
 }
 
 // Setup the watcher deployment and service
 async function setupWatcher(assets: Assets, hash: string, force: boolean) {
   // If the module has a watcher, deploy it
-  const watchDeployment = watcher(assets, hash, assets.buildTimestamp);
+  const watchDeployment = getWatcher(assets, hash, assets.buildTimestamp);
   if (watchDeployment) {
     Log.info("Applying watcher deployment");
     await K8s(kind.Deployment).Apply(watchDeployment, { force });
