@@ -212,9 +212,9 @@ export class Capability implements CapabilityExport {
     type ExtendedCommonChainType = CommonChainType & {
       Alias: (alias: string) => CommonChainType;
       InNamespace: (...namespaces: string[]) => BindingWithName<T>;
-      InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+      InNamespaceRegex: (...namespaces: string[]) => BindingWithName<T>;
       WithName: (name: string) => BindingFilter<T>;
-      WithNameRegex: (regexName: RegExp) => BindingFilter<T>;
+      WithNameRegex: (regexName: string) => BindingFilter<T>;
       WithDeletionTimestamp: () => BindingFilter<T>;
     };
 
