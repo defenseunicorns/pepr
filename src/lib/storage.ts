@@ -12,6 +12,11 @@ export type Unsubscribe = () => void;
 const MAX_WAIT_TIME = 15000;
 const STORE_VERSION_PREFIX = "v2";
 
+interface WaitRecord {
+  timeout?: ReturnType<typeof setTimeout>;
+  unsubscribe?: () => void;
+}
+
 export function v2StoreKey(key: string): string {
   return `${STORE_VERSION_PREFIX}-${pointer.escape(key)}`;
 }
@@ -58,13 +63,13 @@ export interface PeprStore {
    * Sets the value of the pair identified by key to value, creating a new key/value pair if none existed for key previously.
    * Resolves when the key/value show up in the store.
    */
-  setItemAndWait(key: string, value: string): Promise<void>;
+  setItemAndWait(key: string, value: string): Promise<string>;
 
   /**
    * Remove the value of the key.
    * Resolves when the key does not show up in the store.
    */
-  removeItemAndWait(key: string): Promise<void>;
+  removeItemAndWait(key: string): Promise<string>;
 }
 
 /**
@@ -128,22 +133,24 @@ export class Storage implements PeprStore {
    * @param value - The value of the key
    * @returns
    */
-  setItemAndWait = (key: string, value: string): Promise<void> => {
+  setItemAndWait = (key: string, value: string): Promise<string> => {
     this.#dispatchUpdate("add", [v2StoreKey(key)], value);
+    const record: WaitRecord = {};
 
-    return new Promise<void>((resolve, reject) => {
-      const unsubscribe = this.subscribe(data => {
+    return new Promise<string>((resolve, reject) => {
+      // If promise has not resolved before MAX_WAIT_TIME reject
+      record.timeout = setTimeout(() => {
+        record.unsubscribe!();
+        return reject(`MAX_WAIT_TIME elapsed: Key ${key} not seen in ${MAX_WAIT_TIME}s`);
+      }, MAX_WAIT_TIME);
+
+      record.unsubscribe = this.subscribe(data => {
         if (data[`${v2UnescapedStoreKey(key)}`] === value) {
-          unsubscribe();
-          resolve();
+          record.unsubscribe!();
+          clearTimeout(record.timeout);
+          resolve("ok");
         }
       });
-
-      // If promise has not resolved before MAX_WAIT_TIME reject
-      setTimeout(() => {
-        unsubscribe();
-        return reject();
-      }, MAX_WAIT_TIME);
     });
   };
 
@@ -154,21 +161,23 @@ export class Storage implements PeprStore {
    * @param key - The key to add into the store
    * @returns
    */
-  removeItemAndWait = (key: string): Promise<void> => {
+  removeItemAndWait = (key: string): Promise<string> => {
     this.#dispatchUpdate("remove", [v2StoreKey(key)]);
-    return new Promise<void>((resolve, reject) => {
-      const unsubscribe = this.subscribe(data => {
+    const record: WaitRecord = {};
+    return new Promise<string>((resolve, reject) => {
+      // If promise has not resolved before MAX_WAIT_TIME reject
+      record.timeout = setTimeout(() => {
+        record.unsubscribe!();
+        return reject(`MAX_WAIT_TIME elapsed: Key ${key} still seen after ${MAX_WAIT_TIME}s`);
+      }, MAX_WAIT_TIME);
+
+      record.unsubscribe = this.subscribe(data => {
         if (!Object.hasOwn(data, `${v2UnescapedStoreKey(key)}`)) {
-          unsubscribe();
-          resolve();
+          record.unsubscribe!();
+          clearTimeout(record.timeout);
+          resolve("ok");
         }
       });
-
-      // If promise has not resolved before MAX_WAIT_TIME reject
-      setTimeout(() => {
-        unsubscribe();
-        return reject();
-      }, MAX_WAIT_TIME);
     });
   };
 
