@@ -12,7 +12,8 @@ import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";
-export const debounceBackoff = 1000;
+const debounceBackoffReceive = 1000;
+const debounceBackoffSend = 4000;
 
 export class StoreController {
   #name: string;
@@ -68,6 +69,15 @@ export class StoreController {
 
   #migrateAndSetupWatch = async (store: Store): Promise<void> => {
     Log.debug(redactedStore(store), "Pepr Store migration");
+    // Add cacheID label to store
+    await K8s(Store, { namespace, name: this.#name }).Patch([
+      {
+        op: "add",
+        path: "/metadata/labels/pepr.dev-cacheID",
+        value: `${Date.now()}`,
+      },
+    ]);
+
     const data: DataStore = store.data || {};
     let storeCache: Record<string, Operation> = {};
 
@@ -134,7 +144,7 @@ export class StoreController {
 
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
-    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
+    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoffReceive);
   };
 
   #send = (capabilityName: string): DataSender => {
@@ -151,7 +161,7 @@ export class StoreController {
         Log.debug(redactedPatch(storeCache), "Sending updates to Pepr store");
         void sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
       }
-    }, debounceBackoff);
+    }, debounceBackoffSend);
 
     return sender;
   };
@@ -165,6 +175,9 @@ export class StoreController {
         metadata: {
           name: this.#name,
           namespace,
+          labels: {
+            "pepr.dev-cacheID": `${Date.now()}`,
+          },
         },
         data: {
           // JSON Patch will die if the data is empty, so we need to add a placeholder
