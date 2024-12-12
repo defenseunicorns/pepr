@@ -137,16 +137,14 @@ export async function mutateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
-  let wrapped = new PeprMutateRequest(req);
   let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
     allowed: false,
   };
 
-  // track base64-encoded data fields that should be decoded before / reencoded after processing
-  let skipped: string[] = [];
-  [skipped, wrapped] = decodeData(wrapped);
+  let wrapped = new PeprMutateRequest(req);
+  const skipped = decodeData(wrapped);
 
   Log.info(reqMetadata, `Processing request`);
 
