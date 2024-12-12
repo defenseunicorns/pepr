@@ -69,6 +69,15 @@ export class StoreController {
 
   #migrateAndSetupWatch = async (store: Store): Promise<void> => {
     Log.debug(redactedStore(store), "Pepr Store migration");
+    // Add cacheID label to store
+    await K8s(Store, { namespace, name: this.#name }).Patch([
+      {
+        op: "add",
+        path: "/metadata/labels/pepr.dev-cacheID",
+        value: `${Date.now()}`,
+      },
+    ]);
+
     const data: DataStore = store.data || {};
     let storeCache: Record<string, Operation> = {};
 
