@@ -20,7 +20,7 @@ const queues: Record<string, Queue<KubernetesObject>> = {};
  * @param obj The object to derive a key from
  * @returns The key to a Queue in the list of queues
  */
-export function queueKey(obj: KubernetesObject) {
+export function queueKey(obj: KubernetesObject): string {
   const options = ["kind", "kindNs", "kindNsName", "global"];
   const d3fault = "kind";
 
@@ -40,7 +40,7 @@ export function queueKey(obj: KubernetesObject) {
   return lookup[strat];
 }
 
-export function getOrCreateQueue(obj: KubernetesObject) {
+export function getOrCreateQueue(obj: KubernetesObject): Queue<KubernetesObject> {
   const key = queueKey(obj);
   if (!queues[key]) {
     queues[key] = new Queue<KubernetesObject>(key);
@@ -74,7 +74,7 @@ const eventToPhaseMap = {
  *
  * @param capabilities The capabilities to load watches for
  */
-export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]) {
+export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
   capabilities.map(capability =>
     capability.bindings
       .filter(binding => binding.isWatch)
@@ -88,14 +88,18 @@ export function setupWatch(capabilities: Capability[], ignoredNamespaces?: strin
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(binding: Binding, capabilityNamespaces: string[], ignoredNamespaces?: string[]) {
+async function runBinding(
+  binding: Binding,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+): Promise<void> {
   // Get the phases to match, fallback to any
   const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.ANY];
 
   // The watch callback is run when an object is received or dequeued
   Log.debug({ watchCfg }, "Effective WatchConfig");
 
-  const watchCallback = async (kubernetesObject: KubernetesObject, phase: WatchPhase) => {
+  const watchCallback = async (kubernetesObject: KubernetesObject, phase: WatchPhase): Promise<void> => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
@@ -117,7 +121,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
     }
   };
 
-  const handleFinalizerRemoval = async (kubernetesObject: KubernetesObject) => {
+  const handleFinalizerRemoval = async (kubernetesObject: KubernetesObject): Promise<void> => {
     if (!kubernetesObject.metadata?.deletionTimestamp) {
       return;
     }
@@ -191,7 +195,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[], igno
   }
 }
 
-export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject) {
+export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject): void {
   const logMessage = `Watch event ${event} received${message ? `. ${message}.` : "."}`;
   if (obj) {
     Log.debug(obj, logMessage);
