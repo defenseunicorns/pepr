@@ -11,7 +11,9 @@ export const sendUpdatesAndFlushCache = async (cache: Record<string, Operation>,
 
   try {
     if (payload.length > 0) {
-      await K8s(Store, { namespace, name }).Patch(payload); // Send patch to cluster
+      // Force a change on the Watched resource for setItemAndWait and removeItemAndWait to resolve
+      const res = await K8s(Store, { namespace, name }).Patch(updateCacheID(payload)); // Send patch to cluster
+      console.log("res", JSON.stringify(res, null, 2));
       Object.keys(cache).forEach(key => delete cache[key]);
     }
   } catch (err) {
@@ -61,3 +63,12 @@ export const fillStoreCache = (
   }
   return cache;
 };
+
+export function updateCacheID(payload: Operation[]): Operation[] {
+  payload.push({
+    op: "replace",
+    path: "/metadata/labels/pepr.dev-cacheID",
+    value: `${Date.now()}`,
+  });
+  return payload;
+}

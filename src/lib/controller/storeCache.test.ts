@@ -1,5 +1,5 @@
 import { describe, expect, it, jest, afterEach } from "@jest/globals";
-import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
+import { fillStoreCache, sendUpdatesAndFlushCache, updateCacheID } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -98,5 +98,22 @@ describe("sendCache", () => {
         fillStoreCache({}, "capability", "remove", { key: [] });
       }).toThrow("Key is required for REMOVE operation");
     });
+  });
+});
+
+describe("updateCacheId", () => {
+  it("should update the metadata label of the cacheID in the payload array of patches", () => {
+    const patches: Operation[] = [
+      {
+        op: "add",
+        path: "/data/hello-pepr-v2-a",
+        value: "a",
+      },
+    ];
+
+    const updatedPatches = updateCacheID(patches);
+    expect(updatedPatches.length).toBe(2);
+    expect(updatedPatches[1].op).toBe("replace");
+    expect(updatedPatches[1].path).toBe("/metadata/labels/pepr.dev-cacheID");
   });
 });

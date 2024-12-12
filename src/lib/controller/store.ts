@@ -166,6 +166,9 @@ export class StoreController {
         metadata: {
           name: this.#name,
           namespace,
+          labels: {
+            "pepr.dev-cacheID": `${Date.now()}`,
+          },
         },
         data: {
           // JSON Patch will die if the data is empty, so we need to add a placeholder
