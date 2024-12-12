@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Warn and exit if too many changes are about to be pushed
-MAX_CHANGES=3 #Avg commit size on main is 340 as of 12 Dec 2024
+MAX_CHANGES=400 #Avg commit size on main is 340 as of 12 Dec 2024
 
 # Get the local branch name
 current_branch=$(git rev-parse --abbrev-ref HEAD)
