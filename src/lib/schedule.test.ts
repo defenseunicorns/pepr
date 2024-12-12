@@ -20,10 +20,10 @@ export class MockStorage {
     this.storage[key] = value;
   }
 
-  setItemAndWait(key: string, value: string): Promise<void> {
+  setItemAndWait(key: string, value: string): Promise<string> {
     return new Promise(resolve => {
       this.storage[key] = value;
-      resolve();
+      resolve("ok");
     });
   }
 
@@ -31,10 +31,10 @@ export class MockStorage {
     delete this.storage[key];
   }
 
-  removeItemAndWait(key: string): Promise<void> {
+  removeItemAndWait(key: string): Promise<string> {
     return new Promise(resolve => {
       delete this.storage[key];
-      resolve();
+      resolve("ok");
     });
   }
 
