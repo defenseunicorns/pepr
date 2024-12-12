@@ -1,0 +1,110 @@
+name: Deploy Test - Zarf
+
+permissions: read-all
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  MOD_NAME: pepr-test-zarf
+
+jobs:
+  zarf:
+    name: deploy test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Set up Kubernetes
+        uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4.0.0
+        with:
+          version: 'latest'
+
+      - name: "install k3d"
+        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        shell: bash
+
+      - name: Install The Latest Release Version of Zarf
+        uses: defenseunicorns/setup-zarf@10e539efed02f75ec39eb8823e22a5c795f492ae #v1.0.1
+        with:
+          download-init-package: true
+
+      - name: clone pepr
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: setup node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: Install Pepr Dependencies
+        run: |
+          cd "$PEPR"
+          npm ci
+
+      - name: Build Pepr Package + Image
+        run: |
+          cd "$PEPR"
+          npm run build:image
+
+      - name: "set env: MOD_PATH"
+        run: |
+          echo "MOD_PATH=${PEPR}/${MOD_NAME}" >> "$GITHUB_ENV"
+
+      - name: Init Pepr Module
+        run: |
+          cd "$PEPR"
+          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --skip-post-init --confirm
+          sed -i 's/uuid": ".*",/uuid": "'$MOD_NAME'",/g' "$MOD_PATH/package.json"
+
+      - name: Build Pepr Module
+        run: |
+          cd "$MOD_PATH"
+          npm install "${PEPR}/pepr-0.0.0-development.tgz"
+          npx pepr build --custom-image pepr:dev
+
+      - name: "set env: CLUSTER"
+        run: echo "CLUSTER=$MOD_NAME" >> "$GITHUB_ENV"
+
+      - name: Prepare Test Cluster
+        run: |
+          k3d cluster create "$CLUSTER"
+          k3d image import pepr:dev --cluster "$CLUSTER"
+
+      - name: "set env: KUBECONFIG"
+        run: echo "KUBECONFIG=$(k3d kubeconfig write "$CLUSTER")" >> "$GITHUB_ENV"
+
+
+      - name: Initialize Zarf
+        run: |
+          cd "$MOD_PATH"
+          zarf init --confirm
+
+      - name: Package Pepr Module with Zarf
+        run: |
+          cd "$MOD_PATH"
+          zarf package create --confirm "dist/"
+
+      - name: Deploy Pepr Module with Zarf
+        run: |
+          cd "$MOD_PATH"
+          zarf package deploy --confirm zarf-package-pepr-pepr-test-zarf-amd64-0.0.1.tar.zst
+
+      - name: Check Deployment Readiness
+        timeout-minutes: 5
+        run: |
+          ${PEPR}/.github/workflows/scripts/check-deployment-readiness.sh pepr-$MOD_NAME

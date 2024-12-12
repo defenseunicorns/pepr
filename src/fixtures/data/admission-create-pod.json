@@ -13,7 +13,7 @@
   "subResource": "",
   "name": "podinfo",
   "namespace": "default",
-  "operation": "Create",
+  "operation": "CREATE",
   "userInfo": {
     "username": "system:serviceaccount:kube-system:replicaset-controller",
     "uid": "95c8f0ca-d31a-4d3f-9f27-9a2a2661ab3c",
@@ -39,7 +39,8 @@
       "labels": {
         "app.kubernetes.io/name": "cool-name-podinfo",
         "pod-template-hash": "66bbff7cf4",
-        "zarf-agent": "patched"
+        "zarf-agent": "patched",
+        "test-op": "create"
       },
       "name": "cool-name-podinfo-66bbff7cf4-fwhl2",
       "namespace": "helm-releasename",

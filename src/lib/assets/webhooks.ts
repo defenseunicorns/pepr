@@ -10,7 +10,7 @@ import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
-import { Event } from "../types";
+import { Event } from "../enums";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
   key: "pepr.dev",
@@ -20,7 +20,7 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
 
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean) {
+export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
   const { config, capabilities } = assets;
   const rules: V1RuleWithOperations[] = [];
 
@@ -44,8 +44,8 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
       const operations: string[] = [];
 
       // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
-      if (event === Event.CreateOrUpdate) {
-        operations.push(Event.Create, Event.Update);
+      if (event === Event.CREATE_OR_UPDATE) {
+        operations.push(Event.CREATE, Event.UPDATE);
       } else {
         operations.push(event);
       }
@@ -82,7 +82,7 @@ export async function webhookConfig(
   const ignore = [peprIgnoreLabel];
 
   const { name, tls, config, apiToken, host } = assets;
-  const ignoreNS = concat(peprIgnoreNamespaces, config.alwaysIgnore.namespaces || []);
+  const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces || []);
 
   // Add any namespaces to ignore
   if (ignoreNS) {

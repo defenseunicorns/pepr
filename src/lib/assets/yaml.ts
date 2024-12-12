@@ -6,13 +6,20 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { deployment, moduleSecret, namespace, watcher } from "./pods";
+import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
+
 // Helm Chart overrides file (values.yaml) generated from assets
-export async function overridesFile({ hash, name, image, config, apiToken }: Assets, path: string) {
+export async function overridesFile(
+  { hash, name, image, config, apiToken, capabilities }: Assets,
+  path: string,
+): Promise<void> {
+  const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
+
   const overrides = {
+    rbac: rbacOverrides,
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
     },
@@ -63,11 +70,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       },
       resources: {
         requests: {
-          memory: "64Mi",
-          cpu: "100m",
+          memory: "256Mi",
+          cpu: "200m",
         },
         limits: {
-          memory: "256Mi",
+          memory: "512Mi",
           cpu: "500m",
         },
       },
@@ -129,11 +136,11 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
       },
       resources: {
         requests: {
-          memory: "64Mi",
-          cpu: "100m",
+          memory: "256Mi",
+          cpu: "200m",
         },
         limits: {
-          memory: "256Mi",
+          memory: "512Mi",
           cpu: "500m",
         },
       },
@@ -162,7 +169,7 @@ export async function overridesFile({ hash, name, image, config, apiToken }: Ass
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
-export function zarfYaml({ name, image, config }: Assets, path: string) {
+export function zarfYaml({ name, image, config }: Assets, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -190,7 +197,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export function zarfYamlChart({ name, image, config }: Assets, path: string) {
+export function zarfYamlChart({ name, image, config }: Assets, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -219,8 +226,8 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string) {
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?: string) {
-  const { name, tls, apiToken, path } = assets;
+export async function allYaml(assets: Assets, imagePullSecret?: string): Promise<string> {
+  const { name, tls, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
 
   // Generate a hash of the code
@@ -228,19 +235,19 @@ export async function allYaml(assets: Assets, rbacMode: string, imagePullSecret?
 
   const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
   const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = watcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
+  const watchDeployment = getWatcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
-    namespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, rbacMode),
+    getNamespace(assets.config.customLabels?.namespace),
+    clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
+    getDeployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
     service(name),
     watcherService(name),
-    moduleSecret(name, code, assets.hash),
+    getModuleSecret(name, code, assets.hash),
     storeRole(name),
     storeRoleBinding(name),
   ];

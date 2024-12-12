@@ -17,11 +17,13 @@ import update from "./cli/update";
 import kfc from "./cli/kfc";
 
 if (process.env.npm_lifecycle_event !== "npx") {
-  console.warn("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
+  console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 
 const program = new RootCmd();
-
+if (!process.env.PEPR_NODE_WARNINGS) {
+  process.removeAllListeners("warning");
+}
 program
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)

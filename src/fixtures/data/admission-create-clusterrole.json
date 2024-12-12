@@ -1,0 +1,52 @@
+{
+  "uid": "2ac28f03-c045-4af6-86f1-aa0007571863",
+  "kind": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "kind": "ClusterRole"
+  },
+  "resource": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "resource": "clusterroles"
+  },
+  "requestKind": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "kind": "ClusterRole"
+  },
+  "requestResource": {
+    "group": "rbac.authorization.k8s.io",
+    "version": "v1",
+    "resource": "clusterroles"
+  },
+  "name": "pod-creator",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "system:admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": {
+    "kind": "ClusterRole",
+    "apiVersion": "rbac.authorization.k8s.io/v1",
+    "metadata": {
+      "name": "pod-creator",
+      "creationTimestamp": null
+    },
+    "rules": [
+      {
+        "verbs": ["create", "update", "patch"],
+        "apiGroups": [""],
+        "resources": ["pods"]
+      }
+    ]
+  },
+  "oldObject": null,
+  "dryRun": false,
+  "options": {
+    "kind": "CreateOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "fieldManager": "kubectl-create",
+    "fieldValidation": "Strict"
+  }
+}

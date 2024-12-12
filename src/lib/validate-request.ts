@@ -6,8 +6,9 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 
 import { clone } from "ramda";
-import { Operation, AdmissionRequest } from "./k8s";
+import { AdmissionRequest } from "./types";
 import { ValidateActionResponse } from "./types";
+import { Operation } from "./enums";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context

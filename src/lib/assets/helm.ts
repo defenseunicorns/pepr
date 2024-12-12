@@ -1,7 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-export function nsTemplate() {
+export function clusterRoleTemplate(): string {
+  return `
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: {{ .Values.uuid }}
+      namespace: pepr-system
+    rules: 
+      {{- if .Values.rbac }}
+      {{- toYaml .Values.rbac | nindent 2 }}
+      {{- end }}
+  `;
+}
+
+export function namespaceTemplate(): string {
   return `
     apiVersion: v1
     kind: Namespace
@@ -18,7 +32,7 @@ export function nsTemplate() {
     `;
 }
 
-export function chartYaml(name: string, description?: string) {
+export function chartYaml(name: string, description?: string): string {
   return `
     apiVersion: v2
     name: ${name}
@@ -47,7 +61,7 @@ export function chartYaml(name: string, description?: string) {
 `;
 }
 
-export function watcherDeployTemplate(buildTimestamp: string) {
+export function watcherDeployTemplate(buildTimestamp: string): string {
   return `
       apiVersion: apps/v1
       kind: Deployment
@@ -128,7 +142,7 @@ export function watcherDeployTemplate(buildTimestamp: string) {
     `;
 }
 
-export function admissionDeployTemplate(buildTimestamp: string) {
+export function admissionDeployTemplate(buildTimestamp: string): string {
   return `
       apiVersion: apps/v1
       kind: Deployment
@@ -214,7 +228,7 @@ export function admissionDeployTemplate(buildTimestamp: string) {
     `;
 }
 
-export function serviceMonitorTemplate(name: string) {
+export function serviceMonitorTemplate(name: string): string {
   return `
       {{- if .Values.${name}.serviceMonitor.enabled }}
       apiVersion: monitoring.coreos.com/v1

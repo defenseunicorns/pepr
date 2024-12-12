@@ -2,26 +2,28 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
-import { WatchAction } from "kubernetes-fluent-client/dist/fluent/types";
 import { pickBy } from "ramda";
-
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import { OnSchedule, Schedule } from "./schedule";
+import { Event } from "./enums";
 import {
   Binding,
   BindingFilter,
   BindingWithName,
   CapabilityCfg,
   CapabilityExport,
-  Event,
   MutateAction,
   MutateActionChain,
   ValidateAction,
   ValidateActionChain,
+  WatchLogAction,
+  FinalizeAction,
+  FinalizeActionChain,
   WhenSelector,
 } from "./types";
+import { addFinalizer } from "./finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();
@@ -69,6 +71,10 @@ export class Capability implements CapabilityExport {
     }
   };
 
+  public getScheduleStore(): Storage {
+    return this.#scheduleStore;
+  }
+
   /**
    * Store is a key-value data store that can be used to persist data that should be shared
    * between requests. Each capability has its own store, and the data is persisted in Kubernetes
@@ -105,19 +111,19 @@ export class Capability implements CapabilityExport {
     onReady: this.#scheduleStore.onReady,
   };
 
-  get bindings() {
+  get bindings(): Binding[] {
     return this.#bindings;
   }
 
-  get name() {
+  get name(): string {
     return this.#name;
   }
 
-  get description() {
+  get description(): string {
     return this.#description;
   }
 
-  get namespaces() {
+  get namespaces(): string[] {
     return this.#namespaces || [];
   }
 
@@ -133,10 +139,8 @@ export class Capability implements CapabilityExport {
 
   /**
    * Register the store with the capability. This is called automatically by the Pepr controller.
-   *
-   * @param store
    */
-  registerScheduleStore = () => {
+  registerScheduleStore = (): Storage => {
     Log.info(`Registering schedule store for ${this.#name}`);
 
     if (this.#scheduleRegistered) {
@@ -146,9 +150,7 @@ export class Capability implements CapabilityExport {
     this.#scheduleRegistered = true;
 
     // Pass back any ready callback to the controller
-    return {
-      scheduleStore: this.#scheduleStore,
-    };
+    return this.#scheduleStore;
   };
 
   /**
@@ -156,7 +158,7 @@ export class Capability implements CapabilityExport {
    *
    * @param store
    */
-  registerStore = () => {
+  registerStore = (): Storage => {
     Log.info(`Registering store for ${this.#name}`);
 
     if (this.#registered) {
@@ -166,9 +168,7 @@ export class Capability implements CapabilityExport {
     this.#registered = true;
 
     // Pass back any ready callback to the controller
-    return {
-      store: this.#store,
-    };
+    return this.#store;
   };
 
   /**
@@ -192,10 +192,12 @@ export class Capability implements CapabilityExport {
       model,
       // If the kind is not specified, use the matched kind from the model
       kind: kind || matchedKind,
-      event: Event.Any,
+      event: Event.ANY,
       filters: {
         name: "",
         namespaces: [],
+        regexNamespaces: [],
+        regexName: "",
         labels: {},
         annotations: {},
         deletionTimestamp: false,
@@ -204,9 +206,20 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile };
-    const isNotEmpty = (value: object) => Object.keys(value).length > 0;
-    const log = (message: string, cbString: string) => {
+    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile, Alias };
+
+    type CommonChainType = typeof commonChain;
+    type ExtendedCommonChainType = CommonChainType & {
+      Alias: (alias: string) => CommonChainType;
+      InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+      InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+      WithName: (name: string) => BindingFilter<T>;
+      WithNameRegex: (regexName: RegExp) => BindingFilter<T>;
+      WithDeletionTimestamp: () => BindingFilter<T>;
+    };
+
+    const isNotEmpty = (value: object): boolean => Object.keys(value).length > 0;
+    const log = (message: string, cbString: string): void => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
 
       Log.info(`${message} configured for ${binding.event}`, prefix);
@@ -218,12 +231,18 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Validate Action", validateCallback.toString());
 
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
           ...binding,
           isValidate: true,
-          validateCallback,
+          validateCallback: async (req, logger = aliasLogger) => {
+            Log.info(`Executing validate action with alias: ${binding.alias || "no alias provided"}`);
+            return await validateCallback(req, logger);
+          },
         });
       }
 
@@ -234,12 +253,18 @@ export class Capability implements CapabilityExport {
       if (registerAdmission) {
         log("Mutate Action", mutateCallback.toString());
 
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
         bindings.push({
           ...binding,
           isMutate: true,
-          mutateCallback,
+          mutateCallback: async (req, logger = aliasLogger) => {
+            Log.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
+            await mutateCallback(req, logger);
+          },
         });
       }
 
@@ -247,40 +272,104 @@ export class Capability implements CapabilityExport {
       return { Watch, Validate, Reconcile };
     }
 
-    function Watch(watchCallback: WatchAction<T>) {
+    function Watch(watchCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
         log("Watch Action", watchCallback.toString());
 
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
-          watchCallback,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
+            await watchCallback(update, phase, logger);
+          },
         });
       }
+      return { Finalize };
     }
 
-    function Reconcile(watchCallback: WatchAction<T>) {
+    function Reconcile(reconcileCallback: WatchLogAction<T>): FinalizeActionChain<T> {
       if (registerWatch) {
-        log("Reconcile Action", watchCallback.toString());
+        log("Reconcile Action", reconcileCallback.toString());
 
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
         bindings.push({
           ...binding,
           isWatch: true,
           isQueue: true,
-          watchCallback,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            Log.info(`Executing reconcile action with alias: ${binding.alias || "no alias provided"}`);
+            await reconcileCallback(update, phase, logger);
+          },
         });
+      }
+      return { Finalize };
+    }
+
+    function Finalize(finalizeCallback: FinalizeAction<T>): void {
+      log("Finalize Action", finalizeCallback.toString());
+
+      // Create the child logger and cast it to the expected type
+      const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+      // Add binding to inject Pepr finalizer during admission (Mutate)
+      if (registerAdmission) {
+        const mutateBinding = {
+          ...binding,
+          isMutate: true,
+          isFinalize: true,
+          event: Event.ANY,
+          mutateCallback: addFinalizer,
+        };
+        bindings.push(mutateBinding);
+      }
+
+      // Add binding to process finalizer callback / remove Pepr finalizer (Watch)
+      if (registerWatch) {
+        const watchBinding = {
+          ...binding,
+          isWatch: true,
+          isFinalize: true,
+          event: Event.UPDATE,
+          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger): Promise<boolean | void> => {
+            Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
+            return await finalizeCallback(update, logger);
+          },
+        };
+        bindings.push(watchBinding);
       }
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
       Log.debug(`Add namespaces filter ${namespaces}`, prefix);
       binding.filters.namespaces.push(...namespaces);
-      return { ...commonChain, WithName };
+      return { ...commonChain, WithName, WithNameRegex };
+    }
+
+    function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
+      Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
+      binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
+      return { ...commonChain, WithName, WithNameRegex };
     }
 
     function WithDeletionTimestamp(): BindingFilter<T> {
       Log.debug("Add deletionTimestamp filter");
       binding.filters.deletionTimestamp = true;
+      return commonChain;
+    }
+
+    function WithNameRegex(regexName: RegExp): BindingFilter<T> {
+      Log.debug(`Add regex name filter ${regexName}`, prefix);
+      binding.filters.regexName = regexName.source;
       return commonChain;
     }
 
@@ -302,21 +391,30 @@ export class Capability implements CapabilityExport {
       return commonChain;
     }
 
-    function bindEvent(event: Event) {
+    function Alias(alias: string): CommonChainType {
+      Log.debug(`Adding prefix alias ${alias}`, prefix);
+      binding.alias = alias;
+      return commonChain;
+    }
+
+    function bindEvent(event: Event): ExtendedCommonChainType {
       binding.event = event;
       return {
         ...commonChain,
         InNamespace,
+        InNamespaceRegex,
         WithName,
+        WithNameRegex,
         WithDeletionTimestamp,
+        Alias,
       };
     }
 
     return {
-      IsCreatedOrUpdated: () => bindEvent(Event.CreateOrUpdate),
-      IsCreated: () => bindEvent(Event.Create),
-      IsUpdated: () => bindEvent(Event.Update),
-      IsDeleted: () => bindEvent(Event.Delete),
+      IsCreatedOrUpdated: () => bindEvent(Event.CREATE_OR_UPDATE),
+      IsCreated: () => bindEvent(Event.CREATE),
+      IsUpdated: () => bindEvent(Event.UPDATE),
+      IsDeleted: () => bindEvent(Event.DELETE),
     };
   };
 }

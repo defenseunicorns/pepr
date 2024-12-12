@@ -21,9 +21,11 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList, Errors } from "../../lib/errors";
+import prompts from "prompts";
 
 export default function (program: RootCmd) {
   let response = {} as PromptOptions;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let pkgOverride = "";
   program
     .command("init")
@@ -32,7 +34,7 @@ export default function (program: RootCmd) {
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set a errorBehavior.", Errors.reject)
+    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", Errors.reject)
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
@@ -73,25 +75,7 @@ export default function (program: RootCmd) {
           await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
 
           if (!opts.skipPostInit) {
-            // run npm install from the new directory
-            process.chdir(dirName);
-            execSync("npm install", {
-              stdio: "inherit",
-            });
-
-            // setup git
-            execSync("git init", {
-              stdio: "inherit",
-            });
-
-            // try to open vscode
-            try {
-              execSync("code .", {
-                stdio: "inherit",
-              });
-            } catch (e) {
-              // vscode not found, do nothing
-            }
+            doPostInitActions(dirName);
           }
 
           console.log(`New Pepr module created at ${dirName}`);
@@ -105,3 +89,25 @@ export default function (program: RootCmd) {
       }
     });
 }
+
+const doPostInitActions = (dirName: string): void => {
+  // run npm install from the new directory
+  process.chdir(dirName);
+  execSync("npm install", {
+    stdio: "inherit",
+  });
+
+  // setup git
+  execSync("git init --initial-branch=main", {
+    stdio: "inherit",
+  });
+
+  // try to open vscode
+  try {
+    execSync("code .", {
+      stdio: "inherit",
+    });
+  } catch (e) {
+    // vscode not found, do nothing
+  }
+};

@@ -1,0 +1,93 @@
+{
+  "uid": "501f5447-a028-4a3f-b4ac-fc56f3f78ffc",
+  "kind": {
+    "group": "apps",
+    "version": "v1",
+    "kind": "Deployment"
+  },
+  "resource": {
+    "group": "apps",
+    "version": "v1",
+    "resource": "deployments"
+  },
+  "requestKind": {
+    "group": "apps",
+    "version": "v1",
+    "kind": "Deployment"
+  },
+  "requestResource": {
+    "group": "apps",
+    "version": "v1",
+    "resource": "deployments"
+  },
+  "name": "lower",
+  "namespace": "pepr-demo",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "system:admin",
+    "groups": ["system:masters", "system:authenticated"]
+  },
+  "object": {
+    "kind": "Deployment",
+    "apiVersion": "apps/v1",
+    "metadata": {
+      "name": "lower",
+      "namespace": "pepr-demo",
+      "creationTimestamp": null,
+      "labels": {
+        "app": "lower"
+      }
+    },
+    "spec": {
+      "replicas": 3,
+      "selector": {
+        "matchLabels": {
+          "app": "lower"
+        }
+      },
+      "template": {
+        "metadata": {
+          "creationTimestamp": null,
+          "labels": {
+            "app": "lower"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "nginx",
+              "image": "nginx",
+              "resources": {},
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File",
+              "imagePullPolicy": "Always"
+            }
+          ],
+          "restartPolicy": "Always",
+          "terminationGracePeriodSeconds": 30,
+          "dnsPolicy": "ClusterFirst",
+          "securityContext": {},
+          "schedulerName": "default-scheduler"
+        }
+      },
+      "strategy": {
+        "type": "RollingUpdate",
+        "rollingUpdate": {
+          "maxUnavailable": "25%",
+          "maxSurge": "25%"
+        }
+      },
+      "revisionHistoryLimit": 10,
+      "progressDeadlineSeconds": 600
+    },
+    "status": {}
+  },
+  "oldObject": null,
+  "dryRun": false,
+  "options": {
+    "kind": "CreateOptions",
+    "apiVersion": "meta.k8s.io/v1",
+    "fieldManager": "kubectl-create",
+    "fieldValidation": "Strict"
+  }
+}

@@ -3,10 +3,10 @@
 
 import { K8s, kind } from "kubernetes-fluent-client";
 
-import Log from "../logger";
+import Log from "../telemetry/logger";
 import { peprStoreCRD } from "./store";
 
-export async function destroyModule(name: string) {
+export async function destroyModule(name: string): Promise<void> {
   const namespace = "pepr-system";
 
   Log.info("Destroying Pepr module");

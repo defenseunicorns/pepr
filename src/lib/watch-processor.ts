@@ -4,10 +4,12 @@ import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-c
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
 import { filterNoMatchReason } from "./helpers";
-import Log from "./logger";
+import { removeFinalizer } from "./finalizer";
+import Log from "./telemetry/logger";
 import { Queue } from "./queue";
-import { Binding, Event } from "./types";
-import { metricsCollector } from "./metrics";
+import { Binding } from "./types";
+import { Event } from "./enums";
+import { metricsCollector } from "./telemetry/metrics";
 
 // stores Queue instances
 const queues: Record<string, Queue<KubernetesObject>> = {};
@@ -18,7 +20,7 @@ const queues: Record<string, Queue<KubernetesObject>> = {};
  * @param obj The object to derive a key from
  * @returns The key to a Queue in the list of queues
  */
-export function queueKey(obj: KubernetesObject) {
+export function queueKey(obj: KubernetesObject): string {
   const options = ["kind", "kindNs", "kindNsName", "global"];
   const d3fault = "kind";
 
@@ -38,7 +40,7 @@ export function queueKey(obj: KubernetesObject) {
   return lookup[strat];
 }
 
-export function getOrCreateQueue(obj: KubernetesObject) {
+export function getOrCreateQueue(obj: KubernetesObject): Queue<KubernetesObject> {
   const key = queueKey(obj);
   if (!queues[key]) {
     queues[key] = new Queue<KubernetesObject>(key);
@@ -60,11 +62,11 @@ const watchCfg: WatchCfg = {
 
 // Map the event to the watch phase
 const eventToPhaseMap = {
-  [Event.Create]: [WatchPhase.Added],
-  [Event.Update]: [WatchPhase.Modified],
-  [Event.CreateOrUpdate]: [WatchPhase.Added, WatchPhase.Modified],
-  [Event.Delete]: [WatchPhase.Deleted],
-  [Event.Any]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
+  [Event.CREATE]: [WatchPhase.Added],
+  [Event.UPDATE]: [WatchPhase.Modified],
+  [Event.CREATE_OR_UPDATE]: [WatchPhase.Added, WatchPhase.Modified],
+  [Event.DELETE]: [WatchPhase.Deleted],
+  [Event.ANY]: [WatchPhase.Added, WatchPhase.Modified, WatchPhase.Deleted],
 };
 
 /**
@@ -72,11 +74,11 @@ const eventToPhaseMap = {
  *
  * @param capabilities The capabilities to load watches for
  */
-export function setupWatch(capabilities: Capability[]) {
+export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
   capabilities.map(capability =>
     capability.bindings
       .filter(binding => binding.isWatch)
-      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces)),
+      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces, ignoredNamespaces)),
   );
 }
 
@@ -86,28 +88,58 @@ export function setupWatch(capabilities: Capability[]) {
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
+async function runBinding(
+  binding: Binding,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+): Promise<void> {
   // Get the phases to match, fallback to any
-  const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.Any];
+  const phaseMatch: WatchPhase[] = eventToPhaseMap[binding.event] || eventToPhaseMap[Event.ANY];
 
   // The watch callback is run when an object is received or dequeued
   Log.debug({ watchCfg }, "Effective WatchConfig");
 
-  const watchCallback = async (obj: KubernetesObject, phase: WatchPhase) => {
+  const watchCallback = async (kubernetesObject: KubernetesObject, phase: WatchPhase): Promise<void> => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
-        const filterMatch = filterNoMatchReason(binding, obj, capabilityNamespaces);
-        if (filterMatch === "") {
-          await binding.watchCallback?.(obj, phase);
-        } else {
+        const filterMatch = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces, ignoredNamespaces);
+        if (filterMatch !== "") {
           Log.debug(filterMatch);
+          return;
+        }
+        if (binding.isFinalize) {
+          await handleFinalizerRemoval(kubernetesObject);
+        } else {
+          await binding.watchCallback?.(kubernetesObject, phase);
         }
       } catch (e) {
         // Errors in the watch callback should not crash the controller
         Log.error(e, "Error executing watch callback");
       }
+    }
+  };
+
+  const handleFinalizerRemoval = async (kubernetesObject: KubernetesObject): Promise<void> => {
+    if (!kubernetesObject.metadata?.deletionTimestamp) {
+      return;
+    }
+    let shouldRemoveFinalizer: boolean | void | undefined = true;
+    try {
+      shouldRemoveFinalizer = await binding.finalizeCallback?.(kubernetesObject);
+
+      // if not opt'ed out of / if in error state, remove pepr finalizer
+    } finally {
+      const peprFinal = "pepr.dev/finalizer";
+      const meta = kubernetesObject.metadata!;
+      const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
+
+      // [ true, void, undefined ] SHOULD remove finalizer
+      // [ false ] should NOT remove finalizer
+      shouldRemoveFinalizer === false
+        ? Log.debug({ obj: kubernetesObject }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
+        : await removeFinalizer(binding, kubernetesObject);
     }
   };
 
@@ -163,7 +195,7 @@ async function runBinding(binding: Binding, capabilityNamespaces: string[]) {
   }
 }
 
-export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject) {
+export function logEvent(event: WatchEvent, message: string = "", obj?: KubernetesObject): void {
   const logMessage = `Watch event ${event} received${message ? `. ${message}.` : "."}`;
   if (obj) {
     Log.debug(obj, logMessage);

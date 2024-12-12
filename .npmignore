@@ -31,3 +31,6 @@ jest.config.json
 *.toml
 *.test.*
 *.tgz
+
+# Exclude all test files
+src/**/*.test.ts

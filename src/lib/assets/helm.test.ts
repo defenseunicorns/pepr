@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { nsTemplate, chartYaml, watcherDeployTemplate, admissionDeployTemplate, serviceMonitorTemplate } from "./helm";
+import {
+  namespaceTemplate,
+  chartYaml,
+  watcherDeployTemplate,
+  admissionDeployTemplate,
+  serviceMonitorTemplate,
+} from "./helm";
 import { expect, describe, test } from "@jest/globals";
 describe("Kubernetes Template Generators", () => {
   describe("nsTemplate", () => {
     test("should generate a Namespace template correctly", () => {
-      const result = nsTemplate();
+      const result = namespaceTemplate();
       expect(result).toContain("apiVersion: v1");
       expect(result).toContain("kind: Namespace");
       expect(result).toContain("name: pepr-system");

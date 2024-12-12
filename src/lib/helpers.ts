@@ -1,11 +1,38 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { promises as fs } from "fs";
-import { K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import Log from "./logger";
+import { KubernetesObject } from "kubernetes-fluent-client";
+import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
+import {
+  carriedAnnotations,
+  carriedLabels,
+  carriedName,
+  carriedNamespace,
+  carriesIgnoredNamespace,
+  definedAnnotations,
+  definedLabels,
+  definedName,
+  definedNameRegex,
+  definedNamespaces,
+  definedNamespaceRegexes,
+  misboundNamespace,
+  mismatchedAnnotations,
+  mismatchedDeletionTimestamp,
+  mismatchedLabels,
+  mismatchedName,
+  mismatchedNameRegex,
+  mismatchedNamespace,
+  mismatchedNamespaceRegex,
+  missingCarriableNamespace,
+  unbindableNamespaces,
+  uncarryableNamespace,
+} from "./filter/adjudicators/adjudicators";
+
+export function matchesRegex(pattern: string, testString: string): boolean {
+  return new RegExp(pattern).test(testString);
+}
 
 export class ValidationError extends Error {}
 
@@ -28,120 +55,92 @@ export function validateHash(expectedHash: string): void {
   }
 }
 
-type RBACMap = {
+export type RBACMap = {
   [key: string]: {
     verbs: string[];
     plural: string;
   };
 };
 
-// check for overlap with labels and annotations between bindings and kubernetes objects
-export function checkOverlap(bindingFilters: Record<string, string>, objectFilters: Record<string, string>): boolean {
-  // True if labels/annotations are empty
-  if (Object.keys(bindingFilters).length === 0) {
-    return true;
-  }
-
-  let matchCount = 0;
-
-  for (const key in bindingFilters) {
-    // object must have label/annotation
-    if (Object.prototype.hasOwnProperty.call(objectFilters, key)) {
-      const val1 = bindingFilters[key];
-      const val2 = objectFilters[key];
-
-      // If bindingFilter has empty value for this key, only need to ensure objectFilter has this key
-      if (val1 === "" && key in objectFilters) {
-        matchCount++;
-      }
-      // If bindingFilter has a value, it must match the value in objectFilter
-      else if (val1 !== "" && val1 === val2) {
-        matchCount++;
-      }
-    }
-  }
-
-  // For single-key objects in bindingFilter or matching all keys in multiple-keys scenario
-  return matchCount === Object.keys(bindingFilters).length;
-}
-
 /**
  * Decide to run callback after the event comes back from API Server
  **/
 export function filterNoMatchReason(
-  binding: Partial<Binding>,
-  obj: Partial<KubernetesObject>,
+  binding: Binding,
+  kubernetesObject: Partial<KubernetesObject>,
   capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
 ): string {
-  // binding deletionTimestamp filter and object deletionTimestamp dont match
-  if (binding.filters?.deletionTimestamp && !obj.metadata?.deletionTimestamp) {
-    return `Ignoring Watch Callback: Object does not have a deletion timestamp.`;
-  }
+  const prefix = "Ignoring Watch Callback:";
 
-  // binding kind is namespace with a InNamespace filter
-  if (binding.kind && binding.kind.kind === "Namespace" && binding.filters && binding.filters.namespaces.length !== 0) {
-    return `Ignoring Watch Callback: Cannot use a namespace filter in a namespace object.`;
-  }
+  // prettier-ignore
+  return (
+    mismatchedDeletionTimestamp(binding, kubernetesObject) ?
+      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
 
-  if (typeof obj === "object" && obj !== null && "metadata" in obj && obj.metadata !== undefined && binding.filters) {
-    // binding labels and object labels dont match
-    if (obj.metadata.labels && !checkOverlap(binding.filters.labels, obj.metadata.labels)) {
-      return `Ignoring Watch Callback: No overlap between binding and object labels. Binding labels ${JSON.stringify(
-        binding.filters.labels,
-      )}, Object Labels ${JSON.stringify(obj.metadata.labels)}.`;
-    }
+    mismatchedName(binding, kubernetesObject) ?
+      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(kubernetesObject)}'.` :
 
-    // binding annotations and object annotations dont match
-    if (obj.metadata.annotations && !checkOverlap(binding.filters.annotations, obj.metadata.annotations)) {
-      return `Ignoring Watch Callback: No overlap between binding and object annotations. Binding annotations ${JSON.stringify(
-        binding.filters.annotations,
-      )}, Object annotations ${JSON.stringify(obj.metadata.annotations)}.`;
-    }
-  }
+    misboundNamespace(binding) ?
+      `${prefix} Cannot use namespace filter on a namespace object.` :
 
-  // Check object is in the capability namespace
-  if (
-    Array.isArray(capabilityNamespaces) &&
-    capabilityNamespaces.length > 0 &&
-    obj.metadata &&
-    obj.metadata.namespace &&
-    !capabilityNamespaces.includes(obj.metadata.namespace)
-  ) {
-    return `Ignoring Watch Callback: Object is not in the capability namespace. Capability namespaces: ${capabilityNamespaces.join(
-      ", ",
-    )}, Object namespace: ${obj.metadata.namespace}.`;
-  }
+    mismatchedLabels(binding, kubernetesObject) ?
+      (
+        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
+        `but Object carries '${JSON.stringify(carriedLabels(kubernetesObject))}'.`
+      ) :
 
-  // chceck every filter namespace is a capability namespace
-  if (
-    Array.isArray(capabilityNamespaces) &&
-    capabilityNamespaces.length > 0 &&
-    binding.filters &&
-    Array.isArray(binding.filters.namespaces) &&
-    binding.filters.namespaces.length > 0 &&
-    !binding.filters.namespaces.every(ns => capabilityNamespaces.includes(ns))
-  ) {
-    return `Ignoring Watch Callback: Binding namespace is not part of capability namespaces. Capability namespaces: ${capabilityNamespaces.join(
-      ", ",
-    )}, Binding namespaces: ${binding.filters.namespaces.join(", ")}.`;
-  }
+    mismatchedAnnotations(binding, kubernetesObject) ?
+      (
+        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
+        `but Object carries '${JSON.stringify(carriedAnnotations(kubernetesObject))}'.`
+      ) :
 
-  // filter namespace is not the same of object namespace
-  if (
-    binding.filters &&
-    Array.isArray(binding.filters.namespaces) &&
-    binding.filters.namespaces.length > 0 &&
-    obj.metadata &&
-    obj.metadata.namespace &&
-    !binding.filters.namespaces.includes(obj.metadata.namespace)
-  ) {
-    return `Ignoring Watch Callback: Binding namespace and object namespace are not the same. Binding namespaces: ${binding.filters.namespaces.join(
-      ", ",
-    )}, Object namespace: ${obj.metadata.namespace}.`;
-  }
+    uncarryableNamespace(capabilityNamespaces, kubernetesObject) ?
+      (
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+      ) :
 
-  // no problems
-  return "";
+    unbindableNamespaces(capabilityNamespaces, binding) ?
+      (
+        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+      ) :
+
+    mismatchedNamespace(binding, kubernetesObject) ?
+      (
+        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
+      ) :
+
+    mismatchedNamespaceRegex(binding, kubernetesObject) ?
+      (
+        `${prefix} Binding defines namespace regexes ` +
+        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
+        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
+      ) :
+
+    mismatchedNameRegex(binding, kubernetesObject) ?
+      (
+        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
+        `but Object carries '${carriedName(kubernetesObject)}'.`
+      ) :
+
+    carriesIgnoredNamespace(ignoredNamespaces, kubernetesObject) ?
+      (
+        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
+        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+      ) :
+
+    missingCarriableNamespace(capabilityNamespaces, kubernetesObject) ? 
+      (
+        `${prefix} Object does not carry a namespace ` +
+        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+      ) :
+
+    ""
+  );
 }
 
 export function addVerbIfNotExists(verbs: string[], verb: string) {
@@ -171,22 +170,18 @@ export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
           plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
         };
       }
+
+      // Add finalizer rbac
+      if (binding.isFinalize) {
+        acc[key] = {
+          verbs: ["patch"],
+          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
+        };
+      }
     });
 
     return acc;
   }, {});
-}
-
-export async function createDirectoryIfNotExists(path: string) {
-  try {
-    await fs.access(path);
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      await fs.mkdir(path, { recursive: true });
-    } else {
-      throw error;
-    }
-  }
 }
 
 export function hasEveryOverlap<T>(array1: T[], array2: T[]): boolean {
@@ -241,10 +236,13 @@ export function generateWatchNamespaceError(
   return err.replace(/\.([^ ])/g, ". $1");
 }
 
-// namespaceComplianceValidator ensures that capability bindinds respect ignored and capability namespaces
+// namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
 export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces = bindings.flatMap(binding => binding.filters.namespaces);
+  const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
+  const bindingRegexNamespaces: string[] = bindings.flatMap(
+    (binding: Binding) => binding.filters.regexNamespaces || [],
+  );
 
   const namespaceError = generateWatchNamespaceError(
     ignoredNamespaces ? ignoredNamespaces : [],
@@ -256,46 +254,43 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,
     );
   }
-}
 
-// check to see if all replicas are ready for all deployments in the pepr-system namespace
-// returns true if all deployments are ready, false otherwise
-export async function checkDeploymentStatus(namespace: string) {
-  const deployments = await K8s(kind.Deployment).InNamespace(namespace).Get();
-  let status = false;
-  let readyCount = 0;
+  // Ensure that each regexNamespace matches a capabilityNamespace
 
-  for (const deployment of deployments.items) {
-    const readyReplicas = deployment.status?.readyReplicas ? deployment.status?.readyReplicas : 0;
-    if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
-      Log.info(
-        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
-      );
-    } else {
-      Log.info(
-        `Deployment ${deployment.metadata?.name} rolled out: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
-      );
-      readyCount++;
+  if (
+    bindingRegexNamespaces &&
+    bindingRegexNamespaces.length > 0 &&
+    capabilityNamespaces &&
+    capabilityNamespaces.length > 0
+  ) {
+    for (const regexNamespace of bindingRegexNamespaces) {
+      let matches = false;
+      matches =
+        regexNamespace !== "" &&
+        capabilityNamespaces.some(capabilityNamespace => matchesRegex(regexNamespace, capabilityNamespace));
+      if (!matches) {
+        throw new Error(
+          `Ignoring Watch Callback: Object namespace does not match any capability namespace with regex ${regexNamespace}.`,
+        );
+      }
     }
   }
-  if (readyCount === deployments.items.length) {
-    status = true;
-  }
-  return status;
-}
-
-// wait for all deployments in the pepr-system namespace to be ready
-export async function namespaceDeploymentsReady(namespace: string = "pepr-system") {
-  Log.info(`Checking ${namespace} deployments status...`);
-  let ready = false;
-  while (!ready) {
-    ready = await checkDeploymentStatus(namespace);
-    if (ready) {
-      return ready;
+  // ensure regexNamespaces do not match ignored ns
+  if (
+    bindingRegexNamespaces &&
+    bindingRegexNamespaces.length > 0 &&
+    ignoredNamespaces &&
+    ignoredNamespaces.length > 0
+  ) {
+    for (const regexNamespace of bindingRegexNamespaces) {
+      const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
+      if (matchedNS) {
+        throw new Error(
+          `Ignoring Watch Callback: Regex namespace: ${regexNamespace}, is an ignored namespace: ${matchedNS}.`,
+        );
+      }
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
   }
-  Log.info(`All ${namespace} deployments are ready`);
 }
 
 // check if secret is over the size limit
@@ -322,7 +317,7 @@ export const parseTimeout = (value: string, previous: unknown): number => {
 };
 
 // Remove leading whitespace while keeping format of file
-export function dedent(file: string) {
+export function dedent(file: string): string {
   // Check if the first line is empty and remove it
   const lines = file.split("\n");
   if (lines[0].trim() === "") {
@@ -339,8 +334,8 @@ export function dedent(file: string) {
   return file;
 }
 
-export function replaceString(str: string, stringA: string, stringB: string) {
-  //eslint-disable-next-line
+export function replaceString(str: string, stringA: string, stringB: string): string {
+  // eslint-disable-next-line no-useless-escape
   const escapedStringA = stringA.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
   const regExp = new RegExp(escapedStringA, "g");
   return str.replace(regExp, stringB);

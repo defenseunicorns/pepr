@@ -10,7 +10,7 @@ You can find the following information in this section:
 
 ### [Pepr Modules](020_pepr-modules.md)
 
-### [Pepr Actions](030_actions.md)
+### [Pepr Actions](030_actions/)
 
 ### [Pepr Capabilities](040_capabilities.md)
 

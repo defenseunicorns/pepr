@@ -3,7 +3,7 @@
 
 import { K8s, kind } from "kubernetes-fluent-client";
 
-import { PeprStore } from "../src/lib/k8s";
+import { Store } from "../src/lib/k8s";
 
 export function sleep(seconds: number) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
@@ -29,16 +29,15 @@ export async function waitForDeploymentReady(namespace: string, name: string) {
 }
 
 export async function noWaitPeprStoreKey(name: string, matchKey: string) {
-    const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);
-    if (store.data[matchKey]) {
-      return store.data[matchKey];
-    }
+  const store = await K8s(Store).InNamespace("pepr-system").Get(name);
+  if (store.data[matchKey]) {
+    return store.data[matchKey];
+  }
 }
-
 
 export async function waitForPeprStoreKey(name: string, matchKey: string) {
   try {
-    const store = await K8s(PeprStore).InNamespace("pepr-system").Get(name);
+    const store = await K8s(Store).InNamespace("pepr-system").Get(name);
     if (store.data[matchKey]) {
       return store.data[matchKey];
     }

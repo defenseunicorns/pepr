@@ -8,7 +8,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { gunzipSync } from "zlib";
 import { K8s, kind } from "kubernetes-fluent-client";
-import Log from "../lib/logger";
+import Log from "../lib/telemetry/logger";
 import { packageJSON } from "../templates/data.json";
 import { peprStoreCRD } from "../lib/assets/store";
 import { validateHash } from "../lib/helpers";

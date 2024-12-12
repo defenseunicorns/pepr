@@ -2,11 +2,35 @@
 
 This document outlines how to customize the build output through Helm overrides and `package.json` configurations.
 
+## Redact Store Values from Logs
+
+By default, the store values are displayed in logs, to redact them you can set the `PEPR_STORE_REDACT_VALUES` environment variable to `true` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `undefined`.
+
+```json
+{
+  "env": {
+    "PEPR_STORE_REDACT_VALUES": "true"
+  }
+}
+```
+
+## Display Node Warnings
+
+You can display warnings in the logs by setting the `PEPR_NODE_WARNINGS` environment variable to `true` in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is `undefined`.
+
+```json
+{
+  "env": {
+    "PEPR_NODE_WARNINGS": "true"
+  }
+}
+```
+
 ## Customizing Log Format
 
-The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format. 
+The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format.
 
-**Caution**: attempting to format time in-process will significantly impact logging performance.  
+**Caution**: attempting to format time in-process will significantly impact logging performance.
 
 ```json
 {
@@ -22,13 +46,13 @@ With ISO:
 {"level":30,"time":"2024-05-14T14:26:03.788Z","pid":16,"hostname":"pepr-static-test-7f4d54b6cc-9lxm6","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
 ```
 
-Default (without): 
+Default (without):
 
 ```json
 {"level":30,"time":"1715696764106","pid":16,"hostname":"pepr-static-test-watcher-559d94447f-xkq2h","method":"GET","url":"/healthz","status":200,"duration":"1 ms"}
 ```
 
-## Customizing Watch Configuration 
+## Customizing Watch Configuration
 
 The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific enviroment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
 
@@ -90,7 +114,7 @@ Below are the available Helm override configurations after you have built your P
 | `affinity`                                   | Node scheduling options                                             |
 | `terminationGracePeriodSeconds`              | Optional duration in seconds the pod needs to terminate gracefully  |
 
-Note: Replace `*` with `admission` or `watcher` as needed to apply settings specifically for each part.
+Note: Replace `*` within `admission.*` or `watcher.*` to apply settings specific to the desired subparameter (e.g. `admission.failurePolicy`).
 
 ## Customizing with package.json
 
@@ -104,8 +128,33 @@ Below are the available configurations through `package.json`.
 | `onError`        | Behavior of the webhook failure policy | `reject`, `ignore`              |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
-| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`  |
+| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`              |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]   |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`           |
+| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)            | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 
 These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
+
+### Example Custom RBAC Rules
+
+The following example demonstrates how to add custom RBAC rules to the Pepr module.
+
+```json
+{
+  "pepr": {
+    "rbac": [
+      {
+        "apiGroups": ["pepr.dev"],
+        "resources": ["customresources"],
+        "verbs": ["get", "list"]
+      },
+      {
+        "apiGroups": ["apps"],
+        "resources": ["deployments"],
+        "verbs": ["create", "delete"]
+      }
+    ]
+  }
+}
+```

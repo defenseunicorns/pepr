@@ -6,9 +6,10 @@ import { kind } from "kubernetes-fluent-client";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
-import { shouldSkipRequest } from "./filter";
-import { MutateResponse, AdmissionRequest } from "./k8s";
-import Log from "./logger";
+import { shouldSkipRequest } from "./filter/filter";
+import { MutateResponse } from "./k8s";
+import { AdmissionRequest } from "./types";
+import Log from "./telemetry/logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
@@ -33,7 +34,7 @@ export async function mutateProcessor(
   let skipDecode: string[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version == "v1" && req.kind.kind == "Secret";
+  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
   if (isSecret) {
     skipDecode = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
@@ -42,7 +43,6 @@ export async function mutateProcessor(
 
   for (const { name, bindings, namespaces } of capabilities) {
     const actionMetadata = { ...reqMetadata, name };
-
     for (const action of bindings) {
       // Skip this action if it's not a mutate action
       if (!action.mutateCallback) {
@@ -50,20 +50,21 @@ export async function mutateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      if (shouldSkipRequest(action, req, namespaces)) {
+      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
         continue;
       }
 
       const label = action.mutateCallback.name;
       Log.info(actionMetadata, `Processing mutation action (${label})`);
-
       matchedAction = true;
 
       // Add annotations to the request to indicate that the capability started processing
       // this will allow tracking of failed mutations that were permitted to continue
       const updateStatus = (status: string) => {
         // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
-        if (req.operation == "DELETE") {
+        if (req.operation === "DELETE") {
           return;
         }
 
@@ -79,6 +80,7 @@ export async function mutateProcessor(
         // Run the action
         await action.mutateCallback(wrapped);
 
+        // Log on success
         Log.info(actionMetadata, `Mutation action succeeded (${label})`);
 
         // Add annotations to the request to indicate that the capability succeeded
@@ -87,18 +89,9 @@ export async function mutateProcessor(
         updateStatus("warning");
         response.warnings = response.warnings || [];
 
-        let errorMessage = "";
+        const errorMessage = logMutateErrorMessage(e);
 
-        try {
-          if (e.message && e.message !== "[object Object]") {
-            errorMessage = e.message;
-          } else {
-            throw new Error("An error occurred in the mutate action.");
-          }
-        } catch (e) {
-          errorMessage = "An error occurred with the mutate action.";
-        }
-
+        // Log on failure
         Log.error(actionMetadata, `Action failed: ${errorMessage}`);
         response.warnings.push(`Action failed: ${errorMessage}`);
 
@@ -127,7 +120,7 @@ export async function mutateProcessor(
   }
 
   // delete operations can't be mutate, just return before the transformation
-  if (req.operation == "DELETE") {
+  if (req.operation === "DELETE") {
     return response;
   }
 
@@ -158,3 +151,15 @@ export async function mutateProcessor(
 
   return response;
 }
+
+const logMutateErrorMessage = (e: Error): string => {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+};

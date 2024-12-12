@@ -3,17 +3,23 @@
 
 import { afterAll, beforeAll, expect, it } from "@jest/globals";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { Agent } from "https";
 import { fetch } from "kubernetes-fluent-client";
-import { RequestInit } from "node-fetch";
+import { RequestInit, Agent } from "undici";
 import { cwd } from "./entrypoint.test";
 import { sleep } from "./k8s";
 
 const fetchBaseUrl = "https://localhost:3000";
 const fetchOpts: RequestInit = {
-  agent: new Agent({
-    // Avoid tls issues for self-signed certs
-    rejectUnauthorized: false,
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json; charset=UTF-8",
+  },
+  dispatcher: new Agent({
+    // disable keep-alive https://github.com/nodejs/undici/issues/2522#issuecomment-1859213319
+    pipelining: 0,
+    connect: {
+      rejectUnauthorized: false,
+    },
   }),
 };
 
@@ -32,13 +38,13 @@ export function peprDev() {
   let cmd: ChildProcessWithoutNullStreams;
   let success = false;
 
-  beforeAll(() =>{
-    console.info("!!!STARTING PEPR-DEV TESTS!!!")
-  })
+  beforeAll(() => {
+    console.info("!!!STARTING PEPR-DEV TESTS!!!");
+  });
 
-  afterAll(() =>{
-    console.info("!!!FINISHED PEPR-DEV TESTS!!!")
-  })
+  afterAll(() => {
+    console.info("!!!FINISHED PEPR-DEV TESTS!!!");
+  });
 
   it("should start the Pepr dev server", () => {
     cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd, stdio: "pipe" });
@@ -89,7 +95,6 @@ export function peprDev() {
 
       // Convert buffer to string
       const strData = data.toString();
-      console.log(strData);
 
       // Check if any expected lines are found
       expectedLines = expectedLines.filter(expectedLine => {
@@ -97,14 +102,12 @@ export function peprDev() {
         return !strData.replace(/\s+/g, " ").includes(expectedLine);
       });
 
-      console.info(`Expected lines remaining: ${expectedLines.length}`);
-      console.debug(`Remaining expected lines: ${expectedLines}`);
-
       // If all expected lines are found, resolve the promise
-      if (expectedLines.length < 1) {
+      if (expectedLines.length > 0) {
+        console.log(`still waiting on ${expectedLines.length} lines...`);
+      } else {
         // Abort all further processing
         success = true;
-
         // Finish the test
         done();
       }

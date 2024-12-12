@@ -6,45 +6,61 @@ import { loadYaml } from "@kubernetes/client-node";
 import { exec, execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { V1ObjectMeta, KubernetesObject } from '@kubernetes/client-node';
+import { V1ObjectMeta, KubernetesObject } from "@kubernetes/client-node";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
 
-export function peprBuild() {
+const outputDir = "dist/pepr-test-module/child/folder";
 
-  const moduleName = "pepr-test-module"
+export function peprBuild() {
+  const moduleName = "pepr-test-module";
 
   beforeAll(() => {
-    console.info("!!!STARTING PEPR-BUILD TESTS!!!")
-    execSync(`jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'})
-    execSync('npm install', {cwd: 'pepr-test-module'})
-    console.log(execSync(`jq '.dependencies' package.json`, {cwd: 'pepr-test-module'}).toString())
+    console.info("!!!STARTING PEPR-BUILD TESTS!!!");
+    execSync(
+      `jq '.dependencies.pepr = "file:../0.0.0-development"' package.json > temp.json && mv temp.json package.json`,
+      { cwd: "pepr-test-module" },
+    );
+    execSync("npm install", { cwd: "pepr-test-module" });
+    console.log(
+      execSync(`jq '.dependencies' package.json`, { cwd: "pepr-test-module" }).toString(),
+    );
 
     //Prepare the 'env' key in the test module's package.json
-    const envValues = '{"MY_CUSTOM_VAR": "example-value","ZARF_VAR": "###ZARF_VAR_THING###"}'
-    execSync(`jq \'.pepr.env = ${envValues}\' package.json > temp.json && mv temp.json package.json`, {cwd: 'pepr-test-module'});
-  })
+    const envValues = '{"MY_CUSTOM_VAR": "example-value","ZARF_VAR": "###ZARF_VAR_THING###"}';
+    execSync(
+      `jq \'.pepr.env = ${envValues}\' package.json > temp.json && mv temp.json package.json`,
+      { cwd: "pepr-test-module" },
+    );
+  });
 
-  afterAll(()=>{
-    console.info("!!!FINISHED PEPR-BUILD TESTS!!!!")
-  })
+  afterAll(() => {
+    console.info("!!!FINISHED PEPR-BUILD TESTS!!!!");
+  });
 
   it("should successfully build the Pepr project", async () => {
-
     execSync(`npx pepr build`, { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
   });
 
-  it("should generate the K8s yaml file", async () => {
-    const files = fs.readdir(`${cwd}/dist`)
-    const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
-    await fs.access(resolve(cwd, "dist", yamlFile as string)); //TODO: Type coercion
-    //Assert: What's a good assertion?
+  it("should successfully build the Pepr project with arguments", async () => {
+    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
+      cwd: cwd,
+      stdio: "inherit",
+    });
+  });
+
+  it("should generate produce the K8s yaml file", async () => {
+    await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
   });
 
   it("should generate the zarf.yaml file", async () => {
     await fs.access(resolve(cwd, "dist", "zarf.yaml"));
     await validateZarfYaml();
+  });
+
+  it("should generate a scoped ClusterRole", async () => {
+    await validateClusterRoleYaml();
   });
 
   it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {
@@ -59,65 +75,72 @@ export function peprBuild() {
 
     const expectedWatcherEnv = [
       {
-        "name": "PEPR_PRETTY_LOG",
-        "value": "false"
+        name: "PEPR_PRETTY_LOG",
+        value: "false",
       },
       {
-        "name": "LOG_LEVEL",
-        "value": "info"
+        name: "LOG_LEVEL",
+        value: "info",
       },
       {
-        "name": "MY_CUSTOM_VAR",
-        "value": "example-value"
+        name: "MY_CUSTOM_VAR",
+        value: "example-value",
       },
       {
-        "name": "ZARF_VAR",
-        "value": "###ZARF_VAR_THING###"
-      }
+        name: "ZARF_VAR",
+        value: "###ZARF_VAR_THING###",
+      },
     ];
 
     const expectedAdmissionEnv = [
       {
-        "name": "PEPR_PRETTY_LOG",
-        "value": "false"
+        name: "PEPR_PRETTY_LOG",
+        value: "false",
       },
       {
-        "name": "LOG_LEVEL",
-        "value": "info"
+        name: "LOG_LEVEL",
+        value: "info",
       },
       {
-        "name": "MY_CUSTOM_VAR",
-        "value": "example-value"
+        name: "MY_CUSTOM_VAR",
+        value: "example-value",
       },
       {
-        "name": "ZARF_VAR",
-        "value": "###ZARF_VAR_THING###"
-      }
-    ]
+        name: "ZARF_VAR",
+        value: "###ZARF_VAR_THING###",
+      },
+    ];
 
     try {
-      const files = fs.readdir(`${cwd}/dist`)
-      const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
-      const chartDirectoryName = yamlFile?.split('.')[0].split('-').slice(-5).join("-").concat("-chart") as string; //TODO: Type coercion
-
-      const valuesYaml = await fs.readFile(resolve(cwd, "dist", chartDirectoryName, "values.yaml"), "utf8");
+      const valuesYaml = await fs.readFile(
+        resolve(cwd, "dist", "static-test-chart", "values.yaml"),
+        "utf8",
+      );
       const valuesJSON = yaml.load(valuesYaml) as ValuesJSON;
       expect(valuesJSON.admission.env).toEqual(expectedAdmissionEnv);
       expect(valuesJSON.watcher!.env).toEqual(expectedWatcherEnv);
     } catch (error) {
       expect(error).toBeUndefined();
     }
-  })
+  });
+}
+
+async function validateClusterRoleYaml() {
+  // Read the generated yaml files
+  const k8sYaml = await fs.readFile(
+    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
+    "utf8",
+  );
+  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
+
+  expect(k8sYaml.includes(cr)).toEqual(true);
 }
 
 async function validateHelmChart() {
-
-  const files = fs.readdir(`${cwd}/dist`)
-  const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
-  const chartDirectoryName = yamlFile?.split('.')[0].split('-').slice(-5).join("-").concat("-chart") as string; //TODO: Type coercion
-
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", yamlFile as string), "utf8"); //TODO: Type coercion
-  const helmOutput = execSync('helm template .', { cwd: `${cwd}/dist/${chartDirectoryName}`}).toString();
+  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
+  const helmOutput = execSync("helm template .", {
+    cwd: `${cwd}/dist/static-test-chart`,
+  }).toString();
 
   const helmParsed = parseYAMLToJSON(helmOutput);
   const k8sParsed = parseYAMLToJSON(k8sYaml);
@@ -136,8 +159,8 @@ async function validateZarfYaml() {
   // Get the version of the pepr binary
   const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
 
-  const files = fs.readdir(`${cwd}/dist`)
-  const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file))
+  const files = fs.readdir(`${cwd}/dist`);
+  const yamlFile = (await files).find(file => /.*pepr-module.*\.yaml/.test(file));
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", yamlFile as string), "utf8"); //TODO: Type coercion
   const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
@@ -146,7 +169,7 @@ async function validateZarfYaml() {
   const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${peprVer}`;
 
   //TODO: get expected metadtaa.name in a better way
-  const metadataName = yamlFile?.split('.')[0].split('-') as string[]; //TODO: Type coercion
+  const metadataName = yamlFile?.split(".")[0].split("-") as string[]; //TODO: Type coercion
   const expectedMetaDataName = metadataName[0].concat("-").concat(metadataName.slice(-5).join("-"));
 
   // The expected zarf yaml contents
@@ -198,8 +221,10 @@ function parseYAMLToJSON(yamlContent: string): KubernetesObject[] | null {
 function sortKubernetesObjects(objects: KubernetesObject[]): KubernetesObject[] {
   return objects.sort((a, b) => {
     if (a?.kind !== b?.kind) {
-      return (a?.kind ?? '').localeCompare(b?.kind ?? '');
+      return (a?.kind ?? "").localeCompare(b?.kind ?? "");
     }
-    return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? '').localeCompare((b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? '');
+    return ((a && a.metadata && (a.metadata as V1ObjectMeta)?.name) ?? "").localeCompare(
+      (b && b.metadata && (b.metadata as V1ObjectMeta)?.name) ?? "",
+    );
   });
 }
