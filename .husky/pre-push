@@ -7,8 +7,8 @@ MAX_CHANGES=3 #Avg commit size on main is 340 as of 12 Dec 2024
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 # Get the remote and branch being pushed to
-remote_name=$1
-remote_branch=$2
+remote_name="origin"
+remote_branch="main"
 
 # Get the list of commits being pushed
 # Only works if local tracking branch exists and is properly set
