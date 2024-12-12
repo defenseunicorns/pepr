@@ -58,22 +58,26 @@ export function logMutateErrorMessage(e: Error): string {
   }
 }
 
-export function skipDecode(wrapped: PeprMutateRequest<KubernetesObject>): string[] {
+export function decodeData(
+  wrapped: PeprMutateRequest<KubernetesObject>,
+): [string[], PeprMutateRequest<KubernetesObject>] {
   let skipped: string[] = [];
 
   const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
   if (isSecret) {
+    // convertFromBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
     skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
-  return skipped;
+  return [skipped, wrapped];
 }
 
-export function unskipRecode(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
+export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
   const transformed = clone(wrapped.Raw);
 
   const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret && skipped.length > 0) {
+  if (isSecret) {
+    // convertToBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
     convertToBase64Map(transformed as unknown as kind.Secret, skipped);
   }
 
@@ -140,8 +144,9 @@ export async function mutateProcessor(
     allowed: false,
   };
 
-  // Track base64-encoded data fields that should be skipped during decoding
-  const skipped = skipDecode(wrapped);
+  // track base64-encoded data fields that should be decoded before / reencoded after processing
+  let skipped: string[] = [];
+  [skipped, wrapped] = decodeData(wrapped);
 
   Log.info(reqMetadata, `Processing request`);
 
@@ -197,7 +202,7 @@ export async function mutateProcessor(
   }
 
   // unskip base64-encoded data fields that were skipDecode'd
-  const transformed = unskipRecode(wrapped, skipped);
+  const transformed = reencodeData(wrapped, skipped);
 
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
