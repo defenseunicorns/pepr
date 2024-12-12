@@ -25,8 +25,15 @@ fi
 stats=$(git diff --shortstat ${remote_name}/${remote_branch}...HEAD 2>/dev/null || echo "")
 
 # Extract the number of insertions and deletions
-insertions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $2); print $2}' || echo "0")
-deletions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $3); print $3}' || echo "0")
+insertions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $2); print $2}')
+if [ -z "$insertions" ]; then
+  insertions="0"
+fi
+
+deletions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $3); print $3}')
+if [ -z "$deletions" ]; then
+  deletions="0"
+fi
 
 total_changes=$((insertions + deletions))
 
@@ -35,7 +42,7 @@ total_changes=$((insertions + deletions))
 if [[ "$total_changes" -gt "$MAX_CHANGES" ]]; then
     echo "[WARNING] This push has $total_changes changes $insertions(+), $deletions(-), threshold is $MAX_CHANGES total changes."
     echo "Consider breaking your changes into smaller, more manageable pull requests."
-    read -p "Do you want to proceed with the push? (y/n, default is n): " choice
+    read -p "Do you want to proceed with the push? (y/n, default is n): " choice < /dev/tty
     choice=${choice:-n} # Set default choice to 'n' if no input
     if [[ "$choice" != "y" ]]; then
         echo "Push aborted."
