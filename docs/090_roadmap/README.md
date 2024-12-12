@@ -82,8 +82,6 @@ _2025 Roadmap_
 ## Phase 2: Durable Storage for Metrics and Performance Tests / Transactional Pepr Store
 
 - **Q2**:
-  - **Semantic Versioning**:
-    - Establish a clear versioning scheme and adhere to it. This will help users to understand the impact of changes and make it easier to upgrade.
   - **Professional Dashboard displaying metrics and performance tests originating from CI**:
   - **Determine if a Transactional PeprStore makes sense**:
     - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
