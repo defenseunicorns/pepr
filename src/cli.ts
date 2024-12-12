@@ -15,7 +15,7 @@ import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
-
+console.log("Test CI");
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
