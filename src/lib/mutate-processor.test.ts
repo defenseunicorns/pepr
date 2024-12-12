@@ -117,7 +117,7 @@ describe("decodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const [skipped, wrapped] = sut.decodeData(testPeprMutateRequest);
+    const { skipped, wrapped } = sut.decodeData(testPeprMutateRequest);
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(1);
     expect(mockConvertFromBase64Map.mock.calls[0].at(0)).toBe(testPeprMutateRequest.Raw);
@@ -136,7 +136,7 @@ describe("decodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const [skipped, wrapped] = sut.decodeData(testPeprMutateRequest);
+    const { skipped, wrapped } = sut.decodeData(testPeprMutateRequest);
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(0);
     expect(skipped).toEqual([]);

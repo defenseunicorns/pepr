@@ -58,9 +58,10 @@ export function logMutateErrorMessage(e: Error): string {
   }
 }
 
-export function decodeData(
-  wrapped: PeprMutateRequest<KubernetesObject>,
-): [string[], PeprMutateRequest<KubernetesObject>] {
+export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {
+  skipped: string[];
+  wrapped: PeprMutateRequest<KubernetesObject>;
+} {
   let skipped: string[] = [];
 
   const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
@@ -69,7 +70,7 @@ export function decodeData(
     skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
-  return [skipped, wrapped];
+  return { skipped, wrapped };
 }
 
 export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
@@ -143,8 +144,8 @@ export async function mutateProcessor(
     allowed: false,
   };
 
-  let wrapped = new PeprMutateRequest(req);
-  const skipped = decodeData(wrapped);
+  const decoded = decodeData(new PeprMutateRequest(req));
+  let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
 
@@ -200,7 +201,7 @@ export async function mutateProcessor(
   }
 
   // unskip base64-encoded data fields that were skipDecode'd
-  const transformed = reencodeData(wrapped, skipped);
+  const transformed = reencodeData(wrapped, decoded.skipped);
 
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
