@@ -5,7 +5,7 @@ import { KubernetesListObject } from "@kubernetes/client-node";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { RootCmd } from "./root";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("uuid [uuid]")
     .description("Module UUID(s) currently deployed in the cluster")

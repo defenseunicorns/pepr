@@ -6,7 +6,7 @@ import prompt from "prompts";
 
 import { RootCmd } from "./root";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("kfc [args...]")
     .description("Execute Kubernetes Fluent Client commands")
