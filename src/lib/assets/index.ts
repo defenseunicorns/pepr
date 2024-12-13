@@ -16,7 +16,7 @@ import { dedent } from "../helpers";
 import { resolve } from "path";
 import {
   chartYaml,
-  nsTemplate,
+  namespaceTemplate,
   admissionDeployTemplate,
   watcherDeployTemplate,
   clusterRoleTemplate,
@@ -25,7 +25,7 @@ import {
 import { promises as fs } from "fs";
 import { webhookConfig } from "./webhooks";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { watcher, moduleSecret } from "./pods";
+import { getWatcher, getModuleSecret } from "./pods";
 
 import { clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { createDirectoryIfNotExists } from "../filesystemService";
@@ -51,7 +51,7 @@ function createWebhookYaml(
   );
 }
 
-function helmLayout(basePath: string, unique: string) {
+function helmLayout(basePath: string, unique: string): Record<string, Record<string, string>> {
   const helm: Record<string, Record<string, string>> = {
     dirs: {
       chart: resolve(`${basePath}/${unique}-chart`),
@@ -119,20 +119,20 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
-  setHash = (hash: string) => {
+  setHash = (hash: string): void => {
     this.hash = hash;
   };
 
-  deploy = async (force: boolean, webhookTimeout?: number) => {
+  deploy = async (force: boolean, webhookTimeout?: number): Promise<void> => {
     this.capabilities = await loadCapabilities(this.path);
     await deploy(this, force, webhookTimeout);
   };
 
-  zarfYaml = (path: string) => zarfYaml(this, path);
+  zarfYaml = (path: string): string => zarfYaml(this, path);
 
-  zarfYamlChart = (path: string) => zarfYamlChart(this, path);
+  zarfYamlChart = (path: string): string => zarfYamlChart(this, path);
 
-  allYaml = async (imagePullSecret?: string) => {
+  allYaml = async (imagePullSecret?: string): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
@@ -143,7 +143,7 @@ export class Assets {
   };
 
   /* eslint max-statements: ["warn", 21] */
-  generateHelmChart = async (basePath: string) => {
+  generateHelmChart = async (basePath: string): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
 
     try {
@@ -156,18 +156,18 @@ export class Assets {
       const code = await fs.readFile(this.path);
 
       const pairs: [string, () => string][] = [
-        [helm.files.chartYaml, () => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
-        [helm.files.namespaceYaml, () => dedent(nsTemplate())],
-        [helm.files.watcherServiceYaml, () => toYaml(watcherService(this.name))],
-        [helm.files.admissionServiceYaml, () => toYaml(service(this.name))],
-        [helm.files.tlsSecretYaml, () => toYaml(tlsSecret(this.name, this.tls))],
-        [helm.files.apiTokenSecretYaml, () => toYaml(apiTokenSecret(this.name, this.apiToken))],
-        [helm.files.storeRoleYaml, () => toYaml(storeRole(this.name))],
-        [helm.files.storeRoleBindingYaml, () => toYaml(storeRoleBinding(this.name))],
-        [helm.files.clusterRoleYaml, () => dedent(clusterRoleTemplate())],
-        [helm.files.clusterRoleBindingYaml, () => toYaml(clusterRoleBinding(this.name))],
-        [helm.files.serviceAccountYaml, () => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, () => toYaml(moduleSecret(this.name, code, this.hash))],
+        [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
+        [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
+        [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
+        [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
+        [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
+        [helm.files.apiTokenSecretYaml, (): string => toYaml(apiTokenSecret(this.name, this.apiToken))],
+        [helm.files.storeRoleYaml, (): string => toYaml(storeRole(this.name))],
+        [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
+        [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
+        [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
+        [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
+        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, this.hash))],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
@@ -191,7 +191,7 @@ export class Assets {
         await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this, validateWebhook));
       }
 
-      const watchDeployment = watcher(this, this.hash, this.buildTimestamp);
+      const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);
       if (watchDeployment) {
         await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
         await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));

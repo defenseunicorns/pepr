@@ -1,34 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesObject } from "kubernetes-fluent-client";
-import Log from "./logger";
+import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
 import { sanitizeResourceName } from "../sdk/sdk";
-import {
-  carriedAnnotations,
-  carriedLabels,
-  carriedName,
-  carriedNamespace,
-  carriesIgnoredNamespace,
-  definedAnnotations,
-  definedLabels,
-  definedName,
-  definedNameRegex,
-  definedNamespaces,
-  definedNamespaceRegexes,
-  misboundNamespace,
-  mismatchedAnnotations,
-  mismatchedDeletionTimestamp,
-  mismatchedLabels,
-  mismatchedName,
-  mismatchedNameRegex,
-  mismatchedNamespace,
-  mismatchedNamespaceRegex,
-  missingCarriableNamespace,
-  unbindableNamespaces,
-  uncarryableNamespace,
-} from "./filter/adjudicators";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);
@@ -55,99 +30,12 @@ export function validateHash(expectedHash: string): void {
   }
 }
 
-export type RBACMap = {
+type RBACMap = {
   [key: string]: {
     verbs: string[];
     plural: string;
   };
 };
-
-/**
- * Decide to run callback after the event comes back from API Server
- **/
-export function filterNoMatchReason(
-  binding: Binding,
-  kubernetesObject: Partial<KubernetesObject>,
-  capabilityNamespaces: string[],
-  ignoredNamespaces?: string[],
-): string {
-  const prefix = "Ignoring Watch Callback:";
-
-  // prettier-ignore
-  return (
-    mismatchedDeletionTimestamp(binding, kubernetesObject) ?
-      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
-
-    mismatchedName(binding, kubernetesObject) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(kubernetesObject)}'.` :
-
-    misboundNamespace(binding) ?
-      `${prefix} Cannot use namespace filter on a namespace object.` :
-
-    mismatchedLabels(binding, kubernetesObject) ?
-      (
-        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(kubernetesObject))}'.`
-      ) :
-
-    mismatchedAnnotations(binding, kubernetesObject) ?
-      (
-        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(kubernetesObject))}'.`
-      ) :
-
-    uncarryableNamespace(capabilityNamespaces, kubernetesObject) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    unbindableNamespaces(capabilityNamespaces, binding) ?
-      (
-        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    mismatchedNamespace(binding, kubernetesObject) ?
-      (
-        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
-      ) :
-
-    mismatchedNamespaceRegex(binding, kubernetesObject) ?
-      (
-        `${prefix} Binding defines namespace regexes ` +
-        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(kubernetesObject)}'.`
-      ) :
-
-    mismatchedNameRegex(binding, kubernetesObject) ?
-      (
-        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(kubernetesObject)}'.`
-      ) :
-
-    carriesIgnoredNamespace(ignoredNamespaces, kubernetesObject) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(kubernetesObject)}' ` +
-        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
-      ) :
-
-    missingCarriableNamespace(capabilityNamespaces, kubernetesObject) ? 
-      (
-        `${prefix} Object does not carry a namespace ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
-
-    ""
-  );
-}
-
-export function addVerbIfNotExists(verbs: string[], verb: string) {
-  if (!verbs.includes(verb)) {
-    verbs.push(verb);
-  }
-}
 
 export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
@@ -200,11 +88,11 @@ export function hasAnyOverlap<T>(array1: T[], array2: T[]): boolean {
   return array1.some(element => array2.includes(element));
 }
 
-export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]) {
+export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]): boolean {
   return hasAnyOverlap(bindingNamespaces, ignoreNamespaces);
 }
 
-export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]) {
+export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]): boolean {
   if (!capabilityNamespaces) {
     return false;
   }
@@ -215,7 +103,7 @@ export function generateWatchNamespaceError(
   ignoredNamespaces: string[],
   bindingNamespaces: string[],
   capabilityNamespaces: string[],
-) {
+): string {
   let err = "";
 
   // check if binding uses an ignored namespace
@@ -237,7 +125,7 @@ export function generateWatchNamespaceError(
 }
 
 // namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
-export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
+export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]): void {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
   const bindingRegexNamespaces: string[] = bindings.flatMap(
@@ -256,13 +144,16 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
   }
 
   // Ensure that each regexNamespace matches a capabilityNamespace
+  matchRegexToCapababilityNamespace(bindingRegexNamespaces, capabilityNamespaces);
+  // ensure regexNamespaces do not match ignored ns
+  checkRegexNamespaces(bindingRegexNamespaces, ignoredNamespaces);
+}
 
-  if (
-    bindingRegexNamespaces &&
-    bindingRegexNamespaces.length > 0 &&
-    capabilityNamespaces &&
-    capabilityNamespaces.length > 0
-  ) {
+const matchRegexToCapababilityNamespace = (
+  bindingRegexNamespaces: string[],
+  capabilityNamespaces: string[] | undefined,
+): void => {
+  if (bindingRegexNamespaces.length > 0 && capabilityNamespaces && capabilityNamespaces.length > 0) {
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       matches =
@@ -275,13 +166,10 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       }
     }
   }
-  // ensure regexNamespaces do not match ignored ns
-  if (
-    bindingRegexNamespaces &&
-    bindingRegexNamespaces.length > 0 &&
-    ignoredNamespaces &&
-    ignoredNamespaces.length > 0
-  ) {
+};
+
+const checkRegexNamespaces = (bindingRegexNamespaces: string[], ignoredNamespaces: string[] | undefined): void => {
+  if (bindingRegexNamespaces.length > 0 && ignoredNamespaces && ignoredNamespaces.length > 0) {
     for (const regexNamespace of bindingRegexNamespaces) {
       const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
       if (matchedNS) {
@@ -291,7 +179,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       }
     }
   }
-}
+};
 
 // check if secret is over the size limit
 export function secretOverLimit(str: string): boolean {
@@ -302,8 +190,7 @@ export function secretOverLimit(str: string): boolean {
   return sizeInBytes > oneMiBInBytes;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export const parseTimeout = (value: string, previous: unknown): number => {
+export const parseTimeout = (value: string): number => {
   const parsedValue = parseInt(value, 10);
   const floatValue = parseFloat(value);
   if (isNaN(parsedValue)) {

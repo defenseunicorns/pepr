@@ -66,3 +66,38 @@ _2024 Roadmap_
     - Load test Pepr/KFC to identify bottlenecks and areas of improvement.
     - Ensure that Pepr/KFC can handle a large number of resources and events over a sustained period of time (nightly).
 
+_2025 Roadmap_  
+## Phase 1: Code Quality - Experimentation 
+
+- **Q1**:
+  - **Turn on eslint enforcement and configure settings and see no warnings**:
+    - Eliminate circular dependencies, complexity, return statements, etc.
+  - **Metric and Performance Baselining**:
+    - Establish a baseline for performance and resource utilization metrics. Use this data to make informed decisions about the direction of the project in terms of Deno2
+  - **OTEL Preparation**:
+    - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core prespective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
+  - **Nightly Release**:
+    - Establish a nightly release process. This will help us to catch bugs early and ensure that the project is always in a releasable state.
+
+## Phase 2: Durable Storage for Metrics and Performance Tests / Transactional Pepr Store
+
+- **Q2**:
+  - **Professional Dashboard displaying metrics and performance tests originating from CI**:
+  - **Determine if a Transactional PeprStore makes sense**:
+    - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
+  - **Experimentation with Deno2**:
+    - Experiment with Deno2 through Dash Days and see if it can be used in the project. Look into the performance improvements and new features that Deno2 brings to the table. 
+
+
+## Phase 3: TBD
+
+- **Q3**:
+  - **Deno2 Implementation**:
+    - If determined to be advisable, move forward with migrating the project to Deno2 (starting with the kubernetes-fluent-client..?). This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
+  - **Transactional PeprStore Implementation**:
+    - Begin integrating transactional functionality into PeprStore. The implementation will emphasize robust testing and clear documentation to support fast and reliable data operations in a transactional manner.
+
+## Phase 4: TDB
+
+- **Q4**:
+

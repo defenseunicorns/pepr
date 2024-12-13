@@ -20,7 +20,7 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
 
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean) {
+export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
   const { config, capabilities } = assets;
   const rules: V1RuleWithOperations[] = [];
 

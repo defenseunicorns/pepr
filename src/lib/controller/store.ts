@@ -7,12 +7,13 @@ import { startsWith } from "ramda";
 
 import { Capability } from "../capability";
 import { Store } from "../k8s";
-import Log, { redactedPatch, redactedStore } from "../logger";
+import Log, { redactedPatch, redactedStore } from "../telemetry/logger";
 import { DataOp, DataSender, DataStore, Storage } from "../storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";
-export const debounceBackoff = 1000;
+const debounceBackoffReceive = 1000;
+const debounceBackoffSend = 4000;
 
 export class StoreController {
   #name: string;
@@ -25,7 +26,7 @@ export class StoreController {
 
     this.#name = name;
 
-    const setStorageInstance = (registrationFunction: () => Storage, name: string) => {
+    const setStorageInstance = (registrationFunction: () => Storage, name: string): void => {
       const scheduleStore = registrationFunction();
 
       // Bind the store sender to the capability
@@ -61,13 +62,22 @@ export class StoreController {
     );
   }
 
-  #setupWatch = () => {
+  #setupWatch = (): void => {
     const watcher = K8s(Store, { name: this.#name, namespace }).Watch(this.#receive);
     watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
   };
 
-  #migrateAndSetupWatch = async (store: Store) => {
+  #migrateAndSetupWatch = async (store: Store): Promise<void> => {
     Log.debug(redactedStore(store), "Pepr Store migration");
+    // Add cacheID label to store
+    await K8s(Store, { namespace, name: this.#name }).Patch([
+      {
+        op: "add",
+        path: "/metadata/labels/pepr.dev-cacheID",
+        value: `${Date.now()}`,
+      },
+    ]);
+
     const data: DataStore = store.data || {};
     let storeCache: Record<string, Operation> = {};
 
@@ -96,11 +106,11 @@ export class StoreController {
     this.#setupWatch();
   };
 
-  #receive = (store: Store) => {
+  #receive = (store: Store): void => {
     Log.debug(redactedStore(store), "Pepr Store update");
 
     // Wrap the update in a debounced function
-    const debounced = () => {
+    const debounced = (): void => {
       // Base64 decode the data
       const data: DataStore = store.data || {};
 
@@ -134,10 +144,10 @@ export class StoreController {
 
     // Debounce the update to 1 second to avoid multiple rapid calls
     clearTimeout(this.#sendDebounce);
-    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoff);
+    this.#sendDebounce = setTimeout(debounced, this.#onReady ? 0 : debounceBackoffReceive);
   };
 
-  #send = (capabilityName: string) => {
+  #send = (capabilityName: string): DataSender => {
     let storeCache: Record<string, Operation> = {};
 
     // Create a sender function for the capability to add/remove data from the store
@@ -151,12 +161,12 @@ export class StoreController {
         Log.debug(redactedPatch(storeCache), "Sending updates to Pepr store");
         void sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
       }
-    }, debounceBackoff);
+    }, debounceBackoffSend);
 
     return sender;
   };
 
-  #createStoreResource = async (e: unknown) => {
+  #createStoreResource = async (e: unknown): Promise<void> => {
     Log.info(`Pepr store not found, creating...`);
     Log.debug(e);
 
@@ -165,6 +175,9 @@ export class StoreController {
         metadata: {
           name: this.#name,
           namespace,
+          labels: {
+            "pepr.dev-cacheID": `${Date.now()}`,
+          },
         },
         data: {
           // JSON Patch will die if the data is empty, so we need to add a placeholder

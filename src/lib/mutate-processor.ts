@@ -2,111 +2,187 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
-import { kind } from "kubernetes-fluent-client";
+import { kind, KubernetesObject } from "kubernetes-fluent-client";
+import { clone } from "ramda";
 
 import { Capability } from "./capability";
 import { Errors } from "./errors";
 import { shouldSkipRequest } from "./filter/filter";
 import { MutateResponse } from "./k8s";
-import { AdmissionRequest } from "./types";
-import Log from "./logger";
+import { AdmissionRequest, Binding } from "./types";
+import Log from "./telemetry/logger";
 import { ModuleConfig } from "./module";
 import { PeprMutateRequest } from "./mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
 
+export interface Bindable {
+  req: AdmissionRequest;
+  config: ModuleConfig;
+  name: string;
+  namespaces: string[];
+  binding: Binding;
+  actMeta: Record<string, string>;
+}
+
+export interface Result {
+  wrapped: PeprMutateRequest<KubernetesObject>;
+  response: MutateResponse;
+}
+
+// Add annotations to the request to indicate that the capability started processing
+// this will allow tracking of failed mutations that were permitted to continue
+export function updateStatus(
+  config: ModuleConfig,
+  name: string,
+  wrapped: PeprMutateRequest<KubernetesObject>,
+  status: string,
+): PeprMutateRequest<KubernetesObject> {
+  // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
+  if (wrapped.Request.operation === "DELETE") {
+    return wrapped;
+  }
+  wrapped.SetAnnotation(`${config.uuid}.pepr.dev/${name}`, status);
+
+  return wrapped;
+}
+
+export function logMutateErrorMessage(e: Error): string {
+  try {
+    if (e.message && e.message !== "[object Object]") {
+      return e.message;
+    } else {
+      throw new Error("An error occurred in the mutate action.");
+    }
+  } catch (e) {
+    return "An error occurred with the mutate action.";
+  }
+}
+
+export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {
+  skipped: string[];
+  wrapped: PeprMutateRequest<KubernetesObject>;
+} {
+  let skipped: string[] = [];
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret) {
+    // convertFromBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
+    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
+  }
+
+  return { skipped, wrapped };
+}
+
+export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
+  const transformed = clone(wrapped.Raw);
+
+  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
+  if (isSecret) {
+    // convertToBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
+    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
+  }
+
+  return transformed;
+}
+
+export async function processRequest(
+  bindable: Bindable,
+  wrapped: PeprMutateRequest<KubernetesObject>,
+  response: MutateResponse,
+): Promise<Result> {
+  const { binding, actMeta, name, config } = bindable;
+
+  const label = binding.mutateCallback!.name;
+  Log.info(actMeta, `Processing mutation action (${label})`);
+
+  wrapped = updateStatus(config, name, wrapped, "started");
+
+  try {
+    // Run the action
+    await binding.mutateCallback!(wrapped);
+
+    // Log on success
+    Log.info(actMeta, `Mutation action succeeded (${label})`);
+
+    // Add annotations to the request to indicate that the capability succeeded
+    wrapped = updateStatus(config, name, wrapped, "succeeded");
+  } catch (e) {
+    wrapped = updateStatus(config, name, wrapped, "warning");
+    response.warnings = response.warnings || [];
+
+    const errorMessage = logMutateErrorMessage(e);
+
+    // Log on failure
+    Log.error(actMeta, `Action failed: ${errorMessage}`);
+    response.warnings.push(`Action failed: ${errorMessage}`);
+
+    switch (config.onError) {
+      case Errors.reject:
+        response.result = "Pepr module configured to reject on error";
+        break;
+
+      case Errors.audit:
+        response.auditAnnotations = response.auditAnnotations || {};
+        response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
+        break;
+    }
+  }
+
+  return { wrapped, response };
+}
+
+/* eslint max-statements: ["warn", 25] */
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
-  const wrapped = new PeprMutateRequest(req);
-  const response: MutateResponse = {
+  let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
     allowed: false,
   };
 
-  // Track whether any capability matched the request
-  let matchedAction = false;
-
-  // Track data fields that should be skipped during decoding
-  let skipDecode: string[] = [];
-
-  // If the resource is a secret, decode the data
-  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
-  if (isSecret) {
-    skipDecode = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
-  }
+  const decoded = decodeData(new PeprMutateRequest(req));
+  let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
 
-  for (const { name, bindings, namespaces } of capabilities) {
-    const actionMetadata = { ...reqMetadata, name };
-    for (const action of bindings) {
-      // Skip this action if it's not a mutate action
-      if (!action.mutateCallback) {
-        continue;
-      }
+  let bindables: Bindable[] = capabilities.flatMap(capa =>
+    capa.bindings.map(bind => ({
+      req,
+      config,
+      name: capa.name,
+      namespaces: capa.namespaces,
+      binding: bind,
+      actMeta: { ...reqMetadata, name: capa.name },
+    })),
+  );
 
-      // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(action, req, namespaces, config?.alwaysIgnore?.namespaces);
-      if (shouldSkip !== "") {
-        Log.debug(shouldSkip);
-        continue;
-      }
+  bindables = bindables.filter(bind => {
+    if (!bind.binding.mutateCallback) {
+      return false;
+    }
 
-      const label = action.mutateCallback.name;
-      Log.info(actionMetadata, `Processing mutation action (${label})`);
-      matchedAction = true;
+    const shouldSkip = shouldSkipRequest(
+      bind.binding,
+      bind.req,
+      bind.namespaces,
+      bind.config?.alwaysIgnore?.namespaces,
+    );
+    if (shouldSkip !== "") {
+      Log.debug(shouldSkip);
+      return false;
+    }
 
-      // Add annotations to the request to indicate that the capability started processing
-      // this will allow tracking of failed mutations that were permitted to continue
-      const updateStatus = (status: string) => {
-        // Only update the status if the request is a CREATE or UPDATE (we don't use CONNECT)
-        if (req.operation === "DELETE") {
-          return;
-        }
+    return true;
+  });
 
-        const identifier = `${config.uuid}.pepr.dev/${name}`;
-        wrapped.Raw.metadata = wrapped.Raw.metadata || {};
-        wrapped.Raw.metadata.annotations = wrapped.Raw.metadata.annotations || {};
-        wrapped.Raw.metadata.annotations[identifier] = status;
-      };
-
-      updateStatus("started");
-
-      try {
-        // Run the action
-        await action.mutateCallback(wrapped);
-
-        // Log on success
-        Log.info(actionMetadata, `Mutation action succeeded (${label})`);
-
-        // Add annotations to the request to indicate that the capability succeeded
-        updateStatus("succeeded");
-      } catch (e) {
-        updateStatus("warning");
-        response.warnings = response.warnings || [];
-
-        const errorMessage = logMutateErrorMessage(e);
-
-        // Log on failure
-        Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-        response.warnings.push(`Action failed: ${errorMessage}`);
-
-        switch (config.onError) {
-          case Errors.reject:
-            Log.error(actionMetadata, `Action failed: ${errorMessage}`);
-            response.result = "Pepr module configured to reject on error";
-            return response;
-
-          case Errors.audit:
-            response.auditAnnotations = response.auditAnnotations || {};
-            response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
-            break;
-        }
-      }
+  for (const bindable of bindables) {
+    ({ wrapped, response } = await processRequest(bindable, wrapped, response));
+    if (config.onError === Errors.reject && response?.warnings!.length > 0) {
+      return response;
     }
   }
 
@@ -114,7 +190,7 @@ export async function mutateProcessor(
   response.allowed = true;
 
   // If no capability matched the request, exit early
-  if (!matchedAction) {
+  if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
     return response;
   }
@@ -124,12 +200,8 @@ export async function mutateProcessor(
     return response;
   }
 
-  const transformed = wrapped.Raw;
-
-  // Post-process the Secret requests to convert it back to the original format
-  if (isSecret) {
-    convertToBase64Map(transformed as unknown as kind.Secret, skipDecode);
-  }
+  // unskip base64-encoded data fields that were skipDecode'd
+  const transformed = reencodeData(wrapped, decoded.skipped);
 
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
@@ -151,15 +223,3 @@ export async function mutateProcessor(
 
   return response;
 }
-
-const logMutateErrorMessage = (e: Error): string => {
-  try {
-    if (e.message && e.message !== "[object Object]") {
-      return e.message;
-    } else {
-      throw new Error("An error occurred in the mutate action.");
-    }
-  } catch (e) {
-    return "An error occurred with the mutate action.";
-  }
-};
