@@ -93,7 +93,7 @@ export async function getUserConfirmation(opts: { confirm: boolean }): Promise<b
   return confirm.confirm ? true : false;
 }
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
