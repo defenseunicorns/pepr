@@ -14,11 +14,11 @@ export function AdmissionRequestCreatePod() {
   return cloneObject<kind.Pod>(admissionRequestCreatePod);
 }
 
-export function AdmissionRequestDeletePod() {
+export function AdmissionRequestDeletePod(): AdmissionRequest<kind.Pod> {
   return cloneObject<kind.Pod>(admissionRequestDeletePod);
 }
 
-export function AdmissionRequestCreateClusterRole() {
+export function AdmissionRequestCreateClusterRole(): AdmissionRequest<kind.ClusterRole> {
   return cloneObject<kind.ClusterRole>(admissionRequestCreateClusterRole);
 }
 

@@ -5,7 +5,7 @@ import { Command } from "commander";
 
 export class RootCmd extends Command {
   // eslint-disable-next-line class-methods-use-this
-  createCommand(name: string) {
+  createCommand(name: string): Command {
     const cmd = new Command(name);
     return cmd;
   }
