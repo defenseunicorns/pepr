@@ -12,7 +12,7 @@ import { sanitizeName } from "./init/utils";
 import { deployImagePullSecret } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 
-export interface PullSecretDetails {
+export interface ImagePullSecretDetails {
   pullSecret?: string;
   dockerServer?: string;
   dockerUsername?: string;
@@ -20,7 +20,7 @@ export interface PullSecretDetails {
   dockerPassword?: string;
 }
 
-export function validatePullSecretDetails(details: PullSecretDetails): {
+export function validateImagePullSecretDetails(details: ImagePullSecretDetails): {
   valid: boolean;
   error?: string;
 } {
@@ -60,6 +60,39 @@ export function validatePullSecretDetails(details: PullSecretDetails): {
   return { valid: true };
 }
 
+export type ValidatedImagePullSecretDetails = Required<ImagePullSecretDetails>;
+
+function generateImagePullSecret(details: ValidatedImagePullSecretDetails): ImagePullSecret {
+  const auth = Buffer.from(`${details.dockerUsername}:${details.dockerPassword}`).toString(
+    "base64",
+  );
+  return {
+    auths: {
+      [details.dockerServer]: {
+        username: details.dockerUsername,
+        password: details.dockerPassword,
+        email: details.dockerEmail,
+        auth,
+      },
+    },
+  };
+}
+
+export async function getUserConfirmation(opts: { confirm: boolean }): Promise<boolean> {
+  if (opts.confirm) {
+    return true;
+  }
+
+  // Prompt the user to confirm
+  const confirm = await prompt({
+    type: "confirm",
+    name: "confirm",
+    message: "This will remove and redeploy the module. Continue?",
+  });
+
+  return confirm.confirm ? true : false;
+}
+
 export default function (program: RootCmd) {
   program
     .command("deploy")
@@ -73,72 +106,37 @@ export default function (program: RootCmd) {
     .option("--docker-password <password>", "Password for Docker registry")
     .option("--force", "Force deploy the module, override manager field")
     .action(async opts => {
-      const val = validatePullSecretDetails(opts);
-      if (!val.valid) {
-        console.error(val.error);
+      const valResp = validateImagePullSecretDetails(opts);
+      if (!valResp.valid) {
+        console.error(valResp.error);
         process.exit(1);
       }
 
-      let imagePullSecret: ImagePullSecret | undefined;
-
       if (opts.pullSecret) {
-        imagePullSecret = {
-          auths: {
-            [opts.dockerServer]: {
-              username: opts.dockerUsername,
-              password: opts.dockerPassword,
-              email: opts.dockerEmail,
-              auth: Buffer.from(`${opts.dockerUsername}:${opts.dockerPassword}`).toString("base64"),
-            },
-          },
-        };
-
-        await deployImagePullSecret(imagePullSecret, opts.pullSecret);
+        await deployImagePullSecret(generateImagePullSecret(opts), opts.pullSecret);
         return;
       }
 
-      if (!opts.confirm) {
-        // Prompt the user to confirm
-        const confirm = await prompt({
-          type: "confirm",
-          name: "confirm",
-          message: "This will remove and redeploy the module. Continue?",
-        });
+      (await getUserConfirmation(opts)) || process.exit(0);
 
-        // Exit if the user doesn't confirm
-        if (!confirm.confirm) {
-          process.exit(0);
-        }
-      }
-
-      // Build the module
-      const buildModuleResult = await buildModule();
-      if (!buildModuleResult) {
+      const builtModule = await buildModule();
+      if (!builtModule) {
         return;
       }
-
-      const { cfg, path } = buildModuleResult;
 
       // Generate a secret for the module
       const webhook = new Assets(
-        {
-          ...cfg.pepr,
-          description: cfg.description,
-        },
-        path,
+        { ...builtModule.cfg.pepr, description: builtModule.cfg.description },
+        builtModule.path,
       );
-
-      if (opts.image) {
-        webhook.image = opts.image;
-      }
-
-      // Identify conf'd webhookTimeout to give to deploy call
-      const timeout = cfg.pepr.webhookTimeout ? cfg.pepr.webhookTimeout : 10;
+      webhook.image = opts.image ?? webhook.image;
 
       try {
-        await webhook.deploy(opts.force, timeout);
+        await webhook.deploy(opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
+
         // wait for capabilities to be loaded and test names
         validateCapabilityNames(webhook.capabilities);
+
         // Wait for the pepr-system resources to be fully up
         await namespaceDeploymentsReady();
         console.info(`✅ Module deployed successfully`);
