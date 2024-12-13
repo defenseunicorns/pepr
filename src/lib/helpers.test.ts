@@ -4,7 +4,6 @@
 import { Binding, CapabilityExport } from "./types";
 import { Event } from "./enums";
 import {
-  addVerbIfNotExists,
   bindingAndCapabilityNSConflict,
   createRBACMap,
   dedent,
@@ -355,20 +354,6 @@ describe("createRBACMap", () => {
     };
 
     expect(result).toEqual(expected);
-  });
-});
-
-describe("addVerbIfNotExists", () => {
-  it("should add a verb if it does not exist in the array", () => {
-    const verbs = ["get", "list"];
-    addVerbIfNotExists(verbs, "watch");
-    expect(verbs).toEqual(["get", "list", "watch"]);
-  });
-
-  it("should not add a verb if it already exists in the array", () => {
-    const verbs = ["get", "list", "watch"];
-    addVerbIfNotExists(verbs, "get");
-    expect(verbs).toEqual(["get", "list", "watch"]); // The array remains unchanged
   });
 });
 

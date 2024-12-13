@@ -37,12 +37,6 @@ type RBACMap = {
   };
 };
 
-export function addVerbIfNotExists(verbs: string[], verb: string): void {
-  if (!verbs.includes(verb)) {
-    verbs.push(verb);
-  }
-}
-
 export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
   return capabilities.reduce((acc: RBACMap, capability: CapabilityExport) => {
     capability.bindings.forEach(binding => {
