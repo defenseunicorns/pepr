@@ -7,7 +7,6 @@ import {
   addVerbIfNotExists,
   bindingAndCapabilityNSConflict,
   createRBACMap,
-  filterNoMatchReason,
   dedent,
   generateWatchNamespaceError,
   hasAnyOverlap,
@@ -22,6 +21,7 @@ import {
   validateCapabilityNames,
   ValidationError,
 } from "./helpers";
+import { filterNoMatchReason } from "./filter/filterNoMatchReason";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
 import { expect, describe, jest, beforeEach, afterEach, it } from "@jest/globals";
