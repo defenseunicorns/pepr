@@ -196,8 +196,7 @@ export function secretOverLimit(str: string): boolean {
   return sizeInBytes > oneMiBInBytes;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export const parseTimeout = (value: string, previous: unknown): number => {
+export const parseTimeout = (value: string): number => {
   const parsedValue = parseInt(value, 10);
   const floatValue = parseFloat(value);
   if (isNaN(parsedValue)) {

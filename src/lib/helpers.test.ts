@@ -683,26 +683,25 @@ describe("namespaceComplianceValidator", () => {
 });
 
 describe("parseTimeout", () => {
-  const PREV = "a";
   it("should return a number when a valid string number between 1 and 30 is provided", () => {
-    expect(parseTimeout("5", PREV)).toBe(5);
-    expect(parseTimeout("1", PREV)).toBe(1);
-    expect(parseTimeout("30", PREV)).toBe(30);
+    expect(parseTimeout("5")).toBe(5);
+    expect(parseTimeout("1")).toBe(1);
+    expect(parseTimeout("30")).toBe(30);
   });
 
   it("should throw an InvalidArgumentError for non-numeric strings", () => {
-    expect(() => parseTimeout("abc", PREV)).toThrow(Error);
-    expect(() => parseTimeout("", PREV)).toThrow(Error);
+    expect(() => parseTimeout("abc")).toThrow(Error);
+    expect(() => parseTimeout("")).toThrow(Error);
   });
 
   it("should throw an InvalidArgumentError for numbers outside the 1-30 range", () => {
-    expect(() => parseTimeout("0", PREV)).toThrow(Error);
-    expect(() => parseTimeout("31", PREV)).toThrow(Error);
+    expect(() => parseTimeout("0")).toThrow(Error);
+    expect(() => parseTimeout("31")).toThrow(Error);
   });
 
   it("should throw an InvalidArgumentError for numeric strings that represent floating point numbers", () => {
-    expect(() => parseTimeout("5.5", PREV)).toThrow(Error);
-    expect(() => parseTimeout("20.1", PREV)).toThrow(Error);
+    expect(() => parseTimeout("5.5")).toThrow(Error);
+    expect(() => parseTimeout("20.1")).toThrow(Error);
   });
 });
 
