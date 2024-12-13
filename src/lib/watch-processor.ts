@@ -3,7 +3,7 @@
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Capability } from "./capability";
-import { filterNoMatchReason } from "./helpers";
+import { filterNoMatchReason } from "./filter/filterNoMatchReason";
 import { removeFinalizer } from "./finalizer";
 import Log from "./telemetry/logger";
 import { Queue } from "./queue";
