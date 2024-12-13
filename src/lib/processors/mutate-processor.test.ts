@@ -3,17 +3,17 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
-import { ModuleConfig } from "./module";
-import { PeprMutateRequest } from "./mutate-request";
+import { ModuleConfig } from "../module";
+import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
-import { AdmissionRequest, Binding, MutateAction } from "./types";
-import { Event, Operation } from "./enums";
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
+import { AdmissionRequest, Binding, MutateAction } from "../types";
+import { Event, Operation } from "../enums";
+import { convertFromBase64Map, convertToBase64Map } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
-import { MutateResponse } from "./k8s";
-import { Errors } from "./errors";
+import { MutateResponse } from "../k8s";
+import { Errors } from "../errors";
 
-jest.mock("./utils");
+jest.mock("../utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
 const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 
