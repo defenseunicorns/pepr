@@ -1,7 +1,7 @@
 // Refs:
 // - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
 
-export function heredoc(strings: TemplateStringsArray, ...values: string[]) {
+export function heredoc(strings: TemplateStringsArray, ...values: string[]): string {
   // shuffle strings & expression values back together
   const zipped = strings
     .reduce((acc: string[], cur, idx) => {
