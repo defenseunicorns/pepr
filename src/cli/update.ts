@@ -17,7 +17,7 @@ import {
 import { write } from "./init/utils";
 import { RootCmd } from "./root";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("update")
     .description("Update this Pepr module. Not recommended for prod as it may change files.")
