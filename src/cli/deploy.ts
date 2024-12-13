@@ -12,6 +12,7 @@ import { sanitizeName } from "./init/utils";
 import { deployImagePullSecret } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 
+//TODO
 export default function (program: RootCmd) {
   program
     .command("deploy")
