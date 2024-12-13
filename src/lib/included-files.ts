@@ -3,7 +3,7 @@
 
 import { promises as fs } from "fs";
 
-export async function createDockerfile(version: string, description: string, includedFiles: string[]) {
+export async function createDockerfile(version: string, description: string, includedFiles: string[]): Promise<void> {
   const file = `
     # Use an official Node.js runtime as the base image
     FROM ghcr.io/defenseunicorns/pepr/controller:v${version}

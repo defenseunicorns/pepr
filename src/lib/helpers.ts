@@ -143,7 +143,7 @@ export function filterNoMatchReason(
   );
 }
 
-export function addVerbIfNotExists(verbs: string[], verb: string) {
+export function addVerbIfNotExists(verbs: string[], verb: string): void {
   if (!verbs.includes(verb)) {
     verbs.push(verb);
   }
@@ -200,11 +200,11 @@ export function hasAnyOverlap<T>(array1: T[], array2: T[]): boolean {
   return array1.some(element => array2.includes(element));
 }
 
-export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]) {
+export function ignoredNamespaceConflict(ignoreNamespaces: string[], bindingNamespaces: string[]): boolean {
   return hasAnyOverlap(bindingNamespaces, ignoreNamespaces);
 }
 
-export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]) {
+export function bindingAndCapabilityNSConflict(bindingNamespaces: string[], capabilityNamespaces: string[]): boolean {
   if (!capabilityNamespaces) {
     return false;
   }
@@ -215,7 +215,7 @@ export function generateWatchNamespaceError(
   ignoredNamespaces: string[],
   bindingNamespaces: string[],
   capabilityNamespaces: string[],
-) {
+): string {
   let err = "";
 
   // check if binding uses an ignored namespace
@@ -237,7 +237,7 @@ export function generateWatchNamespaceError(
 }
 
 // namespaceComplianceValidator ensures that capability bindings respect ignored and capability namespaces
-export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]) {
+export function namespaceComplianceValidator(capability: CapabilityExport, ignoredNamespaces?: string[]): void {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
   const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => binding.filters.namespaces);
   const bindingRegexNamespaces: string[] = bindings.flatMap(
