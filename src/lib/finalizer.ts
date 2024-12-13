@@ -7,7 +7,7 @@ import { Binding, DeepPartial } from "./types";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
 
-export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>) {
+export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>): void {
   // if a DELETE is being processed, don't add a finalizer
   if (request.Request.operation === Operation.DELETE) {
     return;
@@ -28,7 +28,7 @@ export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequ
   request.Merge({ metadata: { finalizers } } as DeepPartial<K>);
 }
 
-export async function removeFinalizer(binding: Binding, obj: KubernetesObject) {
+export async function removeFinalizer(binding: Binding, obj: KubernetesObject): Promise<void> {
   const peprFinal = "pepr.dev/finalizer";
   const meta = obj.metadata!;
   const resource = `${meta.namespace || "ClusterScoped"}/${meta.name}`;
