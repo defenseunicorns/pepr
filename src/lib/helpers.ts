@@ -150,13 +150,16 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
   }
 
   // Ensure that each regexNamespace matches a capabilityNamespace
+  matchRegexToCapababilityNamespace(bindingRegexNamespaces, capabilityNamespaces);
+  // ensure regexNamespaces do not match ignored ns
+  checkRegexNamespaces(bindingRegexNamespaces, ignoredNamespaces);
+}
 
-  if (
-    bindingRegexNamespaces &&
-    bindingRegexNamespaces.length > 0 &&
-    capabilityNamespaces &&
-    capabilityNamespaces.length > 0
-  ) {
+const matchRegexToCapababilityNamespace = (
+  bindingRegexNamespaces: string[],
+  capabilityNamespaces: string[] | undefined,
+): void => {
+  if (bindingRegexNamespaces.length > 0 && capabilityNamespaces && capabilityNamespaces.length > 0) {
     for (const regexNamespace of bindingRegexNamespaces) {
       let matches = false;
       matches =
@@ -169,13 +172,10 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       }
     }
   }
-  // ensure regexNamespaces do not match ignored ns
-  if (
-    bindingRegexNamespaces &&
-    bindingRegexNamespaces.length > 0 &&
-    ignoredNamespaces &&
-    ignoredNamespaces.length > 0
-  ) {
+};
+
+const checkRegexNamespaces = (bindingRegexNamespaces: string[], ignoredNamespaces: string[] | undefined): void => {
+  if (bindingRegexNamespaces.length > 0 && ignoredNamespaces && ignoredNamespaces.length > 0) {
     for (const regexNamespace of bindingRegexNamespaces) {
       const matchedNS = ignoredNamespaces.find(ignoredNS => matchesRegex(regexNamespace, ignoredNS));
       if (matchedNS) {
@@ -185,7 +185,7 @@ export function namespaceComplianceValidator(capability: CapabilityExport, ignor
       }
     }
   }
-}
+};
 
 // check if secret is over the size limit
 export function secretOverLimit(str: string): boolean {
