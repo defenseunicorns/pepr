@@ -6,7 +6,7 @@ import { Controller } from "./controller";
 import { ValidateError } from "./errors";
 import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
 import { CapabilityExport, AdmissionRequest } from "./types";
-import { setupWatch } from "./watch-processor";
+import { setupWatch } from "./processors/watch-processor";
 import { Log } from "../lib";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
@@ -58,12 +58,12 @@ export type PeprModuleOptions = {
 };
 
 // Track if this is a watch mode controller
-export const isWatchMode = () => process.env.PEPR_WATCH_MODE === "true";
+export const isWatchMode = (): boolean => process.env.PEPR_WATCH_MODE === "true";
 
 // Track if Pepr is running in build mode
-export const isBuildMode = () => process.env.PEPR_MODE === "build";
+export const isBuildMode = (): boolean => process.env.PEPR_MODE === "build";
 
-export const isDevMode = () => process.env.PEPR_MODE === "dev";
+export const isDevMode = (): boolean => process.env.PEPR_MODE === "dev";
 
 export class PeprModule {
   #controller!: Controller;
@@ -135,7 +135,7 @@ export class PeprModule {
    *
    * @param port
    */
-  start = (port = 3000) => {
+  start = (port = 3000): void => {
     this.#controller.startServer(port);
   };
 }

@@ -3,7 +3,7 @@
 
 import { promises } from "fs";
 
-export async function createDirectoryIfNotExists(path: string) {
+export async function createDirectoryIfNotExists(path: string): Promise<void> {
   try {
     await promises.access(path);
   } catch (error) {

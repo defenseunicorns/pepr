@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Event, Operation } from "../../enums";
-import { AdmissionRequest, Binding } from "../../types";
+import { AdmissionRequest, Binding, FinalizeAction, WatchLogAction, MutateAction, ValidateAction } from "../../types";
 import {
   __,
   allPass,
@@ -19,7 +19,7 @@ import {
   nthArg,
   pipe,
 } from "ramda";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 
 /*
   Naming scheme:
@@ -144,7 +144,7 @@ export const definesVersion = pipe(definedVersion, equals(""), not);
 export const definedKind = pipe((binding): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
-export const definedCategory = (binding: Partial<Binding>) => {
+export const definedCategory = (binding: Partial<Binding>): string => {
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? "Finalize" :
@@ -153,8 +153,15 @@ export const definedCategory = (binding: Partial<Binding>) => {
     binding.isValidate ? "Validate" :
     "";
 };
+export type DefinedCallbackReturnType =
+  | FinalizeAction<GenericClass, InstanceType<GenericClass>>
+  | WatchLogAction<GenericClass, InstanceType<GenericClass>>
+  | MutateAction<GenericClass, InstanceType<GenericClass>>
+  | ValidateAction<GenericClass, InstanceType<GenericClass>>
+  | null
+  | undefined;
 
-export const definedCallback = (binding: Partial<Binding>) => {
+export const definedCallback = (binding: Partial<Binding>): DefinedCallbackReturnType => {
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? binding.finalizeCallback :

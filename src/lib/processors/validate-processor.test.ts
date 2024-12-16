@@ -3,9 +3,9 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, Filters } from "./types";
-import { Event, Operation } from "./enums";
-import { PeprValidateRequest } from "./validate-request";
+import { AdmissionRequest, Binding, Filters } from "../types";
+import { Event, Operation } from "../enums";
+import { PeprValidateRequest } from "../validate-request";
 import { clone } from "ramda";
 import * as sut from "./validate-processor";
 

@@ -5,7 +5,11 @@ import { Store } from "../k8s";
 import { StatusCodes } from "http-status-codes";
 import { Operation } from "fast-json-patch";
 
-export const sendUpdatesAndFlushCache = async (cache: Record<string, Operation>, namespace: string, name: string) => {
+export const sendUpdatesAndFlushCache = async (
+  cache: Record<string, Operation>,
+  namespace: string,
+  name: string,
+): Promise<Record<string, Operation>> => {
   const indexes = Object.keys(cache);
   const payload = Object.values(cache);
 
