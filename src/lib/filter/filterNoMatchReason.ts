@@ -28,7 +28,7 @@ import { Binding } from "../types";
 /**
  * Decide to run callback after the event comes back from API Server
  **/
-
+//TODO
 export function filterNoMatchReason(
   binding: Binding,
   kubernetesObject: Partial<KubernetesObject>,
