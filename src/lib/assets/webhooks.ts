@@ -24,40 +24,24 @@ const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
   const { event, kind, isMutate, isValidate } = binding;
 
-  // If the module doesn't have a callback for the event, skip it
-  if (isMutateWebhook && !isMutate) {
+  // Skip invalid bindings based on webhook type
+  if ((isMutateWebhook && !isMutate) || (!isMutateWebhook && !isValidate)) {
     return undefined;
   }
 
-  if (!isMutateWebhook && !isValidate) {
-    return undefined;
-  }
-
-  const operations: string[] = [];
-
-  // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
-  if (event === Event.CREATE_OR_UPDATE) {
-    operations.push(Event.CREATE, Event.UPDATE);
-  } else {
-    operations.push(event);
-  }
+  // Translate event to operations
+  const operations = event === Event.CREATE_OR_UPDATE ? [Event.CREATE, Event.UPDATE] : [event];
 
   // Use the plural property if it exists, otherwise use lowercase kind + s
   const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
 
-  const ruleObject = {
+  const ruleObject: V1RuleWithOperations = {
     apiGroups: [kind.group],
     apiVersions: [kind.version || "*"],
     operations,
-    resources: [resource],
+    resources: [resource, ...(resource === "pods" ? ["pods/ephemeralcontainers"] : [])],
   };
 
-  // If the resource is pods, add ephemeralcontainers as well
-  if (resource === "pods") {
-    ruleObject.resources.push("pods/ephemeralcontainers");
-  }
-
-  // Add the rule to the rules array
   return ruleObject;
 };
 
