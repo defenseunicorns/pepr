@@ -5,37 +5,38 @@ import { AdmissionRequest, Binding } from "../types";
 import { Operation } from "../enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
-  carriesIgnoredNamespace,
-  carriedName,
-  definedEvent,
-  declaredOperation,
-  definedName,
-  definedGroup,
-  declaredGroup,
-  definedVersion,
-  declaredVersion,
-  definedKind,
-  declaredKind,
-  definedNamespaces,
-  carriedNamespace,
-  definedLabels,
-  carriedLabels,
-  definedAnnotations,
   carriedAnnotations,
-  definedNamespaceRegexes,
+  carriedLabels,
+  carriedName,
+  carriedNamespace,
+  carriesIgnoredNamespace,
+  declaredGroup,
+  declaredKind,
+  declaredOperation,
+  declaredVersion,
+  definedAnnotations,
+  definedEvent,
+  definedGroup,
+  definedKind,
+  definedLabels,
+  definedName,
   definedNameRegex,
+  definedNamespaceRegexes,
+  definedNamespaces,
+  definedVersion,
   misboundDeleteWithDeletionTimestamp,
-  mismatchedDeletionTimestamp,
+  misboundNamespace,
   mismatchedAnnotations,
+  mismatchedDeletionTimestamp,
+  mismatchedEvent,
+  mismatchedGroup,
+  mismatchedKind,
   mismatchedLabels,
   mismatchedName,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
-  mismatchedEvent,
-  mismatchedGroup,
   mismatchedVersion,
-  mismatchedKind,
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
@@ -43,10 +44,12 @@ import {
 
 type AdjudicationResult = string | null;
 /**
- * shouldSkipRequest determines if a request should be skipped based on the binding filters.
+ * shouldSkipRequest determines if an admission request should be skipped based on the binding filters.
  *
  * @param binding the action binding
  * @param req the incoming request
+ * @param capabilityNamespaces the namespaces allowed by capability
+ * @param ignoredNamespaces the namespaces ignored by module config
  * @returns
  */
 export function shouldSkipRequest(
@@ -85,6 +88,55 @@ export function shouldSkipRequest(
   }
 
   return "";
+}
+
+/**
+ * filterNoMatchReason determines whether a callback should be skipped after
+ *  receiving an update event from the API server, based on the binding filters.
+ *
+ * @param binding the action binding
+ * @param kubernetesObject the incoming kubernetes object
+ * @param capabilityNamespaces the namespaces allowed by capability
+ * @param ignoredNamespaces the namespaces ignored by module config
+ */
+/**
+ * Decide to run callback after the event comes back from API Server
+ **/
+export function filterNoMatchReason(
+  binding: Binding,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+): string {
+  const prefix = "Ignoring Watch Callback:";
+
+  const adjudicators: Array<() => AdjudicationResult> = [
+    (): AdjudicationResult => adjudicateMismatchedDeletionTimestamp(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedName(binding, obj),
+    (): AdjudicationResult => adjudicateMisboundNamespace(binding),
+    (): AdjudicationResult => adjudicateMismatchedLabels(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedAnnotations(binding, obj),
+    (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
+    (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
+    (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNamespaceRegex(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNameRegex(binding, obj),
+    (): AdjudicationResult => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
+    (): AdjudicationResult => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
+  ];
+
+  for (const adjudicate of adjudicators) {
+    const result = adjudicate();
+    if (result) {
+      return `${prefix} ${result}`;
+    }
+  }
+
+  return "";
+}
+
+export function adjudicateMisboundNamespace(binding: Binding): AdjudicationResult {
+  return misboundNamespace(binding) ? "Cannot use namespace filter on a namespace object." : null;
 }
 
 export function adjudicateMisboundDeleteWithDeletionTimestamp(binding: Binding): AdjudicationResult {
