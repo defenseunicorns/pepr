@@ -62,7 +62,11 @@ export function genTLS(name: string): TLSOut {
   return { ca, key, crt, pem };
 }
 
-function genCert(key: forge.pki.rsa.KeyPair, name: string, issuer: forge.pki.CertificateField[]) {
+function genCert(
+  key: forge.pki.rsa.KeyPair,
+  name: string,
+  issuer: forge.pki.CertificateField[],
+): forge.pki.Certificate {
   const crt = forge.pki.createCertificate();
   crt.publicKey = key.publicKey;
   crt.serialNumber = "01";
