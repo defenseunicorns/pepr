@@ -62,23 +62,16 @@ const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOpe
 };
 
 export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
-  const rules: V1RuleWithOperations[] = [];
   const { config, capabilities } = assets;
 
-  // Iterate through the capabilities and generate the rules
-  for (const capability of capabilities) {
+  const rules = capabilities.flatMap(capability => {
     console.info(`Module ${config.uuid} has capability: ${capability.name}`);
 
-    // Read the bindings and generate the rules
-    for (const binding of capability.bindings) {
-      const validatedRule = validateRule(binding, isMutateWebhook);
-      if (validatedRule) {
-        rules.push(validatedRule);
-      }
-    }
-  }
+    return capability.bindings
+      .map(binding => validateRule(binding, isMutateWebhook))
+      .filter((rule): rule is V1RuleWithOperations => !!rule);
+  });
 
-  // Return the rules with duplicates removed
   return uniqWith(equals, rules);
 }
 
