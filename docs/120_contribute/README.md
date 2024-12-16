@@ -56,6 +56,14 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 - Check formatting: `npm run format:check`
 - Fix formatting: `npm run format:fix`
 
+### Git Hooks
+
+- This project uses [husky](https://typicode.github.io/husky/) to manage git hooks for pre-commit and pre-push actions.
+- pre-commit will automatically run linters so that you don't need to remember to run `npm run format:*` commands
+- pre-push will warn you if you've changed lots of lines on a branch and encourage you to optionally present the changes as several smaller PRs to facilitate easier PR reviews.
+  - The pre-push hook is an opinionated way of working, and is therefore optional.
+  - You can opt-in to using the pre-push hook by setting `PEPR_HOOK_OPT_IN=1` as an environment variable.
+
 ## Running Tests
 
 ### Run Tests Locally

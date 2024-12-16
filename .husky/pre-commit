@@ -1,1 +1,2 @@
+#!/bin/bash
 npx lint-staged --verbose
