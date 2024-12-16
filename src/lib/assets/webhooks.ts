@@ -11,6 +11,7 @@ import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from ".";
 import { Event } from "../enums";
+import { Binding } from "../types";
 
 const peprIgnoreLabel: V1LabelSelectorRequirement = {
   key: "pepr.dev",
@@ -20,57 +21,41 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
 
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
-  const { config, capabilities } = assets;
-  const rules: V1RuleWithOperations[] = [];
+const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
+  const { event, kind, isMutate, isValidate } = binding;
 
-  // Iterate through the capabilities and generate the rules
-  for (const capability of capabilities) {
-    console.info(`Module ${config.uuid} has capability: ${capability.name}`);
-
-    // Read the bindings and generate the rules
-    for (const binding of capability.bindings) {
-      const { event, kind, isMutate, isValidate } = binding;
-
-      // If the module doesn't have a callback for the event, skip it
-      if (isMutateWebhook && !isMutate) {
-        continue;
-      }
-
-      if (!isMutateWebhook && !isValidate) {
-        continue;
-      }
-
-      const operations: string[] = [];
-
-      // CreateOrUpdate is a Pepr-specific event that is translated to Create and Update
-      if (event === Event.CREATE_OR_UPDATE) {
-        operations.push(Event.CREATE, Event.UPDATE);
-      } else {
-        operations.push(event);
-      }
-
-      // Use the plural property if it exists, otherwise use lowercase kind + s
-      const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
-
-      const ruleObject = {
-        apiGroups: [kind.group],
-        apiVersions: [kind.version || "*"],
-        operations,
-        resources: [resource],
-      };
-
-      // If the resource is pods, add ephemeralcontainers as well
-      if (resource === "pods") {
-        ruleObject.resources.push("pods/ephemeralcontainers");
-      }
-
-      // Add the rule to the rules array
-      rules.push(ruleObject);
-    }
+  // Skip invalid bindings based on webhook type
+  if ((isMutateWebhook && !isMutate) || (!isMutateWebhook && !isValidate)) {
+    return undefined;
   }
 
-  // Return the rules with duplicates removed
+  // Translate event to operations
+  const operations = event === Event.CREATE_OR_UPDATE ? [Event.CREATE, Event.UPDATE] : [event];
+
+  // Use the plural property if it exists, otherwise use lowercase kind + s
+  const resource = kind.plural || `${kind.kind.toLowerCase()}s`;
+
+  const ruleObject: V1RuleWithOperations = {
+    apiGroups: [kind.group],
+    apiVersions: [kind.version || "*"],
+    operations,
+    resources: [resource, ...(resource === "pods" ? ["pods/ephemeralcontainers"] : [])],
+  };
+
+  return ruleObject;
+};
+
+export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
+  const { config, capabilities } = assets;
+
+  const rules = capabilities.flatMap(capability => {
+    console.info(`Module ${config.uuid} has capability: ${capability.name}`);
+
+    return capability.bindings
+      .map(binding => validateRule(binding, isMutateWebhook))
+      .filter((rule): rule is V1RuleWithOperations => !!rule);
+  });
+
   return uniqWith(equals, rules);
 }
 
