@@ -43,6 +43,8 @@ import {
 } from "./adjudicators/adjudicators";
 
 type AdjudicationResult = string | null;
+type Adjudicator = () => AdjudicationResult;
+
 /**
  * shouldSkipRequest determines if an admission request should be skipped based on the binding filters.
  *
@@ -61,23 +63,23 @@ export function shouldSkipRequest(
   const obj = (req.operation === Operation.DELETE ? req.oldObject : req.object)!;
   const prefix = "Ignoring Admission Callback:";
 
-  const adjudicators: Array<() => AdjudicationResult> = [
-    (): AdjudicationResult => adjudicateMisboundDeleteWithDeletionTimestamp(binding),
-    (): AdjudicationResult => adjudicateMismatchedDeletionTimestamp(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedEvent(binding, req),
-    (): AdjudicationResult => adjudicateMismatchedName(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedGroup(binding, req),
-    (): AdjudicationResult => adjudicateMismatchedVersion(binding, req),
-    (): AdjudicationResult => adjudicateMismatchedKind(binding, req),
-    (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
-    (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
-    (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedLabels(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedAnnotations(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedNamespaceRegex(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedNameRegex(binding, obj),
-    (): AdjudicationResult => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
-    (): AdjudicationResult => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
+  const adjudicators: Adjudicator[] = [
+    () => adjudicateMisboundDeleteWithDeletionTimestamp(binding),
+    () => adjudicateMismatchedDeletionTimestamp(binding, obj),
+    () => adjudicateMismatchedEvent(binding, req),
+    () => adjudicateMismatchedName(binding, obj),
+    () => adjudicateMismatchedGroup(binding, req),
+    () => adjudicateMismatchedVersion(binding, req),
+    () => adjudicateMismatchedKind(binding, req),
+    () => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
+    () => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
+    () => adjudicateMismatchedNamespace(binding, obj),
+    () => adjudicateMismatchedLabels(binding, obj),
+    () => adjudicateMismatchedAnnotations(binding, obj),
+    () => adjudicateMismatchedNamespaceRegex(binding, obj),
+    () => adjudicateMismatchedNameRegex(binding, obj),
+    () => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
+    () => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
   ];
 
   for (const adjudicator of adjudicators) {
@@ -99,9 +101,6 @@ export function shouldSkipRequest(
  * @param capabilityNamespaces the namespaces allowed by capability
  * @param ignoredNamespaces the namespaces ignored by module config
  */
-/**
- * Decide to run callback after the event comes back from API Server
- **/
 export function filterNoMatchReason(
   binding: Binding,
   obj: Partial<KubernetesObject>,
@@ -110,23 +109,23 @@ export function filterNoMatchReason(
 ): string {
   const prefix = "Ignoring Watch Callback:";
 
-  const adjudicators: Array<() => AdjudicationResult> = [
-    (): AdjudicationResult => adjudicateMismatchedDeletionTimestamp(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedName(binding, obj),
-    (): AdjudicationResult => adjudicateMisboundNamespace(binding),
-    (): AdjudicationResult => adjudicateMismatchedLabels(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedAnnotations(binding, obj),
-    (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
-    (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
-    (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedNamespaceRegex(binding, obj),
-    (): AdjudicationResult => adjudicateMismatchedNameRegex(binding, obj),
-    (): AdjudicationResult => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
-    (): AdjudicationResult => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
+  const adjudicators: Adjudicator[] = [
+    () => adjudicateMismatchedDeletionTimestamp(binding, obj),
+    () => adjudicateMismatchedName(binding, obj),
+    () => adjudicateMisboundNamespace(binding),
+    () => adjudicateMismatchedLabels(binding, obj),
+    () => adjudicateMismatchedAnnotations(binding, obj),
+    () => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
+    () => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
+    () => adjudicateMismatchedNamespace(binding, obj),
+    () => adjudicateMismatchedNamespaceRegex(binding, obj),
+    () => adjudicateMismatchedNameRegex(binding, obj),
+    () => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
+    () => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
   ];
 
-  for (const adjudicate of adjudicators) {
-    const result = adjudicate();
+  for (const adjudicator of adjudicators) {
+    const result = adjudicator();
     if (result) {
       return `${prefix} ${result}`;
     }
