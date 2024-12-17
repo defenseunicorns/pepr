@@ -23,7 +23,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Provides access to the old resource in the request if available.
    * @returns The old Kubernetes resource object or null if not available.
    */
-  get OldResource(): T | undefined {
+  get OldResource(): KubernetesObject | undefined {
     return this.#input.oldObject;
   }
 
@@ -31,7 +31,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Provides access to the request object.
    * @returns The request object containing the Kubernetes resource.
    */
-  get Request(): AdmissionRequest<T> {
+  get Request(): AdmissionRequest<KubernetesObject> {
     return this.#input;
   }
 
