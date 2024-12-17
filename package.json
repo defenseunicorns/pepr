@@ -54,7 +54,7 @@
     "sigstore": "3.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.6.0",
+    "@commitlint/cli": "19.6.1",
     "@commitlint/config-conventional": "19.6.0",
     "@fast-check/jest": "^2.0.1",
     "@jest/globals": "29.7.0",
