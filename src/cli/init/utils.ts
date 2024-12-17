@@ -9,7 +9,7 @@ import { promises as fs } from "fs";
  * @param name the user input name
  * @returns the sanitized name
  */
-export function sanitizeName(name: string) {
+export function sanitizeName(name: string): string {
   if (typeof name !== "string") {
     throw TypeError(
       `sanitizeName() was called with a non-string value. The value is: ${name} of type ${typeof name}`,
@@ -32,7 +32,7 @@ export function sanitizeName(name: string) {
  *
  * @param dir - The directory to create
  */
-export async function createDir(dir: string) {
+export async function createDir(dir: string): Promise<void> {
   try {
     await fs.mkdir(dir);
   } catch (err) {
@@ -51,7 +51,7 @@ export async function createDir(dir: string) {
  * @param data - The data to write
  * @returns A promise that resolves when the file has been written
  */
-export function write(path: string, data: unknown) {
+export function write(path: string, data: unknown): Promise<void> {
   // If the data is not a string, stringify it
   if (typeof data !== "string") {
     data = JSON.stringify(data, null, 2);

@@ -23,7 +23,7 @@ import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList, Errors } from "../../lib/errors";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
   let pkgOverride = "";
   program

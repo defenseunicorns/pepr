@@ -7,7 +7,7 @@ import { format, resolveConfig } from "prettier";
 
 import { RootCmd } from "./root";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("format")
     .description("Lint and format this Pepr module")
@@ -28,7 +28,7 @@ export default function (program: RootCmd) {
  * @param validateOnly
  * @returns success
  */
-export async function peprFormat(validateOnly: boolean) {
+export async function peprFormat(validateOnly: boolean): Promise<boolean> {
   {
     try {
       const eslint = new ESLint();
