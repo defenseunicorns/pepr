@@ -1,13 +1,13 @@
 import { Capability } from "./capability";
-import Log from "./telemetry/logger";
-import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
-import { a } from "../lib";
+import Log from "../telemetry/logger";
+import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "../types";
+import { a } from "../../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
-import { Event, Operation } from "./enums";
-import { PeprMutateRequest } from "./mutate-request";
-import { PeprValidateRequest } from "./validate-request";
-import { AdmissionRequest } from "./types";
+import { Event, Operation } from "../enums";
+import { PeprMutateRequest } from "../mutate-request";
+import { PeprValidateRequest } from "../validate-request";
+import { AdmissionRequest } from "../types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
@@ -21,7 +21,7 @@ jest.mock("./module", () => ({
 }));
 
 // Mock logger globally
-jest.mock("./telemetry/logger", () => ({
+jest.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

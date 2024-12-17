@@ -5,11 +5,11 @@ import express, { NextFunction } from "express";
 import fs from "fs";
 import https from "https";
 
-import { Capability } from "../capability";
+import { Capability } from "../core/capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollector } from "../telemetry/metrics";
-import { ModuleConfig, isWatchMode } from "../module";
+import { ModuleConfig, isWatchMode } from "../core/module";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";

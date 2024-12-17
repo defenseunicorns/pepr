@@ -2,8 +2,8 @@ import { afterEach, describe, expect, jest, it } from "@jest/globals";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Queue } from "./queue";
 
-import Log from "./telemetry/logger";
-jest.mock("./telemetry/logger");
+import Log from "../telemetry/logger";
+jest.mock("../telemetry/logger");
 
 describe("Queue", () => {
   afterEach(() => {

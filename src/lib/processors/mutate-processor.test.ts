@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
-import { ModuleConfig } from "../module";
+import { ModuleConfig } from "../core/module";
 import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
 import { AdmissionRequest, Binding, MutateAction } from "../types";

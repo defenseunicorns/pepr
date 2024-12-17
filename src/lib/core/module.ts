@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { clone } from "ramda";
 import { Capability } from "./capability";
-import { Controller } from "./controller";
-import { ValidateError } from "./errors";
-import { MutateResponse, ValidateResponse, WebhookIgnore } from "./k8s";
-import { CapabilityExport, AdmissionRequest } from "./types";
-import { setupWatch } from "./processors/watch-processor";
-import { Log } from "../lib";
+import { Controller } from "../controller";
+import { ValidateError } from "../errors";
+import { MutateResponse, ValidateResponse, WebhookIgnore } from "../k8s";
+import { CapabilityExport, AdmissionRequest } from "../types";
+import { setupWatch } from "../processors/watch-processor";
+import { Log } from "../../lib";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 /** Custom Labels Type for package.json */
