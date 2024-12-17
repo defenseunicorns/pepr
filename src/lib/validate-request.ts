@@ -23,7 +23,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Provides access to the old resource in the request if available.
    * @returns The old Kubernetes resource object or null if not available.
    */
-  get OldResource() {
+  get OldResource(): KubernetesObject | undefined {
     return this.#input.oldObject;
   }
 
@@ -31,7 +31,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * Provides access to the request object.
    * @returns The request object containing the Kubernetes resource.
    */
-  get Request() {
+  get Request(): AdmissionRequest<KubernetesObject> {
     return this.#input;
   }
 
@@ -61,7 +61,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the label key to check
    * @returns
    */
-  HasLabel = (key: string) => {
+  HasLabel = (key: string): boolean => {
     return this.Raw.metadata?.labels?.[key] !== undefined;
   };
 
@@ -71,7 +71,7 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param key the annotation key to check
    * @returns
    */
-  HasAnnotation = (key: string) => {
+  HasAnnotation = (key: string): boolean => {
     return this.Raw.metadata?.annotations?.[key] !== undefined;
   };
 
