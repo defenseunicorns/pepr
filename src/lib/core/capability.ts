@@ -3,11 +3,11 @@
 
 import { GenericClass, GroupVersionKind, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import { pickBy } from "ramda";
-import Log from "./telemetry/logger";
+import Log from "../telemetry/logger";
 import { isBuildMode, isDevMode, isWatchMode } from "./module";
 import { PeprStore, Storage } from "./storage";
 import { OnSchedule, Schedule } from "./schedule";
-import { Event } from "./enums";
+import { Event } from "../enums";
 import {
   Binding,
   BindingFilter,
@@ -22,8 +22,8 @@ import {
   FinalizeAction,
   FinalizeActionChain,
   WhenSelector,
-} from "./types";
-import { addFinalizer } from "./finalizer";
+} from "../types";
+import { addFinalizer } from "../finalizer";
 
 const registerAdmission = isBuildMode() || !isWatchMode();
 const registerWatch = isBuildMode() || isWatchMode() || isDevMode();

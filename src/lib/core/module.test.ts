@@ -5,13 +5,13 @@ import { beforeEach, expect, jest, test, describe } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
-import { Errors } from "./errors";
+import { Errors } from "../errors";
 import { PackageJSON, PeprModule } from "./module";
-import { CapabilityExport } from "./types";
+import { CapabilityExport } from "../types";
 
 // Mock Controller
 const startServerMock = jest.fn();
-jest.mock("./controller", () => {
+jest.mock("../controller", () => {
   return {
     Controller: jest.fn().mockImplementation(() => {
       return { startServer: startServerMock };

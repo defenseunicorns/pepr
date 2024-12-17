@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import Log from "../telemetry/logger";
 import { Binding } from "../types";
-import { Capability } from "../capability";
+import { Capability } from "../core/capability";
 import { Event } from "../enums";
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
-import { Queue } from "../queue";
+import { Queue } from "../core/queue";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { filterNoMatchReason } from "../filter/filter";
 import { metricsCollector } from "../telemetry/metrics";
