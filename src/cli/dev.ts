@@ -10,7 +10,7 @@ import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Store } from "../lib/k8s";
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   program
     .command("dev")
     .description("Setup a local webhook development environment")
@@ -55,7 +55,7 @@ export default function (program: RootCmd) {
         const store = `pepr-${cfg.pepr.uuid}-store`;
 
         // Run the processed javascript file
-        const runFork = async () => {
+        const runFork = async (): Promise<void> => {
           console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
