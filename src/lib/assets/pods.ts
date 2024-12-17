@@ -6,7 +6,7 @@ import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
 import { Assets } from ".";
-import { ModuleConfig } from "../module";
+import { ModuleConfig } from "../core/module";
 import { Binding } from "../types";
 
 /** Generate the pepr-system namespace */

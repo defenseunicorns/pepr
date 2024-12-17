@@ -1,4 +1,4 @@
-import { DataOp } from "../storage";
+import { DataOp } from "../core/storage";
 import Log from "../telemetry/logger";
 import { K8s } from "kubernetes-fluent-client";
 import { Store } from "../k8s";

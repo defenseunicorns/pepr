@@ -3,8 +3,8 @@
 
 import { StoreController } from "./store";
 import { CapabilityCfg } from "../types";
-import { Capability } from "../capability";
-import { Schedule } from "../schedule";
+import { Capability } from "../core/capability";
+import { Schedule } from "../core/schedule";
 import { Store } from "../k8s";
 import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";

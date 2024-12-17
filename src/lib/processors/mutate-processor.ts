@@ -5,13 +5,13 @@ import jsonPatch from "fast-json-patch";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { clone } from "ramda";
 
-import { Capability } from "../capability";
+import { Capability } from "../core/capability";
 import { Errors } from "../errors";
 import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
 import { AdmissionRequest, Binding } from "../types";
 import Log from "../telemetry/logger";
-import { ModuleConfig } from "../module";
+import { ModuleConfig } from "../core/module";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
 

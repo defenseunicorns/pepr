@@ -4,7 +4,7 @@
 import crypto from "crypto";
 import { dumpYaml } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
-import { ModuleConfig } from "../module";
+import { ModuleConfig } from "../core/module";
 import { TLSOut, genTLS } from "../tls";
 import { CapabilityExport } from "../types";
 import { WebhookIgnore } from "../k8s";

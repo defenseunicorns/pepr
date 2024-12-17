@@ -2,14 +2,14 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
-import { Capability } from "../capability";
+import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { ValidateResponse } from "../k8s";
 import { AdmissionRequest, Binding } from "../types";
 import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
-import { ModuleConfig } from "../module";
+import { ModuleConfig } from "../core/module";
 
 export async function processRequest(
   binding: Binding,
