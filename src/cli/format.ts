@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { ESLint } from "eslint";
-import { promises as fs } from "fs";
-import { format, resolveConfig } from "prettier";
+import { formatWithPrettier } from "./format.helpers";
 
 import { RootCmd } from "./root";
 
@@ -56,20 +55,7 @@ export async function peprFormat(validateOnly: boolean): Promise<boolean> {
         await ESLint.outputFixes(results);
       }
 
-      // Format with Prettier
-      for (const { filePath } of results) {
-        const content = await fs.readFile(filePath, "utf8");
-        const cfg = await resolveConfig(filePath);
-        const formatted = await format(content, { filepath: filePath, ...cfg });
-
-        // If in validate-only mode, check if the file is formatted correctly
-        if (validateOnly && formatted !== content) {
-          hasFailure = true;
-          console.error(`File ${filePath} is not formatted correctly`);
-        } else {
-          await fs.writeFile(filePath, formatted);
-        }
-      }
+      hasFailure = await formatWithPrettier(results, validateOnly);
 
       return !hasFailure;
     } catch (e) {
