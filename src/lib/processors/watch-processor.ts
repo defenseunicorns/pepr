@@ -7,7 +7,7 @@ import { Event } from "../enums";
 import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { Queue } from "../queue";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
-import { filterNoMatchReason } from "../filter/filterNoMatchReason";
+import { filterNoMatchReason } from "../filter/filter";
 import { metricsCollector } from "../telemetry/metrics";
 import { removeFinalizer } from "../finalizer";
 
