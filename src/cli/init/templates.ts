@@ -5,7 +5,9 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 
-import eslintJSON from "../../templates/.eslintrc.template.json";
+// @ts-expect-error : file loaded as TEXT so ignore that TS can't parse it
+import eslintMJS from "../../templates/eslint.config.template.mjs";
+
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
 import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../templates/data.json";
@@ -120,6 +122,6 @@ export const prettier = {
 };
 
 export const eslint = {
-  path: ".eslintrc.json",
-  data: eslintJSON,
+  path: "eslint.config.mjs",
+  data: eslintMJS,
 };

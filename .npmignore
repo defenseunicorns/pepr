@@ -1,6 +1,6 @@
 .adr-dir
 .dockerignore
-.eslintrc.json
+eslint.config.mjs
 .github
 _images
 .prettierrc

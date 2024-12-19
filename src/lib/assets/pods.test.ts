@@ -365,7 +365,7 @@ describe("moduleSecret function", () => {
 
     // Mock the return value of gzipSync
     (gzipSync as jest.Mock).mockReturnValue(Buffer.from(compressedData));
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.spyOn(require("../helpers"), "secretOverLimit").mockReturnValue(false);
 
     const result = getModuleSecret(name, data, hash);
@@ -391,7 +391,7 @@ describe("moduleSecret function", () => {
 
     // Mock the return value of gzipSync
     (gzipSync as jest.Mock).mockReturnValue(data);
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.spyOn(require("../helpers"), "secretOverLimit").mockReturnValue(true);
 
     const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});

@@ -25,6 +25,11 @@ async function builder() {
       define: {
         'process.env.PEPR_PRETTY_LOGS': '"true"',
       },
+      loader: {
+        // allows src/templates/eslint.config.template.mjs to be
+        //  imported as text by src/cli/init/templates.ts
+        '.mjs': 'text'
+      }
     });
 
     console.log(await analyzeMetafile(cli.metafile));
