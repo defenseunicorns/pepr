@@ -4,10 +4,10 @@
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
 
-import { ErrorList } from "../../lib/errors";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
 import { OnError } from "./enums";
+import { ErrorList } from "../../lib/errors";
 
 export type PromptOptions = {
   name: string;
