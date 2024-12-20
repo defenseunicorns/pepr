@@ -19,9 +19,3 @@ export enum Event {
   CREATE_OR_UPDATE = "CREATEORUPDATE",
   ANY = "*",
 }
-
-export enum Errors {
-  AUDIT = "audit",
-  IGNORE = "ignore",
-  reject = "reject",
-}
