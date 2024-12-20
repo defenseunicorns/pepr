@@ -14,6 +14,8 @@ import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "../types";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { OnError, RbacMode } from "./enums";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
@@ -26,12 +28,14 @@ type peprPackageJSON = {
     engines: { node: string };
     pepr: {
       uuid: string;
-      onError: string;
+      onError: OnError;
       webhookTimeout: number;
-      customLabels: { namespace: { "pepr.dev": string } };
-      alwaysIgnore: { namespaces: never[] };
-      includedFiles: never[];
+      customLabels: { namespace: Record<string, string> };
+      alwaysIgnore: { namespaces: string[] };
+      includedFiles: string[];
       env: object;
+      rbac: PolicyRule[];
+      rbacMode: RbacMode;
     };
     scripts: { "k3d-setup": string };
     dependencies: { pepr: string; undici: string };
@@ -76,6 +80,8 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},
+      rbac: [],
+      rbacMode: RbacMode.SCOPED,
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],
