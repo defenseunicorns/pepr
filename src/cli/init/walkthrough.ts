@@ -4,14 +4,15 @@
 import { promises as fs } from "fs";
 import prompt, { Answers, PromptObject } from "prompts";
 
-import { ErrorList, Errors } from "../../lib/errors";
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
+import { OnError } from "./enums";
+import { ErrorList } from "../../lib/errors";
 
 export type PromptOptions = {
   name: string;
   description: string;
-  errorBehavior: "audit" | "ignore" | "reject";
+  errorBehavior: OnError;
 };
 
 export type PartialPromptOptions = Partial<PromptOptions>;
@@ -70,9 +71,7 @@ async function setDescription(description?: string): Promise<Answers<string>> {
   return prompt([askDescription]);
 }
 
-export async function setErrorBehavior(
-  errorBehavior?: "audit" | "ignore" | "reject",
-): Promise<Answers<string>> {
+export async function setErrorBehavior(errorBehavior?: OnError): Promise<Answers<string>> {
   const askErrorBehavior: PromptObject = {
     type: "select",
     name: "errorBehavior",
@@ -80,20 +79,20 @@ export async function setErrorBehavior(
     choices: [
       {
         title: "Reject the operation",
-        value: Errors.reject,
+        value: OnError.REJECT,
         description:
           "In the event that Pepr is down or other module errors occur, the operation will not be allowed to continue. (Recommended for production.)",
       },
       {
         title: "Ignore",
-        value: Errors.ignore,
+        value: OnError.IGNORE,
         description:
           "In the event that Pepr is down or other module errors occur, an entry will be generated in the Pepr Controller Log and the operation will be allowed to continue. (Recommended for development, not for production.)",
         selected: true,
       },
       {
         title: "Log an audit event",
-        value: Errors.audit,
+        value: OnError.AUDIT,
         description:
           "Pepr will continue processing and generate an entry in the Pepr Controller log as well as an audit event in the cluster.",
       },
