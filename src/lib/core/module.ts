@@ -9,7 +9,7 @@ import { CapabilityExport, AdmissionRequest } from "../types";
 import { setupWatch } from "../processors/watch-processor";
 import { Log } from "../../lib";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
-
+import { resolveIgnoreNamespaces } from "../assets/webhooks";
 /** Custom Labels Type for package.json */
 export interface CustomLabels {
   namespace?: Record<string, string>;
@@ -113,7 +113,7 @@ export class PeprModule {
       // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
         try {
-          setupWatch(capabilities, pepr?.alwaysIgnore?.namespaces);
+          setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
         } catch (e) {
           Log.error(e, "Error setting up watch");
           process.exit(1);
