@@ -57,18 +57,18 @@ Pepr, by default, ignores the `kube-system` and `pepr-system` namespaces. These 
 
 The safest and recommended way to define the namespaces your Pepr module should ignore is at build time. This approach leverages a function that validates namespaces based on the Capability configuration, ensuring that your bindings operate only on approved namespaces. Refer to the [`package.json` configurations table](#packagejson-configurations-table) for detailed guidance.
 
-In scenarios where build-time configuration is not feasible, you can set the namespaces to ignore at deploy time by using the `PEPR_IGNORE_NAMESPACES` environment variable in your deployments. However, this method bypasses the build-time safety checks and is not recommended except as a last resort. If you choose this approach, ensure that both controllers (Watch and Admission) are configured with the same value to maintain consistency.
+In scenarios where build-time configuration is not feasible, you can set the namespaces to ignore at deploy time by using the `PEPR_IGNORED_NAMESPACES` environment variable in your deployments. However, this method bypasses the build-time safety checks and is not recommended except as a last resort. If you choose this approach, ensure that both controllers (Watch and Admission) are configured with the same value to maintain consistency.
 
 ```yaml
           env:
-            - name: PEPR_IGNORE_NAMESPACES
+            - name: PEPR_IGNORED_NAMESPACES
               value: 'zarf,istio-system'
 ```
 
 ```bash
-kubectl set env deployment/pepr-admission PEPR_IGNORE_NAMESPACES=zarf,istio-system -n pepr-system
+kubectl set env deployment/pepr-admission PEPR_IGNORED_NAMESPACES=zarf,istio-system -n pepr-system
 
-kubectl set env deployment/pepr-watcher PEPR_IGNORE_NAMESPACES=zarf,istio-system -n pepr-system
+kubectl set env deployment/pepr-watcher PEPR_IGNORED_NAMESPACES=zarf,istio-system -n pepr-system
 ```
 
 ## Customizing Watch Configuration
