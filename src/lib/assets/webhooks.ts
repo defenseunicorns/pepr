@@ -8,7 +8,6 @@ import {
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
-
 import { Assets } from ".";
 import { Event } from "../enums";
 import { Binding } from "../types";
@@ -58,7 +57,15 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
 
   return uniqWith(equals, rules);
 }
+export function resolveIgnoreNamespaces(ignoredNSConfig: string[] = []): string[] {
+  const ignoredNSEnv = process.env.PEPR_IGNORED_NAMESPACES;
+  if (!ignoredNSEnv) {
+    return ignoredNSConfig;
+  }
 
+  const namespaces = ignoredNSEnv.split(",").map(ns => ns.trim());
+  return namespaces.filter(ns => ns.length > 0);
+}
 export async function webhookConfig(
   assets: Assets,
   mutateOrValidate: "mutate" | "validate",
@@ -67,7 +74,7 @@ export async function webhookConfig(
   const ignore = [peprIgnoreLabel];
 
   const { name, tls, config, apiToken, host } = assets;
-  const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces || []);
+  const ignoreNS = concat(peprIgnoreNamespaces, resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces));
 
   // Add any namespaces to ignore
   if (ignoreNS) {

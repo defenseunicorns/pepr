@@ -10,7 +10,7 @@ import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../core/module";
-
+import { resolveIgnoreNamespaces } from "../assets/webhooks";
 export async function processRequest(
   binding: Binding,
   actionMetadata: Record<string, string>,
@@ -78,7 +78,12 @@ export async function validateProcessor(
       }
 
       // Continue to the next action without doing anything if this one should be skipped
-      const shouldSkip = shouldSkipRequest(binding, req, namespaces, config?.alwaysIgnore?.namespaces);
+      const shouldSkip = shouldSkipRequest(
+        binding,
+        req,
+        namespaces,
+        resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces),
+      );
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
         continue;

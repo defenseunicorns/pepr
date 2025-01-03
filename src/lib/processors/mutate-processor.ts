@@ -14,7 +14,7 @@ import Log from "../telemetry/logger";
 import { ModuleConfig } from "../core/module";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
-
+import { resolveIgnoreNamespaces } from "../assets/webhooks";
 export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
@@ -169,7 +169,7 @@ export async function mutateProcessor(
       bind.binding,
       bind.req,
       bind.namespaces,
-      bind.config?.alwaysIgnore?.namespaces,
+      resolveIgnoreNamespaces(bind.config?.alwaysIgnore?.namespaces),
     );
     if (shouldSkip !== "") {
       Log.debug(shouldSkip);
