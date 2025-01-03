@@ -66,9 +66,9 @@ In scenarios where build-time configuration is not feasible, you can set the nam
 ```
 
 ```bash
-kubectl set env deployment/pepr-admission PEPR_IGNORED_NAMESPACES=zarf,istio-system -n pepr-system
+kubectl set env deployment/pepr-admission PEPR_IGNORED_NAMESPACES="zarf,istio-system" -n pepr-system
 
-kubectl set env deployment/pepr-watcher PEPR_IGNORED_NAMESPACES=zarf,istio-system -n pepr-system
+kubectl set env deployment/pepr-watcher PEPR_IGNORED_NAMESPACES="zarf,istio-system" -n pepr-system
 ```
 
 ## Customizing Watch Configuration
