@@ -5,7 +5,7 @@ import { execFileSync } from "child_process";
 import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
-import { Assets } from "../lib/assets";
+import { Assets } from "../lib/assets/assets";
 import { dependencies, version } from "./init/templates";
 import { RootCmd } from "./root";
 import { Option } from "commander";

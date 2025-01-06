@@ -138,11 +138,14 @@ export class Assets {
       }
 
       if (mutateWebhook) {
-        await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this, mutateWebhook));
+        await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this.name, this.config, mutateWebhook));
       }
 
       if (validateWebhook) {
-        await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this, validateWebhook));
+        await fs.writeFile(
+          helm.files.validationWebhookYaml,
+          createWebhookYaml(this.name, this.config, validateWebhook),
+        );
       }
 
       const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);

@@ -5,7 +5,7 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { replaceString } from "../helpers";
 import { resolve } from "path";
-import { Assets } from "./assets";
+import { ModuleConfig } from "../core/module";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toYaml(obj: any): string {
@@ -13,17 +13,18 @@ export function toYaml(obj: any): string {
 }
 
 export function createWebhookYaml(
-  assets: Assets,
+  name: string,
+  config: ModuleConfig,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
   const yaml = toYaml(webhookConfiguration);
   return replaceString(
     replaceString(
-      replaceString(yaml, assets.name, "{{ .Values.uuid }}"),
-      assets.config.onError === "reject" ? "Fail" : "Ignore",
+      replaceString(yaml, name, "{{ .Values.uuid }}"),
+      config.onError === "reject" ? "Fail" : "Ignore",
       "{{ .Values.admission.failurePolicy }}",
     ),
-    `${assets.config.webhookTimeout}` || "10",
+    `${config.webhookTimeout}` || "10",
     "{{ .Values.admission.webhookTimeout }}",
   );
 }
@@ -67,5 +68,3 @@ export function helmLayout(basePath: string, unique: string): Record<string, Rec
 
   return helm;
 }
-
-export { Assets };
