@@ -11,6 +11,7 @@ import {
   setName,
   setErrorBehavior,
 } from "./walkthrough";
+import { OnError } from "./enums";
 
 let consoleLog: jest.Spied<typeof console.log>;
 let consoleError: jest.Spied<typeof console.error>;
@@ -41,7 +42,7 @@ describe("when processing input", () => {
       const expected: PromptOptions = {
         name: "My Test Module",
         description: "A test module for Pepr",
-        errorBehavior: "reject",
+        errorBehavior: OnError.REJECT,
       };
 
       // Set values for the flag(s) under test by making a subset of (expected)
@@ -78,7 +79,7 @@ describe("when processing input", () => {
     it("should prompt for errorBehavior when given invalid input", async () => {
       const expected = { errorBehavior: "audit" };
       prompts.inject(["audit"]);
-      const result = await setErrorBehavior("not-valid" as "reject"); // Type-Coercion forces invalid input
+      const result = await setErrorBehavior("not-valid" as OnError); // Type-Coercion forces invalid input
       expect(result).toStrictEqual(expected);
     });
   });

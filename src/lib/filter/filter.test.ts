@@ -1218,6 +1218,10 @@ describe("adjudicateUnbindableNamespaces", () => {
 });
 
 describe("adjudicateUncarryableNamespace", () => {
+  it("should return uncarryableNamespace reason when the object is a namespace that is not allowed by the capability", () => {
+    const result = adjudicateUncarryableNamespace(["default"], { kind: "Namespace", metadata: { name: "pepr-demo" } });
+    expect(result).toBe(`Object carries namespace 'pepr-demo' but namespaces allowed by Capability are '["default"]'.`);
+  });
   it("should return uncarryableNamespace reason when the object carries a namespace that is not allowed by the capability", () => {
     const result = adjudicateUncarryableNamespace(["default"], { metadata: { namespace: "kube-system" } });
     expect(result).toBe(
@@ -1317,6 +1321,10 @@ describe("adjudicateMismatchedNameRegex", () => {
 });
 
 describe("adjudicateCarriesIgnoredNamespace", () => {
+  it("should return carriesIgnoredNamespace reason when the object is a namespace that is in the ignoredNamespaces", () => {
+    const result = adjudicateCarriesIgnoredNamespace(["default"], { kind: "Namespace", metadata: { name: "default" } });
+    expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);
+  });
   it("should return carriesIgnoredNamespace reason when the object carries a namespace that is in the ignoredNamespaces", () => {
     const result = adjudicateCarriesIgnoredNamespace(["default"], { metadata: { namespace: "default" } });
     expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);

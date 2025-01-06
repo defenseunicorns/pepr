@@ -3,7 +3,8 @@
 
 import { expect, test, describe } from "@jest/globals";
 import * as fc from "fast-check";
-import { Errors, ErrorList, ValidateError } from "./errors";
+import { ErrorList, ValidateError } from "./errors";
+import { OnError } from "../cli/init/enums";
 
 describe("ValidateError Fuzz Testing", () => {
   test("should only accept predefined error values", () => {
@@ -59,15 +60,11 @@ describe("ValidateError Property-Based Testing", () => {
 });
 
 test("Errors object should have correct properties", () => {
-  expect(Errors).toEqual({
-    audit: "audit",
-    ignore: "ignore",
-    reject: "reject",
+  expect(OnError).toEqual({
+    AUDIT: "audit",
+    IGNORE: "ignore",
+    REJECT: "reject",
   });
-});
-
-test("ErrorList should contain correct values", () => {
-  expect(ErrorList).toEqual(["audit", "ignore", "reject"]);
 });
 
 test("ValidateError should not throw an error for valid errors", () => {
