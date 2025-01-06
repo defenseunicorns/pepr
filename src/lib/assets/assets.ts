@@ -51,6 +51,7 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
+  // TODO: Appears unused
   setHash = (hash: string): void => {
     this.hash = hash;
   };
