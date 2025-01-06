@@ -1321,6 +1321,10 @@ describe("adjudicateMismatchedNameRegex", () => {
 });
 
 describe("adjudicateCarriesIgnoredNamespace", () => {
+  it("should return carriesIgnoredNamespace reason when the object is a namespace that is in the ignoredNamespaces", () => {
+    const result = adjudicateCarriesIgnoredNamespace(["default"], { kind: "Namespace", metadata: { name: "default" } });
+    expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);
+  });
   it("should return carriesIgnoredNamespace reason when the object carries a namespace that is in the ignoredNamespaces", () => {
     const result = adjudicateCarriesIgnoredNamespace(["default"], { metadata: { namespace: "default" } });
     expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);
