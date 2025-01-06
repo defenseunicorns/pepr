@@ -76,9 +76,8 @@ export const missingName = complement(carriesName);
 export const carriedNamespace = pipe((kubernetesObject: KubernetesObject): string | undefined => {
   if (kubernetesObject?.kind === "Namespace") {
     return kubernetesObject?.metadata?.name;
-  } else {
-    return kubernetesObject?.metadata?.namespace;
   }
+  return kubernetesObject?.metadata?.namespace;
 }, defaultTo(""));
 
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
@@ -252,10 +251,21 @@ export const mismatchedLabels = allPass([
   pipe((binding, kubernetesObject) => metasMismatch(definedLabels(binding), carriedLabels(kubernetesObject))),
 ]);
 
+/*
+ * If the object does not have a namespace, and it is not a namespace,
+ * then we must return false because it cannot be uncarryable
+ */
 export const uncarryableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), carriesNamespace),
-  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject)), not),
+  pipe((namespaceSelector, kubernetesObject) => {
+    if (kubernetesObject?.kind === "Namespace") {
+      return namespaceSelector.includes(kubernetesObject?.metadata?.name);
+    }
+    if (carriesNamespace(kubernetesObject)) {
+      return namespaceSelector.includes(carriedNamespace(kubernetesObject));
+    }
+    return true;
+  }, not),
 ]);
 
 export const missingCarriableNamespace = allPass([
@@ -267,10 +277,22 @@ export const missingCarriableNamespace = allPass([
   ),
 ]);
 
+/*
+ * If the object does not have a namespace, and it is not a namespace,
+ * then we must return false because it cannot be ignored
+ */
 export const carriesIgnoredNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), carriesNamespace),
-  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject))),
+  pipe((namespaceSelector, kubernetesObject) => {
+    if (kubernetesObject?.kind === "Namespace") {
+      return namespaceSelector.includes(kubernetesObject?.metadata?.name);
+    }
+    if (carriesNamespace(kubernetesObject)) {
+      return namespaceSelector.includes(carriedNamespace(kubernetesObject));
+    }
+
+    return false;
+  }),
 ]);
 
 export const unbindableNamespaces = allPass([
