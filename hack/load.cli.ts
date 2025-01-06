@@ -438,7 +438,7 @@ program
     log(await cmd.run(), "");
 
     //
-    // run test
+    // run deploy
     //
 
     log(`Pepr CLI version`);
@@ -479,6 +479,27 @@ program
     });
     log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
     log(await cmd.run(), "");
+
+    log(`Wait for metrics on the Pepr controller to become available`);
+    const start = Date.now();
+    const max = lib.toMs("2m");
+    while (true) {
+      const now = Date.now();
+      const dur = now - start;
+      if (dur > max) {
+        console.error(`Timeout waiting for metrics-server to be ready.`);
+        process.exit(1);
+      }
+
+      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+      let res = await cmd.runRaw();
+      if (res.exitcode === 0) {
+        log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
+        break;
+      }
+
+      await nap(lib.toMs("5s"));
+    }
   });
 
 program
@@ -736,8 +757,15 @@ program
           .concat("\n");
         await fs.appendFile(audFile, outlines);
       };
-      audience(); // run immediately, then on schedule
-      const ticket = setInterval(audience, opts.audInterval);
+      await audience(); // run immediately, then on schedule
+      const ticket = setInterval(async () => {
+        try {
+          await audience();
+        } catch (e) {
+          console.error(e);
+          process.exit(1);
+        }
+      }, opts.audInterval);
 
       await nap(opts.stagger); // stagger interval starts
 
@@ -763,9 +791,15 @@ program
           await fs.appendFile(actFile, Date.now().toString() + "\n");
         }
       };
-      actress(); // run immediately, then on schedule
-      const backstagePass = setInterval(() => actress(abort), opts.actInterval);
-
+      await actress(); // run immediately, then on schedule
+      const backstagePass = setInterval(async () => {
+        try {
+          await actress(abort);
+        } catch (e) {
+          console.error(e);
+          process.exit(1);
+        }
+      }, opts.actInterval);
       // wait until total duration has elapsed
       const startWait = Date.now();
       await nap(opts.duration - (startWait - alpha));
