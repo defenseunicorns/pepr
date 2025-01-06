@@ -736,8 +736,15 @@ program
           .concat("\n");
         await fs.appendFile(audFile, outlines);
       };
-      audience(); // run immediately, then on schedule
-      const ticket = setInterval(audience, opts.audInterval);
+      await audience(); // run immediately, then on schedule
+      const ticket = setInterval(async () => {
+        try {
+          await audience();
+        } catch (e) {
+          console.error(e);
+          process.exit(1);
+        }
+      }, opts.audInterval);
 
       await nap(opts.stagger); // stagger interval starts
 
@@ -763,9 +770,15 @@ program
           await fs.appendFile(actFile, Date.now().toString() + "\n");
         }
       };
-      actress(); // run immediately, then on schedule
-      const backstagePass = setInterval(() => actress(abort), opts.actInterval);
-
+      await actress(); // run immediately, then on schedule
+      const backstagePass = setInterval(async () => {
+        try {
+          await actress(abort);
+        } catch (e) {
+          console.error(e);
+          process.exit(1);
+        }
+      }, opts.actInterval);
       // wait until total duration has elapsed
       const startWait = Date.now();
       await nap(opts.duration - (startWait - alpha));
