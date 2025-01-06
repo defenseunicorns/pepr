@@ -7,7 +7,6 @@ import {
   V1MutatingWebhookConfiguration,
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node";
-import crypto from "crypto";
 import { promises as fs } from "fs";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { getModuleSecret, getNamespace } from "./pods";
@@ -30,7 +29,7 @@ type AssetsOverrides2 = {
   apiToken: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
-  hash?: string;
+  hash: string;
   name: string;
   path: string;
   tls: TLSOut;
@@ -258,11 +257,8 @@ export async function generateAllYaml(
   deployment: unknown,
   assets: AssetsOverrides2,
 ): Promise<string> {
-  const { name, tls, apiToken, path, config } = assets;
+  const { name, tls, hash, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
-
-  // Generate a hash of the code
-  assets.hash = crypto.createHash("sha256").update(code).digest("hex");
 
   const resources = [
     getNamespace(assets.config.customLabels?.namespace),
@@ -274,7 +270,7 @@ export async function generateAllYaml(
     deployment,
     service(name),
     watcherService(name),
-    getModuleSecret(name, code, assets.hash),
+    getModuleSecret(name, code, hash),
     storeRole(name),
     storeRoleBinding(name),
   ];

@@ -74,6 +74,12 @@ export class Assets {
 
     const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
     const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
+
+    const code = await fs.readFile(this.path);
+
+    // Generate a hash of the code
+    this.hash = crypto.createHash("sha256").update(code).digest("hex");
+
     const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp, imagePullSecret);
     const deployment = getDeployment(this, this.hash, this.buildTimestamp, imagePullSecret);
 
@@ -81,6 +87,7 @@ export class Assets {
       apiToken: this.apiToken,
       capabilities: this.capabilities,
       config: this.config,
+      hash: this.hash,
       name: this.name,
       path: this.path,
       tls: this.tls,
