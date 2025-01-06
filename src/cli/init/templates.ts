@@ -14,10 +14,38 @@ import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
 import { sanitizeName } from "./utils";
 import { InitOptions } from "../types";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { OnError, RbacMode } from "./enums";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
-export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
+type peprPackageJSON = {
+  data: {
+    name: string;
+    version: string;
+    description: string;
+    keywords: string[];
+    engines: { node: string };
+    pepr: {
+      uuid: string;
+      onError: OnError;
+      webhookTimeout: number;
+      customLabels: { namespace: Record<string, string> };
+      alwaysIgnore: { namespaces: string[] };
+      includedFiles: string[];
+      env: object;
+      rbac?: PolicyRule[];
+      rbacMode?: RbacMode;
+    };
+    scripts: { "k3d-setup": string };
+    dependencies: { pepr: string; undici: string };
+    devDependencies: { typescript: string };
+  };
+  path: string;
+  print: string;
+};
+
+export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPackageJSON {
   // Generate a random UUID for the module based on the module name
   const uuid = uuidv5(opts.name, uuidv4());
   // Generate a name for the module based on the module name
@@ -72,7 +100,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string) {
   };
 }
 
-export function genPeprTS() {
+export function genPeprTS(): { path: string; data: string } {
   return {
     path: "pepr.ts",
     data: peprTS,

@@ -5,9 +5,9 @@ import { beforeEach, expect, jest, test, describe } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
-import { Errors } from "../errors";
 import { PackageJSON, PeprModule } from "./module";
 import { CapabilityExport } from "../types";
+import { OnError } from "../../cli/init/enums";
 
 // Mock Controller
 const startServerMock = jest.fn();
@@ -62,13 +62,13 @@ test("should reject invalid pepr onError conditions", () => {
 
 test("should allow valid pepr onError conditions", () => {
   const cfg = clone(packageJSON);
-  cfg.pepr.onError = Errors.audit;
+  cfg.pepr.onError = OnError.AUDIT;
   expect(() => new PeprModule(cfg)).not.toThrow();
 
-  cfg.pepr.onError = Errors.ignore;
+  cfg.pepr.onError = OnError.IGNORE;
   expect(() => new PeprModule(cfg)).not.toThrow();
 
-  cfg.pepr.onError = Errors.reject;
+  cfg.pepr.onError = OnError.REJECT;
   expect(() => new PeprModule(cfg)).not.toThrow();
 });
 
