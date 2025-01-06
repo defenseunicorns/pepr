@@ -73,12 +73,10 @@ export const carriedName = pipe(
 export const carriesName = pipe(carriedName, equals(""), not);
 export const missingName = complement(carriesName);
 
-export const carriedNamespace = pipe((kubernetesObject: KubernetesObject): string | undefined => {
-  if (kubernetesObject?.kind === "Namespace") {
-    return kubernetesObject?.metadata?.name;
-  }
-  return kubernetesObject?.metadata?.namespace;
-}, defaultTo(""));
+export const carriedNamespace = pipe(
+  (kubernetesObject: KubernetesObject): string | undefined => kubernetesObject?.metadata?.namespace,
+  defaultTo(""),
+);
 
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
 

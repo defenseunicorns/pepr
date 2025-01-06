@@ -191,7 +191,7 @@ export function adjudicateUncarryableNamespace(
   obj: KubernetesObject,
 ): AdjudicationResult {
   return uncarryableNamespace(capabilityNamespaces, obj)
-    ? `Object carries namespace '${carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+    ? `Object carries namespace '${obj.kind && obj.kind === "Namespace" ? obj.metadata?.name : carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
     : null;
 }
 
@@ -230,7 +230,7 @@ export function adjudicateCarriesIgnoredNamespace(
   obj: KubernetesObject,
 ): AdjudicationResult {
   return carriesIgnoredNamespace(ignoredNamespaces, obj)
-    ? `Object carries namespace '${carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+    ? `Object carries namespace '${obj.kind && obj.kind === "Namespace" ? obj.metadata?.name : carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
     : null;
 }
 
