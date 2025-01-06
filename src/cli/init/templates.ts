@@ -34,8 +34,8 @@ type peprPackageJSON = {
       alwaysIgnore: { namespaces: string[] };
       includedFiles: string[];
       env: object;
-      rbac: PolicyRule[];
-      rbacMode: RbacMode;
+      rbac?: PolicyRule[];
+      rbacMode?: RbacMode;
     };
     scripts: { "k3d-setup": string };
     dependencies: { pepr: string; undici: string };
@@ -80,8 +80,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},
-      rbac: [],
-      rbacMode: RbacMode.SCOPED,
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],
