@@ -16,27 +16,26 @@ import { ModuleConfig } from "../core/module";
 import { CapabilityExport } from "../types";
 import { TLSOut } from "../tls";
 
-type AssetsOverrides = {
+type CommonOverrideValues = {
   apiToken: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
   hash: string;
-  image: string;
   name: string;
 };
 
-type AssetsOverrides2 = {
-  apiToken: string;
-  capabilities: CapabilityExport[];
-  config: ModuleConfig;
-  hash: string;
-  name: string;
+type ChartOverrides = CommonOverrideValues & {
+  image: string;
+};
+
+type ResourceOverrides = CommonOverrideValues & {
   path: string;
   tls: TLSOut;
 };
+
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
-  { hash, name, image, config, apiToken, capabilities }: AssetsOverrides,
+  { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
   path: string,
 ): Promise<void> {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
@@ -255,7 +254,7 @@ export async function generateAllYaml(
   validateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
   watchDeployment: V1Deployment | null,
   deployment: unknown,
-  assets: AssetsOverrides2,
+  assets: ResourceOverrides,
 ): Promise<string> {
   const { name, tls, hash, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
