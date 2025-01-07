@@ -21,9 +21,10 @@ import {
 } from "./templates";
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
-import { ErrorList, Errors } from "../../lib/errors";
+import { ErrorList } from "../../lib/errors";
+import { OnError } from "./enums";
 
-export default function (program: RootCmd) {
+export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
   let pkgOverride = "";
   program
@@ -33,7 +34,7 @@ export default function (program: RootCmd) {
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", Errors.reject)
+    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", OnError.REJECT)
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140

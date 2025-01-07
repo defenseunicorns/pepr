@@ -18,7 +18,9 @@ const pretty = {
 const transport = isPrettyLog ? pretty : undefined;
 // epochTime is the pino default
 const pinoTimeFunction =
-  process.env.PINO_TIME_STAMP === "iso" ? () => stdTimeFunctions.isoTime() : () => stdTimeFunctions.epochTime();
+  process.env.PINO_TIME_STAMP === "iso"
+    ? (): string => stdTimeFunctions.isoTime()
+    : (): string => stdTimeFunctions.epochTime();
 const Log = pino({
   transport,
   timestamp: pinoTimeFunction,

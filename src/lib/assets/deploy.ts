@@ -15,7 +15,7 @@ import { peprStoreCRD } from "./store";
 import { webhookConfig } from "./webhooks";
 import { CapabilityExport, ImagePullSecret } from "../types";
 
-export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string) {
+export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string): Promise<void> {
   try {
     await K8s(kind.Namespace).Get("pepr-system");
   } catch {
@@ -42,7 +42,7 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
     Log.error(e);
   }
 }
-export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number) {
+export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number): Promise<void> {
   Log.info("Establishing connection to Kubernetes");
 
   const { name, host, path } = assets;
@@ -95,7 +95,7 @@ async function setupRBAC(
   capabilities: CapabilityExport[],
   force: boolean,
   config: { rbacMode?: string; rbac?: PolicyRule[] },
-) {
+): Promise<void> {
   const { rbacMode, rbac } = config;
 
   Log.info("Applying cluster role binding");
@@ -119,7 +119,7 @@ async function setupRBAC(
   await K8s(kind.RoleBinding).Apply(roleBinding, { force });
 }
 
-async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean) {
+async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean): Promise<void> {
   const { name } = assets;
 
   Log.info("Applying module secret");
@@ -144,7 +144,7 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
 }
 
 // Setup the watcher deployment and service
-async function setupWatcher(assets: Assets, hash: string, force: boolean) {
+async function setupWatcher(assets: Assets, hash: string, force: boolean): Promise<void> {
   // If the module has a watcher, deploy it
   const watchDeployment = getWatcher(assets, hash, assets.buildTimestamp);
   if (watchDeployment) {

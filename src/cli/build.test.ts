@@ -16,7 +16,7 @@ import { expect, describe, it, jest, beforeEach } from "@jest/globals";
 import { createDockerfile } from "../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
-import { Capability } from "../lib/capability";
+import { Capability } from "../lib/core/capability";
 
 jest.mock("child_process", () => ({
   execSync: jest.fn(),

@@ -3,17 +3,17 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
-import { ModuleConfig } from "./module";
-import { PeprMutateRequest } from "./mutate-request";
+import { ModuleConfig } from "../core/module";
+import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
-import { AdmissionRequest, Binding, MutateAction } from "./types";
-import { Event, Operation } from "./enums";
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
+import { AdmissionRequest, Binding, MutateAction } from "../types";
+import { Event, Operation } from "../enums";
+import { convertFromBase64Map, convertToBase64Map } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
-import { MutateResponse } from "./k8s";
-import { Errors } from "./errors";
+import { MutateResponse } from "../k8s";
+import { OnError } from "../../cli/init/enums";
 
-jest.mock("./utils");
+jest.mock("../utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
 const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 
@@ -243,7 +243,7 @@ describe("processRequest", () => {
     );
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
-    testBindable.config.onError = Errors.reject;
+    testBindable.config.onError = OnError.REJECT;
     const testPeprMutateRequest = defaultPeprMutateRequest();
     const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
@@ -268,7 +268,7 @@ describe("processRequest", () => {
     );
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
-    testBindable.config.onError = Errors.audit;
+    testBindable.config.onError = OnError.AUDIT;
     const testPeprMutateRequest = defaultPeprMutateRequest();
     const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;

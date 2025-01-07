@@ -1,13 +1,13 @@
 import { Capability } from "./capability";
-import Log from "./telemetry/logger";
-import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "./types";
-import { a } from "../lib";
+import Log from "../telemetry/logger";
+import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "../types";
+import { a } from "../../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
-import { Event, Operation } from "./enums";
-import { PeprMutateRequest } from "./mutate-request";
-import { PeprValidateRequest } from "./validate-request";
-import { AdmissionRequest } from "./types";
+import { Event, Operation } from "../enums";
+import { PeprMutateRequest } from "../mutate-request";
+import { PeprValidateRequest } from "../validate-request";
+import { AdmissionRequest } from "../types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
@@ -21,7 +21,7 @@ jest.mock("./module", () => ({
 }));
 
 // Mock logger globally
-jest.mock("./telemetry/logger", () => ({
+jest.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
@@ -108,20 +108,22 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith(`Registering schedule store for ${capabilityConfig.name}`);
   });
 
-  it("should throw an error if store is registered twice", () => {
-    const capability = new Capability(capabilityConfig);
+  describe("when a store is registered multiple times", () => {
+    it("should throw an error if store is registered twice", () => {
+      const capability = new Capability(capabilityConfig);
 
-    capability.registerStore();
-    expect(() => capability.registerStore()).toThrowError("Store already registered for test-capability");
-  });
+      capability.registerStore();
+      expect(() => capability.registerStore()).toThrowError("Store already registered for test-capability");
+    });
 
-  it("should throw an error if schedule store is registered twice", () => {
-    const capability = new Capability(capabilityConfig);
+    it("should throw an error if schedule store is registered twice", () => {
+      const capability = new Capability(capabilityConfig);
 
-    capability.registerScheduleStore();
-    expect(() => capability.registerScheduleStore()).toThrowError(
-      "Schedule store already registered for test-capability",
-    );
+      capability.registerScheduleStore();
+      expect(() => capability.registerScheduleStore()).toThrowError(
+        "Schedule store already registered for test-capability",
+      );
+    });
   });
 
   it("should correctly chain When, InNamespace, WithLabel, and Mutate methods", async () => {
@@ -159,83 +161,208 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
   });
 
-  it("should use child logger for mutate callback", async () => {
-    const capability = new Capability(capabilityConfig);
+  describe("when creating log messages", () => {
+    it("should use child logger for mutate callback", async () => {
+      const capability = new Capability(capabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Mutate action log");
-      },
-    );
+      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+        (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Mutate action log");
+        },
+      );
 
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespace("default")
-      .WithLabel("test-label", "value")
-      .Alias("test-alias")
-      .Mutate(mockMutateCallback);
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .InNamespace("default")
+        .WithLabel("test-label", "value")
+        .Alias("test-alias")
+        .Mutate(mockMutateCallback);
 
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
+      expect(capability.bindings).toHaveLength(1);
+      const binding = capability.bindings[0];
 
-    // Simulate the mutation action
-    const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
+      // Simulate the mutation action
+      const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
 
-    if (binding.mutateCallback) {
-      await binding.mutateCallback(peprRequest);
-    }
+      if (binding.mutateCallback) {
+        await binding.mutateCallback(peprRequest);
+      }
 
-    expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
-    expect(mockLog.info).toHaveBeenCalledWith("Mutate action log");
-  });
-
-  it("should handle complex alias and logging correctly", async () => {
-    const complexCapabilityConfig: CapabilityCfg = {
-      name: "complex-capability",
-      description: "Test complex capability description",
-      namespaces: ["pepr-demo", "pepr-demo-2"],
-    };
-
-    const capability = new Capability(complexCapabilityConfig);
-
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
-      },
-    );
-
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespace("pepr-demo")
-      .WithLabel("white")
-      .Alias("reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation")
-      .Mutate(mockMutateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
-    expect(binding.filters.namespaces).toContain("pepr-demo");
-    expect(binding.filters.labels).toHaveProperty("white", "");
-    expect(binding.alias).toBe("reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation");
-
-    // Simulate the mutation action
-    const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
-
-    if (binding.mutateCallback) {
-      await binding.mutateCallback(peprRequest);
-    }
-
-    expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({
-      alias: "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+      expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
+      expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
+      expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
+      expect(mockLog.info).toHaveBeenCalledWith("Mutate action log");
     });
-    expect(mockLog.info).toHaveBeenCalledWith(
-      "Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
-    );
-    expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
+
+    it("should handle complex alias and logging correctly", async () => {
+      const complexCapabilityConfig: CapabilityCfg = {
+        name: "complex-capability",
+        description: "Test complex capability description",
+        namespaces: ["pepr-demo", "pepr-demo-2"],
+      };
+
+      const capability = new Capability(complexCapabilityConfig);
+
+      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
+        },
+      );
+
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .InNamespace("pepr-demo")
+        .WithLabel("white")
+        .Alias("reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation")
+        .Mutate(mockMutateCallback);
+
+      expect(capability.bindings).toHaveLength(1);
+      const binding = capability.bindings[0];
+      expect(binding.filters.namespaces).toContain("pepr-demo");
+      expect(binding.filters.labels).toHaveProperty("white", "");
+      expect(binding.alias).toBe("reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation");
+
+      // Simulate the mutation action
+      const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
+
+      if (binding.mutateCallback) {
+        await binding.mutateCallback(peprRequest);
+      }
+
+      expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
+      expect(mockLog.child).toHaveBeenCalledWith({
+        alias: "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+      });
+      expect(mockLog.info).toHaveBeenCalledWith(
+        "Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+      );
+      expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
+    });
+
+    it("should use child logger for validate callback", async () => {
+      const capability = new Capability(capabilityConfig);
+
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
+
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .InNamespace("default")
+        .Alias("test-alias")
+        .Validate(mockValidateCallback);
+
+      expect(capability.bindings).toHaveLength(1);
+      const binding = capability.bindings[0];
+
+      // Simulate the validation action
+      const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
+
+      if (binding.validateCallback) {
+        await binding.validateCallback(mockPeprRequest);
+      }
+
+      expect(mockValidateCallback).toHaveBeenCalledWith(mockPeprRequest, expect.anything());
+      expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
+      expect(mockLog.info).toHaveBeenCalledWith("Executing validate action with alias: test-alias");
+      expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
+    });
+
+    it("should use child logger for reconcile callback", async () => {
+      const capability = new Capability(capabilityConfig);
+
+      const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+        async (update, phase, logger: typeof Log = mockLog) => {
+          logger.info("Reconcile action log");
+        },
+      );
+
+      capability.When(a.Pod).IsCreatedOrUpdated().Reconcile(mockReconcileCallback);
+
+      expect(capability.bindings).toHaveLength(1);
+      const binding = capability.bindings[0];
+
+      // Simulate calling the reconcile action
+      const testPod = new V1Pod();
+      const testPhase = WatchPhase.Modified;
+
+      if (binding.watchCallback) {
+        await binding.watchCallback(testPod, testPhase);
+      }
+
+      expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
+      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+      expect(mockLog.info).toHaveBeenCalledWith("Executing reconcile action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
+    });
+
+    it("should use child logger for finalize callback", async () => {
+      const capability = new Capability(capabilityConfig);
+
+      const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
+        async (update, logger: typeof Log = mockLog) => {
+          logger.info("Finalize action log");
+        },
+      );
+
+      // Create a mock WatchLogAction function that matches the expected signature
+      const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {},
+      );
+
+      // Chain .Watch() with the correct function signature before .Finalize()
+      capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback).Finalize(mockFinalizeCallback);
+
+      // Find the finalize binding
+      const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+
+      expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
+
+      // Simulate calling the finalize action
+      const testPod = new V1Pod();
+
+      if (finalizeBinding?.finalizeCallback) {
+        await finalizeBinding.finalizeCallback(testPod);
+      }
+
+      expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
+      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+      expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
+    });
+
+    it("should use aliasLogger if no logger is provided in watch callback", async () => {
+      const capability = new Capability(capabilityConfig);
+
+      // Mock the watch callback
+      const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+        async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
+          logger?.info("Watch action log");
+        },
+      );
+
+      // Chain Watch without providing an explicit logger
+      capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback);
+
+      expect(capability.bindings).toHaveLength(1);
+      const binding = capability.bindings[0];
+
+      // Simulate the watch action without passing a logger, so aliasLogger is used
+      const testPod = new V1Pod();
+      await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
+
+      // Assert that aliasLogger was used
+      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
+      expect(mockLog.info).toHaveBeenCalledWith("Executing watch action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
+    });
   });
 
   it("should reset the alias before each mutation", async () => {
@@ -280,39 +407,6 @@ describe("Capability", () => {
     expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: no alias provided");
-  });
-
-  it("should use child logger for validate callback", async () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespace("default")
-      .Alias("test-alias")
-      .Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
-
-    // Simulate the validation action
-    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
-
-    if (binding.validateCallback) {
-      await binding.validateCallback(mockPeprRequest);
-    }
-
-    expect(mockValidateCallback).toHaveBeenCalledWith(mockPeprRequest, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing validate action with alias: test-alias");
-    expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
   it("should log 'no alias provided' if alias is not set in validate callback", async () => {
@@ -395,34 +489,6 @@ describe("Capability", () => {
 
     expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, mockLog);
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
-  });
-
-  it("should use child logger for reconcile callback", async () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update, phase, logger: typeof Log = mockLog) => {
-        logger.info("Reconcile action log");
-      },
-    );
-
-    capability.When(a.Pod).IsCreatedOrUpdated().Reconcile(mockReconcileCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
-
-    // Simulate calling the reconcile action
-    const testPod = new V1Pod();
-    const testPhase = WatchPhase.Modified;
-
-    if (binding.watchCallback) {
-      await binding.watchCallback(testPod, testPhase);
-    }
-
-    expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing reconcile action with alias: no alias provided");
-    expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
   });
 
   it("should use user-provided alias for finalizer with reconcile", async () => {
@@ -511,122 +577,95 @@ describe("Capability", () => {
     expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
   });
 
-  it("should use child logger for finalize callback", async () => {
-    const capability = new Capability(capabilityConfig);
+  describe("when adding filters", () => {
+    it("should add deletionTimestamp filter", () => {
+      const capability = new Capability(capabilityConfig);
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(async (update, logger: typeof Log = mockLog) => {
-      logger.info("Finalize action log");
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
+
+      capability.When(a.Pod).IsCreatedOrUpdated().WithDeletionTimestamp().Validate(mockValidateCallback);
+
+      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings[0].filters.deletionTimestamp).toBe(true);
     });
 
-    // Create a mock WatchLogAction function that matches the expected signature
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {},
-    );
+    it("should add name filter", () => {
+      const capability = new Capability(capabilityConfig);
 
-    // Chain .Watch() with the correct function signature before .Finalize()
-    capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback).Finalize(mockFinalizeCallback);
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
 
-    // Find the finalize binding
-    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+      capability.When(a.Pod).IsCreatedOrUpdated().WithName("test-name").Validate(mockValidateCallback);
 
-    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
+      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings[0].filters.name).toBe("test-name");
+    });
 
-    // Simulate calling the finalize action
-    const testPod = new V1Pod();
+    it("should add annotation filter", () => {
+      const capability = new Capability(capabilityConfig);
 
-    if (finalizeBinding?.finalizeCallback) {
-      await finalizeBinding.finalizeCallback(testPod);
-    }
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
 
-    expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: no alias provided");
-    expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .WithAnnotation("test-key", "test-value")
+        .Validate(mockValidateCallback);
+
+      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings[0].filters.annotations["test-key"]).toBe("test-value");
+    });
   });
 
-  it("should add deletionTimestamp filter", () => {
-    const capability = new Capability(capabilityConfig);
+  describe("when binding to events", () => {
+    it("should bind an update event", () => {
+      const capability = new Capability(capabilityConfig);
 
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
 
-    capability.When(a.Pod).IsCreatedOrUpdated().WithDeletionTimestamp().Validate(mockValidateCallback);
+      capability.When(a.Pod).IsUpdated().InNamespace("default").Validate(mockValidateCallback);
 
-    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].filters.deletionTimestamp).toBe(true);
+      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings[0].event).toBe(Event.UPDATE);
+    });
+
+    it("should bind a delete event", async () => {
+      const capability = new Capability(capabilityConfig);
+
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+          logger.info("Validate action log");
+          return { allowed: true };
+        },
+      );
+
+      capability.When(a.Pod).IsDeleted().InNamespace("default").Validate(mockValidateCallback);
+
+      expect(capability.bindings).toHaveLength(1);
+
+      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings[0].event).toBe(Event.DELETE);
+    });
   });
-
-  it("should add name filter", () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    capability.When(a.Pod).IsCreatedOrUpdated().WithName("test-name").Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].filters.name).toBe("test-name");
-  });
-
-  it("should add annotation filter", () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    capability.When(a.Pod).IsCreatedOrUpdated().WithAnnotation("test-key", "test-value").Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].filters.annotations["test-key"]).toBe("test-value");
-  });
-
-  it("should bind an update event", () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    capability.When(a.Pod).IsUpdated().InNamespace("default").Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].event).toBe(Event.UPDATE);
-  });
-
-  it("should bind a delete event", async () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    capability.When(a.Pod).IsDeleted().InNamespace("default").Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-
-    expect(capability.bindings).toHaveLength(1); // Ensure binding is created
-    expect(capability.bindings[0].event).toBe(Event.DELETE);
-  });
-
   it("should throw an error if neither matchedKind nor kind is provided", () => {
     const capability = new Capability(capabilityConfig);
 
@@ -699,32 +738,6 @@ describe("Capability", () => {
 
     // Ensure that OnSchedule was not called
     expect(OnSchedule).not.toHaveBeenCalled();
-  });
-
-  it("should use aliasLogger if no logger is provided in watch callback", async () => {
-    const capability = new Capability(capabilityConfig);
-
-    // Mock the watch callback
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
-        logger?.info("Watch action log");
-      },
-    );
-
-    // Chain Watch without providing an explicit logger
-    capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
-
-    // Simulate the watch action without passing a logger, so aliasLogger is used
-    const testPod = new V1Pod();
-    await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
-
-    // Assert that aliasLogger was used
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing watch action with alias: no alias provided");
-    expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
   });
 
   it("should add annotation with an empty value when no value is provided in WithAnnotation", () => {

@@ -1,0 +1,58 @@
+#!/bin/bash
+# Set PEPR_HOOK_OPT_IN=1 as an envar to use this optional pre-push hook
+
+[ "${PEPR_HOOK_OPT_IN}" != 1 ] && exit 0
+
+# Warn and exit if too many changes are about to be pushed
+MAX_CHANGES=340 #Avg commit size on main is 340 as of 12 Dec 2024
+
+# Get the local branch name
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Get the remote and branch being pushed to
+remote_name="origin"
+remote_branch="main"
+
+# Get the list of commits being pushed
+# Only works if local tracking branch exists and is properly set
+commits=$(git rev-list --left-right --count ${remote_name}/${remote_branch}...HEAD 2>/dev/null || echo "0 0")
+
+# Extract commits ahead of remote
+commits_ahead=$(echo "$commits" | awk '{print $2}')
+if [[ "$commits_ahead" -eq 0 ]]; then
+    echo "No new commits to push. Exiting."
+    exit 0
+fi
+
+# Get the diff statistics for the range of commits
+stats=$(git diff --shortstat ${remote_name}/${remote_branch}...HEAD 2>/dev/null || echo "")
+
+# Extract the number of insertions and deletions
+insertions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $2); print $2}')
+if [ -z "$insertions" ]; then
+  insertions="0"
+fi
+
+deletions=$(echo "$stats" | awk -F',' '{gsub("[^0-9]", "", $3); print $3}')
+if [ -z "$deletions" ]; then
+  deletions="0"
+fi
+
+total_changes=$((insertions + deletions))
+
+
+# Check if total changes exceed the maximum allowed
+if [[ "$total_changes" -gt "$MAX_CHANGES" ]]; then
+    echo "[WARNING] This push has $total_changes changes $insertions(+), $deletions(-), threshold is $MAX_CHANGES total changes."
+    echo "Consider breaking your changes into smaller, more manageable pull requests."
+    read -p "Do you want to proceed with the push? (y/n, default is n): " choice < /dev/tty
+    choice=${choice:-n} # Set default choice to 'n' if no input
+    if [[ "$choice" != "y" ]]; then
+        echo "Push aborted."
+        exit 1
+    fi
+fi
+
+# Proceed with the push
+echo "[INFO] This push contains $total_changes changes ($insertions insertions, $deletions deletions)."
+exit 0

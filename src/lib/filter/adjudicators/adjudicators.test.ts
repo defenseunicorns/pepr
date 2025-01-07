@@ -268,6 +268,9 @@ describe("uncarryableNamespace", () => {
     [[], {}, false],
     [[], { metadata: { namespace: "namespace" } }, false],
 
+    [["namespace"], { kind: "Namespace", metadata: { name: "namespace" } }, false],
+    [["namespace"], { kind: "Namespace", metadata: { name: "monitoring" } }, true],
+
     [["namespace"], {}, false],
     [["namespace"], { metadata: {} }, false],
     [["namespace"], { metadata: { namespace: null } }, false],
@@ -296,6 +299,9 @@ describe("carriesIgnoredNamespace", () => {
   it.each([
     [[], {}, false],
     [[], { metadata: { namespace: "whatever" } }, false],
+
+    [["ignored"], { kind: "Namespace", metadata: { name: "ignored" } }, true],
+    [["ignored"], { kind: "Namespace", metadata: { name: "monitoring" } }, false],
 
     [["ignored"], {}, false],
     [["ignored"], { metadata: {} }, false],

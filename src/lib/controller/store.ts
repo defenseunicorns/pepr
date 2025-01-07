@@ -5,10 +5,10 @@ import { Operation } from "fast-json-patch";
 import { K8s } from "kubernetes-fluent-client";
 import { startsWith } from "ramda";
 
-import { Capability } from "../capability";
+import { Capability } from "../core/capability";
 import { Store } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../telemetry/logger";
-import { DataOp, DataSender, DataStore, Storage } from "../storage";
+import { DataOp, DataSender, DataStore, Storage } from "../core/storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 const namespace = "pepr-system";

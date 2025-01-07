@@ -3,7 +3,7 @@
 import { KubernetesObject } from "@kubernetes/client-node";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { randomBytes } from "node:crypto";
-import Log from "./telemetry/logger";
+import Log from "../telemetry/logger";
 
 type WatchCallback = (obj: KubernetesObject, phase: WatchPhase) => Promise<void>;
 

@@ -4,7 +4,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "./telemetry/logger";
 
 // returns true if all deployments are ready, false otherwise
-export async function checkDeploymentStatus(namespace: string) {
+export async function checkDeploymentStatus(namespace: string): Promise<boolean> {
   const deployments = await K8s(kind.Deployment).InNamespace(namespace).Get();
   let status = false;
   let readyCount = 0;
@@ -29,7 +29,7 @@ export async function checkDeploymentStatus(namespace: string) {
 }
 
 // wait for all deployments in the pepr-system namespace to be ready
-export async function namespaceDeploymentsReady(namespace: string = "pepr-system") {
+export async function namespaceDeploymentsReady(namespace: string = "pepr-system"): Promise<true | undefined> {
   Log.info(`Checking ${namespace} deployments status...`);
   let ready = false;
   while (!ready) {

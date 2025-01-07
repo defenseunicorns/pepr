@@ -3,48 +3,55 @@
 
 import { AdmissionRequest, Binding } from "../types";
 import { Operation } from "../enums";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import {
-  carriesIgnoredNamespace,
-  carriedName,
-  definedEvent,
-  declaredOperation,
-  definedName,
-  definedGroup,
-  declaredGroup,
-  definedVersion,
-  declaredVersion,
-  definedKind,
-  declaredKind,
-  definedNamespaces,
-  carriedNamespace,
-  definedLabels,
-  carriedLabels,
-  definedAnnotations,
   carriedAnnotations,
-  definedNamespaceRegexes,
+  carriedLabels,
+  carriedName,
+  carriedNamespace,
+  carriesIgnoredNamespace,
+  declaredGroup,
+  declaredKind,
+  declaredOperation,
+  declaredVersion,
+  definedAnnotations,
+  definedEvent,
+  definedGroup,
+  definedKind,
+  definedLabels,
+  definedName,
   definedNameRegex,
+  definedNamespaceRegexes,
+  definedNamespaces,
+  definedVersion,
   misboundDeleteWithDeletionTimestamp,
-  mismatchedDeletionTimestamp,
+  misboundNamespace,
   mismatchedAnnotations,
+  mismatchedDeletionTimestamp,
+  mismatchedEvent,
+  mismatchedGroup,
+  mismatchedKind,
   mismatchedLabels,
   mismatchedName,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
-  mismatchedEvent,
-  mismatchedGroup,
   mismatchedVersion,
-  mismatchedKind,
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
 } from "./adjudicators/adjudicators";
 
+type AdjudicationResult = string | null;
+type Adjudicator = () => AdjudicationResult;
+
 /**
- * shouldSkipRequest determines if a request should be skipped based on the binding filters.
+ * shouldSkipRequest determines if an admission request should be skipped based on the binding filters.
  *
  * @param binding the action binding
  * @param req the incoming request
+ * @param capabilityNamespaces the namespaces allowed by capability
+ * @param ignoredNamespaces the namespaces ignored by module config
  * @returns
  */
 export function shouldSkipRequest(
@@ -53,99 +60,185 @@ export function shouldSkipRequest(
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
 ): string {
-  const prefix = "Ignoring Admission Callback:";
   const obj = (req.operation === Operation.DELETE ? req.oldObject : req.object)!;
+  const prefix = "Ignoring Admission Callback:";
 
-  // prettier-ignore
-  return (
-    misboundDeleteWithDeletionTimestamp(binding) ?
-      `${prefix} Cannot use deletionTimestamp filter on a DELETE operation.` :
+  const adjudicators: Adjudicator[] = [
+    (): AdjudicationResult => adjudicateMisboundDeleteWithDeletionTimestamp(binding),
+    (): AdjudicationResult => adjudicateMismatchedDeletionTimestamp(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedEvent(binding, req),
+    (): AdjudicationResult => adjudicateMismatchedName(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedGroup(binding, req),
+    (): AdjudicationResult => adjudicateMismatchedVersion(binding, req),
+    (): AdjudicationResult => adjudicateMismatchedKind(binding, req),
+    (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
+    (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
+    (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedLabels(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedAnnotations(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNamespaceRegex(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNameRegex(binding, obj),
+    (): AdjudicationResult => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
+    (): AdjudicationResult => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
+  ];
 
-    mismatchedDeletionTimestamp(binding, obj) ?
-      `${prefix} Binding defines deletionTimestamp but Object does not carry it.` :
+  for (const adjudicator of adjudicators) {
+    const result = adjudicator();
+    if (result) {
+      return `${prefix} ${result}`;
+    }
+  }
 
-    mismatchedEvent(binding, req) ?
-      (
-        `${prefix} Binding defines event '${definedEvent(binding)}' but ` +
-        `Request declares '${declaredOperation(req)}'.`
-      ) :
+  return "";
+}
 
-    mismatchedName(binding, obj) ?
-      `${prefix} Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.` :
+/**
+ * filterNoMatchReason determines whether a callback should be skipped after
+ *  receiving an update event from the API server, based on the binding filters.
+ *
+ * @param binding the action binding
+ * @param kubernetesObject the incoming kubernetes object
+ * @param capabilityNamespaces the namespaces allowed by capability
+ * @param ignoredNamespaces the namespaces ignored by module config
+ */
+export function filterNoMatchReason(
+  binding: Binding,
+  obj: Partial<KubernetesObject>,
+  capabilityNamespaces: string[],
+  ignoredNamespaces?: string[],
+): string {
+  const prefix = "Ignoring Watch Callback:";
 
-    mismatchedGroup(binding, req) ?
-      (
-        `${prefix} Binding defines group '${definedGroup(binding)}' but ` +
-        `Request declares '${declaredGroup(req)}'.`
-      ) :
+  const adjudicators: Adjudicator[] = [
+    (): AdjudicationResult => adjudicateMismatchedDeletionTimestamp(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedName(binding, obj),
+    (): AdjudicationResult => adjudicateMisboundNamespace(binding),
+    (): AdjudicationResult => adjudicateMismatchedLabels(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedAnnotations(binding, obj),
+    (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
+    (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
+    (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNamespaceRegex(binding, obj),
+    (): AdjudicationResult => adjudicateMismatchedNameRegex(binding, obj),
+    (): AdjudicationResult => adjudicateCarriesIgnoredNamespace(ignoredNamespaces, obj),
+    (): AdjudicationResult => adjudicateMissingCarriableNamespace(capabilityNamespaces, obj),
+  ];
 
-    mismatchedVersion(binding, req) ?
-      (
-        `${prefix} Binding defines version '${definedVersion(binding)}' but ` +
-        `Request declares '${declaredVersion(req)}'.`
-      ) :
+  for (const adjudicator of adjudicators) {
+    const result = adjudicator();
+    if (result) {
+      return `${prefix} ${result}`;
+    }
+  }
 
-    mismatchedKind(binding, req) ?
-      (
-        `${prefix} Binding defines kind '${definedKind(binding)}' but ` +
-        `Request declares '${declaredKind(req)}'.`
-      ) :
+  return "";
+}
 
-    unbindableNamespaces(capabilityNamespaces, binding) ?
-      (
-        `${prefix} Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
+export function adjudicateMisboundNamespace(binding: Binding): AdjudicationResult {
+  return misboundNamespace(binding) ? "Cannot use namespace filter on a namespace object." : null;
+}
 
-    uncarryableNamespace(capabilityNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
+export function adjudicateMisboundDeleteWithDeletionTimestamp(binding: Binding): AdjudicationResult {
+  return misboundDeleteWithDeletionTimestamp(binding)
+    ? "Cannot use deletionTimestamp filter on a DELETE operation."
+    : null;
+}
 
-    mismatchedNamespace(binding, obj) ?
-      (
-        `${prefix} Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
+export function adjudicateMismatchedDeletionTimestamp(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedDeletionTimestamp(binding, obj)
+    ? "Binding defines deletionTimestamp but Object does not carry it."
+    : null;
+}
 
-    mismatchedLabels(binding, obj) ?
-      (
-        `${prefix} Binding defines labels '${JSON.stringify(definedLabels(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
-      ) :
+export function adjudicateMismatchedEvent(binding: Binding, req: AdmissionRequest): AdjudicationResult {
+  return mismatchedEvent(binding, req)
+    ? `Binding defines event '${definedEvent(binding)}' but Request declares '${declaredOperation(req)}'.`
+    : null;
+}
 
-    mismatchedAnnotations(binding, obj) ?
-      (
-        `${prefix} Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' ` +
-        `but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
-      ) :
+export function adjudicateMismatchedName(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedName(binding, obj)
+    ? `Binding defines name '${definedName(binding)}' but Object carries '${carriedName(obj)}'.`
+    : null;
+}
 
-    mismatchedNamespaceRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines namespace regexes ` +
-        `'${JSON.stringify(definedNamespaceRegexes(binding))}' ` +
-        `but Object carries '${carriedNamespace(obj)}'.`
-      ) :
+export function adjudicateMismatchedGroup(binding: Binding, req: AdmissionRequest): AdjudicationResult {
+  return mismatchedGroup(binding, req)
+    ? `Binding defines group '${definedGroup(binding)}' but Request declares '${declaredGroup(req)}'.`
+    : null;
+}
 
-    mismatchedNameRegex(binding, obj) ?
-      (
-        `${prefix} Binding defines name regex '${definedNameRegex(binding)}' ` +
-        `but Object carries '${carriedName(obj)}'.`
-      ) :
+export function adjudicateMismatchedVersion(binding: Binding, req: AdmissionRequest): AdjudicationResult {
+  return mismatchedVersion(binding, req)
+    ? `Binding defines version '${definedVersion(binding)}' but Request declares '${declaredVersion(req)}'.`
+    : null;
+}
 
-    carriesIgnoredNamespace(ignoredNamespaces, obj) ?
-      (
-        `${prefix} Object carries namespace '${carriedNamespace(obj)}' ` +
-        `but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
-      ) :
+export function adjudicateMismatchedKind(binding: Binding, req: AdmissionRequest): AdjudicationResult {
+  return mismatchedKind(binding, req)
+    ? `Binding defines kind '${definedKind(binding)}' but Request declares '${declaredKind(req)}'.`
+    : null;
+}
 
-    missingCarriableNamespace(capabilityNamespaces, obj) ? 
-      (
-        `${prefix} Object does not carry a namespace ` +
-        `but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
-      ) :
+export function adjudicateUnbindableNamespaces(capabilityNamespaces: string[], binding: Binding): AdjudicationResult {
+  return unbindableNamespaces(capabilityNamespaces, binding)
+    ? `Binding defines namespaces ${JSON.stringify(definedNamespaces(binding))} but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+    : null;
+}
 
-    ""
-  );
+export function adjudicateUncarryableNamespace(
+  capabilityNamespaces: string[],
+  obj: KubernetesObject,
+): AdjudicationResult {
+  return uncarryableNamespace(capabilityNamespaces, obj)
+    ? `Object carries namespace '${obj.kind && obj.kind === "Namespace" ? obj.metadata?.name : carriedNamespace(obj)}' but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+    : null;
+}
+
+export function adjudicateMismatchedNamespace(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedNamespace(binding, obj)
+    ? `Binding defines namespaces '${JSON.stringify(definedNamespaces(binding))}' but Object carries '${carriedNamespace(obj)}'.`
+    : null;
+}
+
+export function adjudicateMismatchedLabels(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedLabels(binding, obj)
+    ? `Binding defines labels '${JSON.stringify(definedLabels(binding))}' but Object carries '${JSON.stringify(carriedLabels(obj))}'.`
+    : null;
+}
+
+export function adjudicateMismatchedAnnotations(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedAnnotations(binding, obj)
+    ? `Binding defines annotations '${JSON.stringify(definedAnnotations(binding))}' but Object carries '${JSON.stringify(carriedAnnotations(obj))}'.`
+    : null;
+}
+
+export function adjudicateMismatchedNamespaceRegex(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedNamespaceRegex(binding, obj)
+    ? `Binding defines namespace regexes '${JSON.stringify(definedNamespaceRegexes(binding))}' but Object carries '${carriedNamespace(obj)}'.`
+    : null;
+}
+
+export function adjudicateMismatchedNameRegex(binding: Binding, obj: KubernetesObject): AdjudicationResult {
+  return mismatchedNameRegex(binding, obj)
+    ? `Binding defines name regex '${definedNameRegex(binding)}' but Object carries '${carriedName(obj)}'.`
+    : null;
+}
+
+export function adjudicateCarriesIgnoredNamespace(
+  ignoredNamespaces: string[] | undefined,
+  obj: KubernetesObject,
+): AdjudicationResult {
+  return carriesIgnoredNamespace(ignoredNamespaces, obj)
+    ? `Object carries namespace '${obj.kind && obj.kind === "Namespace" ? obj.metadata?.name : carriedNamespace(obj)}' but ignored namespaces include '${JSON.stringify(ignoredNamespaces)}'.`
+    : null;
+}
+
+export function adjudicateMissingCarriableNamespace(
+  capabilityNamespaces: string[],
+  obj: KubernetesObject,
+): AdjudicationResult {
+  return missingCarriableNamespace(capabilityNamespaces, obj)
+    ? `Object does not carry a namespace but namespaces allowed by Capability are '${JSON.stringify(capabilityNamespaces)}'.`
+    : null;
 }

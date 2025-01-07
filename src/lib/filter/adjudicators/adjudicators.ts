@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Event, Operation } from "../../enums";
-import { AdmissionRequest, Binding } from "../../types";
+import { AdmissionRequest, Binding, FinalizeAction, WatchLogAction, MutateAction, ValidateAction } from "../../types";
 import {
   __,
   allPass,
@@ -19,7 +19,7 @@ import {
   nthArg,
   pipe,
 } from "ramda";
-import { KubernetesObject } from "kubernetes-fluent-client";
+import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 
 /*
   Naming scheme:
@@ -77,6 +77,7 @@ export const carriedNamespace = pipe(
   (kubernetesObject: KubernetesObject): string | undefined => kubernetesObject?.metadata?.namespace,
   defaultTo(""),
 );
+
 export const carriesNamespace = pipe(carriedNamespace, equals(""), not);
 
 export const carriedAnnotations = pipe(
@@ -144,7 +145,7 @@ export const definesVersion = pipe(definedVersion, equals(""), not);
 export const definedKind = pipe((binding): string => binding?.kind?.kind, defaultTo(""));
 export const definesKind = pipe(definedKind, equals(""), not);
 
-export const definedCategory = (binding: Partial<Binding>) => {
+export const definedCategory = (binding: Partial<Binding>): string => {
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? "Finalize" :
@@ -153,8 +154,15 @@ export const definedCategory = (binding: Partial<Binding>) => {
     binding.isValidate ? "Validate" :
     "";
 };
+export type DefinedCallbackReturnType =
+  | FinalizeAction<GenericClass, InstanceType<GenericClass>>
+  | WatchLogAction<GenericClass, InstanceType<GenericClass>>
+  | MutateAction<GenericClass, InstanceType<GenericClass>>
+  | ValidateAction<GenericClass, InstanceType<GenericClass>>
+  | null
+  | undefined;
 
-export const definedCallback = (binding: Partial<Binding>) => {
+export const definedCallback = (binding: Partial<Binding>): DefinedCallbackReturnType => {
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? binding.finalizeCallback :
@@ -241,10 +249,21 @@ export const mismatchedLabels = allPass([
   pipe((binding, kubernetesObject) => metasMismatch(definedLabels(binding), carriedLabels(kubernetesObject))),
 ]);
 
+/*
+ * If the object does not have a namespace, and it is not a namespace,
+ * then we must return false because it cannot be uncarryable
+ */
 export const uncarryableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), carriesNamespace),
-  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject)), not),
+  pipe((namespaceSelector, kubernetesObject) => {
+    if (kubernetesObject?.kind === "Namespace") {
+      return namespaceSelector.includes(kubernetesObject?.metadata?.name);
+    }
+    if (carriesNamespace(kubernetesObject)) {
+      return namespaceSelector.includes(carriedNamespace(kubernetesObject));
+    }
+    return true;
+  }, not),
 ]);
 
 export const missingCarriableNamespace = allPass([
@@ -256,10 +275,22 @@ export const missingCarriableNamespace = allPass([
   ),
 ]);
 
+/*
+ * If the object does not have a namespace, and it is not a namespace,
+ * then we must return false because it cannot be ignored
+ */
 export const carriesIgnoredNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), carriesNamespace),
-  pipe((namespaceSelector, kubernetesObject) => namespaceSelector.includes(carriedNamespace(kubernetesObject))),
+  pipe((namespaceSelector, kubernetesObject) => {
+    if (kubernetesObject?.kind === "Namespace") {
+      return namespaceSelector.includes(kubernetesObject?.metadata?.name);
+    }
+    if (carriesNamespace(kubernetesObject)) {
+      return namespaceSelector.includes(carriedNamespace(kubernetesObject));
+    }
+
+    return false;
+  }),
 ]);
 
 export const unbindableNamespaces = allPass([

@@ -5,15 +5,15 @@ import jsonPatch from "fast-json-patch";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { clone } from "ramda";
 
-import { Capability } from "./capability";
-import { Errors } from "./errors";
-import { shouldSkipRequest } from "./filter/filter";
-import { MutateResponse } from "./k8s";
-import { AdmissionRequest, Binding } from "./types";
-import Log from "./telemetry/logger";
-import { ModuleConfig } from "./module";
-import { PeprMutateRequest } from "./mutate-request";
-import { base64Encode, convertFromBase64Map, convertToBase64Map } from "./utils";
+import { Capability } from "../core/capability";
+import { shouldSkipRequest } from "../filter/filter";
+import { MutateResponse } from "../k8s";
+import { AdmissionRequest, Binding } from "../types";
+import Log from "../telemetry/logger";
+import { ModuleConfig } from "../core/module";
+import { PeprMutateRequest } from "../mutate-request";
+import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
+import { OnError } from "../../cli/init/enums";
 
 export interface Bindable {
   req: AdmissionRequest;
@@ -117,11 +117,11 @@ export async function processRequest(
     response.warnings.push(`Action failed: ${errorMessage}`);
 
     switch (config.onError) {
-      case Errors.reject:
+      case OnError.REJECT:
         response.result = "Pepr module configured to reject on error";
         break;
 
-      case Errors.audit:
+      case OnError.AUDIT:
         response.auditAnnotations = response.auditAnnotations || {};
         response.auditAnnotations[Date.now()] = `Action failed: ${errorMessage}`;
         break;
@@ -181,7 +181,7 @@ export async function mutateProcessor(
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
-    if (config.onError === Errors.reject && response?.warnings!.length > 0) {
+    if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
       return response;
     }
   }
