@@ -114,9 +114,6 @@ export async function webhookConfig(
         namespaceSelector: {
           matchExpressions: ignore,
         },
-        objectSelector: {
-          matchExpressions: ignore,
-        },
         rules,
         // @todo: track side effects state
         sideEffects: "None",
