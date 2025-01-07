@@ -73,8 +73,10 @@ export class Assets {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
 
-    const mutateWebhook = await webhookConfig(this, "mutate", this.config.webhookTimeout);
-    const validateWebhook = await webhookConfig(this, "validate", this.config.webhookTimeout);
+    const webhooks = {
+      mutate: await webhookConfig(this, "mutate", this.config.webhookTimeout),
+      validate: await webhookConfig(this, "validate", this.config.webhookTimeout),
+    };
 
     const code = await fs.readFile(this.path);
 
@@ -93,7 +95,7 @@ export class Assets {
       path: this.path,
       tls: this.tls,
     };
-    return generateAllYaml(mutateWebhook, validateWebhook, watchDeployment, deployment, assetsInputs);
+    return generateAllYaml(webhooks, watchDeployment, deployment, assetsInputs);
   };
 
   writeWebhookFiles = async (

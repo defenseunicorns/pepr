@@ -248,10 +248,10 @@ export function generateZarfYamlChart(name: string, image: string, config: Modul
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-// eslint-disable-next-line max-params
+type webhooks = { validate: V1ValidatingWebhookConfiguration | null; mutate: V1MutatingWebhookConfiguration | null };
+
 export async function generateAllYaml(
-  mutateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
-  validateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
+  webhooks: webhooks,
   watchDeployment: V1Deployment | null,
   deployment: unknown,
   assets: ResourceOverrides,
@@ -274,12 +274,12 @@ export async function generateAllYaml(
     storeRoleBinding(name),
   ];
 
-  if (mutateWebhook) {
-    resources.push(mutateWebhook);
+  if (webhooks.mutate) {
+    resources.push(webhooks.mutate);
   }
 
-  if (validateWebhook) {
-    resources.push(validateWebhook);
+  if (webhooks.validate) {
+    resources.push(webhooks.validate);
   }
 
   if (watchDeployment) {
