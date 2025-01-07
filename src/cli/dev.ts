@@ -5,7 +5,7 @@ import { ChildProcess, fork } from "child_process";
 import { promises as fs } from "fs";
 import prompt from "prompts";
 import { validateCapabilityNames } from "../lib/helpers";
-import { Assets } from "../lib/assets";
+import { Assets } from "../lib/assets/assets";
 import { buildModule, loadModule } from "./build";
 import { RootCmd } from "./root";
 import { K8s, kind } from "kubernetes-fluent-client";

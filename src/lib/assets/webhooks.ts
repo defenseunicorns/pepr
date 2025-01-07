@@ -9,7 +9,7 @@ import {
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
-import { Assets } from ".";
+import { Assets } from "./assets";
 import { Event } from "../enums";
 import { Binding } from "../types";
 

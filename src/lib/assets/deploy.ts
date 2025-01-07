@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-import { Assets } from ".";
+import { Assets } from "./assets";
 import Log from "../telemetry/logger";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";

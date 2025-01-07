@@ -3,7 +3,7 @@
 
 import prompt from "prompts";
 
-import { Assets } from "../lib/assets";
+import { Assets } from "../lib/assets/assets";
 import { buildModule } from "./build";
 import { RootCmd } from "./root";
 import { validateCapabilityNames } from "../lib/helpers";

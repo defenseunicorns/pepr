@@ -5,7 +5,7 @@ import { KubernetesObject, V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
-import { Assets } from ".";
+import { Assets } from "./assets";
 import { ModuleConfig } from "../core/module";
 import { Binding } from "../types";
 

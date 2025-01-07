@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
 import { validateCapabilityNames } from "../lib/helpers";
 import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
-import { Assets } from "../lib/assets";
+import { Assets } from "../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
 
