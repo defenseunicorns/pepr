@@ -52,6 +52,7 @@ export class Assets {
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
 
+  // TODO: Appears unused
   setHash = (hash: string): void => {
     this.hash = hash;
   };
@@ -68,14 +69,19 @@ export class Assets {
   allYaml = async (imagePullSecret?: string): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
-    this.capabilities.forEach(capability => namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces));
-
-    const code = await fs.readFile(this.path);
+    for (const capability of this.capabilities) {
+      namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
+    }
 
     const webhooks = {
       mutate: await webhookConfig(this, "mutate", this.config.webhookTimeout),
       validate: await webhookConfig(this, "validate", this.config.webhookTimeout),
     };
+
+    const code = await fs.readFile(this.path);
+
+    // Generate a hash of the code
+    this.hash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
       default: getDeployment(this, this.hash, this.buildTimestamp, imagePullSecret),
@@ -86,7 +92,7 @@ export class Assets {
       apiToken: this.apiToken,
       capabilities: this.capabilities,
       config: this.config,
-      hash: crypto.createHash("sha256").update(code).digest("hex"),
+      hash: this.hash,
       name: this.name,
       path: this.path,
       tls: this.tls,
