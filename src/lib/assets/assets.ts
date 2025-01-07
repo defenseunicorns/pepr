@@ -83,8 +83,10 @@ export class Assets {
     // Generate a hash of the code
     this.hash = crypto.createHash("sha256").update(code).digest("hex");
 
-    const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp, imagePullSecret);
-    const deployment = getDeployment(this, this.hash, this.buildTimestamp, imagePullSecret);
+    const deployments = {
+      default: getDeployment(this, this.hash, this.buildTimestamp, imagePullSecret),
+      watch: getWatcher(this, this.hash, this.buildTimestamp, imagePullSecret),
+    };
 
     const assetsInputs = {
       apiToken: this.apiToken,
@@ -95,7 +97,7 @@ export class Assets {
       path: this.path,
       tls: this.tls,
     };
-    return generateAllYaml(webhooks, watchDeployment, deployment, assetsInputs);
+    return generateAllYaml(webhooks, deployments, assetsInputs);
   };
 
   writeWebhookFiles = async (

@@ -249,11 +249,11 @@ export function generateZarfYamlChart(name: string, image: string, config: Modul
 }
 
 type webhooks = { validate: V1ValidatingWebhookConfiguration | null; mutate: V1MutatingWebhookConfiguration | null };
+type deployments = { default: V1Deployment; watch: V1Deployment | null };
 
 export async function generateAllYaml(
   webhooks: webhooks,
-  watchDeployment: V1Deployment | null,
-  deployment: unknown,
+  deployments: deployments,
   assets: ResourceOverrides,
 ): Promise<string> {
   const { name, tls, hash, apiToken, path, config } = assets;
@@ -266,7 +266,7 @@ export async function generateAllYaml(
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    deployment,
+    deployments.default,
     service(name),
     watcherService(name),
     getModuleSecret(name, code, hash),
@@ -282,8 +282,8 @@ export async function generateAllYaml(
     resources.push(webhooks.validate);
   }
 
-  if (watchDeployment) {
-    resources.push(watchDeployment);
+  if (deployments.watch) {
+    resources.push(deployments.watch);
   }
 
   // Convert the resources to a single YAML string
