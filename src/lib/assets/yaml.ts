@@ -1,19 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml } from "@kubernetes/client-node";
-import crypto from "crypto";
+import {
+  dumpYaml,
+  V1Deployment,
+  V1MutatingWebhookConfiguration,
+  V1ValidatingWebhookConfiguration,
+} from "@kubernetes/client-node";
 import { promises as fs } from "fs";
-import { Assets } from ".";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
+import { getModuleSecret, getNamespace } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
-import { webhookConfig } from "./webhooks";
 import { genEnv } from "./pods";
+import { ModuleConfig } from "../core/module";
+import { CapabilityExport } from "../types";
+import { TLSOut } from "../tls";
+
+type CommonOverrideValues = {
+  apiToken: string;
+  capabilities: CapabilityExport[];
+  config: ModuleConfig;
+  hash: string;
+  name: string;
+};
+
+type ChartOverrides = CommonOverrideValues & {
+  image: string;
+};
+
+type ResourceOverrides = CommonOverrideValues & {
+  path: string;
+  tls: TLSOut;
+};
 
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
-  { hash, name, image, config, apiToken, capabilities }: Assets,
+  { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
   path: string,
 ): Promise<void> {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
@@ -169,7 +191,7 @@ export async function overridesFile(
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
-export function zarfYaml({ name, image, config }: Assets, path: string): string {
+export function generateZarfYaml(name: string, image: string, config: ModuleConfig, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -197,7 +219,7 @@ export function zarfYaml({ name, image, config }: Assets, path: string): string 
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export function zarfYamlChart({ name, image, config }: Assets, path: string): string {
+export function generateZarfYamlChart(name: string, image: string, config: ModuleConfig, path: string): string {
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
@@ -226,16 +248,16 @@ export function zarfYamlChart({ name, image, config }: Assets, path: string): st
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-export async function allYaml(assets: Assets, imagePullSecret?: string): Promise<string> {
-  const { name, tls, apiToken, path, config } = assets;
+type webhooks = { validate: V1ValidatingWebhookConfiguration | null; mutate: V1MutatingWebhookConfiguration | null };
+type deployments = { default: V1Deployment; watch: V1Deployment | null };
+
+export async function generateAllYaml(
+  webhooks: webhooks,
+  deployments: deployments,
+  assets: ResourceOverrides,
+): Promise<string> {
+  const { name, tls, hash, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
-
-  // Generate a hash of the code
-  assets.hash = crypto.createHash("sha256").update(code).digest("hex");
-
-  const mutateWebhook = await webhookConfig(assets, "mutate", assets.config.webhookTimeout);
-  const validateWebhook = await webhookConfig(assets, "validate", assets.config.webhookTimeout);
-  const watchDeployment = getWatcher(assets, assets.hash, assets.buildTimestamp, imagePullSecret);
 
   const resources = [
     getNamespace(assets.config.customLabels?.namespace),
@@ -244,24 +266,24 @@ export async function allYaml(assets: Assets, imagePullSecret?: string): Promise
     serviceAccount(name),
     apiTokenSecret(name, apiToken),
     tlsSecret(name, tls),
-    getDeployment(assets, assets.hash, assets.buildTimestamp, imagePullSecret),
+    deployments.default,
     service(name),
     watcherService(name),
-    getModuleSecret(name, code, assets.hash),
+    getModuleSecret(name, code, hash),
     storeRole(name),
     storeRoleBinding(name),
   ];
 
-  if (mutateWebhook) {
-    resources.push(mutateWebhook);
+  if (webhooks.mutate) {
+    resources.push(webhooks.mutate);
   }
 
-  if (validateWebhook) {
-    resources.push(validateWebhook);
+  if (webhooks.validate) {
+    resources.push(webhooks.validate);
   }
 
-  if (watchDeployment) {
-    resources.push(watchDeployment);
+  if (deployments.watch) {
+    resources.push(deployments.watch);
   }
 
   // Convert the resources to a single YAML string
