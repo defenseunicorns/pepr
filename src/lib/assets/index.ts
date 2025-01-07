@@ -35,20 +35,67 @@ function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
-function createWebhookYaml(
+// Create a unit test for this function
+export function removeIgnoredNamespacesFromWebhook(
+  webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
+): kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration {
+  if (
+    webhookConfiguration.webhooks &&
+    webhookConfiguration.webhooks[0] &&
+    webhookConfiguration.webhooks[0].namespaceSelector &&
+    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions &&
+    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions[1]
+  ) {
+    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions[1].values = [];
+  }
+  if (
+    webhookConfiguration.webhooks &&
+    webhookConfiguration.webhooks[0] &&
+    webhookConfiguration.webhooks[0].objectSelector &&
+    webhookConfiguration.webhooks[0].objectSelector.matchExpressions &&
+    webhookConfiguration.webhooks[0].objectSelector.matchExpressions[1]
+  ) {
+    webhookConfiguration.webhooks[0].objectSelector.matchExpressions[1].values = [];
+  }
+  return webhookConfiguration;
+}
+
+// Create a unit test for this function
+export function createWebhookYaml(
   assets: Assets,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
-  const yaml = toYaml(webhookConfiguration);
-  return replaceString(
-    replaceString(
-      replaceString(yaml, assets.name, "{{ .Values.uuid }}"),
-      assets.config.onError === "reject" ? "Fail" : "Ignore",
-      "{{ .Values.admission.failurePolicy }}",
-    ),
-    `${assets.config.webhookTimeout}` || "10",
-    "{{ .Values.admission.webhookTimeout }}",
-  );
+  const yaml = toYaml(removeIgnoredNamespacesFromWebhook(webhookConfiguration));
+  const replacements = [
+    { search: assets.name, replace: "{{ .Values.uuid }}" },
+    {
+      search: assets.config.onError === "reject" ? "Fail" : "Ignore",
+      replace: "{{ .Values.admission.failurePolicy }}",
+    },
+    {
+      search: `${assets.config.webhookTimeout}` || "10",
+      replace: "{{ .Values.admission.webhookTimeout }}",
+    },
+    {
+      search: `
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: []
+`,
+      replace: `
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            {{- range .Values.additionalIgnoredNamespaces }}
+            - {{ . }}
+            {{- end }}
+`,
+    },
+  ];
+
+  return replacements.reduce((updatedYaml, { search, replace }) => replaceString(updatedYaml, search, replace), yaml);
 }
 
 function helmLayout(basePath: string, unique: string): Record<string, Record<string, string>> {

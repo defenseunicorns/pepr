@@ -19,6 +19,7 @@ export async function overridesFile(
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
 
   const overrides = {
+    additionalIgnoredNamespaces: config.alwaysIgnore.namespaces || [],
     rbac: rbacOverrides,
     secrets: {
       apiToken: Buffer.from(apiToken).toString("base64"),
