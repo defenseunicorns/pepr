@@ -22,6 +22,7 @@ import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking
 import { webhookConfig } from "./webhooks";
 import { generateZarfYaml, generateZarfYamlChart, generateAllYaml, overridesFile } from "./yaml";
 import { promises as fs } from "fs";
+import { V1MutatingWebhookConfiguration, V1ValidatingWebhookConfiguration } from "@kubernetes/client-node/dist/gen";
 
 export class Assets {
   readonly name: string;
@@ -95,8 +96,25 @@ export class Assets {
     return generateAllYaml(mutateWebhook, validateWebhook, watchDeployment, deployment, assetsInputs);
   };
 
-  /* eslint max-statements: ["warn", 21] */
-  // eslint-disable-next-line max-statements
+  writeWebhookFiles = async (
+    validateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
+    mutateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
+    helm: Record<string, Record<string, string>>,
+  ): Promise<void> => {
+    if (validateWebhook || mutateWebhook) {
+      await fs.writeFile(helm.files.admissionDeploymentYaml, dedent(admissionDeployTemplate(this.buildTimestamp)));
+      await fs.writeFile(helm.files.admissionServiceMonitorYaml, dedent(serviceMonitorTemplate("admission")));
+    }
+
+    if (mutateWebhook) {
+      await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this.name, this.config, mutateWebhook));
+    }
+
+    if (validateWebhook) {
+      await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this.name, this.config, validateWebhook));
+    }
+  };
+
   generateHelmChart = async (basePath: string): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
 
@@ -140,21 +158,7 @@ export class Assets {
         webhookConfig(this, "validate", this.config.webhookTimeout),
       ]);
 
-      if (validateWebhook || mutateWebhook) {
-        await fs.writeFile(helm.files.admissionDeploymentYaml, dedent(admissionDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(helm.files.admissionServiceMonitorYaml, dedent(serviceMonitorTemplate("admission")));
-      }
-
-      if (mutateWebhook) {
-        await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this.name, this.config, mutateWebhook));
-      }
-
-      if (validateWebhook) {
-        await fs.writeFile(
-          helm.files.validationWebhookYaml,
-          createWebhookYaml(this.name, this.config, validateWebhook),
-        );
-      }
+      await this.writeWebhookFiles(validateWebhook, mutateWebhook, helm);
 
       const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);
       if (watchDeployment) {
