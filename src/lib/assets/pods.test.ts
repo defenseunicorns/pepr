@@ -1,6 +1,6 @@
 import { getNamespace, getWatcher, getDeployment, getModuleSecret, genEnv } from "./pods";
 import { expect, describe, test, jest, afterEach } from "@jest/globals";
-import { Assets } from ".";
+import { Assets } from "./assets";
 import { ModuleConfig } from "../core/module";
 import { gzipSync } from "zlib";
 

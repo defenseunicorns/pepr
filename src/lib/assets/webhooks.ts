@@ -9,17 +9,10 @@ import {
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
-import { Assets } from ".";
+import { Assets } from "./assets";
 import { Event } from "../enums";
 import { Binding } from "../types";
 
-const peprIgnoreLabel: V1LabelSelectorRequirement = {
-  key: "pepr.dev",
-  operator: "NotIn",
-  values: ["ignore"],
-};
-
-// Order matters for helm template, kube-system, then pepr-system
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
 const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
@@ -65,7 +58,7 @@ export async function webhookConfig(
   mutateOrValidate: "mutate" | "validate",
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
-  const ignore = [peprIgnoreLabel];
+  const ignore: V1LabelSelectorRequirement[] = [];
 
   const { name, tls, config, apiToken, host } = assets;
   const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces || []);
@@ -119,9 +112,6 @@ export async function webhookConfig(
         matchPolicy: "Equivalent",
         timeoutSeconds,
         namespaceSelector: {
-          matchExpressions: ignore,
-        },
-        objectSelector: {
           matchExpressions: ignore,
         },
         rules,
