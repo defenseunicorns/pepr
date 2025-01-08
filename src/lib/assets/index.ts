@@ -12,19 +12,21 @@ export function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
+// Unit Test Me!!
 export function createWebhookYaml(
-  assets: Assets,
+  name: string,
+  config: ModuleConfig,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
   const yaml = toYaml(webhookConfiguration);
   const replacements = [
-    { search: assets.name, replace: "{{ .Values.uuid }}" },
+    { search: name, replace: "{{ .Values.uuid }}" },
     {
-      search: assets.config.onError === "reject" ? "Fail" : "Ignore",
+      search: config.onError === "reject" ? "Fail" : "Ignore",
       replace: "{{ .Values.admission.failurePolicy }}",
     },
     {
-      search: `${assets.config.webhookTimeout}` || "10",
+      search: `${config.webhookTimeout}` || "10",
       replace: "{{ .Values.admission.webhookTimeout }}",
     },
     {

@@ -116,7 +116,7 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
                   - name: PEPR_WATCH_MODE
                     value: "true"
                   {{- if .Values.additionalIgnoredNamespaces }}
-                  - name: PEPR_IGNORED_NAMESPACES
+                  - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
                     value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
                   {{- end }}
                 envFrom:
@@ -200,7 +200,7 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                   - name: PEPR_WATCH_MODE
                     value: "false"
                   {{- if .Values.additionalIgnoredNamespaces }}
-                  - name: PEPR_IGNORED_NAMESPACES
+                  - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
                     value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
                   {{- end }}
                 envFrom:
