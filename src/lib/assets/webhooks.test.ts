@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { it, describe, expect } from "@jest/globals";
-import { resolveIgnoreNamespaces } from "./webhooks";
+import { resolveIgnoreNamespaces, peprIgnoreNamespaces } from "./webhooks";
+
+describe("peprIgnoreNamespaces", () => {
+  it("should have order of kube-system, then pepr-system for the helm templating", () => {
+    expect(peprIgnoreNamespaces).toEqual(["kube-system", "pepr-system"]);
+    expect(peprIgnoreNamespaces[0]).toEqual("kube-system");
+    expect(peprIgnoreNamespaces[1]).toEqual("pepr-system");
+  });
+});
 
 describe("resolveIgnoreNamespaces", () => {
   it("should default to empty array ig config is empty", () => {

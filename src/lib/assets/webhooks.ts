@@ -13,8 +13,7 @@ import { Assets } from "./assets";
 import { Event } from "../enums";
 import { Binding } from "../types";
 
-// Order matters for helm template - must be kube-system, then pepr-system
-const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
+export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
 const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
   const { event, kind, isMutate, isValidate } = binding;
