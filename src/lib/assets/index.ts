@@ -35,32 +35,6 @@ function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
-// Create a unit test for this function
-export function removeIgnoredNamespacesFromWebhook(
-  webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
-): kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration {
-  if (
-    webhookConfiguration.webhooks &&
-    webhookConfiguration.webhooks[0] &&
-    webhookConfiguration.webhooks[0].namespaceSelector &&
-    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions &&
-    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions[1]
-  ) {
-    webhookConfiguration.webhooks[0].namespaceSelector.matchExpressions[1].values = [];
-  }
-  if (
-    webhookConfiguration.webhooks &&
-    webhookConfiguration.webhooks[0] &&
-    webhookConfiguration.webhooks[0].objectSelector &&
-    webhookConfiguration.webhooks[0].objectSelector.matchExpressions &&
-    webhookConfiguration.webhooks[0].objectSelector.matchExpressions[1]
-  ) {
-    webhookConfiguration.webhooks[0].objectSelector.matchExpressions[1].values = [];
-  }
-  return webhookConfiguration;
-}
-
-// Create a unit test for this function
 export function createWebhookYaml(
   assets: Assets,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
