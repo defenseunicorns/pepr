@@ -19,6 +19,7 @@ const peprIgnoreLabel: V1LabelSelectorRequirement = {
   values: ["ignore"],
 };
 
+// Order matters for helm template, kube-system, then pepr-system
 const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
 const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {

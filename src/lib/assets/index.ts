@@ -65,7 +65,7 @@ export function createWebhookYaml(
   assets: Assets,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
-  const yaml = toYaml(removeIgnoredNamespacesFromWebhook(webhookConfiguration));
+  const yaml = toYaml(webhookConfiguration);
   const replacements = [
     { search: assets.name, replace: "{{ .Values.uuid }}" },
     {
@@ -80,7 +80,9 @@ export function createWebhookYaml(
       search: `
         - key: kubernetes.io/metadata.name
           operator: NotIn
-          values: []
+          values:
+            - kube-system
+            - pepr-system
 `,
       replace: `
         - key: kubernetes.io/metadata.name
