@@ -44,7 +44,7 @@ export class Workdir {
 
   async recreate(): Promise<string> {
     await this.delete();
-    await time.nap(1);
+    await time.nap(100);
     return await this.create();
   }
 }
