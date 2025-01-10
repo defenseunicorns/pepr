@@ -20,43 +20,27 @@ describe("pepr", () => {
     });
   });
 
-  describe("prepWorkdir", () => {
-    const workdir = new Workdir(`${FILE}-prepWorkdir`, `${HERE}/../testroot/helpers`);
-
-    beforeAll(async () => await workdir.recreate());
-
-    it("builds pepr package and drops .tgz into given directory", async () => {
-      await sut.prepWorkdir(workdir.path());
-      const files = await fs.readdir(workdir.path());
-
-      expect(files).toHaveLength(1);
-      expect(files).toContain("pepr-0.0.0-development.tgz");
-    });
-  });
-
   describe("tgzifyModule", () => {
     const workdir = new Workdir(`${FILE}-tgzifyModule`, `${HERE}/../testroot/helpers`);
 
     beforeAll(async () => await workdir.recreate());
 
-    it("converts module source to install pepr from a .tgz", async () => {
-      await sut.prepWorkdir(workdir.path());
+    it("converts module source to install pepr from .tgz", async () => {
+      const modulePath = `${workdir.path()}/module`;
+      const packagePath = `${modulePath}/package.json`;
       let packageJson = {
         dependencies: {
           pepr: "0.0.0-development",
         },
       };
-      const modulePath = `${workdir.path()}/module`;
-      const packagePath = `${modulePath}/package.json`;
       await fs.mkdir(modulePath, { recursive: true });
       await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2));
 
       await sut.tgzifyModule(modulePath);
 
       packageJson = JSON.parse(await fs.readFile(packagePath, { encoding: "utf8" }));
-      expect(packageJson.dependencies.pepr).toBe(
-        `file://${modulePath}/../pepr-0.0.0-development.tgz`,
-      );
+      const root = await sut.projectRoot();
+      expect(packageJson.dependencies.pepr).toBe(`file://${root}/pepr-0.0.0-development.tgz`);
     });
   });
 
@@ -65,28 +49,12 @@ describe("pepr", () => {
 
     beforeAll(async () => {
       await workdir.recreate();
-      await sut.prepWorkdir(workdir.path());
     });
 
     it(
-      "can invoke pepr command via .tgz in current dir",
+      "can invoke pepr command via .tgz",
       async () => {
         const res = await sut.cli(workdir.path(), { cmd: "pepr --version" });
-        expect(res.exitcode).toBe(0);
-        expect(res.stderr.join("").trim()).toBe("");
-        expect(res.stdout.join("").trim()).toBe("0.0.0-development");
-      },
-      time.toMs("2m"),
-    );
-
-    it(
-      "can invoke pepr command via .tgz in parent dir",
-      async () => {
-        const modulePath = `${workdir.path()}/module`;
-        await fs.mkdir(modulePath, { recursive: true });
-
-        const res = await sut.cli(modulePath, { cmd: "pepr --version" });
-
         expect(res.exitcode).toBe(0);
         expect(res.stderr.join("").trim()).toBe("");
         expect(res.stdout.join("").trim()).toBe("0.0.0-development");

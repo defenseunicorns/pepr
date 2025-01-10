@@ -16,7 +16,6 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-    await pepr.prepWorkdir(workdir.path());
   });
 
   it(
