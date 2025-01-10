@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as time from "./time";
 
 export class Workdir {
   root: string;
@@ -43,6 +44,7 @@ export class Workdir {
 
   async recreate(): Promise<string> {
     await this.delete();
+    await time.nap(1);
     return await this.create();
   }
 }

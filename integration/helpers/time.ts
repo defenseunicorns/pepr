@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+export function nap(ms: number) {
+  new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export function toMs(human: string) {
   const UNITS: Record<string, number> = {};
   UNITS.ms = 1;
