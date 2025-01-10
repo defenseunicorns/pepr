@@ -21,7 +21,7 @@ describe("pepr", () => {
   });
 
   describe("prepWorkdir", () => {
-    const workdir = new Workdir(`${FILE}-prepWorkdir`, `${HERE}/../workroot/helpers`);
+    const workdir = new Workdir(`${FILE}-prepWorkdir`, `${HERE}/../testroot/helpers`);
 
     beforeAll(async () => await workdir.recreate());
 
@@ -35,7 +35,7 @@ describe("pepr", () => {
   });
 
   describe("cli", () => {
-    const workdir = new Workdir(`${FILE}-cli`, `${HERE}/../workroot/helpers`);
+    const workdir = new Workdir(`${FILE}-cli`, `${HERE}/../testroot/helpers`);
 
     beforeAll(async () => {
       await workdir.recreate();

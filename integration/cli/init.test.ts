@@ -3,6 +3,7 @@
 
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
+import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
@@ -11,7 +12,7 @@ const FILE = path.basename(__filename);
 const HERE = __dirname;
 
 describe("init", () => {
-  const workdir = new Workdir(`${FILE}`, `${HERE}/../workroot/cli`);
+  const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
   beforeAll(async () => {
     await workdir.recreate();
@@ -19,12 +20,41 @@ describe("init", () => {
   });
 
   it(
-    "init --help",
+    "gives command line help",
     async () => {
-      const res = await pepr.cli(workdir.path(), { cmd: "pepr init --help" });
+      const argz = "--help";
+      const res = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       expect(res.exitcode).toBe(0);
       expect(res.stderr.join("").trim()).toBe("");
       expect(res.stdout.at(0)).toMatch("Usage: pepr init");
+    },
+    time.toMs("2m"),
+  );
+
+  it(
+    "creates new module using input args",
+    async () => {
+      const name = "flags-name";
+      const desc = "flags-desc";
+      const errb = "reject";
+      const argz = [
+        `--name ${name}`,
+        `--description ${desc}`,
+        `--errorBehavior ${errb}`,
+        "--confirm",
+        "--skip-post-init",
+      ].join(" ");
+      const res = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
+      expect(res.exitcode).toBe(0);
+      expect(res.stderr.join("").trim()).toBe("");
+      expect(res.stdout.join("").trim()).toContain("New Pepr module created");
+
+      const packageJson = JSON.parse(
+        await fs.readFile(`${workdir.path()}/${name}/package.json`, { encoding: "utf8" }),
+      );
+      expect(packageJson.name).toBe(name);
+      expect(packageJson.description).toBe(desc);
+      expect(packageJson.pepr.onError).toBe(errb);
     },
     time.toMs("2m"),
   );
