@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-export function nap(ms: number) {
-  new Promise(resolve => setTimeout(resolve, ms));
+const UNITS: Record<string, number> = {};
+UNITS.ms = 1;
+UNITS.s = UNITS.ms * 1000;
+UNITS.m = UNITS.s * 60;
+UNITS.h = UNITS.m * 60;
+UNITS.d = UNITS.h * 24;
+UNITS.w = UNITS.d * 7;
+UNITS.mo = UNITS.d * 30;
+UNITS.y = UNITS.d * 365;
+
+export async function nap(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export function toMs(human: string) {
-  const UNITS: Record<string, number> = {};
-  UNITS.ms = 1;
-  UNITS.s = UNITS.ms * 1000;
-  UNITS.m = UNITS.s * 60;
-  UNITS.h = UNITS.m * 60;
-  UNITS.d = UNITS.h * 24;
-  UNITS.w = UNITS.d * 7;
-  UNITS.mo = UNITS.d * 30;
-  UNITS.y = UNITS.d * 365;
-
   const splits = human.split("").map(m => m.trim());
 
   const groups: string[] = [];
@@ -49,54 +49,27 @@ export function toMs(human: string) {
   return milliseconds;
 }
 
-export function toHuman(ms: number) {
-  const UNITS: Record<string, number> = {};
-  UNITS.ms = 1;
-  UNITS.s = UNITS.ms * 1000;
-  UNITS.m = UNITS.s * 60;
-  UNITS.h = UNITS.m * 60;
-  UNITS.d = UNITS.h * 24;
-  UNITS.w = UNITS.d * 7;
-  UNITS.mo = UNITS.d * 30;
-  UNITS.y = UNITS.d * 365;
+function reduceBy(unit: number, ms: number): [number, number] {
+  let remain = ms;
+  let result = 0;
+  while (remain >= unit) {
+    remain -= unit;
+    result += 1;
+  }
+  return [result, remain];
+}
 
-  let y = 0;
-  let mo = 0;
-  let w = 0;
-  let d = 0;
-  let h = 0;
-  let m = 0;
-  let s = 0;
+export function toHuman(ms: number) {
+  let [y, mo, w, d, h, m, s] = Array(7).fill(0);
   let remain = ms;
 
-  while (remain >= UNITS.y) {
-    remain -= UNITS.y;
-    y += 1;
-  }
-  while (remain >= UNITS.mo) {
-    remain -= UNITS.mo;
-    mo += 1;
-  }
-  while (remain >= UNITS.w) {
-    remain -= UNITS.w;
-    w += 1;
-  }
-  while (remain >= UNITS.d) {
-    remain -= UNITS.d;
-    d += 1;
-  }
-  while (remain >= UNITS.h) {
-    remain -= UNITS.h;
-    h += 1;
-  }
-  while (remain >= UNITS.m) {
-    remain -= UNITS.m;
-    m += 1;
-  }
-  while (remain >= UNITS.s) {
-    remain -= UNITS.s;
-    s += 1;
-  }
+  [y, remain] = reduceBy(UNITS.y, remain);
+  [mo, remain] = reduceBy(UNITS.mo, remain);
+  [w, remain] = reduceBy(UNITS.w, remain);
+  [d, remain] = reduceBy(UNITS.d, remain);
+  [h, remain] = reduceBy(UNITS.h, remain);
+  [m, remain] = reduceBy(UNITS.m, remain);
+  [s, remain] = reduceBy(UNITS.s, remain);
 
   let result = "";
   result = y > 0 ? `${result}${y}y` : result;
