@@ -4,62 +4,14 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { kind } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
-import yaml from "yaml";
-import { kind } from "kubernetes-fluent-client";
+import * as resource from "../helpers/resource";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-async function oneFromFile(path: string): Promise<any> {
-  const ext = path.split(".").at(-1);
-
-  let ret: object;
-  switch (ext) {
-    case "json": {
-      const all = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
-      ret = Array.isArray(all) ? all.at(0) : all;
-      break;
-    }
-
-    case "yaml":
-      ret = yaml.parseDocument(await fs.readFile(path, { encoding: "utf8" })).contents!.toJSON();
-      break;
-
-    default:
-      throw `oops: don't recognize file of type ".${ext}"`;
-  }
-
-  return ret;
-}
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-async function manyFromFile(path: string): Promise<any[]> {
-  const ext = path.split(".").at(-1);
-
-  let ret: object[];
-  switch (ext) {
-    case "json": {
-      const all = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
-      ret = Array.isArray(all) ? all : [all];
-      break;
-    }
-
-    case "yaml":
-      ret = yaml
-        .parseAllDocuments(await fs.readFile(path, { encoding: "utf8" }))
-        .map(m => m.contents!.toJSON());
-      break;
-
-    default:
-      throw `oops: don't recognize file of type ".${ext}"`;
-  }
-
-  return ret;
-}
 
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
@@ -149,24 +101,18 @@ it.only("does", async () => {
   const moduleDst = `/home/barrett/workspace/defuni/pepr/integration/testroot/cli/build.test.ts/overrides`;
   const customImage = "pepr:overrides";
 
-  const packageJson = await oneFromFile(`${moduleDst}/package.json`);
+  const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
   const uuid = packageJson.pepr.uuid;
 
-  const moduleYaml = await manyFromFile(`${moduleDst}/dist/pepr-module-${uuid}.yaml`);
+  const moduleYaml = await resource.manyFromFile(`${moduleDst}/dist/pepr-module-${uuid}.yaml`);
   {
-    const admissionController = moduleYaml
-      .filter(f => f.kind === "Deployment")
-      .filter(f => f.metadata.name === `pepr-${uuid}`)
-      .at(0) as kind.Deployment;
+    const admissionController = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
     const admissionImage = admissionController!
       .spec!.template!.spec!.containers.filter(f => f.name === "server")
       .at(0)!.image;
     expect(admissionImage).toBe(customImage);
 
-    const watchController = moduleYaml
-      .filter(f => f.kind === "Deployment")
-      .filter(f => f.metadata.name === `pepr-${uuid}-watcher`)
-      .at(0) as kind.Deployment;
+    const watchController = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
     const watchImage = watchController!
       .spec!.template!.spec!.containers.filter(f => f.name === "watcher")
       .at(0)!.image;
