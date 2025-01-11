@@ -66,14 +66,23 @@ describe("build", () => {
     it(
       "using build override options",
       async () => {
+        //
+        // prepare module
+        //
         const moduleDst = `${workdir.path()}/overrides`;
         await pepr.copyModule(moduleSrc, moduleDst);
         await pepr.cli(moduleDst, { cmd: `npm install` });
 
+        //
+        // establish override-support conditions
+        //
         const entryPoint = "pepr2.ts";
         await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${entryPoint}`);
         const customImage = "pepr:overrides";
 
+        //
+        // build using with overrides
+        //
         const argz = [`--entry-point ${entryPoint}`, `--custom-image ${customImage}`].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
@@ -81,11 +90,16 @@ describe("build", () => {
         expect(build.stderr.join("").trim()).toBe("");
         expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
+        //
+        // assert on consequences
+        //
         const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
-
-        // --entrypoint (will fail build if given --entrypoint doesn't exist)
-        // --custom-image
         const uuid = packageJson.pepr.uuid;
+
+        /* --entrypoint (will fail build if given --entrypoint doesn't exist) */
+        // noop
+
+        /* --custom-image */
         const moduleYaml = await resource.manyFromFile(
           `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
         );
