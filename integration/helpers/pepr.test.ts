@@ -44,6 +44,30 @@ describe("pepr", () => {
     });
   });
 
+  describe("copyModule", () => {
+    const workdir = new Workdir(`${FILE}-copyModule`, `${HERE}/../testroot/helpers`);
+
+    beforeAll(async () => await workdir.recreate());
+
+    it("copies & configs pepr module", async () => {
+      const srcPath = `${workdir.path()}/src`;
+      const dstPath = `${workdir.path()}/dst`;
+
+      const packageSrc = `${srcPath}/package.json`;
+      let packageJson = {
+        name: "src",
+      };
+      await fs.mkdir(srcPath, { recursive: true });
+      await fs.writeFile(packageSrc, JSON.stringify(packageJson, null, 2));
+
+      await sut.copyModule(srcPath, dstPath);
+
+      const packageDst = `${dstPath}/package.json`;
+      packageJson = JSON.parse(await fs.readFile(packageDst, { encoding: "utf8" }));
+      expect(packageJson.name).toBe("dst");
+    });
+  });
+
   describe("cli", () => {
     const workdir = new Workdir(`${FILE}-cli`, `${HERE}/../testroot/helpers`);
 

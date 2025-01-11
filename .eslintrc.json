@@ -30,7 +30,8 @@
     "pepr-test-module",
     "build.mjs",
     "journey",
-    "__mocks__"
+    "__mocks__",
+    "integration/testroot"
   ],
   "root": true
 }
