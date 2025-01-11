@@ -74,57 +74,54 @@ describe("build", () => {
         await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${entryPoint}`);
         const customImage = "pepr:overrides";
 
-        const argz = [`--entry-point ${entryPoint}`, `--custom-image ${customImage}"`].join(" ");
+        const argz = [`--entry-point ${entryPoint}`, `--custom-image ${customImage}`].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
+
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");
         expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-        const packageJson = JSON.parse(
-          await fs.readFile(`${moduleDst}/package.json`, { encoding: "utf8" }),
-        );
+        const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
 
         // --entrypoint (will fail build if given --entrypoint doesn't exist)
         // --custom-image
-        const moduleYaml = `${moduleDst}/dist/pepr-module-${packageJson.pepr.uuid}.yaml`;
-        console.log(moduleYaml);
+        const uuid = packageJson.pepr.uuid;
+        const moduleYaml = await resource.manyFromFile(
+          `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+        );
+        {
+          const getDepConImg = (deploy: kind.Deployment, container: string): string => {
+            return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!
+              .image!;
+          };
 
-        // const zarfYaml = `${moduleDst}/dist/zarf.yaml`;
-        // const valuesYaml = `${moduleDst}/dist/${packageJson.pepr.uuid}-chart/values.yaml`;
+          const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
+          const admissionImage = getDepConImg(admission, "server");
+          expect(admissionImage).toBe(customImage);
+
+          const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
+          const watcherImage = getDepConImg(watcher, "watcher");
+          expect(watcherImage).toBe(customImage);
+        }
+
+        const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
+        {
+          const componentImage = zarfYaml.components.at(0).images.at(0);
+          expect(componentImage).toBe(customImage);
+        }
+
+        const valuesYaml = await resource.oneFromFile(
+          `${moduleDst}/dist/${uuid}-chart/values.yaml`,
+        );
+        {
+          const admissionImage = valuesYaml.admission.image;
+          expect(admissionImage).toBe(customImage);
+
+          const watcherImage = valuesYaml.watcher.image;
+          expect(watcherImage).toBe(customImage);
+        }
       },
       time.toMs("1m"),
     );
   });
-});
-
-it.only("does", async () => {
-  const moduleDst = `/home/barrett/workspace/defuni/pepr/integration/testroot/cli/build.test.ts/overrides`;
-  const customImage = "pepr:overrides";
-
-  const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
-  const uuid = packageJson.pepr.uuid;
-
-  const moduleYaml = await resource.manyFromFile(`${moduleDst}/dist/pepr-module-${uuid}.yaml`);
-  {
-    const admissionController = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
-    const admissionImage = admissionController!
-      .spec!.template!.spec!.containers.filter(f => f.name === "server")
-      .at(0)!.image;
-    expect(admissionImage).toBe(customImage);
-
-    const watchController = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
-    const watchImage = watchController!
-      .spec!.template!.spec!.containers.filter(f => f.name === "watcher")
-      .at(0)!.image;
-    expect(watchImage).toBe(customImage);
-  }
-
-  // const zarfYaml = await manyFromFile(`${moduleDst}/dist/zarf.yaml`);
-  // const valuesYaml = await manyFromFile(
-  //   `${moduleDst}/dist/${packageJson.pepr.uuid}-chart/values.yaml`,
-  // );
-
-  // console.log(packageJson);
-  // console.log(zarfYaml);
-  // console.log(valuesYaml);
 });
