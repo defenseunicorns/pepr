@@ -8,6 +8,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import yaml from "yaml";
+import { kind } from "kubernetes-fluent-client";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -117,10 +118,11 @@ describe("build", () => {
         await pepr.copyModule(moduleSrc, moduleDst);
         await pepr.cli(moduleDst, { cmd: `npm install` });
 
-        const entrypoint = "pepr2.ts";
-        await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${entrypoint}`);
+        const entryPoint = "pepr2.ts";
+        await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${entryPoint}`);
+        const customImage = "pepr:overrides";
 
-        const argz = [`--entry-point ${entrypoint}`, `--custom-image pepr:overrides`].join(" ");
+        const argz = [`--entry-point ${entryPoint}`, `--custom-image ${customImage}"`].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");
@@ -145,18 +147,38 @@ describe("build", () => {
 
 it.only("does", async () => {
   const moduleDst = `/home/barrett/workspace/defuni/pepr/integration/testroot/cli/build.test.ts/overrides`;
+  const customImage = "pepr:overrides";
 
   const packageJson = await oneFromFile(`${moduleDst}/package.json`);
-  const zarfYaml = await manyFromFile(`${moduleDst}/dist/zarf.yaml`);
-  const moduleYaml = await manyFromFile(
-    `${moduleDst}/dist/pepr-module-${packageJson.pepr.uuid}.yaml`,
-  );
-  const valuesYaml = await manyFromFile(
-    `${moduleDst}/dist/${packageJson.pepr.uuid}-chart/values.yaml`,
-  );
+  const uuid = packageJson.pepr.uuid;
 
-  console.log(packageJson);
-  console.log(zarfYaml);
-  console.log(moduleYaml);
-  console.log(valuesYaml);
+  const moduleYaml = await manyFromFile(`${moduleDst}/dist/pepr-module-${uuid}.yaml`);
+  {
+    const admissionController = moduleYaml
+      .filter(f => f.kind === "Deployment")
+      .filter(f => f.metadata.name === `pepr-${uuid}`)
+      .at(0) as kind.Deployment;
+    const admissionImage = admissionController!
+      .spec!.template!.spec!.containers.filter(f => f.name === "server")
+      .at(0)!.image;
+    expect(admissionImage).toBe(customImage);
+
+    const watchController = moduleYaml
+      .filter(f => f.kind === "Deployment")
+      .filter(f => f.metadata.name === `pepr-${uuid}-watcher`)
+      .at(0) as kind.Deployment;
+    const watchImage = watchController!
+      .spec!.template!.spec!.containers.filter(f => f.name === "watcher")
+      .at(0)!.image;
+    expect(watchImage).toBe(customImage);
+  }
+
+  // const zarfYaml = await manyFromFile(`${moduleDst}/dist/zarf.yaml`);
+  // const valuesYaml = await manyFromFile(
+  //   `${moduleDst}/dist/${packageJson.pepr.uuid}-chart/values.yaml`,
+  // );
+
+  // console.log(packageJson);
+  // console.log(zarfYaml);
+  // console.log(valuesYaml);
 });
