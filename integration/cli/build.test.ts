@@ -32,7 +32,7 @@ describe("build", () => {
     time.toMs("2m"),
   );
 
-  describe("builds a module successfully", () => {
+  describe("builds a module", () => {
     const moduleSrc = `${workdir.path()}/module`;
 
     beforeAll(async () => {
@@ -48,58 +48,68 @@ describe("build", () => {
       await pepr.tgzifyModule(moduleSrc);
     }, time.toMs("2m"));
 
-    it(
-      "using default build options",
-      async () => {
-        const moduleDst = `${workdir.path()}/defaults`;
-        await pepr.copyModule(moduleSrc, moduleDst);
-        await pepr.cli(moduleDst, { cmd: `npm install` });
+    describe("using default build options", () => {
+      it(
+        "succeeds",
+        async () => {
+          const moduleDst = `${workdir.path()}/defaults`;
+          await pepr.copyModule(moduleSrc, moduleDst);
+          await pepr.cli(moduleDst, { cmd: `npm install` });
 
-        const build = await pepr.cli(moduleDst, { cmd: `pepr build` });
-        expect(build.exitcode).toBe(0);
-        expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
-      },
-      time.toMs("1m"),
-    );
+          const build = await pepr.cli(moduleDst, { cmd: `pepr build` });
+          expect(build.exitcode).toBe(0);
+          expect(build.stderr.join("").trim()).toBe("");
+          expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+        },
+        time.toMs("1m"),
+      );
+    });
 
-    it(
-      "using build override options",
-      async () => {
+    describe("using build override options", () => {
+      let moduleDst: string;
+      let packageJson;
+      let uuid: string;
+      const overrides = {
+        entryPoint: "pepr2.ts",
+        customImage: "pepr:override",
+      };
+
+      beforeAll(async () => {
+        moduleDst = `${workdir.path()}/overrides`;
+
         //
         // prepare module
         //
-        const moduleDst = `${workdir.path()}/overrides`;
         await pepr.copyModule(moduleSrc, moduleDst);
         await pepr.cli(moduleDst, { cmd: `npm install` });
 
         //
         // establish override-support conditions
         //
-        const entryPoint = "pepr2.ts";
-        await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${entryPoint}`);
-        const customImage = "pepr:overrides";
+        await fs.rename(`${moduleDst}/pepr.ts`, `${moduleDst}/${overrides.entryPoint}`);
 
         //
-        // build using with overrides
+        // use overrides
         //
-        const argz = [`--entry-point ${entryPoint}`, `--custom-image ${customImage}`].join(" ");
+        const argz = [
+          `--entry-point ${overrides.entryPoint}`,
+          `--custom-image ${overrides.customImage}`,
+        ].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");
         expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-        //
-        // assert on consequences
-        //
-        const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
-        const uuid = packageJson.pepr.uuid;
+        packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
+        uuid = packageJson.pepr.uuid;
+      }, time.toMs("1m"));
 
-        /* --entrypoint (will fail build if given --entrypoint doesn't exist) */
-        // noop
+      it("--entry-point, works", async () => {
+        // build would fail if given entrypoint didn't exist, so... no-op, right?
+      });
 
-        /* --custom-image */
+      it("--custom-image, works", async () => {
         const moduleYaml = await resource.manyFromFile(
           `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
         );
@@ -111,17 +121,17 @@ describe("build", () => {
 
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
           const admissionImage = getDepConImg(admission, "server");
-          expect(admissionImage).toBe(customImage);
+          expect(admissionImage).toBe(overrides.customImage);
 
           const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
           const watcherImage = getDepConImg(watcher, "watcher");
-          expect(watcherImage).toBe(customImage);
+          expect(watcherImage).toBe(overrides.customImage);
         }
 
         const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
         {
           const componentImage = zarfYaml.components.at(0).images.at(0);
-          expect(componentImage).toBe(customImage);
+          expect(componentImage).toBe(overrides.customImage);
         }
 
         const valuesYaml = await resource.oneFromFile(
@@ -129,13 +139,12 @@ describe("build", () => {
         );
         {
           const admissionImage = valuesYaml.admission.image;
-          expect(admissionImage).toBe(customImage);
+          expect(admissionImage).toBe(overrides.customImage);
 
           const watcherImage = valuesYaml.watcher.image;
-          expect(watcherImage).toBe(customImage);
+          expect(watcherImage).toBe(overrides.customImage);
         }
-      },
-      time.toMs("1m"),
-    );
+      });
+    });
   });
 });
