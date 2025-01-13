@@ -159,12 +159,12 @@ export class Assets {
       };
       await overridesFile(overrideData, helm.files.valuesYaml);
 
-      const [mutateWebhook, validateWebhook] = await Promise.all([
-        webhookConfig(this, "mutate", this.config.webhookTimeout),
-        webhookConfig(this, "validate", this.config.webhookTimeout),
-      ]);
+      const webhooks = {
+        mutate: await webhookConfig(this, "mutate", this.config.webhookTimeout),
+        validate: await webhookConfig(this, "validate", this.config.webhookTimeout),
+      };
 
-      await this.writeWebhookFiles(validateWebhook, mutateWebhook, helm);
+      await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
       const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);
       if (watchDeployment) {
