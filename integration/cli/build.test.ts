@@ -207,7 +207,7 @@ describe("build", () => {
         expect(build.stdout.join("").trim()).toContain(cliVersion);
       }, time.toMs("1m"));
 
-      it.only("--version, is broken..?", async () => {
+      it("--version, is broken..?", async () => {
         // looks like it's just giving back the `pepr --version` then exiting,
         //  rather than buidling/affecting the output files at all..?
         expect(await file.exists(`${moduleDst}/dist`)).toBe(false);
