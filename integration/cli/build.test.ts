@@ -9,6 +9,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
+import * as file from "../helpers/file";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -96,44 +97,45 @@ describe("build", () => {
       it("--no-embed, works", async () => {
         // deployable module files
         {
-          const files = [
+          const paths = [
             `${moduleDst}/dist/pepr-${uuid}.js`,
             `${moduleDst}/dist/pepr-${uuid}.js.map`,
             `${moduleDst}/dist/pepr-${uuid}.js.LEGAL.txt`,
             `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
           ];
-          for (const file of files) {
-            await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+          for (const path of paths) {
+            // await expect(fs.access(path)).rejects.toThrowError("no such file or directory");
+            expect(await file.exists(path)).toBe(false);
           }
         }
 
         // zarf manifest
         {
-          const file = `${moduleDst}/dist/zarf.yaml`;
-          await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+          const path = `${moduleDst}/dist/zarf.yaml`;
+          expect(await file.exists(path)).toBe(false);
         }
 
         // helm chart
         {
-          const file = `${moduleDst}/dist/${uuid}-chart/`;
-          await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+          const path = `${moduleDst}/dist/${uuid}-chart/`;
+          expect(await file.exists(path)).toBe(false);
         }
 
         // importable module files
         {
-          const files = [
+          const paths = [
             `${moduleDst}/dist/pepr.js`,
             `${moduleDst}/dist/pepr.js.map`,
             `${moduleDst}/dist/pepr.js.LEGAL.txt`,
           ];
-          for (const file of files) {
-            await expect(fs.access(file)).resolves.toBe(undefined);
+          for (const path of paths) {
+            expect(await file.exists(path)).toBe(true);
           }
         }
       });
     });
 
-    describe("that uses a custom registry", () => {
+    describe("using a custom registry", () => {
       const moduleDst = `${workdir.path()}/reginfo`;
       let packageJson;
       let uuid: string;
@@ -189,18 +191,17 @@ describe("build", () => {
       });
     });
 
-    describe("using build override options", () => {
-      let moduleDst: string;
+    describe("using non-conflicting build override options", () => {
+      const moduleDst = `${workdir.path()}/overrides`;
       let packageJson;
       let uuid: string;
       const overrides = {
         entryPoint: "pepr2.ts",
         customImage: "pepr:override",
+        outputDir: `${moduleDst}/out`,
       };
 
       beforeAll(async () => {
-        moduleDst = `${workdir.path()}/overrides`;
-
         //
         // prepare module
         //
@@ -218,6 +219,7 @@ describe("build", () => {
         const argz = [
           `--entry-point ${overrides.entryPoint}`,
           `--custom-image ${overrides.customImage}`,
+          `--output-dir ${overrides.outputDir}`,
         ].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
@@ -233,9 +235,17 @@ describe("build", () => {
         // build would fail if given entrypoint didn't exist, so... no-op, right?
       });
 
+      it("--output-dir, works", async () => {
+        const dist = `${moduleDst}/dist`;
+        expect(await file.exists(dist)).toBe(false);
+
+        const out = overrides.outputDir;
+        expect(await file.exists(out)).toBe(true);
+      });
+
       it("--custom-image, works", async () => {
         const moduleYaml = await resource.manyFromFile(
-          `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+          `${overrides.outputDir}/pepr-module-${uuid}.yaml`,
         );
         {
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
@@ -247,14 +257,14 @@ describe("build", () => {
           expect(watcherImage).toBe(overrides.customImage);
         }
 
-        const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
+        const zarfYaml = await resource.oneFromFile(`${overrides.outputDir}/zarf.yaml`);
         {
           const componentImage = zarfYaml.components.at(0).images.at(0);
           expect(componentImage).toBe(overrides.customImage);
         }
 
         const valuesYaml = await resource.oneFromFile(
-          `${moduleDst}/dist/${uuid}-chart/values.yaml`,
+          `${overrides.outputDir}/${uuid}-chart/values.yaml`,
         );
         {
           const admissionImage = valuesYaml.admission.image;
