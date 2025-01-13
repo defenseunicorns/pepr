@@ -93,9 +93,7 @@ describe("build", () => {
         uuid = packageJson.pepr.uuid;
       }, time.toMs("1m"));
 
-      it.only("--no-embed, works", async () => {
-        // overwrites --custom-image..?
-
+      it("--no-embed, works", async () => {
         // deployable module files
         {
           const files = [
@@ -136,58 +134,59 @@ describe("build", () => {
     });
 
     describe("that uses a custom registry", () => {
-      it(
-        "--registry-info, works",
-        async () => {
-          // overwrites --custom-image..?
+      const moduleDst = `${workdir.path()}/reginfo`;
+      let packageJson;
+      let uuid: string;
+      const registryInfo = "registry.io/username";
 
-          const moduleDst = `${workdir.path()}/reginfo`;
-          await pepr.copyModule(moduleSrc, moduleDst);
-          await pepr.cli(moduleDst, { cmd: `npm install` });
+      beforeAll(async () => {
+        await pepr.copyModule(moduleSrc, moduleDst);
+        await pepr.cli(moduleDst, { cmd: `npm install` });
 
-          const registryInfo = "registry.io/username";
-          const argz = [`--registry-info ${registryInfo}`].join(" ");
-          const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
-          expect(build.exitcode).toBe(0);
-          expect(build.stderr.join("").trim()).toBe("");
-          expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+        const argz = [`--registry-info ${registryInfo}`].join(" ");
+        const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
+        expect(build.exitcode).toBe(0);
+        expect(build.stderr.join("").trim()).toBe("");
+        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
-          const uuid = packageJson.pepr.uuid;
-          const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
+        packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
+        uuid = packageJson.pepr.uuid;
+      }, time.toMs("1m"));
 
-          const moduleYaml = await resource.manyFromFile(
-            `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
-          );
-          {
-            const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
-            const admissionImage = getDepConImg(admission, "server");
-            expect(admissionImage).toBe(image);
+      it("--registry-info, works", async () => {
+        // overwrites --custom-image..?
+        const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
 
-            const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
-            const watcherImage = getDepConImg(watcher, "watcher");
-            expect(watcherImage).toBe(image);
-          }
+        const moduleYaml = await resource.manyFromFile(
+          `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+        );
+        {
+          const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
+          const admissionImage = getDepConImg(admission, "server");
+          expect(admissionImage).toBe(image);
 
-          const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
-          {
-            const componentImage = zarfYaml.components.at(0).images.at(0);
-            expect(componentImage).toBe(image);
-          }
+          const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
+          const watcherImage = getDepConImg(watcher, "watcher");
+          expect(watcherImage).toBe(image);
+        }
 
-          const valuesYaml = await resource.oneFromFile(
-            `${moduleDst}/dist/${uuid}-chart/values.yaml`,
-          );
-          {
-            const admissionImage = valuesYaml.admission.image;
-            expect(admissionImage).toBe(image);
+        const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
+        {
+          const componentImage = zarfYaml.components.at(0).images.at(0);
+          expect(componentImage).toBe(image);
+        }
 
-            const watcherImage = valuesYaml.watcher.image;
-            expect(watcherImage).toBe(image);
-          }
-        },
-        time.toMs("2m"),
-      );
+        const valuesYaml = await resource.oneFromFile(
+          `${moduleDst}/dist/${uuid}-chart/values.yaml`,
+        );
+        {
+          const admissionImage = valuesYaml.admission.image;
+          expect(admissionImage).toBe(image);
+
+          const watcherImage = valuesYaml.watcher.image;
+          expect(watcherImage).toBe(image);
+        }
+      });
     });
 
     describe("using build override options", () => {
