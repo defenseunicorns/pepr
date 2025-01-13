@@ -14,6 +14,7 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { peprStoreCRD } from "./store";
 import { webhookConfigGenerator } from "./webhooks";
 import { CapabilityExport, ImagePullSecret } from "../types";
+import { WebhookType } from "../enums";
 
 export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string): Promise<void> {
   try {
@@ -42,7 +43,31 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
     Log.error(e);
   }
 }
-export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout?: number): Promise<void> {
+
+async function handleWebhookConfiguration(
+  assets: Assets,
+  type: WebhookType,
+  webhookTimeout: number,
+  force: boolean,
+  name: string,
+): Promise<void> {
+  const kindMap = {
+    mutate: kind.MutatingWebhookConfiguration,
+    validate: kind.ValidatingWebhookConfiguration,
+  };
+
+  const webhookConfig = await webhookConfigGenerator(assets, type, webhookTimeout);
+
+  if (webhookConfig) {
+    Log.info(`Applying ${type} webhook`);
+    await K8s(kindMap[type]).Apply(webhookConfig, { force });
+  } else {
+    Log.info(`${type.charAt(0).toUpperCase() + type.slice(1)} webhook not needed, removing if it exists`);
+    await K8s(kindMap[type]).Delete(name);
+  }
+}
+
+export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout: number): Promise<void> {
   Log.info("Establishing connection to Kubernetes");
 
   const { name, host, path } = assets;
@@ -51,24 +76,10 @@ export async function deployWebhook(assets: Assets, force: boolean, webhookTimeo
   await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
-  const mutateWebhook = await webhookConfigGenerator(assets, "mutate", webhookTimeout);
-  if (mutateWebhook) {
-    Log.info("Applying mutating webhook");
-    await K8s(kind.MutatingWebhookConfiguration).Apply(mutateWebhook, { force });
-  } else {
-    Log.info("Mutating webhook not needed, removing if it exists");
-    await K8s(kind.MutatingWebhookConfiguration).Delete(name);
-  }
+  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force, name);
 
   // Create the validating webhook configuration if it is needed
-  const validateWebhook = await webhookConfigGenerator(assets, "validate", webhookTimeout);
-  if (validateWebhook) {
-    Log.info("Applying validating webhook");
-    await K8s(kind.ValidatingWebhookConfiguration).Apply(validateWebhook, { force });
-  } else {
-    Log.info("Validating webhook not needed, removing if it exists");
-    await K8s(kind.ValidatingWebhookConfiguration).Delete(name);
-  }
+  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force, name);
 
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });

@@ -60,12 +60,15 @@ export class Assets {
   };
 
   async deploy(
-    deployFunction: (assets: Assets, force: boolean, webhookTimeout?: number) => Promise<void>,
+    deployFunction: (assets: Assets, force: boolean, webhookTimeout: number) => Promise<void>,
     force: boolean,
     webhookTimeout?: number,
   ): Promise<void> {
     this.capabilities = await loadCapabilities(this.path);
-    await deployFunction(this, force, webhookTimeout);
+
+    const timeout = typeof webhookTimeout === "number" ? webhookTimeout : 10;
+
+    await deployFunction(this, force, timeout);
   }
 
   zarfYaml = (path: string): string => generateZarfYamlGeneric(this.name, this.image, this.config, path, "manifests");
