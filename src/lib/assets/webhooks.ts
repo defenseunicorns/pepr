@@ -53,7 +53,7 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
   return uniqWith(equals, rules);
 }
 
-export async function webhookConfig(
+export async function webhookConfigGenerator(
   assets: Assets,
   mutateOrValidate: "mutate" | "validate",
   timeoutSeconds = 10,

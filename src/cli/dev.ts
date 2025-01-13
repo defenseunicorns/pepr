@@ -8,7 +8,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import { RootCmd } from "./root";
 import { Store } from "../lib/k8s";
 import { buildModule, loadModule } from "./build";
-import { deploy } from "../lib/assets/deploy";
+import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
 export default function (program: RootCmd): void {
@@ -60,7 +60,7 @@ export default function (program: RootCmd): void {
           console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
-          await webhook.deploy(deploy, false, 30);
+          await webhook.deploy(deployWebhook, false, 30);
 
           try {
             // wait for capabilities to be loaded and test names

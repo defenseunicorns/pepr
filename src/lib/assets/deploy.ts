@@ -12,7 +12,7 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
-import { webhookConfig } from "./webhooks";
+import { webhookConfigGenerator } from "./webhooks";
 import { CapabilityExport, ImagePullSecret } from "../types";
 
 export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string): Promise<void> {
@@ -42,7 +42,7 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
     Log.error(e);
   }
 }
-export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number): Promise<void> {
+export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout?: number): Promise<void> {
   Log.info("Establishing connection to Kubernetes");
 
   const { name, host, path } = assets;
@@ -51,7 +51,7 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
   await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
-  const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
+  const mutateWebhook = await webhookConfigGenerator(assets, "mutate", webhookTimeout);
   if (mutateWebhook) {
     Log.info("Applying mutating webhook");
     await K8s(kind.MutatingWebhookConfiguration).Apply(mutateWebhook, { force });
@@ -61,7 +61,7 @@ export async function deploy(assets: Assets, force: boolean, webhookTimeout?: nu
   }
 
   // Create the validating webhook configuration if it is needed
-  const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
+  const validateWebhook = await webhookConfigGenerator(assets, "validate", webhookTimeout);
   if (validateWebhook) {
     Log.info("Applying validating webhook");
     await K8s(kind.ValidatingWebhookConfiguration).Apply(validateWebhook, { force });

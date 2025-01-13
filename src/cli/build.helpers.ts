@@ -9,7 +9,7 @@ import { Assets } from "../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
 import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
-import { webhookConfig } from "../lib/assets/webhooks";
+import { webhookConfigGenerator as generateWebhookConfig } from "../lib/assets/webhooks";
 
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
@@ -205,6 +205,6 @@ export async function generateYamlAndWriteToDisk(obj: {
   await fs.writeFile(yamlPath, yaml);
   await fs.writeFile(zarfPath, localZarf);
 
-  await assets.generateHelmChart(webhookConfig, outputDir);
+  await assets.generateHelmChart(generateWebhookConfig, outputDir);
   console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }

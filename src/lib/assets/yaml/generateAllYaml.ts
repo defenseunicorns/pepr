@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "../networking";
 import { getModuleSecret, getNamespace } from "../pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
-import { webhookConfig } from "../webhooks";
+import { webhookConfigGenerator } from "../webhooks";
 import { Assets } from "../assets";
 
 type deployments = { default: V1Deployment; watch: V1Deployment | null };
@@ -31,8 +31,8 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
   ];
 
   const webhooks = {
-    mutate: await webhookConfig(assets, "mutate", assets.config.webhookTimeout),
-    validate: await webhookConfig(assets, "validate", assets.config.webhookTimeout),
+    mutate: await webhookConfigGenerator(assets, "mutate", assets.config.webhookTimeout),
+    validate: await webhookConfigGenerator(assets, "validate", assets.config.webhookTimeout),
   };
 
   if (webhooks.mutate) {

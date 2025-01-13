@@ -7,7 +7,7 @@ import { Assets } from "../lib/assets/assets";
 import { ImagePullSecret } from "../lib/types";
 import { RootCmd } from "./root";
 import { buildModule } from "./build";
-import { deployImagePullSecret, deploy } from "../lib/assets/deploy";
+import { deployImagePullSecret, deployWebhook } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 import { sanitizeName } from "./init/utils";
 import { validateCapabilityNames } from "../lib/helpers";
@@ -132,7 +132,7 @@ export default function (program: RootCmd): void {
       webhook.image = opts.image ?? webhook.image;
 
       try {
-        await webhook.deploy(deploy, opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
+        await webhook.deploy(deployWebhook, opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
 
         // wait for capabilities to be loaded and test names
         validateCapabilityNames(webhook.capabilities);
