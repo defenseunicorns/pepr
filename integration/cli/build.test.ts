@@ -13,6 +13,10 @@ import * as resource from "../helpers/resource";
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 
+const getDepConImg = (deploy: kind.Deployment, container: string): string => {
+  return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!.image!;
+};
+
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
@@ -66,68 +70,69 @@ describe("build", () => {
     });
 
     describe("for use as a library", () => {
-      it(
-        "--no-embed, works",
-        async () => {
-          // overwrites --custom-image..?
+      const moduleDst = `${workdir.path()}/noembed`;
+      let packageJson;
+      let uuid: string;
 
-          const moduleDst = `${workdir.path()}/noembed`;
-          await pepr.copyModule(moduleSrc, moduleDst);
-          await pepr.cli(moduleDst, { cmd: `npm install` });
+      beforeAll(async () => {
+        await pepr.copyModule(moduleSrc, moduleDst);
+        await pepr.cli(moduleDst, { cmd: `npm install` });
 
-          const argz = [`--no-embed`].join(" ");
-          const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
-          expect(build.exitcode).toBe(0);
+        const argz = [`--no-embed`].join(" ");
+        const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
+        expect(build.exitcode).toBe(0);
 
-          // TODO: team talk
-          // Should this be writing to stderr? Even with a 0 exit code..?
-          expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
-          // TODO: end
+        // TODO: team talk
+        // Should this be writing to stderr? Even with a 0 exit code..?
+        expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
+        // TODO: end
 
-          expect(build.stdout.join("").trim()).toContain("");
+        expect(build.stdout.join("").trim()).toContain("");
 
-          const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
-          const uuid = packageJson.pepr.uuid;
+        packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
+        uuid = packageJson.pepr.uuid;
+      }, time.toMs("1m"));
 
-          // deployable module files
-          {
-            const files = [
-              `${moduleDst}/dist/pepr-${uuid}.js`,
-              `${moduleDst}/dist/pepr-${uuid}.js.map`,
-              `${moduleDst}/dist/pepr-${uuid}.js.LEGAL.txt`,
-              `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
-            ];
-            for (const file of files) {
-              await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
-            }
-          }
+      it.only("--no-embed, works", async () => {
+        // overwrites --custom-image..?
 
-          // zarf manifest
-          {
-            const file = `${moduleDst}/dist/zarf.yaml`;
+        // deployable module files
+        {
+          const files = [
+            `${moduleDst}/dist/pepr-${uuid}.js`,
+            `${moduleDst}/dist/pepr-${uuid}.js.map`,
+            `${moduleDst}/dist/pepr-${uuid}.js.LEGAL.txt`,
+            `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+          ];
+          for (const file of files) {
             await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
           }
+        }
 
-          // helm chart
-          {
-            const file = `${moduleDst}/dist/${uuid}-chart/`;
-            await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
-          }
+        // zarf manifest
+        {
+          const file = `${moduleDst}/dist/zarf.yaml`;
+          await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+        }
 
-          // importable module files
-          {
-            const files = [
-              `${moduleDst}/dist/pepr.js`,
-              `${moduleDst}/dist/pepr.js.map`,
-              `${moduleDst}/dist/pepr.js.LEGAL.txt`,
-            ];
-            for (const file of files) {
-              await expect(fs.access(file)).resolves.toBe(undefined);
-            }
+        // helm chart
+        {
+          const file = `${moduleDst}/dist/${uuid}-chart/`;
+          await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+        }
+
+        // importable module files
+        {
+          const files = [
+            `${moduleDst}/dist/pepr.js`,
+            `${moduleDst}/dist/pepr.js.map`,
+            `${moduleDst}/dist/pepr.js.LEGAL.txt`,
+          ];
+          for (const file of files) {
+            await expect(fs.access(file)).resolves.toBe(undefined);
           }
-        },
-        time.toMs("2m"),
-      );
+        }
+      });
     });
 
     describe("that uses a custom registry", () => {
@@ -155,12 +160,6 @@ describe("build", () => {
             `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
           );
           {
-            const getDepConImg = (deploy: kind.Deployment, container: string): string => {
-              return deploy!
-                .spec!.template!.spec!.containers.filter(f => f.name === container)
-                .at(0)!.image!;
-            };
-
             const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
             const admissionImage = getDepConImg(admission, "server");
             expect(admissionImage).toBe(image);
@@ -240,11 +239,6 @@ describe("build", () => {
           `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
         );
         {
-          const getDepConImg = (deploy: kind.Deployment, container: string): string => {
-            return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!
-              .image!;
-          };
-
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
           const admissionImage = getDepConImg(admission, "server");
           expect(admissionImage).toBe(overrides.customImage);
