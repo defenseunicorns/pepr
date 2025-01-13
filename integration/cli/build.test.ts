@@ -18,6 +18,10 @@ const getDepConImg = (deploy: kind.Deployment, container: string): string => {
   return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!.image!;
 };
 
+const getDepImgPull = (deploy: kind.Deployment): string[] => {
+  return deploy!.spec!.template!.spec!.imagePullSecrets!.map(m => m.name!);
+};
+
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
@@ -208,9 +212,11 @@ describe("build", () => {
       }, time.toMs("1m"));
 
       it("--version, is broken..?", async () => {
+        // TODO: team talk
         // looks like it's just giving back the `pepr --version` then exiting,
         //  rather than buidling/affecting the output files at all..?
         expect(await file.exists(`${moduleDst}/dist`)).toBe(false);
+        // TODO: end
       });
     });
 
@@ -223,6 +229,7 @@ describe("build", () => {
         customImage: "pepr:override",
         outputDir: `${moduleDst}/out`,
         timeout: 11,
+        withPullSecret: "shhh",
       };
 
       beforeAll(async () => {
@@ -245,6 +252,7 @@ describe("build", () => {
           `--custom-image ${overrides.customImage}`,
           `--output-dir ${overrides.outputDir}`,
           `--timeout ${overrides.timeout}`,
+          `--withPullSecret ${overrides.withPullSecret}`,
         ].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
@@ -327,6 +335,24 @@ describe("build", () => {
           `${overrides.outputDir}/${uuid}-chart/values.yaml`,
         );
         expect(valuesYaml.admission.webhookTimeout).toBe(overrides.timeout);
+      });
+
+      it("--withPullSecret, works", async () => {
+        const moduleYaml = await resource.manyFromFile(
+          `${overrides.outputDir}/pepr-module-${uuid}.yaml`,
+        );
+        {
+          const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
+          const admissionSecrets = getDepImgPull(admission);
+          expect(admissionSecrets).toEqual([overrides.withPullSecret]);
+
+          const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
+          const watcherSecrets = getDepImgPull(watcher);
+          expect(watcherSecrets).toEqual([overrides.withPullSecret]);
+        }
+        // TODO: team talk
+        // Image pull secrets don't seem to map into the Helm chart anywhere..? Should they?
+        // TODO: end
       });
     });
   });
