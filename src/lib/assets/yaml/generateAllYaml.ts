@@ -8,6 +8,7 @@ import { getModuleSecret, getNamespace } from "../pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
 import { webhookConfigGenerator } from "../webhooks";
 import { Assets } from "../assets";
+import { WebhookType } from "../../enums";
 
 type deployments = { default: V1Deployment; watch: V1Deployment | null };
 
@@ -31,8 +32,8 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
   ];
 
   const webhooks = {
-    mutate: await webhookConfigGenerator(assets, "mutate", assets.config.webhookTimeout),
-    validate: await webhookConfigGenerator(assets, "validate", assets.config.webhookTimeout),
+    mutate: await webhookConfigGenerator(assets, WebhookType.MUTATE, assets.config.webhookTimeout),
+    validate: await webhookConfigGenerator(assets, WebhookType.VALIDATE, assets.config.webhookTimeout),
   };
 
   // Add webhooks and watch deployment if they exist

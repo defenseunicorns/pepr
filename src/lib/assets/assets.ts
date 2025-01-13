@@ -26,6 +26,7 @@ import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
 import { generateZarfYamlGeneric } from "./yaml/generateZarfYaml";
+import { WebhookType } from "../enums";
 
 export class Assets {
   readonly name: string;
@@ -123,7 +124,7 @@ export class Assets {
   generateHelmChart = async (
     webhookGeneratorFunction: (
       assets: Assets,
-      mutateOrValidate: "mutate" | "validate",
+      mutateOrValidate: WebhookType,
       timeoutSeconds: number | undefined,
     ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>,
     basePath: string,
@@ -166,8 +167,8 @@ export class Assets {
       await overridesFile(overrideData, helm.files.valuesYaml);
 
       const webhooks = {
-        mutate: await webhookGeneratorFunction(this, "mutate", this.config.webhookTimeout),
-        validate: await webhookGeneratorFunction(this, "validate", this.config.webhookTimeout),
+        mutate: await webhookGeneratorFunction(this, WebhookType.MUTATE, this.config.webhookTimeout),
+        validate: await webhookGeneratorFunction(this, WebhookType.VALIDATE, this.config.webhookTimeout),
       };
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
