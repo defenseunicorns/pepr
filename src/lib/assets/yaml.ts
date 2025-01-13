@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import {
-  dumpYaml,
-  V1Deployment,
-  V1MutatingWebhookConfiguration,
-  V1ValidatingWebhookConfiguration,
-} from "@kubernetes/client-node";
+import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
 import { promises as fs } from "fs";
 import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
 import { getModuleSecret, getNamespace } from "./pods";
@@ -14,7 +9,8 @@ import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBi
 import { genEnv } from "./pods";
 import { ModuleConfig } from "../core/module";
 import { CapabilityExport } from "../types";
-import { TLSOut } from "../tls";
+import { webhookConfig } from "./webhooks";
+import { Assets } from "./assets";
 
 type CommonOverrideValues = {
   apiToken: string;
@@ -26,11 +22,6 @@ type CommonOverrideValues = {
 
 type ChartOverrides = CommonOverrideValues & {
   image: string;
-};
-
-type ResourceOverrides = CommonOverrideValues & {
-  path: string;
-  tls: TLSOut;
 };
 
 // Helm Chart overrides file (values.yaml) generated from assets
@@ -248,14 +239,9 @@ export function generateZarfYamlChart(name: string, image: string, config: Modul
   return dumpYaml(zarfCfg, { noRefs: true });
 }
 
-type webhooks = { validate: V1ValidatingWebhookConfiguration | null; mutate: V1MutatingWebhookConfiguration | null };
 type deployments = { default: V1Deployment; watch: V1Deployment | null };
 
-export async function generateAllYaml(
-  webhooks: webhooks,
-  deployments: deployments,
-  assets: ResourceOverrides,
-): Promise<string> {
+export async function generateAllYaml(assets: Assets, deployments: deployments): Promise<string> {
   const { name, tls, hash, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
 
@@ -273,6 +259,11 @@ export async function generateAllYaml(
     storeRole(name),
     storeRoleBinding(name),
   ];
+
+  const webhooks = {
+    mutate: await webhookConfig(assets, "mutate", assets.config.webhookTimeout),
+    validate: await webhookConfig(assets, "validate", assets.config.webhookTimeout),
+  };
 
   if (webhooks.mutate) {
     resources.push(webhooks.mutate);

@@ -11,9 +11,13 @@ import {
   serviceMonitorTemplate,
   watcherDeployTemplate,
 } from "./helm";
-import { V1MutatingWebhookConfiguration, V1ValidatingWebhookConfiguration } from "@kubernetes/client-node/dist/gen";
+import {
+  V1Deployment,
+  V1MutatingWebhookConfiguration,
+  V1ValidatingWebhookConfiguration,
+} from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
-import { generateZarfYaml, generateZarfYamlChart, generateAllYaml, overridesFile } from "./yaml";
+import { generateZarfYaml, generateZarfYamlChart, overridesFile } from "./yaml";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
@@ -21,7 +25,6 @@ import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
-import { webhookConfig } from "./webhooks";
 
 export class Assets {
   readonly name: string;
@@ -68,17 +71,18 @@ export class Assets {
 
   zarfYamlChart = (path: string): string => generateZarfYamlChart(this.name, this.image, this.config, path);
 
-  allYaml = async (imagePullSecret?: string): Promise<string> => {
+  allYaml = async (
+    yamlGenerationFunction: (
+      assyts: Assets,
+      deployments: { default: V1Deployment; watch: V1Deployment | null },
+    ) => Promise<string>,
+    imagePullSecret?: string,
+  ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
     }
-
-    const webhooks = {
-      mutate: await webhookConfig(this, "mutate", this.config.webhookTimeout),
-      validate: await webhookConfig(this, "validate", this.config.webhookTimeout),
-    };
 
     const code = await fs.readFile(this.path);
 
@@ -90,16 +94,7 @@ export class Assets {
       watch: getWatcher(this, this.hash, this.buildTimestamp, imagePullSecret),
     };
 
-    const assetsInputs = {
-      apiToken: this.apiToken,
-      capabilities: this.capabilities,
-      config: this.config,
-      hash: this.hash,
-      name: this.name,
-      path: this.path,
-      tls: this.tls,
-    };
-    return generateAllYaml(webhooks, deployments, assetsInputs);
+    return yamlGenerationFunction(this, deployments);
   };
 
   writeWebhookFiles = async (
@@ -121,7 +116,14 @@ export class Assets {
     }
   };
 
-  generateHelmChart = async (basePath: string): Promise<void> => {
+  generateHelmChart = async (
+    webhookGeneratorFunction: (
+      assets: Assets,
+      mutateOrValidate: "mutate" | "validate",
+      timeoutSeconds: number | undefined,
+    ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>,
+    basePath: string,
+  ): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
 
     try {
@@ -160,8 +162,8 @@ export class Assets {
       await overridesFile(overrideData, helm.files.valuesYaml);
 
       const webhooks = {
-        mutate: await webhookConfig(this, "mutate", this.config.webhookTimeout),
-        validate: await webhookConfig(this, "validate", this.config.webhookTimeout),
+        mutate: await webhookGeneratorFunction(this, "mutate", this.config.webhookTimeout),
+        validate: await webhookGeneratorFunction(this, "validate", this.config.webhookTimeout),
       };
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
