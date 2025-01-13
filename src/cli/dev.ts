@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { ChildProcess, fork } from "child_process";
-import { promises as fs } from "fs";
 import prompt from "prompts";
-import { validateCapabilityNames } from "../lib/helpers";
 import { Assets } from "../lib/assets/assets";
-import { buildModule, loadModule } from "./build";
-import { RootCmd } from "./root";
+import { ChildProcess, fork } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
+import { RootCmd } from "./root";
 import { Store } from "../lib/k8s";
+import { buildModule, loadModule } from "./build";
+import { deploy } from "../lib/assets/deploy";
+import { promises as fs } from "fs";
+import { validateCapabilityNames } from "../lib/helpers";
 export default function (program: RootCmd): void {
   program
     .command("dev")
@@ -59,7 +60,7 @@ export default function (program: RootCmd): void {
           console.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
-          await webhook.deploy(false, 30);
+          await webhook.deploy(deploy, false, 30);
 
           try {
             // wait for capabilities to be loaded and test names

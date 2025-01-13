@@ -11,18 +11,17 @@ import {
   serviceMonitorTemplate,
   watcherDeployTemplate,
 } from "./helm";
+import { V1MutatingWebhookConfiguration, V1ValidatingWebhookConfiguration } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
-import { deploy } from "./deploy";
+import { generateZarfYaml, generateZarfYamlChart, generateAllYaml, overridesFile } from "./yaml";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
+import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
 import { webhookConfig } from "./webhooks";
-import { generateZarfYaml, generateZarfYamlChart, generateAllYaml, overridesFile } from "./yaml";
-import { promises as fs } from "fs";
-import { V1MutatingWebhookConfiguration, V1ValidatingWebhookConfiguration } from "@kubernetes/client-node/dist/gen";
 
 export class Assets {
   readonly name: string;
@@ -56,10 +55,14 @@ export class Assets {
     this.hash = hash;
   };
 
-  deploy = async (force: boolean, webhookTimeout?: number): Promise<void> => {
+  async deploy(
+    deployFunction: (assets: Assets, force: boolean, webhookTimeout?: number) => Promise<void>,
+    force: boolean,
+    webhookTimeout?: number,
+  ): Promise<void> {
     this.capabilities = await loadCapabilities(this.path);
-    await deploy(this, force, webhookTimeout);
-  };
+    await deployFunction(this, force, webhookTimeout);
+  }
 
   zarfYaml = (path: string): string => generateZarfYaml(this.name, this.image, this.config, path);
 
