@@ -17,7 +17,7 @@ import {
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
-import { overridesFile } from "./yaml";
+import { overridesFile } from "./temp-yaml/generateAllYaml";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";

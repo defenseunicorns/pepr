@@ -8,7 +8,7 @@ import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
 import { Assets } from "../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
-import { generateAllYaml } from "../lib/assets/yaml";
+import { generateAllYaml } from "../lib/assets/temp-yaml/generateAllYaml";
 import { webhookConfig } from "../lib/assets/webhooks";
 
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
