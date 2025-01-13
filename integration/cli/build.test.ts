@@ -42,12 +42,12 @@ describe("build", () => {
   );
 
   describe("builds a module", () => {
-    const moduleSrc = `${workdir.path()}/module`;
+    const moduleSrc = `${workdir.path()}/build-base`;
 
     beforeAll(async () => {
       await fs.rm(moduleSrc, { recursive: true, force: true });
       const argz = [
-        `--name module`,
+        `--name build-base`,
         `--description description`,
         `--errorBehavior reject`,
         "--confirm",
@@ -230,6 +230,7 @@ describe("build", () => {
         outputDir: `${moduleDst}/out`,
         timeout: 11,
         withPullSecret: "shhh",
+        zarf: "chart",
       };
 
       beforeAll(async () => {
@@ -253,6 +254,7 @@ describe("build", () => {
           `--output-dir ${overrides.outputDir}`,
           `--timeout ${overrides.timeout}`,
           `--withPullSecret ${overrides.withPullSecret}`,
+          `--zarf ${overrides.zarf}`,
         ].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
@@ -353,6 +355,21 @@ describe("build", () => {
         // TODO: team talk
         // Image pull secrets don't seem to map into the Helm chart anywhere..? Should they?
         // TODO: end
+      });
+
+      it("--zarf, works", async () => {
+        const chart = {
+          name: "module",
+          namespace: "pepr-system",
+          version: "0.0.1",
+          localPath: `${uuid}-chart`,
+        };
+
+        const zarfYaml = await resource.oneFromFile(`${overrides.outputDir}/zarf.yaml`);
+        const component = zarfYaml.components
+          .filter((f: { name: string }) => f.name === "module")
+          .at(0);
+        expect(component.charts).toContainEqual(chart);
       });
     });
   });
