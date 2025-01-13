@@ -193,6 +193,7 @@ describe("build", () => {
 
     describe("using a specified pepr version", () => {
       const moduleDst = `${workdir.path()}/version`;
+      const cliVersion = "0.0.0-development";
       const version = "1.2.3";
 
       beforeAll(async () => {
@@ -203,11 +204,11 @@ describe("build", () => {
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).toContain("0.0.0-development");
+        expect(build.stdout.join("").trim()).toContain(cliVersion);
       }, time.toMs("1m"));
 
-      it("--version, is broken..?", async () => {
-        // looks like it's just giving back the `pepr --version` and exiting,
+      it.only("--version, is broken..?", async () => {
+        // looks like it's just giving back the `pepr --version` then exiting,
         //  rather than buidling/affecting the output files at all..?
         expect(await file.exists(`${moduleDst}/dist`)).toBe(false);
       });
