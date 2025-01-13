@@ -12,6 +12,7 @@ import {
   watcherDeployTemplate,
 } from "./helm";
 import { createDirectoryIfNotExists } from "../filesystemService";
+import { deploy } from "./deploy";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
@@ -53,6 +54,11 @@ export class Assets {
 
   setHash = (hash: string): void => {
     this.hash = hash;
+  };
+
+  deploy = async (force: boolean, webhookTimeout?: number): Promise<void> => {
+    this.capabilities = await loadCapabilities(this.path);
+    await deploy(this, force, webhookTimeout);
   };
 
   zarfYaml = (path: string): string => generateZarfYaml(this.name, this.image, this.config, path);
