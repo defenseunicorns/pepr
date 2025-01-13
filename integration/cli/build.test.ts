@@ -199,6 +199,7 @@ describe("build", () => {
         entryPoint: "pepr2.ts",
         customImage: "pepr:override",
         outputDir: `${moduleDst}/out`,
+        timeout: 11,
       };
 
       beforeAll(async () => {
@@ -220,6 +221,7 @@ describe("build", () => {
           `--entry-point ${overrides.entryPoint}`,
           `--custom-image ${overrides.customImage}`,
           `--output-dir ${overrides.outputDir}`,
+          `--timeout ${overrides.timeout}`,
         ].join(" ");
         const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
 
@@ -273,6 +275,35 @@ describe("build", () => {
           const watcherImage = valuesYaml.watcher.image;
           expect(watcherImage).toBe(overrides.customImage);
         }
+      });
+
+      it.only("--timeout, works", async () => {
+        const moduleYaml = await resource.manyFromFile(
+          `${overrides.outputDir}/pepr-module-${uuid}.yaml`,
+        );
+        {
+          const mwc = resource.select(
+            moduleYaml,
+            kind.MutatingWebhookConfiguration,
+            `pepr-${uuid}`,
+          );
+          const webhook = mwc.webhooks!.filter(f => f.name === `pepr-${uuid}.pepr.dev`).at(0)!;
+          expect(webhook.timeoutSeconds).toBe(overrides.timeout);
+        }
+        {
+          const mwc = resource.select(
+            moduleYaml,
+            kind.ValidatingWebhookConfiguration,
+            `pepr-${uuid}`,
+          );
+          const webhook = mwc.webhooks!.filter(f => f.name === `pepr-${uuid}.pepr.dev`).at(0)!;
+          expect(webhook.timeoutSeconds).toBe(overrides.timeout);
+        }
+
+        const valuesYaml = await resource.oneFromFile(
+          `${overrides.outputDir}/${uuid}-chart/values.yaml`,
+        );
+        expect(valuesYaml.admission.webhookTimeout).toBe(overrides.timeout);
       });
     });
   });
