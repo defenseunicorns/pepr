@@ -26,6 +26,7 @@ import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
 import { generateZarfYamlChart } from "./yaml/generateZarfYamlChart";
+import { generateZarfYaml } from "./yaml/generateZarfYaml";
 
 export class Assets {
   readonly name: string;
