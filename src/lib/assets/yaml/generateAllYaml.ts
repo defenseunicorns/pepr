@@ -35,18 +35,13 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
     validate: await webhookConfigGenerator(assets, "validate", assets.config.webhookTimeout),
   };
 
-  if (webhooks.mutate) {
-    resources.push(webhooks.mutate);
-  }
+  // Add webhooks and watch deployment if they exist
+  const additionalResources = [webhooks.mutate, webhooks.validate, deployments.watch].filter(
+    resource => resource !== null && resource !== undefined,
+  );
 
-  if (webhooks.validate) {
-    resources.push(webhooks.validate);
-  }
-
-  if (deployments.watch) {
-    resources.push(deployments.watch);
-  }
+  resources.push(...additionalResources);
 
   // Convert the resources to a single YAML string
-  return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
+  return resources.map(resource => dumpYaml(resource, { noRefs: true })).join("---\n");
 }
