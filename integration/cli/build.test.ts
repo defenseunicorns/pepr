@@ -277,7 +277,7 @@ describe("build", () => {
         }
       });
 
-      it.only("--timeout, works", async () => {
+      it("--timeout, works", async () => {
         const moduleYaml = await resource.manyFromFile(
           `${overrides.outputDir}/pepr-module-${uuid}.yaml`,
         );

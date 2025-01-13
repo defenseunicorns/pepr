@@ -21,6 +21,14 @@
     "max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
     "no-invalid-this": "warn"
   },
+  "overrides": [
+    {
+      "files": ["*.test.ts"],
+      "rules": {
+        "max-nested-callbacks": ["warn", { "max": 10 }]
+      }
+    }
+  ],
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
     "src/templates",
