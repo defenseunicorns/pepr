@@ -17,7 +17,7 @@ import {
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
-import { overridesFile } from "./temp-yaml/generateAllYaml";
+import { overridesFile } from "./yaml/overridesFile";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
@@ -25,7 +25,7 @@ import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
-import { generateZarfYamlChart } from "./temp-yaml/generateZarfYamlChart";
+import { generateZarfYamlChart } from "./yaml/generateZarfYamlChart";
 
 export class Assets {
   readonly name: string;
