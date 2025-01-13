@@ -68,7 +68,7 @@ export class Assets {
     await deployFunction(this, force, webhookTimeout);
   }
 
-  zarfYaml = (path: string): string => generateZarfYamlChart(this.name, this.image, this.config, path);
+  zarfYaml = (path: string): string => generateZarfYaml(this.name, this.image, this.config, path);
 
   zarfYamlChart = (path: string): string => generateZarfYamlChart(this.name, this.image, this.config, path);
 
