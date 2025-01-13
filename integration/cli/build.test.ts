@@ -65,6 +65,132 @@ describe("build", () => {
       );
     });
 
+    describe("for use as a library", () => {
+      it(
+        "--no-embed, works",
+        async () => {
+          // overwrites --custom-image..?
+
+          const moduleDst = `${workdir.path()}/noembed`;
+          await pepr.copyModule(moduleSrc, moduleDst);
+          await pepr.cli(moduleDst, { cmd: `npm install` });
+
+          const argz = [`--no-embed`].join(" ");
+          const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
+          expect(build.exitcode).toBe(0);
+
+          // TODO: team talk
+          // Should this be writing to stderr? Even with a 0 exit code..?
+          expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
+          // TODO: end
+
+          expect(build.stdout.join("").trim()).toContain("");
+
+          const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
+          const uuid = packageJson.pepr.uuid;
+
+          // deployable module files
+          {
+            const files = [
+              `${moduleDst}/dist/pepr-${uuid}.js`,
+              `${moduleDst}/dist/pepr-${uuid}.js.map`,
+              `${moduleDst}/dist/pepr-${uuid}.js.LEGAL.txt`,
+              `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+            ];
+            for (const file of files) {
+              await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+            }
+          }
+
+          // zarf manifest
+          {
+            const file = `${moduleDst}/dist/zarf.yaml`;
+            await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+          }
+
+          // helm chart
+          {
+            const file = `${moduleDst}/dist/${uuid}-chart/`;
+            await expect(fs.access(file)).rejects.toThrowError("no such file or directory");
+          }
+
+          // importable module files
+          {
+            const files = [
+              `${moduleDst}/dist/pepr.js`,
+              `${moduleDst}/dist/pepr.js.map`,
+              `${moduleDst}/dist/pepr.js.LEGAL.txt`,
+            ];
+            for (const file of files) {
+              await expect(fs.access(file)).resolves.toBe(undefined);
+            }
+          }
+        },
+        time.toMs("2m"),
+      );
+    });
+
+    describe("that uses a custom registry", () => {
+      it(
+        "--registry-info, works",
+        async () => {
+          // overwrites --custom-image..?
+
+          const moduleDst = `${workdir.path()}/reginfo`;
+          await pepr.copyModule(moduleSrc, moduleDst);
+          await pepr.cli(moduleDst, { cmd: `npm install` });
+
+          const registryInfo = "registry.io/username";
+          const argz = [`--registry-info ${registryInfo}`].join(" ");
+          const build = await pepr.cli(moduleDst, { cmd: `pepr build ${argz}` });
+          expect(build.exitcode).toBe(0);
+          expect(build.stderr.join("").trim()).toBe("");
+          expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+
+          const packageJson = await resource.oneFromFile(`${moduleDst}/package.json`);
+          const uuid = packageJson.pepr.uuid;
+          const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
+
+          const moduleYaml = await resource.manyFromFile(
+            `${moduleDst}/dist/pepr-module-${uuid}.yaml`,
+          );
+          {
+            const getDepConImg = (deploy: kind.Deployment, container: string): string => {
+              return deploy!
+                .spec!.template!.spec!.containers.filter(f => f.name === container)
+                .at(0)!.image!;
+            };
+
+            const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
+            const admissionImage = getDepConImg(admission, "server");
+            expect(admissionImage).toBe(image);
+
+            const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
+            const watcherImage = getDepConImg(watcher, "watcher");
+            expect(watcherImage).toBe(image);
+          }
+
+          const zarfYaml = await resource.oneFromFile(`${moduleDst}/dist/zarf.yaml`);
+          {
+            const componentImage = zarfYaml.components.at(0).images.at(0);
+            expect(componentImage).toBe(image);
+          }
+
+          const valuesYaml = await resource.oneFromFile(
+            `${moduleDst}/dist/${uuid}-chart/values.yaml`,
+          );
+          {
+            const admissionImage = valuesYaml.admission.image;
+            expect(admissionImage).toBe(image);
+
+            const watcherImage = valuesYaml.watcher.image;
+            expect(watcherImage).toBe(image);
+          }
+        },
+        time.toMs("2m"),
+      );
+    });
+
     describe("using build override options", () => {
       let moduleDst: string;
       let packageJson;
