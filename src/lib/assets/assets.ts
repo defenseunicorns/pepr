@@ -17,7 +17,7 @@ import {
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
-import { generateZarfYaml, generateZarfYamlChart, overridesFile } from "./yaml";
+import { overridesFile } from "./yaml";
 import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
@@ -25,6 +25,7 @@ import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
+import { generateZarfYamlChart } from "./temp-yaml/generateZarfYamlChart";
 
 export class Assets {
   readonly name: string;
@@ -67,7 +68,7 @@ export class Assets {
     await deployFunction(this, force, webhookTimeout);
   }
 
-  zarfYaml = (path: string): string => generateZarfYaml(this.name, this.image, this.config, path);
+  zarfYaml = (path: string): string => generateZarfYamlChart(this.name, this.image, this.config, path);
 
   zarfYamlChart = (path: string): string => generateZarfYamlChart(this.name, this.image, this.config, path);
 
