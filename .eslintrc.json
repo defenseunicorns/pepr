@@ -25,7 +25,7 @@
     {
       "files": ["*.test.ts"],
       "rules": {
-        "max-nested-callbacks": ["warn", { "max": 10 }]
+        "max-nested-callbacks": ["warn", { "max": 8 }]
       }
     }
   ],

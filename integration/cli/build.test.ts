@@ -18,10 +18,6 @@ const getDepConImg = (deploy: kind.Deployment, container: string): string => {
   return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!.image!;
 };
 
-const getDepImgPull = (deploy: kind.Deployment): string[] => {
-  return deploy!.spec!.template!.spec!.imagePullSecrets!.map(m => m.name!);
-};
-
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
@@ -29,17 +25,13 @@ describe("build", () => {
     await workdir.recreate();
   });
 
-  it(
-    "gives command line help",
-    async () => {
-      const argz = "--help";
-      const res = await pepr.cli(workdir.path(), { cmd: `pepr build ${argz}` });
-      expect(res.exitcode).toBe(0);
-      expect(res.stderr.join("").trim()).toBe("");
-      expect(res.stdout.at(0)).toMatch("Usage: pepr build");
-    },
-    time.toMs("2m"),
-  );
+  it("gives command line help", async () => {
+    const argz = "--help";
+    const res = await pepr.cli(workdir.path(), { cmd: `pepr build ${argz}` });
+    expect(res.exitcode).toBe(0);
+    expect(res.stderr.join("").trim()).toBe("");
+    expect(res.stdout.at(0)).toMatch("Usage: pepr build");
+  });
 
   describe("builds a module", () => {
     const moduleSrc = `${workdir.path()}/build-base`;
@@ -340,6 +332,10 @@ describe("build", () => {
       });
 
       it("--withPullSecret, works", async () => {
+        const getDepImgPull = (deploy: kind.Deployment): string[] => {
+          return deploy!.spec!.template!.spec!.imagePullSecrets!.map(m => m.name!);
+        };
+
         const moduleYaml = await resource.manyFromFile(
           `${overrides.outputDir}/pepr-module-${uuid}.yaml`,
         );
