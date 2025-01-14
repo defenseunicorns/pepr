@@ -8,7 +8,6 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
-import * as file from "../helpers/file";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
