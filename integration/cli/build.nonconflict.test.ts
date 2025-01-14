@@ -88,8 +88,7 @@ describe("build", () => {
         const dist = `${testModule}/dist`;
         expect(await file.exists(dist)).toBe(false);
 
-        const out = outputDir;
-        expect(await file.exists(out)).toBe(true);
+        expect(await file.exists(outputDir)).toBe(true);
       });
 
       it("--custom-image, works", async () => {
