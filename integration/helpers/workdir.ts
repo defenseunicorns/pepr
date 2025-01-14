@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import * as time from "./time";
 
 export class Workdir {
@@ -22,15 +23,7 @@ export class Workdir {
   }
 
   async exists() {
-    try {
-      await fs.access(this.path());
-      return true;
-    } catch (e) {
-      if (e.message.includes("no such file or directory")) {
-        return false;
-      }
-      throw e;
-    }
+    return existsSync(this.path());
   }
 
   async isEmpty() {
