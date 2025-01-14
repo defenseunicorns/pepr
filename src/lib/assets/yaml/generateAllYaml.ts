@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
-import { promises as fs } from "fs";
-import { apiTokenSecret, service, tlsSecret, watcherService } from "../networking";
-import { getModuleSecret, getNamespace } from "../pods";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
-import { webhookConfigGenerator } from "../webhooks";
+import crypto from "crypto";
 import { Assets } from "../assets";
 import { WebhookType } from "../../enums";
+import { apiTokenSecret, service, tlsSecret, watcherService } from "../networking";
+import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
+import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
+import { getModuleSecret, getNamespace } from "../pods";
+import { promises as fs } from "fs";
+import { webhookConfigGenerator } from "../webhooks";
 
 type deployments = { default: V1Deployment; watch: V1Deployment | null };
 
 export async function generateAllYaml(assets: Assets, deployments: deployments): Promise<string> {
-  const { name, tls, hash, apiToken, path, config } = assets;
+  const { name, tls, apiToken, path, config } = assets;
   const code = await fs.readFile(path);
+  const hash = crypto.createHash("sha256").update(code).digest("hex");
 
   const resources = [
     getNamespace(assets.config.customLabels?.namespace),
