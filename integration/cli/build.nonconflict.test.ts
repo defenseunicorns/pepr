@@ -180,10 +180,6 @@ describe("build", () => {
           .at(0);
         expect(component.charts).toContainEqual(chart);
       });
-
-      // it("--rbac-mode, ...todo!", async () => {
-      // --rbac-mode scoped
-      // }
     });
   });
 });
