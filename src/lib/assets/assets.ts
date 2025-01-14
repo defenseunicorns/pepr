@@ -25,7 +25,6 @@ import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
-import { generateZarfYamlGeneric } from "./yaml/generateZarfYaml";
 import { WebhookType } from "../enums";
 
 export class Assets {
@@ -72,9 +71,15 @@ export class Assets {
     await deployFunction(this, force, timeout);
   }
 
-  zarfYaml = (path: string): string => generateZarfYamlGeneric(this.name, this.image, this.config, path, "manifests");
+  zarfYaml = (
+    zarfYamlGenerator: (assets: Assets, path: string, type: "manifests" | "charts") => string,
+    path: string,
+  ): string => zarfYamlGenerator(this, path, "manifests");
 
-  zarfYamlChart = (path: string): string => generateZarfYamlGeneric(this.name, this.image, this.config, path, "charts");
+  zarfYamlChart = (
+    zarfYamlGenerator: (assets: Assets, path: string, type: "manifests" | "charts") => string,
+    path: string,
+  ): string => zarfYamlGenerator(this, path, "charts");
 
   allYaml = async (
     yamlGenerationFunction: (

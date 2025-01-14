@@ -1,15 +1,9 @@
 import { dumpYaml } from "@kubernetes/client-node";
-import { ModuleConfig } from "../../core/module";
+import { Assets } from "../assets";
 
 type ConfigType = "manifests" | "charts";
 
-export function generateZarfYamlGeneric(
-  name: string,
-  image: string,
-  config: ModuleConfig,
-  path: string,
-  type: ConfigType,
-): string {
+export function generateZarfYamlGeneric(assets: Assets, path: string, type: ConfigType): string {
   const manifestSettings = {
     name: "module",
     namespace: "pepr-system",
@@ -18,24 +12,24 @@ export function generateZarfYamlGeneric(
   const chartSettings = {
     name: "module",
     namespace: "pepr-system",
-    version: `${config.appVersion || "0.0.1"}`,
+    version: `${assets.config.appVersion || "0.0.1"}`,
     localPath: path,
   };
 
   const component = {
     name: "module",
     required: true,
-    images: [image],
+    images: [assets.image],
     [type]: [type === "manifests" ? manifestSettings : chartSettings],
   };
 
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
-      name,
-      description: `Pepr Module: ${config.description}`,
+      name: assets.name,
+      description: `Pepr Module: ${assets.config.description}`,
       url: "https://github.com/defenseunicorns/pepr",
-      version: `${config.appVersion || "0.0.1"}`,
+      version: `${assets.config.appVersion || "0.0.1"}`,
     },
     components: [component],
   };
