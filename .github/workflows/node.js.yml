@@ -61,7 +61,7 @@ jobs:
           version: v3.3.4
 
       - run: npm ci
-      - run: npm run test:int
+      - run: npm run test:integration
 
   journey:
     runs-on: ubuntu-latest
