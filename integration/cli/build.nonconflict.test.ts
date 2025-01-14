@@ -76,8 +76,9 @@ describe("build", () => {
       );
 
       const getDepConImg = (deploy: kind.Deployment, container: string): string => {
-        return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!
-          .image!;
+        return deploy!
+          .spec!.template!.spec!.containers.filter(cont => cont.name === container)
+          .at(0)!.image!;
       };
 
       it("--entry-point, works", async () => {
@@ -127,7 +128,9 @@ describe("build", () => {
             kind.MutatingWebhookConfiguration,
             `pepr-${uuid}`,
           );
-          const webhook = mwc.webhooks!.filter(f => f.name === `pepr-${uuid}.pepr.dev`).at(0)!;
+          const webhook = mwc
+            .webhooks!.filter(hook => hook.name === `pepr-${uuid}.pepr.dev`)
+            .at(0)!;
           expect(webhook.timeoutSeconds).toBe(timeout);
         }
         {
@@ -136,7 +139,9 @@ describe("build", () => {
             kind.ValidatingWebhookConfiguration,
             `pepr-${uuid}`,
           );
-          const webhook = mwc.webhooks!.filter(f => f.name === `pepr-${uuid}.pepr.dev`).at(0)!;
+          const webhook = mwc
+            .webhooks!.filter(hook => hook.name === `pepr-${uuid}.pepr.dev`)
+            .at(0)!;
           expect(webhook.timeoutSeconds).toBe(timeout);
         }
 
@@ -169,7 +174,7 @@ describe("build", () => {
 
         const zarfYaml = await resource.oneFromFile(`${outputDir}/zarf.yaml`);
         const component = zarfYaml.components
-          .filter((f: { name: string }) => f.name === "module")
+          .filter((component: { name: string }) => component.name === "module")
           .at(0);
         expect(component.charts).toContainEqual(chart);
       });

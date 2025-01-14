@@ -45,8 +45,9 @@ describe("build", () => {
       const registryInfo = "registry.io/username";
 
       const getDepConImg = (deploy: kind.Deployment, container: string): string => {
-        return deploy!.spec!.template!.spec!.containers.filter(f => f.name === container).at(0)!
-          .image!;
+        return deploy!
+          .spec!.template!.spec!.containers.filter(cont => cont.name === container)
+          .at(0)!.image!;
       };
 
       it(
