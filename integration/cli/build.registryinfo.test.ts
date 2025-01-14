@@ -66,7 +66,6 @@ describe("build", () => {
       );
 
       it("outputs appropriate configuration", async () => {
-        // overwrites --custom-image..?
         const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
 
         {
