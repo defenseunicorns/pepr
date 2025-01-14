@@ -28,8 +28,8 @@ describe("oneFromFile", () => {
       }
     `,
     );
-    const res = await sut.oneFromFile(oneJson);
-    expect(res.one).toBe("json");
+    const result = await sut.oneFromFile(oneJson);
+    expect(result.one).toBe("json");
   });
 
   it("can load one resource from .yaml file", async () => {
@@ -41,8 +41,8 @@ describe("oneFromFile", () => {
       one: yaml
     `,
     );
-    const res = await sut.oneFromFile(oneYaml);
-    expect(res.one).toBe("yaml");
+    const result = await sut.oneFromFile(oneYaml);
+    expect(result.one).toBe("yaml");
   });
 });
 
@@ -65,10 +65,10 @@ describe("manyFromFile", () => {
       ]
     `,
     );
-    const res = await sut.manyFromFile(manyJson);
-    expect(res.at(0).one).toBe("json");
-    expect(res.at(1).two).toBe("json");
-    expect(res.at(2).three).toBe("json");
+    const result = await sut.manyFromFile(manyJson);
+    expect(result.at(0).one).toBe("json");
+    expect(result.at(1).two).toBe("json");
+    expect(result.at(2).three).toBe("json");
   });
 
   it("can load many resources from .yaml file", async () => {
@@ -84,10 +84,10 @@ describe("manyFromFile", () => {
       three: yaml
     `,
     );
-    const res = await sut.manyFromFile(manyYaml);
-    expect(res.at(0).one).toBe("yaml");
-    expect(res.at(1).two).toBe("yaml");
-    expect(res.at(2).three).toBe("yaml");
+    const result = await sut.manyFromFile(manyYaml);
+    expect(result.at(0).one).toBe("yaml");
+    expect(result.at(1).two).toBe("yaml");
+    expect(result.at(2).three).toBe("yaml");
   });
 });
 

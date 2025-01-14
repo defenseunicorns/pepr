@@ -22,10 +22,10 @@ describe("init", () => {
     "gives command line help",
     async () => {
       const argz = "--help";
-      const res = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      expect(res.exitcode).toBe(0);
-      expect(res.stderr.join("").trim()).toBe("");
-      expect(res.stdout.at(0)).toMatch("Usage: pepr init");
+      const result = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
+      expect(result.exitcode).toBe(0);
+      expect(result.stderr.join("").trim()).toBe("");
+      expect(result.stdout.at(0)).toMatch("Usage: pepr init");
     },
     time.toMs("2m"),
   );
@@ -43,10 +43,10 @@ describe("init", () => {
         "--confirm",
         "--skip-post-init",
       ].join(" ");
-      const res = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      expect(res.exitcode).toBe(0);
-      expect(res.stderr.join("").trim()).toBe("");
-      expect(res.stdout.join("").trim()).toContain("New Pepr module created");
+      const result = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
+      expect(result.exitcode).toBe(0);
+      expect(result.stderr.join("").trim()).toBe("");
+      expect(result.stdout.join("").trim()).toContain("New Pepr module created");
 
       const packageJson = JSON.parse(
         await fs.readFile(`${workdir.path()}/${name}/package.json`, { encoding: "utf8" }),

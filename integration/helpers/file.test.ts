@@ -17,12 +17,12 @@ describe("exists", () => {
   });
 
   it("returns true when exists", async () => {
-    const res = await sut.exists(real);
-    expect(res).toBe(true);
+    const result = await sut.exists(real);
+    expect(result).toBe(true);
   });
 
   it("returns false when missing", async () => {
-    const res = await sut.exists(`${real}.nope`);
-    expect(res).toBe(false);
+    const result = await sut.exists(`${real}.nope`);
+    expect(result).toBe(false);
   });
 });

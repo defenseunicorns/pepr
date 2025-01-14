@@ -78,10 +78,10 @@ describe("pepr", () => {
     it(
       "can invoke pepr command via .tgz",
       async () => {
-        const res = await sut.cli(workdir.path(), { cmd: "pepr --version" });
-        expect(res.exitcode).toBe(0);
-        expect(res.stderr.join("").trim()).toBe("");
-        expect(res.stdout.join("").trim()).toBe("0.0.0-development");
+        const result = await sut.cli(workdir.path(), { cmd: "pepr --version" });
+        expect(result.exitcode).toBe(0);
+        expect(result.stderr.join("").trim()).toBe("");
+        expect(result.stdout.join("").trim()).toBe("0.0.0-development");
       },
       time.toMs("2m"),
     );
