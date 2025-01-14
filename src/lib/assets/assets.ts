@@ -36,7 +36,6 @@ export class Assets {
 
   image: string;
   buildTimestamp: string;
-  hash: string;
 
   constructor(
     readonly config: ModuleConfig,
@@ -47,17 +46,12 @@ export class Assets {
     this.buildTimestamp = `${Date.now()}`;
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
-    this.hash = "";
     // Generate the ephemeral tls things
     this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
 
     // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
   }
-
-  setHash = (hash: string): void => {
-    this.hash = hash;
-  };
 
   async deploy(
     deployFunction: (assets: Assets, force: boolean, webhookTimeout: number) => Promise<void>,
@@ -96,12 +90,11 @@ export class Assets {
 
     const code = await fs.readFile(this.path);
 
-    // Generate a hash of the code
-    this.hash = crypto.createHash("sha256").update(code).digest("hex");
+    const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
-      default: getDeployment(this, this.hash, this.buildTimestamp, imagePullSecret),
-      watch: getWatcher(this, this.hash, this.buildTimestamp, imagePullSecret),
+      default: getDeployment(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      watch: getWatcher(this, moduleHash, this.buildTimestamp, imagePullSecret),
     };
 
     return yamlGenerationFunction(this, deployments);
@@ -144,6 +137,7 @@ export class Assets {
       );
 
       const code = await fs.readFile(this.path);
+      const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
       const pairs: [string, () => string][] = [
         [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
@@ -157,12 +151,12 @@ export class Assets {
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
         [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
         [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, this.hash))],
+        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, moduleHash))],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
       const overrideData = {
-        hash: this.hash,
+        hash: moduleHash,
         name: this.name,
         image: this.image,
         config: this.config,
@@ -178,7 +172,7 @@ export class Assets {
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
-      const watchDeployment = getWatcher(this, this.hash, this.buildTimestamp);
+      const watchDeployment = getWatcher(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
         await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
         await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));
