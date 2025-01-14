@@ -49,7 +49,6 @@ async function handleWebhookConfiguration(
   type: WebhookType,
   webhookTimeout: number,
   force: boolean,
-  name: string,
 ): Promise<void> {
   const kindMap = {
     mutate: kind.MutatingWebhookConfiguration,
@@ -63,7 +62,7 @@ async function handleWebhookConfiguration(
     await K8s(kindMap[type]).Apply(webhookConfig, { force });
   } else {
     Log.info(`${type.charAt(0).toUpperCase() + type.slice(1)} webhook not needed, removing if it exists`);
-    await K8s(kindMap[type]).Delete(name);
+    await K8s(kindMap[type]).Delete(assets.name);
   }
 }
 
@@ -74,10 +73,10 @@ export async function deployWebhook(assets: Assets, force: boolean, webhookTimeo
   await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
-  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force, assets.name);
+  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force);
 
   // Create the validating webhook configuration if it is needed
-  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force, assets.name);
+  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force);
 
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
