@@ -35,11 +35,11 @@ describe("init", () => {
     async () => {
       const name = "flags-name";
       const desc = "flags-desc";
-      const errb = "reject";
+      const errorBehavior = "reject";
       const argz = [
         `--name ${name}`,
         `--description ${desc}`,
-        `--errorBehavior ${errb}`,
+        `--errorBehavior ${errorBehavior}`,
         "--confirm",
         "--skip-post-init",
       ].join(" ");
@@ -53,7 +53,7 @@ describe("init", () => {
       );
       expect(packageJson.name).toBe(name);
       expect(packageJson.description).toBe(desc);
-      expect(packageJson.pepr.onError).toBe(errb);
+      expect(packageJson.pepr.onError).toBe(errorBehavior);
     },
     time.toMs("2m"),
   );
