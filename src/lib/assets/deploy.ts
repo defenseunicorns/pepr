@@ -81,17 +81,11 @@ export async function deployWebhook(assets: Assets, force: boolean, webhookTimeo
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
 
-  // If a host is specified, we don't need to deploy the rest of the resources
-  if (assets.host) {
-    return;
-  }
+  if (assets.host) return; // Skip resource deployment if a host is already specified
 
   const code = await fs.readFile(assets.path);
+  if (!code.length) throw new Error("No code provided");
   const hash = crypto.createHash("sha256").update(code).digest("hex");
-
-  if (code.length < 1) {
-    throw new Error("No code provided");
-  }
 
   await setupRBAC(assets.name, assets.capabilities, force, assets.config);
   await setupController(assets, code, hash, force);
