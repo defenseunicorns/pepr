@@ -29,15 +29,19 @@ const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 
-type PeprConfig = {
-  pepr: Partial<ModuleConfig> & {
+export type PeprNestedFields = Pick<
+  ModuleConfig,
+  'uuid' | 'onError' | 'webhookTimeout' | 'customLabels' | 'alwaysIgnore' | 'env' | 'rbac' | 'rbacMode'
+> & {
+  peprVersion: string;
+};
+
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+  pepr: PeprNestedFields & {
     includedFiles: string[];
-    webhookTimeout?: number;
-    peprVersion: string;
-    uuid: string;
   };
   description: string;
-  version?:string;
+  version: string;
 };
 
 type LoadModuleReturn = {
@@ -55,7 +59,6 @@ type BuildModuleReturn = {
   cfg: PeprConfig;
   uuid: string;
 } | void;
-
 
 export default function (program: RootCmd): void {
   program
@@ -150,7 +153,7 @@ export default function (program: RootCmd): void {
             appVersion: cfg.version,
             description: cfg.description,
             alwaysIgnore: {
-              namespaces: []
+              namespaces: cfg.pepr.alwaysIgnore?.namespaces
             },
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
