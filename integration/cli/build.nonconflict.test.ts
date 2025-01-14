@@ -158,10 +158,6 @@ describe("build", () => {
         const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
         const watcherSecrets = getDepImgPull(watcher);
         expect(watcherSecrets).toEqual([withPullSecret]);
-
-        // TODO: team talk
-        // Image pull secrets don't seem to map into the Helm chart anywhere..? Should they?
-        // TODO: end
       });
 
       it("--zarf, works", async () => {

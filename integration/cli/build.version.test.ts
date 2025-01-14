@@ -50,19 +50,10 @@ describe("build", () => {
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain(cliVersion);
 
-          // TODO: team talk
-          // looks like it's just giving back the `pepr --version` then exiting,
-          //  rather than buidling/affecting the output files at all..?
           expect(await file.exists(`${testModule}/dist`)).toBe(false);
-          // TODO: end
         },
         time.toMs("1m"),
       );
-
-      // it(
-      //   "outputs appropriate configuration",
-      //   async () => { /* TOOD? */ }
-      // );
     });
   });
 });

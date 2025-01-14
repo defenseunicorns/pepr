@@ -48,12 +48,7 @@ describe("build", () => {
           const argz = [`--no-embed`].join(" ");
           const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
           expect(build.exitcode).toBe(0);
-
-          // TODO: team talk
-          // Should this be writing to stderr? Even with a 0 exit code..?
           expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
-          // TODO: end
-
           expect(build.stdout.join("").trim()).toContain("");
 
           packageJson = await resource.oneFromFile(`${testModule}/package.json`);
