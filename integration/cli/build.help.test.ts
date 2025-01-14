@@ -21,10 +21,10 @@ describe("build", () => {
     "gives command line help",
     async () => {
       const argz = "--help";
-      const res = await pepr.cli(workdir.path(), { cmd: `pepr build ${argz}` });
-      expect(res.exitcode).toBe(0);
-      expect(res.stderr.join("").trim()).toBe("");
-      expect(res.stdout.at(0)).toMatch("Usage: pepr build");
+      const result = await pepr.cli(workdir.path(), { cmd: `pepr build ${argz}` });
+      expect(result.exitcode).toBe(0);
+      expect(result.stderr.join("").trim()).toBe("");
+      expect(result.stdout.at(0)).toMatch("Usage: pepr build");
     },
     time.toMs("30s"),
   );
