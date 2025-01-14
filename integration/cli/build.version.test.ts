@@ -21,10 +21,10 @@ describe("build", () => {
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
-    const mod = `${workdir.path()}/${id}`;
+    const testModule = `${workdir.path()}/${id}`;
 
     beforeAll(async () => {
-      await fs.rm(mod, { recursive: true, force: true });
+      await fs.rm(testModule, { recursive: true, force: true });
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
@@ -33,8 +33,8 @@ describe("build", () => {
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(mod);
-      await pepr.cli(mod, { cmd: `npm install` });
+      await pepr.tgzifyModule(testModule);
+      await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
     describe("using a specified pepr version", () => {
@@ -45,7 +45,7 @@ describe("build", () => {
         "builds",
         async () => {
           const argz = [`--version ${version}`].join(" ");
-          const build = await pepr.cli(mod, { cmd: `pepr build ${argz}` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain(cliVersion);
@@ -53,7 +53,7 @@ describe("build", () => {
           // TODO: team talk
           // looks like it's just giving back the `pepr --version` then exiting,
           //  rather than buidling/affecting the output files at all..?
-          expect(await file.exists(`${mod}/dist`)).toBe(false);
+          expect(await file.exists(`${testModule}/dist`)).toBe(false);
           // TODO: end
         },
         time.toMs("1m"),

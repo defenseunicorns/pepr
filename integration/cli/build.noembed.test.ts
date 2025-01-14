@@ -22,10 +22,10 @@ describe("build", () => {
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
-    const mod = `${workdir.path()}/${id}`;
+    const testModule = `${workdir.path()}/${id}`;
 
     beforeAll(async () => {
-      await fs.rm(mod, { recursive: true, force: true });
+      await fs.rm(testModule, { recursive: true, force: true });
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
@@ -34,8 +34,8 @@ describe("build", () => {
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(mod);
-      await pepr.cli(mod, { cmd: `npm install` });
+      await pepr.tgzifyModule(testModule);
+      await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
     describe("for use as a library", () => {
@@ -46,7 +46,7 @@ describe("build", () => {
         "builds",
         async () => {
           const argz = [`--no-embed`].join(" ");
-          const build = await pepr.cli(mod, { cmd: `pepr build ${argz}` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
           expect(build.exitcode).toBe(0);
 
           // TODO: team talk
@@ -56,7 +56,7 @@ describe("build", () => {
 
           expect(build.stdout.join("").trim()).toContain("");
 
-          packageJson = await resource.oneFromFile(`${mod}/package.json`);
+          packageJson = await resource.oneFromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),
@@ -66,21 +66,21 @@ describe("build", () => {
         "outputs appropriate configuration",
         async () => {
           const missing = [
-            `${mod}/dist/pepr-${uuid}.js`,
-            `${mod}/dist/pepr-${uuid}.js.map`,
-            `${mod}/dist/pepr-${uuid}.js.LEGAL.txt`,
-            `${mod}/dist/pepr-module-${uuid}.yaml`,
-            `${mod}/dist/zarf.yaml`,
-            `${mod}/dist/${uuid}-chart/`,
+            `${testModule}/dist/pepr-${uuid}.js`,
+            `${testModule}/dist/pepr-${uuid}.js.map`,
+            `${testModule}/dist/pepr-${uuid}.js.LEGAL.txt`,
+            `${testModule}/dist/pepr-module-${uuid}.yaml`,
+            `${testModule}/dist/zarf.yaml`,
+            `${testModule}/dist/${uuid}-chart/`,
           ];
           for (const path of missing) {
             expect(await file.exists(path)).toBe(false);
           }
 
           const found = [
-            `${mod}/dist/pepr.js`,
-            `${mod}/dist/pepr.js.map`,
-            `${mod}/dist/pepr.js.LEGAL.txt`,
+            `${testModule}/dist/pepr.js`,
+            `${testModule}/dist/pepr.js.map`,
+            `${testModule}/dist/pepr.js.LEGAL.txt`,
           ];
           for (const path of found) {
             expect(await file.exists(path)).toBe(true);

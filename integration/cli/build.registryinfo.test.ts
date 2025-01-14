@@ -22,13 +22,13 @@ describe("build", () => {
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
-    const mod = `${workdir.path()}/${id}`;
+    const testModule = `${workdir.path()}/${id}`;
 
     let packageJson;
     let uuid: string;
 
     beforeAll(async () => {
-      await fs.rm(mod, { recursive: true, force: true });
+      await fs.rm(testModule, { recursive: true, force: true });
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
@@ -37,8 +37,8 @@ describe("build", () => {
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(mod);
-      await pepr.cli(mod, { cmd: `npm install` });
+      await pepr.tgzifyModule(testModule);
+      await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
     describe("using a custom registry", () => {
@@ -53,12 +53,12 @@ describe("build", () => {
         "builds",
         async () => {
           const argz = [`--registry-info ${registryInfo}`].join(" ");
-          const build = await pepr.cli(mod, { cmd: `pepr build ${argz}` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          packageJson = await resource.oneFromFile(`${mod}/package.json`);
+          packageJson = await resource.oneFromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),
@@ -69,7 +69,9 @@ describe("build", () => {
         const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
 
         {
-          const moduleYaml = await resource.manyFromFile(`${mod}/dist/pepr-module-${uuid}.yaml`);
+          const moduleYaml = await resource.manyFromFile(
+            `${testModule}/dist/pepr-module-${uuid}.yaml`,
+          );
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
           const admissionImage = getDepConImg(admission, "server");
           expect(admissionImage).toBe(image);
@@ -79,12 +81,14 @@ describe("build", () => {
           expect(watcherImage).toBe(image);
         }
         {
-          const zarfYaml = await resource.oneFromFile(`${mod}/dist/zarf.yaml`);
+          const zarfYaml = await resource.oneFromFile(`${testModule}/dist/zarf.yaml`);
           const componentImage = zarfYaml.components.at(0).images.at(0);
           expect(componentImage).toBe(image);
         }
         {
-          const valuesYaml = await resource.oneFromFile(`${mod}/dist/${uuid}-chart/values.yaml`);
+          const valuesYaml = await resource.oneFromFile(
+            `${testModule}/dist/${uuid}-chart/values.yaml`,
+          );
           const admissionImage = valuesYaml.admission.image;
           expect(admissionImage).toBe(image);
 

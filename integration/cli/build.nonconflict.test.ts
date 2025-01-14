@@ -23,10 +23,10 @@ describe("build", () => {
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
-    const mod = `${workdir.path()}/${id}`;
+    const testModule = `${workdir.path()}/${id}`;
 
     beforeAll(async () => {
-      await fs.rm(mod, { recursive: true, force: true });
+      await fs.rm(testModule, { recursive: true, force: true });
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
@@ -35,14 +35,14 @@ describe("build", () => {
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(mod);
-      await pepr.cli(mod, { cmd: `npm install` });
+      await pepr.tgzifyModule(testModule);
+      await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
     describe("using non-conflicting build override options", () => {
       const entryPoint = "pepr2.ts";
       const customImage = "pepr:override";
-      const outputDir = `${mod}/out`;
+      const outputDir = `${testModule}/out`;
       const timeout = 11;
       const withPullSecret = "shhh";
       const zarf = "chart";
@@ -53,7 +53,7 @@ describe("build", () => {
       it(
         "builds",
         async () => {
-          await fs.rename(`${mod}/pepr.ts`, `${mod}/${entryPoint}`);
+          await fs.rename(`${testModule}/pepr.ts`, `${testModule}/${entryPoint}`);
 
           const argz = [
             `--entry-point ${entryPoint}`,
@@ -63,13 +63,13 @@ describe("build", () => {
             `--withPullSecret ${withPullSecret}`,
             `--zarf ${zarf}`,
           ].join(" ");
-          const build = await pepr.cli(mod, { cmd: `pepr build ${argz}` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
 
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          packageJson = await resource.oneFromFile(`${mod}/package.json`);
+          packageJson = await resource.oneFromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),
@@ -85,7 +85,7 @@ describe("build", () => {
       });
 
       it("--output-dir, works", async () => {
-        const dist = `${mod}/dist`;
+        const dist = `${testModule}/dist`;
         expect(await file.exists(dist)).toBe(false);
 
         const out = outputDir;

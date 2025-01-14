@@ -20,10 +20,10 @@ describe("build", () => {
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
-    const mod = `${workdir.path()}/${id}`;
+    const testModule = `${workdir.path()}/${id}`;
 
     beforeAll(async () => {
-      await fs.rm(mod, { recursive: true, force: true });
+      await fs.rm(testModule, { recursive: true, force: true });
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
@@ -32,15 +32,15 @@ describe("build", () => {
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(mod);
-      await pepr.cli(mod, { cmd: `npm install` });
+      await pepr.tgzifyModule(testModule);
+      await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
     describe("using default build options", () => {
       it(
         "builds",
         async () => {
-          const build = await pepr.cli(mod, { cmd: `pepr build` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build` });
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
