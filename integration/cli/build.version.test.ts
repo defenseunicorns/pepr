@@ -4,10 +4,10 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
-import * as file from "../helpers/file";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -50,7 +50,7 @@ describe("build", () => {
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain(cliVersion);
 
-          expect(await file.exists(`${testModule}/dist`)).toBe(false);
+          expect(existsSync(`${testModule}/dist`)).toBe(false);
         },
         time.toMs("1m"),
       );

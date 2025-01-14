@@ -4,12 +4,12 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { kind } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
-import * as file from "../helpers/file";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -87,9 +87,9 @@ describe("build", () => {
 
       it("--output-dir, works", async () => {
         const dist = `${testModule}/dist`;
-        expect(await file.exists(dist)).toBe(false);
+        expect(existsSync(dist)).toBe(false);
 
-        expect(await file.exists(outputDir)).toBe(true);
+        expect(existsSync(outputDir)).toBe(true);
       });
 
       it("--custom-image, works", async () => {
