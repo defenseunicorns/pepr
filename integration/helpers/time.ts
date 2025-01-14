@@ -16,7 +16,7 @@ export async function nap(ms: number): Promise<void> {
 }
 
 export function toMs(human: string) {
-  const splits = human.split("").map(m => m.trim());
+  const splits = human.split("").map(str => str.trim());
 
   const groups: string[] = [];
   splits.forEach(next => {

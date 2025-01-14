@@ -50,8 +50,8 @@ export async function manyFromFile(path: string): Promise<any[]> {
     }
 
     case "yaml":
-      ret = parseAllDocuments(await readFile(path, { encoding: "utf8" })).map(m =>
-        m.contents!.toJSON(),
+      ret = parseAllDocuments(await readFile(path, { encoding: "utf8" })).map(yamlDoc =>
+        yamlDoc.contents!.toJSON(),
       );
       break;
 

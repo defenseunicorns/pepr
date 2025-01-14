@@ -151,7 +151,9 @@ describe("build", () => {
 
       it("--withPullSecret, works", async () => {
         const getDepImgPull = (deploy: kind.Deployment): string[] => {
-          return deploy!.spec!.template!.spec!.imagePullSecrets!.map(m => m.name!);
+          return deploy!.spec!.template!.spec!.imagePullSecrets!.map(
+            imagePullSecret => imagePullSecret.name!,
+          );
         };
 
         const moduleYaml = await resource.manyFromFile(`${outputDir}/pepr-module-${uuid}.yaml`);
