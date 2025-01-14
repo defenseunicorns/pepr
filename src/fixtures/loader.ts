@@ -6,11 +6,11 @@ import admissionRequestDeletePod from "./data/admission-delete-pod.json";
 import admissionRequestCreateClusterRole from "./data/admission-create-clusterrole.json";
 import admissionRequestCreateDeployment from "./data/admission-create-deployment.json";
 
-export function AdmissionRequestCreateDeployment() {
+export function AdmissionRequestCreateDeployment(): AdmissionRequest<kind.Deployment> {
   return cloneObject<kind.Deployment>(admissionRequestCreateDeployment);
 }
 
-export function AdmissionRequestCreatePod() {
+export function AdmissionRequestCreatePod(): AdmissionRequest<kind.Pod> {
   return cloneObject<kind.Pod>(admissionRequestCreatePod);
 }
 
