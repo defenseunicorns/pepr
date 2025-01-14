@@ -4,6 +4,7 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
@@ -68,7 +69,7 @@ describe("build", () => {
             `${testModule}/dist/${uuid}-chart/`,
           ];
           for (const path of missing) {
-            expect(await file.exists(path)).toBe(false);
+            expect(existsSync(path)).toBe(false);
           }
 
           const found = [
@@ -77,7 +78,7 @@ describe("build", () => {
             `${testModule}/dist/pepr.js.LEGAL.txt`,
           ];
           for (const path of found) {
-            expect(await file.exists(path)).toBe(true);
+            expect(existsSync(path)).toBe(true);
           }
         },
         time.toMs("1m"),
