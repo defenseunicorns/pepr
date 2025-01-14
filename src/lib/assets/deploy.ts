@@ -70,33 +70,31 @@ async function handleWebhookConfiguration(
 export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout: number): Promise<void> {
   Log.info("Establishing connection to Kubernetes");
 
-  const { name, host, path } = assets;
-
   Log.info("Applying pepr-system namespace");
   await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
-  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force, name);
+  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force, assets.name);
 
   // Create the validating webhook configuration if it is needed
-  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force, name);
+  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force, assets.name);
 
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
 
   // If a host is specified, we don't need to deploy the rest of the resources
-  if (host) {
+  if (assets.host) {
     return;
   }
 
-  const code = await fs.readFile(path);
+  const code = await fs.readFile(assets.path);
   const hash = crypto.createHash("sha256").update(code).digest("hex");
 
   if (code.length < 1) {
     throw new Error("No code provided");
   }
 
-  await setupRBAC(name, assets.capabilities, force, assets.config);
+  await setupRBAC(assets.name, assets.capabilities, force, assets.config);
   await setupController(assets, code, hash, force);
   await setupWatcher(assets, hash, force);
 }
