@@ -4,13 +4,13 @@
 import prompt from "prompts";
 
 import { Assets } from "../lib/assets/assets";
-import { buildModule } from "./build";
-import { RootCmd } from "./root";
-import { validateCapabilityNames } from "../lib/helpers";
 import { ImagePullSecret } from "../lib/types";
-import { sanitizeName } from "./init/utils";
-import { deployImagePullSecret } from "../lib/assets/deploy";
+import { RootCmd } from "./root";
+import { buildModule } from "./build";
+import { deployImagePullSecret, deployWebhook } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
+import { sanitizeName } from "./init/utils";
+import { validateCapabilityNames } from "../lib/helpers";
 
 export interface ImagePullSecretDetails {
   pullSecret?: string;
@@ -132,7 +132,7 @@ export default function (program: RootCmd): void {
       webhook.image = opts.image ?? webhook.image;
 
       try {
-        await webhook.deploy(opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
+        await webhook.deploy(deployWebhook, opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
 
         // wait for capabilities to be loaded and test names
         validateCapabilityNames(webhook.capabilities);
