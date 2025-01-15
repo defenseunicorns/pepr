@@ -20,10 +20,12 @@ type ChartOverrides = CommonOverrideValues & {
 export async function overridesFile(
   { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
   path: string,
+  imagePullSecrets: string[],
 ): Promise<void> {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
 
   const overrides = {
+    imagePullSecrets,
     additionalIgnoredNamespaces: [],
     rbac: rbacOverrides,
     secrets: {

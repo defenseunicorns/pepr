@@ -32,6 +32,7 @@ export class Assets {
   readonly tls: TLSOut;
   readonly apiToken: string;
   readonly alwaysIgnore!: WebhookIgnore;
+  readonly imagePullSecrets: string[];
   capabilities!: CapabilityExport[];
 
   image: string;
@@ -40,9 +41,11 @@ export class Assets {
   constructor(
     readonly config: ModuleConfig,
     readonly path: string,
+    readonly buildImagePullSecrets: string[],
     readonly host?: string,
   ) {
     this.name = `pepr-${config.uuid}`;
+    this.imagePullSecrets = buildImagePullSecrets;
     this.buildTimestamp = `${Date.now()}`;
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
@@ -163,7 +166,7 @@ export class Assets {
         apiToken: this.apiToken,
         capabilities: this.capabilities,
       };
-      await overridesFile(overrideData, helm.files.valuesYaml);
+      await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);
 
       const webhooks = {
         mutate: await webhookGeneratorFunction(this, WebhookType.MUTATE, this.config.webhookTimeout),
