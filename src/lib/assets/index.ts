@@ -12,21 +12,45 @@ export function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
+// Unit Test Me!!
 export function createWebhookYaml(
   name: string,
   config: ModuleConfig,
   webhookConfiguration: kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration,
 ): string {
   const yaml = toYaml(webhookConfiguration);
-  return replaceString(
-    replaceString(
-      replaceString(yaml, name, "{{ .Values.uuid }}"),
-      config.onError === "reject" ? "Fail" : "Ignore",
-      "{{ .Values.admission.failurePolicy }}",
-    ),
-    `${config.webhookTimeout}` || "10",
-    "{{ .Values.admission.webhookTimeout }}",
-  );
+  const replacements = [
+    { search: name, replace: "{{ .Values.uuid }}" },
+    {
+      search: config.onError === "reject" ? "Fail" : "Ignore",
+      replace: "{{ .Values.admission.failurePolicy }}",
+    },
+    {
+      search: `${config.webhookTimeout}` || "10",
+      replace: "{{ .Values.admission.webhookTimeout }}",
+    },
+    {
+      search: `
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+`,
+      replace: `
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            {{- range .Values.additionalIgnoredNamespaces }}
+            - {{ . }}
+            {{- end }}
+`,
+    },
+  ];
+
+  return replacements.reduce((updatedYaml, { search, replace }) => replaceString(updatedYaml, search, replace), yaml);
 }
 
 export function helmLayout(basePath: string, unique: string): Record<string, Record<string, string>> {

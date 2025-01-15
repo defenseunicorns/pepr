@@ -21,6 +21,15 @@
     "max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
     "no-invalid-this": "warn"
   },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "excludedFiles": "*.test.ts",
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "warn"
+      }
+    }
+  ],
   "plugins": ["@typescript-eslint"],
   "ignorePatterns": [
     "src/templates",
