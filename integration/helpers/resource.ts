@@ -1,65 +1,38 @@
 import { readFile } from "node:fs/promises";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
-import { parseDocument, parseAllDocuments } from "yaml";
+import { parseAllDocuments } from "yaml";
 
 /**
- * Read one resource from file, rehydrated as a JS object
+ * Read resources from a file and return them as JS objects.
  *
- * @param path Path to file holding one JSON (*.json) object / YAML (*.yaml) document
- * @returns JS object
+ * @param path Path to the file (supports JSON (*.json) or YAML (*.yaml))
+ * @param single If true, return a single object; otherwise, return an array of objects.
+ * @returns JS object or array of JS objects.
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export async function oneFromFile(path: string): Promise<any> {
-  const ext = path.split(".").at(-1);
+export async function resourcesFromFile(path: string): Promise<any | any[]> {
+  const extension = path.split(".").at(-1);
 
-  let ret: object;
-  switch (ext) {
+  let result: object | object[];
+  const content = await readFile(path, { encoding: "utf8" });
+
+  switch (extension) {
     case "json": {
-      const all = JSON.parse(await readFile(path, { encoding: "utf8" }));
-      ret = Array.isArray(all) ? all.at(0) : all;
+      const parsed = JSON.parse(content);
+      result = Array.isArray(parsed) ? parsed : [parsed];
       break;
     }
-
-    case "yaml":
-      ret = parseDocument(await readFile(path, { encoding: "utf8" })).contents!.toJSON();
-      break;
-
-    default:
-      throw `oops: don't recognize file of type ".${ext}"`;
-  }
-
-  return ret;
-}
-
-/**
- * Read many resources from file, rehydrated as an array of JS objects
- *
- * @param path Path to file holding an array of JSON (*.json) objects / multiple concatinated YAML (*.yaml) documents
- * @returns Array of JS objects
- */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export async function manyFromFile(path: string): Promise<any[]> {
-  const ext = path.split(".").at(-1);
-
-  let ret: object[];
-  switch (ext) {
-    case "json": {
-      const all = JSON.parse(await readFile(path, { encoding: "utf8" }));
-      ret = Array.isArray(all) ? all : [all];
+    case "yaml": {
+      const documents = parseAllDocuments(content).map(doc => doc.contents!.toJSON());
+      result = documents.length === 1 ? documents[0] : documents;
       break;
     }
-
-    case "yaml":
-      ret = parseAllDocuments(await readFile(path, { encoding: "utf8" })).map(yamlDoc =>
-        yamlDoc.contents!.toJSON(),
-      );
-      break;
-
     default:
-      throw `oops: don't recognize file of type ".${ext}"`;
+      throw new Error(`Unsupported file type ".${extension}"`);
   }
 
-  return ret;
+  // If the result is an array with one element, return the single element
+  return Array.isArray(result) && result.length === 1 ? result[0] : result;
 }
 
 /**
