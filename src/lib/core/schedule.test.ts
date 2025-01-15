@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { beforeEach, describe, expect, it, jest, afterEach } from "@jest/globals";
-import { OnSchedule, Schedule } from "./schedule";
+import { OnSchedule, Schedule, Unit } from "./schedule";
 import { Unsubscribe } from "./storage";
 
 export class MockStorage {
@@ -121,45 +121,66 @@ describe("OnSchedule", () => {
     jest.clearAllTimers();
   });
 
-  it("should getDuration", () => {
-    // test second
-    mockSchedule.every = 10;
-    mockSchedule.unit = "seconds";
-    const onSchedule = new OnSchedule(mockSchedule);
-    onSchedule.getDuration();
-    expect(onSchedule.duration).toBe(10000);
+  describe("getDuration handles supported inputs", () => {
+    it.each([
+      {
+        description: "test seconds",
+        setup: { every: 10, unit: "seconds" },
+        expectedDuration: 10000,
+        shouldThrow: false,
+      },
+      {
+        description: "test second error",
+        setup: { every: 8, unit: "seconds" },
+        expectedError: new Error("10 Seconds in the smallest interval allowed"),
+        shouldThrow: true,
+      },
+      {
+        description: "test minutes",
+        setup: { every: 10, unit: "minutes" },
+        expectedDuration: 600000,
+        shouldThrow: false,
+      },
+      {
+        description: "test singular minute",
+        setup: { every: 10, unit: "minute" },
+        expectedDuration: 600000,
+        shouldThrow: false,
+      },
+      {
+        description: "test hours",
+        setup: { every: 10, unit: "hours" },
+        expectedDuration: 36000000,
+        shouldThrow: false,
+      },
+      {
+        description: "test singular hour",
+        setup: { every: 10, unit: "hour" },
+        expectedDuration: 36000000,
+        shouldThrow: false,
+      },
+      {
+        description: "test invalid unit",
+        setup: { every: 10, unit: "second" },
+        expectedError: new Error("Invalid time unit"),
+        shouldThrow: true,
+      },
+    ])("%p", ({ description, setup, expectedDuration, expectedError, shouldThrow }) => {
+      const mockSchedule: Schedule = {
+        name: description,
+        every: setup.every,
+        unit: setup.unit as Unit,
+        run: jest.fn(),
+      };
+      const onSchedule = new OnSchedule(mockSchedule);
 
-    // test second error
-    mockSchedule.every = 8;
-    try {
-      onSchedule.getDuration();
-    } catch (e) {
-      expect(e).toEqual(new Error("10 Seconds in the smallest interval allowed"));
-    }
-
-    // test minute(s)
-    onSchedule.unit = "minutes";
-    onSchedule.getDuration();
-    expect(onSchedule.duration).toBe(600000);
-    onSchedule.unit = "minute";
-    onSchedule.getDuration();
-    expect(onSchedule.duration).toBe(600000);
-
-    // test hour(s)
-    onSchedule.unit = "hours";
-    onSchedule.getDuration();
-    expect(onSchedule.duration).toBe(36000000);
-    onSchedule.unit = "hour";
-    onSchedule.getDuration();
-    expect(onSchedule.duration).toBe(36000000);
-
-    // test invalid unit
-    onSchedule.unit = "second";
-    try {
-      onSchedule.getDuration();
-    } catch (e) {
-      expect(e).toEqual(new Error("Invalid time unit"));
-    }
+      if (shouldThrow) {
+        expect(() => onSchedule.getDuration()).toThrow(expectedError);
+      } else {
+        onSchedule.getDuration();
+        expect(onSchedule.duration).toBe(expectedDuration);
+      }
+    });
   });
 
   it("should setupInterval", () => {
