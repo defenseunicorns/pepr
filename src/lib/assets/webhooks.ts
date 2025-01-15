@@ -13,7 +13,7 @@ import { Assets } from "./assets";
 import { Event } from "../enums";
 import { Binding } from "../types";
 
-const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
+export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
 const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
   const { event, kind, isMutate, isValidate } = binding;
@@ -39,6 +39,21 @@ const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOpe
   return ruleObject;
 };
 
+export function resolveIgnoreNamespaces(ignoredNSConfig: string[] = []): string[] {
+  const ignoredNSEnv = process.env.PEPR_ADDITIONAL_IGNORED_NAMESPACES;
+  if (!ignoredNSEnv) {
+    return ignoredNSConfig;
+  }
+
+  const namespaces = ignoredNSEnv.split(",").map(ns => ns.trim());
+
+  // add alwaysIgnore.namespaces to the list
+  if (ignoredNSConfig) {
+    namespaces.push(...ignoredNSConfig);
+  }
+  return namespaces.filter(ns => ns.length > 0);
+}
+
 export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
   const { config, capabilities } = assets;
 
@@ -61,7 +76,7 @@ export async function webhookConfig(
   const ignore: V1LabelSelectorRequirement[] = [];
 
   const { name, tls, config, apiToken, host } = assets;
-  const ignoreNS = concat(peprIgnoreNamespaces, config?.alwaysIgnore?.namespaces || []);
+  const ignoreNS = concat(peprIgnoreNamespaces, resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces));
 
   // Add any namespaces to ignore
   if (ignoreNS) {
