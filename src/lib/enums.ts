@@ -19,3 +19,9 @@ export enum Event {
   CREATE_OR_UPDATE = "CREATEORUPDATE",
   ANY = "*",
 }
+
+// Supported webhook types for @kubernetes/client-node's V1MutatingWebhookConfiguration
+export enum WebhookType {
+  MUTATE = "mutate",
+  VALIDATE = "validate",
+}
