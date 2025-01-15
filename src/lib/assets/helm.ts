@@ -115,6 +115,10 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
                   {{- toYaml .Values.watcher.env | nindent 12 }}
                   - name: PEPR_WATCH_MODE
                     value: "true"
+                  {{- if .Values.additionalIgnoredNamespaces }}
+                  - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
+                    value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
+                  {{- end }}
                 envFrom:
                   {{- toYaml .Values.watcher.envFrom | nindent 12 }}
                 securityContext:
@@ -195,6 +199,10 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                   {{- toYaml .Values.admission.env | nindent 12 }}
                   - name: PEPR_WATCH_MODE
                     value: "false"
+                  {{- if .Values.additionalIgnoredNamespaces }}
+                  - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
+                    value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
+                  {{- end }}
                 envFrom:
                   {{- toYaml .Values.admission.envFrom | nindent 12 }}
                 securityContext:
