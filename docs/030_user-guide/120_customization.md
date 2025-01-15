@@ -86,6 +86,7 @@ Below are the available Helm override configurations after you have built your P
 
 | Parameter                       | Description                               | Example Values                                 |
 |---------------------------------|-------------------------------------------|------------------------------------------------|
+| `additionalIgnoredNamespaces`              | Namespaces to ignore in addition to alwaysIgnore.namespaces from Pepr config in `package.json`.                    | `- pepr-playground`     |
 | `secrets.apiToken`              | Kube API-Server Token.                    | `Buffer.from(apiToken).toString("base64")`     |
 | `hash`                          | Unique hash for deployment. Do not change.| `<your_hash>`                                  |
 | `namespace.annotations`         | Namespace annotations                     | `{}`                                           |

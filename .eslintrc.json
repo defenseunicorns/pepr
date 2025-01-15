@@ -27,6 +27,13 @@
       "rules": {
         "max-nested-callbacks": ["warn", { "max": 8 }]
       }
+    },
+    {
+      "files": ["*.ts"],
+      "excludedFiles": "*.test.ts",
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "warn"
+      }
     }
   ],
   "plugins": ["@typescript-eslint"],
