@@ -12,8 +12,9 @@ import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking
 import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
-import { webhookConfig } from "./webhooks";
+import { webhookConfigGenerator } from "./webhooks";
 import { CapabilityExport, ImagePullSecret } from "../types";
+import { WebhookType } from "../enums";
 
 export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string): Promise<void> {
   try {
@@ -42,50 +43,51 @@ export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, na
     Log.error(e);
   }
 }
-export async function deploy(assets: Assets, force: boolean, webhookTimeout?: number): Promise<void> {
-  Log.info("Establishing connection to Kubernetes");
 
-  const { name, host, path } = assets;
+async function handleWebhookConfiguration(
+  assets: Assets,
+  type: WebhookType,
+  webhookTimeout: number,
+  force: boolean,
+): Promise<void> {
+  const kindMap = {
+    mutate: kind.MutatingWebhookConfiguration,
+    validate: kind.ValidatingWebhookConfiguration,
+  };
+
+  const webhookConfig = await webhookConfigGenerator(assets, type, webhookTimeout);
+
+  if (webhookConfig) {
+    Log.info(`Applying ${type} webhook`);
+    await K8s(kindMap[type]).Apply(webhookConfig, { force });
+  } else {
+    Log.info(`${type.charAt(0).toUpperCase() + type.slice(1)} webhook not needed, removing if it exists`);
+    await K8s(kindMap[type]).Delete(assets.name);
+  }
+}
+
+export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout: number): Promise<void> {
+  Log.info("Establishing connection to Kubernetes");
 
   Log.info("Applying pepr-system namespace");
   await K8s(kind.Namespace).Apply(getNamespace(assets.config.customLabels?.namespace));
 
   // Create the mutating webhook configuration if it is needed
-  const mutateWebhook = await webhookConfig(assets, "mutate", webhookTimeout);
-  if (mutateWebhook) {
-    Log.info("Applying mutating webhook");
-    await K8s(kind.MutatingWebhookConfiguration).Apply(mutateWebhook, { force });
-  } else {
-    Log.info("Mutating webhook not needed, removing if it exists");
-    await K8s(kind.MutatingWebhookConfiguration).Delete(name);
-  }
+  await handleWebhookConfiguration(assets, WebhookType.MUTATE, webhookTimeout, force);
 
   // Create the validating webhook configuration if it is needed
-  const validateWebhook = await webhookConfig(assets, "validate", webhookTimeout);
-  if (validateWebhook) {
-    Log.info("Applying validating webhook");
-    await K8s(kind.ValidatingWebhookConfiguration).Apply(validateWebhook, { force });
-  } else {
-    Log.info("Validating webhook not needed, removing if it exists");
-    await K8s(kind.ValidatingWebhookConfiguration).Delete(name);
-  }
+  await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force);
 
   Log.info("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
 
-  // If a host is specified, we don't need to deploy the rest of the resources
-  if (host) {
-    return;
-  }
+  if (assets.host) return; // Skip resource deployment if a host is already specified
 
-  const code = await fs.readFile(path);
+  const code = await fs.readFile(assets.path);
+  if (!code.length) throw new Error("No code provided");
   const hash = crypto.createHash("sha256").update(code).digest("hex");
 
-  if (code.length < 1) {
-    throw new Error("No code provided");
-  }
-
-  await setupRBAC(name, assets.capabilities, force, assets.config);
+  await setupRBAC(assets.name, assets.capabilities, force, assets.config);
   await setupController(assets, code, hash, force);
   await setupWatcher(assets, hash, force);
 }

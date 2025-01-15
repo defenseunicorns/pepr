@@ -1,20 +1,9 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
-import {
-  dumpYaml,
-  V1Deployment,
-  V1MutatingWebhookConfiguration,
-  V1ValidatingWebhookConfiguration,
-} from "@kubernetes/client-node";
+import { genEnv } from "../pods";
+import { ModuleConfig } from "../../core/module";
+import { CapabilityExport } from "../../types";
+import { dumpYaml } from "@kubernetes/client-node";
+import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
-import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
-import { getModuleSecret, getNamespace } from "./pods";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
-import { genEnv } from "./pods";
-import { ModuleConfig } from "../core/module";
-import { CapabilityExport } from "../types";
-import { TLSOut } from "../tls";
 
 type CommonOverrideValues = {
   apiToken: string;
@@ -27,12 +16,6 @@ type CommonOverrideValues = {
 type ChartOverrides = CommonOverrideValues & {
   image: string;
 };
-
-type ResourceOverrides = CommonOverrideValues & {
-  path: string;
-  tls: TLSOut;
-};
-
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
   { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
@@ -191,102 +174,4 @@ export async function overridesFile(
   };
 
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
-}
-export function generateZarfYaml(name: string, image: string, config: ModuleConfig, path: string): string {
-  const zarfCfg = {
-    kind: "ZarfPackageConfig",
-    metadata: {
-      name,
-      description: `Pepr Module: ${config.description}`,
-      url: "https://github.com/defenseunicorns/pepr",
-      version: `${config.appVersion || "0.0.1"}`,
-    },
-    components: [
-      {
-        name: "module",
-        required: true,
-        manifests: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            files: [path],
-          },
-        ],
-        images: [image],
-      },
-    ],
-  };
-
-  return dumpYaml(zarfCfg, { noRefs: true });
-}
-
-export function generateZarfYamlChart(name: string, image: string, config: ModuleConfig, path: string): string {
-  const zarfCfg = {
-    kind: "ZarfPackageConfig",
-    metadata: {
-      name,
-      description: `Pepr Module: ${config.description}`,
-      url: "https://github.com/defenseunicorns/pepr",
-      version: `${config.appVersion || "0.0.1"}`,
-    },
-    components: [
-      {
-        name: "module",
-        required: true,
-        charts: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            version: `${config.appVersion || "0.0.1"}`,
-            localPath: path,
-          },
-        ],
-        images: [image],
-      },
-    ],
-  };
-
-  return dumpYaml(zarfCfg, { noRefs: true });
-}
-
-type webhooks = { validate: V1ValidatingWebhookConfiguration | null; mutate: V1MutatingWebhookConfiguration | null };
-type deployments = { default: V1Deployment; watch: V1Deployment | null };
-
-export async function generateAllYaml(
-  webhooks: webhooks,
-  deployments: deployments,
-  assets: ResourceOverrides,
-): Promise<string> {
-  const { name, tls, hash, apiToken, path, config } = assets;
-  const code = await fs.readFile(path);
-
-  const resources = [
-    getNamespace(assets.config.customLabels?.namespace),
-    clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
-    clusterRoleBinding(name),
-    serviceAccount(name),
-    apiTokenSecret(name, apiToken),
-    tlsSecret(name, tls),
-    deployments.default,
-    service(name),
-    watcherService(name),
-    getModuleSecret(name, code, hash),
-    storeRole(name),
-    storeRoleBinding(name),
-  ];
-
-  if (webhooks.mutate) {
-    resources.push(webhooks.mutate);
-  }
-
-  if (webhooks.validate) {
-    resources.push(webhooks.validate);
-  }
-
-  if (deployments.watch) {
-    resources.push(deployments.watch);
-  }
-
-  // Convert the resources to a single YAML string
-  return resources.map(r => dumpYaml(r, { noRefs: true })).join("---\n");
 }
