@@ -8,6 +8,9 @@ import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
 import { Assets } from "../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
+import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
+import { webhookConfigGenerator } from "../lib/assets/webhooks";
+import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
 
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
@@ -191,18 +194,18 @@ export async function generateYamlAndWriteToDisk(obj: {
   const yamlFile = `pepr-module-${uuid}.yaml`;
   const chartPath = `${uuid}-chart`;
   const yamlPath = resolve(outputDir, yamlFile);
-  const yaml = await assets.allYaml(imagePullSecret);
+  const yaml = await assets.allYaml(generateAllYaml, imagePullSecret);
   const zarfPath = resolve(outputDir, "zarf.yaml");
 
   let localZarf = "";
   if (zarf === "chart") {
-    localZarf = assets.zarfYamlChart(chartPath);
+    localZarf = assets.zarfYamlChart(generateZarfYamlGeneric, chartPath);
   } else {
-    localZarf = assets.zarfYaml(yamlFile);
+    localZarf = assets.zarfYaml(generateZarfYamlGeneric, yamlFile);
   }
   await fs.writeFile(yamlPath, yaml);
   await fs.writeFile(zarfPath, localZarf);
 
-  await assets.generateHelmChart(outputDir);
+  await assets.generateHelmChart(webhookConfigGenerator, outputDir);
   console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }

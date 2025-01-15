@@ -10,7 +10,7 @@ import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
 
 import { Assets } from "./assets";
-import { Event } from "../enums";
+import { Event, WebhookType } from "../enums";
 import { Binding } from "../types";
 
 export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
@@ -68,9 +68,9 @@ export async function generateWebhookRules(assets: Assets, isMutateWebhook: bool
   return uniqWith(equals, rules);
 }
 
-export async function webhookConfig(
+export async function webhookConfigGenerator(
   assets: Assets,
-  mutateOrValidate: "mutate" | "validate",
+  mutateOrValidate: WebhookType,
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
   const ignore: V1LabelSelectorRequirement[] = [];
@@ -106,7 +106,7 @@ export async function webhookConfig(
     };
   }
 
-  const isMutate = mutateOrValidate === "mutate";
+  const isMutate = mutateOrValidate === WebhookType.MUTATE;
   const rules = await generateWebhookRules(assets, isMutate);
 
   // If there are no rules, return null
