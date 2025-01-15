@@ -69,7 +69,7 @@ describe("build", () => {
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          packageJson = await resource.resourcesFromFile(`${testModule}/package.json`);
+          packageJson = await resource.fromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),
@@ -93,9 +93,7 @@ describe("build", () => {
       });
 
       it("--custom-image, works", async () => {
-        const moduleYaml = await resource.resourcesFromFile(
-          `${outputDir}/pepr-module-${uuid}.yaml`,
-        );
+        const moduleYaml = await resource.fromFile(`${outputDir}/pepr-module-${uuid}.yaml`);
         {
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
           const admissionImage = getDepConImg(admission, "server");
@@ -106,15 +104,13 @@ describe("build", () => {
           expect(watcherImage).toBe(customImage);
         }
 
-        const zarfYaml = await resource.resourcesFromFile(`${outputDir}/zarf.yaml`);
+        const zarfYaml = await resource.fromFile(`${outputDir}/zarf.yaml`);
         {
           const componentImage = zarfYaml.components.at(0).images.at(0);
           expect(componentImage).toBe(customImage);
         }
 
-        const valuesYaml = await resource.resourcesFromFile(
-          `${outputDir}/${uuid}-chart/values.yaml`,
-        );
+        const valuesYaml = await resource.fromFile(`${outputDir}/${uuid}-chart/values.yaml`);
         {
           const admissionImage = valuesYaml.admission.image;
           expect(admissionImage).toBe(customImage);
@@ -125,9 +121,7 @@ describe("build", () => {
       });
 
       it("--timeout, works", async () => {
-        const moduleYaml = await resource.resourcesFromFile(
-          `${outputDir}/pepr-module-${uuid}.yaml`,
-        );
+        const moduleYaml = await resource.fromFile(`${outputDir}/pepr-module-${uuid}.yaml`);
         {
           const mwc = resource.select(
             moduleYaml,
@@ -151,9 +145,7 @@ describe("build", () => {
           expect(webhook.timeoutSeconds).toBe(timeout);
         }
 
-        const valuesYaml = await resource.resourcesFromFile(
-          `${outputDir}/${uuid}-chart/values.yaml`,
-        );
+        const valuesYaml = await resource.fromFile(`${outputDir}/${uuid}-chart/values.yaml`);
         expect(valuesYaml.admission.webhookTimeout).toBe(timeout);
       });
 
@@ -164,9 +156,7 @@ describe("build", () => {
           );
         };
 
-        const moduleYaml = await resource.resourcesFromFile(
-          `${outputDir}/pepr-module-${uuid}.yaml`,
-        );
+        const moduleYaml = await resource.fromFile(`${outputDir}/pepr-module-${uuid}.yaml`);
         const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
         const admissionSecrets = getDepImgPull(admission);
         expect(admissionSecrets).toEqual([withPullSecret]);
@@ -184,7 +174,7 @@ describe("build", () => {
           localPath: `${uuid}-chart`,
         };
 
-        const zarfYaml = await resource.resourcesFromFile(`${outputDir}/zarf.yaml`);
+        const zarfYaml = await resource.fromFile(`${outputDir}/zarf.yaml`);
         const component = zarfYaml.components
           .filter((component: { name: string }) => component.name === "module")
           .at(0);

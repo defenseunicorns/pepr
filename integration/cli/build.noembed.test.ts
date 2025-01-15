@@ -51,7 +51,7 @@ describe("build", () => {
           expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
           expect(build.stdout.join("").trim()).toContain("");
 
-          packageJson = await resource.resourcesFromFile(`${testModule}/package.json`);
+          packageJson = await resource.fromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),

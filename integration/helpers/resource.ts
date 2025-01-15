@@ -9,7 +9,7 @@ import { parseAllDocuments } from "yaml";
  * @returns JS object or array of JS objects.
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export async function resourcesFromFile(path: string): Promise<any | any[]> {
+export async function fromFile(path: string): Promise<any | any[]> {
   const extension = path.split(".").at(-1);
 
   let result: object | object[];

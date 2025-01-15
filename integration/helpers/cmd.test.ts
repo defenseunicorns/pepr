@@ -27,7 +27,7 @@ describe("runRaw()", () => {
   });
 
   it("accepts working directory", async () => {
-    const expected = "/tmp";
+    const expected = "/";
     const { stdout } = await new Cmd({ cwd: expected, cmd: `pwd` }).runRaw();
     expect(stdout.join("")).toBe(expected);
   });

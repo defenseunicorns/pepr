@@ -17,7 +17,7 @@ beforeAll(async () => {
   await workdir.recreate();
 });
 
-describe("resourcesFromFile", () => {
+describe("fromFile", () => {
   it("can load one resource from .json file", async () => {
     const oneJson = `${workdir.path()}/one.json`;
     await fs.writeFile(
@@ -28,7 +28,7 @@ describe("resourcesFromFile", () => {
       }
     `,
     );
-    const result = await sut.resourcesFromFile(oneJson);
+    const result = await sut.fromFile(oneJson);
     expect(result.one).toBe("json");
   });
 
@@ -41,12 +41,12 @@ describe("resourcesFromFile", () => {
       one: yaml
     `,
     );
-    const result = await sut.resourcesFromFile(oneYaml);
+    const result = await sut.fromFile(oneYaml);
     expect(result.one).toBe("yaml");
   });
 });
 
-describe("resourcesFromFile", () => {
+describe("fromFile", () => {
   it("can load many resources from .json file", async () => {
     const manyJson = `${workdir.path()}/many.json`;
     await fs.writeFile(
@@ -65,7 +65,7 @@ describe("resourcesFromFile", () => {
       ]
     `,
     );
-    const result = await sut.resourcesFromFile(manyJson);
+    const result = await sut.fromFile(manyJson);
     expect(result.at(0).one).toBe("json");
     expect(result.at(1).two).toBe("json");
     expect(result.at(2).three).toBe("json");
@@ -84,7 +84,7 @@ describe("resourcesFromFile", () => {
       three: yaml
     `,
     );
-    const result = await sut.resourcesFromFile(manyYaml);
+    const result = await sut.fromFile(manyYaml);
     expect(result.at(0).one).toBe("yaml");
     expect(result.at(1).two).toBe("yaml");
     expect(result.at(2).three).toBe("yaml");
@@ -115,7 +115,7 @@ describe("select", () => {
         fake: news
     `,
     );
-    const many = await sut.resourcesFromFile(manyYaml);
+    const many = await sut.fromFile(manyYaml);
 
     const sec = sut.select(many, kind.Secret, "sec");
     const cm = sut.select(many, kind.ConfigMap, "cm");
