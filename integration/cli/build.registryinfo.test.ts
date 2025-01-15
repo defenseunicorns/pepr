@@ -59,7 +59,7 @@ describe("build", () => {
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          packageJson = await resource.oneFromFile(`${testModule}/package.json`);
+          packageJson = await resource.resourcesFromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
         time.toMs("1m"),
@@ -69,7 +69,7 @@ describe("build", () => {
         const image = `${registryInfo}/custom-pepr-controller:0.0.0-development`;
 
         {
-          const moduleYaml = await resource.manyFromFile(
+          const moduleYaml = await resource.resourcesFromFile(
             `${testModule}/dist/pepr-module-${uuid}.yaml`,
           );
           const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
@@ -81,12 +81,12 @@ describe("build", () => {
           expect(watcherImage).toBe(image);
         }
         {
-          const zarfYaml = await resource.oneFromFile(`${testModule}/dist/zarf.yaml`);
+          const zarfYaml = await resource.resourcesFromFile(`${testModule}/dist/zarf.yaml`);
           const componentImage = zarfYaml.components.at(0).images.at(0);
           expect(componentImage).toBe(image);
         }
         {
-          const valuesYaml = await resource.oneFromFile(
+          const valuesYaml = await resource.resourcesFromFile(
             `${testModule}/dist/${uuid}-chart/values.yaml`,
           );
           const admissionImage = valuesYaml.admission.image;
