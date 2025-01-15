@@ -6,7 +6,6 @@ import { parseAllDocuments } from "yaml";
  * Read resources from a file and return them as JS objects.
  *
  * @param path Path to the file (supports JSON (*.json) or YAML (*.yaml))
- * @param single If true, return a single object; otherwise, return an array of objects.
  * @returns JS object or array of JS objects.
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
