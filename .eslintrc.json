@@ -6,7 +6,7 @@
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": ["tsconfig.json"],
+    "project": ["tsconfig.eslint.json"],
     "ecmaVersion": 2022
   },
   "rules": {
@@ -22,6 +22,12 @@
     "no-invalid-this": "warn"
   },
   "overrides": [
+    {
+      "files": ["*.test.ts"],
+      "rules": {
+        "max-nested-callbacks": ["warn", { "max": 8 }]
+      }
+    },
     {
       "files": ["*.ts"],
       "excludedFiles": "*.test.ts",
@@ -39,7 +45,8 @@
     "pepr-test-module",
     "build.mjs",
     "journey",
-    "__mocks__"
+    "__mocks__",
+    "integration/testroot"
   ],
   "root": true
 }
