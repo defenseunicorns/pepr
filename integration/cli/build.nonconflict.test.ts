@@ -50,30 +50,26 @@ describe("build", () => {
       let packageJson;
       let uuid: string;
 
-      it(
-        "builds",
-        async () => {
-          await fs.rename(`${testModule}/pepr.ts`, `${testModule}/${entryPoint}`);
+      beforeAll(async () => {
+        await fs.rename(`${testModule}/pepr.ts`, `${testModule}/${entryPoint}`);
 
-          const argz = [
-            `--entry-point ${entryPoint}`,
-            `--custom-image ${customImage}`,
-            `--output-dir ${outputDir}`,
-            `--timeout ${timeout}`,
-            `--withPullSecret ${withPullSecret}`,
-            `--zarf ${zarf}`,
-          ].join(" ");
-          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
+        const argz = [
+          `--entry-point ${entryPoint}`,
+          `--custom-image ${customImage}`,
+          `--output-dir ${outputDir}`,
+          `--timeout ${timeout}`,
+          `--withPullSecret ${withPullSecret}`,
+          `--zarf ${zarf}`,
+        ].join(" ");
+        const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
 
-          expect(build.exitcode).toBe(0);
-          expect(build.stderr.join("").trim()).toBe("");
-          expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+        expect(build.exitcode).toBe(0);
+        expect(build.stderr.join("").trim()).toBe("");
+        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
 
-          packageJson = await resource.fromFile(`${testModule}/package.json`);
-          uuid = packageJson.pepr.uuid;
-        },
-        time.toMs("1m"),
-      );
+        packageJson = await resource.fromFile(`${testModule}/package.json`);
+        uuid = packageJson.pepr.uuid;
+      }, time.toMs("1m"));
 
       const getDepConImg = (deploy: kind.Deployment, container: string): string => {
         return deploy!
@@ -157,6 +153,7 @@ describe("build", () => {
         };
 
         const moduleYaml = await resource.fromFile(`${outputDir}/pepr-module-${uuid}.yaml`);
+
         const admission = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}`);
         const admissionSecrets = getDepImgPull(admission);
         expect(admissionSecrets).toEqual([withPullSecret]);
@@ -164,6 +161,9 @@ describe("build", () => {
         const watcher = resource.select(moduleYaml, kind.Deployment, `pepr-${uuid}-watcher`);
         const watcherSecrets = getDepImgPull(watcher);
         expect(watcherSecrets).toEqual([withPullSecret]);
+
+        const valuesYaml = await resource.fromFile(`${outputDir}/${uuid}-chart/values.yaml`);
+        expect(valuesYaml.imagePullSecrets).toContain(withPullSecret);
       });
 
       it("--zarf, works", async () => {
