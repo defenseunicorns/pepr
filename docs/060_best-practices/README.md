@@ -27,7 +27,7 @@ When developing mutating admission policies, it is essential to include a valida
 Mutating admission policies modify incoming resource configurations dynamically. Without validation, you risk introducing invalid configurations into your cluster if the mutation logic contains bugs, unintended side effects, or runs too long and causes a [Webhook Timeout](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
 2.	Maintain Cluster Integrity:
 By validating the mutated resource, you ensure it adheres to expected formats, standards, and constraints, maintaining the health and stability of your cluster.
-3.	Catch Logic Errors in Mutations:
+1.	Catch Logic Errors in Mutations:
 A mutation may not always produce the intended output due to edge cases, unexpected inputs, or incorrect assumptions in the mutation logic. 
 
 Validation helps catch such issues early and becomes _particularly_ important if your Module is [configured](https://docs.pepr.dev/main/user-guide/customization/#admission-and-watcher-subparameters) to use a Webhook [failurePolicy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) of `ignore`. In that case, admission requests failures _won't prevent further processing and/or acceptance_ of mutate-failed requests and could result in undesirable resources getting into your cluster!
