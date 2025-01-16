@@ -28,9 +28,7 @@ jobs:
     - uses: chainguard-dev/digestabot@cee67ce333549107c469dbe7656afda5a1e1f287 # v1.2.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        signoff: true # optional
-        author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com> # optional
-        committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com> # optional
+        use-gitsign: false
         labels-for-pr: automated pr, kind/cleanup, release-note-none # optional
         branch-for-pr: update-digests # optional
         title-for-pr: Update images digests # optional
