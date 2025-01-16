@@ -99,6 +99,12 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
               - name: watcher
                 image: {{ .Values.watcher.image }}
                 imagePullPolicy: IfNotPresent
+                {{- if gt (len .Values.imagePullSecrets) 0 }}
+                imagePullSecrets:
+                  {{- range .Values.imagePullSecrets }}
+                  - name: {{ . }}
+                  {{- end }}
+                {{- end }}
                 command:
                   - node
                   - /app/node_modules/pepr/dist/controller.js
@@ -183,6 +189,12 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               - name: server
                 image: {{ .Values.admission.image }}
                 imagePullPolicy: IfNotPresent
+                {{- if gt (len .Values.imagePullSecrets) 0 }}
+                imagePullSecrets:
+                  {{- range .Values.imagePullSecrets }}
+                  - name: {{ . }}
+                  {{- end }}
+                {{- end }}
                 command:
                   - node
                   - /app/node_modules/pepr/dist/controller.js
