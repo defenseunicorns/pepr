@@ -6,8 +6,8 @@ on:
     # At the end of every day
     - cron: "0 0 * * *"
 
-# permissions:  # added using https://github.com/step-security/secure-repo
-#   contents: write
+permissions:
+  contents: write
 
 
 jobs:
@@ -26,7 +26,8 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    - uses: chainguard-dev/digestabot@cee67ce333549107c469dbe7656afda5a1e1f287 # v1.2.1
+    # - uses: chainguard-dev/digestabot@cee67ce333549107c469dbe7656afda5a1e1f287 # v1.2.1
+    - uses: bburky/digestabot@patch-1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         use-gitsign: false
