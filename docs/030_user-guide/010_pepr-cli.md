@@ -93,7 +93,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 
 - `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM
-- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.
+- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.
 - `-o, --output-dir [output directory]` - Define where to place build output
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")

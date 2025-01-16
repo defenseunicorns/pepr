@@ -44,7 +44,7 @@ export default function (program: RootCmd): void {
     )
     .option(
       "-r, --registry-info [<registry>/<username>].",
-      "Provide the image registry and username. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
+      "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
     )
     .option("-o, --output-dir <output directory>", "Define where to place build output")
     .option(
