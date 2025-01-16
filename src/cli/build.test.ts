@@ -10,6 +10,8 @@ import {
   checkIronBankImage,
   validImagePullSecret,
   handleCustomImage,
+  validateBuildArgs,
+  BuildOpts,
 } from "./build.helpers";
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
 import { expect, describe, it, jest, beforeEach } from "@jest/globals";
@@ -30,6 +32,68 @@ jest.mock("../lib/filesystemService", () => ({
   createDirectoryIfNotExists: jest.fn(),
 }));
 
+describe("validateBuildArgs", () => {
+  it("should pass when only customImage is provided", () => {
+    const opts: BuildOpts = { customImage: "docker.io/megamind/pepr:v1.0.0" };
+    expect(() => validateBuildArgs(opts)).not.toThrow();
+  });
+
+  it("should pass when only registryInfo is provided", () => {
+    const opts: BuildOpts = { registryInfo: "docker.io/megamind" };
+    expect(() => validateBuildArgs(opts)).not.toThrow();
+  });
+
+  it("should pass when only registry is provided", () => {
+    const opts: BuildOpts = { registry: "GitHub" };
+    expect(() => validateBuildArgs(opts)).not.toThrow();
+  });
+
+  it("should throw an error when customImage and registryInfo are both provided", () => {
+    const opts: BuildOpts = {
+      customImage: "docker.io/megamind/pepr:v1.0.0",
+      registryInfo: "docker.io/megamind",
+    };
+    expect(() => validateBuildArgs(opts)).toThrow(
+      "Conflicting options detected: -i, --custom-image, -r, --registry-info. Please use only one of these options.",
+    );
+  });
+
+  it("should throw an error when customImage and registry are both provided", () => {
+    const opts: BuildOpts = {
+      customImage: "docker.io/megamind/pepr:v1.0.0",
+      registry: "Iron Bank",
+    };
+    expect(() => validateBuildArgs(opts)).toThrow(
+      "Conflicting options detected: -i, --custom-image, --registry. Please use only one of these options.",
+    );
+  });
+
+  it("should throw an error when registryInfo and registry are both provided", () => {
+    const opts: BuildOpts = {
+      registryInfo: "docker.io/megamind",
+      registry: "GitHub",
+    };
+    expect(() => validateBuildArgs(opts)).toThrow(
+      "Conflicting options detected: -r, --registry-info, --registry. Please use only one of these options.",
+    );
+  });
+
+  it("should throw an error when customImage, registryInfo, and registry are all provided", () => {
+    const opts: BuildOpts = {
+      customImage: "docker.io/megamind/pepr:v1.0.0",
+      registryInfo: "docker.io/megamind",
+      registry: "GitHub",
+    };
+    expect(() => validateBuildArgs(opts)).toThrow(
+      "Conflicting options detected: -i, --custom-image, -r, --registry-info, --registry. Please use only one of these options.",
+    );
+  });
+
+  it("should pass when no conflicting options are provided", () => {
+    const opts: BuildOpts = {};
+    expect(() => validateBuildArgs(opts)).not.toThrow();
+  });
+});
 describe("determineRbacMode", () => {
   it("should allow CLI options to overwrite module config", () => {
     const opts = { rbacMode: "admin" };

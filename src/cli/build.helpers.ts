@@ -209,3 +209,24 @@ export async function generateYamlAndWriteToDisk(obj: {
   await assets.generateHelmChart(webhookConfigGenerator, outputDir);
   console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }
+
+export interface BuildOpts {
+  customImage?: string;
+  registryInfo?: string;
+  registry?: "GitHub" | "Iron Bank";
+}
+export function validateBuildArgs(opts: BuildOpts): void {
+  const conflictingOptions: string[] = [];
+
+  if (opts.customImage) conflictingOptions.push("-i, --custom-image");
+  if (opts.registryInfo) conflictingOptions.push("-r, --registry-info");
+  if (opts.registry) conflictingOptions.push("--registry");
+
+  if (conflictingOptions.length > 1) {
+    throw new Error(
+      `Conflicting options detected: ${conflictingOptions.join(
+        ", ",
+      )}. Please use only one of these options.`,
+    );
+  }
+}

@@ -22,6 +22,7 @@ import {
   checkIronBankImage,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
+  validateBuildArgs,
 } from "./build.helpers";
 
 const peprTS = "pepr.ts";
@@ -81,6 +82,9 @@ export default function (program: RootCmd): void {
       ),
     )
     .action(async opts => {
+      // Validate build arguments
+      validateBuildArgs(opts);
+
       // assign custom output directory if provided
       outputDir = await handleCustomOutputDir(opts.outputDir);
 
