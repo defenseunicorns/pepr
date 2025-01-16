@@ -31,26 +31,27 @@ export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
   readonly apiToken: string;
+  readonly config: ModuleConfig;
+  readonly path: string;
   readonly alwaysIgnore!: WebhookIgnore;
   readonly imagePullSecrets: string[];
   capabilities!: CapabilityExport[];
-
   image: string;
   buildTimestamp: string;
+  readonly host?: string;
 
-  constructor(
-    readonly config: ModuleConfig,
-    readonly path: string,
-    readonly buildImagePullSecrets: string[],
-    readonly host?: string,
-  ) {
+  constructor(config: ModuleConfig, path: string, imagePullSecrets: string[], host?: string) {
     this.name = `pepr-${config.uuid}`;
-    this.imagePullSecrets = buildImagePullSecrets;
+    this.imagePullSecrets = imagePullSecrets;
     this.buildTimestamp = `${Date.now()}`;
+    this.config = config;
+    this.path = path;
+    this.host = host;
     this.alwaysIgnore = config.alwaysIgnore;
     this.image = `ghcr.io/defenseunicorns/pepr/controller:v${config.peprVersion}`;
+
     // Generate the ephemeral tls things
-    this.tls = genTLS(this.host || `${this.name}.pepr-system.svc`);
+    this.tls = genTLS(host || `${this.name}.pepr-system.svc`);
 
     // Generate the api token for the controller / webhook
     this.apiToken = crypto.randomBytes(32).toString("hex");
