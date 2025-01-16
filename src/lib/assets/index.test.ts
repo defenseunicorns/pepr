@@ -48,7 +48,6 @@ describe("createWebhookYaml", () => {
 
   it("replaces placeholders in the YAML correctly", () => {
     const result = createWebhookYaml("pepr-static-test", moduleConfig, webhookConfiguration);
-    console.log(result);
     expect(result).toContain("{{ .Values.uuid }}");
     expect(result).toContain("{{ .Values.admission.failurePolicy }}");
     expect(result).toContain("{{ .Values.admission.webhookTimeout }}");

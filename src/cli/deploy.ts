@@ -128,6 +128,7 @@ export default function (program: RootCmd): void {
       const webhook = new Assets(
         { ...builtModule.cfg.pepr, description: builtModule.cfg.description },
         builtModule.path,
+        [],
       );
       webhook.image = opts.image ?? webhook.image;
 

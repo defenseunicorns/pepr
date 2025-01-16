@@ -59,6 +59,7 @@ export default function (program: RootCmd): void {
     .option(
       "--withPullSecret <imagePullSecret>",
       "Image Pull Secret: Use image pull secret for controller Deployment.",
+      "",
     )
 
     .addOption(
@@ -128,6 +129,7 @@ export default function (program: RootCmd): void {
             rbacMode: determineRbacMode(opts, cfg),
           },
           path,
+          opts.withPullSecret === "" ? [] : [opts.withPullSecret],
         );
 
         // If registry is set to Iron Bank, use Iron Bank image
