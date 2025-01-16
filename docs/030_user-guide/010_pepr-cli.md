@@ -93,11 +93,11 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 
 - `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM
-- `-r, --registry-info [<registry>/<username>]` - Registry Info: Image registry and username. Note: You must be signed into the registry
+- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.
 - `-o, --output-dir [output directory]` - Define where to place build output
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
-- `-i, --custom-image [custom-image]` - Custom Image: Use custom image for Admission and Watcher Deployments.
+- `-i, --custom-image [custom-image]` - Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
 - `--registry [GitHub, Iron Bank]` - Container registry: Choose container registry for deployment manifests.
 - `-v, --version <version>. Example: '0.27.3'` - The version of the Pepr image to use in the deployment manifests.
 -  `--withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment.

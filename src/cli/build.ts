@@ -38,12 +38,12 @@ export default function (program: RootCmd): void {
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .option(
-      "-i, --custom-image <custom-image>",
-      "Custom Image: Use custom image for Admission and Watch Deployments.",
+      "-i, --custom-image <custom-image>.",
+      "Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
     )
     .option(
-      "-r, --registry-info [<registry>/<username>]",
-      "Registry Info: Image registry and username. Note: You must be signed into the registry",
+      "-r, --registry-info [<registry>/<username>].",
+      "Provide the image registry and username. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
     )
     .option("-o, --output-dir <output directory>", "Define where to place build output")
     .option(
