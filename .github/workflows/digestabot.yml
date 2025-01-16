@@ -6,8 +6,9 @@ on:
     # At the end of every day
     - cron: "0 0 * * *"
 
-permissions:  # added using https://github.com/step-security/secure-repo
-  contents: write
+# permissions:  # added using https://github.com/step-security/secure-repo
+#   contents: write
+
 
 jobs:
   image-update:
