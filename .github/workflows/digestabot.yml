@@ -7,7 +7,7 @@ on:
     - cron: "0 0 * * *"
 
 permissions:  # added using https://github.com/step-security/secure-repo
-  contents: read
+  contents: write
 
 jobs:
   image-update:
