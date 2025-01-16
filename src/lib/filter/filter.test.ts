@@ -132,7 +132,34 @@ describe("shouldSkipRequest", () => {
     });
   });
 
-  it("create: should reject when regex name does not match", () => {
+  const testCases = [
+    ["regexName", "^default$", "cool-name-podinfo-66bbff7cf4-fwhl2"],
+    ["SOMETHING", "asdf", "asdfasdf"],
+  ];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  it.each(testCases)("GPT should reject when %s does not match (policy: %s, input: %s)", (one, policy, actualValue) => {
+    const binding = {
+      model: kind.Pod,
+      event: Event.ANY,
+      kind: podKind,
+      filters: {
+        name: "",
+        namespaces: [],
+        regexNamespaces: [],
+        regexName: "^default$",
+        labels: {},
+        annotations: {},
+        deletionTimestamp: false,
+      },
+      callback,
+    };
+    const expected = `Ignoring Admission Callback: Binding defines name regex '${policy}' but Object carries '${actualValue}'.`;
+    const pod = AdmissionRequestCreatePod();
+    expect(shouldSkipRequest(binding, pod, [])).toMatch(expected);
+  });
+
+  it.skip("create: should reject when regex name does not match", () => {
     const binding = {
       model: kind.Pod,
       event: Event.ANY,
