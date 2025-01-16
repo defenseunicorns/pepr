@@ -8,6 +8,9 @@ on:
 
 permissions: write-all
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   image-update:
     name: Image digest update
@@ -25,8 +28,6 @@ jobs:
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - uses: chainguard-dev/digestabot@cee67ce333549107c469dbe7656afda5a1e1f287 # v1.2.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         use-gitsign: false
