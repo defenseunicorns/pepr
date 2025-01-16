@@ -31,7 +31,14 @@ export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>
 
 export type PeprNestedFields = Pick<
   ModuleConfig,
-  'uuid' | 'onError' | 'webhookTimeout' | 'customLabels' | 'alwaysIgnore' | 'env' | 'rbac' | 'rbacMode'
+  | "uuid"
+  | "onError"
+  | "webhookTimeout"
+  | "customLabels"
+  | "alwaysIgnore"
+  | "env"
+  | "rbac"
+  | "rbacMode"
 > & {
   peprVersion: string;
 };
@@ -154,7 +161,7 @@ export default function (program: RootCmd): void {
             appVersion: cfg.version,
             description: cfg.description,
             alwaysIgnore: {
-              namespaces: cfg.pepr.alwaysIgnore?.namespaces
+              namespaces: cfg.pepr.alwaysIgnore?.namespaces,
             },
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
@@ -234,7 +241,11 @@ export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn>
   };
 }
 
-export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true): Promise<BuildModuleReturn> {
+export async function buildModule(
+  reloader?: Reloader,
+  entryPoint = peprTS,
+  embed = true,
+): Promise<BuildModuleReturn> {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
