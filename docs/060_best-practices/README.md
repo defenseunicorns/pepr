@@ -24,7 +24,7 @@ When developing mutating admission policies, it is essential to include a valida
 **Why Validate After Mutating?**
 
 1.	Detect Misconfigurations Early:
-Mutating admission policies modify incoming resource configurations dynamically. Without validation, you risk introducing invalid configurations into your cluster if the mutation logic contains bugs, unintended side effects, or even a [Webhook Timeout](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
+Mutating admission policies modify incoming resource configurations dynamically. Without validation, you risk introducing invalid configurations into your cluster if the mutation logic contains bugs, unintended side effects, or runs too long and causes a [Webhook Timeout](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
 2.	Maintain Cluster Integrity:
 By validating the mutated resource, you ensure it adheres to expected formats, standards, and constraints, maintaining the health and stability of your cluster.
 3.	Catch Logic Errors in Mutations:
