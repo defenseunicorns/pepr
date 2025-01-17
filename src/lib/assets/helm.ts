@@ -105,8 +105,7 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
                   - name: {{ . }}
                   {{- end }}
                 {{- end }}
-                command:
-                  - node
+                args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
                 readinessProbe:
@@ -195,8 +194,7 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                   - name: {{ . }}
                   {{- end }}
                 {{- end }}
-                command:
-                  - node
+                args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
                 readinessProbe:
