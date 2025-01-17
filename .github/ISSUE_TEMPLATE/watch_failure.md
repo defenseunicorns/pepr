@@ -10,7 +10,7 @@ assignees: ''
 Kubernetes Distro: (e.g., AKS, EKS, GKE, OpenShift, etc.)  
 Cloud Provider (if applicable): (e.g., AWS, Azure, GCP)  
 Kubernetes Version: (e.g., 1.31)  
-Pepr Version: (e.g., 0.34.3)  
+Pepr Version: (`kubectl get po -n pepr-system -ojsonpath='{.items[0].spec.containers[0].image}'`)  
 
 ### Description of the Failure
 
@@ -25,22 +25,28 @@ List the steps required to reproduce the issue, including any relevant configura
 
 - Has this happened before? (Yes/No, provide details if Yes)
 
+- How long had pods been running? (e.g., 1 hour, 1 day, etc.)
+
 Attach Metrics
 
 ```bash
-kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://$(kubectl get deploy -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}')/metrics > metrics.txt
+SERVICE_NAME=$(kubectl get svc -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}')
+
+kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://$SERVICE_NAME/metrics > metrics.txt
 ```
 
 Attach Admission Logs
 
 ```bash
-kubectl logs deploy/$(kubectl get deploy -n pepr-system -l pepr.dev/controller=admission -ojsonpath='{.items[0].metadata.name}') -n pepr-system > admission.logs
+DEPLOYMENT_NAME=$(kubectl get deploy -n pepr-system -l pepr.dev/controller=admission -ojsonpath='{.items[0].metadata.name}')
+
+kubectl logs deploy/$DEPLOYMENT_NAME -n pepr-system > admission.logs
 ```
 
 Attach Watcher Logs
 
 ```bash
-kubectl logs deploy/$(kubectl get deploy -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}') -n pepr-system > watcher.logs
-```
+DEPLOYMENT_NAME=$(kubectl get deploy -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}')
 
-How long had pods been running? (e.g., 1 hour, 1 day, etc.)
+kubectl logs deploy/$DEPLOYMENT_NAME -n pepr-system > watcher.logs
+```
