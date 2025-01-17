@@ -43,3 +43,4 @@ Attach Watcher Logs
 kubectl logs deploy/$(kubectl get deploy -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}') -n pepr-system > watcher.logs
 ```
 
+How long had pods been running? (e.g., 1 hour, 1 day, etc.)
