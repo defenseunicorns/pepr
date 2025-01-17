@@ -43,6 +43,8 @@ export type PeprNestedFields = Pick<
   peprVersion: string;
 };
 
+export type signCommit = {}
+
 export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
   pepr: PeprNestedFields & {
     includedFiles: string[];
