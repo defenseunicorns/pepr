@@ -109,7 +109,7 @@ export function getWatcher(
               name: "watcher",
               image,
               imagePullPolicy: "IfNotPresent",
-              command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
+              args: ["/app/node_modules/pepr/dist/controller.js", hash],
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
@@ -248,7 +248,7 @@ export function getDeployment(
               name: "server",
               image,
               imagePullPolicy: "IfNotPresent",
-              command: ["node", "/app/node_modules/pepr/dist/controller.js", hash],
+              args: ["/app/node_modules/pepr/dist/controller.js", hash],
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
