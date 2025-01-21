@@ -17,12 +17,11 @@ import {
   handleEmbedding,
   handleCustomOutputDir,
   handleValidCapabilityNames,
-  handleCustomImage,
+  handleCustomImageBuildConflicts,
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
-  validateBuildArgs,
 } from "./build.helpers";
 
 const peprTS = "pepr.ts";
@@ -83,9 +82,6 @@ export default function (program: RootCmd): void {
       ),
     )
     .action(async opts => {
-      // Validate build arguments
-      validateBuildArgs(opts);
-
       // assign custom output directory if provided
       outputDir = await handleCustomOutputDir(opts.outputDir);
 
@@ -96,7 +92,7 @@ export default function (program: RootCmd): void {
         // Files to include in controller image for WASM support
         const { includedFiles } = cfg.pepr;
 
-        let image = handleCustomImage(opts.customImage, opts.registry);
+        let image = handleCustomImageBuildConflicts(opts);
 
         // Check if there is a custom timeout defined
         if (opts.timeout !== undefined) {

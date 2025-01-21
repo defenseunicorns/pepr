@@ -92,19 +92,44 @@ export function validImagePullSecret(imagePullSecretName: string): void {
   }
 }
 
+export interface ImageBuildOpts {
+  customImage?: string;
+  registryInfo?: string;
+  registry?: "GitHub" | "Iron Bank";
+  version?: string;
+}
+
 /**
- * Constraint to majke sure customImage and registry are not both used
- * @param customImage
- * @param registry
- * @returns
+ * Constraint to make sure customImage and other conflicting build image options are not used together
+ * @param ImageBuildOpts
+ * @param
+ * @returns string
  */
-export function handleCustomImage(customImage: string, registry: string): string {
+export function handleCustomImageBuildConflicts(opts: ImageBuildOpts): string {
+  const conflictingOptions: string[] = [];
+  const { customImage, registry, registryInfo, version } = opts;
+  if (customImage) conflictingOptions.push("-i, --custom-image");
+  if (registryInfo) conflictingOptions.push("-r, --registry-info");
+  if (registry) conflictingOptions.push("--registry");
+  if (version) conflictingOptions.push("-v, --version");
+
+  // custom image and registry info can be used together
+  if (version && registry) {
+    conflictingOptions.splice(conflictingOptions.indexOf("--registry"), 1);
+    conflictingOptions.splice(conflictingOptions.indexOf("-v,--version"), 1);
+  }
+
+  if (conflictingOptions.length > 1) {
+    console.error(
+      `Conflicting options detected: ${conflictingOptions.join(
+        ", ",
+      )}. Please use only one of these options.`,
+    );
+    process.exit(1);
+  }
+
   let defaultImage = "";
   if (customImage) {
-    if (registry) {
-      console.error(`Custom Image and registry cannot be used together.`);
-      process.exit(1);
-    }
     defaultImage = customImage;
   }
   return defaultImage;
@@ -208,25 +233,4 @@ export async function generateYamlAndWriteToDisk(obj: {
 
   await assets.generateHelmChart(webhookConfigGenerator, outputDir);
   console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
-}
-
-export interface BuildOpts {
-  customImage?: string;
-  registryInfo?: string;
-  registry?: "GitHub" | "Iron Bank";
-}
-export function validateBuildArgs(opts: BuildOpts): void {
-  const conflictingOptions: string[] = [];
-
-  if (opts.customImage) conflictingOptions.push("-i, --custom-image");
-  if (opts.registryInfo) conflictingOptions.push("-r, --registry-info");
-  if (opts.registry) conflictingOptions.push("--registry");
-
-  if (conflictingOptions.length > 1) {
-    throw new Error(
-      `Conflicting options detected: ${conflictingOptions.join(
-        ", ",
-      )}. Please use only one of these options.`,
-    );
-  }
 }

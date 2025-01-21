@@ -9,9 +9,8 @@ import {
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
-  handleCustomImage,
-  validateBuildArgs,
-  BuildOpts,
+  handleCustomImageBuildConflicts,
+  ImageBuildOpts,
 } from "./build.helpers";
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
 import { expect, describe, it, jest, beforeEach } from "@jest/globals";
@@ -32,68 +31,68 @@ jest.mock("../lib/filesystemService", () => ({
   createDirectoryIfNotExists: jest.fn(),
 }));
 
-describe("validateBuildArgs", () => {
-  it("should pass when only customImage is provided", () => {
-    const opts: BuildOpts = { customImage: "docker.io/megamind/pepr:v1.0.0" };
-    expect(() => validateBuildArgs(opts)).not.toThrow();
-  });
+// describe("validateBuildArgs", () => {
+//   it("should pass when only customImage is provided", () => {
+//     const opts: BuildOpts = { customImage: "docker.io/megamind/pepr:v1.0.0" };
+//     expect(() => validateBuildArgs(opts)).not.toThrow();
+//   });
 
-  it("should pass when only registryInfo is provided", () => {
-    const opts: BuildOpts = { registryInfo: "docker.io/megamind" };
-    expect(() => validateBuildArgs(opts)).not.toThrow();
-  });
+//   it("should pass when only registryInfo is provided", () => {
+//     const opts: BuildOpts = { registryInfo: "docker.io/megamind" };
+//     expect(() => validateBuildArgs(opts)).not.toThrow();
+//   });
 
-  it("should pass when only registry is provided", () => {
-    const opts: BuildOpts = { registry: "GitHub" };
-    expect(() => validateBuildArgs(opts)).not.toThrow();
-  });
+//   it("should pass when only registry is provided", () => {
+//     const opts: BuildOpts = { registry: "GitHub" };
+//     expect(() => validateBuildArgs(opts)).not.toThrow();
+//   });
 
-  it("should throw an error when customImage and registryInfo are both provided", () => {
-    const opts: BuildOpts = {
-      customImage: "docker.io/megamind/pepr:v1.0.0",
-      registryInfo: "docker.io/megamind",
-    };
-    expect(() => validateBuildArgs(opts)).toThrow(
-      "Conflicting options detected: -i, --custom-image, -r, --registry-info. Please use only one of these options.",
-    );
-  });
+//   it("should throw an error when customImage and registryInfo are both provided", () => {
+//     const opts: BuildOpts = {
+//       customImage: "docker.io/megamind/pepr:v1.0.0",
+//       registryInfo: "docker.io/megamind",
+//     };
+//     expect(() => validateBuildArgs(opts)).toThrow(
+//       "Conflicting options detected: -i, --custom-image, -r, --registry-info. Please use only one of these options.",
+//     );
+//   });
 
-  it("should throw an error when customImage and registry are both provided", () => {
-    const opts: BuildOpts = {
-      customImage: "docker.io/megamind/pepr:v1.0.0",
-      registry: "Iron Bank",
-    };
-    expect(() => validateBuildArgs(opts)).toThrow(
-      "Conflicting options detected: -i, --custom-image, --registry. Please use only one of these options.",
-    );
-  });
+//   it("should throw an error when customImage and registry are both provided", () => {
+//     const opts: BuildOpts = {
+//       customImage: "docker.io/megamind/pepr:v1.0.0",
+//       registry: "Iron Bank",
+//     };
+//     expect(() => validateBuildArgs(opts)).toThrow(
+//       "Conflicting options detected: -i, --custom-image, --registry. Please use only one of these options.",
+//     );
+//   });
 
-  it("should throw an error when registryInfo and registry are both provided", () => {
-    const opts: BuildOpts = {
-      registryInfo: "docker.io/megamind",
-      registry: "GitHub",
-    };
-    expect(() => validateBuildArgs(opts)).toThrow(
-      "Conflicting options detected: -r, --registry-info, --registry. Please use only one of these options.",
-    );
-  });
+//   it("should throw an error when registryInfo and registry are both provided", () => {
+//     const opts: BuildOpts = {
+//       registryInfo: "docker.io/megamind",
+//       registry: "GitHub",
+//     };
+//     expect(() => validateBuildArgs(opts)).toThrow(
+//       "Conflicting options detected: -r, --registry-info, --registry. Please use only one of these options.",
+//     );
+//   });
 
-  it("should throw an error when customImage, registryInfo, and registry are all provided", () => {
-    const opts: BuildOpts = {
-      customImage: "docker.io/megamind/pepr:v1.0.0",
-      registryInfo: "docker.io/megamind",
-      registry: "GitHub",
-    };
-    expect(() => validateBuildArgs(opts)).toThrow(
-      "Conflicting options detected: -i, --custom-image, -r, --registry-info, --registry. Please use only one of these options.",
-    );
-  });
+//   it("should throw an error when customImage, registryInfo, and registry are all provided", () => {
+//     const opts: BuildOpts = {
+//       customImage: "docker.io/megamind/pepr:v1.0.0",
+//       registryInfo: "docker.io/megamind",
+//       registry: "GitHub",
+//     };
+//     expect(() => validateBuildArgs(opts)).toThrow(
+//       "Conflicting options detected: -i, --custom-image, -r, --registry-info, --registry. Please use only one of these options.",
+//     );
+//   });
 
-  it("should pass when no conflicting options are provided", () => {
-    const opts: BuildOpts = {};
-    expect(() => validateBuildArgs(opts)).not.toThrow();
-  });
-});
+//   it("should pass when no conflicting options are provided", () => {
+//     const opts: BuildOpts = {};
+//     expect(() => validateBuildArgs(opts)).not.toThrow();
+//   });
+// });
 describe("determineRbacMode", () => {
   it("should allow CLI options to overwrite module config", () => {
     const opts = { rbacMode: "admin" };
@@ -197,33 +196,67 @@ describe("validImagePullSecret", () => {
     expect(mockExit).toHaveBeenCalled();
   });
 });
-describe("handleCustomImage", () => {
+describe("handleCustomImageBuildConflicts", () => {
   const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
     return undefined as never;
   });
-
+  const testBuildOpts: ImageBuildOpts = {
+    customImage: "pepr:dev",
+    registry: "GitHub",
+    registryInfo: "docker.io/defenseunicorns",
+    version: "v1.0.0",
+  };
   const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
+  it("should call process.exit with 1 and log an error if both customImage and version are provided", () => {
+    const builtOpts = { customImage: testBuildOpts.customImage, version: testBuildOpts.version };
+    handleCustomImageBuildConflicts(builtOpts);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Conflicting options detected: -i, --custom-image, -v, --version. Please use only one of these options.",
+    );
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+  it("should call process.exit with 1 and log an error if both customImage, registryInfo, registry and version are provided", () => {
+    handleCustomImageBuildConflicts(testBuildOpts);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Conflicting options detected: -i, --custom-image, -r, --registry-info. Please use only one of these options.",
+    );
+  });
+  it("should not call process.exit or log an error if registry and version are provided", () => {
+    const buildOpts = { version: testBuildOpts.version, registry: testBuildOpts.registry };
+    const image = handleCustomImageBuildConflicts(buildOpts);
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(mockExit).not.toHaveBeenCalled();
+    expect(image).toBe("");
+  });
+  it("should call process.exit with 1 and log an error if both customImage and registryInfo are provided", () => {
+    const buildOpts = {
+      customImage: testBuildOpts.customImage,
+      registryInfo: testBuildOpts.registryInfo,
+    };
 
+    handleCustomImageBuildConflicts(buildOpts);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Conflicting options detected: -i, --custom-image, -r, --registry-info. Please use only one of these options.",
+    );
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
   it("should return the customImage if no registry is provided", () => {
-    const customImage = "custom-image";
-    const registry = "";
+    const buildOpts = { customImage: testBuildOpts.customImage };
 
-    const result = handleCustomImage(customImage, registry);
+    const result = handleCustomImageBuildConflicts(buildOpts);
 
-    expect(result).toBe(customImage);
+    expect(result).toBe(buildOpts.customImage);
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     expect(mockExit).not.toHaveBeenCalled();
   });
 
   it("should return an empty string if neither customImage nor registry is provided", () => {
-    const customImage = "";
-    const registry = "";
-
-    const result = handleCustomImage(customImage, registry);
+    const buildOpts = {};
+    const result = handleCustomImageBuildConflicts(buildOpts);
 
     expect(result).toBe("");
     expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -231,12 +264,11 @@ describe("handleCustomImage", () => {
   });
 
   it("should call process.exit with 1 and log an error if both customImage and registry are provided", () => {
-    const customImage = "custom-image";
-    const registry = "registry";
+    const buildOpts = { customImage: testBuildOpts.customImage, registry: testBuildOpts.registry };
 
-    handleCustomImage(customImage, registry);
+    handleCustomImageBuildConflicts(buildOpts);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Custom Image and registry cannot be used together.",
+      "Conflicting options detected: -i, --custom-image, --registry. Please use only one of these options.",
     );
     expect(mockExit).toHaveBeenCalledWith(1);
   });
