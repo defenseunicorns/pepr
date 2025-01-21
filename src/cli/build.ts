@@ -77,7 +77,7 @@ export default function (program: RootCmd): void {
     )
     .addOption(
       new Option(
-        "-i, --custom-image <custom-image>.",
+        "-i, --custom-image <custom-image>",
         "Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
       ).conflicts(["version", "registryInfo", "registry"]),
     )
