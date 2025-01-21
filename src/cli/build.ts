@@ -96,7 +96,7 @@ export default function (program: RootCmd): void {
     )
     .addOption(
       new Option(
-        "-v, --version <version>. Example: '0.27.3'",
+        "-v, --version <version>",
         "The version of the Pepr image to use in the deployment manifests. Example: '0.27.3'.",
       ).conflicts(["customImage", "registryInfo"]),
     )
