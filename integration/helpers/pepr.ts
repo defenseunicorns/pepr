@@ -33,5 +33,7 @@ export async function cli(workdir: string, spec: Spec): Promise<Result> {
   _spec.env = { ..._spec.env, NPM_CONFIG_CACHE: `${root}/integration/testroot/.npm` };
 
   const cmd = new Cmd(_spec);
-  return await cmd.runRaw();
+  const result = await cmd.runRaw();
+  await new Promise(r => setTimeout(r, 5000));
+  return result;
 }
