@@ -26,42 +26,29 @@
     "unmatched": 0,
     "updated": 0
   },
-  "startTime": 1737491266135,
+  "startTime": 1737491687797,
   "success": true,
   "testResults": [
     {
       "assertionResults": [
         {
-          "ancestorTitles": ["build", "builds a module", "for use as a library"],
-          "duration": 16747,
+          "ancestorTitles": ["build", "builds a module", "using a specified pepr version"],
+          "duration": 8033,
           "failureDetails": [],
           "failureMessages": [],
-          "fullName": "build builds a module for use as a library builds",
+          "fullName": "build builds a module using a specified pepr version builds",
           "invocations": 1,
           "location": null,
-          "numPassingAsserts": 3,
+          "numPassingAsserts": 4,
           "retryReasons": [],
           "status": "passed",
           "title": "builds"
-        },
-        {
-          "ancestorTitles": ["build", "builds a module", "for use as a library"],
-          "duration": 2,
-          "failureDetails": [],
-          "failureMessages": [],
-          "fullName": "build builds a module for use as a library outputs appropriate configuration",
-          "invocations": 1,
-          "location": null,
-          "numPassingAsserts": 9,
-          "retryReasons": [],
-          "status": "passed",
-          "title": "outputs appropriate configuration"
         }
       ],
-      "endTime": 1737491314738,
+      "endTime": 1737491735377,
       "message": "",
-      "name": "/Users/sam/code/work/pepr/integration/cli/build.noembed.test.ts",
-      "startTime": 1737491266254,
+      "name": "/Users/sam/code/work/pepr/integration/cli/build.version.test.ts",
+      "startTime": 1737491687924,
       "status": "passed",
       "summary": ""
     },
@@ -73,7 +60,7 @@
             "builds a module",
             "using non-conflicting build override options"
           ],
-          "duration": 14,
+          "duration": 16,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using non-conflicting build override options --entry-point, works",
@@ -90,7 +77,7 @@
             "builds a module",
             "using non-conflicting build override options"
           ],
-          "duration": 1,
+          "duration": 4,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using non-conflicting build override options --output-dir, works",
@@ -107,7 +94,7 @@
             "builds a module",
             "using non-conflicting build override options"
           ],
-          "duration": 36,
+          "duration": 47,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using non-conflicting build override options --custom-image, works",
@@ -141,7 +128,7 @@
             "builds a module",
             "using non-conflicting build override options"
           ],
-          "duration": 12,
+          "duration": 10,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using non-conflicting build override options --withPullSecret, works",
@@ -158,7 +145,7 @@
             "builds a module",
             "using non-conflicting build override options"
           ],
-          "duration": 4,
+          "duration": 3,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using non-conflicting build override options --zarf, works",
@@ -170,10 +157,10 @@
           "title": "--zarf, works"
         }
       ],
-      "endTime": 1737491315484,
+      "endTime": 1737491741136,
       "message": "",
       "name": "/Users/sam/code/work/pepr/integration/cli/build.nonconflict.test.ts",
-      "startTime": 1737491266254,
+      "startTime": 1737491687924,
       "status": "passed",
       "summary": ""
     },
@@ -181,7 +168,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["build", "builds a module", "using a custom registry"],
-          "duration": 17159,
+          "duration": 16360,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using a custom registry builds",
@@ -194,7 +181,7 @@
         },
         {
           "ancestorTitles": ["build", "builds a module", "using a custom registry"],
-          "duration": 51,
+          "duration": 31,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using a custom registry outputs appropriate configuration",
@@ -206,10 +193,10 @@
           "title": "outputs appropriate configuration"
         }
       ],
-      "endTime": 1737491316108,
+      "endTime": 1737491741725,
       "message": "",
       "name": "/Users/sam/code/work/pepr/integration/cli/build.registryinfo.test.ts",
-      "startTime": 1737491266254,
+      "startTime": 1737491687924,
       "status": "passed",
       "summary": ""
     },
@@ -217,7 +204,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["build", "builds a module", "using default build options"],
-          "duration": 13771,
+          "duration": 16088,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build builds a module using default build options builds",
@@ -229,10 +216,10 @@
           "title": "builds"
         }
       ],
-      "endTime": 1737491318109,
+      "endTime": 1737491743135,
       "message": "",
       "name": "/Users/sam/code/work/pepr/integration/cli/build.defaults.test.ts",
-      "startTime": 1737491266254,
+      "startTime": 1737491687924,
       "status": "passed",
       "summary": ""
     },
@@ -240,7 +227,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["determineRbacMode"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "determineRbacMode should allow CLI options to overwrite module config",
@@ -292,7 +279,7 @@
         },
         {
           "ancestorTitles": ["handleCustomOutputDir"],
-          "duration": 3,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "handleCustomOutputDir should return the provided output directory if it exists and is created successfully",
@@ -318,7 +305,7 @@
         },
         {
           "ancestorTitles": ["checkIronBankImage"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "checkIronBankImage should return the Iron Bank image if the registry is Iron Bank",
@@ -344,7 +331,7 @@
         },
         {
           "ancestorTitles": ["validImagePullSecret"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "validImagePullSecret should not throw an error if the imagePullSecret is valid",
@@ -383,7 +370,7 @@
         },
         {
           "ancestorTitles": ["handleCustomImage"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "handleCustomImage should return the customImage if no registry is provided",
@@ -396,7 +383,7 @@
         },
         {
           "ancestorTitles": ["handleCustomImage"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "handleCustomImage should return an empty string if neither customImage nor registry is provided",
@@ -499,10 +486,10 @@
           "title": "should call validateCapabilityNames with capabilities"
         }
       ],
-      "endTime": 1737491322150,
+      "endTime": 1737491746159,
       "message": "",
       "name": "/Users/sam/code/work/pepr/src/cli/build.test.ts",
-      "startTime": 1737491318117,
+      "startTime": 1737491743148,
       "status": "passed",
       "summary": ""
     },
@@ -536,7 +523,7 @@
         },
         {
           "ancestorTitles": ["when processing input", "walkthough() returns expected results"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "when processing input walkthough() returns expected results when the set flags are: [ 'errorBehavior' ]",
@@ -549,7 +536,7 @@
         },
         {
           "ancestorTitles": ["when processing input", "walkthough() returns expected results"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "when processing input walkthough() returns expected results when the set flags are: [ 'name', 'description', 'errorBehavior' ]",
@@ -614,7 +601,7 @@
         },
         {
           "ancestorTitles": ["when processing input", "walkthough() returns expected results"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "when processing input walkthough() returns expected results should prompt for input when given invalid input",
@@ -640,7 +627,7 @@
         },
         {
           "ancestorTitles": ["when processing input", "confirm() handles input"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "when processing input confirm() handles input when prompt input is 'n'",
@@ -705,7 +692,7 @@
         },
         {
           "ancestorTitles": ["when processing input", "confirm() handles input"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "when processing input confirm() handles input when flag '--confirm' is false",
@@ -717,10 +704,10 @@
           "title": "when flag '--confirm' is false"
         }
       ],
-      "endTime": 1737491322813,
+      "endTime": 1737491746530,
       "message": "",
       "name": "/Users/sam/code/work/pepr/src/cli/init/walkthrough.test.ts",
-      "startTime": 1737491322180,
+      "startTime": 1737491746189,
       "status": "passed",
       "summary": ""
     },
@@ -728,7 +715,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["getK8sLogFromKubeConfig"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "getK8sLogFromKubeConfig should create a K8sLog instance from the default KubeConfig",
@@ -741,7 +728,7 @@
         },
         {
           "ancestorTitles": ["getLabelsAndErrorMessage"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "getLabelsAndErrorMessage should return labels and error message",
@@ -806,7 +793,7 @@
         },
         {
           "ancestorTitles": ["processMutateLog"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "processMutateLog should log a mutation approval with patch details",
@@ -832,7 +819,7 @@
         },
         {
           "ancestorTitles": ["processValidateLog"],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "processValidateLog should log a successful validation",
@@ -857,10 +844,10 @@
           "title": "should log a validation failure with error messages"
         }
       ],
-      "endTime": 1737491322956,
+      "endTime": 1737491746609,
       "message": "",
       "name": "/Users/sam/code/work/pepr/src/cli/monitor.test.ts",
-      "startTime": 1737491322817,
+      "startTime": 1737491746534,
       "status": "passed",
       "summary": ""
     },
@@ -868,7 +855,7 @@
       "assertionResults": [
         {
           "ancestorTitles": [],
-          "duration": 0,
+          "duration": 1,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "sanitizeName() sanitizes 'My Test Module' correctly",
@@ -907,7 +894,7 @@
         },
         {
           "ancestorTitles": [],
-          "duration": 9,
+          "duration": 7,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "sanitizeName() should throw TypeError when given a non-string",
@@ -959,7 +946,7 @@
         },
         {
           "ancestorTitles": ["write"],
-          "duration": 1,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "write should write data to a file",
@@ -984,10 +971,10 @@
           "title": "should stringify data if it is not a string"
         }
       ],
-      "endTime": 1737491323065,
+      "endTime": 1737491746634,
       "message": "",
       "name": "/Users/sam/code/work/pepr/src/cli/init/utils.test.ts",
-      "startTime": 1737491322960,
+      "startTime": 1737491746612,
       "status": "passed",
       "summary": ""
     },
@@ -1008,7 +995,7 @@
         },
         {
           "ancestorTitles": ["formatWithPrettier"],
-          "duration": 3,
+          "duration": 0,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "formatWithPrettier should report failures in validate-only mode if files are not formatted",
@@ -1020,10 +1007,10 @@
           "title": "should report failures in validate-only mode if files are not formatted"
         }
       ],
-      "endTime": 1737491323181,
+      "endTime": 1737491746650,
       "message": "",
       "name": "/Users/sam/code/work/pepr/src/cli/format.test.ts",
-      "startTime": 1737491323068,
+      "startTime": 1737491746636,
       "status": "passed",
       "summary": ""
     },
@@ -1031,7 +1018,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["build"],
-          "duration": 11665,
+          "duration": 9019,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "build gives command line help",
@@ -1043,10 +1030,10 @@
           "title": "gives command line help"
         }
       ],
-      "endTime": 1737491328829,
+      "endTime": 1737491751757,
       "message": "",
       "name": "/Users/sam/code/work/pepr/integration/cli/build.help.test.ts",
-      "startTime": 1737491316116,
+      "startTime": 1737491741733,
       "status": "passed",
       "summary": ""
     },
@@ -1054,7 +1041,7 @@
       "assertionResults": [
         {
           "ancestorTitles": ["init"],
-          "duration": 11800,
+          "duration": 9935,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "init gives command line help",
@@ -1067,7 +1054,7 @@
         },
         {
           "ancestorTitles": ["init"],
-          "duration": 6987,
+          "duration": 9161,
           "failureDetails": [],
           "failureMessages": [],
           "fullName": "init creates new module using input args",
@@ -1079,33 +1066,46 @@
           "title": "creates new module using input args"
         }
       ],
-      "endTime": 1737491335527,
+      "endTime": 1737491761116,
       "message": "",
       "name": "/Users/sam/code/work/pepr/integration/cli/init.test.ts",
-      "startTime": 1737491315492,
+      "startTime": 1737491741145,
       "status": "passed",
       "summary": ""
     },
     {
       "assertionResults": [
         {
-          "ancestorTitles": ["build", "builds a module", "using a specified pepr version"],
-          "duration": 6959,
+          "ancestorTitles": ["build", "builds a module", "for use as a library"],
+          "duration": 12702,
           "failureDetails": [],
           "failureMessages": [],
-          "fullName": "build builds a module using a specified pepr version builds",
+          "fullName": "build builds a module for use as a library builds",
           "invocations": 1,
           "location": null,
-          "numPassingAsserts": 4,
+          "numPassingAsserts": 3,
           "retryReasons": [],
           "status": "passed",
           "title": "builds"
+        },
+        {
+          "ancestorTitles": ["build", "builds a module", "for use as a library"],
+          "duration": 3,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "build builds a module for use as a library outputs appropriate configuration",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "status": "passed",
+          "title": "outputs appropriate configuration"
         }
       ],
-      "endTime": 1737491353478,
+      "endTime": 1737491777023,
       "message": "",
-      "name": "/Users/sam/code/work/pepr/integration/cli/build.version.test.ts",
-      "startTime": 1737491314759,
+      "name": "/Users/sam/code/work/pepr/integration/cli/build.noembed.test.ts",
+      "startTime": 1737491735388,
       "status": "passed",
       "summary": ""
     }
