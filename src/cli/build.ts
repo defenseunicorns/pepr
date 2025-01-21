@@ -139,7 +139,7 @@ export default function (program: RootCmd): void {
         // Files to include in controller image for WASM support
         const { includedFiles } = cfg.pepr;
 
-        let image = "";
+        let image = opts.customImage || "";
 
         // Check if there is a custom timeout defined
         if (opts.timeout !== undefined) {
