@@ -1,6 +1,9 @@
 #!/bin/sh
 # This script makes a version of the npm cache for local use to avoid installing test artifacts into the global npm cache.
 # This isn't an issue in CI where environments are ephemeral, but is useful for local testing.
+
+set -euo pipefail
+
 ME="$(readlink -f "$0")"
 HERE="$(dirname "$ME")"
 ROOT="$(dirname "$HERE")"
