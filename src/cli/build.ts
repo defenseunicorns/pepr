@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
+import { BuildContext, BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -22,10 +22,49 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
+import { ModuleConfig } from "../lib/core/module";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
+
+export type PeprNestedFields = Pick<
+  ModuleConfig,
+  | "uuid"
+  | "onError"
+  | "webhookTimeout"
+  | "customLabels"
+  | "alwaysIgnore"
+  | "env"
+  | "rbac"
+  | "rbacMode"
+> & {
+  peprVersion: string;
+};
+
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+  pepr: PeprNestedFields & {
+    includedFiles: string[];
+  };
+  description: string;
+  version: string;
+};
+
+type LoadModuleReturn = {
+  cfg: PeprConfig;
+  entryPointPath: string;
+  modulePath: string;
+  name: string;
+  path: string;
+  uuid: string;
+};
+
+type BuildModuleReturn = {
+  ctx: BuildContext<BuildOptions>;
+  path: string;
+  cfg: PeprConfig;
+  uuid: string;
+} | void;
 
 export default function (program: RootCmd): void {
   program
@@ -129,6 +168,9 @@ export default function (program: RootCmd): void {
             ...cfg.pepr,
             appVersion: cfg.version,
             description: cfg.description,
+            alwaysIgnore: {
+              namespaces: cfg.pepr.alwaysIgnore?.namespaces,
+            },
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
           },
@@ -166,7 +208,7 @@ externalLibs.push("pepr");
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
 
-export async function loadModule(entryPoint = peprTS) {
+export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn> {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);
   const modulePath = dirname(entryPointPath);
@@ -207,7 +249,11 @@ export async function loadModule(entryPoint = peprTS) {
   };
 }
 
-export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
+export async function buildModule(
+  reloader?: Reloader,
+  entryPoint = peprTS,
+  embed = true,
+): Promise<BuildModuleReturn> {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
@@ -324,7 +370,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
   }
 }
 
-export async function checkFormat() {
+export async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {
