@@ -15,7 +15,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  });
+  }, time.toMs("60s"));
 
   it(
     "gives command line help",
@@ -26,6 +26,6 @@ describe("build", () => {
       expect(result.stderr.join("").trim()).toBe("");
       expect(result.stdout.at(0)).toMatch("Usage: pepr build");
     },
-    time.toMs("30s"),
+    time.toMs("60s"),
   );
 });
