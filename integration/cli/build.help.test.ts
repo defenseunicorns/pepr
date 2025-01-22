@@ -15,7 +15,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  });
 
   it(
     "gives command line help",

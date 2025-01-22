@@ -17,7 +17,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  });
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
