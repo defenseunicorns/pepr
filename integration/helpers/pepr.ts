@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { Spec, Cmd, Result } from "./cmd";
 import { clone } from "ramda";
+import * as time from "./time";
 
 const HERE = __dirname;
 
@@ -34,6 +35,6 @@ export async function cli(workdir: string, spec: Spec): Promise<Result> {
 
   const cmd = new Cmd(_spec);
   const result = await cmd.runRaw();
-  await new Promise(r => setTimeout(r, 5000));
+  await time.nap(3000); // Let filesystem settle after I/O operations
   return result;
 }
