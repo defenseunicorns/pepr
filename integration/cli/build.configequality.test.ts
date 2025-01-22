@@ -79,8 +79,8 @@ describe("build", () => {
         peprResources = await resource.fromFile(peprManifest);
       }, time.toMs("2m"));
 
+      // eslint-disable-next-line max-statements, complexity
       it("configures both raw manifest and helm chart manifests appropriately", async () => {
-        // eslint-disable-line max-statements, complexity
         const peprStringified = JSON.stringify(peprResources);
         const helmStringified = JSON.stringify(helmResources);
 
