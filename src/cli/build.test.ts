@@ -9,7 +9,6 @@ import {
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
-  handleCustomImage,
 } from "./build.helpers";
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
 import { expect, describe, it, jest, beforeEach } from "@jest/globals";
@@ -131,50 +130,6 @@ describe("validImagePullSecret", () => {
     validImagePullSecret(imagePullSecret);
     expect(consoleErrorSpy).toHaveBeenCalled();
     expect(mockExit).toHaveBeenCalled();
-  });
-});
-describe("handleCustomImage", () => {
-  const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-    return undefined as never;
-  });
-
-  const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should return the customImage if no registry is provided", () => {
-    const customImage = "custom-image";
-    const registry = "";
-
-    const result = handleCustomImage(customImage, registry);
-
-    expect(result).toBe(customImage);
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockExit).not.toHaveBeenCalled();
-  });
-
-  it("should return an empty string if neither customImage nor registry is provided", () => {
-    const customImage = "";
-    const registry = "";
-
-    const result = handleCustomImage(customImage, registry);
-
-    expect(result).toBe("");
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockExit).not.toHaveBeenCalled();
-  });
-
-  it("should call process.exit with 1 and log an error if both customImage and registry are provided", () => {
-    const customImage = "custom-image";
-    const registry = "registry";
-
-    handleCustomImage(customImage, registry);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Custom Image and registry cannot be used together.",
-    );
-    expect(mockExit).toHaveBeenCalledWith(1);
   });
 });
 
