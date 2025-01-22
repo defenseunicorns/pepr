@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@c95a14d0e5bab51a9f56296a4eb0e416910cd350 # v2.10.3
+        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
         with:
           egress-policy: audit
 
@@ -68,7 +68,7 @@ jobs:
       
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@c95a14d0e5bab51a9f56296a4eb0e416910cd350 # v2.10.3
+        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
         with:
           egress-policy: audit
 
@@ -180,13 +180,13 @@ jobs:
                 fi
               done
 
-              # Every 20 minutes, scale up or down the `watch-auditor` deployment
+              # Every 20 minutes, scale up or down the watcher deployment
               if [ $((i % 4)) -eq 0 ]; then
                 echo "Scaling down the watch-auditor deployment to 0 replicas"
-                kubectl scale deploy/watch-auditor -n watch-auditor --replicas=0
+                kubectl scale deploy/pepr-soak-ci-watcher -n pepr-system --replicas=0
               else
                 echo "Scaling up the watch-auditor deployment to 1 replica"
-                kubectl scale deploy/watch-auditor -n watch-auditor --replicas=1
+                kubectl scale deploy/pepr-soak-ci-watcher -n pepr-system --replicas=1
               fi
             fi
             sleep 300s  # Sleep for 5 minutes before the next iteration
