@@ -35,6 +35,6 @@ export async function cli(workdir: string, spec: Spec): Promise<Result> {
 
   const cmd = new Cmd(_spec);
   const result = await cmd.runRaw();
-  await time.nap(3000); // Let filesystem settle after I/O operations
+  await time.nap(time.toMs("5s")); // Let filesystem settle after I/O operations
   return result;
 }
