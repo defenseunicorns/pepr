@@ -93,24 +93,6 @@ export function validImagePullSecret(imagePullSecretName: string): void {
 }
 
 /**
- * Constraint to majke sure customImage and registry are not both used
- * @param customImage
- * @param registry
- * @returns
- */
-export function handleCustomImage(customImage: string, registry: string): string {
-  let defaultImage = "";
-  if (customImage) {
-    if (registry) {
-      console.error(`Custom Image and registry cannot be used together.`);
-      process.exit(1);
-    }
-    defaultImage = customImage;
-  }
-  return defaultImage;
-}
-
-/**
  * Creates and pushes a custom image for WASM or any other included files
  * @param includedFiles
  * @param peprVersion

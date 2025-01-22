@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
+import { BuildContext, BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -17,16 +17,54 @@ import {
   handleEmbedding,
   handleCustomOutputDir,
   handleValidCapabilityNames,
-  handleCustomImage,
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
+import { ModuleConfig } from "../lib/core/module";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
+
+export type PeprNestedFields = Pick<
+  ModuleConfig,
+  | "uuid"
+  | "onError"
+  | "webhookTimeout"
+  | "customLabels"
+  | "alwaysIgnore"
+  | "env"
+  | "rbac"
+  | "rbacMode"
+> & {
+  peprVersion: string;
+};
+
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+  pepr: PeprNestedFields & {
+    includedFiles: string[];
+  };
+  description: string;
+  version: string;
+};
+
+type LoadModuleReturn = {
+  cfg: PeprConfig;
+  entryPointPath: string;
+  modulePath: string;
+  name: string;
+  path: string;
+  uuid: string;
+};
+
+type BuildModuleReturn = {
+  ctx: BuildContext<BuildOptions>;
+  path: string;
+  cfg: PeprConfig;
+  uuid: string;
+} | void;
 
 export default function (program: RootCmd): void {
   program
@@ -37,23 +75,30 @@ export default function (program: RootCmd): void {
       "-n, --no-embed",
       "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
-    .option(
-      "-i, --custom-image <custom-image>",
-      "Custom Image: Use custom image for Admission and Watch Deployments.",
+    .addOption(
+      new Option(
+        "-i, --custom-image <custom-image>",
+        "Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
+      ).conflicts(["version", "registryInfo", "registry"]),
     )
-    .option(
-      "-r, --registry-info [<registry>/<username>]",
-      "Registry Info: Image registry and username. Note: You must be signed into the registry",
+    .addOption(
+      new Option(
+        "-r, --registry-info [<registry>/<username>]",
+        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
+      ).conflicts(["customImage", "version", "registry"]),
     )
+
     .option("-o, --output-dir <output directory>", "Define where to place build output")
     .option(
       "--timeout <timeout>",
       "How long the API server should wait for a webhook to respond before treating the call as a failure",
       parseTimeout,
     )
-    .option(
-      "-v, --version <version>. Example: '0.27.3'",
-      "The version of the Pepr image to use in the deployment manifests.",
+    .addOption(
+      new Option(
+        "-v, --version <version>",
+        "The version of the Pepr image to use in the deployment manifests. Example: '0.27.3'.",
+      ).conflicts(["customImage", "registryInfo"]),
     )
     .option(
       "--withPullSecret <imagePullSecret>",
@@ -65,7 +110,9 @@ export default function (program: RootCmd): void {
       new Option(
         "--registry <GitHub|Iron Bank>",
         "Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image.",
-      ).choices(["GitHub", "Iron Bank"]),
+      )
+        .conflicts(["customImage", "registryInfo"])
+        .choices(["GitHub", "Iron Bank"]),
     )
 
     .addOption(
@@ -92,7 +139,7 @@ export default function (program: RootCmd): void {
         // Files to include in controller image for WASM support
         const { includedFiles } = cfg.pepr;
 
-        let image = handleCustomImage(opts.customImage, opts.registry);
+        let image = opts.customImage || "";
 
         // Check if there is a custom timeout defined
         if (opts.timeout !== undefined) {
@@ -121,6 +168,9 @@ export default function (program: RootCmd): void {
             ...cfg.pepr,
             appVersion: cfg.version,
             description: cfg.description,
+            alwaysIgnore: {
+              namespaces: cfg.pepr.alwaysIgnore?.namespaces,
+            },
             // Can override the rbacMode with the CLI option
             rbacMode: determineRbacMode(opts, cfg),
           },
@@ -158,7 +208,7 @@ externalLibs.push("pepr");
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
 
-export async function loadModule(entryPoint = peprTS) {
+export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn> {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);
   const modulePath = dirname(entryPointPath);
@@ -199,7 +249,11 @@ export async function loadModule(entryPoint = peprTS) {
   };
 }
 
-export async function buildModule(reloader?: Reloader, entryPoint = peprTS, embed = true) {
+export async function buildModule(
+  reloader?: Reloader,
+  entryPoint = peprTS,
+  embed = true,
+): Promise<BuildModuleReturn> {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
@@ -316,7 +370,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
   }
 }
 
-export async function checkFormat() {
+export async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {
