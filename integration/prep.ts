@@ -2,12 +2,10 @@ import { execSync } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 
-// Resolve the paths relative to the script
 const scriptPath = __filename;
 const here = path.dirname(scriptPath);
 const root = path.dirname(here);
 
-// Set the NPM cache directory
 const npmCacheDir = path.join(here, "testroot", ".npm");
 process.env["NPM_CONFIG_CACHE"] = npmCacheDir;
 
@@ -16,7 +14,6 @@ fs.mkdirSync(npmCacheDir, { recursive: true });
 console.log(`Created local version of npm cache for testing: ${npmCacheDir}`);
 
 try {
-  // Run the build command
   console.log("Running npm build...");
   execSync("npm run build", { stdio: "inherit" });
 
