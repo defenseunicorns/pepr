@@ -42,12 +42,8 @@ describe("build", () => {
 
     describe("using every config option in package.json > pepr", () => {
       let moduleConfig: Required<ModuleConfig>;
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let peprResources: any;
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let helmResources: any;
+      let peprResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      let helmResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
       beforeAll(async () => {
         // set configuration in package.json
@@ -83,8 +79,8 @@ describe("build", () => {
         peprResources = await resource.fromFile(peprManifest);
       }, time.toMs("2m"));
 
-      it("configures both raw manifest and helm chart manifests appropriately", // eslint-disable-next-line max-statements, complexity
-      async () => {
+      it("configures both raw manifest and helm chart manifests appropriately", async () => {
+        // eslint-disable-line max-statements, complexity
         const peprStringified = JSON.stringify(peprResources);
         const helmStringified = JSON.stringify(helmResources);
 
