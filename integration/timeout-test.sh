@@ -8,8 +8,7 @@ for i in $(seq 1 30); do
 
   # Run the jest command with the specified options and output file
   echo "Running iteration $i..."
-  # ./prep.sh && jest --maxWorkers=4 --json --outputFile=$OUTPUT_FILE cli/
-  ./prep.ts && jest --maxWorkers=4 --json --outputFile=$OUTPUT_FILE cli/
+  npx ts-node prep.ts && jest --maxWorkers=4 --json --outputFile=$OUTPUT_FILE cli/
 
   # Check if the command was successful
   if [ $? -ne 0 ]; then
