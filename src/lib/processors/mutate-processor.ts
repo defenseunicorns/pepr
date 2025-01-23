@@ -15,6 +15,7 @@ import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
 import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { Operation } from "fast-json-patch";
 
 export interface Bindable {
   req: AdmissionRequest;
@@ -209,6 +210,14 @@ export async function mutateProcessor(
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
 
+  updateResponsePatchAndWarnings(patches, response);
+
+  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
+  timer.stop();
+  return response;
+}
+
+export function updateResponsePatchAndWarnings(patches: Operation[], response: MutateResponse): void {
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
     response.patchType = "JSONPatch";
@@ -221,8 +230,4 @@ export async function mutateProcessor(
   if (response.warnings && response.warnings.length < 1) {
     delete response.warnings;
   }
-
-  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
-  timer.stop();
-  return response;
 }
