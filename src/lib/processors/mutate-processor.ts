@@ -133,7 +133,6 @@ export async function processRequest(
   return { wrapped, response };
 }
 
-const timer = new MeasureWebhookTimeout("mutate");
 /* eslint max-statements: ["warn", 25] */
 export async function mutateProcessor(
   config: ModuleConfig,
@@ -141,7 +140,8 @@ export async function mutateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
-  timer.start(config.webhookTimeout);
+  const webhookTimer = new MeasureWebhookTimeout("mutate");
+  webhookTimer.start(config.webhookTimeout);
   let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
@@ -213,7 +213,7 @@ export async function mutateProcessor(
   updateResponsePatchAndWarnings(patches, response);
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
-  timer.stop();
+  webhookTimer.stop();
   return response;
 }
 

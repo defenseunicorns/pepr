@@ -52,20 +52,20 @@ export async function processRequest(
     return valResp;
   }
 }
-const timer = new MeasureWebhookTimeout("validate");
+
 export async function validateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse[]> {
-  timer.start(config.webhookTimeout);
+  const webhookTimer = new MeasureWebhookTimeout("validate");
+  webhookTimer.start(config.webhookTimeout);
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
-  if (isSecret) {
+  if (req.kind.version === "v1" && req.kind.kind === "Secret") {
     convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
@@ -96,6 +96,6 @@ export async function validateProcessor(
       response.push(resp);
     }
   }
-  timer.stop();
+  webhookTimer.stop();
   return response;
 }

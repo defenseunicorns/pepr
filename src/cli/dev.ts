@@ -11,7 +11,7 @@ import { buildModule, loadModule } from "./build";
 import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
-const imagePullSecrets: string[] = [];
+
 export default function (program: RootCmd): void {
   program
     .command("dev")
@@ -43,7 +43,7 @@ export default function (program: RootCmd): void {
           description: cfg.description,
         },
         path,
-        imagePullSecrets,
+        [],
         opts.host,
       );
 
