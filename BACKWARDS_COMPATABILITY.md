@@ -36,7 +36,7 @@ Backward compatibility in Pepr applies to the following components:
 Pepr adheres to the following guarantees to ensure a seamless user experience:
 
 ### 1. Semantic Versioning (SemVer)
-Pepr follows SemVer conventions:
+Pepr follows [SemVer](semver.org) conventions:
 - **Major Versions (X.0.0)**:
   - Not currently in use until we get to 1.0.
 - **Minor Versions (X.Y.0)**:
