@@ -1,6 +1,5 @@
-import { performance } from "perf_hooks";
 import { metricsCollector } from "./metrics";
-
+import { getNow } from "./timeUtils";
 export class MeasureWebhookTimeout {
   #startTime: number | null = null;
   #webhookType: string;
@@ -12,7 +11,7 @@ export class MeasureWebhookTimeout {
   }
 
   start(timeout: number = 10): void {
-    this.#startTime = performance.now();
+    this.#startTime = getNow();
     this.timeout = timeout;
   }
 
@@ -21,7 +20,7 @@ export class MeasureWebhookTimeout {
       throw new Error("Timer was not started before calling stop.");
     }
 
-    const elapsedTime = performance.now() - this.#startTime;
+    const elapsedTime = getNow() - this.#startTime;
     this.#startTime = null;
 
     if (elapsedTime > this.timeout) {
