@@ -69,6 +69,14 @@ describe("build", () => {
               value: "value",
             },
           },
+          rbacMode: "scoped",
+          rbac: [
+            {
+              apiGroups: ["test"],
+              resources: ["tests"],
+              verbs: ["get", "list"],
+            },
+          ],
         };
         await fs.writeFile(packageJson, JSON.stringify(config, null, 2));
 
@@ -401,16 +409,16 @@ describe("build", () => {
         // end incorrect behavior...
       });
 
-      // /** Global configuration for the Pepr runtime. */
-      // export type ModuleConfig = {
-
-      //   /** Custom RBAC rules */
-      //   rbac?: PolicyRule[];
-      //   /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
-      //   rbacMode?: string;
-      // };
-      // TODO: can we (somehow) introspect the type to know which / how many props to match?
-      //  - need to be able to have the test suite flag when "a change that needs testing" has happened
+      it("rbacMode: scoped + rbac: [...]", async () => {
+        for (const clusterRole of [
+          resource.select(peprResources, kind.ClusterRole, peprUuid),
+          resource.select(helmResources, kind.ClusterRole, peprUuid),
+        ]) {
+          moduleConfig.rbac.forEach(policyRule => {
+            expect(clusterRole.rules).toContainEqual(policyRule);
+          });
+        }
+      });
     });
   });
 });
