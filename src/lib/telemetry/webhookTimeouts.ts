@@ -1,12 +1,13 @@
 import { metricsCollector } from "./metrics";
 import { getNow } from "./timeUtils";
 import Log from "./logger";
+import { WebhookType } from "../enums";
 export class MeasureWebhookTimeout {
   #startTime: number | null = null;
   #webhookType: string;
   timeout: number = 0;
 
-  constructor(webhookType: string) {
+  constructor(webhookType: WebhookType) {
     this.#webhookType = webhookType;
     metricsCollector.addCounter(`${webhookType}_timeouts`, `Number of ${webhookType} webhook timeouts`);
   }

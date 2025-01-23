@@ -12,6 +12,7 @@ import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../core/module";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
+import { WebhookType } from "../enums";
 
 export async function processRequest(
   binding: Binding,
@@ -59,7 +60,7 @@ export async function validateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse[]> {
-  const webhookTimer = new MeasureWebhookTimeout("validate");
+  const webhookTimer = new MeasureWebhookTimeout(WebhookType.VALIDATE);
   webhookTimer.start(config.webhookTimeout);
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse[] = [];

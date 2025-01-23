@@ -16,7 +16,7 @@ import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils
 import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { Operation } from "fast-json-patch";
-
+import { WebhookType } from "../enums";
 export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
@@ -140,7 +140,7 @@ export async function mutateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
-  const webhookTimer = new MeasureWebhookTimeout("mutate");
+  const webhookTimer = new MeasureWebhookTimeout(WebhookType.MUTATE);
   webhookTimer.start(config.webhookTimeout);
   let response: MutateResponse = {
     uid: req.uid,
