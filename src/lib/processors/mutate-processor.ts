@@ -4,7 +4,7 @@
 import jsonPatch from "fast-json-patch";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { clone } from "ramda";
-
+import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
@@ -132,6 +132,7 @@ export async function processRequest(
   return { wrapped, response };
 }
 
+const timer = new MeasureWebhookTimeout("mutate");
 /* eslint max-statements: ["warn", 25] */
 export async function mutateProcessor(
   config: ModuleConfig,
@@ -139,6 +140,7 @@ export async function mutateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
+  timer.start(config.webhookTimeout);
   let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
@@ -221,6 +223,6 @@ export async function mutateProcessor(
   }
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
-
+  timer.stop();
   return response;
 }

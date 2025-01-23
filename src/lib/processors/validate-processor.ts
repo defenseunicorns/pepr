@@ -11,6 +11,7 @@ import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../core/module";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 
 export async function processRequest(
   binding: Binding,
@@ -51,13 +52,14 @@ export async function processRequest(
     return valResp;
   }
 }
-
+const timer = new MeasureWebhookTimeout("validate");
 export async function validateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse[]> {
+  timer.start(config.webhookTimeout);
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse[] = [];
 
@@ -94,6 +96,6 @@ export async function validateProcessor(
       response.push(resp);
     }
   }
-
+  timer.stop();
   return response;
 }

@@ -12,6 +12,8 @@ import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 import { sanitizeName } from "./init/utils";
 import { validateCapabilityNames } from "../lib/helpers";
 
+const imagePullSecrets: string[] = [];
+
 export interface ImagePullSecretDetails {
   pullSecret?: string;
   dockerServer?: string;
@@ -128,7 +130,7 @@ export default function (program: RootCmd): void {
       const webhook = new Assets(
         { ...builtModule.cfg.pepr, description: builtModule.cfg.description },
         builtModule.path,
-        [],
+        imagePullSecrets,
       );
       webhook.image = opts.image ?? webhook.image;
 
