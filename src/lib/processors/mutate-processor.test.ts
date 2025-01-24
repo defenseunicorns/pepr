@@ -8,10 +8,12 @@ import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
 import { AdmissionRequest, Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
-import { convertFromBase64Map, convertToBase64Map } from "../utils";
+import { convertFromBase64Map, convertToBase64Map, base64Encode } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { MutateResponse } from "../k8s";
 import { OnError } from "../../cli/init/enums";
+import { updateResponsePatchAndWarnings } from "./mutate-processor";
+import { Operation as JSONPatchOperation } from "fast-json-patch";
 
 jest.mock("../utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
@@ -290,5 +292,22 @@ describe("processRequest", () => {
     const [key, val] = auditAnnotes[0];
     expect(Date.now() - parseInt(key)).toBeLessThan(5);
     expect(val).toBe("Action failed: An error occurred with the mutate action.");
+  });
+});
+
+describe("updateResponsePatchAndWarnings", () => {
+  const mutateResponse: MutateResponse = { uid: "uid", allowed: true, patch: "" };
+  const patches: JSONPatchOperation[] = [{ op: "add", path: "/data/hello-pepr-v2-a", value: "value" }];
+  it("should add a patch to the response if patch length is greater than 0", () => {
+    updateResponsePatchAndWarnings(patches, mutateResponse);
+    expect(mutateResponse.patch).toBe(base64Encode(JSON.stringify(patches)));
+    expect(mutateResponse.patchType).toBe("JSONPatch");
+  });
+
+  it("should remove warnings from the response if warnings are empty", () => {
+    const localMutateResponse = { ...mutateResponse, warnings: [] };
+    expect(localMutateResponse.warnings.length).toBe(0);
+    updateResponsePatchAndWarnings(patches, localMutateResponse);
+    expect(localMutateResponse.warnings).not.toBeDefined();
   });
 });
