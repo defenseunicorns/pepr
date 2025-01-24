@@ -5,7 +5,7 @@ for file in timeout-logs/*.json; do
 done  > extracted_numFailedTests.txt
 
 echo "Freq|# of Failing Tests"
-sort extracted_numFailedTests.txt | uniq -c
+sort extracted_numFailedTests.txt | awk '{print $1}' | uniq -c
 
 for file in $(grep -rl '"success":\s*false' timeout-logs); do
     failureMessages=$(jq '.testResults[] | select(.status == "failed") | .assertionResults[] | select(.status == "failed") | .failureMessages' $file)
