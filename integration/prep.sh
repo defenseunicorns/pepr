@@ -9,6 +9,7 @@ HERE="$(dirname "$ME")"
 ROOT="$(dirname "$HERE")"
 
 export NPM_CONFIG_CACHE="${HERE}/testroot/.npm"
+# ubuntu supports "--parents" long opt but macOS does not, so using "-p" short opt
 mkdir -p "$NPM_CONFIG_CACHE"
 
 npm run build

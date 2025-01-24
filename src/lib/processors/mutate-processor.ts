@@ -4,7 +4,7 @@
 import jsonPatch from "fast-json-patch";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { clone } from "ramda";
-
+import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
@@ -15,7 +15,8 @@ import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
 import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
-
+import { Operation } from "fast-json-patch";
+import { WebhookType } from "../enums";
 export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
@@ -139,6 +140,8 @@ export async function mutateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<MutateResponse> {
+  const webhookTimer = new MeasureWebhookTimeout(WebhookType.MUTATE);
+  webhookTimer.start(config.webhookTimeout);
   let response: MutateResponse = {
     uid: req.uid,
     warnings: [],
@@ -207,6 +210,14 @@ export async function mutateProcessor(
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
 
+  updateResponsePatchAndWarnings(patches, response);
+
+  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
+  webhookTimer.stop();
+  return response;
+}
+
+export function updateResponsePatchAndWarnings(patches: Operation[], response: MutateResponse): void {
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
     response.patchType = "JSONPatch";
@@ -219,8 +230,4 @@ export async function mutateProcessor(
   if (response.warnings && response.warnings.length < 1) {
     delete response.warnings;
   }
-
-  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
-
-  return response;
 }
