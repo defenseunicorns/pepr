@@ -49,7 +49,7 @@ RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src
 # crane digest cgr.dev/chainguard/node-lts:latest
 # cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
 # gcr.io/distroless/nodejs22-debian12@sha256:d00edbf864c5b989f1b69951a13c5c902bf369cca572de59b5ec972552848e33
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:06298f87531dfff6dd2bc6b573095162d25f7e5583abbc865bfcdf45a4fbee16
+FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:5e248b97ff487071c55d9a9a99e838a103c085c591aa42ba09a7807685ce8f6f
 
 WORKDIR /app
 

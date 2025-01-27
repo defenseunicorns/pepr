@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { Spec, Cmd, Result } from "./cmd";
 import { clone } from "ramda";
+import * as time from "./time";
 
 const HERE = __dirname;
 
@@ -33,5 +34,7 @@ export async function cli(workdir: string, spec: Spec): Promise<Result> {
   _spec.env = { ..._spec.env, NPM_CONFIG_CACHE: `${root}/integration/testroot/.npm` };
 
   const cmd = new Cmd(_spec);
-  return await cmd.runRaw();
+  const result = await cmd.runRaw();
+  await time.nap(time.toMs("5s")); // Let filesystem settle after I/O operations
+  return result;
 }
