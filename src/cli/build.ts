@@ -136,8 +136,6 @@ export default function (program: RootCmd): void {
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
       if (buildModuleResult?.cfg && buildModuleResult.path && buildModuleResult.uuid) {
         const { cfg, path, uuid } = buildModuleResult;
-        // Files to include in controller image for WASM support
-        const { includedFiles } = cfg.pepr;
 
         let image = opts.customImage || "";
 
@@ -147,13 +145,16 @@ export default function (program: RootCmd): void {
         }
 
         if (opts.registryInfo !== undefined) {
-          console.info(`Including ${includedFiles.length} files in controller image.`);
-
           // for journey test to make sure the image is built
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
           // only actually build/push if there are files to include
-          await handleCustomImageBuild(includedFiles, cfg.pepr.peprVersion, cfg.description, image);
+          await handleCustomImageBuild(
+            cfg.pepr.includedFiles,
+            cfg.pepr.peprVersion,
+            cfg.description,
+            image,
+          );
         }
 
         // If building without embedding, exit after building
