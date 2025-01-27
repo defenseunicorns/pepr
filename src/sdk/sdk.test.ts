@@ -138,10 +138,12 @@ describe("writeEvent", () => {
     await writeEvent(
       cr as GenericKind,
       event,
-      "Warning",
-      "ReconciliationFailed",
-      "uds.dev/operator",
-      process.env.HOSTNAME as string,
+      {
+        eventType: "Warning",
+        eventReason: "ReconciliationFailed",
+        reportingComponent: "uds.dev/operator",
+        reportingInstance: process.env.HOSTNAME as string,
+      }
     );
     expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
     expect(Create).toHaveBeenCalledWith({
