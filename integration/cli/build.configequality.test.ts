@@ -124,7 +124,6 @@ describe("build", () => {
         expect(helmStringified.includes(moduleConfig.appVersion)).toBe(false);
       });
 
-      // eslint-disable-next-line max-statements, complexity
       it("uuid", async () => {
         for (const clusterRole of [
           resource.select(peprResources, kind.ClusterRole, peprUuid),
