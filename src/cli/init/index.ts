@@ -9,7 +9,7 @@ import { RootCmd } from "../root";
 import {
   codeSettings,
   eslint,
-  genPeprTS,
+  peprTSTemplate,
   genPkgJSON,
   gitignore,
   helloPepr,
@@ -51,16 +51,15 @@ export default function (program: RootCmd): void {
     .action(async opts => {
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
-      const peprTS = genPeprTS();
 
-      const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
+      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.confirm);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");
 
         try {
           await setupProjectStructure(dirName);
-          await createProjectFiles(dirName, packageJSON, peprTS);
+          await createProjectFiles(dirName, packageJSON);
 
           if (!opts.skipPostInit) {
             doPostInitActions(dirName);
@@ -84,10 +83,7 @@ async function setupProjectStructure(dirName: string): Promise<void> {
   await createDir(resolve(dirName, "capabilities"));
 }
 
-async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON, peprTS: {
-  path: string;
-  data: string;
-}): Promise<void> {
+async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON): Promise<void> {
   const files = [
     { path: gitignore.path, data: gitignore.data },
     { path: eslint.path, data: eslint.data },
@@ -95,7 +91,7 @@ async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON,
     { path: packageJSON.path, data: packageJSON.data },
     { path: readme.path, data: readme.data },
     { path: tsConfig.path, data: tsConfig.data },
-    { path: peprTS.path, data: peprTS.data },
+    { path: peprTSTemplate.path, data: peprTSTemplate.data },
     { path: ".vscode" + snippet.path, data: snippet.data },
     { path: ".vscode" + codeSettings.path, data: codeSettings.data },
     { path: "capabilities" + samplesYaml.path, data: samplesYaml.data },
