@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
+import { BuildContext, BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -11,6 +11,7 @@ import { RootCmd } from "./root";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
 import { peprFormat } from "./format";
+import { ModuleConfig } from "../lib/core/module";
 import {
   watchForChanges,
   determineRbacMode,
@@ -20,13 +21,48 @@ import {
   handleCustomImageBuild,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
-  BuildModuleReturn,
-  LoadModuleReturn,
 } from "./build.helpers";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
+export type PeprNestedFields = Pick<
+  ModuleConfig,
+  | "uuid"
+  | "onError"
+  | "webhookTimeout"
+  | "customLabels"
+  | "alwaysIgnore"
+  | "env"
+  | "rbac"
+  | "rbacMode"
+> & {
+  peprVersion: string;
+};
+
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+  pepr: PeprNestedFields & {
+    includedFiles: string[];
+  };
+  description: string;
+  version: string;
+};
+
+type LoadModuleReturn = {
+  cfg: PeprConfig;
+  entryPointPath: string;
+  modulePath: string;
+  name: string;
+  path: string;
+  uuid: string;
+};
+
+type BuildModuleReturn = {
+  ctx: BuildContext<BuildOptions>;
+  path: string;
+  cfg: PeprConfig;
+  uuid: string;
+};
 
 export default function (program: RootCmd): void {
   program
