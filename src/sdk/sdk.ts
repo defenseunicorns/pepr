@@ -46,11 +46,15 @@ export function containers(
 export async function writeEvent(
   cr: GenericKind,
   event: Partial<kind.CoreEvent>,
-  eventType: string,
-  eventReason: string,
-  reportingComponent: string,
-  reportingInstance: string,
+  options: {
+    eventType: string;
+    eventReason: string;
+    reportingComponent: string;
+    reportingInstance: string;
+  }
 ): Promise<void> {
+  const { eventType, eventReason, reportingComponent, reportingInstance } = options;
+
   await K8s(kind.CoreEvent).Create({
     type: eventType,
     reason: eventReason,
