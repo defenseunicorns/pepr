@@ -11,6 +11,8 @@ import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../core/module";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
+import { WebhookType } from "../enums";
 
 export async function processRequest(
   binding: Binding,
@@ -58,12 +60,13 @@ export async function validateProcessor(
   req: AdmissionRequest,
   reqMetadata: Record<string, string>,
 ): Promise<ValidateResponse[]> {
+  const webhookTimer = new MeasureWebhookTimeout(WebhookType.VALIDATE);
+  webhookTimer.start(config.webhookTimeout);
   const wrapped = new PeprValidateRequest(req);
   const response: ValidateResponse[] = [];
 
   // If the resource is a secret, decode the data
-  const isSecret = req.kind.version === "v1" && req.kind.kind === "Secret";
-  if (isSecret) {
+  if (req.kind.version === "v1" && req.kind.kind === "Secret") {
     convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
@@ -94,6 +97,6 @@ export async function validateProcessor(
       response.push(resp);
     }
   }
-
+  webhookTimer.stop();
   return response;
 }
