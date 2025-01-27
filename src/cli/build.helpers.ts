@@ -106,7 +106,6 @@ export async function handleCustomImageBuild(
   image: string,
 ): Promise<void> {
   if (includedFiles.length > 0) {
-    console.info(`Including ${includedFiles.length} files in controller image.`);
     await createDockerfile(peprVersion, description, includedFiles);
     execSync(`docker build --tag ${image} -f Dockerfile.controller .`, {
       stdio: "inherit",

@@ -146,6 +146,7 @@ export default function (program: RootCmd): void {
         }
 
         if (opts.registryInfo !== undefined) {
+          console.info(`Including ${includedFiles.length} files in controller image.`);
           // for journey test to make sure the image is built
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
