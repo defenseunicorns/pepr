@@ -2,7 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildContext, BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
+import {
+  // BuildContext,
+  BuildOptions,
+  BuildResult,
+  analyzeMetafile,
+} from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -14,57 +19,20 @@ import { peprFormat } from "./format";
 import {
   watchForChanges,
   determineRbacMode,
-  handleEmbedding,
+  assignImage,
   handleCustomOutputDir,
   handleValidCapabilityNames,
   handleCustomImageBuild,
-  checkIronBankImage,
+  // shouldExitEarly,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
+  BuildModuleReturn,
+  LoadModuleReturn,
 } from "./build.helpers";
-import { ModuleConfig } from "../lib/core/module";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
-
-export type PeprNestedFields = Pick<
-  ModuleConfig,
-  | "uuid"
-  | "onError"
-  | "webhookTimeout"
-  | "customLabels"
-  | "alwaysIgnore"
-  | "env"
-  | "rbac"
-  | "rbacMode"
-> & {
-  peprVersion: string;
-};
-
-export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
-  pepr: PeprNestedFields & {
-    includedFiles: string[];
-  };
-  description: string;
-  version: string;
-};
-
-type LoadModuleReturn = {
-  cfg: PeprConfig;
-  entryPointPath: string;
-  modulePath: string;
-  name: string;
-  path: string;
-  uuid: string;
-};
-
-type BuildModuleReturn = {
-  ctx: BuildContext<BuildOptions>;
-  path: string;
-  cfg: PeprConfig;
-  uuid: string;
-} | void;
 
 export default function (program: RootCmd): void {
   program
@@ -134,66 +102,74 @@ export default function (program: RootCmd): void {
 
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
-      if (buildModuleResult?.cfg && buildModuleResult.path && buildModuleResult.uuid) {
-        const { cfg, path, uuid } = buildModuleResult;
-        // Files to include in controller image for WASM support
-        const { includedFiles } = cfg.pepr;
-        let image = opts.customImage || "";
 
-        // Check if there is a custom timeout defined
-        if (opts.timeout !== undefined) {
-          cfg.pepr.webhookTimeout = opts.timeout;
-        }
+      // if (shouldExitEarly(buildModuleResult)) {
+      //   return;
+      // }
+      const { cfg, path, uuid } = buildModuleResult;
+      const image = assignImage({
+        customImage: opts.customImage,
+        registryInfo: opts.registryInfo,
+        peprVersion: cfg.pepr.peprVersion,
+        registry: opts.registry,
+      });
 
-        if (opts.registryInfo !== undefined) {
-          console.info(`Including ${includedFiles.length} files in controller image.`);
-          // for journey test to make sure the image is built
-          image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
-
-          // only actually build/push if there are files to include
-          await handleCustomImageBuild(includedFiles, cfg.pepr.peprVersion, cfg.description, image);
-        }
-
-        // If building without embedding, exit after building
-        handleEmbedding(opts.embed, path);
-
-        // set the image version if provided
-        opts.version ? (cfg.pepr.peprVersion = opts.version) : null;
-
-        // Generate a secret for the module
-        const assets = new Assets(
-          {
-            ...cfg.pepr,
-            appVersion: cfg.version,
-            description: cfg.description,
-            alwaysIgnore: {
-              namespaces: cfg.pepr.alwaysIgnore?.namespaces,
-            },
-            // Can override the rbacMode with the CLI option
-            rbacMode: determineRbacMode(opts, cfg),
-          },
-          path,
-          opts.withPullSecret === "" ? [] : [opts.withPullSecret],
-        );
-
-        // If registry is set to Iron Bank, use Iron Bank image
-        image = checkIronBankImage(opts.registry, image, cfg.pepr.peprVersion);
-
-        // if image is a custom image, use that instead of the default
-        image !== "" ? (assets.image = image) : null;
-
-        // Ensure imagePullSecret is valid
-        validImagePullSecret(opts.withPullSecret);
-
-        handleValidCapabilityNames(assets.capabilities);
-        await generateYamlAndWriteToDisk({
-          uuid,
-          outputDir,
-          imagePullSecret: opts.withPullSecret,
-          zarf: opts.zarf,
-          assets,
-        });
+      // Check if there is a custom timeout defined
+      if (opts.timeout !== undefined) {
+        cfg.pepr.webhookTimeout = opts.timeout;
       }
+
+      if (opts.registryInfo !== undefined) {
+        console.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
+        // for journey test to make sure the image is built
+
+        // only actually build/push if there are files to include
+        await handleCustomImageBuild(
+          cfg.pepr.includedFiles,
+          cfg.pepr.peprVersion,
+          cfg.description,
+          image,
+        );
+      }
+
+      // If building without embedding, exit after building
+      if (!opts.embed) {
+        console.info(`✅ Module built successfully at ${path}`);
+        return;
+      }
+      // set the image version if provided
+      opts.version ? (cfg.pepr.peprVersion = opts.version) : null;
+
+      // Generate a secret for the module
+      const assets = new Assets(
+        {
+          ...cfg.pepr,
+          appVersion: cfg.version,
+          description: cfg.description,
+          alwaysIgnore: {
+            namespaces: cfg.pepr.alwaysIgnore?.namespaces,
+          },
+          // Can override the rbacMode with the CLI option
+          rbacMode: determineRbacMode(opts, cfg),
+        },
+        path,
+        opts.withPullSecret === "" ? [] : [opts.withPullSecret],
+      );
+
+      // if image is a custom image, use that instead of the default
+      image !== "" ? (assets.image = image) : null;
+
+      // Ensure imagePullSecret is valid
+      validImagePullSecret(opts.withPullSecret);
+
+      handleValidCapabilityNames(assets.capabilities);
+      await generateYamlAndWriteToDisk({
+        uuid,
+        outputDir,
+        imagePullSecret: opts.withPullSecret,
+        zarf: opts.zarf,
+        assets,
+      });
     });
 }
 

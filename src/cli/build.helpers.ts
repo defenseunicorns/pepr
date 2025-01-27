@@ -11,6 +11,73 @@ import { promises as fs } from "fs";
 import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
+import { ModuleConfig } from "../lib/core/module";
+
+export type PeprNestedFields = Pick<
+  ModuleConfig,
+  | "uuid"
+  | "onError"
+  | "webhookTimeout"
+  | "customLabels"
+  | "alwaysIgnore"
+  | "env"
+  | "rbac"
+  | "rbacMode"
+> & {
+  peprVersion: string;
+};
+
+export type LoadModuleReturn = {
+  cfg: PeprConfig;
+  entryPointPath: string;
+  modulePath: string;
+  name: string;
+  path: string;
+  uuid: string;
+};
+
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+  pepr: PeprNestedFields & {
+    includedFiles: string[];
+  };
+  description: string;
+  version: string;
+};
+
+export type BuildModuleReturn = {
+  ctx: BuildContext<BuildOptions>;
+  path: string;
+  cfg: PeprConfig;
+  uuid: string;
+};
+interface ImageOptions {
+  customImage?: string;
+  registryInfo?: string;
+  peprVersion?: string;
+  registry?: string;
+}
+export function assignImage(imageOptions: ImageOptions): string {
+  const { customImage, registryInfo, peprVersion, registry } = imageOptions;
+  if (customImage) {
+    return customImage;
+  }
+
+  if (registryInfo) {
+    return `${registryInfo}/custom-pepr-controller:${peprVersion}`;
+  }
+
+  if (registry) {
+    return checkIronBankImage(registry, "", peprVersion!);
+  }
+
+  return "";
+}
+export function shouldExitEarly(buildModuleResult: BuildModuleReturn): boolean {
+  if (buildModuleResult?.cfg && buildModuleResult.path && buildModuleResult.uuid) {
+    return false;
+  }
+  return true;
+}
 
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
@@ -111,19 +178,6 @@ export async function handleCustomImageBuild(
       stdio: "inherit",
     });
     execSync(`docker push ${image}`, { stdio: "inherit" });
-  }
-}
-
-/**
- * Disables embedding of deployment files into output module
- * @param embed
- * @param path
- * @returns
- */
-export function handleEmbedding(embed: boolean, path: string): void {
-  if (!embed) {
-    console.info(`✅ Module built successfully at ${path}`);
-    process.exit(0);
   }
 }
 
