@@ -227,7 +227,7 @@ export async function buildModule(
   reloader?: Reloader,
   entryPoint = peprTS,
   embed = true,
-): Promise<BuildModuleReturn> {
+): Promise<BuildModuleReturn | void> {
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
 
