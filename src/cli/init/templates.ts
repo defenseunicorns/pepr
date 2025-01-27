@@ -101,12 +101,10 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
   };
 }
 
-export function genPeprTS(): { path: string; data: string } {
-  return {
-    path: "pepr.ts",
-    data: peprTS,
-  };
-}
+export const peprTSTemplate = {
+  path: "pepr.ts",
+  data: peprTS,
+};
 
 export const readme = {
   path: "README.md",
