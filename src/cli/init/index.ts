@@ -13,6 +13,7 @@ import {
   genPkgJSON,
   gitignore,
   helloPepr,
+  peprPackageJSON,
   prettier,
   readme,
   samplesYaml,
@@ -58,21 +59,8 @@ export default function (program: RootCmd): void {
         console.log("Creating new Pepr module...");
 
         try {
-          await createDir(dirName);
-          await createDir(resolve(dirName, ".vscode"));
-          await createDir(resolve(dirName, "capabilities"));
-
-          await write(resolve(dirName, gitignore.path), gitignore.data);
-          await write(resolve(dirName, eslint.path), eslint.data);
-          await write(resolve(dirName, prettier.path), prettier.data);
-          await write(resolve(dirName, packageJSON.path), packageJSON.data);
-          await write(resolve(dirName, readme.path), readme.data);
-          await write(resolve(dirName, tsConfig.path), tsConfig.data);
-          await write(resolve(dirName, peprTS.path), peprTS.data);
-          await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
-          await write(resolve(dirName, ".vscode", codeSettings.path), codeSettings.data);
-          await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
-          await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
+          await setupProjectStructure(dirName);
+          await createProjectFiles(dirName, packageJSON, peprTS);
 
           if (!opts.skipPostInit) {
             doPostInitActions(dirName);
@@ -88,6 +76,35 @@ export default function (program: RootCmd): void {
         }
       }
     });
+}
+
+async function setupProjectStructure(dirName: string): Promise<void> {
+  await createDir(dirName);
+  await createDir(resolve(dirName, ".vscode"));
+  await createDir(resolve(dirName, "capabilities"));
+}
+
+async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON, peprTS: {
+  path: string;
+  data: string;
+}): Promise<void> {
+  const files = [
+    { path: gitignore.path, data: gitignore.data },
+    { path: eslint.path, data: eslint.data },
+    { path: prettier.path, data: prettier.data },
+    { path: packageJSON.path, data: packageJSON.data },
+    { path: readme.path, data: readme.data },
+    { path: tsConfig.path, data: tsConfig.data },
+    { path: peprTS.path, data: peprTS.data },
+    { path: ".vscode" + snippet.path, data: snippet.data },
+    { path: ".vscode" + codeSettings.path, data: codeSettings.data },
+    { path: "capabilities" + samplesYaml.path, data: samplesYaml.data },
+    { path: "capabilities" + helloPepr.path, data: helloPepr.data },
+  ];
+
+  for (const file of files) {
+    await write(resolve(dirName, file.path), file.data);
+  }
 }
 
 const doPostInitActions = (dirName: string): void => {

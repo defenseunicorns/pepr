@@ -19,7 +19,7 @@ import { OnError, RbacMode } from "./enums";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
-type peprPackageJSON = {
+export type peprPackageJSON = {
   data: {
     name: string;
     version: string;
