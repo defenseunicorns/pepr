@@ -9,11 +9,8 @@ import {
   checkIronBankImage,
   validImagePullSecret,
   assignImage,
-  // shouldExitEarly,
-  // BuildModuleReturn,
-  // PeprConfig
 } from "./build.helpers";
-// import { BuildOptions, BuildContext, BuildResult, ServeResult } from "esbuild";
+
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
 import { expect, describe, it, jest, beforeEach } from "@jest/globals";
 import { createDockerfile } from "../lib/included-files";
@@ -32,65 +29,6 @@ jest.mock("../lib/included-files", () => ({
 jest.mock("../lib/filesystemService", () => ({
   createDirectoryIfNotExists: jest.fn(),
 }));
-
-// describe("shouldExitEarly", () => {
-
-//   it("should return true if buildModuleResult is missing required fields", () => {
-//     const buildModuleResult: BuildModuleReturn = {} as BuildModuleReturn;
-//     const result = shouldExitEarly(buildModuleResult);
-//     expect(result).toBe(true);
-//   });
-
-//   it("should return false if buildModuleResult has all required fields", () => {
-//     const config: PeprConfig = {
-//       pepr: {
-//         uuid: "some-uuid",
-//         onError: "ignore",
-//         webhookTimeout: 30,
-//         customLabels: {},
-//         alwaysIgnore: {
-//           namespaces: [],
-//         },
-//         env: {},
-//         rbac: [],
-//         rbacMode: "minimal",
-//         peprVersion: "1.0.0",
-//         includedFiles: [],
-//       },
-//       description: "A test module",
-//       version: "1.0.0",
-//     };
-
-//     const mockContext: BuildContext<BuildOptions> = {
-//       rebuild: jest.fn<() => Promise<BuildResult<BuildOptions>>>().mockImplementation(() =>
-//         Promise.resolve({} as BuildResult<BuildOptions>)
-//       ),
-//       dispose: jest.fn<() => Promise<void>>().mockImplementation(() => Promise.resolve()),
-//       watch: jest.fn<() => Promise<void>>().mockImplementation(() => Promise.resolve()),
-//       cancel: jest.fn<() => Promise<void>>().mockImplementation(() => Promise.resolve()),
-//       serve: jest.fn<() => Promise<ServeResult>>().mockImplementation(() =>
-//         Promise.resolve({ host: "localhost", port: 8000 })
-//       ),
-//     };
-//     const buildModuleResult: BuildModuleReturn = {
-//       ctx: mockContext,
-//       path: "some-path",
-//       cfg: config,
-//       uuid: "some-uuid",
-//     };
-//     const result = shouldExitEarly(buildModuleResult);
-//     expect(result).toBe(false);
-//   });
-
-//   it("should return true if any field in buildModuleResult is falsy", () => {
-//     const buildModuleResult: BuildModuleReturn = {
-//       path: "some-path",
-//       uuid: "some-uuid",
-//     } as BuildModuleReturn;
-//     const result = shouldExitEarly(buildModuleResult);
-//     expect(result).toBe(true);
-//   });
-// });
 
 describe("assignImage", () => {
   const mockPeprVersion = "1.0.0";

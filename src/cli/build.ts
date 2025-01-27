@@ -2,12 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import {
-  // BuildContext,
-  BuildOptions,
-  BuildResult,
-  analyzeMetafile,
-} from "esbuild";
+import { BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -23,7 +18,6 @@ import {
   handleCustomOutputDir,
   handleValidCapabilityNames,
   handleCustomImageBuild,
-  // shouldExitEarly,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
   BuildModuleReturn,
@@ -103,9 +97,6 @@ export default function (program: RootCmd): void {
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
 
-      // if (shouldExitEarly(buildModuleResult)) {
-      //   return;
-      // }
       const { cfg, path, uuid } = buildModuleResult!;
       const image = assignImage({
         customImage: opts.customImage,
