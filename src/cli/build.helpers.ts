@@ -123,7 +123,7 @@ export async function handleCustomImageBuild(
 export function handleEmbedding(embed: boolean, path: string): void {
   if (!embed) {
     console.info(`✅ Module built successfully at ${path}`);
-    return;
+    process.exit(0);
   }
 }
 
