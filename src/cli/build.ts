@@ -106,7 +106,7 @@ export default function (program: RootCmd): void {
       // if (shouldExitEarly(buildModuleResult)) {
       //   return;
       // }
-      const { cfg, path, uuid } = buildModuleResult;
+      const { cfg, path, uuid } = buildModuleResult!;
       const image = assignImage({
         customImage: opts.customImage,
         registryInfo: opts.registryInfo,
