@@ -136,7 +136,8 @@ export default function (program: RootCmd): void {
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
       if (buildModuleResult?.cfg && buildModuleResult.path && buildModuleResult.uuid) {
         const { cfg, path, uuid } = buildModuleResult;
-
+        // Files to include in controller image for WASM support
+        const { includedFiles } = cfg.pepr;
         let image = opts.customImage || "";
 
         // Check if there is a custom timeout defined
@@ -149,12 +150,7 @@ export default function (program: RootCmd): void {
           image = `${opts.registryInfo}/custom-pepr-controller:${cfg.pepr.peprVersion}`;
 
           // only actually build/push if there are files to include
-          await handleCustomImageBuild(
-            cfg.pepr.includedFiles,
-            cfg.pepr.peprVersion,
-            cfg.description,
-            image,
-          );
+          await handleCustomImageBuild(includedFiles, cfg.pepr.peprVersion, cfg.description, image);
         }
 
         // If building without embedding, exit after building
