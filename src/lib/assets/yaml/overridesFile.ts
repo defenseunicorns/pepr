@@ -32,7 +32,7 @@ export async function overridesFile(
     hash,
     namespace: {
       annotations: {},
-      labels: {
+      labels: config.customLabels?.namespace ?? {
         "pepr.dev": "",
       },
     },
