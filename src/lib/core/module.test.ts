@@ -34,7 +34,6 @@ const packageJSON: PackageJSON = {
     alwaysIgnore: {
       namespaces: [],
     },
-    customLabels: { namespace: { "pepr.dev": "" } },
   },
 };
 
