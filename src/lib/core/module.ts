@@ -13,7 +13,7 @@ import { resolveIgnoreNamespaces } from "../assets/webhooks";
 
 /** Custom Labels Type for package.json */
 
-export type CustomLabels = { namespace: Record<string, string> };
+export type CustomLabels = { namespace: Record<string, string> } | Record<string, never>;
 
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
