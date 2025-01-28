@@ -13,31 +13,7 @@ import { resolveIgnoreNamespaces } from "../assets/webhooks";
 
 /** Custom Labels Type for package.json */
 
-export type CustomLabels = { namespace: Record<string, string> } | Record<string, never>;
-
-/** Configuration that MAY be set a Pepr module's package.json. */
-export type ModuleConfigOptions = {
-  /** The Pepr version this module uses */
-  peprVersion: string;
-  /** The user-defined version of the module */
-  appVersion: string;
-  /** A description of the Pepr module and what it does. */
-  description: string;
-  /** The webhookTimeout */
-  webhookTimeout: number;
-  /** Reject K8s resource AdmissionRequests on error. */
-  onError: string;
-  /** Define the log level for the in-cluster controllers */
-  logLevel: string;
-  /** Propagate env variables to in-cluster controllers */
-  env: Record<string, string>;
-  /** Custom RBAC rules */
-  rbac: PolicyRule[];
-  /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
-  rbacMode: string;
-  /** Custom Labels for Kubernetes Objects */
-  customLabels: CustomLabels;
-};
+export type CustomLabels = { namespace: Record<string, string> };
 
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
@@ -45,7 +21,17 @@ export type ModuleConfig = {
   uuid: string;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
-} & Partial<ModuleConfigOptions>;
+  /** Define the log level for the in-cluster controllers */
+  logLevel?: string;
+  /** Propagate env variables to in-cluster controllers */
+  env?: Record<string, string>;
+  /** Custom Labels for Kubernetes Objects */
+  customLabels: CustomLabels;
+  /** Custom RBAC rules */
+  rbac?: PolicyRule[];
+  /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
+  rbacMode?: string;
+};
 
 export type PackageJSON = {
   description: string;
