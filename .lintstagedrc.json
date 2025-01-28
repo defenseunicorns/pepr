@@ -2,5 +2,6 @@
   "*.ts": ["prettier --write", "eslint --fix"],
   "*.js": ["prettier --write", "eslint --fix"],
   "*.json": ["prettier --write"],
-  "*.sh|.husky/pre-*": ["shellcheck -f tty"]
+  "*.sh": ["shellcheck -f tty"],
+  ".husky/pre-*": ["shellcheck -f tty"]
 }
