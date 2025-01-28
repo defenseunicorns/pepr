@@ -81,7 +81,7 @@ export class PeprModule {
    * @param opts Options for the Pepr runtime
    */
   constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
-    const config = clone(pepr);
+    const config: ModuleConfig = clone(pepr);
     config.description = description;
 
     // Need to validate at runtime since TS gets sad about parsing the package.json
