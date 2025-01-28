@@ -12,6 +12,34 @@ import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
 
+interface ImageOptions {
+  customImage?: string;
+  registryInfo?: string;
+  peprVersion?: string;
+  registry?: string;
+}
+/**
+ * Assign image string
+ * @param imageOptions CLI options for image
+ * @returns image string
+ */
+export function assignImage(imageOptions: ImageOptions): string {
+  const { customImage, registryInfo, peprVersion, registry } = imageOptions;
+  if (customImage) {
+    return customImage;
+  }
+
+  if (registryInfo) {
+    return `${registryInfo}/custom-pepr-controller:${peprVersion}`;
+  }
+
+  if (registry) {
+    return checkIronBankImage(registry, "", peprVersion!);
+  }
+
+  return "";
+}
+
 export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
  * Determine the RBAC mode based on the CLI options and the module's config
@@ -111,19 +139,6 @@ export async function handleCustomImageBuild(
       stdio: "inherit",
     });
     execSync(`docker push ${image}`, { stdio: "inherit" });
-  }
-}
-
-/**
- * Disables embedding of deployment files into output module
- * @param embed
- * @param path
- * @returns
- */
-export function handleEmbedding(embed: boolean, path: string): void {
-  if (!embed) {
-    console.info(`✅ Module built successfully at ${path}`);
-    return;
   }
 }
 
