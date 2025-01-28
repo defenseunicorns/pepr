@@ -418,6 +418,11 @@ describe("genEnv", () => {
       alwaysIgnore: {
         namespaces: [],
       },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
+      },
     };
 
     const expectedEnv = [
@@ -436,6 +441,11 @@ describe("genEnv", () => {
       uuid: "12345",
       alwaysIgnore: {
         namespaces: [],
+      },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
       },
     };
 
@@ -460,6 +470,11 @@ describe("genEnv", () => {
       alwaysIgnore: {
         namespaces: [],
       },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
+      },
     };
 
     const expectedEnv = [
@@ -481,6 +496,11 @@ describe("genEnv", () => {
       env: {},
       alwaysIgnore: {
         namespaces: [],
+      },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
       },
     };
 
@@ -505,6 +525,11 @@ describe("genEnv", () => {
       alwaysIgnore: {
         namespaces: [],
       },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
+      },
     };
 
     const result = genEnv(config, true);
@@ -518,6 +543,11 @@ describe("genEnv", () => {
       logLevel: "error",
       alwaysIgnore: {
         namespaces: [],
+      },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
       },
     };
 
@@ -538,6 +568,11 @@ describe("genEnv", () => {
       logLevel: "error",
       alwaysIgnore: {
         namespaces: [],
+      },
+      customLabels: {
+        namespace: {
+          "pepr.dev": "",
+        },
       },
     };
 

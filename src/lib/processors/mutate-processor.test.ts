@@ -22,6 +22,11 @@ const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
   alwaysIgnore: {},
+  customLabels: {
+    namespace: {
+      "pepr.dev": "",
+    },
+  },
 };
 
 const defaultAdmissionRequest: AdmissionRequest = {

@@ -12,9 +12,9 @@ import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 
 /** Custom Labels Type for package.json */
-export interface CustomLabels {
-  namespace?: Record<string, string>;
-}
+
+export type CustomLabels = { namespace: Record<string, string> };
+
 /** Global configuration for the Pepr runtime. */
 export type ModuleConfig = {
   /** The Pepr version this module uses */
@@ -36,7 +36,7 @@ export type ModuleConfig = {
   /** Propagate env variables to in-cluster controllers */
   env?: Record<string, string>;
   /** Custom Labels for Kubernetes Objects */
-  customLabels?: CustomLabels;
+  customLabels: CustomLabels;
   /** Custom RBAC rules */
   rbac?: PolicyRule[];
   /** The RBAC mode; if "scoped", generates scoped rules, otherwise uses wildcard rules. */
