@@ -183,7 +183,6 @@ export default function (program: RootCmd): void {
         opts.withPullSecret === "" ? [] : [opts.withPullSecret],
       );
 
-      // if image is a custom image, use that instead of the default
       image !== "" ? (assets.image = image) : null;
 
       // Ensure imagePullSecret is valid
