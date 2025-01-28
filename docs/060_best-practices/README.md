@@ -4,6 +4,7 @@
 
 - [Pepr Best Practices](#pepr-best-practices)
   - [Table of Contents](#table-of-contents)
+  - [Mutating Webhook Errors](#mutating-webhook-errors)
   - [Core Development](#core-development)
   - [Debugging](#debugging)
   - [Deployment](#deployment)
@@ -16,6 +17,41 @@
   - [Pepr Store](#pepr-store)
   - [Watch](#watch)
 
+## Mutating Webhook Errors
+
+When developing mutating admission policies, it is essential to include a validation step immediately after applying mutations. This ensures that the changes made by the mutating admission policy were applied correctly and do not introduce unintended inconsistencies or invalid configurations into your Kubernetes cluster.
+
+**Why Validate After Mutating?**
+
+1.	Detect Misconfigurations Early:
+Mutating admission policies modify incoming resource configurations dynamically. Without validation, you risk introducing invalid configurations into your cluster if the mutation logic contains bugs, unintended side effects, or runs too long and causes a [Webhook Timeout](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
+1.	Maintain Cluster Integrity:
+By validating the mutated resource, you ensure it adheres to expected formats, standards, and constraints, maintaining the health and stability of your cluster.
+1.	Catch Logic Errors in Mutations:
+A mutation may not always produce the intended output due to edge cases, unexpected inputs, or incorrect assumptions in the mutation logic. 
+
+Validation helps catch such issues early and becomes _particularly_ important if your Module is [configured](https://docs.pepr.dev/main/user-guide/customization/#admission-and-watcher-subparameters) to use a Webhook [failurePolicy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) of `ignore`. In that case, admission requests failures _won't prevent further processing and/or acceptance_ of mutate-failed requests and could result in undesirable resources getting into your cluster!
+1.	Comply with Kubernetes Best Practices:
+Kubernetes resources must meet specific structural and functional requirements. Validating ensures compliance, preventing the risk of deployment failures or runtime errors.
+
+**How to implement a Validate-After-Mutate Pattern**
+
+1. Apply the desired transformations to the resource in the `Mutate` block.
+2. Validate the mutated resource in the `Validate` block to ensure it adheres to the expected structure.
+3. If the validation fails, reject the resource with a descriptive message explaining the issue.
+```typescript
+When(a.Pod)
+  .IsCreated()
+  .InNamespace("my-app")
+  .WithName("database")
+  .Mutate(po => po.SetLabel("pepr", "true"))
+  .Validate(po => {
+    if (po.Raw.metadata?.labels["pepr"] !== "true") {
+      return po.Approve();
+    }
+    return po.Deny("Needs pepr label set to true")
+  });
+```
 
 ## Core Development
 
