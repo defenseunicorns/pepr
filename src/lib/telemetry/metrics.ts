@@ -66,9 +66,7 @@ export class MetricsCollector {
   #addMetric = <T extends Counter<string> | Gauge<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
-    name: string,
-    help: string,
-    labelNames?: string[],
+    { name, help, labelNames }: Omit<MetricArgs, 'registers'>
   ): void => {
     if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
@@ -86,15 +84,15 @@ export class MetricsCollector {
   };
 
   addCounter = (name: string, help: string): void => {
-    this.#addMetric(this.#counters, promClient.Counter, name, help, []);
+    this.#addMetric(this.#counters, promClient.Counter, { name, help, labelNames: [] });
   };
 
   addSummary = (name: string, help: string): void => {
-    this.#addMetric(this.#summaries, promClient.Summary, name, help, []);
+    this.#addMetric(this.#summaries, promClient.Summary, { name, help, labelNames: [] });
   };
 
   addGauge = (name: string, help: string, labelNames?: string[]): void => {
-    this.#addMetric(this.#gauges, promClient.Gauge, name, help, labelNames);
+    this.#addMetric(this.#gauges, promClient.Gauge, { name, help, labelNames });
   };
 
   incCounter = (name: string): void => {
