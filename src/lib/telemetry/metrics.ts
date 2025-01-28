@@ -66,7 +66,7 @@ export class MetricsCollector {
   #addMetric = <T extends Counter<string> | Gauge<string> | Summary<string>>(
     collection: Map<string, T>,
     MetricType: new (args: MetricArgs) => T,
-    { name, help, labelNames }: Omit<MetricArgs, 'registers'>
+    { name, help, labelNames }: Omit<MetricArgs, "registers">,
   ): void => {
     if (collection.has(this.#getMetricName(name))) {
       Log.debug(`Metric for ${name} already exists`, loggingPrefix);
