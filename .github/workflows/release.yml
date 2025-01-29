@@ -48,7 +48,7 @@ jobs:
 
           npm install -g npm
 
-          npm run version
+          npm run set:version
 
           # Build Controller Image
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
