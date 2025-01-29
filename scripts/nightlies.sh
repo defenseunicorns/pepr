@@ -35,4 +35,7 @@ npm version --no-git-tag-version "$FULL_VERSION"
 
 docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:v"$FULL_VERSION" .
 
+npm install 
+npm run build
+
 npm publish --tag "nightly"
