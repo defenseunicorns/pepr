@@ -3,6 +3,7 @@
 import { it, describe, expect } from "@jest/globals";
 import { createWebhookYaml } from "./index";
 import { kind } from "kubernetes-fluent-client";
+import { ModuleConfig } from "../core/module";
 
 describe("createWebhookYaml", () => {
   const webhookConfiguration = new kind.MutatingWebhookConfiguration();
@@ -37,13 +38,14 @@ describe("createWebhookYaml", () => {
     },
   ];
 
-  const moduleConfig = {
+  const moduleConfig: ModuleConfig = {
     onError: "reject",
     webhookTimeout: 15,
     uuid: "some-uuid",
     alwaysIgnore: {
       namespaces: ["kube-system", "pepr-system"],
     },
+    customLabels: { namespace: { "pepr.dev": "" } },
   };
 
   it("replaces placeholders in the YAML correctly", () => {
