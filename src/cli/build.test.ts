@@ -4,12 +4,13 @@
 import {
   determineRbacMode,
   handleCustomOutputDir,
-  handleEmbedding,
   handleValidCapabilityNames,
   handleCustomImageBuild,
   checkIronBankImage,
   validImagePullSecret,
+  assignImage,
 } from "./build.helpers";
+
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
 import { expect, describe, it, jest, beforeEach } from "@jest/globals";
 import { createDockerfile } from "../lib/included-files";
@@ -28,6 +29,52 @@ jest.mock("../lib/included-files", () => ({
 jest.mock("../lib/filesystemService", () => ({
   createDirectoryIfNotExists: jest.fn(),
 }));
+
+describe("assignImage", () => {
+  const mockPeprVersion = "1.0.0";
+
+  it("should return the customImage if provided", () => {
+    const result = assignImage({
+      customImage: "pepr:dev",
+      registryInfo: "docker.io/defenseunicorns",
+      peprVersion: mockPeprVersion,
+      registry: "my-registry",
+    });
+    expect(result).toBe("pepr:dev");
+  });
+
+  it("should return registryInfo with custom-pepr-controller and peprVersion if customImage is not provided", () => {
+    const result = assignImage({
+      customImage: "",
+      registryInfo: "docker.io/defenseunicorns",
+      peprVersion: mockPeprVersion,
+      registry: "my-registry",
+    });
+    expect(result).toBe(`docker.io/defenseunicorns/custom-pepr-controller:1.0.0`);
+  });
+
+  it("should return IronBank image if registry is provided and others are not", () => {
+    const result = assignImage({
+      customImage: "",
+      registryInfo: "",
+      peprVersion: mockPeprVersion,
+      registry: "Iron Bank",
+    });
+    expect(result).toBe(
+      `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v${mockPeprVersion}`,
+    );
+  });
+
+  it("should return an empty string if none of the conditions are met", () => {
+    const result = assignImage({
+      customImage: "",
+      registryInfo: "",
+      peprVersion: "",
+      registry: "",
+    });
+    expect(result).toBe("");
+  });
+});
 
 describe("determineRbacMode", () => {
   it("should allow CLI options to overwrite module config", () => {
@@ -171,32 +218,6 @@ describe("handleCustomImageBuild", () => {
     expect(mockedExecSync).not.toHaveBeenCalled();
   });
 });
-describe("handleEmbedding", () => {
-  const consoleInfoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should log success message if embed is false", () => {
-    const embed = false;
-    const path = "test/path";
-
-    handleEmbedding(embed, path);
-
-    expect(consoleInfoSpy).toHaveBeenCalledWith(`✅ Module built successfully at ${path}`);
-  });
-
-  it("should not log success message if embed is true", () => {
-    const embed = true;
-    const path = "test/path";
-
-    handleEmbedding(embed, path);
-
-    expect(consoleInfoSpy).not.toHaveBeenCalled();
-  });
-});
-
 describe("handleValidCapabilityNames", () => {
   const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
     return undefined as never;
