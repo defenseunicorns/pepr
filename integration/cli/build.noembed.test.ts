@@ -48,8 +48,8 @@ describe("build", () => {
           const argz = [`--no-embed`].join(" ");
           const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
           expect(build.exitcode).toBe(0);
-          expect(build.stderr.join("").trim()).toContain("Error: Cannot find module");
-          expect(build.stdout.join("").trim()).toContain("");
+          expect(build.stderr.join("").trim()).toContain("");
+          expect(build.stdout.join("").trim()).toContain("Module built successfully at");
 
           packageJson = await resource.fromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
