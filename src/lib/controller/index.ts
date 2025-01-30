@@ -16,6 +16,12 @@ import { StoreController } from "./store";
 import { AdmissionRequest } from "../types";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
 
+export interface ControllerHooks {
+  beforeHook?: (req: AdmissionRequest) => void;
+  afterHook?: (res: MutateResponse | ValidateResponse) => void;
+  onReady?: () => void;
+}
+
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
@@ -39,13 +45,8 @@ export class Controller {
   readonly #beforeHook?: (req: AdmissionRequest) => void;
   readonly #afterHook?: (res: MutateResponse | ValidateResponse) => void;
 
-  constructor(
-    config: ModuleConfig,
-    capabilities: Capability[],
-    beforeHook?: (req: AdmissionRequest) => void,
-    afterHook?: (res: MutateResponse | ValidateResponse) => void,
-    onReady?: () => void,
-  ) {
+  constructor(config: ModuleConfig, capabilities: Capability[], hooks: ControllerHooks = {}) {
+    const { beforeHook, afterHook, onReady } = hooks;
     this.#config = config;
     this.#capabilities = capabilities;
 
