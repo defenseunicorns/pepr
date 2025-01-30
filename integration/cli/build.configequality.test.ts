@@ -393,19 +393,21 @@ describe("build", () => {
       it("customLabels.namespace", async () => {
         for (const namespace of [
           resource.select(peprResources, kind.Namespace, "pepr-system"),
-          // resource.select(helmResources, kind.Namespace, "pepr-system"), // <-- desired behavior!
+          resource.select(helmResources, kind.Namespace, "pepr-system"),
         ]) {
           expect(namespace.metadata!.labels!).toEqual(
             expect.objectContaining(moduleConfig.customLabels.namespace!),
           );
         }
 
-        // incorrect behavior...
-        // Issue: https://github.com/defenseunicorns/pepr/issues/1713
         for (const namespace of [resource.select(helmResources, kind.Namespace, "pepr-system")]) {
-          expect(namespace.metadata!.labels!).toEqual(expect.objectContaining({ "pepr.dev": "" }));
+          expect(namespace.metadata!.labels!).toEqual(
+            expect.objectContaining({
+              test: "test",
+              value: "value",
+            }),
+          );
         }
-        // end incorrect behavior...
       });
 
       it("rbacMode: scoped + rbac: [...]", async () => {
