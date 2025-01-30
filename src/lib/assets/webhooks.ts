@@ -15,7 +15,7 @@ import { Binding } from "../types";
 
 export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
+export const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
   const { event, kind, isMutate, isValidate } = binding;
 
   // Skip invalid bindings based on webhook type
