@@ -76,6 +76,9 @@
     "ts-jest": "29.2.5",
     "undici": "^7.0.1"
   },
+  "overrides": {
+    "glob": "^9.0.0"
+  },
   "peerDependencies": {
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
