@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { clone } from "ramda";
 import { Capability } from "./capability";
-import { Controller } from "../controller";
+import { Controller, ControllerHooks } from "../controller";
 import { ValidateError } from "../errors";
 import { MutateResponse, ValidateResponse, WebhookIgnore } from "../k8s";
 import { CapabilityExport, AdmissionRequest } from "../types";
@@ -114,17 +114,23 @@ export class PeprModule {
       return;
     }
 
-    this.#controller = new Controller(config, capabilities, opts.beforeHook, opts.afterHook, () => {
-      // Wait for the controller to be ready before setting up watches
-      if (isWatchMode() || isDevMode()) {
-        try {
-          setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
-        } catch (e) {
-          Log.error(e, "Error setting up watch");
-          process.exit(1);
+    const controllerHooks: ControllerHooks = {
+      beforeHook: opts.beforeHook,
+      afterHook: opts.afterHook,
+      onReady: (): void => {
+        // Wait for the controller to be ready before setting up watches
+        if (isWatchMode() || isDevMode()) {
+          try {
+            setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
+          } catch (e) {
+            Log.error(e, "Error setting up watch");
+            process.exit(1);
+          }
         }
-      }
-    });
+      },
+    };
+
+    this.#controller = new Controller(config, capabilities, controllerHooks);
 
     // Stop processing if deferStart is set to true
     if (opts.deferStart) {
