@@ -17,7 +17,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Features
 
-- Zero-config K8s Mutating and Validating Webhook and Controller generation
+- Zero-config K8s Mutating and Validating Webhooks plus Controller generation
 - Automatic leader-elected K8s resource watching
 - Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](./docs/030_user-guide/050_store.md)
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
