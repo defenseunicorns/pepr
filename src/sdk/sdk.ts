@@ -51,7 +51,7 @@ export async function writeEvent(
     eventReason: string;
     reportingComponent: string;
     reportingInstance: string;
-  }
+  },
 ): Promise<void> {
   const { eventType, eventReason, reportingComponent, reportingInstance } = options;
 
