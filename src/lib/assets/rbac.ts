@@ -24,8 +24,7 @@ export function clusterRole(
   const rbacMap = createRBACMap(capabilities);
   // Generate scoped rules from rbacMap
   const scopedRules = Object.keys(rbacMap).map(key => {
-    let group: string;
-    key.split("/").length < 3 ? (group = "") : (group = key.split("/")[0]);
+    const group: string = key.split("/").length < 3 ? "" : key.split("/")[0];
 
     return {
       apiGroups: [group],

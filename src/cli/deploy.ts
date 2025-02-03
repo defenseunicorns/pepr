@@ -93,6 +93,35 @@ export async function getUserConfirmation(opts: { confirm: boolean }): Promise<b
   return confirm.confirm ? true : false;
 }
 
+async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
+  const builtModule = await buildModule();
+  if (!builtModule) {
+    return;
+  }
+
+  // Generate a secret for the module
+  const webhook = new Assets(
+    { ...builtModule.cfg.pepr, description: builtModule.cfg.description },
+    builtModule.path,
+    [],
+  );
+  webhook.image = image ?? webhook.image;
+
+  try {
+    await webhook.deploy(deployWebhook, force, builtModule.cfg.pepr.webhookTimeout ?? 10);
+
+    // wait for capabilities to be loaded and test names
+    validateCapabilityNames(webhook.capabilities);
+
+    // Wait for the pepr-system resources to be fully up
+    await namespaceDeploymentsReady();
+    console.info(`✅ Module deployed successfully`);
+  } catch (e) {
+    console.error(`Error deploying module:`, e);
+    process.exit(1);
+  }
+}
+
 export default function (program: RootCmd): void {
   program
     .command("deploy")
@@ -117,33 +146,10 @@ export default function (program: RootCmd): void {
         return;
       }
 
-      (await getUserConfirmation(opts)) || process.exit(0);
-
-      const builtModule = await buildModule();
-      if (!builtModule) {
-        return;
+      if (!(await getUserConfirmation(opts))) {
+        process.exit(0);
       }
 
-      // Generate a secret for the module
-      const webhook = new Assets(
-        { ...builtModule.cfg.pepr, description: builtModule.cfg.description },
-        builtModule.path,
-        [],
-      );
-      webhook.image = opts.image ?? webhook.image;
-
-      try {
-        await webhook.deploy(deployWebhook, opts.force, builtModule.cfg.pepr.webhookTimeout ?? 10);
-
-        // wait for capabilities to be loaded and test names
-        validateCapabilityNames(webhook.capabilities);
-
-        // Wait for the pepr-system resources to be fully up
-        await namespaceDeploymentsReady();
-        console.info(`✅ Module deployed successfully`);
-      } catch (e) {
-        console.error(`Error deploying module:`, e);
-        process.exit(1);
-      }
+      await buildAndDeployModule(opts.image, opts.force);
     });
 }
