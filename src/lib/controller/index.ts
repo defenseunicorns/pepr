@@ -53,7 +53,9 @@ export class Controller {
     // Initialize the Pepr store for each capability
     new StoreController(capabilities, `pepr-${config.uuid}-store`, () => {
       this.#bindEndpoints();
-      onReady && onReady();
+      if (typeof onReady === "function") {
+        onReady();
+      }
       Log.info("✅ Controller startup complete");
       // Initialize the schedule store for each capability
       new StoreController(capabilities, `pepr-${config.uuid}-schedule`, () => {
@@ -224,7 +226,9 @@ export class Controller {
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Run the before hook if it exists
-        this.#beforeHook && this.#beforeHook(request || {});
+        if (typeof this.#beforeHook === "function") {
+          this.#beforeHook(request || {});
+        }
 
         // Process the request
         const response: MutateResponse | ValidateResponse[] =
@@ -234,7 +238,9 @@ export class Controller {
 
         // Run the after hook if it exists
         [response].flat().map(res => {
-          this.#afterHook && this.#afterHook(res);
+          if (typeof this.#afterHook === "function") {
+            this.#afterHook(res);
+          }
           Log.info({ ...reqMetadata, res }, "Check response");
         });
 
