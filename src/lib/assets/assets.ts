@@ -132,7 +132,7 @@ export class Assets {
     basePath: string,
   ): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
-    console.log(helm.dirs);
+
     try {
       await Promise.all(
         Object.values(helm.dirs)
