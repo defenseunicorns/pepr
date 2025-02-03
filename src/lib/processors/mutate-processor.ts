@@ -55,7 +55,7 @@ export function logMutateErrorMessage(e: Error): string {
     } else {
       throw new Error("An error occurred in the mutate action.");
     }
-  } catch (e) {
+  } catch {
     return "An error occurred with the mutate action.";
   }
 }
