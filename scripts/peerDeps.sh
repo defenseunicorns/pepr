@@ -5,7 +5,7 @@ echo ""
 PEER_DEPS=$(jq -r '.peerDependencies | keys[]' package.json)
 
 for dependency in $PEER_DEPS; do
-  echo "\"$dependency\": \"$(npm show "$dependency" version)\","
+  echo "    \"$dependency\": \"$(npm show "$dependency" version)\","
 done
 
 echo ""
