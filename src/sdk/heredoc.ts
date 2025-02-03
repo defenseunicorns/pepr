@@ -14,8 +14,8 @@ export function heredoc(strings: TemplateStringsArray, ...values: string[]): str
   const asLines = zipped.join("").split(/[\r\n]+/);
 
   // strip whitespace-only first & last lines
-  asLines[0].trim().length === 0 ? asLines.shift() : null;
-  asLines.slice(-1)[0].trim().length === 0 ? asLines.pop() : null;
+  if (asLines[0].trim().length === 0) asLines.shift();
+  if (asLines.slice(-1)[0].trim().length === 0) asLines.pop();
 
   // find smallest indent
   const indent = asLines.reduce((acc, cur) => {
