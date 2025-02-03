@@ -212,8 +212,12 @@ describe("Assets", () => {
   it("should call allYaml that calls yamlGenerationFunction with assets deployments", async () => {
     const yamlGenerationFunction = jest.fn<() => Promise<string>>().mockResolvedValue("");
     await assets.allYaml(yamlGenerationFunction);
-
+    const expectedDeployments = {
+      default: expect.any(Object),
+      watch: expect.any(Object),
+    };
     expect(yamlGenerationFunction).toHaveBeenCalledTimes(1);
+    expect(yamlGenerationFunction).toHaveBeenCalledWith(assets, expectedDeployments);
   });
 
   it("should call writeWebhookFiles and write admissionController Deployment, ServiceMonitor, and WebhookConfigs", async () => {
