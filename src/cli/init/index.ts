@@ -107,7 +107,7 @@ const doPostInitActions = (dirName: string): void => {
     execSync("code .", {
       stdio: "inherit",
     });
-  } catch (e) {
-    // vscode not found, do nothing
+  } catch {
+    console.warn("VSCode was not found, IDE will not automatically open.");
   }
 };

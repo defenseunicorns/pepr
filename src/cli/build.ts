@@ -165,7 +165,7 @@ export default function (program: RootCmd): void {
         return;
       }
       // set the image version if provided
-      opts.version ? (cfg.pepr.peprVersion = opts.version) : null;
+      if (opts.version) cfg.pepr.peprVersion = opts.version;
 
       // Generate a secret for the module
       const assets = new Assets(
@@ -183,7 +183,7 @@ export default function (program: RootCmd): void {
         opts.withPullSecret === "" ? [] : [opts.withPullSecret],
       );
 
-      image !== "" ? (assets.image = image) : null;
+      if (image !== "") assets.image = image;
 
       // Ensure imagePullSecret is valid
       validImagePullSecret(opts.withPullSecret);
@@ -218,7 +218,7 @@ export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn>
   try {
     await fs.access(cfgPath);
     await fs.access(entryPointPath);
-  } catch (e) {
+  } catch {
     console.error(
       `Could not find ${cfgPath} or ${entryPointPath} in the current directory. Please run this command from the root of your module's directory.`,
     );
