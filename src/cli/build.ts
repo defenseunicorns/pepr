@@ -165,7 +165,7 @@ export default function (program: RootCmd): void {
         return;
       }
       // set the image version if provided
-      cfg.pepr.peprVersion = opts.version ? opts.version : null;
+      if (opts.version) cfg.pepr.peprVersion = opts.version;
 
       // Generate a secret for the module
       const assets = new Assets(
@@ -183,7 +183,7 @@ export default function (program: RootCmd): void {
         opts.withPullSecret === "" ? [] : [opts.withPullSecret],
       );
 
-      assets.image = image !== "" ? image : "";
+      if (image !== "") assets.image = image;
 
       // Ensure imagePullSecret is valid
       validImagePullSecret(opts.withPullSecret);
