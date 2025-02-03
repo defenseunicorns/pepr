@@ -38,7 +38,7 @@ export async function setName(name?: string): Promise<Answers<string>> {
         await fs.access(name, fs.constants.F_OK);
 
         return "A directory with this name already exists";
-      } catch (e) {
+      } catch {
         return val.length > 2 || "The name must be at least 3 characters long";
       }
     },
