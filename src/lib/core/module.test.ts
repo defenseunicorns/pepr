@@ -5,7 +5,8 @@ import { beforeEach, expect, jest, test, describe } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
-import { PackageJSON, PeprModule } from "./module";
+import { PeprModule } from "./module";
+import { PackageJSON } from "../types";
 import { CapabilityExport } from "../types";
 import { OnError } from "../../cli/init/enums";
 

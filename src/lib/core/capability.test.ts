@@ -14,7 +14,7 @@ import { Schedule } from "./schedule";
 import { OnSchedule } from "./schedule";
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
-jest.mock("./module", () => ({
+jest.mock("./moduleTypes", () => ({
   isBuildMode: jest.fn(() => true),
   isWatchMode: jest.fn(() => true),
   isDevMode: jest.fn(() => true),

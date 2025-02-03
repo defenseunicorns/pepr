@@ -5,7 +5,7 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { replaceString } from "../helpers";
 import { resolve } from "path";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toYaml(obj: any): string {
