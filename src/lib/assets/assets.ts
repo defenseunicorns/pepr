@@ -81,7 +81,7 @@ export class Assets {
 
   allYaml = async (
     yamlGenerationFunction: (
-      assyts: Assets,
+      assets: Assets,
       deployments: { default: V1Deployment; watch: V1Deployment | null },
     ) => Promise<string>,
     imagePullSecret?: string,
@@ -132,7 +132,7 @@ export class Assets {
     basePath: string,
   ): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
-
+    console.log(helm.dirs);
     try {
       await Promise.all(
         Object.values(helm.dirs)
