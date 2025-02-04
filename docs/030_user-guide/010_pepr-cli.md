@@ -99,7 +99,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
 - `-i, --custom-image [custom-image]` - Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
 - `--registry [GitHub, Iron Bank]` - Container registry: Choose container registry for deployment manifests.
-- `-v, --version <version>. Example: '0.27.3'` - The version of the Pepr image to use in the deployment manifests.
+- `-v, --version <version>. Example: '0.27.3'` - DEPRECATED: The version of the Pepr image to use in the deployment manifests.
 -  `--withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment.
 - `-z, --zarf [manifest|chart]` - The Zarf package type to generate: manifest or chart (default: manifest).
 
