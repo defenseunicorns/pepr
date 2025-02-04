@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { Assets } from "./assets";
 import { expect, describe, it, jest, afterAll } from "@jest/globals";
 import { CapabilityExport } from "../types";
