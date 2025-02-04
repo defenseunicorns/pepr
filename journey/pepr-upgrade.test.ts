@@ -1,72 +1,119 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, jest, it } from "@jest/globals";
-import { execSync, spawnSync } from "child_process";;
-import { promises as fs } from 'fs';
+import { describe, expect, jest, it, beforeAll } from "@jest/globals";
+import { execSync, execFileSync, spawnSync } from "child_process";
+import { promises, readdirSync, existsSync, rmSync } from "fs";
 
-import {
-    waitForDeploymentReady,
-} from "./k8s";
+import { waitForDeploymentReady } from "./k8s";
+import path from "path";
 
 jest.setTimeout(1000 * 60 * 5);
 
 export function peprUpgrade() {
+  let matchedFile = "";
 
-    it("should prepare, build, and deploy hello-pepr with pepr@latest", async () => {
-        try {
-            // Install pepr@latest
-            execSync("npm i pepr@latest", { cwd: "pepr-upgrade-test", stdio: "inherit" })
+  beforeAll(() => {
+    const dirPath = "./pepr-upgrade-test";
+    if (existsSync(dirPath)) {
+      rmSync(dirPath, { recursive: true, force: true });
+      console.log(`Old test directory removed: ${dirPath}`);
+    }
+    execSync(
+      `npx pepr init --name pepr-upgrade-test --description "Upgrade testing" --skip-post-init --confirm`,
+    );
+  });
 
-            // Update manifests of pepr@latest
-            execSync("node ./node_modules/pepr/dist/cli.js update --skip-template-update", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+  it("should prepare, build, and deploy hello-pepr with pepr@latest", async () => {
+    try {
+      // Install pepr@latest
+      execSync("npm i pepr@latest", { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
-            // Generate manifests with pepr@latest
-            execSync("node ./node_modules/pepr/dist/cli.js build", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+      // Update manifests of pepr@latest
+      execSync("node ./node_modules/pepr/dist/cli.js update --skip-template-update", {
+        cwd: "pepr-upgrade-test",
+        stdio: "inherit",
+      });
 
-            // Deploy manifests of pepr@latest
-            execSync("kubectl create -f dist/pepr-module-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456.yaml", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+      // Generate manifests with pepr@latest
+      execSync("node ./node_modules/pepr/dist/cli.js build", {
+        cwd: "pepr-upgrade-test",
+        stdio: "inherit",
+      });
 
-            // Wait for the deployments to be ready
-            await Promise.all([waitForDeploymentReady("pepr-system", "pepr-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456"), waitForDeploymentReady("pepr-system", "pepr-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456-watcher")]);
-        }
-        catch (error) {
-            expect(error).toBeNull();
-        }
+      let manifestUUID;
+      ({ manifestUUID, matchedFile } = getManifestData());
 
-    });
+      // Deploy manifests of pepr@latest
+      execFileSync("kubectl", ["create", "-f", matchedFile], { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
-    it("should prepare, build, and deploy hello-pepr with pepr@pr-candidate", async () => {
+      // Wait for the deployments to be ready
+      await Promise.all([
+        waitForDeploymentReady("pepr-system", `pepr-${manifestUUID}`),
+        waitForDeploymentReady("pepr-system", `pepr-${manifestUUID}-watcher`),
+      ]);
+    } catch (error) {
+      console.log(error);
+      expect(error).toBeNull();
+    }
+  });
 
-        try {
-            // Re-generate manifests with pepr@pr-candidate
-            execSync("npx --yes ts-node ../src/cli.ts build", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+  it("should prepare, build, and deploy hello-pepr with pepr@pr-candidate", async () => {
+    try {
+      // Re-generate manifests with pepr@pr-candidate
+      execSync("npx --yes ts-node ../src/cli.ts build -i pepr:dev", {
+        cwd: "pepr-upgrade-test",
+        stdio: "inherit",
+      });
 
-            // // Replace pepr@latest with pepr@pr-candidate image pepr:dev
-            await replaceString("pepr-upgrade-test/dist/pepr-module-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456.yaml", "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development", "pepr:dev");
+      let manifestUUID;
+      ({ manifestUUID, matchedFile } = getManifestData());
 
-            // Deploy manifests of pepr@latest
-            const applyOut = spawnSync("kubectl apply -f dist/pepr-module-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456.yaml", {
-                shell: true,
-                encoding: "utf-8",
-                cwd: "pepr-upgrade-test",
-            });
 
-            const { status } = applyOut;
+      // Deploy manifests of pepr@latest
+      const applyOut = spawnSync(`kubectl apply -f ${matchedFile}`, {
+        shell: true,
+        encoding: "utf-8",
+        cwd: "pepr-upgrade-test",
+      });
 
-            // Validation should not return an error
-            expect(status).toBe(0);
+      const { status } = applyOut;
 
-            // Wait for the deployments to be ready
-            await Promise.all([waitForDeploymentReady("pepr-system", "pepr-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456"), waitForDeploymentReady("pepr-system", "pepr-3b1b7ed6-88f6-54ec-9ae0-0dcc8a432456-watcher")]);
-        }
-        catch (error) {
-            expect(error).toBeNull();
-        }
-    });
+      // Validation should not return an error
+      expect(status).toBe(0);
+
+      // Wait for the deployments to be ready
+      await Promise.all([
+        waitForDeploymentReady("pepr-system", `pepr-${manifestUUID}`),
+        waitForDeploymentReady("pepr-system", `pepr-${manifestUUID}-watcher`),
+      ]);
+    } catch (error) {
+      expect(error).toBeNull();
+    }
+  });
 }
 
-describe("Should test Pepr upgrade", peprUpgrade)
+describe("Should test Pepr upgrade", peprUpgrade);
+
+function getManifestData(): { manifestUUID: string; matchedFile: string } {
+  const moduleDirectory = path.join("./pepr-upgrade-test", "dist");
+  const manifestPattern = /.*pepr-module-([a-f0-9-]+)\.yaml$/;
+
+  let matchedFile = findMatchingFile(moduleDirectory, manifestPattern);
+  if (!matchedFile) {
+    console.error(`No manifest file found with pattern '${manifestPattern}'.`);
+    process.exit(1);
+  }
+
+  // Remove "pepr-upgrade-test" from the start of the matched file path due to cwd of test
+  matchedFile = matchedFile.replace(/^pepr-upgrade-test\//, "");
+
+  const manifestUUID = matchedFile.match(manifestPattern)?.[1] || "NO-MATCH";
+
+  console.log(`Manifest file: ${matchedFile}\nManifest UUID: ${manifestUUID}`);
+
+  return { manifestUUID, matchedFile };
+}
 
 /**
  * Replace a string in a file and on error throws
@@ -75,12 +122,28 @@ describe("Should test Pepr upgrade", peprUpgrade)
  * @param newString - New string to replace with
  */
 async function replaceString(filePath: string, originalString: string, newString: string) {
-    try {
-        let fileContent = await fs.readFile(filePath, 'utf8');
-        const modifiedContent = fileContent.split(originalString).join(newString);
-        await fs.writeFile(filePath, modifiedContent, 'utf8');
-    } catch (error) {
-        throw error
-    }
+  try {
+    let fileContent = await promises.readFile(filePath, "utf8");
+    const modifiedContent = fileContent.split(originalString).join(newString);
+    await promises.writeFile(filePath, modifiedContent, "utf8");
+  } catch (error) {
+    throw error;
+  }
 }
 
+/**
+ * @param dir The directory to search in
+ * @param pattern The filename pattern (regex)
+ * @returns The matched file name or empty-string if not found
+ */
+function findMatchingFile(dir: string, pattern: RegExp): string {
+  if (!existsSync(dir)) {
+    console.error(`Directory does not exist: ${dir}`);
+    return "";
+  }
+
+  const files = readdirSync(dir);
+  const matchedFile = files.find(file => pattern.test(file));
+
+  return matchedFile ? path.join(dir, matchedFile) : "";
+}
