@@ -41,11 +41,11 @@ jobs:
         run: |
           npx madge --circular --ts-config tsconfig.json --extensions ts,js src/ > tmp.log || true # Force exit 0 for post-processing
           tail -n +4 tmp.log > circular-deps.log
-          if [ $(wc -l < circular-deps.log) -gt 9 ]; then
-            echo "circular-deps.log has more than 9 circular dependencies."
+          if [ $(wc -l < circular-deps.log) -gt 4 ]; then
+            echo "circular-deps.log has more than 4 circular dependencies."
             wc -l circular-deps.log
             exit 1
           else
-            echo "circular-deps.log has 9 or fewer circular dependencies."
+            echo "circular-deps.log has 4 or fewer circular dependencies."
             exit 0
           fi

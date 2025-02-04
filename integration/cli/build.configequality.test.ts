@@ -9,7 +9,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
-import { ModuleConfig } from "../../src/lib/core/module";
+import { ModuleConfig } from "../../src/lib/types";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;

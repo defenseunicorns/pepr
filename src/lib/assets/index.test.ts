@@ -3,7 +3,7 @@
 import { it, describe, expect } from "@jest/globals";
 import { createWebhookYaml } from "./index";
 import { kind } from "kubernetes-fluent-client";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 
 describe("createWebhookYaml", () => {
   const webhookConfiguration = new kind.MutatingWebhookConfiguration();

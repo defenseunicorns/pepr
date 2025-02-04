@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { CapabilityExport } from "../types";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "../tls";
 import { WebhookIgnore } from "../k8s";
 import {

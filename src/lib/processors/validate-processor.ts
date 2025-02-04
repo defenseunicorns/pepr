@@ -9,7 +9,7 @@ import { AdmissionRequest, Binding } from "../types";
 import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { WebhookType } from "../enums";

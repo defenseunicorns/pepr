@@ -11,7 +11,7 @@ import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
 import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
-import { CustomLabels } from "../../lib/core/module";
+import { CustomLabels } from "../../lib/types";
 import { InitOptions } from "../types";
 import { OnError, RbacMode } from "./enums";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
