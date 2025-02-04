@@ -69,7 +69,7 @@ export function peprUpgrade() {
       let manifestUUID;
       ({ manifestUUID, matchedFile } = getManifestData());
 
-      // // Replace pepr@latest with pepr@pr-candidate image pepr:dev
+      // Replace pepr@latest with pepr@pr-candidate image pepr:dev
       await replaceString(
         `pepr-upgrade-test/${matchedFile}`,
         "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development",
@@ -102,21 +102,19 @@ export function peprUpgrade() {
 describe("Should test Pepr upgrade", peprUpgrade);
 
 function getManifestData(): { manifestUUID: string; matchedFile: string } {
-  const directory = path.join("./pepr-upgrade-test", "dist");
-  const filePattern = /.*pepr-module-([a-f0-9-]+)\.yaml$/;
+  const moduleDirectory = path.join("./pepr-upgrade-test", "dist");
+  const manifestPattern = /.*pepr-module-([a-f0-9-]+)\.yaml$/;
 
-  // Find the matching file
-  let matchedFile = findMatchingFile(directory, filePattern);
+  let matchedFile = findMatchingFile(moduleDirectory, manifestPattern);
   if (!matchedFile) {
-    console.error(`No manifest file found with pattern '${filePattern}'.`);
+    console.error(`No manifest file found with pattern '${manifestPattern}'.`);
     process.exit(1);
   }
 
   // Remove "pepr-upgrade-test" from the start of the matched file path due to cwd of test
   matchedFile = matchedFile.replace(/^pepr-upgrade-test\//, "");
 
-  // Extract the UUID
-  const manifestUUID = matchedFile.match(filePattern)?.[1] || "NO-MATCH";
+  const manifestUUID = matchedFile.match(manifestPattern)?.[1] || "NO-MATCH";
 
   console.log(`Manifest file: ${matchedFile}\nManifest UUID: ${manifestUUID}`);
 
@@ -140,10 +138,9 @@ async function replaceString(filePath: string, originalString: string, newString
 }
 
 /**
- * Find a file that matches the pattern `dist/pepr-module-*.yaml`
  * @param dir The directory to search in
  * @param pattern The filename pattern (regex)
- * @returns The matched file name or `null` if not found
+ * @returns The matched file name or empty-string if not found
  */
 function findMatchingFile(dir: string, pattern: RegExp): string {
   if (!existsSync(dir)) {
