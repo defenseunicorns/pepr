@@ -11,7 +11,7 @@ import { RootCmd } from "./root";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
 import { peprFormat } from "./format";
-import { ModuleConfig } from "../lib/core/module";
+import { ModuleConfig } from "../lib/types";
 import {
   watchForChanges,
   determineRbacMode,

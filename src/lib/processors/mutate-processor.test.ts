@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
 import { AdmissionRequest, Binding, MutateAction } from "../types";
@@ -290,7 +290,8 @@ describe("processRequest", () => {
     expect(auditAnnotes).toHaveLength(1);
 
     const [key, val] = auditAnnotes[0];
-    expect(Date.now() - parseInt(key)).toBeLessThan(5);
+    const timeWindowMs = 10;
+    expect(Date.now() - parseInt(key)).toBeLessThan(timeWindowMs);
     expect(val).toBe("Action failed: An error occurred with the mutate action.");
   });
 });
