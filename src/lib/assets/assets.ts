@@ -81,7 +81,7 @@ export class Assets {
 
   allYaml = async (
     yamlGenerationFunction: (
-      assyts: Assets,
+      assets: Assets,
       deployments: { default: V1Deployment; watch: V1Deployment | null },
     ) => Promise<string>,
     imagePullSecret?: string,

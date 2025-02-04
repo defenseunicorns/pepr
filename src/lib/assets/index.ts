@@ -12,7 +12,6 @@ export function toYaml(obj: any): string {
   return dumpYaml(obj, { noRefs: true });
 }
 
-// Unit Test Me!!
 export function createWebhookYaml(
   name: string,
   config: ModuleConfig,
