@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { describe, expect, jest, it, beforeAll } from "@jest/globals";
-import { execSync, spawnSync } from "child_process";
+import { execSync, execFileSync, spawnSync } from "child_process";
 import { promises, readdirSync, existsSync, rmSync } from "fs";
 
 import { waitForDeploymentReady } from "./k8s";
@@ -45,7 +45,7 @@ export function peprUpgrade() {
       ({ manifestUUID, matchedFile } = getManifestData());
 
       // Deploy manifests of pepr@latest
-      execSync(`kubectl create -f ${matchedFile}`, { cwd: "pepr-upgrade-test", stdio: "inherit" });
+      execFileSync("kubectl", ["create", "-f", matchedFile], { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
       // Wait for the deployments to be ready
       await Promise.all([
