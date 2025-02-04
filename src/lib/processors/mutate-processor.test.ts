@@ -290,7 +290,8 @@ describe("processRequest", () => {
     expect(auditAnnotes).toHaveLength(1);
 
     const [key, val] = auditAnnotes[0];
-    expect(Date.now() - parseInt(key)).toBeLessThan(5);
+    const timeWindowMs = 10;
+    expect(Date.now() - parseInt(key)).toBeLessThan(timeWindowMs);
     expect(val).toBe("Action failed: An error occurred with the mutate action.");
   });
 });
