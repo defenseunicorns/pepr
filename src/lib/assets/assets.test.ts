@@ -264,7 +264,7 @@ describe("Assets", () => {
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
- it("should call generateHelmChart without an error when asset class instance is correct", async () => {
+  it("should call generateHelmChart without an error when asset class instance is correct", async () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const webhookGeneratorFunction = jest
