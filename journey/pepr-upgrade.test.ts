@@ -69,12 +69,6 @@ export function peprUpgrade() {
       let manifestUUID;
       ({ manifestUUID, matchedFile } = getManifestData());
 
-      // Replace pepr@latest with pepr@pr-candidate image pepr:dev
-      await replaceString(
-        `pepr-upgrade-test/${matchedFile}`,
-        "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development",
-        "pepr:dev",
-      );
 
       // Deploy manifests of pepr@latest
       const applyOut = spawnSync(`kubectl apply -f ${matchedFile}`, {
