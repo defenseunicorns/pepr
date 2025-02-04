@@ -61,7 +61,7 @@ export function peprUpgrade() {
   it("should prepare, build, and deploy hello-pepr with pepr@pr-candidate", async () => {
     try {
       // Re-generate manifests with pepr@pr-candidate
-      execSync("npx --yes ts-node ../src/cli.ts build", {
+      execSync("npx --yes ts-node ../src/cli.ts build -i pepr:dev", {
         cwd: "pepr-upgrade-test",
         stdio: "inherit",
       });
