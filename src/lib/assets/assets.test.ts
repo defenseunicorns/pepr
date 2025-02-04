@@ -13,6 +13,8 @@ import {
   V1Secret,
   V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node/dist/gen";
+import { WebhookType } from "../enums";
+import { helmLayout } from "./index";
 
 jest.mock("../filesystemService", () => ({
   createDirectoryIfNotExists: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
@@ -260,5 +262,40 @@ describe("Assets", () => {
       .mockResolvedValue(new kind.MutatingWebhookConfiguration());
     await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
     expect(consoleErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it("should call generateHelmChart and get and not get an error when asset class instance is correct", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const webhookGeneratorFunction = jest
+      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
+      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
+    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it("should call generateHelmChart and throw an error when config is incorrect", async () => {
+    const exitString = "Mock console.exit call";
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error(exitString);
+    });
+
+    (helmLayout as jest.Mock).mockReturnValue(null);
+
+    const webhookGeneratorFunction = jest
+      .fn<
+        (
+          assets: Assets,
+          mutateOrValidate: WebhookType,
+          timeoutSeconds: number | undefined,
+        ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
+      >()
+      .mockResolvedValue(new kind.ValidatingWebhookConfiguration());
+
+    await expect(assets.generateHelmChart(webhookGeneratorFunction, "/tmp")).rejects.toThrow(exitString);
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(processExitSpy).toHaveBeenCalledWith(1);
   });
 });
