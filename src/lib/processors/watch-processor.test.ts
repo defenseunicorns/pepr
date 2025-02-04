@@ -26,6 +26,33 @@ jest.mock("../telemetry/metrics", () => ({
     incRetryCount: jest.fn(),
   },
 }));
+
+const testPhaseCallbacks = (
+  mockCallback: (payload: kind.Pod, phase: WatchPhase) => void,
+  watchCallback: jest.Mock,
+  phase: WatchPhase,
+  cbNotCalled: {
+    cb: jest.Mock;
+    phase: WatchPhase;
+  }[],
+) => {
+  console.log(`Entering testPhaseCallbacks for phase: ${phase}`);
+
+  mockCallback({} as kind.Pod, phase);
+
+  expect(watchCallback).toHaveBeenCalledTimes(1);
+  expect(watchCallback).toHaveBeenCalledWith({}, phase);
+  watchCallback.mockClear();
+
+  cbNotCalled.forEach(({ cb, phase }) => {
+    mockCallback({} as kind.Pod, phase);
+    expect(cb).not.toHaveBeenCalled();
+    cb.mockClear();
+  });
+
+  console.log(`Exiting testPhaseCallbacks for phase: ${phase}`);
+};
+
 describe("WatchProcessor", () => {
   const mockStart = jest.fn();
   const mockK8s = jest.mocked(K8s);
@@ -174,48 +201,26 @@ describe("WatchProcessor", () => {
 
     type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
 
-    const firstCall = mockWatch.mock.calls[0] as unknown as mockArg;
-    const secondCall = mockWatch.mock.calls[1] as unknown as mockArg;
-    const thirdCall = mockWatch.mock.calls[2] as unknown as mockArg;
+    const [firstCall, secondCall, thirdCall] = mockWatch.mock.calls as unknown as mockArg[];
 
     expect(firstCall[1].resyncFailureMax).toEqual(5);
     expect(firstCall[1].resyncDelaySec).toEqual(5);
     expect(firstCall[0]).toBeInstanceOf(Function);
 
-    firstCall[0]({} as kind.Pod, WatchPhase.Added);
-    expect(watchCallbackCreate).toHaveBeenCalledTimes(1);
-    expect(watchCallbackCreate).toHaveBeenCalledWith({}, WatchPhase.Added);
+    testPhaseCallbacks(firstCall[0], watchCallbackCreate, WatchPhase.Added, [
+      { cb: watchCallbackUpdate, phase: WatchPhase.Modified },
+      { cb: watchCallbackDelete, phase: WatchPhase.Deleted },
+    ]);
 
-    firstCall[0]({} as kind.Pod, WatchPhase.Modified);
-    firstCall[0]({} as kind.Pod, WatchPhase.Deleted);
-    expect(watchCallbackDelete).toHaveBeenCalledTimes(0);
-    expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
+    testPhaseCallbacks(secondCall[0], watchCallbackUpdate, WatchPhase.Modified, [
+      { cb: watchCallbackCreate, phase: WatchPhase.Added },
+      { cb: watchCallbackDelete, phase: WatchPhase.Deleted },
+    ]);
 
-    watchCallbackCreate.mockClear();
-    watchCallbackUpdate.mockClear();
-    watchCallbackDelete.mockClear();
-
-    secondCall[0]({} as kind.Pod, WatchPhase.Modified);
-    expect(watchCallbackUpdate).toHaveBeenCalledTimes(1);
-    expect(watchCallbackUpdate).toHaveBeenCalledWith({}, WatchPhase.Modified);
-
-    secondCall[0]({} as kind.Pod, WatchPhase.Added);
-    secondCall[0]({} as kind.Pod, WatchPhase.Deleted);
-    expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
-    expect(watchCallbackDelete).toHaveBeenCalledTimes(0);
-
-    watchCallbackCreate.mockClear();
-    watchCallbackUpdate.mockClear();
-    watchCallbackDelete.mockClear();
-
-    thirdCall[0]({} as kind.Pod, WatchPhase.Deleted);
-    expect(watchCallbackDelete).toHaveBeenCalledTimes(1);
-    expect(watchCallbackDelete).toHaveBeenCalledWith({}, WatchPhase.Deleted);
-
-    thirdCall[0]({} as kind.Pod, WatchPhase.Added);
-    thirdCall[0]({} as kind.Pod, WatchPhase.Modified);
-    expect(watchCallbackCreate).toHaveBeenCalledTimes(0);
-    expect(watchCallbackUpdate).toHaveBeenCalledTimes(0);
+    testPhaseCallbacks(thirdCall[0], watchCallbackDelete, WatchPhase.Deleted, [
+      { cb: watchCallbackCreate, phase: WatchPhase.Added },
+      { cb: watchCallbackUpdate, phase: WatchPhase.Modified },
+    ]);
   });
 
   it("should call the metricsCollector methods on respective events", async () => {
