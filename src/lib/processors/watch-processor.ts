@@ -4,11 +4,12 @@ import Log from "../telemetry/logger";
 import { Binding } from "../types";
 import { Capability } from "../core/capability";
 import { Event } from "../enums";
-import { K8s, KubernetesObject, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { K8s, KubernetesObject, WatchCfg, WatchEvent, GenericClass } from "kubernetes-fluent-client";
 import { Queue } from "../core/queue";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { KubernetesListObject } from "kubernetes-fluent-client/dist/types";
 import { filterNoMatchReason } from "../filter/filter";
-import { metricsCollector } from "../telemetry/metrics";
+import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
 import { removeFinalizer } from "../finalizer";
 
 // stores Queue instances
@@ -157,36 +158,8 @@ async function runBinding(
     }
   }, watchCfg);
 
-  // If failure continues, log and exit
-  watcher.events.on(WatchEvent.GIVE_UP, err => {
-    Log.error(err, "Watch failed after 5 attempts, giving up");
-    process.exit(1);
-  });
-
-  watcher.events.on(WatchEvent.CONNECT, url => logEvent(WatchEvent.CONNECT, url));
-
-  watcher.events.on(WatchEvent.DATA_ERROR, err => logEvent(WatchEvent.DATA_ERROR, err.message));
-  watcher.events.on(WatchEvent.RECONNECT, retryCount =>
-    logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
-  );
-  watcher.events.on(WatchEvent.RECONNECT_PENDING, () => logEvent(WatchEvent.RECONNECT_PENDING));
-  watcher.events.on(WatchEvent.GIVE_UP, err => logEvent(WatchEvent.GIVE_UP, err.message));
-  watcher.events.on(WatchEvent.ABORT, err => logEvent(WatchEvent.ABORT, err.message));
-  watcher.events.on(WatchEvent.OLD_RESOURCE_VERSION, err => logEvent(WatchEvent.OLD_RESOURCE_VERSION, err));
-  watcher.events.on(WatchEvent.NETWORK_ERROR, err => logEvent(WatchEvent.NETWORK_ERROR, err.message));
-  watcher.events.on(WatchEvent.LIST_ERROR, err => logEvent(WatchEvent.LIST_ERROR, err.message));
-  watcher.events.on(WatchEvent.LIST, list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)));
-  watcher.events.on(WatchEvent.CACHE_MISS, windowName => {
-    metricsCollector.incCacheMiss(windowName);
-  });
-
-  watcher.events.on(WatchEvent.INIT_CACHE_MISS, windowName => {
-    metricsCollector.initCacheMissWindow(windowName);
-  });
-
-  watcher.events.on(WatchEvent.INC_RESYNC_FAILURE_COUNT, retryCount => {
-    metricsCollector.incRetryCount(retryCount);
-  });
+  // Register event handlers
+  registerWatchEventHandlers(watcher, logEvent, metricsCollector);
 
   // Start the watch
   try {
@@ -204,4 +177,56 @@ export function logEvent(event: WatchEvent, message: string = "", obj?: Kubernet
   } else {
     Log.debug(logMessage);
   }
+}
+
+export type WatchEventArgs<K extends WatchEvent, T extends GenericClass> = {
+  [WatchEvent.LIST]: KubernetesListObject<InstanceType<T>>;
+  [WatchEvent.RECONNECT]: number;
+  [WatchEvent.CACHE_MISS]: string;
+  [WatchEvent.INIT_CACHE_MISS]: string;
+  [WatchEvent.GIVE_UP]: Error;
+  [WatchEvent.ABORT]: Error;
+  [WatchEvent.OLD_RESOURCE_VERSION]: string;
+  [WatchEvent.NETWORK_ERROR]: Error;
+  [WatchEvent.LIST_ERROR]: Error;
+  [WatchEvent.DATA_ERROR]: Error;
+  [WatchEvent.CONNECT]: string;
+  [WatchEvent.RECONNECT_PENDING]: undefined;
+  [WatchEvent.DATA]: undefined;
+  [WatchEvent.INC_RESYNC_FAILURE_COUNT]: number;
+}[K];
+
+export type LogEventFunction = (event: WatchEvent, message?: string) => void;
+export function registerWatchEventHandlers(
+  watcher: WatcherType<GenericClass>,
+  logEvent: LogEventFunction,
+  metricsCollector: MetricsCollectorInstance,
+): void {
+  const eventHandlers: {
+    [K in WatchEvent]?: (arg: WatchEventArgs<K, GenericClass>) => void;
+  } = {
+    [WatchEvent.DATA]: () => null,
+    [WatchEvent.GIVE_UP]: err => {
+      // If failure continues, log and exit
+      logEvent(WatchEvent.GIVE_UP, err.message);
+      process.exit(1);
+    },
+    [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
+    [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),
+    [WatchEvent.RECONNECT]: retryCount =>
+      logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
+    [WatchEvent.RECONNECT_PENDING]: () => logEvent(WatchEvent.RECONNECT_PENDING),
+    [WatchEvent.ABORT]: err => logEvent(WatchEvent.ABORT, err.message),
+    [WatchEvent.OLD_RESOURCE_VERSION]: errMessage => logEvent(WatchEvent.OLD_RESOURCE_VERSION, errMessage),
+    [WatchEvent.NETWORK_ERROR]: err => logEvent(WatchEvent.NETWORK_ERROR, err.message),
+    [WatchEvent.LIST_ERROR]: err => logEvent(WatchEvent.LIST_ERROR, err.message),
+    [WatchEvent.LIST]: list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)),
+    [WatchEvent.CACHE_MISS]: windowName => metricsCollector.incCacheMiss(windowName),
+    [WatchEvent.INIT_CACHE_MISS]: windowName => metricsCollector.initCacheMissWindow(windowName),
+    [WatchEvent.INC_RESYNC_FAILURE_COUNT]: retryCount => metricsCollector.incRetryCount(retryCount),
+  };
+
+  Object.entries(eventHandlers).forEach(([event, handler]) => {
+    watcher.events.on(event as WatchEvent, handler);
+  });
 }

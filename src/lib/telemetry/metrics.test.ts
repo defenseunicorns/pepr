@@ -93,7 +93,7 @@ test("incCacheMiss increments cache miss gauge", async () => {
 test("incRetryCount increments retry count gauge", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
-  collector.incRetryCount("1");
+  collector.incRetryCount(1);
 
   const metrics: string = await collector.getMetrics();
   expect(metrics).toMatch(/testPrefix_resync_failure_count{count="1"} 1/);
