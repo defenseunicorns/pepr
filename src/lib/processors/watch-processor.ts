@@ -227,6 +227,6 @@ export function registerWatchEventHandlers(
   };
 
   Object.entries(eventHandlers).forEach(([event, handler]) => {
-    watcher.events.on(event as WatchEvent, handler);
+    watcher.events.on(event, handler);
   });
 }
