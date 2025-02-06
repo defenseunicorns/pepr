@@ -7,7 +7,7 @@
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 # cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM docker.io/library/node:22-bookworm AS build
+FROM docker.io/library/node:22-alpine AS build
 
 WORKDIR /app
 
@@ -41,7 +41,7 @@ RUN npm run build && \
 # crane digest cgr.dev/chainguard/node-lts:latest
 # cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
 # gcr.io/distroless/nodejs22-debian12@sha256:d00edbf864c5b989f1b69951a13c5c902bf369cca572de59b5ec972552848e33
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:5e248b97ff487071c55d9a9a99e838a103c085c591aa42ba09a7807685ce8f6f
+FROM docker.io/library/node:22-alpine
 
 WORKDIR /app
 
