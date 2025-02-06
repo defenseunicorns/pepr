@@ -32,25 +32,19 @@ const testPhaseCallbacks = (
   watchCallback: jest.Mock,
   phase: WatchPhase,
   cbNotCalled: {
-    cb: jest.Mock;
+    callback: jest.Mock;
     phase: WatchPhase;
   }[],
 ) => {
-  console.log(`Entering testPhaseCallbacks for phase: ${phase}`);
-
   mockCallback({} as kind.Pod, phase);
 
   expect(watchCallback).toHaveBeenCalledTimes(1);
   expect(watchCallback).toHaveBeenCalledWith({}, phase);
-  watchCallback.mockClear();
 
-  cbNotCalled.forEach(({ cb, phase }) => {
+  cbNotCalled.forEach(({ callback, phase }) => {
     mockCallback({} as kind.Pod, phase);
-    expect(cb).not.toHaveBeenCalled();
-    cb.mockClear();
+    expect(callback).not.toHaveBeenCalled();
   });
-
-  console.log(`Exiting testPhaseCallbacks for phase: ${phase}`);
 };
 
 describe("WatchProcessor", () => {
@@ -208,18 +202,26 @@ describe("WatchProcessor", () => {
     expect(firstCall[0]).toBeInstanceOf(Function);
 
     testPhaseCallbacks(firstCall[0], watchCallbackCreate, WatchPhase.Added, [
-      { cb: watchCallbackUpdate, phase: WatchPhase.Modified },
-      { cb: watchCallbackDelete, phase: WatchPhase.Deleted },
+      { callback: watchCallbackUpdate, phase: WatchPhase.Modified },
+      { callback: watchCallbackDelete, phase: WatchPhase.Deleted },
     ]);
+
+    watchCallbackCreate.mockClear();
+    watchCallbackUpdate.mockClear();
+    watchCallbackDelete.mockClear();
 
     testPhaseCallbacks(secondCall[0], watchCallbackUpdate, WatchPhase.Modified, [
-      { cb: watchCallbackCreate, phase: WatchPhase.Added },
-      { cb: watchCallbackDelete, phase: WatchPhase.Deleted },
+      { callback: watchCallbackCreate, phase: WatchPhase.Added },
+      { callback: watchCallbackDelete, phase: WatchPhase.Deleted },
     ]);
 
+    watchCallbackCreate.mockClear();
+    watchCallbackUpdate.mockClear();
+    watchCallbackDelete.mockClear();
+
     testPhaseCallbacks(thirdCall[0], watchCallbackDelete, WatchPhase.Deleted, [
-      { cb: watchCallbackCreate, phase: WatchPhase.Added },
-      { cb: watchCallbackUpdate, phase: WatchPhase.Modified },
+      { callback: watchCallbackCreate, phase: WatchPhase.Added },
+      { callback: watchCallbackUpdate, phase: WatchPhase.Modified },
     ]);
   });
 
