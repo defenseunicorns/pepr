@@ -1,5 +1,5 @@
 import { genEnv } from "../pods";
-import { ModuleConfig } from "../../core/module";
+import { ModuleConfig } from "../../types";
 import { CapabilityExport } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";

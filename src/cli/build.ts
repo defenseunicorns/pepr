@@ -11,7 +11,7 @@ import { RootCmd } from "./root";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
 import { peprFormat } from "./format";
-import { ModuleConfig } from "../lib/core/module";
+import { ModuleConfig } from "../lib/types";
 import {
   watchForChanges,
   determineRbacMode,
@@ -95,7 +95,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "-v, --version <version>",
-        "The version of the Pepr image to use in the deployment manifests. Example: '0.27.3'.",
+        "DEPRECATED: The version of the Pepr image to use in the deployment manifests. Example: '0.27.3'.",
       ).conflicts(["customImage", "registryInfo"]),
     )
     .option(
@@ -164,7 +164,7 @@ export default function (program: RootCmd): void {
         console.info(`✅ Module built successfully at ${path}`);
         return;
       }
-      // set the image version if provided
+      // set the image version if provided -- DEPRECATED
       if (opts.version) cfg.pepr.peprVersion = opts.version;
 
       // Generate a secret for the module

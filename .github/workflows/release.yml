@@ -60,7 +60,7 @@ jobs:
       actions: read
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.0.0
     with:
-      run-scripts: "version, ci, build"
+      run-scripts: "set:version, ci, build"
 
   publish:
     needs: [slsa]
