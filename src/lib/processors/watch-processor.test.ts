@@ -2,12 +2,13 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { afterAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8sInit, WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
-import { setupWatch, logEvent, queueKey, getOrCreateQueue } from "./watch-processor";
+import { setupWatch, logEvent, queueKey, getOrCreateQueue, registerWatchEventHandlers } from "./watch-processor";
 import Log from "../telemetry/logger";
-import { metricsCollector } from "../telemetry/metrics";
+import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
+import { EventEmitter } from "stream";
 
 type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
 
@@ -420,5 +421,92 @@ describe("getOrCreateQueue", () => {
     expect(secondQueue.label()).toBeDefined();
 
     expect(firstQueue).toBe(secondQueue);
+  });
+});
+
+describe("registerWatchEventHandlers", () => {
+  let watcher: WatcherType<GenericClass>;
+  let logEvent: jest.Mock;
+  let metricsCollector: MetricsCollectorInstance;
+
+  beforeEach(() => {
+    const eventEmitter = new EventEmitter();
+
+    watcher = {
+      events: eventEmitter,
+    } as unknown as WatcherType<GenericClass>;
+
+    jest.spyOn(eventEmitter, "on");
+    logEvent = jest.fn();
+
+    metricsCollector = {
+      incCacheMiss: jest.fn(),
+      initCacheMissWindow: jest.fn(),
+      incRetryCount: jest.fn(),
+    } as unknown as MetricsCollectorInstance;
+
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  });
+  it("log event on CONNECT", () => {
+    watcher.events.emit(WatchEvent.CONNECT, "url");
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.CONNECT, "url");
+  });
+  it("log event on DATA_ERROR", () => {
+    watcher.events.emit(WatchEvent.DATA_ERROR, new Error("data_error"));
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.DATA_ERROR, "data_error");
+  });
+
+  it("log event on RECONNECT", () => {
+    watcher.events.emit(WatchEvent.RECONNECT, 1);
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.RECONNECT, "Reconnecting after 1 attempt");
+  });
+
+  it("log event on RECONNECT_PENDING", () => {
+    watcher.events.emit(WatchEvent.RECONNECT_PENDING);
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.RECONNECT_PENDING);
+  });
+
+  it("log event on ABORT", () => {
+    watcher.events.emit(WatchEvent.ABORT, new Error("abort"));
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.ABORT, "abort");
+  });
+  it("log event on OLD_RESOURCE_VERSION", () => {
+    watcher.events.emit(WatchEvent.OLD_RESOURCE_VERSION, "old_resource_version");
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.OLD_RESOURCE_VERSION, "old_resource_version");
+  });
+  it("log event on NETWORK_ERROR", () => {
+    watcher.events.emit(WatchEvent.NETWORK_ERROR, new Error("network_error"));
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.NETWORK_ERROR, "network_error");
+  });
+
+  it("log event on LIST_ERROR", () => {
+    watcher.events.emit(WatchEvent.LIST_ERROR, new Error("network_error"));
+    expect(logEvent).toHaveBeenCalledWith(WatchEvent.LIST_ERROR, "network_error");
+  });
+
+  it("log event on LIST", () => {
+    watcher.events.emit(WatchEvent.LIST, { apiVersion: "v1", items: [] });
+    expect(logEvent).toHaveBeenCalledWith(
+      WatchEvent.LIST,
+      JSON.stringify({ apiVersion: "v1", items: [] }, undefined, 2),
+    );
+  });
+
+  it("log event on CACHE_MISS", () => {
+    watcher.events.emit(WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z");
+    expect(metricsCollector.incCacheMiss).toHaveBeenCalledWith("2025-02-05T04:14:39.535Z");
+  });
+  it("log event on INIT_CACHE_MISS", () => {
+    watcher.events.emit(WatchEvent.INIT_CACHE_MISS, "2025-02-05T04:14:39.535Z");
+    expect(metricsCollector.initCacheMissWindow).toHaveBeenCalledWith("2025-02-05T04:14:39.535Z");
+  });
+  it("log event on INC_RESYNC_FAILURE_COUNT", () => {
+    watcher.events.emit(WatchEvent.INC_RESYNC_FAILURE_COUNT, 1);
+    expect(metricsCollector.incRetryCount).toHaveBeenCalledWith(1);
+  });
+
+  it("log event on DATA", () => {
+    watcher.events.emit(WatchEvent.DATA);
+    expect(logEvent).not.toHaveBeenCalled();
   });
 });
