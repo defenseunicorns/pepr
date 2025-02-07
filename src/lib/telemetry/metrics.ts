@@ -9,7 +9,7 @@ import Log from "./logger";
 
 const loggingPrefix = "MetricsCollector";
 
-type MetricsCollectorInstance = InstanceType<typeof MetricsCollector>;
+export type MetricsCollectorInstance = InstanceType<typeof MetricsCollector>;
 interface MetricNames {
   errors: string;
   alerts: string;
@@ -148,8 +148,8 @@ export class MetricsCollector {
    * Increments the retry count gauge.
    * @param count - The count to increment by.
    */
-  incRetryCount = (count: string): void => {
-    this.incGauge(this.#metricNames.resyncFailureCount, { count });
+  incRetryCount = (count: number): void => {
+    this.incGauge(this.#metricNames.resyncFailureCount, { count: count.toString() });
   };
 
   /**
