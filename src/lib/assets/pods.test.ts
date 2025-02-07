@@ -1,8 +1,9 @@
 import { getNamespace, getWatcher, getDeployment, getModuleSecret, genEnv } from "./pods";
 import { expect, describe, test, jest, afterEach } from "@jest/globals";
 import { Assets } from "./assets";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { gzipSync } from "zlib";
+import * as helpers from "../helpers";
 
 jest.mock("zlib");
 
@@ -365,8 +366,7 @@ describe("moduleSecret function", () => {
 
     // Mock the return value of gzipSync
     (gzipSync as jest.Mock).mockReturnValue(Buffer.from(compressedData));
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    jest.spyOn(require("../helpers"), "secretOverLimit").mockReturnValue(false);
+    jest.spyOn(helpers, "secretOverLimit").mockReturnValue(false);
 
     const result = getModuleSecret(name, data, hash);
 
@@ -391,8 +391,7 @@ describe("moduleSecret function", () => {
 
     // Mock the return value of gzipSync
     (gzipSync as jest.Mock).mockReturnValue(data);
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    jest.spyOn(require("../helpers"), "secretOverLimit").mockReturnValue(true);
+    jest.spyOn(helpers, "secretOverLimit").mockReturnValue(true);
 
     const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
     const processExitMock = jest.spyOn(process, "exit").mockImplementation(() => {

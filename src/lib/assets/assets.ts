@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { CapabilityExport } from "../types";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { TLSOut, genTLS } from "../tls";
 import { WebhookIgnore } from "../k8s";
 import {
@@ -81,7 +81,7 @@ export class Assets {
 
   allYaml = async (
     yamlGenerationFunction: (
-      assyts: Assets,
+      assets: Assets,
       deployments: { default: V1Deployment; watch: V1Deployment | null },
     ) => Promise<string>,
     imagePullSecret?: string,

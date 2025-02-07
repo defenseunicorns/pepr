@@ -6,16 +6,17 @@ import { inspect } from "util";
 import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
 
 import eslintJSON from "../../templates/.eslintrc.template.json";
+import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
-import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../templates/data.json";
-import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import settingsJSON from "../../templates/settings.json";
 import tsConfigJSON from "../../templates/tsconfig.module.json";
-import { sanitizeName } from "./utils";
+import { CustomLabels } from "../../lib/types";
 import { InitOptions } from "../types";
-import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import { OnError, RbacMode } from "./enums";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { gitIgnore, helloPeprTS, packageJSON, peprTS, readmeMd } from "../../templates/data.json";
+import { sanitizeName } from "./utils";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
@@ -30,7 +31,7 @@ export type peprPackageJSON = {
       uuid: string;
       onError: OnError;
       webhookTimeout: number;
-      customLabels: { namespace: Record<string, string> };
+      customLabels: CustomLabels;
       alwaysIgnore: { namespaces: string[] };
       includedFiles: string[];
       env: object;

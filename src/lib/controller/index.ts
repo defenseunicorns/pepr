@@ -9,12 +9,19 @@ import { Capability } from "../core/capability";
 import { MutateResponse, ValidateResponse } from "../k8s";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollector } from "../telemetry/metrics";
-import { ModuleConfig, isWatchMode } from "../core/module";
+import { isWatchMode } from "../core/envChecks";
+import { ModuleConfig } from "../types";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
 import { AdmissionRequest } from "../types";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
+
+export interface ControllerHooks {
+  beforeHook?: (req: AdmissionRequest) => void;
+  afterHook?: (res: MutateResponse | ValidateResponse) => void;
+  onReady?: () => void;
+}
 
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
@@ -39,20 +46,17 @@ export class Controller {
   readonly #beforeHook?: (req: AdmissionRequest) => void;
   readonly #afterHook?: (res: MutateResponse | ValidateResponse) => void;
 
-  constructor(
-    config: ModuleConfig,
-    capabilities: Capability[],
-    beforeHook?: (req: AdmissionRequest) => void,
-    afterHook?: (res: MutateResponse | ValidateResponse) => void,
-    onReady?: () => void,
-  ) {
+  constructor(config: ModuleConfig, capabilities: Capability[], hooks: ControllerHooks = {}) {
+    const { beforeHook, afterHook, onReady } = hooks;
     this.#config = config;
     this.#capabilities = capabilities;
 
     // Initialize the Pepr store for each capability
     new StoreController(capabilities, `pepr-${config.uuid}-store`, () => {
       this.#bindEndpoints();
-      onReady && onReady();
+      if (typeof onReady === "function") {
+        onReady();
+      }
       Log.info("✅ Controller startup complete");
       // Initialize the schedule store for each capability
       new StoreController(capabilities, `pepr-${config.uuid}-schedule`, () => {
@@ -223,7 +227,9 @@ export class Controller {
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Run the before hook if it exists
-        this.#beforeHook && this.#beforeHook(request || {});
+        if (typeof this.#beforeHook === "function") {
+          this.#beforeHook(request || {});
+        }
 
         // Process the request
         const response: MutateResponse | ValidateResponse[] =
@@ -233,7 +239,9 @@ export class Controller {
 
         // Run the after hook if it exists
         [response].flat().map(res => {
-          this.#afterHook && this.#afterHook(res);
+          if (typeof this.#afterHook === "function") {
+            this.#afterHook(res);
+          }
           Log.info({ ...reqMetadata, res }, "Check response");
         });
 

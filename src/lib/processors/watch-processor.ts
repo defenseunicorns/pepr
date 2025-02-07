@@ -137,9 +137,11 @@ async function runBinding(
 
       // [ true, void, undefined ] SHOULD remove finalizer
       // [ false ] should NOT remove finalizer
-      shouldRemoveFinalizer === false
-        ? Log.debug({ obj: kubernetesObject }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`)
-        : await removeFinalizer(binding, kubernetesObject);
+      if (shouldRemoveFinalizer === false) {
+        Log.debug({ obj: kubernetesObject }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`);
+      } else {
+        await removeFinalizer(binding, kubernetesObject);
+      }
     }
   };
 

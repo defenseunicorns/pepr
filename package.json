@@ -22,20 +22,19 @@
     "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
-    "version": "node scripts/set-version.js",
     "build": "tsc && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
+    "set:version": "node scripts/set-version.js",
     "test": "npm run test:unit && npm run test:journey",
     "test:unit": "npm run gen-data-json && jest src --coverage --detectOpenHandles --coverageDirectory=./coverage --testPathIgnorePatterns='cosign.e2e.test.ts'",
     "test:integration": "npm run test:integration:prep && npm run test:integration:run",
     "test:integration:prep": "./integration/prep.sh",
     "test:integration:run": "jest --maxWorkers=4 integration",
     "test:journey": "npm run test:journey:k3d && npm run build && npm run test:journey:image && npm run test:journey:run",
-    "test:journey:prep": "if [ ! -d ./pepr-upgrade-test ]; then git clone https://github.com/defenseunicorns/pepr-upgrade-test.git ; fi",
     "test:journey-wasm": "npm run test:journey:k3d && npm run build && npm run test:journey:image && npm run test:journey:run-wasm",
     "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system",
     "test:journey:image": "docker buildx build --output type=docker --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
-    "test:journey:run": "jest --detectOpenHandles journey/entrypoint.test.ts && npm run test:journey:prep && npm run test:journey:upgrade",
+    "test:journey:run": "jest --detectOpenHandles journey/entrypoint.test.ts && npm run test:journey:upgrade",
     "test:journey:run-wasm": "jest --detectOpenHandles journey/entrypoint-wasm.test.ts",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
     "format:check": "eslint src && prettier src --check",
@@ -57,8 +56,8 @@
     "sigstore": "3.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.6.1",
-    "@commitlint/config-conventional": "19.6.0",
+    "@commitlint/cli": "19.7.1",
+    "@commitlint/config-conventional": "19.7.1",
     "@fast-check/jest": "^2.0.1",
     "@jest/globals": "29.7.0",
     "@types/eslint": "9.6.1",
@@ -72,20 +71,24 @@
     "husky": "^9.1.6",
     "jest": "29.7.0",
     "js-yaml": "^4.1.0",
+    "shellcheck": "^3.0.0",
     "ts-jest": "29.2.5",
     "undici": "^7.0.1"
   },
+  "overrides": {
+    "glob": "^9.0.0"
+  },
   "peerDependencies": {
-    "@typescript-eslint/eslint-plugin": "7.18.0",
-    "@typescript-eslint/parser": "7.18.0",
     "@types/prompts": "2.4.9",
+    "@typescript-eslint/eslint-plugin": "8.23.0",
+    "@typescript-eslint/parser": "8.23.0",
+    "commander": "13.1.0",
+    "esbuild": "0.24.2",
     "eslint": "8.57.0",
-    "commander": "12.1.0",
-    "esbuild": "0.24.0",
     "node-forge": "1.3.1",
     "prettier": "3.4.2",
     "prompts": "2.4.2",
-    "typescript": "^5.3.3",
-    "uuid": "11.0.3"
+    "typescript": "5.7.3",
+    "uuid": "11.0.5"
   }
 }

@@ -1,21 +1,19 @@
 import { genEnv } from "../pods";
-import { ModuleConfig } from "../../core/module";
+import { ModuleConfig } from "../../types";
 import { CapabilityExport } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 
-type CommonOverrideValues = {
+type ChartOverrides = {
   apiToken: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
   hash: string;
   name: string;
-};
-
-type ChartOverrides = CommonOverrideValues & {
   image: string;
 };
+
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
   { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
@@ -34,7 +32,7 @@ export async function overridesFile(
     hash,
     namespace: {
       annotations: {},
-      labels: {
+      labels: config.customLabels?.namespace ?? {
         "pepr.dev": "",
       },
     },

@@ -91,7 +91,7 @@ export class OnSchedule implements Schedule {
       lastTimestamp: new Date(),
       name: this.name,
     };
-    this.store && this.store.setItem(this.name, JSON.stringify(schedule));
+    if (this.store) this.store.setItem(this.name, JSON.stringify(schedule));
   }
 
   /**
@@ -170,6 +170,6 @@ export class OnSchedule implements Schedule {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.store && this.store.removeItem(this.name);
+    if (this.store) this.store.removeItem(this.name);
   }
 }

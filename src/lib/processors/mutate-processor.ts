@@ -10,7 +10,7 @@ import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
 import { AdmissionRequest, Binding } from "../types";
 import Log from "../telemetry/logger";
-import { ModuleConfig } from "../core/module";
+import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
 import { OnError } from "../../cli/init/enums";
@@ -55,7 +55,7 @@ export function logMutateErrorMessage(e: Error): string {
     } else {
       throw new Error("An error occurred in the mutate action.");
     }
-  } catch (e) {
+  } catch {
     return "An error occurred with the mutate action.";
   }
 }

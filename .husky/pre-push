@@ -7,7 +7,6 @@
 MAX_CHANGES=340 #Avg commit size on main is 340 as of 12 Dec 2024
 
 # Get the local branch name
-current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 # Get the remote and branch being pushed to
 remote_name="origin"
@@ -45,7 +44,7 @@ total_changes=$((insertions + deletions))
 if [[ "$total_changes" -gt "$MAX_CHANGES" ]]; then
     echo "[WARNING] This push has $total_changes changes $insertions(+), $deletions(-), threshold is $MAX_CHANGES total changes."
     echo "Consider breaking your changes into smaller, more manageable pull requests."
-    read -p "Do you want to proceed with the push? (y/n, default is n): " choice < /dev/tty
+    read -r -p "Do you want to proceed with the push? (y/n, default is n): " choice < /dev/tty
     choice=${choice:-n} # Set default choice to 'n' if no input
     if [[ "$choice" != "y" ]]; then
         echo "Push aborted."
