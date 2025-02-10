@@ -10,6 +10,9 @@ import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 export const outputDir = "dist/pepr-test-module/child/folder";
 
+/*
+ * Validate the generated Zarf yaml file and image
+ */
 export async function validateZarfYaml(expectedImage: string) {
   // Read the generated yaml files
   const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
@@ -42,6 +45,9 @@ export async function validateZarfYaml(expectedImage: string) {
   expect(actualZarfYaml).toEqual(expectedZarfYaml);
 }
 
+/*
+ * Validate the ClusterRole generated in the K8s yaml file has appropriate rules
+ */
 export async function validateClusterRoleYaml() {
   // Read the generated yaml files
   const k8sYaml = await fs.readFile(
@@ -51,6 +57,10 @@ export async function validateClusterRoleYaml() {
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
   expect(k8sYaml.includes(cr)).toEqual(true);
 }
+
+/*
+ * Validate the values.yaml file in the helm chart has the appropriate RBAC rules
+ */
 
 export async function validateOverridesYamlRbac() {
   const yamlChartRBAC = await fs.readFile(resolve("journey", "resources", "values.yaml"), "utf8");
