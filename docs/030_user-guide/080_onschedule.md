@@ -2,7 +2,6 @@
 
 The `OnSchedule` feature allows you to schedule and automate the execution of specific code at predefined intervals or schedules. This feature is designed to simplify recurring tasks and can serve as an alternative to traditional CronJobs. This code is designed to be run at the top level on a Capability, not within a function like `When`.
 
-
 ## Best Practices
 
 `OnSchedule` is designed for targeting intervals equal to or larger than 30 seconds due to the storage mechanism used to archive schedule info.
