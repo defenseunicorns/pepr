@@ -71,9 +71,20 @@ The workflow for developing features in Pepr is:
 - [Internal Error Occurred](https://docs.pepr.dev/main/best-practices/#internal-error-occurred)
 - [Pepr Store](https://docs.pepr.dev/main/best-practices/#pepr-store)
 
-Pepr is composed of `Modules` (i.e., what happens when you issue `npx pepr init`), [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) like `hello-pepr.ts`, and [Actions](https://docs.pepr.dev/main/user-guide/actions/) (i.e., the blocks of code containing filters and `Mutate`, `Validate`, `Watch`, `Reconcile`, `OnSchedule`). You can have as many Capabilities as you would like in a Module.
+Pepr is composed of `Modules`, `Capabilities`, and `Actions`:
 
-Pepr is a webhook-based system, meaning it is event-driven. When a resource is created, updated, or deleted, Pepr is called to perform the actions you have defined in your Capabilities. It's common for multiple webhooks to exist in a cluster, not just Pepr. When there are multiple webhooks, the order in which they are called is not guaranteed. The only guarantee is that all of the `MutatingWebhooks` will be called before all of the `ValidatingWebhooks`. After the admission webhooks are called, the `Watch` and `Reconcile` are called. The `Reconcile` and `Watch` create a watch on the resources specified in the `When` block and are watched for changes after admission. The difference between reconcile and watch is that `Reconcile` processes events in a queue to guarantee that the events are processed in order where as watch does not.
+- [Actions](https://docs.pepr.dev/main/user-guide/actions/) are the blocks of code containing filters, `Mutate`, `Validate`, `Watch`, `Reconcile`, and `OnSchedule`.
+- [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) such as `hello-pepr.ts`.
+- `Modules` are the result of `npx pepr init`. You can have as many Capabilities as you would like in a Module.
+
+Pepr is a webhook-based system, meaning it is event-driven.
+When a resource is created, updated, or deleted, Pepr is called to perform the actions you have defined in your Capabilities.
+It's common for multiple webhooks to exist in a cluster, not just Pepr.
+When there are multiple webhooks, the order in which they are called is not guaranteed.
+The only guarantee is that all of the `MutatingWebhooks` will be called before all of the `ValidatingWebhooks`.
+After the admission webhooks are called, the `Watch` and `Reconcile` are called.
+The `Reconcile` and `Watch` create a watch on the resources specified in the `When` block and are watched for changes after admission.
+The difference between reconcile and watch is that `Reconcile` processes events in a queue to guarantee that the events are processed in order where as watch does not.
 
 Considering that many webhooks may be modifying the same resource, it is best practice to validate the resource after mutations are made to ensure that the resource is in a valid state if it has been changed since the last mutation.
 
