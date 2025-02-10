@@ -9,9 +9,10 @@
 [![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
-#### **_Type safe Kubernetes middleware for humans_**
+## **_Type safe Kubernetes middleware for humans_**
 
-<img align="right" width="40%" src="_images/pepr.png" />
+<!-- markdownlint-disable MD033 - Image-styling is unsupported on GitHub-flavored markdown -->
+<img alt="The Pepr Logo" align="right" width="40%" src="_images/pepr.png" />
 
 Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops organizational knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
 
@@ -89,7 +90,7 @@ When(a.ConfigMap)
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
   - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
-## Wow, too many words! tl;dr;
+## Wow, too many words! tl;dr
 
 ```bash
 # Create a new Pepr Module
@@ -112,7 +113,7 @@ kubectl apply -f capabilities/hello-pepr.samples.yaml
 > local k8s distro documentation how to reach your localhost, which is where
 > `pepr dev` is serving the code from.
 
-https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4
+<https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4>
 
 ## Concepts
 
@@ -151,8 +152,7 @@ See [actions](./docs/030_user-guide/030_actions/README.md) for more details.
 
 To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) and join the `#pepr` channel.
 
-<a href="https://github.com/defenseunicorns/pepr/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=defenseunicorns/pepr" />
-</a>
+[contributors]: https://contrib.rocks/image?repo=defenseunicorns/pepr
+[![Contributor Chart][contributors]](https://github.com/defenseunicorns/pepr/graphs/contributors)
 
 Made with [contrib.rocks](https://contrib.rocks).
