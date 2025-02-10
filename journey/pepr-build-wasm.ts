@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, beforeAll } from "@jest/globals";
-import { loadYaml, V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { it, beforeAll } from "@jest/globals";
+
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
-
-export const outputDir = "dist/pepr-test-module/child/folder";
+import { validateZarfYaml, outputDir, validateOverridesYamlRbac } from "./pepr-build.helpers";
 
 export function peprBuild() {
   beforeAll(async () => {
@@ -30,79 +28,14 @@ export function peprBuild() {
 
   it("should generate a custom image in zarf.yaml", async () => {
     await fs.access(resolve(cwd, outputDir, "zarf.yaml"));
-    await validateZarfYaml();
+    const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:${execSync("npx pepr --version", { cwd }).toString().trim()}`;
+
+    await validateZarfYaml(expectedImage);
   });
 
   it("should generate a scoped ClusterRole", async () => {
-    const validateHelmChart = true;
-    await validateClusterRoleYaml(validateHelmChart);
+    await validateOverridesYamlRbac();
   });
-}
-
-async function validateZarfYaml() {
-  // Get the version of the pepr binary
-  const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
-
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
-  const zarfYAML = await fs.readFile(resolve(cwd, outputDir, "zarf.yaml"), "utf8");
-
-  // The expected image name
-  const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:0.0.0-development`;
-
-  // The expected zarf yaml contents
-  const expectedZarfYaml = {
-    kind: "ZarfPackageConfig",
-    metadata: {
-      name: "pepr-static-test",
-      description: "Pepr Module: A test module for Pepr",
-      url: "https://github.com/defenseunicorns/pepr",
-      version: "0.0.1",
-    },
-    components: [
-      {
-        name: "module",
-        required: true,
-        manifests: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            files: ["pepr-module-static-test.yaml"],
-          },
-        ],
-        images: [expectedImage],
-      },
-    ],
-  };
-
-  // Check the generated zarf yaml
-  const actualZarfYaml = loadYaml(zarfYAML);
-  expect(actualZarfYaml).toEqual(expectedZarfYaml);
-}
-
-async function validateClusterRoleYaml(validateChart: boolean = false) {
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
-  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
-  expect(k8sYaml.includes(cr)).toEqual(true);
-
-  if (validateChart) {
-    const yamlChartRBAC = await fs.readFile(resolve("journey", "resources", "values.yaml"), "utf8");
-    const expectedYamlChartRBAC = await fs.readFile(
-      resolve("journey", "resources", "values.yaml"),
-      "utf8",
-    );
-    const jsonChartRBAC = yaml.load(yamlChartRBAC) as Record<string, PolicyRule[]>;
-    const expectedJsonChartRBAC = yaml.load(expectedYamlChartRBAC) as Record<string, PolicyRule[]>;
-
-    expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
-  }
 }
 
 // Set rbacMode in the Pepr Module Config and write it back to disk
