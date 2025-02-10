@@ -135,14 +135,12 @@ describe("writeEvent", () => {
       metadata: { name: "test", namespace: "default", uid: "1" },
     };
     const event = { message: "Test event" };
-    await writeEvent(
-      cr as GenericKind,
-      event,
-      "Warning",
-      "ReconciliationFailed",
-      "uds.dev/operator",
-      process.env.HOSTNAME as string,
-    );
+    await writeEvent(cr as GenericKind, event, {
+      eventType: "Warning",
+      eventReason: "ReconciliationFailed",
+      reportingComponent: "uds.dev/operator",
+      reportingInstance: process.env.HOSTNAME as string,
+    });
     expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
     expect(Create).toHaveBeenCalledWith({
       ...event,

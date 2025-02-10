@@ -677,7 +677,14 @@ export async function reconciler(instance: WebApp) {
  * @param status The new status
  */
 async function updateStatus(instance: WebApp, status: Status) {
-  await writeEvent(instance, {phase: status}, "Normal", "CreatedOrUpdate", instance.metadata.name, instance.metadata.name);
+
+  await writeEvent(instance, {phase: status}, {
+      eventType: "Normal",
+      eventReason: "CreatedOrUpdate",
+      reportingComponent: instance.kind,
+      reportingInstance: instance.metadata.name,
+  });
+
   await K8s(WebApp).PatchStatus({
     metadata: {
       name: instance.metadata!.name,
