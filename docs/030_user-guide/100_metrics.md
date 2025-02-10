@@ -17,7 +17,6 @@ The `MetricsCollector` exposes the following metrics:
 
 | `PEPR_MAX_CACHE_MISS_WINDOWS` | Maximum number windows to emit `pepr_cache_miss` metrics for  | default: `Undefined`  |
 
-
 ## API Details
 
 **Method:** GET

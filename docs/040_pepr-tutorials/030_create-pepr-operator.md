@@ -6,21 +6,20 @@ This tutorial will walk you through the process of building a Kubernetes Operato
 
 ## Background
 
-
 The WebApp Operator deploys the WebApp `CustomResourceDefinition`, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
 
 The WebApp instance represents a `Deployment` object with configurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
 
-If any object deployed by the Operator is deleted for any reason, the Operator will abruptly redeploy the object. 
+If any object deployed by the Operator is deleted for any reason, the Operator will abruptly redeploy the object.
 
 ## Steps
 
 - [Create a new Pepr Module](#create-a-new-pepr-module)
 - [Create CRD](#create-crd)
 - [Create Helpers](#create-helpers)
-- [Create Reconciler](#create-reconciler) 
-- [Build and Deploy](#build-and-deploy)
- 
+- [Create Reconciler](#create-reconciler)
+- [Build and Deploy](#demo)
+
 ## Create a new Pepr Module
 
 ```bash
@@ -745,7 +744,7 @@ When(a.CustomResourceDefinition)
     RegisterCRD();
   });
 
-// // Don't let them be deleted
+// Don't let them be deleted
 When(a.Deployment)
   .IsDeleted()
   .WithLabel("pepr.dev/operator")
@@ -775,6 +774,7 @@ When(a.ConfigMap)
   });
 
 ```
+
 - When a WebApp is created or updated, validate it, store the name of the instance and enqueue it for processing.
 - If an "owned" resource (ConfigMap, Service, or Deployment) is deleted, redeploy it.
 - Always redeploy the WebApp CRD if it was deleted as the controller depends on it
@@ -783,7 +783,7 @@ In this section we created a `reconciler.ts` file that contains the function tha
 
 ## Demo
 
-_Create an ephemeral cluster. (Kind or k3d will work)_
+Create an ephemeral cluster (Kind or k3d will work).
 
 Clone the Operator
 
@@ -804,7 +804,7 @@ Build the Pepr manifests (Already built with appropriate RBAC)
 npx pepr build
 ```
 
-Deploy the Operator 
+Deploy the Operator
 
 ```bash
 kubectl apply -f dist/pepr-module-774fab07-77fa-517c-b5f8-c682c96c20c0.yaml
@@ -919,6 +919,7 @@ Port-forward and look at the WebApp in the browser
 ```bash
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
+
 [WebApp](http://localhost:3000)
 ![WebApp](light.png)
 
@@ -960,6 +961,7 @@ Port-forward and look at the WebApp in the browser
 ```bash
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
+
 [WebApp](http://localhost:3000)
 
 ![WebApp](dark.png)
@@ -976,7 +978,6 @@ configmap/kube-root-ca.crt   1      40s
 ```
 
 When the WebApp is deleted, all of the resources that it created are also deleted.
-
 
 ## Conclusion
 
