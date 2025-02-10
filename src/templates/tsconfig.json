@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.module.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"],
     "paths": {
       "pepr": ["../lib.ts"]
     },
