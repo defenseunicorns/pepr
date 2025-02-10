@@ -84,7 +84,7 @@ export default function (program: RootCmd): void {
           if (e instanceof Error) {
             console.error(`Error creating Pepr module:`, e);
           }
-          process.exit(1);
+          return;
         }
       }
     });

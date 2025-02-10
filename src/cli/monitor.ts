@@ -40,7 +40,7 @@ export default function (program: RootCmd): void {
 
       if (podNames.length < 1) {
         console.error(errorMessage);
-        process.exit(1);
+        return;
       }
 
       const log = getK8sLogFromKubeConfig();

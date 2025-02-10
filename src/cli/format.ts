@@ -16,8 +16,6 @@ export default function (program: RootCmd): void {
 
       if (success) {
         console.info("✅ Module formatted");
-      } else {
-        process.exit(1);
       }
     });
 }
