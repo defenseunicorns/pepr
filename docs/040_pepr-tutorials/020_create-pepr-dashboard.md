@@ -33,7 +33,6 @@ kubectl apply -f capabilities/hello-pepr.samples.yaml
 npx pepr deploy
 ```
 
-
 ### Step 2: Create and Apply Our Pepr Dashboard to the Cluster
 
 Create a new file called grafana-dashboard.yaml and add the following content:
@@ -842,7 +841,7 @@ The targets should look something like this:
 
 You should be able to test the Prometheus connection in the Grafana UI by visiting the following URL:
 
-http://localhost:3000/connections/datasources
+<http://localhost:3000/connections/datasources>
 
 The login information for Grafana was set in the values.yaml file:
 
@@ -853,7 +852,7 @@ By clicking on the Prometheus data source, you should be able to test the connec
 
 NOTE: The Prometheus server URL should be something like:
 
-http://monitoring-kube-prometh-prometheus.default:9090/
+<http://monitoring-kube-prometh-prometheus.default:9090/>
 
 You should now be able to select the Pepr Dashboard from the Grafana UI in the "Dashboards" section.
 

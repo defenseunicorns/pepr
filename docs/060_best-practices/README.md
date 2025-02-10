@@ -21,24 +21,26 @@
 
 When developing mutating admission policies, it is essential to include a validation step immediately after applying mutations. This ensures that the changes made by the mutating admission policy were applied correctly and do not introduce unintended inconsistencies or invalid configurations into your Kubernetes cluster.
 
-**Why Validate After Mutating?**
+### Why Validate After Mutating?
 
-1.	Detect Misconfigurations Early:
+1. Detect Misconfigurations Early:
 Mutating admission policies modify incoming resource configurations dynamically. Without validation, you risk introducing invalid configurations into your cluster if the mutation logic contains bugs, unintended side effects, or runs too long and causes a [Webhook Timeout](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts).
-1.	Maintain Cluster Integrity:
+1. Maintain Cluster Integrity:
 By validating the mutated resource, you ensure it adheres to expected formats, standards, and constraints, maintaining the health and stability of your cluster.
-1.	Catch Logic Errors in Mutations:
-A mutation may not always produce the intended output due to edge cases, unexpected inputs, or incorrect assumptions in the mutation logic. 
+1. Catch Logic Errors in Mutations:
+A mutation may not always produce the intended output due to edge cases, unexpected inputs, or incorrect assumptions in the mutation logic.
 
 Validation helps catch such issues early and becomes _particularly_ important if your Module is [configured](https://docs.pepr.dev/main/user-guide/customization/#admission-and-watcher-subparameters) to use a Webhook [failurePolicy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) of `ignore`. In that case, admission requests failures _won't prevent further processing and/or acceptance_ of mutate-failed requests and could result in undesirable resources getting into your cluster!
-1.	Comply with Kubernetes Best Practices:
+
+1. Comply with Kubernetes Best Practices:
 Kubernetes resources must meet specific structural and functional requirements. Validating ensures compliance, preventing the risk of deployment failures or runtime errors.
 
-**How to implement a Validate-After-Mutate Pattern**
+### How to implement a Validate-After-Mutate Pattern
 
 1. Apply the desired transformations to the resource in the `Mutate` block.
 2. Validate the mutated resource in the `Validate` block to ensure it adheres to the expected structure.
 3. If the validation fails, reject the resource with a descriptive message explaining the issue.
+
 ```typescript
 When(a.Pod)
   .IsCreated()
@@ -69,16 +71,11 @@ The workflow for developing features in Pepr is:
 - [Internal Error Occurred](https://docs.pepr.dev/main/best-practices/#internal-error-occurred)
 - [Pepr Store](https://docs.pepr.dev/main/best-practices/#pepr-store)
 
-
-Welcome to the the debugging section! 🐛
-
 Pepr is composed of `Modules` (i.e., what happens when you issue `npx pepr init`), [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) like `hello-pepr.ts`, and [Actions](https://docs.pepr.dev/main/user-guide/actions/) (i.e., the blocks of code containing filters and `Mutate`, `Validate`, `Watch`, `Reconcile`, `OnSchedule`). You can have as many Capabilities as you would like in a Module.
 
-Pepr is a webhook-based system, meaning it is event-driven. When a resource is created, updated, or deleted, Pepr is called to perform the actions you have defined in your Capabilities. It's common for multiple webhooks to exist in a cluster, not just Pepr. When there are multiple webhooks, the order in which they are called is not guaranteed. The only guarantee is that all of the `MutatingWebhooks` will be called before all of the `ValidatingWebhooks`. After the admission webhooks are called, the `Watch` and `Reconcile` are called. The `Reconcile` and `Watch` create a watch on the resources specified in the `When` block and are watched for changes after admission. The difference between reconcile and watch is that `Reconcile` processes events in a queue to guarantee that the events are processed in order where as watch does not. 
+Pepr is a webhook-based system, meaning it is event-driven. When a resource is created, updated, or deleted, Pepr is called to perform the actions you have defined in your Capabilities. It's common for multiple webhooks to exist in a cluster, not just Pepr. When there are multiple webhooks, the order in which they are called is not guaranteed. The only guarantee is that all of the `MutatingWebhooks` will be called before all of the `ValidatingWebhooks`. After the admission webhooks are called, the `Watch` and `Reconcile` are called. The `Reconcile` and `Watch` create a watch on the resources specified in the `When` block and are watched for changes after admission. The difference between reconcile and watch is that `Reconcile` processes events in a queue to guarantee that the events are processed in order where as watch does not.
 
 Considering that many webhooks may be modifying the same resource, it is best practice to validate the resource after mutations are made to ensure that the resource is in a valid state if it has been changed since the last mutation.
-
-
 
 ```typescript
 When(a.Pod)
@@ -100,14 +97,13 @@ When(a.Pod)
 
 _If you think your Webhook is not being called for a given resource, check the `*WebhookConfiguration`._
 
-
 ### Debugging During Module Development
 
 Pepr supports breakpoints in the VSCode editor. To use breakpoints, run `npx pepr dev` in the root of a Pepr module using a JavaScript Debug Terminal. This command starts the Pepr development server running at `localhost:3000` with the `*WebhookConfiguration` configured to send `AdmissionRequest` objects to the local address.
 
 This allows you to set breakpoints in `Mutate()`, `Validate()`, `Reconcile()`, `Watch()` or `OnSchedule()` and step through module code.
 
-Note that you will need a cluster running: 
+Note that you will need a cluster running:
 
 ```bash
 k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait
@@ -191,8 +187,7 @@ The failurePolicy and timeouts can be set in the Module's `package.json` file, u
 
 Read more on customization [here](https://docs.pepr.dev/main/user-guide/customization/).
 
-
-### Pepr Store
+### Pepr Store Custom Resource
 
 If you need to read all store keys, or you think the PeprStore is malfunctioning, you can check the PeprStore CR:
 
@@ -259,21 +254,21 @@ When using Pepr as a `Validating` Webhook, it is recommended to set the Webhook'
 
 By following these best practices, you can help protect your Pepr Controller from potential security threats.
 
-## Reconcile 
+## Reconcile
 
-Fills a similar niche to .Watch() -- and runs in the Watch Controller -- but it employs a Queue to force sequential processing of resource states once they are returned by the Kubernetes API. This allows things like operators to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource. For example, creating and then deleting a resource should be processed in that exact order to avoid state inconsistencies.
+Fills a similar niche to `.Watch()` -- and runs in the Watch Controller -- but it employs a Queue to force sequential processing of resource states once they are returned by the Kubernetes API. This allows things like operators to handle bursts of events without overwhelming the system or the Kubernetes API. It provides a mechanism to back off when the system is under heavy load, enhancing overall stability and maintaining the state consistency of Kubernetes resources, as the order of operations can impact the final state of a resource. For example, creating and then deleting a resource should be processed in that exact order to avoid state inconsistencies.
 
 ```typescript
 When(WebApp)
   .IsCreatedOrUpdated()
   .Validate(validator)
   .Reconcile(async instance => {
-     // Do WORK HERE
+     // Do work here
 ```
 
 ## Pepr Store
 
-The store is backed by ETCD in a `PeprStore` resource, and updates happen at 5-second intervals when an array of patches is sent to the Kubernetes API Server. The store is intentionally not designed to be `transactional`; instead, it is built to be eventually consistent, meaning that the last operation within the interval will be persisted, potentially overwriting other operations. In simpler terms, changes to the data are made without a guarantee that they will occur simultaneously, so caution is needed in managing errors and ensuring consistency.
+The store is backed by ETCD in a `PeprStore` resource, and updates happen at 5-second intervals when an array of patches is sent to the Kubernetes API Server. The store is intentionally not designed to be `transactional`; instead, it is built to be eventually consistent, meaning that the last operation within the interval will be persisted, potentially overwriting other operations. Changes to the data are made without a guarantee that they will occur simultaneously, so caution is needed in managing errors and ensuring consistency.
 
 ## Watch
 
