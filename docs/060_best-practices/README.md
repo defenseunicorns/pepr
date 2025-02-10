@@ -72,7 +72,7 @@ The workflow for developing features in Pepr is:
 
 Welcome to the the debugging section! 🐛
 
-Pepr is composed of `Modules` (ie, what happens when you issue `npx pepr init`), [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) like `hello-pepr.ts`, and [Actions](https://docs.pepr.dev/main/user-guide/actions/) (ie, the blocks of code containing filters and `Mutate`, `Validate`, `Watch`, `Reconcile`, `OnSchedule`). You can have as many Capabilities as you would like in a Module.
+Pepr is composed of `Modules` (i.e., what happens when you issue `npx pepr init`), [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) like `hello-pepr.ts`, and [Actions](https://docs.pepr.dev/main/user-guide/actions/) (i.e., the blocks of code containing filters and `Mutate`, `Validate`, `Watch`, `Reconcile`, `OnSchedule`). You can have as many Capabilities as you would like in a Module.
 
 Pepr is a webhook-based system, meaning it is event-driven. When a resource is created, updated, or deleted, Pepr is called to perform the actions you have defined in your Capabilities. It's common for multiple webhooks to exist in a cluster, not just Pepr. When there are multiple webhooks, the order in which they are called is not guaranteed. The only guarantee is that all of the `MutatingWebhooks` will be called before all of the `ValidatingWebhooks`. After the admission webhooks are called, the `Watch` and `Reconcile` are called. The `Reconcile` and `Watch` create a watch on the resources specified in the `When` block and are watched for changes after admission. The difference between reconcile and watch is that `Reconcile` processes events in a queue to guarantee that the events are processed in order where as watch does not. 
 
