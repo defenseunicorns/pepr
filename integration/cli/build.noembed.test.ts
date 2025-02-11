@@ -56,21 +56,21 @@ describe("build", () => {
         },
       );
 
-      const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-
       it.each([
-        { filename: new RegExp(`^${uuidPattern}-chart/$`) },
-        { filename: new RegExp(`^pepr-${uuidPattern}\\.js\\.map$`) },
-        { filename: new RegExp(`^pepr-${uuidPattern}\\.js$`) },
-        { filename: new RegExp(`^pepr-module-${uuidPattern}\\.yaml$`) },
-        { filename: /^zarf\.yaml$/ },
+        { filename: `^UUID-chart/$` },
+        { filename: `^pepr-UUID\\.js\\.map$` },
+        { filename: `^pepr-UUID\\.js$` },
+        { filename: `^pepr-module-UUID\\.yaml$` },
+        { filename: `^zarf\\.yaml$` },
         // Legal files are omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-        { filename: new RegExp(`^pepr-${uuidPattern}\\.js\\.LEGAL\\.txt$`) },
-        { filename: /^pepr\.js\.LEGAL\.txt$/ },
+        { filename: `^pepr-UUID\\.js\\.LEGAL\\.txt$` },
+        { filename: `^pepr\\.js\\.LEGAL\\.txt$` },
       ])("should not create: '$filename'", ({ filename }) => {
+        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        const regex = new RegExp(filename.replace("UUID", uuidPattern));
         const files = readdirSync(`${testModule}/dist/`);
 
-        const matchingFiles = files.filter(file => filename.test(file));
+        const matchingFiles = files.filter(file => regex.test(file));
 
         expect(matchingFiles.length).toBe(0);
       });
