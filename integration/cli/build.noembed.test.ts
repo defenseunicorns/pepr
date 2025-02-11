@@ -51,24 +51,8 @@ describe("build", () => {
     );
 
     describe("for use as a library", () => {
-      let omittedConfigFiles;
-      let omittedLegalFiles;
-      beforeAll(() => {
-        const packageJson = resource.fromFile(`${testModule}/package.json`);
-        const uuid = packageJson.pepr.uuid;
-        omittedConfigFiles = [
-          [`${uuid}-chart/`],
-          [`pepr-${uuid}.js.map`],
-          [`pepr-${uuid}.js`],
-          [`pepr-module-${uuid}.yaml`],
-          [`zarf.yaml`],
-        ];
-        omittedLegalFiles = [[`pepr-${uuid}.js.LEGAL.txt`], [`pepr.js.LEGAL.txt`]];
-      });
-
-      it.each(omittedConfigFiles)("should not create configuration file: '%s'", filename => {
-        expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
-      });
+      const packageJson = resource.fromFile(`${testModule}/package.json`);
+      const uuid = packageJson.pepr.uuid;
 
       it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.js.map`], [`pepr.js`]])(
         "should create configuration file: '%s'",
@@ -77,10 +61,23 @@ describe("build", () => {
         },
       );
 
-      it.each(omittedLegalFiles)("should not create legal file: '%s'", filename => {
-        // Omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-        expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
+      it.each([
+        { filename: `${uuid}-chart/` },
+        { filename: `pepr-${uuid}.js.map` },
+        { filename: `pepr-${uuid}.js` },
+        { filename: `pepr-module-${uuid}.yaml` },
+        { filename: `zarf.yaml` },
+      ])("should not create configuration file: '$filename'", input => {
+        expect(existsSync(`${testModule}/dist/${input.filename}`)).toBe(false);
       });
+
+      it.each([{ filename: `pepr-${uuid}.js.LEGAL.txt` }, { filename: `pepr.js.LEGAL.txt` }])(
+        "should not create legal file: '$filename'",
+        input => {
+          // Omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
+          expect(existsSync(`${testModule}/dist/${input.filename}`)).toBe(false);
+        },
+      );
     });
   });
 });
