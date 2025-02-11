@@ -4,7 +4,7 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
@@ -50,25 +50,29 @@ describe("build", () => {
 
     describe("for use as a library", () => {
       it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.js.map`], [`pepr.js`]])(
-        "should create configuration file: '%s'",
+        "should create: '%s'",
         filename => {
           expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
         },
       );
 
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
       it.each([
-        { filename: `${uuidRegex}-chart/` },
-        { filename: `pepr-${uuidRegex}.js.map` },
-        { filename: `pepr-${uuidRegex}.js` },
-        { filename: `pepr-module-${uuidRegex}.yaml` },
-        { filename: `zarf.yaml` },
+        { filename: new RegExp(`^${uuidPattern}-chart/$`) },
+        { filename: new RegExp(`^pepr-${uuidPattern}\\.js\\.map$`) },
+        { filename: new RegExp(`^pepr-${uuidPattern}\\.js$`) },
+        { filename: new RegExp(`^pepr-module-${uuidPattern}\\.yaml$`) },
+        { filename: /^zarf\.yaml$/ },
         // Legal files are omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-        { filename: `pepr-${uuidRegex}.js.LEGAL.txt` },
-        { filename: `pepr.js.LEGAL.txt` },
-      ])("should not create configuration file: '$filename'", input => {
-        expect(existsSync(`${testModule}/dist/${input.filename}`)).toBe(false);
+        { filename: new RegExp(`^pepr-${uuidPattern}\\.js\\.LEGAL\\.txt$`) },
+        { filename: /^pepr\.js\.LEGAL\.txt$/ },
+      ])("should not create: '$filename'", ({ filename }) => {
+        const files = readdirSync(`${testModule}/dist/`);
+
+        const matchingFiles = files.filter(file => filename.test(file));
+
+        expect(matchingFiles.length).toBe(0);
       });
     });
   });
