@@ -8,7 +8,6 @@ import { existsSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
-import * as resource from "../helpers/resource";
 import { Result } from "../helpers/cmd";
 
 const FILE = path.basename(__filename);
@@ -25,8 +24,6 @@ describe("build", () => {
     const id = FILE.split(".").at(1);
     const testModule = `${workdir.path()}/${id}`;
     let buildOutput: Result;
-    let packageJson;
-    let uuid: string;
 
     beforeAll(async () => {
       await fs.rm(testModule, { recursive: true, force: true });
@@ -43,8 +40,6 @@ describe("build", () => {
 
       const buildArgs = [`--no-embed`].join(" ");
       buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
-      packageJson = resource.fromFile(`${testModule}/package.json`);
-      uuid = packageJson.pepr.uuid;
     }, time.toMs("3m"));
 
     it("should execute 'pepr build'", () => {
@@ -61,23 +56,20 @@ describe("build", () => {
         },
       );
 
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
       it.each([
-        { filename: `${uuid}-chart/` },
-        { filename: `pepr-${uuid}.js.map` },
-        { filename: `pepr-${uuid}.js` },
-        { filename: `pepr-module-${uuid}.yaml` },
+        { filename: `${uuidRegex}-chart/` },
+        { filename: `pepr-${uuidRegex}.js.map` },
+        { filename: `pepr-${uuidRegex}.js` },
+        { filename: `pepr-module-${uuidRegex}.yaml` },
         { filename: `zarf.yaml` },
+        // Legal files are omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
+        { filename: `pepr-${uuidRegex}.js.LEGAL.txt` },
+        { filename: `pepr.js.LEGAL.txt` },
       ])("should not create configuration file: '$filename'", input => {
         expect(existsSync(`${testModule}/dist/${input.filename}`)).toBe(false);
       });
-
-      it.each([{ filename: `pepr-${uuid}.js.LEGAL.txt` }, { filename: `pepr.js.LEGAL.txt` }])(
-        "should not create legal file: '$filename'",
-        input => {
-          // Omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-          expect(existsSync(`${testModule}/dist/${input.filename}`)).toBe(false);
-        },
-      );
     });
   });
 });
