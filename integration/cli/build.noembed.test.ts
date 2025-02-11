@@ -9,6 +9,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
+import { Result } from "../helpers/cmd";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -23,7 +24,7 @@ describe("build", () => {
   describe("when building a module", () => {
     const id = FILE.split(".").at(1);
     const testModule = `${workdir.path()}/${id}`;
-
+    let buildOutput: Result;
     beforeAll(async () => {
       await fs.rm(testModule, { recursive: true, force: true });
       const initArgs = [
@@ -38,11 +39,13 @@ describe("build", () => {
       await pepr.cli(testModule, { cmd: `npm install` });
 
       const buildArgs = [`--no-embed`].join(" ");
-      await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
+      buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
     }, time.toMs("3m"));
 
     it("should execute 'pepr build'", () => {
-      expect(true).toBe(true);
+      expect(buildOutput.exitcode).toBe(0);
+      expect(buildOutput.stderr.join("").trim()).toContain("");
+      expect(buildOutput.stdout.join("").trim()).toContain("Module built successfully at");
     });
 
     describe("for use as a library", () => {
