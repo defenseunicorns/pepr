@@ -51,15 +51,20 @@ describe("build", () => {
     );
 
     describe("for use as a library", () => {
-      const packageJson = resource.fromFile(`${testModule}/package.json`);
-      const uuid = packageJson.pepr.uuid;
-      const omittedConfigFiles = [
-        [`${uuid}-chart/`],
-        [`pepr-${uuid}.js.map`],
-        [`pepr-${uuid}.js`],
-        [`pepr-module-${uuid}.yaml`],
-        [`zarf.yaml`],
-      ];
+      let omittedConfigFiles;
+      let omittedLegalFiles;
+      beforeAll(() => {
+        const packageJson = resource.fromFile(`${testModule}/package.json`);
+        const uuid = packageJson.pepr.uuid;
+        omittedConfigFiles = [
+          [`${uuid}-chart/`],
+          [`pepr-${uuid}.js.map`],
+          [`pepr-${uuid}.js`],
+          [`pepr-module-${uuid}.yaml`],
+          [`zarf.yaml`],
+        ];
+        omittedLegalFiles = [[`pepr-${uuid}.js.LEGAL.txt`], [`pepr.js.LEGAL.txt`]];
+      });
 
       it.each(omittedConfigFiles)("should not create configuration file: '%s'", filename => {
         expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
@@ -72,13 +77,10 @@ describe("build", () => {
         },
       );
 
-      it.each([[`pepr-${uuid}.js.LEGAL.txt`], [`pepr.js.LEGAL.txt`]])(
-        "should not create legal file: '%s'",
-        filename => {
-          // Omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-          expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
-        },
-      );
+      it.each(omittedLegalFiles)("should not create legal file: '%s'", filename => {
+        // Omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
+        expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
+      });
     });
   });
 });
