@@ -8,33 +8,28 @@ import { resolve } from "path";
 import { V1ObjectMeta, KubernetesObject } from "@kubernetes/client-node";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
-import { validateZarfYaml, outputDir, validateClusterRoleYaml } from "./pepr-build.helpers";
+import { validateZarfYaml, validateClusterRoleYaml } from "./pepr-build.helpers";
 
 export function peprBuild() {
-  it("should successfully build the Pepr project", async () => {
-    execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
+  it("should build the Pepr module in scoped mode", async () => {
+    execSync("npx pepr build --rbac-mode=scoped", { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
-  });
-
-  it("should successfully build the Pepr project with arguments", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
-      cwd: cwd,
-      stdio: "inherit",
-    });
   });
 
   it("should generate produce the K8s yaml file", async () => {
     await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
   });
 
-  it("should generate the zarf.yaml file", async () => {
-    await fs.access(resolve(cwd, "dist", "zarf.yaml"));
+  it("should generate the zarf.yaml file with the correct image", async () => {
+    const zarfFilePath = resolve(cwd, "dist", "zarf.yaml");
+    await fs.access(zarfFilePath);
     const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${execSync("npx pepr --version", { cwd }).toString().trim()}`;
-    await validateZarfYaml(expectedImage);
+    await validateZarfYaml(expectedImage, zarfFilePath);
   });
 
-  it("should generate a scoped ClusterRole", async () => {
-    await validateClusterRoleYaml();
+  it("should generate a clusterRole that is least privileged", async () => {
+    const kubernetesManifestPath = resolve(cwd, "dist", "pepr-module-static-test.yaml");
+    await validateClusterRoleYaml(kubernetesManifestPath);
   });
 
   it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {

@@ -11,13 +11,12 @@ import { validateZarfYaml, outputDir, validateOverridesYamlRbac } from "./pepr-b
 
 export function peprBuild() {
   beforeAll(async () => {
-    const dir = resolve(cwd);
     await fs.mkdir(outputDir, { recursive: true });
     await addScopedRbacMode();
   });
-  it("should successfully build the Pepr project with arguments and rbacMode scoped", async () => {
+  it("should successfully build the Pepr project with specific output directory and rbacMode scoped", async () => {
     execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
-      cwd: cwd,
+      cwd,
       stdio: "inherit",
     });
   });
@@ -26,15 +25,17 @@ export function peprBuild() {
     await fs.access(resolve(cwd, outputDir, "pepr-module-static-test.yaml"));
   });
 
-  it("should generate a custom image in zarf.yaml", async () => {
-    await fs.access(resolve(cwd, outputDir, "zarf.yaml"));
+  it("should generate a custom image in zarf.yaml with correct image", async () => {
+    const zarfFilePath = resolve(cwd, outputDir, "zarf.yaml");
+    await fs.access(zarfFilePath);
     const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:${execSync("npx pepr --version", { cwd }).toString().trim()}`;
 
-    await validateZarfYaml(expectedImage);
+    await validateZarfYaml(expectedImage, zarfFilePath);
   });
 
-  it("should generate a scoped ClusterRole", async () => {
-    await validateOverridesYamlRbac();
+  it("should generate the right values in the values file to create a scoped clusterRole", async () => {
+    const valuesFilePath = resolve(cwd, outputDir, "static-test-chart", "values.yaml");
+    await validateOverridesYamlRbac(valuesFilePath);
   });
 }
 

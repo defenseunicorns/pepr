@@ -13,9 +13,9 @@ export const outputDir = "dist/pepr-test-module/child/folder";
 /*
  * Validate the generated Zarf yaml file and image
  */
-export async function validateZarfYaml(expectedImage: string) {
-  // Read the generated yaml files
-  const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
+export async function validateZarfYaml(expectedImage: string, filePath: string) {
+  // Read the generated yaml files from the child folder
+  const zarfYAML = await fs.readFile(filePath, "utf8");
 
   const expectedZarfYaml = {
     kind: "ZarfPackageConfig",
@@ -48,12 +48,9 @@ export async function validateZarfYaml(expectedImage: string) {
 /*
  * Validate the ClusterRole generated in the K8s yaml file has appropriate rules
  */
-export async function validateClusterRoleYaml() {
+export async function validateClusterRoleYaml(manifestsPath: string) {
   // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
+  const k8sYaml = await fs.readFile(manifestsPath, "utf8");
   const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
   expect(k8sYaml.includes(cr)).toEqual(true);
 }
@@ -62,8 +59,8 @@ export async function validateClusterRoleYaml() {
  * Validate the values.yaml file in the helm chart has the appropriate RBAC rules
  */
 
-export async function validateOverridesYamlRbac() {
-  const yamlChartRBAC = await fs.readFile(resolve("journey", "resources", "values.yaml"), "utf8");
+export async function validateOverridesYamlRbac(valuesFilePath: string) {
+  const yamlChartRBAC = await fs.readFile(valuesFilePath, "utf8");
   const expectedYamlChartRBAC = await fs.readFile(
     resolve("journey", "resources", "values.yaml"),
     "utf8",
@@ -71,5 +68,5 @@ export async function validateOverridesYamlRbac() {
   const jsonChartRBAC = yaml.load(yamlChartRBAC) as Record<string, PolicyRule[]>;
   const expectedJsonChartRBAC = yaml.load(expectedYamlChartRBAC) as Record<string, PolicyRule[]>;
 
-  expect(JSON.stringify(jsonChartRBAC)).toEqual(JSON.stringify(expectedJsonChartRBAC));
+  expect(JSON.stringify(jsonChartRBAC.rbac)).toEqual(JSON.stringify(expectedJsonChartRBAC.rbac));
 }
