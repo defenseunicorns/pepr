@@ -25,6 +25,9 @@ describe("build", () => {
     const id = FILE.split(".").at(1);
     const testModule = `${workdir.path()}/${id}`;
     let buildOutput: Result;
+    let packageJson;
+    let uuid: string;
+
     beforeAll(async () => {
       await fs.rm(testModule, { recursive: true, force: true });
       const initArgs = [
@@ -40,6 +43,8 @@ describe("build", () => {
 
       const buildArgs = [`--no-embed`].join(" ");
       buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
+      packageJson = resource.fromFile(`${testModule}/package.json`);
+      uuid = packageJson.pepr.uuid;
     }, time.toMs("3m"));
 
     it("should execute 'pepr build'", () => {
@@ -49,9 +54,6 @@ describe("build", () => {
     });
 
     describe("for use as a library", () => {
-      const packageJson = resource.fromFile(`${testModule}/package.json`);
-      const uuid = packageJson.pepr.uuid;
-
       it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.js.map`], [`pepr.js`]])(
         "should create configuration file: '%s'",
         filename => {
