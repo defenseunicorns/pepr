@@ -20,7 +20,7 @@ describe("build", () => {
     await workdir.recreate();
   }, time.toMs("60s"));
 
-  describe("builds a module", () => {
+  describe("when building a module", () => {
     const id = FILE.split(".").at(1);
     const testModule = `${workdir.path()}/${id}`;
 
@@ -38,50 +38,38 @@ describe("build", () => {
       await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
+    it(
+      "should execute 'pepr build'",
+      async () => {
+        const argz = [`--no-embed`].join(" ");
+        const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
+        expect(build.exitcode).toBe(0);
+        expect(build.stderr.join("").trim()).toContain("");
+        expect(build.stdout.join("").trim()).toContain("Module built successfully at");
+      },
+      time.toMs("1m"),
+    );
+
     describe("for use as a library", () => {
-      let packageJson;
-      let uuid: string;
+      const packageJson = resource.fromFile(`${testModule}/package.json`);
+      const uuid = packageJson.pepr.uuid;
 
-      it(
-        "builds",
-        async () => {
-          const argz = [`--no-embed`].join(" ");
-          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
-          expect(build.exitcode).toBe(0);
-          expect(build.stderr.join("").trim()).toContain("");
-          expect(build.stdout.join("").trim()).toContain("Module built successfully at");
+      it.each([
+        [`pepr-${uuid}.js`],
+        [`pepr-${uuid}.js.map`],
+        [`pepr-${uuid}.js.LEGAL.txt`],
+        [`pepr-module-${uuid}.yaml`],
+        [`zarf.yaml`],
+        [`${uuid}-chart/`],
+      ])("should not create configuration file: '%s'", filename => {
+        expect(existsSync(`${testModule}/dist/${filename}`)).toBe(false);
+      });
 
-          packageJson = await resource.fromFile(`${testModule}/package.json`);
-          uuid = packageJson.pepr.uuid;
+      it.each([[`pepr.js`], [`pepr.js.map`], [`pepr.js.LEGAL.txt`]])(
+        "should create configuration file: '%s'",
+        filename => {
+          expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
         },
-        time.toMs("1m"),
-      );
-
-      it(
-        "outputs appropriate configuration",
-        async () => {
-          const missing = [
-            `${testModule}/dist/pepr-${uuid}.js`,
-            `${testModule}/dist/pepr-${uuid}.js.map`,
-            `${testModule}/dist/pepr-${uuid}.js.LEGAL.txt`,
-            `${testModule}/dist/pepr-module-${uuid}.yaml`,
-            `${testModule}/dist/zarf.yaml`,
-            `${testModule}/dist/${uuid}-chart/`,
-          ];
-          for (const path of missing) {
-            expect(existsSync(path)).toBe(false);
-          }
-
-          const found = [
-            `${testModule}/dist/pepr.js`,
-            `${testModule}/dist/pepr.js.map`,
-            `${testModule}/dist/pepr.js.LEGAL.txt`,
-          ];
-          for (const path of found) {
-            expect(existsSync(path)).toBe(true);
-          }
-        },
-        time.toMs("1m"),
       );
     });
   });
