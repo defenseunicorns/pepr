@@ -4,8 +4,6 @@ permissions:
   actions: read
 
 on:
-  workflow_dispatch:
-    
   push:
     branches:
       - main
