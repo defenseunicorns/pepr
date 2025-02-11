@@ -2,40 +2,34 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
 import { expect, it } from "@jest/globals";
-import { loadYaml } from "@kubernetes/client-node";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
 import { V1ObjectMeta, KubernetesObject } from "@kubernetes/client-node";
 import yaml from "js-yaml";
 import { cwd } from "./entrypoint.test";
-
-const outputDir = "dist/pepr-test-module/child/folder";
+import { validateZarfYaml, validateClusterRoleYaml } from "./pepr-build.helpers";
 
 export function peprBuild() {
-  it("should successfully build the Pepr project", async () => {
-    execSync("npx pepr build", { cwd: cwd, stdio: "inherit" });
+  it("should build the Pepr module in scoped mode", async () => {
+    execSync("npx pepr build --rbac-mode=scoped", { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
-  });
-
-  it("should successfully build the Pepr project with arguments", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns --rbac-mode scoped -o ${outputDir}`, {
-      cwd: cwd,
-      stdio: "inherit",
-    });
   });
 
   it("should generate produce the K8s yaml file", async () => {
     await fs.access(resolve(cwd, "dist", "pepr-module-static-test.yaml"));
   });
 
-  it("should generate the zarf.yaml file", async () => {
-    await fs.access(resolve(cwd, "dist", "zarf.yaml"));
-    await validateZarfYaml();
+  it("should generate the zarf.yaml file with the correct image", async () => {
+    const zarfFilePath = resolve(cwd, "dist", "zarf.yaml");
+    await fs.access(zarfFilePath);
+    const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${execSync("npx pepr --version", { cwd }).toString().trim()}`;
+    await validateZarfYaml(expectedImage, zarfFilePath);
   });
 
-  it("should generate a scoped ClusterRole", async () => {
-    await validateClusterRoleYaml();
+  it("should generate a clusterRole that is least privileged", async () => {
+    const kubernetesManifestPath = resolve(cwd, "dist", "pepr-module-static-test.yaml");
+    await validateClusterRoleYaml(kubernetesManifestPath);
   });
 
   it("should correctly merge in the package.json env vars into the values.yaml helm chart file", async () => {
@@ -100,17 +94,6 @@ export function peprBuild() {
   });
 }
 
-async function validateClusterRoleYaml() {
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(
-    resolve(cwd, outputDir, "pepr-module-static-test.yaml"),
-    "utf8",
-  );
-  const cr = await fs.readFile(resolve("journey", "resources", "clusterrole.yaml"), "utf8");
-
-  expect(k8sYaml.includes(cr)).toEqual(true);
-}
-
 async function validateHelmChart() {
   const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
   const helmOutput = execSync("helm template .", {
@@ -129,53 +112,6 @@ async function validateHelmChart() {
 
     expect(helmJSON.toString()).toBe(expectedJSON.toString());
   }
-}
-async function validateZarfYaml() {
-  // Get the version of the pepr binary
-  const peprVer = execSync("npx pepr --version", { cwd }).toString().trim();
-
-  // Read the generated yaml files
-  const k8sYaml = await fs.readFile(resolve(cwd, "dist", "pepr-module-static-test.yaml"), "utf8");
-  const zarfYAML = await fs.readFile(resolve(cwd, "dist", "zarf.yaml"), "utf8");
-
-  // The expected image name
-  const expectedImage = `ghcr.io/defenseunicorns/pepr/controller:v${peprVer}`;
-
-  // The expected zarf yaml contents
-  const expectedZarfYaml = {
-    kind: "ZarfPackageConfig",
-    metadata: {
-      name: "pepr-static-test",
-      description: "Pepr Module: A test module for Pepr",
-      url: "https://github.com/defenseunicorns/pepr",
-      version: "0.0.1",
-    },
-    components: [
-      {
-        name: "module",
-        required: true,
-        manifests: [
-          {
-            name: "module",
-            namespace: "pepr-system",
-            files: ["pepr-module-static-test.yaml"],
-          },
-        ],
-        images: [expectedImage],
-      },
-    ],
-  };
-
-  // Check the generated zarf yaml
-  const actualZarfYaml = loadYaml(zarfYAML);
-  expect(actualZarfYaml).toEqual(expectedZarfYaml);
-
-  // Check the generated k8s yaml
-  expect(k8sYaml).toMatch(`image: ${expectedImage}`);
-  expect(k8sYaml).toMatch(`name: MY_CUSTOM_VAR`);
-  expect(k8sYaml).toMatch(`value: example-value`);
-  expect(k8sYaml).toMatch(`name: ZARF_VAR`);
-  expect(k8sYaml).toMatch(`value: '###ZARF_VAR_THING###'`);
 }
 
 function parseYAMLToJSON(yamlContent: string): KubernetesObject[] | null {
