@@ -7,7 +7,7 @@
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 # cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM FROM docker.io/library/node:22-bookworm AS build
+FROM docker.io/library/node:22-bookworm AS build
 
 WORKDIR /app
 
