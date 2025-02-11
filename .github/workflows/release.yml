@@ -46,7 +46,7 @@ jobs:
         run: |
           #!/bin/bash
 
-          npm install -g npm
+          npm install -g npm@10.9.2
 
           npm run set:version
 
