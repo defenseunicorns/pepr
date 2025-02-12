@@ -319,6 +319,16 @@ describe("webhookConfigGenerator", () => {
       "cicd",
     ]);
   });
+  it("should use a specified host", async () => {
+    const assetsWithHost = new Assets(assets.config, assets.path, assets.imagePullSecrets, "localhost");
+    assetsWithHost.capabilities = assets.capabilities;
+    const apiTokenPattern = "[a-fA-F0-9]{32}";
+    const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiTokenPattern}`);
+
+    const result = await webhookConfigGenerator(assetsWithHost, WebhookType.VALIDATE);
+
+    expect(result!.webhooks![0].clientConfig.url).toMatch(expected);
+  });
 });
 
 describe("validateRule", () => {
@@ -375,19 +385,21 @@ describe("validateRule", () => {
 });
 
 describe("generateWebhookRules", () => {
-  it("should generate a webhook rule for creating Unicorns when the assets have a secret object for mutate on a create event", async () => {
-    const result = await generateWebhookRules(assets, true);
-    const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
-    expect(secretRule).toEqual([
-      { apiGroups: ["pepr.dev"], apiVersions: ["v1"], operations: ["CREATE"], resources: ["unicorns"] },
-    ]);
-  });
-  it("should generate a webhook rule for creating secrets when the assets have a secret object for mutate on a create event", async () => {
-    const result = await generateWebhookRules(assets, true);
-    const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
-    expect(secretRule).toEqual([
-      { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
-    ]);
+  describe("when the assets have a secret object for mutate on a create event", () => {
+    it("should generate a webhook rule for creating Unicorns", async () => {
+      const result = await generateWebhookRules(assets, true);
+      const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
+      expect(secretRule).toEqual([
+        { apiGroups: ["pepr.dev"], apiVersions: ["v1"], operations: ["CREATE"], resources: ["unicorns"] },
+      ]);
+    });
+    it("should generate a webhook rule for creating secrets", async () => {
+      const result = await generateWebhookRules(assets, true);
+      const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
+      expect(secretRule).toEqual([
+        { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
+      ]);
+    });
   });
 
   it("should return an empty array if capabilities is empty", async () => {
@@ -406,19 +418,19 @@ describe("peprIgnoreNamespaces", () => {
 });
 
 describe("resolveIgnoreNamespaces", () => {
-  it("should default to empty array ig config is empty", () => {
+  it("should default to empty array if config is empty", () => {
     const result = resolveIgnoreNamespaces();
     expect(result).toEqual([]);
   });
-
-  it("should return the config ignore namespaces if not provided PEPR_ADDITIONAL_IGNORED_NAMESPACES is not provided", () => {
+  it("should return the config ignore namespaces", () => {
     const result = resolveIgnoreNamespaces(["payments", "istio-system"]);
     expect(result).toEqual(["payments", "istio-system"]);
   });
-
-  it("should include additionalIgnoredNamespaces when PEPR_ADDITIONAL_IGNORED_NAMESPACES is provided", () => {
-    process.env.PEPR_ADDITIONAL_IGNORED_NAMESPACES = "uds, project-fox";
-    const result = resolveIgnoreNamespaces(["zarf", "lula"]);
-    expect(result).toEqual(["uds", "project-fox", "zarf", "lula"]);
+  describe("when PEPR_ADDITIONAL_IGNORED_NAMESPACES are provided", () => {
+    it("should include additionalIgnoredNamespaces", () => {
+      process.env.PEPR_ADDITIONAL_IGNORED_NAMESPACES = "uds, project-fox";
+      const result = resolveIgnoreNamespaces(["zarf", "lula"]);
+      expect(result).toEqual(["uds", "project-fox", "zarf", "lula"]);
+    });
   });
 });
