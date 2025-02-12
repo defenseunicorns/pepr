@@ -1,4 +1,4 @@
-import { describe, jest, test, beforeEach, afterEach, expect } from "@jest/globals";
+import { describe, jest, it, beforeEach, afterEach, expect } from "@jest/globals";
 import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./deploymentChecks";
@@ -22,7 +22,7 @@ describe("namespaceDeploymentsReady", () => {
     jest.useRealTimers();
   });
 
-  test("should return true if all deployments are ready", async () => {
+  it("should return true if all deployments are ready", async () => {
     const deployments = {
       items: [
         {
@@ -64,7 +64,7 @@ describe("namespaceDeploymentsReady", () => {
     expect(result).toBe(expected);
   });
 
-  test("should call checkDeploymentStatus if any deployments are not ready", async () => {
+  it("should call checkDeploymentStatus if any deployments are not ready", async () => {
     const deployments = {
       items: [
         {
@@ -157,7 +157,7 @@ describe("checkDeploymentStatus", () => {
     jest.resetAllMocks();
     jest.useRealTimers();
   });
-  test("should return true if all deployments are ready", async () => {
+  it("should return true if all deployments are ready", async () => {
     const deployments = {
       items: [
         {
@@ -199,7 +199,7 @@ describe("checkDeploymentStatus", () => {
     expect(result).toBe(expected);
   });
 
-  test("should return false if any deployments are not ready", async () => {
+  it("should return false if any deployments are not ready", async () => {
     const deployments = {
       items: [
         {
