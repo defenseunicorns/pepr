@@ -8,10 +8,10 @@ import {
   admissionDeployTemplate,
   serviceMonitorTemplate,
 } from "./helm";
-import { expect, describe, test } from "@jest/globals";
+import { expect, describe, it } from "@jest/globals";
 describe("Kubernetes Template Generators", () => {
   describe("nsTemplate", () => {
-    test("should generate a Namespace template correctly", () => {
+    it("should generate a Namespace template correctly", () => {
       const result = namespaceTemplate();
       expect(result).toContain("apiVersion: v1");
       expect(result).toContain("kind: Namespace");
@@ -20,7 +20,7 @@ describe("Kubernetes Template Generators", () => {
   });
 
   describe("chartYaml", () => {
-    test("should generate a Chart.yaml content correctly", () => {
+    it("should generate a Chart.yaml content correctly", () => {
       const name = "test-app";
       const description = "A test application";
       const result = chartYaml(name, description);
@@ -31,7 +31,7 @@ describe("Kubernetes Template Generators", () => {
   });
 
   describe("watcherDeployTemplate", () => {
-    test("should generate a Deployment template for the watcher correctly", () => {
+    it("should generate a Deployment template for the watcher correctly", () => {
       const result = watcherDeployTemplate(`${Date.now()}`);
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
@@ -40,7 +40,7 @@ describe("Kubernetes Template Generators", () => {
   });
 
   describe("admissionDeployTemplate", () => {
-    test("should generate a Deployment template for the admission controller correctly", () => {
+    it("should generate a Deployment template for the admission controller correctly", () => {
       const result = admissionDeployTemplate(`${Date.now()}`);
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
@@ -49,7 +49,7 @@ describe("Kubernetes Template Generators", () => {
   });
 
   describe("admissionServiceMonitor", () => {
-    test("should generate a Service Monitor template for the admission controller correctly", () => {
+    it("should generate a Service Monitor template for the admission controller correctly", () => {
       const result = serviceMonitorTemplate("admission");
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");
@@ -59,7 +59,7 @@ describe("Kubernetes Template Generators", () => {
   });
 
   describe("watcherServiceMonitor", () => {
-    test("should generate a Service Monitor template for the watcher controller correctly", () => {
+    it("should generate a Service Monitor template for the watcher controller correctly", () => {
       const result = serviceMonitorTemplate("watcher");
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");

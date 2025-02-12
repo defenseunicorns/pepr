@@ -1,5 +1,5 @@
 import { getNamespace, getWatcher, getDeployment, getModuleSecret, genEnv } from "./pods";
-import { expect, describe, test, jest, afterEach } from "@jest/globals";
+import { expect, describe, it, jest, afterEach } from "@jest/globals";
 import { Assets } from "./assets";
 import { ModuleConfig } from "../types";
 import { gzipSync } from "zlib";
@@ -296,7 +296,7 @@ const assets: Assets = JSON.parse(`{
   "hash": "e303205079a4445946f6eacde9ec4800534653f85aca6f84539d0f7158a22569"
 }`);
 describe("namespace function", () => {
-  test("should create a namespace object without labels if none are provided", () => {
+  it("should create a namespace object without labels if none are provided", () => {
     const result = getNamespace();
     expect(result).toEqual({
       apiVersion: "v1",
@@ -318,12 +318,12 @@ describe("namespace function", () => {
     });
   });
 
-  test("should create a namespace object with empty labels if an empty object is provided", () => {
+  it("should create a namespace object with empty labels if an empty object is provided", () => {
     const result = getNamespace({});
     expect(result.metadata?.labels).toEqual({});
   });
 
-  test("should create a namespace object with provided labels", () => {
+  it("should create a namespace object with provided labels", () => {
     const labels = { "pepr.dev/controller": "admission", "istio-injection": "enabled" };
     const result = getNamespace(labels);
     expect(result.metadata?.labels).toEqual(labels);
@@ -331,14 +331,14 @@ describe("namespace function", () => {
 });
 
 describe("watcher function", () => {
-  test("watcher with bindings", () => {
+  it("watcher with bindings", () => {
     const result = getWatcher(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeTruthy();
     expect(result!.metadata!.name).toBe("pepr-static-test-watcher");
   });
 
-  test("watcher without bindings", () => {
+  it("watcher without bindings", () => {
     assets.capabilities = [];
     const result = getWatcher(assets, "test-hash", "test-timestamp");
 
@@ -346,7 +346,7 @@ describe("watcher function", () => {
   });
 });
 describe("deployment function", () => {
-  test("deployment", () => {
+  it("deployment", () => {
     const result = getDeployment(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeTruthy();
@@ -358,7 +358,7 @@ describe("moduleSecret function", () => {
     jest.resetAllMocks();
   });
 
-  test("moduleSecret within limit", () => {
+  it("moduleSecret within limit", () => {
     const name = "test";
     const data = Buffer.from("test data");
     const hash = "test-hash";
@@ -384,7 +384,7 @@ describe("moduleSecret function", () => {
     });
   });
 
-  test("moduleSecret over limit", () => {
+  it("moduleSecret over limit", () => {
     const name = "test";
     const data = Buffer.from("test data");
     const hash = "test-hash";
@@ -411,7 +411,7 @@ describe("moduleSecret function", () => {
 });
 
 describe("genEnv", () => {
-  test("generates default environment variables without watch mode", () => {
+  it("generates default environment variables without watch mode", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       alwaysIgnore: {
@@ -430,7 +430,7 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
-  test("generates default environment variables with watch mode", () => {
+  it("generates default environment variables with watch mode", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       alwaysIgnore: {
@@ -449,7 +449,7 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
-  test("overrides default environment variables with config.env", () => {
+  it("overrides default environment variables with config.env", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       logLevel: "debug",
@@ -473,7 +473,7 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
-  test("handles empty config.env correctly", () => {
+  it("handles empty config.env correctly", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       logLevel: "error",
@@ -494,7 +494,7 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
-  test("should not be able to override PEPR_WATCH_MODE in package.json pepr env", () => {
+  it("should not be able to override PEPR_WATCH_MODE in package.json pepr env", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       logLevel: "error",
@@ -511,7 +511,7 @@ describe("genEnv", () => {
     expect(watchMode.value).toEqual("true");
   });
 
-  test("handles no config.env correctly", () => {
+  it("handles no config.env correctly", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       logLevel: "error",
@@ -531,7 +531,7 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
-  test("handles ignoreWatchMode for helm chart", () => {
+  it("handles ignoreWatchMode for helm chart", () => {
     const config: ModuleConfig = {
       uuid: "12345",
       logLevel: "error",
