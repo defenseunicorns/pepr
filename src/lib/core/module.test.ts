@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, expect, jest, test, describe } from "@jest/globals";
+import { beforeEach, expect, jest, it, describe } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
@@ -38,30 +38,30 @@ const packageJSON: PackageJSON = {
   },
 };
 
-test("should instantiate Controller and start it with the default port", () => {
+it("should instantiate Controller and start it with the default port", () => {
   new PeprModule(packageJSON);
   expect(startServerMock).toHaveBeenCalledWith(3000);
 });
 
-test("should instantiate Controller and start it with the specified port", () => {
+it("should instantiate Controller and start it with the specified port", () => {
   const module = new PeprModule(packageJSON, [], { deferStart: true });
   const port = Math.floor(Math.random() * 10000) + 1000;
   module.start(port);
   expect(startServerMock).toHaveBeenCalledWith(port);
 });
 
-test("should not start if deferStart is true", () => {
+it("should not start if deferStart is true", () => {
   new PeprModule(packageJSON, [], { deferStart: true });
   expect(startServerMock).not.toHaveBeenCalled();
 });
 
-test("should reject invalid pepr onError conditions", () => {
+it("should reject invalid pepr onError conditions", () => {
   const cfg = clone(packageJSON);
   cfg.pepr.onError = "invalidError";
   expect(() => new PeprModule(cfg)).toThrow();
 });
 
-test("should allow valid pepr onError conditions", () => {
+it("should allow valid pepr onError conditions", () => {
   const cfg = clone(packageJSON);
   cfg.pepr.onError = OnError.AUDIT;
   expect(() => new PeprModule(cfg)).not.toThrow();
@@ -73,13 +73,13 @@ test("should allow valid pepr onError conditions", () => {
   expect(() => new PeprModule(cfg)).not.toThrow();
 });
 
-test("should not create a controller if PEPR_MODE is set to build", () => {
+it("should not create a controller if PEPR_MODE is set to build", () => {
   process.env.PEPR_MODE = "build";
   new PeprModule(packageJSON);
   expect(startServerMock).not.toHaveBeenCalled();
 });
 
-test("should send the capabilities to the parent process if PEPR_MODE is set to build", () => {
+it("should send the capabilities to the parent process if PEPR_MODE is set to build", () => {
   const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
   process.env.PEPR_MODE = "build";
 
@@ -119,7 +119,7 @@ describe("Capability", () => {
     };
   });
 
-  test("should handle OnSchedule", () => {
+  it("should handle OnSchedule", () => {
     const { OnSchedule } = capability;
     OnSchedule(schedule);
     expect(capability.hasSchedule).toBe(true);
