@@ -34,6 +34,11 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          
       - name: "Pepr Controller: Login to GHCR"
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
