@@ -75,7 +75,7 @@ export async function webhookConfigGenerator(
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
   const ignore: V1LabelSelectorRequirement[] = [];
 
-  const { name, tls, config, apiToken, host } = assets;
+  const { name, tls, config, apiPath, host } = assets;
   const ignoreNS = concat(peprIgnoreNamespaces, resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces));
 
   // Add any namespaces to ignore
@@ -91,18 +91,18 @@ export async function webhookConfigGenerator(
     caBundle: tls.ca,
   };
 
-  // The URL must include the API Token
-  const apiPath = `/${mutateOrValidate}/${apiToken}`;
+  // The URL must include the API Path
+  const fullApiPath = `/${mutateOrValidate}/${apiPath}`;
 
   // If a host is specified, use that with a port of 3000
   if (host) {
-    clientConfig.url = `https://${host}:3000${apiPath}`;
+    clientConfig.url = `https://${host}:3000${fullApiPath}`;
   } else {
     // Otherwise, use the service
     clientConfig.service = {
       name: name,
       namespace: "pepr-system",
-      path: apiPath,
+      path: fullApiPath,
     };
   }
 

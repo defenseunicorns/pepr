@@ -47,7 +47,7 @@ const assets: Assets = JSON.parse(`{
       "key": ""
     }
   },
-  "apiToken": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
+  "apiPath": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
   "alwaysIgnore": {
     "namespaces": []
   },
@@ -322,8 +322,8 @@ describe("webhookConfigGenerator", () => {
   it("should use a specified host", async () => {
     const assetsWithHost = new Assets(assets.config, assets.path, assets.imagePullSecrets, "localhost");
     assetsWithHost.capabilities = assets.capabilities;
-    const apiTokenPattern = "[a-fA-F0-9]{32}";
-    const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiTokenPattern}`);
+    const apiPathPattern = "[a-fA-F0-9]{32}";
+    const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiPathPattern}`);
 
     const result = await webhookConfigGenerator(assetsWithHost, WebhookType.VALIDATE);
 

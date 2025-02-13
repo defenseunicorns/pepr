@@ -25,7 +25,7 @@ export async function destroyModule(name: string): Promise<void> {
     K8s(kind.Secret, { namespace }).Delete(`${name}-module`),
     K8s(kind.Service, { namespace }).Delete(name),
     K8s(kind.Secret, { namespace }).Delete(`${name}-tls`),
-    K8s(kind.Secret, { namespace }).Delete(`${name}-api-token`),
+    K8s(kind.Secret, { namespace }).Delete(`${name}-api-path`),
     K8s(kind.Deployment, { namespace }).Delete(name),
     K8s(kind.Deployment, { namespace }).Delete(`${name}-watcher`),
     K8s(kind.Service, { namespace }).Delete(`${name}-watcher`),
