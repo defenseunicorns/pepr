@@ -10,297 +10,200 @@ import {
 } from "./webhooks";
 import { Event, WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
-import { Binding } from "../types";
+import { Binding, CapabilityExport, ModuleConfig } from "../types";
+import { WebhookIgnore } from "../k8s";
+import { TLSOut } from "../tls";
 import { Assets } from "./assets";
 
-const assets: Assets = JSON.parse(`{
-  "config": {
-    "uuid": "static-test",
-    "onError": "ignore",
-    "webhookTimeout": 10,
-    "customLabels": {
-      "namespace": {
-        "pepr.dev": ""
-      }
-    },
-    "alwaysIgnore": {
-      "namespaces": ["cicd"]
-    },
-    "includedFiles": [],
-    "env": {
-      "MY_CUSTOM_VAR": "example-value",
-      "ZARF_VAR": "###ZARF_VAR_THING###"
-    },
-    "peprVersion": "0.0.0-development",
-    "appVersion": "0.0.1",
-    "description": "A test module for Pepr"
+export type AssetsType = {
+  name: string;
+  apiToken: string;
+  tls: TLSOut;
+  config: ModuleConfig;
+  path: string;
+  alwaysIgnore: WebhookIgnore;
+  imagePullSecrets: string[];
+  capabilities: CapabilityExport[];
+  image: string;
+  buildTimestamp: string;
+  host?: string;
+};
+
+type LooseBinding = Omit<Binding, "filters" | "model"> & {
+  filters?: Partial<Binding["filters"]>;
+  model?: Partial<Binding["model"]>;
+};
+
+type LooseAssets = Omit<AssetsType, "config" | "deploy"> & {
+  config?: AssetsType["config"] & { includedFiles?: string[] };
+  hash: string;
+};
+
+const allBindings: LooseBinding[] = [
+  {
+    kind: { kind: "Namespace", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
   },
-  "path": "/Users/cmwylie19/pepr/pepr-test-module/dist/pepr-static-test.js",
-  "name": "pepr-static-test",
-  "tls": {
-    "ca": "",
-    "key": "",
-    "crt": "",
-    "pem": {
-      "ca": "",
-      "crt": "",
-      "key": ""
-    }
+  {
+    kind: { kind: "Namespace", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: {
+      name: "pepr-demo-2",
+      namespaces: [],
+      labels: {},
+      annotations: {},
+    },
+    isWatch: true,
   },
-  "apiToken": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
-  "alwaysIgnore": {
-    "namespaces": []
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "example-1", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
   },
-  "capabilities": [
-    {
-      "name": "hello-pepr",
-      "description": "A simple example capability to show how things work.",
-      "namespaces": [
-        "pepr-demo",
-        "pepr-demo-2"
-      ],
-      "bindings": [
-        {
-          "kind": {
-            "kind": "Namespace",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "Namespace",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "pepr-demo-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isWatch": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isWatch": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATEORUPDATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "change": "by-label"
-            },
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "DELETE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "change": "by-label"
-            },
-            "annotations": {}
-          },
-          "isValidate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-4",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-4a",
-            "namespaces": [
-              "pepr-demo-2"
-            ],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "ConfigMap",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "",
-            "namespaces": [],
-            "labels": {
-              "chuck-norris": ""
-            },
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "kind": "Secret",
-            "version": "v1",
-            "group": ""
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "secret-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "group": "pepr.dev",
-            "version": "v1",
-            "kind": "Unicorn"
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-1",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        },
-        {
-          "kind": {
-            "group": "pepr.dev",
-            "version": "v1",
-            "kind": "Unicorn"
-          },
-          "event": "CREATE",
-          "filters": {
-            "name": "example-2",
-            "namespaces": [],
-            "labels": {},
-            "annotations": {}
-          },
-          "isMutate": true
-        }
-      ],
-      "hasSchedule": false
-    }
-  ],
-  "image": "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development",
-  "buildTimestamp": "1721936569867",
-  "hash": "e303205079a4445946f6eacde9ec4800534653f85aca6f84539d0f7158a22569"
-}`);
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "example-2", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "example-2", namespaces: [], labels: {}, annotations: {} },
+    isValidate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "example-2", namespaces: [], labels: {}, annotations: {} },
+    isWatch: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "", namespaces: [], labels: {}, annotations: {} },
+    isValidate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE_OR_UPDATE,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: { change: "by-label" },
+      annotations: {},
+    },
+    isMutate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.DELETE,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: { change: "by-label" },
+      annotations: {},
+    },
+    isValidate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "example-4", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: {
+      name: "example-4a",
+      namespaces: ["pepr-demo-2"],
+      labels: {},
+      annotations: {},
+    },
+    isMutate: true,
+  },
+  {
+    kind: { kind: "ConfigMap", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: {
+      name: "",
+      namespaces: [],
+      labels: { "chuck-norris": "" },
+      annotations: {},
+    },
+    isMutate: true,
+  },
+  {
+    kind: { kind: "Secret", version: "v1", group: "" },
+    event: Event.CREATE,
+    filters: { name: "secret-1", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
+  },
+  {
+    kind: { group: "pepr.dev", version: "v1", kind: "Unicorn" },
+    event: Event.CREATE,
+    filters: { name: "example-1", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
+  },
+  {
+    kind: { group: "pepr.dev", version: "v1", kind: "Unicorn" },
+    event: Event.CREATE,
+    filters: { name: "example-2", namespaces: [], labels: {}, annotations: {} },
+    isMutate: true,
+  },
+];
+
+// Factory function to generate test assets
+const createTestAssets = (overrides?: Partial<AssetsType>): LooseAssets => {
+  return {
+    config: {
+      uuid: "static-test",
+      onError: "ignore",
+      webhookTimeout: 10,
+      customLabels: { namespace: { "pepr.dev": "" } },
+      alwaysIgnore: { namespaces: ["cicd"] },
+      includedFiles: [],
+      env: {
+        MY_CUSTOM_VAR: "example-value",
+        ZARF_VAR: "###ZARF_VAR_THING###",
+      },
+      peprVersion: "0.0.0-development",
+      appVersion: "0.0.1",
+      description: "A test module for Pepr",
+    },
+    path: "/Users/cmwylie19/pepr/pepr-test-module/dist/pepr-static-test.js",
+    name: "pepr-static-test",
+    tls: {
+      ca: "",
+      key: "",
+      crt: "",
+      pem: { ca: "", crt: "", key: "" },
+    },
+    apiToken: "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
+    alwaysIgnore: { namespaces: [] },
+    capabilities: [
+      {
+        name: "hello-pepr",
+        description: "A simple example capability to show how things work.",
+        namespaces: ["pepr-demo", "pepr-demo-2"],
+        bindings: allBindings as Binding[],
+        hasSchedule: false,
+      },
+    ],
+    image: "ghcr.io/defenseunicorns/pepr/controller:v0.0.0-development",
+    buildTimestamp: Date.now().toString(),
+    hash: "e303205079a4445946f6eacde9ec4800534653f85aca6f84539d0f7158a22569",
+    // not sure where it comes from - temporarily adding it to avoid type error
+    imagePullSecrets: [""],
+    ...overrides,
+  };
+};
+
+const assets: AssetsType = createTestAssets() as AssetsType;
 
 describe("webhookConfigGenerator", () => {
   it("should have correct timeoutSeconds 10", async () => {
