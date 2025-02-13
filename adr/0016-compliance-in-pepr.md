@@ -20,8 +20,7 @@ Extend the fluent API with a new keyword function that accepts a strongly typed 
 ### Consequences ###
 
 - Extend the Capability class with a new function, such as `CompliesWith()`, that accepts a strongly typed control to associate it with a given binding.
-- Store compliance data in `PeprStore` (or introduce a new store for this purpose).
-- Prevent deletion of compliance data from PeprStore for audit purposes, unless a new store is used.
+- Store compliance data in `PeprStore` in a new instance prevent corruption of compliance data through Store API.
 - Enhance the Pepr CLI to generate compliance reports based on stored compliance data.
 
 ##### Pros
@@ -29,13 +28,12 @@ Extend the fluent API with a new keyword function that accepts a strongly typed 
 - Gives Pepr the ability to generate compliance reports based on the status of compliance controls on demand.
 - Straightforward to implement and maintain.
 - Should not make a major impact in terms of resource utilization.
+- Report generation can be automated.
 
 ##### Cons
 
-_Questions_
-- How do Exemptions work here?
-- What does the audit trail look like
-- We should probably just use a new store where the Store API is not mapped
+- Module Authors need to update their modules to include compliance controls.
+- It is possible that Pepr may need to introduce a new depedency to support reporting in certain formats.
 
 ### Related Repos ###
 
