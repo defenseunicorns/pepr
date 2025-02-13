@@ -203,7 +203,10 @@ const createTestAssets = (overrides?: Partial<AssetsType>): LooseAssets => {
   };
 };
 
-const assets: AssetsType = createTestAssets() as AssetsType;
+const loseAssets: LooseAssets = createTestAssets();
+const assets: Assets = new Assets(loseAssets.config as ModuleConfig, loseAssets.path, loseAssets.imagePullSecrets);
+
+assets.capabilities = [...loseAssets.capabilities];
 
 describe("webhookConfigGenerator", () => {
   it("should have correct timeoutSeconds 10", async () => {
