@@ -62,7 +62,6 @@ describe("StoreController", () => {
         testCapability.OnSchedule(mockSchedule);
       }
 
-      // Mock the timeout in the constructor
       const controllerStore = new StoreController([testCapability], storeName, () => {});
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
