@@ -26,7 +26,7 @@ Extend the fluent API with a new keyword function that accepts a strongly typed 
 
 ##### Pros
 
-- Gives Pepr the ability to generate compliance reports based on the status of compliance controls.
+- Gives Pepr the ability to generate compliance reports based on the status of compliance controls on demand.
 - Straightforward to implement and maintain.
 - Should not make a major impact in terms of resource utilization.
 
