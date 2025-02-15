@@ -6,7 +6,7 @@ import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 
 type ChartOverrides = {
-  apiToken: string;
+  apiPath: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
   hash: string;
@@ -16,7 +16,7 @@ type ChartOverrides = {
 
 // Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
-  { hash, name, image, config, apiToken, capabilities }: ChartOverrides,
+  { hash, name, image, config, apiPath, capabilities }: ChartOverrides,
   path: string,
   imagePullSecrets: string[],
 ): Promise<void> {
@@ -27,7 +27,7 @@ export async function overridesFile(
     additionalIgnoredNamespaces: [],
     rbac: rbacOverrides,
     secrets: {
-      apiToken: Buffer.from(apiToken).toString("base64"),
+      apiPath: Buffer.from(apiPath).toString("base64"),
     },
     hash,
     namespace: {

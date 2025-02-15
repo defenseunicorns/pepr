@@ -41,7 +41,7 @@ const assets: Assets = JSON.parse(`{
       "key": ""
     }
   },
-  "apiToken": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
+  "apiPath": "db5eb6d40e3744fcc2d7863c8f56ce24aaa94ff32cf22918700bdb9369e6d426",
   "alwaysIgnore": {
     "namespaces": []
   },

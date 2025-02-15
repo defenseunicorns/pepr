@@ -139,7 +139,7 @@ jest.mock("./index", () => ({
       watcherServiceYaml: "/tmp/watcher-service.yaml",
       admissionServiceYaml: "/tmp/admission-service.yaml",
       tlsSecretYaml: "/tmp/tls-secret.yaml",
-      apiTokenSecretYaml: "/tmp/api-token-secret.yaml",
+      apiPathSecretYaml: "/tmp/api-path-secret.yaml",
       storeRoleYaml: "/tmp/store-role.yaml",
       storeRoleBindingYaml: "/tmp/store-role-binding.yaml",
       clusterRoleYaml: "/tmp/cluster-role.yaml",

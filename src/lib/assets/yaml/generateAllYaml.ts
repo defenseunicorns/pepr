@@ -4,7 +4,7 @@
 import crypto from "crypto";
 import { Assets } from "../assets";
 import { WebhookType } from "../../enums";
-import { apiTokenSecret, service, tlsSecret, watcherService } from "../networking";
+import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
 import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
 import { getModuleSecret, getNamespace } from "../pods";
@@ -14,7 +14,7 @@ import { webhookConfigGenerator } from "../webhooks";
 type deployments = { default: V1Deployment; watch: V1Deployment | null };
 
 export async function generateAllYaml(assets: Assets, deployments: deployments): Promise<string> {
-  const { name, tls, apiToken, path, config } = assets;
+  const { name, tls, apiPath, path, config } = assets;
   const code = await fs.readFile(path);
   const hash = crypto.createHash("sha256").update(code).digest("hex");
 
@@ -23,7 +23,7 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
     clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
     clusterRoleBinding(name),
     serviceAccount(name),
-    apiTokenSecret(name, apiToken),
+    apiPathSecret(name, apiPath),
     tlsSecret(name, tls),
     deployments.default,
     service(name),

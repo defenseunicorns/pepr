@@ -221,8 +221,8 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                   - name: tls-certs
                     mountPath: /etc/certs
                     readOnly: true
-                  - name: api-token
-                    mountPath: /app/api-token
+                  - name: api-path
+                    mountPath: /app/api-path
                     readOnly: true
                   - name: module
                     mountPath: /app/load
@@ -234,9 +234,9 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               - name: tls-certs
                 secret:
                   secretName: {{ .Values.uuid }}-tls
-              - name: api-token
+              - name: api-path
                 secret:
-                  secretName: {{ .Values.uuid }}-api-token
+                  secretName: {{ .Values.uuid }}-api-path
               - name: module
                 secret:
                   secretName: {{ .Values.uuid }}-module  

@@ -5,17 +5,17 @@ import { kind } from "kubernetes-fluent-client";
 
 import { TLSOut } from "../tls";
 
-export function apiTokenSecret(name: string, apiToken: string): kind.Secret {
+export function apiPathSecret(name: string, apiPath: string): kind.Secret {
   return {
     apiVersion: "v1",
     kind: "Secret",
     metadata: {
-      name: `${name}-api-token`,
+      name: `${name}-api-path`,
       namespace: "pepr-system",
     },
     type: "Opaque",
     data: {
-      value: Buffer.from(apiToken).toString("base64"),
+      value: Buffer.from(apiPath).toString("base64"),
     },
   };
 }
