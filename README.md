@@ -9,6 +9,14 @@
 [![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
+## What happened to Pepr's stars?
+
+In February 2025, an accidental change to the repository's visibility reset the star count.  The visibility issue was quickly resolved, but the stars were unfortunately lost.
+
+Pepr had over 200 stars, demonstrating its recognition and value within the Kubernetes community.  We're working to rebuild that recognition.
+
+If you've previously starred Pepr, or if you find it a useful project, we would greatly appreciate it if you could re-star the repository. We really appreciate your support! :star:
+
 ## **_Type safe Kubernetes middleware for humans_**
 
 <!-- markdownlint-disable MD033 - Image-styling is unsupported on GitHub-flavored markdown -->

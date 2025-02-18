@@ -10,7 +10,9 @@ on:
     - "LICENSE"
     - "CODEOWNERS"
     - "**.md"
+
 permissions:
+  id-token: write # This is needed for OIDC federation.
   contents: read
 
 jobs:
@@ -65,6 +67,14 @@ jobs:
 
   journey:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        test-command:
+          - "npm run test:journey"
+          - "npm run test:journey:unicorn"
+          - "npm run test:journey-wasm"
+          - "npm run test:journey-wasm:unicorn"
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -81,6 +91,10 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
       - run: npm ci
-      - run: npm run test:journey
-      - run: npm run test:journey-wasm
+      - run: ${{ matrix.test-command }}
