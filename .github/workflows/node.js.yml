@@ -85,20 +85,15 @@ jobs:
       - name: "Install K3d"
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
-       
-        
-      - name: Debug CHAINGUARD_IDENTITY
+
+
+      - name: Install chainctl
         run: |
-          if [[ -z "${{ secrets.CHAINGUARD_IDENTITY }}" ]]; then
-            echo "CHAINGUARD_IDENTITY is missing!"
-            exit 1
-          else
-            echo "CHAINGUARD_IDENTITY is set."
-          fi     
+          curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')" && chmod +x chainctl && sudo mv chainctl /usr/local/bin/
+
       - name: Chainguard Login
-        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
-        with:
-          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+        run: |
+          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --non-interactive -v=0
 
       - run: npm ci
       - run: ${{ matrix.journey-test }}
