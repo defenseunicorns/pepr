@@ -97,4 +97,6 @@ jobs:
           identity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - run: npm ci
-      - run: ${{ matrix.test-command }}
+      - run: |
+          echo "Running: ${{ matrix.test-command }}"
+          eval ${{ matrix.test-command }}
