@@ -97,11 +97,4 @@ jobs:
           identity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - run: npm ci
-      - run: |
-          set -e # Exit immediately if a command exits with a non-zero status.
-          echo "Executing: ${{ matrix.test-command }}"
-          eval ${{ matrix.test-command }}
-          if [[ $? -ne 0 ]]; then
-            echo "Tests failed: ${{ matrix.test-command }}"
-            exit 1
-          fi
+      - run: ${{ matrix.test-command }}
