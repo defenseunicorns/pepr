@@ -61,7 +61,7 @@ jobs:
 
       - name: Chainguard Login
         run: |
-          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser --headless
+          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser 
       # - name: Debug Identity Variable
       #   run: |
       #     if [[ -z "${{ secrets.CHAINGUARD_IDENTITY }}" ]]; then
