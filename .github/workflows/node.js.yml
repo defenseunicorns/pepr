@@ -94,7 +94,10 @@ jobs:
       - name: Chainguard Login
         run: |
           chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser
-
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
       - run: npm ci
       - run: ${{ matrix.journey-test }}
       - run: ${{ matrix.journey-wasm-test }}
