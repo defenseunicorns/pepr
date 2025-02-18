@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
 
@@ -102,7 +102,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
 
@@ -151,7 +151,7 @@ jobs:
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
         with:
           egress-policy: audit
 
@@ -192,7 +192,7 @@ jobs:
           npm ci
 
       - name: run e2e tests
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
+        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082 # v3.0.1
         with:
           max_attempts: 3
           retry_on: error
