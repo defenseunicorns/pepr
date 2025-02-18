@@ -7,7 +7,7 @@
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 # cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM docker.io/library/node@sha256:a182b9b37154a3e11e5c1d15145470ceb22069646d0b7390de226da2548aa2a7 AS build
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:18160bed0e77c8300b99a8d1af8cc997280e189e590b55b5ff94893bd398a1e6 AS build
 
 WORKDIR /app
 
@@ -22,26 +22,18 @@ COPY --chown=node:node ./hack/ ./hack/
 COPY --chown=node:node ./tsconfig.json ./build.mjs ./
 
 COPY --chown=node:node ./src/ ./src/
-COPY --chown=node:node kubernetes-fluent-client/ ./kubernetes-fluent-client/
-RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src && \
-    cp -r kubernetes-fluent-client/dist node_modules/kubernetes-fluent-client/dist && \
-    npm run build && \
+
+RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
-    cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src && \
-    cp -r kubernetes-fluent-client/dist node_modules/kubernetes-fluent-client/dist && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
     # Remove Ramda unused Ramda files
     rm -rf node_modules/ramda/dist && \
     rm -rf node_modules/ramda/es && \
-    rm -rf node_modules/kubernetes-fluent-client/src && \
-    rm -rf node_modules/kubernetes-fluent-client/dist && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
-    cp -r kubernetes-fluent-client/dist node_modules/kubernetes-fluent-client/dist && \
-    cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
@@ -49,8 +41,8 @@ RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src
 # crane digest cgr.dev/chainguard/node-lts:latest
 # cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
 # gcr.io/distroless/nodejs22-debian12@sha256:d00edbf864c5b989f1b69951a13c5c902bf369cca572de59b5ec972552848e33
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:894873fc72ea5731e38cf3cfa75a6a3b1985a9330e46bb4d81162e6a184f212e
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:95ce4c850fd71a7fe53d9cbaf7f9db318bba9c0ade54717078d9e60c317b5496
 
 WORKDIR /app
 
-COPY --from=build --chown=nonroot:nonroot /app/node_modules/ ./node_modules/
+COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
