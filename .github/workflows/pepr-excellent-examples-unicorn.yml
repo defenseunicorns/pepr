@@ -58,10 +58,10 @@ jobs:
       - name: Install chainctl
         run: |
           curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')" && chmod +x chainctl && sudo mv chainctl /usr/local/bin/
-          chainctl auth configure-docker --identity "${{ secrets.CHAINGUARD_IDENTITY }}"
-      # - name: Chainguard Login
-      #   run: |
-      #     chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser
+
+      - name: Chainguard Login
+        run: |
+          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser
       # - name: Debug Identity Variable
       #   run: |
       #     if [[ -z "${{ secrets.CHAINGUARD_IDENTITY }}" ]]; then
