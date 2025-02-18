@@ -72,10 +72,7 @@ jobs:
         journey-wasm-test: ["npm run test:journey-wasm", "npm run test:journey-wasm:unicorn"]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Chainguard Login
-        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
-        with:
-          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
       - name: Use Node.js 22
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
@@ -94,9 +91,7 @@ jobs:
         run: |
           curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')" && chmod +x chainctl && sudo mv chainctl /usr/local/bin/
           chainctl auth configure-docker --identity "${{ secrets.CHAINGUARD_IDENTITY }}"
-      - name: Chainguard Login
-        run: |
-          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser
+
       - name: Debug Identity Variable
         run: |
           if [[ -z "${{ secrets.CHAINGUARD_IDENTITY }}" ]]; then
@@ -105,10 +100,7 @@ jobs:
           else
             echo "CHAINGUARD_IDENTITY is set."
           fi
-      - name: Chainguard Login
-        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
-        with:
-          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
       - run: npm ci
       - run: ${{ matrix.journey-test }}
       - run: ${{ matrix.journey-wasm-test }}
