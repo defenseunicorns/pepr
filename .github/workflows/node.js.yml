@@ -68,7 +68,6 @@ jobs:
   journey:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
       matrix:
         test-command:
           - "npm run test:journey"
