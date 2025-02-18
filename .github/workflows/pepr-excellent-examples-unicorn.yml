@@ -61,7 +61,7 @@ jobs:
 
       - name: Chainguard Login
         run: |
-          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" 
+          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser
 
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
