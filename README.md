@@ -11,7 +11,7 @@
 
 ## What happened to Pepr's stars?
 
-In February a brief of 2025, an accidental change to the repository's visibility inadvertently reset the star count.  The visibility issue was quickly resolved, but the stars were unfortunately lost.
+In February 2025, an accidental change to the repository's visibility reset the star count.  The visibility issue was quickly resolved, but the stars were unfortunately lost.
 
 Pepr had over 200 stars, demonstrating its recognition and value within the Kubernetes community.  We're working to rebuild that recognition.
 
