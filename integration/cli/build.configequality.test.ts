@@ -148,11 +148,11 @@ describe("build", () => {
           expect(serviceAccount).toBeDefined();
         }
 
-        for (const secretApiToken of [
-          resource.select(peprResources, kind.Secret, `${peprUuid}-api-token`),
-          resource.select(helmResources, kind.Secret, `${peprUuid}-api-token`),
+        for (const secretApiPath of [
+          resource.select(peprResources, kind.Secret, `${peprUuid}-api-path`),
+          resource.select(helmResources, kind.Secret, `${peprUuid}-api-path`),
         ]) {
-          expect(secretApiToken).toBeDefined();
+          expect(secretApiPath).toBeDefined();
         }
 
         for (const secretTls of [
@@ -179,9 +179,9 @@ describe("build", () => {
           ).toBe(`${peprUuid}-tls`);
           expect(
             deployAdmission
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "api-token")
+              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "api-path")
               .at(0)!.secret!.secretName,
-          ).toBe(`${peprUuid}-api-token`);
+          ).toBe(`${peprUuid}-api-path`);
           expect(
             deployAdmission
               .spec!.template!.spec!.volumes!.filter(vol => vol.name === "module")

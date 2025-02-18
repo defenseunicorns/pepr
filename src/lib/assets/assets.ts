@@ -24,13 +24,13 @@ import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
-import { watcherService, service, tlsSecret, apiTokenSecret } from "./networking";
+import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 
 export class Assets {
   readonly name: string;
   readonly tls: TLSOut;
-  readonly apiToken: string;
+  readonly apiPath: string;
   readonly config: ModuleConfig;
   readonly path: string;
   readonly alwaysIgnore!: WebhookIgnore;
@@ -53,8 +53,8 @@ export class Assets {
     // Generate the ephemeral tls things
     this.tls = genTLS(host || `${this.name}.pepr-system.svc`);
 
-    // Generate the api token for the controller / webhook
-    this.apiToken = crypto.randomBytes(32).toString("hex");
+    // Generate the api path for the controller / webhook
+    this.apiPath = crypto.randomBytes(32).toString("hex");
   }
 
   async deploy(
@@ -149,7 +149,7 @@ export class Assets {
         [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
         [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
-        [helm.files.apiTokenSecretYaml, (): string => toYaml(apiTokenSecret(this.name, this.apiToken))],
+        [helm.files.apiPathSecretYaml, (): string => toYaml(apiPathSecret(this.name, this.apiPath))],
         [helm.files.storeRoleYaml, (): string => toYaml(storeRole(this.name))],
         [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
@@ -164,7 +164,7 @@ export class Assets {
         name: this.name,
         image: this.image,
         config: this.config,
-        apiToken: this.apiToken,
+        apiPath: this.apiPath,
         capabilities: this.capabilities,
       };
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);

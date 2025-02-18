@@ -297,8 +297,8 @@ export function getDeployment(
                   readOnly: true,
                 },
                 {
-                  name: "api-token",
-                  mountPath: "/app/api-token",
+                  name: "api-path",
+                  mountPath: "/app/api-path",
                   readOnly: true,
                 },
                 {
@@ -317,9 +317,9 @@ export function getDeployment(
               },
             },
             {
-              name: "api-token",
+              name: "api-path",
               secret: {
-                secretName: `${name}-api-token`,
+                secretName: `${name}-api-path`,
               },
             },
             {

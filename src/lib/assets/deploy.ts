@@ -8,7 +8,7 @@ import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 import { Assets } from "./assets";
 import Log from "../telemetry/logger";
-import { apiTokenSecret, service, tlsSecret, watcherService } from "./networking";
+import { apiPathSecret, service, tlsSecret, watcherService } from "./networking";
 import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
 import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
 import { peprStoreCRD } from "./store";
@@ -136,9 +136,9 @@ async function setupController(assets: Assets, code: Buffer, hash: string, force
   const tls = tlsSecret(name, assets.tls);
   await K8s(kind.Secret).Apply(tls, { force });
 
-  Log.info("Applying API token secret");
-  const apiToken = apiTokenSecret(name, assets.apiToken);
-  await K8s(kind.Secret).Apply(apiToken, { force });
+  Log.info("Applying API path secret");
+  const apiPath = apiPathSecret(name, assets.apiPath);
+  await K8s(kind.Secret).Apply(apiPath, { force });
 
   Log.info("Applying deployment");
   const dep = getDeployment(assets, hash, assets.buildTimestamp);
