@@ -56,6 +56,11 @@ jobs:
           cd "$PEPR"
           npm ci
 
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |

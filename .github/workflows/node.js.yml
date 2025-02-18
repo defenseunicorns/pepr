@@ -86,6 +86,11 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          
       - run: npm ci
       - run: ${{ matrix.journey-test }}
       - run: ${{ matrix.journey-wasm-test }}
