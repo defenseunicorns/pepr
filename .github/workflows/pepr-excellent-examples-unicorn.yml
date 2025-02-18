@@ -1,6 +1,9 @@
 name: E2E - Pepr Excellent Examples - Unicorn
 
-permissions: read-all
+permissions:
+  id-token: write # This is needed for OIDC federation.
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -55,25 +58,12 @@ jobs:
         run: |
           cd "$PEPR"
           npm ci
-      - name: Install chainctl
-        run: |
-          curl -o chainctl "https://dl.enforce.dev/chainctl/latest/chainctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/aarch64/arm64/')" && chmod +x chainctl && sudo mv chainctl /usr/local/bin/
 
       - name: Chainguard Login
-        run: |
-          chainctl auth login --identity "${{ secrets.CHAINGUARD_IDENTITY }}" --skip-browser 
-      # - name: Debug Identity Variable
-      #   run: |
-      #     if [[ -z "${{ secrets.CHAINGUARD_IDENTITY }}" ]]; then
-      #       echo "ERROR: CHAINGUARD_IDENTITY is missing!"
-      #       exit 1
-      #     else
-      #       echo "CHAINGUARD_IDENTITY is set."
-      #     fi
-      # - name: Chainguard Login
-      #   uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
-      #   with:
-      #     identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
