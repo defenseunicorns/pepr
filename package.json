@@ -80,7 +80,8 @@
     "undici": "^7.0.1"
   },
   "overrides": {
-    "glob": "^9.0.0"
+    "glob": "^9.0.0",
+    "jsonpath-plus": "^10.3.0"
   },
   "peerDependencies": {
     "@types/prompts": "2.4.9",
