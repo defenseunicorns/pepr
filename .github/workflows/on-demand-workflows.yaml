@@ -4,15 +4,25 @@ name: on-demand-workflows
 on:
   workflow_call:
     inputs:
-      node-version:
-        description: "Node.js version"
+      run-format:
+        description: "Run format check"
         required: false
-        type: string
+        default: false
+        type: boolean
+      run-units:
+        description: "Run unit tests"
+        required: false
+        default: false
+        type: boolean
       run-integration:
         description: "Run integration tests"
         required: false
         default: false
         type: boolean
+      node-version:
+        description: "Node.js version"
+        required: false
+        type: string
 
     secrets:
       CODECOV_ORG_TOKEN:
