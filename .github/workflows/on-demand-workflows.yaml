@@ -1,0 +1,86 @@
+# Workflows that can be called on demand
+name: on-demand-workflows
+
+on:
+  workflow_call:
+    inputs:
+      run-format:
+        description: "Run format check"
+        required: false
+        default: false
+        type: boolean
+      run-units:
+        description: "Run unit tests"
+        required: false
+        default: false
+        type: boolean
+      run-integration:
+        description: "Run integration tests"
+        required: false
+        default: false
+        type: boolean
+      node-version:
+        description: "Node.js version"
+        required: false
+        type: string
+
+    secrets:
+      CODECOV_ORG_TOKEN:
+        required: true
+      CHAINGUARD_IDENTITY:
+        required: false
+
+permissions:
+  id-token: write # This is needed for OIDC federation.
+  contents: read
+
+jobs:
+  format:
+    if: inputs.run-format == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js latest
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: latest
+          cache: "npm"
+      - run: npm ci
+      - run: npm run format:check
+
+  test:
+    if: inputs.run-units == true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run test:unit
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+
+  integration:
+    if: inputs.run-integration == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js 22
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+          cache: "npm"
+      - name: Setup Helm
+        uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
+        with:
+          version: v3.3.4
+      - run: npm ci
+      - run: npm run test:integration
