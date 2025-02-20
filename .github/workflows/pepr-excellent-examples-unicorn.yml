@@ -17,13 +17,6 @@ on:
     - "LICENSE"
     - "CODEOWNERS"
     - "**.md"
-    - "package.json"    
-    - "package-lock.json"             
-    - "Dockerfile"              
-    - "Dockerfile.controller"   
-    - "Dockerfile.kfc"          
-    - "Dockerfile.unicorn" 
-    - ".github/workflows/**" 
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
