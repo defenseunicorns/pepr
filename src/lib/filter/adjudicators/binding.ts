@@ -60,12 +60,14 @@ export const definesKind = pipe(definedKind, equals(""), not);
 
 export const definedCategory = (binding: Partial<Binding>): string => {
   // Ordering matters, finalize is a "watch"
-  // prettier-ignore
-  return binding.isFinalize ? "Finalize" :
-    binding.isWatch ? "Watch" :
-    binding.isMutate ? "Mutate" :
-    binding.isValidate ? "Validate" :
-    "";
+  const categories: { [key: string]: boolean | undefined } = {
+    Finalize: binding.isFinalize,
+    Watch: binding.isWatch,
+    Mutate: binding.isMutate,
+    Validate: binding.isValidate,
+  };
+
+  return Object.keys(categories).find(key => categories[key]) || "";
 };
 export type DefinedCallbackReturnType =
   | FinalizeAction<GenericClass, InstanceType<GenericClass>>
@@ -76,6 +78,7 @@ export type DefinedCallbackReturnType =
   | undefined;
 
 export const definedCallback = (binding: Partial<Binding>): DefinedCallbackReturnType => {
+  // TODO: Need test case to enforce ordering
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? binding.finalizeCallback :
