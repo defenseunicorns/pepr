@@ -21,6 +21,10 @@ import {
 } from "./mismatch";
 import { Event, Operation } from "../../enums";
 
+// TODO: There seems to be several instances of duplicated tests in this file
+// TODO: There seems to be several instances of duplicated tests in this file
+// TODO: There seems to be several instances of duplicated tests in this file
+
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
