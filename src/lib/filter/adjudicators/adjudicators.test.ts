@@ -20,7 +20,7 @@ import {
   operationMatchesEvent,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./adjudicators";
+} from "./postCollection";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { AdmissionRequest, Binding, DeepPartial } from "../../types";
 import { Event, Operation } from "../../enums";

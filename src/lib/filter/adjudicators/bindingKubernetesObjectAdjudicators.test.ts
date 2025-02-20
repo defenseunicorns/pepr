@@ -13,7 +13,7 @@ import {
   mismatchedAnnotations,
   mismatchedLabels,
   metasMismatch,
-} from "./adjudicators";
+} from "./postCollection";
 import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 
 describe("mismatchedName", () => {
