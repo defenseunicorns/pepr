@@ -47,25 +47,23 @@ jest.mock("@kubernetes/client-node", () => ({
 }));
 
 jest.mock("../pods", () => ({
-  getNamespace: jest.fn().mockReturnValue({ kind: "Namespace", metadata: { name: "mock-namespace" } }),
-  getModuleSecret: jest.fn().mockReturnValue({ kind: "Secret", metadata: { name: "mock-secret" } }),
+  getNamespace: jest.fn().mockReturnValue({}),
+  getModuleSecret: jest.fn().mockReturnValue({}),
 }));
 
 jest.mock("../rbac", () => ({
-  clusterRole: jest.fn().mockReturnValue({ kind: "ClusterRole", metadata: { name: "mock-clusterrole" } }),
-  clusterRoleBinding: jest
-    .fn()
-    .mockReturnValue({ kind: "ClusterRoleBinding", metadata: { name: "mock-clusterrolebinding" } }),
-  serviceAccount: jest.fn().mockReturnValue({ kind: "ServiceAccount", metadata: { name: "mock-serviceaccount" } }),
-  storeRole: jest.fn().mockReturnValue({ kind: "Role", metadata: { name: "mock-storerole" } }),
-  storeRoleBinding: jest.fn().mockReturnValue({ kind: "RoleBinding", metadata: { name: "mock-storerolebinding" } }),
+  clusterRole: jest.fn().mockReturnValue({}),
+  clusterRoleBinding: jest.fn().mockReturnValue({}),
+  serviceAccount: jest.fn().mockReturnValue({}),
+  storeRole: jest.fn().mockReturnValue({}),
+  storeRoleBinding: jest.fn().mockReturnValue({}),
 }));
 
 jest.mock("../networking", () => ({
-  apiPathSecret: jest.fn().mockReturnValue({ kind: "Secret", metadata: { name: "mock-api-path-secret" } }),
-  service: jest.fn().mockReturnValue({ kind: "Service", metadata: { name: "mock-service" } }),
-  tlsSecret: jest.fn().mockReturnValue({ kind: "Secret", metadata: { name: "mock-tls-secret" } }),
-  watcherService: jest.fn().mockReturnValue({ kind: "Service", metadata: { name: "mock-watcher-service" } }),
+  apiPathSecret: jest.fn().mockReturnValue({}),
+  service: jest.fn().mockReturnValue({}),
+  tlsSecret: jest.fn().mockReturnValue({}),
+  watcherService: jest.fn().mockReturnValue({}),
 }));
 describe("generateAllYaml", () => {
   const moduleConfig: ModuleConfig = {
