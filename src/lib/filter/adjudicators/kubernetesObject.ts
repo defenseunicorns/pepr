@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { __, allPass, complement, defaultTo, difference, equals, length, gt, not, nthArg, pipe } from "ramda";
+import { __, allPass, complement, defaultTo, equals, length, gt, not, nthArg, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { definesNamespaces, definedNamespaces } from "./binding";
 
 /*
   KubernetesObject collectors
@@ -93,15 +92,4 @@ export const carriesIgnoredNamespace = allPass([
 
     return false;
   }),
-]);
-
-export const unbindableNamespaces = allPass([
-  pipe(nthArg(0), length, gt(__, 0)),
-  pipe(nthArg(1), definesNamespaces),
-  pipe(
-    (namespaceSelector, binding) => difference(definedNamespaces(binding), namespaceSelector),
-    length,
-    equals(0),
-    not,
-  ),
 ]);
