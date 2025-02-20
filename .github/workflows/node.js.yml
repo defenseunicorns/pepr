@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   on-demand-tests:
-    uses: ./.github/workflows/reusable-tests.yaml
+    uses: ./.github/workflows/on-demand-workflows.yaml
     secrets:
       CODECOV_ORG_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
     with:
