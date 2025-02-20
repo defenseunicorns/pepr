@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Event, Operation } from "../../enums";
-import { __, allPass, anyPass, curry, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
+import { __, allPass, curry, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { definedKind, definedNamespaces, definesDelete, definesDeletionTimestamp, definesNamespaces } from "./binding";
 import { carriedNamespace, carriesNamespace } from "./kubernetesObject";
@@ -12,10 +11,6 @@ import { carriedNamespace, carriesNamespace } from "./kubernetesObject";
   - AdmissionRequest - "declares" / "neglects"
   - KubernetesObject - "carries" / "missing"
   - Binding - "defines" / "ignores"
-*/
-
-/*
-  post-collection comparitors
 */
 
 export const bindsToKind = curry(
@@ -80,9 +75,3 @@ export const unbindableNamespaces = allPass([
 ]);
 
 export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
-
-export const operationMatchesEvent = anyPass([
-  pipe(nthArg(1), equals(Event.ANY)),
-  pipe((operation: Operation, event: Event): boolean => operation.valueOf() === event.valueOf()),
-  pipe((operation: Operation, event: Event): boolean => (operation ? event.includes(operation) : false)),
-]);

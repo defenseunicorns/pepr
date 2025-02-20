@@ -4,9 +4,6 @@
 import { __, allPass, complement, defaultTo, equals, length, gt, not, nthArg, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
 
-/*
-  KubernetesObject collectors
-*/
 export const carriesDeletionTimestamp = pipe(
   kubernetesObject => !!kubernetesObject.metadata?.deletionTimestamp,
   defaultTo(false),

@@ -6,9 +6,6 @@ import { AdmissionRequest } from "../../types";
 import { defaultTo, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
 
-/*
-  AdmissionRequest collectors
-*/
 export const declaredOperation = pipe(
   (request: AdmissionRequest<KubernetesObject>): Operation => request?.operation,
   defaultTo(""),

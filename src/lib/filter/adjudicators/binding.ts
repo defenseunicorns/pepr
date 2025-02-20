@@ -6,10 +6,6 @@ import { Binding, FinalizeAction, WatchLogAction, MutateAction, ValidateAction }
 import { complement, defaultTo, equals, not, pipe } from "ramda";
 import { GenericClass } from "kubernetes-fluent-client";
 
-/*
-  Binding collectors
-*/
-
 export const definesDeletionTimestamp = pipe(
   (binding: Binding): boolean => binding?.filters?.deletionTimestamp ?? false,
   defaultTo(false),

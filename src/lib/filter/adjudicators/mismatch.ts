@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { AdmissionRequest, Binding } from "../../types";
-import { allPass, any, not, nthArg, pipe } from "ramda";
+import { allPass, any, anyPass, equals, not, nthArg, pipe } from "ramda";
 import {
   definedAnnotations,
   definedEvent,
@@ -33,7 +33,7 @@ import {
   missingDeletionTimestamp,
 } from "./kubernetesObject";
 import { declaredOperation, declaredGroup, declaredVersion, declaredKind } from "./admissionRequest";
-import { operationMatchesEvent } from "./postCollection";
+import { Event, Operation } from "../../enums";
 
 export const mismatchedDeletionTimestamp = allPass([
   pipe(nthArg(0), definesDeletionTimestamp),
@@ -121,4 +121,9 @@ export const mismatchedVersion = allPass([
 export const mismatchedKind = allPass([
   pipe(nthArg(0), definesKind),
   pipe((binding, request) => definedKind(binding) !== declaredKind(request)),
+]);
+export const operationMatchesEvent = anyPass([
+  pipe(nthArg(1), equals(Event.ANY)),
+  pipe((operation: Operation, event: Event): boolean => operation.valueOf() === event.valueOf()),
+  pipe((operation: Operation, event: Event): boolean => (operation ? event.includes(operation) : false)),
 ]);
