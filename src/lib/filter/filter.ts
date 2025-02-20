@@ -8,17 +8,6 @@ import {
   carriesIgnoredNamespace,
   misboundDeleteWithDeletionTimestamp,
   misboundNamespace,
-  mismatchedAnnotations,
-  mismatchedDeletionTimestamp,
-  mismatchedEvent,
-  mismatchedGroup,
-  mismatchedKind,
-  mismatchedLabels,
-  mismatchedName,
-  mismatchedNameRegex,
-  mismatchedNamespace,
-  mismatchedNamespaceRegex,
-  mismatchedVersion,
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
@@ -37,6 +26,19 @@ import {
   definedNameRegex,
 } from "./adjudicators/binding";
 import { carriedName, carriedNamespace, carriedLabels, carriedAnnotations } from "./adjudicators/kubernetesObject";
+import {
+  mismatchedDeletionTimestamp,
+  mismatchedEvent,
+  mismatchedName,
+  mismatchedGroup,
+  mismatchedVersion,
+  mismatchedKind,
+  mismatchedNamespace,
+  mismatchedLabels,
+  mismatchedAnnotations,
+  mismatchedNamespaceRegex,
+  mismatchedNameRegex,
+} from "./adjudicators/mismatch";
 
 type AdjudicationResult = string | null;
 type Adjudicator = () => AdjudicationResult;

@@ -2,29 +2,62 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
+import { KubernetesObject } from "kubernetes-fluent-client";
+import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
-  bindsToKind,
-  carriesIgnoredNamespace,
-  metasMismatch,
-  mismatchedAnnotations,
   mismatchedEvent,
   mismatchedGroup,
+  mismatchedVersion,
   mismatchedKind,
+  metasMismatch,
+  mismatchedAnnotations,
+  mismatchedDeletionTimestamp,
   mismatchedLabels,
   mismatchedName,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
-  mismatchedVersion,
-  missingCarriableNamespace,
-  operationMatchesEvent,
-  unbindableNamespaces,
-  uncarryableNamespace,
-} from "./postCollection";
-import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+} from "./mismatch";
 import { Event, Operation } from "../../enums";
-import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
+
+describe("mismatchedName", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{ filters: { name: "name" } }, {}, true],
+    [{ filters: { name: "name" } }, { metadata: { name: "name" } }, false],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, name: bnd.filters.name },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
+
+    const result = mismatchedName(binding, kubernetesObject);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedDeletionTimestamp", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { deletionTimestamp: new Date() } }, false],
+    [{ filters: { deletionTimestamp: true } }, {}, true],
+    [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
+
+    const result = mismatchedDeletionTimestamp(binding, kubernetesObject);
+
+    expect(result).toBe(expected);
+  });
+});
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
@@ -70,23 +103,23 @@ describe("mismatchedNameRegex", () => {
   });
 });
 
-describe("bindsToKind", () => {
-  //[ Binding, Kind, result ]
+describe("mismatchedNameRegex", () => {
+  //[ Binding, KubernetesObject, result ]
   it.each([
-    [{}, "", false],
-    [{ kind: {} }, "", false],
-    [{ kind: { kind: null } }, "", false],
-    [{ kind: { kind: "" } }, "", false],
-    [{}, "Kind", false],
-    [{ kind: {} }, "Kind", false],
-    [{ kind: { kind: null } }, "Kind", false],
-    [{ kind: { kind: "" } }, "Kind", false],
-    [{ kind: { kind: "Kind" } }, "Kind", true],
-  ])("given binding %j, and kind '%s', returns %s", (bnd, knd, expected) => {
+    [{}, {}, false],
+    [{}, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, {}, true],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "name" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "neme" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nime" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nome" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "nume" } }, false],
+    [{ filters: { regexName: "^n[aeiou]me$" } }, { metadata: { name: "n3me" } }, true],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
-    const kind = knd as string;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = bindsToKind(binding, kind);
+    const result = mismatchedNameRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -105,6 +138,24 @@ describe("mismatchedNamespace", () => {
     const object = obj as DeepPartial<Binding>;
 
     const result = mismatchedNamespace(binding, object);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedNamespace", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { namespaces: ["namespace"] } }, {}, true],
+    [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "nopesause" } }, true],
+    [{ filters: { namespaces: ["namespace"] } }, { metadata: { namespace: "namespace" } }, false],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
+
+    const result = mismatchedNamespace(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -143,27 +194,37 @@ describe("mismatchedNamespaceRegex", () => {
   });
 });
 
-describe("metasMismatch", () => {
+describe("mismatchedNamespaceRegex", () => {
+  //[ Binding, KubernetesObject, result ]
+  const testRegex1 = "^n.mespace$"; //regexr.com/89l8u
+  const testRegex2 = "^n[aeiou]mespace$"; //regexr.com/89l8f
+  const testRegex3 = "^n[aeiou]me$"; //regexr.com/89l8l
+  const testRegex4 = "^sp[aeiou]ce$"; //regexr.com/89l8o
+
   it.each([
-    [{}, {}, false],
-    [{}, { anno: "tate" }, false],
+    [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
 
-    [{ anno: "" }, {}, true],
-    [{ anno: "" }, { anno: "" }, false],
-    [{ anno: "" }, { anno: "tate" }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nemespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nimespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nomespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "numespace" } }, false],
+    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "n3mespace" } }, true],
 
-    [{ anno: "tate" }, {}, true],
-    [{ anno: "tate" }, { anno: "" }, true],
-    [{ anno: "tate" }, { anno: "tate" }, false],
-    [{ anno: "tate" }, { anno: "tato" }, true],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "name" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "space" } }, false],
+    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "namespace" } }, true],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: bnd.filters.regexNamespaces },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: "metadata" in obj ? obj.metadata : defaultKubernetesObject.metadata,
+    };
 
-    [{ an: "no", ta: "te" }, { an: "" }, true],
-    [{ an: "no", ta: "te" }, { an: "no" }, true],
-    [{ an: "no", ta: "te" }, { an: "no", ta: "" }, true],
-    [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
-    [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
-  ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
-    const result = metasMismatch(bnd, obj);
+    const result = mismatchedNamespaceRegex(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
@@ -203,6 +264,40 @@ describe("mismatchedAnnotations", () => {
   });
 });
 
+describe("mismatchedAnnotations", () => {
+  //[ Binding, KubernetesObject, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { metadata: { annotations: { anno: "tate" } } }, false],
+
+    [{ filters: { annotations: { anno: "" } } }, {}, true],
+    [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "" } } }, false],
+    [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+
+    [{ filters: { annotations: { anno: "tate" } } }, {}, true],
+    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "" } } }, true],
+    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tato" } } }, true],
+
+    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "" } } }, true],
+    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no" } } }, true],
+    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "" } } }, true],
+    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "to" } } }, true],
+    [
+      { filters: { annotations: { an: "no", ta: "te" } } },
+      { metadata: { annotations: { an: "no", ta: "te" } } },
+      false,
+    ],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
+
+    const result = mismatchedAnnotations(binding, kubernetesObject);
+
+    expect(result).toBe(expected);
+  });
+});
+
 describe("mismatchedLabels", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([
@@ -231,161 +326,83 @@ describe("mismatchedLabels", () => {
   });
 });
 
-describe("missingCarriableNamespace", () => {
-  //[ capa ns's, KubernetesObject, result ]
+describe("mismatchedLabels", () => {
+  //[ Binding, KubernetesObject, result ]
   it.each([
-    [[], {}, false],
-    [[], { metadata: { namespace: "namespace" } }, false],
+    [{}, {}, false],
+    [{}, { metadata: { labels: { la: "ble" } } }, false],
 
-    [["namespace"], {}, true],
-    [["namespace"], { metadata: {} }, true],
-    [["namespace"], { metadata: { namespace: null } }, true],
-    [["namespace"], { metadata: { namespace: "" } }, true],
-    [["namespace"], { metadata: { namespace: "incorrect" } }, false],
-    [["namespace"], { metadata: { namespace: "namespace" } }, false],
+    [{ filters: { labels: { la: "" } } }, {}, true],
+    [{ filters: { labels: { la: "" } } }, { metadata: { labels: { la: "" } } }, false],
+    [{ filters: { labels: { la: "" } } }, { metadata: { labels: { la: "ble" } } }, false],
 
-    [["name", "space"], {}, true],
-    [["name", "space"], { metadata: {} }, true],
-    [["name", "space"], { metadata: { namespace: null } }, true],
-    [["name", "space"], { metadata: { namespace: "" } }, true],
-    [["name", "space"], { metadata: { namespace: "incorrect" } }, false],
-    [["name", "space"], { metadata: { namespace: "name" } }, false],
-    [["name", "space"], { metadata: { namespace: "space" } }, false],
-    [["ingress-controller"], { kind: "Namespace", metadata: { name: "ingress-controller" } }, false],
-    [["ingress-controller"], { kind: "Namespace", metadata: { name: "egress-controller" } }, true],
-  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
-    const object = obj as DeepPartial<KubernetesObject>;
+    [{ filters: { labels: { la: "ble" } } }, {}, true],
+    [{ filters: { labels: { la: "ble" } } }, { metadata: { labels: { la: "" } } }, true],
+    [{ filters: { labels: { la: "ble" } } }, { metadata: { labels: { la: "ble" } } }, false],
 
-    const result = missingCarriableNamespace(nss, object);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("uncarryableNamespace", () => {
-  //[ capa ns's, KubernetesObject, result ]
-  it.each([
-    [[], {}, false],
-    [[], { metadata: { namespace: "namespace" } }, false],
-
-    [["namespace"], { kind: "Namespace", metadata: { name: "namespace" } }, false],
-    [["namespace"], { kind: "Namespace", metadata: { name: "monitoring" } }, true],
-
-    [["namespace"], {}, false],
-    [["namespace"], { metadata: {} }, false],
-    [["namespace"], { metadata: { namespace: null } }, false],
-    [["namespace"], { metadata: { namespace: "" } }, false],
-    [["namespace"], { metadata: { namespace: "incorrect" } }, true],
-    [["namespace"], { metadata: { namespace: "namespace" } }, false],
-
-    [["name", "space"], {}, false],
-    [["name", "space"], { metadata: {} }, false],
-    [["name", "space"], { metadata: { namespace: null } }, false],
-    [["name", "space"], { metadata: { namespace: "" } }, false],
-    [["name", "space"], { metadata: { namespace: "incorrect" } }, true],
-    [["name", "space"], { metadata: { namespace: "name" } }, false],
-    [["name", "space"], { metadata: { namespace: "space" } }, false],
-  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
-    const object = obj as DeepPartial<Binding>;
-
-    const result = uncarryableNamespace(nss, object);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("carriesIgnoredNamespace", () => {
-  //[ ignored ns's, KubernetesObject, result ]
-  it.each([
-    [[], {}, false],
-    [[], { metadata: { namespace: "whatever" } }, false],
-
-    [["ignored"], { kind: "Namespace", metadata: { name: "ignored" } }, true],
-    [["ignored"], { kind: "Namespace", metadata: { name: "monitoring" } }, false],
-
-    [["ignored"], {}, false],
-    [["ignored"], { metadata: {} }, false],
-    [["ignored"], { metadata: { namespace: null } }, false],
-    [["ignored"], { metadata: { namespace: "" } }, false],
-    [["ignored"], { metadata: { namespace: "namespace" } }, false],
-    [["ignored"], { metadata: { namespace: "ignored" } }, true],
-
-    [["ign", "ored"], {}, false],
-    [["ign", "ored"], { metadata: {} }, false],
-    [["ign", "ored"], { metadata: { namespace: null } }, false],
-    [["ign", "ored"], { metadata: { namespace: "" } }, false],
-    [["ign", "ored"], { metadata: { namespace: "ign" } }, true],
-    [["ign", "ored"], { metadata: { namespace: "ored" } }, true],
-    [["ign", "ored"], { metadata: { namespace: "namespace" } }, false],
-  ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
-    const object = obj as DeepPartial<Binding>;
-
-    const result = carriesIgnoredNamespace(nss, object);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("unbindableNamespaces", () => {
-  //[ capa ns's, Binding, result ]
-  it.each([
-    [[], {}, false],
-    [[], { metadata: { namespace: "namespace" } }, false],
-
-    [["namespace"], {}, false],
-    [["namespace"], { filters: {} }, false],
-    [["namespace"], { filters: { namespaces: null } }, false],
-    [["namespace"], { filters: { namespaces: [] } }, false],
-    [["namespace"], { filters: { namespaces: ["incorrect"] } }, true],
-    [["namespace"], { filters: { namespaces: ["namespace"] } }, false],
-
-    [["name", "space"], {}, false],
-    [["name", "space"], { filters: {} }, false],
-    [["name", "space"], { filters: { namespaces: null } }, false],
-    [["name", "space"], { filters: { namespaces: [] } }, false],
-    [["name", "space"], { filters: { namespaces: ["namespace"] } }, true],
-    [["name", "space"], { filters: { namespaces: ["name"] } }, false],
-    [["name", "space"], { filters: { namespaces: ["space"] } }, false],
-    [["name", "space"], { filters: { namespaces: ["incorrect", "space"] } }, true],
-  ])("given capabilityNamespaces %j and binding %j, returns %s", (nss, bnd, expected) => {
+    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "" } } }, true],
+    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a" } } }, true],
+    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "" } } }, true],
+    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
+  ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
+    const kubernetesObject = obj as DeepPartial<KubernetesObject>;
 
-    const result = unbindableNamespaces(nss, binding);
+    const result = mismatchedLabels(binding, kubernetesObject);
 
     expect(result).toBe(expected);
   });
 });
 
-describe("operationMatchesEvent", () => {
-  //[ Operation, Event, result ]
+describe("metasMismatch", () => {
   it.each([
-    [Operation.CREATE, Event.CREATE, true],
-    [Operation.CREATE, Event.UPDATE, false],
-    [Operation.CREATE, Event.DELETE, false],
-    [Operation.CREATE, Event.CREATE_OR_UPDATE, true],
-    [Operation.CREATE, Event.ANY, true],
+    [{}, {}, false],
+    [{}, { anno: "tate" }, false],
 
-    [Operation.UPDATE, Event.CREATE, false],
-    [Operation.UPDATE, Event.UPDATE, true],
-    [Operation.UPDATE, Event.DELETE, false],
-    [Operation.UPDATE, Event.CREATE_OR_UPDATE, true],
-    [Operation.UPDATE, Event.ANY, true],
+    [{ anno: "" }, {}, true],
+    [{ anno: "" }, { anno: "" }, false],
+    [{ anno: "" }, { anno: "tate" }, false],
 
-    [Operation.DELETE, Event.CREATE, false],
-    [Operation.DELETE, Event.UPDATE, false],
-    [Operation.DELETE, Event.DELETE, true],
-    [Operation.DELETE, Event.CREATE_OR_UPDATE, false],
-    [Operation.DELETE, Event.ANY, true],
+    [{ anno: "tate" }, {}, true],
+    [{ anno: "tate" }, { anno: "" }, true],
+    [{ anno: "tate" }, { anno: "tate" }, false],
+    [{ anno: "tate" }, { anno: "tato" }, true],
 
-    [Operation.CONNECT, Event.CREATE, false],
-    [Operation.CONNECT, Event.UPDATE, false],
-    [Operation.CONNECT, Event.DELETE, false],
-    [Operation.CONNECT, Event.CREATE_OR_UPDATE, false],
-    [Operation.CONNECT, Event.ANY, true],
-  ])("given operation %s and event %s, returns %s", (op, evt, expected) => {
-    const result = operationMatchesEvent(op, evt);
+    [{ an: "no", ta: "te" }, { an: "" }, true],
+    [{ an: "no", ta: "te" }, { an: "no" }, true],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "" }, true],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
+  ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
+    const result = metasMismatch(bnd, obj);
 
-    expect(result).toEqual(expected);
+    expect(result).toBe(expected);
+  });
+});
+
+describe("metasMismatch", () => {
+  it.each([
+    [{}, {}, false],
+    [{}, { anno: "tate" }, false],
+
+    [{ anno: "" }, {}, true],
+    [{ anno: "" }, { anno: "" }, false],
+    [{ anno: "" }, { anno: "tate" }, false],
+
+    [{ anno: "tate" }, {}, true],
+    [{ anno: "tate" }, { anno: "" }, true],
+    [{ anno: "tate" }, { anno: "tate" }, false],
+    [{ anno: "tate" }, { anno: "tato" }, true],
+
+    [{ an: "no", ta: "te" }, { an: "" }, true],
+    [{ an: "no", ta: "te" }, { an: "no" }, true],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "" }, true],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "te" }, false],
+    [{ an: "no", ta: "te" }, { an: "no", ta: "to" }, true],
+  ])("given left %j and right %j, returns %s", (bnd, obj, expected) => {
+    const result = metasMismatch(bnd, obj);
+
+    expect(result).toBe(expected);
   });
 });
 
