@@ -74,7 +74,6 @@ export type DefinedCallbackReturnType =
   | undefined;
 
 export const definedCallback = (binding: Partial<Binding>): DefinedCallbackReturnType => {
-  // TODO: Need test case to enforce ordering
   // Ordering matters, finalize is a "watch"
   // prettier-ignore
   return binding.isFinalize ? binding.finalizeCallback :

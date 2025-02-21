@@ -45,8 +45,6 @@ export const carriedLabels = pipe(
 );
 export const carriesLabels = pipe(carriedLabels, equals({}), not);
 
-// TODO
-
 /*
  * If the object does not have a namespace, and it is not a namespace,
  * then we must return false because it cannot be uncarryable
