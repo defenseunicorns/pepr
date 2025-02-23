@@ -56,7 +56,7 @@ jobs:
           npx ts-node hack/load.cli.ts prep ./
 
       - name: upload pepr package artifact (.tgz)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: tgz
           path: "**/pepr-0.0.0-development.tgz"
@@ -64,7 +64,7 @@ jobs:
           retention-days: 30
 
       - name: upload pepr controller image artifact (.tar)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: tar
           path: "**/pepr-dev.tar"
@@ -92,7 +92,7 @@ jobs:
             capabilities/configmap.yaml
 
       - name: upload raw test inject log (actress)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: actress.log
           path: "**/load/*-actress.log"
@@ -100,7 +100,7 @@ jobs:
           retention-days: 30
 
       - name: upload raw test sample log (audience)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: audience.log
           path: "**/load/*-audience.log"
@@ -113,7 +113,7 @@ jobs:
           npx ts-node hack/load.cli.ts post
 
       - name: upload parsed inject log (actress)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: actress.json
           path: "**/load/*-actress.json"
@@ -121,7 +121,7 @@ jobs:
           retention-days: 30
 
       - name: upload parsed sample log (audience)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: audience.json
           path: "**/load/*-audience.json"
@@ -129,7 +129,7 @@ jobs:
           retention-days: 30
 
       - name: upload load test summary
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: summary.json
           path: "**/load/*-summary.json"
@@ -142,7 +142,7 @@ jobs:
           npx ts-node hack/load.cli.ts graph
 
       - name: upload load test result graph (watcher)
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: watcher.png
           path: "**/load/*.png"
