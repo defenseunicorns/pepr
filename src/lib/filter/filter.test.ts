@@ -38,49 +38,81 @@ import {
 
 const callback = () => undefined;
 
+const kindSchema = fc.record({
+  group: fc.string(),
+  version: fc.string(),
+  kind: fc.string(),
+});
+
+const filtersSchema = fc.record({
+  name: fc.string(),
+  namespaces: fc.array(fc.string()),
+  labels: fc.dictionary(fc.string(), fc.string()),
+  annotations: fc.dictionary(fc.string(), fc.string()),
+  deletionTimestamp: fc.boolean(),
+});
+
+const bindingSchema = fc.record({
+  event: fc.constantFrom("CREATE", "UPDATE", "DELETE", "ANY"),
+  kind: kindSchema,
+  filters: filtersSchema,
+});
+
+const requestSchema = fc.record({
+  operation: fc.string(),
+  uid: fc.string(),
+  name: fc.string(),
+  namespace: fc.string(),
+  kind: kindSchema,
+  object: fc.record({
+    metadata: fc.record({
+      deletionTimestamp: fc.option(fc.date()),
+    }),
+  }),
+});
+
+type ExtendedBinding = Partial<Omit<Binding, "filters">> & {
+  filters?: Partial<Binding["filters"]>;
+  callback: () => void;
+};
+
+const createBinding = (overrides: Partial<ExtendedBinding> = {}) => {
+  const {
+    model = kind.Pod,
+    event = Event.ANY,
+    kind: bindingKind = podKind,
+    filters: {
+      name = "",
+      namespaces = [],
+      regexNamespaces = [],
+      regexName = "",
+      labels = {},
+      annotations = {},
+      deletionTimestamp = false,
+    } = {},
+    callback = () => {},
+    ...rest
+  } = overrides;
+
+  return {
+    model,
+    event,
+    kind: bindingKind,
+    filters: { name, namespaces, regexNamespaces, regexName, labels, annotations, deletionTimestamp },
+    callback,
+    ...rest,
+  };
+};
+
 describe("shouldSkipRequest", () => {
   describe("Fuzzing shouldSkipRequest", () => {
     it("should handle random inputs without crashing", () => {
       fc.assert(
-        fc.property(
-          fc.record({
-            event: fc.constantFrom("CREATE", "UPDATE", "DELETE", "ANY"),
-            kind: fc.record({
-              group: fc.string(),
-              version: fc.string(),
-              kind: fc.string(),
-            }),
-            filters: fc.record({
-              name: fc.string(),
-              namespaces: fc.array(fc.string()),
-              labels: fc.dictionary(fc.string(), fc.string()),
-              annotations: fc.dictionary(fc.string(), fc.string()),
-              deletionTimestamp: fc.boolean(),
-            }),
-          }),
-          fc.record({
-            operation: fc.string(),
-            uid: fc.string(),
-            name: fc.string(),
-            namespace: fc.string(),
-            kind: fc.record({
-              group: fc.string(),
-              version: fc.string(),
-              kind: fc.string(),
-            }),
-            object: fc.record({
-              metadata: fc.record({
-                deletionTimestamp: fc.option(fc.date()),
-              }),
-            }),
-          }),
-          fc.array(fc.string()),
-          (binding, req, capabilityNamespaces) => {
-            expect(() =>
-              shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
-            ).not.toThrow();
-          },
-        ),
+        fc.property(bindingSchema, requestSchema, fc.array(fc.string()), (binding, req, capabilityNamespaces) => {
+          expect(() =>
+            shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
+          ).not.toThrow();
+        }),
         { numRuns: 100 },
       );
     });
@@ -89,65 +121,21 @@ describe("shouldSkipRequest", () => {
   describe("Property-Based Testing shouldSkipRequest", () => {
     it("should only skip requests that do not match the binding criteria", () => {
       fc.assert(
-        fc.property(
-          fc.record({
-            event: fc.constantFrom("CREATE", "UPDATE", "DELETE", "ANY"),
-            kind: fc.record({
-              group: fc.string(),
-              version: fc.string(),
-              kind: fc.string(),
-            }),
-            filters: fc.record({
-              name: fc.string(),
-              namespaces: fc.array(fc.string()),
-              labels: fc.dictionary(fc.string(), fc.string()),
-              annotations: fc.dictionary(fc.string(), fc.string()),
-              deletionTimestamp: fc.boolean(),
-            }),
-          }),
-          fc.record({
-            operation: fc.string(),
-            uid: fc.string(),
-            name: fc.string(),
-            namespace: fc.string(),
-            kind: fc.record({
-              group: fc.string(),
-              version: fc.string(),
-              kind: fc.string(),
-            }),
-            object: fc.record({
-              metadata: fc.record({
-                deletionTimestamp: fc.option(fc.date()),
-              }),
-            }),
-          }),
-          fc.array(fc.string()),
-          (binding, req, capabilityNamespaces) => {
-            const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
-            expect(typeof shouldSkip).toBe("string");
-          },
-        ),
+        fc.property(bindingSchema, requestSchema, fc.array(fc.string()), (binding, req, capabilityNamespaces) => {
+          const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
+          expect(typeof shouldSkip).toBe("string");
+        }),
         { numRuns: 100 },
       );
     });
   });
 
   it("create: should reject when regex name does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^default$",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexName: "^default$" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
@@ -155,41 +143,21 @@ describe("shouldSkipRequest", () => {
   });
 
   it("create: should not reject when regex name does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexName: "^cool" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("delete: should reject when regex name does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^default$",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexName: "^default$" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
@@ -197,61 +165,47 @@ describe("shouldSkipRequest", () => {
   });
 
   it("delete: should not reject when regex name does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    // const binding = {
+    //   model: kind.Pod,
+    //   event: Event.ANY,
+    //   kind: podKind,
+    //   filters: {
+    //     name: "",
+    //     namespaces: [],
+    //     regexNamespaces: [],
+    //     regexName: "^cool",
+    //     labels: {},
+    //     annotations: {},
+    //     deletionTimestamp: false,
+    //   },
+    //   callback,
+    // };
+
+    const binding = createBinding({
+      filters: { regexName: "^cool" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("create: should not reject when regex namespace does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [new RegExp("^helm").source],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexNamespaces: [new RegExp("^helm").source] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("create: should reject when regex namespace does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [new RegExp("^argo").source],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexNamespaces: [new RegExp("^argo").source] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
@@ -259,21 +213,11 @@ describe("shouldSkipRequest", () => {
   });
 
   it("delete: should reject when regex namespace does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [new RegExp("^argo").source],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexNamespaces: [new RegExp("^argo").source] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
@@ -281,41 +225,21 @@ describe("shouldSkipRequest", () => {
   });
 
   it("delete: should not reject when regex namespace does match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [new RegExp("^helm").source],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexNamespaces: [new RegExp("^helm").source] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("delete: should reject when name does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "bleh",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "^not-cool",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      filters: { regexName: "^not-cool", name: "bleh" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
       /Ignoring Admission Callback: Binding defines name '.*' but Object carries '.*'./,
@@ -323,25 +247,11 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when kind does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: {
-        group: "",
-        version: "v1",
-        kind: "Nope",
-      },
-      filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-      },
+    const binding = createBinding({
+      kind: { version: "v1", kind: "Nope", group: "" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -350,25 +260,11 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when group does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: {
-        group: "Nope",
-        version: "v1",
-        kind: "Pod",
-      },
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
+      kind: { version: "v1", kind: "Pod", group: "Nope" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -377,25 +273,11 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when version does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: {
-        group: "",
-        version: "Nope",
-        kind: "Pod",
-      },
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
+      kind: { version: "Nope", kind: "Pod", group: "" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -404,67 +286,31 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should allow when group, version, and kind match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should allow when kind match and others are empty", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: {
-        group: "",
-        version: "",
-        kind: "Pod",
-      },
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
+      kind: { version: "", kind: "Pod", group: "" },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should reject when the capability namespace does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
@@ -473,21 +319,11 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when namespace does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: ["bleh"],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
+      filters: { namespaces: ["bleh"] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -496,44 +332,26 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should allow when namespace is match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
-      filters: {
-        name: "",
-        namespaces: ["helm-releasename", "unicorn", "things"],
-        labels: {},
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
-      },
+    const binding = createBinding({
+      filters: { namespaces: ["helm-releasename", "unicorn", "things"] },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toBe("");
   });
 
   it("should reject when label does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
         labels: {
           foo: "bar",
         },
-        annotations: {},
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
       },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -542,24 +360,15 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should allow when label is match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        deletionTimestamp: false,
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
         labels: {
           foo: "bar",
           test: "test1",
         },
-        annotations: {},
       },
       callback,
-    };
+    });
 
     const pod = AdmissionRequestCreatePod();
     pod.object.metadata = pod.object.metadata || {};
@@ -573,23 +382,15 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when annotation does not match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
         annotations: {
           foo: "bar",
         },
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
       },
       callback,
-    };
+    });
+
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
@@ -598,24 +399,15 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should allow when annotation is match", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
         annotations: {
           foo: "bar",
           test: "test1",
         },
-        deletionTimestamp: false,
-        regexNamespaces: [],
-        regexName: "",
       },
       callback,
-    };
+    });
 
     const pod = AdmissionRequestCreatePod();
     pod.object.metadata = pod.object.metadata || {};
@@ -629,23 +421,14 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should use `oldObject` when the operation is `DELETE`", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.DELETE,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
-        regexNamespaces: [],
-        regexName: "",
-        deletionTimestamp: false,
         labels: {
           "test-op": "delete",
         },
-        annotations: {},
       },
       callback,
-    };
+    });
 
     const pod = AdmissionRequestDeletePod();
 
@@ -653,16 +436,8 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should allow when deletionTimestamp is present on pod", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        regexNamespaces: [],
-        regexName: "",
         annotations: {
           foo: "bar",
           test: "test1",
@@ -670,7 +445,7 @@ describe("shouldSkipRequest", () => {
         deletionTimestamp: true,
       },
       callback,
-    };
+    });
 
     const pod = AdmissionRequestCreatePod();
     pod.object.metadata = pod.object.metadata || {};
@@ -685,16 +460,8 @@ describe("shouldSkipRequest", () => {
   });
 
   it("should reject when deletionTimestamp is not present on pod", () => {
-    const binding = {
-      model: kind.Pod,
-      event: Event.ANY,
-      kind: podKind,
+    const binding = createBinding({
       filters: {
-        name: "",
-        namespaces: [],
-        labels: {},
-        regexNamespaces: [],
-        regexName: "",
         annotations: {
           foo: "bar",
           test: "test1",
@@ -702,7 +469,7 @@ describe("shouldSkipRequest", () => {
         deletionTimestamp: true,
       },
       callback,
-    };
+    });
 
     const pod = AdmissionRequestCreatePod();
     pod.object.metadata = pod.object.metadata || {};
