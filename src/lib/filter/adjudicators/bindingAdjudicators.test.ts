@@ -662,16 +662,41 @@ describe("definedCallback", () => {
     [{ isMutate: true, mutateCallback }, mutateCallback],
     [{ isWatch: true, watchCallback }, watchCallback],
     [{ isFinalize: true, finalizeCallback }, finalizeCallback],
-
-    // ** [Order Matter] Tests **
-    [{ isValidate: true, isMutate: true, validateCallback, mutateCallback }, mutateCallback], // Mutate > Validate
-    [{ isWatch: true, isMutate: true, watchCallback, mutateCallback }, watchCallback], // Watch > Mutate
-    [{ isFinalize: true, isWatch: true, finalizeCallback, watchCallback }, finalizeCallback], // Finalize > Watch
     [{ isFinalize: true, isValidate: true, finalizeCallback, validateCallback }, finalizeCallback], // Finalize > Validate
+    [{ isFinalize: true, isWatch: true, finalizeCallback, watchCallback }, finalizeCallback], // Finalize > Watch
     [
       { isFinalize: true, isMutate: true, isWatch: true, finalizeCallback, mutateCallback, watchCallback },
       finalizeCallback,
-    ], // Finalize > Mutate & Watch
+    ], // Finalize > Mutate > Watch
+    [{ isValidate: true, isMutate: true, validateCallback, mutateCallback }, mutateCallback], // Mutate > Validate
+    [{ isWatch: true, isMutate: true, watchCallback, mutateCallback }, watchCallback], // Watch > Mutate
+    [{ isMutate: true, isFinalize: true, mutateCallback, finalizeCallback }, finalizeCallback], // Finalize > Mutate
+    [
+      { isMutate: true, isWatch: true, isFinalize: true, mutateCallback, watchCallback, finalizeCallback },
+      finalizeCallback,
+    ], // Finalize > Watch > Mutate
+    [
+      { isValidate: true, isMutate: true, isFinalize: true, validateCallback, mutateCallback, finalizeCallback },
+      finalizeCallback,
+    ], // Finalize > Mutate > Validate
+    [
+      { isValidate: true, isMutate: true, isWatch: true, validateCallback, mutateCallback, watchCallback },
+      watchCallback,
+    ], // Watch > Mutate > Validate
+    [{ isValidate: true, isWatch: true, validateCallback, watchCallback }, watchCallback], // Watch > Validate
+    [
+      {
+        isValidate: true,
+        isMutate: true,
+        isWatch: true,
+        isFinalize: true,
+        validateCallback,
+        mutateCallback,
+        watchCallback,
+        finalizeCallback,
+      },
+      finalizeCallback,
+    ], // Finalize > Watch > Mutate > Validate
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
