@@ -662,6 +662,16 @@ describe("definedCallback", () => {
     [{ isMutate: true, mutateCallback }, mutateCallback],
     [{ isWatch: true, watchCallback }, watchCallback],
     [{ isFinalize: true, finalizeCallback }, finalizeCallback],
+
+    // ** [Order Matter] Tests **
+    [{ isValidate: true, isMutate: true, validateCallback, mutateCallback }, mutateCallback], // Mutate > Validate
+    [{ isWatch: true, isMutate: true, watchCallback, mutateCallback }, watchCallback], // Watch > Mutate
+    [{ isFinalize: true, isWatch: true, finalizeCallback, watchCallback }, finalizeCallback], // Finalize > Watch
+    [{ isFinalize: true, isValidate: true, finalizeCallback, validateCallback }, finalizeCallback], // Finalize > Validate
+    [
+      { isFinalize: true, isMutate: true, isWatch: true, finalizeCallback, mutateCallback, watchCallback },
+      finalizeCallback,
+    ], // Finalize > Mutate & Watch
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
