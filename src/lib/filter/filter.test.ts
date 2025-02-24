@@ -149,8 +149,9 @@ describe("shouldSkipRequest", () => {
       callback,
     };
     const pod = AdmissionRequestCreatePod();
+
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name regex '\^default\$' but Object carries 'cool-name-podinfo-66bbff7cf4-fwhl2'./,
     );
   });
 
@@ -192,7 +193,7 @@ describe("shouldSkipRequest", () => {
     };
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name regex '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name regex '\^default\$' but Object carries 'cool-name-podinfo-66bbff7cf4-fwhl2'./,
     );
   });
 
@@ -254,7 +255,7 @@ describe("shouldSkipRequest", () => {
     };
     const pod = AdmissionRequestCreatePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespace regexes '\["\^argo"\]' but Object carries 'helm-releasename'./,
     );
   });
 
@@ -276,7 +277,7 @@ describe("shouldSkipRequest", () => {
     };
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines namespace regexes '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespace regexes '\["\^argo"\]' but Object carries 'helm-releasename'./,
     );
   });
 
@@ -318,7 +319,7 @@ describe("shouldSkipRequest", () => {
     };
     const pod = AdmissionRequestDeletePod();
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines name '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines name 'bleh' but Object carries 'cool-name-podinfo-66bbff7cf4-fwhl2'./,
     );
   });
 
@@ -345,7 +346,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines kind '.*' but Request declares '.*'./,
+      /Ignoring Admission Callback: Binding defines kind 'Nope' but Request declares 'Pod'./,
     );
   });
 
@@ -372,7 +373,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines group '.*' but Request declares '.*'./,
+      /Ignoring Admission Callback: Binding defines group 'Nope' but Request declares ''./,
     );
   });
 
@@ -399,7 +400,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines version '.*' but Request declares '.*'./,
+      /Ignoring Admission Callback: Binding defines version 'Nope' but Request declares 'v1'./,
     );
   });
 
@@ -468,7 +469,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
-      /Ignoring Admission Callback: Object carries namespace '.*' but namespaces allowed by Capability are '.*'./,
+      /Ignoring Admission Callback: Object carries namespace 'helm-releasename' but namespaces allowed by Capability are '\["bleh","bleh2"\]'\./,
     );
   });
 
@@ -491,7 +492,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines namespaces '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines namespaces '\["bleh"\]' but Object carries 'helm-releasename'./,
     );
   });
 
@@ -537,7 +538,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines labels '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines labels '\{"foo":"bar"\}' but Object carries '\{"app\.kubernetes\.io\/name":"cool-name-podinfo","pod-template-hash":"66bbff7cf4","zarf-agent":"patched","test-op":"create"\}'.*/,
     );
   });
 
@@ -593,7 +594,7 @@ describe("shouldSkipRequest", () => {
     const pod = AdmissionRequestCreatePod();
 
     expect(shouldSkipRequest(binding, pod, [])).toMatch(
-      /Ignoring Admission Callback: Binding defines annotations '.*' but Object carries '.*'./,
+      /Ignoring Admission Callback: Binding defines annotations '\{"foo":"bar"\}' but Object carries '\{"prometheus\.io\/port":"9898","prometheus\.io\/scrape":"true"\}'./,
     );
   });
 
