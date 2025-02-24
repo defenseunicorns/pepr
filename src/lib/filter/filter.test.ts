@@ -165,22 +165,6 @@ describe("shouldSkipRequest", () => {
   });
 
   it("delete: should not reject when regex name does match", () => {
-    // const binding = {
-    //   model: kind.Pod,
-    //   event: Event.ANY,
-    //   kind: podKind,
-    //   filters: {
-    //     name: "",
-    //     namespaces: [],
-    //     regexNamespaces: [],
-    //     regexName: "^cool",
-    //     labels: {},
-    //     annotations: {},
-    //     deletionTimestamp: false,
-    //   },
-    //   callback,
-    // };
-
     const binding = createBinding({
       filters: { regexName: "^cool" },
       callback,
