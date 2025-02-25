@@ -3,7 +3,7 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+import { Binding } from "../../types";
 import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
   mismatchedEvent,
@@ -20,6 +20,8 @@ import {
   mismatchedNamespaceRegex,
 } from "./mismatch";
 import { Event, Operation } from "../../enums";
+import { DeepPartial } from "../../utility-types";
+import { AdmissionRequest } from "../../common-types";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]

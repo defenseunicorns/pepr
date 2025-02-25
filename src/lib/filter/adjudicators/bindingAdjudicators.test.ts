@@ -3,7 +3,7 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
+import { Binding } from "../../types";
 import { Event } from "../../enums";
 import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
@@ -45,6 +45,8 @@ import {
   carriedLabels,
   carriesLabels,
 } from "./kubernetesObject";
+import { DeepPartial } from "../../utility-types";
+import { ValidateActionResponse } from "../../common-types";
 
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]

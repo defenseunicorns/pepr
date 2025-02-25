@@ -3,9 +3,10 @@
 
 import { K8s, KubernetesObject, RegisterKind } from "kubernetes-fluent-client";
 import Log from "./telemetry/logger";
-import { Binding, DeepPartial } from "./types";
+import { Binding } from "./types";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
+import { DeepPartial } from "./utility-types";
 
 export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>): void {
   // if a DELETE is being processed, don't add a finalizer
