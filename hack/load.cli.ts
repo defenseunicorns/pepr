@@ -435,7 +435,12 @@ program
     log(`Install package artifact into working directory module`);
     cmd = new Cmd({ cmd: `npm install ${path.basename(worktgz)}`, cwd: workdir });
     log({ cmd: cmd.cmd, cwd: cmd.cwd });
-    log(await cmd.run(), "");
+    try {
+      log(await cmd.run(), "");
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
 
     //
     // run deploy
