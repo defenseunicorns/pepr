@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding } from "../../types";
+import { Binding } from "../../types";
 import { allPass, any, anyPass, equals, not, nthArg, pipe } from "ramda";
 import {
   definedAnnotations,
@@ -34,6 +34,7 @@ import {
 } from "./kubernetesObject";
 import { declaredOperation, declaredGroup, declaredVersion, declaredKind } from "./admissionRequest";
 import { Event, Operation } from "../../enums";
+import { AdmissionRequest } from "../../common-types";
 
 export const mismatchedDeletionTimestamp = allPass([
   pipe(nthArg(0), definesDeletionTimestamp),
@@ -79,10 +80,10 @@ export const metasMismatch = pipe(
         // prettier-ignore
         return (
           keyMissing ? { [key]: value } :
-          noValue ? {} :
-          valMissing ? { [key]: value } :
-          valDiffers ? { [key]: value } :
-          {}
+            noValue ? {} :
+              valMissing ? { [key]: value } :
+                valDiffers ? { [key]: value } :
+                  {}
         )
       })
       .reduce((acc, cur) => ({ ...acc, ...cur }), {});
