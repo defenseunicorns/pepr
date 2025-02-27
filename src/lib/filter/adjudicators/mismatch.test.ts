@@ -3,18 +3,23 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial } from "../../types";
+import { AdmissionRequest, Binding, DeepPartial } from "../../types";
+import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
-  mismatchedName,
+  mismatchedEvent,
+  mismatchedGroup,
+  mismatchedVersion,
+  mismatchedKind,
+  metasMismatch,
+  mismatchedAnnotations,
   mismatchedDeletionTimestamp,
+  mismatchedLabels,
+  mismatchedName,
   mismatchedNameRegex,
   mismatchedNamespace,
   mismatchedNamespaceRegex,
-  mismatchedAnnotations,
-  mismatchedLabels,
-  metasMismatch,
-} from "./adjudicators";
-import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
+} from "./mismatch";
+import { Event, Operation } from "../../enums";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
@@ -215,5 +220,101 @@ describe("metasMismatch", () => {
     const result = metasMismatch(bnd, obj);
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("mismatchedEvent", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{ event: Event.CREATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.UPDATE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CREATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CREATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.CREATE }, false],
+
+    [{ event: Event.CREATE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.DELETE }, { operation: Operation.UPDATE }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.UPDATE }, false],
+    [{ event: Event.ANY }, { operation: Operation.UPDATE }, false],
+
+    [{ event: Event.CREATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.DELETE }, { operation: Operation.DELETE }, false],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.DELETE }, true],
+    [{ event: Event.ANY }, { operation: Operation.DELETE }, false],
+
+    [{ event: Event.CREATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.DELETE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.CREATE_OR_UPDATE }, { operation: Operation.CONNECT }, true],
+    [{ event: Event.ANY }, { operation: Operation.CONNECT }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding: Binding = {
+      ...defaultBinding,
+      event: bnd.event,
+    };
+    const request: AdmissionRequest = {
+      ...defaultAdmissionRequest,
+      operation: req.operation,
+    };
+
+    const result = mismatchedEvent(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedGroup", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { group: "group" } }, false],
+    [{ kind: { group: "group" } }, {}, true],
+    [{ kind: { group: "group" } }, { kind: { group: "wrong" } }, true],
+    [{ kind: { group: "group" } }, { kind: { group: "group" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = mismatchedGroup(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedVersion", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { version: "version" } }, false],
+    [{ kind: { version: "version" } }, {}, true],
+    [{ kind: { version: "version" } }, { kind: { version: "wrong" } }, true],
+    [{ kind: { version: "version" } }, { kind: { version: "version" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = mismatchedVersion(binding, request);
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("mismatchedKind", () => {
+  //[ Binding, AdmissionRequest, result ]
+  it.each([
+    [{}, {}, false],
+    [{}, { kind: { kind: "kind" } }, false],
+    [{ kind: { kind: "kind" } }, {}, true],
+    [{ kind: { kind: "kind" } }, { kind: { kind: "wrong" } }, true],
+    [{ kind: { kind: "kind" } }, { kind: { kind: "kind" } }, false],
+  ])("given binding %j and admission request %j, returns %s", (bnd, req, expected) => {
+    const binding = bnd as DeepPartial<Binding>;
+    const request = req as DeepPartial<AdmissionRequest>;
+
+    const result = mismatchedKind(binding, request);
+
+    expect(result).toEqual(expected);
   });
 });

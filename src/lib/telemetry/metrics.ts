@@ -54,7 +54,7 @@ export class MetricsCollector {
     this.#registry = new Registry();
     this.#prefix = prefix;
     this.addCounter(this.#metricNames.errors, "Mutation/Validate errors encountered");
-    this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api token received");
+    this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api path received");
     this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
     this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);

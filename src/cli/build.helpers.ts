@@ -94,7 +94,7 @@ export async function handleCustomOutputDir(outputDir: string): Promise<string> 
  * Check if the image is from Iron Bank and return the correct image
  * @param registry The registry of the image
  * @param image The image to check
- * @param peprVersion The version of the PEPR controller
+ * @param peprVersion The version of the Pepr controller
  * @returns The image string
  * @example
  */

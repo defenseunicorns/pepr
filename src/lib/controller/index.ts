@@ -34,8 +34,8 @@ export class Controller {
   // Metrics collector
   #metricsCollector = metricsCollector;
 
-  // The token used to authenticate requests
-  #token = "";
+  // The path used to authenticate requests
+  #path = "";
 
   // The express app instance
   readonly #app = express();
@@ -93,14 +93,14 @@ export class Controller {
       cert: fs.readFileSync(process.env.SSL_CERT_PATH || "/etc/certs/tls.crt"),
     };
 
-    // Get the API token if not in watch mode
+    // Get the API path if not in watch mode
     if (!isWatchMode()) {
-      // Get the API token from the environment variable or the mounted secret
-      this.#token = process.env.PEPR_API_TOKEN || fs.readFileSync("/app/api-token/value").toString().trim();
-      Log.info(`Using API token: ${this.#token}`);
+      // Get the API path from the environment variable or the mounted secret
+      this.#path = process.env.PEPR_API_PATH || fs.readFileSync("/app/api-path/value").toString().trim();
+      Log.info(`Using API path: ${this.#path}`);
 
-      if (!this.#token) {
-        throw new Error("API token not found");
+      if (!this.#path) {
+        throw new Error("API path not found");
       }
     }
 
@@ -149,35 +149,35 @@ export class Controller {
     }
 
     // Require auth for webhook endpoints
-    this.#app.use(["/mutate/:token", "/validate/:token"], this.#validateToken);
+    this.#app.use(["/mutate/:path", "/validate/:path"], this.#validatepath);
 
     // Mutate endpoint
-    this.#app.post("/mutate/:token", this.#admissionReq("Mutate"));
+    this.#app.post("/mutate/:path", this.#admissionReq("Mutate"));
 
     // Validate endpoint
-    this.#app.post("/validate/:token", this.#admissionReq("Validate"));
+    this.#app.post("/validate/:path", this.#admissionReq("Validate"));
   };
 
   /**
-   * Validate the token in the request path
+   * Validate the path in the request path
    *
    * @param req The incoming request
    * @param res The outgoing response
    * @param next The next middleware function
    * @returns
    */
-  #validateToken = (req: express.Request, res: express.Response, next: NextFunction): void => {
-    // Validate the token
-    const { token } = req.params;
-    if (token !== this.#token) {
-      const err = `Unauthorized: invalid token '${token.replace(/[^\w]/g, "_")}'`;
+  #validatepath = (req: express.Request, res: express.Response, next: NextFunction): void => {
+    // Validate the path
+    const { path } = req.params;
+    if (path !== this.#path) {
+      const err = `Unauthorized: invalid path '${path.replace(/[^\w]/g, "_")}'`;
       Log.info(err);
       res.status(401).send(err);
       this.#metricsCollector.alert();
       return;
     }
 
-    // Token is valid, continue
+    // path is valid, continue
     next();
   };
 

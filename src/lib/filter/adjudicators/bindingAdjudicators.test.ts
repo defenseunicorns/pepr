@@ -5,47 +5,46 @@ import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
 import { Event } from "../../enums";
+import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
-  bindsToNamespace,
-  carriedAnnotations,
-  carriedLabels,
-  carriedName,
-  carriedNamespace,
-  carriesAnnotations,
-  carriesLabels,
-  carriesName,
-  carriesNamespace,
+  definesDeletionTimestamp,
+  ignoresDeletionTimestamp,
+  definedName,
+  definesName,
+  ignoresName,
+  definedNameRegex,
+  definesNameRegex,
+  definedNamespaces,
+  definesNamespaces,
+  definedNamespaceRegexes,
+  definesNamespaceRegexes,
   definedAnnotations,
+  definesAnnotations,
+  definedLabels,
+  definesLabels,
+  definedEvent,
+  definesDelete,
+  definedGroup,
+  definesGroup,
+  definedVersion,
+  definesVersion,
+  definedKind,
+  definesKind,
+  definedCategory,
   definedCallback,
   definedCallbackName,
-  definedCategory,
-  definedEvent,
-  definedGroup,
-  definedKind,
-  definedLabels,
-  definedName,
-  definedNameRegex,
-  definedNamespaceRegexes,
-  definedNamespaces,
-  definedVersion,
-  definesAnnotations,
-  definesDelete,
-  definesDeletionTimestamp,
-  definesGroup,
-  definesKind,
-  definesLabels,
-  definesName,
-  definesNameRegex,
-  definesNamespaceRegexes,
-  definesNamespaces,
-  definesVersion,
-  ignoresDeletionTimestamp,
-  ignoresName,
-  misboundDeleteWithDeletionTimestamp,
-  misboundNamespace,
+} from "./binding";
+import {
+  carriedName,
+  carriesName,
   missingName,
-} from "./adjudicators";
-import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
+  carriedNamespace,
+  carriesNamespace,
+  carriedAnnotations,
+  carriesAnnotations,
+  carriedLabels,
+  carriesLabels,
+} from "./kubernetesObject";
 
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
@@ -214,26 +213,6 @@ describe("missingName", () => {
   });
 });
 
-describe("bindsToNamespace", () => {
-  //[ Binding, result ]
-  it.each([
-    [{ kind: { kind: "" } }, false],
-    [{ kind: { kind: "Namespace" } }, true],
-  ])("given binding %j returns %s", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: {
-        ...defaultFilters,
-      },
-      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
-    };
-
-    const result = bindsToNamespace(binding);
-
-    expect(result).toBe(expected);
-  });
-});
-
 describe("definedNamespaces", () => {
   //[ Binding, result ]
   it.each([
@@ -347,29 +326,6 @@ describe("carriesNamespace", () => {
     };
 
     const result = carriesNamespace(kubernetesObject);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("misboundNamespace", () => {
-  //[ Binding, result ]
-  it.each([
-    [{ kind: { kind: "Kind" }, filters: { namespaces: [] } }, false],
-    [{ kind: { kind: "Kind" }, filters: { namespaces: ["namespace"] } }, false],
-    [{ kind: { kind: "Namespace" }, filters: { namespaces: [] } }, false],
-    [{ kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"] } }, true],
-  ])("given %j, returns %s", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: {
-        ...defaultFilters,
-        namespaces: given.filters.namespaces,
-      },
-      kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
-    };
-
-    const result = misboundNamespace(binding);
 
     expect(result).toBe(expected);
   });
@@ -569,41 +525,6 @@ describe("definesDelete", () => {
   });
 });
 
-describe("misboundDeleteWithDeletionTimestamp", () => {
-  //[ Binding, result ]
-  it.each([
-    [{ event: Event.DELETE, filters: { deletionTimestamp: false } }, false],
-    [{ event: Event.DELETE, filters: { deletionTimestamp: true } }, true],
-  ])("given %j, returns %s", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: { ...defaultFilters, deletionTimestamp: given.filters.deletionTimestamp },
-      event: given.event,
-    };
-
-    const result = misboundDeleteWithDeletionTimestamp(binding);
-
-    expect(result).toEqual(expected);
-  });
-});
-describe("when filters are not set", () => {
-  it.each([
-    [{ event: Event.CREATE }, false],
-    [{ event: Event.CREATE_OR_UPDATE }, false],
-    [{ event: Event.UPDATE }, false],
-    [{ event: Event.DELETE }, false],
-  ])("given %j, returns %s", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      event: given.event,
-    };
-
-    const result = misboundDeleteWithDeletionTimestamp(binding);
-
-    expect(result).toEqual(expected);
-  });
-});
-
 describe("definedGroup", () => {
   //[ Binding, result ]
   it.each([
@@ -741,6 +662,41 @@ describe("definedCallback", () => {
     [{ isMutate: true, mutateCallback }, mutateCallback],
     [{ isWatch: true, watchCallback }, watchCallback],
     [{ isFinalize: true, finalizeCallback }, finalizeCallback],
+    [{ isFinalize: true, isValidate: true, finalizeCallback, validateCallback }, finalizeCallback], // Finalize > Validate
+    [{ isFinalize: true, isWatch: true, finalizeCallback, watchCallback }, finalizeCallback], // Finalize > Watch
+    [
+      { isFinalize: true, isMutate: true, isWatch: true, finalizeCallback, mutateCallback, watchCallback },
+      finalizeCallback,
+    ], // Finalize > Mutate > Watch
+    [{ isValidate: true, isMutate: true, validateCallback, mutateCallback }, mutateCallback], // Mutate > Validate
+    [{ isWatch: true, isMutate: true, watchCallback, mutateCallback }, watchCallback], // Watch > Mutate
+    [{ isMutate: true, isFinalize: true, mutateCallback, finalizeCallback }, finalizeCallback], // Finalize > Mutate
+    [
+      { isMutate: true, isWatch: true, isFinalize: true, mutateCallback, watchCallback, finalizeCallback },
+      finalizeCallback,
+    ], // Finalize > Watch > Mutate
+    [
+      { isValidate: true, isMutate: true, isFinalize: true, validateCallback, mutateCallback, finalizeCallback },
+      finalizeCallback,
+    ], // Finalize > Mutate > Validate
+    [
+      { isValidate: true, isMutate: true, isWatch: true, validateCallback, mutateCallback, watchCallback },
+      watchCallback,
+    ], // Watch > Mutate > Validate
+    [{ isValidate: true, isWatch: true, validateCallback, watchCallback }, watchCallback], // Watch > Validate
+    [
+      {
+        isValidate: true,
+        isMutate: true,
+        isWatch: true,
+        isFinalize: true,
+        validateCallback,
+        mutateCallback,
+        watchCallback,
+        finalizeCallback,
+      },
+      finalizeCallback,
+    ], // Finalize > Watch > Mutate > Validate
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,

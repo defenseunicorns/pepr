@@ -1,6 +1,9 @@
-name: E2E - Pepr Excellent Examples
+name: E2E - Pepr Excellent Examples - Unicorn
 
-permissions: read-all
+permissions:
+  id-token: write # This is needed for OIDC federation.
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -27,6 +30,7 @@ on:
 
 jobs:
   pepr-build:
+    if: github.actor != 'dependabot[bot]'
     name: controller image
     runs-on: ubuntu-latest
     steps:
@@ -56,11 +60,16 @@ jobs:
           cd "$PEPR"
           npm ci
 
+      - name: Chainguard Login
+        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
-          npm run build:image
+          npm run build:image:unicorn
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
@@ -94,6 +103,7 @@ jobs:
           retention-days: 1
 
   examples-matrix:
+    if: github.actor != 'dependabot[bot]'
     name: job matrix
     runs-on: ubuntu-latest
     needs:
@@ -140,11 +150,11 @@ jobs:
         id: create-matrix
 
   excellent-examples:
+    if: github.actor != 'dependabot[bot]' && needs.examples-matrix.outputs.matrix != ''
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs:
       - examples-matrix
-    if: needs.examples-matrix.outputs.matrix != ''
     strategy:
       fail-fast: false
       max-parallel: 32 # Roughly matches the number of E2E tests and below GitHub concurrency limit
