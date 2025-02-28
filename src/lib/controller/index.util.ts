@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+import { AdmissionRequest } from "../common-types";
 import { MutateResponse, ValidateResponse } from "../k8s";
-import { ResponseItem, AdmissionRequest } from "../types";
+import { ResponseItem } from "../types";
 
 export interface KubeAdmissionReview {
   apiVersion: string;

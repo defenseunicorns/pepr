@@ -6,7 +6,7 @@ import { clone } from "ramda";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import * as sut from "./mutate-processor";
-import { AdmissionRequest, Binding, MutateAction } from "../types";
+import { Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
 import { convertFromBase64Map, convertToBase64Map, base64Encode } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
@@ -14,6 +14,7 @@ import { MutateResponse } from "../k8s";
 import { OnError } from "../../cli/init/enums";
 import { updateResponsePatchAndWarnings } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
+import { AdmissionRequest } from "../common-types";
 
 jest.mock("../utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);

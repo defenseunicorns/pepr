@@ -1,6 +1,7 @@
 import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Event, Operation } from "../../enums";
-import { AdmissionRequest, Binding, Filters } from "../../types";
+import { Binding, Filters } from "../../types";
+import { AdmissionRequest } from "../../common-types";
 
 export const defaultFilters: Filters = {
   annotations: {},
