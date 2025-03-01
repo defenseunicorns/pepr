@@ -170,7 +170,7 @@ jobs:
         shell: bash
 
       - name: download artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: pepr-package-and-controller-image
           path: ${{ github.workspace }}
@@ -202,7 +202,7 @@ jobs:
           npm ci
 
       - name: run e2e tests
-        uses: nick-fields/retry@c97818ca39074beaea45180dba704f92496a0082 # v3.0.1
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
           max_attempts: 3
           retry_on: error
