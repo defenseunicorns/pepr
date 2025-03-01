@@ -92,14 +92,21 @@ async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON)
     { path: readme.path, data: readme.data },
     { path: tsConfig.path, data: tsConfig.data },
     { path: peprTSTemplate.path, data: peprTSTemplate.data },
-    { path: ".vscode" + snippet.path, data: snippet.data },
-    { path: ".vscode" + codeSettings.path, data: codeSettings.data },
-    { path: "capabilities" + samplesYaml.path, data: samplesYaml.data },
-    { path: "capabilities" + helloPepr.path, data: helloPepr.data },
+  ];
+
+  const nestedFiles = [
+    { dir: ".vscode", path: snippet.path, data: snippet.data },
+    { dir: ".vscode", path: codeSettings.path, data: codeSettings.data },
+    { dir: "capabilities", path: samplesYaml.path, data: samplesYaml.data },
+    { dir: "capabilities", path: helloPepr.path, data: helloPepr.data },
   ];
 
   for (const file of files) {
     await write(resolve(dirName, file.path), file.data);
+  }
+
+  for (const file of nestedFiles) {
+    await write(resolve(dirName, file.dir, file.path), file.data);
   }
 }
 
