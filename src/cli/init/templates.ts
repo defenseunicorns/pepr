@@ -20,7 +20,7 @@ import { sanitizeName } from "./utils";
 
 export const { dependencies, devDependencies, peerDependencies, scripts, version } = packageJSON;
 
-type peprPackageJSON = {
+export type peprPackageJSON = {
   data: {
     name: string;
     version: string;
@@ -101,12 +101,10 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
   };
 }
 
-export function genPeprTS(): { path: string; data: string } {
-  return {
-    path: "pepr.ts",
-    data: peprTS,
-  };
-}
+export const peprTSTemplate = {
+  path: "pepr.ts",
+  data: peprTS,
+};
 
 export const readme = {
   path: "README.md",
