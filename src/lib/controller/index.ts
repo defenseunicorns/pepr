@@ -14,8 +14,8 @@ import { ModuleConfig } from "../types";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
-import { AdmissionRequest } from "../types";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
+import { AdmissionRequest } from "../common-types";
 
 export interface ControllerHooks {
   beforeHook?: (req: AdmissionRequest) => void;

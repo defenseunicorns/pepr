@@ -5,7 +5,7 @@ import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { ValidateResponse } from "../k8s";
-import { AdmissionRequest, Binding } from "../types";
+import { Binding } from "../types";
 import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
@@ -13,6 +13,7 @@ import { ModuleConfig } from "../types";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { WebhookType } from "../enums";
+import { AdmissionRequest } from "../common-types";
 
 export async function processRequest(
   binding: Binding,

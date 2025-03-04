@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { addFinalizer, removeFinalizer } from "./finalizer";
 import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
-import { AdmissionRequest } from "./types";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
 import { Binding } from "./types";
+import { AdmissionRequest } from "./common-types";
 
 jest.mock("kubernetes-fluent-client");
 const mockK8s = jest.mocked(K8s);
