@@ -14,16 +14,14 @@ export const createMockRbacRule = (
   verbs,
 });
 
-/* eslint-disable max-params */
 export const createMockBinding = (
-  group: string = "pepr.dev",
-  version: string = "v1",
-  kind: string = "peprstore",
-  plural: string = "peprstores",
-  isWatch: boolean = false,
-  event: Event = Event.CREATE,
-  isFinalize?: boolean,
+  kindDetails: { group?: string; version?: string; kind?: string; plural?: string } = {},
+  options: { isWatch?: boolean; event?: Event; isFinalize?: boolean } = {},
 ): Binding => {
+  const { group = "pepr.dev", version = "v1", kind = "peprstore", plural = "peprstores" } = kindDetails;
+
+  const { isWatch = false, event = Event.CREATE, isFinalize } = options;
+
   return {
     kind: { group, version, kind, plural },
     isWatch,
@@ -33,7 +31,6 @@ export const createMockBinding = (
     filters: { ...defaultFilters, regexName: "" },
   };
 };
-/* eslint-enable max-params */
 
 export const createMockCapability = (
   rbacRules = [createMockRbacRule()],
@@ -52,54 +49,89 @@ export const mockCapabilities: CapabilityExport[] = [
     [createMockRbacRule(["apiextensions.k8s.io"], ["customresourcedefinitions"], ["patch", "create"])],
     [
       createMockBinding(
-        "apiextensions.k8s.io",
-        "v1",
-        "customresourcedefinition",
-        "customresourcedefinitions",
-        false,
-        Event.CREATE,
-        false,
+        {
+          group: "apiextensions.k8s.io",
+          version: "v1",
+          kind: "customresourcedefinition",
+          plural: "customresourcedefinitions",
+        },
+        { isWatch: false, event: Event.CREATE, isFinalize: false },
       ),
     ],
   ),
   createMockCapability(
     [createMockRbacRule([""], ["namespaces"], ["watch"])],
-    [createMockBinding("", "v1", "namespace", "namespaces", true, Event.CREATE, false)],
+    [
+      createMockBinding(
+        { group: "", version: "v1", kind: "namespace", plural: "namespaces" },
+        { isWatch: true, event: Event.CREATE, isFinalize: false },
+      ),
+    ],
   ),
   createMockCapability(
     [createMockRbacRule([""], ["configmaps"], ["watch"])],
-    [createMockBinding("", "v1", "configmap", "configmaps", true, Event.CREATE, false)],
+    [
+      createMockBinding(
+        { group: "", version: "v1", kind: "configmap", plural: "configmaps" },
+        { isWatch: true, event: Event.CREATE, isFinalize: false },
+      ),
+    ],
   ),
 ];
 
 export const capabilityWithFinalize: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["pepr.dev"], ["peprstores"], ["patch"])],
-    [createMockBinding("pepr.dev", "v1", "peprstore", "peprstores", false, Event.CREATE, true)],
+    [
+      createMockBinding(
+        { group: "pepr.dev", version: "v1", kind: "peprstore", plural: "peprstores" },
+        { isWatch: false, event: Event.CREATE, isFinalize: true },
+      ),
+    ],
   ),
 ];
 
 export const capabilityWithDuplicates: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["pepr.dev"], ["peprstores"], ["create", "get"])],
-    [createMockBinding("pepr.dev", "v1", "peprlog", "peprlogs", false, Event.CREATE)],
+    [
+      createMockBinding(
+        { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
+        { isWatch: false, event: Event.CREATE },
+      ),
+    ],
   ),
   createMockCapability(
     [createMockRbacRule(["pepr.dev"], ["peprstores"], ["get", "patch"])],
-    [createMockBinding("pepr.dev", "v1", "peprlog", "peprlogs", false, Event.CREATE)],
+    [
+      createMockBinding(
+        { group: "pepr.dev", version: "v1", kind: "peprlog", plural: "peprlogs" },
+        { isWatch: false, event: Event.CREATE },
+      ),
+    ],
   ),
 ];
 
 export const capabilityWithShortKey: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule([""], ["nodes"], ["get"])],
-    [createMockBinding("", "v1", "node", "nodes", false, Event.CREATE)],
+    [
+      createMockBinding(
+        { group: "", version: "v1", kind: "node", plural: "nodes" },
+        { isWatch: false, event: Event.CREATE },
+      ),
+    ],
   ),
 ];
 
 export const capabilityWithLongKey: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["apps"], ["deployments"], ["create"])],
-    [createMockBinding("apps", "v1", "deployment", "deployments", false, Event.CREATE)],
+    [
+      createMockBinding(
+        { group: "apps", version: "v1", kind: "deployment", plural: "deployments" },
+        { isWatch: false, event: Event.CREATE },
+      ),
+    ],
   ),
 ];
