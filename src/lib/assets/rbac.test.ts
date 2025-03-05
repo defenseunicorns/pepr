@@ -7,12 +7,11 @@ import fs from "fs";
 import { kind } from "kubernetes-fluent-client";
 import * as helpers from "../helpers";
 import {
-  capabilitiesWithDuplicates,
-  capabilitiesWithFinalize,
-  capabilitiesWithLongKey,
-  capabilitiesWithShortKey,
+  newCapabilityWithDuplicates,
   mockCapabilitiesNew,
-  mockCapabilitiesOld,
+  newCapabilityWithFinalize,
+  newCapabilityWithLongKey,
+  newCapabilityWithShortKey,
 } from "./defaultTestObjects";
 
 describe("RBAC Resource Creation", () => {
@@ -114,9 +113,9 @@ describe("RBAC Rule Processing", () => {
   it("should deduplicate verbs and resources in rules", () => {
     const result = clusterRole(
       "test-role",
-      capabilitiesWithDuplicates,
+      newCapabilityWithDuplicates,
       "scoped",
-      capabilitiesWithDuplicates.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      newCapabilityWithDuplicates.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // Filter out only the rules for 'pepr.dev' and 'peprstores'
@@ -150,7 +149,7 @@ describe("RBAC Rule Processing", () => {
       });
     });
 
-    const result = clusterRole("test-role", mockCapabilitiesOld, "scoped", customRbacWithNoVerbs);
+    const result = clusterRole("test-role", mockCapabilitiesNew, "scoped", customRbacWithNoVerbs);
 
     // Check that the verbs array is empty for the custom RBAC rule
     expect(result.rules).toContainEqual({
@@ -214,7 +213,7 @@ describe("ClusterRole Generation", () => {
       },
     ];
 
-    const result = clusterRole("test-role", mockCapabilitiesOld, "admin", []);
+    const result = clusterRole("test-role", mockCapabilitiesNew, "admin", []);
 
     expect(result.rules).toEqual(expectedWildcardRules);
   });
@@ -241,7 +240,7 @@ describe("ClusterRole Generation", () => {
         verbs: ["watch"],
       },
     ];
-    const result = clusterRole("test-role", mockCapabilitiesOld, "scoped", []);
+    const result = clusterRole("test-role", mockCapabilitiesNew, "scoped", []);
 
     expect(result.rules).toEqual(expected);
   });
@@ -262,9 +261,9 @@ describe("ClusterRole Generation", () => {
 
     const result = clusterRole(
       "test-role",
-      capabilitiesWithFinalize,
+      newCapabilityWithFinalize,
       "scoped",
-      capabilitiesWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      newCapabilityWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
@@ -295,9 +294,9 @@ describe("RBAC Key Handling", () => {
 
     const result = clusterRole(
       "test-role",
-      capabilitiesWithLongKey,
+      newCapabilityWithLongKey,
       "scoped",
-      capabilitiesWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      newCapabilityWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
@@ -320,9 +319,9 @@ describe("RBAC Key Handling", () => {
     ];
     const result = clusterRole(
       "test-role",
-      capabilitiesWithShortKey,
+      newCapabilityWithShortKey,
       "scoped",
-      capabilitiesWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      newCapabilityWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
