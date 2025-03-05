@@ -1,8 +1,10 @@
 import { GenericClass } from "kubernetes-fluent-client";
 import { Event } from "../enums";
-import { CapabilityExport } from "../types";
+import { Binding, CapabilityExport } from "../types";
+import { defaultFilters } from "../filter/adjudicators/defaultTestObjects";
+import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-export const mockCapabilities: CapabilityExport[] = [
+export const mockCapabilitiesOld: CapabilityExport[] = [
   {
     rbac: [
       {
@@ -285,4 +287,72 @@ export const capabilitiesWithLongKey: CapabilityExport[] = [
     name: "",
     description: "",
   },
+];
+
+export const createMockRbacRule = (
+  apiGroups: string[] = ["pepr.dev"],
+  resources: string[] = ["peprstores"],
+  verbs: string[] = ["create", "get", "patch", "watch"],
+): PolicyRule => ({
+  apiGroups,
+  resources,
+  verbs,
+});
+
+/* eslint-disable max-params */
+export const createMockBinding = (
+  group: string = "pepr.dev",
+  version: string = "v1",
+  kind: string = "peprstore",
+  plural: string = "peprstores",
+  isWatch: boolean = false,
+  event: Event = Event.CREATE,
+  isFinalize?: boolean,
+): Binding => {
+  return {
+    kind: { group, version, kind, plural },
+    isWatch,
+    ...(isFinalize !== undefined && { isFinalize }),
+    event,
+    model: {} as GenericClass,
+    filters: { ...defaultFilters, regexName: "" },
+  };
+};
+/* eslint-enable max-params */
+
+export const createMockCapability = (
+  rbacRules = [createMockRbacRule()],
+  bindings = [createMockBinding()],
+): CapabilityExport => ({
+  name: "",
+  hasSchedule: false,
+  description: "",
+  rbac: rbacRules,
+  bindings,
+});
+
+export const mockCapabilitiesNew: CapabilityExport[] = [
+  createMockCapability(),
+  createMockCapability(
+    [createMockRbacRule(["apiextensions.k8s.io"], ["customresourcedefinitions"], ["patch", "create"])],
+    [
+      createMockBinding(
+        "apiextensions.k8s.io",
+        "v1",
+        "customresourcedefinition",
+        "customresourcedefinitions",
+        false,
+        Event.CREATE,
+        false,
+      ),
+    ],
+  ),
+  createMockCapability(
+    [createMockRbacRule([""], ["namespaces"], ["watch"])],
+    [createMockBinding("", "v1", "namespace", "namespaces", true, Event.CREATE, false)],
+  ),
+  createMockCapability(
+    [createMockRbacRule([""], ["configmaps"], ["watch"])],
+    [createMockBinding("", "v1", "configmap", "configmaps", true, Event.CREATE, false)],
+  ),
 ];

@@ -4,15 +4,16 @@ import { clusterRole, clusterRoleBinding, storeRole, serviceAccount, storeRoleBi
 import { it, describe, expect, jest } from "@jest/globals";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import fs from "fs";
+import { kind } from "kubernetes-fluent-client";
+import * as helpers from "../helpers";
 import {
   capabilitiesWithDuplicates,
   capabilitiesWithFinalize,
   capabilitiesWithLongKey,
   capabilitiesWithShortKey,
-  mockCapabilities,
+  mockCapabilitiesNew,
+  mockCapabilitiesOld,
 } from "./defaultTestObjects";
-import { kind } from "kubernetes-fluent-client";
-import * as helpers from "../helpers";
 
 describe("RBAC Resource Creation", () => {
   it("should create a ClusterRoleBinding with the specified name", () => {
@@ -149,7 +150,7 @@ describe("RBAC Rule Processing", () => {
       });
     });
 
-    const result = clusterRole("test-role", mockCapabilities, "scoped", customRbacWithNoVerbs);
+    const result = clusterRole("test-role", mockCapabilitiesOld, "scoped", customRbacWithNoVerbs);
 
     // Check that the verbs array is empty for the custom RBAC rule
     expect(result.rules).toContainEqual({
@@ -193,9 +194,9 @@ describe("RBAC Rule Processing", () => {
 
     const result = clusterRole(
       "test-role",
-      mockCapabilities,
+      mockCapabilitiesNew,
       "scoped",
-      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      mockCapabilitiesNew.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // The result should only contain rules from the capabilities, not from the invalid custom RBAC
@@ -213,7 +214,7 @@ describe("ClusterRole Generation", () => {
       },
     ];
 
-    const result = clusterRole("test-role", mockCapabilities, "admin", []);
+    const result = clusterRole("test-role", mockCapabilitiesOld, "admin", []);
 
     expect(result.rules).toEqual(expectedWildcardRules);
   });
@@ -240,7 +241,7 @@ describe("ClusterRole Generation", () => {
         verbs: ["watch"],
       },
     ];
-    const result = clusterRole("test-role", mockCapabilities, "scoped", []);
+    const result = clusterRole("test-role", mockCapabilitiesOld, "scoped", []);
 
     expect(result.rules).toEqual(expected);
   });
