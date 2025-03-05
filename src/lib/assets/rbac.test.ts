@@ -168,15 +168,7 @@ describe("RBAC Rule Processing", () => {
       });
     });
 
-    const result = clusterRole(
-      "test-role",
-      mockCapabilities,
-      "scoped",
-      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
-    );
-
-    // The result should only contain rules from the capabilities, not from the invalid custom RBAC
-    expect(result.rules).toEqual([
+    const expected: PolicyRule[] = [
       {
         apiGroups: ["pepr.dev"],
         resources: ["peprstores"],
@@ -197,7 +189,17 @@ describe("RBAC Rule Processing", () => {
         resources: ["configmaps"],
         verbs: ["watch"],
       },
-    ]);
+    ];
+
+    const result = clusterRole(
+      "test-role",
+      mockCapabilities,
+      "scoped",
+      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
+
+    // The result should only contain rules from the capabilities, not from the invalid custom RBAC
+    expect(result.rules).toEqual(expected);
   });
 });
 
@@ -216,9 +218,7 @@ describe("ClusterRole Generation", () => {
     expect(result.rules).toEqual(expectedWildcardRules);
   });
   it("should generate correct ClusterRole rules in scoped mode", () => {
-    const result = clusterRole("test-role", mockCapabilities, "scoped", []);
-
-    expect(result.rules).toEqual([
+    const expected: PolicyRule[] = [
       {
         apiGroups: ["pepr.dev"],
         resources: ["peprstores"],
@@ -239,18 +239,14 @@ describe("ClusterRole Generation", () => {
         resources: ["configmaps"],
         verbs: ["watch"],
       },
-    ]);
+    ];
+    const result = clusterRole("test-role", mockCapabilities, "scoped", []);
+
+    expect(result.rules).toEqual(expected);
   });
 
   it("should include finalize verbs if isFinalize is true in scoped mode", () => {
-    const result = clusterRole(
-      "test-role",
-      capabilitiesWithFinalize,
-      "scoped",
-      capabilitiesWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
-    );
-
-    expect(result.rules).toEqual([
+    const expected: PolicyRule[] = [
       {
         apiGroups: ["pepr.dev"],
         resources: ["peprstores"],
@@ -261,7 +257,16 @@ describe("ClusterRole Generation", () => {
         resources: ["customresourcedefinitions"],
         verbs: ["patch", "create"],
       },
-    ]);
+    ];
+
+    const result = clusterRole(
+      "test-role",
+      capabilitiesWithFinalize,
+      "scoped",
+      capabilitiesWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+    );
+
+    expect(result.rules).toEqual(expected);
   });
   it("should return an empty rules array when capabilities are empty in scoped mode", () => {
     const result = clusterRole("test-role", [], "scoped", []);
@@ -279,6 +284,14 @@ describe("RBAC Key Handling", () => {
       },
     });
 
+    const expected: PolicyRule[] = [
+      {
+        apiGroups: ["apps"],
+        resources: ["deployments"],
+        verbs: ["create"],
+      },
+    ];
+
     const result = clusterRole(
       "test-role",
       capabilitiesWithLongKey,
@@ -286,13 +299,7 @@ describe("RBAC Key Handling", () => {
       capabilitiesWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
-    expect(result.rules).toEqual([
-      {
-        apiGroups: ["apps"],
-        resources: ["deployments"],
-        verbs: ["create"],
-      },
-    ]);
+    expect(result.rules).toEqual(expected);
   });
 
   it("should handle keys with less than 3 segments and set group to an empty string", () => {
@@ -303,6 +310,13 @@ describe("RBAC Key Handling", () => {
       },
     });
 
+    const expected: PolicyRule[] = [
+      {
+        apiGroups: [""],
+        resources: ["nodes"],
+        verbs: ["get"],
+      },
+    ];
     const result = clusterRole(
       "test-role",
       capabilitiesWithShortKey,
@@ -310,12 +324,6 @@ describe("RBAC Key Handling", () => {
       capabilitiesWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
-    expect(result.rules).toEqual([
-      {
-        apiGroups: [""],
-        resources: ["nodes"],
-        verbs: ["get"],
-      },
-    ]);
+    expect(result.rules).toEqual(expected);
   });
 });
