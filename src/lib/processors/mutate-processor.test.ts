@@ -7,23 +7,26 @@ import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import { AdmissionRequest, Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
-import { convertFromBase64Map, convertToBase64Map, base64Encode } from "../utils";
+import { base64Encode } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { MutateResponse } from "../k8s";
 import { OnError } from "../../cli/init/enums";
 import {
   updateResponsePatchAndWarnings,
   Bindable,
-  reencodeData,
   mutateProcessor,
   updateStatus,
   logMutateErrorMessage,
-  decodeData,
   processRequest,
 } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
+import { decodeData } from "../decode-utils";
+
+jest.mock("../decode-utils", () => ({
+  decodeData: jest.fn(),
+}));
 
 jest.mock("../telemetry/logger", () => ({
   info: jest.fn(),
@@ -48,8 +51,6 @@ jest.mock("../filter/filter", () => ({
 }));
 
 jest.mock("../utils");
-const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
-const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -83,6 +84,10 @@ const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
 
 beforeEach(() => {
   jest.resetAllMocks();
+  (decodeData as jest.Mock).mockReturnValue({
+    wrapped: { mockWrapped: true },
+    skipped: [],
+  });
 });
 
 describe("updateStatus", () => {
@@ -130,91 +135,6 @@ describe("logMutateErrorMessage", () => {
   ])("given error '%s', returns '%s'", (err, res) => {
     const result = logMutateErrorMessage(new Error(err));
     expect(result).toBe(res);
-  });
-});
-
-describe("decodeData", () => {
-  const skips = ["convert", "From", "Base64", "Map"];
-
-  beforeEach(() => {
-    mockConvertFromBase64Map.mockImplementation(() => skips);
-  });
-
-  it("returns skips if required & given a Secret", () => {
-    const testAdmissionRequest = {
-      ...defaultAdmissionRequest,
-      kind: {
-        kind: "Secret",
-        version: "v1",
-        group: "",
-      },
-    };
-    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
-
-    const { skipped, wrapped } = decodeData(testPeprMutateRequest);
-
-    expect(mockConvertFromBase64Map.mock.calls.length).toBe(1);
-    expect(mockConvertFromBase64Map.mock.calls[0].at(0)).toBe(testPeprMutateRequest.Raw);
-    expect(skipped).toBe(skips);
-    expect(wrapped).toBe(testPeprMutateRequest);
-  });
-
-  it("returns no skips when given a non-Secret", () => {
-    const testAdmissionRequest = {
-      ...defaultAdmissionRequest,
-      kind: {
-        kind: "NotASecret",
-        version: "v1",
-        group: "",
-      },
-    };
-    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
-
-    const { skipped, wrapped } = decodeData(testPeprMutateRequest);
-
-    expect(mockConvertFromBase64Map.mock.calls.length).toBe(0);
-    expect(skipped).toEqual([]);
-    expect(wrapped).toBe(testPeprMutateRequest);
-  });
-});
-
-describe("reencodeData", () => {
-  it("returns unchanged content when given non-secret", () => {
-    const skipped = ["convert", "To", "Base64", "Map"];
-    const testAdmissionRequest = {
-      ...defaultAdmissionRequest,
-      kind: {
-        kind: "NotASecret",
-        version: "v1",
-        group: "",
-      },
-    };
-    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
-
-    const transformed = reencodeData(testPeprMutateRequest, skipped);
-
-    expect(mockConvertToBase64Map.mock.calls.length).toBe(0);
-    expect(transformed).toEqual(testAdmissionRequest.object);
-  });
-
-  it("returns modified content when given a secret and skips", () => {
-    const skipped = ["convert", "To", "Base64", "Map"];
-    const testAdmissionRequest = {
-      ...defaultAdmissionRequest,
-      kind: {
-        kind: "Secret",
-        version: "v1",
-        group: "",
-      },
-    };
-    const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
-
-    const transformed = reencodeData(testPeprMutateRequest, skipped);
-
-    expect(mockConvertToBase64Map.mock.calls.length).toBe(1);
-    expect(mockConvertToBase64Map.mock.calls[0].at(0)).toEqual(testPeprMutateRequest.Raw);
-    expect(mockConvertToBase64Map.mock.calls[0].at(1)).toBe(skipped);
-    expect(transformed).toEqual(testPeprMutateRequest.Raw);
   });
 });
 
@@ -347,6 +267,7 @@ describe("updateResponsePatchAndWarnings", () => {
 
 describe("mutateProcessor", () => {
   let config: ModuleConfig;
+  let capability: Capability;
   beforeEach(() => {
     jest.clearAllMocks();
     config = {
@@ -354,14 +275,17 @@ describe("mutateProcessor", () => {
       uuid: "some-uuid",
       alwaysIgnore: {},
     };
-  });
-
-  it("should measure if a timeout occurred based on webhookTimeout", async () => {
-    const capability = new Capability({
+    capability = new Capability({
       name: "test",
       description: "test",
     });
+    (decodeData as jest.Mock).mockReturnValue({
+      wrapped: { mockWrapped: true },
+      skipped: [],
+    });
+  });
 
+  it("should measure if a timeout occurred based on webhookTimeout", async () => {
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
 
@@ -374,17 +298,6 @@ describe("mutateProcessor", () => {
   });
 
   it("should stop the timer after processing", async () => {
-    const capability = new Capability({
-      name: "test",
-      description: "test",
-      bindings: [
-        {
-          isMutate: true,
-          mutateCallback: jest.fn(),
-        },
-      ],
-    } as unknown as Capability);
-
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
 
@@ -394,5 +307,19 @@ describe("mutateProcessor", () => {
 
     expect(spyStop).toHaveBeenCalled();
     spyStop.mockRestore();
+  });
+
+  it("should call decodeData", async () => {
+    const req = defaultAdmissionRequest;
+    const reqMetadata = {};
+
+    (decodeData as jest.Mock).mockReturnValue({
+      wrapped: { mockWrapped: true },
+      skipped: [],
+    });
+
+    await mutateProcessor(config, [capability], req, reqMetadata);
+
+    expect(decodeData).toHaveBeenCalled();
   });
 });
