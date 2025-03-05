@@ -300,6 +300,17 @@ export const capabilitiesWithDuplicates: CapabilityExport[] = [
   },
 ];
 
+export const newCapabilityWithDuplicates: CapabilityExport[] = [
+  createMockCapability(
+    [createMockRbacRule(["pepr.dev"], ["peprstores"], ["create", "get"])],
+    [createMockBinding("pepr.dev", "v1", "peprlog", "peprlogs", false, Event.CREATE)],
+  ),
+  createMockCapability(
+    [createMockRbacRule(["pepr.dev"], ["peprstores"], ["get", "patch"])],
+    [createMockBinding("pepr.dev", "v1", "peprlog", "peprlogs", false, Event.CREATE)],
+  ),
+];
+
 export const capabilitiesWithShortKey: CapabilityExport[] = [
   {
     rbac: [
@@ -330,6 +341,13 @@ export const capabilitiesWithShortKey: CapabilityExport[] = [
     name: "",
     description: "",
   },
+];
+
+export const newCapabilityWithShortKey: CapabilityExport[] = [
+  createMockCapability(
+    [createMockRbacRule([""], ["nodes"], ["get"])],
+    [createMockBinding("", "v1", "node", "nodes", false, Event.CREATE)],
+  ),
 ];
 
 export const capabilitiesWithLongKey: CapabilityExport[] = [
