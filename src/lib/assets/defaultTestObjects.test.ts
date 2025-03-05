@@ -1,10 +1,10 @@
 import { expect, it } from "@jest/globals";
 import {
-  mockCapabilitiesNew,
-  newCapabilityWithDuplicates,
-  newCapabilityWithFinalize,
-  newCapabilityWithLongKey,
-  newCapabilityWithShortKey,
+  mockCapabilities,
+  capabilityWithDuplicates,
+  capabilityWithFinalize,
+  capabilityWithLongKey,
+  capabilityWithShortKey,
 } from "./defaultTestObjects";
 import {
   capabilitiesWithDuplicates,
@@ -15,21 +15,21 @@ import {
 } from "./legacy-data/defaultTestObjects";
 
 it("generates the same mockCapability", () => {
-  expect(mockCapabilitiesNew).toEqual(mockCapabilitiesOld);
+  expect(mockCapabilities).toEqual(mockCapabilitiesOld);
 });
 
 it("generates the same mockCapabilityWithFinalize", () => {
-  expect(newCapabilityWithFinalize).toEqual(capabilitiesWithFinalize);
+  expect(capabilityWithFinalize).toEqual(capabilitiesWithFinalize);
 });
 
 it("generates the same mockCapabilityWithDuplicates", () => {
-  expect(newCapabilityWithDuplicates).toEqual(capabilitiesWithDuplicates);
+  expect(capabilityWithDuplicates).toEqual(capabilitiesWithDuplicates);
 });
 
 it("generates the same mockCapabilityWithShortKey", () => {
-  expect(newCapabilityWithShortKey).toEqual(capabilitiesWithShortKey);
+  expect(capabilityWithShortKey).toEqual(capabilitiesWithShortKey);
 });
 
 it("generates the same mockCapabilityWithLongKey", () => {
-  expect(newCapabilityWithLongKey).toEqual(capabilitiesWithLongKey);
+  expect(capabilityWithLongKey).toEqual(capabilitiesWithLongKey);
 });

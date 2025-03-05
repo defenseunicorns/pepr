@@ -46,7 +46,7 @@ export const createMockCapability = (
   bindings,
 });
 
-export const mockCapabilitiesNew: CapabilityExport[] = [
+export const mockCapabilities: CapabilityExport[] = [
   createMockCapability(),
   createMockCapability(
     [createMockRbacRule(["apiextensions.k8s.io"], ["customresourcedefinitions"], ["patch", "create"])],
@@ -72,14 +72,14 @@ export const mockCapabilitiesNew: CapabilityExport[] = [
   ),
 ];
 
-export const newCapabilityWithFinalize: CapabilityExport[] = [
+export const capabilityWithFinalize: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["pepr.dev"], ["peprstores"], ["patch"])],
     [createMockBinding("pepr.dev", "v1", "peprstore", "peprstores", false, Event.CREATE, true)],
   ),
 ];
 
-export const newCapabilityWithDuplicates: CapabilityExport[] = [
+export const capabilityWithDuplicates: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["pepr.dev"], ["peprstores"], ["create", "get"])],
     [createMockBinding("pepr.dev", "v1", "peprlog", "peprlogs", false, Event.CREATE)],
@@ -90,14 +90,14 @@ export const newCapabilityWithDuplicates: CapabilityExport[] = [
   ),
 ];
 
-export const newCapabilityWithShortKey: CapabilityExport[] = [
+export const capabilityWithShortKey: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule([""], ["nodes"], ["get"])],
     [createMockBinding("", "v1", "node", "nodes", false, Event.CREATE)],
   ),
 ];
 
-export const newCapabilityWithLongKey: CapabilityExport[] = [
+export const capabilityWithLongKey: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["apps"], ["deployments"], ["create"])],
     [createMockBinding("apps", "v1", "deployment", "deployments", false, Event.CREATE)],
