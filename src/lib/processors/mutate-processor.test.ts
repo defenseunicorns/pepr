@@ -8,15 +8,22 @@ import { PeprMutateRequest } from "../mutate-request";
 import { AdmissionRequest, Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
 import { convertFromBase64Map, convertToBase64Map, base64Encode } from "../utils";
-import { GenericClass, KubernetesObject, GroupVersionKind } from "kubernetes-fluent-client";
+import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { MutateResponse } from "../k8s";
 import { OnError } from "../../cli/init/enums";
-import { updateResponsePatchAndWarnings, Bindable, reencodeData, mutateProcessor, updateStatus, logMutateErrorMessage, decodeData, processRequest } from "./mutate-processor";
+import {
+  updateResponsePatchAndWarnings,
+  Bindable,
+  reencodeData,
+  mutateProcessor,
+  updateStatus,
+  logMutateErrorMessage,
+  decodeData,
+  processRequest,
+} from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
-import * as utils from "../utils";
-import { shouldSkipRequest } from "../filter/filter";
 
 jest.mock("../telemetry/logger", () => ({
   info: jest.fn(),
@@ -340,14 +347,14 @@ describe("updateResponsePatchAndWarnings", () => {
 
 describe("mutateProcessor", () => {
   let config: ModuleConfig;
-  beforeEach(()=>{
+  beforeEach(() => {
     jest.clearAllMocks();
     config = {
       webhookTimeout: 11,
       uuid: "some-uuid",
       alwaysIgnore: {},
     };
-  })
+  });
 
   it("should measure if a timeout occurred based on webhookTimeout", async () => {
     const capability = new Capability({
@@ -366,31 +373,17 @@ describe("mutateProcessor", () => {
     spyStart.mockRestore();
   });
 
-  // it("should call convertFromBase64Map if the kind is a Secret", async () => {
-  //   const capability = new Capability({
-  //     name: "test",
-  //     description: "test",
-  //   });
-  //   const testGroupVersionKind: GroupVersionKind = {
-  //     kind: "Secret",
-  //     version: "v1",
-  //     group: "",
-  //   };
-  //   const req: AdmissionRequest = { ...defaultAdmissionRequest, kind: testGroupVersionKind };
-  //   const reqMetadata = {};
-
-  //   const spyConvert = jest.spyOn(utils, "convertFromBase64Map");
-
-  //   await mutateProcessor(config, [capability], req, reqMetadata);
-
-  //   expect(spyConvert).toHaveBeenCalled();
-  //   spyConvert.mockRestore();
-  // });
   it("should stop the timer after processing", async () => {
     const capability = new Capability({
       name: "test",
       description: "test",
-    });
+      bindings: [
+        {
+          isMutate: true,
+          mutateCallback: jest.fn(),
+        },
+      ],
+    } as unknown as Capability);
 
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
@@ -402,69 +395,4 @@ describe("mutateProcessor", () => {
     expect(spyStop).toHaveBeenCalled();
     spyStop.mockRestore();
   });
-
-  // it("should skip bindings that do not have validateCallback", async () => {
-  //   config = {
-  //     webhookTimeout: 10,
-  //     uuid: "some-uuid",
-  //     alwaysIgnore: {},
-  //   };
-
-  //   const capability = new Capability({
-  //     name: "test",
-  //     description: "test",
-  //     bindings: [
-  //       {
-  //         isValidate: true,
-  //         validateCallback: undefined,
-  //       },
-  //     ],
-  //   } as unknown as Capability);
-
-  //   const req = testAdmissionRequest;
-  //   const reqMetadata = {};
-
-  //   // This rule is skipped because we cannot mock this function globally as it is tested above
-  //   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  //   const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
-
-  //   await validateProcessor(config, [capability], req, reqMetadata);
-
-  //   expect(spyProcessRequest).not.toHaveBeenCalled();
-
-  //   spyProcessRequest.mockRestore();
-  // });
-
-  // it("should skip bindings if shouldSkipRequest returns a reason", async () => {
-  //   config = {
-  //     webhookTimeout: 10,
-  //     uuid: "some-uuid",
-  //     alwaysIgnore: {},
-  //   };
-
-  //   const capability = new Capability({
-  //     name: "test",
-  //     description: "test",
-  //     bindings: [
-  //       {
-  //         isValidate: true,
-  //         validateCallback: jest.fn(),
-  //       },
-  //     ],
-  //   } as unknown as Capability);
-
-  //   const req = testAdmissionRequest;
-  //   const reqMetadata = {};
-
-  //   // This rule is skipped because we cannot mock this function globally as it is tested above
-  //   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  //   const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
-  //   (shouldSkipRequest as jest.Mock).mockReturnValue("Skip reason");
-
-  //   await validateProcessor(config, [capability], req, reqMetadata);
-
-  //   expect(spyProcessRequest).not.toHaveBeenCalled();
-
-  //   spyProcessRequest.mockRestore();
-  // });
 });
