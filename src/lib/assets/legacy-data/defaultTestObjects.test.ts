@@ -5,14 +5,14 @@ import {
   capabilityWithFinalize,
   capabilityWithLongKey,
   capabilityWithShortKey,
-} from "./defaultTestObjects";
+} from "../defaultTestObjects";
 import {
   capabilitiesWithDuplicates,
   capabilitiesWithFinalize,
   capabilitiesWithLongKey,
   capabilitiesWithShortKey,
   mockCapabilitiesOld,
-} from "./legacy-data/defaultTestObjects";
+} from "./defaultTestObjects";
 
 it("generates the same mockCapability", () => {
   expect(mockCapabilities).toEqual(mockCapabilitiesOld);
