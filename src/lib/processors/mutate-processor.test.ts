@@ -5,15 +5,40 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
-import * as sut from "./mutate-processor";
 import { AdmissionRequest, Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
 import { convertFromBase64Map, convertToBase64Map, base64Encode } from "../utils";
-import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
+import { GenericClass, KubernetesObject, GroupVersionKind } from "kubernetes-fluent-client";
 import { MutateResponse } from "../k8s";
 import { OnError } from "../../cli/init/enums";
-import { updateResponsePatchAndWarnings } from "./mutate-processor";
+import { updateResponsePatchAndWarnings, Bindable, reencodeData, mutateProcessor, updateStatus, logMutateErrorMessage, decodeData, processRequest } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
+import { Capability } from "../core/capability";
+import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
+import * as utils from "../utils";
+import { shouldSkipRequest } from "../filter/filter";
+
+jest.mock("../telemetry/logger", () => ({
+  info: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn(),
+}));
+
+jest.mock("../telemetry/metrics", () => ({
+  metricsCollector: {
+    addCounter: jest.fn(),
+    incCounter: jest.fn(),
+  },
+  MeasureWebhookTimeout: jest.fn(),
+}));
+
+jest.mock("../telemetry/timeUtils", () => ({
+  getNow: jest.fn(() => 1000),
+}));
+
+jest.mock("../filter/filter", () => ({
+  shouldSkipRequest: jest.fn(),
+}));
 
 jest.mock("../utils");
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
@@ -60,7 +85,7 @@ describe("updateStatus", () => {
       const status = "test-status";
       const annote = `${defaultModuleConfig.uuid}.pepr.dev/${name}`;
 
-      const result = sut.updateStatus(defaultModuleConfig, name, defaultPeprMutateRequest(), status);
+      const result = updateStatus(defaultModuleConfig, name, defaultPeprMutateRequest(), status);
 
       expect(result.HasAnnotation(annote)).toBe(true);
       expect(result.Raw.metadata?.annotations?.[annote]).toBe(status);
@@ -77,7 +102,7 @@ describe("updateStatus", () => {
       const name = "capa";
       const annote = `${defaultModuleConfig.uuid}.pepr.dev/${name}`;
 
-      const result = sut.updateStatus(
+      const result = updateStatus(
         defaultModuleConfig,
         name,
         defaultPeprMutateRequest(testAdmissionRequest),
@@ -96,7 +121,7 @@ describe("logMutateErrorMessage", () => {
     ["", "An error occurred with the mutate action."],
     ["[object Object]", "An error occurred with the mutate action."],
   ])("given error '%s', returns '%s'", (err, res) => {
-    const result = sut.logMutateErrorMessage(new Error(err));
+    const result = logMutateErrorMessage(new Error(err));
     expect(result).toBe(res);
   });
 });
@@ -119,7 +144,7 @@ describe("decodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const { skipped, wrapped } = sut.decodeData(testPeprMutateRequest);
+    const { skipped, wrapped } = decodeData(testPeprMutateRequest);
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(1);
     expect(mockConvertFromBase64Map.mock.calls[0].at(0)).toBe(testPeprMutateRequest.Raw);
@@ -138,7 +163,7 @@ describe("decodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const { skipped, wrapped } = sut.decodeData(testPeprMutateRequest);
+    const { skipped, wrapped } = decodeData(testPeprMutateRequest);
 
     expect(mockConvertFromBase64Map.mock.calls.length).toBe(0);
     expect(skipped).toEqual([]);
@@ -159,7 +184,7 @@ describe("reencodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const transformed = sut.reencodeData(testPeprMutateRequest, skipped);
+    const transformed = reencodeData(testPeprMutateRequest, skipped);
 
     expect(mockConvertToBase64Map.mock.calls.length).toBe(0);
     expect(transformed).toEqual(testAdmissionRequest.object);
@@ -177,7 +202,7 @@ describe("reencodeData", () => {
     };
     const testPeprMutateRequest = defaultPeprMutateRequest(testAdmissionRequest);
 
-    const transformed = sut.reencodeData(testPeprMutateRequest, skipped);
+    const transformed = reencodeData(testPeprMutateRequest, skipped);
 
     expect(mockConvertToBase64Map.mock.calls.length).toBe(1);
     expect(mockConvertToBase64Map.mock.calls[0].at(0)).toEqual(testPeprMutateRequest.Raw);
@@ -206,7 +231,7 @@ const defaultBinding: Binding = {
   mutateCallback: jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>,
 };
 
-const defaultBindable: sut.Bindable = {
+const defaultBindable: Bindable = {
   req: defaultAdmissionRequest,
   config: defaultModuleConfig,
   name: "test-name",
@@ -226,7 +251,7 @@ describe("processRequest", () => {
     const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
-    const result = await sut.processRequest(defaultBindable, testPeprMutateRequest, testMutateResponse);
+    const result = await processRequest(defaultBindable, testPeprMutateRequest, testMutateResponse);
 
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
@@ -250,7 +275,7 @@ describe("processRequest", () => {
     const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
-    const result = await sut.processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
+    const result = await processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
 
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
@@ -275,7 +300,7 @@ describe("processRequest", () => {
     const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
-    const result = await sut.processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
+    const result = await processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
 
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
@@ -311,4 +336,135 @@ describe("updateResponsePatchAndWarnings", () => {
     updateResponsePatchAndWarnings(patches, localMutateResponse);
     expect(localMutateResponse.warnings).not.toBeDefined();
   });
+});
+
+describe("mutateProcessor", () => {
+  let config: ModuleConfig;
+  beforeEach(()=>{
+    jest.clearAllMocks();
+    config = {
+      webhookTimeout: 11,
+      uuid: "some-uuid",
+      alwaysIgnore: {},
+    };
+  })
+
+  it("should measure if a timeout occurred based on webhookTimeout", async () => {
+    const capability = new Capability({
+      name: "test",
+      description: "test",
+    });
+
+    const req = defaultAdmissionRequest;
+    const reqMetadata = {};
+
+    const spyStart = jest.spyOn(MeasureWebhookTimeout.prototype, "start");
+
+    await mutateProcessor(config, [capability], req, reqMetadata);
+
+    expect(spyStart).toHaveBeenCalledWith(config.webhookTimeout);
+    spyStart.mockRestore();
+  });
+
+  // it("should call convertFromBase64Map if the kind is a Secret", async () => {
+  //   const capability = new Capability({
+  //     name: "test",
+  //     description: "test",
+  //   });
+  //   const testGroupVersionKind: GroupVersionKind = {
+  //     kind: "Secret",
+  //     version: "v1",
+  //     group: "",
+  //   };
+  //   const req: AdmissionRequest = { ...defaultAdmissionRequest, kind: testGroupVersionKind };
+  //   const reqMetadata = {};
+
+  //   const spyConvert = jest.spyOn(utils, "convertFromBase64Map");
+
+  //   await mutateProcessor(config, [capability], req, reqMetadata);
+
+  //   expect(spyConvert).toHaveBeenCalled();
+  //   spyConvert.mockRestore();
+  // });
+  it("should stop the timer after processing", async () => {
+    const capability = new Capability({
+      name: "test",
+      description: "test",
+    });
+
+    const req = defaultAdmissionRequest;
+    const reqMetadata = {};
+
+    const spyStop = jest.spyOn(MeasureWebhookTimeout.prototype, "stop");
+
+    await mutateProcessor(config, [capability], req, reqMetadata);
+
+    expect(spyStop).toHaveBeenCalled();
+    spyStop.mockRestore();
+  });
+
+  // it("should skip bindings that do not have validateCallback", async () => {
+  //   config = {
+  //     webhookTimeout: 10,
+  //     uuid: "some-uuid",
+  //     alwaysIgnore: {},
+  //   };
+
+  //   const capability = new Capability({
+  //     name: "test",
+  //     description: "test",
+  //     bindings: [
+  //       {
+  //         isValidate: true,
+  //         validateCallback: undefined,
+  //       },
+  //     ],
+  //   } as unknown as Capability);
+
+  //   const req = testAdmissionRequest;
+  //   const reqMetadata = {};
+
+  //   // This rule is skipped because we cannot mock this function globally as it is tested above
+  //   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  //   const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
+
+  //   await validateProcessor(config, [capability], req, reqMetadata);
+
+  //   expect(spyProcessRequest).not.toHaveBeenCalled();
+
+  //   spyProcessRequest.mockRestore();
+  // });
+
+  // it("should skip bindings if shouldSkipRequest returns a reason", async () => {
+  //   config = {
+  //     webhookTimeout: 10,
+  //     uuid: "some-uuid",
+  //     alwaysIgnore: {},
+  //   };
+
+  //   const capability = new Capability({
+  //     name: "test",
+  //     description: "test",
+  //     bindings: [
+  //       {
+  //         isValidate: true,
+  //         validateCallback: jest.fn(),
+  //       },
+  //     ],
+  //   } as unknown as Capability);
+
+  //   const req = testAdmissionRequest;
+  //   const reqMetadata = {};
+
+  //   // This rule is skipped because we cannot mock this function globally as it is tested above
+  //   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  //   const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
+  //   (shouldSkipRequest as jest.Mock).mockReturnValue("Skip reason");
+
+  //   await validateProcessor(config, [capability], req, reqMetadata);
+
+  //   expect(spyProcessRequest).not.toHaveBeenCalled();
+
+  //   spyProcessRequest.mockRestore();
+  // });
 });
