@@ -9,8 +9,8 @@ on:
     - cron: '0 5 * * *' # 1AM EST/10PM PST
 
 jobs:
-  setup:
-    name: controller image
+  ib-arm-e2e:
+    name: Iron Bank ARM Image E2E Test
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
@@ -21,7 +21,7 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
-      - name: create matrix
+      - name: Create Matrix
         run: |
           matrix=$(
             node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js" "$PEPR_EXCELLENT_EXAMPLES_PATH"
@@ -29,7 +29,7 @@ jobs:
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
         id: create-matrix
 
-      - name: run e2e tests
+      - name: Run e2e tests
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
           max_attempts: 3
@@ -41,7 +41,7 @@ jobs:
               --image pepr:arm \
               --custom-package ../pepr-0.0.0-development.tgz
 
-      - name: upload artifacts (troubleshooting)
+      - name: Upload artifacts (troubleshooting)
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: always()
         with:
