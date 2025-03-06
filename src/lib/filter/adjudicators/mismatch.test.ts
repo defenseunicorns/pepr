@@ -20,7 +20,7 @@ import {
   mismatchedNamespaceRegex,
 } from "./mismatch";
 import { Event, Operation } from "../../enums";
-import { DeepPartial } from "../../utility-types";
+import { DeepPartial } from "../../common-types";
 import { AdmissionRequest } from "../../common-types";
 
 describe("mismatchedName", () => {

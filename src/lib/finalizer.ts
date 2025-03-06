@@ -6,7 +6,7 @@ import Log from "./telemetry/logger";
 import { Binding } from "./types";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
-import { DeepPartial } from "./utility-types";
+import { DeepPartial } from "./common-types";
 
 export function addFinalizer<K extends KubernetesObject>(request: PeprMutateRequest<K>): void {
   // if a DELETE is being processed, don't add a finalizer

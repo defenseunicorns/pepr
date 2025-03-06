@@ -17,7 +17,7 @@ import { KubernetesObject } from "kubernetes-fluent-client";
 import { Binding } from "../../types";
 import { Event, Operation } from "../../enums";
 import { defaultBinding, defaultFilters } from "./defaultTestObjects";
-import { DeepPartial } from "../../utility-types";
+import { DeepPartial } from "../../common-types";
 
 describe("bindsToKind", () => {
   //[ Binding, Kind, result ]

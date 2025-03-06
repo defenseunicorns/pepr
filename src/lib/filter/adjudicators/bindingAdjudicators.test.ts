@@ -45,7 +45,7 @@ import {
   carriedLabels,
   carriesLabels,
 } from "./kubernetesObject";
-import { DeepPartial } from "../../utility-types";
+import { DeepPartial } from "../../common-types";
 import { ValidateActionResponse } from "../../common-types";
 
 describe("definesDeletionTimestamp", () => {
