@@ -187,6 +187,7 @@ export async function mutateProcessor(
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
     if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
+      webhookTimer.stop();
       return response;
     }
   }
@@ -203,6 +204,7 @@ export async function mutateProcessor(
 
   // delete operations can't be mutate, just return before the transformation
   if (req.operation === "DELETE") {
+    webhookTimer.stop();
     return response;
   }
 
