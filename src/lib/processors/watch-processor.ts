@@ -147,7 +147,7 @@ async function runBinding(
   };
 
   // Setup the resource watch
-  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
+  const watcher = K8s(binding.model, { ...binding.filters, kindOverride: binding.kind }).Watch(async (obj, phase) => {
     Log.debug(obj, `Watch event ${phase} received`);
 
     if (binding.isQueue) {
