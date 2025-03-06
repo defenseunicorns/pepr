@@ -1,6 +1,6 @@
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
+import { convertFromBase64Map, convertToBase64Map } from "../utils";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
-import { PeprMutateRequest } from "./mutate-request";
+import { PeprMutateRequest } from "../mutate-request";
 import { clone } from "ramda";
 
 export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {

@@ -22,9 +22,9 @@ import {
 import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
-import { decodeData } from "../decode-utils";
+import { decodeData } from "./decode-utils";
 
-jest.mock("../decode-utils", () => ({
+jest.mock("./decode-utils", () => ({
   decodeData: jest.fn(),
 }));
 

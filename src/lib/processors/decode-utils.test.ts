@@ -1,39 +1,18 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { AdmissionRequest } from "./types";
-import { convertFromBase64Map, convertToBase64Map } from "./utils";
-import { Operation } from "./enums";
-import { PeprMutateRequest } from "./mutate-request";
+import { convertFromBase64Map, convertToBase64Map } from "../utils";
+import { PeprMutateRequest } from "../mutate-request";
 import { decodeData, reencodeData } from "./decode-utils";
+import { createMockAdmissionRequest } from "../assets/defaultTestObjects";
 
-jest.mock("./utils");
+jest.mock("../utils");
+
+const defaultAdmissionRequest = createMockAdmissionRequest();
 
 const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
   new PeprMutateRequest(admissionRequest);
 
 const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
 const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
-
-const defaultAdmissionRequest: AdmissionRequest = {
-  uid: "uid",
-  kind: {
-    kind: "kind",
-    group: "group",
-    version: "version",
-  },
-  resource: {
-    group: "group",
-    version: "version",
-    resource: "resource",
-  },
-  name: "",
-  object: {
-    metadata: {
-      name: "create-me",
-    },
-  },
-  operation: Operation.CREATE,
-  userInfo: {},
-};
 
 describe("decodeData", () => {
   const skips = ["convert", "From", "Base64", "Map"];
