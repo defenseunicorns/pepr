@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
@@ -10,11 +11,20 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "integration/**/*.ts",
+    ".github/workflows/pepr-excellent-examples-matrix.js",
+    "config/commitlint.config.js",
+    "commitlint.config.js",
+    "coverage/lcov-report/block-navigation.js",
+    "coverage/lcov-report/prettify.js",
+    "coverage/lcov-report/sorter.js",
+    "scripts/set-version.js"
+  ],
   "exclude": ["node_modules", "dist", "fixtures", "src/templates", "pepr-test-module"]
 }
