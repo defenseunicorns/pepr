@@ -16,7 +16,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Environment setup
-        uses: ./.github/ironbank-actions/setup
+        uses: ./.github/actions/ironbank-setup
         with:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
