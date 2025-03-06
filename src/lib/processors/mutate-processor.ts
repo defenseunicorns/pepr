@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
-import { kind, KubernetesObject } from "kubernetes-fluent-client";
-import { clone } from "ramda";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
@@ -12,11 +11,13 @@ import { AdmissionRequest, Binding } from "../types";
 import Log from "../telemetry/logger";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
-import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
+import { base64Encode } from "../utils";
 import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
+import { decodeData, reencodeData } from "./decode-utils";
+
 export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
@@ -58,33 +59,6 @@ export function logMutateErrorMessage(e: Error): string {
   } catch {
     return "An error occurred with the mutate action.";
   }
-}
-
-export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {
-  skipped: string[];
-  wrapped: PeprMutateRequest<KubernetesObject>;
-} {
-  let skipped: string[] = [];
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret) {
-    // convertFromBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
-    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
-  }
-
-  return { skipped, wrapped };
-}
-
-export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
-  const transformed = clone(wrapped.Raw);
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret) {
-    // convertToBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
-    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
-  }
-
-  return transformed;
 }
 
 export async function processRequest(
@@ -186,6 +160,7 @@ export async function mutateProcessor(
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
     if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
+      webhookTimer.stop();
       return response;
     }
   }
@@ -196,11 +171,13 @@ export async function mutateProcessor(
   // If no capability matched the request, exit early
   if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
+    webhookTimer.stop();
     return response;
   }
 
   // delete operations can't be mutate, just return before the transformation
   if (req.operation === "DELETE") {
+    webhookTimer.stop();
     return response;
   }
 
