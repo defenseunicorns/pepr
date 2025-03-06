@@ -83,6 +83,7 @@ runs:
       run: |
         cd "$PEPR"
         npm run build
+        mv pepr-0.0.0-development.tgz pepr-0.0.0-development.tar.gz
         mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
         docker build -t pepr:amd -f Dockerfile.ironbank.amd .
         docker build -t pepr:arm -f Dockerfile.ironbank.arm .
