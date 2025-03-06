@@ -1,8 +1,25 @@
-import { GenericClass } from "kubernetes-fluent-client";
+import { GenericClass, GroupVersionKind } from "kubernetes-fluent-client";
 import { Event } from "../enums";
 import { Binding, CapabilityExport } from "../types";
 import { defaultFilters } from "../filter/adjudicators/defaultTestObjects";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
+import { AdmissionRequest, GroupVersionResource } from "../types";
+import { Operation } from "../enums";
+
+export const createMockAdmissionRequest = (
+  kind: GroupVersionKind = { kind: "kind", group: "group", version: "version" },
+  resource: GroupVersionResource = { group: "group", version: "version", resource: "resource" },
+  object: { metadata: { name: string } } = { metadata: { name: "create-me" } },
+  operation: Operation = Operation.CREATE,
+): AdmissionRequest => ({
+  uid: "uid",
+  kind,
+  resource,
+  name: "",
+  object,
+  operation,
+  userInfo: {},
+});
 
 export const createMockRbacRule = (
   apiGroups: string[] = ["pepr.dev"],
