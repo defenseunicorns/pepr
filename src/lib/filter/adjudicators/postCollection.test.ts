@@ -14,9 +14,10 @@ import {
 } from "./postCollection";
 import { operationMatchesEvent } from "./mismatch";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial } from "../../types";
+import { Binding } from "../../types";
 import { Event, Operation } from "../../enums";
 import { defaultBinding, defaultFilters } from "./defaultTestObjects";
+import { DeepPartial } from "../../common-types";
 
 describe("bindsToKind", () => {
   //[ Binding, Kind, result ]

@@ -1,10 +1,10 @@
 import { kind } from "kubernetes-fluent-client";
 
-import { AdmissionRequest } from "../lib/types";
 import admissionRequestCreatePod from "./data/admission-create-pod.json";
 import admissionRequestDeletePod from "./data/admission-delete-pod.json";
 import admissionRequestCreateClusterRole from "./data/admission-create-clusterrole.json";
 import admissionRequestCreateDeployment from "./data/admission-create-deployment.json";
+import { AdmissionRequest } from "../lib/common-types";
 
 export function AdmissionRequestCreateDeployment(): AdmissionRequest<kind.Deployment> {
   return cloneObject<kind.Deployment>(admissionRequestCreateDeployment);

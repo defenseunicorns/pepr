@@ -3,7 +3,7 @@ import { Event } from "../enums";
 import { Binding, CapabilityExport } from "../types";
 import { defaultFilters } from "../filter/adjudicators/defaultTestObjects";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
-import { AdmissionRequest, GroupVersionResource } from "../types";
+import { AdmissionRequest, GroupVersionResource } from "../common-types";
 import { Operation } from "../enums";
 
 export const createMockAdmissionRequest = (

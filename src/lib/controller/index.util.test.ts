@@ -4,7 +4,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { MutateResponse, ValidateResponse } from "../k8s";
 import * as sut from "./index.util";
-import { AdmissionRequest } from "../types";
+import { AdmissionRequest } from "../common-types";
 
 describe("karForMutate()", () => {
   it("returns given MutateResponse wrapped in an KubeAdmissionReview", () => {

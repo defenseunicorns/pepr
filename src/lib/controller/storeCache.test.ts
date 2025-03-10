@@ -93,7 +93,6 @@ describe("sendCache", () => {
     });
 
     it("should require a key to be defined", () => {
-      // eslint-disable-next-line max-nested-callbacks
       expect(() => {
         fillStoreCache({}, "capability", "remove", { key: [] });
       }).toThrow("Key is required for REMOVE operation");
