@@ -1,0 +1,119 @@
+name: E2E - Pepr Excellent Examples - IronBank AMD Image
+
+permissions:
+  contents: read
+  id-token: write 
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *' # 2AM EST/11PM PST
+
+jobs:
+  ironbank-setup:
+    name: Iron Bank AMD Image E2E Test Setup
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Environment setup
+        uses: ./.github/actions/ironbank-setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+
+      - name: Clone Pepr
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+    
+      - name: Set Pepr Environment Variable
+        shell: bash
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: Clone Pepr Excellent Examples
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: defenseunicorns/pepr-excellent-examples
+          path: pepr-excellent-examples
+
+      - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
+        run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
+
+      - name: Create Matrix
+        run: |
+          matrix=$(
+            node "$PEPR/.github/workflows/pepr-excellent-examples-matrix.js" "$PEPR_EXCELLENT_EXAMPLES_PATH"
+          )
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+        id: create-matrix
+
+  run-e2e-tests:
+    name: Iron Bank AMD ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    needs:
+      - ironbank-setup
+    if: needs.ironbank-setup.outputs.matrix != ''
+    strategy:
+      fail-fast: false
+      max-parallel: 32 # Roughly matches the number of E2E tests and below GitHub concurrency limit
+      matrix: ${{ fromJSON(needs.ironbank-setup.outputs.matrix) }}
+    steps:
+
+      - name: "install k3d"
+        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        shell: bash
+
+      - name: Clone Pepr Excellent Examples
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: defenseunicorns/pepr-excellent-examples
+          path: pepr-excellent-examples
+
+      - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
+        run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
+        
+      - name: download artifacts
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: pepr-package-and-controller-image
+          path: ${{ github.workspace }}
+
+      - name: import pepr image from tar
+        run: |
+          PEPR_AMD_TAR="${GITHUB_WORKSPACE}/pepr-amd-img.tar"
+          PEPR_ARM_TAR="${GITHUB_WORKSPACE}/pepr-arm-img.tar"
+
+          echo "PEPR_ARM_TAR=${PEPR_ARM_TAR}" >> "$GITHUB_ENV"
+          echo "PEPR_AMD_TAR=${PEPR_AMD_TAR}" >> "$GITHUB_ENV"
+
+          docker image load --input "$PEPR_AMD_TAR"
+          docker image load --input "$PEPR_ARM_TAR"
+
+      - name: Run e2e tests
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 6
+          command: |
+            cd $PEPR_EXCELLENT_EXAMPLES_PATH
+
+            npm i
+            npm run --workspace=${{ matrix.name }} test:e2e -- \
+              --image pepr:amd \
+              --custom-package ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+
+      - name: Upload artifacts (troubleshooting)
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: always()
+        with:
+          name: "troubleshooting_logs_${{matrix.name}}"
+          path: | 
+            pepr-excellent-examples/package.json
+            pepr-excellent-examples/package-lock.json
+          if-no-files-found: error
+          retention-days: 1
+
