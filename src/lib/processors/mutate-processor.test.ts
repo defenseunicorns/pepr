@@ -5,11 +5,8 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { clone } from "ramda";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
-
-import * as sut from "./mutate-processor";
 import { AdmissionRequest } from "../common-types";
 import { Binding, MutateAction } from "../types";
-
 import { Event, Operation } from "../enums";
 import { base64Encode } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
@@ -24,7 +21,6 @@ import {
   processRequest,
 } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
-
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
@@ -54,7 +50,6 @@ jest.mock("../telemetry/timeUtils", () => ({
 jest.mock("../filter/filter", () => ({
   shouldSkipRequest: jest.fn(),
 }));
-
 
 jest.mock("../utils");
 
