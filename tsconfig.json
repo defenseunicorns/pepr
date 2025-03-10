@@ -24,7 +24,8 @@
     "coverage/lcov-report/block-navigation.js",
     "coverage/lcov-report/prettify.js",
     "coverage/lcov-report/sorter.js",
-    "scripts/set-version.js"
+    "scripts/set-version.js",
+    "scripts/read-unicorn-build-args.js"
   ],
   "exclude": ["node_modules", "dist", "fixtures", "src/templates", "pepr-test-module"]
 }
