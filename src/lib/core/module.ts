@@ -6,7 +6,7 @@ import { Controller, ControllerHooks } from "../controller";
 import { ValidateError } from "../errors";
 import { CapabilityExport } from "../types";
 import { setupWatch } from "../processors/watch-processor";
-import { Log } from "../../lib";
+import Log from "../../lib/telemetry/logger";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { isBuildMode, isDevMode, isWatchMode } from "./envChecks";
 import { PackageJSON, PeprModuleOptions, ModuleConfig } from "../types";
