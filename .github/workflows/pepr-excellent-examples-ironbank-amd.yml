@@ -85,7 +85,6 @@ jobs:
         run: |
           PEPR_AMD_TAR="${GITHUB_WORKSPACE}/pepr-amd-img.tar"
           echo "PEPR_AMD_TAR=${PEPR_AMD_TAR}" >> "$GITHUB_ENV"
-
           docker image load --input "$PEPR_AMD_TAR"
 
       - name: Run e2e tests
