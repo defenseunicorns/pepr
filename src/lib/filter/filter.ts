@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding } from "../types";
+import { Binding } from "../types";
 import { Operation } from "../enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
@@ -39,6 +39,7 @@ import {
   mismatchedNamespaceRegex,
   mismatchedNameRegex,
 } from "./adjudicators/mismatch";
+import { AdmissionRequest } from "../common-types";
 
 type AdjudicationResult = string | null;
 type Adjudicator = () => AdjudicationResult;

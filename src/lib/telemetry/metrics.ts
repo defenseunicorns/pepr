@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-/* eslint-disable class-methods-use-this */
-
 import { performance } from "perf_hooks";
 import promClient, { Counter, Registry, Gauge, Summary } from "prom-client";
 import Log from "./logger";
