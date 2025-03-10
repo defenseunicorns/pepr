@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-/* eslint-disable class-methods-use-this */
-
 import { performance } from "perf_hooks";
 import promClient, { Counter, Registry, Gauge, Summary } from "prom-client";
 import Log from "./logger";
@@ -54,7 +52,7 @@ export class MetricsCollector {
     this.#registry = new Registry();
     this.#prefix = prefix;
     this.addCounter(this.#metricNames.errors, "Mutation/Validate errors encountered");
-    this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api token received");
+    this.addCounter(this.#metricNames.alerts, "Mutation/Validate bad api path received");
     this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
     this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);

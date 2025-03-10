@@ -4,11 +4,11 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
-import * as resource from "../helpers/resource";
+import { Result } from "../helpers/cmd";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -20,69 +20,60 @@ describe("build", () => {
     await workdir.recreate();
   }, time.toMs("60s"));
 
-  describe("builds a module", () => {
+  describe("when building a module", () => {
     const id = FILE.split(".").at(1);
     const testModule = `${workdir.path()}/${id}`;
+    let buildOutput: Result;
 
     beforeAll(async () => {
       await fs.rm(testModule, { recursive: true, force: true });
-      const argz = [
+      const initArgs = [
         `--name ${id}`,
         `--description ${id}`,
         `--errorBehavior reject`,
         "--confirm",
         "--skip-post-init",
       ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
+      await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-    }, time.toMs("2m"));
+
+      const buildArgs = [`--no-embed`].join(" ");
+      buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
+    }, time.toMs("3m"));
+
+    it("should execute 'pepr build'", () => {
+      expect(buildOutput.exitcode).toBe(0);
+      expect(buildOutput.stderr.join("").trim()).toContain("");
+      expect(buildOutput.stdout.join("").trim()).toContain("Module built successfully at");
+    });
 
     describe("for use as a library", () => {
-      let packageJson;
-      let uuid: string;
-
-      it(
-        "builds",
-        async () => {
-          const argz = [`--no-embed`].join(" ");
-          const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
-          expect(build.exitcode).toBe(0);
-          expect(build.stderr.join("").trim()).toContain("");
-          expect(build.stdout.join("").trim()).toContain("Module built successfully at");
-
-          packageJson = await resource.fromFile(`${testModule}/package.json`);
-          uuid = packageJson.pepr.uuid;
+      it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.js.map`], [`pepr.js`]])(
+        "should create: '%s'",
+        filename => {
+          expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
         },
-        time.toMs("1m"),
       );
 
-      it(
-        "outputs appropriate configuration",
-        async () => {
-          const missing = [
-            `${testModule}/dist/pepr-${uuid}.js`,
-            `${testModule}/dist/pepr-${uuid}.js.map`,
-            `${testModule}/dist/pepr-${uuid}.js.LEGAL.txt`,
-            `${testModule}/dist/pepr-module-${uuid}.yaml`,
-            `${testModule}/dist/zarf.yaml`,
-            `${testModule}/dist/${uuid}-chart/`,
-          ];
-          for (const path of missing) {
-            expect(existsSync(path)).toBe(false);
-          }
+      it.each([
+        { filename: `^UUID-chart/$` },
+        { filename: `^pepr-UUID\\.js\\.map$` },
+        { filename: `^pepr-UUID\\.js$` },
+        { filename: `^pepr-module-UUID\\.yaml$` },
+        { filename: `^zarf\\.yaml$` },
+        // Legal files are omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
+        { filename: `^pepr-UUID\\.js\\.LEGAL\\.txt$` },
+        { filename: `^pepr\\.js\\.LEGAL\\.txt$` },
+      ])("should not create: '$filename'", ({ filename }) => {
+        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        const regex = new RegExp(filename.replace("UUID", uuidPattern));
+        const files = readdirSync(`${testModule}/dist/`);
 
-          const found = [
-            `${testModule}/dist/pepr.js`,
-            `${testModule}/dist/pepr.js.map`,
-            `${testModule}/dist/pepr.js.LEGAL.txt`,
-          ];
-          for (const path of found) {
-            expect(existsSync(path)).toBe(true);
-          }
-        },
-        time.toMs("1m"),
-      );
+        const matchingFiles = files.filter(file => regex.test(file));
+
+        expect(matchingFiles.length).toBe(0);
+      });
     });
   });
 });

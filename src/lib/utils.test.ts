@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe } from "@jest/globals";
+import { expect, it, describe } from "@jest/globals";
 import { convertToBase64Map, convertFromBase64Map, base64Decode, base64Encode } from "./utils";
 
 describe("utils", () => {
-  test("convertToBase64Map should encode all ascii values and skip listed values in skip array", () => {
+  it("convertToBase64Map should encode all ascii values and skip listed values in skip array", () => {
     const obj = {
       data: {
         test1: "test1",
@@ -22,7 +22,7 @@ describe("utils", () => {
     expect(obj.data["test4"]).toBe("test4");
   });
 
-  test("convertFromBase64Map should decode all ascii values and skip values in skip array", () => {
+  it("convertFromBase64Map should decode all ascii values and skip values in skip array", () => {
     const obj = {
       data: {
         test1: base64Encode("test1"),
@@ -41,24 +41,24 @@ describe("utils", () => {
     expect(obj.data["test5"]).toBe("");
   });
 
-  test("base64Decode should decode a base64 string", () => {
+  it("base64Decode should decode a base64 string", () => {
     const data = "dGVzdDE=";
     expect(base64Decode(data)).toBe("test1");
   });
 
-  test("base64Encode should encode a string to base64", () => {
+  it("base64Encode should encode a string to base64", () => {
     const data = "test1";
     expect(base64Encode(data)).toBe("dGVzdDE=");
   });
 
-  test("convertToBase64Map empty object", () => {
+  it("convertToBase64Map empty object", () => {
     const obj = {};
     const objOut = { data: {} };
     convertToBase64Map(obj, []);
     expect(obj).toStrictEqual(objOut);
   });
 
-  test("convertFromBase64Map empty object", () => {
+  it("convertFromBase64Map empty object", () => {
     const obj = {};
     const objOut = { data: {} };
     const skip = convertFromBase64Map(obj);

@@ -10,7 +10,7 @@ import { peprDev } from "./pepr-dev";
 import { peprFormat } from "./pepr-format";
 import { peprInit } from "./pepr-init";
 import { removeFolder } from "./utils";
-import { outputDir } from "./pepr-build-wasm";
+import { outputDir } from "./pepr-build.helpers";
 // Unmock unit test things
 jest.deepUnmock("pino");
 

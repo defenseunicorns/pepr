@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test } from "@jest/globals";
 import { PeprValidateRequest } from "../lib/validate-request";
 import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 import * as fc from "fast-check";
-import { beforeEach, describe, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Mock } from "jest-mock";
@@ -26,7 +25,7 @@ jest.mock("kubernetes-fluent-client", () => ({
 }));
 
 describe("containers", () => {
-  test("should return a list of containers in the pod when in a validate block", async () => {
+  it("should return a list of containers in the pod when in a validate block", async () => {
     const standardContainers = [
       {
         name: "container-1",
@@ -70,7 +69,7 @@ describe("containers", () => {
     expect(result).toHaveLength(ephemeralContainers.length);
   });
 
-  test("should return a list of containers in the pod when in a mutate block", async () => {
+  it("should return a list of containers in the pod when in a mutate block", async () => {
     const standardContainers = [
       {
         name: "container-1",
@@ -191,7 +190,7 @@ describe("getOwnerRefFrom", () => {
     controller: false,
   }));
 
-  test.each([
+  it.each([
     [true, false, ownerRefWithAllFields],
     [false, undefined, ownerRefWithBlockOwnerDeletion],
     [undefined, true, ownerRefWithController],
@@ -212,7 +211,7 @@ describe("getOwnerRefFrom", () => {
 });
 
 describe("sanitizeResourceName Fuzzing Tests", () => {
-  test("should handle any random string input", () => {
+  it("should handle any random string input", () => {
     fc.assert(
       fc.property(fc.string(), name => {
         expect(() => sanitizeResourceName(name)).not.toThrow();
@@ -224,7 +223,7 @@ describe("sanitizeResourceName Fuzzing Tests", () => {
 });
 
 describe("sanitizeResourceName Property-Based Tests", () => {
-  test("should always return lowercase, alphanumeric names without leading/trailing hyphens", () => {
+  it("should always return lowercase, alphanumeric names without leading/trailing hyphens", () => {
     fc.assert(
       fc.property(fc.string(), name => {
         const sanitized = sanitizeResourceName(name);

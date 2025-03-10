@@ -1,46 +1,45 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding } from "../types";
+import { Binding } from "../types";
 import { Operation } from "../enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
-  carriedAnnotations,
-  carriedLabels,
-  carriedName,
-  carriedNamespace,
   carriesIgnoredNamespace,
-  declaredGroup,
-  declaredKind,
-  declaredOperation,
-  declaredVersion,
-  definedAnnotations,
-  definedEvent,
-  definedGroup,
-  definedKind,
-  definedLabels,
-  definedName,
-  definedNameRegex,
-  definedNamespaceRegexes,
-  definedNamespaces,
-  definedVersion,
   misboundDeleteWithDeletionTimestamp,
   misboundNamespace,
-  mismatchedAnnotations,
-  mismatchedDeletionTimestamp,
-  mismatchedEvent,
-  mismatchedGroup,
-  mismatchedKind,
-  mismatchedLabels,
-  mismatchedName,
-  mismatchedNameRegex,
-  mismatchedNamespace,
-  mismatchedNamespaceRegex,
-  mismatchedVersion,
   missingCarriableNamespace,
   unbindableNamespaces,
   uncarryableNamespace,
-} from "./adjudicators/adjudicators";
+} from "./adjudicators/postCollection";
+import { declaredOperation, declaredGroup, declaredVersion, declaredKind } from "./adjudicators/admissionRequest";
+import {
+  definedEvent,
+  definedName,
+  definedGroup,
+  definedVersion,
+  definedKind,
+  definedNamespaces,
+  definedLabels,
+  definedAnnotations,
+  definedNamespaceRegexes,
+  definedNameRegex,
+} from "./adjudicators/binding";
+import { carriedName, carriedNamespace, carriedLabels, carriedAnnotations } from "./adjudicators/kubernetesObject";
+import {
+  mismatchedDeletionTimestamp,
+  mismatchedEvent,
+  mismatchedName,
+  mismatchedGroup,
+  mismatchedVersion,
+  mismatchedKind,
+  mismatchedNamespace,
+  mismatchedLabels,
+  mismatchedAnnotations,
+  mismatchedNamespaceRegex,
+  mismatchedNameRegex,
+} from "./adjudicators/mismatch";
+import { AdmissionRequest } from "../common-types";
 
 type AdjudicationResult = string | null;
 type Adjudicator = () => AdjudicationResult;

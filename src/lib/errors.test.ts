@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test, describe } from "@jest/globals";
+import { expect, it, describe } from "@jest/globals";
 import * as fc from "fast-check";
 import { ErrorList, ValidateError } from "./errors";
 import { OnError } from "../cli/init/enums";
 
 describe("ValidateError Fuzz Testing", () => {
-  test("should only accept predefined error values", () => {
+  it("should only accept predefined error values", () => {
     fc.assert(
       fc.property(fc.string(), error => {
         if (ErrorList.includes(error)) {
@@ -23,7 +23,7 @@ describe("ValidateError Fuzz Testing", () => {
   });
 });
 describe("ValidateError Fake Data Testing", () => {
-  test("should correctly handle typical fake error data", () => {
+  it("should correctly handle typical fake error data", () => {
     const fakeErrors = ["error", "failure", "null", "undefined", "exception"];
     fakeErrors.forEach(fakeError => {
       if (ErrorList.includes(fakeError)) {
@@ -37,7 +37,7 @@ describe("ValidateError Fake Data Testing", () => {
   });
 });
 describe("ValidateError Property-Based Testing", () => {
-  test("should only validate errors that are part of the ErrorList", () => {
+  it("should only validate errors that are part of the ErrorList", () => {
     fc.assert(
       fc.property(fc.constantFrom(...ErrorList), validError => {
         expect(() => ValidateError(validError)).not.toThrow();
@@ -59,7 +59,7 @@ describe("ValidateError Property-Based Testing", () => {
   });
 });
 
-test("Errors object should have correct properties", () => {
+it("Errors object should have correct properties", () => {
   expect(OnError).toEqual({
     AUDIT: "audit",
     IGNORE: "ignore",
@@ -67,7 +67,7 @@ test("Errors object should have correct properties", () => {
   });
 });
 
-test("ValidateError should not throw an error for valid errors", () => {
+it("ValidateError should not throw an error for valid errors", () => {
   expect(() => {
     ValidateError("audit");
     ValidateError("ignore");
@@ -75,7 +75,7 @@ test("ValidateError should not throw an error for valid errors", () => {
   }).not.toThrow();
 });
 
-test("ValidateError should throw an error for invalid errors", () => {
+it("ValidateError should throw an error for invalid errors", () => {
   expect(() => ValidateError("invalidError")).toThrowError({
     message: "Invalid error: invalidError. Must be one of: audit, ignore, reject",
   });

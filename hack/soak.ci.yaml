@@ -46,7 +46,7 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pepr-soak-ci-api-token
+  name: pepr-soak-ci-api-path
   namespace: pepr-system
 type: Opaque
 data:
@@ -143,8 +143,8 @@ spec:
             - name: tls-certs
               mountPath: /etc/certs
               readOnly: true
-            - name: api-token
-              mountPath: /app/api-token
+            - name: api-path
+              mountPath: /app/api-path
               readOnly: true
             - name: module
               mountPath: /app/load
@@ -153,9 +153,9 @@ spec:
         - name: tls-certs
           secret:
             secretName: pepr-soak-ci-tls
-        - name: api-token
+        - name: api-path
           secret:
-            secretName: pepr-soak-ci-api-token
+            secretName: pepr-soak-ci-api-path
         - name: module
           secret:
             secretName: pepr-soak-ci-module

@@ -4,7 +4,7 @@
 import { describe, jest, afterAll } from "@jest/globals";
 import { peprBuild } from "./pepr-build-wasm";
 import { removeFolder } from "./utils";
-import { outputDir } from "./pepr-build-wasm";
+import { outputDir } from "./pepr-build.helpers";
 // Unmock unit test things
 jest.deepUnmock("pino");
 

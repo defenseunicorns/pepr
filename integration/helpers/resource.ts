@@ -1,6 +1,6 @@
-import { readFile } from "node:fs/promises";
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { parseAllDocuments } from "yaml";
+import { readFileSync } from "node:fs";
 
 /**
  * Read resources from a file and return them as JS objects.
@@ -9,11 +9,11 @@ import { parseAllDocuments } from "yaml";
  * @returns JS object or array of JS objects.
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export async function fromFile(path: string): Promise<any | any[]> {
+export function fromFile(path: string): any | any[] {
   const extension = path.split(".").at(-1);
 
   let result: object | object[];
-  const content = await readFile(path, { encoding: "utf8" });
+  const content = readFileSync(path, { encoding: "utf8" });
 
   switch (extension) {
     case "json": {

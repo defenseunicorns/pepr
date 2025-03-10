@@ -77,13 +77,13 @@ export default function (program: RootCmd): void {
       new Option(
         "-i, --custom-image <custom-image>",
         "Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
-      ).conflicts(["version", "registryInfo", "registry"]),
+      ).conflicts(["registryInfo", "registry"]),
     )
     .addOption(
       new Option(
         "-r, --registry-info [<registry>/<username>]",
         "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
-      ).conflicts(["customImage", "version", "registry"]),
+      ).conflicts(["customImage", "registry"]),
     )
 
     .option("-o, --output-dir <output directory>", "Define where to place build output")
@@ -91,12 +91,6 @@ export default function (program: RootCmd): void {
       "--timeout <timeout>",
       "How long the API server should wait for a webhook to respond before treating the call as a failure",
       parseTimeout,
-    )
-    .addOption(
-      new Option(
-        "-v, --version <version>",
-        "DEPRECATED: The version of the Pepr image to use in the deployment manifests. Example: '0.27.3'.",
-      ).conflicts(["customImage", "registryInfo"]),
     )
     .option(
       "--withPullSecret <imagePullSecret>",
@@ -164,8 +158,6 @@ export default function (program: RootCmd): void {
         console.info(`✅ Module built successfully at ${path}`);
         return;
       }
-      // set the image version if provided -- DEPRECATED
-      if (opts.version) cfg.pepr.peprVersion = opts.version;
 
       // Generate a secret for the module
       const assets = new Assets(

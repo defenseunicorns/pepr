@@ -12,7 +12,7 @@ import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
 jest.mock("kubernetes-fluent-client");
 
-describe("pepr store tests", () => {
+describe("StoreController", () => {
   const mockK8s = jest.mocked(K8s);
   const capabilityConfig: CapabilityCfg = {
     name: "test-capability",
@@ -36,9 +36,44 @@ describe("pepr store tests", () => {
     jest.useRealTimers();
   });
 
-  describe("when initializing the store", () => {
-    beforeEach(() => {
-      testCapability = new Capability(capabilityConfig);
+  beforeEach(() => {
+    testCapability = new Capability(capabilityConfig);
+    const mockPeprStore = new Store();
+    const defaultMockImplementations = <T extends GenericClass, K extends KubernetesObject>() =>
+      ({
+        Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+        InNamespace: jest.fn().mockReturnValueOnce({
+          Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+        }),
+        Watch: jest.fn().mockReturnValueOnce(undefined),
+        Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
+      }) as unknown as K8sInit<T, K>;
+
+    mockK8s.mockImplementationOnce(defaultMockImplementations);
+    jest.useFakeTimers();
+  });
+
+  describe("PeprStore initialization", () => {
+    it.each([
+      ["with schedule", `pepr-test-schedule`, true],
+      ["without schedule", `pepr-test-store`, false],
+    ])("should initialize the store %s", async (_, storeName, withSchedule) => {
+      if (withSchedule) {
+        testCapability.OnSchedule(mockSchedule);
+      }
+
+      const controllerStore = new StoreController([testCapability], storeName, () => {});
+      jest.advanceTimersToNextTimer();
+      await Promise.resolve();
+
+      // K8s(Store).Get() mock
+      expect(mockK8s).toHaveBeenCalled();
+      expect(controllerStore).toBeDefined();
+    });
+  });
+
+  describe("PeprStore Migration and setupWatch ", () => {
+    it("should migrate existing stores and set up a watch on the store resource", async () => {
       const mockPeprStore = new Store();
       const defaultMockImplementations = <T extends GenericClass, K extends KubernetesObject>() =>
         ({
@@ -51,23 +86,14 @@ describe("pepr store tests", () => {
         }) as unknown as K8sInit<T, K>;
 
       mockK8s.mockImplementationOnce(defaultMockImplementations);
-      jest.useFakeTimers();
-    });
-    it.skip("should migrate and setup the watch (with schedule)", async () => {
-      testCapability.OnSchedule(mockSchedule);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const controllerStore = new StoreController([testCapability], `pepr-test-schedule`, () => {});
+      new StoreController([testCapability], `pepr-test-schedule`, () => {});
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
-      expect(true).toBe(false); // store.ts only exposes a constructor, hard to test
-    });
 
-    it.skip("should create the store resource for a scheduled capability (without schedule)", async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const controllerStore = new StoreController([testCapability], `pepr-test-store`, () => {});
-      jest.advanceTimersToNextTimer();
-      await Promise.resolve();
-      expect(true).toBe(false); // store.ts only exposes a constructor, hard to test
+      // K8s(Store).Patch() mock - migrateAndSetupWatch
+      expect(mockK8s).toHaveBeenCalled();
+      // K8s(Store).Watch() mock - setupWatch
+      expect(mockK8s).toHaveBeenCalled();
     });
   });
 });

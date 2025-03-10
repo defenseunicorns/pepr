@@ -94,8 +94,8 @@ export function peprDev() {
     await waitForServer();
   });
 
-  it("should protect the controller mutate & validate endpoint with an API token", async () => {
-    await validateAPIKey();
+  it("should protect the controller mutate & validate endpoint with an API path", async () => {
+    await validateAPIPath();
   });
 
   it("should expose Prometheus metrics", async () => {
@@ -136,22 +136,22 @@ async function waitForServer() {
   }
 }
 
-async function validateAPIKey() {
+async function validateAPIPath() {
   const mutateUrl = `${fetchBaseUrl}/mutate/`;
   const validateUrl = `${fetchBaseUrl}/validate/`;
   const fetchPushOpts = { ...fetchOpts, method: "POST" };
 
-  // Test for empty api token
-  const emptyMutateToken = await fetch(mutateUrl, fetchPushOpts);
-  expect(emptyMutateToken.status).toBe(404);
-  const emptyValidateToken = await fetch(validateUrl, fetchPushOpts);
-  expect(emptyValidateToken.status).toBe(404);
+  // Test for empty api path
+  const emptyMutatePath = await fetch(mutateUrl, fetchPushOpts);
+  expect(emptyMutatePath.status).toBe(404);
+  const emptyValidatePath = await fetch(validateUrl, fetchPushOpts);
+  expect(emptyValidatePath.status).toBe(404);
 
-  // Test api token validation
-  const evilMutateToken = await fetch(`${mutateUrl}evil-token`, fetchPushOpts);
-  expect(evilMutateToken.status).toBe(401);
-  const evilValidateToken = await fetch(`${validateUrl}evil-token`, fetchPushOpts);
-  expect(evilValidateToken.status).toBe(401);
+  // Test api path validation
+  const evilMutatePath = await fetch(`${mutateUrl}evil-path`, fetchPushOpts);
+  expect(evilMutatePath.status).toBe(401);
+  const evilValidatePath = await fetch(`${validateUrl}evil-path`, fetchPushOpts);
+  expect(evilValidatePath.status).toBe(401);
 }
 
 async function validateMetrics() {

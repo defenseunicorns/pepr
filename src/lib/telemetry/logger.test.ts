@@ -79,7 +79,6 @@ describe("Logger", () => {
         fc.property(peprStoreFuzz, store => {
           const result = redactedStore(store);
 
-          // eslint-disable-next-line max-nested-callbacks
           Object.values(result.data).forEach(value => {
             expect(value).toBe(redactedValue);
           });

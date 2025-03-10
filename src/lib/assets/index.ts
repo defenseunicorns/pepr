@@ -80,7 +80,7 @@ export function helmLayout(basePath: string, unique: string): Record<string, Rec
     watcherDeploymentYaml: `${helm.dirs.tmpls}/watcher-deployment.yaml`,
     watcherServiceMonitorYaml: `${helm.dirs.tmpls}/watcher-service-monitor.yaml`,
     tlsSecretYaml: `${helm.dirs.tmpls}/tls-secret.yaml`,
-    apiTokenSecretYaml: `${helm.dirs.tmpls}/api-token-secret.yaml`,
+    apiPathSecretYaml: `${helm.dirs.tmpls}/api-path-secret.yaml`,
     moduleSecretYaml: `${helm.dirs.tmpls}/module-secret.yaml`,
     storeRoleYaml: `${helm.dirs.tmpls}/store-role.yaml`,
     storeRoleBindingYaml: `${helm.dirs.tmpls}/store-role-binding.yaml`,

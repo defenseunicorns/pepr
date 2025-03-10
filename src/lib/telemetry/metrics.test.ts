@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, test } from "@jest/globals";
+import { expect, it } from "@jest/globals";
 import { performance } from "perf_hooks";
 
 import { MetricsCollector } from "./metrics";
 
-test("constructor initializes counters correctly", () => {
+it("constructor initializes counters correctly", () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   expect(collector).toBeTruthy();
 });
 
-test("error method increments error counter", async () => {
+it("error method increments error counter", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   collector.error();
@@ -21,7 +21,7 @@ test("error method increments error counter", async () => {
   expect(metrics).toMatch(/testPrefix_errors 1/);
 });
 
-test("alert method increments alerts counter", async () => {
+it("alert method increments alerts counter", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   collector.alert();
@@ -30,7 +30,7 @@ test("alert method increments alerts counter", async () => {
   expect(metrics).toMatch(/testPrefix_alerts 1/);
 });
 
-test("observeStart returns current timestamp", () => {
+it("observeStart returns current timestamp", () => {
   const timeBefore: number = performance.now();
   const startTime: number = MetricsCollector.observeStart();
   const timeAfter: number = performance.now();
@@ -39,7 +39,7 @@ test("observeStart returns current timestamp", () => {
   expect(timeAfter >= startTime).toBe(true);
 });
 
-test("observeEnd updates summary", async () => {
+it("observeEnd updates summary", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   const startTime: number = MetricsCollector.observeStart();
@@ -58,7 +58,7 @@ test("observeEnd updates summary", async () => {
   expect(metrics).toMatch(/testPrefix_validate_sum \d+\.\d+/);
 });
 
-test("coverage tests, with duplicate counters, default prefix (pepr) and still works properly", async () => {
+it("coverage tests, with duplicate counters, default prefix (pepr) and still works properly", async () => {
   const collector: MetricsCollector = new MetricsCollector();
   collector.addCounter("testCounter", "testHelp");
   // second one should log, but still work fine TODO: validate log
@@ -81,7 +81,7 @@ test("coverage tests, with duplicate counters, default prefix (pepr) and still w
   expect(metrics).toMatch(/pepr_testSummary_sum \d+\.\d+/);
 });
 
-test("incCacheMiss increments cache miss gauge", async () => {
+it("incCacheMiss increments cache miss gauge", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   collector.incCacheMiss("window1");
@@ -90,7 +90,7 @@ test("incCacheMiss increments cache miss gauge", async () => {
   expect(metrics).toMatch(/testPrefix_cache_miss{window="window1"} 1/);
 });
 
-test("incRetryCount increments retry count gauge", async () => {
+it("incRetryCount increments retry count gauge", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   collector.incRetryCount(1);
@@ -99,7 +99,7 @@ test("incRetryCount increments retry count gauge", async () => {
   expect(metrics).toMatch(/testPrefix_resync_failure_count{count="1"} 1/);
 });
 
-test("initCacheMissWindow initializes cache miss gauge to zero", async () => {
+it("initCacheMissWindow initializes cache miss gauge to zero", async () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");
 
   collector.initCacheMissWindow("window1");
@@ -108,7 +108,7 @@ test("initCacheMissWindow initializes cache miss gauge to zero", async () => {
   expect(metrics).toMatch(/testPrefix_cache_miss{window="window1"} 0/);
 });
 
-test("should initialize cache miss window and maintain size limit", async () => {
+it("should initialize cache miss window and maintain size limit", async () => {
   process.env.PEPR_MAX_CACHE_MISS_WINDOWS = "3";
   const collector: MetricsCollector = new MetricsCollector("pepr");
   collector.initCacheMissWindow("window1");
