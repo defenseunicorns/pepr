@@ -7,7 +7,7 @@ import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
-import { AdmissionRequest, Binding } from "../types";
+import { Binding } from "../types";
 import Log from "../telemetry/logger";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
@@ -16,6 +16,9 @@ import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
+
+import { AdmissionRequest } from "../common-types";
+
 import { decodeData, reencodeData } from "./decode-utils";
 
 export interface Bindable {

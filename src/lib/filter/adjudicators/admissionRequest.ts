@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Operation } from "../../enums";
-import { AdmissionRequest } from "../../types";
 import { defaultTo, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
+import { AdmissionRequest } from "../../common-types";
 
 export const declaredOperation = pipe(
   (request: AdmissionRequest<KubernetesObject>): Operation => request?.operation,
