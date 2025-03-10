@@ -22,8 +22,19 @@ updates:
     directory: /
     schedule:
       interval: daily
+    registries:
+      - chainguard
 
   - package-ecosystem: docker
     directory: /config
     schedule:
       interval: daily
+    registries:
+      - chainguard
+
+registries:
+  chainguard:
+    type: "docker-registry"
+    url: "https://cgr.dev"
+    username: "oauth2"
+    password: "${{ secrets.CHAINGUARD_REGISTRY_TOKEN }}"
