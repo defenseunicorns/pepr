@@ -49,6 +49,8 @@ Please follow our [Code of Conduct](../../CODE_OF_CONDUCT.md) to maintain a resp
 - All commits must be signed.
 - PRs should have a related issue, except for trivial fixes.
 
+We take PR reviews seriously and strive to provide a great contributor experience with timely feedback. To help maintain this, we ask external contributors to limit themselves to no more than two open PRs at a time. Having too many open PRs can slow down the review process and impact the quality of feedback
+
 ## Coding Guidelines
 
 Please follow the coding conventions and style used in the project. Use ESLint and Prettier for linting and formatting:
