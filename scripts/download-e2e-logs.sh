@@ -64,7 +64,7 @@ for RUN_ID in $RUN_IDS; do
     # Get job IDs and names within the run
     JOBS_JSON=$(gh run view "$RUN_ID" --repo "$REPO" --json jobs)
     
-    JOB_IDS=$(echo "$JOBS_JSON" | jq -r '.jobs[].id')
+    JOB_IDS=$(echo "$JOBS_JSON" | jq -r '.jobs[].databaseId')
     JOB_NAMES=$(echo "$JOBS_JSON" | jq -r '.jobs[].name')
     
     if [[ -z "$JOB_IDS" ]]; then
@@ -80,10 +80,10 @@ for RUN_ID in $RUN_IDS; do
         
         echo "Downloading log for job: $JOB_NAME (ID: $JOB_ID)..."
         
-        # gh api \
-        #   -H "Accept: application/vnd.github+json" \
-        #   -H "X-GitHub-Api-Version: 2022-11-28" \
-        #   repos/defenseunicorns/pepr/actions/jobs/38576673531/logs > "$JOB_LOG_FILE"
+        gh api \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          repos/defenseunicorns/pepr/actions/jobs/"$JOB_ID"/logs > "$JOB_LOG_FILE"
         
         echo "Log saved to: $JOB_LOG_FILE"
         INDEX=$((INDEX + 1))
