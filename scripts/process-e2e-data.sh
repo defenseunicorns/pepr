@@ -34,7 +34,7 @@ for log_dir in "$@"; do
     first_entry=true
     
     # Find log files in the directory matching the naming pattern
-    for job in "$log_dir"/[0-9]_*.txt "$log_dir"/[0-9][0-9]_*.txt; do
+    for job in "$log_dir"/[0-9]_*.log "$log_dir"/[0-9][0-9]_*.log; do
         if [[ -f "$job" ]]; then
             # Check if the file contains "Run nick-fields/retry", if not, skip this file
             if ! grep -q "Run nick-fields/retry" "$job"; then
