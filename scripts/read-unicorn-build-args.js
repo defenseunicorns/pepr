@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { readFileSync } from "fs";
-import { load } from "js-yaml";
+const { readFileSync } = require("fs");
+const { load } = require("js-yaml");
 
 try {
   const config = load(readFileSync("./config/unicorn.yaml", "utf8"));
