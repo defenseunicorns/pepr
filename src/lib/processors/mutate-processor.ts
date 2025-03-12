@@ -167,6 +167,8 @@ export async function mutateProcessor(
     }
   }
 
+  // The request is allowed
+
   // If no capability matched the request, exit early
   if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
