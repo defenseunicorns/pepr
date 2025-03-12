@@ -43,7 +43,13 @@ for log_dir in "$@"; do
             fi
     
             # Count total runs
-            TOTAL_RUNS=$(grep -c "Attempt [0-9]$" "$job")
+            LOGGED_ATTEMPT_TOTAL=$(grep -c "Command completed after [0-9] attempt" "$job")
+            LOGGED_ATTEMPT_COUNT=$(grep -c "Attempt [0-9]$" "$job")
+
+            # Ensure default value of 0 if grep returns nothing
+            LOGGED_ATTEMPT_TOTAL=${LOGGED_ATTEMPT_TOTAL:-0}
+            LOGGED_ATTEMPT_COUNT=${LOGGED_ATTEMPT_COUNT:-0}
+            TOTAL_RUNS=$(( LOGGED_ATTEMPT_TOTAL + LOGGED_ATTEMPT_COUNT ))
     
             # Count retry attempts (strip leading spaces)
             ATTEMPT_FAILURE_COUNT=$(grep -c "Attempt [0-9] failed" "$job")
@@ -76,6 +82,8 @@ for log_dir in "$@"; do
             echo "  {"
             echo "    \"job_name\": \"$(basename "$job")\","
             echo "    \"total_runs\": $TOTAL_RUNS,"
+            echo "    \"logged_attempt_total\": $LOGGED_ATTEMPT_TOTAL,"
+            echo "    \"logged_attempt_count\": $LOGGED_ATTEMPT_COUNT,"
             echo "    \"failures\": $FAILURE_COUNT,"
             echo "    \"test_failure_count\": $TEST_FAIL_COUNT,"
             echo "    \"attempt_failure_count\": $ATTEMPT_FAILURE_COUNT,"
