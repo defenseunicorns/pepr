@@ -46,8 +46,17 @@ for log_dir in "$@"; do
             TOTAL_RUNS=$(grep -c "Attempt [0-9]$" "$job")
     
             # Count retry attempts (strip leading spaces)
-            FAILURE_COUNT=$(($(grep -c "Attempt [0-9] failed" "$job") + $(grep -c "Final attempt failed" "$job")))
+            ATTEMPT_FAILURE_COUNT=$(grep -c "Attempt [0-9] failed" "$job")
+            FINAL_ATTEMPT_FAILURE_COUNT=$(grep -c "Final attempt failed" "$job")
+            TEST_FAIL_COUNT=$(grep -c -E 'Tests:\s+[0-9]+ failed,' "$job")
 
+            # Ensure default value of 0 if grep returns nothing
+            ATTEMPT_FAILURE_COUNT=${ATTEMPT_FAILURE_COUNT:-0}
+            FINAL_ATTEMPT_FAILURE_COUNT=${FINAL_ATTEMPT_FAILURE_COUNT:-0}
+            TEST_FAIL_COUNT=${TEST_FAIL_COUNT:-0}
+
+            # Sum the counts safely
+            FAILURE_COUNT=$(( ATTEMPT_FAILURE_COUNT + FINAL_ATTEMPT_FAILURE_COUNT + TEST_FAIL_COUNT ))
     
             # Compute failure rate (percentage)
             if [[ $TOTAL_RUNS -gt 0 ]]; then
@@ -68,6 +77,9 @@ for log_dir in "$@"; do
             echo "    \"job_name\": \"$(basename "$job")\","
             echo "    \"total_runs\": $TOTAL_RUNS,"
             echo "    \"failures\": $FAILURE_COUNT,"
+            echo "    \"test_failure_count\": $TEST_FAIL_COUNT,"
+            echo "    \"attempt_failure_count\": $ATTEMPT_FAILURE_COUNT,"
+            echo "    \"final_attempt_failure_count\": $FINAL_ATTEMPT_FAILURE_COUNT,"
             echo "    \"failure_rate\": $FAILURE_RATE"
             echo "  }"
         fi
