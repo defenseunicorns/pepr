@@ -129,36 +129,35 @@ export async function mutateProcessor(
   let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
-  const bindables: Bindable[] = capabilities.flatMap(capa =>
-    capa.bindings.flatMap(bind => {
-      if (!bind.mutateCallback) {
-        return [];
+  const bindables: Bindable[] = capabilities
+    .flatMap(capa =>
+      capa.bindings.map(bind => ({
+        req,
+        config,
+        name: capa.name,
+        namespaces: capa.namespaces,
+        binding: bind,
+        actMeta: { ...reqMetadata, name: capa.name },
+      })),
+    )
+    .filter(bind => {
+      if (!bind.binding.mutateCallback) {
+        return false;
       }
 
       const shouldSkip = shouldSkipRequest(
-        bind,
-        req,
-        capa.namespaces,
-        resolveIgnoreNamespaces(config.alwaysIgnore?.namespaces),
+        bind.binding,
+        bind.req,
+        bind.namespaces,
+        resolveIgnoreNamespaces(bind.config?.alwaysIgnore?.namespaces),
       );
-
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
-        return [];
+        return false;
       }
 
-      return [
-        {
-          req,
-          config,
-          name: capa.name,
-          namespaces: capa.namespaces,
-          binding: bind,
-          actMeta: { ...reqMetadata, name: capa.name },
-        },
-      ];
-    }),
-  );
+      return true;
+    });
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
