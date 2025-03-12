@@ -1,3 +1,3 @@
 images:
-  build: cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:18160bed0e77c8300b99a8d1af8cc997280e189e590b55b5ff94893bd398a1e6
-  base: cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:95ce4c850fd71a7fe53d9cbaf7f9db318bba9c0ade54717078d9e60c317b5496
+  build: cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:b1240ac4f77e28349febd9dfa0a7176d459688a4bd2df98ef0160a80e6e78e33
+  base: cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:9ac4adb34641d76753c39798916877f2038b7618450ca25609aec67d18a7ac68
