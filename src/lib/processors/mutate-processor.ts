@@ -188,7 +188,7 @@ export async function mutateProcessor(
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
 
-  updateResponsePatchAndWarnings(patches, { ...response, allowed: true });
+  updateResponsePatchAndWarnings(patches, response);
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
   webhookTimer.stop();
