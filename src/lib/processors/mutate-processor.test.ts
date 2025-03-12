@@ -226,13 +226,14 @@ describe("processRequest", () => {
     testBindable.config.onError = OnError.AUDIT;
     const testPeprMutateRequest = defaultPeprMutateRequest();
     const testMutateResponse = clone(defaultMutateResponse);
-    const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
     const result = await processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
 
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
-    expect(result.wrapped.Raw.metadata!.annotations![annote]).toBe("warning");
+    expect(
+      result.wrapped.Raw.metadata!.annotations![`${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`],
+    ).toBe("warning");
 
     expect(result.response.warnings).toHaveLength(1);
     expect(result.response.warnings![0]).toBe("Action failed: An error occurred with the mutate action.");

@@ -129,36 +129,32 @@ export async function mutateProcessor(
   let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
-
-  let bindables: Bindable[] = capabilities.flatMap(capa =>
-    capa.bindings.map(bind => ({
-      req,
-      config,
-      name: capa.name,
-      namespaces: capa.namespaces,
-      binding: bind,
-      actMeta: { ...reqMetadata, name: capa.name },
-    })),
-  );
-
-  bindables = bindables.filter(bind => {
-    if (!bind.binding.mutateCallback) {
-      return false;
-    }
-
-    const shouldSkip = shouldSkipRequest(
-      bind.binding,
-      bind.req,
-      bind.namespaces,
-      resolveIgnoreNamespaces(bind.config?.alwaysIgnore?.namespaces),
-    );
-    if (shouldSkip !== "") {
-      Log.debug(shouldSkip);
-      return false;
-    }
-
-    return true;
-  });
+  const bindables: Bindable[] = capabilities
+    .flatMap(capability =>
+      capability.bindings
+        .filter(bind => bind.mutateCallback)
+        .map(bind => {
+          const shouldSkip = shouldSkipRequest(
+            bind,
+            req,
+            capability.namespaces,
+            resolveIgnoreNamespaces(config.alwaysIgnore?.namespaces),
+          );
+          if (shouldSkip !== "") {
+            Log.debug(shouldSkip);
+            return null;
+          }
+          return {
+            req,
+            config,
+            name: capability.name,
+            namespaces: capability.namespaces,
+            binding: bind,
+            actMeta: { ...reqMetadata, name: capability.name },
+          };
+        }),
+    )
+    .filter(Boolean) as Bindable[];
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
@@ -168,20 +164,17 @@ export async function mutateProcessor(
     }
   }
 
-  // If we've made it this far, the request is allowed
-  response.allowed = true;
-
   // If no capability matched the request, exit early
   if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
     webhookTimer.stop();
-    return response;
+    return { ...response, allowed: true };
   }
 
   // delete operations can't be mutate, just return before the transformation
   if (req.operation === "DELETE") {
     webhookTimer.stop();
-    return response;
+    return { ...response, allowed: true };
   }
 
   // unskip base64-encoded data fields that were skipDecode'd
@@ -190,11 +183,11 @@ export async function mutateProcessor(
   // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
 
-  updateResponsePatchAndWarnings(patches, response);
+  updateResponsePatchAndWarnings(patches, { ...response, allowed: true });
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
   webhookTimer.stop();
-  return response;
+  return { ...response, allowed: true };
 }
 
 export function updateResponsePatchAndWarnings(patches: Operation[], response: MutateResponse): void {
