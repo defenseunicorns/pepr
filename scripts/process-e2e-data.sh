@@ -46,7 +46,8 @@ for log_dir in "$@"; do
             TOTAL_RUNS=$(grep -c "Attempt [0-9]$" "$job")
     
             # Count retry attempts (strip leading spaces)
-            FAILURE_COUNT=$(grep -c "Attempt [0-9] failed" "$job")
+            FAILURE_COUNT=$(($(grep -c "Attempt [0-9] failed" "$job") + $(grep -c "Final attempt failed" "$job")))
+
     
             # Compute failure rate (percentage)
             if [[ $TOTAL_RUNS -gt 0 ]]; then

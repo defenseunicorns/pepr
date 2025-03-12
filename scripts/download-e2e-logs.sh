@@ -43,7 +43,7 @@ fi
 echo "Workflow ID for '$WORKFLOW_NAME': $WORKFLOW_ID"
 
 # Get workflow runs from the last 30 days
-RUN_IDS=$(gh run list --workflow "$WORKFLOW_ID" --repo "$REPO" --limit 100 --json databaseId,createdAt \
+RUN_IDS=$(gh run list --workflow "$WORKFLOW_ID" --repo "$REPO" --limit 500 --json databaseId,createdAt \
     --jq "map(select(.createdAt >= \"$(date -v-30d -u +"%Y-%m-%dT%H:%M:%SZ")\")) | .[].databaseId")
 
 if [[ -z "$RUN_IDS" ]]; then
