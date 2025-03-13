@@ -130,7 +130,7 @@ describe("overridesFile", () => {
     expect(writtenPath).toBe(mockPath);
 
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
-    console.log(parsedYaml);
+
     expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe("");
     expect(parsedYaml.watcher.annotations["pepr.dev/description"]).toBe("");
   });
