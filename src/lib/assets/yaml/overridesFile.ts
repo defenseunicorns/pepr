@@ -5,7 +5,7 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 
-type ChartOverrides = {
+export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
