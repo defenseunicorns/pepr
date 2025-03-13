@@ -62,6 +62,11 @@ export const uncarryableNamespace = allPass([
   }, not),
 ]);
 
+/*
+ * Returns true if the object is missing a carriable namespace.
+ * - If the object is a Namespace, it returns true if its name is not in the namespaceSelector.
+ * - Otherwise, it returns true if the object does not carry a namespace.
+ */
 export const missingCarriableNamespace = allPass([
   pipe(nthArg(0), length, gt(__, 0)),
   pipe((namespaceSelector: string[], kubernetesObject: KubernetesObject): boolean =>
