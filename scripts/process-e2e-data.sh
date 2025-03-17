@@ -32,6 +32,8 @@ process_log_file() {
     local first_entry=$2
 
     if [[ ! -f "$job" ]] || ! grep -q "Run nick-fields/retry" "$job"; then
+        print_json_entry "$first_entry" "does-not-retry" "0" "0" "0" \
+                        "0" "0" "0" "0" "0"
         return
     fi
 
