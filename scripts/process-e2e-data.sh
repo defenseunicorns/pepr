@@ -31,10 +31,6 @@ process_log_file() {
     local job=$1
     local first_entry=$2
 
-    if [[ ! -f "$job" ]] || ! grep -q "Run nick-fields/retry" "$job"; then
-        return
-    fi
-
     # Extract relevant metrics
     local logged_attempt_total
     logged_attempt_total=$(grep -c "Command completed after [0-9] attempt" "$job")
