@@ -63,6 +63,9 @@ for log_dir in "$@"; do
 
             # Sum the counts safely
             FAILURE_COUNT=$(( ATTEMPT_FAILURE_COUNT + FINAL_ATTEMPT_FAILURE_COUNT + TEST_FAIL_COUNT ))
+            if [[ $FAILURE_COUNT -gt 3 ]]; then
+                FAILURE_COUNT=3
+            fi
     
             # Compute failure rate (percentage)
             if [[ $TOTAL_RUNS -gt 0 ]]; then
