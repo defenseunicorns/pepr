@@ -51,7 +51,7 @@ def process_log_file(job):
     failure_rate = compute_failure_rate(failure_count, total_runs)
 
     return {
-        "job_name": os.path.basename(job),
+        "job_name": re.sub(r"^\d+-", "", os.path.basename(job)),
         "total_runs": total_runs,
         "logged_attempt_total": logged_attempt_total,
         "logged_attempt_count": logged_attempt_count,
