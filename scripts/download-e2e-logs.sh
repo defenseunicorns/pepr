@@ -30,7 +30,7 @@ get_workflow_id() {
 get_run_ids() {
     echo "Fetching workflow runs from the last 30 days..."
     RUN_IDS=$(gh run list --workflow "$WORKFLOW_ID" --repo "$REPO" --limit 500 --json databaseId,createdAt \
-        --jq "map(select(.createdAt >= \"$(date -v-1d -u +"%Y-%m-%dT%H:%M:%SZ")\")) | .[].databaseId")
+        --jq "map(select(.createdAt >= \"$(date -v-30d -u +"%Y-%m-%dT%H:%M:%SZ")\")) | .[].databaseId")
 
     if [[ -z "$RUN_IDS" ]]; then
         echo "No runs found for the past 30 days."
