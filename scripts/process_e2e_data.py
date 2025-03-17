@@ -47,7 +47,7 @@ def process_log_file(job):
     final_attempt_failure_count = len(re.findall(r"Final attempt failed", content))
     test_fail_count = len(re.findall(r"Tests:\s+\d+ failed,", content))
 
-    failure_count = min(attempt_failure_count + final_attempt_failure_count + test_fail_count, 3)
+    failure_count = min(attempt_failure_count + final_attempt_failure_count + test_fail_count, 3) # Retry is capped at 3, kludge for multiple valid failure-strings
     failure_rate = compute_failure_rate(failure_count, total_runs)
 
     return {
