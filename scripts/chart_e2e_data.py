@@ -31,16 +31,18 @@ def aggregate_failures(failures):
 def plot_failures(df, output_path):
     """Generates and saves a histogram of failures."""
     plt.figure(figsize=(10, 6))
-    plt.bar(df["job_name"], df["failures"], color="skyblue")
-    plt.xticks(rotation=90)
-    plt.xlabel("Job Name")
-    plt.ylabel("Number of Failures")
+    plt.barh(df["job_name"], df["failures"], color="skyblue")
+    plt.xticks(rotation=0)
+    plt.xlabel("Number of Failures")
+    plt.ylabel("Job Name")
     plt.title("Histogram of Failures by Job Name")
-    plt.grid(axis="y")
+    plt.grid(axis="x")
 
     # Add threshold lines
-    plt.axhline(y=8, color="red", linestyle="--", label="Threshold: 8 Failures")
-    plt.axhline(y=5, color="green", linestyle="--", label="Threshold: 5 Failures")
+    mean_failures = int(round(df["failures"].mean()))
+    plt.axvline(x=mean_failures, color="red", linestyle="--", label=f"Mean: {mean_failures} Failures")
+    median_failures = int(round(df["failures"].median()))
+    plt.axvline(x=median_failures, color="green", linestyle="--", label=f"Median: {median_failures} Failures")
     plt.legend()
 
     plt.tight_layout()
