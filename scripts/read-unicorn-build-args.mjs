@@ -2,21 +2,22 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { readFileSync } from "fs";
-import { load } from "js-yaml";
+
 
 try {
-  const config = load(readFileSync("./config/unicorn.yaml", "utf8"));
+  const dockerfileContent = readFileSync("./config/Dockerfile", "utf8");
+  const fromStatements = dockerfileContent.match(/^FROM\s+([^\s]+)\s+/gm);
 
-  const buildImage = config.images?.build;
-  const baseImage = config.images?.base;
-
-  if (!buildImage || !baseImage) {
-    console.error("Error: Missing 'build' or 'base' image in YAML config.");
+  if (!fromStatements || fromStatements.length < 2) {
+    console.error("Error: Could not find two FROM statements in the Dockerfile.");
     process.exit(1);
   }
 
+  const buildImage = fromStatements[0].split(" ")[1]; 
+  const baseImage = fromStatements[1].split(" ")[1];  
+
   console.log(`--build-arg BUILD_IMAGE=${buildImage} --build-arg BASE_IMAGE=${baseImage}`);
 } catch (error) {
-  console.error("Error reading or parsing the YAML file:", error);
+  console.error("Error reading or parsing the Dockerfile:", error);
   process.exit(1);
 }

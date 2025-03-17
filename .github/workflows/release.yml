@@ -57,7 +57,7 @@ jobs:
 
           # Build Controller Images
           docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
-          docker buildx build -f Dockerfile.unicorn --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/private/controller:${{ github.ref_name }} .
+          docker buildx build --push --platform linux/arm64/v8,linux/amd64 $(node scripts/read-unicorn-build-args.mjs) --tag ghcr.io/defenseunicorns/pepr/private/controller:${{ github.ref_name }} .
   slsa:
     permissions:
       id-token: write

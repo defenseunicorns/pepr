@@ -36,5 +36,5 @@ registries:
   chainguard:
     type: "docker-registry"
     url: "https://cgr.dev"
-    username: "{{ secrets.CHAINGUARD_USERNAME }}"
-    password: "{{ secrets.CHAINGUARD_PASSWORD }}"
+    username: "{{ secrets.CHAINGUARD_PEPR_USERNAME }}"
+    password: "{{ secrets.CHAINGUARD_PEPR_PASSWORD }}"
