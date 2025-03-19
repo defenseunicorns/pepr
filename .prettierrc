@@ -1,13 +1,14 @@
 {
   "arrowParens": "avoid",
-  "bracketSameLine": true,
+  "bracketSameLine": false,
   "bracketSpacing": true,
   "embeddedLanguageFormatting": "auto",
   "insertPragma": false,
-  "printWidth": 100,
+  "printWidth": 120,
   "quoteProps": "as-needed",
   "requirePragma": false,
   "semi": true,
   "useTabs": false,
+  "vueIndentScriptAndStyle": false,
   "tabWidth": 2
 }
