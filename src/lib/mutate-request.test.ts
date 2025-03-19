@@ -93,7 +93,9 @@ describe("PeprMutateRequest", () => {
       object: undefined as unknown as KubernetesObject,
     };
 
-    expect(() => new PeprMutateRequest(mockRequest)).toThrow("Unable to load the request object into PeprRequest.Raw");
+    expect(() => new PeprMutateRequest(mockRequest)).toThrow(
+      "Unable to load the request object into PeprRequest.Raw",
+    );
   });
 
   it("should merge the provided object with the current resource", () => {

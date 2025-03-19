@@ -169,7 +169,9 @@ export class Storage implements PeprStore {
       // If promise has not resolved before MAX_WAIT_TIME reject
       record.timeout = setTimeout(() => {
         record.unsubscribe!();
-        return reject(`MAX_WAIT_TIME elapsed: Key ${key} still seen after ${MAX_WAIT_TIME / 1000}s`);
+        return reject(
+          `MAX_WAIT_TIME elapsed: Key ${key} still seen after ${MAX_WAIT_TIME / 1000}s`,
+        );
       }, MAX_WAIT_TIME);
 
       record.unsubscribe = this.subscribe(data => {

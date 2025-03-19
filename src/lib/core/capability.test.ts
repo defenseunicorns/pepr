@@ -1,6 +1,12 @@
 import { Capability } from "./capability";
 import Log from "../telemetry/logger";
-import { CapabilityCfg, FinalizeAction, MutateAction, ValidateAction, WatchLogAction } from "../types";
+import {
+  CapabilityCfg,
+  FinalizeAction,
+  MutateAction,
+  ValidateAction,
+  WatchLogAction,
+} from "../types";
 import { a } from "../../lib";
 import { V1Pod } from "@kubernetes/client-node";
 import { expect, describe, jest, beforeEach, it } from "@jest/globals";
@@ -105,7 +111,9 @@ describe("Capability", () => {
 
     const scheduleStoreResult = capability.registerScheduleStore();
     expect(scheduleStoreResult.onReady).toBeDefined();
-    expect(mockLog.info).toHaveBeenCalledWith(`Registering schedule store for ${capabilityConfig.name}`);
+    expect(mockLog.info).toHaveBeenCalledWith(
+      `Registering schedule store for ${capabilityConfig.name}`,
+    );
   });
 
   describe("when a store is registered multiple times", () => {
@@ -113,7 +121,9 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       capability.registerStore();
-      expect(() => capability.registerStore()).toThrowError("Store already registered for test-capability");
+      expect(() => capability.registerStore()).toThrowError(
+        "Store already registered for test-capability",
+      );
     });
 
     it("should throw an error if schedule store is registered twice", () => {
@@ -222,7 +232,9 @@ describe("Capability", () => {
       const binding = capability.bindings[0];
       expect(binding.filters.namespaces).toContain("pepr-demo");
       expect(binding.filters.labels).toHaveProperty("white", "");
-      expect(binding.alias).toBe("reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation");
+      expect(binding.alias).toBe(
+        "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
+      );
 
       // Simulate the mutation action
       const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
@@ -238,7 +250,9 @@ describe("Capability", () => {
       expect(mockLog.info).toHaveBeenCalledWith(
         "Executing mutation action with alias: reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
       );
-      expect(mockLog.info).toHaveBeenCalledWith(`SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`);
+      expect(mockLog.info).toHaveBeenCalledWith(
+        `SNAKES ON A PLANE! ${mockRequest.object.metadata?.name}`,
+      );
     });
 
     it("should use child logger for validate callback", async () => {
@@ -298,7 +312,9 @@ describe("Capability", () => {
 
       expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith("Executing reconcile action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith(
+        "Executing reconcile action with alias: no alias provided",
+      );
       expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
     });
 
@@ -318,7 +334,11 @@ describe("Capability", () => {
       );
 
       // Chain .Watch() with the correct function signature before .Finalize()
-      capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback).Finalize(mockFinalizeCallback);
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .Watch(mockWatchCallback)
+        .Finalize(mockFinalizeCallback);
 
       // Find the finalize binding
       const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
@@ -334,7 +354,9 @@ describe("Capability", () => {
 
       expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith(
+        "Executing finalize action with alias: no alias provided",
+      );
       expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
     });
 
@@ -360,7 +382,9 @@ describe("Capability", () => {
 
       // Assert that aliasLogger was used
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith("Executing watch action with alias: no alias provided");
+      expect(mockLog.info).toHaveBeenCalledWith(
+        "Executing watch action with alias: no alias provided",
+      );
       expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
     });
   });
@@ -381,7 +405,12 @@ describe("Capability", () => {
     );
 
     // First mutation with an alias
-    capability.When(a.Pod).IsCreatedOrUpdated().InNamespace("default").Alias("first-alias").Mutate(firstMutateCallback);
+    capability
+      .When(a.Pod)
+      .IsCreatedOrUpdated()
+      .InNamespace("default")
+      .Alias("first-alias")
+      .Mutate(firstMutateCallback);
 
     // Second mutation without an alias (should use "no alias provided")
     capability.When(a.Pod).IsCreatedOrUpdated().InNamespace("default").Mutate(secondMutateCallback);
@@ -406,7 +435,9 @@ describe("Capability", () => {
 
     expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith(
+      "Executing mutation action with alias: no alias provided",
+    );
   });
 
   it("should log 'no alias provided' if alias is not set in validate callback", async () => {
@@ -434,7 +465,9 @@ describe("Capability", () => {
     }
 
     // Expect the log to contain "no alias provided"
-    expect(mockLog.info).toHaveBeenCalledWith("Executing validate action with alias: no alias provided");
+    expect(mockLog.info).toHaveBeenCalledWith(
+      "Executing validate action with alias: no alias provided",
+    );
     expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
@@ -530,7 +563,9 @@ describe("Capability", () => {
     // Assertions to ensure the user-provided alias is used in the logger
     expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: custom-finalizer-alias");
+    expect(mockLog.info).toHaveBeenCalledWith(
+      "Executing finalize action with alias: custom-finalizer-alias",
+    );
     expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
   });
 
@@ -573,7 +608,9 @@ describe("Capability", () => {
     // Assertions to ensure the user-provided alias is used in the logger
     expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
-    expect(mockLog.info).toHaveBeenCalledWith("Executing finalize action with alias: custom-finalizer-alias");
+    expect(mockLog.info).toHaveBeenCalledWith(
+      "Executing finalize action with alias: custom-finalizer-alias",
+    );
     expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
   });
 
@@ -588,7 +625,11 @@ describe("Capability", () => {
         },
       );
 
-      capability.When(a.Pod).IsCreatedOrUpdated().WithDeletionTimestamp().Validate(mockValidateCallback);
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .WithDeletionTimestamp()
+        .Validate(mockValidateCallback);
 
       expect(capability.bindings).toHaveLength(1); // Ensure binding is created
       expect(capability.bindings[0].filters.deletionTimestamp).toBe(true);
@@ -604,7 +645,11 @@ describe("Capability", () => {
         },
       );
 
-      capability.When(a.Pod).IsCreatedOrUpdated().WithName("test-name").Validate(mockValidateCallback);
+      capability
+        .When(a.Pod)
+        .IsCreatedOrUpdated()
+        .WithName("test-name")
+        .Validate(mockValidateCallback);
 
       expect(capability.bindings).toHaveLength(1); // Ensure binding is created
       expect(capability.bindings[0].filters.name).toBe("test-name");
@@ -703,7 +748,8 @@ describe("Capability", () => {
     expect(scheduleStoreInstance.onReady).toHaveBeenCalledWith(expect.any(Function));
 
     // Simulate the `onReady` callback being invoked
-    const onReadyCallback = (scheduleStoreInstance.onReady as jest.Mock).mock.calls[0][0] as () => void;
+    const onReadyCallback = (scheduleStoreInstance.onReady as jest.Mock).mock
+      .calls[0][0] as () => void;
     onReadyCallback(); // The callback function is now invoked as a type of `() => void`
 
     // Ensure the new OnSchedule instance is created with the correct schedule data

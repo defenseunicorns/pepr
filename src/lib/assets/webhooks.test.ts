@@ -204,7 +204,11 @@ const createTestAssets = (overrides?: Partial<AssetsType>): LooseAssets => {
 };
 
 const loseAssets: LooseAssets = createTestAssets();
-const assets: Assets = new Assets(loseAssets.config as ModuleConfig, loseAssets.path, loseAssets.imagePullSecrets);
+const assets: Assets = new Assets(
+  loseAssets.config as ModuleConfig,
+  loseAssets.path,
+  loseAssets.imagePullSecrets,
+);
 
 assets.capabilities = [...loseAssets.capabilities];
 
@@ -226,7 +230,12 @@ describe("webhookConfigGenerator", () => {
     ]);
   });
   it("should use a specified host", async () => {
-    const assetsWithHost = new Assets(assets.config, assets.path, assets.imagePullSecrets, "localhost");
+    const assetsWithHost = new Assets(
+      assets.config,
+      assets.path,
+      assets.imagePullSecrets,
+      "localhost",
+    );
     assetsWithHost.capabilities = assets.capabilities;
     const apiPathPattern = "[a-fA-F0-9]{32}";
     const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiPathPattern}`);
@@ -296,7 +305,12 @@ describe("generateWebhookRules", () => {
       const result = await generateWebhookRules(assets, true);
       const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
       expect(secretRule).toEqual([
-        { apiGroups: ["pepr.dev"], apiVersions: ["v1"], operations: ["CREATE"], resources: ["unicorns"] },
+        {
+          apiGroups: ["pepr.dev"],
+          apiVersions: ["v1"],
+          operations: ["CREATE"],
+          resources: ["unicorns"],
+        },
       ]);
     });
     it("should generate a webhook rule for creating secrets", async () => {

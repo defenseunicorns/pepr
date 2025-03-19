@@ -9,7 +9,10 @@ export class MeasureWebhookTimeout {
 
   constructor(webhookType: WebhookType) {
     this.#webhookType = webhookType;
-    metricsCollector.addCounter(`${webhookType}_timeouts`, `Number of ${webhookType} webhook timeouts`);
+    metricsCollector.addCounter(
+      `${webhookType}_timeouts`,
+      `Number of ${webhookType} webhook timeouts`,
+    );
   }
 
   start(timeout: number = 10): void {

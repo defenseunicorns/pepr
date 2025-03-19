@@ -21,7 +21,11 @@ export class PeprModule {
    * @param capabilities The capabilities to be loaded into the Pepr runtime
    * @param opts Options for the Pepr runtime
    */
-  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
+  constructor(
+    { description, pepr }: PackageJSON,
+    capabilities: Capability[] = [],
+    opts: PeprModuleOptions = {},
+  ) {
     const config: ModuleConfig = clone(pepr);
     config.description = description;
 
