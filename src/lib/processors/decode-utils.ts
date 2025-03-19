@@ -18,7 +18,10 @@ export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {
   return { skipped, wrapped };
 }
 
-export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
+export function reencodeData(
+  wrapped: PeprMutateRequest<KubernetesObject>,
+  skipped: string[],
+): KubernetesObject {
   const transformed = clone(wrapped.Raw);
 
   const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";

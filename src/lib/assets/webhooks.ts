@@ -15,7 +15,10 @@ import { Binding } from "../types";
 
 export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
-export const validateRule = (binding: Binding, isMutateWebhook: boolean): V1RuleWithOperations | undefined => {
+export const validateRule = (
+  binding: Binding,
+  isMutateWebhook: boolean,
+): V1RuleWithOperations | undefined => {
   const { event, kind, isMutate, isValidate } = binding;
 
   // Skip invalid bindings based on webhook type
@@ -54,7 +57,10 @@ export function resolveIgnoreNamespaces(ignoredNSConfig: string[] = []): string[
   return namespaces.filter(ns => ns.length > 0);
 }
 
-export async function generateWebhookRules(assets: Assets, isMutateWebhook: boolean): Promise<V1RuleWithOperations[]> {
+export async function generateWebhookRules(
+  assets: Assets,
+  isMutateWebhook: boolean,
+): Promise<V1RuleWithOperations[]> {
   const { config, capabilities } = assets;
 
   const rules = capabilities.flatMap(capability => {
@@ -76,7 +82,10 @@ export async function webhookConfigGenerator(
   const ignore: V1LabelSelectorRequirement[] = [];
 
   const { name, tls, config, apiPath, host } = assets;
-  const ignoreNS = concat(peprIgnoreNamespaces, resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces));
+  const ignoreNS = concat(
+    peprIgnoreNamespaces,
+    resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces),
+  );
 
   // Add any namespaces to ignore
   if (ignoreNS) {

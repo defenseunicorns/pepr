@@ -195,7 +195,10 @@ export async function mutateProcessor(
   return { ...response, allowed: true };
 }
 
-export function updateResponsePatchAndWarnings(patches: Operation[], response: MutateResponse): void {
+export function updateResponsePatchAndWarnings(
+  patches: Operation[],
+  response: MutateResponse,
+): void {
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
     response.patchType = "JSONPatch";

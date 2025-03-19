@@ -4,10 +4,11 @@
   "bracketSpacing": true,
   "embeddedLanguageFormatting": "auto",
   "insertPragma": false,
-  "printWidth": 80,
+  "printWidth": 100,
   "quoteProps": "as-needed",
   "requirePragma": false,
   "semi": true,
   "tabWidth": 2,
-  "useTabs": false
+  "useTabs": false,
+  "vueIndentScriptAndStyle": false
 }

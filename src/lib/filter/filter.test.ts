@@ -99,7 +99,15 @@ const createBinding = (overrides: Partial<ExtendedBinding> = {}) => {
     model,
     event,
     kind: bindingKind,
-    filters: { name, namespaces, regexNamespaces, regexName, labels, annotations, deletionTimestamp },
+    filters: {
+      name,
+      namespaces,
+      regexNamespaces,
+      regexName,
+      labels,
+      annotations,
+      deletionTimestamp,
+    },
     callback,
     ...rest,
   };
@@ -109,11 +117,16 @@ describe("shouldSkipRequest", () => {
   describe("Fuzzing shouldSkipRequest", () => {
     it("should handle random inputs without crashing", () => {
       fc.assert(
-        fc.property(bindingSchema, requestSchema, fc.array(fc.string()), (binding, req, capabilityNamespaces) => {
-          expect(() =>
-            shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
-          ).not.toThrow();
-        }),
+        fc.property(
+          bindingSchema,
+          requestSchema,
+          fc.array(fc.string()),
+          (binding, req, capabilityNamespaces) => {
+            expect(() =>
+              shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces),
+            ).not.toThrow();
+          },
+        ),
         { numRuns: 100 },
       );
     });
@@ -122,10 +135,19 @@ describe("shouldSkipRequest", () => {
   describe("Property-Based Testing shouldSkipRequest", () => {
     it("should only skip requests that do not match the binding criteria", () => {
       fc.assert(
-        fc.property(bindingSchema, requestSchema, fc.array(fc.string()), (binding, req, capabilityNamespaces) => {
-          const shouldSkip = shouldSkipRequest(binding as Binding, req as AdmissionRequest, capabilityNamespaces);
-          expect(typeof shouldSkip).toBe("string");
-        }),
+        fc.property(
+          bindingSchema,
+          requestSchema,
+          fc.array(fc.string()),
+          (binding, req, capabilityNamespaces) => {
+            const shouldSkip = shouldSkipRequest(
+              binding as Binding,
+              req as AdmissionRequest,
+              capabilityNamespaces,
+            );
+            expect(typeof shouldSkip).toBe("string");
+          },
+        ),
         { numRuns: 100 },
       );
     });
@@ -523,25 +545,31 @@ describe("filterNoMatchReason", () => {
   );
 
   describe("when pod namespace matches the namespace regex", () => {
-    it.each([["pepr-system"], ["pepr-uds-system"], ["uds-system"], ["some-thing-that-is-a-system"], ["your-system"]])(
-      "should not return an error message (namespace: '%s')",
-      namespace => {
-        const binding: Binding = {
-          ...defaultBinding,
-          kind: { kind: "Pod", group: "some-group" },
-          filters: {
-            ...defaultFilters,
-            regexName: "",
-            regexNamespaces: [new RegExp("(.*)-system").source],
-            namespaces: [],
-          },
-        };
-        const kubernetesObject: KubernetesObject = { ...defaultKubernetesObject, metadata: { namespace: namespace } };
-        const capabilityNamespaces: string[] = [];
-        const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces);
-        expect(result).toEqual("");
-      },
-    );
+    it.each([
+      ["pepr-system"],
+      ["pepr-uds-system"],
+      ["uds-system"],
+      ["some-thing-that-is-a-system"],
+      ["your-system"],
+    ])("should not return an error message (namespace: '%s')", namespace => {
+      const binding: Binding = {
+        ...defaultBinding,
+        kind: { kind: "Pod", group: "some-group" },
+        filters: {
+          ...defaultFilters,
+          regexName: "",
+          regexNamespaces: [new RegExp("(.*)-system").source],
+          namespaces: [],
+        },
+      };
+      const kubernetesObject: KubernetesObject = {
+        ...defaultKubernetesObject,
+        metadata: { namespace: namespace },
+      };
+      const capabilityNamespaces: string[] = [];
+      const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces);
+      expect(result).toEqual("");
+    });
   });
 
   // Names Fail
@@ -561,7 +589,11 @@ describe("filterNoMatchReason", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReason(binding, object as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+      const result = filterNoMatchReason(
+        binding,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
       expect(result).toEqual(
         `Ignoring Watch Callback: Binding defines name regex '^system' but Object carries '${object?.metadata?.name}'.`,
       );
@@ -585,7 +617,11 @@ describe("filterNoMatchReason", () => {
     ];
     const capabilityNamespaces: string[] = [];
     objArray.map(object => {
-      const result = filterNoMatchReason(binding, object as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+      const result = filterNoMatchReason(
+        binding,
+        object as unknown as Partial<KubernetesObject>,
+        capabilityNamespaces,
+      );
       expect(result).toEqual(``);
     });
   });
@@ -622,8 +658,14 @@ describe("filterNoMatchReason", () => {
       metadata: { name: "clusterrole1" },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual("Ignoring Watch Callback: Binding defines namespaces '[\"ns1\"]' but Object carries ''.");
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Binding defines namespaces '[\"ns1\"]' but Object carries ''.",
+    );
   });
 
   it("returns namespace filter error for namespace objects with namespace filters", () => {
@@ -634,8 +676,14 @@ describe("filterNoMatchReason", () => {
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual("Ignoring Watch Callback: Cannot use namespace filter on a namespace object.");
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Cannot use namespace filter on a namespace object.",
+    );
   });
 
   it("return an Ignoring Watch Callback string if the binding name and object name are different", () => {
@@ -649,8 +697,14 @@ describe("filterNoMatchReason", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual(`Ignoring Watch Callback: Binding defines name 'pepr' but Object carries 'not-pepr'.`);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      `Ignoring Watch Callback: Binding defines name 'pepr' but Object carries 'not-pepr'.`,
+    );
   });
 
   describe("when the binding name and KubernetesObject name are the same", () => {
@@ -677,8 +731,14 @@ describe("filterNoMatchReason", () => {
       metadata: {},
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp but Object does not carry it.");
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Binding defines deletionTimestamp but Object does not carry it.",
+    );
   });
 
   it("return no deletionTimestamp error when there is a deletionTimestamp in the object", () => {
@@ -692,8 +752,14 @@ describe("filterNoMatchReason", () => {
       },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).not.toEqual("Ignoring Watch Callback: Binding defines deletionTimestamp Object does not carry it.");
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).not.toEqual(
+      "Ignoring Watch Callback: Binding defines deletionTimestamp Object does not carry it.",
+    );
   });
 
   it("returns label overlap error when there is no overlap between binding and object labels", () => {
@@ -705,7 +771,11 @@ describe("filterNoMatchReason", () => {
       metadata: { labels: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
     expect(result).toEqual(
       `Ignoring Watch Callback: Binding defines labels '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
@@ -720,7 +790,11 @@ describe("filterNoMatchReason", () => {
       metadata: { annotations: { anotherKey: "anotherValue" } },
     };
     const capabilityNamespaces: string[] = [];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
     expect(result).toEqual(
       `Ignoring Watch Callback: Binding defines annotations '{"key":"value"}' but Object carries '{"anotherKey":"anotherValue"}'.`,
     );
@@ -751,7 +825,11 @@ describe("filterNoMatchReason", () => {
       metadata: { namespace: "ns2", name: "bleh" },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
     expect(result).toEqual(
       `Ignoring Watch Callback: Object carries namespace 'ns2' but namespaces allowed by Capability are '["ns1"]'.`,
     );
@@ -764,7 +842,11 @@ describe("filterNoMatchReason", () => {
     };
     const obj = {};
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
     expect(result).toEqual(
       `Ignoring Watch Callback: Binding defines namespaces ["ns3"] but namespaces allowed by Capability are '["ns1","ns2"]'.`,
     );
@@ -779,8 +861,14 @@ describe("filterNoMatchReason", () => {
       metadata: { namespace: "ns2" },
     };
     const capabilityNamespaces = ["ns1", "ns2"];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
-    expect(result).toEqual(`Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      `Ignoring Watch Callback: Binding defines namespaces '["ns1"]' but Object carries 'ns2'.`,
+    );
   });
 
   describe("when a KubernetesObject is in an ingnored namespace", () => {
@@ -795,7 +883,12 @@ describe("filterNoMatchReason", () => {
       };
       const capabilityNamespaces = ["ns3"];
       const ignoredNamespaces = ["ns3"];
-      const result = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces, ignoredNamespaces);
+      const result = filterNoMatchReason(
+        binding,
+        kubernetesObject,
+        capabilityNamespaces,
+        ignoredNamespaces,
+      );
       expect(result).toEqual(
         `Ignoring Watch Callback: Object carries namespace 'ns3' but ignored namespaces include '["ns3"]'.`,
       );
@@ -817,7 +910,11 @@ describe("filterNoMatchReason", () => {
       metadata: { namespace: "ns1", labels: { key: "value" }, annotations: { key: "value" } },
     };
     const capabilityNamespaces = ["ns1"];
-    const result = filterNoMatchReason(binding, obj as unknown as Partial<KubernetesObject>, capabilityNamespaces);
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
     expect(result).toEqual("");
   });
 });
@@ -906,7 +1003,9 @@ describe("adjudicateMismatchedGroup", () => {
       ...defaultAdmissionRequest,
       kind: { ...defaultAdmissionRequest.kind, group: "other-group" },
     });
-    expect(result).toBe(`Binding defines group 'rbac.authorization.k8s.io' but Request declares 'other-group'.`);
+    expect(result).toBe(
+      `Binding defines group 'rbac.authorization.k8s.io' but Request declares 'other-group'.`,
+    );
   });
   it("should not return mismatchedGroup reason when the binding group and request group match", () => {
     const result = adjudicateMismatchedGroup(clusterScopedBinding, {
@@ -972,11 +1071,18 @@ describe("adjudicateUnbindableNamespaces", () => {
 
 describe("adjudicateUncarryableNamespace", () => {
   it("should return uncarryableNamespace reason when the object is a namespace that is not allowed by the capability", () => {
-    const result = adjudicateUncarryableNamespace(["default"], { kind: "Namespace", metadata: { name: "pepr-demo" } });
-    expect(result).toBe(`Object carries namespace 'pepr-demo' but namespaces allowed by Capability are '["default"]'.`);
+    const result = adjudicateUncarryableNamespace(["default"], {
+      kind: "Namespace",
+      metadata: { name: "pepr-demo" },
+    });
+    expect(result).toBe(
+      `Object carries namespace 'pepr-demo' but namespaces allowed by Capability are '["default"]'.`,
+    );
   });
   it("should return uncarryableNamespace reason when the object carries a namespace that is not allowed by the capability", () => {
-    const result = adjudicateUncarryableNamespace(["default"], { metadata: { namespace: "kube-system" } });
+    const result = adjudicateUncarryableNamespace(["default"], {
+      metadata: { namespace: "kube-system" },
+    });
     expect(result).toBe(
       `Object carries namespace 'kube-system' but namespaces allowed by Capability are '["default"]'.`,
     );
@@ -992,14 +1098,22 @@ describe("adjudicateUncarryableNamespace", () => {
 describe("adjudicateMismatchedNamespace", () => {
   it("should return mismatchedNamespace reason when the binding namespace does not match the object namespace", () => {
     const result = adjudicateMismatchedNamespace(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, namespaces: ["kube-system"] } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, namespaces: ["kube-system"] },
+      },
       { metadata: { namespace: "default" } },
     );
-    expect(result).toBe(`Binding defines namespaces '["kube-system"]' but Object carries 'default'.`);
+    expect(result).toBe(
+      `Binding defines namespaces '["kube-system"]' but Object carries 'default'.`,
+    );
   });
   it("should not return mismatchedNamespace reason when the binding namespace and object namespace match", () => {
     const result = adjudicateMismatchedNamespace(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, namespaces: ["default"] } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, namespaces: ["default"] },
+      },
       { metadata: { namespace: "default" } },
     );
     expect(result).toBe(null);
@@ -1009,14 +1123,22 @@ describe("adjudicateMismatchedNamespace", () => {
 describe("adjudicateMismatchedLabels", () => {
   it("should return mismatchedLabels reason when the binding labels do not match the object labels", () => {
     const result = adjudicateMismatchedLabels(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, labels: { foo: "bar" } } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, labels: { foo: "bar" } },
+      },
       { metadata: { labels: { foo: "not-bar" } } },
     );
-    expect(result).toBe(`Binding defines labels '{"foo":"bar"}' but Object carries '{"foo":"not-bar"}'.`);
+    expect(result).toBe(
+      `Binding defines labels '{"foo":"bar"}' but Object carries '{"foo":"not-bar"}'.`,
+    );
   });
   it("should not return mismatchedLabels reason when the binding labels and object labels match", () => {
     const result = adjudicateMismatchedLabels(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, labels: { foo: "bar" } } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, labels: { foo: "bar" } },
+      },
       { metadata: { labels: { foo: "bar" } } },
     );
     expect(result).toBe(null);
@@ -1026,14 +1148,22 @@ describe("adjudicateMismatchedLabels", () => {
 describe("adjudicateMismatchedAnnotations", () => {
   it("should return mismatchedAnnotations reason when the binding annotations do not match the object annotations", () => {
     const result = adjudicateMismatchedAnnotations(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, annotations: { foo: "bar" } } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, annotations: { foo: "bar" } },
+      },
       { metadata: { annotations: { foo: "not-bar" } } },
     );
-    expect(result).toBe(`Binding defines annotations '{"foo":"bar"}' but Object carries '{"foo":"not-bar"}'.`);
+    expect(result).toBe(
+      `Binding defines annotations '{"foo":"bar"}' but Object carries '{"foo":"not-bar"}'.`,
+    );
   });
   it("should not return mismatchedAnnotations reason when the binding annotations and object annotations match", () => {
     const result = adjudicateMismatchedAnnotations(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, annotations: { foo: "bar" } } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, annotations: { foo: "bar" } },
+      },
       { metadata: { annotations: { foo: "bar" } } },
     );
     expect(result).toBe(null);
@@ -1042,14 +1172,20 @@ describe("adjudicateMismatchedAnnotations", () => {
 describe("adjudicateMismatchedNameRegex", () => {
   it("should return mismatchedNameRegex reason when the binding regexName does not match the object name", () => {
     const result = adjudicateMismatchedNameRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexName: "^default$" } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexName: "^default$" },
+      },
       { metadata: { name: "not-default" } },
     );
     expect(result).toBe(`Binding defines name regex '^default$' but Object carries 'not-default'.`);
   });
   it("should not return mismatchedNameRegex reason when the binding regexName and object name match", () => {
     const result = adjudicateMismatchedNameRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexName: "^default$" } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexName: "^default$" },
+      },
       { metadata: { name: "default" } },
     );
     expect(result).toBe(null);
@@ -1059,14 +1195,20 @@ describe("adjudicateMismatchedNameRegex", () => {
 describe("adjudicateMismatchedNameRegex", () => {
   it("should return mismatchedNameRegex reason when the binding regexName does not match the object name", () => {
     const result = adjudicateMismatchedNameRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexName: "^default$" } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexName: "^default$" },
+      },
       { metadata: { name: "not-default" } },
     );
     expect(result).toBe(`Binding defines name regex '^default$' but Object carries 'not-default'.`);
   });
   it("should not return mismatchedNameRegex reason when the binding regexName and object name match", () => {
     const result = adjudicateMismatchedNameRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexName: "^default$" } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexName: "^default$" },
+      },
       { metadata: { name: "default" } },
     );
     expect(result).toBe(null);
@@ -1075,15 +1217,26 @@ describe("adjudicateMismatchedNameRegex", () => {
 
 describe("adjudicateCarriesIgnoredNamespace", () => {
   it("should return carriesIgnoredNamespace reason when the object is a namespace that is in the ignoredNamespaces", () => {
-    const result = adjudicateCarriesIgnoredNamespace(["default"], { kind: "Namespace", metadata: { name: "default" } });
-    expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);
+    const result = adjudicateCarriesIgnoredNamespace(["default"], {
+      kind: "Namespace",
+      metadata: { name: "default" },
+    });
+    expect(result).toBe(
+      `Object carries namespace 'default' but ignored namespaces include '["default"]'.`,
+    );
   });
   it("should return carriesIgnoredNamespace reason when the object carries a namespace that is in the ignoredNamespaces", () => {
-    const result = adjudicateCarriesIgnoredNamespace(["default"], { metadata: { namespace: "default" } });
-    expect(result).toBe(`Object carries namespace 'default' but ignored namespaces include '["default"]'.`);
+    const result = adjudicateCarriesIgnoredNamespace(["default"], {
+      metadata: { namespace: "default" },
+    });
+    expect(result).toBe(
+      `Object carries namespace 'default' but ignored namespaces include '["default"]'.`,
+    );
   });
   it("should not return carriesIgnoredNamespace reason when the object carries a namespace that is not in the ignoredNamespaces", () => {
-    const result = adjudicateCarriesIgnoredNamespace(["kube-system"], { metadata: { namespace: "default" } });
+    const result = adjudicateCarriesIgnoredNamespace(["kube-system"], {
+      metadata: { namespace: "default" },
+    });
     expect(result).toBe(null);
   });
 });
@@ -1091,10 +1244,14 @@ describe("adjudicateCarriesIgnoredNamespace", () => {
 describe("adjudicateMissingCarriableNamespace", () => {
   it("should return missingCarriableNamespace reason when the object does not carry a namespace and the capability does not allow it", () => {
     const result = adjudicateMissingCarriableNamespace(["default"], { metadata: {} });
-    expect(result).toBe(`Object does not carry a namespace but namespaces allowed by Capability are '["default"]'.`);
+    expect(result).toBe(
+      `Object does not carry a namespace but namespaces allowed by Capability are '["default"]'.`,
+    );
   });
   it("should not return missingCarriableNamespace reason when the object carries a namespace that is allowed by the capability", () => {
-    const result = adjudicateMissingCarriableNamespace(["default"], { metadata: { namespace: "default" } });
+    const result = adjudicateMissingCarriableNamespace(["default"], {
+      metadata: { namespace: "default" },
+    });
     expect(result).toBe(null);
   });
 });
@@ -1102,14 +1259,22 @@ describe("adjudicateMissingCarriableNamespace", () => {
 describe("adjudicateMismatchedNamespaceRegex", () => {
   it("should return mismatchedNamespaceRegex reason when the binding regexNamespaces do not match the object namespace", () => {
     const result = adjudicateMismatchedNamespaceRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexNamespaces: ["^default$"] } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexNamespaces: ["^default$"] },
+      },
       { metadata: { namespace: "not-default" } },
     );
-    expect(result).toBe(`Binding defines namespace regexes '["^default$"]' but Object carries 'not-default'.`);
+    expect(result).toBe(
+      `Binding defines namespace regexes '["^default$"]' but Object carries 'not-default'.`,
+    );
   });
   it("should not return mismatchedNamespaceRegex reason when the binding regexNamespaces and object namespace match", () => {
     const result = adjudicateMismatchedNamespaceRegex(
-      { ...clusterScopedBinding, filters: { ...clusterScopedBinding.filters, regexNamespaces: ["^default$"] } },
+      {
+        ...clusterScopedBinding,
+        filters: { ...clusterScopedBinding.filters, regexNamespaces: ["^default$"] },
+      },
       { metadata: { namespace: "default" } },
     );
     expect(result).toBe(null);

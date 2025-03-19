@@ -35,7 +35,12 @@ export const createMockBinding = (
   kindDetails: { group?: string; version?: string; kind?: string; plural?: string } = {},
   options: { isWatch?: boolean; event?: Event; isFinalize?: boolean } = {},
 ): Binding => {
-  const { group = "pepr.dev", version = "v1", kind = "peprstore", plural = "peprstores" } = kindDetails;
+  const {
+    group = "pepr.dev",
+    version = "v1",
+    kind = "peprstore",
+    plural = "peprstores",
+  } = kindDetails;
 
   const { isWatch = false, event = Event.CREATE, isFinalize } = options;
 
@@ -63,7 +68,13 @@ export const createMockCapability = (
 export const mockCapabilities: CapabilityExport[] = [
   createMockCapability(),
   createMockCapability(
-    [createMockRbacRule(["apiextensions.k8s.io"], ["customresourcedefinitions"], ["patch", "create"])],
+    [
+      createMockRbacRule(
+        ["apiextensions.k8s.io"],
+        ["customresourcedefinitions"],
+        ["patch", "create"],
+      ),
+    ],
     [
       createMockBinding(
         {

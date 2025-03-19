@@ -41,7 +41,10 @@ export async function processRequest(
       };
     }
 
-    Log.info(actionMetadata, `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`);
+    Log.info(
+      actionMetadata,
+      `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`,
+    );
     return valResp;
   } catch (e) {
     // If any validation throws an error, note the failure in the Response
