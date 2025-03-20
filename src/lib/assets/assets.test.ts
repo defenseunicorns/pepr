@@ -231,7 +231,8 @@ describe("Assets", () => {
         validationWebhookYaml: "/tmp/validation-webhook.yaml",
       },
     };
-    const validateWebhook: V1ValidatingWebhookConfiguration = new kind.ValidatingWebhookConfiguration();
+    const validateWebhook: V1ValidatingWebhookConfiguration =
+      new kind.ValidatingWebhookConfiguration();
     const mutateWebhook: V1MutatingWebhookConfiguration = new kind.MutatingWebhookConfiguration();
     await assets.writeWebhookFiles(validateWebhook, mutateWebhook, mockHelm);
 
@@ -293,7 +294,9 @@ describe("Assets", () => {
       >()
       .mockResolvedValue(new kind.ValidatingWebhookConfiguration());
 
-    await expect(assets.generateHelmChart(webhookGeneratorFunction, "/tmp")).rejects.toThrow(exitString);
+    await expect(assets.generateHelmChart(webhookGeneratorFunction, "/tmp")).rejects.toThrow(
+      exitString,
+    );
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     expect(processExitSpy).toHaveBeenCalledWith(1);

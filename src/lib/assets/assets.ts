@@ -110,16 +110,28 @@ export class Assets {
     helm: Record<string, Record<string, string>>,
   ): Promise<void> => {
     if (validateWebhook || mutateWebhook) {
-      await fs.writeFile(helm.files.admissionDeploymentYaml, dedent(admissionDeployTemplate(this.buildTimestamp)));
-      await fs.writeFile(helm.files.admissionServiceMonitorYaml, dedent(serviceMonitorTemplate("admission")));
+      await fs.writeFile(
+        helm.files.admissionDeploymentYaml,
+        dedent(admissionDeployTemplate(this.buildTimestamp)),
+      );
+      await fs.writeFile(
+        helm.files.admissionServiceMonitorYaml,
+        dedent(serviceMonitorTemplate("admission")),
+      );
     }
 
     if (mutateWebhook) {
-      await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this.name, this.config, mutateWebhook));
+      await fs.writeFile(
+        helm.files.mutationWebhookYaml,
+        createWebhookYaml(this.name, this.config, mutateWebhook),
+      );
     }
 
     if (validateWebhook) {
-      await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this.name, this.config, validateWebhook));
+      await fs.writeFile(
+        helm.files.validationWebhookYaml,
+        createWebhookYaml(this.name, this.config, validateWebhook),
+      );
     }
   };
 
@@ -144,18 +156,27 @@ export class Assets {
       const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
       const pairs: [string, () => string][] = [
-        [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
+        [
+          helm.files.chartYaml,
+          (): string => dedent(chartYaml(this.config.uuid, this.config.description || "")),
+        ],
         [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
         [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
         [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
-        [helm.files.apiPathSecretYaml, (): string => toYaml(apiPathSecret(this.name, this.apiPath))],
+        [
+          helm.files.apiPathSecretYaml,
+          (): string => toYaml(apiPathSecret(this.name, this.apiPath)),
+        ],
         [helm.files.storeRoleYaml, (): string => toYaml(storeRole(this.name))],
         [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
         [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
         [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, moduleHash))],
+        [
+          helm.files.moduleSecretYaml,
+          (): string => toYaml(getModuleSecret(this.name, code, moduleHash)),
+        ],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
@@ -170,16 +191,30 @@ export class Assets {
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);
 
       const webhooks = {
-        mutate: await webhookGeneratorFunction(this, WebhookType.MUTATE, this.config.webhookTimeout),
-        validate: await webhookGeneratorFunction(this, WebhookType.VALIDATE, this.config.webhookTimeout),
+        mutate: await webhookGeneratorFunction(
+          this,
+          WebhookType.MUTATE,
+          this.config.webhookTimeout,
+        ),
+        validate: await webhookGeneratorFunction(
+          this,
+          WebhookType.VALIDATE,
+          this.config.webhookTimeout,
+        ),
       };
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
       const watchDeployment = getWatcher(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
-        await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));
+        await fs.writeFile(
+          helm.files.watcherDeploymentYaml,
+          dedent(watcherDeployTemplate(this.buildTimestamp)),
+        );
+        await fs.writeFile(
+          helm.files.watcherServiceMonitorYaml,
+          dedent(serviceMonitorTemplate("watcher")),
+        );
       }
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);

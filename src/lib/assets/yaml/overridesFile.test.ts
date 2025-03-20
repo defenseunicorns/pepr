@@ -103,7 +103,9 @@ describe("overridesFile", () => {
     expect(parsedYaml.admission.failurePolicy).toBe("Fail");
     expect(parsedYaml.watcher.image).toBe(mockOverrides.image);
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
-    expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(mockOverrides.config.description);
+    expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(
+      mockOverrides.config.description,
+    );
   });
 
   it("sets correct webhook failurePolicy based on config", async () => {

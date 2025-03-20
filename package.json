@@ -41,8 +41,8 @@
     "test:journey:run": "jest --detectOpenHandles journey/entrypoint.test.ts && npm run test:journey:upgrade",
     "test:journey:run-wasm": "jest --detectOpenHandles journey/entrypoint-wasm.test.ts",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
-    "format:check": "eslint src && prettier src --check",
-    "format:fix": "eslint src --fix && prettier src --write",
+    "format:check": "eslint src && prettier --config .prettierrc src --check",
+    "format:fix": "eslint src --fix && prettier --config .prettierrc src --write",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
   },
   "dependencies": {
@@ -67,7 +67,7 @@
     "@fast-check/jest": "^2.0.1",
     "@jest/globals": "29.7.0",
     "@types/eslint": "9.6.1",
-    "@types/express": "5.0.0",
+    "@types/express": "5.0.1",
     "@types/json-pointer": "^1.0.34",
     "@types/node": "22.x.x",
     "@types/node-forge": "1.3.11",

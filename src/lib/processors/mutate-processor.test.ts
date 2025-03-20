@@ -191,11 +191,11 @@ describe("processRequest", () => {
   });
 
   it("adds a status annotation, warning, and result on failure when Errors.reject", async () => {
-    const mutateCallback = (jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>).mockImplementation(
-      () => {
-        throw "oof";
-      },
-    );
+    const mutateCallback = (
+      jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>
+    ).mockImplementation(() => {
+      throw "oof";
+    });
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
     testBindable.config.onError = OnError.REJECT;
@@ -210,17 +210,19 @@ describe("processRequest", () => {
     expect(result.wrapped.Raw.metadata!.annotations![annote]).toBe("warning");
 
     expect(result.response.warnings).toHaveLength(1);
-    expect(result.response.warnings![0]).toBe("Action failed: An error occurred with the mutate action.");
+    expect(result.response.warnings![0]).toBe(
+      "Action failed: An error occurred with the mutate action.",
+    );
     expect(result.response.result).toBe("Pepr module configured to reject on error");
     expect(result.response.auditAnnotations).toBeUndefined();
   });
 
   it("adds a status annotation, warning, and auditAnnotation on failure when Errors.audit", async () => {
-    const mutateCallback = (jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>).mockImplementation(
-      () => {
-        throw "oof";
-      },
-    );
+    const mutateCallback = (
+      jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>
+    ).mockImplementation(() => {
+      throw "oof";
+    });
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
     testBindable.config.onError = OnError.AUDIT;
@@ -232,11 +234,15 @@ describe("processRequest", () => {
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
     expect(
-      result.wrapped.Raw.metadata!.annotations![`${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`],
+      result.wrapped.Raw.metadata!.annotations![
+        `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`
+      ],
     ).toBe("warning");
 
     expect(result.response.warnings).toHaveLength(1);
-    expect(result.response.warnings![0]).toBe("Action failed: An error occurred with the mutate action.");
+    expect(result.response.warnings![0]).toBe(
+      "Action failed: An error occurred with the mutate action.",
+    );
     expect(result.response.result).toBeUndefined();
     expect(result.response.auditAnnotations).toBeDefined();
 
@@ -252,7 +258,9 @@ describe("processRequest", () => {
 
 describe("updateResponsePatchAndWarnings", () => {
   const mutateResponse: MutateResponse = { uid: "uid", allowed: true, patch: "" };
-  const patches: JSONPatchOperation[] = [{ op: "add", path: "/data/hello-pepr-v2-a", value: "value" }];
+  const patches: JSONPatchOperation[] = [
+    { op: "add", path: "/data/hello-pepr-v2-a", value: "value" },
+  ];
   it("should add a patch to the response if patch length is greater than 0", () => {
     updateResponsePatchAndWarnings(patches, mutateResponse);
     expect(mutateResponse.patch).toBe(base64Encode(JSON.stringify(patches)));

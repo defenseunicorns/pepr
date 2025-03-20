@@ -418,7 +418,9 @@ describe("bindingAndCapabilityNSConflict", () => {
 describe("generateWatchNamespaceError", () => {
   it("returns error for ignored namespace conflict", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], []);
-    expect(error).toBe("Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1].");
+    expect(error).toBe(
+      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1].",
+    );
   });
 
   it("returns error for binding and capability namespace conflict", () => {
@@ -498,7 +500,8 @@ const allNSCapabilities: CapabilityExport[] = JSON.parse(`[
 const nonNsViolation: CapabilityExport[] = [
   {
     name: "test-capability-namespaces",
-    description: "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
+    description:
+      "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
     namespaces: ["miami", "dallas", "milwaukee"],
     bindings: [
       {
@@ -526,7 +529,10 @@ const nonNsViolation: CapabilityExport[] = [
 ];
 
 describe("namespaceComplianceValidator", () => {
-  let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
+  let errorSpy: SpiedFunction<{
+    (...data: unknown[]): void;
+    (message?: unknown, ...optionalParams: unknown[]): void;
+  }>;
   beforeEach(() => {
     errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });

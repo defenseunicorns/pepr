@@ -15,7 +15,8 @@ export const carriedKind = pipe(
   defaultTo("not set"),
 );
 export const carriedVersion = pipe(
-  (kubernetesObject: KubernetesObject): string | undefined => kubernetesObject?.metadata?.resourceVersion,
+  (kubernetesObject: KubernetesObject): string | undefined =>
+    kubernetesObject?.metadata?.resourceVersion,
   defaultTo("not set"),
 );
 export const carriedName = pipe(
@@ -40,7 +41,8 @@ export const carriedAnnotations = pipe(
 export const carriesAnnotations = pipe(carriedAnnotations, equals({}), not);
 
 export const carriedLabels = pipe(
-  (kubernetesObject: KubernetesObject): { [key: string]: string } | undefined => kubernetesObject?.metadata?.labels,
+  (kubernetesObject: KubernetesObject): { [key: string]: string } | undefined =>
+    kubernetesObject?.metadata?.labels,
   defaultTo({}),
 );
 export const carriesLabels = pipe(carriedLabels, equals({}), not);

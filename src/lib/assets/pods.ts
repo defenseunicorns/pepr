@@ -366,7 +366,11 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
   }
 }
 
-export function genEnv(config: ModuleConfig, watchMode = false, ignoreWatchMode = false): V1EnvVar[] {
+export function genEnv(
+  config: ModuleConfig,
+  watchMode = false,
+  ignoreWatchMode = false,
+): V1EnvVar[] {
   const noWatchDef = {
     PEPR_PRETTY_LOG: "false",
     LOG_LEVEL: config.logLevel || "info",

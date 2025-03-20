@@ -31,7 +31,13 @@ describe("v2StoreKey", () => {
 describe("v2UnescapedStoreKey", () => {
   it("should prefix the key with v2", () => {
     const keys = ["https://google.com", "sso-client-http://bin", "key3", "key4", "key5"];
-    const results = ["v2-https://google.com", "v2-sso-client-http://bin", "v2-key3", "v2-key4", "v2-key5"];
+    const results = [
+      "v2-https://google.com",
+      "v2-sso-client-http://bin",
+      "v2-key3",
+      "v2-key4",
+      "v2-key5",
+    ];
 
     for (let i = 0; i < keys.length; i++) {
       const result = v2UnescapedStoreKey(keys[i]);
@@ -158,12 +164,24 @@ describe("Storage", () => {
     storage.receive({ key1: "value1", key2: "value2", "sso-client-http://bin": "value3" });
     storage.clear();
 
-    expect(mockSender).toHaveBeenCalledWith("remove", ["key1", "key2", "sso-client-http:~1~1bin"], undefined);
+    expect(mockSender).toHaveBeenCalledWith(
+      "remove",
+      ["key1", "key2", "sso-client-http:~1~1bin"],
+      undefined,
+    );
   });
 
   it("should get an item", () => {
     const keys = ["key1", "!", "!", "pepr", "https://google.com", "sftp://here:22", "!"];
-    const results = ["value1", null, "!", "was-here", "3f7dd007-568f-4f4a-bbac-2e6bfff93860", "your-machine", " "];
+    const results = [
+      "value1",
+      null,
+      "!",
+      "was-here",
+      "3f7dd007-568f-4f4a-bbac-2e6bfff93860",
+      "your-machine",
+      " ",
+    ];
 
     keys.map((key, i) => {
       const mockData: DataStore = { [v2UnescapedStoreKey(key)]: results[i]! };

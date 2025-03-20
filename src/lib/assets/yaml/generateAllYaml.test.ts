@@ -11,7 +11,13 @@ import { webhookConfigGenerator } from "../webhooks";
 import { WebhookType } from "../../enums";
 import { getModuleSecret, getNamespace } from "../pods";
 import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
+import {
+  clusterRole,
+  clusterRoleBinding,
+  serviceAccount,
+  storeRole,
+  storeRoleBinding,
+} from "../rbac";
 import crypto from "crypto";
 
 jest.mock("../webhooks", () => ({
@@ -43,7 +49,9 @@ jest.mock("crypto", () => ({
 
 jest.mock("@kubernetes/client-node", () => ({
   ...(jest.requireActual("@kubernetes/client-node") as object),
-  dumpYaml: jest.fn((resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`),
+  dumpYaml: jest.fn(
+    (resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`,
+  ),
 }));
 
 jest.mock("../pods", () => ({
