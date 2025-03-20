@@ -13,6 +13,7 @@ export type PromptOptions = {
   name: string;
   description: string;
   errorBehavior: OnError;
+  uuid: string;
 };
 
 export type PartialPromptOptions = Partial<PromptOptions>;
@@ -22,6 +23,7 @@ export async function walkthrough(opts?: PartialPromptOptions): Promise<PromptOp
     ...(await setName(opts?.name)),
     ...(await setDescription(opts?.description)),
     ...(await setErrorBehavior(opts?.errorBehavior)),
+    ...(await setUUID(opts?.uuid)),
   };
   return result as PromptOptions;
 }
@@ -55,6 +57,22 @@ export async function setName(name?: string): Promise<Answers<string>> {
   }
 
   return prompt([askName]);
+}
+async function setUUID(uuid?: string): Promise<Answers<string>> {
+  const askUUID: PromptObject = {
+    type: "text",
+    name: "uuid",
+    message: "Enter a unique identifier for the new Pepr module.\n",
+    validate: (val: string) => {
+      return val.length <= 36 || "The UUID must be 36 characters or fewer.";
+    },
+  };
+
+  if (uuid !== undefined) {
+    return { uuid };
+  }
+
+  return prompt([askUUID]);
 }
 
 async function setDescription(description?: string): Promise<Answers<string>> {

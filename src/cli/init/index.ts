@@ -36,6 +36,13 @@ export default function (program: RootCmd): void {
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
     .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", OnError.REJECT)
+    .option("--uuid <string>", "Unique identifier for your module.", (uuid: string) => {
+      // length of generated uuid
+      if (uuid.length > 36) {
+        throw new Error("The UUID must be 36 characters or fewer.");
+      }
+      return uuid;
+    })
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
