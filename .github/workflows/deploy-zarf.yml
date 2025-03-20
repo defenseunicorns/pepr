@@ -68,7 +68,7 @@ jobs:
       - name: Init Pepr Module
         run: |
           cd "$PEPR"
-          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --skip-post-init --confirm
+          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --uuid "$MOD_NAME" --skip-post-init --confirm
           sed -i 's/uuid": ".*",/uuid": "'$MOD_NAME'",/g' "$MOD_PATH/package.json"
 
       - name: Build Pepr Module
