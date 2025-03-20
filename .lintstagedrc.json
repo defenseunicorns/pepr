@@ -1,7 +1,9 @@
 {
   "*.js": ["prettier --config .prettierrc --write", "eslint --fix"],
   "*.json": ["prettier --config .prettierrc --write"],
-  "*.md": ["./scripts/markdown-warn.sh"],
+  "*.md": [
+    "markdownlint --fix --ignore adr --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules"
+  ],
   "*.sh": ["shellcheck -f tty"],
   "*.ts": ["prettier --config .prettierrc --write", "eslint --fix"],
   ".husky/pre-*": ["shellcheck -f tty"]
