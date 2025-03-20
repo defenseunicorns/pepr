@@ -16,17 +16,6 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": [
-    "src/**/*.ts",
-    "integration/**/*.ts",
-    ".github/workflows/pepr-excellent-examples-matrix.js",
-    "config/commitlint.config.js",
-    "commitlint.config.js",
-    "coverage/lcov-report/block-navigation.js",
-    "coverage/lcov-report/prettify.js",
-    "coverage/lcov-report/sorter.js",
-    "scripts/set-version.js",
-    "scripts/read-unicorn-build-args.js"
-  ],
-  "exclude": ["node_modules", "dist", "fixtures", "src/templates", "pepr-test-module"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "fixtures", "node_modules", "pepr-test-module", "src/templates"]
 }

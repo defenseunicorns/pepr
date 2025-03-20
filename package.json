@@ -10,11 +10,20 @@
     "node": ">=18.0.0"
   },
   "files": [
-    "/dist",
-    "/src",
-    "!src/**/DefaultTestObjects.ts",
+    "!.github/**",
+    "!dist/**/*.test.d.ts*",
+    "!dist/**/DefaultTestObjects.d.ts",
+    "!dist/**/DefaultTestObjects.d.ts.map",
+    "!dist/**/DefaultTestObjects.ts",
+    "!dist/.github/**",
+    "!integration/**",
+    "!scripts",
     "!src/**/*.test.ts",
-    "!dist/**/*.test.d.ts*"
+    "!src/**/DefaultTestObjects.d.ts",
+    "!src/**/DefaultTestObjects.ts",
+    "!src/fixtures",
+    "/dist",
+    "/src"
   ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
