@@ -5,7 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:b1240ac4f77e28349febd9dfa0a7176d459688a4bd2df98ef0160a80e6e78e33 AS build
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:8a479a5574085bee6c003cb6ba56b73901cf4240c1496ac06b32012f464e52ba AS build
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN npm run build && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
-FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:9ac4adb34641d76753c39798916877f2038b7618450ca25609aec67d18a7ac68
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:05560c42afabb42619062315fda5cd7dcbb009f629e45825720f52188d526af5
 
 WORKDIR /app
 
