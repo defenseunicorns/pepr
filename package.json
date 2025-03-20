@@ -12,6 +12,7 @@
   "files": [
     "/dist",
     "/src",
+    "!src/**/DefaultTestObjects.ts",
     "!src/**/*.test.ts",
     "!dist/**/*.test.d.ts*"
   ],
@@ -21,7 +22,7 @@
   "scripts": {
     "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
-    "prebuild": "rm -fr dist/* && npm run gen-data-json",
+    "prebuild": "rm -rf dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
     "build:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr:dev $(node scripts/read-unicorn-build-args.mjs) .",
