@@ -69,9 +69,17 @@ describe("sendCache", () => {
   describe("when creating 'add' operations", () => {
     it("should write to the cache", () => {
       const input: Record<string, Operation> = {
-        "add:/data/capability-key:value": { op: "add", path: "/data/capability-key", value: "value" },
+        "add:/data/capability-key:value": {
+          op: "add",
+          path: "/data/capability-key",
+          value: "value",
+        },
       };
-      const result = fillStoreCache({}, "capability", "add", { key: ["key"], value: "value", version: "" });
+      const result = fillStoreCache({}, "capability", "add", {
+        key: ["key"],
+        value: "value",
+        version: "",
+      });
       expect(result).toStrictEqual(input);
     });
 

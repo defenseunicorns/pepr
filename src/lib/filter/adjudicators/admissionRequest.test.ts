@@ -4,7 +4,13 @@
 import { expect, describe, it } from "@jest/globals";
 import { Operation } from "../../enums";
 import { defaultAdmissionRequest } from "./defaultTestObjects";
-import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "./admissionRequest";
+import {
+  declaredUid,
+  declaredKind,
+  declaredVersion,
+  declaredGroup,
+  declaredOperation,
+} from "./admissionRequest";
 import { AdmissionRequest } from "../../common-types";
 
 describe("declaredUid", () => {

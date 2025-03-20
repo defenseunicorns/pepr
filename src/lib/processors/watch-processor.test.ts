@@ -5,7 +5,13 @@ import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-cli
 import { K8sInit, WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
-import { setupWatch, logEvent, queueKey, getOrCreateQueue, registerWatchEventHandlers } from "./watch-processor";
+import {
+  setupWatch,
+  logEvent,
+  queueKey,
+  getOrCreateQueue,
+  registerWatchEventHandlers,
+} from "./watch-processor";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
 import { EventEmitter } from "stream";
@@ -123,7 +129,14 @@ describe("WatchProcessor", () => {
           event: "Create",
           watchCallback: jest.fn(),
         },
-        { isWatch: false, isQueue: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+        {
+          isWatch: false,
+          isQueue: false,
+          model: "someModel",
+          filters: {},
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
       ],
     } as unknown as Capability);
 
@@ -184,9 +197,27 @@ describe("WatchProcessor", () => {
     const capabilities = [
       {
         bindings: [
-          { isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallbackCreate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Update", watchCallback: watchCallbackUpdate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Delete", watchCallback: watchCallbackDelete },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: watchCallbackCreate,
+          },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Update",
+            watchCallback: watchCallbackUpdate,
+          },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Delete",
+            watchCallback: watchCallbackDelete,
+          },
           // Add more events here
         ],
       },
@@ -234,7 +265,15 @@ describe("WatchProcessor", () => {
     const watchCallback = jest.fn();
     const capabilities = [
       {
-        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallback }],
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: watchCallback,
+          },
+        ],
       },
     ] as unknown as Capability[];
 
@@ -283,8 +322,20 @@ describe("WatchProcessor", () => {
 
     capabilities.push({
       bindings: [
-        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
-        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+        {
+          isWatch: true,
+          model: "someModel",
+          filters: { name: "bleh" },
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
+        {
+          isWatch: false,
+          model: "someModel",
+          filters: {},
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
       ],
     } as unknown as Capability);
 
@@ -303,7 +354,10 @@ describe("logEvent function", () => {
     const mockObj = { id: "123", type: "Pod" } as KubernetesObject;
     const message = "Test message";
     logEvent(WatchEvent.DATA, message, mockObj);
-    expect(Log.debug).toHaveBeenCalledWith(mockObj, `Watch event ${WatchEvent.DATA} received. ${message}.`);
+    expect(Log.debug).toHaveBeenCalledWith(
+      mockObj,
+      `Watch event ${WatchEvent.DATA} received. ${message}.`,
+    );
   });
 
   it("should handle CONNECT events", () => {
@@ -315,7 +369,9 @@ describe("logEvent function", () => {
   it("should handle LIST_ERROR events", () => {
     const message = "LIST_ERROR";
     logEvent(WatchEvent.LIST_ERROR, message);
-    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.LIST_ERROR} received. ${message}.`);
+    expect(Log.debug).toHaveBeenCalledWith(
+      `Watch event ${WatchEvent.LIST_ERROR} received. ${message}.`,
+    );
   });
   it("should handle LIST events", () => {
     const podList = {
@@ -332,12 +388,17 @@ describe("logEvent function", () => {
   it("should handle DATA_ERROR events", () => {
     const message = "Test message";
     logEvent(WatchEvent.DATA_ERROR, message);
-    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.DATA_ERROR} received. ${message}.`);
+    expect(Log.debug).toHaveBeenCalledWith(
+      `Watch event ${WatchEvent.DATA_ERROR} received. ${message}.`,
+    );
   });
 });
 
 describe("queueKey", () => {
-  const withKindNsName = { kind: "Pod", metadata: { namespace: "my-ns", name: "my-name" } } as KubernetesObject;
+  const withKindNsName = {
+    kind: "Pod",
+    metadata: { namespace: "my-ns", name: "my-name" },
+  } as KubernetesObject;
   const withKindNs = { kind: "Pod", metadata: { namespace: "my-ns" } } as KubernetesObject;
   const withKindName = { kind: "Pod", metadata: { name: "my-name" } } as KubernetesObject;
   const withNsName = { metadata: { namespace: "my-ns", name: "my-name" } } as KubernetesObject;
@@ -466,7 +527,12 @@ describe("registerWatchEventHandlers", () => {
         WatchEvent.OLD_RESOURCE_VERSION,
         "old_resource_version",
       ],
-      [WatchEvent.NETWORK_ERROR, new Error("network_error"), WatchEvent.NETWORK_ERROR, "network_error"],
+      [
+        WatchEvent.NETWORK_ERROR,
+        new Error("network_error"),
+        WatchEvent.NETWORK_ERROR,
+        "network_error",
+      ],
       [WatchEvent.LIST_ERROR, new Error("network_error"), WatchEvent.LIST_ERROR, "network_error"],
       [
         WatchEvent.LIST,
@@ -501,7 +567,9 @@ describe("registerWatchEventHandlers", () => {
       [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
     ])("calls metric function %s", (event, input, methodName) => {
       watcher.events.emit(event, input);
-      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(input);
+      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
     });
   });
 

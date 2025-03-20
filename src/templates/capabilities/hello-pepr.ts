@@ -89,9 +89,7 @@ When(a.ConfigMap)
   .IsCreated()
   .WithName("example-1")
   .Mutate(request => {
-    request
-      .SetLabel("pepr", "was-here")
-      .SetAnnotation("pepr.dev", "annotations-work-too");
+    request.SetLabel("pepr", "was-here").SetAnnotation("pepr.dev", "annotations-work-too");
 
     // Use the Store to persist data between requests and Pepr controller pods
     Store.setItem("example-1", "was-here");
@@ -228,11 +226,7 @@ function example4Cb(cm: PeprMutateRequest<a.ConfigMap>) {
  * Note because the Capability defines namespaces, the namespace specified here must be one of those.
  * Alternatively, you can remove the namespace from the Capability definition and specify it here.
  */
-When(a.ConfigMap)
-  .IsCreated()
-  .InNamespace("pepr-demo-2")
-  .WithName("example-4a")
-  .Mutate(example4Cb);
+When(a.ConfigMap).IsCreated().InNamespace("pepr-demo-2").WithName("example-4a").Mutate(example4Cb);
 
 /**
  * ---------------------------------------------------------------------------------------------------

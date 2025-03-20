@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { clusterRole, clusterRoleBinding, storeRole, serviceAccount, storeRoleBinding } from "./rbac";
+import {
+  clusterRole,
+  clusterRoleBinding,
+  storeRole,
+  serviceAccount,
+  storeRoleBinding,
+} from "./rbac";
 import { it, describe, expect, jest } from "@jest/globals";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import fs from "fs";
@@ -115,7 +121,9 @@ describe("RBAC Rule Processing", () => {
       "test-role",
       capabilityWithDuplicates,
       "scoped",
-      capabilityWithDuplicates.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithDuplicates
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // Filter out only the rules for 'pepr.dev' and 'peprstores'
@@ -195,7 +203,9 @@ describe("RBAC Rule Processing", () => {
       "test-role",
       mockCapabilities,
       "scoped",
-      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      mockCapabilities
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // The result should only contain rules from the capabilities, not from the invalid custom RBAC
@@ -263,7 +273,9 @@ describe("ClusterRole Generation", () => {
       "test-role",
       capabilityWithFinalize,
       "scoped",
-      capabilityWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithFinalize
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
@@ -296,7 +308,9 @@ describe("RBAC Key Handling", () => {
       "test-role",
       capabilityWithLongKey,
       "scoped",
-      capabilityWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithLongKey
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
@@ -321,7 +335,9 @@ describe("RBAC Key Handling", () => {
       "test-role",
       capabilityWithShortKey,
       "scoped",
-      capabilityWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithShortKey
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
