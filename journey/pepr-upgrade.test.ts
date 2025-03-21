@@ -20,7 +20,7 @@ export function peprUpgrade() {
       console.log(`Old test directory removed: ${dirPath}`);
     }
     execSync(
-      `npx pepr init --name pepr-upgrade-test --description "Upgrade testing" --skip-post-init --confirm`,
+      `npx pepr init --name pepr-upgrade-test --description "Upgrade testing" --errorBehavior "ignore" --uuid "upgrade-test" --skip-post-init --confirm`,
     );
   });
 
@@ -45,7 +45,10 @@ export function peprUpgrade() {
       ({ manifestUUID, matchedFile } = getManifestData());
 
       // Deploy manifests of pepr@latest
-      execFileSync("kubectl", ["create", "-f", matchedFile], { cwd: "pepr-upgrade-test", stdio: "inherit" });
+      execFileSync("kubectl", ["create", "-f", matchedFile], {
+        cwd: "pepr-upgrade-test",
+        stdio: "inherit",
+      });
 
       // Wait for the deployments to be ready
       await Promise.all([
@@ -68,7 +71,6 @@ export function peprUpgrade() {
 
       let manifestUUID;
       ({ manifestUUID, matchedFile } = getManifestData());
-
 
       // Deploy manifests of pepr@latest
       const applyOut = spawnSync(`kubectl apply -f ${matchedFile}`, {
