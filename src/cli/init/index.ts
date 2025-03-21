@@ -40,7 +40,7 @@ export default function (program: RootCmd): void {
       if (uuid.length > 36) {
         throw new Error("The UUID must be 36 characters or fewer.");
       }
-      return uuid;
+      return uuid.toLocaleLowerCase();
     })
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
