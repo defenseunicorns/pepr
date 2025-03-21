@@ -1,0 +1,52 @@
+{
+  "env": {
+    "browser": false,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.eslint.json"],
+    "ecmaVersion": 2022
+  },
+  "rules": {
+    "@typescript-eslint/no-floating-promises": "warn",
+    "class-methods-use-this": "warn",
+    "complexity": ["warn", { "max": 10 }],
+    "consistent-this": "warn",
+    "eqeqeq": "error",
+    "max-depth": ["warn", { "max": 3 }],
+    "max-nested-callbacks": ["warn", { "max": 4 }],
+    "max-params": ["error", { "max": 4 }],
+    "max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
+    "no-invalid-this": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts"],
+      "rules": {
+        "max-nested-callbacks": ["warn", { "max": 8 }]
+      }
+    },
+    {
+      "files": ["*.ts"],
+      "excludedFiles": "*.test.ts",
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "error"
+      }
+    }
+  ],
+  "plugins": ["@typescript-eslint"],
+  "ignorePatterns": [
+    "src/templates",
+    "node_modules",
+    "dist",
+    "hack",
+    "pepr-test-module",
+    "build.mjs",
+    "journey",
+    "__mocks__",
+    "integration/testroot"
+  ],
+  "root": true
+}
