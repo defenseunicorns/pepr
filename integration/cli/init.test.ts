@@ -40,6 +40,7 @@ describe("init", () => {
         `--name ${name}`,
         `--description ${desc}`,
         `--errorBehavior ${errorBehavior}`,
+        `--uuid random-identifier`,
         "--confirm",
         "--skip-post-init",
       ].join(" ");

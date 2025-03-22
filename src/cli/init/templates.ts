@@ -47,8 +47,8 @@ export type peprPackageJSON = {
 };
 
 export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPackageJSON {
-  // Generate a random UUID for the module based on the module name
-  const uuid = uuidv5(opts.name, uuidv4());
+  // Generate a random UUID for the module based on the module name if it is not provided
+  const uuid = !opts.uuid ? uuidv5(opts.name, uuidv4()) : opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency

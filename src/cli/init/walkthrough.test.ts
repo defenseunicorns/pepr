@@ -43,6 +43,7 @@ describe("when processing input", () => {
         name: "My Test Module",
         description: "A test module for Pepr",
         errorBehavior: OnError.REJECT,
+        uuid: "unique-identifier",
       };
 
       // Set values for the flag(s) under test by making a subset of (expected)
