@@ -57,6 +57,7 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 - Check formatting: `npm run format:check`
 - Fix formatting: `npm run format:fix`
+- If regex is used, provide a link to regex101.com with an explanation of the regex pattern.
 
 ### Git Hooks
 
