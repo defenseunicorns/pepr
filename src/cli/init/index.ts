@@ -36,8 +36,9 @@ export default function (program: RootCmd): void {
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
     .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
     .option("--uuid [string]", "Unique identifier for your module.", (uuid: string): string => {
+      const uuidLengthLimit = 36;
       // length of generated uuid
-      if (uuid.length > 36) {
+      if (uuid.length > uuidLengthLimit) {
         throw new Error("The UUID must be 36 characters or fewer.");
       }
       return uuid.toLocaleLowerCase();
