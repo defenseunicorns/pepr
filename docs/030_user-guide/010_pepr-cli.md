@@ -12,7 +12,7 @@ Initialize a new Pepr Module.
 - `--name <string>` - Set the name of the new module.
 - `--skip-post-init` - Skip npm install, git init, and VSCode launch.
 - `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
-- `--uuid [string]` - Unique identifier for your module.
+- `--uuid [string]` - Unique identifier for your module with a max length of 32 characters.
 ---
 
 ## `npx pepr update`
