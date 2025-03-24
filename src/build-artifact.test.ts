@@ -21,8 +21,6 @@ describe("Published package does not include unintended files", () => {
     expect(disallowed).toEqual([]);
   });
 
-  // TODO: Size check
-
   describe("when creating declaration files", () => {
     const expectedDeclarationFiles: string[] = [];
     const expectedSourceMapFiles: string[] = [];
@@ -53,5 +51,30 @@ describe("Published package does not include unintended files", () => {
       expect(missing).toEqual([]);
     });
   });
+
+  it("should warn the developer when lots of files are added to the build", async () => {
+    async function getPublishedFileCount(pkg: string): Promise<number> {
+      const response = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch metadata for package "${pkg}"`);
+      }
+      const metadata = await response.json();
+      return metadata.dist.fileCount;
+    }
+
+    const referenceList = await getPublishedFileCount("pepr");
+    const diff = Math.abs(packedFiles.length - referenceList);
+    const warnThreshold = 15;
+    if (diff > warnThreshold) {
+      const message = `Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
+      If this is intentional, increase the 'warnThreshold' in this unit test.
+      This test is a backstop to ensure developers do not accidentaly include unrelated build artifacts.`;
+
+      if (process.env.CI === "true") {
+        console.warn("[CI Warning]", message);
+      } else {
+        throw new Error(message);
+      }
+    }
+  });
 });
-// TODO: Ensure files have a corresponding declaration file
