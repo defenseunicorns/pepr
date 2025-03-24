@@ -1,36 +1,40 @@
-.adr-dir
-.dockerignore
-.eslintrc.json
-.github
-_images
-.prettierrc
+# IDE/editor settings and project configuration
 .vscode
+.eslintrc.json
+.prettierrc
+.prettierignore
+tsconfig.*
+Dockerfile*
+CODEOWNERS
+
+# Docs, hacks, dev utilities
+.adr-dir
 adr
+_images
 /docs/
 /hack
-build.mjs
 /journey
-/__mocks__
-/coverage
-jest.config.json
-/prettierignore
-/dist/cli/**/*.d.*
-/dist/fixtures
-/dist/test
-/pepr-test-module
 
-/src/cli
-/src/fixtures
-
-/CODEOWNERS
-/Dockerfile
-/Dockerfile.dist
-/insecure*
-/tsconfig.*
-
-*.toml
+# Test and coverage files
+__mocks__
+coverage
 *.test.*
-*.tgz
-
-# Exclude all test files
 src/**/*.test.ts
+
+# Build output
+dist/
+
+# Dev-specific modules and test modules
+pepr-test-module
+
+# Source files not intended for publishing
+src/cli
+src/fixtures
+
+# GitHub and CI configs
+.github
+.dockerignore
+
+# Miscellaneous
+*.tgz
+*.toml
