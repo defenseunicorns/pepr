@@ -6,7 +6,6 @@ describe("Published package does not include unintended files", () => {
 
   beforeAll(async () => {
     type BuildArtifact = { mode: number; path: string; size: number };
-    console.log(execSync("npm pack --dry-run"));
     const tarballBuffer = execSync("npm pack --dry-run --json", { stdio: "pipe" });
     const tarballJson = JSON.parse(tarballBuffer.toString());
     packedFiles = tarballJson.flatMap((entry: { files: BuildArtifact[] }) =>
