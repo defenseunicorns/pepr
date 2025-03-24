@@ -26,28 +26,21 @@ describe("Published package does not include unintended files", () => {
     const expectedSourceMapFiles: string[] = [];
     beforeAll(() => {
       const tsFilesExcludingTemplates = packedFiles
-        .filter(file => !file.endsWith(".d.ts") && !file.endsWith(".d.ts.map"))
-        .filter(file => !file.includes("src/templates/"))
-        .filter(file => file.endsWith(".ts"));
+        .filter(f => f.endsWith(".ts") && !f.endsWith(".d.ts") && !f.endsWith(".d.ts.map"))
+        .filter(f => !f.includes("src/templates/"))
+        .map(f => f.replace(/\.ts$/, "").replace(/^src/, "dist"));
 
       for (const tsFile of tsFilesExcludingTemplates) {
-        const basePath = tsFile.replace(/\.ts$/, "").replace(/^src/, "dist");
-        expectedDeclarationFiles.push(`${basePath}.d.ts`);
-        expectedSourceMapFiles.push(`${basePath}.d.ts.map`);
+        expectedDeclarationFiles.push(`${tsFile}.d.ts`);
+        expectedSourceMapFiles.push(`${tsFile}.d.ts.map`);
       }
     });
 
-    it("should include declaration (.d.ts) files for each .ts file in dist/", () => {
-      const missing = expectedDeclarationFiles.filter(
-        declarationFile => !packedFiles.includes(declarationFile),
-      );
-      expect(missing).toEqual([]);
-    });
-
-    it("should include source map (.d.ts.map) files for each .ts file in dist/", () => {
-      const missing = expectedSourceMapFiles.filter(
-        sourceMapFile => !packedFiles.includes(sourceMapFile),
-      );
+    it.each([
+      ["declaration (.d.ts)", expectedDeclarationFiles],
+      ["source map (.d.ts.map)", expectedSourceMapFiles],
+    ])("should include %s files for each .ts file in dist/", (_, expectedFiles) => {
+      const missing = expectedFiles.filter(file => !packedFiles.includes(file));
       expect(missing).toEqual([]);
     });
   });
