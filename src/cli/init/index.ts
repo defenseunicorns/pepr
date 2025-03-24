@@ -23,7 +23,6 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
-import { OnError } from "./enums";
 
 export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
@@ -35,12 +34,30 @@ export default function (program: RootCmd): void {
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", OnError.REJECT)
+    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
+    .option(
+      "--uuid [string]",
+      "Unique identifier for your module with a max length of 32 characters.",
+      (uuid: string): string => {
+        const uuidLengthLimit = 36;
+        // length of generated uuid
+        if (uuid.length > uuidLengthLimit) {
+          throw new Error("The UUID must be 36 characters or fewer.");
+        }
+        return uuid.toLocaleLowerCase();
+      },
+    )
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
-        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
+        prompts.inject([
+          "pepr-test-module",
+          "A test module for Pepr",
+          "ignore",
+          "static-test",
+          "y",
+        ]);
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
         response = await walkthrough();
       } else {
