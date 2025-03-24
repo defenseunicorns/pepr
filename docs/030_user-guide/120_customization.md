@@ -125,7 +125,7 @@ Below are the available configurations through `package.json`.
 
 | Field            | Description                            | Example Values                  |
 |------------------|----------------------------------------|---------------------------------|
-| `uuid`           | Unique identifier for the module*      | `hub-operator`                  |
+| `uuid`           | Unique identifier for the module       | `hub-operator`                  |
 | `onError`        | Behavior of the webhook failure policy | `audit`, `ignore`, `reject`     |
 | `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
