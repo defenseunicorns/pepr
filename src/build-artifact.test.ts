@@ -6,6 +6,7 @@ describe("Published package does not include unintended files", () => {
 
   beforeAll(async () => {
     type BuildArtifact = { mode: number; path: string; size: number };
+    console.log(execSync("npm pack --dry-run"));
     const tarballBuffer = execSync("npm pack --dry-run --json", { stdio: "pipe" });
     const tarballJson = JSON.parse(tarballBuffer.toString());
     packedFiles = tarballJson.flatMap((entry: { files: BuildArtifact[] }) =>
@@ -66,7 +67,7 @@ describe("Published package does not include unintended files", () => {
     const diff = Math.abs(packedFiles.length - referenceList);
     const warnThreshold = 15;
     if (diff > warnThreshold) {
-      const message = `[WARNING] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
+      const message = `[WARN] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
       If this is intentional, increase the 'warnThreshold' in this unit test.
       This test is a backstop to ensure developers do not accidentaly include unrelated build artifacts.`;
       throw new Error(message);
