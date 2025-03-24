@@ -66,15 +66,10 @@ describe("Published package does not include unintended files", () => {
     const diff = Math.abs(packedFiles.length - referenceList);
     const warnThreshold = 15;
     if (diff > warnThreshold) {
-      const message = `Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
+      const message = `[WARNING] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
       If this is intentional, increase the 'warnThreshold' in this unit test.
       This test is a backstop to ensure developers do not accidentaly include unrelated build artifacts.`;
-
-      if (process.env.CI === "true") {
-        console.warn("[CI Warning]", message);
-      } else {
-        throw new Error(message);
-      }
+      throw new Error(message);
     }
   });
 });
