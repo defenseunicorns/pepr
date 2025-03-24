@@ -85,7 +85,6 @@ jobs:
       - run: npm ci
       - run: npm run test:integration
 
-
   build-artifacts:
     if: inputs.run-units == true
     runs-on: ubuntu-latest
