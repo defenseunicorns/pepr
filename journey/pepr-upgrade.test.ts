@@ -99,7 +99,7 @@ describe("Should test Pepr upgrade", peprUpgrade);
 
 function getManifestData(): { manifestUUID: string; matchedFile: string } {
   const moduleDirectory = path.join("./pepr-upgrade-test", "dist");
-  // https://regex101.com/r/URNKAg/1
+  // https://regex101.com/r/euWatJ/1
   const manifestPattern = /.*pepr-module-([a-z0-9-]+)\.yaml$/;
 
   let matchedFile = findMatchingFile(moduleDirectory, manifestPattern);
