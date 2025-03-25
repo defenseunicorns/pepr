@@ -7,8 +7,7 @@ import { Capability } from "../core/capability";
 import { Schedule } from "../core/schedule";
 import { Store } from "../k8s";
 import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
-import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
-import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8s } from "kubernetes-fluent-client";
 
 jest.mock("kubernetes-fluent-client");
 
@@ -39,17 +38,23 @@ describe("StoreController", () => {
   beforeEach(() => {
     testCapability = new Capability(capabilityConfig);
     const mockPeprStore = new Store();
-    const defaultMockImplementations = <T extends GenericClass, K extends KubernetesObject>() =>
-      ({
-        Patch: jest.fn().mockResolvedValueOnce(undefined as never),
-        InNamespace: jest.fn().mockReturnValueOnce({
-          Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
-        }),
-        Watch: jest.fn().mockReturnValueOnce(undefined),
-        Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
-      }) as unknown as K8sInit<T, K>;
 
-    mockK8s.mockImplementationOnce(defaultMockImplementations);
+    const mockImplementation = {
+      Patch: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      InNamespace: jest.fn().mockReturnValue({
+        Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      }),
+      Watch: jest.fn().mockReturnValue({
+        start: jest.fn().mockReturnValue(Promise.resolve()),
+      }),
+      Apply: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      Logs: jest.fn().mockReturnValue(Promise.resolve([] as string[])),
+      Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      Delete: jest.fn().mockReturnValue(Promise.resolve()),
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockK8s.mockImplementation(() => mockImplementation as any);
     jest.useFakeTimers();
   });
 
@@ -66,7 +71,6 @@ describe("StoreController", () => {
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
 
-      // K8s(Store).Get() mock
       expect(mockK8s).toHaveBeenCalled();
       expect(controllerStore).toBeDefined();
     });
@@ -75,17 +79,23 @@ describe("StoreController", () => {
   describe("PeprStore Migration and setupWatch ", () => {
     it("should migrate existing stores and set up a watch on the store resource", async () => {
       const mockPeprStore = new Store();
-      const defaultMockImplementations = <T extends GenericClass, K extends KubernetesObject>() =>
-        ({
-          Patch: jest.fn().mockResolvedValueOnce(undefined as never),
-          InNamespace: jest.fn().mockReturnValueOnce({
-            Get: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
-          }),
-          Watch: jest.fn().mockReturnValueOnce(undefined),
-          Apply: jest.fn().mockResolvedValueOnce(mockPeprStore as never),
-        }) as unknown as K8sInit<T, K>;
 
-      mockK8s.mockImplementationOnce(defaultMockImplementations);
+      const mockImplementation = {
+        Patch: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+        }),
+        Watch: jest.fn().mockReturnValue({
+          start: jest.fn().mockReturnValue(Promise.resolve()),
+        }),
+        Apply: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+        Logs: jest.fn().mockReturnValue(Promise.resolve([] as string[])),
+        Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+        Delete: jest.fn().mockReturnValue(Promise.resolve()),
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockK8s.mockImplementation(() => mockImplementation as any);
       new StoreController([testCapability], `pepr-test-schedule`, () => {});
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
