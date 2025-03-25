@@ -1,6 +1,7 @@
 import { describe, beforeAll, it, expect } from "@jest/globals";
 import { execSync } from "child_process";
 
+// These tests require 'src/' and 'dist/' to exist locally. Use 'npm run test:artifacts'.
 describe("Published package does not include unintended files", () => {
   let packedFiles: string[] = [];
 
@@ -55,11 +56,11 @@ describe("Published package does not include unintended files", () => {
       return metadata.dist.fileCount;
     }
 
-    const referenceList = await getPublishedFileCount("pepr");
-    const diff = Math.abs(packedFiles.length - referenceList);
+    const latestFileCount = await getPublishedFileCount("pepr");
+    const diff = Math.abs(packedFiles.length - latestFileCount);
     const warnThreshold = 15;
     if (diff > warnThreshold) {
-      const message = `[WARN] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${referenceList}).
+      const message = `[WARN] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${latestFileCount}).
       If this is intentional, increase the 'warnThreshold' in this unit test.
       This test is a backstop to ensure developers do not accidentaly include unrelated build artifacts.`;
       throw new Error(message);
