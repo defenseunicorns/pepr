@@ -85,19 +85,11 @@ describe("StoreController", () => {
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
 
-      if (withSchedule) {
-        const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
-        expect(mockLogCalls).toEqual([
-          "Capability test-capability registered",
-          "Registering schedule store for test-capability",
-        ]);
-      } else {
-        const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
-        expect(mockLogCalls).toEqual([
-          "Capability test-capability registered",
-          "Registering store for test-capability",
-        ]);
-      }
+      const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
+      expect(mockLogCalls).toEqual([
+        "Capability test-capability registered",
+        `Registering ${withSchedule ? "schedule " : ""}store for test-capability`,
+      ]);
       expect(mockK8s).toHaveBeenCalled();
       expect(controllerStore).toBeDefined();
       expect(mockLog.debug).toHaveBeenCalledWith(capabilityConfig);
