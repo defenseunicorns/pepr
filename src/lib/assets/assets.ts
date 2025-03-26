@@ -18,14 +18,14 @@ import {
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
 import { overridesFile } from "./yaml/overridesFile";
-import { getDeployment, getModuleSecret, getWatcher } from "./pods";
-import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
+import { getDeployment, getModuleSecret, getWatcher } from "./pods";
+import { helmLayout, createWebhookYaml, toYaml } from "./index";
 
 export class Assets {
   readonly name: string;

@@ -5,9 +5,15 @@ import { KubernetesObject, V1EnvVar } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
-import { Assets } from "./assets";
 import { ModuleConfig } from "../types";
-import { Binding } from "../types";
+import { Binding, CapabilityExport } from "../types";
+
+interface PeprAssetConfig {
+  name: string;
+  image: string;
+  capabilities: CapabilityExport[];
+  config: ModuleConfig;
+}
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
@@ -32,7 +38,7 @@ export function getNamespace(namespaceLabels?: Record<string, string>): Kubernet
 }
 
 export function getWatcher(
-  assets: Assets,
+  assets: PeprAssetConfig,
   hash: string,
   buildTimestamp: string,
   imagePullSecret?: string,
@@ -192,7 +198,7 @@ export function getWatcher(
 }
 
 export function getDeployment(
-  assets: Assets,
+  assets: PeprAssetConfig,
   hash: string,
   buildTimestamp: string,
   imagePullSecret?: string,
