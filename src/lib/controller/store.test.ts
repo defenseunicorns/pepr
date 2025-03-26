@@ -30,16 +30,9 @@ describe("StoreController", () => {
     completions: 1,
   };
 
-  afterEach(() => {
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
-
-  beforeEach(() => {
-    testCapability = new Capability(capabilityConfig);
+  const createMockImplementation = () => {
     const mockPeprStore = new Store();
-
-    const mockImplementation = {
+    return {
       Patch: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
       InNamespace: jest.fn().mockReturnValue({
         Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
@@ -52,9 +45,17 @@ describe("StoreController", () => {
       Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
       Delete: jest.fn().mockReturnValue(Promise.resolve()),
     };
+  };
 
+  afterEach(() => {
+    jest.resetAllMocks();
+    jest.useRealTimers();
+  });
+
+  beforeEach(() => {
+    testCapability = new Capability(capabilityConfig);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockK8s.mockImplementation(() => mockImplementation as any);
+    mockK8s.mockImplementation(() => createMockImplementation() as any);
     jest.useFakeTimers();
   });
 
@@ -78,24 +79,6 @@ describe("StoreController", () => {
 
   describe("PeprStore Migration and setupWatch ", () => {
     it("should migrate existing stores and set up a watch on the store resource", async () => {
-      const mockPeprStore = new Store();
-
-      const mockImplementation = {
-        Patch: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-        }),
-        Watch: jest.fn().mockReturnValue({
-          start: jest.fn().mockReturnValue(Promise.resolve()),
-        }),
-        Apply: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-        Logs: jest.fn().mockReturnValue(Promise.resolve([] as string[])),
-        Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-        Delete: jest.fn().mockReturnValue(Promise.resolve()),
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockK8s.mockImplementation(() => mockImplementation as any);
       new StoreController([testCapability], `pepr-test-schedule`, () => {});
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
