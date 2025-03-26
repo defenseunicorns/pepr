@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { ModuleConfig } from "../types";
+import { ModuleConfig, CapabilityExport } from "../types";
 import { Assets } from "./assets";
-import { expect, describe, it, jest, afterAll } from "@jest/globals";
-import { CapabilityExport } from "../types";
+import { expect, describe, it, jest, beforeEach, afterEach, afterAll } from "@jest/globals";
 import { kind } from "kubernetes-fluent-client";
 import { createDirectoryIfNotExists } from "../filesystemService";
 import { promises as fs } from "fs";
@@ -165,23 +164,45 @@ jest.mock("./index", () => ({
 }));
 
 describe("Assets", () => {
-  const moduleConfig: ModuleConfig = {
-    uuid: "test-uuid",
-    alwaysIgnore: {
-      namespaces: ["zarf"],
-    },
-    peprVersion: "0.0.1",
-    appVersion: "0.0.1",
-    description: "A test module",
-    webhookTimeout: 10,
-    onError: "reject",
-    logLevel: "info",
-    env: {},
-    rbac: [],
-    rbacMode: "scoped",
-    customLabels: {},
-  };
-  const assets = new Assets(moduleConfig, "/tmp", ["secret1", "secret2"], "localhost");
+  let moduleConfig: ModuleConfig;
+  let assets: Assets;
+  let consoleErrorSpy: ReturnType<typeof jest.spyOn>;
+
+  const createMockWebhookGenerator = () =>
+    jest
+      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
+      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
+
+  const createMockWatcher = () =>
+    jest.fn<() => kind.Deployment | null>().mockReturnValue(new kind.Deployment());
+
+  const createMockModuleSecret = () =>
+    jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+
+  beforeEach(() => {
+    moduleConfig = {
+      uuid: "test-uuid",
+      alwaysIgnore: {
+        namespaces: ["zarf"],
+      },
+      peprVersion: "0.0.1",
+      appVersion: "0.0.1",
+      description: "A test module",
+      webhookTimeout: 10,
+      onError: "reject",
+      logLevel: "info",
+      env: {},
+      rbac: [],
+      rbacMode: "scoped",
+      customLabels: {},
+    };
+    assets = new Assets(moduleConfig, "/tmp", ["secret1", "secret2"], "localhost");
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
 
   afterAll(() => {
     jest.clearAllMocks();
@@ -246,13 +267,10 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart which should call createDirectoryIfNotExists twice for templates and charts", async () => {
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    const getWatcherFunction = jest
-      .fn<() => kind.Deployment | null>()
-      .mockReturnValue(new kind.Deployment());
-    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
+
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -263,13 +281,10 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart which should write file 40 times for built Kubernetes Manifests and helm chart generation", async () => {
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    const getWatcherFunction = jest
-      .fn<() => kind.Deployment | null>()
-      .mockReturnValue(new kind.Deployment());
-    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
+
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -280,15 +295,10 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart and get no error", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
 
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    const getWatcherFunction = jest
-      .fn<() => kind.Deployment | null>()
-      .mockReturnValue(new kind.Deployment());
-    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -299,15 +309,10 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart without an error when asset class instance is correct", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
 
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    const getWatcherFunction = jest
-      .fn<() => kind.Deployment | null>()
-      .mockReturnValue(new kind.Deployment());
-    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -319,7 +324,6 @@ describe("Assets", () => {
 
   it("should call generateHelmChart and throw an error when config is incorrect", async () => {
     const exitString = "Mock console.exit call";
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
       throw new Error(exitString);
     });
@@ -335,10 +339,9 @@ describe("Assets", () => {
         ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
       >()
       .mockResolvedValue(new kind.ValidatingWebhookConfiguration());
-    const getWatcherFunction = jest
-      .fn<() => kind.Deployment | null>()
-      .mockReturnValue(new kind.Deployment());
-    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
+
     await expect(
       assets.generateHelmChart(
         webhookGeneratorFunction,
