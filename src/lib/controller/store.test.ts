@@ -8,18 +8,29 @@ import { Schedule } from "../core/schedule";
 import { Store } from "../k8s";
 import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
 import { K8s } from "kubernetes-fluent-client";
+import Log from "../telemetry/logger";
 
 jest.mock("kubernetes-fluent-client");
+jest.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 
 describe("StoreController", () => {
   const mockK8s = jest.mocked(K8s);
+  const mockLog = jest.mocked(Log);
   const capabilityConfig: CapabilityCfg = {
     name: "test-capability",
     description: "Test capability description",
     namespaces: ["default"],
   };
 
-  let testCapability = new Capability(capabilityConfig);
+  let testCapability: Capability;
 
   const mockSchedule: Schedule = {
     name: "test-schedule",
@@ -29,6 +40,20 @@ describe("StoreController", () => {
     startTime: new Date(),
     completions: 1,
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks(); // Clear all mocks before each test
+    mockLog.info.mockClear(); // Explicitly clear the logger mock
+    testCapability = new Capability(capabilityConfig);
+    const mockImplementation = createMockImplementation();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockK8s.mockImplementation(() => mockImplementation as any);
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   const createMockImplementation = () => {
     const mockPeprStore = new Store();
@@ -47,18 +72,6 @@ describe("StoreController", () => {
     };
   };
 
-  afterEach(() => {
-    jest.resetAllMocks();
-    jest.useRealTimers();
-  });
-
-  beforeEach(() => {
-    testCapability = new Capability(capabilityConfig);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockK8s.mockImplementation(() => createMockImplementation() as any);
-    jest.useFakeTimers();
-  });
-
   describe("PeprStore initialization", () => {
     it.each([
       ["with schedule", `pepr-test-schedule`, true],
@@ -72,8 +85,22 @@ describe("StoreController", () => {
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
 
+      if (withSchedule) {
+        const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
+        expect(mockLogCalls).toEqual([
+          "Capability test-capability registered",
+          "Registering schedule store for test-capability",
+        ]);
+      } else {
+        const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
+        expect(mockLogCalls).toEqual([
+          "Capability test-capability registered",
+          "Registering store for test-capability",
+        ]);
+      }
       expect(mockK8s).toHaveBeenCalled();
       expect(controllerStore).toBeDefined();
+      expect(mockLog.debug).toHaveBeenCalledWith(capabilityConfig);
     });
   });
 
@@ -83,7 +110,9 @@ describe("StoreController", () => {
       jest.advanceTimersToNextTimer();
       await Promise.resolve();
 
-      // K8s(Store).Patch() mock - migrateAndSetupWatch
+      const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
+      expect(mockLogCalls).toEqual(["Capability test-capability registered"]);
+      // K8s API calls verification
       expect(mockK8s).toHaveBeenCalled();
       // K8s(Store).Watch() mock - setupWatch
       expect(mockK8s).toHaveBeenCalled();
