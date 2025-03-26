@@ -213,7 +213,13 @@ describe("Assets", () => {
 
   it("should call allYaml that calls yamlGenerationFunction with assets deployments", async () => {
     const yamlGenerationFunction = jest.fn<() => Promise<string>>().mockResolvedValue("");
-    await assets.allYaml(yamlGenerationFunction);
+    const getDeploymentFunction = jest
+      .fn<() => kind.Deployment>()
+      .mockReturnValue(new kind.Deployment());
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    await assets.allYaml(yamlGenerationFunction, getDeploymentFunction, getWatcherFunction);
     const expectedDeployments = {
       default: expect.any(Object),
       watch: expect.any(Object),
@@ -243,7 +249,16 @@ describe("Assets", () => {
     const webhookGeneratorFunction = jest
       .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
       .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(createDirectoryIfNotExists).toHaveBeenCalledTimes(2);
   });
 
@@ -251,7 +266,16 @@ describe("Assets", () => {
     const webhookGeneratorFunction = jest
       .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
       .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(fs.writeFile).toHaveBeenCalledTimes(40);
   });
 
@@ -261,7 +285,16 @@ describe("Assets", () => {
     const webhookGeneratorFunction = jest
       .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
       .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
@@ -271,7 +304,16 @@ describe("Assets", () => {
     const webhookGeneratorFunction = jest
       .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
       .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
@@ -293,10 +335,18 @@ describe("Assets", () => {
         ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
       >()
       .mockResolvedValue(new kind.ValidatingWebhookConfiguration());
-
-    await expect(assets.generateHelmChart(webhookGeneratorFunction, "/tmp")).rejects.toThrow(
-      exitString,
-    );
+    const getWatcherFunction = jest
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    const getModuleSecretFunction = jest.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+    await expect(
+      assets.generateHelmChart(
+        webhookGeneratorFunction,
+        getWatcherFunction,
+        getModuleSecretFunction,
+        "/tmp",
+      ),
+    ).rejects.toThrow(exitString);
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     expect(processExitSpy).toHaveBeenCalledWith(1);
