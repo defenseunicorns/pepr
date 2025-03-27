@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Binding } from "../types";
+import { AdjudicationResult, Binding } from "../types";
 import { Operation } from "../enums";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { AdmissionRequest } from "../common-types";
@@ -25,7 +25,6 @@ import {
   adjudicateMisboundNamespace,
 } from "./adjudication";
 
-export type AdjudicationResult = string | null;
 type Adjudicator = () => AdjudicationResult;
 
 /**

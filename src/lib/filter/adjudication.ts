@@ -46,7 +46,7 @@ import {
   carriesIgnoredNamespace,
   missingCarriableNamespace,
 } from "./adjudicators/postCollection";
-import { AdjudicationResult } from "./filter";
+import { AdjudicationResult } from "../types";
 
 export function adjudicateMisboundNamespace(binding: Binding): AdjudicationResult {
   return misboundNamespace(binding) ? "Cannot use namespace filter on a namespace object." : null;
