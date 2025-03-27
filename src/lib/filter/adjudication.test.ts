@@ -21,7 +21,7 @@ import {
   adjudicateMissingCarriableNamespace,
   adjudicateMismatchedNamespaceRegex,
   adjudicateMisboundNamespace,
-} from "./filter";
+} from "./adjudication";
 import { clusterScopedBinding } from "./filter.test";
 import { Event, Operation } from "../enums";
 
