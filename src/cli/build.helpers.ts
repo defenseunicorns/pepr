@@ -11,6 +11,7 @@ import { promises as fs } from "fs";
 import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
+import { getDeployment, getModuleSecret, getWatcher } from "../lib/assets/pods";
 
 interface ImageOptions {
   customImage?: string;
@@ -191,7 +192,7 @@ export async function generateYamlAndWriteToDisk(obj: {
   const yamlFile = `pepr-module-${uuid}.yaml`;
   const chartPath = `${uuid}-chart`;
   const yamlPath = resolve(outputDir, yamlFile);
-  const yaml = await assets.allYaml(generateAllYaml, imagePullSecret);
+  const yaml = await assets.allYaml(generateAllYaml, getDeployment, getWatcher, imagePullSecret);
   const zarfPath = resolve(outputDir, "zarf.yaml");
 
   let localZarf = "";
@@ -203,6 +204,6 @@ export async function generateYamlAndWriteToDisk(obj: {
   await fs.writeFile(yamlPath, yaml);
   await fs.writeFile(zarfPath, localZarf);
 
-  await assets.generateHelmChart(webhookConfigGenerator, outputDir);
+  await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
   console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }

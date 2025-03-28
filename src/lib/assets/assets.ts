@@ -18,7 +18,6 @@ import {
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
 import { overridesFile } from "./yaml/overridesFile";
-import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
@@ -26,6 +25,7 @@ import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
+import { kind } from "kubernetes-fluent-client";
 
 export class Assets {
   readonly name: string;
@@ -84,6 +84,18 @@ export class Assets {
       assets: Assets,
       deployments: { default: V1Deployment; watch: V1Deployment | null },
     ) => Promise<string>,
+    getDeploymentFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment,
+    getWatcherFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment | null,
     imagePullSecret?: string,
   ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
@@ -97,8 +109,8 @@ export class Assets {
     const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
-      default: getDeployment(this, moduleHash, this.buildTimestamp, imagePullSecret),
-      watch: getWatcher(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      default: getDeploymentFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      watch: getWatcherFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
     };
 
     return yamlGenerationFunction(this, deployments);
@@ -141,6 +153,13 @@ export class Assets {
       mutateOrValidate: WebhookType,
       timeoutSeconds: number | undefined,
     ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>,
+    getWatcherFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment | null,
+    getModuleSecretFunction: (name: string, data: Buffer, hash: string) => kind.Secret,
     basePath: string,
   ): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
@@ -175,7 +194,7 @@ export class Assets {
         [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
         [
           helm.files.moduleSecretYaml,
-          (): string => toYaml(getModuleSecret(this.name, code, moduleHash)),
+          (): string => toYaml(getModuleSecretFunction(this.name, code, moduleHash)),
         ],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
@@ -205,7 +224,7 @@ export class Assets {
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
-      const watchDeployment = getWatcher(this, moduleHash, this.buildTimestamp);
+      const watchDeployment = getWatcherFunction(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
         await fs.writeFile(
           helm.files.watcherDeploymentYaml,
