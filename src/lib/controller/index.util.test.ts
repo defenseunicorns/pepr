@@ -37,6 +37,30 @@ describe("karForValidate()", () => {
       const result = sut.karForValidate(ar, vrs);
       expect(result).toEqual(kar);
     });
+
+    it("returns KubeAdmissionReview with warnings when provided", () => {
+      const ar = { uid: "uid" } as unknown as AdmissionRequest;
+      const vrs: ValidateResponse[] = [
+        {
+          uid: "uid",
+          allowed: true,
+          warnings: ["This is a warning message"],
+        },
+      ];
+      const resp = {
+        uid: "uid",
+        allowed: true,
+        status: { code: 200, message: "" },
+        warnings: ["This is a warning message"],
+      };
+      const kar: sut.KubeAdmissionReview = {
+        apiVersion: "admission.k8s.io/v1",
+        kind: "AdmissionReview",
+        response: resp,
+      };
+      const result = sut.karForValidate(ar, vrs);
+      expect(result).toEqual(kar);
+    });
   });
 
   describe("given 1-or-more ValidationResponse[]'s", () => {
@@ -90,6 +114,71 @@ describe("karForValidate()", () => {
         uid: ar.uid,
         allowed: false,
         status: { code: 422, message: "mess; age" },
+      };
+      const kar: sut.KubeAdmissionReview = {
+        apiVersion: "admission.k8s.io/v1",
+        kind: "AdmissionReview",
+        response: resp,
+      };
+      const result = sut.karForValidate(ar, vrs);
+      expect(result).toEqual(kar);
+    });
+
+    it("returns KubeAdmissionReview with multiple warnings from different responses", () => {
+      const ar = { uid: "uid" } as unknown as AdmissionRequest;
+      const vrs: ValidateResponse[] = [
+        {
+          uid: "uid",
+          allowed: true,
+          warnings: ["First warning message"],
+          status: {
+            code: 200,
+            message: "success",
+          },
+        },
+        {
+          uid: "uid",
+          allowed: true,
+          warnings: ["Second warning message"],
+          status: {
+            code: 200,
+            message: "also success",
+          },
+        },
+      ];
+      const resp = {
+        uid: "uid",
+        allowed: true,
+        status: { code: 200, message: "" },
+        warnings: ["First warning message", "Second warning message"],
+      };
+      const kar: sut.KubeAdmissionReview = {
+        apiVersion: "admission.k8s.io/v1",
+        kind: "AdmissionReview",
+        response: resp,
+      };
+      const result = sut.karForValidate(ar, vrs);
+      expect(result).toEqual(kar);
+    });
+
+    it("returns KubeAdmissionReview with warnings in denied responses", () => {
+      const ar = { uid: "uid" } as unknown as AdmissionRequest;
+      const vrs: ValidateResponse[] = [
+        {
+          uid: "uid",
+          allowed: false,
+          warnings: ["Warning with denial"],
+          status: {
+            code: 422,
+            message: "denied",
+          },
+        },
+      ];
+      const resp = {
+        uid: "uid",
+        allowed: false,
+        status: { code: 422, message: "denied" },
+        warnings: ["Warning with denial"],
       };
       const kar: sut.KubeAdmissionReview = {
         apiVersion: "admission.k8s.io/v1",
