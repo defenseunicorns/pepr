@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesObject, V1EnvVar } from "@kubernetes/client-node";
+import { KubernetesObject } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
 import { Assets } from "./assets";
-import { ModuleConfig } from "../types";
 import { Binding } from "../types";
+import { genEnv } from "./envrionment";
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
@@ -364,28 +364,4 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
       },
     };
   }
-}
-
-export function genEnv(
-  config: ModuleConfig,
-  watchMode = false,
-  ignoreWatchMode = false,
-): V1EnvVar[] {
-  const noWatchDef = {
-    PEPR_PRETTY_LOG: "false",
-    LOG_LEVEL: config.logLevel || "info",
-  };
-
-  const def = {
-    PEPR_WATCH_MODE: watchMode ? "true" : "false",
-    ...noWatchDef,
-  };
-
-  if (config.env && config.env["PEPR_WATCH_MODE"]) {
-    delete config.env["PEPR_WATCH_MODE"];
-  }
-  const cfg = config.env || {};
-  return ignoreWatchMode
-    ? Object.entries({ ...noWatchDef, ...cfg }).map(([name, value]) => ({ name, value }))
-    : Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
 }

@@ -39,13 +39,4 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Circular Dependency Check
         run: |
-          npx madge --circular --ts-config tsconfig.json --extensions ts,js src/ > tmp.log || true # Force exit 0 for post-processing
-          tail -n +4 tmp.log > circular-deps.log
-          if [ $(wc -l < circular-deps.log) -gt 1 ]; then
-            echo "circular-deps.log has more than 1 circular dependencies."
-            wc -l circular-deps.log
-            exit 1
-          else
-            echo "circular-deps.log has 1 or fewer circular dependencies."
-            exit 0
-          fi
+          npx madge --circular --ts-config tsconfig.json --extensions ts,js src/
