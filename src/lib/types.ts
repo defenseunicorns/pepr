@@ -308,3 +308,4 @@ export type PeprModuleOptions = {
   /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
   afterHook?: (res: MutateResponse | ValidateResponse) => void;
 }; // Track if this is a watch mode controller
+export type AdjudicationResult = string | null;
