@@ -201,7 +201,8 @@ jobs:
             cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
             npm run --workspace=${{ matrix.name }} test:e2e -- \
               --image pepr:dev \
-              --custom-package ../pepr-0.0.0-development.tgz
+              --custom-package ../pepr-0.0.0-development.tgz \
+              --release-candidate ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
