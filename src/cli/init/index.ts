@@ -23,6 +23,7 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
+import { UUID_LENGTH_LIMIT } from "./enums";
 
 export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
@@ -37,11 +38,9 @@ export default function (program: RootCmd): void {
     .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
     .option(
       "--uuid [string]",
-      "Unique identifier for your module with a max length of 32 characters.",
+      "Unique identifier for your module with a max length of 36 characters.",
       (uuid: string): string => {
-        const uuidLengthLimit = 36;
-        // length of generated uuid
-        if (uuid.length > uuidLengthLimit) {
+        if (uuid.length > UUID_LENGTH_LIMIT) {
           throw new Error("The UUID must be 36 characters or fewer.");
         }
         return uuid.toLocaleLowerCase();
