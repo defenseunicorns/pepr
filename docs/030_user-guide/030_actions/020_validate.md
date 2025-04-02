@@ -11,15 +11,12 @@ Validation actions can either approve or deny requests:
 ```ts
 When(a.ConfigMap)
   .IsCreated()
-  .InNamespace("pepr-demo")
   .Validate(request => {
-    // If data exists, approve the request
-    if (request.Raw.data) {
-      return request.Approve();
+    if (request.HasAnnotation("evil")) {
+      return request.Deny("No evil CM annotations allowed.", 400);
     }
 
-    // Otherwise, deny the request with a message and optional status code
-    return request.Deny("ConfigMap must have data", 422);
+    return request.Approve();
   });
 ```
 
