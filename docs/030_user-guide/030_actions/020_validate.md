@@ -73,4 +73,4 @@ When(a.ConfigMap)
   });
 ```
 
-Warnings will be included in the Kubernetes API response and can be displayed to users by kubectl and other Kubernetes clients, providing helpful feedback while still enforcing policies.
+Warnings will be included in the Kubernetes API response and can be displayed to users by `kubectl` and other Kubernetes clients, providing helpful feedback while still enforcing policies.
