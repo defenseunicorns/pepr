@@ -185,14 +185,20 @@ async function runBinding(
   );
 
   // Register event handlers
-  registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  try {
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  } catch (err) {
+    throw new Error(
+      "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      { cause: err },
+    );
+  }
 
   // Start the watch
   try {
     await watcher.start();
   } catch (err) {
-    Log.error(err, "Error starting watch");
-    process.exit(1);
+    throw new Error("WatchStart Error: Unable to start watch.", { cause: err });
   }
 }
 
@@ -235,7 +241,7 @@ export function registerWatchEventHandlers(
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       logEvent(WatchEvent.GIVE_UP, err.message);
-      process.exit(1);
+      throw err;
     },
     [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
     [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),
