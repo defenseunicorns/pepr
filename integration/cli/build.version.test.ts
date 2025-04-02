@@ -47,6 +47,7 @@ describe("build", () => {
         async () => {
           const argz = [`--version ${version}`].join(" ");
           const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
+          console.log(JSON.stringify(build, null, 2));
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain(cliVersion);

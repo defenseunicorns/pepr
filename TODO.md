@@ -1,16 +1,17 @@
 ```bash
 operator-sdk init --domain example.com --repo github.com/example/memcached-operator
 
+// Scaffolds the Go structs in  the /api/<group>/
 operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller
 ```
 
-TODO:
-- [ ] cli command api generate-types- generates API types in api/<version>
+INIT:
+- [x] root crd command
+- [x] create command off crd command
+- [x] generate crds command
 
-- [ ] cli command api generate-crd reads the api/<version> types and generates the CRD in config/crd/bases
+PHASE 1:
+- [ ] Generate the class/type when `crd create` is run
+- [ ] Generate the CRD when `crd generate` is run
 
-Uknowns:
--  [ ] point to path to generate 
-
-
-operator-sdk generate crds reads the API Types from onfig/crd/bases
+operator-sdk generate crds reads the API Types from config/crd/bases
