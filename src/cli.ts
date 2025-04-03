@@ -26,9 +26,8 @@ if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
 program
-  .version(version)
   .enablePositionalOptions()
-  .passThroughOptions()
+  .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
   .action(() => {
     if (program.args.length < 1) {
