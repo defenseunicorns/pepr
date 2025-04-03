@@ -12,13 +12,13 @@ Phase 0:
 
 Phase 1:
 - [x] Generate the class/type when `crd create` is run
-- [] Generate the CRD when `crd generate` is run
+- [x] Generate the CRD when `crd generate` is run
 
 Phase 2:
-- [ ] Shortname
-- [ ] Namespaced
-- [ ] Plural
-- [ ] Description
+- [x] Shortname
+- [x] Namespaced
+- [x] Plural
+- [x] Description
 
 operator-sdk generate crds reads the API Types from config/crd/bases
 
@@ -26,4 +26,15 @@ operator-sdk generate crds reads the API Types from config/crd/bases
 npx ts-node src/cli.ts crd create --group cache --version v1alpha1 --kind Memcache
 
 npx ts-node src/cli.ts crd generate
+kubectl apply -f crds
+kubectl apply -f -<<EOF
+apiVersion: cache.pepr.dev/v1alpha1
+kind: Memcache
+metadata:
+  name: memcached-sample
+  namespace: default
+spec:
+  size: [3,3]
+  containerPort: 8080
+EOF
 ```
