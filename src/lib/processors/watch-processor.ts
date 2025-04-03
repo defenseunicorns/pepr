@@ -85,13 +85,10 @@ const eventToPhaseMap = {
  *
  * @param capabilities The capabilities to load watches for
  */
-export async function setupWatch(
-  capabilities: Capability[],
-  ignoredNamespaces?: string[],
-): Promise<void> {
+export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
   for (const capability of capabilities) {
     for (const binding of capability.bindings.filter(b => b.isWatch)) {
-      await runBinding(binding, capability.namespaces, ignoredNamespaces);
+      runBinding(binding, capability.namespaces, ignoredNamespaces);
     }
   }
 }
@@ -102,7 +99,7 @@ export async function setupWatch(
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(
+export async function runBinding(
   binding: Binding,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
@@ -242,7 +239,10 @@ export function registerWatchEventHandlers(
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       logEvent(WatchEvent.GIVE_UP, err.message);
-      throw new Error("WatchEvent GiveUp Error: The watch has failed to start after several attempts.", {cause: err});
+      throw new Error(
+        "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        { cause: err },
+      );
     },
     [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
     [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),

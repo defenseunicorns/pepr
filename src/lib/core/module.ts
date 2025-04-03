@@ -66,7 +66,7 @@ export class PeprModule {
         // Wait for the controller to be ready before setting up watches
         if (isWatchMode() || isDevMode()) {
           try {
-            await setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
+            setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
           } catch (e) {
             Log.error(e, "Error setting up watch");
             process.exit(1);
