@@ -161,7 +161,21 @@ describe("WatchProcessor", () => {
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
-  it("should exit if the watch fails to start", async () => {
+  it("should throw a WatchStart error with cause if the watch fails to start", async () => {
+    const rootCause = new Error("err");
+    mockStart.mockRejectedValue(rootCause as never);
+  
+    try {
+      await setupWatch(capabilities);
+      throw new Error("Expected error was not thrown");
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe("WatchStart Error: Unable to start watch.");
+      expect(err.cause).toBe(rootCause);
+    }
+  });
+
+  it.skip("should exit if the watch fails to start", async () => {
     const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
       return undefined as never;
     });
@@ -173,20 +187,28 @@ describe("WatchProcessor", () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  it("should watch for the give_up event", async () => {
-    const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
-
-    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
+  
+  it("should throw a WatchEvent GiveUp error with cause if GIVE_UP event is triggered", async () => {
+    const rootCause = new Error("WatchEvent GiveUp Error: The watch has failed to start after several attempts.");
+  
+    mockEvents.mockImplementation((eventName: string | symbol, listener: (arg: any) => void) => {
       if (eventName === WatchEvent.GIVE_UP) {
-        expect(listener).toBeInstanceOf(Function);
-        listener("err");
-        expect(exitSpy).toHaveBeenCalledWith(1);
+        listener(rootCause);
       }
     });
-
-    setupWatch(capabilities);
+  
+    mockStart.mockImplementation(() => Promise.resolve());
+  
+    try {
+      await setupWatch(capabilities);
+      throw new Error("Expected GIVE_UP error was not thrown");
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe(
+        "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      );
+      expect(err.cause).toStrictEqual(rootCause);
+    }
   });
 
   it("should setup watches with correct phases for different events", async () => {
