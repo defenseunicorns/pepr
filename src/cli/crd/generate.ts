@@ -157,7 +157,7 @@ function extractDetails(content: string): {
 
 function extractSpecProperties(
   content: string,
-  interfaceName: string
+  interfaceName: string,
 ): Record<string, JSONSchemaProperty & { required: boolean }> {
   const regex = new RegExp(`export interface ${interfaceName}\\s*{([\\s\\S]*?)^}`, "m");
   const match = content.match(regex);
@@ -166,7 +166,7 @@ function extractSpecProperties(
   const body = match[1];
 
   // This regex handles: optional, arrays, comments
-  const propRegex = /^\s*(\/\/.*\n)?\s*(\w+)(\??):\s*([\w\[\]<> \{\}:|]+);/gm;
+  const propRegex = /^\s*(\/\/.*\n)?\s*(\w+)(\??):\s*([\w[\]<> {}:|]+);/gm;
 
   const props: Record<string, JSONSchemaProperty & { required: boolean }> = {};
   let propMatch: RegExpExecArray | null;
