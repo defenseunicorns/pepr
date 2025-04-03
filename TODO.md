@@ -15,3 +15,7 @@ PHASE 1:
 - [ ] Generate the CRD when `crd generate` is run
 
 operator-sdk generate crds reads the API Types from config/crd/bases
+
+```bash
+npx ts-node src/cli.ts crd create --group cache --version v1alpha1 --kind Memcache
+```
