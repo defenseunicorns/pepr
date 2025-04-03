@@ -48,16 +48,7 @@ jobs:
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          #!/bin/bash
-
-          npm install -g npm
-
-          npm run set:version
-
-          # Build Controller Images
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:${{ github.ref_name }} .
-          docker buildx build --push --platform linux/arm64/v8,linux/amd64 $(node scripts/read-unicorn-build-args.mjs) --tag ghcr.io/defenseunicorns/pepr/private/controller:${{ github.ref_name }} .
+        run: ./.github/workflows/scripts/release.sh ${{ github.ref_name }}
   slsa:
     permissions:
       id-token: write
