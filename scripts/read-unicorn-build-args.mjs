@@ -16,8 +16,8 @@ try {
   const buildImage = fromStatements[0].split(" ")[1].trim(); 
   const baseImage = fromStatements[1].split(" ")[1].trim();  
 
-  // Quote only the values, not the key=value pairs
-  console.log(`--build-arg BUILD_IMAGE="${buildImage}" --build-arg BASE_IMAGE="${baseImage}"`);
+  // Don't quote the values since they're quoted in the Dockerfile
+  console.log(`--build-arg BUILD_IMAGE=${buildImage} --build-arg BASE_IMAGE=${baseImage}`);
 } catch (error) {
   console.error("Error reading or parsing the Dockerfile:", error);
   process.exit(1);
