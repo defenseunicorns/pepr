@@ -157,31 +157,34 @@ function extractDetails(content: string): {
 
 function extractSpecProperties(
   content: string,
-  interfaceName: string,
+  interfaceName: string
 ): Record<string, JSONSchemaProperty & { required: boolean }> {
   const regex = new RegExp(`export interface ${interfaceName}\\s*{([\\s\\S]*?)^}`, "m");
   const match = content.match(regex);
   if (!match) return {};
 
   const body = match[1];
-  const propRegex = /(?:\/\/\\s*(.*)\\n)?\\s*(\\w+)(\\??):\\s*(string|number|boolean|\\w+\\[\\]);/g;
+
+  // This regex handles: optional, arrays, comments
+  const propRegex = /^\s*(\/\/.*\n)?\s*(\w+)(\??):\s*([\w\[\]<> \{\}:|]+);/gm;
 
   const props: Record<string, JSONSchemaProperty & { required: boolean }> = {};
   let propMatch: RegExpExecArray | null;
 
   while ((propMatch = propRegex.exec(body)) !== null) {
-    const [, comment, name, optional, type] = propMatch;
-    const propType = normalizeType(type);
-    const isArray = type.endsWith("[]");
+    const [, commentBlock, name, optional, typeString] = propMatch;
+    const isArray = typeString.trim().endsWith("[]");
+    const baseType = normalizeType(typeString.trim().replace(/\[\]$/, ""));
+    const required = optional !== "?";
 
     const prop: JSONSchemaProperty & { required: boolean } = {
-      type: isArray ? "array" : propType,
-      ...(isArray ? { items: { type: propType } } : {}),
-      required: optional !== "?",
+      type: isArray ? "array" : baseType,
+      ...(isArray ? { items: { type: baseType } } : {}),
+      required,
     };
 
-    if (comment) {
-      prop.description = comment.trim();
+    if (commentBlock) {
+      prop.description = commentBlock.trim().replace(/^\/\/\s*/, "");
     }
 
     props[uncapitalize(name)] = prop;
