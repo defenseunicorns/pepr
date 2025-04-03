@@ -36,5 +36,32 @@ metadata:
 spec:
   size: [3,3]
   containerPort: 8080
+  config: 
+    retries: 3
+    enableTLS: true
 EOF
 ```
+
+
+Prompt:
+
+```
+I am making a feature to generate CRDs from a TypeScript interfaces. 
+This is the create
+
+<create>
+
+this file gets generated.
+
+this is the generate command
+<generate>
+
+The command should respect required fields, objects and arrays
+
+Size?: number[]; //optional array
+ContainerPort: number; //required
+Config?: { // Object with properties
+    retries?: number; 
+    enable: boolean; 
+  };
+}

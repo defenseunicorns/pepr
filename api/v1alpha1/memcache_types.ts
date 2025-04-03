@@ -13,6 +13,11 @@ export interface MemcacheSpec {
 
   // Port defines the port that will be used to init the container with the image
   ContainerPort: number;
+
+  Config?: {
+    enableTLS: boolean;
+    retries: number;
+  };
 }
 
 export interface MemcacheStatus {

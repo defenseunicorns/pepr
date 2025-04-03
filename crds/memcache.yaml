@@ -32,6 +32,13 @@ spec:
                   type: number
                   description: Port defines the port that will be used to init the container with
                     the image
+                config:
+                  type: object
+                  properties:
+                    enableTLS:
+                      type: boolean
+                    retries:
+                      type: number
               required:
                 - containerPort
             status:
