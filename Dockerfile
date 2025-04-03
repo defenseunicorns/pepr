@@ -39,7 +39,7 @@ RUN npm run build && \
 
 ##### DELIVER #####
 
-FROM "${BASE_IMAGE}"
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
