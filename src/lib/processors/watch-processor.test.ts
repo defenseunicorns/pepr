@@ -18,7 +18,6 @@ import { EventEmitter } from "stream";
 
 type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
-// Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
 jest.mock("../telemetry/logger", () => ({
@@ -85,17 +84,6 @@ describe("WatchProcessor", () => {
 
     // Set up all mock implementations after reset
     mockStart.mockImplementation(() => Promise.resolve());
-    mockEvents.mockImplementation(
-      (eventName: string | symbol, listener: (msg: Error | string) => void) => {
-        if (eventName === WatchEvent.GIVE_UP) {
-          listener(
-            new Error(
-              "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
-            ),
-          );
-        }
-      },
-    );
     mockWatch.mockImplementation(
       () =>
         ({
