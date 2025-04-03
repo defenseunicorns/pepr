@@ -62,11 +62,11 @@ export class PeprModule {
     const controllerHooks: ControllerHooks = {
       beforeHook: opts.beforeHook,
       afterHook: opts.afterHook,
-      onReady: (): void => {
+      onReady: async (): Promise<void> => {
         // Wait for the controller to be ready before setting up watches
         if (isWatchMode() || isDevMode()) {
           try {
-            setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
+            await setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
           } catch (e) {
             Log.error(e, "Error setting up watch");
             process.exit(1);
