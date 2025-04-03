@@ -13,10 +13,11 @@ try {
     process.exit(1);
   }
 
-  const buildImage = fromStatements[0].split(" ")[1]; 
-  const baseImage = fromStatements[1].split(" ")[1];  
+  const buildImage = fromStatements[0].split(" ")[1].trim(); 
+  const baseImage = fromStatements[1].split(" ")[1].trim();  
 
-  console.log(`--build-arg BUILD_IMAGE=${buildImage} --build-arg BASE_IMAGE=${baseImage}`);
+  // Quote only the values, not the key=value pairs
+  console.log(`--build-arg BUILD_IMAGE="${buildImage}" --build-arg BASE_IMAGE="${baseImage}"`);
 } catch (error) {
   console.error("Error reading or parsing the Dockerfile:", error);
   process.exit(1);
