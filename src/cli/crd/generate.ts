@@ -45,7 +45,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
     const details = extractDetails(content);
 
     const specProps = extractSpecProperties(content, `${kind}Spec`);
-    const requiredProps = Object.keys(specProps).filter(key => specProps[key].required);
+    const requiredProps = Object.keys(specProps).filter(key => specProps[key]._required);
     const plural =
       details.plural ?? `${kind.toLowerCase()}${kind.toLowerCase().endsWith("s") ? "es" : "s"}`;
     const scope = details.scope ?? "Namespaced";
@@ -53,8 +53,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { required: _required, ...typed } = value;
+      const { _required, ...typed } = value;
       typedSpecProps[key] = typed;
     }
 
@@ -112,8 +111,6 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
               },
             },
             subresources: {
-              // subresource status must be empty for CRD to be correct
-              // eslint-disable-next-line @typescript-eslint/no-empty-object-type
               status: {},
             },
           },
@@ -158,41 +155,120 @@ function extractDetails(content: string): {
 function extractSpecProperties(
   content: string,
   interfaceName: string,
-): Record<string, JSONSchemaProperty & { required: boolean }> {
+): Record<string, JSONSchemaPropertyWithMetadata> {
   const regex = new RegExp(`export interface ${interfaceName}\\s*{([\\s\\S]*?)^}`, "m");
   const match = content.match(regex);
   if (!match) return {};
 
-  const body = match[1];
+  const lines = match[1].split("\n");
+  const props: Record<string, JSONSchemaPropertyWithMetadata> = {};
 
-  // This regex handles: optional, arrays, comments
-  const propRegex = /^\s*(\/\/.*\n)?\s*(\w+)(\??):\s*([\w[\]<> {}:|]+);/gm;
+  let currentComment: string | undefined;
+  let currentPropLines: string[] = [];
+  let braceDepth = 0;
 
-  const props: Record<string, JSONSchemaProperty & { required: boolean }> = {};
-  let propMatch: RegExpExecArray | null;
+  for (let line of lines) {
+    const trimmed = line.trim();
 
-  while ((propMatch = propRegex.exec(body)) !== null) {
-    const [, commentBlock, name, optional, typeString] = propMatch;
-    const isArray = typeString.trim().endsWith("[]");
-    const baseType = normalizeType(typeString.trim().replace(/\[\]$/, ""));
-    const required = optional !== "?";
-
-    const prop: JSONSchemaProperty & { required: boolean } = {
-      type: isArray ? "array" : baseType,
-      ...(isArray ? { items: { type: baseType } } : {}),
-      required,
-    };
-
-    if (commentBlock) {
-      prop.description = commentBlock.trim().replace(/^\/\/\s*/, "");
+    if (trimmed.startsWith("//")) {
+      currentComment = trimmed.replace(/^\/\/\s?/, "");
+      continue;
     }
 
-    props[uncapitalize(name)] = prop;
+    if (braceDepth > 0 || trimmed.includes("{")) {
+      currentPropLines.push(line);
+      braceDepth += (line.match(/{/g) || []).length;
+      braceDepth -= (line.match(/}/g) || []).length;
+
+      if (braceDepth === 0) {
+        const full = currentPropLines.join(" ").replace(/\s+/g, " ");
+        const match = full.match(/(\w+)(\??):\s*{(.*)}/);
+        if (match) {
+          const [, name, optional, body] = match;
+          const { properties, required } = extractInlineObject(`{${body}}`);
+          const isRequired = optional !== "?";
+
+props[uncapitalize(name)] = {
+  type: "object",
+  properties,
+  ...(isRequired && required.length > 0 ? { required } : {}),
+  ...(currentComment ? { description: currentComment } : {}),
+  _required: isRequired,
+};
+        }
+        currentComment = undefined;
+        currentPropLines = [];
+      }
+      continue;
+    }
+
+    const match = trimmed.match(/^(\w+)(\??):\s*([\w\[\]]+);/);
+    if (match) {
+      const [, name, optional, tsType] = match;
+      const isOptional = optional === "?";
+      let schema: JSONSchemaProperty;
+
+      if (tsType.endsWith("[]")) {
+        const itemType = normalizeType(tsType.slice(0, -2));
+        schema = {
+          type: "array",
+          items: { type: itemType },
+        };
+      } else {
+        schema = {
+          type: normalizeType(tsType),
+        };
+      }
+
+      if (currentComment) {
+        schema.description = currentComment;
+        currentComment = undefined;
+      }
+
+      props[uncapitalize(name)] = {
+        ...schema,
+        _required: !isOptional,
+      };
+    }
   }
 
   return props;
 }
 
+function extractInlineObject(typeString: string): {
+  properties: Record<string, JSONSchemaProperty>;
+  required: string[];
+} {
+  const props: Record<string, JSONSchemaProperty> = {};
+  const required: string[] = [];
+
+  // Normalize and flatten
+  const inner = typeString
+    .trim()
+    .replace(/^{/, "")
+    .replace(/}$/, "")
+    .trim();
+
+  const entries = inner.split(/;\s*\n?/).map(s => s.trim()).filter(Boolean);
+
+  for (const entry of entries) {
+    const match = entry.match(/(\w+)(\??):\s*([\w\[\]]+)/);
+    if (!match) continue;
+
+    const [, key, optional, tsType] = match;
+    const jsonType = normalizeType(tsType.replace("[]", ""));
+
+    props[key] = tsType.endsWith("[]")
+      ? { type: "array", items: { type: jsonType } }
+      : { type: jsonType };
+
+    if (!optional) {
+      required.push(key);
+    }
+  }
+
+  return { properties: props, required };
+}
 function extractConditionTypeProperties(
   content: string,
   typeName: string,
@@ -224,16 +300,11 @@ function extractConditionTypeProperties(
 }
 
 function normalizeType(tsType: string): "string" | "number" | "boolean" {
-  if (tsType.endsWith("[]")) {
-    tsType = tsType.replace(/\[\]$/, "");
-  }
   switch (tsType) {
     case "string":
-      return "string";
     case "number":
-      return "number";
     case "boolean":
-      return "boolean";
+      return tsType;
     default:
       return "string";
   }
@@ -241,6 +312,21 @@ function normalizeType(tsType: string): "string" | "number" | "boolean" {
 
 function uncapitalize(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+interface JSONSchemaProperty {
+  type: "string" | "number" | "boolean" | "array" | "object";
+  description?: string;
+  format?: string;
+  items?: {
+    type: "string" | "number" | "boolean";
+  };
+  properties?: Record<string, JSONSchemaProperty>;
+  required?: string[];
+}
+
+interface JSONSchemaPropertyWithMetadata extends JSONSchemaProperty {
+  _required?: boolean;
 }
 
 interface CustomResourceDefinition {
@@ -292,20 +378,9 @@ interface CustomResourceDefinition {
         };
       };
       subresources: {
-        // subresource status must be empty for CRD to be correct
-        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         status: {};
       };
     }>;
-  };
-}
-
-interface JSONSchemaProperty {
-  type: "string" | "number" | "boolean" | "array";
-  description?: string;
-  format?: string;
-  items?: {
-    type: "string" | "number" | "boolean";
   };
 }
 
