@@ -25,6 +25,7 @@ operator-sdk generate crds reads the API Types from config/crd/bases
 ```bash
 npx ts-node src/cli.ts crd create --group cache --version v1alpha1 --kind Memcache
 
+k delete mc --all
 npx ts-node src/cli.ts crd generate
 kubectl apply -f crds
 kubectl apply -f -<<EOF

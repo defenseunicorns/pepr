@@ -53,7 +53,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
-      const { _required, ...typed } = value;
+      const { ...typed } = value;
       typedSpecProps[key] = typed;
     }
 
@@ -167,7 +167,7 @@ function extractSpecProperties(
   let currentPropLines: string[] = [];
   let braceDepth = 0;
 
-  for (let line of lines) {
+  for (const line of lines) {
     const trimmed = line.trim();
 
     if (trimmed.startsWith("//")) {
@@ -188,13 +188,13 @@ function extractSpecProperties(
           const { properties, required } = extractInlineObject(`{${body}}`);
           const isRequired = optional !== "?";
 
-props[uncapitalize(name)] = {
-  type: "object",
-  properties,
-  ...(isRequired && required.length > 0 ? { required } : {}),
-  ...(currentComment ? { description: currentComment } : {}),
-  _required: isRequired,
-};
+          props[uncapitalize(name)] = {
+            type: "object",
+            properties,
+            ...(isRequired && required.length > 0 ? { required } : {}),
+            ...(currentComment ? { description: currentComment } : {}),
+            _required: isRequired,
+          };
         }
         currentComment = undefined;
         currentPropLines = [];
@@ -202,7 +202,7 @@ props[uncapitalize(name)] = {
       continue;
     }
 
-    const match = trimmed.match(/^(\w+)(\??):\s*([\w\[\]]+);/);
+    const match = trimmed.match(/^(\w+)(\??):\s*([\w[\]]+);/);
     if (match) {
       const [, name, optional, tsType] = match;
       const isOptional = optional === "?";
@@ -243,16 +243,15 @@ function extractInlineObject(typeString: string): {
   const required: string[] = [];
 
   // Normalize and flatten
-  const inner = typeString
-    .trim()
-    .replace(/^{/, "")
-    .replace(/}$/, "")
-    .trim();
+  const inner = typeString.trim().replace(/^{/, "").replace(/}$/, "").trim();
 
-  const entries = inner.split(/;\s*\n?/).map(s => s.trim()).filter(Boolean);
+  const entries = inner
+    .split(/;\s*\n?/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
   for (const entry of entries) {
-    const match = entry.match(/(\w+)(\??):\s*([\w\[\]]+)/);
+    const match = entry.match(/(\w+)(\??):\s*([\w[\]]+)/);
     if (!match) continue;
 
     const [, key, optional, tsType] = match;
@@ -378,6 +377,8 @@ interface CustomResourceDefinition {
         };
       };
       subresources: {
+        // Not optional, subresource must be present and it is empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         status: {};
       };
     }>;
