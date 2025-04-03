@@ -16,7 +16,10 @@ try {
   const buildImage = fromStatements[0].split(" ")[1].trim(); 
   const baseImage = fromStatements[1].split(" ")[1].trim();  
 
-  console.log(`--build-arg BUILD_IMAGE=${buildImage} --build-arg BASE_IMAGE=${baseImage}`);
+  console.log("--build-arg");
+  console.log(`BUILD_IMAGE=${buildImage}`);
+  console.log("--build-arg");
+  console.log(`BASE_IMAGE=${baseImage}`);
 } catch (error) {
   console.error("Error reading or parsing the Dockerfile:", error);
   process.exit(1);
