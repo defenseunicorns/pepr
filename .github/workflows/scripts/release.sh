@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e 
 npm install -g npm
 
 npm run set:version
