@@ -12,7 +12,7 @@ Phase 0:
 
 Phase 1:
 - [x] Generate the class/type when `crd create` is run
-- [x] Generate the CRD when `crd generate` is run
+- [] Generate the CRD when `crd generate` is run
 
 Phase 2:
 - [ ] Shortname
