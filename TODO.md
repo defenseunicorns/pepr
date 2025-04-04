@@ -44,3 +44,5 @@ EOF
 ```
 
 
+        // Not optional, subresource must be present and it is empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
