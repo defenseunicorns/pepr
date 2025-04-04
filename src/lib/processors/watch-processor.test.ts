@@ -434,113 +434,113 @@ describe("Event Logging", () => {
 });
 
 describe("Watch Event Handling", () => {
-    let watcher: WatcherType<GenericClass>;
-    let logEvent: jest.Mock;
-    let metricsCollector: MetricsCollectorInstance;
+  let watcher: WatcherType<GenericClass>;
+  let logEvent: jest.Mock;
+  let metricsCollector: MetricsCollectorInstance;
 
-    beforeEach(() => {
-      const eventEmitter = new EventEmitter();
+  beforeEach(() => {
+    const eventEmitter = new EventEmitter();
 
-      watcher = {
-        events: eventEmitter,
-      } as unknown as WatcherType<GenericClass>;
+    watcher = {
+      events: eventEmitter,
+    } as unknown as WatcherType<GenericClass>;
 
-      jest.spyOn(eventEmitter, "on");
-      logEvent = jest.fn();
+    jest.spyOn(eventEmitter, "on");
+    logEvent = jest.fn();
 
-      metricsCollector = {
-        incCacheMiss: jest.fn(),
-        initCacheMissWindow: jest.fn(),
-        incRetryCount: jest.fn(),
-      } as unknown as MetricsCollectorInstance;
+    metricsCollector = {
+      incCacheMiss: jest.fn(),
+      initCacheMissWindow: jest.fn(),
+      incRetryCount: jest.fn(),
+    } as unknown as MetricsCollectorInstance;
 
-      registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  });
+
+  it("suppresses DATA events", () => {
+    watcher.events.emit(WatchEvent.DATA);
+    expect(logEvent).not.toHaveBeenCalled();
+  });
+
+  describe("when logging events", () => {
+    it.each([
+      ["connection", WatchEvent.CONNECT, "url", "url"],
+      ["data error", WatchEvent.DATA_ERROR, new Error("data_error"), "data_error"],
+      ["reconnection", WatchEvent.RECONNECT, 1, "Reconnecting after 1 attempt"],
+      ["pending reconnect", WatchEvent.RECONNECT_PENDING, undefined, undefined],
+      ["abort", WatchEvent.ABORT, new Error("abort"), "abort"],
+      [
+        "old resource version",
+        WatchEvent.OLD_RESOURCE_VERSION,
+        "old_resource_version",
+        "old_resource_version",
+      ],
+      ["network error", WatchEvent.NETWORK_ERROR, new Error("network_error"), "network_error"],
+      ["list error", WatchEvent.LIST_ERROR, new Error("list_error"), "list_error"],
+      [
+        "list operation",
+        WatchEvent.LIST,
+        { apiVersion: "v1", items: [] },
+        JSON.stringify({ apiVersion: "v1", items: [] }, undefined, 2),
+      ],
+    ])("records %s events", (_name, event, input, expected) => {
+      watcher.events.emit(event, input);
+      if (event === WatchEvent.RECONNECT_PENDING) {
+        expect(logEvent).toHaveBeenCalledWith(event);
+      } else {
+        expect(logEvent).toHaveBeenCalledWith(event, expected);
+      }
     });
 
-    it("suppresses DATA events", () => {
-      watcher.events.emit(WatchEvent.DATA);
-      expect(logEvent).not.toHaveBeenCalled();
-    });
-
-    describe("when logging events", () => {
-      it.each([
-        ["connection", WatchEvent.CONNECT, "url", "url"],
-        ["data error", WatchEvent.DATA_ERROR, new Error("data_error"), "data_error"],
-        ["reconnection", WatchEvent.RECONNECT, 1, "Reconnecting after 1 attempt"],
-        ["pending reconnect", WatchEvent.RECONNECT_PENDING, undefined, undefined],
-        ["abort", WatchEvent.ABORT, new Error("abort"), "abort"],
-        [
-          "old resource version",
-          WatchEvent.OLD_RESOURCE_VERSION,
-          "old_resource_version",
-          "old_resource_version",
-        ],
-        ["network error", WatchEvent.NETWORK_ERROR, new Error("network_error"), "network_error"],
-        ["list error", WatchEvent.LIST_ERROR, new Error("list_error"), "list_error"],
-        [
-          "list operation",
-          WatchEvent.LIST,
-          { apiVersion: "v1", items: [] },
-          JSON.stringify({ apiVersion: "v1", items: [] }, undefined, 2),
-        ],
-      ])("records %s events", (_name, event, input, expected) => {
-        watcher.events.emit(event, input);
-        if (event === WatchEvent.RECONNECT_PENDING) {
-          expect(logEvent).toHaveBeenCalledWith(event);
-        } else {
-          expect(logEvent).toHaveBeenCalledWith(event, expected);
-        }
-      });
-
-      it("handles GIVE_UP events with error escalation", () => {
-        const rootCause = new Error("Some error message");
-        try {
-          watcher.events.emit(WatchEvent.GIVE_UP, rootCause);
-          throw new Error("Expected GIVE_UP error was not thrown");
-        } catch (err) {
-          expect(err).toBeInstanceOf(Error);
-          expect(err.message).toBe(
-            "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
-          );
-          expect(err.cause).toStrictEqual(rootCause);
-        }
-
-        expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
-      });
-    });
-
-    describe("when collecting metrics", () => {
-      it.each([
-        ["cache miss", WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
-        [
-          "initial cache miss",
-          WatchEvent.INIT_CACHE_MISS,
-          "2025-02-05T04:14:39.535Z",
-          "initCacheMissWindow",
-        ],
-        ["resync failure", WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
-      ])("tracks %s", (_name, event, input, method) => {
-        watcher.events.emit(event, input);
-        expect(metricsCollector[method as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
-          input,
+    it("handles GIVE_UP events with error escalation", () => {
+      const rootCause = new Error("Some error message");
+      try {
+        watcher.events.emit(WatchEvent.GIVE_UP, rootCause);
+        throw new Error("Expected GIVE_UP error was not thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe(
+          "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
         );
-      });
-    });
-    describe("calls metric functions correctly", () => {
-      it.each([
-        [WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
-        [WatchEvent.INIT_CACHE_MISS, "2025-02-05T04:14:39.535Z", "initCacheMissWindow"],
-        [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
-      ])("calls metric function %s", (event, input, methodName) => {
-        watcher.events.emit(event, input);
-        expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
-          input,
-        );
-      });
-    });
-  
-    it("does not log event on DATA", () => {
-      watcher.events.emit(WatchEvent.DATA);
-      expect(logEvent).not.toHaveBeenCalled();
+        expect(err.cause).toStrictEqual(rootCause);
+      }
+
+      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
     });
   });
+
+  describe("when collecting metrics", () => {
+    it.each([
+      ["cache miss", WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
+      [
+        "initial cache miss",
+        WatchEvent.INIT_CACHE_MISS,
+        "2025-02-05T04:14:39.535Z",
+        "initCacheMissWindow",
+      ],
+      ["resync failure", WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
+    ])("tracks %s", (_name, event, input, method) => {
+      watcher.events.emit(event, input);
+      expect(metricsCollector[method as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
+    });
+  });
+  describe("calls metric functions correctly", () => {
+    it.each([
+      [WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
+      [WatchEvent.INIT_CACHE_MISS, "2025-02-05T04:14:39.535Z", "initCacheMissWindow"],
+      [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
+    ])("calls metric function %s", (event, input, methodName) => {
+      watcher.events.emit(event, input);
+      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
+    });
+  });
+
+  it("does not log event on DATA", () => {
+    watcher.events.emit(WatchEvent.DATA);
+    expect(logEvent).not.toHaveBeenCalled();
+  });
+});
