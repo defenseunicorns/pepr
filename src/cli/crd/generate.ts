@@ -53,8 +53,9 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
-      const { ...typed } = value;
-      typedSpecProps[key] = typed;
+      // remove _required property since it cannot exist in the final schema
+      delete value._required;
+      typedSpecProps[key] = value;
     }
 
     const crd: CustomResourceDefinition = {
