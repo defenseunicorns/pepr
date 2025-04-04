@@ -231,7 +231,7 @@ describe("WatchProcessor", () => {
     }
   });
 
-  it.skip("should setup watches with correct phases for different events", async () => {
+  it("should setup watches with correct phases for different events", async () => {
     const watchCallbackCreate = jest.fn();
     const watchCallbackUpdate = jest.fn();
     const watchCallbackDelete = jest.fn();
@@ -346,7 +346,7 @@ describe("WatchProcessor", () => {
     expect(mockIncRetryCount).toHaveBeenCalledWith(retryCount);
   });
 
-  it.skip("should call parseInt with process.env.PEPR_RELIST_INTERVAL_SECONDS", async () => {
+  it("should call parseInt with process.env.PEPR_RELIST_INTERVAL_SECONDS", async () => {
     const parseIntSpy = jest.spyOn(global, "parseInt");
 
     process.env.PEPR_RELIST_INTERVAL_SECONDS = "1800";
