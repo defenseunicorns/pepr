@@ -23,7 +23,7 @@ Phase 2:
 operator-sdk generate crds reads the API Types from config/crd/bases
 
 ```bash
-npx ts-node src/cli.ts crd create --group cache --version v1alpha1 --kind Memcache
+npx ts-node src/cli.ts crd create --group cache --version v1alpha1 --kind Memcache --shortName mc --plural memcaches --scope Namespaced
 
 k delete mc --all
 npx ts-node src/cli.ts crd generate
@@ -38,8 +38,8 @@ spec:
   size: [3,3]
   containerPort: 8080
   config: 
-    retries: 3
-    enableTLS: true
+    data: okay
+    asdf: [1,1,3,4]
 EOF
 ```
 
