@@ -190,4 +190,22 @@ describe("registerWatchEventHandlers", () => {
       expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
     });
   });
+
+  describe("calls metric functions correctly", () => {
+    it.each([
+      [WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
+      [WatchEvent.INIT_CACHE_MISS, "2025-02-05T04:14:39.535Z", "initCacheMissWindow"],
+      [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
+    ])("calls metric function %s", (event, input, methodName) => {
+      watcher.events.emit(event, input);
+      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
+    });
+  });
+
+  it("does not log event on DATA", () => {
+    watcher.events.emit(WatchEvent.DATA);
+    expect(logEvent).not.toHaveBeenCalled();
+  });
 });
