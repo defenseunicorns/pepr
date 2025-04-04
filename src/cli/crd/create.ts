@@ -14,7 +14,7 @@ const create = new Command("create")
   .requiredOption("--kind <kind>", "Kind name (e.g. Memcached)")
   .option("--domain <domain>", "Optional domain (e.g. pepr.dev)", "pepr.dev")
   .option(
-    "--scope <string>",
+    "--scope <Namespaced | Cluster>",
     "Whether the resulting custom resource is cluster- or namespace-scoped",
     validateScope,
     "Namespaced",

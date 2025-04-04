@@ -24,6 +24,26 @@ const generate = new Command("generate")
     }
   });
 
+function extractMetadata(kind: string, content: string): {
+  specProps: Record<string, JSONSchemaPropertyWithMetadata>
+  fqdn: string;
+  details: {
+    plural?: string;
+    scope?: "Cluster" | "Namespaced";
+    shortName?: string;
+  };
+} {
+  const group = extractComment(content, "Group") ?? "example";
+  const domain = extractComment(content, "Domain") ?? "pepr.dev";
+  const fqdn = `${group}.${domain}`;
+  const details = extractDetails(content);
+  const specProps = extractSpecProperties(content, `${kind}Spec`);
+  return {
+    specProps,
+    fqdn,
+    details,
+  };
+}
 async function processVersion(version: string, apiRoot: string, outputDir: string): Promise<void> {
   const versionDir = path.join(apiRoot, version);
   const files = fs.readdirSync(versionDir).filter(f => f.endsWith(".ts"));
@@ -39,6 +59,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
     }
 
     const kind = kindFromComment;
+    // const { fqdn, details, specProps } = extractMetadata(content);
     const group = extractComment(content, "Group") ?? "example";
     const domain = extractComment(content, "Domain") ?? "pepr.dev";
     const fqdn = `${group}.${domain}`;
@@ -269,31 +290,52 @@ function extractInlineObject(typeString: string): {
 
   return { properties: props, required };
 }
+
 function extractConditionTypeProperties(
   content: string,
   typeName: string,
 ): Record<string, JSONSchemaProperty> {
-  const regex = new RegExp(`type ${typeName}\\s*=\\s*{([\\s\\S]*?)^}`, "m");
+  const regex = new RegExp(`type\\s+${typeName}\\s*=\\s*{([\\s\\S]*?)}\\s*`, "m");
   const match = content.match(regex);
   if (!match) return {};
 
   const body = match[1];
-  const propRegex =
-    /(?:\/\*\*\\s*\\n(?:\\s*\*\\s*(.*?)\\n)+\\s*\*\/\\s*)?['"]?(\\w+)['"]?(\\??):\\s*(string|number|boolean|Date);/g;
+  const lines = body.split("\n");
 
   const props: Record<string, JSONSchemaProperty> = {};
-  let propMatch: RegExpExecArray | null;
+  let currentDescription: string[] = [];
 
-  while ((propMatch = propRegex.exec(body)) !== null) {
-    const [, docComment, name, , tsType] = propMatch;
-    const type = tsType === "Date" ? "string" : normalizeType(tsType);
-    const format = tsType === "Date" ? "date-time" : undefined;
+  for (let line of lines) {
+    line = line.trim();
 
-    props[name] = {
-      type,
-      ...(format ? { format } : {}),
-      ...(docComment ? { description: docComment.trim() } : {}),
-    };
+    // Capture multiline /** */ comments
+    if (line.startsWith("/**")) {
+      currentDescription = [];
+    }
+    if (line.startsWith("*")) {
+      currentDescription.push(line.replace(/^\*\s?/, ""));
+      continue;
+    }
+    if (line.endsWith("*/")) {
+      continue;
+    }
+
+    const match = line.match(/^(\w+)(\??):\s*(\w+);/);
+    if (match) {
+      const [, name, optional, tsType] = match;
+      const type = tsType === "Date" ? "string" : normalizeType(tsType);
+      const format = tsType === "Date" ? "date-time" : undefined;
+
+      props[name] = {
+        type,
+        ...(format ? { format } : {}),
+        ...(currentDescription.length > 0
+          ? { description: currentDescription.join(" ") }
+          : {}),
+      };
+
+      currentDescription = [];
+    }
   }
 
   return props;
