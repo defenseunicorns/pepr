@@ -27,21 +27,33 @@ const generate = new Command("generate")
 function extractMetadata(kind: string, content: string): {
   specProps: Record<string, JSONSchemaPropertyWithMetadata>
   fqdn: string;
-  details: {
-    plural?: string;
-    scope?: "Cluster" | "Namespaced";
-    shortName?: string;
-  };
+  requiredProps: string[];
+  shortNames?: string[];
+  plural: string;
+  scope: "Cluster" | "Namespaced";
+  // details: {
+  //   plural?: string;
+  //   scope?: "Cluster" | "Namespaced";
+  //   shortName?: string;
+  // };
 } {
   const group = extractComment(content, "Group") ?? "example";
   const domain = extractComment(content, "Domain") ?? "pepr.dev";
   const fqdn = `${group}.${domain}`;
   const details = extractDetails(content);
   const specProps = extractSpecProperties(content, `${kind}Spec`);
+  const requiredProps = Object.keys(specProps).filter(key => specProps[key]._required);
+  const plural =
+    details.plural ?? `${kind.toLowerCase()}${kind.toLowerCase().endsWith("s") ? "es" : "s"}`;
+  const scope = details.scope ?? "Namespaced";
+  const shortNames = details.shortName ? [details.shortName] : undefined;
   return {
+    requiredProps,
+    plural,
+    scope,
+    shortNames,
     specProps,
-    fqdn,
-    details,
+    fqdn
   };
 }
 async function processVersion(version: string, apiRoot: string, outputDir: string): Promise<void> {
@@ -59,18 +71,18 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
     }
 
     const kind = kindFromComment;
-    // const { fqdn, details, specProps } = extractMetadata(content);
-    const group = extractComment(content, "Group") ?? "example";
-    const domain = extractComment(content, "Domain") ?? "pepr.dev";
-    const fqdn = `${group}.${domain}`;
-    const details = extractDetails(content);
+    const { fqdn, specProps, requiredProps, plural, scope, shortNames } = extractMetadata(kind, content);
+    // const group = extractComment(content, "Group") ?? "example";
+    // const domain = extractComment(content, "Domain") ?? "pepr.dev";
+    // const fqdn = `${group}.${domain}`;
+    // const details = extractDetails(content);
 
-    const specProps = extractSpecProperties(content, `${kind}Spec`);
-    const requiredProps = Object.keys(specProps).filter(key => specProps[key]._required);
-    const plural =
-      details.plural ?? `${kind.toLowerCase()}${kind.toLowerCase().endsWith("s") ? "es" : "s"}`;
-    const scope = details.scope ?? "Namespaced";
-    const shortNames = details.shortName ? [details.shortName] : undefined;
+    // const specProps = extractSpecProperties(content, `${kind}Spec`);
+    // const requiredProps = Object.keys(specProps).filter(key => specProps[key]._required);
+    // const plural =
+    //   details.plural ?? `${kind.toLowerCase()}${kind.toLowerCase().endsWith("s") ? "es" : "s"}`;
+    // const scope = details.scope ?? "Namespaced";
+    // const shortNames = details.shortName ? [details.shortName] : undefined;
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
