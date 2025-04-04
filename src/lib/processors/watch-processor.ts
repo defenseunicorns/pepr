@@ -86,13 +86,11 @@ const eventToPhaseMap = {
  * @param capabilities The capabilities to load watches for
  */
 export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
-  capabilities.map(capability =>
-    capability.bindings
-      .filter(binding => binding.isWatch)
-      .forEach(bindingElement =>
-        runBinding(bindingElement, capability.namespaces, ignoredNamespaces),
-      ),
-  );
+  for (const capability of capabilities) {
+    for (const binding of capability.bindings.filter(b => b.isWatch)) {
+      runBinding(binding, capability.namespaces, ignoredNamespaces);
+    }
+  }
 }
 
 /**
@@ -101,7 +99,7 @@ export function setupWatch(capabilities: Capability[], ignoredNamespaces?: strin
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(
+export async function runBinding(
   binding: Binding,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
@@ -185,14 +183,20 @@ async function runBinding(
   );
 
   // Register event handlers
-  registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  try {
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  } catch (err) {
+    throw new Error(
+      "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      { cause: err },
+    );
+  }
 
   // Start the watch
   try {
     await watcher.start();
   } catch (err) {
-    Log.error(err, "Error starting watch");
-    process.exit(1);
+    throw new Error("WatchStart Error: Unable to start watch.", { cause: err });
   }
 }
 
@@ -235,7 +239,10 @@ export function registerWatchEventHandlers(
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       logEvent(WatchEvent.GIVE_UP, err.message);
-      process.exit(1);
+      throw new Error(
+        "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        { cause: err },
+      );
     },
     [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
     [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),
