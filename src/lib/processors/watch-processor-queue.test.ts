@@ -1,10 +1,7 @@
-import { describe, beforeEach, it, expect, afterAll, jest } from "@jest/globals";
-import EventEmitter from "events";
-import { KubernetesObject, GenericClass, WatchEvent } from "kubernetes-fluent-client";
-import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { describe, beforeEach, it, expect, afterAll } from "@jest/globals";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { V1ObjectMeta } from "@kubernetes/client-node";
-import { MetricsCollectorInstance } from "../telemetry/metrics";
-import { queueKey, getOrCreateQueue, registerWatchEventHandlers } from "./watch-processor";
+import { queueKey, getOrCreateQueue } from "./watch-processor";
 
 class LoggableKubernetesObject implements KubernetesObject {
   kind?: string;
