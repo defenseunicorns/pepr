@@ -2,12 +2,13 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import { K8sInit, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8sInit, WatcherType, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
-import { setupWatch, logEvent, runBinding } from "./watch-processor";
+import { setupWatch, logEvent, runBinding, registerWatchEventHandlers } from "./watch-processor";
 import Log from "../telemetry/logger";
-import { metricsCollector } from "../telemetry/metrics";
+import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
+import EventEmitter from "events";
 
 type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
@@ -425,5 +426,101 @@ describe("logEvent function", () => {
     expect(Log.debug).toHaveBeenCalledWith(
       `Watch event ${WatchEvent.DATA_ERROR} received. ${message}.`,
     );
+  });
+});
+
+describe("registerWatchEventHandlers", () => {
+  let watcher: WatcherType<GenericClass>;
+  let logEvent: jest.Mock;
+  let metricsCollector: MetricsCollectorInstance;
+
+  beforeEach(() => {
+    const eventEmitter = new EventEmitter();
+
+    watcher = {
+      events: eventEmitter,
+    } as unknown as WatcherType<GenericClass>;
+
+    jest.spyOn(eventEmitter, "on");
+    logEvent = jest.fn();
+
+    metricsCollector = {
+      incCacheMiss: jest.fn(),
+      initCacheMissWindow: jest.fn(),
+      incRetryCount: jest.fn(),
+    } as unknown as MetricsCollectorInstance;
+
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  });
+
+  describe("logs events correctly", () => {
+    it.each([
+      [WatchEvent.CONNECT, "url", WatchEvent.CONNECT, "url"],
+      [WatchEvent.DATA_ERROR, new Error("data_error"), WatchEvent.DATA_ERROR, "data_error"],
+      [WatchEvent.RECONNECT, 1, WatchEvent.RECONNECT, "Reconnecting after 1 attempt"],
+      [WatchEvent.RECONNECT_PENDING, undefined, WatchEvent.RECONNECT_PENDING, undefined],
+      [WatchEvent.ABORT, new Error("abort"), WatchEvent.ABORT, "abort"],
+      [
+        WatchEvent.OLD_RESOURCE_VERSION,
+        "old_resource_version",
+        WatchEvent.OLD_RESOURCE_VERSION,
+        "old_resource_version",
+      ],
+      [
+        WatchEvent.NETWORK_ERROR,
+        new Error("network_error"),
+        WatchEvent.NETWORK_ERROR,
+        "network_error",
+      ],
+      [WatchEvent.LIST_ERROR, new Error("network_error"), WatchEvent.LIST_ERROR, "network_error"],
+      [
+        WatchEvent.LIST,
+        { apiVersion: "v1", items: [] },
+        WatchEvent.LIST,
+        JSON.stringify({ apiVersion: "v1", items: [] }, undefined, 2),
+      ],
+    ])("logs event %s correctly", (event, input, expectedEvent, expectedMessage) => {
+      if (event === WatchEvent.RECONNECT_PENDING) {
+        watcher.events.emit(event);
+        expect(logEvent).toHaveBeenCalledWith(expectedEvent);
+      } else {
+        watcher.events.emit(event, input);
+        expect(logEvent).toHaveBeenCalledWith(expectedEvent, expectedMessage);
+      }
+    });
+
+    it("logs GIVE_UP event and throws error", () => {
+      const rootCause = new Error("Some error message");
+      try {
+        watcher.events.emit(WatchEvent.GIVE_UP, rootCause);
+        throw new Error("Expected GIVE_UP error was not thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe(
+          "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        );
+        expect(err.cause).toStrictEqual(rootCause);
+      }
+
+      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
+    });
+  });
+
+  describe("calls metric functions correctly", () => {
+    it.each([
+      [WatchEvent.CACHE_MISS, "2025-02-05T04:14:39.535Z", "incCacheMiss"],
+      [WatchEvent.INIT_CACHE_MISS, "2025-02-05T04:14:39.535Z", "initCacheMissWindow"],
+      [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
+    ])("calls metric function %s", (event, input, methodName) => {
+      watcher.events.emit(event, input);
+      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
+    });
+  });
+
+  it("does not log event on DATA", () => {
+    watcher.events.emit(WatchEvent.DATA);
+    expect(logEvent).not.toHaveBeenCalled();
   });
 });
