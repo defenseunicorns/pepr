@@ -11,14 +11,14 @@ import {
   queueKey,
   getOrCreateQueue,
   registerWatchEventHandlers,
+  runBinding,
 } from "./watch-processor";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
 import { EventEmitter } from "stream";
 
-type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
+type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
-// Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
 jest.mock("../telemetry/logger", () => ({
@@ -83,23 +83,17 @@ describe("WatchProcessor", () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
 
-    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-      return {
-        Apply: mockApply,
-        InNamespace: jest.fn().mockReturnThis(),
-        Watch: mockWatch,
-        Get: mockGet,
-      } as unknown as K8sInit<T, K>;
-    });
-
-    mockWatch.mockImplementation(() => {
-      return {
-        start: mockStart,
-        events: {
-          on: mockEvents,
-        },
-      } as unknown as Watcher<typeof kind.Pod>;
-    });
+    // Set up all mock implementations after reset
+    mockStart.mockImplementation(() => Promise.resolve());
+    mockWatch.mockImplementation(
+      () =>
+        ({
+          start: mockStart,
+          events: {
+            on: mockEvents,
+          },
+        }) as unknown as Watcher<typeof kind.Pod>,
+    );
 
     mockGet.mockImplementation(() => ({
       data: {
@@ -109,6 +103,16 @@ describe("WatchProcessor", () => {
     }));
 
     mockApply.mockImplementation(() => Promise.resolve());
+
+    // Set up K8s mock last since it depends on other mocks
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+      return {
+        Apply: mockApply,
+        InNamespace: jest.fn().mockReturnThis(),
+        Watch: mockWatch,
+        Get: mockGet,
+      } as unknown as K8sInit<T, K>;
+    });
   });
 
   it("should setup watches for all bindings with isWatch=true", async () => {
@@ -151,42 +155,80 @@ describe("WatchProcessor", () => {
   });
 
   it("should not setup watches if capabilities array is empty", async () => {
-    await setupWatch([]);
+    setupWatch([]);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
   it("should not setup watches if no bindings are present", async () => {
     const capabilities = [{ bindings: [] }, { bindings: [] }] as unknown as Capability[];
-    await setupWatch(capabilities);
+    setupWatch(capabilities);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
-  it("should exit if the watch fails to start", async () => {
-    const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
+  it("should throw a WatchStart error with cause if the watch fails to start", async () => {
+    const rootCause = new Error("err");
+    mockStart.mockRejectedValue(rootCause as never);
 
-    mockStart.mockRejectedValue(new Error("err") as never);
-
-    await setupWatch(capabilities);
-
-    expect(exitSpy).toHaveBeenCalledWith(1);
+    const capabilities = [
+      {
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: jest.fn(),
+          },
+        ],
+      },
+    ] as unknown as Capability[];
+    try {
+      await runBinding(capabilities[0].bindings[0], [], []);
+      throw new Error("Expected error was not thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe("WatchStart Error: Unable to start watch.");
+      expect(err.cause).toBe(rootCause);
+    }
   });
 
-  it("should watch for the give_up event", async () => {
-    const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
+  it("should throw a WatchEvent GiveUp error with cause if GIVE_UP event is triggered", async () => {
+    const rootCause = new Error(
+      "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+    );
 
-    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
-      if (eventName === WatchEvent.GIVE_UP) {
-        expect(listener).toBeInstanceOf(Function);
-        listener("err");
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      }
-    });
+    mockEvents.mockImplementation(
+      (eventName: string | symbol, listener: (msg: Error | string) => void) => {
+        if (eventName === WatchEvent.GIVE_UP) {
+          listener(rootCause);
+        }
+      },
+    );
 
-    setupWatch(capabilities);
+    mockStart.mockImplementation(() => Promise.resolve());
+    const capabilities = [
+      {
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: jest.fn(),
+          },
+        ],
+      },
+    ] as unknown as Capability[];
+    try {
+      await runBinding(capabilities[0].bindings[0], [], []);
+      throw new Error("Expected GIVE_UP error was not thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe(
+        "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      );
+      expect(err.cause).toStrictEqual(rootCause);
+    }
   });
 
   it("should setup watches with correct phases for different events", async () => {
@@ -277,7 +319,7 @@ describe("WatchProcessor", () => {
       },
     ] as unknown as Capability[];
 
-    setupWatch(capabilities);
+    await runBinding(capabilities[0].bindings[0], [], []);
 
     type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
 
@@ -550,13 +592,20 @@ describe("registerWatchEventHandlers", () => {
       }
     });
 
-    it("logs GIVE_UP event and exits process", () => {
-      const error = new Error("Giving up");
+    it("logs GIVE_UP event and throws error", () => {
+      const rootCause = new Error("Some error message");
+      try {
+        watcher.events.emit(WatchEvent.GIVE_UP, rootCause);
+        throw new Error("Expected GIVE_UP error was not thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe(
+          "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        );
+        expect(err.cause).toStrictEqual(rootCause);
+      }
 
-      watcher.events.emit(WatchEvent.GIVE_UP, error);
-
-      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Giving up");
-      expect(mockExit).toHaveBeenCalledWith(1);
+      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
     });
   });
 
