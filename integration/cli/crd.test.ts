@@ -44,22 +44,28 @@ describe("crd", () => {
         `--domain ${domain}`,
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr crd create ${argz}` });
-      // await pepr.tgzifyModule(testModule);
-      // await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
 
-    describe("creates TypeScript types", () => {
+    describe("npx pepr api create - creates TypeScript types", () => {
       it("creates a new CRD TypeScript definition at api/<group>/<kind>_types.ts", async () => {
-        // Check if the file exists
         try {
           await fs.access(filePath);
-          // File exists, so the test passes
           expect(true).toBe(true);
         } catch (err) {
-          // File does not exist, fail the test
           expect(err).toBeFalsy();
         }
       });
     });
+
+    // describe("npx pepr api generate - generates a CRD from TypeScript types", () => {
+    //   it("creates a new CRD TypeScript definition at api/<group>/<kind>_types.ts", async () => {
+    //     try {
+    //       await fs.access(filePath);
+    //       expect(true).toBe(true);
+    //     } catch (err) {
+    //       expect(err).toBeFalsy();
+    //     }
+    //   });
+    // });
   });
 });
