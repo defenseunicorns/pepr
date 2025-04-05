@@ -92,6 +92,5 @@ spec:
                       - message
                       - reason
                       - status
-                      - type
       subresources:
         status: {}

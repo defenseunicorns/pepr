@@ -31,11 +31,6 @@ function extractMetadata(kind: string, content: string): {
   shortNames?: string[];
   plural: string;
   scope: "Cluster" | "Namespaced";
-  // details: {
-  //   plural?: string;
-  //   scope?: "Cluster" | "Namespaced";
-  //   shortName?: string;
-  // };
 } {
   const group = extractComment(content, "Group") ?? "example";
   const domain = extractComment(content, "Domain") ?? "pepr.dev";
@@ -72,17 +67,6 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
 
     const kind = kindFromComment;
     const { fqdn, specProps, requiredProps, plural, scope, shortNames } = extractMetadata(kind, content);
-    // const group = extractComment(content, "Group") ?? "example";
-    // const domain = extractComment(content, "Domain") ?? "pepr.dev";
-    // const fqdn = `${group}.${domain}`;
-    // const details = extractDetails(content);
-
-    // const specProps = extractSpecProperties(content, `${kind}Spec`);
-    // const requiredProps = Object.keys(specProps).filter(key => specProps[key]._required);
-    // const plural =
-    //   details.plural ?? `${kind.toLowerCase()}${kind.toLowerCase().endsWith("s") ? "es" : "s"}`;
-    // const scope = details.scope ?? "Namespaced";
-    // const shortNames = details.shortName ? [details.shortName] : undefined;
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
@@ -136,7 +120,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
                             content,
                             `${kind}StatusCondition`,
                           ),
-                          required: ["lastTransitionTime", "message", "reason", "status", "type"],
+                          required: ["lastTransitionTime", "message", "reason", "status"],
                         },
                       },
                     },
@@ -399,7 +383,7 @@ interface JSONSchemaPropertyWithMetadata extends JSONSchemaProperty {
   _required?: boolean;
 }
 
-interface CustomResourceDefinition {
+export interface CustomResourceDefinition {
   apiVersion: "apiextensions.k8s.io/v1";
   kind: "CustomResourceDefinition";
   metadata: {
