@@ -25,6 +25,8 @@ describe("generateCRDScaffold", () => {
     expect(result).toContain(`plural: "${data.plural}"`);
     expect(result).toContain(`scope: "${data.scope}"`);
     expect(result).toContain(`shortName: "${data.shortName}"`);
+    expect(result).toContain(`${kind}StatusCondition`)
+    expect(result).toContain(`${kind}Status`)
   });
 });
 

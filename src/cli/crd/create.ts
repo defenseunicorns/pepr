@@ -51,7 +51,7 @@ export const generateCRDScaffold = (
 // Version: ${version}
 // Domain: ${data.domain}
 
-export interface MemcacheSpec {
+export interface ${kind}Spec {
   // INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
   // Important: Run "npx pepr crd generate" to regenerate code after modifying this file
 
@@ -68,8 +68,8 @@ export interface MemcacheSpec {
   };
 }
 
-export interface MemcacheStatus {
-  conditions: MemcacheStatusCondition[];
+export interface ${kind}Status {
+  conditions: ${kind}StatusCondition[];
 }
 
 export const details = {
@@ -78,7 +78,7 @@ export const details = {
   shortName: "${data.shortName}",
 };
 
-type MemcacheStatusCondition = {
+type ${kind}StatusCondition = {
   /**
    * lastTransitionTime is the last time the condition transitioned from one status to another. This is not guaranteed to be set in happensBefore order across different conditions for a given object. It may be unset in some circumstances.
    */
