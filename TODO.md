@@ -19,6 +19,14 @@ Phase 2:
 - [x] Namespaced
 - [x] Plural
 - [x] Description
+- [x] Status
+
+Phase 3:
+- [ ] regex101 links
+- [ ] Complexity
+- [ ] Unit Test
+- [ ] Integration Test
+- [ ] Documentation
 
 operator-sdk generate crds reads the API Types from config/crd/bases
 

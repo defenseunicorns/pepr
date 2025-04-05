@@ -35,12 +35,13 @@ spec:
                 config:
                   type: object
                   properties:
-                    data:
-                      type: string
-                    asdf:
+                    language:
                       type: array
                       items:
-                        type: number
+                        type: string
+                    timezone:
+                      type: number
+                  description: Application specific configuration
               required:
                 - containerPort
             status:

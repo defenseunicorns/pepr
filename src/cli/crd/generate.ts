@@ -303,6 +303,21 @@ function extractInlineObject(typeString: string): {
   return { properties: props, required };
 }
 
+function conditionTypePropertiesVariables(
+  match: RegExpMatchArray,
+): {
+  lines: string[];
+  props: Record<string, JSONSchemaProperty>,
+
+}{
+  const body = match[1];
+  const lines = body.split("\n");
+  const props: Record<string, JSONSchemaProperty> = {};
+
+  return {
+    lines, props
+  }
+}
 function extractConditionTypeProperties(
   content: string,
   typeName: string,
@@ -311,10 +326,11 @@ function extractConditionTypeProperties(
   const match = content.match(regex);
   if (!match) return {};
 
-  const body = match[1];
-  const lines = body.split("\n");
+  const { lines, props } = conditionTypePropertiesVariables(match);
+  // const body = match[1];
+  // const lines = body.split("\n");
 
-  const props: Record<string, JSONSchemaProperty> = {};
+  // const props: Record<string, JSONSchemaProperty> = {};
   let currentDescription: string[] = [];
 
   for (let line of lines) {
@@ -334,7 +350,7 @@ function extractConditionTypeProperties(
 
     const match = line.match(/^(\w+)(\??):\s*(\w+);/);
     if (match) {
-      const [, name, optional, tsType] = match;
+      const [, name, , tsType] = match;
       const type = tsType === "Date" ? "string" : normalizeType(tsType);
       const format = tsType === "Date" ? "date-time" : undefined;
 
