@@ -60,6 +60,12 @@ export interface MemcacheSpec {
 
   // Port defines the port that will be used to init the container with the image
   ContainerPort: number;
+
+  // Application specific configuration
+  Config?: {
+    language: string[];
+    timezone: number;
+  };
 }
 
 export interface MemcacheStatus {
