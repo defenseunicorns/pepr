@@ -36,23 +36,27 @@ spec:
                   type: object
                   properties:
                     language:
-                      type: string
-                    timezone:
-                      type: string
-                    zone:
-                      type: string
-                    state:
-                      type: string
-                    areaCode:
                       type: array
                       items:
                         type: string
+                    timezone:
+                      type: number
+                    zone:
+                      type: object
+                      properties:
+                        state:
+                          type: string
+                        areaCode:
+                          type: array
+                          items:
+                            type: string
+                      required:
+                        - state
+                        - areaCode
                   required:
                     - language
                     - timezone
                     - zone
-                    - state
-                    - areaCode
                   description: Application specific configuration
               required:
                 - containerPort
@@ -121,5 +125,6 @@ spec:
                       - message
                       - reason
                       - status
+                      - work
       subresources:
         status: {}

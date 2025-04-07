@@ -364,21 +364,28 @@ function extractConditionTypeProperties(
     // Inline nested object e.g. work: {
       const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
       if (objectStartMatch) {
-        const [, key, optional, rest] = objectStartMatch;
-        const isOptional = optional === "?";
+        const [, key, optionalToken] = objectStartMatch;
+        const isOptional = optionalToken === "?";
       
-        // Fast path: object defined inline in one line
-        if (rest?.trim().endsWith("}")) {
+        // Handle inline on one line: e.g., work: { name: string; }
+        const inlineBody = objectStartMatch[3];
+        if (inlineBody?.trim().endsWith("}")) {
+          const inlineObject = `{${inlineBody}`;
+          const { properties: inlineProps, required: inlineReq } = extractInlineObject(inlineObject);
           props[key] = {
             type: "object",
-            properties: {}, // optional: could parse rest to extract simple fields
+            properties: inlineProps,
+            ...(inlineReq.length > 0 ? { required: inlineReq } : {}),
+            ...(currentDescription.length > 0
+              ? { description: currentDescription.join(" ") }
+              : {}),
           };
           if (!isOptional) required.push(key);
           currentDescription = [];
           continue;
         }
       
-        // Multi-line object block
+        // Multi-line object
         let braceDepth = 1;
         const nestedLines: string[] = [];
         i++;
@@ -393,6 +400,7 @@ function extractConditionTypeProperties(
       
         const nestedBody = `{${nestedLines.join("\n")}}`;
         const nested = extractInlineObject(nestedBody);
+      
         props[key] = {
           type: "object",
           properties: nested.properties,
@@ -401,7 +409,11 @@ function extractConditionTypeProperties(
             ? { description: currentDescription.join(" ") }
             : {}),
         };
-        if (!isOptional) required.push(key);
+      
+        if (!isOptional) {
+          required.push(key); // ← this is what fixes your `work` case
+        }
+      
         currentDescription = [];
         continue;
       }
