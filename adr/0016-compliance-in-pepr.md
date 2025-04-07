@@ -35,11 +35,11 @@ After careful consideration, we created an external library, [`compliance-report
 
 ##### Pros
 
-- Gives Pepr the ability to generate compliance reports based on the status of compliance controls on demand through another library.
+- Gives Pepr the ability to generate compliance reports based on the status of compliance controls on-demand through another library.
 - Straightforward to implement and maintain.
 - Should not make a major impact in terms of resource utilization.
 - Report generation can be automated.
-- Enables type completions for mapping controls for type visibility.
+- Enables type-completions for mapping controls for type visibility.
 
 ##### Cons
 
