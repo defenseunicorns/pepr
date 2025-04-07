@@ -74,7 +74,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
       delete value._required;
       typedSpecProps[key] = value;
     }
-
+    const conditionSchema = extractConditionTypeProperties(content, `${kind}StatusCondition`);
     const crd: CustomResourceDefinition = {
       apiVersion: "apiextensions.k8s.io/v1",
       kind: "CustomResourceDefinition",
@@ -116,11 +116,8 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
                           type: "object",
                           description:
                             "Condition contains details for one aspect of the current state of this API Resource.",
-                          properties: extractConditionTypeProperties(
-                            content,
-                            `${kind}StatusCondition`,
-                          ),
-                          required: ["lastTransitionTime", "message", "reason", "status"],
+                            properties: conditionSchema.properties,
+                            required: conditionSchema.required,
                         },
                       },
                     },
@@ -341,13 +338,14 @@ function extractInlineObject(typeString: string): {
 function extractConditionTypeProperties(
   content: string,
   typeName: string,
-): Record<string, JSONSchemaProperty> {
+): { properties: Record<string, JSONSchemaProperty>; required: string[] } {
   const regex = new RegExp(`type\\s+${typeName}\\s*=\\s*{([\\s\\S]*?)}\\s*`, "m");
   const match = content.match(regex);
-  if (!match) return {};
+  if (!match) return { properties: {}, required: [] };
 
   const lines = match[1].split("\n").map(l => l.trim());
   const props: Record<string, JSONSchemaProperty> = {};
+  const required: string[] = [];
   let currentDescription: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -364,39 +362,55 @@ function extractConditionTypeProperties(
     }
 
     // Inline nested object e.g. work: {
-    const objectStartMatch = line.match(/^(\w+)(\??):\s*{$/);
-    if (objectStartMatch) {
-      const [, key] = objectStartMatch;
-      let braceDepth = 1;
-      const nestedLines = [];
-      i++;
-
-      while (i < lines.length && braceDepth > 0) {
-        const l = lines[i];
-        braceDepth += (l.match(/{/g) || []).length;
-        braceDepth -= (l.match(/}/g) || []).length;
-        nestedLines.push(l);
+      const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
+      if (objectStartMatch) {
+        const [, key, optional, rest] = objectStartMatch;
+        const isOptional = optional === "?";
+      
+        // Fast path: object defined inline in one line
+        if (rest?.trim().endsWith("}")) {
+          props[key] = {
+            type: "object",
+            properties: {}, // optional: could parse rest to extract simple fields
+          };
+          if (!isOptional) required.push(key);
+          currentDescription = [];
+          continue;
+        }
+      
+        // Multi-line object block
+        let braceDepth = 1;
+        const nestedLines: string[] = [];
         i++;
+      
+        while (i < lines.length && braceDepth > 0) {
+          const l = lines[i];
+          braceDepth += (l.match(/{/g) || []).length;
+          braceDepth -= (l.match(/}/g) || []).length;
+          nestedLines.push(l);
+          i++;
+        }
+      
+        const nestedBody = `{${nestedLines.join("\n")}}`;
+        const nested = extractInlineObject(nestedBody);
+        props[key] = {
+          type: "object",
+          properties: nested.properties,
+          ...(nested.required.length > 0 ? { required: nested.required } : {}),
+          ...(currentDescription.length > 0
+            ? { description: currentDescription.join(" ") }
+            : {}),
+        };
+        if (!isOptional) required.push(key);
+        currentDescription = [];
+        continue;
       }
-
-      const nestedBody = `{${nestedLines.join("\n")}}`;
-      const nested = extractInlineObject(nestedBody);
-      props[key] = {
-        type: "object",
-        properties: nested.properties,
-        ...(nested.required.length > 0 ? { required: nested.required } : {}),
-        ...(currentDescription.length > 0
-          ? { description: currentDescription.join(" ") }
-          : {}),
-      };
-      currentDescription = [];
-      continue;
-    }
 
     // Simple field
     const flatMatch = line.match(/^(\w+)(\??):\s*(\w+);/);
     if (flatMatch) {
-      const [, key, , tsType] = flatMatch;
+      const [, key, optional, tsType] = flatMatch;
+      const isOptional = optional === "?";
       const type = tsType === "Date" ? "string" : normalizeType(tsType);
       const format = tsType === "Date" ? "date-time" : undefined;
 
@@ -407,11 +421,16 @@ function extractConditionTypeProperties(
           ? { description: currentDescription.join(" ") }
           : {}),
       };
+
+      if (!isOptional) {
+        required.push(key);
+      }
+
       currentDescription = [];
     }
   }
 
-  return props;
+  return { properties: props, required };
 }
 
 function normalizeType(tsType: string): "string" | "number" | "boolean" {
