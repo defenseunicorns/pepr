@@ -45,11 +45,11 @@ status?: string;
           lastTransitionTime: {
             type: "string",
             format: "date-time",
-            description: "/** Timestamp of last change",
+            description: "Timestamp of last change",
           },
           reason: {
             type: "string",
-            description: "/** Reason for state",
+            description: "Reason for state",
           },
           status: {
             type: "string",
