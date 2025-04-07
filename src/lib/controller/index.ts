@@ -14,8 +14,8 @@ import { ModuleConfig } from "../types";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
-import { AdmissionRequest } from "../types";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
+import { AdmissionRequest } from "../common-types";
 
 export interface ControllerHooks {
   beforeHook?: (req: AdmissionRequest) => void;
@@ -84,7 +84,9 @@ export class Controller {
   /** Start the webhook server */
   startServer = (port: number): void => {
     if (this.#running) {
-      throw new Error("Cannot start Pepr module: Pepr module was not instantiated with deferStart=true");
+      throw new Error(
+        "Cannot start Pepr module: Pepr module was not instantiated with deferStart=true",
+      );
     }
 
     // Load SSL certificate and key
@@ -96,7 +98,8 @@ export class Controller {
     // Get the API path if not in watch mode
     if (!isWatchMode()) {
       // Get the API path from the environment variable or the mounted secret
-      this.#path = process.env.PEPR_API_PATH || fs.readFileSync("/app/api-path/value").toString().trim();
+      this.#path =
+        process.env.PEPR_API_PATH || fs.readFileSync("/app/api-path/value").toString().trim();
       Log.info(`Using API path: ${this.#path}`);
 
       if (!this.#path) {
@@ -223,7 +226,10 @@ export class Controller {
         };
 
         const reqMetadata = { uid: request.uid, namespace, name };
-        Log.info({ ...reqMetadata, gvk, operation: request.operation, admissionKind }, "Incoming request");
+        Log.info(
+          { ...reqMetadata, gvk, operation: request.operation, admissionKind },
+          "Incoming request",
+        );
         Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Run the before hook if it exists

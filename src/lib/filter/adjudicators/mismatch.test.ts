@@ -3,8 +3,13 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { AdmissionRequest, Binding, DeepPartial } from "../../types";
-import { defaultAdmissionRequest, defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
+import { Binding } from "../../types";
+import {
+  defaultAdmissionRequest,
+  defaultBinding,
+  defaultFilters,
+  defaultKubernetesObject,
+} from "./defaultTestObjects";
 import {
   mismatchedEvent,
   mismatchedGroup,
@@ -20,6 +25,8 @@ import {
   mismatchedNamespaceRegex,
 } from "./mismatch";
 import { Event, Operation } from "../../enums";
+import { DeepPartial } from "../../common-types";
+import { AdmissionRequest } from "../../common-types";
 
 describe("mismatchedName", () => {
   //[ Binding, KubernetesObject, result ]
@@ -48,7 +55,11 @@ describe("mismatchedDeletionTimestamp", () => {
     [{}, {}, false],
     [{}, { metadata: { deletionTimestamp: new Date() } }, false],
     [{ filters: { deletionTimestamp: true } }, {}, true],
-    [{ filters: { deletionTimestamp: true } }, { metadata: { deletionTimestamp: new Date() } }, false],
+    [
+      { filters: { deletionTimestamp: true } },
+      { metadata: { deletionTimestamp: new Date() } },
+      false,
+    ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
     const kubernetesObject = obj as DeepPartial<KubernetesObject>;
@@ -109,16 +120,52 @@ describe("mismatchedNamespaceRegex", () => {
   it.each([
     [{ filters: { regexNamespaces: [testRegex1] } }, {}, true],
 
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "namespace" } }, false],
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nemespace" } }, false],
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nimespace" } }, false],
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "nomespace" } }, false],
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "numespace" } }, false],
-    [{ filters: { regexNamespaces: [testRegex2] } }, { metadata: { namespace: "n3mespace" } }, true],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "namespace" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "nemespace" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "nimespace" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "nomespace" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "numespace" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex2] } },
+      { metadata: { namespace: "n3mespace" } },
+      true,
+    ],
 
-    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "name" } }, false],
-    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "space" } }, false],
-    [{ filters: { regexNamespaces: [testRegex3, testRegex4] } }, { metadata: { namespace: "namespace" } }, true],
+    [
+      { filters: { regexNamespaces: [testRegex3, testRegex4] } },
+      { metadata: { namespace: "name" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex3, testRegex4] } },
+      { metadata: { namespace: "space" } },
+      false,
+    ],
+    [
+      { filters: { regexNamespaces: [testRegex3, testRegex4] } },
+      { metadata: { namespace: "namespace" } },
+      true,
+    ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding: Binding = {
       ...defaultBinding,
@@ -142,18 +189,54 @@ describe("mismatchedAnnotations", () => {
     [{}, { metadata: { annotations: { anno: "tate" } } }, false],
 
     [{ filters: { annotations: { anno: "" } } }, {}, true],
-    [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "" } } }, false],
-    [{ filters: { annotations: { anno: "" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
+    [
+      { filters: { annotations: { anno: "" } } },
+      { metadata: { annotations: { anno: "" } } },
+      false,
+    ],
+    [
+      { filters: { annotations: { anno: "" } } },
+      { metadata: { annotations: { anno: "tate" } } },
+      false,
+    ],
 
     [{ filters: { annotations: { anno: "tate" } } }, {}, true],
-    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "" } } }, true],
-    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tate" } } }, false],
-    [{ filters: { annotations: { anno: "tate" } } }, { metadata: { annotations: { anno: "tato" } } }, true],
+    [
+      { filters: { annotations: { anno: "tate" } } },
+      { metadata: { annotations: { anno: "" } } },
+      true,
+    ],
+    [
+      { filters: { annotations: { anno: "tate" } } },
+      { metadata: { annotations: { anno: "tate" } } },
+      false,
+    ],
+    [
+      { filters: { annotations: { anno: "tate" } } },
+      { metadata: { annotations: { anno: "tato" } } },
+      true,
+    ],
 
-    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "" } } }, true],
-    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no" } } }, true],
-    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "" } } }, true],
-    [{ filters: { annotations: { an: "no", ta: "te" } } }, { metadata: { annotations: { an: "no", ta: "to" } } }, true],
+    [
+      { filters: { annotations: { an: "no", ta: "te" } } },
+      { metadata: { annotations: { an: "" } } },
+      true,
+    ],
+    [
+      { filters: { annotations: { an: "no", ta: "te" } } },
+      { metadata: { annotations: { an: "no" } } },
+      true,
+    ],
+    [
+      { filters: { annotations: { an: "no", ta: "te" } } },
+      { metadata: { annotations: { an: "no", ta: "" } } },
+      true,
+    ],
+    [
+      { filters: { annotations: { an: "no", ta: "te" } } },
+      { metadata: { annotations: { an: "no", ta: "to" } } },
+      true,
+    ],
     [
       { filters: { annotations: { an: "no", ta: "te" } } },
       { metadata: { annotations: { an: "no", ta: "te" } } },
@@ -185,8 +268,16 @@ describe("mismatchedLabels", () => {
 
     [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "" } } }, true],
     [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a" } } }, true],
-    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "" } } }, true],
-    [{ filters: { labels: { l: "a", b: "le" } } }, { metadata: { labels: { l: "a", b: "le" } } }, false],
+    [
+      { filters: { labels: { l: "a", b: "le" } } },
+      { metadata: { labels: { l: "a", b: "" } } },
+      true,
+    ],
+    [
+      { filters: { labels: { l: "a", b: "le" } } },
+      { metadata: { labels: { l: "a", b: "le" } } },
+      false,
+    ],
   ])("given binding %j and object %j, returns %s", (bnd, obj, expected) => {
     const binding = bnd as DeepPartial<Binding>;
     const kubernetesObject = obj as DeepPartial<KubernetesObject>;

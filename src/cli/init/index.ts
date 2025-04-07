@@ -9,10 +9,11 @@ import { RootCmd } from "../root";
 import {
   codeSettings,
   eslint,
-  genPeprTS,
+  peprTSTemplate,
   genPkgJSON,
   gitignore,
   helloPepr,
+  peprPackageJSON,
   prettier,
   readme,
   samplesYaml,
@@ -22,7 +23,7 @@ import {
 import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
-import { OnError } from "./enums";
+import { UUID_LENGTH_LIMIT } from "./enums";
 
 export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
@@ -34,12 +35,28 @@ export default function (program: RootCmd): void {
     .option("--description <string>", "Explain the purpose of the new module.")
     .option("--name <string>", "Set the name of the new module.")
     .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.", OnError.REJECT)
+    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
+    .option(
+      "--uuid [string]",
+      "Unique identifier for your module with a max length of 36 characters.",
+      (uuid: string): string => {
+        if (uuid.length > UUID_LENGTH_LIMIT) {
+          throw new Error("The UUID must be 36 characters or fewer.");
+        }
+        return uuid.toLocaleLowerCase();
+      },
+    )
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
-        prompts.inject(["pepr-test-module", "A test module for Pepr", "ignore", "y"]);
+        prompts.inject([
+          "pepr-test-module",
+          "A test module for Pepr",
+          "ignore",
+          "static-test",
+          "y",
+        ]);
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
         response = await walkthrough();
       } else {
@@ -50,29 +67,15 @@ export default function (program: RootCmd): void {
     .action(async opts => {
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
-      const peprTS = genPeprTS();
 
-      const confirmed = await confirm(dirName, packageJSON, peprTS.path, opts.confirm);
+      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.confirm);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");
 
         try {
-          await createDir(dirName);
-          await createDir(resolve(dirName, ".vscode"));
-          await createDir(resolve(dirName, "capabilities"));
-
-          await write(resolve(dirName, gitignore.path), gitignore.data);
-          await write(resolve(dirName, eslint.path), eslint.data);
-          await write(resolve(dirName, prettier.path), prettier.data);
-          await write(resolve(dirName, packageJSON.path), packageJSON.data);
-          await write(resolve(dirName, readme.path), readme.data);
-          await write(resolve(dirName, tsConfig.path), tsConfig.data);
-          await write(resolve(dirName, peprTS.path), peprTS.data);
-          await write(resolve(dirName, ".vscode", snippet.path), snippet.data);
-          await write(resolve(dirName, ".vscode", codeSettings.path), codeSettings.data);
-          await write(resolve(dirName, "capabilities", samplesYaml.path), samplesYaml.data);
-          await write(resolve(dirName, "capabilities", helloPepr.path), helloPepr.data);
+          await setupProjectStructure(dirName);
+          await createProjectFiles(dirName, packageJSON);
 
           if (!opts.skipPostInit) {
             doPostInitActions(dirName);
@@ -88,6 +91,39 @@ export default function (program: RootCmd): void {
         }
       }
     });
+}
+
+async function setupProjectStructure(dirName: string): Promise<void> {
+  await createDir(dirName);
+  await createDir(resolve(dirName, ".vscode"));
+  await createDir(resolve(dirName, "capabilities"));
+}
+
+async function createProjectFiles(dirName: string, packageJSON: peprPackageJSON): Promise<void> {
+  const files = [
+    { path: gitignore.path, data: gitignore.data },
+    { path: eslint.path, data: eslint.data },
+    { path: prettier.path, data: prettier.data },
+    { path: packageJSON.path, data: packageJSON.data },
+    { path: readme.path, data: readme.data },
+    { path: tsConfig.path, data: tsConfig.data },
+    { path: peprTSTemplate.path, data: peprTSTemplate.data },
+  ];
+
+  const nestedFiles = [
+    { dir: ".vscode", path: snippet.path, data: snippet.data },
+    { dir: ".vscode", path: codeSettings.path, data: codeSettings.data },
+    { dir: "capabilities", path: samplesYaml.path, data: samplesYaml.data },
+    { dir: "capabilities", path: helloPepr.path, data: helloPepr.data },
+  ];
+
+  for (const file of files) {
+    await write(resolve(dirName, file.path), file.data);
+  }
+
+  for (const file of nestedFiles) {
+    await write(resolve(dirName, file.dir, file.path), file.data);
+  }
 }
 
 const doPostInitActions = (dirName: string): void => {

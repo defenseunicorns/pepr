@@ -14,9 +14,10 @@ import {
 } from "./postCollection";
 import { operationMatchesEvent } from "./mismatch";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial } from "../../types";
+import { Binding } from "../../types";
 import { Event, Operation } from "../../enums";
 import { defaultBinding, defaultFilters } from "./defaultTestObjects";
+import { DeepPartial } from "../../common-types";
 
 describe("bindsToKind", () => {
   //[ Binding, Kind, result ]
@@ -60,7 +61,11 @@ describe("missingCarriableNamespace", () => {
     [["name", "space"], { metadata: { namespace: "incorrect" } }, false],
     [["name", "space"], { metadata: { namespace: "name" } }, false],
     [["name", "space"], { metadata: { namespace: "space" } }, false],
-    [["ingress-controller"], { kind: "Namespace", metadata: { name: "ingress-controller" } }, false],
+    [
+      ["ingress-controller"],
+      { kind: "Namespace", metadata: { name: "ingress-controller" } },
+      false,
+    ],
     [["ingress-controller"], { kind: "Namespace", metadata: { name: "egress-controller" } }, true],
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
     const object = obj as DeepPartial<KubernetesObject>;

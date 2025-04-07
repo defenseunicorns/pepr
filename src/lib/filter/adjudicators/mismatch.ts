@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { AdmissionRequest, Binding } from "../../types";
+import { Binding } from "../../types";
 import { allPass, any, anyPass, equals, not, nthArg, pipe } from "ramda";
 import {
   definedAnnotations,
@@ -32,8 +32,14 @@ import {
   carriedNamespace,
   missingDeletionTimestamp,
 } from "./kubernetesObject";
-import { declaredOperation, declaredGroup, declaredVersion, declaredKind } from "./admissionRequest";
+import {
+  declaredOperation,
+  declaredGroup,
+  declaredVersion,
+  declaredKind,
+} from "./admissionRequest";
 import { Event, Operation } from "../../enums";
+import { AdmissionRequest } from "../../common-types";
 
 export const mismatchedDeletionTimestamp = allPass([
   pipe(nthArg(0), definesDeletionTimestamp),
@@ -47,12 +53,20 @@ export const mismatchedName = allPass([
 
 export const mismatchedNameRegex = allPass([
   pipe(nthArg(0), definesNameRegex),
-  pipe((binding, kubernetesObject) => new RegExp(definedNameRegex(binding)).test(carriedName(kubernetesObject)), not),
+  pipe(
+    (binding, kubernetesObject) =>
+      new RegExp(definedNameRegex(binding)).test(carriedName(kubernetesObject)),
+    not,
+  ),
 ]);
 
 export const mismatchedNamespace = allPass([
   pipe(nthArg(0), definesNamespaces),
-  pipe((binding, kubernetesObject) => definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)), not),
+  pipe(
+    (binding, kubernetesObject) =>
+      definedNamespaces(binding).includes(carriedNamespace(kubernetesObject)),
+    not,
+  ),
 ]);
 
 export const mismatchedNamespaceRegex = allPass([
@@ -79,10 +93,10 @@ export const metasMismatch = pipe(
         // prettier-ignore
         return (
           keyMissing ? { [key]: value } :
-          noValue ? {} :
-          valMissing ? { [key]: value } :
-          valDiffers ? { [key]: value } :
-          {}
+            noValue ? {} :
+              valMissing ? { [key]: value } :
+                valDiffers ? { [key]: value } :
+                  {}
         )
       })
       .reduce((acc, cur) => ({ ...acc, ...cur }), {});
@@ -94,12 +108,16 @@ export const metasMismatch = pipe(
 
 export const mismatchedAnnotations = allPass([
   pipe(nthArg(0), definesAnnotations),
-  pipe((binding, kubernetesObject) => metasMismatch(definedAnnotations(binding), carriedAnnotations(kubernetesObject))),
+  pipe((binding, kubernetesObject) =>
+    metasMismatch(definedAnnotations(binding), carriedAnnotations(kubernetesObject)),
+  ),
 ]);
 
 export const mismatchedLabels = allPass([
   pipe(nthArg(0), definesLabels),
-  pipe((binding, kubernetesObject) => metasMismatch(definedLabels(binding), carriedLabels(kubernetesObject))),
+  pipe((binding, kubernetesObject) =>
+    metasMismatch(definedLabels(binding), carriedLabels(kubernetesObject)),
+  ),
 ]);
 
 export const mismatchedEvent = pipe(
@@ -125,5 +143,7 @@ export const mismatchedKind = allPass([
 export const operationMatchesEvent = anyPass([
   pipe(nthArg(1), equals(Event.ANY)),
   pipe((operation: Operation, event: Event): boolean => operation.valueOf() === event.valueOf()),
-  pipe((operation: Operation, event: Event): boolean => (operation ? event.includes(operation) : false)),
+  pipe((operation: Operation, event: Event): boolean =>
+    operation ? event.includes(operation) : false,
+  ),
 ]);

@@ -6,7 +6,7 @@ import { Controller, ControllerHooks } from "../controller";
 import { ValidateError } from "../errors";
 import { CapabilityExport } from "../types";
 import { setupWatch } from "../processors/watch-processor";
-import { Log } from "../../lib";
+import Log from "../../lib/telemetry/logger";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { isBuildMode, isDevMode, isWatchMode } from "./envChecks";
 import { PackageJSON, PeprModuleOptions, ModuleConfig } from "../types";
@@ -21,7 +21,11 @@ export class PeprModule {
    * @param capabilities The capabilities to be loaded into the Pepr runtime
    * @param opts Options for the Pepr runtime
    */
-  constructor({ description, pepr }: PackageJSON, capabilities: Capability[] = [], opts: PeprModuleOptions = {}) {
+  constructor(
+    { description, pepr }: PackageJSON,
+    capabilities: Capability[] = [],
+    opts: PeprModuleOptions = {},
+  ) {
     const config: ModuleConfig = clone(pepr);
     config.description = description;
 
@@ -58,7 +62,7 @@ export class PeprModule {
     const controllerHooks: ControllerHooks = {
       beforeHook: opts.beforeHook,
       afterHook: opts.afterHook,
-      onReady: (): void => {
+      onReady: async (): Promise<void> => {
         // Wait for the controller to be ready before setting up watches
         if (isWatchMode() || isDevMode()) {
           try {

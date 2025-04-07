@@ -12,6 +12,7 @@ Thank you for your interest in contributing to Pepr! We welcome all contribution
   - [Submitting a Pull Request](#submitting-a-pull-request)
     - [PR Requirements](#pr-requirements)
   - [Coding Guidelines](#coding-guidelines)
+    - [Git Hooks](#git-hooks)
   - [Running Tests](#running-tests)
     - [Run Tests Locally](#run-tests-locally)
     - [Test a Local Development Version](#test-a-local-development-version)
@@ -49,12 +50,15 @@ Please follow our [Code of Conduct](../../CODE_OF_CONDUCT.md) to maintain a resp
 - All commits must be signed.
 - PRs should have a related issue, except for trivial fixes.
 
+We take PR reviews seriously and strive to provide a great contributor experience with timely feedback. To help maintain this, we ask external contributors to limit themselves to no more than two open PRs at a time. Having too many open PRs can slow down the review process and impact the quality of feedback
+
 ## Coding Guidelines
 
 Please follow the coding conventions and style used in the project. Use ESLint and Prettier for linting and formatting:
 
 - Check formatting: `npm run format:check`
 - Fix formatting: `npm run format:fix`
+- If regex is used, provide a link to regex101.com with an explanation of the regex pattern.
 
 ### Git Hooks
 

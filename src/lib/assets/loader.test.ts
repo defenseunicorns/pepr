@@ -30,8 +30,18 @@ describe("loadCapabilities", () => {
 
   it("should resolve the capabilities array when the forked process sends message", async () => {
     const mockCapabilities: CapabilityExport[] = [
-      { name: "TestCapability1", description: "Test Description 1", bindings: [], hasSchedule: false },
-      { name: "TestCapability2", description: "Test Description 2", bindings: [], hasSchedule: false },
+      {
+        name: "TestCapability1",
+        description: "Test Description 1",
+        bindings: [],
+        hasSchedule: false,
+      },
+      {
+        name: "TestCapability2",
+        description: "Test Description 2",
+        bindings: [],
+        hasSchedule: false,
+      },
     ];
 
     setTimeout(() => {
@@ -55,9 +65,9 @@ describe("loadCapabilities", () => {
     const mockError = new Error("Process failed");
 
     setTimeout(() => {
-      mockProcess.on.mock.calls.find((call: [string, [(error: Error) => void]]) => call[0] === "error")?.[1]?.(
-        mockError,
-      );
+      mockProcess.on.mock.calls.find(
+        (call: [string, [(error: Error) => void]]) => call[0] === "error",
+      )?.[1]?.(mockError);
     }, 10);
 
     await expect(loadCapabilities("/fake/path")).rejects.toThrow("Process failed");

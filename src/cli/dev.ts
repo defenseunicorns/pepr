@@ -75,7 +75,7 @@ export default function (program: RootCmd): void {
           program = fork(path, {
             env: {
               ...process.env,
-              LOG_LEVEL: "debug",
+              LOG_LEVEL: process.env.LOG_LEVEL ?? "debug",
               PEPR_MODE: "dev",
               PEPR_API_PATH: webhook.apiPath,
               PEPR_PRETTY_LOGS: "true",

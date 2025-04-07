@@ -3,7 +3,7 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Binding, DeepPartial, ValidateActionResponse } from "../../types";
+import { Binding } from "../../types";
 import { Event } from "../../enums";
 import { defaultBinding, defaultFilters, defaultKubernetesObject } from "./defaultTestObjects";
 import {
@@ -45,6 +45,8 @@ import {
   carriedLabels,
   carriesLabels,
 } from "./kubernetesObject";
+import { DeepPartial } from "../../common-types";
+import { ValidateActionResponse } from "../../common-types";
 
 describe("definesDeletionTimestamp", () => {
   //[ Binding, result ]
@@ -88,19 +90,22 @@ describe("ignoresDeletionTimestamp", () => {
 
 describe("definedName", () => {
   //[ Binding, result ]
-  it.each([[{ filters: { name: "name" } }, "name"]])("given %j, returns '%s'", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: {
-        ...defaultFilters,
-        name: given.filters.name,
-      },
-    };
+  it.each([[{ filters: { name: "name" } }, "name"]])(
+    "given %j, returns '%s'",
+    (given, expected) => {
+      const binding: Binding = {
+        ...defaultBinding,
+        filters: {
+          ...defaultFilters,
+          name: given.filters.name,
+        },
+      };
 
-    const result = definedName(binding);
+      const result = definedName(binding);
 
-    expect(result).toBe(expected);
-  });
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("definesName", () => {
@@ -139,50 +144,59 @@ describe("ignoresName", () => {
 
 describe("definedNameRegex", () => {
   //[ Binding, result ]
-  it.each([[{ filters: { regexName: "n.me" } }, "n.me"]])("given %j, returns '%s'", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: {
-        ...defaultFilters,
-        regexName: given.filters.regexName,
-      },
-    };
+  it.each([[{ filters: { regexName: "n.me" } }, "n.me"]])(
+    "given %j, returns '%s'",
+    (given, expected) => {
+      const binding: Binding = {
+        ...defaultBinding,
+        filters: {
+          ...defaultFilters,
+          regexName: given.filters.regexName,
+        },
+      };
 
-    const result = definedNameRegex(binding);
+      const result = definedNameRegex(binding);
 
-    expect(result).toBe(expected);
-  });
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("definesNameRegex", () => {
   //[ Binding, result ]
-  it.each([[{ filters: { regexName: "n.me" } }, true]])("given %j, returns %s", (given, expected) => {
-    const binding: Binding = {
-      ...defaultBinding,
-      filters: {
-        ...defaultFilters,
-        regexName: given.filters.regexName,
-      },
-    };
+  it.each([[{ filters: { regexName: "n.me" } }, true]])(
+    "given %j, returns %s",
+    (given, expected) => {
+      const binding: Binding = {
+        ...defaultBinding,
+        filters: {
+          ...defaultFilters,
+          regexName: given.filters.regexName,
+        },
+      };
 
-    const result = definesNameRegex(binding);
+      const result = definesNameRegex(binding);
 
-    expect(result).toBe(expected);
-  });
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("carriedName", () => {
   //[ KubernetesObject, result ]
-  it.each([[{ metadata: { name: "name" } }, "name"]])("given %j, returns '%s'", (given, expected) => {
-    const kubernetesObject = {
-      ...defaultKubernetesObject,
-      metadata: { name: given.metadata.name },
-    };
+  it.each([[{ metadata: { name: "name" } }, "name"]])(
+    "given %j, returns '%s'",
+    (given, expected) => {
+      const kubernetesObject = {
+        ...defaultKubernetesObject,
+        metadata: { name: given.metadata.name },
+      };
 
-    const result = carriedName(kubernetesObject);
+      const result = carriedName(kubernetesObject);
 
-    expect(result).toBe(expected);
-  });
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("carriesName", () => {
@@ -260,7 +274,10 @@ describe("definedNamespaceRegexes", () => {
   it.each([
     [{ filters: { regexNamespaces: [] } }, []],
     [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, ["n.mesp.ce"]],
-    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, ["n.me", "sp.ce"]],
+    [
+      { filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } },
+      ["n.me", "sp.ce"],
+    ],
   ])("given %j, returns %j", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
@@ -281,7 +298,10 @@ describe("definesNamespaceRegexes", () => {
   it.each([
     [{ filters: { regexNamespaces: [] } }, false],
     [{ filters: { regexNamespaces: [new RegExp("n.mesp.ce").source] } }, true],
-    [{ filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } }, true],
+    [
+      { filters: { regexNamespaces: [new RegExp("n.me").source, new RegExp("sp.ce").source] } },
+      true,
+    ],
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
@@ -665,22 +685,50 @@ describe("definedCallback", () => {
     [{ isFinalize: true, isValidate: true, finalizeCallback, validateCallback }, finalizeCallback], // Finalize > Validate
     [{ isFinalize: true, isWatch: true, finalizeCallback, watchCallback }, finalizeCallback], // Finalize > Watch
     [
-      { isFinalize: true, isMutate: true, isWatch: true, finalizeCallback, mutateCallback, watchCallback },
+      {
+        isFinalize: true,
+        isMutate: true,
+        isWatch: true,
+        finalizeCallback,
+        mutateCallback,
+        watchCallback,
+      },
       finalizeCallback,
     ], // Finalize > Mutate > Watch
     [{ isValidate: true, isMutate: true, validateCallback, mutateCallback }, mutateCallback], // Mutate > Validate
     [{ isWatch: true, isMutate: true, watchCallback, mutateCallback }, watchCallback], // Watch > Mutate
     [{ isMutate: true, isFinalize: true, mutateCallback, finalizeCallback }, finalizeCallback], // Finalize > Mutate
     [
-      { isMutate: true, isWatch: true, isFinalize: true, mutateCallback, watchCallback, finalizeCallback },
+      {
+        isMutate: true,
+        isWatch: true,
+        isFinalize: true,
+        mutateCallback,
+        watchCallback,
+        finalizeCallback,
+      },
       finalizeCallback,
     ], // Finalize > Watch > Mutate
     [
-      { isValidate: true, isMutate: true, isFinalize: true, validateCallback, mutateCallback, finalizeCallback },
+      {
+        isValidate: true,
+        isMutate: true,
+        isFinalize: true,
+        validateCallback,
+        mutateCallback,
+        finalizeCallback,
+      },
       finalizeCallback,
     ], // Finalize > Mutate > Validate
     [
-      { isValidate: true, isMutate: true, isWatch: true, validateCallback, mutateCallback, watchCallback },
+      {
+        isValidate: true,
+        isMutate: true,
+        isWatch: true,
+        validateCallback,
+        mutateCallback,
+        watchCallback,
+      },
       watchCallback,
     ], // Watch > Mutate > Validate
     [{ isValidate: true, isWatch: true, validateCallback, watchCallback }, watchCallback], // Watch > Validate

@@ -32,6 +32,7 @@ describe("build", () => {
         `--name ${id}`,
         `--description ${id}`,
         `--errorBehavior reject`,
+        `--uuid random-identifier`,
         "--confirm",
         "--skip-post-init",
       ].join(" ");

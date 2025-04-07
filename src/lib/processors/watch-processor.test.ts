@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { afterAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import { K8sInit, WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8sInit, WatcherType, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
-import { setupWatch, logEvent, queueKey, getOrCreateQueue, registerWatchEventHandlers } from "./watch-processor";
+import { setupWatch, logEvent, runBinding, registerWatchEventHandlers } from "./watch-processor";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
-import { EventEmitter } from "stream";
+import EventEmitter from "events";
 
-type onCallback = (eventName: string | symbol, listener: (msg: string) => void) => void;
+type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
-// Mock the dependencies
 jest.mock("kubernetes-fluent-client");
 
 jest.mock("../telemetry/logger", () => ({
@@ -77,23 +76,17 @@ describe("WatchProcessor", () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
 
-    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-      return {
-        Apply: mockApply,
-        InNamespace: jest.fn().mockReturnThis(),
-        Watch: mockWatch,
-        Get: mockGet,
-      } as unknown as K8sInit<T, K>;
-    });
-
-    mockWatch.mockImplementation(() => {
-      return {
-        start: mockStart,
-        events: {
-          on: mockEvents,
-        },
-      } as unknown as Watcher<typeof kind.Pod>;
-    });
+    // Set up all mock implementations after reset
+    mockStart.mockImplementation(() => Promise.resolve());
+    mockWatch.mockImplementation(
+      () =>
+        ({
+          start: mockStart,
+          events: {
+            on: mockEvents,
+          },
+        }) as unknown as Watcher<typeof kind.Pod>,
+    );
 
     mockGet.mockImplementation(() => ({
       data: {
@@ -103,6 +96,16 @@ describe("WatchProcessor", () => {
     }));
 
     mockApply.mockImplementation(() => Promise.resolve());
+
+    // Set up K8s mock last since it depends on other mocks
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+      return {
+        Apply: mockApply,
+        InNamespace: jest.fn().mockReturnThis(),
+        Watch: mockWatch,
+        Get: mockGet,
+      } as unknown as K8sInit<T, K>;
+    });
   });
 
   it("should setup watches for all bindings with isWatch=true", async () => {
@@ -123,7 +126,14 @@ describe("WatchProcessor", () => {
           event: "Create",
           watchCallback: jest.fn(),
         },
-        { isWatch: false, isQueue: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+        {
+          isWatch: false,
+          isQueue: false,
+          model: "someModel",
+          filters: {},
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
       ],
     } as unknown as Capability);
 
@@ -138,42 +148,80 @@ describe("WatchProcessor", () => {
   });
 
   it("should not setup watches if capabilities array is empty", async () => {
-    await setupWatch([]);
+    setupWatch([]);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
   it("should not setup watches if no bindings are present", async () => {
     const capabilities = [{ bindings: [] }, { bindings: [] }] as unknown as Capability[];
-    await setupWatch(capabilities);
+    setupWatch(capabilities);
     expect(mockWatch).toHaveBeenCalledTimes(0);
   });
 
-  it("should exit if the watch fails to start", async () => {
-    const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
+  it("should throw a WatchStart error with cause if the watch fails to start", async () => {
+    const rootCause = new Error("err");
+    mockStart.mockRejectedValue(rootCause as never);
 
-    mockStart.mockRejectedValue(new Error("err") as never);
-
-    await setupWatch(capabilities);
-
-    expect(exitSpy).toHaveBeenCalledWith(1);
+    const capabilities = [
+      {
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: jest.fn(),
+          },
+        ],
+      },
+    ] as unknown as Capability[];
+    try {
+      await runBinding(capabilities[0].bindings[0], [], []);
+      throw new Error("Expected error was not thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe("WatchStart Error: Unable to start watch.");
+      expect(err.cause).toBe(rootCause);
+    }
   });
 
-  it("should watch for the give_up event", async () => {
-    const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
+  it("should throw a WatchEvent GiveUp error with cause if GIVE_UP event is triggered", async () => {
+    const rootCause = new Error(
+      "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+    );
 
-    mockEvents.mockImplementation((eventName: string | symbol, listener: (msg: string) => void) => {
-      if (eventName === WatchEvent.GIVE_UP) {
-        expect(listener).toBeInstanceOf(Function);
-        listener("err");
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      }
-    });
+    mockEvents.mockImplementation(
+      (eventName: string | symbol, listener: (msg: Error | string) => void) => {
+        if (eventName === WatchEvent.GIVE_UP) {
+          listener(rootCause);
+        }
+      },
+    );
 
-    setupWatch(capabilities);
+    mockStart.mockImplementation(() => Promise.resolve());
+    const capabilities = [
+      {
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: jest.fn(),
+          },
+        ],
+      },
+    ] as unknown as Capability[];
+    try {
+      await runBinding(capabilities[0].bindings[0], [], []);
+      throw new Error("Expected GIVE_UP error was not thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe(
+        "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      );
+      expect(err.cause).toStrictEqual(rootCause);
+    }
   });
 
   it("should setup watches with correct phases for different events", async () => {
@@ -184,9 +232,27 @@ describe("WatchProcessor", () => {
     const capabilities = [
       {
         bindings: [
-          { isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallbackCreate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Update", watchCallback: watchCallbackUpdate },
-          { isWatch: true, model: "someModel", filters: {}, event: "Delete", watchCallback: watchCallbackDelete },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: watchCallbackCreate,
+          },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Update",
+            watchCallback: watchCallbackUpdate,
+          },
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Delete",
+            watchCallback: watchCallbackDelete,
+          },
           // Add more events here
         ],
       },
@@ -234,11 +300,19 @@ describe("WatchProcessor", () => {
     const watchCallback = jest.fn();
     const capabilities = [
       {
-        bindings: [{ isWatch: true, model: "someModel", filters: {}, event: "Create", watchCallback: watchCallback }],
+        bindings: [
+          {
+            isWatch: true,
+            model: "someModel",
+            filters: {},
+            event: "Create",
+            watchCallback: watchCallback,
+          },
+        ],
       },
     ] as unknown as Capability[];
 
-    setupWatch(capabilities);
+    await runBinding(capabilities[0].bindings[0], [], []);
 
     type mockArg = [(payload: kind.Pod, phase: WatchPhase) => void, WatchCfg];
 
@@ -283,8 +357,20 @@ describe("WatchProcessor", () => {
 
     capabilities.push({
       bindings: [
-        { isWatch: true, model: "someModel", filters: { name: "bleh" }, event: "Create", watchCallback: jest.fn() },
-        { isWatch: false, model: "someModel", filters: {}, event: "Create", watchCallback: jest.fn() },
+        {
+          isWatch: true,
+          model: "someModel",
+          filters: { name: "bleh" },
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
+        {
+          isWatch: false,
+          model: "someModel",
+          filters: {},
+          event: "Create",
+          watchCallback: jest.fn(),
+        },
       ],
     } as unknown as Capability);
 
@@ -303,7 +389,10 @@ describe("logEvent function", () => {
     const mockObj = { id: "123", type: "Pod" } as KubernetesObject;
     const message = "Test message";
     logEvent(WatchEvent.DATA, message, mockObj);
-    expect(Log.debug).toHaveBeenCalledWith(mockObj, `Watch event ${WatchEvent.DATA} received. ${message}.`);
+    expect(Log.debug).toHaveBeenCalledWith(
+      mockObj,
+      `Watch event ${WatchEvent.DATA} received. ${message}.`,
+    );
   });
 
   it("should handle CONNECT events", () => {
@@ -315,7 +404,9 @@ describe("logEvent function", () => {
   it("should handle LIST_ERROR events", () => {
     const message = "LIST_ERROR";
     logEvent(WatchEvent.LIST_ERROR, message);
-    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.LIST_ERROR} received. ${message}.`);
+    expect(Log.debug).toHaveBeenCalledWith(
+      `Watch event ${WatchEvent.LIST_ERROR} received. ${message}.`,
+    );
   });
   it("should handle LIST events", () => {
     const podList = {
@@ -332,95 +423,9 @@ describe("logEvent function", () => {
   it("should handle DATA_ERROR events", () => {
     const message = "Test message";
     logEvent(WatchEvent.DATA_ERROR, message);
-    expect(Log.debug).toHaveBeenCalledWith(`Watch event ${WatchEvent.DATA_ERROR} received. ${message}.`);
-  });
-});
-
-describe("queueKey", () => {
-  const withKindNsName = { kind: "Pod", metadata: { namespace: "my-ns", name: "my-name" } } as KubernetesObject;
-  const withKindNs = { kind: "Pod", metadata: { namespace: "my-ns" } } as KubernetesObject;
-  const withKindName = { kind: "Pod", metadata: { name: "my-name" } } as KubernetesObject;
-  const withNsName = { metadata: { namespace: "my-ns", name: "my-name" } } as KubernetesObject;
-  const withKind = { kind: "Pod" } as KubernetesObject;
-  const withNs = { metadata: { namespace: "my-ns" } } as KubernetesObject;
-  const withName = { metadata: { name: "my-name" } } as KubernetesObject;
-  const withNone = {} as KubernetesObject;
-
-  const original = process.env.PEPR_RECONCILE_STRATEGY;
-
-  it.each([
-    ["kind", withKindNsName, "Pod"],
-    ["kind", withKindNs, "Pod"],
-    ["kind", withKindName, "Pod"],
-    ["kind", withNsName, "UnknownKind"],
-    ["kind", withKind, "Pod"],
-    ["kind", withNs, "UnknownKind"],
-    ["kind", withName, "UnknownKind"],
-    ["kind", withNone, "UnknownKind"],
-    ["kindNs", withKindNsName, "Pod/my-ns"],
-    ["kindNs", withKindNs, "Pod/my-ns"],
-    ["kindNs", withKindName, "Pod/cluster-scoped"],
-    ["kindNs", withNsName, "UnknownKind/my-ns"],
-    ["kindNs", withKind, "Pod/cluster-scoped"],
-    ["kindNs", withNs, "UnknownKind/my-ns"],
-    ["kindNs", withName, "UnknownKind/cluster-scoped"],
-    ["kindNs", withNone, "UnknownKind/cluster-scoped"],
-    ["kindNsName", withKindNsName, "Pod/my-ns/my-name"],
-    ["kindNsName", withKindNs, "Pod/my-ns/Unnamed"],
-    ["kindNsName", withKindName, "Pod/cluster-scoped/my-name"],
-    ["kindNsName", withNsName, "UnknownKind/my-ns/my-name"],
-    ["kindNsName", withKind, "Pod/cluster-scoped/Unnamed"],
-    ["kindNsName", withNs, "UnknownKind/my-ns/Unnamed"],
-    ["kindNsName", withName, "UnknownKind/cluster-scoped/my-name"],
-    ["kindNsName", withNone, "UnknownKind/cluster-scoped/Unnamed"],
-    ["global", withKindNsName, "global"],
-    ["global", withKindNs, "global"],
-    ["global", withKindName, "global"],
-    ["global", withNsName, "global"],
-    ["global", withKind, "global"],
-    ["global", withNs, "global"],
-    ["global", withName, "global"],
-    ["global", withNone, "global"],
-  ])("PEPR_RECONCILE_STRATEGY='%s' over '%j' becomes '%s'", (strat, obj, key) => {
-    process.env.PEPR_RECONCILE_STRATEGY = strat;
-    expect(queueKey(obj)).toBe(key);
-  });
-
-  afterAll(() => {
-    process.env.PEPR_RECONCILE_STRATEGY = original;
-  });
-});
-
-describe("getOrCreateQueue", () => {
-  it("creates a Queue instance on first call", () => {
-    const obj: KubernetesObject = {
-      kind: "queue",
-      metadata: {
-        name: "nm",
-        namespace: "ns",
-      },
-    };
-
-    const firstQueue = getOrCreateQueue(obj);
-    expect(firstQueue.label()).toBeDefined();
-  });
-
-  it("returns same Queue instance on subsequent calls", () => {
-    const obj: KubernetesObject = {
-      kind: "queue",
-      metadata: {
-        name: "nm",
-        namespace: "ns",
-      },
-    };
-
-    const firstQueue = getOrCreateQueue(obj);
-    expect(firstQueue.label()).toBeDefined();
-
-    const secondQueue = getOrCreateQueue(obj);
-    expect(secondQueue.label()).toBeDefined();
-
-    expect(firstQueue).toBe(secondQueue);
+    expect(Log.debug).toHaveBeenCalledWith(
+      `Watch event ${WatchEvent.DATA_ERROR} received. ${message}.`,
+    );
   });
 });
 
@@ -428,7 +433,6 @@ describe("registerWatchEventHandlers", () => {
   let watcher: WatcherType<GenericClass>;
   let logEvent: jest.Mock;
   let metricsCollector: MetricsCollectorInstance;
-  let mockExit: jest.SpiedFunction<(code?: number | string | null | undefined) => never>;
 
   beforeEach(() => {
     const eventEmitter = new EventEmitter();
@@ -446,10 +450,6 @@ describe("registerWatchEventHandlers", () => {
       incRetryCount: jest.fn(),
     } as unknown as MetricsCollectorInstance;
 
-    mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
-
     registerWatchEventHandlers(watcher, logEvent, metricsCollector);
   });
 
@@ -466,7 +466,12 @@ describe("registerWatchEventHandlers", () => {
         WatchEvent.OLD_RESOURCE_VERSION,
         "old_resource_version",
       ],
-      [WatchEvent.NETWORK_ERROR, new Error("network_error"), WatchEvent.NETWORK_ERROR, "network_error"],
+      [
+        WatchEvent.NETWORK_ERROR,
+        new Error("network_error"),
+        WatchEvent.NETWORK_ERROR,
+        "network_error",
+      ],
       [WatchEvent.LIST_ERROR, new Error("network_error"), WatchEvent.LIST_ERROR, "network_error"],
       [
         WatchEvent.LIST,
@@ -484,13 +489,20 @@ describe("registerWatchEventHandlers", () => {
       }
     });
 
-    it("logs GIVE_UP event and exits process", () => {
-      const error = new Error("Giving up");
+    it("logs GIVE_UP event and throws error", () => {
+      const rootCause = new Error("Some error message");
+      try {
+        watcher.events.emit(WatchEvent.GIVE_UP, rootCause);
+        throw new Error("Expected GIVE_UP error was not thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toBe(
+          "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        );
+        expect(err.cause).toStrictEqual(rootCause);
+      }
 
-      watcher.events.emit(WatchEvent.GIVE_UP, error);
-
-      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Giving up");
-      expect(mockExit).toHaveBeenCalledWith(1);
+      expect(logEvent).toHaveBeenCalledWith(WatchEvent.GIVE_UP, "Some error message");
     });
   });
 
@@ -501,7 +513,9 @@ describe("registerWatchEventHandlers", () => {
       [WatchEvent.INC_RESYNC_FAILURE_COUNT, 1, "incRetryCount"],
     ])("calls metric function %s", (event, input, methodName) => {
       watcher.events.emit(event, input);
-      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(input);
+      expect(metricsCollector[methodName as keyof MetricsCollectorInstance]).toHaveBeenCalledWith(
+        input,
+      );
     });
   });
 
