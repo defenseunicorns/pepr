@@ -182,60 +182,75 @@ function extractSpecProperties(
   const props: Record<string, JSONSchemaPropertyWithMetadata> = {};
 
   let currentComment: string | undefined;
-  let currentPropLines: string[] = [];
+  let collectingBlock = false;
+  let blockKey = "";
+  let blockRequired = false;
+  let blockLines: string[] = [];
   let braceDepth = 0;
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const line = rawLine.trim();
 
-    if (trimmed.startsWith("//")) {
-      currentComment = trimmed.replace(/^\/\/\s?/, "");
+    if (line.startsWith("//")) {
+      currentComment = line.replace(/^\/\/\s?/, "").trim();
       continue;
     }
 
-    if (braceDepth > 0 || trimmed.includes("{")) {
-      currentPropLines.push(line);
+    if (collectingBlock) {
+      // Inside a multi-line inline object
       braceDepth += (line.match(/{/g) || []).length;
       braceDepth -= (line.match(/}/g) || []).length;
+      blockLines.push(rawLine);
 
       if (braceDepth === 0) {
-        const full = currentPropLines.join(" ").replace(/\s+/g, " ");
-        const match = full.match(/(\w+)(\??):\s*{(.*)}/);
-        if (match) {
-          const [, name, optional, body] = match;
-          const { properties, required } = extractInlineObject(`{${body}}`);
-          const isRequired = optional !== "?";
+        // Done collecting block
+        const body = blockLines.join("\n").replace(/^[^{]*{/, "{").replace(/};?$/, "}");
+        const { properties, required } = extractInlineObject(body);
 
-          props[uncapitalize(name)] = {
-            type: "object",
-            properties,
-            ...(isRequired && required.length > 0 ? { required } : {}),
-            ...(currentComment ? { description: currentComment } : {}),
-            _required: isRequired,
-          };
-        }
+        props[uncapitalize(blockKey)] = {
+          type: "object",
+          properties,
+          ...(required.length > 0 ? { required } : {}),
+          ...(currentComment ? { description: currentComment } : {}),
+          _required: blockRequired,
+        };
+
+        // Reset
+        collectingBlock = false;
+        blockKey = "";
+        blockLines = [];
         currentComment = undefined;
-        currentPropLines = [];
       }
+
       continue;
     }
 
-    const match = trimmed.match(/^(\w+)(\??):\s*([\w[\]]+);/);
-    if (match) {
-      const [, name, optional, tsType] = match;
-      const isOptional = optional === "?";
-      let schema: JSONSchemaProperty;
+    // Match start of object block
+    const blockStart = line.match(/^(\w+)(\??):\s*{?$/);
+    if (blockStart) {
+      blockKey = blockStart[1];
+      blockRequired = blockStart[2] !== "?";
+      collectingBlock = true;
+      braceDepth = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+      blockLines = [rawLine];
+      continue;
+    }
 
+    // Flat field (only if not inside an object block)
+    const flatMatch = line.match(/^(\w+)(\??):\s*([\w\[\]]+);$/);
+    if (flatMatch) {
+      const [, name, optional, tsType] = flatMatch;
+      const isOptional = optional === "?";
+
+      let schema: JSONSchemaProperty;
       if (tsType.endsWith("[]")) {
-        const itemType = normalizeType(tsType.slice(0, -2));
         schema = {
           type: "array",
-          items: { type: itemType },
+          items: { type: normalizeType(tsType.slice(0, -2)) },
         };
       } else {
-        schema = {
-          type: normalizeType(tsType),
-        };
+        schema = { type: normalizeType(tsType) };
       }
 
       if (currentComment) {
@@ -247,12 +262,12 @@ function extractSpecProperties(
         ...schema,
         _required: !isOptional,
       };
+      continue;
     }
   }
 
   return props;
 }
-
 function extractInlineObject(typeString: string): {
   properties: Record<string, JSONSchemaProperty>;
   required: string[];
@@ -260,33 +275,74 @@ function extractInlineObject(typeString: string): {
   const props: Record<string, JSONSchemaProperty> = {};
   const required: string[] = [];
 
-  // Normalize and flatten
-  const inner = typeString.trim().replace(/^{/, "").replace(/}$/, "").trim();
-
-  const entries = inner
-    .split(/;\s*\n?/)
-    .map(s => s.trim())
+  const lines = typeString
+    .replace(/^{/, "")
+    .replace(/}$/, "")
+    .split(/\r?\n/)
+    .map(l => l.trim())
     .filter(Boolean);
 
-  for (const entry of entries) {
-    const match = entry.match(/(\w+)(\??):\s*([\w[\]]+)/);
-    if (!match) continue;
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
 
-    const [, key, optional, tsType] = match;
-    const jsonType = normalizeType(tsType.replace("[]", ""));
+    // Match simple types or arrays
+    const simpleMatch = line.match(/^(\w+)(\??):\s*([\w\[\]]+);?$/);
+    if (simpleMatch) {
+      const [, key, optional, tsType] = simpleMatch;
+      const isOptional = optional === "?";
 
-    props[key] = tsType.endsWith("[]")
-      ? { type: "array", items: { type: jsonType } }
-      : { type: jsonType };
+      let prop: JSONSchemaProperty;
+      if (tsType.endsWith("[]")) {
+        prop = {
+          type: "array",
+          items: { type: normalizeType(tsType.slice(0, -2)) },
+        };
+      } else {
+        prop = { type: normalizeType(tsType) };
+      }
 
-    if (!optional) {
-      required.push(key);
+      props[key] = prop;
+      if (!isOptional) required.push(key);
+      i++;
+      continue;
     }
+
+    // Match object fields: key?: {
+    const objectStartMatch = line.match(/^(\w+)(\??):\s*{$/);
+    if (objectStartMatch) {
+      const [, key, optional] = objectStartMatch;
+      const isOptional = optional === "?";
+      let depth = 1;
+      const objectLines = [];
+      i++;
+
+      while (i < lines.length && depth > 0) {
+        const l = lines[i];
+        depth += (l.match(/{/g) || []).length;
+        depth -= (l.match(/}/g) || []).length;
+        objectLines.push(l);
+        i++;
+      }
+
+      const nestedBody = `{${objectLines.join("\n")}}`;
+      const { properties: nestedProps, required: nestedReqs } = extractInlineObject(nestedBody);
+
+      props[key] = {
+        type: "object",
+        properties: nestedProps,
+        ...(nestedReqs.length > 0 ? { required: nestedReqs } : {}),
+      };
+
+      if (!isOptional) required.push(key);
+      continue;
+    }
+
+    i++; // fallback advance
   }
 
   return { properties: props, required };
 }
-
 function conditionTypePropertiesVariables(
   match: RegExpMatchArray,
 ): {
@@ -302,6 +358,7 @@ function conditionTypePropertiesVariables(
     lines, props
   }
 }
+
 function extractConditionTypeProperties(
   content: string,
   typeName: string,
@@ -310,42 +367,67 @@ function extractConditionTypeProperties(
   const match = content.match(regex);
   if (!match) return {};
 
-  const { lines, props } = conditionTypePropertiesVariables(match);
-  // const body = match[1];
-  // const lines = body.split("\n");
-
-  // const props: Record<string, JSONSchemaProperty> = {};
+  const lines = match[1].split("\n").map(l => l.trim());
+  const props: Record<string, JSONSchemaProperty> = {};
   let currentDescription: string[] = [];
 
-  for (let line of lines) {
-    line = line.trim();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
 
-    // Capture multiline /** */ comments
+    // Handle JSDoc
     if (line.startsWith("/**")) {
       currentDescription = [];
-    }
-    if (line.startsWith("*")) {
-      currentDescription.push(line.replace(/^\*\s?/, ""));
-      continue;
-    }
-    if (line.endsWith("*/")) {
+      while (!lines[i].endsWith("*/") && i < lines.length) {
+        currentDescription.push(lines[i].replace(/^(\*\s?)/, ""));
+        i++;
+      }
       continue;
     }
 
-    const match = line.match(/^(\w+)(\??):\s*(\w+);/);
-    if (match) {
-      const [, name, , tsType] = match;
+    // Inline nested object e.g. work: {
+    const objectStartMatch = line.match(/^(\w+)(\??):\s*{$/);
+    if (objectStartMatch) {
+      const [, key] = objectStartMatch;
+      let braceDepth = 1;
+      const nestedLines = [];
+      i++;
+
+      while (i < lines.length && braceDepth > 0) {
+        const l = lines[i];
+        braceDepth += (l.match(/{/g) || []).length;
+        braceDepth -= (l.match(/}/g) || []).length;
+        nestedLines.push(l);
+        i++;
+      }
+
+      const nestedBody = `{${nestedLines.join("\n")}}`;
+      const nested = extractInlineObject(nestedBody);
+      props[key] = {
+        type: "object",
+        properties: nested.properties,
+        ...(nested.required.length > 0 ? { required: nested.required } : {}),
+        ...(currentDescription.length > 0
+          ? { description: currentDescription.join(" ") }
+          : {}),
+      };
+      currentDescription = [];
+      continue;
+    }
+
+    // Simple field
+    const flatMatch = line.match(/^(\w+)(\??):\s*(\w+);/);
+    if (flatMatch) {
+      const [, key, , tsType] = flatMatch;
       const type = tsType === "Date" ? "string" : normalizeType(tsType);
       const format = tsType === "Date" ? "date-time" : undefined;
 
-      props[name] = {
+      props[key] = {
         type,
         ...(format ? { format } : {}),
         ...(currentDescription.length > 0
           ? { description: currentDescription.join(" ") }
           : {}),
       };
-
       currentDescription = [];
     }
   }
