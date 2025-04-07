@@ -65,6 +65,10 @@ export interface ${kind}Spec {
   Config?: {
     language: string[];
     timezone: number;
+    zone: {
+      state: string;
+      areaCode: string[];
+    };
   };
 }
 
@@ -99,6 +103,15 @@ type ${kind}StatusCondition = {
    * status of the condition, one of True, False, Unknown.
    */
   status: string;
+  /**
+   * VM location.
+   */
+  vm: {
+    name: string;
+    region: string;
+    status: string;
+    message: string;
+  }
 };
 
 

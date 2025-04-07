@@ -103,12 +103,12 @@ spec:
                       status:
                         type: string
                         description: /** status of the condition, one of True, False, Unknown.
-                      work:
+                      vm:
                         type: object
                         properties:
                           name:
                             type: string
-                          namespace:
+                          region:
                             type: string
                           status:
                             type: string
@@ -116,15 +116,15 @@ spec:
                             type: string
                         required:
                           - name
-                          - namespace
+                          - region
                           - status
                           - message
-                        description: /** Work location.
+                        description: /** VM location.
                     required:
                       - lastTransitionTime
                       - message
                       - reason
                       - status
-                      - work
+                      - vm
       subresources:
         status: {}
