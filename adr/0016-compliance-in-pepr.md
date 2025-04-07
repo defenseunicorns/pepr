@@ -18,8 +18,8 @@ After careful consideration, we created an external library, [`compliance-report
 
 ## Goals
 
-- Compliance Reporter to provide the mechanism to run the validation reports.
-- The report generation should be either on-demand or on schedule, but first step is to a create `ConfigMap` to be consumed be other services.
+- Compliance Reporter provides the mechanism to run validation reports.
+- The report generation should be either on-demand or on schedule, but first step is to a create `ConfigMap` to be consumed bye other services.
 - Ensure compliance reports aggregate all registered controls, even those without implementations.
 
 ## Non-Goals
