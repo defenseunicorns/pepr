@@ -127,6 +127,16 @@ describe("crd", () => {
       expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.timezone).toBeDefined();
       expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.timezone.type).toEqual("number");
       expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.description).toEqual("Application specific configuration");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.type).toEqual("object");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties!.state).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties!.state.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties!.areaCode).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties!.areaCode.type).toEqual("array");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.properties!.areaCode.items!.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.properties!.zone.required).toEqual(["state", "areaCode"]);
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.config.required).toEqual(["language", "timezone", "zone"]);
     });
 
     it("should container correct required fields for spec", () =>{
@@ -180,8 +190,25 @@ describe("crd", () => {
       expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.status.description).toContain("status of the condition, one of True, False, Unknown.");
     })
 
+    it("should produce CRD with accurate status conditions vm", () => {
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.type).toEqual("object");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.description).toContain("VM location.");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.name).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.name.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.region).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.region.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.status).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.status.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.message).toBeDefined();
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.properties!.message.type).toEqual("string");
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.properties.vm.required).toEqual(["name", "region", "status", "message"]);
+
+    })
+
     it("should produce CRD with accurate required fields for status", () => {
-      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.required).toStrictEqual(["lastTransitionTime", "message", "reason", "status"]);
+      expect(crdJSON.spec.versions[0].schema.openAPIV3Schema.properties.status.properties.conditions.items!.required).toStrictEqual(["lastTransitionTime", "message", "reason", "status", "vm"]);
 
     })
 

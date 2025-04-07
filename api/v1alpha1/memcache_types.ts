@@ -19,9 +19,9 @@ export interface MemcacheSpec {
     language: string[];
     timezone: number;
     zone: {
-      state: string
-      areaCode: string[]
-    }
+      state: string;
+      areaCode: string[];
+    };
   };
 }
 
@@ -56,13 +56,12 @@ type MemcacheStatusCondition = {
    * status of the condition, one of True, False, Unknown.
    */
   status: string;
-
   /**
-   * Work location.
+   * VM location.
    */
-  work: {
+  vm: {
     name: string;
-    namespace: string;
+    region: string;
     status: string;
     message: string;
   }
