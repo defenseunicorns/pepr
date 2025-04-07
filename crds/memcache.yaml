@@ -75,18 +75,18 @@ spec:
                       lastTransitionTime:
                         type: string
                         format: date-time
-                        description: /** lastTransitionTime is the last time the condition transitioned
-                          from one status to another. This is not guaranteed to
-                          be set in happensBefore order across different
-                          conditions for a given object. It may be unset in some
+                        description: lastTransitionTime is the last time the condition transitioned from
+                          one status to another. This is not guaranteed to be
+                          set in happensBefore order across different conditions
+                          for a given object. It may be unset in some
                           circumstances.
                       message:
                         type: string
-                        description: /** message is a human readable message indicating details about
-                          the transition. This may be an empty string.
+                        description: message is a human readable message indicating details about the
+                          transition. This may be an empty string.
                       observedGeneration:
                         type: number
-                        description: /** observedGeneration represents the .metadata.generation that the
+                        description: observedGeneration represents the .metadata.generation that the
                           condition was set based upon. For instance, if
                           .metadata.generation is currently 12, but the
                           .status.conditions[x].observedGeneration is 9, the
@@ -94,15 +94,15 @@ spec:
                           state of the instance.
                       reason:
                         type: string
-                        description: /** reason contains a programmatic identifier indicating the reason
-                          for the condition's last transition. Producers of
-                          specific condition types may define expected values
-                          and meanings for this field, and whether the values
-                          are considered a guaranteed API. The value should be a
+                        description: reason contains a programmatic identifier indicating the reason for
+                          the condition's last transition. Producers of specific
+                          condition types may define expected values and
+                          meanings for this field, and whether the values are
+                          considered a guaranteed API. The value should be a
                           CamelCase string. This field may not be empty.
                       status:
                         type: string
-                        description: /** status of the condition, one of True, False, Unknown.
+                        description: status of the condition, one of True, False, Unknown.
                       vm:
                         type: object
                         properties:
@@ -119,7 +119,7 @@ spec:
                           - region
                           - status
                           - message
-                        description: /** VM location.
+                        description: VM location.
                     required:
                       - lastTransitionTime
                       - message

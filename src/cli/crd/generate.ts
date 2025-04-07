@@ -396,16 +396,41 @@ export function extractConditionTypeProperties(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Handle JSDoc
+    // Handle comments to create CRD descriptions
     if (line.startsWith("/**")) {
       currentDescription = [];
-      while (!lines[i].endsWith("*/") && i < lines.length) {
-        currentDescription.push(lines[i].replace(/^(\*\s?)/, ""));
+
+      // Start collecting comment lines including the first
+      while (i < lines.length) {
+        const commentLine = lines[i].trim();
+
+        // End of comment
+        if (commentLine.endsWith("*/")) {
+          // Remove trailing */
+          currentDescription.push(
+            commentLine
+              .replace(/^\/\*\*?/, "")
+              .replace(/\*\/$/, "")
+              .replace(/^\*\s?/, "")
+              .trim(),
+          );
+          break;
+        }
+
+        // Normal JSDoc line
+        currentDescription.push(
+          commentLine
+            .replace(/^\/\*\*?/, "")
+            .replace(/^\*\s?/, "")
+            .trim(),
+        );
         i++;
       }
+
+      // Remove any empty lines and join
+      currentDescription = currentDescription.filter(Boolean);
       continue;
     }
-
     // Inline nested object e.g. work: {
     const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
     if (objectStartMatch) {
@@ -484,6 +509,11 @@ export function extractConditionTypeProperties(
   return { properties: props, required };
 }
 
+/**
+ * Normalizes TypeScript types to JSON Schema types.
+ * @param tsType - The TypeScript type to normalize.
+ * @returns The normalized type as a string.
+ */
 export function normalizeType(tsType: string): "string" | "number" | "boolean" {
   switch (tsType) {
     case "string":
@@ -495,6 +525,11 @@ export function normalizeType(tsType: string): "string" | "number" | "boolean" {
   }
 }
 
+/**
+ * Converts the first character of a string to lowercase.
+ * @param str - The string to convert.
+ * @returns The string with the first character in lowercase.
+ */
 export function uncapitalize(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
