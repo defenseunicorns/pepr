@@ -24,8 +24,11 @@ const generate = new Command("generate")
     }
   });
 
-function extractMetadata(kind: string, content: string): {
-  specProps: Record<string, JSONSchemaPropertyWithMetadata>
+function extractMetadata(
+  kind: string,
+  content: string,
+): {
+  specProps: Record<string, JSONSchemaPropertyWithMetadata>;
   fqdn: string;
   requiredProps: string[];
   shortNames?: string[];
@@ -48,7 +51,7 @@ function extractMetadata(kind: string, content: string): {
     scope,
     shortNames,
     specProps,
-    fqdn
+    fqdn,
   };
 }
 async function processVersion(version: string, apiRoot: string, outputDir: string): Promise<void> {
@@ -66,7 +69,10 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
     }
 
     const kind = kindFromComment;
-    const { fqdn, specProps, requiredProps, plural, scope, shortNames } = extractMetadata(kind, content);
+    const { fqdn, specProps, requiredProps, plural, scope, shortNames } = extractMetadata(
+      kind,
+      content,
+    );
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
@@ -116,8 +122,8 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
                           type: "object",
                           description:
                             "Condition contains details for one aspect of the current state of this API Resource.",
-                            properties: conditionSchema.properties,
-                            required: conditionSchema.required,
+                          properties: conditionSchema.properties,
+                          required: conditionSchema.required,
                         },
                       },
                     },
@@ -139,13 +145,13 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
   }
 }
 
-function extractComment(content: string, label: string): string | undefined {
+export function extractComment(content: string, label: string): string | undefined {
   const regex = new RegExp(`//\\s+${label}:\\s+(.*)`);
   const match = content.match(regex);
   return match ? match[1].trim() : undefined;
 }
 
-function extractDetails(content: string): {
+export function extractDetails(content: string): {
   plural?: string;
   scope?: "Cluster" | "Namespaced";
   shortName?: string;
@@ -159,15 +165,14 @@ function extractDetails(content: string): {
   const shortName = matchField(body, "shortName");
 
   return { plural, scope, shortName };
-
-  function matchField(body: string, key: string): string | undefined {
-    const reg = new RegExp(`${key}\\s*:\\s*["'](.*?)["']`);
-    const result = body.match(reg);
-    return result?.[1];
-  }
+}
+export function matchField(body: string, key: string): string | undefined {
+  const reg = new RegExp(`${key}\\s*:\\s*["'](.*?)["']`);
+  const result = body.match(reg);
+  return result?.[1];
 }
 
-function extractSpecProperties(
+export function extractSpecProperties(
   content: string,
   interfaceName: string,
 ): Record<string, JSONSchemaPropertyWithMetadata> {
@@ -202,7 +207,10 @@ function extractSpecProperties(
 
       if (braceDepth === 0) {
         // Done collecting block
-        const body = blockLines.join("\n").replace(/^[^{]*{/, "{").replace(/};?$/, "}");
+        const body = blockLines
+          .join("\n")
+          .replace(/^[^{]*{/, "{")
+          .replace(/};?$/, "}");
         const { properties, required } = extractInlineObject(body);
 
         props[uncapitalize(blockKey)] = {
@@ -335,7 +343,7 @@ function extractInlineObject(typeString: string): {
   return { properties: props, required };
 }
 
-function extractConditionTypeProperties(
+export function extractConditionTypeProperties(
   content: string,
   typeName: string,
 ): { properties: Record<string, JSONSchemaProperty>; required: string[] } {
@@ -362,61 +370,57 @@ function extractConditionTypeProperties(
     }
 
     // Inline nested object e.g. work: {
-      const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
-      if (objectStartMatch) {
-        const [, key, optionalToken] = objectStartMatch;
-        const isOptional = optionalToken === "?";
-      
-        // Handle inline on one line: e.g., work: { name: string; }
-        const inlineBody = objectStartMatch[3];
-        if (inlineBody?.trim().endsWith("}")) {
-          const inlineObject = `{${inlineBody}`;
-          const { properties: inlineProps, required: inlineReq } = extractInlineObject(inlineObject);
-          props[key] = {
-            type: "object",
-            properties: inlineProps,
-            ...(inlineReq.length > 0 ? { required: inlineReq } : {}),
-            ...(currentDescription.length > 0
-              ? { description: currentDescription.join(" ") }
-              : {}),
-          };
-          if (!isOptional) required.push(key);
-          currentDescription = [];
-          continue;
-        }
-      
-        // Multi-line object
-        let braceDepth = 1;
-        const nestedLines: string[] = [];
-        i++;
-      
-        while (i < lines.length && braceDepth > 0) {
-          const l = lines[i];
-          braceDepth += (l.match(/{/g) || []).length;
-          braceDepth -= (l.match(/}/g) || []).length;
-          nestedLines.push(l);
-          i++;
-        }
-      
-        const nestedBody = `{${nestedLines.join("\n")}}`;
-        const nested = extractInlineObject(nestedBody);
-      
+    const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
+    if (objectStartMatch) {
+      const [, key, optionalToken] = objectStartMatch;
+      const isOptional = optionalToken === "?";
+
+      // Handle inline on one line: e.g., work: { name: string; }
+      const inlineBody = objectStartMatch[3];
+      if (inlineBody?.trim().endsWith("}")) {
+        const inlineObject = `{${inlineBody}`;
+        const { properties: inlineProps, required: inlineReq } = extractInlineObject(inlineObject);
         props[key] = {
           type: "object",
-          properties: nested.properties,
-          ...(nested.required.length > 0 ? { required: nested.required } : {}),
-          ...(currentDescription.length > 0
-            ? { description: currentDescription.join(" ") }
-            : {}),
+          properties: inlineProps,
+          ...(inlineReq.length > 0 ? { required: inlineReq } : {}),
+          ...(currentDescription.length > 0 ? { description: currentDescription.join(" ") } : {}),
         };
-      
-        if (!isOptional) {
-          required.push(key); // ← this is what fixes your `work` case
-        }
-      
+        if (!isOptional) required.push(key);
         currentDescription = [];
         continue;
       }
+
+      // Multi-line object
+      let braceDepth = 1;
+      const nestedLines: string[] = [];
+      i++;
+
+      while (i < lines.length && braceDepth > 0) {
+        const l = lines[i];
+        braceDepth += (l.match(/{/g) || []).length;
+        braceDepth -= (l.match(/}/g) || []).length;
+        nestedLines.push(l);
+        i++;
+      }
+
+      const nestedBody = `{${nestedLines.join("\n")}}`;
+      const nested = extractInlineObject(nestedBody);
+
+      props[key] = {
+        type: "object",
+        properties: nested.properties,
+        ...(nested.required.length > 0 ? { required: nested.required } : {}),
+        ...(currentDescription.length > 0 ? { description: currentDescription.join(" ") } : {}),
+      };
+
+      if (!isOptional) {
+        required.push(key); // ← this is what fixes your `work` case
+      }
+
+      currentDescription = [];
+      continue;
+    }
 
     // Simple field
     const flatMatch = line.match(/^(\w+)(\??):\s*(\w+);/);
@@ -429,9 +433,7 @@ function extractConditionTypeProperties(
       props[key] = {
         type,
         ...(format ? { format } : {}),
-        ...(currentDescription.length > 0
-          ? { description: currentDescription.join(" ") }
-          : {}),
+        ...(currentDescription.length > 0 ? { description: currentDescription.join(" ") } : {}),
       };
 
       if (!isOptional) {
@@ -445,7 +447,7 @@ function extractConditionTypeProperties(
   return { properties: props, required };
 }
 
-function normalizeType(tsType: string): "string" | "number" | "boolean" {
+export function normalizeType(tsType: string): "string" | "number" | "boolean" {
   switch (tsType) {
     case "string":
     case "number":
@@ -456,7 +458,7 @@ function normalizeType(tsType: string): "string" | "number" | "boolean" {
   }
 }
 
-function uncapitalize(str: string): string {
+export function uncapitalize(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
