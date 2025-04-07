@@ -14,6 +14,7 @@ const generate = new Command("generate")
     const outputDir = path.resolve(options.output);
     await createDirectoryIfNotExists(outputDir);
 
+    // Scans the api directory for versions
     const apiRoot = path.resolve("api");
     const versions = fs
       .readdirSync(apiRoot)
@@ -24,6 +25,12 @@ const generate = new Command("generate")
     }
   });
 
+/**
+ * Generates CRD YAML files from TypeScript definitions.
+ * @param version - The version of the API.
+ * @param content - The TypeScript content to process.
+ * @returns An object containing the extracted metadata.
+ */
 function extractMetadata(
   kind: string,
   content: string,
@@ -54,6 +61,13 @@ function extractMetadata(
     fqdn,
   };
 }
+
+/**
+ * Processes a version directory, extracting metadata and generating CRD YAML files.
+ * @param version - The version directory to process.
+ * @param apiRoot - The root directory of the API definitions.
+ * @param outputDir - The output directory for generated CRD files.
+ */
 async function processVersion(version: string, apiRoot: string, outputDir: string): Promise<void> {
   const versionDir = path.join(apiRoot, version);
   const files = fs.readdirSync(versionDir).filter(f => f.endsWith(".ts"));
@@ -151,6 +165,12 @@ export function extractComment(content: string, label: string): string | undefin
   return match ? match[1].trim() : undefined;
 }
 
+/**
+ * Extracts details from the content string.
+ * @param plural - Plural name of the resource
+ * @param scope - "Cluster" | "Namespaced"
+ * @param shortName - Short name of the resource
+ */
 export function extractDetails(content: string): {
   plural?: string;
   scope?: "Cluster" | "Namespaced";
@@ -166,6 +186,13 @@ export function extractDetails(content: string): {
 
   return { plural, scope, shortName };
 }
+
+/**
+ * Matches a field in the content string.
+ * @param body - The content string to search in.
+ * @param key - The key to match.
+ * @returns The value of the matched field or undefined if not found.
+ */
 export function matchField(body: string, key: string): string | undefined {
   const reg = new RegExp(`${key}\\s*:\\s*["'](.*?)["']`);
   const result = body.match(reg);
@@ -272,6 +299,11 @@ export function extractSpecProperties(
   return props;
 }
 
+/**
+ * Extracts properties from an inline object in TypeScript.
+ * @param typeString - The TypeScript type string to extract from.
+ * @returns An object containing the extracted properties and required fields.
+ */
 function extractInlineObject(typeString: string): {
   properties: Record<string, JSONSchemaProperty>;
   required: string[];
@@ -342,6 +374,12 @@ function extractInlineObject(typeString: string): {
   return { properties: props, required };
 }
 
+/**
+ * Extracts properties from a TypeScript condition type.
+ * @param content - The TypeScript content to search in.
+ * @param typeName - The name of the condition type to extract.
+ * @returns An object containing the extracted properties and required fields.
+ */
 export function extractConditionTypeProperties(
   content: string,
   typeName: string,
