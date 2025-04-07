@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { afterAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import { K8sInit, WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8sInit, WatcherType, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
-import {
-  setupWatch,
-  logEvent,
-  queueKey,
-  getOrCreateQueue,
-  registerWatchEventHandlers,
-  runBinding,
-} from "./watch-processor";
+import { setupWatch, logEvent, runBinding, registerWatchEventHandlers } from "./watch-processor";
 import Log from "../telemetry/logger";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
-import { EventEmitter } from "stream";
+import EventEmitter from "events";
 
 type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
@@ -436,102 +429,10 @@ describe("logEvent function", () => {
   });
 });
 
-describe("queueKey", () => {
-  const withKindNsName = {
-    kind: "Pod",
-    metadata: { namespace: "my-ns", name: "my-name" },
-  } as KubernetesObject;
-  const withKindNs = { kind: "Pod", metadata: { namespace: "my-ns" } } as KubernetesObject;
-  const withKindName = { kind: "Pod", metadata: { name: "my-name" } } as KubernetesObject;
-  const withNsName = { metadata: { namespace: "my-ns", name: "my-name" } } as KubernetesObject;
-  const withKind = { kind: "Pod" } as KubernetesObject;
-  const withNs = { metadata: { namespace: "my-ns" } } as KubernetesObject;
-  const withName = { metadata: { name: "my-name" } } as KubernetesObject;
-  const withNone = {} as KubernetesObject;
-
-  const original = process.env.PEPR_RECONCILE_STRATEGY;
-
-  it.each([
-    ["kind", withKindNsName, "Pod"],
-    ["kind", withKindNs, "Pod"],
-    ["kind", withKindName, "Pod"],
-    ["kind", withNsName, "UnknownKind"],
-    ["kind", withKind, "Pod"],
-    ["kind", withNs, "UnknownKind"],
-    ["kind", withName, "UnknownKind"],
-    ["kind", withNone, "UnknownKind"],
-    ["kindNs", withKindNsName, "Pod/my-ns"],
-    ["kindNs", withKindNs, "Pod/my-ns"],
-    ["kindNs", withKindName, "Pod/cluster-scoped"],
-    ["kindNs", withNsName, "UnknownKind/my-ns"],
-    ["kindNs", withKind, "Pod/cluster-scoped"],
-    ["kindNs", withNs, "UnknownKind/my-ns"],
-    ["kindNs", withName, "UnknownKind/cluster-scoped"],
-    ["kindNs", withNone, "UnknownKind/cluster-scoped"],
-    ["kindNsName", withKindNsName, "Pod/my-ns/my-name"],
-    ["kindNsName", withKindNs, "Pod/my-ns/Unnamed"],
-    ["kindNsName", withKindName, "Pod/cluster-scoped/my-name"],
-    ["kindNsName", withNsName, "UnknownKind/my-ns/my-name"],
-    ["kindNsName", withKind, "Pod/cluster-scoped/Unnamed"],
-    ["kindNsName", withNs, "UnknownKind/my-ns/Unnamed"],
-    ["kindNsName", withName, "UnknownKind/cluster-scoped/my-name"],
-    ["kindNsName", withNone, "UnknownKind/cluster-scoped/Unnamed"],
-    ["global", withKindNsName, "global"],
-    ["global", withKindNs, "global"],
-    ["global", withKindName, "global"],
-    ["global", withNsName, "global"],
-    ["global", withKind, "global"],
-    ["global", withNs, "global"],
-    ["global", withName, "global"],
-    ["global", withNone, "global"],
-  ])("PEPR_RECONCILE_STRATEGY='%s' over '%j' becomes '%s'", (strat, obj, key) => {
-    process.env.PEPR_RECONCILE_STRATEGY = strat;
-    expect(queueKey(obj)).toBe(key);
-  });
-
-  afterAll(() => {
-    process.env.PEPR_RECONCILE_STRATEGY = original;
-  });
-});
-
-describe("getOrCreateQueue", () => {
-  it("creates a Queue instance on first call", () => {
-    const obj: KubernetesObject = {
-      kind: "queue",
-      metadata: {
-        name: "nm",
-        namespace: "ns",
-      },
-    };
-
-    const firstQueue = getOrCreateQueue(obj);
-    expect(firstQueue.label()).toBeDefined();
-  });
-
-  it("returns same Queue instance on subsequent calls", () => {
-    const obj: KubernetesObject = {
-      kind: "queue",
-      metadata: {
-        name: "nm",
-        namespace: "ns",
-      },
-    };
-
-    const firstQueue = getOrCreateQueue(obj);
-    expect(firstQueue.label()).toBeDefined();
-
-    const secondQueue = getOrCreateQueue(obj);
-    expect(secondQueue.label()).toBeDefined();
-
-    expect(firstQueue).toBe(secondQueue);
-  });
-});
-
 describe("registerWatchEventHandlers", () => {
   let watcher: WatcherType<GenericClass>;
   let logEvent: jest.Mock;
   let metricsCollector: MetricsCollectorInstance;
-  let mockExit: jest.SpiedFunction<(code?: number | string | null | undefined) => never>;
 
   beforeEach(() => {
     const eventEmitter = new EventEmitter();
@@ -548,10 +449,6 @@ describe("registerWatchEventHandlers", () => {
       initCacheMissWindow: jest.fn(),
       incRetryCount: jest.fn(),
     } as unknown as MetricsCollectorInstance;
-
-    mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
 
     registerWatchEventHandlers(watcher, logEvent, metricsCollector);
   });
