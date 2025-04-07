@@ -76,7 +76,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
 
     const typedSpecProps: Record<string, JSONSchemaProperty> = {};
     for (const [key, value] of Object.entries(specProps)) {
-      // remove _required property since it cannot exist in the final schema
+      // remove _required property since it cannot exist in the final schema in the CRD or it breaks
       delete value._required;
       typedSpecProps[key] = value;
     }
@@ -206,7 +206,6 @@ export function extractSpecProperties(
       blockLines.push(rawLine);
 
       if (braceDepth === 0) {
-        // Done collecting block
         const body = blockLines
           .join("\n")
           .replace(/^[^{]*{/, "{")
@@ -415,7 +414,7 @@ export function extractConditionTypeProperties(
       };
 
       if (!isOptional) {
-        required.push(key); // ← this is what fixes your `work` case
+        required.push(key);
       }
 
       currentDescription = [];
