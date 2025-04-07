@@ -267,6 +267,7 @@ function extractSpecProperties(
 
   return props;
 }
+
 function extractInlineObject(typeString: string): {
   properties: Record<string, JSONSchemaProperty>;
   required: string[];
@@ -286,22 +287,16 @@ function extractInlineObject(typeString: string): {
     const line = lines[i];
 
     // Match simple types or arrays
-    const simpleMatch = line.match(/^(\w+)(\??):\s*(\S+);?$/);
+    const simpleMatch = line.match(/^(\w+)(\??):\s*(\w+)(\[\])?;?$/);
     if (simpleMatch) {
-      const [, key, optional, tsType] = simpleMatch;
+      const [, key, optional, baseType, isArray] = simpleMatch;
       const isOptional = optional === "?";
 
-      let prop: JSONSchemaProperty;
-      if (tsType.endsWith("[]")) {
-        prop = {
-          type: "array",
-          items: { type: normalizeType(tsType.slice(0, -2)) },
-        };
-      } else {
-        prop = { type: normalizeType(tsType) };
-      }
+      const normalizedType = normalizeType(baseType);
+      props[key] = isArray
+        ? { type: "array", items: { type: normalizedType } }
+        : { type: normalizedType };
 
-      props[key] = prop;
       if (!isOptional) required.push(key);
       i++;
       continue;
