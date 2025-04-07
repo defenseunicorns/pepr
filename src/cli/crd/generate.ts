@@ -237,8 +237,7 @@ function extractSpecProperties(
       continue;
     }
 
-    // Flat field (only if not inside an object block)
-    const flatMatch = line.match(/^(\w+)(\??):\s*([\w\[\]]+);$/);
+    const flatMatch = line.match(/^(\w+)(\??):\s*(\S+);$/);
     if (flatMatch) {
       const [, name, optional, tsType] = flatMatch;
       const isOptional = optional === "?";
@@ -284,10 +283,10 @@ function extractInlineObject(typeString: string): {
 
   let i = 0;
   while (i < lines.length) {
-    let line = lines[i];
+    const line = lines[i];
 
     // Match simple types or arrays
-    const simpleMatch = line.match(/^(\w+)(\??):\s*([\w\[\]]+);?$/);
+    const simpleMatch = line.match(/^(\w+)(\??):\s*(\S+);?$/);
     if (simpleMatch) {
       const [, key, optional, tsType] = simpleMatch;
       const isOptional = optional === "?";
@@ -342,21 +341,6 @@ function extractInlineObject(typeString: string): {
   }
 
   return { properties: props, required };
-}
-function conditionTypePropertiesVariables(
-  match: RegExpMatchArray,
-): {
-  lines: string[];
-  props: Record<string, JSONSchemaProperty>,
-
-}{
-  const body = match[1];
-  const lines = body.split("\n");
-  const props: Record<string, JSONSchemaProperty> = {};
-
-  return {
-    lines, props
-  }
 }
 
 function extractConditionTypeProperties(

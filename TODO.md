@@ -40,16 +40,22 @@ kubectl apply -f -<<EOF
 apiVersion: cache.pepr.dev/v1alpha1
 kind: Memcache
 metadata:
-  name: memcached-sample
+  name: memcached
   namespace: default
 spec:
   size: [3,3]
   containerPort: 8080
   config: 
-    data: okay
-    asdf: [1,1,3,4]
+    language: ["en", "fr"]
+    timezone: 
+      name: "UTC"
+      offset: "ok"
 EOF
 ```
+
+
+        // Not optional, subresource must be present and it is empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 
 
         // Not optional, subresource must be present and it is empty
