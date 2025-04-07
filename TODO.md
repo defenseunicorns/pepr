@@ -51,6 +51,23 @@ spec:
       name: "UTC"
       offset: "ok"
 EOF
+
+kubectl apply -f -<<EOF
+apiVersion: cache.pepr.dev/v1alpha1
+kind: Memcache
+metadata:
+  name: memcached
+  namespace: default
+spec:
+  size: [3,3]
+  containerPort: 8080
+  config: 
+    language: ["en", "fr"]
+    timezone: 3
+    zone: 
+      state: "UTC"
+      areaCode: ["ok"]
+EOF
 ```
 
 
