@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { stringify as toYAML } from "yaml";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
+import { kind as k } from "kubernetes-fluent-client";
 
 const generate = new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
@@ -95,7 +96,7 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
       typedSpecProps[key] = value;
     }
     const conditionSchema = extractConditionTypeProperties(content, `${kind}StatusCondition`);
-    const crd: CustomResourceDefinition = {
+    const crd: k.CustomResourceDefinition = {
       apiVersion: "apiextensions.k8s.io/v1",
       kind: "CustomResourceDefinition",
       metadata: {
@@ -338,7 +339,7 @@ function extractInlineObject(typeString: string): {
       continue;
     }
 
-    // Match object fields: key?: {
+    // Match object fields: key?: { (optional) }
     const objectStartMatch = line.match(/^(\w+)(\??):\s*{$/);
     if (objectStartMatch) {
       const [, key, optional] = objectStartMatch;
@@ -484,7 +485,7 @@ export function extractConditionTypeProperties(
       continue;
     }
 
-    // Simple field
+    // Simple field - e.g., name: string;
     const flatMatch = line.match(/^(\w+)(\??):\s*(\w+);/);
     if (flatMatch) {
       const [, key, optional, tsType] = flatMatch;
@@ -547,63 +548,6 @@ interface JSONSchemaProperty {
 
 interface JSONSchemaPropertyWithMetadata extends JSONSchemaProperty {
   _required?: boolean;
-}
-
-export interface CustomResourceDefinition {
-  apiVersion: "apiextensions.k8s.io/v1";
-  kind: "CustomResourceDefinition";
-  metadata: {
-    name: string;
-  };
-  spec: {
-    group: string;
-    names: {
-      kind: string;
-      plural: string;
-      singular: string;
-      shortNames?: string[];
-    };
-    scope: "Namespaced" | "Cluster";
-    versions: Array<{
-      name: string;
-      served: true;
-      storage: true;
-      schema: {
-        openAPIV3Schema: {
-          type: "object";
-          properties: {
-            spec: {
-              type: "object";
-              description?: string;
-              properties: Record<string, JSONSchemaProperty>;
-              required?: string[];
-            };
-            status: {
-              type: "object";
-              description?: string;
-              properties: {
-                conditions: {
-                  type: "array";
-                  description?: string;
-                  items: {
-                    type: "object";
-                    description?: string;
-                    properties: Record<string, JSONSchemaProperty>;
-                    required?: string[];
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-      subresources: {
-        // Not optional, subresource must be present and it is empty
-        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-        status: {};
-      };
-    }>;
-  };
 }
 
 export default generate;
