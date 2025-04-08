@@ -129,6 +129,9 @@ jobs:
           name: pepr-0.0.0-development.tgz
           path: ${{ github.workspace }}
 
+      - name: "set env: PEPR_TGZ"
+        run: echo "PEPR_TGZ=${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz" >> "$GITHUB_ENV"
+
       - name: "set env: PEPR_IMG"
         run: echo "PEPR_IMG=${GITHUB_WORKSPACE}/pepr-img.tar" >> "$GITHUB_ENV"
 
@@ -148,5 +151,5 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          npm i --no-save pepr-0.0.0-development.tgz
+          npm i "$PEPR_TGZ" 
           PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
