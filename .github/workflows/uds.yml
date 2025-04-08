@@ -42,6 +42,13 @@ jobs:
           cd "$PEPR"
           npm run build:image
 
+      - name: build pepr library npm module
+        run: |
+          cd "$PEPR"
+          npm run build
+          PEPR_TGZ="${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
+          echo "PEPR_TGZ=${PEPR_TGZ}" >> "$GITHUB_ENV"
+
       - name: tar pepr image
         run: |
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
@@ -53,6 +60,13 @@ jobs:
         with:
           name: pepr-img.tar
           path: pepr-img.tar
+          retention-days: 1
+
+      - name: upload pepr tgz artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pepr-0.0.0-development.tgz
+          path: pepr-0.0.0-development.tgz
           retention-days: 1
 
   uds-run:
@@ -109,6 +123,12 @@ jobs:
           name: pepr-img.tar
           path: ${{ github.workspace }}
 
+      - name: dowload image tgz artifact
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        with:
+          name: pepr-0.0.0-development.tgz
+          path: ${{ github.workspace }}
+
       - name: "set env: PEPR_IMG"
         run: echo "PEPR_IMG=${GITHUB_WORKSPACE}/pepr-img.tar" >> "$GITHUB_ENV"
 
@@ -128,4 +148,5 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
+          npm i --no-save pepr-0.0.0-development.tgz
           PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
