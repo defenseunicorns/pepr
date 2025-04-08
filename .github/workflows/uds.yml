@@ -48,6 +48,7 @@ jobs:
           npm run build
           PEPR_TGZ="${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
           echo "PEPR_TGZ=${PEPR_TGZ}" >> "$GITHUB_ENV"
+          mv "$PEPR/pepr-0.0.0-development.tgz" "$PEPR_TGZ"
 
       - name: tar pepr image
         run: |
@@ -117,13 +118,13 @@ jobs:
 
           uds version
 
-      - name: dowload image tar artifact
+      - name: download image tar artifact
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: pepr-img.tar
           path: ${{ github.workspace }}
 
-      - name: dowload image tgz artifact
+      - name: download tgz artifact
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: pepr-0.0.0-development.tgz
