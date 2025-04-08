@@ -160,7 +160,9 @@ async function processVersion(version: string, apiRoot: string, outputDir: strin
   }
 }
 
+// Matches value after // ${label}: <value>
 export function extractComment(content: string, label: string): string | undefined {
+  // https://regex101.com/r/oLFaHP/1
   const regex = new RegExp(`//\\s+${label}:\\s+(.*)`);
   const match = content.match(regex);
   return match ? match[1].trim() : undefined;
@@ -177,6 +179,8 @@ export function extractDetails(content: string): {
   scope?: "Cluster" | "Namespaced";
   shortName?: string;
 } {
+  // Matches the export const details = { ... }
+  // https://regex101.com/r/I8DK0U/1
   const match = content.match(/export const details\s*=\s*{([\s\S]*?)}/m);
   if (!match) return {};
   const body = match[1];
@@ -195,6 +199,8 @@ export function extractDetails(content: string): {
  * @returns The value of the matched field or undefined if not found.
  */
 export function matchField(body: string, key: string): string | undefined {
+  // Matches the value from the key in the body
+  // https://regex101.com/r/e8NWzB/1
   const reg = new RegExp(`${key}\\s*:\\s*["'](.*?)["']`);
   const result = body.match(reg);
   return result?.[1];
@@ -204,6 +210,8 @@ export function extractSpecProperties(
   content: string,
   interfaceName: string,
 ): Record<string, JSONSchemaPropertyWithMetadata> {
+  // Matches the body of the interface
+  // https://regex101.com/r/634BrY/1
   const regex = new RegExp(`export interface ${interfaceName}\\s*{([\\s\\S]*?)^}`, "m");
   const match = content.match(regex);
   if (!match) return {};
@@ -223,6 +231,8 @@ export function extractSpecProperties(
     const line = rawLine.trim();
 
     if (line.startsWith("//")) {
+      // remove forward slashes from comment - matches // and replaces with ""
+      // https://regex101.com/r/jTfcXf/1
       currentComment = line.replace(/^\/\/\s?/, "").trim();
       continue;
     }
@@ -235,9 +245,9 @@ export function extractSpecProperties(
 
       if (braceDepth === 0) {
         const body = blockLines
-          .join("\n")
-          .replace(/^[^{]*{/, "{")
-          .replace(/};?$/, "}");
+          .join("\n") // Joins all elements of the `blockLines` array into a single string, with each element separated by a newline.
+          .replace(/^[^{]*{/, "{") // Replaces everything from the beginning of the string up to and including the first `{` with just `{`.
+          .replace(/};?$/, "}"); // Replaces a potential semicolon and closing brace (`}`) at the end of the string with just `}`.
         const { properties, required } = extractInlineObject(body);
 
         props[uncapitalize(blockKey)] = {
@@ -259,6 +269,7 @@ export function extractSpecProperties(
     }
 
     // Match start of object block
+    // https://regex101.com/r/YKYnji/1
     const blockStart = line.match(/^(\w+)(\??):\s*{?$/);
     if (blockStart) {
       blockKey = blockStart[1];
@@ -269,6 +280,7 @@ export function extractSpecProperties(
       continue;
     }
 
+    // https://regex101.com/r/hSOchU/1
     const flatMatch = line.match(/^(\w+)(\??):\s*(\S+);$/);
     if (flatMatch) {
       const [, name, optional, tsType] = flatMatch;
@@ -324,6 +336,7 @@ function extractInlineObject(typeString: string): {
     const line = lines[i];
 
     // Match simple types or arrays
+    // https://regex101.com/r/1t6C7n/1
     const simpleMatch = line.match(/^(\w+)(\??):\s*(\w+)(\[\])?;?$/);
     if (simpleMatch) {
       const [, key, optional, baseType, isArray] = simpleMatch;
@@ -340,6 +353,8 @@ function extractInlineObject(typeString: string): {
     }
 
     // Match object fields: key?: { (optional) }
+    // gets the name
+    // https://regex101.com/r/lvzjuy/1
     const objectStartMatch = line.match(/^(\w+)(\??):\s*{$/);
     if (objectStartMatch) {
       const [, key, optional] = objectStartMatch;
@@ -385,6 +400,8 @@ export function extractConditionTypeProperties(
   content: string,
   typeName: string,
 ): { properties: Record<string, JSONSchemaProperty>; required: string[] } {
+  // Body of some condition type
+  // https://regex101.com/r/2CQ4CV/1
   const regex = new RegExp(`type\\s+${typeName}\\s*=\\s*{([\\s\\S]*?)}\\s*`, "m");
   const match = content.match(regex);
   if (!match) return { properties: {}, required: [] };
@@ -432,7 +449,8 @@ export function extractConditionTypeProperties(
       currentDescription = currentDescription.filter(Boolean);
       continue;
     }
-    // Inline nested object e.g. work: {
+    // Inline nested object e.g. work: { name: string; }
+    // https://regex101.com/r/s1T4ZA/1
     const objectStartMatch = line.match(/^(\w+)(\??):\s*{(.*)?$/);
     if (objectStartMatch) {
       const [, key, optionalToken] = objectStartMatch;
@@ -486,6 +504,7 @@ export function extractConditionTypeProperties(
     }
 
     // Simple field - e.g., name: string;
+    // https://regex101.com/r/UmfhzR/1
     const flatMatch = line.match(/^(\w+)(\??):\s*(\w+);/);
     if (flatMatch) {
       const [, key, optional, tsType] = flatMatch;
