@@ -6,7 +6,7 @@ import { Store } from "../k8s";
 import { Operation } from "fast-json-patch";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
-interface StoreMigration {
+export interface StoreMigration {
   name: string;
   namespace: string;
   store: Store;
@@ -16,6 +16,7 @@ interface StoreMigration {
 
 export async function migrateAndSetupWatch(storeData: StoreMigration): Promise<void> {
   const { store, namespace, name, stores, setupWatch } = storeData;
+
   Log.debug(redactedStore(store), "Pepr Store migration");
   // Add cacheID label to store
   await K8s(Store, { namespace, name }).Patch([
