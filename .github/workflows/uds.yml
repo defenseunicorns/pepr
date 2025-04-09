@@ -152,5 +152,5 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          npm i "$PEPR_TGZ" 
+          npm install "$PEPR_TGZ" 
           PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
