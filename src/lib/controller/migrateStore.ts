@@ -27,7 +27,7 @@ export async function migrateAndSetupWatch(storeData: StoreMigration): Promise<v
     },
   ]);
 
-  const data: DataStore = store.data || {};
+  const data: DataStore = store.data;
   let storeCache: Record<string, Operation> = {};
 
   for (const name of Object.keys(stores)) {
