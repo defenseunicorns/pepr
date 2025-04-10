@@ -10,7 +10,6 @@ import { Store } from "../k8s";
 import Log, { redactedPatch, redactedStore } from "../telemetry/logger";
 import { DataOp, DataSender, DataStore, Storage } from "../core/storage";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
-import { migrateAndSetupWatch } from "./migrateStore";
 
 const namespace = "pepr-system";
 const debounceBackoffReceive = 1000;
@@ -57,16 +56,7 @@ export class StoreController {
         K8s(Store)
           .InNamespace(namespace)
           .Get(this.#name)
-          .then(
-            async (store: Store) =>
-              await migrateAndSetupWatch({
-                name,
-                namespace,
-                store,
-                stores: this.#stores,
-                setupWatch: this.#setupWatch,
-              }),
-          )
+          .then(async (store: Store) => await this.#migrateAndSetupWatch(store))
           .catch(this.#createStoreResource),
       Math.random() * 3000, // Add a jitter to the Store creation to avoid collisions
     );
@@ -75,6 +65,45 @@ export class StoreController {
   #setupWatch = (): void => {
     const watcher = K8s(Store, { name: this.#name, namespace }).Watch(this.#receive);
     watcher.start().catch(e => Log.error(e, "Error starting Pepr store watch"));
+  };
+
+  #migrateAndSetupWatch = async (store: Store): Promise<void> => {
+    Log.debug(redactedStore(store), "Pepr Store migration");
+    // Add cacheID label to store
+    await K8s(Store, { namespace, name: this.#name }).Patch([
+      {
+        op: "add",
+        path: "/metadata/labels/pepr.dev-cacheID",
+        value: `${Date.now()}`,
+      },
+    ]);
+
+    const data: DataStore = store.data || {};
+    let storeCache: Record<string, Operation> = {};
+
+    for (const name of Object.keys(this.#stores)) {
+      // Get the prefix offset for the keys
+      const offset = `${name}-`.length;
+
+      // Loop over each key in the store
+      for (const key of Object.keys(data)) {
+        // Match on the capability name as a prefix for non v2 keys
+        if (startsWith(name, key) && !startsWith(`${name}-v2`, key)) {
+          // populate migrate cache
+          storeCache = fillStoreCache(storeCache, name, "remove", {
+            key: [key.slice(offset)],
+            value: data[key],
+          });
+          storeCache = fillStoreCache(storeCache, name, "add", {
+            key: [key.slice(offset)],
+            value: data[key],
+            version: "v2",
+          });
+        }
+      }
+    }
+    storeCache = await sendUpdatesAndFlushCache(storeCache, namespace, this.#name);
+    this.#setupWatch();
   };
 
   #receive = (store: Store): void => {
