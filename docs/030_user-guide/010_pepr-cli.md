@@ -13,6 +13,7 @@ Initialize a new Pepr Module.
 - `--skip-post-init` - Skip npm install, git init, and VSCode launch.
 - `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
 - `--uuid [string]` - Unique identifier for your module with a max length of 36 characters.
+- `--crd` - Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 ---
 
 ## `npx pepr update`
@@ -119,3 +120,41 @@ If you are unsure of what commands are available, you can run `npx pepr kfc` to 
 For example, to generate usable types from a Kubernetes CRD, you can run `npx pepr kfc crd [source] [directory]`. This will generate the types for the `[source]` CRD and output the generated types to the `[directory]`.
 
 You can learn more about the `kubernetes-fluent-client` [here](https://github.com/defenseunicorns/kubernetes-fluent-client).
+
+## `npx pepr crd`
+
+Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
+
+**Options:**
+
+  -h, --help          display help for command
+
+**Commands:**
+
+  create [options]    Create a new CRD TypeScript definition
+  generate [options]  Generate CRD manifests from TypeScript definitions
+  help [command]      display help for command
+
+## `npx pepr crd create`
+
+Create a new CRD TypeScript definition.
+
+**Options:**
+
+  - `--group <group> ` - API group (e.g. cache)
+  - `--version <version>` - API version (e.g. v1alpha1)
+  - `--kind <kind>` - Kind name (e.g. Memcached)
+  - `--domain <domain>` - Optional domain (e.g. pepr.dev) (default: "pepr.dev")
+  - `--scope <Namespaced | Cluster>` - Whether the resulting custom resource is cluster- or namespace-scoped (default: "Namespaced")
+  - `--plural <plural>` - Plural name (e.g. memcacheds) (default: "")
+  - `--shortName <shortName>` - Short name (e.g. mc) (default: "")
+  - `-h, --help` - display help for command
+
+## `npx pepr crd generate`
+
+Generate CRD manifests from TypeScript definitions
+
+**Options:**
+
+ - `--output <output>` - Output directory for generated CRDs (default: "./crds")
+ - `-h, --help` - display help for command
