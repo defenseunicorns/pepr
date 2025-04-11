@@ -127,7 +127,7 @@ describe("migrateAndSetupWatch", () => {
     expect(actualCache).toEqual({});
   });
 
-  it("should log that the store is being migrated to easier debuggin through the logs", async () => {
+  it("should log that the store is being migrated for easier debugging through the logs", async () => {
     await migrateAndSetupWatch(storeMigrationData);
     expect(Log.debug).toHaveBeenCalledWith(expect.anything(), "Pepr Store migration");
   });
