@@ -9,7 +9,7 @@
 [![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
-## What happened to Pepr's stars?
+## What happened to Pepr's stars? ⭐
 
 In February 2025, an accidental change to the repository's visibility reset the star count.  The visibility issue was quickly resolved, but the stars were unfortunately lost.
 
@@ -40,7 +40,7 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 - Least-privilege [RBAC](./docs/030_user-guide/090_rbac.md) generation
 - AMD64 and ARM64 support
 
-## Example Pepr Action
+## Example Pepr Action 🦄
 
 This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/030_user-guide/030_actions/) section.
 
