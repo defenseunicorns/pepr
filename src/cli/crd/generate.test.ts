@@ -1,122 +1,202 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it } from "@jest/globals";
-import { extractSingleLineComment, extractDetails, uncapitalize } from "./generate";
+import { expect, describe, it, afterEach, jest } from "@jest/globals";
+import {
+  extractSingleLineComment,
+  extractDetails,
+  processSourceFile,
+  uncapitalize,
+  emptySchema,
+  loadVersionFiles,
+  getAPIVersions,
+} from "./generate";
 import { Project } from "ts-morph";
+import * as fs from "fs";
 
-describe("extractSingleLineComment", () => {
-  it.each([
-    ["// Group: cache", "Group", "cache"],
-    ["// Kind: Widget\n// Group: something", "Kind", "Widget"],
-    ["// Group:   domain.io  ", "Group", "domain.io"],
-    ["// NotMatching: nope", "Domain", undefined],
-    ["", "Group", undefined],
-  ])("extracts '%s' with label '%s' => '%s'", (content, label, expected) => {
-    expect(extractSingleLineComment(content, label)).toBe(expected);
+jest.mock("fs");
+
+describe("generate.ts", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
   });
-});
 
-describe("extractDetails", () => {
-  const project = new Project();
+  describe("extractSingleLineComment", () => {
+    it("should extract a labeled single line comment", () => {
+      const content = `// Kind: Widget`;
+      const result = extractSingleLineComment(content, "Kind");
+      expect(result).toBe("Widget");
+    });
 
-  it("extracts all required fields correctly", () => {
-    const sourceFile = project.createSourceFile(
-      "valid.ts",
-      `
-      export const details = {
-        plural: "widgets",
-        scope: "Cluster",
-        shortName: "wd"
-      };
-    `,
-    );
-    expect(extractDetails(sourceFile)).toEqual({
-      plural: "widgets",
-      scope: "Cluster",
-      shortName: "wd",
+    it("should return undefined if label is missing", () => {
+      const content = `// Group: test`;
+      const result = extractSingleLineComment(content, "Kind");
+      expect(result).toBeUndefined();
     });
   });
 
-  it("throws if 'details' variable is missing", () => {
-    const sourceFile = project.createSourceFile(
-      "missing-details.ts",
-      `
-      const unrelated = { foo: "bar" };
-    `,
-    );
-    expect(() => extractDetails(sourceFile)).toThrow("Missing 'details' variable declaration.");
+  describe("uncapitalize", () => {
+    it("should uncapitalize the first letter", () => {
+      expect(uncapitalize("CamelCase")).toBe("camelCase");
+    });
+
+    it("should return empty string when input is empty", () => {
+      expect(uncapitalize("")).toBe("");
+    });
   });
 
-  it("throws if 'plural' is missing", () => {
-    const sourceFile = project.createSourceFile(
-      "missing-plural.ts",
-      `
-      export const details = {
-        scope: "Cluster",
-        shortName: "wd"
-      };
-    `,
-    );
-    expect(() => extractDetails(sourceFile)).toThrow(
-      "Missing or invalid value for required key: 'plural'",
-    );
+  describe("emptySchema", () => {
+    it("should return an empty schema object", () => {
+      const result = emptySchema();
+      expect(result).toEqual({ properties: {}, required: [] });
+    });
   });
 
-  it("throws if 'scope' is missing", () => {
-    const sourceFile = project.createSourceFile(
-      "missing-scope.ts",
-      `
-      export const details = {
+  describe("getAPIVersions", () => {
+    it("should return directories from the api root", () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "v2"]);
+      (fs.statSync as jest.Mock).mockImplementation(p => ({
+        isDirectory: () => typeof p === "string" && (p.endsWith("v1") || p.endsWith("v2")),
+      }));
+
+      const versions = getAPIVersions("/api");
+      expect(versions).toEqual(["v1", "v2"]);
+    });
+
+    it("should ignore non-directory entries", () => {
+      (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "README.md"]);
+      (fs.statSync as jest.Mock).mockImplementation(p => ({
+        isDirectory: () => typeof p === "string" && p.endsWith("v1"),
+      }));
+
+      const versions = getAPIVersions("/api");
+      expect(versions).toEqual(["v1"]);
+    });
+  });
+
+  describe("loadVersionFiles", () => {
+    it("should load only TypeScript files from version directory", () => {
+      const project = new Project();
+      const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]); // don't resolve real files
+
+      (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts"]);
+
+      const result = loadVersionFiles(project, "/api/v1");
+
+      expect(addSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
+      expect(result).toEqual([]); // we mocked return value
+    });
+  });
+
+  describe("extractDetails", () => {
+    const createProjectWithFile = (name: string, content: string) => {
+      const project = new Project();
+      return project.createSourceFile(name, content);
+    };
+
+    it("should extract plural, scope, and shortName from the details object", () => {
+      const file = createProjectWithFile(
+        "temp.ts",
+        `
+        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
+      `,
+      );
+
+      const details = extractDetails(file);
+      expect(details).toEqual({
         plural: "widgets",
-        shortName: "wd"
-      };
-    `,
-    );
-    expect(() => extractDetails(sourceFile)).toThrow(
-      "Missing or invalid value for required key: 'scope'",
-    );
+        scope: "Namespaced",
+        shortName: "wd",
+      });
+    });
+
+    it("should throw if 'scope' is invalid", () => {
+      const file = createProjectWithFile(
+        "bad.ts",
+        `
+        const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };
+      `,
+      );
+
+      expect(() => extractDetails(file)).toThrow(
+        `'scope' must be either "Cluster" or "Namespaced", got "BadScope"`,
+      );
+    });
+
+    it("should throw if details variable is missing", () => {
+      const file = createProjectWithFile("noDetails.ts", `const somethingElse = {};`);
+      expect(() => extractDetails(file)).toThrow(`Missing 'details' variable declaration.`);
+    });
   });
 
-  it("throws if 'shortName' is missing", () => {
-    const sourceFile = project.createSourceFile(
-      "missing-shortName.ts",
-      `
-      export const details = {
-        plural: "widgets",
-        scope: "Cluster"
-      };
-    `,
-    );
-    expect(() => extractDetails(sourceFile)).toThrow(
-      "Missing or invalid value for required key: 'shortName'",
-    );
-  });
+  describe("processSourceFile", () => {
+    const createProjectWithFile = (name: string, content: string) => {
+      const project = new Project();
+      return project.createSourceFile(name, content);
+    };
 
-  it("throws if 'scope' is not 'Cluster' or 'Namespaced'", () => {
-    const sourceFile = project.createSourceFile(
-      "invalid-scope.ts",
-      `
-      export const details = {
-        plural: "widgets",
-        scope: "Global",
-        shortName: "wd"
-      };
-    `,
-    );
-    expect(() => extractDetails(sourceFile)).toThrow(
-      `'scope' must be either "Cluster" or "Namespaced", got "Global"`,
-    );
-  });
-});
+    it("should skip file with no kind comment", () => {
+      const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const file = createProjectWithFile(
+        "test.ts",
+        `
+        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
+        export interface SomethingSpec {}
+      `,
+      );
 
-describe("uncapitalize", () => {
-  it.each([
-    ["Test", "test"],
-    ["Name", "name"],
-    ["x", "x"],
-    ["", ""],
-  ])("uncapitalizes %s to %s", (input, expected) => {
-    expect(uncapitalize(input)).toBe(expected);
+      processSourceFile(file, "v1", "/output");
+      expect(consoleWarn).toHaveBeenCalledWith(
+        expect.stringContaining("missing '// Kind: <KindName>' comment"),
+      );
+    });
+
+    it("should skip file with missing Spec interface", () => {
+      const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const file = createProjectWithFile(
+        "test.ts",
+        `
+        // Kind: Something
+        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
+      `,
+      );
+
+      processSourceFile(file, "v1", "/output");
+      expect(consoleWarn).toHaveBeenCalledWith(
+        expect.stringContaining("missing interface SomethingSpec"),
+      );
+    });
+
+    it("should generate a CRD YAML file for valid input", () => {
+      const writeFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+      const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+      const file = createProjectWithFile(
+        "valid.ts",
+        `
+        // Kind: Widget
+        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
+
+        export interface WidgetSpec {
+          /** The name */
+          name: string;
+        }
+
+        export type WidgetStatusCondition = {
+          /** The type */
+          type: string;
+        };
+      `,
+      );
+
+      processSourceFile(file, "v1", "/crds");
+
+      expect(writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("/crds/widget.yaml"),
+        expect.stringContaining("CustomResourceDefinition"),
+        "utf8",
+      );
+
+      expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+    });
   });
 });

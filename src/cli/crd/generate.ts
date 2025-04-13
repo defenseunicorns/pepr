@@ -46,61 +46,69 @@ export function extractCRDDetails(
   return { kind, plural, scope, shortNames, fqdn };
 }
 
-async function generateCRDs(options: { output: string }): Promise<void> {
+export async function generateCRDs(options: { output: string }): Promise<void> {
   const outputDir = path.resolve(options.output);
   await createDirectoryIfNotExists(outputDir);
 
-  const apiRoot = path.resolve("api");
-
-  // directories generates from `npx pepr crd create ..`
-  const versions = fs
-    .readdirSync(apiRoot)
-    .filter(v => fs.statSync(path.join(apiRoot, v)).isDirectory());
   const project = new Project();
+  const apiRoot = path.resolve("api");
+  const versions = getAPIVersions(apiRoot);
 
   for (const version of versions) {
-    const versionDir = path.join(apiRoot, version);
-    const files = fs.readdirSync(versionDir).filter(f => f.endsWith(".ts"));
-    const filePaths = files.map(f => path.join(versionDir, f));
-    project.addSourceFilesAtPaths(filePaths);
-
-    for (const sourceFile of project.getSourceFiles()) {
-      const content = sourceFile.getFullText();
-
-      const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
-      if (!kind) {
-        console.warn(
-          `⚠️ Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`,
-        );
-        continue;
-      }
-
-      const spec = sourceFile.getInterface(`${kind}Spec`);
-      if (!spec) {
-        console.warn(`⚠️ Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
-        continue;
-      }
-
-      const condition = sourceFile.getTypeAlias(`${kind}StatusCondition`);
-      const specSchema = getSchemaFromType(spec);
-      const conditionSchema = condition ? getSchemaFromType(condition) : emptySchema();
-
-      const crd = buildCRD({
-        kind,
-        fqdn,
-        version,
-        plural,
-        scope,
-        shortNames,
-        specSchema,
-        conditionSchema,
-      });
-
-      const outPath = path.join(outputDir, `${kind.toLowerCase()}.yaml`);
-      fs.writeFileSync(outPath, toYAML(crd), "utf8");
-      console.log(`✔ Created ${outPath}`);
+    const sourceFiles = loadVersionFiles(project, path.join(apiRoot, version));
+    for (const sourceFile of sourceFiles) {
+      processSourceFile(sourceFile, version, outputDir);
     }
   }
+}
+
+export function getAPIVersions(apiRoot: string): string[] {
+  return fs.readdirSync(apiRoot).filter(v => fs.statSync(path.join(apiRoot, v)).isDirectory());
+}
+
+export function loadVersionFiles(project: Project, versionDir: string): SourceFile[] {
+  const files = fs.readdirSync(versionDir).filter(f => f.endsWith(".ts"));
+  const filePaths = files.map(f => path.join(versionDir, f));
+  return project.addSourceFilesAtPaths(filePaths);
+}
+
+export function processSourceFile(
+  sourceFile: SourceFile,
+  version: string,
+  outputDir: string,
+): void {
+  const content = sourceFile.getFullText();
+  const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
+
+  if (!kind) {
+    console.warn(`⚠️ Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`);
+    return;
+  }
+
+  const spec = sourceFile.getInterface(`${kind}Spec`);
+  if (!spec) {
+    console.warn(`⚠️ Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
+    return;
+  }
+
+  const condition = sourceFile.getTypeAlias(`${kind}StatusCondition`);
+  const specSchema = getSchemaFromType(spec);
+  const conditionSchema = condition ? getSchemaFromType(condition) : emptySchema();
+
+  const crd = buildCRD({
+    kind,
+    fqdn,
+    version,
+    plural,
+    scope,
+    shortNames,
+    specSchema,
+    conditionSchema,
+  });
+
+  const outPath = path.join(outputDir, `${kind.toLowerCase()}.yaml`);
+  fs.writeFileSync(outPath, toYAML(crd), "utf8");
+  console.log(`✔ Created ${outPath}`);
 }
 
 // Extracts a comment from the content of a file based on a label.
@@ -143,7 +151,7 @@ export function extractDetails(sourceFile: SourceFile): {
   };
 }
 
-function getJsDocDescription(node: Node): string {
+export function getJsDocDescription(node: Node): string {
   if (!Node.isPropertySignature(node) && !Node.isPropertyDeclaration(node)) return "";
   return node
     .getJsDocs()
@@ -153,7 +161,7 @@ function getJsDocDescription(node: Node): string {
     .trim();
 }
 
-function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
+export function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
   properties: Record<string, V1JSONSchemaProps>;
   required: string[];
 } {
@@ -181,7 +189,7 @@ function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
   return { properties, required };
 }
 
-function mapTypeToSchema(type: Type): V1JSONSchemaProps {
+export function mapTypeToSchema(type: Type): V1JSONSchemaProps {
   if (type.getText() === "Date") return { type: "string", format: "date-time" };
   if (type.isString()) return { type: "string" };
   if (type.isNumber()) return { type: "number" };
@@ -197,7 +205,7 @@ function mapTypeToSchema(type: Type): V1JSONSchemaProps {
   return { type: "string" };
 }
 
-function buildObjectSchema(type: Type): V1JSONSchemaProps {
+export function buildObjectSchema(type: Type): V1JSONSchemaProps {
   const props: Record<string, V1JSONSchemaProps> = {};
   const required: string[] = [];
 
@@ -229,7 +237,10 @@ export function uncapitalize(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
-function emptySchema(): { properties: Record<string, V1JSONSchemaProps>; required: string[] } {
+export function emptySchema(): {
+  properties: Record<string, V1JSONSchemaProps>;
+  required: string[];
+} {
   return { properties: {}, required: [] };
 }
 
@@ -244,7 +255,7 @@ interface CRDConfig {
   conditionSchema: ReturnType<typeof getSchemaFromType>;
 }
 
-function buildCRD(config: CRDConfig): k.CustomResourceDefinition {
+export function buildCRD(config: CRDConfig): k.CustomResourceDefinition {
   return {
     apiVersion: "apiextensions.k8s.io/v1",
     kind: "CustomResourceDefinition",
