@@ -55,13 +55,19 @@ export interface ${kind}Spec {
   // INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
   // Important: Run "npx pepr crd generate" to regenerate code after modifying this file
 
-  // Size defines the number of Memcache instances
+  /** 
+   * Size defines the number of Memcache instances 
+   */
   Size?: number[];
 
-  // Port defines the port that will be used to init the container with the image
+  /** 
+   * Port defines the port that will be used to init the container with the image 
+   */
   ContainerPort: number;
 
-  // Application specific configuration
+  /** 
+   * Application specific configuration 
+   */
   Config?: {
     language: string[];
     timezone: number;

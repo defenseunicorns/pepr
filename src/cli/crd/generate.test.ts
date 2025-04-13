@@ -2,17 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { expect, describe, it } from "@jest/globals";
-import {
-  matchField,
-  extractComment,
-  extractConditionTypeProperties,
-  extractSpecProperties,
-  extractDetails,
-  normalizeType,
-  uncapitalize,
-} from "./generate";
+import { extractSingleLineComment, extractDetails, uncapitalize } from "./generate";
+import { Project } from "ts-morph";
 
-describe("extractComment", () => {
+describe("extractSingleLineComment", () => {
   it.each([
     ["// Group: cache", "Group", "cache"],
     ["// Kind: Widget\n// Group: something", "Kind", "Widget"],
@@ -20,116 +13,100 @@ describe("extractComment", () => {
     ["// NotMatching: nope", "Domain", undefined],
     ["", "Group", undefined],
   ])("extracts '%s' with label '%s' => '%s'", (content, label, expected) => {
-    expect(extractComment(content, label)).toBe(expected);
+    expect(extractSingleLineComment(content, label)).toBe(expected);
   });
 });
 
-describe("extractConditionTypeProperties", () => {
-  it.each([
-    [
-      `type WidgetStatusCondition = {
-/**
- * Timestamp of last change
- */
-lastTransitionTime: Date;
-/**
- * Reason for state
- */
-reason: string;
-status?: string;
-};
-`,
-      "WidgetStatusCondition",
-      {
-        properties: {
-          lastTransitionTime: {
-            type: "string",
-            format: "date-time",
-            description: "Timestamp of last change",
-          },
-          reason: {
-            type: "string",
-            description: "Reason for state",
-          },
-          status: {
-            type: "string",
-          },
-        },
-        required: ["lastTransitionTime", "reason"],
-      },
-    ],
-  ])("parses %s correctly", (content, typeName, expected) => {
-    const actual = extractConditionTypeProperties(content, typeName);
-    expect(actual).toEqual(expected);
-  });
-});
-
-describe("extractSpecProperties", () => {
-  it.each([
-    [
-      `export interface WidgetSpec {
-  // Number of widgets
-  count: number;
-
-  // Optional name
-  name?: string;
-
-  // Labels
-  labels: {
-    team: string;
-    zone?: string;
-  };
-}
-`,
-      "WidgetSpec",
-      {
-        count: { type: "number", description: "Number of widgets", _required: true },
-        name: { type: "string", description: "Optional name", _required: false },
-        labels: {
-          type: "object",
-          description: "Labels",
-          _required: true,
-          properties: {
-            team: { type: "string" },
-            zone: { type: "string" },
-          },
-          required: ["team"],
-        },
-      },
-    ],
-  ])("extracts properties from interface %s", (content, interfaceName, expected) => {
-    const actual = extractSpecProperties(content, interfaceName);
-    expect(actual).toEqual(expected);
-  });
-});
 describe("extractDetails", () => {
-  it.each([
-    [
+  const project = new Project();
+
+  it("extracts all required fields correctly", () => {
+    const sourceFile = project.createSourceFile(
+      "valid.ts",
       `
       export const details = {
         plural: "widgets",
         scope: "Cluster",
         shortName: "wd"
       };
-      `,
-      { plural: "widgets", scope: "Cluster", shortName: "wd" },
-    ],
-    [
-      `
-      export const details = {
-        plural: "things"
-      };
-      `,
-      { plural: "things", scope: undefined, shortName: undefined },
-    ],
-    [
+    `,
+    );
+    expect(extractDetails(sourceFile)).toEqual({
+      plural: "widgets",
+      scope: "Cluster",
+      shortName: "wd",
+    });
+  });
+
+  it("throws if 'details' variable is missing", () => {
+    const sourceFile = project.createSourceFile(
+      "missing-details.ts",
       `
       const unrelated = { foo: "bar" };
-      `,
-      {},
-    ],
-  ])("extracts details from: %s", (input, expected) => {
-    expect(extractDetails(input)).toEqual(expected);
+    `,
+    );
+    expect(() => extractDetails(sourceFile)).toThrow("Missing 'details' variable declaration.");
+  });
+
+  it("throws if 'plural' is missing", () => {
+    const sourceFile = project.createSourceFile(
+      "missing-plural.ts",
+      `
+      export const details = {
+        scope: "Cluster",
+        shortName: "wd"
+      };
+    `,
+    );
+    expect(() => extractDetails(sourceFile)).toThrow(
+      "Missing or invalid value for required key: 'plural'",
+    );
+  });
+
+  it("throws if 'scope' is missing", () => {
+    const sourceFile = project.createSourceFile(
+      "missing-scope.ts",
+      `
+      export const details = {
+        plural: "widgets",
+        shortName: "wd"
+      };
+    `,
+    );
+    expect(() => extractDetails(sourceFile)).toThrow(
+      "Missing or invalid value for required key: 'scope'",
+    );
+  });
+
+  it("throws if 'shortName' is missing", () => {
+    const sourceFile = project.createSourceFile(
+      "missing-shortName.ts",
+      `
+      export const details = {
+        plural: "widgets",
+        scope: "Cluster"
+      };
+    `,
+    );
+    expect(() => extractDetails(sourceFile)).toThrow(
+      "Missing or invalid value for required key: 'shortName'",
+    );
+  });
+
+  it("throws if 'scope' is not 'Cluster' or 'Namespaced'", () => {
+    const sourceFile = project.createSourceFile(
+      "invalid-scope.ts",
+      `
+      export const details = {
+        plural: "widgets",
+        scope: "Global",
+        shortName: "wd"
+      };
+    `,
+    );
+    expect(() => extractDetails(sourceFile)).toThrow(
+      `'scope' must be either "Cluster" or "Namespaced", got "Global"`,
+    );
   });
 });
 
@@ -141,84 +118,5 @@ describe("uncapitalize", () => {
     ["", ""],
   ])("uncapitalizes %s to %s", (input, expected) => {
     expect(uncapitalize(input)).toBe(expected);
-  });
-});
-
-describe("normalizeType", () => {
-  it.each([
-    ["string", "string"],
-    ["number", "number"],
-    ["boolean", "boolean"],
-    ["Date", "string"],
-    ["SomethingElse", "string"],
-  ])("normalizes %s to %s", (input, expected) => {
-    expect(normalizeType(input)).toBe(expected);
-  });
-});
-
-describe("normalizeType", () => {
-  it.each([
-    ["string", "string"],
-    ["number", "number"],
-    ["boolean", "boolean"],
-    ["Date", "string"],
-    ["Foo", "string"],
-  ])("normalizes TypeScript type %s to JSON Schema type %s", (input, expected) => {
-    expect(normalizeType(input)).toBe(expected);
-  });
-});
-
-describe("matchField", () => {
-  it.each([
-    [
-      `
-        plural: "widgets",
-        scope: "Namespaced",
-        shortName: "wg"
-      `,
-      "plural",
-      "widgets",
-    ],
-    [
-      `
-        plural: "widgets",
-        scope: "Namespaced",
-        shortName: "wg"
-      `,
-      "scope",
-      "Namespaced",
-    ],
-    [
-      `
-        plural: "widgets",
-        scope: "Namespaced",
-        shortName: "wg"
-      `,
-      "shortName",
-      "wg",
-    ],
-    [
-      `
-        kind: "Gadget"
-      `,
-      "plural",
-      undefined,
-    ],
-    [
-      `
-        plural   :    'things'
-      `,
-      "plural",
-      "things",
-    ],
-    [
-      `
-        example: { foo: "bar" }
-      `,
-      "example",
-      undefined,
-    ],
-  ])("extracts '%s' from key '%s' => '%s'", (input, key, expected) => {
-    expect(matchField(input, key)).toBe(expected);
   });
 });

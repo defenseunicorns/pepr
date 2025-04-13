@@ -71,7 +71,6 @@ describe("crd", () => {
           await fs.access(crdFilePath);
           crd = await fs.readFile(crdFilePath, "utf8");
           crdJSON = yaml.load(crd) as kind.CustomResourceDefinition;
-          expect(true).toBe(true);
           expect(crdJSON).toBeDefined();
           expect(crd).toBeDefined();
         } catch (err) {
