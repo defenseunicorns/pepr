@@ -15,6 +15,7 @@ import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
+import crd from "./cli/crd";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -26,6 +27,8 @@ if (!process.env.PEPR_NODE_WARNINGS) {
 }
 program
   .version(version)
+  .enablePositionalOptions()
+  .passThroughOptions()
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
   .action(() => {
     if (program.args.length < 1) {
@@ -47,4 +50,5 @@ format(program);
 monitor(program);
 uuid(program);
 kfc(program);
+crd(program);
 program.parse();
