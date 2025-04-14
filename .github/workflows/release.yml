@@ -48,7 +48,7 @@ jobs:
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./.github/workflows/scripts/release.sh ${{ github.ref_name }}
+        run: VERSION=${{ github.ref_name }} && ./.github/workflows/scripts/release.sh "${VERSION:1}" # Strip the leading 'v' to match nightly release process
   slsa:
     permissions:
       id-token: write
