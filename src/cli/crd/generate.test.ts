@@ -55,8 +55,8 @@ describe("generate.ts", () => {
   describe("getAPIVersions", () => {
     it("should return directories from the api root", () => {
       (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "v2"]);
-      (fs.statSync as jest.Mock).mockImplementation(p => ({
-        isDirectory: () => typeof p === "string" && (p.endsWith("v1") || p.endsWith("v2")),
+      (fs.statSync as jest.Mock).mockImplementation(path => ({
+        isDirectory: () => typeof path === "string" && (path.endsWith("v1") || p.endsWith("v2")),
       }));
 
       const versions = getAPIVersions("/api");
