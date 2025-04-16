@@ -81,13 +81,13 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    console.warn(`⚠️ Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`);
+    console.warn(`Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`);
     return;
   }
 
   const spec = sourceFile.getInterface(`${kind}Spec`);
   if (!spec) {
-    console.warn(`⚠️ Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
+    console.warn(`Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
     return;
   }
 
