@@ -9,7 +9,9 @@ The `MetricsCollector` exposes the following metrics:
 - `pepr_errors`: A counter that increments when an error event occurs in the application.
 - `pepr_alerts`: A counter that increments when an alert event is triggered in the application.
 - `pepr_mutate`: A summary that provides the observed durations of mutation events in the application.
+- `pepr_mutate_timeouts` : A counter that increments when a webhook timeout occurs during mutation.
 - `pepr_validate`: A summary that provides the observed durations of validation events in the application.
+- `pepr_validate_timeouts` : A counter that increments when a webhook timeout occurs during validation.
 - `pepr_cache_miss`: A gauge that provides the number of cache misses per window.
 - `pepr_resync_failure_count`: A gauge that provides the number of unsuccessful attempts at receiving an event within the last seen event limit before re-establishing a new connection.
 
