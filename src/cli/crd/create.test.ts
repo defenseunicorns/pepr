@@ -35,14 +35,12 @@ describe("validateScope", () => {
     jest.clearAllMocks();
   });
 
-  it("should return the scope if it is valid - Cluster", () => {
-    const result = validateScope("Cluster");
-    expect(result).toBe("Cluster");
-  });
-
-  it("should return the scope if it is valid - Namespaced", () => {
-    const result = validateScope("Namespaced");
-    expect(result).toBe("Namespaced");
+  it.each([
+    ["Cluster"],
+    ["Namespaced"],
+  ])("should return the scope if it is valid - %s", (input) => {
+    const result = validateScope(input);
+    expect(result).toBe(input);
   });
 
   it("should throw an error if the scope is invalid", () => {
