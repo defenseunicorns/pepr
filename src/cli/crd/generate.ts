@@ -140,15 +140,15 @@ export function extractDetails(sourceFile: SourceFile): {
   };
 
   const scope = getStr("scope");
-  if (scope !== "Cluster" && scope !== "Namespaced") {
-    throw new Error(`'scope' must be either "Cluster" or "Namespaced", got "${scope}"`);
+  if (scope === "Cluster" || scope === "Namespaced") {
+    return {
+      plural: getStr("plural"),
+      scope,
+      shortName: getStr("shortName"),
+    };
   }
 
-  return {
-    plural: getStr("plural"),
-    scope,
-    shortName: getStr("shortName"),
-  };
+  throw new Error(`'scope' must be either "Cluster" or "Namespaced", got "${scope}"`);
 }
 
 export function getJsDocDescription(node: Node): string {
