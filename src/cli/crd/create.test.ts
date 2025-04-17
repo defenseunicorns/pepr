@@ -35,10 +35,7 @@ describe("validateScope", () => {
     jest.clearAllMocks();
   });
 
-  it.each([
-    ["Cluster"],
-    ["Namespaced"],
-  ])("should return the scope if it is valid - %s", (input) => {
+  it.each([["Cluster"], ["Namespaced"]])("should return the scope if it is valid - %s", input => {
     const result = validateScope(input);
     expect(result).toBe(input);
   });
