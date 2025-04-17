@@ -54,8 +54,10 @@ tar -zcvf pepr-0.0.0-development.tar.gz pepr
 mv pepr-0.0.0-development.tgz "${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
 
 # Build Docker images
-docker build --build-arg PEPR_BUILD_VERSION=0.0.0 -t pepr:amd -f Dockerfile.ironbank.amd .
-docker build --build-arg PEPR_BUILD_VERSION=0.0.0 -t pepr:arm -f Dockerfile.ironbank.arm .
+export PEPR_BUILD_VERSION
+PEPR_BUILD_VERSION=v$(npx pepr@latest --version)
+docker build --build-arg PEPR_BUILD_VERSION="$PEPR_BUILD_VERSION" -t pepr:amd -f Dockerfile.ironbank.amd .
+docker build --build-arg PEPR_BUILD_VERSION="$PEPR_BUILD_VERSION" -t pepr:arm -f Dockerfile.ironbank.arm .
 
 # Save Docker images
 docker image save --output "$PEPR_AMD_TAR" pepr:amd
