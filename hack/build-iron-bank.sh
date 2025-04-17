@@ -24,10 +24,8 @@ cd "$PEPR"
 
 # Define output image tar paths
 PEPR_AMD_TAR="$GITHUB_WORKSPACE/pepr-amd-img.tar"
-PEPR_ARM_TAR="$GITHUB_WORKSPACE/pepr-arm-img.tar"
 
 echo "PEPR_AMD_TAR=${PEPR_AMD_TAR}"
-echo "PEPR_ARM_TAR=${PEPR_ARM_TAR}"
 
 # Build Pepr
 npm run build
@@ -57,12 +55,9 @@ mv pepr-0.0.0-development.tgz "${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
 export PEPR_BUILD_VERSION
 PEPR_BUILD_VERSION=v$(npx pepr@latest --version)
 docker build --build-arg PEPR_BUILD_VERSION="$PEPR_BUILD_VERSION" -t pepr:amd -f Dockerfile.ironbank.amd .
-docker build --build-arg PEPR_BUILD_VERSION="$PEPR_BUILD_VERSION" -t pepr:arm -f Dockerfile.ironbank.arm .
 
 # Save Docker images
 docker image save --output "$PEPR_AMD_TAR" pepr:amd
-docker image save --output "$PEPR_ARM_TAR" pepr:arm
 
 echo "Build complete! Images saved to:"
 echo "  - $PEPR_AMD_TAR"
-echo "  - $PEPR_ARM_TAR"
