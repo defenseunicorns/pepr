@@ -192,18 +192,23 @@ export async function generateYamlAndWriteToDisk(obj: {
   const yamlFile = `pepr-module-${uuid}.yaml`;
   const chartPath = `${uuid}-chart`;
   const yamlPath = resolve(outputDir, yamlFile);
-  const yaml = await assets.allYaml(generateAllYaml, getDeployment, getWatcher, imagePullSecret);
-  const zarfPath = resolve(outputDir, "zarf.yaml");
+  try {
+    const yaml = await assets.allYaml(generateAllYaml, getDeployment, getWatcher, imagePullSecret);
+    const zarfPath = resolve(outputDir, "zarf.yaml");
 
-  let localZarf = "";
-  if (zarf === "chart") {
-    localZarf = assets.zarfYamlChart(generateZarfYamlGeneric, chartPath);
-  } else {
-    localZarf = assets.zarfYaml(generateZarfYamlGeneric, yamlFile);
+    let localZarf = "";
+    if (zarf === "chart") {
+      localZarf = assets.zarfYamlChart(generateZarfYamlGeneric, chartPath);
+    } else {
+      localZarf = assets.zarfYaml(generateZarfYamlGeneric, yamlFile);
+    }
+    await fs.writeFile(yamlPath, yaml);
+    await fs.writeFile(zarfPath, localZarf);
+
+    await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
+    console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
+  } catch (error) {
+    console.error(`Error generating YAML: ${error}`);
+    process.exit(1);
   }
-  await fs.writeFile(yamlPath, yaml);
-  await fs.writeFile(zarfPath, localZarf);
-
-  await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
-  console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
 }
