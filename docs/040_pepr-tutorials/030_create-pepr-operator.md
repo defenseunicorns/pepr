@@ -130,14 +130,14 @@ Examine `register.ts` and observe...
 
 
 Create a file to ensure that instances of the WebApp resource are in valid namespaces and have a maximum of `7` replicas.
-Create a `validate.ts` file with the command:
+Create a `validator.ts` file with the command:
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/validator.ts \
   -o capabilities/crd/validator.ts
 ```
 
-Examine `register.ts` and observe...
+Examine `validator.ts` and observe...
 <!-- Point out some useful things here -->
 
 In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of `7` replicas.
