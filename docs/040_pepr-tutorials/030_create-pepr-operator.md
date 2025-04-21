@@ -32,7 +32,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 2. [Define the WebApp CRD](#create-crd)
 3. [Create Helper Functions](#create-helpers)
 4. [Implement the Reconciler](#create-reconciler)
-5. [Build and Deploy Your Operator](#build-and-deploy)
+5. [Build and Deploy Your Operator](#build-and-deploy-your-operator)
 6. [Test Your Operator](#test-your-operator)
 
 ## Create a new Pepr Module
@@ -813,7 +813,7 @@ When(a.ConfigMap)
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
 
-## Demo
+## Build and Deploy Your Operator
 
 Create an ephemeral cluster (Kind or k3d will work).
 
@@ -879,6 +879,8 @@ FIELDS:
   theme <string> -required-
     Theme defines the theme of the web application, either dark or light.
 ```
+
+## Test Your Operator
 
 Create an instance of a `WebApp` in English with the light theme and 1 replica
 
