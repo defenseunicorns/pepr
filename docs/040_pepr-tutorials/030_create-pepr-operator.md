@@ -71,6 +71,7 @@ Now, let's define the WebApp CRD that includes:
 
 <details>
 <summary>WebApp CRD</summary>
+
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -135,6 +136,7 @@ spec:
     shortNames:
     - wa
 ```
+
 </details>
 
 Status should also be listed under `subresources` to make it writable. We provide descriptions under the properties for clarity around what the property is used for. Enums are useful to limit the values that can be used for a property.
