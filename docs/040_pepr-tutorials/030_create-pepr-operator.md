@@ -665,6 +665,9 @@ Now, create the function that reacts to changes across WebApp instances. This fu
 
 In the base of the `capabilities` folder, create a `reconciler.ts` file and add the following:
 
+<details>
+<summary>Reconciler Implementation</summary>
+
 ```typescript
 import { K8s, Log, sdk } from "pepr";
 import Deploy from "./controller/generators";
@@ -741,7 +744,13 @@ async function updateStatus(instance: WebApp, status: Status) {
 }
 ```
 
+</details>
+
+
 Finally create the `index.ts` file in the `capabilities` folder and add the following:
+
+<details>
+<summary>index.ts Implementation</summary>
 
 ```typescript
 import { Capability, a, Log } from "pepr";
@@ -819,8 +828,9 @@ When(a.ConfigMap)
     ) as a.GenericKind;
       await Deploy(instance);
   });
-
 ```
+
+</details>
 
 - When a WebApp is created or updated, validate it, store the name of the instance and enqueue it for processing.
 - If an "owned" resource (ConfigMap, Service, or Deployment) is deleted, redeploy it.
