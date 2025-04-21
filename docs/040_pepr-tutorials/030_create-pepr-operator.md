@@ -24,9 +24,10 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 ## Prerequisites
 
 - A Kubernetes cluster (local or remote)
-- Node.js ≥ 18.0
+- Access to the `curl` command
 - Basic understanding of Kubernetes concepts
 - Familiarity with TypeScript
+- Node.js ≥ 18.0
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
@@ -59,114 +60,48 @@ npx pepr init \
 ## Create CRD
 
 The WebApp Custom Resource Definition (CRD) specifies the structure and validation for your custom resource.
-
-First, create the necessary directory structure:
+Create the necessary directory structure:
 
 ```bash
 mkdir -p capabilities/crd/generated capabilities/crd/source
 ```
 
-Now, let's define the WebApp CRD that includes:
+Create a CRD named `crd.yaml` for the WebApp that includes:
 - Theme selection (dark/light)
 - Language selection (en/es)
 - Configurable replica count
 - Status tracking
 
-<details>
-<summary>WebApp CRD</summary>
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: webapps.pepr.io
-spec:
-  group: pepr.io
-  versions:
-    - name: v1alpha1
-      served: true
-      storage: true
-      subresources:
-        status: {}
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            apiVersion:
-              type: string
-            kind:
-              type: string
-            metadata:
-              type: object
-            spec:
-              required:
-                - theme
-                - language
-                - replicas
-              type: object
-              properties:
-                theme:
-                  type: string
-                  description: "Theme defines the theme of the web application, either dark or light."
-                  enum:
-                    - "dark"
-                    - "light"
-                language:
-                  type: string
-                  description: "Language defines the language of the web application, either English (en) or Spanish (es)."
-                  enum:
-                    - "en"
-                    - "es"
-                replicas:
-                  type: integer
-                  description: "Replicas is the number of desired replicas."
-            status:
-              type: object
-              properties:
-                observedGeneration:
-                  type: integer
-                phase:
-                  type: string
-                  enum:
-                    - "Failed"
-                    - "Pending"
-                    - "Ready"
-  scope: Namespaced
-  names:
-    plural: webapps
-    singular: webapp
-    kind: WebApp
-    shortNames:
-    - wa
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/source/crd.yaml \
+  -o capabilities/crd/source/crd.yaml
 ```
 
-</details>
+Examine the contents of `capabilities/crd/source/crd.yaml`.
+Status should also be listed under `subresources` to make it writable.
+We provide descriptions under the properties for clarity around what the property is used for.
+Enums are useful to limit the values that can be used for a property.
 
-Status should also be listed under `subresources` to make it writable. We provide descriptions under the properties for clarity around what the property is used for. Enums are useful to limit the values that can be used for a property.
-
-Go to the `capabilities` directory, create a new directory called `crd` with two child folders, generated and source.
+Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client).
+This way we can react to the fields of the CRD in a type-safe manner.
 
 ```bash
-mkdir -p capabilities/crd/generated capabilities/crd/source  
+npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml capabilities/crd/generated/
 ```
 
-Generate a class based on the WebApp CRD using `kubernetes-fluent-client`. This way we can react to the fields of the CRD in a type-safe way.
+Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
+
+Change the first lines of `webapp-v1alphav1.ts` with the command:
+<!-- Why do we do this? -->
 
 ```bash
-npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml . 
+sed -i '' '1,/Status;/c\
+import { a, RegisterKind } from "pepr";\
+export class WebApp extends a.GenericKind {\
+    spec?:       Spec;\
+    status?:     Status;\
+' capabilities/crd/generated/webapp-v1alpha1.ts
 ```
-
-Change the first lines of the generated file to the following:
-
-```typescript
-import { a, RegisterKind } from "pepr";
-export class WebApp extends a.GenericKind {
-    spec?:       Spec;
-    status?:     Status;
-}
-```
-
-Move the updated file to `capabilities/crd/generated/webapp-v1alpha1.ts`.
 
 In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
 
