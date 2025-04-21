@@ -167,6 +167,9 @@ Move the updated file to `capabilities/crd/generated/webapp-v1alpha1.ts`.
 
 In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
 
+<details>
+<summary>WebApp CRD in Typescript</summary>
+
 ```typescript
 export const WebAppCRD = {
   apiVersion: "apiextensions.k8s.io/v1",
@@ -246,6 +249,8 @@ export const WebAppCRD = {
   },
 };
 ```
+
+</details>
 
 Add a `register.ts` file to the `capabilities/crd/` folder and add the following. This will auto register the CRD on startup.
 
