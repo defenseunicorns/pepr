@@ -273,6 +273,9 @@ export const RegisterCRD = () => {
 
 Finally add a `validate.ts` file to the `crd` folder and add the following. This will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
 
+<details>
+<summary>Implementation of validate.ts</summary>
+
 ```typescript
 import { PeprValidateRequest } from "pepr";
 
@@ -302,6 +305,8 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
   return req.Approve();
 }
 ```
+
+</details>
 
 In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
 
