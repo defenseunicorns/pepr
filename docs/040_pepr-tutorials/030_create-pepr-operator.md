@@ -46,17 +46,12 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 First, create a new Pepr module for your operator:
 
 ```bash
-npx pepr init
-
-# output
-✔ Enter a name for the new Pepr module. This will create a new directory based on the name.
- … operator
-✔ (Recommended) Enter a description for the new Pepr module.
- … Kubernetes Controller for WebApp Resources
-? How do you want Pepr to handle errors encountered during K8s operations? › - Use arrow-keys. Return to submit.
-    Ignore
-    Log an audit event
-❯   Reject the operation - Pepr will reject the operation and return an error to the client.
+npx pepr init \
+  --name operator \
+  --uuid my-operator-uuid \
+  --description "Kubernetes Controller for WebApp Resources" \
+  --errorBehavior reject \
+  --confirm
 ```
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
