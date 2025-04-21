@@ -348,7 +348,6 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
   const compressedData = compressed.toString("base64");
   if (secretOverLimit(compressedData)) {
     const error = new Error(`Module secret for ${name} is over the 1MB limit`);
-    console.error("Uncaught Exception:", error);
     throw error;
   } else {
     return {
