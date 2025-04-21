@@ -19,12 +19,16 @@ The WebApp Operator will:
 
 All resources will include `ownerReferences`, triggering cascading deletion when a WebApp is removed. The operator will also automatically restore any managed resources that are deleted externally.
 
+[Back to top](#building-a-kubernetes-operator-with-pepr)
+
 ## Prerequisites
 
 - A Kubernetes cluster (local or remote)
 - Node.js ≥ 18.0
 - Basic understanding of Kubernetes concepts
 - Familiarity with TypeScript
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Tutorial Steps
 
@@ -34,6 +38,8 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 4. [Implement the Reconciler](#create-reconciler)
 5. [Build and Deploy Your Operator](#build-and-deploy-your-operator)
 6. [Test Your Operator](#test-your-operator)
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create a new Pepr Module
 
@@ -52,6 +58,8 @@ npx pepr init
     Log an audit event
 ❯   Reject the operation - Pepr will reject the operation and return an error to the client.
 ```
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create CRD
 
@@ -314,6 +322,8 @@ export async function validator(req: PeprValidateRequest<WebApp>) {
 </details>
 
 In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Helpers
 
@@ -669,6 +679,8 @@ Our job is to make the deployment of the WebApp simple. Instead of having to kee
 
 We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
 
+[Back to top](#building-a-kubernetes-operator-with-pepr)
+
 ## Create Reconciler
 
 Now, create the function that reacts to changes across WebApp instances. This function will be called and put into a queue, guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
@@ -848,6 +860,8 @@ When(a.ConfigMap)
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
 
+[Back to top](#building-a-kubernetes-operator-with-pepr)
+
 ## Build and Deploy Your Operator
 
 Create an ephemeral cluster (Kind or k3d will work).
@@ -914,6 +928,8 @@ FIELDS:
   theme <string> -required-
     Theme defines the theme of the web application, either dark or light.
 ```
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Test Your Operator
 
@@ -1054,6 +1070,8 @@ configmap/kube-root-ca.crt   1      40s
 
 When the WebApp is deleted, all of the resources that it created are also deleted.
 
+[Back to top](#building-a-kubernetes-operator-with-pepr)
+
 ## Conclusion
 
 Congratulations! You've successfully built a Kubernetes Operator using Pepr. Your operator:
@@ -1065,6 +1083,8 @@ Congratulations! You've successfully built a Kubernetes Operator using Pepr. You
 
 This pattern is powerful for creating reusable, self-managing applications in Kubernetes.
 
+[Back to top](#building-a-kubernetes-operator-with-pepr)
+
 ## Next Steps
 
 - Add more sophisticated validations for your WebApp CRD
@@ -1073,3 +1093,5 @@ This pattern is powerful for creating reusable, self-managing applications in Ku
 - Create a custom metrics dashboard for your WebApp
 
 For more examples and reference, check out the [Pepr documentation](https://docs.pepr.dev) and [Pepr GitHub repository](https://github.com/defenseunicorns/pepr). Also, checkout the finished example in [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator).
+
+[Back to top](#building-a-kubernetes-operator-with-pepr)
