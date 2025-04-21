@@ -1,26 +1,43 @@
-# Tutorial - Create an Operator in Pepr
+# Building a Kubernetes Operator with Pepr
 
 ## Introduction
 
-This tutorial will walk you through the process of building a Kubernetes Operator in Pepr. If you get stuck, browse over to the [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator) to see the finished code.
+This tutorial guides you through building a Kubernetes Operator using Pepr. You'll create a WebApp Operator that manages custom WebApp resources in your Kubernetes cluster.
 
-## Background
+If you get stuck at any point, you can reference the [complete example code in the Pepr Excellent Examples repository](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator).
 
-The WebApp Operator deploys the WebApp `CustomResourceDefinition`, then watches and reconciles against instances of WebApps to ensure the desired state meets the actual cluster state.
+## What You'll Build
 
-The WebApp instance represents a `Deployment` object with configurable replicas, a `Service`, and a `ConfigMap` that has a `index.html` file that can be configured to a specific language, and theme. The resources the Operator deploys contain `ownerReferences`, causing a cascading delete effect when the WebApp instance is deleted.
+The WebApp Operator will:
 
-If any object deployed by the Operator is deleted for any reason, the Operator will abruptly redeploy the object.
+1. Deploy a custom `WebApp` resource definition (CRD)
+2. Watch for WebApp instances and reconcile them with actual cluster state
+3. For each WebApp instance, manage:
+   - A `Deployment` with configurable replicas
+   - A `Service` to expose the application
+   - A `ConfigMap` containing configurable HTML with language and theme options
 
-## Steps
+All resources will include `ownerReferences`, triggering cascading deletion when a WebApp is removed. The operator will also automatically restore any managed resources that are deleted externally.
 
-- [Create a new Pepr Module](#create-a-new-pepr-module)
-- [Create CRD](#create-crd)
-- [Create Helpers](#create-helpers)
-- [Create Reconciler](#create-reconciler)
-- [Build and Deploy](#demo)
+## Prerequisites
+
+- A Kubernetes cluster (local or remote)
+- Node.js ≥ 18.0
+- Basic understanding of Kubernetes concepts
+- Familiarity with TypeScript
+
+## Tutorial Steps
+
+1. [Create a new Pepr Module](#create-a-new-pepr-module)
+2. [Define the WebApp CRD](#create-crd)
+3. [Create Helper Functions](#create-helpers)
+4. [Implement the Reconciler](#create-reconciler)
+5. [Build and Deploy Your Operator](#build-and-deploy)
+6. [Test Your Operator](#test-your-operator)
 
 ## Create a new Pepr Module
+
+First, create a new Pepr module for your operator:
 
 ```bash
 npx pepr init
@@ -38,7 +55,19 @@ npx pepr init
 
 ## Create CRD
 
-The WebApp CRD has the following properties: `theme`, `language`, and `replicas` with a `status` section used to track the status of the WebApp resource.
+The WebApp Custom Resource Definition (CRD) specifies the structure and validation for your custom resource.
+
+First, create the necessary directory structure:
+
+```bash
+mkdir -p capabilities/crd/generated capabilities/crd/source
+```
+
+Now, let's define the WebApp CRD that includes:
+- Theme selection (dark/light)
+- Language selection (en/es)
+- Configurable replica count
+- Status tracking
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -268,7 +297,7 @@ In this section we generated the CRD class for WebApp, created a function to aut
 
 ## Create Helpers
 
-In this section we will create helper functions to help with the reconciliation process. The idea is that this operator will "remedy" any accidental deletions of the resources it creates. If any object deployed by the Operator is deleted for any reason, the Operator will automatically redeploy the object.
+Now, let's create helper functions that will generate the Kubernetes resources managed by our operator. These helpers will simplify the creation of Deployments, Services, and ConfigMaps for each WebApp instance.
 
 Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes Objects for the Operator to deploy (with the ownerReferences auto-included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
@@ -358,8 +387,10 @@ function deployment(instance: WebApp) {
   };
 }
 
-function service(instance: WebApp) {
+// Generate a Service for a WebApp instance
+export function service(instance: WebApp) {
   const { name, namespace } = instance.metadata!;
+
   return {
     apiVersion: "v1",
     kind: "Service",
@@ -387,7 +418,8 @@ function service(instance: WebApp) {
   };
 }
 
-function configmap(instance: WebApp) {
+// Generate a ConfigMap with themed and localized HTML content
+export function configmap(instance: WebApp) {
   const { name, namespace } = instance.metadata!;
   const { language, theme } = instance.spec!;
 
@@ -552,12 +584,12 @@ function configmap(instance: WebApp) {
         <img src="https://raw.githubusercontent.com/defenseunicorns/pepr/main/_images/pepr.png" alt="Pepr Logo">
         <h1>Pepr - Kubernetes Controller</h1>
         <img src="https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png" alt="Kubernetes Logo">
-    </div>
+        </div>
     <div class="container">
         <div class="section">
             <h2>About the Project</h2>
             <p>Our Kubernetes Admission Controller and Operator are designed to ensure security, efficiency, and reliability in your container orchestration. The Admission Controller provides rigorous security checks and governance, while the Operator simplifies complex operations, making management a breeze.</p>
-        </div>
+    </div>
         <div class="section">
             <h2>Features</h2>
             <p><strong>Admission Controller:</strong> Automated compliance checks, real-time security enforcement, and seamless integration with your CI/CD pipeline.</p>
@@ -586,7 +618,7 @@ function configmap(instance: WebApp) {
     </head>
     <body>
         ${language === "en" ? en : es}
-    </body>
+</body>
     </html>
         `;
 
@@ -719,12 +751,12 @@ When(WebApp)
   .IsCreatedOrUpdated()
   .Validate(validator)
   .Reconcile(async instance => {
-    try {
+  try {
       Store.setItem(instance.metadata.name, JSON.stringify(instance));
       await reconciler(instance);
     } catch (error) {
       Log.info(`Error reconciling instance of WebApp`);
-    }
+  }
   });
 
 // Remove the instance from the store BEFORE it is deleted so reconcile stops 
@@ -752,7 +784,7 @@ When(a.Deployment)
     const instance = JSON.parse(
       Store.getItem(deploy.metadata!.labels["pepr.dev/operator"]),
     ) as a.GenericKind;
-    await Deploy(instance);
+      await Deploy(instance);
   });
 When(a.Service)
   .IsDeleted()
@@ -761,7 +793,7 @@ When(a.Service)
     const instance = JSON.parse(
       Store.getItem(svc.metadata!.labels["pepr.dev/operator"]),
     ) as a.GenericKind;
-    await Deploy(instance);
+      await Deploy(instance);
   });
 When(a.ConfigMap)
   .IsDeleted()
@@ -770,7 +802,7 @@ When(a.ConfigMap)
     const instance = JSON.parse(
       Store.getItem(cm.metadata!.labels["pepr.dev/operator"]),
     ) as a.GenericKind;
-    await Deploy(instance);
+      await Deploy(instance);
   });
 
 ```
@@ -798,20 +830,25 @@ Make sure Pepr is update to date
 npx pepr update
 ```
 
-Build the Pepr manifests (Already built with appropriate RBAC)
+This command will:
+1. Compile your TypeScript code
+2. Bundle the operator into a deployable format
+3. Generate Kubernetes manifests in the `dist` directory
 
 ```bash
 npx pepr build
 ```
 
-Deploy the Operator
+### Deploy to Kubernetes
+
+To deploy your operator to a Kubernetes cluster:
 
 ```bash
 kubectl apply -f dist/pepr-module-774fab07-77fa-517c-b5f8-c682c96c20c0.yaml
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
-Notice that the WebApp CRD has been deployed
+Verify the deployment was successful:
 
 ```bash
 kubectl get crd | grep webapp
@@ -860,7 +897,7 @@ spec:
 EOF
 ```
 
-Check that the `ConfigMap`, `Service` and `Deployment` are deployed
+Verify that the WebApp was created:
 
 ```bash
 kubectl get cm,svc,deploy -n webapps
@@ -956,7 +993,7 @@ EOF
 webapp.pepr.io/webapp-light-en configured
 ```
 
-Port-forward and look at the WebApp in the browser
+Port-forward the service again and refresh your browser to see the light theme:
 
 ```bash
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
@@ -981,6 +1018,20 @@ When the WebApp is deleted, all of the resources that it created are also delete
 
 ## Conclusion
 
-In this tutorial we created a Kubernetes Operator using Pepr. We created a CRD, created helper functions to help with the reconciliation process, and created a queue and reconciler to reconcile the state of the instance with the cluster. We also built and deployed the Operator and created an instance of the WebApp resource and watched the Operator reconcile the state of the instance with the cluster. Finally, we updated and deleted the instance and watched the Operator reconcile the manifests based in the updated instance and delete the resources when the instance was deleted.
+Congratulations! You've successfully built a Kubernetes Operator using Pepr. Your operator:
 
-If you have questions, reach out in the [Slack channel](https://kubernetes.slack.com/archives/C06DGH40UCB) or [GitHub](https://github.com/defenseunicorns/pepr). Also, checkout the finished example in [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator)
+1. Manages a custom resource (WebApp)
+2. Creates and maintains the required resources (Deployment, Service, ConfigMap)
+3. Automatically reconciles resources to maintain the desired state 
+4. Updates resources when the custom resource is modified
+
+This pattern is powerful for creating reusable, self-managing applications in Kubernetes.
+
+## Next Steps
+
+- Add more sophisticated validations for your WebApp CRD
+- Implement more detailed status reporting
+- Add support for horizontal auto-scaling
+- Create a custom metrics dashboard for your WebApp
+
+For more examples and reference, check out the [Pepr documentation](https://docs.pepr.dev) and [Pepr GitHub repository](https://github.com/defenseunicorns/pepr). Also, checkout the finished example in [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator).
