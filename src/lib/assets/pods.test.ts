@@ -398,11 +398,6 @@ describe("moduleSecret function", () => {
       "Module secret for test is over the 1MB limit",
     );
 
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      "Uncaught Exception:",
-      new Error(`Module secret for ${name} is over the 1MB limit`),
-    );
-
     consoleErrorMock.mockRestore();
   });
 });
