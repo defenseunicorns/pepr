@@ -254,6 +254,9 @@ export const WebAppCRD = {
 
 Add a `register.ts` file to the `capabilities/crd/` folder and add the following. This will auto register the CRD on startup.
 
+<details>
+<summary>Implementation of register.ts</summary>
+
 ```typescript
 import { K8s, Log, kind } from "pepr";
 
@@ -270,6 +273,8 @@ export const RegisterCRD = () => {
 };
 (() => RegisterCRD())();
 ```
+
+</details>
 
 Finally add a `validate.ts` file to the `crd` folder and add the following. This will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
 
