@@ -40,6 +40,7 @@
   "ignorePatterns": [
     "src/templates",
     "node_modules",
+    "docs",
     "dist",
     "hack",
     "pepr-test-module",

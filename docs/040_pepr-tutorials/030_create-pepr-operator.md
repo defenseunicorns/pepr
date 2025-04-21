@@ -311,6 +311,9 @@ Now, let's create helper functions that will generate the Kubernetes resources m
 
 Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes Objects for the Operator to deploy (with the ownerReferences auto-included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
+<details>
+<summary>Implementation of generators.ts</summary>
+
 ```typescript
 import { kind, K8s, Log, sdk } from "pepr";
 import { WebApp } from "../crd/generated/webapp-v1alpha1";
@@ -649,6 +652,8 @@ export function configmap(instance: WebApp) {
   };
 }
 ```
+
+</details>
 
 Our job is to make the deployment of the WebApp simple. Instead of having to keep track of the versions and revisions of all of the Kubernetes Objects required for the WebApp, rolling pods and updating configMaps, the deployer now only needs to focus on the `WebApp` instance. The controller will reconcile instances of the operand (WebApp) against the actual cluster state to reach the desired state.
 
