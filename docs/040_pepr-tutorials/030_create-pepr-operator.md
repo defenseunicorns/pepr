@@ -181,11 +181,25 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/reconciler.ts
 ```
 
+<!-- TODO: error in code produces build warning
+
+    {
+      eventType: "Normal",
+      eventReason: "InstanceCreatedOrUpdated",
+      reportingComponent: instance.metadata.name,
+      reportingInstance: instance.metadata.name
+    }
+
+-->
+
+
 Examine `reconciler.ts` and observe...
 <!-- Point out some useful things here -->
 
 
 Finally create the `index.ts` file in the `capabilities` folder and add the following:
+
+<!-- TODO: Unused error in code produces build warning -->
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/index.ts \
@@ -207,21 +221,26 @@ In this section we created a `reconciler.ts` file that contains the function tha
 
 Create an ephemeral cluster (Kind or k3d will work).
 
-Clone the Operator
+If you've followed the tutorial steps in a separate directory, skip this step.
+If you've encountered issues deploying the operator to a cluster, use the pepr-excellent-examples version of the `pepr-operator` to see a working example.
+
+If approprtiate, Clone the Operator. Otherwise, move on.
 
 ```bash
 git clone https://github.com/defenseunicorns/pepr-excellent-examples.git
 cd pepr-operator
 ```
 
-Make sure Pepr is update to date
+<!-- Perhaps the cluster was created incorrectly for local testing? -->
+Make sure Pepr is updated:
 
 ```bash
 npx pepr update
 ```
 
-This command will:
-1. Compile your TypeScript code
+Build the pepr module. This command performs three actions:
+
+1. Compile TypeScript code
 2. Bundle the operator into a deployable format
 3. Generate Kubernetes manifests in the `dist` directory
 
@@ -234,7 +253,7 @@ npx pepr build
 To deploy your operator to a Kubernetes cluster:
 
 ```bash
-kubectl apply -f dist/pepr-module-774fab07-77fa-517c-b5f8-c682c96c20c0.yaml
+kubectl apply -f dist/pepr-module-my-operator-uuid.yaml
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
@@ -294,7 +313,7 @@ EOF
 Verify that the WebApp was created:
 
 ```bash
-kubectl get cm,svc,deploy -n webapps
+kubectl get cm,svc,deploy,webapp -n webapps
 
 # output
 NAME                                    DATA   AGE
@@ -312,6 +331,7 @@ Get the Status of the WebApp
 
 ```json
 kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq  
+// TODO: Command doesn't work?
 
 # output
 {
