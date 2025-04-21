@@ -47,7 +47,6 @@ runs:
         git clone https://repo1.dso.mil/dsop/opensource/defenseunicorns/pepr/controller.git
         cd controller
         mv Dockerfile $PEPR/Dockerfile.ironbank.amd
-        mv Dockerfile.arm64 $PEPR/Dockerfile.ironbank.arm
         mv removeVersion.js $PEPR/removeVersion.js
 
     - name: Install Pepr Dependencies
@@ -67,6 +66,5 @@ runs:
         path: | 
           pepr-0.0.0-development.tgz
           pepr-amd-img.tar
-          pepr-arm-img.tar
         if-no-files-found: error
         retention-days: 1
