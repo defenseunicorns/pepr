@@ -105,153 +105,42 @@ export class WebApp extends a.GenericKind {\
 
 In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
 
-<details>
-<summary>WebApp CRD in Typescript</summary>
 
-```typescript
-export const WebAppCRD = {
-  apiVersion: "apiextensions.k8s.io/v1",
-  kind: "CustomResourceDefinition",
-  metadata: {
-    name: "webapps.pepr.io",
-  },
-  spec: {
-    group: "pepr.io",
-    versions: [
-      {
-        name: "v1alpha1",
-        served: true,
-        storage: true,
-        subresources: {
-          status: {},
-        },
-        schema: {
-          openAPIV3Schema: {
-            type: "object",
-            properties: {
-              apiVersion: {
-                type: "string",
-              },
-              kind: {
-                type: "string",
-              },
-              metadata: {
-                type: "object",
-              },
-              spec: {
-                type: "object",
-                properties: {
-                  theme: {
-                    type: "string",
-                    enum: ["dark", "light"],
-                    description:
-                      "Theme defines the theme of the web application, either dark or light.",
-                  },
-                  language: {
-                    type: "string",
-                    enum: ["en", "es"],
-                    description:
-                      "Language defines the language of the web application, either English (en) or Spanish (es).",
-                  },
-                  replicas: {
-                    type: "integer",
-                    description: "Replicas is the number of desired replicas.",
-                  },
-                },
-                required: ["theme", "language", "replicas"],
-              },
-              status: {
-                type: "object",
-                properties: {
-                  observedGeneration: {
-                    type: "integer",
-                  },
-                  phase: {
-                    type: "string",
-                    enum: ["Failed", "Pending", "Ready"],
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    ],
-    scope: "Namespaced",
-    names: {
-      plural: "webapps",
-      singular: "webapp",
-      kind: "WebApp",
-      shortNames: ["wa"],
-    },
-  },
-};
+Create a typescripte file that contains the webapp CRD named `webapp.crd.ts`.
+This will have the controller automatically create the CRD on startup.
+Use the command:
+
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/source/webapp.crd.ts \
+  -o capabilities/crd/source/webapp.crd.ts
 ```
 
-</details>
+Examine `webapp.crd.ts` and observe...
+<!-- Point out some useful things here -->
 
-Add a `register.ts` file to the `capabilities/crd/` folder and add the following. This will auto register the CRD on startup.
+Create a file that will automatically register the CRD on startup named `capabilities/crd/register.ts`. Use the command:
 
-<details>
-<summary>Implementation of register.ts</summary>
-
-```typescript
-import { K8s, Log, kind } from "pepr";
-
-import { WebAppCRD } from "./source/webapp.crd";
-
-export const RegisterCRD = () => {
-  K8s(kind.CustomResourceDefinition)
-    .Apply(WebAppCRD, { force: true })
-    .then(() => Log.info("WebApp CRD registered"))
-    .catch(err => {
-      Log.error(err);
-      process.exit(1);
-    });
-};
-(() => RegisterCRD())();
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/register.ts \
+  -o capabilities/crd/register.ts
 ```
 
-</details>
+Examine `register.ts` and observe...
+<!-- Point out some useful things here -->
 
-Finally add a `validate.ts` file to the `crd` folder and add the following. This will ensure that instances of the WebApp resource are in valid namespaces and have a maximum of 7 replicas.
 
-<details>
-<summary>Implementation of validate.ts</summary>
+Create a file to ensure that instances of the WebApp resource are in valid namespaces and have a maximum of `7` replicas.
+Create a `validate.ts` file with the command:
 
-```typescript
-import { PeprValidateRequest } from "pepr";
-
-import { WebApp } from "./generated/webapp-v1alpha1";
-
-const invalidNamespaces = [
-  "kube-system",
-  "kube-public",
-  "_unknown_",
-  "pepr-system",
-  "default",
-];
-
-export async function validator(req: PeprValidateRequest<WebApp>) {
-  const ns = req.Raw.metadata?.namespace ?? "_unknown_";
-
-  if (req.Raw.spec.replicas > 7) {
-    return req.Deny("max replicas is 7 to prevent noisy neighbors");
-  }
-  if (invalidNamespaces.includes(ns)) {
-    if (req.Raw.metadata?.namespace === "default") {
-      return req.Deny("default namespace is not allowed");
-    }
-    return req.Deny("invalid namespace");
-  }
-
-  return req.Approve();
-}
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/validator.ts \
+  -o capabilities/crd/validator.ts
 ```
 
-</details>
+Examine `register.ts` and observe...
+<!-- Point out some useful things here -->
 
-In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of 7 replicas.
+In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of `7` replicas.
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
