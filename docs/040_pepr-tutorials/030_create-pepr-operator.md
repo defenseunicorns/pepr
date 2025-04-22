@@ -425,21 +425,20 @@ This continuous loop ensures your application maintains its expected configurati
 
 ### Creating a WebApp Instance
 
-Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replica:
+Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replica.
+Copy down the WebApp resource with the following command:
 
-```yaml
-kubectl create ns webapps;
-kubectl apply -f -<<EOF
-kind: WebApp
-apiVersion: pepr.io/v1alpha1
-metadata:
-  name: webapp-light-en
-  namespace: webapps
-spec:
-  theme: light 
-  language: en
-  replicas: 1 
-EOF
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/webapp-light-en.yaml \
+  -o webapp-light-en.yaml
+```
+
+Examine the contents of `webapp-light-en.yaml`. Observe...
+Next, apply it to the cluster:
+
+```bash
+kubectl create namespace webapps
+kubectl apply -f webapp-light-en.yaml
 ```
 
 <details>
@@ -585,20 +584,24 @@ web-content-webapp-light-en   1      0s
 
 ### Updating the WebApp
 
-Now let's test changing the WebApp's specification:
+Now let's test changing the WebApp's specification.
+Copy down the next WebApp resource with the following command:
 
 ```bash
-kubectl apply -f -<<EOF
-kind: WebApp
-apiVersion: pepr.io/v1alpha1
-metadata:
-  name: webapp-light-en
-  namespace: webapps
-spec:
-  theme: dark 
-  language: es
-  replicas: 1 
-EOF
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/webapp-dark-es.yaml \
+  -o webapp-dark-es.yaml
+```
+
+Compare the contents of `webapp-light-en.yaml` and `webapp-dark-es.yaml` with the command:
+
+```bash
+diff --side-by-side \
+  webapp-light-en.yaml \
+  webapp-dark-es.yaml
+```
+
+```bash
+kubectl apply -f webapp-dark-es.yaml
 ```
 
 > 💡 **Note**: We've changed the theme from light to dark and the language from English (en) to Spanish (es).
