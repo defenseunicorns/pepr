@@ -219,35 +219,84 @@ In this section we created a `reconciler.ts` file that contains the function tha
 
 ## Build and Deploy Your Operator
 
+> 🌟 **Key Concepts**: In this section, we'll transform our code into a running Kubernetes operator that actively monitors and manages WebApp resources in your cluster.
+
+### Preparing Your Environment
+
 Create an ephemeral cluster (Kind or k3d will work).
+
+<!-- TODO: Add a sample command -->
+
+```bash
+k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system
+```
+
+<details>
+<summary>💡 What is an ephemeral cluster?</summary>
+An ephemeral cluster is a temporary Kubernetes cluster that exists only for testing purposes. Tools like Kind (Kubernetes in Docker) and k3d let you quickly create and destroy clusters without affecting your production environments.
+</details>
 
 If you've followed the tutorial steps in a separate directory, skip this step.
 If you've encountered issues deploying the operator to a cluster, use the pepr-excellent-examples version of the `pepr-operator` to see a working example.
 
-If approprtiate, Clone the Operator. Otherwise, move on.
+If appropriate, Clone the Operator. Otherwise, move on.
 
 ```bash
 git clone https://github.com/defenseunicorns/pepr-excellent-examples.git
 cd pepr-operator
 ```
 
-<!-- Perhaps the cluster was created incorrectly for local testing? -->
-Make sure Pepr is updated:
+#### Update and Prepare Pepr
+
+Make sure Pepr is updated to the latest version:
 
 ```bash
 npx pepr update --skip-template-update
-# TODO Can override by mistake, call out here
 ```
 
-Build the pepr module. This command performs three actions:
+> ⚠️ **Important Note**: Be cautious when updating Pepr in an existing project as it could potentially override custom configurations. The `--skip-template-update` flag helps prevent this.
 
-1. Compile TypeScript code
-2. Bundle the operator into a deployable format
-3. Generate Kubernetes manifests in the `dist` directory
+### Building the Operator
+
+Build the pepr module by running:
 
 ```bash
 npx pepr build
 ```
+
+<details>
+<summary>🔍 What happens during the build process?</summary>
+
+The `pepr build` command performs three critical steps:
+
+1. **Compile TypeScript**: Converts your TypeScript code to JavaScript using the settings in tsconfig.json
+2. **Bundle the Operator**: Packages everything into a deployable format using esbuild
+3. **Generate Kubernetes Manifests**: Creates all necessary YAML files in the `dist` directory, including:
+   - Custom Resource Definitions (CRDs)
+   - The controller deployment
+   - ServiceAccounts and RBAC permissions
+   - Any other resources needed for your operator
+
+This process creates a self-contained deployment unit that includes everything needed to run your operator in a Kubernetes cluster.
+
+```
+┌─────────────────────┐          ┌──────────────────┐          ┌───────────────────┐
+│                     │          │                  │          │                   │
+│  Your Pepr Code     │────────▶ │  pepr build      │────────▶ │ dist/             │
+│  (TypeScript)       │          │  (Build Process) │          │(Deployment Files) │
+│                     │          │                  │          │                   │
+└─────────────────────┘          └──────────────────┘          └───────────────────┘
+                                                                        │
+                                                                        │
+                                                                        ▼
+                                                               ┌───────────────────┐
+                                                               │                   │
+                                                               │  Kubernetes       │
+                                                               │  Cluster          │
+                                                               │                   │
+                                                               └───────────────────┘
+```
+</details>
 
 ### Deploy to Kubernetes
 
@@ -258,15 +307,50 @@ kubectl apply -f dist/pepr-module-my-operator-uuid.yaml
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
-Verify the deployment was successful:
-
 <!-- Issue with CRD generation, updated pepr.ts -->
+<details>
+<summary>🔍 What's happening here?</summary>
+
+1. The first command applies all the Kubernetes resources defined in the YAML file, including:
+   - The WebApp CRD (Custom Resource Definition)
+   - A Deployment that runs your operator code
+   - The necessary RBAC permissions for your operator to function
+   
+2. The second command waits for the operator pod to be ready before proceeding. This ensures your operator is running before you attempt to create WebApp resources.
+</details>
+
+#### Troubleshooting Deployment Issues
+
+<details>
+<summary>❓ My operator isn't starting or is crashing</summary>
+
+If your operator doesn't start properly, check these common issues:
+
+1. **Check pod logs**:
+   ```bash
+   kubectl logs -n pepr-system -l app --tail=100
+   ```
+   
+2. **Verify permissions**:
+   ```bash
+   kubectl describe deployment -n pepr-system
+   ```
+   Look for permission-related errors in the events section.
+   
+3. **Check for CRD issues**:
+</details>
+
+Verify the deployment was successful by checking if the CRD has been properly registered:
 
 ```bash
 kubectl get crd | grep webapp
 ```
 
-Explain the `WebApp.spec`
+You should see `webapps.pepr.io` in the output, which confirms your Custom Resource Definition was created successfully.
+
+#### Understanding the WebApp Resource
+
+You can use `kubectl explain` to see the structure of your custom resource:
 
 ```bash
 kubectl explain wa.spec
@@ -291,6 +375,8 @@ FIELDS:
   theme <string> -required-
     Theme defines the theme of the web application, either dark or light.
 ```
+
+> 💡 **Note**: `wa` is the short form of `webapp` that kubectl recognizes. This resource structure directly matches the TypeScript interface we defined earlier in our code.
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
