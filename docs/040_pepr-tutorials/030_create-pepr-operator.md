@@ -105,6 +105,8 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/crd/source/webapp.crd.ts
 ```
 
+Take a moment to commit your changes for CRD creation with `git add capabilities/crd/ && git commit -m "Create WebApp CRD"`
+
 Examine `webapp.crd.ts` and observe...
 <!-- Point out some useful things here -->
 
