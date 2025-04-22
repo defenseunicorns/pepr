@@ -619,17 +619,22 @@ kubectl apply -f webapp-dark-es.yaml
 
 > 💡 **Note**: We've changed the theme from light to dark and the language from English (en) to Spanish (es).
 
-Refresh your browser (with port-forwarding still active) to see the changes:
+Your port-forward should still be active, so you can refresh your browser to see the changes.
+If your porf-forward is no longer active for some reason, create a new one:
 
 ```bash
-kubectl port-forward svc/webapp-light-en -n webapps 3000:80
+# Only needed if previous port-forward closed
+kubectl port-forward svc/webapp-light-en -n webapps 3000:80 &
+PID=$!
+echo "Port-forward PID: $PID"
 ```
 
-Now open [http://localhost:3000](http://localhost:3000) in your browser to see your WebApp.
-Alternatively, run `curl http://localhost:3000` to see the response in a terminal.
-The result should look like this:
+Now open [http://localhost:3000](http://localhost:3000) in your browser or run `curl http://localhost:3000` to see the response in a terminal.
+The browser should display a dark theme web application:
 
 ![WebApp Dark Theme](resources/030_create-pepr-operator/dark.png)
+
+Now that we've successfully updated a WebApp, commit your changes: `git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mode in spanish"`
 
 <details>
 <summary>🔍 How does updating work?</summary>
@@ -647,8 +652,9 @@ The result should look like this:
 When you're done testing, you can delete your WebApp and verify that all owned resources are removed:
 
 ```bash
-kubectl delete wa -n webapps --all
-# wait a few seconds
+kill $PID && # Close port-forward
+kubectl delete wa -n webapps --all && 
+sleep 5 &&
 kubectl get cm,deploy,svc -n webapps
 ```
 
