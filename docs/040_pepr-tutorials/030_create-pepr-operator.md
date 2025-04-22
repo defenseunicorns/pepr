@@ -86,7 +86,15 @@ Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https:
 This way we can react to the fields of the CRD in a type-safe manner.
 
 ```bash
-npx kubernetes-fluent-client crd https://gist.githubusercontent.com/cmwylie19/69b765af5ab25af62696f3337df13687/raw/72f53db7ddc06fc8891dc81136a7c190bc70f41b/WebApp.yaml capabilities/crd/generated/
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/source/crd.yaml \
+  -o capabilities/crd/source/crd.yaml
+```
+
+Create a interface for the CRD spec with the following command:
+
+```bash
+curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/generated/webapp-v1alpha1.ts \
+  -o capabilities/crd/generated/webapp-v1alpha1.ts
 ```
 
 Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
@@ -94,19 +102,7 @@ Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
 Change the first lines of `webapp-v1alphav1.ts` with the command:
 <!-- Why do we do this? -->
 
-```bash
-sed -i '' '1,/Status;/c\
-import { a, RegisterKind } from "pepr";\
-export class WebApp extends a.GenericKind {\
-    spec?:       Spec;\
-    status?:     Status;\
-' capabilities/crd/generated/webapp-v1alpha1.ts
-```
-
-In the `capabilities/crd/source` folder, create a file called `webapp.crd.ts` and add the following. This will have the controller automatically create the CRD when it starts.
-
-
-Create a typescripte file that contains the webapp CRD named `webapp.crd.ts`.
+Create a typescript file that contains the webapp CRD named `webapp.crd.ts`.
 This will have the controller automatically create the CRD on startup.
 Use the command:
 
