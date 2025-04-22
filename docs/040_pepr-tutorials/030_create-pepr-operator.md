@@ -96,9 +96,6 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
 
 Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
 
-Change the first lines of `webapp-v1alphav1.ts` with the command:
-<!-- Why do we do this? -->
-
 Create a typescript file that contains the webapp CRD named `webapp.crd.ts`.
 This will have the controller automatically create the CRD on startup.
 Use the command:
