@@ -177,25 +177,10 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/reconciler.ts
 ```
 
-<!-- TODO: error in code produces build warning
-
-    {
-      eventType: "Normal",
-      eventReason: "InstanceCreatedOrUpdated",
-      reportingComponent: instance.metadata.name,
-      reportingInstance: instance.metadata.name
-    }
-
--->
-
-
 Examine `reconciler.ts` and observe...
 <!-- Point out some useful things here -->
 
-
 Finally create the `index.ts` file in the `capabilities` folder and add the following:
-
-<!-- TODO: Unused error in code produces build warning -->
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/index.ts \
@@ -210,6 +195,9 @@ Examine `index.ts` and observe...
 - Always redeploy the WebApp CRD if it was deleted as the controller depends on it
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
+
+Commit your changes with `git add capabilities/ && git commit -m "Create reconciler for webapps"`
+
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
