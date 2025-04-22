@@ -134,6 +134,8 @@ Examine `validator.ts` and observe...
 
 In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of `7` replicas.
 
+Commit your changes for CRD registration & validation with `git add capabilities/crd/ && git commit -m "Create CRD handling logic"`
+
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Helpers
