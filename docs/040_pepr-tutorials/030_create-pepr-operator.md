@@ -401,7 +401,6 @@ Reconciliation is the core concept behind Kubernetes operators. It's the process
 3. Taking actions to align the actual state with the desired state
 
 This continuous loop ensures your application maintains its expected configuration even when disruptions occur.
-</details>
 
 ```
 ┌───────────────────┐
@@ -429,6 +428,7 @@ This continuous loop ensures your application maintains its expected configurati
 │  • Deployment     │ reconciliation
 └───────────────────┘
 ```
+</details>
 
 ### Creating a WebApp Instance
 
