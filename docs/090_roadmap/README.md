@@ -12,14 +12,16 @@ _2025 Roadmap_
   - **Nightly Release**:
     - Establish a nightly release process. This will help us to catch bugs early and ensure that the project is always in a releasable state.
 
-## Phase 2: Durable Storage for Metrics and Performance Tests / Transactional Pepr Store
+## Phase 2: Test Reliability & CRD generation
 
 - **Q2**:
-  - **Professional Dashboard displaying metrics and performance tests originating from CI**:
-  - **Determine if a Transactional PeprStore makes sense**:
-    - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
+  - **Professional Dashboard displaying metrics and performance tests originating from CI**
+  - **Improve integration testing with Pepr, UDS Core, and Kubernetes Fluent Client**
+    - This focused on a more reliable release process to reduce the frequency of regressions.
+  - **Migrate old `journey/` style tests to Pepr-Excellent-Examples or newer CLI integration tests. See [pepr/#1597](https://github.com/defenseunicorns/pepr/issues/1597).
   - **Define Governance with Pepr**
-    - Add support for compliance/governance validation within Pepr. See [pepr/#1823](https://github.com/defenseunicorns/pepr/issues/1823)
+    - Add support for compliance/governance validation within Pepr. See [pepr/#1823](https://github.com/defenseunicorns/pepr/issues/1823).
+  - As an alpha feature, support the generation of CRDs within Pepr. See [pepr/#1062](https://github.com/defenseunicorns/pepr/issues/1062).
 
 ## Phase 3: TBD
 
@@ -47,6 +49,9 @@ This section contains work we've considered, but have not slotted in to the road
   - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core prespective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
 - **Deno2 Implementation**:
   - If determined to be advisable, move forward with migrating the project to Deno2 (starting with the kubernetes-fluent-client..?). This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
+- **Determine if a Transactional PeprStore makes sense**:
+  - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
+
 
 _2024 Roadmap_  
 
