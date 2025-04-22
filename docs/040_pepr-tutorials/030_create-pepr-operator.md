@@ -235,7 +235,8 @@ cd pepr-operator
 Make sure Pepr is updated:
 
 ```bash
-npx pepr update
+npx pepr update --skip-template-update
+# TODO Can override by mistake, call out here
 ```
 
 Build the pepr module. This command performs three actions:
@@ -258,6 +259,8 @@ kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
 Verify the deployment was successful:
+
+<!-- Issue with CRD generation, updated pepr.ts -->
 
 ```bash
 kubectl get crd | grep webapp
@@ -331,7 +334,7 @@ Get the Status of the WebApp
 
 ```json
 kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq  
-// TODO: Command doesn't work?
+// TODO: Need to register the capability in `pepr.ts`
 
 # output
 {
