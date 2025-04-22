@@ -382,7 +382,57 @@ FIELDS:
 
 ## Test Your Operator
 
-Create an instance of a `WebApp` in English with the light theme and 1 replica
+> 🔄 **Key Concept**: Testing an operator involves verifying that it correctly responds to changes in your custom resources and maintains the desired state in your cluster.
+
+### Understanding the Testing Strategy
+
+We'll test our WebApp operator by:
+1. Creating a WebApp resource to verify the operator creates all required components
+2. Examining the status and events to verify proper operation
+3. Testing the reconciliation loop by intentionally deleting owned resources
+4. Updating the WebApp to see if changes are properly applied
+
+<details>
+<summary>💡 What is reconciliation?</summary>
+
+Reconciliation is the core concept behind Kubernetes operators. It's the process of:
+1. Observing the current state of resources in the cluster
+2. Comparing it to the desired state (defined in your custom resource)
+3. Taking actions to align the actual state with the desired state
+
+This continuous loop ensures your application maintains its expected configuration even when disruptions occur.
+</details>
+
+```
+┌───────────────────┐
+│                   │
+│  Custom Resource  │◄────────────┐
+│  (WebApp)         │             │
+│                   │             │
+└───────┬───────────┘             │
+        │                         │
+        │ Observe                 │
+        ▼                         │
+┌───────────────────┐    ┌────────────────┐
+│                   │    │                │
+│  Pepr Operator    │───►│  Reconcile     │
+│  Controller       │    │  (Take Action) │
+│                   │    │                │
+└───────┬───────────┘    └────────────────┘
+        │                         ▲
+        │ Create/Update           │
+        ▼                         │
+┌───────────────────┐             │
+│  Owned Resources  │─────────────┘
+│  • ConfigMap      │ If deleted or
+│  • Service        │ changed, trigger
+│  • Deployment     │ reconciliation
+└───────────────────┘
+```
+
+### Creating a WebApp Instance
+
+Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replica:
 
 ```yaml
 kubectl create ns webapps;
@@ -399,12 +449,32 @@ spec:
 EOF
 ```
 
-Verify that the WebApp was created:
+<details>
+<summary>🔍 What happens when you create this resource?</summary>
+
+1. Kubernetes API server receives the WebApp resource
+2. Our operator's controller (in `index.ts`) detects the new resource via its watch function
+3. The controller validates the WebApp using our validator
+4. The reconcile function creates three "owned" resources:
+   - A ConfigMap with HTML content based on the theme and language
+   - A Service to expose the web application
+   - A Deployment to run the web server pods
+5. The status is updated to track progress
+
+All this logic is in the code we wrote earlier in the tutorial.
+</details>
+
+### Verifying Resource Creation
+
+Now, verify that the WebApp and its owned resources were created properly:
 
 ```bash
 kubectl get cm,svc,deploy,webapp -n webapps
+```
 
-# output
+Expected Output:
+
+```bash
 NAME                                    DATA   AGE
 configmap/kube-root-ca.crt              1      6s
 configmap/web-content-webapp-light-en   1      5s
@@ -416,24 +486,40 @@ NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/webapp-light-en   1/1     1            1           5s
 ```
 
-Get the Status of the WebApp
+> 💡 **Tip**: Our operator created three resources based on our single WebApp definition - this is the power of operators in action!
 
+### Checking WebApp Status
+
+The status field is how our operator communicates the current state of the WebApp:
+
+```bash
+kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq
+```
+
+Expected Output:
 ```json
-kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq  
-// TODO: Need to register the capability in `pepr.ts`
-
-# output
 {
   "observedGeneration": 1,
   "phase": "Ready"
 }
 ```
 
-Describe the WebApp to look at events
+<details>
+<summary>💡 What do these status fields mean?</summary>
+
+- **observedGeneration**: A counter that increments each time the resource spec is changed
+- **phase**: The current lifecycle state of the WebApp ("Pending" during creation, "Ready" when all components are operational)
+
+This status information comes from our reconciler code, which updates these fields during each reconciliation cycle.
+</details>
+
+You can also see events related to your WebApp that provide a timeline of actions taken by the operator:
 
 ```bash
 kubectl describe wa webapp-light-en -n webapps
-# output
+```
+Expected Output:
+```
 Name:         webapp-light-en
 Namespace:    webapps
 API Version:  pepr.io/v1alpha1
@@ -451,27 +537,40 @@ Events:
   ----    ------                    ----  ----             -------
   Normal  InstanceCreatedOrUpdated  36s   webapp-light-en  Pending
   Normal  InstanceCreatedOrUpdated  36s   webapp-light-en  Ready
-
 ```
 
-Port-forward and look at the WebApp in the browser
+### Viewing Your WebApp
+
+To access your WebApp in a browser, use port-forwarding to connect to the service:
 
 ```bash
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
 
-[WebApp](http://localhost:3000)
+<details>
+<summary>💡 What is port-forwarding?</summary>
 
-![WebApp](resources/030_create-pepr-operator/light.png)
+Port-forwarding creates a secure tunnel from your local machine to a pod or service in your Kubernetes cluster. In this case, we're forwarding your local port 3000 to port 80 of the WebApp service, allowing you to access the application at http://localhost:3000 in your browser.
+</details>
 
-Delete the `ConfigMap` on the WebApp to watch it the operator reconcile it back
+Now open [http://localhost:3000](http://localhost:3000) in your browser to see your WebApp.
+Alternatively, run `curl http://localhost:3000` to see the response in a terminal.
+The result should look like this:
+
+![WebApp Light Theme](resources/030_create-pepr-operator/light.png)
+
+### Testing the Reconciliation Loop
+
+A key feature of operators is their ability to automatically repair resources when they're deleted or changed. Let's test this by deleting the ConfigMap:
 
 ```bash
 kubectl delete cm -n webapps --all 
 # wait a few seconds
 kubectl get cm -n webapps 
+```
 
-# output
+Expected output:
+```
 configmap "kube-root-ca.crt" deleted
 configmap "web-content-webapp-light-en" deleted
 NAME                          DATA   AGE
@@ -479,7 +578,21 @@ kube-root-ca.crt              1      0s
 web-content-webapp-light-en   1      0s
 ```
 
-Update the `WebApp` and change the theme to dark and language to spanish
+<details>
+<summary>🔍 What happened behind the scenes?</summary>
+
+1. When you deleted the ConfigMap, Kubernetes sent a DELETE event
+2. Our operator (in `index.ts`) was watching for these events via the `onDeleteOwnedResource` handler
+3. This triggered the reconciliation loop, which detected that the ConfigMap was missing
+4. The reconciler recreated the ConfigMap based on the WebApp definition
+5. This all happened automatically without manual intervention - the core benefit of using an operator!
+</details>
+
+> 🛠️ **Try it yourself**: Try deleting the Service or Deployment. What happens? The operator should recreate those too!
+
+### Updating the WebApp
+
+Now let's test changing the WebApp's specification:
 
 ```bash
 kubectl apply -f -<<EOF
@@ -493,45 +606,54 @@ spec:
   language: es
   replicas: 1 
 EOF
-#output
-webapp.pepr.io/webapp-light-en configured
 ```
 
-Port-forward the service again and refresh your browser to see the light theme:
+> 💡 **Note**: We've changed the theme from light to dark and the language from English (en) to Spanish (es).
+
+Refresh your browser (with port-forwarding still active) to see the changes:
 
 ```bash
 kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 ```
 
-[WebApp](http://localhost:3000)
+Now open [http://localhost:3000](http://localhost:3000) in your browser to see your WebApp.
+Alternatively, run `curl http://localhost:3000` to see the response in a terminal.
+The result should look like this:
 
-![WebApp](resources/030_create-pepr-operator/dark.png)
+![WebApp Dark Theme](resources/030_create-pepr-operator/dark.png)
 
-Delete the WebApp and check the namespace
+<details>
+<summary>🔍 How does updating work?</summary>
+
+1. When you apply the changed WebApp, Kubernetes sends an UPDATE event
+2. Our operator's controller (in `index.ts`) detects this via the `onUpdate` handler
+3. The updated spec is validated and then queued for reconciliation
+4. The reconciler compares the current resources with what's needed for the new spec
+5. It updates the ConfigMap with the new theme and language content
+6. The Deployment automatically detects the ConfigMap change and restarts the pod with the new content
+</details>
+
+### Cleanup
+
+When you're done testing, you can delete your WebApp and verify that all owned resources are removed:
 
 ```bash
 kubectl delete wa -n webapps --all
 # wait a few seconds
 kubectl get cm,deploy,svc -n webapps
-# output
-NAME                         DATA   AGE
-configmap/kube-root-ca.crt   1      40s
 ```
 
-When the WebApp is deleted, all of the resources that it created are also deleted.
+### What You've Learned
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+Congratulations! You've successfully:
 
-## Conclusion
+1.  Created a custom WebApp resource
+2.  Verified that your operator automatically creates owned resources
+3.  Tested the reconciliation loop by deleting owned resources
+4.  Updated your WebApp and seen the changes reflected
 
-Congratulations! You've successfully built a Kubernetes Operator using Pepr. Your operator:
-
-1. Manages a custom resource (WebApp)
-2. Creates and maintains the required resources (Deployment, Service, ConfigMap)
-3. Automatically reconciles resources to maintain the desired state 
-4. Updates resources when the custom resource is modified
-
-This pattern is powerful for creating reusable, self-managing applications in Kubernetes.
+This pattern is powerful for creating reusable, self-managing applications in Kubernetes. 
+Your operator now handles the complex task of maintaining your application's state according to your specifications, reducing the need for manual intervention.
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
