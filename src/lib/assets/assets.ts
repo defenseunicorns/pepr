@@ -18,7 +18,6 @@ import {
 } from "@kubernetes/client-node/dist/gen";
 import { createDirectoryIfNotExists } from "../filesystemService";
 import { overridesFile } from "./yaml/overridesFile";
-import { getDeployment, getModuleSecret, getWatcher } from "./pods";
 import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
@@ -26,6 +25,7 @@ import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
 import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
+import { kind } from "kubernetes-fluent-client";
 
 export class Assets {
   readonly name: string;
@@ -84,6 +84,18 @@ export class Assets {
       assets: Assets,
       deployments: { default: V1Deployment; watch: V1Deployment | null },
     ) => Promise<string>,
+    getDeploymentFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment,
+    getWatcherFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment | null,
     imagePullSecret?: string,
   ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
@@ -97,8 +109,8 @@ export class Assets {
     const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
-      default: getDeployment(this, moduleHash, this.buildTimestamp, imagePullSecret),
-      watch: getWatcher(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      default: getDeploymentFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      watch: getWatcherFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
     };
 
     return yamlGenerationFunction(this, deployments);
@@ -110,16 +122,28 @@ export class Assets {
     helm: Record<string, Record<string, string>>,
   ): Promise<void> => {
     if (validateWebhook || mutateWebhook) {
-      await fs.writeFile(helm.files.admissionDeploymentYaml, dedent(admissionDeployTemplate(this.buildTimestamp)));
-      await fs.writeFile(helm.files.admissionServiceMonitorYaml, dedent(serviceMonitorTemplate("admission")));
+      await fs.writeFile(
+        helm.files.admissionDeploymentYaml,
+        dedent(admissionDeployTemplate(this.buildTimestamp)),
+      );
+      await fs.writeFile(
+        helm.files.admissionServiceMonitorYaml,
+        dedent(serviceMonitorTemplate("admission")),
+      );
     }
 
     if (mutateWebhook) {
-      await fs.writeFile(helm.files.mutationWebhookYaml, createWebhookYaml(this.name, this.config, mutateWebhook));
+      await fs.writeFile(
+        helm.files.mutationWebhookYaml,
+        createWebhookYaml(this.name, this.config, mutateWebhook),
+      );
     }
 
     if (validateWebhook) {
-      await fs.writeFile(helm.files.validationWebhookYaml, createWebhookYaml(this.name, this.config, validateWebhook));
+      await fs.writeFile(
+        helm.files.validationWebhookYaml,
+        createWebhookYaml(this.name, this.config, validateWebhook),
+      );
     }
   };
 
@@ -129,6 +153,13 @@ export class Assets {
       mutateOrValidate: WebhookType,
       timeoutSeconds: number | undefined,
     ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>,
+    getWatcherFunction: (
+      assets: Assets,
+      hash: string,
+      buildTimestamp: string,
+      imagePullSecret?: string,
+    ) => kind.Deployment | null,
+    getModuleSecretFunction: (name: string, data: Buffer, hash: string) => kind.Secret,
     basePath: string,
   ): Promise<void> => {
     const helm = helmLayout(basePath, this.config.uuid);
@@ -144,18 +175,27 @@ export class Assets {
       const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
       const pairs: [string, () => string][] = [
-        [helm.files.chartYaml, (): string => dedent(chartYaml(this.config.uuid, this.config.description || ""))],
+        [
+          helm.files.chartYaml,
+          (): string => dedent(chartYaml(this.config.uuid, this.config.description || "")),
+        ],
         [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
         [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
         [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
-        [helm.files.apiPathSecretYaml, (): string => toYaml(apiPathSecret(this.name, this.apiPath))],
+        [
+          helm.files.apiPathSecretYaml,
+          (): string => toYaml(apiPathSecret(this.name, this.apiPath)),
+        ],
         [helm.files.storeRoleYaml, (): string => toYaml(storeRole(this.name))],
         [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
         [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
         [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
-        [helm.files.moduleSecretYaml, (): string => toYaml(getModuleSecret(this.name, code, moduleHash))],
+        [
+          helm.files.moduleSecretYaml,
+          (): string => toYaml(getModuleSecretFunction(this.name, code, moduleHash)),
+        ],
       ];
       await Promise.all(pairs.map(async ([file, content]) => await fs.writeFile(file, content())));
 
@@ -170,16 +210,30 @@ export class Assets {
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);
 
       const webhooks = {
-        mutate: await webhookGeneratorFunction(this, WebhookType.MUTATE, this.config.webhookTimeout),
-        validate: await webhookGeneratorFunction(this, WebhookType.VALIDATE, this.config.webhookTimeout),
+        mutate: await webhookGeneratorFunction(
+          this,
+          WebhookType.MUTATE,
+          this.config.webhookTimeout,
+        ),
+        validate: await webhookGeneratorFunction(
+          this,
+          WebhookType.VALIDATE,
+          this.config.webhookTimeout,
+        ),
       };
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
-      const watchDeployment = getWatcher(this, moduleHash, this.buildTimestamp);
+      const watchDeployment = getWatcherFunction(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
-        await fs.writeFile(helm.files.watcherDeploymentYaml, dedent(watcherDeployTemplate(this.buildTimestamp)));
-        await fs.writeFile(helm.files.watcherServiceMonitorYaml, dedent(serviceMonitorTemplate("watcher")));
+        await fs.writeFile(
+          helm.files.watcherDeploymentYaml,
+          dedent(watcherDeployTemplate(this.buildTimestamp)),
+        );
+        await fs.writeFile(
+          helm.files.watcherServiceMonitorYaml,
+          dedent(serviceMonitorTemplate("watcher")),
+        );
       }
     } catch (err) {
       console.error(`Error generating helm chart: ${err.message}`);

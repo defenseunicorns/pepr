@@ -6,8 +6,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 
 import { clone } from "ramda";
-import { AdmissionRequest } from "./types";
-import { ValidateActionResponse } from "./types";
+import { AdmissionRequest, ValidateActionResponse } from "./common-types";
 import { Operation } from "./enums";
 
 /**
@@ -80,9 +79,10 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    *
    * @returns The validation response.
    */
-  Approve = (): ValidateActionResponse => {
+  Approve = (warnings?: string[]): ValidateActionResponse => {
     return {
       allowed: true,
+      warnings,
     };
   };
 
@@ -93,11 +93,16 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny = (statusMessage?: string, statusCode?: number): ValidateActionResponse => {
+  Deny = (
+    statusMessage?: string,
+    statusCode?: number,
+    warnings?: string[],
+  ): ValidateActionResponse => {
     return {
       allowed: false,
       statusCode,
       statusMessage,
+      warnings,
     };
   };
 }

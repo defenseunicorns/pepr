@@ -1,6 +1,6 @@
 {
   "arrowParens": "avoid",
-  "bracketSameLine": true,
+  "bracketSameLine": false,
   "bracketSpacing": true,
   "embeddedLanguageFormatting": "auto",
   "insertPragma": false,
@@ -8,6 +8,7 @@
   "quoteProps": "as-needed",
   "requirePragma": false,
   "semi": true,
+  "tabWidth": 2,
   "useTabs": false,
-  "tabWidth": 2
+  "vueIndentScriptAndStyle": false
 }

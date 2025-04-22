@@ -1,0 +1,70 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: Apache-2.0
+
+name: "Pepr Iron Bank Setup"
+description: "Pepr Iron Bank Environment Setup"
+inputs:
+  registry1Username:
+    description: 'IRON_BANK_ROBOT_USERNAME'
+    required: true
+  registry1Password:
+    description: 'IRON_BANK_ROBOT_PASSWORD'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Use Node.js 22
+      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+      with:
+        node-version: 22
+
+    - name: Install k3d
+      shell: bash
+      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
+    - name: Iron Bank Login
+      if: ${{ inputs.registry1Username != '' }}
+      env:
+        REGISTRY_USERNAME: ${{ inputs.registry1Username }}
+        REGISTRY_PASSWORD: ${{ inputs.registry1Password }}
+      run: echo "${{ env.REGISTRY_PASSWORD }}" | docker login -u "${{ env.REGISTRY_USERNAME }}" --password-stdin registry1.dso.mil
+      shell: bash
+
+    - name: Clone Pepr
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        repository: defenseunicorns/pepr
+        path: pepr
+
+    - name: Set Pepr Environment Variable
+      shell: bash
+      run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+    - name: Clone Iron Bank Repo & Transfer Dockerfiles
+      shell: bash
+      run: |
+        git clone https://repo1.dso.mil/dsop/opensource/defenseunicorns/pepr/controller.git
+        cd controller
+        mv Dockerfile $PEPR/Dockerfile.ironbank.amd
+        mv removeVersion.js $PEPR/removeVersion.js
+
+    - name: Install Pepr Dependencies
+      shell: bash
+      run: |
+        cd "$PEPR"
+        npm ci
+
+    - name: Build Pepr Iron Bank Images
+      shell: bash
+      run: ./hack/build-iron-bank.sh "${GITHUB_WORKSPACE}"
+
+    - name: upload artifacts
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+      with:
+        name: pepr-package-and-controller-image
+        path: | 
+          pepr-0.0.0-development.tgz
+          pepr-amd-img.tar
+        if-no-files-found: error
+        retention-days: 1

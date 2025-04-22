@@ -135,6 +135,8 @@ Below are the available configurations through `package.json`.
 | `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)            | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
 | `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 
+**uuid**: An identifier for the module in the `pepr-system` namespace. If not provided, a UUID will be generated. It can be any [kubernetes acceptable name](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) that is under 36 characters.
+
 These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
 
 ### Example Custom RBAC Rules

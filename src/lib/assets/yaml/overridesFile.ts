@@ -1,11 +1,10 @@
-import { genEnv } from "../pods";
-import { ModuleConfig } from "../../types";
-import { CapabilityExport } from "../../types";
+import { genEnv } from "../envrionment";
+import { CapabilityExport, ModuleConfig } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 
-type ChartOverrides = {
+export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;

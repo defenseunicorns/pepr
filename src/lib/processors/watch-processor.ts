@@ -4,7 +4,13 @@ import Log from "../telemetry/logger";
 import { Binding } from "../types";
 import { Capability } from "../core/capability";
 import { Event } from "../enums";
-import { K8s, KubernetesObject, WatchCfg, WatchEvent, GenericClass } from "kubernetes-fluent-client";
+import {
+  K8s,
+  KubernetesObject,
+  WatchCfg,
+  WatchEvent,
+  GenericClass,
+} from "kubernetes-fluent-client";
 import { Queue } from "../core/queue";
 import { WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { KubernetesListObject } from "kubernetes-fluent-client/dist/types";
@@ -51,8 +57,12 @@ export function getOrCreateQueue(obj: KubernetesObject): Queue<KubernetesObject>
 
 // Watch configuration
 const watchCfg: WatchCfg = {
-  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10) : 5,
-  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10) : 5,
+  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
+    ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
+    : 5,
+  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS
+    ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10)
+    : 5,
   lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
     ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
     : 300,
@@ -76,11 +86,11 @@ const eventToPhaseMap = {
  * @param capabilities The capabilities to load watches for
  */
 export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
-  capabilities.map(capability =>
-    capability.bindings
-      .filter(binding => binding.isWatch)
-      .forEach(bindingElement => runBinding(bindingElement, capability.namespaces, ignoredNamespaces)),
-  );
+  for (const capability of capabilities) {
+    for (const binding of capability.bindings.filter(b => b.isWatch)) {
+      runBinding(binding, capability.namespaces, ignoredNamespaces);
+    }
+  }
 }
 
 /**
@@ -89,7 +99,7 @@ export function setupWatch(capabilities: Capability[], ignoredNamespaces?: strin
  * @param binding the binding to watch
  * @param capabilityNamespaces list of namespaces to filter on
  */
-async function runBinding(
+export async function runBinding(
   binding: Binding,
   capabilityNamespaces: string[],
   ignoredNamespaces?: string[],
@@ -100,12 +110,20 @@ async function runBinding(
   // The watch callback is run when an object is received or dequeued
   Log.debug({ watchCfg }, "Effective WatchConfig");
 
-  const watchCallback = async (kubernetesObject: KubernetesObject, phase: WatchPhase): Promise<void> => {
+  const watchCallback = async (
+    kubernetesObject: KubernetesObject,
+    phase: WatchPhase,
+  ): Promise<void> => {
     // First, filter the object based on the phase
     if (phaseMatch.includes(phase)) {
       try {
         // Then, check if the object matches the filter
-        const filterMatch = filterNoMatchReason(binding, kubernetesObject, capabilityNamespaces, ignoredNamespaces);
+        const filterMatch = filterNoMatchReason(
+          binding,
+          kubernetesObject,
+          capabilityNamespaces,
+          ignoredNamespaces,
+        );
         if (filterMatch !== "") {
           Log.debug(filterMatch);
           return;
@@ -139,7 +157,10 @@ async function runBinding(
       // [ true, void, undefined ] SHOULD remove finalizer
       // [ false ] should NOT remove finalizer
       if (shouldRemoveFinalizer === false) {
-        Log.debug({ obj: kubernetesObject }, `Skipping removal of finalizer '${peprFinal}' from '${resource}'`);
+        Log.debug(
+          { obj: kubernetesObject },
+          `Skipping removal of finalizer '${peprFinal}' from '${resource}'`,
+        );
       } else {
         await removeFinalizer(binding, kubernetesObject);
       }
@@ -147,26 +168,35 @@ async function runBinding(
   };
 
   // Setup the resource watch
-  const watcher = K8s(binding.model, binding.filters).Watch(async (obj, phase) => {
-    Log.debug(obj, `Watch event ${phase} received`);
+  const watcher = K8s(binding.model, { ...binding.filters, kindOverride: binding.kind }).Watch(
+    async (obj, phase) => {
+      Log.debug(obj, `Watch event ${phase} received`);
 
-    if (binding.isQueue) {
-      const queue = getOrCreateQueue(obj);
-      await queue.enqueue(obj, phase, watchCallback);
-    } else {
-      await watchCallback(obj, phase);
-    }
-  }, watchCfg);
+      if (binding.isQueue) {
+        const queue = getOrCreateQueue(obj);
+        await queue.enqueue(obj, phase, watchCallback);
+      } else {
+        await watchCallback(obj, phase);
+      }
+    },
+    watchCfg,
+  );
 
   // Register event handlers
-  registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  try {
+    registerWatchEventHandlers(watcher, logEvent, metricsCollector);
+  } catch (err) {
+    throw new Error(
+      "WatchEventHandler Registration Error: Unable to register event watch handler.",
+      { cause: err },
+    );
+  }
 
   // Start the watch
   try {
     await watcher.start();
   } catch (err) {
-    Log.error(err, "Error starting watch");
-    process.exit(1);
+    throw new Error("WatchStart Error: Unable to start watch.", { cause: err });
   }
 }
 
@@ -209,15 +239,22 @@ export function registerWatchEventHandlers(
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       logEvent(WatchEvent.GIVE_UP, err.message);
-      process.exit(1);
+      throw new Error(
+        "WatchEvent GiveUp Error: The watch has failed to start after several attempts.",
+        { cause: err },
+      );
     },
     [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
     [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),
     [WatchEvent.RECONNECT]: retryCount =>
-      logEvent(WatchEvent.RECONNECT, `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`),
+      logEvent(
+        WatchEvent.RECONNECT,
+        `Reconnecting after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`,
+      ),
     [WatchEvent.RECONNECT_PENDING]: () => logEvent(WatchEvent.RECONNECT_PENDING),
     [WatchEvent.ABORT]: err => logEvent(WatchEvent.ABORT, err.message),
-    [WatchEvent.OLD_RESOURCE_VERSION]: errMessage => logEvent(WatchEvent.OLD_RESOURCE_VERSION, errMessage),
+    [WatchEvent.OLD_RESOURCE_VERSION]: errMessage =>
+      logEvent(WatchEvent.OLD_RESOURCE_VERSION, errMessage),
     [WatchEvent.NETWORK_ERROR]: err => logEvent(WatchEvent.NETWORK_ERROR, err.message),
     [WatchEvent.LIST_ERROR]: err => logEvent(WatchEvent.LIST_ERROR, err.message),
     [WatchEvent.LIST]: list => logEvent(WatchEvent.LIST, JSON.stringify(list, undefined, 2)),

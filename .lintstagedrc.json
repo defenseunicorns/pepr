@@ -1,7 +1,7 @@
 {
-  "*.ts": ["prettier --write", "eslint --fix"],
-  "*.js": ["prettier --write", "eslint --fix"],
-  "*.json": ["prettier --write"],
+  "*.ts": ["prettier --config .prettierrc --write", "eslint --fix"],
+  "*.js": ["prettier --config .prettierrc --write", "eslint --fix"],
+  "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
   ".husky/pre-*": ["shellcheck -f tty"]
 }

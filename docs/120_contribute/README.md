@@ -9,9 +9,11 @@ Thank you for your interest in contributing to Pepr! We welcome all contribution
   - [Code of Conduct](#code-of-conduct)
   - [Getting Started](#getting-started)
     - [Setup](#setup)
+    - [Kubernetes Fluent Client Contributions](#kubernetes-fluent-client-contributions)
   - [Submitting a Pull Request](#submitting-a-pull-request)
     - [PR Requirements](#pr-requirements)
   - [Coding Guidelines](#coding-guidelines)
+    - [Git Hooks](#git-hooks)
   - [Running Tests](#running-tests)
     - [Run Tests Locally](#run-tests-locally)
     - [Test a Local Development Version](#test-a-local-development-version)
@@ -34,6 +36,19 @@ Please follow our [Code of Conduct](../../CODE_OF_CONDUCT.md) to maintain a resp
 3. Install dependencies: `npm ci`.
 4. Create a new branch for your feature or fix: `git checkout -b my-feature-branch`.
 
+### Kubernetes Fluent Client Contributions
+
+[Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client) is a library used by Pepr that provides a fluent interface for Kubernetes API clients. In Pepr, we use the `kubernetes-fluent-client` package to interact with Kubernetes resources. Due to the nature of this library, it is important to ensure that any changes made to the Kubernetes Fluent Client are thoroughly tested and validated in Pepr before being merged into the codebase. In particular, we need to ensure that the changes do not break any existing functionality or introduce new bugs, especially in the context of the Pepr Watcher.
+
+If you are making changes to the Kubernetes Fluent Client, please ensure that you run the Soak Test in GitHub Actions to validate your changes.
+
+To run the Soak Test, you can do the following:
+
+- Go to the [GitHub Actions tab](https://github.com/defenseunicorns/pepr/actions)
+- Select the workflow named "Soak Test"
+- Click on the "Run workflow" button to get the options to run the workflow
+- Select the Kubernetes Fluent Client branch you want to test (`KFC dev branch`) and click "Run workflow"
+
 ## Submitting a Pull Request
 
 1. **Create an Issue**: For significant changes, please create an issue first, describing the problem or feature proposal. Trivial fixes do not require an issue.
@@ -49,12 +64,15 @@ Please follow our [Code of Conduct](../../CODE_OF_CONDUCT.md) to maintain a resp
 - All commits must be signed.
 - PRs should have a related issue, except for trivial fixes.
 
+We take PR reviews seriously and strive to provide a great contributor experience with timely feedback. To help maintain this, we ask external contributors to limit themselves to no more than two open PRs at a time. Having too many open PRs can slow down the review process and impact the quality of feedback
+
 ## Coding Guidelines
 
 Please follow the coding conventions and style used in the project. Use ESLint and Prettier for linting and formatting:
 
 - Check formatting: `npm run format:check`
 - Fix formatting: `npm run format:fix`
+- If regex is used, provide a link to regex101.com with an explanation of the regex pattern.
 
 ### Git Hooks
 

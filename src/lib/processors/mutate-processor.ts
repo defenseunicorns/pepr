@@ -2,21 +2,25 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import jsonPatch from "fast-json-patch";
-import { kind, KubernetesObject } from "kubernetes-fluent-client";
-import { clone } from "ramda";
+import { KubernetesObject } from "kubernetes-fluent-client";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { Capability } from "../core/capability";
 import { shouldSkipRequest } from "../filter/filter";
 import { MutateResponse } from "../k8s";
-import { AdmissionRequest, Binding } from "../types";
+import { Binding } from "../types";
 import Log from "../telemetry/logger";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
-import { base64Encode, convertFromBase64Map, convertToBase64Map } from "../utils";
+import { base64Encode } from "../utils";
 import { OnError } from "../../cli/init/enums";
 import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
+
+import { AdmissionRequest } from "../common-types";
+
+import { decodeData, reencodeData } from "./decode-utils";
+
 export interface Bindable {
   req: AdmissionRequest;
   config: ModuleConfig;
@@ -58,33 +62,6 @@ export function logMutateErrorMessage(e: Error): string {
   } catch {
     return "An error occurred with the mutate action.";
   }
-}
-
-export function decodeData(wrapped: PeprMutateRequest<KubernetesObject>): {
-  skipped: string[];
-  wrapped: PeprMutateRequest<KubernetesObject>;
-} {
-  let skipped: string[] = [];
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret) {
-    // convertFromBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
-    skipped = convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
-  }
-
-  return { skipped, wrapped };
-}
-
-export function reencodeData(wrapped: PeprMutateRequest<KubernetesObject>, skipped: string[]): KubernetesObject {
-  const transformed = clone(wrapped.Raw);
-
-  const isSecret = wrapped.Request.kind.version === "v1" && wrapped.Request.kind.kind === "Secret";
-  if (isSecret) {
-    // convertToBase64Map modifies it's arg rather than returing a mod'ed copy (ye olde side-effect special, blerg)
-    convertToBase64Map(transformed as unknown as kind.Secret, skipped);
-  }
-
-  return transformed;
 }
 
 export async function processRequest(
@@ -152,56 +129,57 @@ export async function mutateProcessor(
   let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
+  const bindables: Bindable[] = capabilities
+    .flatMap(capa =>
+      capa.bindings.map(bind => ({
+        req,
+        config,
+        name: capa.name,
+        namespaces: capa.namespaces,
+        binding: bind,
+        actMeta: { ...reqMetadata, name: capa.name },
+      })),
+    )
+    .filter(bind => {
+      if (!bind.binding.mutateCallback) {
+        return false;
+      }
 
-  let bindables: Bindable[] = capabilities.flatMap(capa =>
-    capa.bindings.map(bind => ({
-      req,
-      config,
-      name: capa.name,
-      namespaces: capa.namespaces,
-      binding: bind,
-      actMeta: { ...reqMetadata, name: capa.name },
-    })),
-  );
+      const shouldSkip = shouldSkipRequest(
+        bind.binding,
+        bind.req,
+        bind.namespaces,
+        resolveIgnoreNamespaces(bind.config?.alwaysIgnore?.namespaces),
+      );
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
+        return false;
+      }
 
-  bindables = bindables.filter(bind => {
-    if (!bind.binding.mutateCallback) {
-      return false;
-    }
-
-    const shouldSkip = shouldSkipRequest(
-      bind.binding,
-      bind.req,
-      bind.namespaces,
-      resolveIgnoreNamespaces(bind.config?.alwaysIgnore?.namespaces),
-    );
-    if (shouldSkip !== "") {
-      Log.debug(shouldSkip);
-      return false;
-    }
-
-    return true;
-  });
+      return true;
+    });
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
     if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
+      webhookTimer.stop();
       return response;
     }
   }
 
-  // If we've made it this far, the request is allowed
-  response.allowed = true;
+  // The request is allowed
 
   // If no capability matched the request, exit early
   if (bindables.length === 0) {
     Log.info(reqMetadata, `No matching actions found`);
-    return response;
+    webhookTimer.stop();
+    return { ...response, allowed: true };
   }
 
   // delete operations can't be mutate, just return before the transformation
   if (req.operation === "DELETE") {
-    return response;
+    webhookTimer.stop();
+    return { ...response, allowed: true };
   }
 
   // unskip base64-encoded data fields that were skipDecode'd
@@ -214,10 +192,13 @@ export async function mutateProcessor(
 
   Log.debug({ ...reqMetadata, patches }, `Patches generated`);
   webhookTimer.stop();
-  return response;
+  return { ...response, allowed: true };
 }
 
-export function updateResponsePatchAndWarnings(patches: Operation[], response: MutateResponse): void {
+export function updateResponsePatchAndWarnings(
+  patches: Operation[],
+  response: MutateResponse,
+): void {
   // Only add the patch if there are patches to apply
   if (patches.length > 0) {
     response.patchType = "JSONPatch";

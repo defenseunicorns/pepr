@@ -5,9 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-# crane digest cgr.dev/chainguard/node-lts:latest-dev
-# cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:18160bed0e77c8300b99a8d1af8cc997280e189e590b55b5ff94893bd398a1e6 AS build
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0@sha256:dffd51781a7d00d31a9fb67ac5bfd6dcf62d685d33f84d1487ec5ed3fecbfc33 AS build
 
 WORKDIR /app
 
@@ -37,11 +35,7 @@ RUN npm run build && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
-
-# crane digest cgr.dev/chainguard/node-lts:latest
-# cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
-# gcr.io/distroless/nodejs22-debian12@sha256:d00edbf864c5b989f1b69951a13c5c902bf369cca572de59b5ec972552848e33
-FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:95ce4c850fd71a7fe53d9cbaf7f9db318bba9c0ade54717078d9e60c317b5496
+FROM cgr.dev/du-uds-defenseunicorns/node:22.14.0-slim@sha256:fc0e0abf53b0edcec023b12f8e2b9ee82bef06b251026c59120ee4ef7f9b0b93
 
 WORKDIR /app
 

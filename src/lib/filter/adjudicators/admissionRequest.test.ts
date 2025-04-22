@@ -3,9 +3,15 @@
 
 import { expect, describe, it } from "@jest/globals";
 import { Operation } from "../../enums";
-import { AdmissionRequest } from "../../types";
 import { defaultAdmissionRequest } from "./defaultTestObjects";
-import { declaredUid, declaredKind, declaredVersion, declaredGroup, declaredOperation } from "./adjudicators";
+import {
+  declaredUid,
+  declaredKind,
+  declaredVersion,
+  declaredGroup,
+  declaredOperation,
+} from "./admissionRequest";
+import { AdmissionRequest } from "../../common-types";
 
 describe("declaredUid", () => {
   //[ AdmissionRequest, result ]
