@@ -201,18 +201,30 @@ Commit your changes with `git add capabilities/ && git commit -m "Create reconci
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
+## Add capability to Pepr Module
+
+Ensure that the PeprModule uses `WebAppController`, the implementation should look something like this:
+
+```typescript
+new PeprModule(cfg, [
+  WebAppController,
+]);
+```
+
+Commit your changes now that the WebAppController is part of the Pepr Module: `git add pepr.ts && git commit -m "Register WebAppController with pepr module"`
+
 ## Build and Deploy Your Operator
 
 > 🌟 **Key Concepts**: In this section, we'll transform our code into a running Kubernetes operator that actively monitors and manages WebApp resources in your cluster.
 
 ### Preparing Your Environment
 
-Create an ephemeral cluster (Kind or k3d will work).
-
-<!-- TODO: Add a sample command -->
+Create an ephemeral cluster with `k3d`.
 
 ```bash
-k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system
+k3d cluster delete pepr-dev &&
+k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait &&
+kubectl rollout status deployment -n kube-system
 ```
 
 <details>
@@ -245,8 +257,11 @@ npx pepr update --skip-template-update
 Build the pepr module by running:
 
 ```bash
+npx pepr format && 
 npx pepr build
 ```
+
+Commit your changes now that a build has completed: `git add capabilities/ package*.json && git commit -m "Build pepr module"`
 
 <details>
 <summary>🔍 What happens during the build process?</summary>
@@ -287,7 +302,7 @@ This process creates a self-contained deployment unit that includes everything n
 To deploy your operator to a Kubernetes cluster:
 
 ```bash
-kubectl apply -f dist/pepr-module-my-operator-uuid.yaml
+kubectl apply -f dist/pepr-module-my-operator-uuid.yaml &&
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
@@ -320,8 +335,7 @@ If your operator doesn't start properly, check these common issues:
    kubectl describe deployment -n pepr-system
    ```
    Look for permission-related errors in the events section.
-   
-3. **Check for CRD issues**:
+
 </details>
 
 Verify the deployment was successful by checking if the CRD has been properly registered:
@@ -334,12 +348,15 @@ You should see `webapps.pepr.io` in the output, which confirms your Custom Resou
 
 #### Understanding the WebApp Resource
 
-You can use `kubectl explain` to see the structure of your custom resource:
+You can use `kubectl explain` to see the structure of your custom resource.
+It may take a moment for the cluster to recognize this resource before the following command will work:
 
 ```bash
 kubectl explain wa.spec
+```
 
-# output
+Expected Output:
+```
 GROUP:      pepr.io
 KIND:       WebApp
 VERSION:    v1alpha1
@@ -428,7 +445,7 @@ Examine the contents of `webapp-light-en.yaml`. Observe...
 Next, apply it to the cluster:
 
 ```bash
-kubectl create namespace webapps
+kubectl create namespace webapps &&
 kubectl apply -f webapp-light-en.yaml
 ```
 
@@ -524,10 +541,14 @@ Events:
 
 ### Viewing Your WebApp
 
-To access your WebApp in a browser, use port-forwarding to connect to the service:
+To access your WebApp in a browser, use port-forwarding to connect to the service.
+The following command runs the portforward in the background.
+Be sure to make note of the `Port-forward PID` for later when we tear down the test environment.
 
 ```bash
-kubectl port-forward svc/webapp-light-en -n webapps 3000:80
+kubectl port-forward svc/webapp-light-en -n webapps 3000:80 &
+PID=$!
+echo "Port-forward PID: $PID"
 ```
 
 <details>
@@ -536,9 +557,8 @@ kubectl port-forward svc/webapp-light-en -n webapps 3000:80
 Port-forwarding creates a secure tunnel from your local machine to a pod or service in your Kubernetes cluster. In this case, we're forwarding your local port 3000 to port 80 of the WebApp service, allowing you to access the application at http://localhost:3000 in your browser.
 </details>
 
-Now open [http://localhost:3000](http://localhost:3000) in your browser to see your WebApp.
-Alternatively, run `curl http://localhost:3000` to see the response in a terminal.
-The result should look like this:
+Now open [http://localhost:3000](http://localhost:3000) in your browser or run `curl http://localhost:3000` to see the response in a terminal.
+The browser should display a light theme web application:
 
 ![WebApp Light Theme](resources/030_create-pepr-operator/light.png)
 
