@@ -145,7 +145,7 @@ Now, let's create helper functions that will generate the Kubernetes resources m
 Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes Objects for the Operator to deploy (with the ownerReferences auto-included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
 ```bash
-mkdir -p capabilities/controller`
+mkdir -p capabilities/controller
 ```
 
 Create `generators.ts` with the following command:
@@ -161,6 +161,8 @@ Examine `generators.ts` and observe...
 Our job is to make the deployment of the WebApp simple. Instead of having to keep track of the versions and revisions of all of the Kubernetes Objects required for the WebApp, rolling pods and updating configMaps, the deployer now only needs to focus on the `WebApp` instance. The controller will reconcile instances of the operand (WebApp) against the actual cluster state to reach the desired state.
 
 We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
+
+Commit your changes for deployment, service, and configmap generation with `git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"`
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
