@@ -567,8 +567,8 @@ The browser should display a light theme web application:
 A key feature of operators is their ability to automatically repair resources when they're deleted or changed. Let's test this by deleting the ConfigMap:
 
 ```bash
-kubectl delete cm -n webapps --all 
-# wait a few seconds
+kubectl delete cm -n webapps --all &&
+sleep 10 && 
 kubectl get cm -n webapps 
 ```
 
@@ -580,6 +580,8 @@ NAME                          DATA   AGE
 kube-root-ca.crt              1      0s
 web-content-webapp-light-en   1      0s
 ```
+
+Now that we've successfully deployed a WebApp, commit your changes: `git add webapp-light-en.yaml && git commit -m "Add WebApp resource for light mode in english"`
 
 <details>
 <summary>🔍 What happened behind the scenes?</summary>
