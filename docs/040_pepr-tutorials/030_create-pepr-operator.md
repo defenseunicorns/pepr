@@ -55,6 +55,9 @@ npx pepr init \
   --confirm
 ```
 
+To track your progress in this tutorial, let's treat it as a `git` repository.
+Run `git init && git add --all && git commit -m "npx pepr init"` to create the initial commit.
+
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create CRD
@@ -66,6 +69,8 @@ Create the necessary directory structure:
 mkdir -p capabilities/crd/generated capabilities/crd/source
 ```
 
+Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client).
+This way we can react to the fields of the CRD in a type-safe manner.
 Create a CRD named `crd.yaml` for the WebApp that includes:
 - Theme selection (dark/light)
 - Language selection (en/es)
@@ -81,14 +86,6 @@ Examine the contents of `capabilities/crd/source/crd.yaml`.
 Status should also be listed under `subresources` to make it writable.
 We provide descriptions under the properties for clarity around what the property is used for.
 Enums are useful to limit the values that can be used for a property.
-
-Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client).
-This way we can react to the fields of the CRD in a type-safe manner.
-
-```bash
-curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/source/crd.yaml \
-  -o capabilities/crd/source/crd.yaml
-```
 
 Create a interface for the CRD spec with the following command:
 
