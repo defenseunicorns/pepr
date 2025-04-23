@@ -43,6 +43,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create a new Pepr Module
+**[🟢⚪⚪⚪⚪⚪] Step 1 of 6**
 
 First, create a new Pepr module for your operator:
 
@@ -65,6 +66,7 @@ git init && git add --all && git commit -m "npx pepr init"
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create CRD
+**[🟢🟢⚪⚪⚪⚪] Step 2 of 6**
 
 The WebApp Custom Resource Definition (CRD) specifies the structure and validation for your custom resource.
 Create the necessary directory structure:
@@ -147,6 +149,7 @@ git add capabilities/crd/ && git commit -m "Create CRD handling logic"
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Helpers
+**[🟢🟢🟢⚪⚪⚪] Step 3 of 6**
 
 Now, let's create helper functions that will generate the Kubernetes resources managed by our operator. These helpers will simplify the creation of Deployments, Services, and ConfigMaps for each WebApp instance.
 
@@ -178,6 +181,7 @@ git add capabilities/controller/ && git commit -m "Add generators for WebApp dep
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Reconciler
+**[🟢🟢🟢🟢⚪⚪] Step 4 of 6**
 
 Now, create the function that reacts to changes in WebApp instances. This function will be called and placed into a queue, guaranteeing ordered and synchronous processing of events, even when the system is under heavy load.
 
@@ -242,6 +246,7 @@ git add pepr.ts && git commit -m "Register WebAppController with pepr module"
 ```
 
 ## Build and Deploy Your Operator
+**[🟢🟢🟢🟢🟢⚪] Step 5 of 6**
 
 ### Preparing Your Environment
 
@@ -392,6 +397,7 @@ FIELDS:
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Test Your Operator
+**[🟢🟢🟢🟢🟢🟢] Step 6 of 6**
 
 **Understanding reconciliation**  
 
