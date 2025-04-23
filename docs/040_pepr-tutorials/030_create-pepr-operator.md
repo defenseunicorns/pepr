@@ -225,7 +225,7 @@ git add capabilities/ && git commit -m "Create reconciler for webapps"
 Ensure that the PeprModule in `pepr.ts` uses `WebAppController`. The implementation should look something like this:
 
 ```typescript
-new PeprModule(cfg, [ WebAppController ]);
+new PeprModule(cfg, [WebAppController]);
 ```
 
 Using `sed`, replace the contents of the file to use our new `WebAppController`:
