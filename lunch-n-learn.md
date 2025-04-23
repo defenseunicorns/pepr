@@ -2,51 +2,45 @@
 %author: Sam Mayer, Defense Unicorns
 %date: 2025-04-09
 
-
-
 # tl;dr
 
-> **Rule 2.** Measure. Don't tune for speed until you've measured, and even then don't unless one part of the code overwhelms the rest.
+> **Rule 2.** Measure. 
+> Don't tune for speed until you've measured,
+>  and even then don't unless one part of the code overwhelms the rest.
 
 - [Rob Pike's Rules of Programming](https://users.ece.utexas.edu/~adnan/pike.html)
-
-
 
 -------------------------------------------------
 
 # Learning Objectives
 
-- Understand the difference between test-level failures and workflow-level failures.
-- Understand how their reporting affects debugging efforts.
-- Summarize the role of GitHub Actions, GitHub CLI, and Python scripting in analyzing test failures within CI environments.
+- State the difference between test-level failures and workflow-level failures.
+- Identify how failures at test and workflow levels impact debugging.
+- Summarize how GitHub CLI and Python scripting can analyze test failures within CI/CD.
 
 -------------------------------------------------
 
 # What was the Problem?
 
-Our E2Es treat _any_ failed test as a full workflow failure.
-
-**9/10 passing tests is still a failure.**
-
 A small amount of flaky tests snowballed into outsized frustrations for developers.
+
+[E2E - Pepr Excellent Examples](https://github.com/defenseunicorns/pepr/actions/runs/14586396962) in GitHub Actions
 
 -------------------------------------------------
 
 # Why Didn't We Have Enough Information?
 
-Use of [nick-fields/retry](https://github.com/nick-fields/retry) concealed true scope of problem.
-
-Tests usually passed when re-ran
-
-Other priorities at the time
+1. Tests usually passed when re-ran.
+2. Use of [nick-fields/retry](https://github.com/nick-fields/retry) concealed true scope of problem.
+3. Other priorities at the time.
 
 -------------------------------------------------
 
 # How Did We Understand the Problem?
 
-1. Download logs from Github
+1. Download logs 
 2. Get workflow ID of "E2E - Pepr Excellent Examples"
-3. Given a workflow ID, get run IDs within the past N days
+3. Given a workflow ID, get run IDs within the past ` N ` days
 4. Process the log file for failure messages
 5. Produce a JSON entry for each log file
 6. Chart it!
@@ -80,11 +74,9 @@ Other priorities at the time
 
 The real impact on developer experience is now quantified:
 
-* Over a 30 day period we see 11,150 test runs with 150 failures (**1% failure rate**).
-* 65 failing workflows out of 406 workflow runs (**16% failure rate**).
-
-* Shell scripts quickly grow out of hand after initial prototype is established
-* Agentic workflow success story (Python conversion)
+* Over a 30 day period we see a 1% test failure rate (150 of 11,150 tests).
+* In practice, it feels like a 16% failure rate (65 of 406 workflows).
+* Agentic coding workflow success story (BASH -> Python)
 
 -------------------------------------------------
 
@@ -99,3 +91,9 @@ The real impact on developer experience is now quantified:
 * Share scripts?
 
 -------------------------------------------------
+
+# Learning Objectives
+
+- State the difference between test-level failures and workflow-level failures.
+- Identify how failures at test and workflow levels impact debugging.
+- Summarize how GitHub CLI and Python scripting can analyze test failures within CI/CD.
