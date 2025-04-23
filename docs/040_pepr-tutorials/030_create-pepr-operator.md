@@ -11,7 +11,7 @@ If you get stuck at any point, you can reference the [complete example code in t
 The WebApp Operator will:
 
 1. Deploy a custom `WebApp` resource definition (CRD)
-2. Watch for WebApp instances and reconcile them with actual cluster state
+2. Watch for WebApp instances and reconcile them with the actual cluster state
 3. For each WebApp instance, manage:
    - A `Deployment` with configurable replicas
    - A `Service` to expose the application
@@ -56,9 +56,7 @@ npx pepr init \
 cd operator # set working directory as the new pepr module
 ```
 
-To track your progress in this tutorial, let's treat it as a `git` repository.
-
-Create an initial commit with:
+To track your progress in this tutorial, let's treat it as a `git` repository:
 
 ```bash
 git init && git add --all && git commit -m "npx pepr init"
@@ -76,7 +74,7 @@ mkdir -p capabilities/crd/generated capabilities/crd/source
 ```
 
 Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client).
-This way we can react to the fields of the CRD in a type-safe manner.
+This allows us to react to the CRD fields in a type-safe manner.
 Create a CRD named `crd.yaml` for the WebApp that includes:
 - Theme selection (dark/light)
 - Language selection (en/es)
@@ -89,21 +87,21 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
 ```
 
 Examine the contents of `capabilities/crd/source/crd.yaml`.
-Status should also be listed under `subresources` to make it writable.
-We provide descriptions under the properties for clarity around what the property is used for.
-Enums are useful to limit the values that can be used for a property.
+Note that the status should be listed under `subresources` to make it writable.
+We provide descriptions for each property to clarify their purpose.
+Enums are used to restrict the values that can be assigned to a property.
 
-Create a interface for the CRD spec with the following command:
+Create an interface for the CRD spec with the following command:
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/generated/webapp-v1alpha1.ts \
   -o capabilities/crd/generated/webapp-v1alpha1.ts
 ```
 
-Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
+Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`.
 
-Create a TypeScript file that contains the webapp CRD named `webapp.crd.ts`.
-This will have the controller automatically create the CRD on startup.
+Create a TypeScript file that contains the WebApp CRD named `webapp.crd.ts`.
+This will enable the controller to automatically create the CRD on startup.
 Use the command:
 
 ```bash
@@ -111,27 +109,24 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/crd/source/webapp.crd.ts
 ```
 
-Take a moment to commit your changes for CRD creation with:
+Take a moment to commit your changes for CRD creation:
 
 ```bash
 git add capabilities/crd/ && git commit -m "Create WebApp CRD"
 ```
 
-Examine `webapp.crd.ts` and observe...
-<!-- Point out some useful things here -->
+The `webapp.crd.ts` file defines the structure of our CRD, including the validation rules and schema that Kubernetes will use when WebApp resources are created or modified.
 
-Create a file that will automatically register the CRD on startup named `capabilities/crd/register.ts`. Use the command:
+Create a file that will automatically register the CRD on startup named `capabilities/crd/register.ts`:
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/crd/register.ts \
   -o capabilities/crd/register.ts
 ```
 
-Examine `register.ts` and observe...
-<!-- Point out some useful things here -->
+The `register.ts` file contains logic to ensure our CRD is created in the cluster when the operator starts up, avoiding the need for manual CRD installation.
 
-
-Create a file to ensure that instances of the WebApp resource are in valid namespaces and have a maximum of `7` replicas.
+Create a file to validate that WebApp instances are in valid namespaces and have a maximum of `7` replicas.
 Create a `validator.ts` file with the command:
 
 ```bash
@@ -139,12 +134,11 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/crd/validator.ts
 ```
 
-Examine `validator.ts` and observe...
-<!-- Point out some useful things here -->
+The `validator.ts` file implements validation logic for our WebApp resources, ensuring they meet our requirements before they're accepted by the cluster.
 
-In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of `7` replicas.
+In this section, we've generated the CRD class for WebApp, created a function to automatically register the CRD, and added a validator to ensure WebApp instances are in valid namespaces and don't exceed 7 replicas.
 
-Commit your changes for CRD registration & validation with:
+Commit your changes for CRD registration & validation:
 
 ```bash
 git add capabilities/crd/ && git commit -m "Create CRD handling logic"
@@ -156,7 +150,7 @@ git add capabilities/crd/ && git commit -m "Create CRD handling logic"
 
 Now, let's create helper functions that will generate the Kubernetes resources managed by our operator. These helpers will simplify the creation of Deployments, Services, and ConfigMaps for each WebApp instance.
 
-Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes Objects for the Operator to deploy (with the ownerReferences auto-included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
+Create a `controller` folder in the `capabilities` folder and create a `generators.ts` file. This file will contain functions that generate Kubernetes objects for the operator to deploy (with the ownerReferences automatically included). Since these resources are owned by the WebApp resource, they will be deleted when the WebApp resource is deleted.
 
 ```bash
 mkdir -p capabilities/controller
@@ -169,14 +163,13 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/controller/generators.ts
 ```
 
-Examine `generators.ts` and observe...
-<!-- Point out some useful things here -->
+The `generators.ts` file contains functions to create all the necessary Kubernetes resources for our WebApp, including properly configured Deployments, Services, and ConfigMaps with appropriate labels and selectors.
 
-Our job is to make the deployment of the WebApp simple. Instead of having to keep track of the versions and revisions of all of the Kubernetes Objects required for the WebApp, rolling pods and updating configMaps, the deployer now only needs to focus on the `WebApp` instance. The controller will reconcile instances of the operand (WebApp) against the actual cluster state to reach the desired state.
+Our goal is to simplify WebApp deployment. Instead of requiring users to manage multiple Kubernetes objects, track versions, and handle revisions manually, they can focus solely on the `WebApp` instance. The controller reconciles WebApp instances against the actual cluster state to achieve the desired configuration.
 
-We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
+The controller deploys a `ConfigMap` based on the language and theme specified in the WebApp resource and sets the number of replicas according to the WebApp specification.
 
-Commit your changes for deployment, service, and configmap generation with: 
+Commit your changes for deployment, service, and configmap generation: 
 
 ```bash
 git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"
@@ -186,7 +179,7 @@ git add capabilities/controller/ && git commit -m "Add generators for WebApp dep
 
 ## Create Reconciler
 
-Now, create the function that reacts to changes across WebApp instances. This function will be called and put into a queue, guaranteeing ordered and synchronous processing of events, even when the system may be under heavy load.
+Now, create the function that reacts to changes in WebApp instances. This function will be called and placed into a queue, guaranteeing ordered and synchronous processing of events, even when the system is under heavy load.
 
 In the base of the `capabilities` folder, create a `reconciler.ts` file and add the following:
 
@@ -195,26 +188,26 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/reconciler.ts
 ```
 
-Examine `reconciler.ts` and observe...
-<!-- Point out some useful things here -->
+The `reconciler.ts` file contains the core logic of our operator, handling the creation, updating, and deletion of WebApp resources and ensuring the cluster state matches the desired state.
 
-Finally create the `index.ts` file in the `capabilities` folder and add the following:
+Finally, create the `index.ts` file in the `capabilities` folder and add the following:
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/capabilities/index.ts \
   -o capabilities/index.ts
 ```
 
-Examine `index.ts` and observe...
-<!-- Point out some useful things here -->
+The `index.ts` file contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources.
 
 - When a WebApp is created or updated, validate it, store the name of the instance and enqueue it for processing.
 - If an "owned" resource (ConfigMap, Service, or Deployment) is deleted, redeploy it.
 - Always redeploy the WebApp CRD if it was deleted as the controller depends on it
 
-In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
+In this section we created a `reconciler.ts` file that contains the function responsible for reconciling the state of WebApp instances with the cluster and updating their status.
+The `index.ts` file contains the WebAppController capability and functions that watch for changes to WebApp resources and their corresponding Kubernetes objects.
+The `Reconcile` action processes callbacks in a queue, guaranteeing ordered and synchronous processing of events.
 
-Commit your changes with
+Commit your changes with:
 
 ```bash
 git add capabilities/ && git commit -m "Create reconciler for webapps"
@@ -225,7 +218,7 @@ git add capabilities/ && git commit -m "Create reconciler for webapps"
 
 ## Add capability to Pepr Module
 
-Ensure that the PeprModule in `pepr.ts` uses `WebAppController`, the implementation should look something like this:
+Ensure that the PeprModule in `pepr.ts` uses `WebAppController`. The implementation should look something like this:
 
 ```typescript
 new PeprModule(cfg, [ WebAppController ]);
@@ -250,8 +243,6 @@ git add pepr.ts && git commit -m "Register WebAppController with pepr module"
 
 ## Build and Deploy Your Operator
 
-> 🌟 **Key Concepts**: In this section, we'll transform our code into a running Kubernetes operator that actively monitors and manages WebApp resources in your cluster.
-
 ### Preparing Your Environment
 
 Create an ephemeral cluster with `k3d`.
@@ -267,7 +258,7 @@ kubectl rollout status deployment -n kube-system
 An ephemeral cluster is a temporary Kubernetes cluster that exists only for testing purposes. Tools like Kind (Kubernetes in Docker) and k3d let you quickly create and destroy clusters without affecting your production environments.
 </details>
 
-#### Update and Prepare Pepr
+### Update and Prepare Pepr
 
 Make sure Pepr is updated to the latest version:
 
@@ -279,14 +270,14 @@ npx pepr update --skip-template-update
 
 ### Building the Operator
 
-Build the pepr module by running:
+Build the Pepr module by running:
 
 ```bash
 npx pepr format && 
 npx pepr build
 ```
 
-Commit your changes now that a build has completed:
+Commit your changes after the build completes:
 
 ```bash
 git add capabilities/ package*.json && git commit -m "Build pepr module"
@@ -335,7 +326,6 @@ kubectl apply -f dist/pepr-module-my-operator-uuid.yaml &&
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
-<!-- Issue with CRD generation, updated pepr.ts -->
 <details>
 <summary>🔍 What's happening here?</summary>
 
@@ -462,15 +452,15 @@ This continuous loop ensures your application maintains its expected configurati
 
 ### Creating a WebApp Instance
 
-Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replica.
-Copy down the WebApp resource with the following command:
+Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replicas:
 
 ```bash
 curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-examples/main/pepr-operator/webapp-light-en.yaml \
   -o webapp-light-en.yaml
 ```
 
-Examine the contents of `webapp-light-en.yaml`. Observe...
+Examine the contents of `webapp-light-en.yaml`. It defines a WebApp with English language, light theme, and 1 replica.
+
 Next, apply it to the cluster:
 
 ```bash
@@ -487,7 +477,7 @@ kubectl apply -f webapp-light-en.yaml
 4. The reconcile function creates three "owned" resources:
    - A ConfigMap with HTML content based on the theme and language
    - A Service to expose the web application
-   - A Deployment to run the web server pods
+   - A Deployment to run the web server pods with the specified number of replicas
 5. The status is updated to track progress
 
 All this logic is in the code we wrote earlier in the tutorial.
@@ -695,27 +685,50 @@ sleep 5 &&
 kubectl get cm,deploy,svc -n webapps
 ```
 
+You can also delete the entire test cluster when you're finished:
+
+```bash
+k3d cluster delete pepr-dev
+```
+
+## Congratulations!
+
+You've successfully built a Kubernetes operator using Pepr. Through this tutorial, you:
+
+1. Created a custom resource definition (CRD) for WebApps
+2. Implemented a controller with reconciliation logic
+3. Added validation for your custom resources
+4. Deployed your operator to a Kubernetes cluster
+5. Verified that your operator correctly manages the lifecycle of WebApp resources
+
+This pattern is powerful for creating self-managing applications in Kubernetes. Your operator now handles the complex task of maintaining your application's state according to your specifications, reducing the need for manual intervention.
+
 ### What You've Learned
 
-Congratulations! You've successfully:
+By completing this tutorial, you've gained experience with several important concepts:
 
-1.  Created a custom WebApp resource
-2.  Verified that your operator automatically creates owned resources
-3.  Tested the reconciliation loop by deleting owned resources
-4.  Updated your WebApp and seen the changes reflected
+- **Custom Resource Definitions (CRDs)**: You defined a structured, validated schema for your WebApp resources
+- **Reconciliation**: You implemented the core operator pattern that maintains desired state
+- **Owner References**: You used Kubernetes ownership to manage resource lifecycles
+- **Status Reporting**: Your operator provides feedback about resource state through status fields
+- **Watch Patterns**: Your operator reacts to changes in both custom and standard Kubernetes resources
 
-This pattern is powerful for creating reusable, self-managing applications in Kubernetes. 
-Your operator now handles the complex task of maintaining your application's state according to your specifications, reducing the need for manual intervention.
+These concepts form the foundation of the operator pattern and can be applied to manage any application or service on Kubernetes.
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+### Next Steps
 
-## Next Steps
+Now that you understand the basics of building an operator with Pepr, you might want to:
 
-- Add more sophisticated validations for your WebApp CRD
-- Implement more detailed status reporting
-- Add support for horizontal auto-scaling
-- Create a custom metrics dashboard for your WebApp
+- Add more sophisticated validation logic
+- Implement status conditions that provide detailed health information
+- Add support for upgrading between versions of your application
+- Explore more complex reconciliation patterns for multi-component applications
+- Add metrics and monitoring to your operator
 
-For more examples and reference, check out the [Pepr documentation](https://docs.pepr.dev) and [Pepr GitHub repository](https://github.com/defenseunicorns/pepr). Also, checkout the finished example in [Pepr Excellent Examples](https://github.com/defenseunicorns/pepr-excellent-examples/tree/main/pepr-operator).
+For more information, check out:
+
+- [Pepr Documentation](https://docs.pepr.dev)
+- [Kubernetes Operator Best Practices](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+- [Custom Resource Definition Documentation](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
