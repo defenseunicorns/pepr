@@ -96,7 +96,7 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
 
 Examine the contents of `capabilities/crd/generated/webapp-v1alpha1.ts`
 
-Create a typescript file that contains the webapp CRD named `webapp.crd.ts`.
+Create a TypeScript file that contains the webapp CRD named `webapp.crd.ts`.
 This will have the controller automatically create the CRD on startup.
 Use the command:
 
@@ -453,7 +453,7 @@ kubectl apply -f webapp-light-en.yaml
 <summary>🔍 What happens when you create this resource?</summary>
 
 1. Kubernetes API server receives the WebApp resource
-2. Our operator's controller (in `index.ts`) detects the new resource via its watch function
+2. Our operator's controller (in `index.ts`) detects the new resource via its reconcile function
 3. The controller validates the WebApp using our validator
 4. The reconcile function creates three "owned" resources:
    - A ConfigMap with HTML content based on the theme and language
