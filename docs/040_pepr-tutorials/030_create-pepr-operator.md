@@ -52,7 +52,8 @@ npx pepr init \
   --uuid my-operator-uuid \
   --description "Kubernetes Controller for WebApp Resources" \
   --errorBehavior reject \
-  --confirm
+  --confirm &&
+cd operator # set working directory as the new pepr module
 ```
 
 To track your progress in this tutorial, let's treat it as a `git` repository.
