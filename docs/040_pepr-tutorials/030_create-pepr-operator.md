@@ -267,16 +267,6 @@ kubectl rollout status deployment -n kube-system
 An ephemeral cluster is a temporary Kubernetes cluster that exists only for testing purposes. Tools like Kind (Kubernetes in Docker) and k3d let you quickly create and destroy clusters without affecting your production environments.
 </details>
 
-If you've followed the tutorial steps in a separate directory, skip this step.
-If you've encountered issues deploying the operator to a cluster, use the pepr-excellent-examples version of the `pepr-operator` to see a working example.
-
-If appropriate, Clone the Operator. Otherwise, move on.
-
-```bash
-git clone https://github.com/defenseunicorns/pepr-excellent-examples.git
-cd pepr-operator
-```
-
 #### Update and Prepare Pepr
 
 Make sure Pepr is updated to the latest version:
