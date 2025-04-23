@@ -253,10 +253,8 @@ k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait &&
 kubectl rollout status deployment -n kube-system
 ```
 
-<details>
-<summary>💡 What is an ephemeral cluster?</summary>
+**What is an ephemeral cluster?**  
 An ephemeral cluster is a temporary Kubernetes cluster that exists only for testing purposes. Tools like Kind (Kubernetes in Docker) and k3d let you quickly create and destroy clusters without affecting your production environments.
-</details>
 
 ### Update and Prepare Pepr
 
@@ -283,8 +281,7 @@ Commit your changes after the build completes:
 git add capabilities/ package*.json && git commit -m "Build pepr module"
 ```
 
-<details>
-<summary>🔍 What happens during the build process?</summary>
+**The build process explained**  
 
 The `pepr build` command performs three critical steps:
 
@@ -315,7 +312,6 @@ This process creates a self-contained deployment unit that includes everything n
                                                                │                   │
                                                                └───────────────────┘
 ```
-</details>
 
 ### Deploy to Kubernetes
 
@@ -326,8 +322,7 @@ kubectl apply -f dist/pepr-module-my-operator-uuid.yaml &&
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
 
-<details>
-<summary>🔍 What's happening here?</summary>
+**What's happening during deployment?**  
 
 1. The first command applies all the Kubernetes resources defined in the YAML file, including:
    - The WebApp CRD (Custom Resource Definition)
@@ -335,12 +330,10 @@ kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
    - The necessary RBAC permissions for your operator to function
    
 2. The second command waits for the operator pod to be ready before proceeding. This ensures your operator is running before you attempt to create WebApp resources.
-</details>
 
 #### Troubleshooting Deployment Issues
 
-<details>
-<summary>❓ My operator isn't starting or is crashing</summary>
+**Troubleshooting operator startup problems**  
 
 If your operator doesn't start properly, check these common issues:
 
@@ -354,8 +347,6 @@ If your operator doesn't start properly, check these common issues:
    kubectl describe deployment -n pepr-system
    ```
    Look for permission-related errors in the events section.
-
-</details>
 
 Verify the deployment was successful by checking if the CRD has been properly registered:
 
@@ -402,18 +393,7 @@ FIELDS:
 
 ## Test Your Operator
 
-> 🔄 **Key Concept**: Testing an operator involves verifying that it correctly responds to changes in your custom resources and maintains the desired state in your cluster.
-
-### Understanding the Testing Strategy
-
-We'll test our WebApp operator by:
-1. Creating a WebApp resource to verify the operator creates all required components
-2. Examining the status and events to verify proper operation
-3. Testing the reconciliation loop by intentionally deleting owned resources
-4. Updating the WebApp to see if changes are properly applied
-
-<details>
-<summary>💡 What is reconciliation?</summary>
+**Understanding reconciliation**  
 
 Reconciliation is the core concept behind Kubernetes operators. It's the process of:
 1. Observing the current state of resources in the cluster
@@ -448,7 +428,6 @@ This continuous loop ensures your application maintains its expected configurati
 │  • Deployment     │ reconciliation
 └───────────────────┘
 ```
-</details>
 
 ### Creating a WebApp Instance
 
@@ -468,8 +447,7 @@ kubectl create namespace webapps &&
 kubectl apply -f webapp-light-en.yaml
 ```
 
-<details>
-<summary>🔍 What happens when you create this resource?</summary>
+**How resource creation works**  
 
 1. Kubernetes API server receives the WebApp resource
 2. Our operator's controller (in `index.ts`) detects the new resource via its reconcile function
@@ -481,7 +459,6 @@ kubectl apply -f webapp-light-en.yaml
 5. The status is updated to track progress
 
 All this logic is in the code we wrote earlier in the tutorial.
-</details>
 
 ### Verifying Resource Creation
 
@@ -523,14 +500,12 @@ Expected Output:
 }
 ```
 
-<details>
-<summary>💡 What do these status fields mean?</summary>
+**Understanding status fields**  
 
 - **observedGeneration**: A counter that increments each time the resource spec is changed
 - **phase**: The current lifecycle state of the WebApp ("Pending" during creation, "Ready" when all components are operational)
 
 This status information comes from our reconciler code, which updates these fields during each reconciliation cycle.
-</details>
 
 You can also see events related to your WebApp that provide a timeline of actions taken by the operator:
 
@@ -570,11 +545,9 @@ PID=$!
 echo "Port-forward PID: $PID"
 ```
 
-<details>
-<summary>💡 What is port-forwarding?</summary>
+**About port-forwarding**  
 
 Port-forwarding creates a secure tunnel from your local machine to a pod or service in your Kubernetes cluster. In this case, we're forwarding your local port 3000 to port 80 of the WebApp service, allowing you to access the application at http://localhost:3000 in your browser.
-</details>
 
 Now open [http://localhost:3000](http://localhost:3000) in your browser or run `curl http://localhost:3000` to see the response in a terminal.
 The browser should display a light theme web application:
@@ -606,15 +579,13 @@ Now that we've successfully deployed a WebApp, commit your changes:
 git add webapp-light-en.yaml && git commit -m "Add WebApp resource for light mode in english"
 ```
 
-<details>
-<summary>🔍 What happened behind the scenes?</summary>
+**Behind the scenes of reconciliation**  
 
 1. When you deleted the ConfigMap, Kubernetes sent a DELETE event
 2. Our operator (in `index.ts`) was watching for these events via the `onDeleteOwnedResource` handler
 3. This triggered the reconciliation loop, which detected that the ConfigMap was missing
 4. The reconciler recreated the ConfigMap based on the WebApp definition
 5. This all happened automatically without manual intervention - the core benefit of using an operator!
-</details>
 
 > 🛠️ **Try it yourself**: Try deleting the Service or Deployment. What happens? The operator should recreate those too!
 
@@ -663,8 +634,7 @@ Now that we've successfully updated a WebApp, commit your changes:
 git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mode in spanish"
 ```
 
-<details>
-<summary>🔍 How does updating work?</summary>
+**How updating works**  
 
 1. When you apply the changed WebApp, Kubernetes sends an UPDATE event
 2. Our operator's controller (in `index.ts`) detects this via the `onUpdate` handler
@@ -672,7 +642,6 @@ git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mo
 4. The reconciler compares the current resources with what's needed for the new spec
 5. It updates the ConfigMap with the new theme and language content
 6. The Deployment automatically detects the ConfigMap change and restarts the pod with the new content
-</details>
 
 ### Cleanup
 
