@@ -56,7 +56,12 @@ npx pepr init \
 ```
 
 To track your progress in this tutorial, let's treat it as a `git` repository.
-Run `git init && git add --all && git commit -m "npx pepr init"` to create the initial commit.
+
+Create an initial commit with:
+
+```bash
+git init && git add --all && git commit -m "npx pepr init"
+```
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
@@ -105,7 +110,11 @@ curl -s https://raw.githubusercontent.com/defenseunicorns/pepr-excellent-example
   -o capabilities/crd/source/webapp.crd.ts
 ```
 
-Take a moment to commit your changes for CRD creation with `git add capabilities/crd/ && git commit -m "Create WebApp CRD"`
+Take a moment to commit your changes for CRD creation with:
+
+```bash
+git add capabilities/crd/ && git commit -m "Create WebApp CRD"
+```
 
 Examine `webapp.crd.ts` and observe...
 <!-- Point out some useful things here -->
@@ -134,7 +143,11 @@ Examine `validator.ts` and observe...
 
 In this section we generated the CRD class for WebApp, created a function to auto register the CRD, and added a validator to validate that instances of WebApp are in valid namespaces and have a maximum of `7` replicas.
 
-Commit your changes for CRD registration & validation with `git add capabilities/crd/ && git commit -m "Create CRD handling logic"`
+Commit your changes for CRD registration & validation with:
+
+```bash
+git add capabilities/crd/ && git commit -m "Create CRD handling logic"
+```
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
@@ -162,7 +175,11 @@ Our job is to make the deployment of the WebApp simple. Instead of having to kee
 
 We decide which `ConfigMap` to deploy based on the language and theme specified in the WebApp resource and how many replicas to deploy based on the replicas specified in the WebApp resource.
 
-Commit your changes for deployment, service, and configmap generation with `git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"`
+Commit your changes for deployment, service, and configmap generation with: 
+
+```bash
+git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"
+```
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
@@ -196,7 +213,11 @@ Examine `index.ts` and observe...
 
 In this section we created a `reconciler.ts` file that contains the function that is responsible for reconciling the state of the instance with the cluster based on CustomResource and updating the status of the instance. The `index.ts` file that contains the WebAppController capability and the functions that are used to watch for changes to the WebApp resource and corresponding Kubernetes resources. The `Reconcile` action processes the callback in a queue guaranteeing ordered and synchronous processing of events
 
-Commit your changes with `git add capabilities/ && git commit -m "Create reconciler for webapps"`
+Commit your changes with
+
+```bash
+git add capabilities/ && git commit -m "Create reconciler for webapps"
+```
 
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
@@ -211,7 +232,11 @@ new PeprModule(cfg, [
 ]);
 ```
 
-Commit your changes now that the WebAppController is part of the Pepr Module: `git add pepr.ts && git commit -m "Register WebAppController with pepr module"`
+Commit your changes now that the WebAppController is part of the Pepr Module:
+
+```bash
+git add pepr.ts && git commit -m "Register WebAppController with pepr module"
+```
 
 ## Build and Deploy Your Operator
 
@@ -261,7 +286,11 @@ npx pepr format &&
 npx pepr build
 ```
 
-Commit your changes now that a build has completed: `git add capabilities/ package*.json && git commit -m "Build pepr module"`
+Commit your changes now that a build has completed:
+
+```bash
+git add capabilities/ package*.json && git commit -m "Build pepr module"
+```
 
 <details>
 <summary>🔍 What happens during the build process?</summary>
@@ -581,7 +610,11 @@ kube-root-ca.crt              1      0s
 web-content-webapp-light-en   1      0s
 ```
 
-Now that we've successfully deployed a WebApp, commit your changes: `git add webapp-light-en.yaml && git commit -m "Add WebApp resource for light mode in english"`
+Now that we've successfully deployed a WebApp, commit your changes:
+
+```bash
+git add webapp-light-en.yaml && git commit -m "Add WebApp resource for light mode in english"
+```
 
 <details>
 <summary>🔍 What happened behind the scenes?</summary>
@@ -634,7 +667,11 @@ The browser should display a dark theme web application:
 
 ![WebApp Dark Theme](resources/030_create-pepr-operator/dark.png)
 
-Now that we've successfully updated a WebApp, commit your changes: `git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mode in spanish"`
+Now that we've successfully updated a WebApp, commit your changes: 
+
+```bash
+git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mode in spanish"
+```
 
 <details>
 <summary>🔍 How does updating work?</summary>
