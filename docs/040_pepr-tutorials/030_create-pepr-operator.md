@@ -236,7 +236,7 @@ Using `sed`, replace the contents of the file to use our new `WebAppController`:
 ```bash
 # Use the WebAppController Module
 sed -i '' -e '/new PeprModule(cfg, \[/,/\]);/c\
-new PeprModule(cfg, [ WebAppController ]);' ./pepr.ts
+new PeprModule(cfg, [WebAppController]);' ./pepr.ts
 
 # Update Imports
 sed -i '' 's|import { HelloPepr } from "./capabilities/hello-pepr";|import { WebAppController } from "./capabilities";|' ./pepr.ts
