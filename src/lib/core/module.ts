@@ -96,10 +96,7 @@ export class PeprModule {
         // Wait for the controller to be ready before setting up watches
         if (isWatchMode() || isDevMode()) {
           try {
-            await PeprModule.setupWatchWrapper(
-              capabilities,
-              resolveIgnoreNamespaces(ignoreNamespaces),
-            );
+            setupWatch(capabilities, resolveIgnoreNamespaces(ignoreNamespaces));
           } catch (e) {
             Log.error(e, "Error setting up watch");
             // Throw error instead of exiting process for better testability
@@ -110,20 +107,6 @@ export class PeprModule {
         }
       },
     };
-  }
-
-  /**
-   * Setup watch functionality - extracted for better testability through method overriding
-   *
-   * @param capabilities The capabilities to watch
-   * @param ignoreNamespaces Namespaces to ignore
-   * @returns Promise that resolves when watch is setup
-   */
-  protected static async setupWatchWrapper(
-    capabilities: Capability[],
-    ignoreNamespaces: string[],
-  ): Promise<void> {
-    return setupWatch(capabilities, ignoreNamespaces);
   }
 
   /**
