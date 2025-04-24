@@ -50,7 +50,7 @@ describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
     });
 
     await expect(createControllerHooks(opts, capabilities, []).onReady!()).rejects.toThrow(
-      "Failed to set up watch: Test watch setup error",
+      "Watch Error: Could not set up watch.",
     );
 
     expect(setupWatchMock).toHaveBeenCalledTimes(1);

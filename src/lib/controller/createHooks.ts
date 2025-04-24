@@ -3,7 +3,6 @@ import { resolveIgnoreNamespaces } from "../assets/webhooks";
 import { Capability } from "../core/capability";
 import { isWatchMode, isDevMode } from "../core/envChecks";
 import { setupWatch } from "../processors/watch-processor";
-import Log from "../telemetry/logger";
 import { PeprModuleOptions } from "../types";
 
 /**
@@ -24,14 +23,11 @@ export function createControllerHooks(
     beforeHook: opts.beforeHook,
     afterHook: opts.afterHook,
     onReady: async (): Promise<void> => {
-      // Wait for the controller to be ready before setting up watches
       if (isWatchMode() || isDevMode()) {
         try {
           setupWatch(capabilities, resolveIgnoreNamespaces(ignoreNamespaces));
-        } catch (e) {
-          Log.error(e, "Error setting up watch");
-          // Throw error instead of exiting process for better testability
-          throw new Error(`Failed to set up watch: ${e instanceof Error ? e.message : String(e)}`);
+        } catch (error) {
+          throw new Error(`WatchError: Could not set up watch.`, { cause: error });
         }
       }
     },
