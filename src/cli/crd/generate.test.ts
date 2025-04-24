@@ -77,7 +77,7 @@ describe("generate.ts", () => {
   describe("loadVersionFiles", () => {
     it("should load only TypeScript files from version directory", () => {
       const project = new Project();
-      const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockImplementation(() => {});// don't resolve real files
+      const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]); // don't resolve real files
 
       (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts"]);
 
