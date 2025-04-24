@@ -7,7 +7,6 @@ import { PeprModuleOptions } from "../types";
 
 /**
  * Creates controller hooks with proper handling of watch setup
- * Extracted to a separate method for better testability
  *
  * @param opts Module options including hooks
  * @param capabilities List of capabilities
