@@ -110,7 +110,6 @@ describe("PeprModule", () => {
     const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
 
     beforeEach(() => {
-      // Use the environment variable approach as it's part of the implementation
       process.env.PEPR_MODE = "build";
     });
 
