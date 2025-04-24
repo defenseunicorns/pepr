@@ -73,31 +73,33 @@ it("should allow valid pepr onError conditions", () => {
   expect(() => new PeprModule(cfg)).not.toThrow();
 });
 
-it("should not create a controller if PEPR_MODE is set to build", () => {
-  process.env.PEPR_MODE = "build";
-  new PeprModule(packageJSON);
-  expect(startServerMock).not.toHaveBeenCalled();
-});
-
-it("should send the capabilities to the parent process if PEPR_MODE is set to build", () => {
-  const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
-  process.env.PEPR_MODE = "build";
-
-  const capability = new Capability({
-    name: "test",
-    description: "test",
+describe("when PEPR_MODE is build", () => {
+  it("should not create a controller", () => {
+    process.env.PEPR_MODE = "build";
+    new PeprModule(packageJSON);
+    expect(startServerMock).not.toHaveBeenCalled();
   });
 
-  const expected: CapabilityExport = {
-    name: capability.name,
-    description: capability.description,
-    namespaces: capability.namespaces,
-    bindings: capability.bindings,
-    hasSchedule: capability.hasSchedule,
-  };
+  it("should send the capabilities to the parent process", () => {
+    const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
+    process.env.PEPR_MODE = "build";
 
-  new PeprModule(packageJSON, [capability]);
-  expect(sendMock).toHaveBeenCalledWith([expected]);
+    const capability = new Capability({
+      name: "test",
+      description: "test",
+    });
+
+    const expected: CapabilityExport = {
+      name: capability.name,
+      description: capability.description,
+      namespaces: capability.namespaces,
+      bindings: capability.bindings,
+      hasSchedule: capability.hasSchedule,
+    };
+
+    new PeprModule(packageJSON, [capability]);
+    expect(sendMock).toHaveBeenCalledWith([expected]);
+  });
 });
 
 describe("Capability", () => {
