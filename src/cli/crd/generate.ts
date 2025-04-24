@@ -47,6 +47,7 @@ export function extractCRDDetails(
 }
 
 export async function generateCRDs(options: { output: string }): Promise<void> {
+  console.log("This feature is currently in alpha.\n");
   const outputDir = path.resolve(options.output);
   await createDirectoryIfNotExists(outputDir);
 

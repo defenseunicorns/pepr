@@ -22,6 +22,7 @@ const create = new Command("create")
   .option("--plural <plural>", "Plural name (e.g. memcacheds)", "")
   .option("--shortName <shortName>", "Short name (e.g. mc)", "")
   .action(async ({ group, version, kind, domain, scope, plural, shortName }) => {
+    console.log("This feature is currently in alpha.\n");
     const outputDir = path.resolve(`./api/${version}`);
     await createDirectoryIfNotExists(outputDir);
 
@@ -30,6 +31,7 @@ const create = new Command("create")
       `./api/${version}/${kind.toLowerCase()}_types.ts`,
       generateCRDScaffold(group, version, kind, { domain, scope, plural, shortName }),
     );
+    console.log(`✔ Created ${kind} TypeScript definition in ${outputDir}`);
   });
 
 export default create;
