@@ -37,10 +37,34 @@ const mockPackageJSON: PackageJSON = {
 };
 
 describe("PeprModule", () => {
+  const capabilities = [
+    new Capability({
+      name: "test-capability",
+      description: "test capability for hooks",
+    }),
+  ];
+
+  const opts = {
+    beforeHook: jest.fn(),
+    afterHook: jest.fn(),
+    deferStart: true,
+  };
+
+  const mockPkgJSON = clone(mockPackageJSON);
+  mockPkgJSON.pepr.alwaysIgnore = {
+    namespaces: ["kube-system", "kube-public"],
+  };
+
   // Reset mocks and env state before each test
   beforeEach(() => {
     jest.clearAllMocks();
     delete process.env.PEPR_MODE;
+    delete process.env.PEPR_WATCH_MODE;
+  });
+
+  it("should not call setupWatch when not in watch or dev mode", async () => {
+    createControllerHooks(opts, capabilities, []).onReady!();
+    expect(setupWatchMock).not.toHaveBeenCalled();
   });
 
   describe("when instantiated with default options", () => {
@@ -118,29 +142,18 @@ describe("PeprModule", () => {
     });
   });
 
-  describe.each([["watch"], ["dev"]])("when running in '%s' mode", () => {
-    const capabilities = [
-      new Capability({
-        name: "test-capability",
-        description: "test capability for hooks",
-      }),
-    ];
-
-    const opts = {
-      beforeHook: jest.fn(),
-      afterHook: jest.fn(),
-      deferStart: true,
-    };
-
-    const mockPkgJSON = clone(mockPackageJSON);
-    mockPkgJSON.pepr.alwaysIgnore = {
-      namespaces: ["kube-system", "kube-public"],
-    };
-
+  describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
     beforeEach(() => {
-      process.env.PEPR_WATCH_MODE = "true";
+      if (mode === "watch") {
+        process.env.PEPR_WATCH_MODE = "true";
+        delete process.env.PEPR_MODE;
+      } else {
+        process.env.PEPR_MODE = "dev";
+        delete process.env.PEPR_WATCH_MODE;
+      }
       jest.resetAllMocks();
     });
+
     it("should call setupWatch when controller is ready", async () => {
       // Setup mock to throw
       setupWatchMock.mockImplementationOnce(() => {
@@ -167,16 +180,6 @@ describe("PeprModule", () => {
       );
 
       expect(setupWatchMock).toHaveBeenCalledTimes(1);
-    });
-
-    it("should not call setupWatch when not in watch or dev mode", async () => {
-      // For this test only, change the environment mode
-      delete process.env.PEPR_MODE;
-      delete process.env.PEPR_WATCH_MODE;
-
-      createControllerHooks(opts, capabilities, []).onReady!();
-
-      expect(setupWatchMock).not.toHaveBeenCalled();
     });
   });
 });
