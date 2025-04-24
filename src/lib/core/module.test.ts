@@ -143,18 +143,12 @@ describe("PeprModule", () => {
 
   describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
     beforeEach(() => {
-      if (mode === "watch") {
-        process.env.PEPR_WATCH_MODE = "true";
-        delete process.env.PEPR_MODE;
-      } else {
-        process.env.PEPR_MODE = "dev";
-        delete process.env.PEPR_WATCH_MODE;
-      }
+      process.env.PEPR_WATCH_MODE = mode === "watch" ? "true" : undefined;
+      process.env.PEPR_MODE = mode === "dev" ? "dev" : undefined;
       jest.resetAllMocks();
     });
 
     it("should call setupWatch when controller is ready", async () => {
-      // Setup mock to throw
       setupWatchMock.mockImplementationOnce(() => {
         return;
       });
@@ -169,7 +163,6 @@ describe("PeprModule", () => {
     });
 
     it("should throw an error when setupWatch fails", async () => {
-      // Setup mock to throw
       setupWatchMock.mockImplementationOnce(() => {
         throw new Error("Test watch setup error");
       });
