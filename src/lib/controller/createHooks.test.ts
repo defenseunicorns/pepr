@@ -30,6 +30,12 @@ describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
     jest.resetAllMocks();
   });
 
+  describe("when ignored namespaces are not provided", () => {
+    it("should include all namespaces", async () => {
+      createControllerHooks(opts, capabilities).onReady!();
+      expect(setupWatchMock).toHaveBeenCalledWith(capabilities, []);
+    });
+  });
   it("should call setupWatch when controller is ready", async () => {
     setupWatchMock.mockImplementationOnce(() => {
       return;
@@ -50,7 +56,7 @@ describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
     });
 
     await expect(createControllerHooks(opts, capabilities, []).onReady!()).rejects.toThrow(
-      "Watch Error: Could not set up watch.",
+      "WatchError: Could not set up watch.",
     );
 
     expect(setupWatchMock).toHaveBeenCalledTimes(1);
