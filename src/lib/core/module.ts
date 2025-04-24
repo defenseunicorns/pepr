@@ -7,7 +7,7 @@ import { ValidateError } from "../errors";
 import { CapabilityExport } from "../types";
 import { isBuildMode } from "./envChecks";
 import { PackageJSON, PeprModuleOptions, ModuleConfig } from "../types";
-import { createControllerHooks } from "./asdf";
+import { createControllerHooks } from "../controller/createHooks";
 
 export class PeprModule {
   #controller!: Controller;
