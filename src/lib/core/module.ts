@@ -96,7 +96,7 @@ export class PeprModule {
         // Wait for the controller to be ready before setting up watches
         if (isWatchMode() || isDevMode()) {
           try {
-            await this.setupWatch(capabilities, resolveIgnoreNamespaces(ignoreNamespaces));
+            await this.setupWatchWrapper(capabilities, resolveIgnoreNamespaces(ignoreNamespaces));
           } catch (e) {
             Log.error(e, "Error setting up watch");
             // Throw error instead of exiting process for better testability
@@ -116,7 +116,7 @@ export class PeprModule {
    * @param ignoreNamespaces Namespaces to ignore
    * @returns Promise that resolves when watch is setup
    */
-  protected async setupWatch(
+  protected async setupWatchWrapper(
     capabilities: Capability[],
     ignoreNamespaces: string[],
   ): Promise<void> {
