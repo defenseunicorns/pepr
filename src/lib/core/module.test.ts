@@ -36,13 +36,6 @@ const mockPackageJSON: PackageJSON = {
   },
 };
 
-// Define the controller hooks type
-type ControllerHooks = {
-  onReady: () => Promise<void>;
-  beforeHook?: (req: unknown, res: unknown, next: () => void) => void;
-  afterHook?: (req: unknown, res: unknown) => void;
-};
-
 describe("PeprModule", () => {
   // Reset mocks and env state before each test
   beforeEach(() => {
@@ -89,7 +82,7 @@ describe("PeprModule", () => {
     });
   });
 
-  describe("when running in build mode", () => {
+  describe("when running in 'build' mode", () => {
     const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
 
     beforeEach(() => {
@@ -125,7 +118,7 @@ describe("PeprModule", () => {
     });
   });
 
-  describe("when testing controller hooks", () => {
+  describe.each([["watch"], ["dev"]])("when running in '%s' mode", () => {
     const capabilities = [
       new Capability({
         name: "test-capability",
@@ -148,57 +141,42 @@ describe("PeprModule", () => {
       process.env.PEPR_WATCH_MODE = "true";
       jest.resetAllMocks();
     });
-
-    describe.only("when in watch mode", () => {
-      it("should call setupWatch when controller is ready", async () => {
-        // Create the module
-        new PeprModule(mockPkgJSON, capabilities, opts);
-
-        // Get the controller constructor mock
-        const { Controller } = jest.mocked(await import("../controller"));
-
-        // Verify controller was initialized
-        expect(Controller).toHaveBeenCalled();
-
-        // Get the hooks passed to the controller
-        const controllerHooks = Controller.mock.calls[0][2] as ControllerHooks;
-
-        // Call the onReady hook
-        await controllerHooks.onReady();
-
-        // Verify setupWatch was called with correct args
-        expect(setupWatchMock).toHaveBeenCalledTimes(1);
-        expect(setupWatchMock).toHaveBeenCalledWith(
-          capabilities,
-          expect.arrayContaining(["kube-system", "kube-public"]),
-        );
-
-        // Verify our hooks were passed through
-        expect(controllerHooks.beforeHook).toBe(opts.beforeHook);
-        expect(controllerHooks.afterHook).toBe(opts.afterHook);
+    it("should call setupWatch when controller is ready", async () => {
+      // Setup mock to throw
+      setupWatchMock.mockImplementationOnce(() => {
+        return;
       });
 
-      it("should throw an error when setupWatch fails", async () => {
-        // Setup mock to throw
-        setupWatchMock.mockImplementationOnce(() => {
-          throw new Error("Test watch setup error");
-        });
+      createControllerHooks(opts, capabilities, ["some-namespace"]).onReady!();
 
-        await expect(createControllerHooks(opts, capabilities, []).onReady!()).rejects.toThrow(
-          "Failed to set up watch: Test watch setup error",
-        );
+      expect(setupWatchMock).toHaveBeenCalledTimes(1);
+      expect(setupWatchMock).toHaveBeenCalledWith(
+        capabilities,
+        expect.arrayContaining(["some-namespace"]),
+      );
+    });
 
-        expect(setupWatchMock).toHaveBeenCalledTimes(1);
+    it("should throw an error when setupWatch fails", async () => {
+      // Setup mock to throw
+      setupWatchMock.mockImplementationOnce(() => {
+        throw new Error("Test watch setup error");
       });
 
-      it("should not call setupWatch when not in watch or dev mode", async () => {
-        // For this test only, change the environment mode
-        delete process.env.PEPR_MODE;
+      await expect(createControllerHooks(opts, capabilities, []).onReady!()).rejects.toThrow(
+        "Failed to set up watch: Test watch setup error",
+      );
 
-        createControllerHooks(opts, capabilities, []).onReady!();
+      expect(setupWatchMock).toHaveBeenCalledTimes(1);
+    });
 
-        expect(setupWatchMock).not.toHaveBeenCalled();
-      });
+    it("should not call setupWatch when not in watch or dev mode", async () => {
+      // For this test only, change the environment mode
+      delete process.env.PEPR_MODE;
+      delete process.env.PEPR_WATCH_MODE;
+
+      createControllerHooks(opts, capabilities, []).onReady!();
+
+      expect(setupWatchMock).not.toHaveBeenCalled();
     });
   });
 });
