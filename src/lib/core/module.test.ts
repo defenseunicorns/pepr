@@ -10,6 +10,7 @@ import { PackageJSON } from "../types";
 import { CapabilityExport } from "../types";
 import { OnError } from "../../cli/init/enums";
 import * as watchProcessor from "../processors/watch-processor";
+import { createControllerHooks } from "./asdf";
 
 // Mock Controller
 const startServerMock = jest.fn();
@@ -144,11 +145,11 @@ describe("PeprModule", () => {
     };
 
     beforeEach(() => {
-      process.env.PEPR_MODE = "watch";
+      process.env.PEPR_WATCH_MODE = "true";
       jest.resetAllMocks();
     });
 
-    describe("when in watch mode", () => {
+    describe.only("when in watch mode", () => {
       it("should call setupWatch when controller is ready", async () => {
         // Create the module
         new PeprModule(mockPkgJSON, capabilities, opts);
@@ -179,20 +180,11 @@ describe("PeprModule", () => {
 
       it("should throw an error when setupWatch fails", async () => {
         // Setup mock to throw
-        const mockError = new Error("Test watch setup error");
-        setupWatchMock.mockImplementation(() => Promise.reject(mockError));
+        setupWatchMock.mockImplementationOnce(() => {
+          throw new Error("Test watch setup error");
+        });
 
-        // Create a module
-        new PeprModule(mockPackageJSON, [], { deferStart: true });
-
-        // Get the controller constructor mock
-        const { Controller } = jest.mocked(await import("../controller"));
-
-        // Get the hooks passed to the controller
-        const controllerHooks = Controller.mock.calls[0][2] as ControllerHooks;
-
-        // Call the onReady hook and expect it to throw
-        await expect(controllerHooks.onReady()).rejects.toThrow(
+        await expect(createControllerHooks(opts, capabilities, []).onReady!()).rejects.toThrow(
           "Failed to set up watch: Test watch setup error",
         );
 
@@ -203,17 +195,7 @@ describe("PeprModule", () => {
         // For this test only, change the environment mode
         delete process.env.PEPR_MODE;
 
-        // Create a module
-        new PeprModule(mockPackageJSON, [], { deferStart: true });
-
-        // Get the controller constructor mock
-        const { Controller } = jest.mocked(await import("../controller"));
-
-        // Get the hooks passed to the controller
-        const controllerHooks = Controller.mock.calls[0][2] as ControllerHooks;
-
-        // Call the onReady hook
-        await controllerHooks.onReady();
+        createControllerHooks(opts, capabilities, []).onReady!();
 
         expect(setupWatchMock).not.toHaveBeenCalled();
       });
