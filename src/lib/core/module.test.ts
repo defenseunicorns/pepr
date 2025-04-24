@@ -36,7 +36,6 @@ describe("PeprModule", () => {
     namespaces: ["kube-system", "kube-public"],
   };
 
-  // Reset mocks and env state before each test
   beforeEach(() => {
     jest.clearAllMocks();
     delete process.env.PEPR_MODE;
