@@ -59,21 +59,11 @@ export class PeprModule {
       return;
     }
 
-    const controllerHooks: ControllerHooks = {
-      beforeHook: opts.beforeHook,
-      afterHook: opts.afterHook,
-      onReady: async (): Promise<void> => {
-        // Wait for the controller to be ready before setting up watches
-        if (isWatchMode() || isDevMode()) {
-          try {
-            setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
-          } catch (e) {
-            Log.error(e, "Error setting up watch");
-            process.exit(1);
-          }
-        }
-      },
-    };
+    const controllerHooks = this.createControllerHooks(
+      opts,
+      capabilities,
+      pepr?.alwaysIgnore?.namespaces,
+    );
 
     this.#controller = new Controller(config, capabilities, controllerHooks);
 
@@ -83,6 +73,54 @@ export class PeprModule {
     }
 
     this.start();
+  }
+
+  /**
+   * Creates controller hooks with proper handling of watch setup
+   * Extracted to a separate method for better testability
+   *
+   * @param opts Module options including hooks
+   * @param capabilities List of capabilities
+   * @param ignoreNamespaces Namespaces to ignore
+   * @returns Controller hooks configuration
+   */
+  protected createControllerHooks(
+    opts: PeprModuleOptions,
+    capabilities: Capability[],
+    ignoreNamespaces: string[] = [],
+  ): ControllerHooks {
+    return {
+      beforeHook: opts.beforeHook,
+      afterHook: opts.afterHook,
+      onReady: async (): Promise<void> => {
+        // Wait for the controller to be ready before setting up watches
+        if (isWatchMode() || isDevMode()) {
+          try {
+            await this.setupWatch(capabilities, resolveIgnoreNamespaces(ignoreNamespaces));
+          } catch (e) {
+            Log.error(e, "Error setting up watch");
+            // Throw error instead of exiting process for better testability
+            throw new Error(
+              `Failed to set up watch: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          }
+        }
+      },
+    };
+  }
+
+  /**
+   * Setup watch functionality - extracted for better testability through method overriding
+   *
+   * @param capabilities The capabilities to watch
+   * @param ignoreNamespaces Namespaces to ignore
+   * @returns Promise that resolves when watch is setup
+   */
+  protected async setupWatch(
+    capabilities: Capability[],
+    ignoreNamespaces: string[],
+  ): Promise<void> {
+    return setupWatch(capabilities, ignoreNamespaces);
   }
 
   /**
