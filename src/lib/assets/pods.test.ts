@@ -393,18 +393,11 @@ describe("moduleSecret function", () => {
     jest.spyOn(helpers, "secretOverLimit").mockReturnValue(true);
 
     const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
-    const processExitMock = jest.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit");
-    });
 
-    expect(() => getModuleSecret(name, data, hash)).toThrow("process.exit");
-
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      "Uncaught Exception:",
-      new Error(`Module secret for ${name} is over the 1MB limit`),
+    expect(() => getModuleSecret(name, data, hash)).toThrow(
+      "Module secret for test is over the 1MB limit",
     );
 
     consoleErrorMock.mockRestore();
-    processExitMock.mockRestore();
   });
 });
