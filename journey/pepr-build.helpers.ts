@@ -27,7 +27,7 @@ export async function validateZarfYaml(expectedImage: string, filePath: string) 
     },
     components: [
       {
-        name: "pepr-static-test",
+        name: "module",
         required: true,
         manifests: [
           {
