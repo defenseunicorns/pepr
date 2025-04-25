@@ -57,6 +57,7 @@ describe("build", () => {
         const argz = [
           `--entry-point ${entryPoint}`,
           `--custom-image ${customImage}`,
+          `--custom-name random-identifier`,
           `--output-dir ${outputDir}`,
           `--timeout ${timeout}`,
           `--withPullSecret ${withPullSecret}`,

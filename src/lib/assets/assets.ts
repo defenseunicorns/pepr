@@ -128,7 +128,12 @@ export class Assets {
       );
       await fs.writeFile(
         helm.files.admissionServiceMonitorYaml,
-        dedent(serviceMonitorTemplate(`admission-${this.config.uuid}`, `admission`)),
+        dedent(
+          serviceMonitorTemplate(
+            process.env.PEPR_CUSTOM_BUILD_NAME ? `admission-${this.config.uuid}` : "admission",
+            `admission`,
+          ),
+        ),
       );
     }
 
@@ -232,7 +237,12 @@ export class Assets {
         );
         await fs.writeFile(
           helm.files.watcherServiceMonitorYaml,
-          dedent(serviceMonitorTemplate(`watcher-${this.config.uuid}`, `watcher`)),
+          dedent(
+            serviceMonitorTemplate(
+              process.env.PEPR_CUSTOM_BUILD_NAME ? `watcher-${this.config.uuid}` : "watcher",
+              `watcher`,
+            ),
+          ),
         );
       }
     } catch (err) {

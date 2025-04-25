@@ -30,18 +30,18 @@ describe("generateZarfYamlGeneric", () => {
   )![0];
 
   it("should generate the expected metadata", () => {
-    expect(zarfManifest.metadata!.name).toBe("pepr-test-uuid");
+    expect(zarfManifest.metadata!.name).toBe("module");
     expect(zarfManifest.metadata!.description).toBe("Pepr Module: A test module");
     expect(zarfManifest.metadata!.version).toBe("0.0.2");
   });
 
   it("should generate the expected component for helm charts", () => {
-    expect(zarfManifest.components[0].name).toBe(`pepr-${moduleConfig.uuid}`);
+    expect(zarfManifest.components[0].name).toBe("module");
     expect(zarfManifest.components[0].required).toBe(true);
     expect(zarfManifest.components[0].images[0]).toBe(
       "ghcr.io/defenseunicorns/pepr/controller:v0.0.2",
     );
-    expect(zarfManifest.components[0].manifests![0].name).toBe(`pepr-${moduleConfig.uuid}`);
+    expect(zarfManifest.components[0].manifests![0].name).toBe("module");
     expect(zarfManifest.components[0].manifests![0].namespace).toBe("pepr-system");
     expect(zarfManifest.components[0].manifests![0].files[0]).toBe("pepr-module-static-test.yaml");
   });
@@ -50,7 +50,7 @@ describe("generateZarfYamlGeneric", () => {
     const zarfChart = parseYAMLToJSON(
       generateZarfYamlGeneric(assets, "static-test-chart", "charts"),
     )![0];
-    expect(zarfChart.components[0].charts![0].name).toBe(`pepr-${moduleConfig.uuid}`);
+    expect(zarfChart.components[0].charts![0].name).toBe("module");
     expect(zarfChart.components[0].charts![0].namespace).toBe("pepr-system");
     expect(zarfChart.components[0].charts![0].version).toBe("0.0.2");
     expect(zarfChart.components[0].charts![0].localPath).toBe("static-test-chart");

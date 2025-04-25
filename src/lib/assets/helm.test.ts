@@ -50,7 +50,7 @@ describe("Kubernetes Template Generators", () => {
 
   describe("admissionServiceMonitor", () => {
     it("should generate a Service Monitor template for the admission controller correctly", () => {
-      const result = serviceMonitorTemplate("admission-uuid", "admission");
+      const result = serviceMonitorTemplate("admission", "admission");
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");
       expect(result).toContain("name: admission");
@@ -60,7 +60,7 @@ describe("Kubernetes Template Generators", () => {
 
   describe("watcherServiceMonitor", () => {
     it("should generate a Service Monitor template for the watcher controller correctly", () => {
-      const result = serviceMonitorTemplate("watcher-uuid", "watcher");
+      const result = serviceMonitorTemplate("watcher", "watcher");
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");
       expect(result).toContain("name: watcher-uuid");
