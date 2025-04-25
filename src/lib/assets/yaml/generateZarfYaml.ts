@@ -27,7 +27,7 @@ export function generateZarfYamlGeneric(assets: Assets, path: string, type: Conf
   const zarfCfg = {
     kind: "ZarfPackageConfig",
     metadata: {
-      name: zarfComponentName,
+      name: assets.name,
       description: `Pepr Module: ${assets.config.description}`,
       url: "https://github.com/defenseunicorns/pepr",
       version: `${assets.config.appVersion || "0.0.1"}`,
