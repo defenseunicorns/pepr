@@ -30,7 +30,7 @@ describe("generateZarfYamlGeneric", () => {
   )![0];
 
   it("should generate the expected metadata", () => {
-    expect(zarfManifest.metadata!.name).toBe("module");
+    expect(zarfManifest.metadata!.name).toBe("pepr-test-uuid");
     expect(zarfManifest.metadata!.description).toBe("Pepr Module: A test module");
     expect(zarfManifest.metadata!.version).toBe("0.0.2");
   });
