@@ -128,7 +128,7 @@ export class Assets {
       );
       await fs.writeFile(
         helm.files.admissionServiceMonitorYaml,
-        dedent(serviceMonitorTemplate("admission")),
+        dedent(serviceMonitorTemplate(`admission-${this.config.uuid}`, `admission`)),
       );
     }
 
@@ -232,7 +232,7 @@ export class Assets {
         );
         await fs.writeFile(
           helm.files.watcherServiceMonitorYaml,
-          dedent(serviceMonitorTemplate("watcher")),
+          dedent(serviceMonitorTemplate(`watcher-${this.config.uuid}`, `watcher`)),
         );
       }
     } catch (err) {

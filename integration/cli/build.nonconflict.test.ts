@@ -169,7 +169,7 @@ describe("build", () => {
 
       it("--zarf, works", async () => {
         const chart = {
-          name: "module",
+          name: "pepr-random-identifier",
           namespace: "pepr-system",
           version: "0.0.1",
           localPath: `${uuid}-chart`,
@@ -177,7 +177,7 @@ describe("build", () => {
 
         const zarfYaml = await resource.fromFile(`${outputDir}/zarf.yaml`);
         const component = zarfYaml.components
-          .filter((component: { name: string }) => component.name === "module")
+          .filter((component: { name: string }) => component.name === "pepr-random-identifier")
           .at(0);
         expect(component.charts).toContainEqual(chart);
       });

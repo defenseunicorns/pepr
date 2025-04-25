@@ -245,22 +245,23 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               {{- end }}
     `;
 }
-
-export function serviceMonitorTemplate(name: string): string {
+type ControllerType = "admission" | "watcher";
+export function serviceMonitorTemplate(name: string, type: ControllerType): string {
   return `
-      {{- if .Values.${name}.serviceMonitor.enabled }}
+      {{- if .Values.${type}.serviceMonitor.enabled }}
       apiVersion: monitoring.coreos.com/v1
       kind: ServiceMonitor
       metadata:
         name: ${name}
+        namespace: pepr-system
         annotations:
-          {{- toYaml .Values.${name}.serviceMonitor.annotations | nindent 4 }}
+          {{- toYaml .Values.${type}.serviceMonitor.annotations | nindent 4 }}
         labels:
-          {{- toYaml .Values.${name}.serviceMonitor.labels | nindent 4 }}
+          {{- toYaml .Values.${type}.serviceMonitor.labels | nindent 4 }}
       spec:
         selector:
           matchLabels:
-            pepr.dev/controller: ${name}
+            pepr.dev/controller: ${type}
         namespaceSelector:
           matchNames:
             - pepr-system

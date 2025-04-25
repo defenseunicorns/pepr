@@ -122,6 +122,24 @@ export function validImagePullSecret(imagePullSecretName: string): void {
 }
 
 /**
+ * Check if the custom name is a valid Kubernetes name
+ * @param customName
+ * @returns boolean
+ */
+export function validCustomName(customName: string): void {
+  if (customName) {
+    const sanitizedName = sanitizeResourceName(customName);
+    console.log(sanitizedName);
+    const error = "Invalid customName. Please provide a valid name as defined in RFC 1123.";
+    if (sanitizeResourceName(customName) !== customName) {
+      // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+      console.error(error);
+      process.exit(1);
+    }
+  }
+}
+
+/**
  * Creates and pushes a custom image for WASM or any other included files
  * @param includedFiles
  * @param peprVersion

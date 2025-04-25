@@ -5,19 +5,19 @@ type ConfigType = "manifests" | "charts";
 
 export function generateZarfYamlGeneric(assets: Assets, path: string, type: ConfigType): string {
   const manifestSettings = {
-    name: "module",
+    name: assets.name,
     namespace: "pepr-system",
     files: [path],
   };
   const chartSettings = {
-    name: "module",
+    name: assets.name,
     namespace: "pepr-system",
     version: `${assets.config.appVersion || "0.0.1"}`,
     localPath: path,
   };
 
   const component = {
-    name: "module",
+    name: assets.name,
     required: true,
     images: [assets.image],
     [type]: [type === "manifests" ? manifestSettings : chartSettings],
