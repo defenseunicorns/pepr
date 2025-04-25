@@ -31,7 +31,7 @@ export async function validateZarfYaml(expectedImage: string, filePath: string) 
         required: true,
         manifests: [
           {
-            name: "pepr-static-test",
+            name: "module",
             namespace: "pepr-system",
             files: ["pepr-module-static-test.yaml"],
           },
