@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, expect, jest, it, describe } from "@jest/globals";
+import { beforeEach, expect, jest, it, describe, afterEach } from "@jest/globals";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
@@ -12,21 +12,13 @@ import { OnError } from "../../cli/init/enums";
 
 // Mock Controller
 const startServerMock = jest.fn();
-jest.mock("../controller", () => {
-  return {
-    Controller: jest.fn().mockImplementation(() => {
-      return { startServer: startServerMock };
-    }),
-  };
-});
+jest.mock("../controller", () => ({
+  Controller: jest.fn().mockImplementation(() => ({
+    startServer: startServerMock,
+  })),
+}));
 
-// Reset the mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-// Mock PackageJSON
-const packageJSON: PackageJSON = {
+const mockPackageJSON: PackageJSON = {
   description: "Test Description",
   pepr: {
     uuid: "20e17cf6-a2e4-46b2-b626-75d88d96c88b",
@@ -38,66 +30,91 @@ const packageJSON: PackageJSON = {
   },
 };
 
-it("should instantiate Controller and start it with the default port", () => {
-  new PeprModule(packageJSON);
-  expect(startServerMock).toHaveBeenCalledWith(3000);
-});
-
-it("should instantiate Controller and start it with the specified port", () => {
-  const module = new PeprModule(packageJSON, [], { deferStart: true });
-  const port = Math.floor(Math.random() * 10000) + 1000;
-  module.start(port);
-  expect(startServerMock).toHaveBeenCalledWith(port);
-});
-
-it("should not start if deferStart is true", () => {
-  new PeprModule(packageJSON, [], { deferStart: true });
-  expect(startServerMock).not.toHaveBeenCalled();
-});
-
-it("should reject invalid pepr onError conditions", () => {
-  const cfg = clone(packageJSON);
-  cfg.pepr.onError = "invalidError";
-  expect(() => new PeprModule(cfg)).toThrow();
-});
-
-it("should allow valid pepr onError conditions", () => {
-  const cfg = clone(packageJSON);
-  cfg.pepr.onError = OnError.AUDIT;
-  expect(() => new PeprModule(cfg)).not.toThrow();
-
-  cfg.pepr.onError = OnError.IGNORE;
-  expect(() => new PeprModule(cfg)).not.toThrow();
-
-  cfg.pepr.onError = OnError.REJECT;
-  expect(() => new PeprModule(cfg)).not.toThrow();
-});
-
-it("should not create a controller if PEPR_MODE is set to build", () => {
-  process.env.PEPR_MODE = "build";
-  new PeprModule(packageJSON);
-  expect(startServerMock).not.toHaveBeenCalled();
-});
-
-it("should send the capabilities to the parent process if PEPR_MODE is set to build", () => {
-  const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
-  process.env.PEPR_MODE = "build";
-
-  const capability = new Capability({
-    name: "test",
-    description: "test",
-  });
-
-  const expected: CapabilityExport = {
-    name: capability.name,
-    description: capability.description,
-    namespaces: capability.namespaces,
-    bindings: capability.bindings,
-    hasSchedule: capability.hasSchedule,
+describe("PeprModule", () => {
+  const mockPkgJSON = clone(mockPackageJSON);
+  mockPkgJSON.pepr.alwaysIgnore = {
+    namespaces: ["kube-system", "kube-public"],
   };
 
-  new PeprModule(packageJSON, [capability]);
-  expect(sendMock).toHaveBeenCalledWith([expected]);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    delete process.env.PEPR_MODE;
+    delete process.env.PEPR_WATCH_MODE;
+  });
+
+  describe("when instantiated with default options", () => {
+    it("should start the Controller with the default port", () => {
+      new PeprModule(mockPackageJSON);
+      expect(startServerMock).toHaveBeenCalledWith(3000);
+    });
+  });
+
+  describe("when instantiated with deferStart option", () => {
+    it("should not start the server automatically", () => {
+      new PeprModule(mockPackageJSON, [], { deferStart: true });
+      expect(startServerMock).not.toHaveBeenCalled();
+    });
+
+    it("should start the server with specified port when start method is called", () => {
+      const module = new PeprModule(mockPackageJSON, [], { deferStart: true });
+      const port = Math.floor(Math.random() * 10000) + 1000;
+      module.start(port);
+      expect(startServerMock).toHaveBeenCalledWith(port);
+    });
+  });
+
+  describe("when validating onError configuration", () => {
+    it("should throw an error for invalid onError conditions", () => {
+      const invalidConfig = clone(mockPackageJSON);
+      invalidConfig.pepr.onError = "invalidError";
+      expect(() => new PeprModule(invalidConfig)).toThrow();
+    });
+
+    it("should accept valid onError conditions", () => {
+      const validErrors = [OnError.AUDIT, OnError.IGNORE, OnError.REJECT];
+
+      validErrors.forEach(errorType => {
+        const validConfig = clone(mockPackageJSON);
+        validConfig.pepr.onError = errorType;
+        expect(() => new PeprModule(validConfig)).not.toThrow();
+      });
+    });
+  });
+
+  describe("when running in 'build' mode", () => {
+    const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
+
+    beforeEach(() => {
+      process.env.PEPR_MODE = "build";
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it("should not create a controller", () => {
+      new PeprModule(mockPackageJSON);
+      expect(startServerMock).not.toHaveBeenCalled();
+    });
+
+    it("should send the capabilities to the parent process", () => {
+      const capability = new Capability({
+        name: "test",
+        description: "test",
+      });
+
+      const expectedExport: CapabilityExport = {
+        name: capability.name,
+        description: capability.description,
+        namespaces: capability.namespaces,
+        bindings: capability.bindings,
+        hasSchedule: capability.hasSchedule,
+      };
+
+      new PeprModule(mockPackageJSON, [capability]);
+      expect(sendMock).toHaveBeenCalledWith([expectedExport]);
+    });
+  });
 });
 
 describe("Capability", () => {
@@ -109,6 +126,7 @@ describe("Capability", () => {
       name: "test",
       description: "test",
     });
+
     schedule = {
       name: "test-name",
       every: 1,
@@ -119,9 +137,11 @@ describe("Capability", () => {
     };
   });
 
-  it("should handle OnSchedule", () => {
-    const { OnSchedule } = capability;
-    OnSchedule(schedule);
-    expect(capability.hasSchedule).toBe(true);
+  describe("when handling schedules", () => {
+    it("should set hasSchedule flag when OnSchedule is called", () => {
+      const { OnSchedule } = capability;
+      OnSchedule(schedule);
+      expect(capability.hasSchedule).toBe(true);
+    });
   });
 });

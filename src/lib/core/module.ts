@@ -2,14 +2,12 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { clone } from "ramda";
 import { Capability } from "./capability";
-import { Controller, ControllerHooks } from "../controller";
+import { Controller } from "../controller";
 import { ValidateError } from "../errors";
 import { CapabilityExport } from "../types";
-import { setupWatch } from "../processors/watch-processor";
-import Log from "../../lib/telemetry/logger";
-import { resolveIgnoreNamespaces } from "../assets/webhooks";
-import { isBuildMode, isDevMode, isWatchMode } from "./envChecks";
+import { isBuildMode } from "./envChecks";
 import { PackageJSON, PeprModuleOptions, ModuleConfig } from "../types";
+import { createControllerHooks } from "../controller/createHooks";
 
 export class PeprModule {
   #controller!: Controller;
@@ -59,21 +57,11 @@ export class PeprModule {
       return;
     }
 
-    const controllerHooks: ControllerHooks = {
-      beforeHook: opts.beforeHook,
-      afterHook: opts.afterHook,
-      onReady: async (): Promise<void> => {
-        // Wait for the controller to be ready before setting up watches
-        if (isWatchMode() || isDevMode()) {
-          try {
-            setupWatch(capabilities, resolveIgnoreNamespaces(pepr?.alwaysIgnore?.namespaces));
-          } catch (e) {
-            Log.error(e, "Error setting up watch");
-            process.exit(1);
-          }
-        }
-      },
-    };
+    const controllerHooks = createControllerHooks(
+      opts,
+      capabilities,
+      pepr?.alwaysIgnore?.namespaces,
+    );
 
     this.#controller = new Controller(config, capabilities, controllerHooks);
 
