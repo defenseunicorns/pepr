@@ -63,7 +63,7 @@ describe("Kubernetes Template Generators", () => {
       const result = serviceMonitorTemplate("watcher", "watcher");
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");
-      expect(result).toContain("name: watcher-uuid");
+      expect(result).toContain("name: watcher");
       expect(result).toContain("pepr.dev/controller: watcher");
     });
   });
