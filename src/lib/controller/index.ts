@@ -135,7 +135,6 @@ export class Controller {
       Log.info("Received SIGTERM, closing server");
       server.close(() => {
         Log.info("Server closed");
-        process.exit(0);
       });
     });
   };
