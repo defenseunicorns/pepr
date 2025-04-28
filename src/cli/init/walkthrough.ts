@@ -6,13 +6,14 @@ import prompt, { Answers, PromptObject } from "prompts";
 
 import { eslint, gitignore, prettier, readme, tsConfig } from "./templates";
 import { sanitizeName } from "./utils";
-import { OnError } from "./enums";
+import { OnError, UUID_LENGTH_LIMIT } from "./enums";
 import { ErrorList } from "../../lib/errors";
 
 export type PromptOptions = {
   name: string;
   description: string;
   errorBehavior: OnError;
+  uuid: string;
 };
 
 export type PartialPromptOptions = Partial<PromptOptions>;
@@ -22,10 +23,29 @@ export async function walkthrough(opts?: PartialPromptOptions): Promise<PromptOp
     ...(await setName(opts?.name)),
     ...(await setDescription(opts?.description)),
     ...(await setErrorBehavior(opts?.errorBehavior)),
+    ...(await setUUID(opts?.uuid)),
   };
   return result as PromptOptions;
 }
+async function setUUID(uuid?: string): Promise<Answers<string>> {
+  const askUUID: PromptObject = {
+    type: "text",
+    name: "uuid",
+    message: "Enter a unique identifier for the new Pepr module.\n",
+    validate: (val: string) => {
+      return (
+        val.length <= UUID_LENGTH_LIMIT ||
+        `The UUID must be ${UUID_LENGTH_LIMIT} characters or fewer.`
+      );
+    },
+  };
 
+  if (uuid !== undefined) {
+    return { uuid };
+  }
+
+  return prompt([askUUID]);
+}
 export async function setName(name?: string): Promise<Answers<string>> {
   const askName: PromptObject = {
     type: "text",

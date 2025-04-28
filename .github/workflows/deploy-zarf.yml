@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           egress-policy: audit
 
@@ -42,7 +42,7 @@ jobs:
           path: pepr
 
       - name: setup node
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: "npm"
@@ -68,7 +68,7 @@ jobs:
       - name: Init Pepr Module
         run: |
           cd "$PEPR"
-          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --skip-post-init --confirm
+          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --errorBehavior "ignore" --uuid "$MOD_NAME" --skip-post-init --confirm
           sed -i 's/uuid": ".*",/uuid": "'$MOD_NAME'",/g' "$MOD_PATH/package.json"
 
       - name: Build Pepr Module

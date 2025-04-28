@@ -12,6 +12,8 @@ Initialize a new Pepr Module.
 - `--name <string>` - Set the name of the new module.
 - `--skip-post-init` - Skip npm install, git init, and VSCode launch.
 - `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
+- `--uuid [string]` - Unique identifier for your module with a max length of 36 characters.
+- `--crd` - Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 
 ---
 
@@ -94,7 +96,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 
 - `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM
-- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.
+- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `registry/username/custom-pepr-controller:<current-version>`.
 - `-o, --output-dir [output directory]` - Define where to place build output
 - `--timeout [timeout]` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped", default: "admin")
@@ -119,3 +121,41 @@ If you are unsure of what commands are available, you can run `npx pepr kfc` to 
 For example, to generate usable types from a Kubernetes CRD, you can run `npx pepr kfc crd [source] [directory]`. This will generate the types for the `[source]` CRD and output the generated types to the `[directory]`.
 
 You can learn more about the `kubernetes-fluent-client` [here](https://github.com/defenseunicorns/kubernetes-fluent-client).
+
+## `npx pepr crd`
+
+Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
+
+**Options:**
+
+  -h, --help          display help for command
+
+**Commands:**
+
+  create [options]    Create a new CRD TypeScript definition
+  generate [options]  Generate CRD manifests from TypeScript definitions
+  help [command]      display help for command
+
+## `npx pepr crd create`
+
+Create a new CRD TypeScript definition.
+
+**Options:**
+
+- `--group <group>` - API group (e.g. cache)
+- `--version <version>` - API version (e.g. v1alpha1)
+- `--kind <kind>` - Kind name (e.g. Memcached)
+- `--domain <domain>` - Optional domain (e.g. pepr.dev) (default: "pepr.dev")
+- `--scope <Namespaced | Cluster>` - Whether the resulting custom resource is cluster- or namespace-scoped (default: "Namespaced")
+- `--plural <plural>` - Plural name (e.g. memcacheds) (default: "")
+- `--shortName <shortName>` - Short name (e.g. mc) (default: "")
+- `-h, --help` - display help for command
+
+## `npx pepr crd generate`
+
+Generate CRD manifests from TypeScript definitions
+
+**Options:**
+
+- `--output <output>` - Output directory for generated CRDs (default: "./crds")
+- `-h, --help` - display help for command

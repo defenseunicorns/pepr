@@ -3,7 +3,7 @@
 
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
-import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 import eslintJSON from "../../templates/.eslintrc.template.json";
 import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
@@ -47,8 +47,8 @@ export type peprPackageJSON = {
 };
 
 export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPackageJSON {
-  // Generate a random UUID for the module based on the module name
-  const uuid = uuidv5(opts.name, uuidv4());
+  // Generate a random UUID for the module based on the module name if it is not provided
+  const uuid = !opts.uuid ? uuidv4() : opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency

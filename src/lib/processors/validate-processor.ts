@@ -41,6 +41,11 @@ export async function processRequest(
       };
     }
 
+    // Transfer any warnings from the callback response to the validation response
+    if (callbackResp.warnings && callbackResp.warnings.length > 0) {
+      valResp.warnings = callbackResp.warnings;
+    }
+
     Log.info(
       actionMetadata,
       `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`,

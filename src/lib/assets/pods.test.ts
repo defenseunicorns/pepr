@@ -1,7 +1,6 @@
-import { getNamespace, getWatcher, getDeployment, getModuleSecret, genEnv } from "./pods";
+import { getNamespace, getWatcher, getDeployment, getModuleSecret } from "./pods";
 import { expect, describe, it, jest, afterEach } from "@jest/globals";
 import { Assets } from "./assets";
-import { ModuleConfig } from "../types";
 import { gzipSync } from "zlib";
 import * as helpers from "../helpers";
 
@@ -394,159 +393,11 @@ describe("moduleSecret function", () => {
     jest.spyOn(helpers, "secretOverLimit").mockReturnValue(true);
 
     const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
-    const processExitMock = jest.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit");
-    });
 
-    expect(() => getModuleSecret(name, data, hash)).toThrow("process.exit");
-
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      "Uncaught Exception:",
-      new Error(`Module secret for ${name} is over the 1MB limit`),
+    expect(() => getModuleSecret(name, data, hash)).toThrow(
+      "Module secret for test is over the 1MB limit",
     );
 
     consoleErrorMock.mockRestore();
-    processExitMock.mockRestore();
-  });
-});
-
-describe("genEnv", () => {
-  it("generates default environment variables without watch mode", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_WATCH_MODE", value: "false" },
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "info" },
-    ];
-
-    const result = genEnv(config);
-
-    expect(result).toEqual(expectedEnv);
-  });
-
-  it("generates default environment variables with watch mode", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_WATCH_MODE", value: "true" },
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "info" },
-    ];
-
-    const result = genEnv(config, true);
-
-    expect(result).toEqual(expectedEnv);
-  });
-
-  it("overrides default environment variables with config.env", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      logLevel: "debug",
-      env: {
-        CUSTOM_ENV_VAR: "custom_value",
-      },
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_WATCH_MODE", value: "false" },
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "debug" },
-      { name: "CUSTOM_ENV_VAR", value: "custom_value" },
-    ];
-
-    const result = genEnv(config);
-
-    expect(result).toEqual(expectedEnv);
-  });
-
-  it("handles empty config.env correctly", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      logLevel: "error",
-      env: {},
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_WATCH_MODE", value: "false" },
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "error" },
-    ];
-
-    const result = genEnv(config);
-
-    expect(result).toEqual(expectedEnv);
-  });
-
-  it("should not be able to override PEPR_WATCH_MODE in package.json pepr env", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      logLevel: "error",
-      env: {
-        PEPR_WATCH_MODE: "false",
-      },
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const result = genEnv(config, true);
-    const watchMode = result.filter(env => env.name === "PEPR_WATCH_MODE")[0];
-    expect(watchMode.value).toEqual("true");
-  });
-
-  it("handles no config.env correctly", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      logLevel: "error",
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_WATCH_MODE", value: "false" },
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "error" },
-    ];
-
-    const result = genEnv(config);
-
-    expect(result).toEqual(expectedEnv);
-  });
-
-  it("handles ignoreWatchMode for helm chart", () => {
-    const config: ModuleConfig = {
-      uuid: "12345",
-      logLevel: "error",
-      alwaysIgnore: {
-        namespaces: [],
-      },
-    };
-
-    const expectedEnv = [
-      { name: "PEPR_PRETTY_LOG", value: "false" },
-      { name: "LOG_LEVEL", value: "error" },
-    ];
-
-    const result = genEnv(config, false, true);
-
-    expect(result).toEqual(expectedEnv);
   });
 });
