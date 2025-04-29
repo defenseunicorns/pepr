@@ -24,12 +24,6 @@ const generateTestContent = ({
   noDetails = false,
   specInterface = "",
   extraContent = "",
-}: {
-  kind?: string;
-  badScope?: boolean;
-  noDetails?: boolean;
-  specInterface?: string;
-  extraContent?: string;
 } = {}): string =>
   [
     // Kind comment (if any)
