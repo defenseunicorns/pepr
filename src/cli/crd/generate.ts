@@ -17,7 +17,7 @@ import {
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
-import { ErrorMessages } from "./errorMessages";
+import { ErrorMessages, WarningMessages } from "./errorMessages";
 
 export default new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
@@ -83,13 +83,13 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    console.warn(ErrorMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
+    console.warn(WarningMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
     return;
   }
 
   const spec = sourceFile.getInterface(`${kind}Spec`);
   if (!spec) {
-    console.warn(ErrorMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
+    console.warn(WarningMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
     return;
   }
 
