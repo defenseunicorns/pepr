@@ -18,10 +18,10 @@ import * as fs from "fs";
 jest.mock("fs");
 
 // Generates test file content for CRD tests with a fluent, concise style
-const generateFileContents = ({
+const generateTestContent = ({
   kind = "",
-  badScope = false,
-  noDetails = false,
+  hasBadScope = false,
+  hasDetails = true,
   specInterface = "",
   extraContent = "",
 } = {}): string =>
@@ -30,9 +30,9 @@ const generateFileContents = ({
     kind && `// Kind: ${kind}`,
 
     // Details or alternative
-    noDetails
-      ? "const somethingElse = {};"
-      : `const details = { plural: "widgets", scope: "${badScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`,
+    hasDetails
+      ? `const details = { plural: "widgets", scope: "${hasBadScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`
+      : "const somethingElse = {};",
 
     // Interface (if any)
     specInterface && `export interface ${specInterface} {}`,
@@ -122,7 +122,7 @@ describe("generate.ts", () => {
     };
 
     it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile("temp.ts", generateFileContents());
+      const file = createProjectWithFile("temp.ts", generateTestContent());
 
       const details = extractDetails(file);
       expect(details).toEqual({
@@ -134,11 +134,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: generateFileContents({ badScope: true }),
+        contents: generateTestContent({ hasBadScope: true }),
         expectedError: ErrorMessages.INVALID_SCOPE("BadScope"),
       },
       {
-        contents: generateFileContents({ noDetails: true }),
+        contents: generateTestContent({ hasDetails: false }),
         expectedError: ErrorMessages.MISSING_DETAILS,
       },
     ])("should throw error: $expectedError", ({ contents, expectedError }) => {
@@ -155,11 +155,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: generateFileContents({ specInterface: "SomethingSpec" }),
+        contents: generateTestContent({ specInterface: "SomethingSpec" }),
         expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
       },
       {
-        contents: generateFileContents({ kind: "Something" }),
+        contents: generateTestContent({ kind: "Something" }),
         expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
       },
     ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
@@ -174,7 +174,7 @@ describe("generate.ts", () => {
       const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
       const file = createProjectWithFile(
         "valid.ts",
-        generateFileContents({
+        generateTestContent({
           kind: "Widget",
           specInterface: "WidgetSpec",
           extraContent: `
