@@ -123,7 +123,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "--custom-name [name]",
-        "Custom Name: Specify a custom name for your deployment artifacts.",
+        "Custom Name: Specify a custom name for zarf component and service monitors in helm charts.",
       ),
     )
     .action(async opts => {
