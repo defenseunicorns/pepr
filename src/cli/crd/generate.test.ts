@@ -135,36 +135,20 @@ describe("generate.ts", () => {
       return project.createSourceFile(name, content);
     };
 
-    it("should skip file with no kind comment", () => {
+    it.each([
+      {
+        contents: `const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };\nexport interface SomethingSpec {}`,
+        warning: "missing '// Kind: <KindName>' comment",
+      },
+      {
+        contents: `// Kind: Something\nconst details = { plural: "widgets", scope: "Cluster", shortName: "wd" };`,
+        warning: "missing interface SomethingSpec",
+      },
+    ])("should warn if required contents do not exist - $warning", ({ contents, warning }) => {
       const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
-      const file = createProjectWithFile(
-        "test.ts",
-        `
-        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
-        export interface SomethingSpec {}
-      `,
-      );
-
+      const file = createProjectWithFile("test.ts", contents);
       processSourceFile(file, "v1", "/output");
-      expect(consoleWarn).toHaveBeenCalledWith(
-        expect.stringContaining("missing '// Kind: <KindName>' comment"),
-      );
-    });
-
-    it("should skip file with missing Spec interface", () => {
-      const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
-      const file = createProjectWithFile(
-        "test.ts",
-        `
-        // Kind: Something
-        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
-      `,
-      );
-
-      processSourceFile(file, "v1", "/output");
-      expect(consoleWarn).toHaveBeenCalledWith(
-        expect.stringContaining("missing interface SomethingSpec"),
-      );
+      expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining(warning));
     });
 
     it("should generate a CRD YAML file for valid input", () => {
