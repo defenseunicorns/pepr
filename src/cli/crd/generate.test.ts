@@ -17,7 +17,7 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
-// Generates test file content for CRD tests with a fluent, concise style
+// Generates test content for CRD tests with individual boolean checks that are joined into a string
 const generateTestContent = ({
   kind = "",
   hasBadScope = false,
