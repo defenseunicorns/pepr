@@ -17,39 +17,37 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
-// Generates test file content for CRD tests
-const generateTestContent = (
-  options: {
-    kind?: string; // Kind comment value (empty string = no comment)
-    badScope?: boolean; // Use invalid scope value
-    noDetails?: boolean; // Use somethingElse instead of details
-    specInterface?: string; // Interface name (empty string = no interface)
-    extraContent?: string;
-  } = {},
-): string => {
-  let content = "";
+// Generates test file content for CRD tests with a fluent, concise style
+const generateTestContent = ({
+  kind = "",
+  badScope = false,
+  noDetails = false,
+  specInterface = "",
+  extraContent = "",
+}: {
+  kind?: string;
+  badScope?: boolean;
+  noDetails?: boolean;
+  specInterface?: string;
+  extraContent?: string;
+} = {}): string =>
+  [
+    // Kind comment (if any)
+    kind && `// Kind: ${kind}`,
 
-  if (options.kind) {
-    content += `// Kind: ${options.kind}\n`;
-  }
+    // Details or alternative
+    noDetails
+      ? "const somethingElse = {};"
+      : `const details = { plural: "widgets", scope: "${badScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`,
 
-  if (options.noDetails) {
-    content += "const somethingElse = {};\n";
-  } else {
-    const scope = options.badScope ? "BadScope" : "Namespaced";
-    content += `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };\n`;
-  }
+    // Interface (if any)
+    specInterface && `export interface ${specInterface} {}`,
 
-  if (options.specInterface) {
-    content += `export interface ${options.specInterface} {}\n`;
-  }
-
-  if (options.extraContent) {
-    content += options.extraContent;
-  }
-
-  return content;
-};
+    // Extra content (if any)
+    extraContent,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
 describe("generate.ts", () => {
   afterEach(() => {
