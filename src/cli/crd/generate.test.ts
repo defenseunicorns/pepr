@@ -110,22 +110,18 @@ describe("generate.ts", () => {
       });
     });
 
-    it("should throw if 'scope' is invalid", () => {
-      const file = createProjectWithFile(
-        "bad.ts",
-        `
-        const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };
-      `,
-      );
-
-      expect(() => extractDetails(file)).toThrow(
-        `'scope' must be either "Cluster" or "Namespaced", got "BadScope"`,
-      );
-    });
-
-    it("should throw if details variable is missing", () => {
-      const file = createProjectWithFile("noDetails.ts", `const somethingElse = {};`);
-      expect(() => extractDetails(file)).toThrow(`Missing 'details' variable declaration.`);
+    it.each([
+      {
+        contents: 'const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };',
+        warning: '\'scope\' must be either "Cluster" or "Namespaced", got "BadScope"',
+      },
+      {
+        contents: "const somethingElse = {};",
+        warning: "Missing 'details' variable declaration.",
+      },
+    ])("should throw with invalid contents - $warning", ({ contents, warning }) => {
+      const file = createProjectWithFile("test.ts", contents);
+      expect(() => extractDetails(file)).toThrow(warning);
     });
   });
 
