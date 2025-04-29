@@ -17,6 +17,31 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
+/**
+ * Generate test file content with various configurations
+ */
+const generateTestContent = ({
+  kindComment = "",
+  details = { plural: "widgets", scope: "Namespaced", shortName: "wd" },
+  hasInterface = false,
+  interfaceName = "SomethingSpec",
+  extraContent = "",
+}: {
+  kindComment?: string;
+  details?: { plural: string; scope: string; shortName: string } | null;
+  hasInterface?: boolean;
+  interfaceName?: string;
+  extraContent?: string;
+} = {}) => {
+  const kindLine = kindComment ? `// Kind: ${kindComment}\n` : "";
+  const detailsLine = details
+    ? `const details = { plural: "${details.plural}", scope: "${details.scope}", shortName: "${details.shortName}" };\n`
+    : "const somethingElse = {};\n";
+  const interfaceLine = hasInterface ? `export interface ${interfaceName} {}\n` : "";
+
+  return `${kindLine}${detailsLine}${interfaceLine}${extraContent}`;
+};
+
 describe("generate.ts", () => {
   afterEach(() => {
     jest.resetAllMocks();
@@ -96,12 +121,7 @@ describe("generate.ts", () => {
     };
 
     it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile(
-        "temp.ts",
-        `
-        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
-      `,
-      );
+      const file = createProjectWithFile("temp.ts", generateTestContent());
 
       const details = extractDetails(file);
       expect(details).toEqual({
@@ -113,11 +133,13 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: 'const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };',
+        contents: generateTestContent({
+          details: { plural: "widgets", scope: "BadScope", shortName: "wd" },
+        }),
         expectedError: ErrorMessages.INVALID_SCOPE("BadScope"),
       },
       {
-        contents: "const somethingElse = {};",
+        contents: generateTestContent({ details: null }),
         expectedError: ErrorMessages.MISSING_DETAILS,
       },
     ])("should throw error: $expectedError", ({ contents, expectedError }) => {
@@ -134,11 +156,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: `const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };\nexport interface SomethingSpec {}`,
+        contents: generateTestContent({ hasInterface: true }),
         expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
       },
       {
-        contents: `// Kind: Something\nconst details = { plural: "widgets", scope: "Cluster", shortName: "wd" };`,
+        contents: generateTestContent({ kindComment: "Something" }),
         expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
       },
     ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
@@ -153,20 +175,16 @@ describe("generate.ts", () => {
       const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
       const file = createProjectWithFile(
         "valid.ts",
-        `
-        // Kind: Widget
-        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
-
-        export interface WidgetSpec {
-          /** The name */
-          name: string;
-        }
-
+        generateTestContent({
+          kindComment: "Widget",
+          hasInterface: true,
+          interfaceName: "WidgetSpec",
+          extraContent: `
         export type WidgetStatusCondition = {
           /** The type */
           type: string;
-        };
-      `,
+        };`,
+        }),
       );
 
       processSourceFile(file, "v1", "/crds");
