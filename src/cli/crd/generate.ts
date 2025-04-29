@@ -82,13 +82,13 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    console.warn(`Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`);
+    console.warn(ErrorMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
     return;
   }
 
   const spec = sourceFile.getInterface(`${kind}Spec`);
   if (!spec) {
-    console.warn(`Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
+    console.warn(ErrorMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
     return;
   }
 
@@ -119,6 +119,19 @@ export function extractSingleLineComment(content: string, label: string): string
   return match?.[1].trim();
 }
 
+// Error message constants that can be exported and used in tests
+export const ErrorMessages = {
+  MISSING_DETAILS: "Missing 'details' variable declaration.",
+  INVALID_SCOPE: (scope: string): string =>
+    `'scope' must be either "Cluster" or "Namespaced", got "${scope}"`,
+  MISSING_OR_INVALID_KEY: (key: string): string =>
+    `Missing or invalid value for required key: '${key}'`,
+  MISSING_KIND_COMMENT: (fileName: string): string =>
+    `Skipping ${fileName}: missing '// Kind: <KindName>' comment`,
+  MISSING_INTERFACE: (fileName: string, kind: string): string =>
+    `Skipping ${fileName}: missing interface ${kind}Spec`,
+};
+
 export function extractDetails(sourceFile: SourceFile): {
   plural: string;
   scope: "Cluster" | "Namespaced";
@@ -126,7 +139,7 @@ export function extractDetails(sourceFile: SourceFile): {
 } {
   const decl = sourceFile.getVariableDeclaration("details");
   if (!decl) {
-    throw new Error(`Missing 'details' variable declaration.`);
+    throw new Error(ErrorMessages.MISSING_DETAILS);
   }
 
   const init = decl.getInitializerIfKindOrThrow(SyntaxKind.ObjectLiteralExpression);
@@ -135,7 +148,7 @@ export function extractDetails(sourceFile: SourceFile): {
     const prop = init.getProperty(key);
     const value = prop?.getFirstChildByKind(SyntaxKind.StringLiteral)?.getLiteralText();
     if (!value) {
-      throw new Error(`Missing or invalid value for required key: '${key}'`);
+      throw new Error(ErrorMessages.MISSING_OR_INVALID_KEY(key));
     }
     return value;
   };
@@ -149,7 +162,7 @@ export function extractDetails(sourceFile: SourceFile): {
     };
   }
 
-  throw new Error(`'scope' must be either "Cluster" or "Namespaced", got "${scope}"`);
+  throw new Error(ErrorMessages.INVALID_SCOPE(scope));
 }
 
 export function getJsDocDescription(node: Node): string {

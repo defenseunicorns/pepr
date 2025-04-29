@@ -10,6 +10,7 @@ import {
   emptySchema,
   loadVersionFiles,
   getAPIVersions,
+  ErrorMessages,
 } from "./generate";
 import { Project } from "ts-morph";
 import * as fs from "fs";
@@ -113,15 +114,21 @@ describe("generate.ts", () => {
     it.each([
       {
         contents: 'const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };',
-        warning: '\'scope\' must be either "Cluster" or "Namespaced", got "BadScope"',
+        errorType: "INVALID_SCOPE",
+        scope: "BadScope",
       },
       {
         contents: "const somethingElse = {};",
-        warning: "Missing 'details' variable declaration.",
+        errorType: "MISSING_DETAILS",
       },
-    ])("should throw with invalid contents - $warning", ({ contents, warning }) => {
+    ])("should throw $errorType", ({ contents, errorType, scope }) => {
       const file = createProjectWithFile("test.ts", contents);
-      expect(() => extractDetails(file)).toThrow(warning);
+
+      if (errorType === "INVALID_SCOPE" && scope) {
+        expect(() => extractDetails(file)).toThrow(ErrorMessages.INVALID_SCOPE(scope));
+      } else if (errorType === "MISSING_DETAILS") {
+        expect(() => extractDetails(file)).toThrow(ErrorMessages.MISSING_DETAILS);
+      }
     });
   });
 
@@ -134,17 +141,25 @@ describe("generate.ts", () => {
     it.each([
       {
         contents: `const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };\nexport interface SomethingSpec {}`,
-        warning: "missing '// Kind: <KindName>' comment",
+        errorType: "MISSING_KIND_COMMENT",
+        fileName: "test.ts",
       },
       {
         contents: `// Kind: Something\nconst details = { plural: "widgets", scope: "Cluster", shortName: "wd" };`,
-        warning: "missing interface SomethingSpec",
+        errorType: "MISSING_INTERFACE",
+        fileName: "test.ts",
+        kind: "Something",
       },
-    ])("should warn if required contents do not exist - $warning", ({ contents, warning }) => {
+    ])("should warn when $errorType", ({ contents, errorType, fileName, kind }) => {
       const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
-      const file = createProjectWithFile("test.ts", contents);
+      const file = createProjectWithFile(fileName, contents);
       processSourceFile(file, "v1", "/output");
-      expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining(warning));
+
+      if (errorType === "MISSING_KIND_COMMENT") {
+        expect(consoleWarn).toHaveBeenCalledWith(ErrorMessages.MISSING_KIND_COMMENT(fileName));
+      } else if (errorType === "MISSING_INTERFACE" && kind) {
+        expect(consoleWarn).toHaveBeenCalledWith(ErrorMessages.MISSING_INTERFACE(fileName, kind));
+      }
     });
 
     it("should generate a CRD YAML file for valid input", () => {
