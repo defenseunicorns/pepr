@@ -17,6 +17,7 @@ import {
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
+import { ErrorMessages } from "./errorMessages";
 
 export default new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
@@ -118,19 +119,6 @@ export function extractSingleLineComment(content: string, label: string): string
   const match = content.match(new RegExp(`//\\s+${label}:\\s+(.*)`));
   return match?.[1].trim();
 }
-
-// Error message constants that can be exported and used in tests
-export const ErrorMessages = {
-  MISSING_DETAILS: "Missing 'details' variable declaration.",
-  INVALID_SCOPE: (scope: string): string =>
-    `'scope' must be either "Cluster" or "Namespaced", got "${scope}"`,
-  MISSING_OR_INVALID_KEY: (key: string): string =>
-    `Missing or invalid value for required key: '${key}'`,
-  MISSING_KIND_COMMENT: (fileName: string): string =>
-    `Skipping ${fileName}: missing '// Kind: <KindName>' comment`,
-  MISSING_INTERFACE: (fileName: string, kind: string): string =>
-    `Skipping ${fileName}: missing interface ${kind}Spec`,
-};
 
 export function extractDetails(sourceFile: SourceFile): {
   plural: string;
