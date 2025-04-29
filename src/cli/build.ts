@@ -136,9 +136,7 @@ export default function (program: RootCmd): void {
       const { cfg, path } = buildModuleResult!;
       // override the name if provided
       if (opts.customName) {
-        // set this env var to protect the defaults
         process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName;
-        cfg.pepr.uuid = opts.customName;
       }
 
       const image = assignImage({

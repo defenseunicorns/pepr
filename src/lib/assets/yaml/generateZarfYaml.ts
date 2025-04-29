@@ -4,7 +4,7 @@ import { Assets } from "../assets";
 type ConfigType = "manifests" | "charts";
 
 export function generateZarfYamlGeneric(assets: Assets, path: string, type: ConfigType): string {
-  const zarfComponentName = process.env.PEPR_CUSTOM_BUILD_NAME ? assets.name : "module";
+  const zarfComponentName = process.env.PEPR_CUSTOM_BUILD_NAME ?? "module";
   const manifestSettings = {
     name: zarfComponentName,
     namespace: "pepr-system",

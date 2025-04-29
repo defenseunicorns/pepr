@@ -130,7 +130,9 @@ export class Assets {
         helm.files.admissionServiceMonitorYaml,
         dedent(
           serviceMonitorTemplate(
-            process.env.PEPR_CUSTOM_BUILD_NAME ? `admission-${this.config.uuid}` : "admission",
+            process.env.PEPR_CUSTOM_BUILD_NAME
+              ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+              : "admission",
             `admission`,
           ),
         ),
@@ -239,7 +241,9 @@ export class Assets {
           helm.files.watcherServiceMonitorYaml,
           dedent(
             serviceMonitorTemplate(
-              process.env.PEPR_CUSTOM_BUILD_NAME ? `watcher-${this.config.uuid}` : "watcher",
+              process.env.PEPR_CUSTOM_BUILD_NAME
+                ? `watcher-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+                : "watcher",
               `watcher`,
             ),
           ),
