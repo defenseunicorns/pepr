@@ -132,10 +132,10 @@ export class Controller {
 
     // Listen for the SIGTERM signal and gracefully close the server
     process.on("SIGTERM", () => {
-      Log.info("Received SIGTERM, closing server");
+      Log.info("Received SIGTERM, closing server.");
       server.close(() => {
-        Log.info("Server closed");
-        process.exit(0);
+        Log.info("Server closed.");
+        process.exit(143);
       });
     });
   };
