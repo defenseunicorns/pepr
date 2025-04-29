@@ -11,7 +11,7 @@ import {
   loadVersionFiles,
   getAPIVersions,
 } from "./generate";
-import { ErrorMessages, WarningMessages } from "./errorMessages";
+import { ErrorMessages, WarningMessages } from "./messages";
 import { Project } from "ts-morph";
 import * as fs from "fs";
 

@@ -17,7 +17,7 @@ import {
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
-import { ErrorMessages, WarningMessages } from "./errorMessages";
+import { WarningMessages, ErrorMessages } from "./messages";
 
 export default new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
