@@ -17,29 +17,40 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
-/**
- * Generate test file content with various configurations
- */
-const generateTestContent = ({
-  kindComment = "",
-  details = { plural: "widgets", scope: "Namespaced", shortName: "wd" },
-  hasInterface = false,
-  interfaceName = "SomethingSpec",
-  extraContent = "",
-}: {
-  kindComment?: string;
-  details?: { plural: string; scope: string; shortName: string } | null;
-  hasInterface?: boolean;
-  interfaceName?: string;
-  extraContent?: string;
-} = {}) => {
-  const kindLine = kindComment ? `// Kind: ${kindComment}\n` : "";
-  const detailsLine = details
-    ? `const details = { plural: "${details.plural}", scope: "${details.scope}", shortName: "${details.shortName}" };\n`
-    : "const somethingElse = {};\n";
-  const interfaceLine = hasInterface ? `export interface ${interfaceName} {}\n` : "";
+const generateTestContent = (
+  options: {
+    hasKindComment?: boolean | string;
+    hasDetails?: boolean | { scope?: string };
+    hasInterface?: boolean | string;
+    extraContent?: string;
+  } = {},
+): string => {
+  const kindName =
+    typeof options.hasKindComment === "string"
+      ? options.hasKindComment
+      : options.hasKindComment
+        ? "Widget"
+        : "";
+  const kindLine = kindName ? `// Kind: ${kindName}\n` : "";
 
-  return `${kindLine}${detailsLine}${interfaceLine}${extraContent}`;
+  let detailsLine = "const somethingElse = {};\n";
+  if (options.hasDetails !== false) {
+    const scope =
+      options.hasDetails && typeof options.hasDetails === "object" && options.hasDetails.scope
+        ? options.hasDetails.scope
+        : "Namespaced";
+    detailsLine = `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };\n`;
+  }
+
+  const interfaceName =
+    typeof options.hasInterface === "string"
+      ? options.hasInterface
+      : options.hasInterface
+        ? (kindName || "Something") + "Spec"
+        : "";
+  const interfaceLine = interfaceName ? `export interface ${interfaceName} {}\n` : "";
+
+  return `${kindLine}${detailsLine}${interfaceLine}${options.extraContent || ""}`;
 };
 
 describe("generate.ts", () => {
@@ -121,7 +132,7 @@ describe("generate.ts", () => {
     };
 
     it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile("temp.ts", generateTestContent());
+      const file = createProjectWithFile("temp.ts", generateTestContent({ hasDetails: true }));
 
       const details = extractDetails(file);
       expect(details).toEqual({
@@ -134,12 +145,12 @@ describe("generate.ts", () => {
     it.each([
       {
         contents: generateTestContent({
-          details: { plural: "widgets", scope: "BadScope", shortName: "wd" },
+          hasDetails: { scope: "BadScope" },
         }),
         expectedError: ErrorMessages.INVALID_SCOPE("BadScope"),
       },
       {
-        contents: generateTestContent({ details: null }),
+        contents: generateTestContent({ hasDetails: false }),
         expectedError: ErrorMessages.MISSING_DETAILS,
       },
     ])("should throw error: $expectedError", ({ contents, expectedError }) => {
@@ -156,11 +167,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: generateTestContent({ hasInterface: true }),
+        contents: generateTestContent({ hasInterface: true, hasKindComment: false }),
         expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
       },
       {
-        contents: generateTestContent({ kindComment: "Something" }),
+        contents: generateTestContent({ hasKindComment: "Something", hasInterface: false }),
         expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
       },
     ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
@@ -176,9 +187,8 @@ describe("generate.ts", () => {
       const file = createProjectWithFile(
         "valid.ts",
         generateTestContent({
-          kindComment: "Widget",
-          hasInterface: true,
-          interfaceName: "WidgetSpec",
+          hasKindComment: "Widget",
+          hasInterface: "WidgetSpec",
           extraContent: `
         export type WidgetStatusCondition = {
           /** The type */
