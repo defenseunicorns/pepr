@@ -18,7 +18,7 @@ import * as fs from "fs";
 jest.mock("fs");
 
 // Generates test file content for CRD tests with a fluent, concise style
-const generateTestContent = ({
+const generateFileContents = ({
   kind = "",
   badScope = false,
   noDetails = false,
@@ -122,7 +122,7 @@ describe("generate.ts", () => {
     };
 
     it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile("temp.ts", generateTestContent({}));
+      const file = createProjectWithFile("temp.ts", generateFileContents());
 
       const details = extractDetails(file);
       expect(details).toEqual({
@@ -134,11 +134,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: generateTestContent({ badScope: true }),
+        contents: generateFileContents({ badScope: true }),
         expectedError: ErrorMessages.INVALID_SCOPE("BadScope"),
       },
       {
-        contents: generateTestContent({ noDetails: true }),
+        contents: generateFileContents({ noDetails: true }),
         expectedError: ErrorMessages.MISSING_DETAILS,
       },
     ])("should throw error: $expectedError", ({ contents, expectedError }) => {
@@ -155,11 +155,11 @@ describe("generate.ts", () => {
 
     it.each([
       {
-        contents: generateTestContent({ specInterface: "SomethingSpec" }),
+        contents: generateFileContents({ specInterface: "SomethingSpec" }),
         expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
       },
       {
-        contents: generateTestContent({ kind: "Something" }),
+        contents: generateFileContents({ kind: "Something" }),
         expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
       },
     ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
@@ -174,7 +174,7 @@ describe("generate.ts", () => {
       const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
       const file = createProjectWithFile(
         "valid.ts",
-        generateTestContent({
+        generateFileContents({
           kind: "Widget",
           specInterface: "WidgetSpec",
           extraContent: `
