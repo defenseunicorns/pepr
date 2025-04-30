@@ -228,6 +228,7 @@ describe("sanitizeResourceName Property-Based Tests", () => {
       fc.property(fc.string(), name => {
         const sanitized = sanitizeResourceName(name);
         if (sanitized.length > 0) {
+          // https://regex101.com/r/3tqGf5/1
           expect(sanitized).toMatch(/^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/);
         }
         expect(sanitized).toBe(sanitized.toLowerCase());
