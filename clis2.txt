@@ -30,6 +30,7 @@
 "deploy", "-p", "--pull-secret <name>", "Deploy imagePullSecret for Controller private registry."
 "deploy", "-y", "--yes", "Skip confirmation prompts."
 "dev", "-H", "--host <hostname>", "Host to listen on. Default: host.k3d.internal"
+"dev", "-h", "--help", "Display help for command"
 "dev", "-y", "--yes", "Skip confirmation prompts."
 "format", "-v", "--validate-only", "Do not modify files, only validate formatting."
 "init", "-d", "--description <string>", "Explain the purpose of the new module."
