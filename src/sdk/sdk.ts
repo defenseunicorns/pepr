@@ -118,7 +118,7 @@ export function sanitizeResourceName(name: string): string {
       .toLowerCase()
       // Replace invalid characters (anything not a-z, 0-9, or '-') with '-'
       .replace(/[^a-z0-9-]+/g, "-")
-      // Trim to 63 characters (RFC 1035 Label Names)
+      // Trim to 63 characters (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names)
       .slice(0, 63)
       // Remove leading non-alphanumeric characters
       .replace(/^[^a-z0-9]+/, "")
