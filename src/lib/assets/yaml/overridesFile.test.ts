@@ -37,6 +37,7 @@ interface OverridesFileSchema {
   };
   uuid: string;
   admission: {
+    antiAffinity: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
     annotations: {
@@ -100,6 +101,7 @@ describe("overridesFile", () => {
     expect(parsedYaml.imagePullSecrets).toEqual(["secret1", "secret2"]);
     expect(parsedYaml.hash).toBe(mockOverrides.hash);
     expect(parsedYaml.admission.image).toBe(mockOverrides.image);
+    expect(parsedYaml.admission.antiAffinity).toBe(false);
     expect(parsedYaml.admission.failurePolicy).toBe("Fail");
     expect(parsedYaml.watcher.image).toBe(mockOverrides.image);
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
