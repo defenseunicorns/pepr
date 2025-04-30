@@ -37,6 +37,7 @@ export async function overridesFile(
     },
     uuid: name,
     admission: {
+      antiAffinity: false,
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,

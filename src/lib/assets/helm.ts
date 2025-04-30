@@ -179,6 +179,18 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
+            {{- if .Values.admission.antiAffinity }}
+            affinity:
+              podAntiAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  - labelSelector:
+                      matchExpressions:
+                        - key: pepr.dev/controller
+                          operator: In
+                          values:
+                            - admission
+                    topologyKey: "kubernetes.io/hostname"
+            {{- end }}
             terminationGracePeriodSeconds: {{ .Values.admission.terminationGracePeriodSeconds }}
             priorityClassName: system-node-critical
             serviceAccountName: {{ .Values.uuid }}
