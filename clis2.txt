@@ -25,6 +25,7 @@
 "deploy", "-S", "--docker-server <server>", "Docker server address."
 "deploy", "-U", "--docker-username <username>", "Docker registry username."
 "deploy", "-f", "--force", "Force deploy the module, override manager field."
+"deploy", "-h", "--help", "Display help for command"
 "deploy", "-i", "--image [image]", "Override the image tag."
 "deploy", "-p", "--pull-secret <name>", "Deploy imagePullSecret for Controller private registry."
 "deploy", "-y", "--yes", "Skip confirmation prompts."
