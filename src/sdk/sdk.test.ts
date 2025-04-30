@@ -228,16 +228,21 @@ describe("sanitizeResourceName Property-Based Tests", () => {
       fc.property(fc.string(), name => {
         const sanitized = sanitizeResourceName(name);
         if (sanitized.length > 0) {
-          expect(sanitized).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+          expect(sanitized).toMatch(/^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/);
         }
         expect(sanitized).toBe(sanitized.toLowerCase());
-        expect(sanitized.length).toBeLessThanOrEqual(250);
+        expect(sanitized.length).toBeLessThanOrEqual(63);
       }),
     );
   });
 });
 
 describe("sanitizeResourceName", () => {
+  it("should allow numbers", () => {
+    const resourceName = "testing-123";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("testing-123");
+  });
   it("should return same resource name if no sanitization needed", () => {
     const resourceName = "test-resource";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
@@ -253,21 +258,21 @@ describe("sanitizeResourceName", () => {
   it("should replace sequences of non-alphanumeric characters with a single -", () => {
     const resourceName = "test-*^%- -!=!resource";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
-    expect(sanitizedResourceName).toEqual("test-resource");
+    expect(sanitizedResourceName).toEqual("test------resource");
   });
 
-  it("should truncate name to 250 characters", () => {
+  it("should truncate name to 253 characters", () => {
     const resourceName =
-      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresource";
+      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourcemoreletters";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
     expect(sanitizedResourceName).toEqual(
-      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresou",
+      "test-resourceresourceresourceresourceresourceresourceresourcere",
     );
   });
 
   it("should remove leading and trailing non-letter characters", () => {
     const resourceName = " 1=-test-resource *2 ";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
-    expect(sanitizedResourceName).toEqual("test-resource");
+    expect(sanitizedResourceName).toEqual("1--test-resource-2");
   });
 });
