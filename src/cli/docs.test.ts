@@ -3,6 +3,7 @@ import path from "path";
 import * as childProcess from "child_process";
 import { promisify } from "util";
 
+// Can probably simplify this. Tests take 30ish secs to run right now
 const execPromise = promisify(childProcess.exec);
 
 describe("Pepr CLI Help Menu", () => {
