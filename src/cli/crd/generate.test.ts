@@ -43,6 +43,11 @@ const generateTestContent = ({
     .filter(Boolean)
     .join("\n");
 
+const createProjectWithFile = (name: string, content: string) => {
+  const project = new Project();
+  return project.createSourceFile(name, content);
+};
+
 describe("generate.ts", () => {
   afterEach(() => {
     jest.resetAllMocks();
@@ -121,11 +126,6 @@ describe("generate.ts", () => {
   });
 
   describe("when extracting CRD details", () => {
-    const createProjectWithFile = (name: string, content: string) => {
-      const project = new Project();
-      return project.createSourceFile(name, content);
-    };
-
     it("should extract plural, scope, and shortName from the details object", () => {
       const file = createProjectWithFile("temp.ts", generateTestContent());
 
@@ -155,10 +155,6 @@ describe("generate.ts", () => {
   });
 
   describe("when processing source files", () => {
-    const createProjectWithFile = (name: string, content: string) => {
-      const project = new Project();
-      return project.createSourceFile(name, content);
-    };
     describe("when file content is incomplete", () => {
       it.each([
         {
