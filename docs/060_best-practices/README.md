@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Pepr Best Practices](#pepr-best-practices)
+  - [High Availability](#high-availability)
   - [Table of Contents](#table-of-contents)
   - [Mutating Webhook Errors](#mutating-webhook-errors)
   - [Core Development](#core-development)
