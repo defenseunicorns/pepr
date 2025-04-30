@@ -11,17 +11,44 @@ import {
   loadVersionFiles,
   getAPIVersions,
 } from "./generate";
+import { ErrorMessages, WarningMessages } from "./messages";
 import { Project } from "ts-morph";
 import * as fs from "fs";
 
 jest.mock("fs");
+
+// Generates test content for CRD tests with individual boolean checks that are joined into a string
+const generateTestContent = ({
+  kind = "",
+  hasBadScope = false,
+  hasDetails = true,
+  specInterface = "",
+  extraContent = "",
+} = {}): string =>
+  [
+    // Kind comment (if any)
+    kind && `// Kind: ${kind}`,
+
+    // Details or alternative
+    hasDetails
+      ? `const details = { plural: "widgets", scope: "${hasBadScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`
+      : "const somethingElse = {};",
+
+    // Interface (if any)
+    specInterface && `export interface ${specInterface} {}`,
+
+    // Extra content (if any)
+    extraContent,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
 describe("generate.ts", () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
 
-  describe("extractSingleLineComment", () => {
+  describe("when extracting single line comments", () => {
     it("should extract a labeled single line comment", () => {
       const content = `// Kind: Widget`;
       const result = extractSingleLineComment(content, "Kind");
@@ -35,8 +62,8 @@ describe("generate.ts", () => {
     });
   });
 
-  describe("uncapitalize", () => {
-    it("should uncapitalize the first letter", () => {
+  describe("when manipulating strings", () => {
+    it("should convert the first letter to lowercase", () => {
       expect(uncapitalize("CamelCase")).toBe("camelCase");
     });
 
@@ -45,62 +72,62 @@ describe("generate.ts", () => {
     });
   });
 
-  describe("emptySchema", () => {
-    it("should return an empty schema object", () => {
-      const result = emptySchema();
-      expect(result).toEqual({ properties: {}, required: [] });
+  describe("when working with schemas", () => {
+    describe("given an emptySchema", () => {
+      it("should return an object with empty properties and required arrays", () => {
+        const result = emptySchema();
+        expect(result).toEqual({ properties: {}, required: [] });
+      });
     });
   });
 
-  describe("getAPIVersions", () => {
-    it("should return directories from the api root", () => {
-      (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "v2"]);
-      (fs.statSync as jest.Mock).mockImplementation(path => ({
-        isDirectory: () => typeof path === "string" && (path.endsWith("v1") || path.endsWith("v2")),
-      }));
+  describe("when managing API versions", () => {
+    describe("getAPIVersions", () => {
+      it("should return only directory entries from the api root", () => {
+        (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "v2"]);
+        (fs.statSync as jest.Mock).mockImplementation(path => ({
+          isDirectory: () =>
+            typeof path === "string" && (path.endsWith("v1") || path.endsWith("v2")),
+        }));
 
-      const versions = getAPIVersions("/api");
-      expect(versions).toEqual(["v1", "v2"]);
+        const versions = getAPIVersions("/api");
+        expect(versions).toEqual(["v1", "v2"]);
+      });
+
+      it("should ignore non-directory entries", () => {
+        (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "README.md"]);
+        (fs.statSync as jest.Mock).mockImplementation(p => ({
+          isDirectory: () => typeof p === "string" && p.endsWith("v1"),
+        }));
+
+        const versions = getAPIVersions("/api");
+        expect(versions).toEqual(["v1"]);
+      });
     });
 
-    it("should ignore non-directory entries", () => {
-      (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "README.md"]);
-      (fs.statSync as jest.Mock).mockImplementation(p => ({
-        isDirectory: () => typeof p === "string" && p.endsWith("v1"),
-      }));
+    describe("loadVersionFiles", () => {
+      it("should load only TypeScript files from the version directory", () => {
+        const project = new Project();
+        const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
 
-      const versions = getAPIVersions("/api");
-      expect(versions).toEqual(["v1"]);
+        (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts"]);
+
+        const result = loadVersionFiles(project, "/api/v1");
+
+        expect(addSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
+        expect(result).toEqual([]);
+      });
     });
   });
 
-  describe("loadVersionFiles", () => {
-    it("should load only TypeScript files from version directory", () => {
-      const project = new Project();
-      const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]); // don't resolve real files
-
-      (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts"]);
-
-      const result = loadVersionFiles(project, "/api/v1");
-
-      expect(addSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
-      expect(result).toEqual([]); // we mocked return value
-    });
-  });
-
-  describe("extractDetails", () => {
+  describe("when extracting CRD details", () => {
     const createProjectWithFile = (name: string, content: string) => {
       const project = new Project();
       return project.createSourceFile(name, content);
     };
 
     it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile(
-        "temp.ts",
-        `
-        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
-      `,
-      );
+      const file = createProjectWithFile("temp.ts", generateTestContent());
 
       const details = extractDetails(file);
       expect(details).toEqual({
@@ -110,93 +137,73 @@ describe("generate.ts", () => {
       });
     });
 
-    it("should throw if 'scope' is invalid", () => {
-      const file = createProjectWithFile(
-        "bad.ts",
-        `
-        const details = { plural: "widgets", scope: "BadScope", shortName: "wd" };
-      `,
-      );
-
-      expect(() => extractDetails(file)).toThrow(
-        `'scope' must be either "Cluster" or "Namespaced", got "BadScope"`,
-      );
-    });
-
-    it("should throw if details variable is missing", () => {
-      const file = createProjectWithFile("noDetails.ts", `const somethingElse = {};`);
-      expect(() => extractDetails(file)).toThrow(`Missing 'details' variable declaration.`);
+    describe("when details are invalid", () => {
+      it.each([
+        {
+          contents: generateTestContent({ hasBadScope: true }),
+          expectedError: ErrorMessages.INVALID_SCOPE("BadScope"),
+        },
+        {
+          contents: generateTestContent({ hasDetails: false }),
+          expectedError: ErrorMessages.MISSING_DETAILS,
+        },
+      ])("should throw: $expectedError", ({ contents, expectedError }) => {
+        const file = createProjectWithFile("test.ts", contents);
+        expect(() => extractDetails(file)).toThrow(expectedError);
+      });
     });
   });
 
-  describe("processSourceFile", () => {
+  describe("when processing source files", () => {
     const createProjectWithFile = (name: string, content: string) => {
       const project = new Project();
       return project.createSourceFile(name, content);
     };
-
-    it("should skip file with no kind comment", () => {
-      const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
-      const file = createProjectWithFile(
-        "test.ts",
-        `
-        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
-        export interface SomethingSpec {}
-      `,
-      );
-
-      processSourceFile(file, "v1", "/output");
-      expect(consoleWarn).toHaveBeenCalledWith(
-        expect.stringContaining("missing '// Kind: <KindName>' comment"),
-      );
+    describe("when file content is incomplete", () => {
+      it.each([
+        {
+          contents: generateTestContent({ specInterface: "SomethingSpec" }),
+          expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
+        },
+        {
+          contents: generateTestContent({ kind: "Something" }),
+          expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
+        },
+      ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
+        const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+        const file = createProjectWithFile("test.ts", contents);
+        processSourceFile(file, "v1", "/output");
+        expect(consoleWarn).toHaveBeenCalledWith(expectedWarning);
+      });
     });
 
-    it("should skip file with missing Spec interface", () => {
-      const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
-      const file = createProjectWithFile(
-        "test.ts",
-        `
-        // Kind: Something
-        const details = { plural: "widgets", scope: "Cluster", shortName: "wd" };
-      `,
-      );
+    describe("when file content is valid", () => {
+      it("should generate a CRD YAML file", () => {
+        const writeFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+        const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+        const file = createProjectWithFile(
+          "valid.ts",
+          generateTestContent({
+            kind: "Widget",
+            specInterface: "WidgetSpec",
+            extraContent: `
+            export type WidgetStatusCondition = {
+              /** The type */
+              type: string;
+            };`,
+          }),
+        );
 
-      processSourceFile(file, "v1", "/output");
-      expect(consoleWarn).toHaveBeenCalledWith(
-        expect.stringContaining("missing interface SomethingSpec"),
-      );
-    });
+        processSourceFile(file, "v1", "/crds");
 
-    it("should generate a CRD YAML file for valid input", () => {
-      const writeFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation(() => {});
-      const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
-      const file = createProjectWithFile(
-        "valid.ts",
-        `
-        // Kind: Widget
-        const details = { plural: "widgets", scope: "Namespaced", shortName: "wd" };
+        expect(writeFileSync).toHaveBeenCalledWith(
+          expect.stringContaining("/crds/widget.yaml"),
+          expect.stringContaining("CustomResourceDefinition"),
+          "utf8",
+        );
 
-        export interface WidgetSpec {
-          /** The name */
-          name: string;
-        }
-
-        export type WidgetStatusCondition = {
-          /** The type */
-          type: string;
-        };
-      `,
-      );
-
-      processSourceFile(file, "v1", "/crds");
-
-      expect(writeFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("/crds/widget.yaml"),
-        expect.stringContaining("CustomResourceDefinition"),
-        "utf8",
-      );
-
-      expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+        expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+      });
     });
   });
 });
