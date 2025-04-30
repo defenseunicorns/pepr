@@ -43,3 +43,4 @@
 "init", "-y", "--yes", "Skip verification prompt when creating a new module."
 "update", "-K", "--skip-template-update", "Skip updating the template files."
 "update", "-h", "--help", "Display help for command"
+"monitor", "-h", "--help", "Display help for command"
