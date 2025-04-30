@@ -43,6 +43,8 @@
 "init", "-y", "--yes", "Skip verification prompt when creating a new module."
 "kfc", "-h", "--help", "Display help for command"
 "monitor", "-h", "--help", "Display help for command"
+"pepr", "-V", "--version", "Display the version of the Pepr CLI."
+"pepr", "-h", "--help", "Display help for command"
 "update", "-K", "--skip-template-update", "Skip updating the template files."
 "update", "-h", "--help", "Display help for command"
 "uuid", "-h", "--help", "Display help for command"
