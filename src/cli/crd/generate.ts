@@ -4,7 +4,7 @@
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import { stringify as toYAML } from "yaml";
+import { stringify } from "yaml";
 import {
   Project,
   InterfaceDeclaration,
@@ -109,7 +109,7 @@ export function processSourceFile(
   });
 
   const outPath = path.join(outputDir, `${kind.toLowerCase()}.yaml`);
-  fs.writeFileSync(outPath, toYAML(crd), "utf8");
+  fs.writeFileSync(outPath, stringify(crd), "utf8");
   console.log(`✔ Created ${outPath}`);
 }
 
