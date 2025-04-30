@@ -7,7 +7,7 @@ const execPromise = promisify(childProcess.exec);
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
-  describe("when executing `pepr --help`", () => {
+  describe("when `pepr --help` executes", () => {
     it("should display the help menu with correct information", async () => {
       const command = `npx ts-node ${cliPath} --help`;
 
@@ -23,6 +23,72 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
+    });
+  });
+
+  describe("when `pepr build --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+
+  describe("when `pepr crd --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+
+  describe("when `pepr crd create --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+
+  describe("when `pepr crd generate --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+
+  describe("when `pepr deploy --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+
+  describe("when `pepr dev --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr format --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr init --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr kfc --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr monitor --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr update --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
+    });
+  });
+  describe("when `pepr uuid --help` executes", () => {
+    it("does something", () => {
+      expect(true).toBeTruthy();
     });
   });
 });
