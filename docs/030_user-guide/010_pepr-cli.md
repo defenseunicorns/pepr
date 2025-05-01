@@ -94,6 +94,14 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 ## `npx pepr dev`
 
+Setup a local webhook development environment
+
+**Options:**
+
+- `-h, --host [host]` - host to listen on (default: "host.k3d.internal")
+- `-x, -confirm` - skip confirmation prompt
+- `-h, --help` - display help for command
+
 Connect a local cluster to a local version of the Pepr Controller to do real-time debugging of your module. Note the `npx pepr dev` assumes a K3d cluster is running by default. If you are working with Kind or another docker-based K8s distro, you will need to pass the `--host host.docker.internal` option to `npx pepr dev`. If working with a remote cluster you will have to give Pepr a host path to your machine that is reachable from the K8s cluster.
 
 NOTE: This command, by necessity, installs resources into the cluster you run it against.  Generally, these resources are removed once the `pepr dev` session ends but there are two notable exceptions:
@@ -102,11 +110,6 @@ NOTE: This command, by necessity, installs resources into the cluster you run it
 - the `PeprStore` CRD.
 
 These can't be auto-removed because they're global in scope & doing so would risk wrecking any other Pepr deployments that are already running in-cluster.  If (for some strange reason) you're _not_ `pepr dev`-ing against an ephemeral dev cluster and need to keep the cluster clean, you'll have to remove these hold-overs yourself (or not)!
-
-**Options:**
-
-- `-h, --host [host]` - Host to listen on (default: "host.k3d.internal")
-- `--confirm` - Skip confirmation prompt
 
 ## `npx pepr format`
 
