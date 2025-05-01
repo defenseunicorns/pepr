@@ -271,7 +271,7 @@ describe("sanitizeResourceName", () => {
     );
   });
 
-  it("should remove leading and trailing non-letter characters", () => {
+  it("should remove leading and trailing non-alphanumeric characters", () => {
     const resourceName = " 1=-test-resource *2 ";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
     expect(sanitizedResourceName).toEqual("1--test-resource-2");
