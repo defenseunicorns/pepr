@@ -123,18 +123,21 @@ Initialize a new Pepr Module.
 
 **Options:**
 
-- `--skip-post-init` - Skip npm install, git init and VSCode launch.
-- `--confirm` - Skip verification prompt when creating a new module.
-- `--description <string>` - Explain the purpose of the new module.
-- `--name <string>` - Set the name of the new module.
-- `--skip-post-init` - Skip npm install, git init, and VSCode launch.
-- `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
-- `--uuid [string]` - Unique identifier for your module with a max length of 36 characters.
-- `--crd` - Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
+- `-c, --confirm` - Skip verification prompt when creating a new module.
+- `-c, --description <string>` - Explain the purpose of the new module.
+- `-c, --name <string>` - Set the name of the new module.
+- `-c, --skip-post-init` - Skip npm install, git init, and VSCode launch.
+- `-c, --errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
+- `-c, --uuid [string]` - Unique identifier for your module with a max length of 36 characters.
+- `-c, --crd` - Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 
 ## `npx pepr kfc`
 
 Execute a `kubernetes-fluent-client` command. This command is a wrapper around `kubernetes-fluent-client`.
+
+**Options:**
+
+- `-h, --help` - Display help for command
 
 Usage:
 
@@ -148,9 +151,14 @@ For example, to generate usable types from a Kubernetes CRD, you can run `npx pe
 
 You can learn more about the `kubernetes-fluent-client` [here](https://github.com/defenseunicorns/kubernetes-fluent-client).
 
+
 ## `npx pepr monitor`
 
 Monitor Validations for a given Pepr Module or all Pepr Modules.
+
+**Options:**
+
+- `-h, --help` - Display help for command
 
 Usage:
 
@@ -168,12 +176,17 @@ Update the current Pepr Module to the latest SDK version. This command is not re
 
 **Options:**
 
-- `--skip-template-update` - Skip updating the template files
+- `-c, --skip-template-update` - Skip updating the template files
+- `-h, --help` - Display help for command
 
 ## `npx pepr uuid`
 
 Module UUID(s) currently deployed in the cluster with their descriptions.
 
 **Options:**
+
+- `-h, --help` - Display help for command
+
+Other notes...
 
 - `[uuid]` - Specific module UUID

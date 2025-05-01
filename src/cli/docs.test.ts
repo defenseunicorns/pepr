@@ -72,23 +72,27 @@ describe("Pepr CLI Help Menu", () => {
   };
 
   describe.only("getDocsForCommand", () => {
-    it("should extract the main pepr command section correctly", () => {
-      const { options, commands } = getDocsForCommand();
-      expect(options).toHaveLength(2);
-      expect(commands).toHaveLength(10);
-    });
-
-    it("should extract the pepr build command section correctly", () => {
-      const { options, commands } = getDocsForCommand("build");
-      expect(options).toHaveLength(12);
-      expect(commands).toHaveLength(0);
-    });
-
-    it("should extract nested commands like crd create correctly", () => {
-      const { options, commands } = getDocsForCommand("crd create");
-      expect(options).toHaveLength(8);
-      expect(commands).toHaveLength(0);
-    });
+    it.each([
+      { command: "", optionsCount: 2, subcommands: 10 },
+      { command: "build", optionsCount: 12, subcommands: 0 },
+      { command: "crd create", optionsCount: 8, subcommands: 0 },
+      { command: "crd generate", optionsCount: 2, subcommands: 0 },
+      { command: "deploy", optionsCount: 9, subcommands: 0 },
+      { command: "format", optionsCount: 2, subcommands: 0 },
+      { command: "dev", optionsCount: 3, subcommands: 0 },
+      { command: "init", optionsCount: 7, subcommands: 0 },
+      { command: "kfc", optionsCount: 1, subcommands: 0 },
+      { command: "monitor", optionsCount: 1, subcommands: 0 },
+      { command: "update", optionsCount: 2, subcommands: 0 },
+      { command: "uuid", optionsCount: 1, subcommands: 0 },
+    ])(
+      "should extract the npx pepr $command command correctly",
+      ({ command, optionsCount, subcommands }) => {
+        const { options, commands } = getDocsForCommand(command);
+        expect(options).toHaveLength(optionsCount);
+        expect(commands).toHaveLength(subcommands);
+      },
+    );
 
     it("should throw an error for non-existent commands", () => {
       expect(() => getDocsForCommand("nonexistent")).toThrow(
