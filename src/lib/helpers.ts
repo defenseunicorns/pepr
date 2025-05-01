@@ -141,30 +141,27 @@ export function namespaceComplianceValidator(
   watch?: boolean,
 ): void {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces: string[] = bindings.flatMap((binding: Binding) => {
-    if (watch && binding.isWatch) {
-      return binding.filters.namespaces || [];
-    }
-    if ((!watch && binding.isMutate) || binding.isValidate) {
-      return binding.filters.namespaces || [];
-    }
-    return binding.filters.namespaces || [];
-  });
-  const bindingRegexNamespaces: string[] = bindings.flatMap((binding: Binding) => {
-    if (watch && binding.isWatch) {
-      return binding.filters.regexNamespaces || [];
-    }
-    if ((!watch && binding.isMutate) || binding.isValidate) {
-      return binding.filters.regexNamespaces || [];
-    }
-    return binding.filters.regexNamespaces || [];
-  });
+
+  const shouldInclude = (binding: Binding): boolean => {
+    if (watch === true) return !!binding.isWatch;
+    if (watch === false) return !!binding.isMutate;
+    return true;
+  };
+
+  const bindingNamespaces: string[] = bindings.flatMap(binding =>
+    shouldInclude(binding) ? binding.filters.namespaces || [] : [],
+  );
+
+  const bindingRegexNamespaces: string[] = bindings.flatMap(binding =>
+    shouldInclude(binding) ? binding.filters.regexNamespaces || [] : [],
+  );
 
   const namespaceError = generateWatchNamespaceError(
-    ignoredNamespaces ? ignoredNamespaces : [],
+    ignoredNamespaces ?? [],
     bindingNamespaces,
-    capabilityNamespaces ? capabilityNamespaces : [],
+    capabilityNamespaces ?? [],
   );
+
   if (namespaceError !== "") {
     throw new Error(
       `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,
