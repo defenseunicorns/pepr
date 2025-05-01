@@ -4,11 +4,13 @@
 
 Type safe K8s middleware for humans
 
-Options:
+**Options:**
+
   -V, --version          output the version number
   -h, --help             display help for command
 
-Commands:
+**Commands:**
+
   init [options]         Initialize a new Pepr Module
   build [options]        Build a Pepr Module for deployment
   deploy [options]       Deploy a Pepr Module

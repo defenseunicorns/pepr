@@ -20,7 +20,7 @@ describe("Pepr CLI Help Menu", () => {
     // Format the section heading pattern - for either main command or subcommand
     const peprCommand = cmd ? `npx pepr ${cmd}` : `npx pepr`;
     const headingPattern = new RegExp(
-      `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>Type safe.*\\s\\sOptions:\\s(?<options>(?<option>  -., --.*\\s)+)\\sCommands:\\s(?<commands>(?<command>  .*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
+      `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>  -., --.*\\s)+)\\s\\*\\*Commands:\\*\\*\\s\\s(?<commands>(?<command>  .*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
       "m",
     );
 
