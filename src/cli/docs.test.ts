@@ -89,7 +89,7 @@ describe("Pepr CLI Help Menu", () => {
       { command: "update", optionsCount: 2, subcommands: 0 },
       { command: "uuid", optionsCount: 1, subcommands: 0 },
     ])(
-      "should extract the npx pepr $command command correctly",
+      "should extract the npx pepr $command command ($optionsCount options, $subcommands subcommands)",
       ({ command, optionsCount, subcommands }) => {
         const { options, commands } = getDocsForCommand(command);
         expect(options).toHaveLength(optionsCount);
