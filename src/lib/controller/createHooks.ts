@@ -1,5 +1,5 @@
 import { ControllerHooks } from ".";
-import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { Capability } from "../core/capability";
 import { isWatchMode, isDevMode } from "../core/envChecks";
 import { setupWatch } from "../processors/watch-processor";

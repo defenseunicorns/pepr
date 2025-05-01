@@ -13,7 +13,7 @@ import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode } from "../utils";
 import { OnError } from "../../cli/init/enums";
-import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
 

@@ -8,7 +8,7 @@ import {
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
-
+import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
 import { Assets } from "./assets";
 import { Event, WebhookType } from "../enums";
 import { Binding } from "../types";
@@ -41,21 +41,6 @@ export const validateRule = (
 
   return ruleObject;
 };
-
-export function resolveIgnoreNamespaces(ignoredNSConfig: string[] = []): string[] {
-  const ignoredNSEnv = process.env.PEPR_ADDITIONAL_IGNORED_NAMESPACES;
-  if (!ignoredNSEnv) {
-    return ignoredNSConfig;
-  }
-
-  const namespaces = ignoredNSEnv.split(",").map(ns => ns.trim());
-
-  // add alwaysIgnore.namespaces to the list
-  if (ignoredNSConfig) {
-    namespaces.push(...ignoredNSConfig);
-  }
-  return namespaces.filter(ns => ns.length > 0);
-}
 
 export async function generateWebhookRules(
   assets: Assets,
