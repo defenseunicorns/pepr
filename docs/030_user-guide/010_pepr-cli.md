@@ -46,9 +46,11 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 
 **Options:**
-  -h, --help          display help for command
+
+- `-h, --help` - display help for command
 
 **Commands:**
+
   create [options]    Create a new CRD TypeScript definition
   generate [options]  Generate CRD manifests from TypeScript definitions
   help [command]      display help for command
