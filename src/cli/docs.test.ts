@@ -19,19 +19,45 @@ describe("Pepr CLI Help Menu", () => {
 
     // Format the section heading pattern - for either main command or subcommand
     const peprCommand = cmd ? `npx pepr ${cmd}` : `npx pepr`;
+    // Regexr against .md
+    // (?<=## `npx pepr`\s\s)(?'menuItem'Type safe.*\s\s\*\*Options\:\*\*\s\s(?'options'(?'option'- `-., --.*\s)+)\s\*\*Commands:\*\*\s\s(?'commands'(?'command'  .*\s)+))(?=\s## `npx pepr.*`)
     const headingPattern = new RegExp(
-      `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>  -., --.*\\s)+)\\s\\*\\*Commands:\\*\\*\\s\\s(?<commands>(?<command>  .*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
+      `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>- \`-., --.*\\s)+)\\s\\*\\*Commands:\\*\\*\\s\\s(?<commands>(?<command>  .*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
       "m",
     );
 
-    // Find the matching section
-    const match = docsContent.match(headingPattern);
-
-    if (!match) {
-      throw new Error(`Documentation for command 'npx pepr ${cmd}' not found.`);
-    }
+    //Hardcoded to regex results, refactor later
     const optsIndex = 2;
     const cmdsIndex = 4;
+
+    // Find the matching section
+    let match = docsContent.match(headingPattern);
+
+    if (!match) {
+      //Command may not have subcommands
+      // (?<=## `npx pepr build`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
+      // (?<=## `npx pepr crd create`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
+
+      const optsOnlyPattern = new RegExp(
+        `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>- \`-., --.*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
+        "m",
+      );
+      match = docsContent.match(optsOnlyPattern);
+
+      if (!match) {
+        throw new Error(
+          `Documentation for command 'npx pepr ${cmd}' not found. Command does not match regexes.`,
+        );
+      }
+      return {
+        options: match[optsIndex]
+          .split("\n")
+          .map(item => item.trim())
+          .filter(item => item.startsWith("-")),
+        commands: [],
+      };
+    }
+
     // Return the matched section (trimmig any trailing whitespace)
     return {
       options: match[optsIndex]
@@ -53,16 +79,15 @@ describe("Pepr CLI Help Menu", () => {
     });
 
     it("should extract the pepr build command section correctly", () => {
-      const section = getDocsForCommand("build");
-      expect(section).toContain("## `npx pepr build`");
-      expect(section).toContain("Create a [zarf.yaml]");
-      expect(section).toContain("**Options:**");
+      const { options, commands } = getDocsForCommand("build");
+      expect(options).toHaveLength(12);
+      expect(commands).toHaveLength(0);
     });
 
     it("should extract nested commands like crd create correctly", () => {
-      const section = getDocsForCommand("crd create");
-      expect(section).toContain("## `npx pepr crd create`");
-      expect(section).toContain("Create a new CRD TypeScript definition");
+      const { options, commands } = getDocsForCommand("crd create");
+      expect(options).toHaveLength(8);
+      expect(commands).toHaveLength(0);
     });
 
     it("should throw an error for non-existent commands", () => {
