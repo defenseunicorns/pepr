@@ -185,6 +185,7 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
+            {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
             affinity:
             {{- if .Values.admission.antiAffinity }}
               podAntiAffinity:
@@ -196,8 +197,10 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                           values:
                             - admission
                     topologyKey: "kubernetes.io/hostname"
-            {{- else }}
+            {{- end }}
+            {{- if .Values.admission.affinity }}
               {{- toYaml .Values.admission.affinity | nindent 8 }}
+            {{- end }}
             {{- end }}
             nodeSelector:
               {{- toYaml .Values.admission.nodeSelector | nindent 8 }}
