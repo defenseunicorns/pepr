@@ -22,9 +22,23 @@ Type safe K8s middleware for humans
   kfc [args...]          Execute Kubernetes Fluent Client commands
   crd                    Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
 
+## `npx pepr crd`
+
+Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
+
+**Options:**
+
+- `-h, --help` - display help for command
+
+**Commands:**
+
+  create [options]    Create a new CRD TypeScript definition
+  generate [options]  Generate CRD manifests from TypeScript definitions
+  help [command]      display help for command
+
 ## `npx pepr build`
 
-Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
+Build a Pepr Module for deployment.
 
 **Options:**
 
@@ -41,19 +55,7 @@ Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. 
 - `-c, --withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment.
 - `-z, --zarf [manifest|chart]` - The Zarf package type to generate: manifest or chart (default: manifest).
 
-## `npx pepr crd`
-
-Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
-
-**Options:**
-
-- `-h, --help` - display help for command
-
-**Commands:**
-
-  create [options]    Create a new CRD TypeScript definition
-  generate [options]  Generate CRD manifests from TypeScript definitions
-  help [command]      display help for command
+Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
 
 ## `npx pepr crd create`
 
