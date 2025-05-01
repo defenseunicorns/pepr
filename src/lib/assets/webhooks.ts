@@ -84,7 +84,11 @@ export async function webhookConfigGenerator(
   const { name, tls, config, apiPath, host } = assets;
   const ignoreNS = concat(
     peprIgnoreNamespaces,
-    resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces),
+    resolveIgnoreNamespaces(
+      config?.alwaysIgnore?.namespaces?.length
+        ? config?.alwaysIgnore?.namespaces
+        : config?.admission?.alwaysIgnore?.namespaces,
+    ),
   );
 
   // Add any namespaces to ignore
