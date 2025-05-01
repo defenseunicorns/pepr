@@ -74,8 +74,8 @@ Generate CRD manifests from TypeScript definitions
 
 **Options:**
 
- - `--output <output>` - Output directory for generated CRDs (default: "./crds")
- - `-h, --help` - display help for command
+- `--output <output>` - Output directory for generated CRDs (default: "./crds")
+- `-h, --help` - display help for command
 
 ## `npx pepr deploy`
 
@@ -83,14 +83,15 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 **Options:**
 
+- `-h, --help` - display help for command
+- `-c, --confirm` - Skip confirmation prompt
 - `-i, --image [image]` - Override the image tag
-- `--confirm` - Skip confirmation prompt
-- `--pullSecret <name>` - Deploy imagePullSecret for Controller private registry
-- `--docker-server <server>` - Docker server address
-- `--docker-username <username>` - Docker registry username
-- `--docker-email <email>` - Email for Docker registry
-- `--docker-password <password>` - Password for Docker registry
-- `--force` - Force deploy the module, override manager field
+- `-x, --docker-email <email>` - Email for Docker registry
+- `-x, --docker-password <password>` - Password for Docker registry
+- `-x, --docker-server <server>` - Docker server address
+- `-x, --docker-username <username>` - Docker registry username
+- `-x, --force` - Force deploy the module, override manager field
+- `-x, --pullSecret <name>` - Deploy imagePullSecret for Controller private registry
 
 ## `npx pepr dev`
 
@@ -99,7 +100,7 @@ Setup a local webhook development environment
 **Options:**
 
 - `-h, --host [host]` - host to listen on (default: "host.k3d.internal")
-- `-x, -confirm` - skip confirmation prompt
+- `-x, --confirm` - skip confirmation prompt
 - `-h, --help` - display help for command
 
 Connect a local cluster to a local version of the Pepr Controller to do real-time debugging of your module. Note the `npx pepr dev` assumes a K3d cluster is running by default. If you are working with Kind or another docker-based K8s distro, you will need to pass the `--host host.docker.internal` option to `npx pepr dev`. If working with a remote cluster you will have to give Pepr a host path to your machine that is reachable from the K8s cluster.

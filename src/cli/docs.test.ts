@@ -37,6 +37,8 @@ describe("Pepr CLI Help Menu", () => {
       //Command may not have subcommands
       // (?<=## `npx pepr build`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
       // (?<=## `npx pepr crd create`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
+      // (?<=## `npx pepr dev`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
+      // (?<=## `npx pepr deploy`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
 
       const optsOnlyPattern = new RegExp(
         `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>- \`-., --.*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
