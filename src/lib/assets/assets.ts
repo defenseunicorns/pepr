@@ -101,7 +101,14 @@ export class Assets {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
+      // until deployment, Pepr does not distinguish between watch and admission
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
+      namespaceComplianceValidator(
+        capability,
+        this.config.admission?.alwaysIgnore?.namespaces,
+        false,
+      );
+      namespaceComplianceValidator(capability, this.config.watch?.alwaysIgnore?.namespaces, true);
     }
 
     const code = await fs.readFile(this.path);

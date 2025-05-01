@@ -95,7 +95,11 @@ export async function validateProcessor(
         binding,
         req,
         namespaces,
-        resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces),
+        resolveIgnoreNamespaces(
+          config?.alwaysIgnore?.namespaces?.length
+            ? config?.alwaysIgnore?.namespaces
+            : config?.admission?.alwaysIgnore?.namespaces,
+        ),
       );
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
