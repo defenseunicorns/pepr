@@ -74,7 +74,7 @@ Generate CRD manifests from TypeScript definitions
 
 **Options:**
 
-- `--output <output>` - Output directory for generated CRDs (default: "./crds")
+- `-o, --output <output>` - Output directory for generated CRDs (default: "./crds")
 - `-h, --help` - display help for command
 
 ## `npx pepr deploy`

@@ -77,6 +77,7 @@ describe("Pepr CLI Help Menu", () => {
     it.each([
       { command: "", optionsCount: 2, subcommands: 10 },
       { command: "build", optionsCount: 12, subcommands: 0 },
+      { command: "crd", optionsCount: 1, subcommands: 3 },
       { command: "crd create", optionsCount: 8, subcommands: 0 },
       { command: "crd generate", optionsCount: 2, subcommands: 0 },
       { command: "deploy", optionsCount: 9, subcommands: 0 },
