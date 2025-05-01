@@ -94,7 +94,13 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
             terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
             serviceAccountName: {{ .Values.uuid }}
             securityContext:
-              {{- toYaml .Values.admission.securityContext | nindent 8 }}
+              {{- toYaml .Values.watcher.securityContext | nindent 8 }}
+            nodeSelector:
+              {{- toYaml .Values.watcher.nodeSelector | nindent 8 }}
+            tolerations:
+              {{- toYaml .Values.watcher.tolerations | nindent 8 }}
+            affinity:
+              {{- toYaml .Values.watcher.affinity | nindent 8 }}
             containers:
               - name: watcher
                 image: {{ .Values.watcher.image }}
@@ -179,8 +185,8 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
-            {{- if .Values.admission.antiAffinity }}
             affinity:
+            {{- if .Values.admission.antiAffinity }}
               podAntiAffinity:
                 requiredDuringSchedulingIgnoredDuringExecution:
                   - labelSelector:
@@ -190,7 +196,13 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
                           values:
                             - admission
                     topologyKey: "kubernetes.io/hostname"
+            {{- else }}
+              {{- toYaml .Values.admission.affinity | nindent 8 }}
             {{- end }}
+            nodeSelector:
+              {{- toYaml .Values.admission.nodeSelector | nindent 8 }}
+            tolerations:
+              {{- toYaml .Values.admission.tolerations | nindent 8 }}
             terminationGracePeriodSeconds: {{ .Values.admission.terminationGracePeriodSeconds }}
             priorityClassName: system-node-critical
             serviceAccountName: {{ .Values.uuid }}
