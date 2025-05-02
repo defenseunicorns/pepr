@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import path from "path";
 import * as childProcess from "child_process";
 import { promisify } from "util";
+import { getDocsForCommand, parseCLIOutput } from "./docs.helper.test";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execPromise = promisify(childProcess.exec);
@@ -11,11 +12,10 @@ describe("Pepr CLI Help Menu", () => {
   const command = async (subcommand: string = "") =>
     await execPromise(`npx ts-node ${cliPath} ${subcommand} --help`);
 
-  describe("when `pepr --help` executes", () => {
+  describe.only("when `pepr --help` executes", () => {
     it("should display the help menu with correct information", async () => {
       try {
         const { stdout, stderr } = await command();
-
         expect(stdout).toBeTruthy();
         expect(stdout).toContain("-V, --version          output the version number");
         expect(stdout).toContain("-h, --help             display help for command");
@@ -27,15 +27,18 @@ describe("Pepr CLI Help Menu", () => {
       }
     });
 
-    // it("should match documented CLI behavior", async () => {
-    //   try {
-    //     const { stdout, stderr } = await command();
-    //     const docsContent = getDocsForCommand();
-
-    //   } catch (error) {
-    //     console.error("Error executing CLI:", error);
-    //     expect(error).toBeUndefined(); }
-    // });
+    it("should match documented CLI behavior", async () => {
+      try {
+        const { stdout, stderr } = await command();
+        const docsContent = getDocsForCommand();
+        const cliContent = parseCLIOutput(stdout);
+        expect(docsContent).toBe(cliContent);
+        expect(stderr).toBeFalsy();
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
+    });
   });
 
   describe("when `pepr build --help` executes", () => {

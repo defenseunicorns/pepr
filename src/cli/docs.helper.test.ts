@@ -3,6 +3,65 @@ import fs from "fs";
 
 const cliDocsPath = "./docs/030_user-guide/010_pepr-cli.md";
 
+/**
+ * Parse CLI output into options and commands
+ */
+export const parseCLIOutput = (cliOutput: string): { options: string[]; commands: string[] } => {
+  const lines = cliOutput.split("\n");
+
+  // Find section boundaries
+  const optionsIndex = lines.findIndex(line => line.trim().startsWith("Options:"));
+  const commandsIndex = lines.findIndex(line => line.trim().startsWith("Commands:"));
+
+  // Extract options
+  const options: string[] = [];
+  if (optionsIndex !== -1) {
+    let i = optionsIndex + 1;
+    while (i < lines.length && (commandsIndex === -1 || i < commandsIndex)) {
+      const line = lines[i].trim();
+      if (line && line.startsWith("-")) {
+        options.push(line);
+      }
+      i++;
+    }
+  }
+
+  // Extract commands
+  const commands: string[] = [];
+  if (commandsIndex !== -1) {
+    let i = commandsIndex + 1;
+    let currentCommand = null;
+
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      const originalLine = lines[i];
+
+      // Skip empty lines or section headers
+      if (!line || line.startsWith("Options:") || line === "Commands:") {
+        if (line === "") break; // Stop at blank line
+        i++;
+        continue;
+      }
+
+      // Check if this is a new command (starts with command name pattern)
+      // Command names typically have format: "command [args]    Description"
+      const isNewCommand = !line.startsWith("-") && line.match(/^\S+(\s+\[.+?\])?\s{2,}/) !== null;
+
+      if (isNewCommand) {
+        currentCommand = line;
+        commands.push(currentCommand);
+      } else if (originalLine.startsWith("                             ")) {
+        // This is a continuation line (has significant indentation)
+        // We don't add continuation lines to the commands array
+      }
+
+      i++;
+    }
+  }
+
+  return { options, commands };
+};
+
 const parseSection = (section: string): { options: string[]; commands: string[] } => {
   const hasOptions = section.includes("**Options:**");
   const hasCommands = section.includes("**Commands:**");
@@ -22,6 +81,7 @@ const parseSection = (section: string): { options: string[]; commands: string[] 
         .split("**Commands:**")[1]
         .split(/\n\s*\n\*\*|\n## /)[0]
         .split("\n")
+        .map(line => line.trim())
         .filter(line => {
           const trimmed = line.trim();
           return trimmed && !trimmed.startsWith("-") && !trimmed.startsWith("*");
@@ -31,7 +91,7 @@ const parseSection = (section: string): { options: string[]; commands: string[] 
   return { options, commands };
 };
 
-const getDocsForCommand = (cmd: string = ""): { options: string[]; commands: string[] } => {
+export const getDocsForCommand = (cmd: string = ""): { options: string[]; commands: string[] } => {
   const docsContent = fs.readFileSync(cliDocsPath, "utf-8");
 
   const commandToFind = cmd ? `npx pepr ${cmd}` : "npx pepr";
@@ -78,5 +138,122 @@ describe("getDocsForCommand", () => {
     expect(() => getDocsForCommand("nonexistent")).toThrow(
       "Documentation for command 'npx pepr nonexistent' not found.",
     );
+  });
+});
+
+describe("parseCLIOutput", () => {
+  describe("when parsing CLI output with both options and commands", () => {
+    const sampleOutput = `
+    Usage: pepr [options] [command]
+
+    Type safe K8s middleware for humans
+
+    Options:
+      -V, --version          output the version number
+      -h, --help             display help for command
+
+    Commands:
+      init [options]         Initialize a new Pepr Module
+      build [options]        Build a Pepr Module for deployment
+      deploy [options]       Deploy a Pepr Module
+    `;
+
+    it("should extract all options", () => {
+      const result = parseCLIOutput(sampleOutput);
+
+      expect(result.options).toHaveLength(2);
+      expect(result.options).toContain("-V, --version          output the version number");
+      expect(result.options).toContain("-h, --help             display help for command");
+    });
+
+    it("should extract all commands", () => {
+      const result = parseCLIOutput(sampleOutput);
+
+      expect(result.commands).toHaveLength(3);
+      expect(result.commands).toContain("init [options]         Initialize a new Pepr Module");
+      expect(result.commands).toContain(
+        "build [options]        Build a Pepr Module for deployment",
+      );
+      expect(result.commands).toContain("deploy [options]       Deploy a Pepr Module");
+    });
+  });
+
+  describe("when parsing CLI output with only options", () => {
+    const optionsOnlyOutput = `
+    Usage: pepr uuid [options]
+
+    Module UUID(s) currently deployed in the cluster
+
+    Options:
+      -h, --help             display help for command
+    `;
+
+    it("should extract options but no commands", () => {
+      const result = parseCLIOutput(optionsOnlyOutput);
+
+      expect(result.options).toHaveLength(1);
+      expect(result.options).toContain("-h, --help             display help for command");
+      expect(result.commands).toHaveLength(0);
+    });
+  });
+
+  describe("when parsing CLI output with only commands", () => {
+    const commandsOnlyOutput = `
+    Usage: pepr crd [options] [command]
+
+    Scaffold and generate Kubernetes CRDs
+
+    Commands:
+      create [options]       Create a new CRD TypeScript definition
+      generate [options]     Generate CRD manifests from TypeScript definitions
+      help [command]         display help for command
+    `;
+
+    it("should extract commands but no options", () => {
+      const result = parseCLIOutput(commandsOnlyOutput);
+
+      expect(result.commands).toHaveLength(3);
+      expect(result.options).toHaveLength(0);
+    });
+  });
+
+  describe("when parsing CLI output with multiline command descriptions", () => {
+    const multilineOutput = `
+    Usage: pepr [options] [command]
+
+    Type safe K8s middleware for humans
+
+    Options:
+      -V, --version          output the version number
+      -h, --help             display help for command
+
+    Commands:
+      init [options]         Initialize a new Pepr Module
+      update [options]       Update this Pepr module. Not recommended for prod as it
+                             may change files.
+      format [options]       Lint and format this Pepr module
+    `;
+
+    it("should properly handle multiline command descriptions", () => {
+      const result = parseCLIOutput(multilineOutput);
+
+      expect(result.commands).toHaveLength(3);
+      expect(result.commands).toContain("init [options]         Initialize a new Pepr Module");
+      expect(result.commands).toContain(
+        "update [options]       Update this Pepr module. Not recommended for prod as it",
+      );
+      expect(result.commands).toContain("format [options]       Lint and format this Pepr module");
+      // The continued line shouldn't be captured as a separate command
+      expect(result.commands).not.toContain("may change files.");
+    });
+  });
+
+  describe("when parsing empty CLI output", () => {
+    it("should return empty arrays", () => {
+      const result = parseCLIOutput("");
+
+      expect(result.options).toHaveLength(0);
+      expect(result.commands).toHaveLength(0);
+    });
   });
 });
