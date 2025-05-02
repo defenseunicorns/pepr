@@ -14,7 +14,8 @@
     "/src",
     "!src/**/*.test.ts",
     "!src/fixtures/**",
-    "!dist/**/*.test.d.ts*"
+    "!dist/**/*.test.d.ts*",
+    "!src/cli/docs/**"
   ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
