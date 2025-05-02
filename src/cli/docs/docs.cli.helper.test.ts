@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { parseCLIOutput } from "./docs.cli.helper";
+import { parseCLIOutput } from "../../../docs/test/docs.cli.helper";
 
 describe("parseCLIOutput", () => {
   describe("when parsing CLI output with both options and commands", () => {
