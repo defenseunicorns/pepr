@@ -1,5 +1,14 @@
 # Pepr CLI
 
+## `npx pepr`
+
+Type safe K8s middleware for humans
+
+**Options:**
+
+- `-V, --version`          output the version number
+- `-h, --help`             display help for command
+
 ## `npx pepr build`
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
