@@ -4,6 +4,82 @@ import fs from "fs";
 const cliDocsPath = "./docs/030_user-guide/010_pepr-cli.md";
 
 /**
+ * Extract CLI options from a section of text
+ */
+const extractOptions = (lines: string[], optionsIndex: number, commandsIndex: number): string[] => {
+  const options: string[] = [];
+  if (optionsIndex === -1) return options;
+
+  let i = optionsIndex + 1;
+  const endIndex = commandsIndex === -1 ? lines.length : commandsIndex;
+
+  while (i < endIndex) {
+    const line = lines[i].trim();
+    if (line && line.startsWith("-")) {
+      options.push(line);
+    }
+    i++;
+  }
+
+  return options;
+};
+
+/**
+ * Check if a line represents a new command
+ */
+const isCommandLine = (line: string): boolean => {
+  return !line.startsWith("-") && line.match(/^\S+(\s+\[.+?\])?\s{2,}/) !== null;
+};
+
+/**
+ * Check if a line is a continuation of a previous command
+ */
+const isContinuationLine = (line: string): boolean => {
+  return line.match(/^\s{20,}/) !== null;
+};
+
+/**
+ * Extract CLI commands from a section of text
+ */
+const extractCommands = (lines: string[], commandsIndex: number): string[] => {
+  const commands: string[] = [];
+  if (commandsIndex === -1) return commands;
+
+  let i = commandsIndex + 1;
+  let currentCommandIndex = -1;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+
+    // Skip empty lines or section headers
+    if (!trimmedLine || trimmedLine.startsWith("Options:") || trimmedLine === "Commands:") {
+      if (trimmedLine === "") break; // Stop at blank line
+      i++;
+      continue;
+    }
+
+    if (isCommandLine(trimmedLine)) {
+      // New command found
+      commands.push(trimmedLine);
+      currentCommandIndex = commands.length - 1;
+    } else if (currentCommandIndex !== -1 && isContinuationLine(line)) {
+      // Join continuation line to current command
+      const continuation = trimmedLine;
+      const currentCommand = commands[currentCommandIndex];
+
+      // Replace trailing spaces with a single space before joining
+      const baseCommand = currentCommand.replace(/\s+$/, "");
+      commands[currentCommandIndex] = `${baseCommand} ${continuation}`;
+    }
+
+    i++;
+  }
+
+  return commands;
+};
+
+/**
  * Parse CLI output into options and commands
  */
 export const parseCLIOutput = (cliOutput: string): { options: string[]; commands: string[] } => {
@@ -13,57 +89,9 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   const optionsIndex = lines.findIndex(line => line.trim().startsWith("Options:"));
   const commandsIndex = lines.findIndex(line => line.trim().startsWith("Commands:"));
 
-  // Extract options
-  const options: string[] = [];
-  if (optionsIndex !== -1) {
-    let i = optionsIndex + 1;
-    while (i < lines.length && (commandsIndex === -1 || i < commandsIndex)) {
-      const line = lines[i].trim();
-      if (line && line.startsWith("-")) {
-        options.push(line);
-      }
-      i++;
-    }
-  }
-
-  // Extract commands
-  const commands: string[] = [];
-  if (commandsIndex !== -1) {
-    let i = commandsIndex + 1;
-    let currentCommandIndex = -1;
-
-    while (i < lines.length) {
-      const line = lines[i].trim();
-      const originalLine = lines[i];
-
-      // Skip empty lines or section headers
-      if (!line || line.startsWith("Options:") || line === "Commands:") {
-        if (line === "") break; // Stop at blank line
-        i++;
-        continue;
-      }
-
-      // Check if this is a new command (starts with command name pattern)
-      // Command names typically have format: "command [args]    Description"
-      const isNewCommand = !line.startsWith("-") && line.match(/^\S+(\s+\[.+?\])?\s{2,}/) !== null;
-
-      if (isNewCommand) {
-        commands.push(line);
-        currentCommandIndex = commands.length - 1;
-      } else if (currentCommandIndex !== -1 && originalLine.match(/^\s{20,}/)) {
-        // This is a continuation line (has significant indentation)
-        // Add it to the current command by removing indentation and joining
-        const continuation = line.trim();
-        const currentCommand = commands[currentCommandIndex];
-
-        // Replace any trailing spaces with a single space before joining
-        const baseCommand = currentCommand.replace(/\s+$/, "");
-        commands[currentCommandIndex] = `${baseCommand} ${continuation}`;
-      }
-
-      i++;
-    }
-  }
+  // Extract options and commands
+  const options = extractOptions(lines, optionsIndex, commandsIndex);
+  const commands = extractCommands(lines, commandsIndex);
 
   return { options, commands };
 };
