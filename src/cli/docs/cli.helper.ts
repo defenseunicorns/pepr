@@ -16,12 +16,15 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
  * Normalize whitespace between CLI options and their descriptions to be exactly two spaces
  */
 export const normalizeOptionWhitespace = (option: string): string => {
-  // Match the pattern: option, followed by whitespace, followed by description
-  const match = option.match(/^(--?[a-zA-Z0-9-,\s]+)\s{2,}(.+)$/);
+  // Match the pattern: option part (including any param types like [string] or <value>),
+  // followed by whitespace, followed by description
+  const match = option.match(/^(-{1,2}[a-zA-Z0-9-,\s]+(?:\s+(?:\[.*?\]|<.*?>))?)\s{2,}(.+)$/);
+
   if (match) {
     // Replace variable whitespace with exactly two spaces
     return `${match[1].trim()}  ${match[2]}`;
   }
+
   return option;
 };
 

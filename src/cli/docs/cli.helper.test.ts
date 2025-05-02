@@ -122,6 +122,9 @@ describe("parseCLIOutput", () => {
         "-h, --help              display help for command",
         "-V, --version          output the version number",
         "-n, --no-embed       Disables embedding of deployment files",
+        "--uuid [string]                        Unique identifier for your module with a max length of 36 characters.",
+        "--description <string>                 Explain the purpose of the new module.",
+        "--name <string>                        Set the name of the new module.",
       ];
 
       const normalizedOptions = options.map(normalizeOptionWhitespace);
@@ -131,6 +134,9 @@ describe("parseCLIOutput", () => {
         "-h, --help  display help for command",
         "-V, --version  output the version number",
         "-n, --no-embed  Disables embedding of deployment files",
+        "--uuid [string]  Unique identifier for your module with a max length of 36 characters.",
+        "--description <string>  Explain the purpose of the new module.",
+        "--name <string>  Set the name of the new module.",
       ]);
     });
   });
