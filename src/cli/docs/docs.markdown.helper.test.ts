@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { getDocsForCommand } from "../../../docs/test/docs.markdown.helper";
+import { getDocsForCommand } from "./docs.markdown.helper";
 
 describe("getDocsForCommand", () => {
   it.each([
