@@ -16,5 +16,5 @@
     "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/templates", "src/cli/docs/**"]
+  "exclude": ["node_modules", "dist", "src/templates"]
 }
