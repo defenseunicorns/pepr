@@ -32,7 +32,7 @@ describe("Pepr CLI Help Menu", () => {
         const { stdout, stderr } = await command();
         const docsContent = getDocsForCommand();
         const cliContent = parseCLIOutput(stdout);
-        expect(docsContent).toBe(cliContent);
+        expect(docsContent).toStrictEqual(cliContent);
         expect(stderr).toBeFalsy();
       } catch (error) {
         console.error("Error executing CLI:", error);

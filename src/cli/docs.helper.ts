@@ -95,6 +95,9 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   return { options, commands };
 };
 
+/**
+ * Parse a markdown section to extract command options and subcommands
+ */
 const parseSection = (section: string): { options: string[]; commands: string[] } => {
   const hasOptions = section.includes("**Options:**");
   const hasCommands = section.includes("**Commands:**");
@@ -124,6 +127,32 @@ const parseSection = (section: string): { options: string[]; commands: string[] 
   return { options, commands };
 };
 
+/**
+ * Normalize option text from documentation format to CLI format
+ * Converts: "- `-V, --version`          output the version number"
+ * To:       "-V, --version          output the version number"
+ * Preserving the whitespace between option and description
+ */
+const normalizeOption = (option: string): string => {
+  // Handle Markdown format from docs
+  if (option.startsWith("- `-")) {
+    const markdownPattern = /^- `-([^`]+)`(\s+)(.*)$/;
+    const match = option.match(markdownPattern);
+
+    if (match) {
+      const [, optFlag, whitespace, description] = match;
+      return `-${optFlag}${whitespace}${description}`;
+    }
+
+    // Fallback to simpler replacement if pattern doesn't match
+    return option.replace(/^- `-([^`]+)`\s+/, "-$1 ");
+  }
+  return option;
+};
+
+/**
+ * Get documentation for a Pepr command from the markdown docs
+ */
 export const getDocsForCommand = (cmd: string = ""): { options: string[]; commands: string[] } => {
   const docsContent = fs.readFileSync(cliDocsPath, "utf-8");
 
@@ -140,5 +169,12 @@ export const getDocsForCommand = (cmd: string = ""): { options: string[]; comman
 
   if (!targetSection) throw new Error(`Documentation for command '${commandToFind}' not found.`);
 
-  return parseSection(`## \`npx pepr${targetSection}`);
+  // Get the options and commands from the section
+  const result = parseSection(`## \`npx pepr${targetSection}`);
+
+  // Normalize options to match CLI output format
+  return {
+    options: result.options.map(normalizeOption),
+    commands: result.commands,
+  };
 };
