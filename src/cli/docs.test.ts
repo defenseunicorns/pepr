@@ -2,107 +2,14 @@ import { describe, expect, it } from "@jest/globals";
 import path from "path";
 import * as childProcess from "child_process";
 import { promisify } from "util";
-import fs from "fs";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execPromise = promisify(childProcess.exec);
 
 describe("Pepr CLI Help Menu", () => {
-  const cliDocsPath = "./docs/030_user-guide/010_pepr-cli.md";
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
   const command = async (subcommand: string = "") =>
     await execPromise(`npx ts-node ${cliPath} ${subcommand} --help`);
-
-  const getDocsForCommand = (cmd: string = "") => {
-    // Read the docs file
-    const docsContent = fs.readFileSync(cliDocsPath, "utf-8");
-
-    // Format the section heading pattern - for either main command or subcommand
-    const peprCommand = cmd ? `npx pepr ${cmd}` : `npx pepr`;
-    // Regexr against .md
-    // (?<=## `npx pepr`\s\s)(?'menuItem'Type safe.*\s\s\*\*Options\:\*\*\s\s(?'options'(?'option'- `-., --.*\s)+)\s\*\*Commands:\*\*\s\s(?'commands'(?'command'  .*\s)+))(?=\s## `npx pepr.*`)
-    const headingPattern = new RegExp(
-      `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>- \`-., --.*\\s)+)\\s\\*\\*Commands:\\*\\*\\s\\s(?<commands>(?<command>  .*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
-      "m",
-    );
-
-    //Hardcoded to regex results, refactor later
-    const optsIndex = 2;
-    const cmdsIndex = 4;
-
-    // Find the matching section
-    let match = docsContent.match(headingPattern);
-
-    if (!match) {
-      //Command may not have subcommands
-      // (?<=## `npx pepr build`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
-      // (?<=## `npx pepr crd create`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
-      // (?<=## `npx pepr dev`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
-      // (?<=## `npx pepr deploy`\s\s)(?'menuItem'[A-Z].*\s\s\*\*Options:\*\*)\s\s(?'options'(?'option'- \`-., --.*\s)+)
-
-      const optsOnlyPattern = new RegExp(
-        `## \`${peprCommand}\`[\\s\\S]*?(?<menuItem>[A-Z].*\\s\\s\\*\\*Options:\\*\\*\\s\\s(?<options>(?<option>- \`-., --.*\\s)+))(?=\\s## \`npx pepr.*\`|$)`,
-        "m",
-      );
-      match = docsContent.match(optsOnlyPattern);
-
-      if (!match) {
-        throw new Error(
-          `Documentation for command 'npx pepr ${cmd}' not found. Command does not match regexes.`,
-        );
-      }
-      return {
-        options: match[optsIndex]
-          .split("\n")
-          .map(item => item.trim())
-          .filter(item => item.startsWith("-")),
-        commands: [],
-      };
-    }
-
-    // Return the matched section (trimmig any trailing whitespace)
-    return {
-      options: match[optsIndex]
-        .split("\n")
-        .map(item => item.trim())
-        .filter(item => item.startsWith("-")),
-      commands: match[cmdsIndex]
-        .split("\n")
-        .map(item => item.trim())
-        .filter(item => item !== ""),
-    };
-  };
-
-  describe.only("getDocsForCommand", () => {
-    it.each([
-      { command: "", optionsCount: 2, subcommands: 10 },
-      { command: "build", optionsCount: 12, subcommands: 0 },
-      { command: "crd", optionsCount: 1, subcommands: 3 },
-      { command: "crd create", optionsCount: 8, subcommands: 0 },
-      { command: "crd generate", optionsCount: 2, subcommands: 0 },
-      { command: "deploy", optionsCount: 9, subcommands: 0 },
-      { command: "dev", optionsCount: 3, subcommands: 0 },
-      { command: "format", optionsCount: 2, subcommands: 0 },
-      { command: "init", optionsCount: 7, subcommands: 0 },
-      { command: "kfc", optionsCount: 1, subcommands: 0 },
-      { command: "monitor", optionsCount: 1, subcommands: 0 },
-      { command: "update", optionsCount: 2, subcommands: 0 },
-      { command: "uuid", optionsCount: 1, subcommands: 0 },
-    ])(
-      "should extract the npx pepr $command command ($optionsCount options, $subcommands subcommands)",
-      ({ command, optionsCount, subcommands }) => {
-        const { options, commands } = getDocsForCommand(command);
-        expect(options).toHaveLength(optionsCount);
-        expect(commands).toHaveLength(subcommands);
-      },
-    );
-
-    it("should throw an error for non-existent commands", () => {
-      expect(() => getDocsForCommand("nonexistent")).toThrow(
-        "Documentation for command 'npx pepr nonexistent' not found.",
-      );
-    });
-  });
 
   describe("when `pepr --help` executes", () => {
     it("should display the help menu with correct information", async () => {
