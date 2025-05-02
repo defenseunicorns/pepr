@@ -103,9 +103,9 @@ Setup a local webhook development environment
 
 **Options:**
 
-- `-h, --host [host]` - host to listen on (default: "host.k3d.internal")
-- `-x, --confirm` - skip confirmation prompt
-- `-h, --help` - display help for command
+- `-h, --host [host]` - Host to listen on (default: "host.k3d.internal")
+- `--confirm` - Skip confirmation prompt
+- `--help` - display help for command
 
 Connect a local cluster to a local version of the Pepr Controller to do real-time debugging of your module. Note the `npx pepr dev` assumes a K3d cluster is running by default. If you are working with Kind or another docker-based K8s distro, you will need to pass the `--host host.docker.internal` option to `npx pepr dev`. If working with a remote cluster you will have to give Pepr a host path to your machine that is reachable from the K8s cluster.
 
@@ -122,8 +122,8 @@ Lint and format this Pepr module.
 
 **Options:**
 
+- `-v, --validate-only` - Do not modify files, only validate formatting.
 - `-h, --help` - display help for command
-- `-v, --validate-only` - Do not modify files, only validate formatting. - UNDOCUMENTED!
 
 ## `npx pepr init`
 

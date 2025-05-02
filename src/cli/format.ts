@@ -10,7 +10,7 @@ export default function (program: RootCmd): void {
   program
     .command("format")
     .description("Lint and format this Pepr module")
-    .option("-v, --validate-only", "Do not modify files, only validate formatting")
+    .option("-v, --validate-only", "Do not modify files, only validate formatting.")
     .action(async opts => {
       const success = await peprFormat(opts.validateOnly);
 
