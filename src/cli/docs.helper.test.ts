@@ -3,9 +3,6 @@ import fs from "fs";
 
 const cliDocsPath = "./docs/030_user-guide/010_pepr-cli.md";
 
-/**
- * Extract options and commands from markdown text
- */
 const parseSection = (section: string): { options: string[]; commands: string[] } => {
   const hasOptions = section.includes("**Options:**");
   const hasCommands = section.includes("**Commands:**");
@@ -34,25 +31,21 @@ const parseSection = (section: string): { options: string[]; commands: string[] 
   return { options, commands };
 };
 
-/**
- * Get documentation for a Pepr command
- */
 const getDocsForCommand = (cmd: string = ""): { options: string[]; commands: string[] } => {
   const docsContent = fs.readFileSync(cliDocsPath, "utf-8");
 
-  // Special case for main command
-  if (!cmd) {
-    const mainPattern = /## `npx pepr`[\s\S]*?(?=## `npx pepr )/m;
-    const match = docsContent.match(mainPattern);
-    if (!match) throw new Error("Documentation for main 'npx pepr' command not found.");
-    return parseSection(match[0]);
-  }
+  const commandToFind = cmd ? `npx pepr ${cmd}` : "npx pepr";
 
-  // For specific commands, find the right section
+  // Split the doc by section headings (all lines starting with "## `npx pepr")
   const sections = docsContent.split(/\n## `npx pepr/);
-  const targetSection = sections.find(s => s.startsWith(` ${cmd}\``) || s.startsWith(`${cmd}\``));
 
-  if (!targetSection) throw new Error(`Documentation for command 'npx pepr ${cmd}' not found.`);
+  // Find the section that matches our command
+  const targetSection = sections.find(section => {
+    if (!cmd) return section.startsWith("`") || section.startsWith(" `");
+    return section.startsWith(` ${cmd}\``) || section.startsWith(`${cmd}\``);
+  });
+
+  if (!targetSection) throw new Error(`Documentation for command '${commandToFind}' not found.`);
 
   return parseSection(`## \`npx pepr${targetSection}`);
 };
