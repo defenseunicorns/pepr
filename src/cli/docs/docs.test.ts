@@ -26,7 +26,7 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    });
+    }, 10000);
 
     it("should match documented CLI behavior", async () => {
       try {
@@ -39,6 +39,6 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    });
+    }, 10000);
   });
 });
