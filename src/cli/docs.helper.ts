@@ -64,41 +64,69 @@ const joinContinuationLine = (command: string, continuation: string): string => 
 };
 
 /**
- * Extract commands from an array of lines
+ * Process a single command line in the context of already processed commands
+ */
+const processCommandLine = (
+  result: { commands: string[]; currentCommand: string | null },
+  line: string,
+  originalLine: string,
+): { commands: string[]; currentCommand: string | null } => {
+  const trimmedLine = line.trim();
+
+  // Skip section separators
+  if (isSectionSeparator(trimmedLine)) {
+    return result;
+  }
+
+  // Handle new command
+  if (isCommandLine(trimmedLine)) {
+    return {
+      commands: [...result.commands, trimmedLine],
+      currentCommand: trimmedLine,
+    };
+  }
+
+  // Handle continuation of current command
+  if (result.currentCommand && isContinuationLine(originalLine)) {
+    const updatedCommands = [...result.commands];
+    const lastIndex = updatedCommands.length - 1;
+
+    if (lastIndex >= 0) {
+      updatedCommands[lastIndex] = joinContinuationLine(updatedCommands[lastIndex], trimmedLine);
+    }
+
+    return {
+      commands: updatedCommands,
+      currentCommand: result.currentCommand,
+    };
+  }
+
+  return result;
+};
+
+/**
+ * Extract commands from an array of lines using a functional approach
  */
 const extractCommandsFromLines = (lines: string[], commandsIndex: number): string[] => {
   if (commandsIndex === -1) return [];
 
-  const commands: string[] = [];
-  let currentCommandIndex = -1;
-  let i = commandsIndex + 1;
+  // Get command section lines
+  const commandLines = lines.slice(commandsIndex + 1);
 
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmedLine = line.trim();
+  // Find the first empty line index (if any)
+  const emptyLineIndex = commandLines.findIndex(line => line.trim() === "");
 
-    // Stop processing if we hit a section separator
-    if (isSectionSeparator(trimmedLine)) {
-      if (trimmedLine === "") break;
-      i++;
-      continue;
-    }
+  // Slice up to empty line or use all lines if no empty line found
+  const relevantLines =
+    emptyLineIndex !== -1 ? commandLines.slice(0, emptyLineIndex) : commandLines;
 
-    // Process the line based on its type
-    if (isCommandLine(trimmedLine)) {
-      commands.push(trimmedLine);
-      currentCommandIndex = commands.length - 1;
-    } else if (currentCommandIndex !== -1 && isContinuationLine(line)) {
-      commands[currentCommandIndex] = joinContinuationLine(
-        commands[currentCommandIndex],
-        trimmedLine,
-      );
-    }
+  // Process the lines in sequence, tracking state
+  const result = relevantLines.reduce<{ commands: string[]; currentCommand: string | null }>(
+    (acc, line) => processCommandLine(acc, line, line),
+    { commands: [], currentCommand: null },
+  );
 
-    i++;
-  }
-
-  return commands;
+  return result.commands;
 };
 
 /**
