@@ -131,7 +131,7 @@ Below are the available configurations through `package.json`.
 | `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`                  |
 | `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`                 |
 | `admission`      | admission namespaces to always ignore  | `{alwaysIgnore: {namespaces: []}}` |
-| `watcher`        | watcher namespaces to always ignor     | `{alwaysIgnore: {namespaces: []}}` |
+| `watch`        | watcher namespaces to always ignor     | `{alwaysIgnore: {namespaces: []}}` |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]      |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`              |
 | `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)               | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
