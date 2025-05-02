@@ -12,9 +12,6 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   };
 };
 
-/**
- * Extract options from an array of lines
- */
 const extractOptionsFromLines = (
   lines: string[],
   optionsIndex: number,
@@ -42,17 +39,11 @@ const isContinuationLine = (line: string): boolean => {
   return Boolean(line.match(/^\s{20,}/));
 };
 
-/**
- * Join a continuation line to its parent command
- */
 const joinContinuationLine = (command: string, continuation: string): string => {
   const baseCommand = command.replace(/\s+$/, "");
   return `${baseCommand} ${continuation}`;
 };
 
-/**
- * Process a single command line in the context of already processed commands
- */
 const processCommandLine = (
   result: { commands: string[]; currentCommand: string | null },
   line: string,
@@ -91,9 +82,6 @@ const processCommandLine = (
   return result;
 };
 
-/**
- * Extract commands from an array of lines using a functional approach
- */
 const extractCommandsFromLines = (lines: string[], commandsIndex: number): string[] => {
   if (commandsIndex === -1) return [];
 
