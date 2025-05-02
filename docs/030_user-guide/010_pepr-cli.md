@@ -122,7 +122,7 @@ Lint and format this Pepr module.
 
 **Options:**
 
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 - `-v, --validate-only` - Do not modify files, only validate formatting. - UNDOCUMENTED!
 
 ## `npx pepr init`
@@ -145,7 +145,7 @@ Execute a `kubernetes-fluent-client` command. This command is a wrapper around `
 
 **Options:**
 
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 
 Usage:
 
@@ -166,7 +166,7 @@ Monitor Validations for a given Pepr Module or all Pepr Modules.
 
 **Options:**
 
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 
 Usage:
 
@@ -176,7 +176,7 @@ npx pepr monitor [options] [module-uuid]
 
 **Options:**
 
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 
 ## `npx pepr update`
 
@@ -185,7 +185,7 @@ Update the current Pepr Module to the latest SDK version. This command is not re
 **Options:**
 
 - `-c, --skip-template-update` - Skip updating the template files
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 
 ## `npx pepr uuid`
 
@@ -193,7 +193,7 @@ Module UUID(s) currently deployed in the cluster with their descriptions.
 
 **Options:**
 
-- `-h, --help` - Display help for command
+- `-h, --help` - display help for command
 
 Other notes...
 
