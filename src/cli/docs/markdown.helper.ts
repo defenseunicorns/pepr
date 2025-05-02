@@ -22,7 +22,7 @@ export const getDocsForCommand = (cmd: string = ""): { options: string[]; comman
   // Extract and normalize options and commands
   const { options, commands } = parseMarkdownSection(`## \`npx pepr${targetSection}`);
   return {
-    options: options.map(normalizeOption),
+    options: options.map(normalizeOption).map(option => option.replace(" - ", "  ")),
     commands,
   };
 };
