@@ -13,7 +13,7 @@ describe("Pepr CLI Help Menu", () => {
   const command = async (subcommand: string = "") =>
     await execFilePromise("npx", ["ts-node", cliPath, subcommand, "--help"]);
 
-  describe.only("when `pepr --help` executes", () => {
+  describe("when `pepr --help` executes", () => {
     it("should display the help menu with correct information", async () => {
       try {
         const { stdout, stderr } = await command();
@@ -43,18 +43,56 @@ describe("Pepr CLI Help Menu", () => {
   });
 
   describe("when `pepr build --help` executes", () => {
-    it("does something", async () => {
-      const { stdout, stderr } = await command("build");
-      expect(stdout).toBeTruthy();
-      expect(stderr).toBeFalsy();
-    });
+    it("should display the help menu with correct information", async () => {
+      try {
+        const { stdout, stderr } = await command("build");
+        expect(stdout).toBeTruthy();
+        expect(stderr).toBeFalsy();
+        // Other asserts?
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
+    }, 10000);
+
+    it("should match documented CLI behavior", async () => {
+      try {
+        const { stdout, stderr } = await command("build");
+        const docsContent = getDocsForCommand("build");
+        const cliContent = parseCLIOutput(stdout);
+        expect(docsContent).toStrictEqual(cliContent);
+        expect(stderr).toBeFalsy();
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
+    }, 10000);
   });
 
-  describe("when `pepr crd --help` executes", () => {
-    it("does something", async () => {
-      const { stdout, stderr } = await command("crd");
-      expect(stdout).toBeTruthy();
-      expect(stderr).toBeFalsy();
+  describe.only("when `pepr crd --help` executes", () => {
+    it("should display the help menu with correct information", async () => {
+      try {
+        const { stdout, stderr } = await command("crd");
+        expect(stdout).toBeTruthy();
+        expect(stderr).toBeFalsy();
+        // Other asserts?
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
+    }, 10000);
+
+    it.only("should match documented CLI behavior", async () => {
+      try {
+        const { stdout, stderr } = await command("crd");
+        const docsContent = getDocsForCommand("crd");
+        const cliContent = parseCLIOutput(stdout);
+        expect(docsContent).toStrictEqual(cliContent);
+        expect(stderr).toBeFalsy();
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
     });
   });
 
