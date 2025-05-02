@@ -1,5 +1,27 @@
 # Pepr CLI
 
+## `npx pepr`
+
+Type safe K8s middleware for humans
+
+**Options:**
+
+- `-V, --version`          output the version number
+- `-h, --help`             display help for command
+
+**Commands:**
+
+  init [options]         Initialize a new Pepr Module
+  build [options]        Build a Pepr Module for deployment
+  deploy [options]       Deploy a Pepr Module
+  dev [options]          Setup a local webhook development environment
+  update [options]       Update this Pepr module. Not recommended for prod as it may change files.
+  format [options]       Lint and format this Pepr module
+  monitor [module-uuid]  Monitor a Pepr Module
+  uuid [uuid]            Module UUID(s) currently deployed in the cluster
+  kfc [args...]          Execute Kubernetes Fluent Client commands
+  crd                    Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
+
 ## `npx pepr build`
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
