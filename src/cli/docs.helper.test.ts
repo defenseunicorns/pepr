@@ -30,7 +30,7 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   const commands: string[] = [];
   if (commandsIndex !== -1) {
     let i = commandsIndex + 1;
-    let currentCommand = null;
+    let currentCommandIndex = -1;
 
     while (i < lines.length) {
       const line = lines[i].trim();
@@ -48,11 +48,17 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
       const isNewCommand = !line.startsWith("-") && line.match(/^\S+(\s+\[.+?\])?\s{2,}/) !== null;
 
       if (isNewCommand) {
-        currentCommand = line;
-        commands.push(currentCommand);
-      } else if (originalLine.startsWith("                             ")) {
+        commands.push(line);
+        currentCommandIndex = commands.length - 1;
+      } else if (currentCommandIndex !== -1 && originalLine.match(/^\s{20,}/)) {
         // This is a continuation line (has significant indentation)
-        // We don't add continuation lines to the commands array
+        // Add it to the current command by removing indentation and joining
+        const continuation = line.trim();
+        const currentCommand = commands[currentCommandIndex];
+
+        // Replace any trailing spaces with a single space before joining
+        const baseCommand = currentCommand.replace(/\s+$/, "");
+        commands[currentCommandIndex] = `${baseCommand} ${continuation}`;
       }
 
       i++;
@@ -240,11 +246,9 @@ describe("parseCLIOutput", () => {
       expect(result.commands).toHaveLength(3);
       expect(result.commands).toContain("init [options]         Initialize a new Pepr Module");
       expect(result.commands).toContain(
-        "update [options]       Update this Pepr module. Not recommended for prod as it",
+        "update [options]       Update this Pepr module. Not recommended for prod as it may change files.",
       );
       expect(result.commands).toContain("format [options]       Lint and format this Pepr module");
-      // The continued line shouldn't be captured as a separate command
-      expect(result.commands).not.toContain("may change files.");
     });
   });
 
