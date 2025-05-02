@@ -29,24 +29,15 @@ const extractOptionsFromLines = (
     .filter(line => line && line.startsWith("-"));
 };
 
-/**
- * Check if a line should be treated as a section separator
- */
 const isSectionSeparator = (line: string): boolean => {
   const trimmed = line.trim();
   return !trimmed || trimmed === "Options:" || trimmed === "Commands:" || trimmed === "";
 };
 
-/**
- * Check if a line represents a new command
- */
 const isCommandLine = (line: string): boolean => {
   return !line.startsWith("-") && Boolean(line.match(/^\S+(\s+\[.+?\])?\s{2,}/));
 };
 
-/**
- * Check if a line is a continuation of a previous command (has significant indentation)
- */
 const isContinuationLine = (line: string): boolean => {
   return Boolean(line.match(/^\s{20,}/));
 };
