@@ -4,101 +4,32 @@ import fs from "fs";
 const cliDocsPath = "./docs/030_user-guide/010_pepr-cli.md";
 
 /**
- * Parse CLI options from markdown text, filtering for actual CLI options
+ * Extract options and commands from markdown text
  */
-const parseOptions = (optionsText: string): string[] => {
-  return optionsText
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line.startsWith("- ") && line.match(/- `-[a-zA-Z]/) !== null);
-};
-
-/**
- * Parse commands from markdown text
- */
-const parseCommands = (commandsText: string): string[] => {
-  return commandsText
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line.length > 0 && !line.startsWith("- ") && !line.startsWith("*"));
-};
-
-/**
- * Extract the main 'npx pepr' command from the docs
- */
-const getMainCommand = (docsContent: string): { options: string[]; commands: string[] } => {
-  const mainPattern = new RegExp("## `npx pepr`[\\s\\S]*?(?=## `npx pepr )", "m");
-  const match = docsContent.match(mainPattern);
-
-  if (!match) {
-    throw new Error("Documentation for main 'npx pepr' command not found.");
-  }
-
-  const section = match[0];
+const parseSection = (section: string): { options: string[]; commands: string[] } => {
   const hasOptions = section.includes("**Options:**");
   const hasCommands = section.includes("**Commands:**");
 
-  let options: string[] = [];
-  if (hasOptions) {
-    const optionsPart = section.split("**Options:**")[1].split("**Commands:**")[0];
-    options = parseOptions(optionsPart);
-  }
+  // Parse options with CLI pattern matching
+  const options = hasOptions
+    ? section
+        .split("**Options:**")[1]
+        .split(/(?:\*\*Commands:\*\*|\n## )/)[0]
+        .split("\n")
+        .filter(line => line.trim().match(/^- `-[a-zA-Z]/))
+    : [];
 
-  let commands: string[] = [];
-  if (hasCommands) {
-    const commandsPart = section.split("**Commands:**")[1];
-    commands = parseCommands(commandsPart);
-  }
-
-  return { options, commands };
-};
-
-/**
- * Extract a specific command from the docs
- */
-const getSpecificCommand = (
-  docsContent: string,
-  cmd: string,
-): { options: string[]; commands: string[] } => {
-  // Split the doc by section headings (all lines starting with "## `npx pepr")
-  const sections: string[] = docsContent.split(/\n## `npx pepr/);
-
-  // Find the section that starts with our command
-  const targetSection: string | undefined = sections.find(
-    section => section.startsWith(` ${cmd}\``) || section.startsWith(`${cmd}\``),
-  );
-
-  if (!targetSection) {
-    throw new Error(`Documentation for command 'npx pepr ${cmd}' not found.`);
-  }
-
-  // Add back the section heading for consistent processing
-  const fullSection: string = `## \`npx pepr${targetSection}`;
-
-  return extractCommandInfo(fullSection);
-};
-
-/**
- * Extract options and commands from a command section
- */
-const extractCommandInfo = (section: string): { options: string[]; commands: string[] } => {
-  const hasOptions = section.includes("**Options:**");
-  const hasCommands = section.includes("**Commands:**");
-
-  let options: string[] = [];
-  if (hasOptions) {
-    const optionsPart = section.split("**Options:**")[1];
-    // Split at the next section or command header
-    const optionsText = optionsPart.split(/\n\s*\n\*\*|\n## /)[0];
-    options = parseOptions(optionsText);
-  }
-
-  let commands: string[] = [];
-  if (hasCommands) {
-    const commandsPart = section.split("**Commands:**")[1];
-    const commandsText = commandsPart.split(/\n\s*\n\*\*|\n## /)[0];
-    commands = parseCommands(commandsText);
-  }
+  // Parse commands
+  const commands = hasCommands
+    ? section
+        .split("**Commands:**")[1]
+        .split(/\n\s*\n\*\*|\n## /)[0]
+        .split("\n")
+        .filter(line => {
+          const trimmed = line.trim();
+          return trimmed && !trimmed.startsWith("-") && !trimmed.startsWith("*");
+        })
+    : [];
 
   return { options, commands };
 };
@@ -107,16 +38,23 @@ const extractCommandInfo = (section: string): { options: string[]; commands: str
  * Get documentation for a Pepr command
  */
 const getDocsForCommand = (cmd: string = ""): { options: string[]; commands: string[] } => {
-  // Read the docs file
-  const docsContent: string = fs.readFileSync(cliDocsPath, "utf-8");
+  const docsContent = fs.readFileSync(cliDocsPath, "utf-8");
 
-  // Handle main command separately
+  // Special case for main command
   if (!cmd) {
-    return getMainCommand(docsContent);
+    const mainPattern = /## `npx pepr`[\s\S]*?(?=## `npx pepr )/m;
+    const match = docsContent.match(mainPattern);
+    if (!match) throw new Error("Documentation for main 'npx pepr' command not found.");
+    return parseSection(match[0]);
   }
 
-  // Handle specific commands
-  return getSpecificCommand(docsContent, cmd);
+  // For specific commands, find the right section
+  const sections = docsContent.split(/\n## `npx pepr/);
+  const targetSection = sections.find(s => s.startsWith(` ${cmd}\``) || s.startsWith(`${cmd}\``));
+
+  if (!targetSection) throw new Error(`Documentation for command 'npx pepr ${cmd}' not found.`);
+
+  return parseSection(`## \`npx pepr${targetSection}`);
 };
 
 describe("getDocsForCommand", () => {
