@@ -6,8 +6,8 @@ Type safe K8s middleware for humans
 
 **Options:**
 
-- `-V, --version`          output the version number
-- `-h, --help`             display help for command
+- `-V, --version` - output the version number
+- `-h, --help` - display help for command
 
 **Commands:**
 
@@ -184,7 +184,7 @@ Update the current Pepr Module to the latest SDK version. This command is not re
 
 **Options:**
 
-- `-c, --skip-template-update` - Skip updating the template files
+- `--skip-template-update` - Skip updating the template files
 - `-h, --help` - display help for command
 
 ## `npx pepr uuid`

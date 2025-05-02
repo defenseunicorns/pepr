@@ -12,6 +12,19 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   };
 };
 
+/**
+ * Normalize whitespace between CLI options and their descriptions to be exactly two spaces
+ */
+export const normalizeOptionWhitespace = (option: string): string => {
+  // Match the pattern: option, followed by whitespace, followed by description
+  const match = option.match(/^(--?[a-zA-Z0-9-,\s]+)\s{2,}(.+)$/);
+  if (match) {
+    // Replace variable whitespace with exactly two spaces
+    return `${match[1].trim()}  ${match[2]}`;
+  }
+  return option;
+};
+
 const extractOptionsFromLines = (
   lines: string[],
   optionsIndex: number,
@@ -23,7 +36,8 @@ const extractOptionsFromLines = (
   return lines
     .slice(optionsIndex + 1, endIndex)
     .map(line => line.trim())
-    .filter(line => line && line.startsWith("-"));
+    .filter(line => line && line.startsWith("-"))
+    .map(normalizeOptionWhitespace);
 };
 
 const isSectionSeparator = (line: string): boolean => {

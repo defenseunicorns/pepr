@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { parseCLIOutput } from "./cli.helper";
+import { parseCLIOutput, normalizeOptionWhitespace } from "./cli.helper";
 
 describe("parseCLIOutput", () => {
   describe("when parsing CLI output with both options and commands", () => {
@@ -22,8 +22,8 @@ describe("parseCLIOutput", () => {
       const result = parseCLIOutput(sampleOutput);
 
       expect(result.options).toHaveLength(2);
-      expect(result.options).toContain("-V, --version          output the version number");
-      expect(result.options).toContain("-h, --help             display help for command");
+      expect(result.options).toContain("-V, --version  output the version number");
+      expect(result.options).toContain("-h, --help  display help for command");
     });
 
     it("should extract all commands", () => {
@@ -52,7 +52,7 @@ describe("parseCLIOutput", () => {
       const result = parseCLIOutput(optionsOnlyOutput);
 
       expect(result.options).toHaveLength(1);
-      expect(result.options).toContain("-h, --help             display help for command");
+      expect(result.options).toContain("-h, --help  display help for command");
       expect(result.commands).toHaveLength(0);
     });
   });
@@ -112,6 +112,26 @@ describe("parseCLIOutput", () => {
 
       expect(result.options).toHaveLength(0);
       expect(result.commands).toHaveLength(0);
+    });
+  });
+
+  describe("when normalizing option whitespace", () => {
+    it("should normalize variable whitespace to exactly two spaces", () => {
+      const options = [
+        "--skip-template-update  Skip updating the template files",
+        "-h, --help              display help for command",
+        "-V, --version          output the version number",
+        "-n, --no-embed       Disables embedding of deployment files",
+      ];
+
+      const normalizedOptions = options.map(normalizeOptionWhitespace);
+
+      expect(normalizedOptions).toEqual([
+        "--skip-template-update  Skip updating the template files",
+        "-h, --help  display help for command",
+        "-V, --version  output the version number",
+        "-n, --no-embed  Disables embedding of deployment files",
+      ]);
     });
   });
 });

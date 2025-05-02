@@ -40,7 +40,7 @@ const parseMarkdownSection = (section: string): { options: string[]; commands: s
           .split("**Options:**")[1]
           .split(/(?:\*\*Commands:\*\*|\n## )/)[0]
           .split("\n")
-          .filter(line => line.trim().match(/^- `-[a-zA-Z]/))
+          .filter(line => line.trim().match(/^- `(-[a-zA-Z]|--[a-zA-Z])/))
       : [],
 
     commands: hasCommands
