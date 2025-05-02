@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import path from "path";
 import * as childProcess from "child_process";
 import { promisify } from "util";
-import { getDocsForCommand, parseCLIOutput } from "./docs.helper.test";
+import { getDocsForCommand, parseCLIOutput } from "./docs.helper";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execPromise = promisify(childProcess.exec);
