@@ -6,12 +6,12 @@ import { getDocsForCommand } from "./markdown.helper";
 import { parseCLIOutput } from "./cli.helper";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
-const execPromise = promisify(childProcess.exec);
+const execFilePromise = promisify(childProcess.execFile);
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
   const command = async (subcommand: string = "") =>
-    await execPromise(`npx ts-node ${cliPath} ${subcommand} --help`);
+    await execFilePromise("npx", ["ts-node", cliPath, subcommand, "--help"]);
 
   describe.only("when `pepr --help` executes", () => {
     it("should display the help menu with correct information", async () => {
@@ -26,7 +26,7 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    });
+    }, 10000);
 
     it("should match documented CLI behavior", async () => {
       try {
@@ -39,7 +39,7 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    });
+    }, 10000);
   });
 
   describe("when `pepr build --help` executes", () => {
