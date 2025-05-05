@@ -12,7 +12,7 @@ import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 import { sanitizeName } from "./init/utils";
 import { validateCapabilityNames } from "../lib/helpers";
 import { namespaceComplianceValidator } from "../lib/helpers";
-
+import { loadCapabilities } from "../lib/assets/loader";
 export interface ImagePullSecretDetails {
   pullSecret?: string;
   dockerServer?: string;
@@ -107,8 +107,8 @@ async function buildAndDeployModule(image: string, force: boolean): Promise<void
     [],
   );
   webhook.image = image ?? webhook.image;
-
-  for (const capability of webhook.capabilities) {
+  const capabilities = await loadCapabilities(webhook.path);
+  for (const capability of capabilities) {
     namespaceComplianceValidator(capability, webhook.alwaysIgnore?.namespaces);
     namespaceComplianceValidator(
       capability,
