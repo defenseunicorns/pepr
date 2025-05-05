@@ -80,6 +80,7 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
+      - run: npm run gen-data-json
       - run: npm run test:docs
 
   integration:
