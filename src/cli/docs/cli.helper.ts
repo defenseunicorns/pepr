@@ -12,6 +12,60 @@ export const parseCLIOutput = (cliOutput: string): { options: string[]; commands
   };
 };
 
+/**
+ * Normalize whitespace between CLI options and their descriptions to be exactly two spaces
+ */
+export const normalizeOptionWhitespace = (option: string): string => {
+  // Match the pattern: option part (including any param types like [string] or <value>),
+  // followed by whitespace, followed by description
+  const match = option.match(/^(-{1,2}[a-zA-Z0-9-,\s]+(?:\s+(?:\[.*?\]|<.*?>))?)\s{2,}(.+)$/);
+
+  if (match) {
+    // Replace variable whitespace with exactly two spaces
+    return `${match[1].trim()}  ${match[2]}`;
+  }
+
+  return option;
+};
+
+const processOptionLine = (
+  result: { options: string[]; currentOption: string | null },
+  line: string,
+  originalLine: string,
+): { options: string[]; currentOption: string | null } => {
+  const trimmedLine = line.trim();
+
+  // Skip section separators
+  if (isSectionSeparator(trimmedLine)) {
+    return result;
+  }
+
+  // Handle new option
+  if (trimmedLine.startsWith("-")) {
+    return {
+      options: [...result.options, normalizeOptionWhitespace(trimmedLine)],
+      currentOption: trimmedLine,
+    };
+  }
+
+  // Handle continuation of current option
+  if (result.currentOption && isContinuationLine(originalLine)) {
+    const updatedOptions = [...result.options];
+    const lastIndex = updatedOptions.length - 1;
+
+    if (lastIndex >= 0) {
+      updatedOptions[lastIndex] = joinContinuationLine(updatedOptions[lastIndex], trimmedLine);
+    }
+
+    return {
+      options: updatedOptions,
+      currentOption: result.currentOption,
+    };
+  }
+
+  return result;
+};
+
 const extractOptionsFromLines = (
   lines: string[],
   optionsIndex: number,
@@ -20,10 +74,15 @@ const extractOptionsFromLines = (
   if (optionsIndex === -1) return [];
 
   const endIndex = commandsIndex === -1 ? lines.length : commandsIndex;
-  return lines
-    .slice(optionsIndex + 1, endIndex)
-    .map(line => line.trim())
-    .filter(line => line && line.startsWith("-"));
+  const optionLines = lines.slice(optionsIndex + 1, endIndex);
+
+  // Process the lines in sequence, tracking state
+  const result = optionLines.reduce<{ options: string[]; currentOption: string | null }>(
+    (acc, line) => processOptionLine(acc, line, line),
+    { options: [], currentOption: null },
+  );
+
+  return result.options;
 };
 
 const isSectionSeparator = (line: string): boolean => {
