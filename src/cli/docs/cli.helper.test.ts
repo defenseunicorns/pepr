@@ -77,7 +77,7 @@ describe("parseCLIOutput", () => {
     });
   });
 
-  describe("when parsing CLI output with multiline command descriptions", () => {
+  describe("when parsing CLI output with multiline descriptions", () => {
     const multilineOutput = `
     Usage: pepr [options] [command]
 
@@ -85,7 +85,8 @@ describe("parseCLIOutput", () => {
 
     Options:
       -V, --version          output the version number
-      -h, --help             display help for command
+      -h, --help             display help for 
+                             command
 
     Commands:
       init [options]         Initialize a new Pepr Module
@@ -103,6 +104,13 @@ describe("parseCLIOutput", () => {
         "update [options]       Update this Pepr module. Not recommended for prod as it may change files.",
       );
       expect(result.commands).toContain("format [options]       Lint and format this Pepr module");
+    });
+
+    it("should properly handle multiline option descriptions", () => {
+      const result = parseCLIOutput(multilineOutput);
+
+      expect(result.options).toHaveLength(2);
+      expect(result.options).toContain("-h, --help  display help for command");
     });
   });
 
