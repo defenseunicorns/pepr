@@ -592,6 +592,40 @@ describe("namespaceComplianceValidator", () => {
       `Ignoring Watch Callback: Regex namespace: ${namespaceViolationCapability.bindings[0].filters.regexNamespaces[0]}, is an ignored namespace: miami.`,
     );
   });
+  it("should check watch bindings namespaces and regex namespaces", () => {
+    const nonNamespaceViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: ["something"],
+          regexNamespaces: [new RegExp("^brickell").source],
+        },
+        isWatch: true,
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonNamespaceViolationCapability, ["miami"], true);
+    }).toThrow();
+  });
+  it("should check admission binding namespaces and regex namespaces", () => {
+    const nonNamespaceViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: ["something"],
+          regexNamespaces: [new RegExp("^brickell").source],
+        },
+        isWatch: true,
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonNamespaceViolationCapability, ["miami"], false);
+    }).toThrow();
+  });
   it("should not throw an error for valid regex ignored namespaces", () => {
     const nonNamespaceViolationCapability: CapabilityExport = {
       ...nonNsViolation[0],
