@@ -10,10 +10,16 @@ const execFilePromise = promisify(childProcess.execFile);
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
-  const command = async (subcommand: string = "") =>
-    await execFilePromise("npx", ["ts-node", cliPath, subcommand, "--help"]);
+  const command = async (subcommand: string = "") => {
+    const baseArgs = ["ts-node", cliPath];
 
-  describe.only("when `pepr --help` executes", () => {
+    // If subcommand exists, split it by spaces and add each part as a separate argument
+    const subcommandArgs = subcommand ? subcommand.split(/\s+/) : [];
+    const args = [...baseArgs, ...subcommandArgs, "--help"];
+    return await execFilePromise("npx", args);
+  };
+
+  describe("when 'npx pepr --help' executes", () => {
     it("should display the help menu with correct information", async () => {
       try {
         const { stdout, stderr } = await command();
@@ -32,6 +38,34 @@ describe("Pepr CLI Help Menu", () => {
       try {
         const { stdout, stderr } = await command();
         const docsContent = getDocsForCommand();
+        const cliContent = parseCLIOutput(stdout);
+        expect(docsContent).toStrictEqual(cliContent);
+        expect(stderr).toBeFalsy();
+      } catch (error) {
+        console.error("Error executing CLI:", error);
+        expect(error).toBeUndefined();
+      }
+    }, 10000);
+  });
+
+  describe.each([
+    { commandName: "build" },
+    { commandName: "crd create" },
+    { commandName: "crd generate" },
+    { commandName: "crd" },
+    { commandName: "deploy" },
+    { commandName: "dev" },
+    { commandName: "format" },
+    { commandName: "init" },
+    { commandName: "kfc" },
+    { commandName: "monitor" },
+    { commandName: "update" },
+    { commandName: "uuid" },
+  ])("when 'npx pepr $commandName --help' executes", ({ commandName }) => {
+    it("should match documented CLI behavior", async () => {
+      try {
+        const { stdout, stderr } = await command(commandName);
+        const docsContent = getDocsForCommand(commandName);
         const cliContent = parseCLIOutput(stdout);
         expect(docsContent).toStrictEqual(cliContent);
         expect(stderr).toBeFalsy();
