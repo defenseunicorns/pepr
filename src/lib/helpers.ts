@@ -138,20 +138,30 @@ export function generateWatchNamespaceError(
 export function namespaceComplianceValidator(
   capability: CapabilityExport,
   ignoredNamespaces?: string[],
+  watch?: boolean,
 ): void {
   const { namespaces: capabilityNamespaces, bindings, name } = capability;
-  const bindingNamespaces: string[] = bindings.flatMap(
-    (binding: Binding) => binding.filters.namespaces,
+
+  const shouldInclude = (binding: Binding): boolean => {
+    if (watch === true) return !!binding.isWatch;
+    if (watch === false) return !!binding.isMutate;
+    return true;
+  };
+
+  const bindingNamespaces: string[] = bindings.flatMap(binding =>
+    shouldInclude(binding) ? binding.filters.namespaces || [] : [],
   );
-  const bindingRegexNamespaces: string[] = bindings.flatMap(
-    (binding: Binding) => binding.filters.regexNamespaces || [],
+
+  const bindingRegexNamespaces: string[] = bindings.flatMap(binding =>
+    shouldInclude(binding) ? binding.filters.regexNamespaces || [] : [],
   );
 
   const namespaceError = generateWatchNamespaceError(
-    ignoredNamespaces ? ignoredNamespaces : [],
+    ignoredNamespaces ?? [],
     bindingNamespaces,
-    capabilityNamespaces ? capabilityNamespaces : [],
+    capabilityNamespaces ?? [],
   );
+
   if (namespaceError !== "") {
     throw new Error(
       `Error in ${name} capability. A binding violates namespace rules. Please check ignoredNamespaces and capability namespaces: ${namespaceError}`,

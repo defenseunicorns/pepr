@@ -3,7 +3,7 @@ import { CapabilityExport, ModuleConfig } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
-
+import { resolveIgnoreNamespaces } from "../ignoredNamespaces";
 export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
@@ -23,7 +23,11 @@ export async function overridesFile(
 
   const overrides = {
     imagePullSecrets,
-    additionalIgnoredNamespaces: [],
+    additionalIgnoredNamespaces: resolveIgnoreNamespaces(
+      config?.alwaysIgnore?.namespaces?.length
+        ? config?.alwaysIgnore?.namespaces
+        : config?.admission?.alwaysIgnore?.namespaces,
+    ),
     rbac: rbacOverrides,
     secrets: {
       apiPath: Buffer.from(apiPath).toString("base64"),

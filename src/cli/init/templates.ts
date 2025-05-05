@@ -33,6 +33,8 @@ export type peprPackageJSON = {
       webhookTimeout: number;
       customLabels: CustomLabels;
       alwaysIgnore: { namespaces: string[] };
+      admission: { alwaysIgnore: { namespaces: string[] } };
+      watch: { alwaysIgnore: { namespaces: string[] } };
       includedFiles: string[];
       env: object;
       rbac?: PolicyRule[];
@@ -78,6 +80,16 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       },
       alwaysIgnore: {
         namespaces: [],
+      },
+      admission: {
+        alwaysIgnore: {
+          namespaces: [],
+        },
+      },
+      watch: {
+        alwaysIgnore: {
+          namespaces: [],
+        },
       },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},

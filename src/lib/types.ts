@@ -292,6 +292,14 @@ export type ModuleConfig = {
   uuid: string;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
+  /** admission specific ignore */
+  admission?: {
+    alwaysIgnore: WebhookIgnore;
+  };
+  /** watch specific ignore */
+  watch?: {
+    alwaysIgnore: WebhookIgnore;
+  };
 } & Partial<ModuleConfigOptions>;
 
 export type PackageJSON = {
