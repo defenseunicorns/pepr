@@ -63,13 +63,13 @@ Create a new CRD TypeScript definition.
 
 **Options:**
 
-- `-g, --group <group>` - API group (e.g. cache)
-- `-v, --version <version>` - API version (e.g. v1alpha1)
-- `-k, --kind <kind>` - Kind name (e.g. Memcached)
-- `-d, --domain <domain>` - Optional domain (e.g. pepr.dev) (default: "pepr.dev")
-- `-s, --scope <Namespaced | Cluster>` - Whether the resulting custom resource is cluster- or namespace-scoped (default: "Namespaced")
-- `-p, --plural <plural>` - Plural name (e.g. memcacheds) (default: "")
-- `-c, --shortName <shortName>` - Short name (e.g. mc) (default: "")
+- `--group <group>` - API group (e.g. cache)
+- `--version <version>` - API version (e.g. v1alpha1)
+- `--kind <kind>` - Kind name (e.g. Memcached)
+- `--domain <domain>` - Optional domain (e.g. pepr.dev) (default: "pepr.dev")
+- `--scope <Namespaced | Cluster>` - Whether the resulting custom resource is cluster- or namespace-scoped (default: "Namespaced")
+- `--plural <plural>` - Plural name (e.g. memcacheds) (default: "")
+- `--shortName <shortName>` - Short name (e.g. mc) (default: "")
 - `-h, --help` - display help for command
 
 ## `npx pepr crd generate`
@@ -78,7 +78,7 @@ Generate CRD manifests from TypeScript definitions
 
 **Options:**
 
-- `-o, --output <output>` - Output directory for generated CRDs (default: "./crds")
+- `--output <output>` - Output directory for generated CRDs (default: "./crds")
 - `-h, --help` - display help for command
 
 ## `npx pepr deploy`

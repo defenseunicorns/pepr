@@ -10,8 +10,14 @@ const execFilePromise = promisify(childProcess.execFile);
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
-  const command = async (subcommand: string = "") =>
-    await execFilePromise("npx", ["ts-node", cliPath, subcommand, "--help"]);
+  const command = async (subcommand: string = "") => {
+    const baseArgs = ["ts-node", cliPath];
+
+    // If subcommand exists, split it by spaces and add each part as a separate argument
+    const subcommandArgs = subcommand ? subcommand.split(/\s+/) : [];
+    const args = [...baseArgs, ...subcommandArgs, "--help"];
+    return await execFilePromise("npx", args);
+  };
 
   describe("when 'npx pepr --help' executes", () => {
     it("should display the help menu with correct information", async () => {
