@@ -44,9 +44,9 @@ describe("Pepr CLI Help Menu", () => {
 
   describe.each([
     { commandName: "build" },
-    { commandName: "crd" },
     { commandName: "crd create" },
     { commandName: "crd generate" },
+    { commandName: "crd" },
     { commandName: "deploy" },
     { commandName: "dev" },
     { commandName: "format" },
@@ -56,18 +56,6 @@ describe("Pepr CLI Help Menu", () => {
     { commandName: "update" },
     { commandName: "uuid" },
   ])("when 'npx pepr $commandName --help' executes", ({ commandName }) => {
-    it("should display the help menu with correct information", async () => {
-      try {
-        const { stdout, stderr } = await command(commandName);
-        expect(stdout).toBeTruthy();
-        expect(stderr).toBeFalsy();
-        // Other asserts?
-      } catch (error) {
-        console.error("Error executing CLI:", error);
-        expect(error).toBeUndefined();
-      }
-    }, 10000);
-
     it("should match documented CLI behavior", async () => {
       try {
         const { stdout, stderr } = await command(commandName);
