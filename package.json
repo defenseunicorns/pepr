@@ -67,8 +67,6 @@
   "devDependencies": {
     "@commitlint/cli": "19.8.0",
     "@commitlint/config-conventional": "19.8.0",
-    "@eslint/eslintrc": "^3.3.0",
-    "@eslint/js": "^9.21.0",
     "@fast-check/jest": "^2.0.1",
     "@jest/globals": "29.7.0",
     "@types/eslint": "9.6.1",
@@ -84,7 +82,6 @@
     "js-yaml": "^4.1.0",
     "shellcheck": "^3.0.0",
     "ts-jest": "29.3.2",
-    "typescript-eslint": "^8.26.0",
     "undici": "^7.0.1"
   },
   "overrides": {
