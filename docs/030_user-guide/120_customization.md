@@ -134,7 +134,7 @@ Below are the available configurations through `package.json`.
 | `watch`        | watcher namespaces to always ignor     | `{alwaysIgnore: {namespaces: []}}` |
 | `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]      |
 | `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`              |
-| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)               | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)               | `[{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]` |
 | `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 
 **admission.alwaysIgnore && watcher.alwaysIgnore**: These configurations cannot be used with the global `alwaysIgnore` field. They are used to specify namespaces that should always be ignored by the admission controller or watcher, respectively.
