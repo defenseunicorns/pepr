@@ -4,8 +4,9 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4 } from "uuid";
+import { readFileSync } from "fs";
+import path from "path";
 
-import eslintConfigMJS from "../../templates/eslint.config.mjs";
 import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
@@ -160,5 +161,5 @@ export const prettier = {
 
 export const eslint = {
   path: "eslint.config.mjs",
-  data: eslintConfigMJS,
+  data: readFileSync(path.resolve(__dirname, "../../../eslint.config.mjs"), "utf-8"),
 };
