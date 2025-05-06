@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
@@ -10,7 +11,6 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
