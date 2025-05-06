@@ -161,5 +161,5 @@ export const prettier = {
 
 export const eslint = {
   path: "eslint.config.mjs",
-  data: readFileSync(path.resolve(__dirname, "../../../eslint.config.mjs"), "utf-8"),
+  data: readFileSync(path.resolve(__dirname, "../src/templates/eslint.config.mjs"), "utf-8"),
 };
