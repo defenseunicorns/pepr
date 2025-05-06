@@ -159,13 +159,19 @@ export const prettier = {
   data: prettierJSON,
 };
 
-const lengthOfPeprSuffix = "pepr/".length;
 export const eslint = {
   path: "eslint.config.mjs",
   data: readFileSync(
     path.resolve(
-      __dirname.substring(0, __dirname.indexOf("pepr/") + lengthOfPeprSuffix),
-      "src/templates/eslint.config.mjs",
+      ((): string => {
+        const fullPath = __dirname;
+        const lengthOfSuffix = "pepr/".length;
+        // Find the last occurrence of "pepr/"
+        const lastPeprIndex = fullPath.lastIndexOf("pepr/");
+        // Return the path up to and including the last "pepr/"
+        return fullPath.substring(0, lastPeprIndex + lengthOfSuffix);
+      })(),
+      "eslint.config.mjs",
     ),
     "utf-8",
   ),
