@@ -62,6 +62,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
+      - run: ls -l .
+      - run: ls -l ${GITHUB_WORKSPACE}/pepr/
       - run: npm run test:unit
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
