@@ -1,5 +1,6 @@
 {
   "*.ts": ["prettier --config .prettierrc --write", "eslint --fix"],
+  "*.mjs": ["prettier --config .prettierrc --write", "eslint --fix"],
   "*.js": ["prettier --config .prettierrc --write", "eslint --fix"],
   "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
