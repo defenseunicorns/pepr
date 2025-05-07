@@ -47,12 +47,17 @@ describe("Published package does not include unintended files", () => {
   });
 
   it("should warn the developer when lots of files are added to the build", async () => {
+    interface NpmMetadata {
+      dist: {
+        fileCount: number;
+      };
+    }
     async function getPublishedFileCount(pkg: string): Promise<number> {
       const response = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
       if (!response.ok) {
         throw new Error(`Failed to fetch metadata for package "${pkg}"`);
       }
-      const metadata = await response.json();
+      const metadata: NpmMetadata = (await response.json()) as NpmMetadata;
       return metadata.dist.fileCount;
     }
 

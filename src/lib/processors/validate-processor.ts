@@ -37,7 +37,9 @@ export async function processRequest(
     if (callbackResp.statusCode || callbackResp.statusMessage) {
       valResp.status = {
         code: callbackResp.statusCode || 400,
-        message: callbackResp.statusMessage || `Validation failed for ${name}`,
+        message:
+          callbackResp.statusMessage ||
+          `Validation failed for ${peprValidateRequest.Request.kind.kind.toLowerCase()}/${peprValidateRequest.Request.name}${peprValidateRequest.Request.namespace ? ` in ${peprValidateRequest.Request.namespace} namespace.` : ""}`,
       };
     }
 
