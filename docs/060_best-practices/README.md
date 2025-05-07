@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Pepr Best Practices](#pepr-best-practices)
+  - [High Availability](#high-availability)
   - [Table of Contents](#table-of-contents)
   - [Mutating Webhook Errors](#mutating-webhook-errors)
   - [Core Development](#core-development)
@@ -16,6 +17,19 @@
   - [Security](#security)
   - [Pepr Store](#pepr-store)
   - [Watch](#watch)
+
+## High Availability
+
+Pepr is designed to be deployed in a high availability (HA) configuration. This means that you can run multiple instances of the Pepr Admission Controller in different availability zones or regions to ensure that your Pepr deployment is resilient to failures. By default, the Admission Controller is deployed with two replicas.
+
+For modules that have a failurePolicy of `Fail`, it is recommended to opt into `podAntiAffinity` in the helm chart by setting `admission.antiAffinity` to true in the values.yaml of the helm chart generated after running `npx pepr build`. This ensures the pods are scheduled on different nodes, providing better fault tolerance for when nodes are unavailable. Modules running on edge devices or single node environments should keep `admission.antiAffinity` set to false to avoid scheduling issues.
+
+```yaml
+admission:
+  antiAffinity: true
+```
+
+Due to the nature of having two different instances of the Admission Controller, it is important to ensure that the modules are idempotent and do not store ephemeral data since there is no gaurantee which replica will serve the request. When state must be saved, use the [`PeprStore`](../030_user-guide/050_store.md).
 
 ## Mutating Webhook Errors
 

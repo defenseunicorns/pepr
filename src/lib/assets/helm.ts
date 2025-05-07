@@ -94,7 +94,13 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
             terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
             serviceAccountName: {{ .Values.uuid }}
             securityContext:
-              {{- toYaml .Values.admission.securityContext | nindent 8 }}
+              {{- toYaml .Values.watcher.securityContext | nindent 8 }}
+            nodeSelector:
+              {{- toYaml .Values.watcher.nodeSelector | nindent 8 }}
+            tolerations:
+              {{- toYaml .Values.watcher.tolerations | nindent 8 }}
+            affinity:
+              {{- toYaml .Values.watcher.affinity | nindent 8 }}
             containers:
               - name: watcher
                 image: {{ .Values.watcher.image }}
@@ -179,6 +185,27 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
           spec:
+            {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
+            affinity:
+            {{- if .Values.admission.antiAffinity }}
+              podAntiAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  - labelSelector:
+                      matchExpressions:
+                        - key: pepr.dev/controller
+                          operator: In
+                          values:
+                            - admission
+                    topologyKey: "kubernetes.io/hostname"
+            {{- end }}
+            {{- if .Values.admission.affinity }}
+              {{- toYaml .Values.admission.affinity | nindent 8 }}
+            {{- end }}
+            {{- end }}
+            nodeSelector:
+              {{- toYaml .Values.admission.nodeSelector | nindent 8 }}
+            tolerations:
+              {{- toYaml .Values.admission.tolerations | nindent 8 }}
             terminationGracePeriodSeconds: {{ .Values.admission.terminationGracePeriodSeconds }}
             priorityClassName: system-node-critical
             serviceAccountName: {{ .Values.uuid }}
@@ -245,22 +272,23 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               {{- end }}
     `;
 }
-
-export function serviceMonitorTemplate(name: string): string {
+type ControllerType = "admission" | "watcher";
+export function serviceMonitorTemplate(name: string, type: ControllerType): string {
   return `
-      {{- if .Values.${name}.serviceMonitor.enabled }}
+      {{- if .Values.${type}.serviceMonitor.enabled }}
       apiVersion: monitoring.coreos.com/v1
       kind: ServiceMonitor
       metadata:
         name: ${name}
+        namespace: pepr-system
         annotations:
-          {{- toYaml .Values.${name}.serviceMonitor.annotations | nindent 4 }}
+          {{- toYaml .Values.${type}.serviceMonitor.annotations | nindent 4 }}
         labels:
-          {{- toYaml .Values.${name}.serviceMonitor.labels | nindent 4 }}
+          {{- toYaml .Values.${type}.serviceMonitor.labels | nindent 4 }}
       spec:
         selector:
           matchLabels:
-            pepr.dev/controller: ${name}
+            pepr.dev/controller: ${type}
         namespaceSelector:
           matchNames:
             - pepr-system

@@ -4,7 +4,7 @@
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import { stringify as toYAML } from "yaml";
+import { stringify } from "yaml";
 import {
   Project,
   InterfaceDeclaration,
@@ -17,6 +17,7 @@ import {
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
+import { WarningMessages, ErrorMessages } from "./messages";
 
 export default new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
@@ -82,13 +83,13 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    console.warn(`Skipping ${sourceFile.getBaseName()}: missing '// Kind: <KindName>' comment`);
+    console.warn(WarningMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
     return;
   }
 
   const spec = sourceFile.getInterface(`${kind}Spec`);
   if (!spec) {
-    console.warn(`Skipping ${sourceFile.getBaseName()}: missing interface ${kind}Spec`);
+    console.warn(WarningMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
     return;
   }
 
@@ -108,7 +109,7 @@ export function processSourceFile(
   });
 
   const outPath = path.join(outputDir, `${kind.toLowerCase()}.yaml`);
-  fs.writeFileSync(outPath, toYAML(crd), "utf8");
+  fs.writeFileSync(outPath, stringify(crd), "utf8");
   console.log(`✔ Created ${outPath}`);
 }
 
@@ -126,7 +127,7 @@ export function extractDetails(sourceFile: SourceFile): {
 } {
   const decl = sourceFile.getVariableDeclaration("details");
   if (!decl) {
-    throw new Error(`Missing 'details' variable declaration.`);
+    throw new Error(ErrorMessages.MISSING_DETAILS);
   }
 
   const init = decl.getInitializerIfKindOrThrow(SyntaxKind.ObjectLiteralExpression);
@@ -135,7 +136,7 @@ export function extractDetails(sourceFile: SourceFile): {
     const prop = init.getProperty(key);
     const value = prop?.getFirstChildByKind(SyntaxKind.StringLiteral)?.getLiteralText();
     if (!value) {
-      throw new Error(`Missing or invalid value for required key: '${key}'`);
+      throw new Error(ErrorMessages.MISSING_OR_INVALID_KEY(key));
     }
     return value;
   };
@@ -149,7 +150,7 @@ export function extractDetails(sourceFile: SourceFile): {
     };
   }
 
-  throw new Error(`'scope' must be either "Cluster" or "Namespaced", got "${scope}"`);
+  throw new Error(ErrorMessages.INVALID_SCOPE(scope));
 }
 
 export function getJsDocDescription(node: Node): string {

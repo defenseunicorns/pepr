@@ -101,7 +101,14 @@ export class Assets {
     this.capabilities = await loadCapabilities(this.path);
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
+      // until deployment, Pepr does not distinguish between watch and admission
       namespaceComplianceValidator(capability, this.alwaysIgnore?.namespaces);
+      namespaceComplianceValidator(
+        capability,
+        this.config.admission?.alwaysIgnore?.namespaces,
+        false,
+      );
+      namespaceComplianceValidator(capability, this.config.watch?.alwaysIgnore?.namespaces, true);
     }
 
     const code = await fs.readFile(this.path);
@@ -128,7 +135,14 @@ export class Assets {
       );
       await fs.writeFile(
         helm.files.admissionServiceMonitorYaml,
-        dedent(serviceMonitorTemplate("admission")),
+        dedent(
+          serviceMonitorTemplate(
+            process.env.PEPR_CUSTOM_BUILD_NAME
+              ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+              : "admission",
+            `admission`,
+          ),
+        ),
       );
     }
 
@@ -232,7 +246,14 @@ export class Assets {
         );
         await fs.writeFile(
           helm.files.watcherServiceMonitorYaml,
-          dedent(serviceMonitorTemplate("watcher")),
+          dedent(
+            serviceMonitorTemplate(
+              process.env.PEPR_CUSTOM_BUILD_NAME
+                ? `watcher-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+                : "watcher",
+              `watcher`,
+            ),
+          ),
         );
       }
     } catch (err) {

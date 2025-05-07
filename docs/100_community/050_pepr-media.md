@@ -4,7 +4,7 @@
 
 ### Presentations
 
-- [Building Smarter Kubernetes Workflows: Pepr for the modern SRE](https://sreday.com/2025-london-q1/Casey_Wylie_Defense_Unicorns_Building_Smarter_Kubernetes_Workflows_Pepr_for_the_Modern_SRE)
+- Building Smarter Kubernetes Workflows: Pepr for the modern SRE
 
 ## 2024
 

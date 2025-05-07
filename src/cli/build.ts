@@ -71,7 +71,7 @@ export default function (program: RootCmd): void {
     .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
     .option(
       "-n, --no-embed",
-      "Disables embedding of deployment files into output module.  Useful when creating library modules intended solely for reuse/distribution via NPM.",
+      "Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .addOption(
       new Option(
@@ -120,6 +120,12 @@ export default function (program: RootCmd): void {
         ["admin", "scoped"],
       ),
     )
+    .addOption(
+      new Option(
+        "--custom-name [name]",
+        "Specify a custom name for zarf component and service monitors in helm charts.",
+      ),
+    )
     .action(async opts => {
       // assign custom output directory if provided
       outputDir = await handleCustomOutputDir(opts.outputDir);
@@ -127,7 +133,12 @@ export default function (program: RootCmd): void {
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
 
-      const { cfg, path, uuid } = buildModuleResult!;
+      const { cfg, path } = buildModuleResult!;
+      // override the name if provided
+      if (opts.customName) {
+        process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName;
+      }
+
       const image = assignImage({
         customImage: opts.customImage,
         registryInfo: opts.registryInfo,
@@ -182,7 +193,7 @@ export default function (program: RootCmd): void {
 
       handleValidCapabilityNames(assets.capabilities);
       await generateYamlAndWriteToDisk({
-        uuid,
+        uuid: cfg.pepr.uuid,
         outputDir,
         imagePullSecret: opts.withPullSecret,
         zarf: opts.zarf,

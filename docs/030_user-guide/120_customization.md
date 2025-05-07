@@ -123,18 +123,21 @@ Below are the available configurations through `package.json`.
 
 ### package.json Configurations Table
 
-| Field            | Description                            | Example Values                  |
-|------------------|----------------------------------------|---------------------------------|
-| `uuid`           | Unique identifier for the module       | `hub-operator`                  |
-| `onError`        | Behavior of the webhook failure policy | `audit`, `ignore`, `reject`     |
-| `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                      |
-| `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`               |
-| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`              |
-| `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]   |
-| `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`           |
-| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)            | `{"rbac": [{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]}` |
+| Field            | Description                            | Example Values                     |
+|------------------|----------------------------------------|------------------------------------|
+| `uuid`           | Unique identifier for the module       | `hub-operator`                     |
+| `onError`        | Behavior of the webhook failure policy | `audit`, `ignore`, `reject`        |
+| `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                         |
+| `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`                  |
+| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`                 |
+| `admission`      | admission namespaces to always ignore  | `{alwaysIgnore: {namespaces: []}}` |
+| `watch`        | watcher namespaces to always ignor     | `{alwaysIgnore: {namespaces: []}}` |
+| `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]      |
+| `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`              |
+| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)               | `[{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]` |
 | `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
 
+**admission.alwaysIgnore && watcher.alwaysIgnore**: These configurations cannot be used with the global `alwaysIgnore` field. They are used to specify namespaces that should always be ignored by the admission controller or watcher, respectively.
 **uuid**: An identifier for the module in the `pepr-system` namespace. If not provided, a UUID will be generated. It can be any [kubernetes acceptable name](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) that is under 36 characters.
 
 These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.

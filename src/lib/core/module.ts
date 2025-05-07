@@ -60,7 +60,9 @@ export class PeprModule {
     const controllerHooks = createControllerHooks(
       opts,
       capabilities,
-      pepr?.alwaysIgnore?.namespaces,
+      pepr?.alwaysIgnore?.namespaces?.length
+        ? pepr.alwaysIgnore.namespaces
+        : config?.watch?.alwaysIgnore?.namespaces,
     );
 
     this.#controller = new Controller(config, capabilities, controllerHooks);
