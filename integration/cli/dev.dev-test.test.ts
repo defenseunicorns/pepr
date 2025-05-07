@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, afterAll, describe, expect, it } from "@jest/globals";
+import { beforeAll, afterAll, describe, expect, it, jest } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { fetch, K8s, kind } from "kubernetes-fluent-client";
+import { fetch } from "kubernetes-fluent-client";
 import { RequestInit, Agent } from "undici";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
-
+jest.setTimeout(1000 * 60 * 5);
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
@@ -76,47 +76,32 @@ describe("dev", () => {
         }
       });
     }, 180000);
-    it(
-      "should be properly configured by the module ",
-      done => {
-        K8s(kind.Namespace).Apply({ metadata: { name: "pepr-demo-2" } });
-        K8s(kind.ConfigMap).Apply({
-          metadata: {
-            name: "example-1",
-            namespace: "pepr-demo-2",
-          },
-          data: {
-            key: "ex-1-val",
-          },
+    it("should be properly configured by the module ", done => {
+      cmd.stdout.on("data", (data: Buffer) => {
+        if (success) {
+          return;
+        }
+
+        // Convert buffer to string
+        const strData = data.toString();
+
+        // Check if any expected lines are found
+        expectedLines = expectedLines.filter(expectedLine => {
+          // Check if the expected line is found in the output, ignoring whitespace
+          return !strData.replace(/\s+/g, " ").includes(expectedLine);
         });
-        cmd.stdout.on("data", (data: Buffer) => {
-          if (success) {
-            return;
-          }
 
-          // Convert buffer to string
-          const strData = data.toString();
-
-          // Check if any expected lines are found
-          expectedLines = expectedLines.filter(expectedLine => {
-            // Check if the expected line is found in the output, ignoring whitespace
-            return !strData.replace(/\s+/g, " ").includes(expectedLine);
-          });
-
-          // If all expected lines are found, resolve the promise
-          if (expectedLines.length > 0) {
-            console.log(`still waiting on ${expectedLines.length} lines...`);
-          } else {
-            console.log(`FINISHED!!!!!!`);
-            // Abort all further processing
-            success = true;
-            // Finish the test
-            done();
-          }
-        });
-      },
-      60000 * 10,
-    );
+        // If all expected lines are found, resolve the promise
+        if (expectedLines.length > 0) {
+          console.log(`still waiting on ${expectedLines.length} lines...`);
+        } else {
+          // Abort all further processing
+          success = true;
+          // Finish the test
+          done();
+        }
+      });
+    });
     it("should be ready to accept requests", async () => {
       await waitForServer();
     });
@@ -129,6 +114,12 @@ describe("dev", () => {
       expect(metrics).toMatch("pepr_mutate");
       expect(metrics).toMatch("pepr_errors");
       expect(metrics).toMatch("pepr_alerts");
+      expect(metrics).toMatch("pepr_mutate_sum");
+      expect(metrics).toMatch("pepr_mutate_count");
+      expect(metrics).toMatch("pepr_validate_sum");
+      expect(metrics).toMatch("pepr_validate_count");
+      expect(metrics).toMatch("pepr_cache_miss");
+      expect(metrics).toMatch("pepr_resync_failure_count");
     });
 
     afterAll(async () => {
@@ -150,7 +141,7 @@ describe("dev", () => {
       // Kill the process
       cmd.kill(9);
       await pepr.cli(workdir.path(), { cmd: `k3d cluster delete pepr-dev-cli` });
-    }, 60000);
+    });
   });
 });
 
