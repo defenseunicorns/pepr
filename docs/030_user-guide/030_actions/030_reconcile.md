@@ -6,7 +6,6 @@ Ordering can be configured to operate in one of two ways: as a single queue that
 
 See [Configuring Reconcile](../120_customization.md#configuring-reconcile) for more on configuring how Reconcile behaves.
 
-
 ```ts
 When(WebApp)
   .IsCreatedOrUpdated()

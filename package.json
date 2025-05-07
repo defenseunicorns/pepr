@@ -21,12 +21,17 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
-    "ci": "npm ci",
-    "gen-data-json": "node hack/build-template-data.js",
-    "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
     "build:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr:dev $(node scripts/read-unicorn-build-args.mjs) .",
+    "ci": "npm ci",
+    "format:check": "eslint src && prettier --config .prettierrc src --check && npm run markdown:check",
+    "format:fix": "eslint src --fix && prettier --config .prettierrc src --write && npm run markdown:fix",
+    "gen-data-json": "node hack/build-template-data.js",
+    "markdown:check": "markdownlint --ignore adr --ignore pepr-test-module --ignore pepr-upgrade-test **/*.md",
+    "markdown:fix": "markdownlint --fix --ignore adr --ignore pepr-test-module --ignore pepr-upgrade-test **/*.md",
+    "prebuild": "rm -fr dist/* && npm run gen-data-json",
+    "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi",
     "set:version": "node scripts/set-version.js",
     "test": "npm run test:unit && npm run test:journey && npm run test:journey-wasm",
     "test:artifacts": "npm run build && jest src/build-artifact.test.ts",
@@ -44,10 +49,7 @@
     "test:journey:run-wasm": "jest --detectOpenHandles journey/entrypoint-wasm.test.ts",
     "test:journey:unicorn": "npm run test:journey:k3d && npm run test:journey:image:unicorn && npm run test:journey:run",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
-    "test:unit": "npm run gen-data-json && jest src --coverage --detectOpenHandles --coverageDirectory=./coverage --testPathIgnorePatterns=\"build-artifact.test.ts|src/cli/docs/.*\\.test\\.ts\"",
-    "format:check": "eslint src && prettier --config .prettierrc src --check",
-    "format:fix": "eslint src --fix && prettier --config .prettierrc src --write",
-    "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
+    "test:unit": "npm run gen-data-json && jest src --coverage --detectOpenHandles --coverageDirectory=./coverage --testPathIgnorePatterns=\"build-artifact.test.ts|src/cli/docs/.*\\.test\\.ts\""
   },
   "dependencies": {
     "@types/ramda": "0.30.2",
@@ -80,6 +82,7 @@
     "husky": "^9.1.6",
     "jest": "29.7.0",
     "js-yaml": "^4.1.0",
+    "markdownlint-cli": "^0.44.0",
     "shellcheck": "^3.0.0",
     "ts-jest": "29.3.2",
     "undici": "^7.0.1"

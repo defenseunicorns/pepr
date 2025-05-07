@@ -52,7 +52,6 @@ This section contains work we've considered, but have not slotted in to the road
 - **Determine if a Transactional PeprStore makes sense**:
   - Sus out details involved with having a transactional Pepr Store. What are the implications of this? What are the benefits? What are the drawbacks? What are the use-cases? What are the technologies that can be used to implement this?
 
-
 _2024 Roadmap_  
 
 ## Phase 1: Preparation - Testing and Docs

@@ -1,6 +1,6 @@
 # Pepr Media
 
-## 2025 
+## 2025
 
 ### Presentations
 

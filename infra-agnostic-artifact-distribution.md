@@ -11,19 +11,19 @@ We currently publish production artifacts to the following destinations:
 
 If access to these services is lost, Pepr artifacts can be distributed through **any OCI-compliant registry** using the following process:
 
-1. **Run a Local `zot` Registry**
+### **Run a Local `zot` Registry**
 
 ```bash
 docker run --platform linux/amd64 -d -p 3333:5000 --name oras-quickstart ghcr.io/project-zot/zot-linux-amd64:latest
 ```
 
-2. **Build the Pepr Image and Library**
+### **Build the Pepr Image and Library**
 
 ```bash
 npm run build:image
 ```
 
-3. **Push Artifacts to the Local Registry**
+### **Push Artifacts to the Local Registry**
 
 ```bash
 oras push --plain-http localhost:3333/pepr-library:v0.38.1 \
@@ -34,14 +34,14 @@ docker tag pepr:dev localhost:3333/pepr:v0.38.1
 docker push localhost:3333/pepr:v0.38.1
 ```
 
-4. **Pull Artifacts from the Local Registry**
+### **Pull Artifacts from the Local Registry**
 
 ```bash
 oras pull localhost:3333/pepr-library:v0.38.1 
 docker pull localhost:3333/pepr:v0.38.1
 ```
 
-5. **View Artifacts in the Registry**
+### **View Artifacts in the Registry**
 
 ```bash
 oras discover localhost:3333/pepr-library:v0.38.1
