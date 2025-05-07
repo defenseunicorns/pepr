@@ -13,7 +13,8 @@ import { RequestInit, Agent } from "undici";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
-jest.setTimeout(1000 * 60 * 5);
+const five_mins = 1000 * 60 * 5;
+jest.setTimeout(five_mins);
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
