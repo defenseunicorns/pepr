@@ -1,15 +1,15 @@
 {
   "*.ts": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs --max-warnings 2"
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
   ],
   "*.mjs": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs --max-warnings 2"
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
   ],
   "*.js": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs --max-warnings 2"
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
   ],
   "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
