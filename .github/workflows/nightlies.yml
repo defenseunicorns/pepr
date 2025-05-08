@@ -11,7 +11,7 @@ permissions:
 env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -50,6 +50,15 @@ jobs:
           username: dummy
           password: ${{ github.token }}
 
+
+      - name: Check for always-auth in .npmrc
+        run: |
+          echo "User-level .npmrc:"
+          cat ~/.npmrc || echo "No user-level .npmrc found."
+          echo "Global .npmrc:"
+          npm config get globalconfig
+          cat $(npm config get globalconfig) || echo "No global .npmrc found."
+          
       - name: Publish to GHCR and NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
