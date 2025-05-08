@@ -5,152 +5,145 @@ import { expect, describe, it, beforeAll } from "@jest/globals";
 import { promises as fs } from "fs";
 import path from "path";
 
-// Path to project main - relative to the location of this test file
-const projectmain = path.resolve(__dirname, "../../..");
-const mainEslintPath = path.join(projectmain, "eslint.config.mjs");
-const templateEslintPath = path.join(projectmain, "src/templates/eslint.config.mjs");
+// Path definitions
+const projectRoot = path.resolve(__dirname, "../../..");
+const rootConfig = path.join(projectRoot, "eslint.config.mjs");
+const templateConfig = path.join(projectRoot, "src/templates/eslint.config.mjs");
 
-describe(`ESLint template configuration (${templateEslintPath})`, () => {
-  // File paths used in all tests
-  let mainEslintContent: string;
-  let templateEslintContent: string;
+// Define config item types to check
+type ConfigType = "imports" | "consts" | "rules" | "ignores" | "languageOptions";
+type ConfigItem = {
+  type: ConfigType;
+  matcher: RegExp;
+  nameGroupIndex?: number;
+  contentGroupIndex?: number;
+  keySettings?: string[];
+};
 
-  // Helper to extract content matching a pattern
-  const extractContent = (content: string, regex: RegExp, groupIndex = 0): string[] => {
+// Test suite for comparing ESLint configuration files
+describe(`ESLint Template Configuration Tests`, () => {
+  let rootContent = "";
+  let templateContent = "";
+
+  // Define extractors for different config item types
+  const configItems: ConfigItem[] = [
+    {
+      type: "imports",
+      matcher: /import\s+.*?from\s+["']([^"']+)["'];?/g,
+    },
+    {
+      type: "consts",
+      matcher: /const\s+([^=]+)\s*=/g,
+      nameGroupIndex: 1,
+    },
+    {
+      type: "rules",
+      matcher: /rules\s*:\s*{([^}]*)}/g,
+      contentGroupIndex: 1,
+    },
+    {
+      type: "ignores",
+      matcher: /ignores\s*:\s*\[([^\]]+)\]/g,
+      contentGroupIndex: 1,
+    },
+    {
+      type: "languageOptions",
+      matcher: /languageOptions/,
+      keySettings: ["parser: tsParser", 'sourceType: "module"', "globals.node"],
+    },
+  ];
+
+  // Helper to extract values using regex
+  const extractValues = (content: string, regex: RegExp, groupIndex = 0): string[] => {
     const results: string[] = [];
     let match;
-    while ((match = regex.exec(content)) !== null) {
-      if (match[groupIndex]) results.push(match[groupIndex].trim());
+    const clone = new RegExp(regex.source, regex.flags);
+
+    while ((match = clone.exec(content)) !== null) {
+      if (match[groupIndex]) {
+        results.push(match[groupIndex].trim());
+      }
     }
+
     return results;
   };
 
-  // Helper to extract string literals from content
-  const extractStringLiterals = (content: string): string[] => {
-    const literals = extractContent(content, /["']([^"']+)["']/g, 1);
-    return [...new Set(literals)]; // Remove duplicates
+  // Extract string literals from content
+  const extractStringLiterals = (content: string): Set<string> => {
+    const regex = /["']([^"']+)["']/g;
+    const values = extractValues(content, regex, 1).filter(value => !value.includes(":"));
+
+    return new Set(values);
   };
 
-  // Output error details in a consistent format
-  const logErrors = (missingItems: string[]): void => {
-    if (missingItems.length === 0) return;
+  // Check if an item exists in root config
+  const compareConfigs = (item: ConfigItem): string[] => {
+    switch (item.type) {
+      case "imports":
+      case "consts": {
+        const templateItems = extractValues(templateContent, item.matcher, item.nameGroupIndex);
+        const rootItems = extractValues(rootContent, item.matcher, item.nameGroupIndex);
+        return templateItems.filter(ti => !rootItems.some(ri => ri.includes(ti)));
+      }
 
-    console.error(
-      `The following items in ${templateEslintPath} are missing in ${mainEslintPath}:\n` +
-        missingItems.map(item => `  - ${item}`).join("\n") +
-        "\n",
-    );
+      case "rules":
+      case "ignores": {
+        const templateBlocks = extractValues(templateContent, item.matcher, item.contentGroupIndex);
+        const rootBlocks = extractValues(rootContent, item.matcher, item.contentGroupIndex);
+
+        const templateItems = new Set<string>();
+        templateBlocks.forEach(block => {
+          extractStringLiterals(block).forEach(value => templateItems.add(value));
+        });
+
+        const rootItems = new Set<string>();
+        rootBlocks.forEach(block => {
+          extractStringLiterals(block).forEach(value => rootItems.add(value));
+        });
+
+        return [...templateItems].filter(item => !rootItems.has(item));
+      }
+
+      case "languageOptions": {
+        const hasLanguageOptions =
+          rootContent.includes("languageOptions") && templateContent.includes("languageOptions");
+
+        if (!hasLanguageOptions) {
+          return ["languageOptions section missing"];
+        }
+
+        return (item.keySettings || []).filter(
+          setting => !rootContent.includes(setting) || !templateContent.includes(setting),
+        );
+      }
+
+      default:
+        return [];
+    }
   };
 
-  // Before all tests, load the file contents
+  // Load file contents before tests
   beforeAll(async () => {
-    mainEslintContent = await fs.readFile(mainEslintPath, "utf-8");
-    templateEslintContent = await fs.readFile(templateEslintPath, "utf-8");
+    rootContent = await fs.readFile(rootConfig, "utf-8");
+    templateContent = await fs.readFile(templateConfig, "utf-8");
   });
 
-  it(`template imports exist in ${mainEslintPath}`, () => {
-    // Extract imports
-    const importRegex = /import\s+.*?from\s+["']([^"']+)["'];?/g;
-    const mainImports = extractContent(mainEslintContent, importRegex, 0);
-    const templateImports = extractContent(templateEslintContent, importRegex, 0);
+  // Generate a test for each config item type
+  configItems.forEach(item => {
+    it(`checks template ${item.type} exist in root config`, () => {
+      const missingItems = compareConfigs(item);
 
-    // Find missing imports
-    const missingImports = templateImports.filter(imp => !mainImports.some(ri => ri.includes(imp)));
+      if (missingItems.length > 0) {
+        console.error(
+          `Template ${item.type} missing in root config:\n` +
+            missingItems.map(i => `  - ${i}`).join("\n") +
+            "\n" +
+            `Template file: ${templateConfig}\n` +
+            `Root file: ${rootConfig}`,
+        );
+      }
 
-    logErrors(missingImports);
-    expect(missingImports).toHaveLength(0);
-  });
-
-  it(`template consts exist in ${mainEslintPath}`, () => {
-    // Extract const declarations
-    const constRegex = /const\s+([^=]+)\s*=/g;
-    const mainConsts = extractContent(mainEslintContent, constRegex, 1);
-    const templateConsts = extractContent(templateEslintContent, constRegex, 1);
-
-    // Find missing consts
-    const missingConsts = templateConsts.filter(
-      c => !mainConsts.some(rc => rc.trim() === c.trim()),
-    );
-
-    logErrors(missingConsts);
-    expect(missingConsts).toHaveLength(0);
-  });
-
-  it(`template eslint rules exist in ${mainEslintPath}`, () => {
-    // Extract rules
-    const ruleBlockRegex = /rules\s*:\s*{([^}]*)}/g;
-    const templateRuleBlocks = extractContent(templateEslintContent, ruleBlockRegex, 1);
-    const mainRuleBlocks = extractContent(mainEslintContent, ruleBlockRegex, 1);
-
-    // Get rule names from extracted blocks
-    const templateRuleNames = new Set<string>();
-    templateRuleBlocks.forEach(block => {
-      extractStringLiterals(block)
-        .filter(rule => !rule.includes(":"))
-        .forEach(rule => templateRuleNames.add(rule));
+      expect(missingItems).toHaveLength(0);
     });
-
-    const mainRuleNames = new Set<string>();
-    mainRuleBlocks.forEach(block => {
-      extractStringLiterals(block)
-        .filter(rule => !rule.includes(":"))
-        .forEach(rule => mainRuleNames.add(rule));
-    });
-
-    // Find missing rules
-    const missingRules = [...templateRuleNames].filter(rule => !mainRuleNames.has(rule));
-
-    // Log any issues
-    if (missingRules.length > 0) {
-      console.error(
-        "Rules missing in ${mainEslintPath}:\n" +
-          missingRules.map(rule => `  - ${rule}`).join("\n") +
-          "\n",
-      );
-      console.error(
-        "Template ESLint configuration should be a subset of the ${mainEslintPath}uration.\n" +
-          `main file: ${mainEslintPath}\n` +
-          `Template file: ${templateEslintPath}\n`,
-      );
-    }
-
-    expect(missingRules).toHaveLength(0);
-  });
-
-  it(`template eslint ignores exist in ${mainEslintPath}`, () => {
-    // Extract ignores
-    const ignoresRegex = /ignores\s*:\s*\[([^\]]+)\]/g;
-    const templateIgnoresBlocks = extractContent(templateEslintContent, ignoresRegex, 1);
-    const mainIgnoresBlocks = extractContent(mainEslintContent, ignoresRegex, 1);
-
-    // Get ignore patterns
-    const templateIgnores = new Set<string>();
-    templateIgnoresBlocks.forEach(block => {
-      extractStringLiterals(block).forEach(ignore => templateIgnores.add(ignore));
-    });
-
-    const mainIgnores = new Set<string>();
-    mainIgnoresBlocks.forEach(block => {
-      extractStringLiterals(block).forEach(ignore => mainIgnores.add(ignore));
-    });
-
-    // Find missing ignores
-    const missingIgnores = [...templateIgnores].filter(ignore => !mainIgnores.has(ignore));
-
-    // Log any issues
-    if (missingIgnores.length > 0) {
-      console.error(
-        "Ignores missing in ${mainEslintPath}:\n" +
-          missingIgnores.map(ignore => `  - ${ignore}`).join("\n") +
-          "\n",
-      );
-      console.error(
-        "Template ESLint configuration should be a subset of the ${mainEslintPath}uration.\n" +
-          `main file: ${mainEslintPath}\n` +
-          `Template file: ${templateEslintPath}\n`,
-      );
-    }
-
-    expect(missingIgnores).toHaveLength(0);
   });
 });
