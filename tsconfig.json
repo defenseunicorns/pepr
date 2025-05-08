@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "allowJs": true,
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
@@ -17,5 +16,5 @@
     "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "src/templates/*", "!src/templates/eslint.config.mjs"]
 }
