@@ -63,7 +63,7 @@ export default function (program: RootCmd): void {
             packageLockContent.match(/"eslint":\s*"[~^]?8\.[0-9]+\.[0-9]+"/)
           ) {
             console.warn(
-              "⚠️  Warning: Your project is using ESLint v8. ESLint will be upgraded to v9 in a future release.",
+              "\nWarning: This Pepr module uses ESLint v8. Pepr will be upgraded to use v9 in a future release.\nSee eslint@9.0.0 release notes for more details: https://eslint.org/blog/2024/04/eslint-v9.0.0-released/",
             );
           }
         }
