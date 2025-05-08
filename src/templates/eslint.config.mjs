@@ -16,17 +16,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: [
-      "src/templates",
-      "**/node_modules",
-      "**/dist",
-      "**/hack",
-      "**/pepr-test-module",
-      "**/build.mjs",
-      "**/journey",
-      "**/__mocks__",
-      "integration/testroot",
-    ],
+    ignores: ["**/node_modules", "**/dist"],
   },
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
   {
@@ -49,71 +39,7 @@ export default [
     },
 
     rules: {
-      "@typescript-eslint/no-floating-promises": "warn",
-      "class-methods-use-this": "warn",
-
-      complexity: [
-        "warn",
-        {
-          max: 10,
-        },
-      ],
-
-      "consistent-this": "warn",
-      eqeqeq: "error",
-
-      "max-depth": [
-        "warn",
-        {
-          max: 3,
-        },
-      ],
-
-      "max-nested-callbacks": [
-        "warn",
-        {
-          max: 4,
-        },
-      ],
-
-      "max-params": [
-        "error",
-        {
-          max: 4,
-        },
-      ],
-
-      "max-statements": [
-        "warn",
-        {
-          max: 20,
-        },
-        {
-          ignoreTopLevelFunctions: true,
-        },
-      ],
-
-      "no-invalid-this": "warn",
-    },
-  },
-  {
-    files: ["**/*.test.ts"],
-
-    rules: {
-      "max-nested-callbacks": [
-        "warn",
-        {
-          max: 8,
-        },
-      ],
-    },
-  },
-  {
-    files: ["**/*.ts"],
-    ignores: ["**/*.test.ts"],
-
-    rules: {
-      "@typescript-eslint/explicit-function-return-type": "error",
+      "@typescript-eslint/no-floating-promises": "error",
     },
   },
 ];
