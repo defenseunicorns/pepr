@@ -99,7 +99,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       "k3d-setup": scripts["test:journey:k3d"],
     },
     dependencies: {
-      pepr: pgkVerOverride || "file:../pepr-0.0.0-development.tgz",
+      pepr: pgkVerOverride || version,
       undici: "^7.0.1",
     },
     devDependencies: {
