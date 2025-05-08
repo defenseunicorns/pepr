@@ -8,7 +8,7 @@ import path from "path";
 // Path definitions
 const projectRoot = path.resolve(__dirname, "../../..");
 const rootConfig = path.join(projectRoot, "eslint.config.mjs");
-const templateConfig = path.join(projectRoot, "src/templates/eslint.config.mjs");
+const templateConfig = path.join(projectRoot, "src/templates/eslint.config.mjs.txt");
 
 // Define config item types to check
 type ConfigType = "imports" | "consts" | "rules" | "ignores" | "languageOptions";
