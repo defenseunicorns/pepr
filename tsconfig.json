@@ -16,6 +16,6 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts", "src/templates/eslint.config.mjs"],
-  "exclude": ["node_modules", "dist", "src/templates/"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
