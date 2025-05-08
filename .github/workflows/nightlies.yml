@@ -51,14 +51,8 @@ jobs:
           password: ${{ github.token }}
 
 
-      - name: Check for always-auth in .npmrc
-        run: |
-          echo "User-level .npmrc:"
-          cat ~/.npmrc || echo "No user-level .npmrc found."
-          echo "Global .npmrc:"
-          npm config get globalconfig
-          cat $(npm config get globalconfig) || echo "No global .npmrc found."
-          
+      - name: Dump all npm config
+        run: npm config list --long
       - name: Publish to GHCR and NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
