@@ -171,7 +171,7 @@ export const eslint = {
         // Return the path up to and including the last "pepr/"
         return fullPath.substring(0, lastPeprIndex + lengthOfSuffix);
       })(),
-      "eslint.config.mjs",
+      "src/templates/eslint.config.mjs",
     ),
     "utf-8",
   ),
