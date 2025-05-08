@@ -21,7 +21,7 @@ type ConfigItem = {
 };
 
 // Test suite for comparing ESLint configuration files
-describe(`ESLint Template Configuration Tests`, () => {
+describe(`ESLint Template Configuration (${templateConfig})`, () => {
   let rootContent = "";
   let templateContent = "";
 
@@ -130,12 +130,12 @@ describe(`ESLint Template Configuration Tests`, () => {
 
   // Generate a test for each config item type
   configItems.forEach(item => {
-    it(`checks template ${item.type} exist in root config`, () => {
+    it(`checks template ${item.type} exist in ${rootConfig}`, () => {
       const missingItems = compareConfigs(item);
 
       if (missingItems.length > 0) {
         console.error(
-          `Template ${item.type} missing in root config:\n` +
+          `Template ${item.type} missing in ${rootConfig}:\n` +
             missingItems.map(i => `  - ${i}`).join("\n") +
             "\n" +
             `Template file: ${templateConfig}\n` +
