@@ -211,7 +211,7 @@ When(a.ConfigMap)
 When(a.ConfigMap).IsCreated().WithName("example-4").Mutate(example4Cb);
 
 // This function uses the complete type definition, but is not required.
-function example4Cb(cm: PeprMutateRequest<a.ConfigMap>) {
+function example4Cb(cm: PeprMutateRequest<a.ConfigMap>): void {
   cm.SetLabel("pepr.dev/first", "true");
   cm.SetLabel("pepr.dev/second", "true");
   cm.SetLabel("pepr.dev/third", "true");
