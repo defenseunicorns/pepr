@@ -1,4 +1,4 @@
-# Tutorial - Create a Pepr Module
+# Create a Pepr Module
 
 ## Introduction
 
