@@ -98,6 +98,8 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
     dependencies: {
       pepr: pgkVerOverride || version,
       undici: "^7.0.1",
+      typescript: packageJSON.dependencies.typescript,
+      eslint: packageJSON.dependencies.eslint,
     },
     devDependencies: {},
   };
