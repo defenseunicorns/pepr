@@ -16,17 +16,6 @@ import {
 } from "../init/templates";
 import { write } from "../init/utils";
 import { RootCmd } from "../root";
-import { findPackageJson } from "./eslint-migration/data-management";
-import {
-  checkEslintInstalled,
-  addEslintDependency,
-  createEslintConfig,
-  replaceLanguageOptions,
-  upgradeEslint,
-  validateEslint,
-} from "./eslint-migration/eslint-operations";
-import { repoHasTsConfig, createTSConfig } from "./eslint-migration/tsconfig-operations";
-
 export default function (program: RootCmd): void {
   program
     .command("update")

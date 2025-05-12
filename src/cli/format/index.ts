@@ -4,7 +4,7 @@
 import { ESLint } from "eslint";
 import { formatWithPrettier } from "./format.helpers";
 
-import { RootCmd } from "./root";
+import { RootCmd } from "../root";
 
 export default function (program: RootCmd): void {
   program
