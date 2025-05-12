@@ -53,6 +53,7 @@ jobs:
   run-e2e-tests:
     name: Iron Bank AMD ${{ matrix.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs:
       - ironbank-setup
     if: needs.ironbank-setup.outputs.matrix != ''
