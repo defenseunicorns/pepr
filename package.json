@@ -22,7 +22,7 @@
   "types": "dist/lib.d.ts",
   "scripts": {
     "ci": "npm ci",
-    "gen-data-json": "node hack/build-template-data.js && prettier --config .prettierrc src/templates/data.json --write",
+    "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "build": "tsc && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
