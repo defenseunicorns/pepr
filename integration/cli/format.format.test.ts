@@ -41,7 +41,7 @@ describe("build", () => {
       formatOutput = await pepr.cli(testModule, { cmd: `pepr format` });
     }, time.toMs("3m"));
 
-    it("should execute 'pepr form,at'", () => {
+    it("should execute 'pepr format'", () => {
       expect(formatOutput.exitcode).toBe(0);
       expect(formatOutput.stderr.join("").trim()).toContain("");
       expect(formatOutput.stdout.join("").trim()).toContain("✅ Module formatted");
