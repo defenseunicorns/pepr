@@ -65,8 +65,8 @@
     "ts-morph": "^25.0.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.8.0",
-    "@commitlint/config-conventional": "19.8.0",
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
     "@fast-check/jest": "^2.0.1",
     "@jest/globals": "29.7.0",
     "@types/eslint": "9.6.1",
