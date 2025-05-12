@@ -13,9 +13,9 @@ import {
   samplesYaml,
   snippet,
   tsConfig,
-} from "./init/templates";
-import { write } from "./init/utils";
-import { RootCmd } from "./root";
+} from "../init/templates";
+import { write } from "../init/utils";
+import { RootCmd } from "../root";
 
 export default function (program: RootCmd): void {
   program
