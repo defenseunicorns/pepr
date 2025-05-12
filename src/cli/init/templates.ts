@@ -41,8 +41,8 @@ export type peprPackageJSON = {
       rbacMode?: RbacMode;
     };
     scripts: { "k3d-setup": string };
-    dependencies: { pepr: string; undici: string };
-    devDependencies: { typescript: string };
+    dependencies: { pepr: string; undici: string; eslint: string; typescript: string };
+    devDependencies: object;
   };
   path: string;
   print: string;
@@ -53,8 +53,6 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
   const uuid = !opts.uuid ? uuidv4() : opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
-  // Make typescript a dev dependency
-  const { typescript } = peerDependencies;
 
   const testEnv = {
     MY_CUSTOM_VAR: "example-value",
@@ -101,9 +99,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       pepr: pgkVerOverride || version,
       undici: "^7.0.1",
     },
-    devDependencies: {
-      typescript,
-    },
+    devDependencies: {},
   };
 
   return {
