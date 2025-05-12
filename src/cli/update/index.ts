@@ -16,17 +16,6 @@ import {
 } from "../init/templates";
 import { write } from "../init/utils";
 import { RootCmd } from "../root";
-import { findPackageJson } from "./eslint-migration/data-management";
-import {
-  checkEslintInstalled,
-  addEslintDependency,
-  createEslintConfig,
-  replaceLanguageOptions,
-  upgradeEslint,
-  validateEslint,
-} from "./eslint-migration/eslint-operations";
-import { repoHasTsConfig, createTSConfig } from "./eslint-migration/tsconfig-operations";
-
 export default function (program: RootCmd): void {
   program
     .command("update")
@@ -75,9 +64,6 @@ export default function (program: RootCmd): void {
             console.warn(
               "\nWarning: This Pepr module uses ESLint v8. Pepr will be upgraded to use v9 in a future release.\nSee eslint@9.0.0 release notes for more details: https://eslint.org/blog/2024/04/eslint-v9.0.0-released/",
             );
-            console.warn("\nWarning: Attempting automatic migration to ESLint v9.");
-
-            migrateESLint(process.cwd());
           }
         }
 
@@ -132,36 +118,4 @@ export default function (program: RootCmd): void {
         process.exit(1);
       }
     });
-}
-function migrateESLint(repo: string): void {
-  const targetDir = findPackageJson(repo)?.replace(/\/package\.json$/, "");
-
-  execSync(`npm install`, { cwd: targetDir });
-  console.log("Installed npm dependencies");
-
-  //TS Config Processing
-  if (!repoHasTsConfig(targetDir)) {
-    console.log(`No tsconfig.json found.`);
-    createTSConfig(targetDir);
-  }
-
-  //ESLint Processing
-  console.log(`Checking ${targetDir} for eslint`);
-  const eslintVersion = checkEslintInstalled(targetDir);
-
-  if (eslintVersion.includes("not-found")) {
-    addEslintDependency(targetDir);
-
-    createEslintConfig(targetDir);
-    replaceLanguageOptions(targetDir);
-  } else if (eslintVersion.includes("8.")) {
-    console.log(`Upgrading ESLint from ${eslintVersion} to 9.x`);
-    upgradeEslint(targetDir);
-  } else if (eslintVersion.includes("9.")) {
-    console.log(`ESLint 9.x is already in use.`);
-  }
-
-  // Run eslint in targetDir (contains package.json)
-  const eslintResult = validateEslint(targetDir);
-  console.log(`eslint@${eslintResult} in use.`);
 }
