@@ -34,7 +34,7 @@ jobs:
           path: pepr
 
       - name: "set env: PEPR"
-        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+        run: echo "PEPR=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
 
       - name: setup node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
