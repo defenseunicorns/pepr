@@ -4,8 +4,9 @@
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
 import { v4 as uuidv4 } from "uuid";
+import { readFileSync } from "fs";
+import path from "path";
 
-import eslintJSON from "../../templates/.eslintrc.template.json";
 import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
@@ -159,6 +160,19 @@ export const prettier = {
 };
 
 export const eslint = {
-  path: ".eslintrc.json",
-  data: eslintJSON,
+  path: "eslint.config.mjs",
+  data: readFileSync(
+    path.resolve(
+      ((): string => {
+        const fullPath = __dirname;
+        const lengthOfSuffix = "pepr/".length;
+        // Find the last occurrence of "pepr/"
+        const lastPeprIndex = fullPath.lastIndexOf("pepr/");
+        // Return the path up to and including the last "pepr/"
+        return fullPath.substring(0, lastPeprIndex + lengthOfSuffix);
+      })(),
+      "src/templates/eslint.config.mjs",
+    ),
+    "utf-8",
+  ),
 };

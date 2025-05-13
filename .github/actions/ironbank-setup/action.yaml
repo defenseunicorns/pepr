@@ -39,7 +39,7 @@ runs:
 
     - name: Set Pepr Environment Variable
       shell: bash
-      run: echo "PEPR=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
+      run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
     - name: Clone Iron Bank Repo & Transfer Dockerfiles
       shell: bash

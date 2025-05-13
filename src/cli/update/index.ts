@@ -16,6 +16,7 @@ import {
 } from "../init/templates";
 import { write } from "../init/utils";
 import { RootCmd } from "../root";
+
 export default function (program: RootCmd): void {
   program
     .command("update")
