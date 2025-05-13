@@ -46,7 +46,7 @@ jobs:
       - name: install pepr deps
         run: |
           cd "$PEPR"
-          npm ci
+          npm i
 
       - name: build pepr image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
