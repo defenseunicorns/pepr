@@ -1,6 +1,16 @@
 {
-  "*.ts": ["prettier --config .prettierrc --write", "eslint --fix"],
-  "*.js": ["prettier --config .prettierrc --write", "eslint --fix"],
+  "*.ts": [
+    "prettier --config .prettierrc --write",
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+  ],
+  "*.mjs": [
+    "prettier --config .prettierrc --write",
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+  ],
+  "*.js": [
+    "prettier --config .prettierrc --write",
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+  ],
   "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
   ".husky/pre-*": ["shellcheck -f tty"]
