@@ -13,7 +13,7 @@ import init from "./cli/init/index";
 import uuid from "./cli/uuid";
 import { version } from "./cli/init/templates";
 import { RootCmd } from "./cli/root";
-import update from "./cli/update/update";
+import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
 
