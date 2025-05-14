@@ -4,14 +4,12 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import * as f from "node:fs";
 import { execSync } from "node:child_process";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import { kind } from "kubernetes-fluent-client";
-import YAML from "yaml";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -60,11 +58,23 @@ describe("build rbacMode=scoped", () => {
       }, time.toMs("1m"));
 
       it("creates a scoped rbac role to the kubernetes manifests", async () => {
-        const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(`${outputDir}/pepr-module-${uuid}.yaml`, "ClusterRole", `pepr-${uuid}`);
+        const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(
+          `${outputDir}/pepr-module-${uuid}.yaml`,
+          "ClusterRole",
+          `pepr-${uuid}`,
+        );
         expect(clusterRole).toBeDefined();
         expect(clusterRole!.rules).toEqual([
-          { apiGroups: ["pepr.dev"], resources: ["peprstores"], verbs: ["create", "get", "patch", "watch"] },
-          { apiGroups: ["apiextensions.k8s.io"], resources: ["customresourcedefinitions"], verbs: ["patch", "create"] },
+          {
+            apiGroups: ["pepr.dev"],
+            resources: ["peprstores"],
+            verbs: ["create", "get", "patch", "watch"],
+          },
+          {
+            apiGroups: ["apiextensions.k8s.io"],
+            resources: ["customresourcedefinitions"],
+            verbs: ["patch", "create"],
+          },
           { apiGroups: [""], resources: ["namespaces"], verbs: ["watch"] },
           { apiGroups: [""], resources: ["configmaps"], verbs: ["watch"] },
         ]);
@@ -74,11 +84,23 @@ describe("build rbacMode=scoped", () => {
         execSync(`helm template .  > ${outputDir}/helm-template.yaml`, {
           cwd: `${outputDir}/${uuid}-chart`,
         });
-        const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(`${outputDir}/helm-template.yaml`, "ClusterRole", `pepr-${uuid}`);
+        const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(
+          `${outputDir}/helm-template.yaml`,
+          "ClusterRole",
+          `pepr-${uuid}`,
+        );
         expect(clusterRole).toBeDefined();
         expect(clusterRole!.rules).toEqual([
-          { apiGroups: ["pepr.dev"], resources: ["peprstores"], verbs: ["create", "get", "patch", "watch"] },
-          { apiGroups: ["apiextensions.k8s.io"], resources: ["customresourcedefinitions"], verbs: ["patch", "create"] },
+          {
+            apiGroups: ["pepr.dev"],
+            resources: ["peprstores"],
+            verbs: ["create", "get", "patch", "watch"],
+          },
+          {
+            apiGroups: ["apiextensions.k8s.io"],
+            resources: ["customresourcedefinitions"],
+            verbs: ["patch", "create"],
+          },
           { apiGroups: [""], resources: ["namespaces"], verbs: ["watch"] },
           { apiGroups: [""], resources: ["configmaps"], verbs: ["watch"] },
         ]);
