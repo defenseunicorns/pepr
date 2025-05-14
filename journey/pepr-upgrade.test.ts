@@ -29,12 +29,6 @@ export function peprUpgrade() {
       // Install pepr@nightly
       execSync("npm i pepr@nightly", { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
-      // // Update manifests of pepr@latest
-      // execSync("node ./node_modules/pepr/dist/cli.js update --skip-template-update", {
-      //   cwd: "pepr-upgrade-test",
-      //   stdio: "inherit",
-      // });
-
       // Generate manifests with pepr@latest
       execSync("node ./node_modules/pepr/dist/cli.js build", {
         cwd: "pepr-upgrade-test",
