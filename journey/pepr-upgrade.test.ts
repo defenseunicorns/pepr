@@ -27,7 +27,7 @@ export function peprUpgrade() {
   it("should prepare, build, and deploy hello-pepr with pepr@latest", async () => {
     try {
       // Install pepr@latest
-      execSync("npm i pepr@latest", { cwd: "pepr-upgrade-test", stdio: "inherit" });
+      execSync("npm i pepr@nightly", { cwd: "pepr-upgrade-test", stdio: "inherit" });
 
       // Update manifests of pepr@latest
       execSync("node ./node_modules/pepr/dist/cli.js update --skip-template-update", {
