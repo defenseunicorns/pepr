@@ -17,31 +17,40 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
-// Generates test content for CRD tests with individual boolean checks that are joined into a string
+// Helper function to get details string based on parameters
+const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
+  if (!hasDetails) {
+    return "const somethingElse = {};";
+  }
+
+  const scope = hasBadScope ? "BadScope" : "Namespaced";
+  return `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };`;
+};
+
+// Generates test content for CRD tests by combining different parts
 const generateTestContent = ({
   kind = "",
   hasBadScope = false,
   hasDetails = true,
   specInterface = "",
   extraContent = "",
-} = {}): string =>
-  [
-    // Kind comment (if any)
-    kind && `// Kind: ${kind}`,
+} = {}): string => {
+  const parts: string[] = [];
 
-    // Details or alternative
-    hasDetails
-      ? `const details = { plural: "widgets", scope: "${hasBadScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`
-      : "const somethingElse = {};",
+  // Add kind comment
+  if (kind) parts.push(`// Kind: ${kind}`);
 
-    // Interface (if any)
-    specInterface && `export interface ${specInterface} {}`,
+  // Add details section
+  parts.push(getDetailsString(hasDetails, hasBadScope));
 
-    // Extra content (if any)
-    extraContent,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  // Add interface definition
+  if (specInterface) parts.push(`export interface ${specInterface} {}`);
+
+  // Add any extra content
+  if (extraContent) parts.push(extraContent);
+
+  return parts.join("\n");
+};
 
 const createProjectWithFile = (name: string, content: string) => {
   const project = new Project();
