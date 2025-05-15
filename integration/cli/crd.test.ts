@@ -414,4 +414,3 @@ describe("crd", () => {
     });
   });
 });
-// Not optional, subresource must be present and it is empty
