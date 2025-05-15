@@ -41,33 +41,6 @@ export default function (program: RootCmd): void {
       console.log("Updating the Pepr module...");
 
       try {
-        // Check if eslint v8 is a project dependency and warn about future upgrade
-        let packageLockContent = "";
-        let foundPackageLock = false;
-
-        try {
-          // Try to find package-lock.json in the current directory
-          if (fs.existsSync("./package-lock.json")) {
-            packageLockContent = fs.readFileSync("./package-lock.json", "utf-8");
-            foundPackageLock = true;
-          }
-        } catch {
-          // Ignore errors and continue with installation
-        }
-
-        // If we found the package-lock.json and could read it, check for eslint v8
-        if (foundPackageLock && packageLockContent) {
-          // Look for eslint version 8.x.x pattern in the file content
-          if (
-            packageLockContent.indexOf('"eslint":') >= 0 &&
-            packageLockContent.match(/"eslint":\s*"[~^]?8\.[0-9]+\.[0-9]+"/)
-          ) {
-            console.warn(
-              "\nWarning: This Pepr module uses ESLint v8. Pepr will be upgraded to use v9 in a future release.\nSee eslint@9.0.0 release notes for more details: https://eslint.org/blog/2024/04/eslint-v9.0.0-released/",
-            );
-          }
-        }
-
         // Update Pepr for the module
         execSync("npm install pepr@latest", {
           stdio: "inherit",
