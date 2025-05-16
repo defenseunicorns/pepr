@@ -3,29 +3,38 @@
 import { K8s, kind } from "kubernetes-fluent-client";
 import Log from "./telemetry/logger";
 
-// returns true if all deployments are ready, false otherwise
+/**
+ * Checks whether all deployments in the specified Kubernetes namespace are fully rolled out.
+ *
+ * A deployment is considered ready when the number of `readyReplicas` equals the desired `replicas`.
+ * Logs the rollout status of each deployment.
+ *
+ * @param {string} namespace - The Kubernetes namespace to check.
+ * @returns {Promise<boolean>} - `true` if all deployments are ready, otherwise `false`.
+ */
 export async function checkDeploymentStatus(namespace: string): Promise<boolean> {
   const deployments = await K8s(kind.Deployment).InNamespace(namespace).Get();
-  let status = false;
-  let readyCount = 0;
+
+  let allReady = true;
 
   for (const deployment of deployments.items) {
-    const readyReplicas = deployment.status?.readyReplicas ? deployment.status?.readyReplicas : 0;
-    if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
+    const name = deployment.metadata?.name ?? "unknown";
+    const specReplicas = deployment.spec?.replicas ?? 0;
+    const readyReplicas = deployment.status?.readyReplicas ?? 0;
+
+    if (readyReplicas !== specReplicas) {
       Log.info(
-        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
+        `Waiting for deployment ${name} rollout to finish: ${readyReplicas} of ${specReplicas} replicas are available`,
       );
+      allReady = false;
     } else {
       Log.info(
-        `Deployment ${deployment.metadata?.name} rolled out: ${readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
+        `Deployment ${name} rolled out: ${readyReplicas} of ${specReplicas} replicas are available`,
       );
-      readyCount++;
     }
   }
-  if (readyCount === deployments.items.length) {
-    status = true;
-  }
-  return status;
+
+  return allReady;
 }
 
 // wait for all deployments in the pepr-system namespace to be ready
