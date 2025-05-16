@@ -18,16 +18,14 @@ export async function checkDeploymentStatus(namespace: string): Promise<boolean>
   let allReady = true;
 
   for (const deployment of deployments.items) {
-    const name = deployment.metadata?.name ?? "unknown";
-
     if (deployment.status?.readyReplicas !== deployment.spec?.replicas) {
       Log.info(
-        `Waiting for deployment ${name} rollout to finish: ${deployment.status?.readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
+        `Waiting for deployment ${deployment.metadata?.name} rollout to finish: ${deployment.status?.readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
       );
       allReady = false;
     } else {
       Log.info(
-        `Deployment ${name} rolled out: ${deployment.status?.readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
+        `Deployment ${deployment.metadata?.name} rolled out: ${deployment.status?.readyReplicas} of ${deployment.spec?.replicas} replicas are available`,
       );
     }
   }
