@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, describe, expect, it } from "@jest/globals";
+import { beforeAll, describe,beforeEach,afterEach, expect, it } from "@jest/globals";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as f from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import { heredoc } from "../../src/sdk/heredoc";
 import * as sut from "./resource";
 import { kind } from "kubernetes-fluent-client";
+import os from 'os';
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -122,5 +124,74 @@ describe("select", () => {
 
     expect(sec.stringData!.top).toBe("secret");
     expect(cm.data!.fake).toBe("news");
+  });
+});
+
+
+const mockYaml = `
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pepr:agent
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  key: value
+`;
+
+describe('getK8sObjectByKindAndName with real file', () => {
+  let tempFilePath: string;
+
+  beforeEach(() => {
+    const tmpDir = f.mkdtempSync(path.join(os.tmpdir(), 'k8s-test-'));
+    tempFilePath = path.join(tmpDir, 'resources.yaml');
+    f.writeFileSync(tempFilePath, mockYaml, 'utf8');
+  });
+
+  afterEach(() => {
+    if (f.existsSync(tempFilePath)) {
+      f.unlinkSync(tempFilePath); 
+      f.rmdirSync(path.dirname(tempFilePath));
+    }
+  });
+
+  it('finds a ClusterRole by kind and name', () => {
+    const result = sut.getK8sObjectByKindAndName<kind.ClusterRole>(
+      tempFilePath,
+      'ClusterRole',
+      'pepr:agent'
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe('ClusterRole');
+    expect(result?.metadata?.name).toBe('pepr:agent');
+    expect(result?.rules?.[0].resources).toContain('pods');
+  });
+
+  it('returns null if the kind is incorrect', () => {
+    const result = sut.getK8sObjectByKindAndName<kind.ClusterRole>(
+      tempFilePath,
+      'Role',
+      'pepr:agent'
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('returns null if the name is incorrect', () => {
+    const result = sut.getK8sObjectByKindAndName<kind.ClusterRole>(
+      tempFilePath,
+      'ClusterRole',
+      'not-a-match'
+    );
+
+    expect(result).toBeNull();
   });
 });

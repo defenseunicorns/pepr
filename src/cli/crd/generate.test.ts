@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, afterEach, jest } from "@jest/globals";
+import { expect, describe, it, beforeEach, afterEach, jest } from "@jest/globals";
 import {
   extractSingleLineComment,
   extractDetails,
@@ -17,31 +17,40 @@ import * as fs from "fs";
 
 jest.mock("fs");
 
-// Generates test content for CRD tests with individual boolean checks that are joined into a string
+// Helper function to get details string based on parameters
+const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
+  if (!hasDetails) {
+    return "const somethingElse = {};";
+  }
+
+  const scope = hasBadScope ? "BadScope" : "Namespaced";
+  return `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };`;
+};
+
+// Generates test content for CRD tests by combining different parts
 const generateTestContent = ({
   kind = "",
   hasBadScope = false,
   hasDetails = true,
   specInterface = "",
   extraContent = "",
-} = {}): string =>
-  [
-    // Kind comment (if any)
-    kind && `// Kind: ${kind}`,
+} = {}): string => {
+  const parts: string[] = [];
 
-    // Details or alternative
-    hasDetails
-      ? `const details = { plural: "widgets", scope: "${hasBadScope ? "BadScope" : "Namespaced"}", shortName: "wd" };`
-      : "const somethingElse = {};",
+  // Add kind comment
+  if (kind) parts.push(`// Kind: ${kind}`);
 
-    // Interface (if any)
-    specInterface && `export interface ${specInterface} {}`,
+  // Add details section
+  parts.push(getDetailsString(hasDetails, hasBadScope));
 
-    // Extra content (if any)
-    extraContent,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  // Add interface definition
+  if (specInterface) parts.push(`export interface ${specInterface} {}`);
+
+  // Add any extra content
+  if (extraContent) parts.push(extraContent);
+
+  return parts.join("\n");
+};
 
 const createProjectWithFile = (name: string, content: string) => {
   const project = new Project();
@@ -111,16 +120,60 @@ describe("generate.ts", () => {
     });
 
     describe("loadVersionFiles", () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
       it("should load only TypeScript files from the version directory", () => {
         const project = new Project();
-        const addSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
+        // Create mock source files with type-coercion because only care about the return value behavior
+        const mockReturnFiles = [
+          "mock-source-file-1",
+          "mock-source-file-2",
+        ] as unknown as import("ts-morph").SourceFile[];
 
-        (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts"]);
+        (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts", "README.md"]);
+        const projectSpy = jest
+          .spyOn(project, "addSourceFilesAtPaths")
+          .mockReturnValue(mockReturnFiles);
 
         const result = loadVersionFiles(project, "/api/v1");
 
-        expect(addSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
+        expect(fs.readdirSync).toHaveBeenCalledWith("/api/v1");
+        expect(projectSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
+        expect(result).toBe(mockReturnFiles);
+      });
+
+      it("should return empty array when directory has no TypeScript files", () => {
+        const project = new Project();
+        (fs.readdirSync as jest.Mock).mockReturnValue(["bar.js", "README.md", "config.json"]);
+        const projectSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
+
+        const result = loadVersionFiles(project, "/api/v1");
+
+        expect(fs.readdirSync).toHaveBeenCalledWith("/api/v1");
+        expect(projectSpy).toHaveBeenCalledWith([]);
         expect(result).toEqual([]);
+      });
+
+      it("should return empty array for empty directory", () => {
+        const project = new Project();
+        (fs.readdirSync as jest.Mock).mockReturnValue([]);
+        const projectSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
+
+        const result = loadVersionFiles(project, "/api/v1");
+
+        expect(projectSpy).toHaveBeenCalledWith([]);
+        expect(result).toEqual([]);
+      });
+
+      it("should handle fs.readdirSync errors", () => {
+        const project = new Project();
+        (fs.readdirSync as jest.Mock).mockImplementation(() => {
+          throw new Error("Directory not found");
+        });
+
+        expect(() => loadVersionFiles(project, "/non-existent-dir")).toThrow("Directory not found");
       });
     });
   });

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import prompt from "prompts";
-
+import { CapabilityExport } from "../lib/types";
 import { Assets } from "../lib/assets/assets";
 import { ImagePullSecret } from "../lib/types";
 import { RootCmd } from "./root";
@@ -109,13 +109,7 @@ async function buildAndDeployModule(image: string, force: boolean): Promise<void
   webhook.image = image ?? webhook.image;
   const capabilities = await loadCapabilities(webhook.path);
   for (const capability of capabilities) {
-    namespaceComplianceValidator(capability, webhook.alwaysIgnore?.namespaces);
-    namespaceComplianceValidator(
-      capability,
-      webhook.config.admission?.alwaysIgnore?.namespaces,
-      false,
-    );
-    namespaceComplianceValidator(capability, webhook.config.watch?.alwaysIgnore?.namespaces, true);
+    validateNamespaces(capability, webhook);
   }
   try {
     await webhook.deploy(deployWebhook, force, builtModule.cfg.pepr.webhookTimeout ?? 10);
@@ -162,4 +156,14 @@ export default function (program: RootCmd): void {
 
       await buildAndDeployModule(opts.image, opts.force);
     });
+}
+
+export function validateNamespaces(capability: CapabilityExport, webhook: Assets): void {
+  namespaceComplianceValidator(capability, webhook.alwaysIgnore?.namespaces);
+  namespaceComplianceValidator(
+    capability,
+    webhook.config.admission?.alwaysIgnore?.namespaces,
+    false,
+  );
+  namespaceComplianceValidator(capability, webhook.config.watch?.alwaysIgnore?.namespaces, true);
 }
