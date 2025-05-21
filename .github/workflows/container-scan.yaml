@@ -37,7 +37,6 @@ jobs:
         run: |
           mkdir -p ~/.grype
           echo "ignore:" > ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-0395" >> ~/.grype.yaml
       - name: Vulnerability Scan
         uses: anchore/scan-action@2c901ab7378897c01b8efaa2d0c9bf519cc64b9e # v6.2.0
         with:
