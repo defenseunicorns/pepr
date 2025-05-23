@@ -5,7 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.15.0@sha256:886cb29e11b35f89448cd859371cc321d96fd773978e629ce8ed7f6333df8cc8 AS build
+FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.16.0@sha256:ecc71005908276ea1c625fa4a00829484d3ff760540cc1919dccbc38977e4af3 AS build
 
 WORKDIR /app
 
