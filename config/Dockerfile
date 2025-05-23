@@ -35,7 +35,7 @@ RUN npm run build && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
-FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.15.0-slim@sha256:80f43f7a53733029448de10ab810a1669e1feeb3fa5f34eb64a7d75e476afd45
+FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.16.0-slim@sha256:1f2fb710f35199224ecc43c686b1eae21a62a0fdac68d6b5824e2aab46fa88a5
 
 WORKDIR /app
 
