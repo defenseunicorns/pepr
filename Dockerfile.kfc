@@ -7,7 +7,7 @@
 
 # crane digest cgr.dev/chainguard/node-lts:latest-dev
 # cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM docker.io/library/node@sha256:37c7b4cd8867313fc17ba76c1a6676414c61e2aac113694072bb8e3ef6d0a4c8 AS build
+FROM docker.io/library/node@sha256:78de4efa741a48b2418f6e13434aee4497ba91bd5da339ecd1cb3c55e8873e15 AS build
 
 WORKDIR /app
 
