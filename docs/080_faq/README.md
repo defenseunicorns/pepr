@@ -3,7 +3,7 @@
 ## What is a module author?
 
 A module author is someone who creates a [Pepr Module](../030_user-guide/020_pepr-modules.md) , which defines capabilities to enforce or apply desired state in a Kubernetes cluster.
-If you’ve run npx pepr init to create a module, congratulations — you’re a module author.
+If you’ve run `npx pepr init` to create a module, congratulations — you’re a module author.
 
 ## How do I remove the punycode warning?
 
