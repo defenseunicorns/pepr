@@ -264,6 +264,8 @@ export async function buildModule(
     // Resolve node_modules folder (in support of npm workspaces!)
     const npmRoot = execFileSync("npm", ["root"]).toString().trim();
 
+    execFileSync(`npm uninstall markdownlint-cli`); //Exclude a dev tool from build
+
     // Run `tsc` to validate the module's types & output sourcemaps
     const args = ["--project", `${modulePath}/tsconfig.json`, "--outdir", outputDir];
     execFileSync(`${npmRoot}/.bin/tsc`, args);
