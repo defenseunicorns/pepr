@@ -29,7 +29,8 @@ export default function (program: RootCmd): void {
 
         // Exit if the user doesn't confirm
         if (!confirm.confirm) {
-          process.exit(0);
+          process.exitCode = 0;
+          return;
         }
       }
 
@@ -67,9 +68,11 @@ export default function (program: RootCmd): void {
           try {
             // wait for capabilities to be loaded and test names
             validateCapabilityNames(webhook.capabilities);
-          } catch (e) {
-            console.error(`Error validating capability names:`, e);
-            process.exitCode = 1;
+          } catch (error) {
+            console.error(
+              `CapabilityValidation Error - Unable to valide capability name(s) in: '${webhook.capabilities.map(item => item.name)}'\n${error}`,
+            );
+            process.exit(1);
           }
 
           program = fork(path, {
@@ -115,7 +118,7 @@ export default function (program: RootCmd): void {
         });
       } catch (e) {
         console.error(`Error deploying module:`, e);
-        process.exitCode = 1;
+        process.exit(1);
       }
     });
 }
