@@ -69,7 +69,7 @@ export default function (program: RootCmd): void {
             validateCapabilityNames(webhook.capabilities);
           } catch (e) {
             console.error(`Error validating capability names:`, e);
-            process.exit(1);
+            process.exitCode = 1;
           }
 
           program = fork(path, {
@@ -115,7 +115,7 @@ export default function (program: RootCmd): void {
         });
       } catch (e) {
         console.error(`Error deploying module:`, e);
-        process.exit(1);
+        process.exitCode = 1;
       }
     });
 }
