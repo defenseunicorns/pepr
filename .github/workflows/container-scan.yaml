@@ -37,7 +37,7 @@ jobs:
         run: |
           mkdir -p ~/.grype
           echo "ignore:" > ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-0395" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-4802" >> ~/.grype.yaml
       - name: Vulnerability Scan
         uses: anchore/scan-action@2c901ab7378897c01b8efaa2d0c9bf519cc64b9e # v6.2.0
         with:
@@ -45,7 +45,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
       - name: Generate SBOM
-        uses: anchore/sbom-action@9f7302141466aa6482940f15371237e9d9f4c34a # v0.19.0
+        uses: anchore/sbom-action@e11c554f704a0b820cbf8c51673f6945e0731532 # v0.20.0
         with:
           image: pepr:dev
           upload-artifact: true
