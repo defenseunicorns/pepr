@@ -5,7 +5,13 @@ Pepr comes with the ability to generate Kubernetes Custom Resource Definitions (
 To generate a TypeScript types for a CRD, you can use the `pepr crd create` command. This command allows you to specify the group, version, kind, short name, plural name, and scope of the CRD.
 
 ```bash
-npx pepr crd create --group cache --version v1alpha1 --kind Memcache --shortName mc --plural memcaches --scope Namespaced
+npx pepr crd create \
+  --group cache \
+  --version v1alpha1 \
+  --kind Memcache \
+  --shortName mc \
+  --plural memcaches \
+  --scope Namespaced
 ```
 
 This command will create a TypeScript file in the `crds` directory with the generated types for the specified CRD. The generated file will include the necessary type definitions for the CRD.
