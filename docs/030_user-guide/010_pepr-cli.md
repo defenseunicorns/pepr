@@ -157,7 +157,7 @@ If you are unsure of what commands are available, you can run `npx pepr kfc` to 
 
 For example, to generate usable types from a Kubernetes CRD, you can run `npx pepr kfc crd [source] [directory]`. This will generate the types for the `[source]` CRD and output the generated types to the `[directory]`.
 
-You can learn more about the `kubernetes-fluent-client` [here](https://github.com/defenseunicorns/kubernetes-fluent-client).
+You can [learn more about the `kubernetes-fluent-client` here](https://github.com/defenseunicorns/kubernetes-fluent-client).
 
 ## `npx pepr monitor`
 

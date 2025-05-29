@@ -210,7 +210,7 @@ The failurePolicy and timeouts can be set in the Module's `package.json` file, u
   }
 ```
 
-Read more on customization [here](https://docs.pepr.dev/main/user-guide/customization/).
+Read [more on customization](https://docs.pepr.dev/main/user-guide/customization/).
 
 ### Pepr Store Custom Resource
 

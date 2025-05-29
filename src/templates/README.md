@@ -10,7 +10,7 @@ per-capability or common logic in shared files or folders.
 
 Example Structure:
 
-```
+```text
 Module Root
 ├── package.json
 ├── pepr.ts
