@@ -59,10 +59,12 @@ jobs:
           cd "$PEPR"
           npm ci
 
-      - name: Chainguard Login
-        uses: chainguard-dev/setup-chainctl@272698817627c158bbd813cb783b62a4b9bbbc67 # v0.3.1
+      - name: Rapidfort Login
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
-          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          registry: ${{ secrets.RF_ROOT_URL }}
+          username: ${{ secrets.RAPIDFORT_USERNAME }}
+          password: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
