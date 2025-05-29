@@ -14,7 +14,5 @@
   "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
   ".husky/pre-*": ["shellcheck -f tty"],
-  "*.md": [
-    "markdownlint --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules"
-  ]
+  "*.md": ["scripts/markdownlint.sh"]
 }

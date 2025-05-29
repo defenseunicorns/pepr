@@ -23,8 +23,8 @@
   "scripts": {
     "ci": "npm ci",
     "gen-data-json": "node hack/build-template-data.js",
-    "prebuild": "rm -fr dist/* && npm run gen-data-json",
-    "build": "npm uninstall markdownlint-cli && tsc && node build.mjs && npm pack && npm install -D markdownlint-cli",
+    "prebuild": "rm -fr dist/* && npm uninstall markdownlint-cli && npm run gen-data-json",
+    "build": "npm run prebuild && tsc && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
     "build:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr:dev $(node scripts/read-unicorn-build-args.mjs) .",
     "set:version": "node scripts/set-version.js",
@@ -81,7 +81,6 @@
     "husky": "^9.1.6",
     "jest": "29.7.0",
     "js-yaml": "^4.1.0",
-    "markdownlint-cli": "^0.45.0",
     "shellcheck": "^3.0.0",
     "ts-jest": "29.3.4",
     "undici": "^7.0.1"
