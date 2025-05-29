@@ -104,13 +104,11 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 1. Run `npm run build` to build the package.
 2. For running modified pepr, you have two options:
-
-  - Using `npx ts-node ./src/cli.ts init` to run the modified code directly, without installing it locally.
-    You'll need to also run `npx link <your_dev_pepr_location>` inside your pepr module, to link to the
-    development version of pepr.
-  - Install the pre-build package with `npm install pepr-0.0.0-development.tgz`.
-    You'll need to re-run the installation after every build, though.
-
+    1. Using `npx ts-node ./src/cli.ts init` to run the modified code directly, without installing it locally.
+      You'll need to also run `npx link <your_dev_pepr_location>` inside your pepr module, to link to the
+      development version of pepr.
+    2. Install the pre-build package with `npm install pepr-0.0.0-development.tgz`.
+      You'll need to re-run the installation after every build, though.
 3. Run `npx pepr dev` inside your module's directory to run the modified version of pepr.
 
 > [!TIP]

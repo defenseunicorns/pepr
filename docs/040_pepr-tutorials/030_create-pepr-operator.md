@@ -43,6 +43,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create a new Pepr Module
+
 **[🟢⚪⚪⚪⚪⚪] Step 1 of 6**
 
 First, create a new Pepr module for your operator:
@@ -66,6 +67,7 @@ git init && git add --all && git commit -m "npx pepr init"
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create CRD
+
 **[🟢🟢⚪⚪⚪⚪] Step 2 of 6**
 
 The WebApp Custom Resource Definition (CRD) specifies the structure and validation for your custom resource.
@@ -78,6 +80,7 @@ mkdir -p capabilities/crd/generated capabilities/crd/source
 Generate a class based on the WebApp CRD using [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client).
 This allows us to react to the CRD fields in a type-safe manner.
 Create a CRD named `crd.yaml` for the WebApp that includes:
+
 - Theme selection (dark/light)
 - Language selection (en/es)
 - Configurable replica count
@@ -149,6 +152,7 @@ git add capabilities/crd/ && git commit -m "Create CRD handling logic"
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Helpers
+
 **[🟢🟢🟢⚪⚪⚪] Step 3 of 6**
 
 Now, let's create helper functions that will generate the Kubernetes resources managed by our operator. These helpers will simplify the creation of Deployments, Services, and ConfigMaps for each WebApp instance.
@@ -172,7 +176,7 @@ Our goal is to simplify WebApp deployment. Instead of requiring users to manage 
 
 The controller deploys a `ConfigMap` based on the language and theme specified in the WebApp resource and sets the number of replicas according to the WebApp specification.
 
-Commit your changes for deployment, service, and configmap generation: 
+Commit your changes for deployment, service, and configmap generation:
 
 ```bash
 git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"
@@ -181,6 +185,7 @@ git add capabilities/controller/ && git commit -m "Add generators for WebApp dep
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Create Reconciler
+
 **[🟢🟢🟢🟢⚪⚪] Step 4 of 6**
 
 Now, create the function that reacts to changes in WebApp instances. This function will be called and placed into a queue, guaranteeing ordered and synchronous processing of events, even when the system is under heavy load.
@@ -217,7 +222,6 @@ Commit your changes with:
 git add capabilities/ && git commit -m "Create reconciler for webapps"
 ```
 
-
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Add capability to Pepr Module
@@ -246,6 +250,7 @@ git add pepr.ts && git commit -m "Register WebAppController with pepr module"
 ```
 
 ## Build and Deploy Your Operator
+
 **[🟢🟢🟢🟢🟢⚪] Step 5 of 6**
 
 ### Preparing Your Environment
@@ -300,7 +305,7 @@ The `pepr build` command performs three critical steps:
 
 This process creates a self-contained deployment unit that includes everything needed to run your operator in a Kubernetes cluster.
 
-```
+```text
 ┌─────────────────────┐          ┌──────────────────┐          ┌───────────────────┐
 │                     │          │                  │          │                   │
 │  Your Pepr Code     │────────▶ │  pepr build      │────────▶ │ dist/             │
@@ -333,7 +338,7 @@ kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
    - The WebApp CRD (Custom Resource Definition)
    - A Deployment that runs your operator code
    - The necessary RBAC permissions for your operator to function
-   
+
 2. The second command waits for the operator pod to be ready before proceeding. This ensures your operator is running before you attempt to create WebApp resources.
 
 #### Troubleshooting Deployment Issues
@@ -343,14 +348,17 @@ kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 If your operator doesn't start properly, check these common issues:
 
 1. **Check pod logs**:
+
    ```bash
    kubectl logs -n pepr-system -l app --tail=100
    ```
-   
+
 2. **Verify permissions**:
+
    ```bash
    kubectl describe deployment -n pepr-system
    ```
+
    Look for permission-related errors in the events section.
 
 Verify the deployment was successful by checking if the CRD has been properly registered:
@@ -371,7 +379,8 @@ kubectl explain wa.spec
 ```
 
 Expected Output:
-```
+
+```text
 GROUP:      pepr.io
 KIND:       WebApp
 VERSION:    v1alpha1
@@ -397,18 +406,20 @@ FIELDS:
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
 ## Test Your Operator
+
 **[🟢🟢🟢🟢🟢🟢] Step 6 of 6**
 
 **Understanding reconciliation**  
 
 Reconciliation is the core concept behind Kubernetes operators. It's the process of:
+
 1. Observing the current state of resources in the cluster
 2. Comparing it to the desired state (defined in your custom resource)
 3. Taking actions to align the actual state with the desired state
 
 This continuous loop ensures your application maintains its expected configuration even when disruptions occur.
 
-```
+```text
 ┌───────────────────┐
 │                   │
 │  Custom Resource  │◄────────────┐
@@ -499,6 +510,7 @@ kubectl get wa webapp-light-en -n webapps -ojsonpath="{.status}" | jq
 ```
 
 Expected Output:
+
 ```json
 {
   "observedGeneration": 1,
@@ -518,8 +530,10 @@ You can also see events related to your WebApp that provide a timeline of action
 ```bash
 kubectl describe wa webapp-light-en -n webapps
 ```
+
 Expected Output:
-```
+
+```text
 Name:         webapp-light-en
 Namespace:    webapps
 API Version:  pepr.io/v1alpha1
@@ -553,7 +567,7 @@ echo "Port-forward PID: $PID"
 
 **About port-forwarding**  
 
-Port-forwarding creates a secure tunnel from your local machine to a pod or service in your Kubernetes cluster. In this case, we're forwarding your local port 3000 to port 80 of the WebApp service, allowing you to access the application at http://localhost:3000 in your browser.
+Port-forwarding creates a secure tunnel from your local machine to a pod or service in your Kubernetes cluster. In this case, we're forwarding your local port 3000 to port 80 of the WebApp service, allowing you to access the application at <http://localhost:3000> in your browser.
 
 Now open [http://localhost:3000](http://localhost:3000) in your browser or run `curl http://localhost:3000` to see the response in a terminal.
 The browser should display a light theme web application:
@@ -571,7 +585,8 @@ kubectl get cm -n webapps
 ```
 
 Expected output:
-```
+
+```text
 configmap "kube-root-ca.crt" deleted
 configmap "web-content-webapp-light-en" deleted
 NAME                          DATA   AGE
@@ -634,7 +649,7 @@ The browser should display a dark theme web application:
 
 ![WebApp Dark Theme](resources/030_create-pepr-operator/dark.png)
 
-Now that we've successfully updated a WebApp, commit your changes: 
+Now that we've successfully updated a WebApp, commit your changes:
 
 ```bash
 git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mode in spanish"
@@ -666,7 +681,7 @@ You can also delete the entire test cluster when you're finished:
 k3d cluster delete pepr-dev
 ```
 
-## Congratulations!
+## Congratulations
 
 You've successfully built a Kubernetes operator using Pepr. Through this tutorial, you:
 

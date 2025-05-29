@@ -45,8 +45,8 @@
     "test:journey:unicorn": "npm run test:journey:k3d && npm run test:journey:image:unicorn && npm run test:journey:run",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && jest --detectOpenHandles journey/pepr-upgrade.test.ts",
     "test:unit": "npm run gen-data-json && jest src --coverage --detectOpenHandles --coverageDirectory=./coverage --testPathIgnorePatterns=\"build-artifact.test.ts|src/cli/docs/.*\\.test\\.ts\"",
-    "format:check": "eslint --ignore-pattern src/templates/eslint.config.mjs  src && prettier --config .prettierrc src --check",
-    "format:fix": "eslint --fix --ignore-pattern src/templates/eslint.config.mjs  src && prettier --config .prettierrc src --write",
+    "format:check": "eslint --ignore-pattern src/templates/eslint.config.mjs  src && prettier --config .prettierrc src --check && npx -y markdownlint-cli --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules \"**/*.md\"",
+    "format:fix": "eslint --fix --ignore-pattern src/templates/eslint.config.mjs  src && prettier --config .prettierrc src --write && npx -y markdownlint-cli --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules \"**/*.md\"",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
   },
   "dependencies": {

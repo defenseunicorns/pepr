@@ -31,7 +31,7 @@ Build a Pepr Module for deployment.
 - `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
 - `-i, --custom-image <custom-image>` - Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
-- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.
+- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `'registry/username/custom-pepr-controller:<current-version>'`.
 - `-o, --output-dir <output directory>` - Define where to place build output
 - `--timeout <timeout>` - How long the API server should wait for a webhook to respond before treating the call as a failure
 - `--withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment. (default: "")
@@ -157,8 +157,7 @@ If you are unsure of what commands are available, you can run `npx pepr kfc` to 
 
 For example, to generate usable types from a Kubernetes CRD, you can run `npx pepr kfc crd [source] [directory]`. This will generate the types for the `[source]` CRD and output the generated types to the `[directory]`.
 
-You can learn more about the `kubernetes-fluent-client` [here](https://github.com/defenseunicorns/kubernetes-fluent-client).
-
+You can [learn more about the `kubernetes-fluent-client` here](https://github.com/defenseunicorns/kubernetes-fluent-client).
 
 ## `npx pepr monitor`
 
