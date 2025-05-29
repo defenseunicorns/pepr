@@ -311,10 +311,6 @@ describe("Capability", () => {
       }
 
       expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
-      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith(
-        "Executing reconcile action with alias: no alias provided",
-      );
       expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
     });
 
@@ -353,10 +349,6 @@ describe("Capability", () => {
       }
 
       expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
-      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith(
-        "Executing finalize action with alias: no alias provided",
-      );
       expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
     });
 
@@ -380,11 +372,6 @@ describe("Capability", () => {
       const testPod = new V1Pod();
       await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
 
-      // Assert that aliasLogger was used
-      expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-      expect(mockLog.info).toHaveBeenCalledWith(
-        "Executing watch action with alias: no alias provided",
-      );
       expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
     });
   });
@@ -412,7 +399,6 @@ describe("Capability", () => {
       .Alias("first-alias")
       .Mutate(firstMutateCallback);
 
-    // Second mutation without an alias (should use "no alias provided")
     capability.When(a.Pod).IsCreatedOrUpdated().InNamespace("default").Mutate(secondMutateCallback);
 
     expect(capability.bindings).toHaveLength(2);
@@ -434,41 +420,6 @@ describe("Capability", () => {
     }
 
     expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
-    expect(mockLog.child).toHaveBeenCalledWith({ alias: "no alias provided" });
-    expect(mockLog.info).toHaveBeenCalledWith(
-      "Executing mutation action with alias: no alias provided",
-    );
-  });
-
-  it("should log 'no alias provided' if alias is not set in validate callback", async () => {
-    const capability = new Capability(capabilityConfig);
-
-    // Mock the validate callback
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
-        logger.info("Validate action log");
-        return { allowed: true };
-      },
-    );
-
-    // Do not set alias, to trigger "no alias provided"
-    capability.When(a.Pod).IsCreatedOrUpdated().Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    const binding = capability.bindings[0];
-
-    // Simulate the validation action
-    const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
-
-    if (binding.validateCallback) {
-      await binding.validateCallback(mockPeprRequest);
-    }
-
-    // Expect the log to contain "no alias provided"
-    expect(mockLog.info).toHaveBeenCalledWith(
-      "Executing validate action with alias: no alias provided",
-    );
-    expect(mockLog.info).toHaveBeenCalledWith("Validate action log");
   });
 
   it("should register a Watch action and execute it with the logger", async () => {

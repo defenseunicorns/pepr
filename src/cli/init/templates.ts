@@ -68,7 +68,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
     description: opts.description,
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     engines: {
-      node: ">=18.0.0",
+      node: ">=20.0.0",
     },
     pepr: {
       uuid: pgkVerOverride ? "static-test" : uuid,

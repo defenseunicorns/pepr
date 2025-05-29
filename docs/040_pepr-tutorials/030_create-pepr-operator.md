@@ -27,7 +27,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 - Access to the `curl` command
 - Basic understanding of Kubernetes concepts
 - Familiarity with TypeScript
-- Node.js ≥ 18.0
+- Node.js ≥ 20.0
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
