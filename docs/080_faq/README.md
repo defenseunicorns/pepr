@@ -1,5 +1,15 @@
 # Frequently Asked Questions
 
+## What is the difference between `.Watch()` and `.Reconcile()`?
+
+`.Watch()` and `.Reconcile()` are two different actions used in Pepr to handle events in a Kubernetes cluster, the difference is that `.Reconcile()` processes events in a queue based on a specific configuration defined by the user, while `.Watch()` processes events as soon as they are received.
+
+What does this mean?  
+
+If you are updating a resource in the cluster, `Watch()` may process the events out of order, which can lead to unexpected behavior. For example, if you are updating a resource and then deleting it, `Watch()` may process the delete event before the update event if the update payload takes less time to complete, which can lead to the resource being deleted before it is updated.
+
+`Reconcile()` processes events in a queue, which means that it will process the events in the order they were received. This ensures that the events are processed in the correct order no matter the execution time, which can help prevent unexpected behavior.
+
 ## What is a module author?
 
 A module author is someone who creates a [Pepr Module](../030_user-guide/020_pepr-modules.md) , which defines capabilities to enforce or apply desired state in a Kubernetes cluster.
