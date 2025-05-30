@@ -99,7 +99,7 @@ export function getWatcher(
           terminationGracePeriodSeconds: 5,
           serviceAccountName: name,
           securityContext: {
-            runAsUser: 65532,
+            runAsUser: image.includes("private") ? 1000 : 65532,
             runAsGroup: 65532,
             runAsNonRoot: true,
             fsGroup: 65532,
@@ -142,7 +142,7 @@ export function getWatcher(
                 },
               },
               securityContext: {
-                runAsUser: 65532,
+                runAsUser: image.includes("private") ? 1000 : 65532,
                 runAsGroup: 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
@@ -238,7 +238,7 @@ export function getDeployment(
           priorityClassName: "system-node-critical",
           serviceAccountName: name,
           securityContext: {
-            runAsUser: 65532,
+            runAsUser: image.includes("private") ? 1000 : 65532,
             runAsGroup: 65532,
             runAsNonRoot: true,
             fsGroup: 65532,
@@ -282,7 +282,7 @@ export function getDeployment(
               },
               env: genEnv(config),
               securityContext: {
-                runAsUser: 65532,
+                runAsUser: image.includes("private") ? 1000 : 65532,
                 runAsGroup: 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
