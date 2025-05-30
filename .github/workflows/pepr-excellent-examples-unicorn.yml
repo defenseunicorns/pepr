@@ -72,6 +72,7 @@ jobs:
           cd "$PEPR"
           npm run build:image:unicorn
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          docker images
           ls -l ${GITHUB_WORKSPACE}
 
       - name: build pepr package and kfc dev container image
