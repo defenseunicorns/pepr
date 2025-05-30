@@ -57,7 +57,7 @@ export async function overridesFile(
         "pepr.dev/uuid": config.uuid,
       },
       securityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         fsGroup: 65532,
@@ -89,7 +89,7 @@ export async function overridesFile(
         },
       },
       containerSecurityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
@@ -123,7 +123,7 @@ export async function overridesFile(
         "pepr.dev/uuid": config.uuid,
       },
       securityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         fsGroup: 65532,
@@ -155,7 +155,7 @@ export async function overridesFile(
         },
       },
       containerSecurityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
