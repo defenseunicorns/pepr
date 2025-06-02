@@ -249,9 +249,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isValidate: true,
           validateCallback: async (req, logger = aliasLogger) => {
-            Log.info(
-              `Executing validate action with alias: ${binding.alias || "no alias provided"}`,
-            );
+            if (binding.alias) {
+              Log.info(`Executing validate action with alias: ${binding.alias}`);
+            }
             return await validateCallback(req, logger);
           },
         });
@@ -273,9 +273,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isMutate: true,
           mutateCallback: async (req, logger = aliasLogger) => {
-            Log.info(
-              `Executing mutation action with alias: ${binding.alias || "no alias provided"}`,
-            );
+            if (binding.alias) {
+              Log.info(`Executing mutation action with alias: ${binding.alias}`);
+            }
             await mutateCallback(req, logger);
           },
         });
@@ -300,7 +300,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isWatch: true,
           watchCallback: async (update, phase, logger = aliasLogger) => {
-            Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
+            if (binding.alias) {
+              Log.info(`Executing watch action with alias: ${binding.alias}`);
+            }
             await watchCallback(update, phase, logger);
           },
         });
@@ -324,9 +326,9 @@ export class Capability implements CapabilityExport {
           isWatch: true,
           isQueue: true,
           watchCallback: async (update, phase, logger = aliasLogger) => {
-            Log.info(
-              `Executing reconcile action with alias: ${binding.alias || "no alias provided"}`,
-            );
+            if (binding.alias) {
+              Log.info(`Executing reconcile action with alias: ${binding.alias}`);
+            }
             await reconcileCallback(update, phase, logger);
           },
         });
@@ -363,9 +365,9 @@ export class Capability implements CapabilityExport {
             update: InstanceType<T>,
             logger = aliasLogger,
           ): Promise<boolean | void> => {
-            Log.info(
-              `Executing finalize action with alias: ${binding.alias || "no alias provided"}`,
-            );
+            if (binding.alias) {
+              Log.info(`Executing finalize action with alias: ${binding.alias}`);
+            }
             return await finalizeCallback(update, logger);
           },
         };

@@ -1,5 +1,45 @@
 # Frequently Asked Questions
 
+## Difference between `.Watch()` vs. `.Reconcile()` in Pepr
+
+`.Watch()` and `.Reconcile()` are two distinct mechanisms in Pepr used to handle Kubernetes events. The core difference is **when** and **how** they process events:
+
+- **`.Watch()`** processes events **immediately** as they arrive, without any ordering guarantees.
+- **`.Reconcile()`** processes events **sequentially** through a queue, based on a user-defined configuration.
+
+### Why This Matters
+
+If you're performing multiple operations on the same resource, using `.Watch()` can lead to **out-of-order event handling**.
+
+**Example:**  
+Suppose your controller updates a resource and then deletes it. With `.Watch()`, the delete event might be processed **before** the update if the update takes longer to complete. This could result in the resource being deleted before it was properly updated — leading to **unexpected behavior**.
+
+### How `.Reconcile()` Solves This
+
+`.Reconcile()` ensures **event order is preserved** by placing events into a queue. Events are then processed **in the order they were received**, regardless of their processing time. This reduces race conditions and increases predictability.
+
+### `Reconcile()` Queue Configurations
+
+You can configure `.Reconcile()` with different queue granularities depending on your desired level of isolation:
+
+| Option         | Description                                                                                                    | Example                                                                                   |
+|----------------|----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `kind`         | One queue per resource kind.                                                                                   | All Deployments share a queue, all Pods share a queue, etc.                              |
+| `kindNs`       | One queue per kind **within each namespace**.                                                                  | Deployments in `default` share a queue; Pods in `default` share a different one.         |
+| `kindNsName`   | One queue **per resource**, keyed by kind + namespace + name. _(Recommended)_                                  | Events for `Deployment/default/my-deployment` are processed in their own dedicated queue.|
+| `global`       | A **single global queue** for all events.                                                                      | All events across all kinds and namespaces are funneled into one queue.                  |
+
+### Summary
+
+- Use **`.Watch()`** when immediate reaction is acceptable and event order doesn't matter.
+- Use **`.Reconcile()`** when consistency and **event order are critical**, especially for updates, deletes, or resource coordination.
+- Prefer `kindNsName` mode for most real-world workloads to ensure per-resource consistency.
+
+## What is a module author?
+
+A module author is someone who creates a [Pepr Module](../030_user-guide/020_pepr-modules.md) , which defines capabilities to enforce or apply desired state in a Kubernetes cluster.
+If you’ve run `npx pepr init` to create a module, congratulations — you’re a module author.
+
 ## How do I remove the punycode warning?
 
 By default, warnings are removed. You can allow warnings by setting the `PEPR_NODE_WARNINGS` environment variable.
@@ -26,17 +66,17 @@ Pepr and Operator SDK are both frameworks used for building Kubernetes operators
 
 Similarities:
 
-* **Scaffolding**: Automatically generate boilerplate code for new operators and Kubernetes manifests for building controllers.
-* **Helper Functions**: Provide utility functions to interact with Kubernetes resources and manage the lifecycle of Kubernetes resources.
-* **Admission Webhooks and Kubernetes Controllers**: Both support building admission and Kubernetes controllers by reacting to changes in the cluster in an automated way.
+- **Scaffolding**: Automatically generate boilerplate code for new operators and Kubernetes manifests for building controllers.
+- **Helper Functions**: Provide utility functions to interact with Kubernetes resources and manage the lifecycle of Kubernetes resources.
+- **Admission Webhooks and Kubernetes Controllers**: Both support building admission and Kubernetes controllers by reacting to changes in the cluster in an automated way.
 
 Differences:
 
-* **Main Goals**: Operator SDK is mainly focused on building operators and later included support for Webhooks. In contrast, Pepr started out as a framework for building Webhooks and later added support for building operators via [Kubernetes-Fluent-Client](https://github.com/defenseunicorns/kubernetes-fluent-client) through [Watch](../030_user-guide/030_actions/040_watch.md) and [Reconcile](../030_user-guide/030_actions/030_reconcile.md).
-* **Language Support**: Operator SDK supports Go, Ansible, and Helm, while Pepr is written in TypeScript and designed with an English style fluent API for simplicity.
-* **Lifecycle Management**: Operator SDK provides tools for managing the lifecycle of operators through OLM (Operator Lifecycle Manager), while Pepr relies on [Helm](../030_user-guide/120_customization.md) for upgrades.
-* **Complexity**: Operator SDK uses native Kubernetes Go libraries for deep integration with Kubernetes resources, while Pepr exposes a high-level abstraction allowing users to focus on business logic.
-* **Easy Setup**: While both make it easy to initialize a new project, Pepr comes with an out-of-the-box `hello-pepr.ts` example which demonstrates how to use Pepr effectively.
+- **Main Goals**: Operator SDK is mainly focused on building operators and later included support for Webhooks. In contrast, Pepr started out as a framework for building Webhooks and later added support for building operators via [Kubernetes-Fluent-Client](https://github.com/defenseunicorns/kubernetes-fluent-client) through [Watch](../030_user-guide/030_actions/040_watch.md) and [Reconcile](../030_user-guide/030_actions/030_reconcile.md).
+- **Language Support**: Operator SDK supports Go, Ansible, and Helm, while Pepr is written in TypeScript and designed with an English style fluent API for simplicity.
+- **Lifecycle Management**: Operator SDK provides tools for managing the lifecycle of operators through OLM (Operator Lifecycle Manager), while Pepr relies on [Helm](../030_user-guide/120_customization.md) for upgrades.
+- **Complexity**: Operator SDK uses native Kubernetes Go libraries for deep integration with Kubernetes resources, while Pepr exposes a high-level abstraction allowing users to focus on business logic.
+- **Easy Setup**: While both make it easy to initialize a new project, Pepr comes with an out-of-the-box `hello-pepr.ts` example which demonstrates how to use Pepr effectively.
 
 ## How does Pepr compare to Kyverno?
 
@@ -44,17 +84,17 @@ Although Pepr and Kyverno have similarities, Pepr is very different than Kyverno
 
 Similarities:
 
-* Both have Mutating Webhooks that can dynamically change resources before admission
-* Both have Validating Webhooks to configure what can/cannot go through admission
-* Both provide a way to react to changes to pre-existing cluster resources (i.e., resources that have already gone through admission)
+- Both have Mutating Webhooks that can dynamically change resources before admission
+- Both have Validating Webhooks to configure what can/cannot go through admission
+- Both provide a way to react to changes to pre-existing cluster resources (i.e., resources that have already gone through admission)
 
 Differences:
 
-* Pepr is more like a "framework" than a tool. In Pepr you create a Pepr [Module](../030_user-guide/020_pepr-modules.md). In the Pepr module you define [capabilities](../030_user-guide/040_capabilities.md) that enforce / apply desired cluster state.
-* Pepr is written in TypeScript. Kyverno is written in Go.
-* Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
-* Pepr can be used to reconcile events in order, similar to Kube-Builder or Operator SDK.
-* Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource.
+- Pepr is more like a "framework" than a tool. In Pepr you create a Pepr [Module](../030_user-guide/020_pepr-modules.md). In the Pepr module you define [capabilities](../030_user-guide/040_capabilities.md) that enforce / apply desired cluster state.
+- Pepr is written in TypeScript. Kyverno is written in Go.
+- Pepr provides the flexibility of a full-fledged, strongly typed programming language to decide what decisions to make based on events happening in the cluster. With Kyverno, you are limited to the constraints of YAML.
+- Pepr can be used to reconcile events in order, similar to Kube-Builder or Operator SDK.
+- Pepr can apply a CustomResourceDefinition and control cluster state based on that custom resource.
 
 Both Pepr and Kyverno are great tools. Which one to use for your project depends on your use case.
 
@@ -108,8 +148,8 @@ If you want to ensure the cache has been cleared, you can check the cache direct
 
 Please report it by opening an issue in the [Pepr GitHub repository](https://github.com/defenseunicorns/pepr/issues). Please include as much information as possible in your bug report, including:
 
-* The version of Pepr you are using
-* The version of Kubernetes you are using
+- The version of Pepr you are using
+- The version of Kubernetes you are using
 
 ## I've found a security issue, what should I do?
 

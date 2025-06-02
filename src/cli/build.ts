@@ -82,7 +82,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "-r, --registry-info [<registry>/<username>]",
-        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes 'registry/username/custom-pepr-controller:<current-version>'.",
+        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `'registry/username/custom-pepr-controller:<current-version>'`.",
       ).conflicts(["customImage", "registry"]),
     )
 

@@ -18,7 +18,7 @@ _If you prefer not to use VSCode, you can also modify or copy the `HelloPepr` ca
 
 ## Reusable Capabilities
 
-Pepr has an NPM org managed by Defense Unicorns, `@pepr`, where capabilities are published for reuse in other Pepr Modules. You can find a list of published capabilities [here](https://www.npmjs.com/search?q=@pepr).
+Pepr has an NPM org managed by Defense Unicorns, `@pepr`, where capabilities are published for reuse in other Pepr Modules. You can find a list of [published capabilities here](https://www.npmjs.com/search?q=@pepr).
 
 You also can publish your own Pepr capabilities to NPM and import them.  A couple of things you'll want to be aware of when publishing your own capabilities:
 

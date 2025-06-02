@@ -5,8 +5,8 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-ARG BUILD_IMAGE=docker.io/library/node@sha256:c29271c7f2b4788fe9b90a7506d790dc8f2ff46132e1b70e71bf0c0679c8451c
-ARG BASE_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot@sha256:894873fc72ea5731e38cf3cfa75a6a3b1985a9330e46bb4d81162e6a184f212e
+ARG BUILD_IMAGE=docker.io/library/node@sha256:37c7b4cd8867313fc17ba76c1a6676414c61e2aac113694072bb8e3ef6d0a4c8
+ARG BASE_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot@sha256:595dcd85af33b16450868993ec48992c82d90a692fb0d5c6f435bca16edb85d6
 
 FROM ${BUILD_IMAGE} AS build
 

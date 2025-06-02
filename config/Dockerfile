@@ -5,7 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.15.0@sha256:886cb29e11b35f89448cd859371cc321d96fd773978e629ce8ed7f6333df8cc8 AS build
+FROM quay.io/rfcurated/node:22.16.0-jammy-fips-rfcurated@sha256:e327925a3e5ba4f0fd3a7af2a561d532f4e1ef3ddbe1568a83e0778e273e7ab7 AS build
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN npm run build && \
     cp package.json node_modules/pepr
 
 ##### DELIVER #####
-FROM cgr.dev/du-uds-defenseunicorns/node-fips:22.15.0-slim@sha256:80f43f7a53733029448de10ab810a1669e1feeb3fa5f34eb64a7d75e476afd45
+FROM quay.io/rfcurated/node:22.16.0-jammy-fips-rfcurated@sha256:e327925a3e5ba4f0fd3a7af2a561d532f4e1ef3ddbe1568a83e0778e273e7ab7
 
 WORKDIR /app
 

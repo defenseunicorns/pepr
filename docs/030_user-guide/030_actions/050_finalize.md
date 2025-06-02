@@ -10,7 +10,6 @@ This method will:
 
 1. Remove the injected finalizer from the `metadata.finalizers` field of the requested resource.
 
-
 ```ts
 When(a.ConfigMap)
   .IsCreated()

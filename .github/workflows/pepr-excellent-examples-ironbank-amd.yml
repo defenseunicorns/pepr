@@ -92,7 +92,7 @@ jobs:
         with:
           max_attempts: 3
           retry_on: error
-          timeout_minutes: 6
+          timeout_minutes: 8
           command: |
             cd $PEPR_EXCELLENT_EXAMPLES_PATH
 

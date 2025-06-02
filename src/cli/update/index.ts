@@ -56,7 +56,7 @@ export default function (program: RootCmd): void {
         console.log(`✅ Module updated successfully`);
       } catch (e) {
         console.error(`Error updating Pepr module:`, e);
-        process.exit(1);
+        process.exitCode = 1;
       }
     });
 
@@ -87,9 +87,10 @@ export default function (program: RootCmd): void {
             await write(tsPath, helloPepr.data);
           }
         }
+        throw new Error("another error, for testing");
       } catch (e) {
         console.error(`Error updating template files:`, e);
-        process.exit(1);
+        process.exitCode = 1;
       }
     });
 }
