@@ -143,7 +143,7 @@ Action is a discrete set of behaviors defined in a single function that acts on 
 
 For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There are also `Watch()` and `Reconcile()` actions that can be used to watch for changes to Kubernetes resources that already exist. There is also a `Finalize()` action that adds a finalizer to a resource and can be used to perform cleanup operations when a resource is deleted.
+There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There are also `Watch()` and `Reconcile()` actions that can be used to watch for changes to Kubernetes resources that already exist. Finally, the `Finalize()` can be used after `Watch()` or `Reconcile()` to perform cleanup operations when the resource is deleted.
 
 See [actions](./docs/030_user-guide/030_actions/README.md) for more details.
 
