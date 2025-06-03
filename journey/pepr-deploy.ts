@@ -33,7 +33,8 @@ export function peprDeploy() {
      * when controller starts up, it will migrate the store
      * and later on the keys will be tested to validate the migration
      */
-    execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
+    const image = process.env.PEPR_IMAGE || "pepr:dev";
+    execSync(`npx pepr deploy -i ${image} --confirm`, { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
     await Promise.all([

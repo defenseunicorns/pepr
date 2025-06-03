@@ -38,7 +38,7 @@
     "test:journey-wasm": "npm run test:journey:k3d && npm run build && npm run test:journey:image && npm run test:journey:run-wasm",
     "test:journey-wasm:unicorn": "npm run test:journey:k3d && npm run build && npm run test:journey:image:unicorn && npm run test:journey:run-wasm",
     "test:journey:image": "docker buildx build --output type=docker --tag pepr:dev . && k3d image import pepr:dev -c pepr-dev",
-    "test:journey:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr:dev $(node scripts/read-unicorn-build-args.mjs) . && k3d image import pepr:dev -c pepr-dev",
+    "test:journey:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr/private:dev $(node scripts/read-unicorn-build-args.mjs) . && k3d image import pepr/private:dev -c pepr-dev",
     "test:journey:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system",
     "test:journey:run": "jest --detectOpenHandles journey/entrypoint.test.ts && npm run test:journey:upgrade",
     "test:journey:run-wasm": "jest --detectOpenHandles journey/entrypoint-wasm.test.ts",
