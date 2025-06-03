@@ -45,6 +45,6 @@ jobs:
 
       - run: npm ci
       - run: |
-          PEPR_IMAGE=pepr/private:dev
+          export PEPR_IMAGE=pepr/private:dev
           npm run test:journey:unicorn
           npm run test:journey-wasm:unicorn
