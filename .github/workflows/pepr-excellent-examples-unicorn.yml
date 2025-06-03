@@ -97,7 +97,7 @@ jobs:
         run: |
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
-          docker image save --output "$PEPR_TAR" pepr:dev
+          docker image save --output "$PEPR_TAR" pep/private:dev
 
       - name: upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -216,7 +216,7 @@ jobs:
           command: |
             cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
             npm run --workspace=${{ matrix.name }} test:e2e -- \
-              --image pepr:dev \
+              --image pepr/private:dev \
               --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
