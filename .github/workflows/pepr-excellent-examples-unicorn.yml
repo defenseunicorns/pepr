@@ -73,7 +73,12 @@ jobs:
           npm run build:image:unicorn
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
-
+          if ! docker images | grep -q "pepr.*dev"; then
+            echo "pepr:dev image not found"
+            docker images
+            node -e "process.exit(1)"
+          fi
+          
       - name: build pepr package and kfc dev container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
