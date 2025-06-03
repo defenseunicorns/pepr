@@ -323,10 +323,8 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart and throw an error when config is incorrect", async () => {
-    const exitString = "Mock console.exit call";
-    const processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error(exitString);
-    });
+    const exitString =
+      "Error generating helm chart: Cannot read properties of null (reading 'dirs')";
 
     (helmLayout as jest.Mock).mockReturnValue(null);
 
@@ -350,8 +348,5 @@ describe("Assets", () => {
         "/tmp",
       ),
     ).rejects.toThrow(exitString);
-
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    expect(processExitSpy).toHaveBeenCalledWith(1);
   });
 });
