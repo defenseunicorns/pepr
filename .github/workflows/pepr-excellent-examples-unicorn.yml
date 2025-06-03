@@ -73,6 +73,7 @@ jobs:
           npm run build:image:unicorn
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
+          docker images
           if ! docker images | grep -q "pepr.*dev"; then
             echo "pepr:dev image not found"
             docker images
