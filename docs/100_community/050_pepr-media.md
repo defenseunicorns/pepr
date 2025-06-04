@@ -5,6 +5,7 @@
 ### Presentations
 
 - Building Smarter Kubernetes Workflows: Pepr for the modern SRE
+- [Shipping Software faster and Safer with Pepr](https://open.spotify.com/episode/3ZtXKLCsMN0hFHXCinCZVT?si=c824f1ace8ca4960)
 
 ## 2024
 
