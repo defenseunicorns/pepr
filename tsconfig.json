@@ -10,11 +10,17 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/templates/*", "!src/templates/eslint.config.mjs"]
+  "include": ["src/**/*.ts", "integration/cli/**/*.ts", "integration/helpers/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/templates/*",
+    "!src/templates/eslint.config.mjs",
+    "integration/testroot"
+  ]
 }
