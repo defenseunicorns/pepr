@@ -22,7 +22,7 @@ If you've previously starred Pepr, or if you find it a useful project, we would 
 <!-- markdownlint-disable MD033 - Image-styling is unsupported on GitHub-flavored markdown -->
 <img alt="The Pepr Logo" align="right" width="40%" src="_images/pepr.png" />
 
-Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops organizational knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
+Pepr simplifies Kubernetes management by providing an alternative to complex YAML configurations, custom scripts, and ad-hoc solutions. As a Kubernetes controller, Pepr enables you to define Kubernetes transformations using TypeScript, accessible through straightforward configurations even without extensive development expertise. Pepr transforms disparate implementation approaches into a cohesive, well-structured, and maintainable system. With Pepr, you can efficiently convert organizational knowledge into code, improving documentation, testing, validation, and change management for more predictable outcomes.
 
 ## Features
 
@@ -48,7 +48,7 @@ This quick sample shows how to react to a ConfigMap being created or updated in 
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
-  .WithLabel("unicorn", "rainbow")
+  .WithLabel("example", "value")
   // Create a Mutate Action for the ConfigMap
   .Mutate(request => {
     // Add a label and annotation to the ConfigMap
@@ -58,7 +58,7 @@ When(a.ConfigMap)
     request.Raw.data["doug-says"] = "Pepr is awesome!";
 
     // Log a message to the Pepr controller logs
-    Log.info("A 🦄 ConfigMap was created or updated:");
+    Log.info("A ConfigMap was created or updated:");
   })
   // Create a Validate Action for the ConfigMap
   .Validate(request => {
@@ -68,7 +68,7 @@ When(a.ConfigMap)
     }
 
     // Reject the ConfigMap if it doesn't have the label
-    return request.Deny("ConfigMap must have a unicorn label");
+    return request.Deny("ConfigMap must have the required pepr label");
   })
   // Watch behaves like controller-runtime's Manager.Watch()
   .Watch(async (cm, phase) => {
@@ -98,7 +98,7 @@ When(a.ConfigMap)
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
   - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
-## Wow, too many words! tl;dr
+## Quick Start Guide
 
 ```bash
 # Create a new Pepr Module
@@ -112,8 +112,6 @@ npm run k3d-setup
 # run `npx pepr dev --host <your_hostname>`
 npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
-
-# Be amazed and ⭐️ this repo!
 ```
 
 > [!TIP]
