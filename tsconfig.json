@@ -10,7 +10,7 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": ".",
+    "rootDir": "src",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
