@@ -15,7 +15,7 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts", "integration/cli/**/*.ts", "integration/helpers/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "node_modules",
     "dist",
