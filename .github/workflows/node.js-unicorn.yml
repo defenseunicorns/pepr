@@ -37,11 +37,13 @@ jobs:
         shell: bash
 
       - name: Rapidfort Login
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
-          registry: "quay.io"
-          username: ${{ secrets.RAPIDFORT_USERNAME }}
-          password: ${{ secrets.RAPIDFORT_PASSWORD }}
+          max_attempts: 5
+          retry_on: error
+          timeout_minutes: 1
+          command: |
+            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io -u "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - run: npm ci
       - run: |
