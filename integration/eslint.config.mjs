@@ -16,29 +16,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: [
-      "**/node_modules",
-      "**/dist",
-      "**/hack",
-      "**/pepr-test-module",
-      "**/build.mjs",
-      "**/journey",
-      "**/__mocks__",
-      "integration/testroot",
-      "integration/cli/build.configequality.test.ts",
-      "integration/cli/build.defaults.test.ts",
-      "integration/cli/build.envvars.test.ts",
-      "integration/cli/build.help.test.ts",
-      "integration/cli/build.noembed.test.ts",
-      "integration/cli/build.nonconflict.test.ts",
-      "integration/cli/build.rbacmode.test.ts",
-      "integration/cli/build.registryinfo.test.ts",
-      "integration/cli/crd.test.ts",
-      "integration/cli/dev.dev-test.test.ts",
-      "integration/cli/format.format.test.ts",
-      "integration/cli/init.test.ts",
-      "integration/eslint.config.mjs",
-    ],
+    ignores: ["integration/testroot"],
   },
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
   {
@@ -122,7 +100,7 @@ export default [
   },
   {
     files: ["**/*.ts"],
-    ignores: ["**/*.test.ts"],
+    // ignores: ["**/*.test.ts"],
 
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",
