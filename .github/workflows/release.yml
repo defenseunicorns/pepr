@@ -40,7 +40,7 @@ jobs:
           retry_on: error
           timeout_minutes: 1
           command: |
-            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io -u "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
+            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - name: "Pepr Controller: Login to GHCR"
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
