@@ -14,7 +14,7 @@ updates:
         dependency-type: "development"
     ignore:
       - dependency-name: "jest"
-        versions: ["30.x"]
+        versions: ["30"]
  
   - package-ecosystem: github-actions
     directory: /
