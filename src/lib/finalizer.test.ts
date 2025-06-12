@@ -14,6 +14,14 @@ jest.mock("kubernetes-fluent-client");
 const mockK8s = jest.mocked(K8s);
 const mockRegisterKind = jest.mocked(RegisterKind);
 
+jest.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 const PEPR_FINALIZER = "pepr.dev/finalizer";
 
 describe("addFinalizer", () => {
