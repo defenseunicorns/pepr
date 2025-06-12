@@ -90,7 +90,8 @@
     "undici": "^7.0.1"
   },
   "overrides": {
-    "glob": "^9.0.0"
+    "glob": "^9.0.0",
+    "brace-expansion": "1.1.11"
   },
   "peerDependencies": {
     "@types/prompts": "2.4.9",
