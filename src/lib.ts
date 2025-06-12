@@ -8,8 +8,10 @@ import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
 import * as sdk from "./sdk/sdk";
+import { metricsCollector } from "./lib/telemetry/metrics";
 
 export {
+  metricsCollector,
   Capability,
   K8s,
   Log,
