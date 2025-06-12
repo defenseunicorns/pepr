@@ -43,7 +43,7 @@ jobs:
           retry_on: error
           timeout_minutes: 1
           command: |
-            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io -u "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
+            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - run: npm ci
       - run: |

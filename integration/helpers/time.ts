@@ -15,14 +15,18 @@ export async function nap(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function toMs(human: string) {
+export function toMs(human: string): number {
   const splits = human.split("").map(str => str.trim());
 
   const groups: string[] = [];
   splits.forEach(next => {
     const tail = groups.at(-1) as string;
-    const sameKind = (tail: string, next: string) => /\d+/.test(tail) === /\d+/.test(next);
-    sameKind(tail, next) ? groups.splice(-1, 1, `${tail}${next}`) : groups.push(next);
+    const sameKind = (tail: string, next: string): boolean => /\d+/.test(tail) === /\d+/.test(next);
+    if (sameKind(tail, next)) {
+      groups.splice(-1, 1, `${tail}${next}`);
+    } else {
+      groups.push(next);
+    }
   });
 
   const pairs = groups.reduce<[string, string][]>(
@@ -59,7 +63,7 @@ function reduceBy(unit: number, ms: number): [number, number] {
   return [result, remain];
 }
 
-export function toHuman(ms: number) {
+export function toHuman(ms: number): string {
   let [y, mo, w, d, h, m, s] = Array(7).fill(0);
   let remain = ms;
 
