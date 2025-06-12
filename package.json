@@ -33,7 +33,7 @@
     "test:docs": "jest --verbose src/cli/docs/*.test.ts",
     "test:integration": "npm run test:integration:prep && npm run test:integration:run",
     "test:integration:prep": "./integration/prep.sh",
-    "test:integration:run": "jest --maxWorkers=4 integration",
+    "test:integration:run": "vitest run integration",
     "test:journey": "npm run test:journey:k3d && npm run build && npm run test:journey:image && npm run test:journey:run",
     "test:journey-wasm": "npm run test:journey:k3d && npm run build && npm run test:journey:image && npm run test:journey:run-wasm",
     "test:journey-wasm:unicorn": "npm run test:journey:k3d && npm run build && npm run test:journey:image:unicorn && npm run test:journey:run-wasm",
@@ -87,7 +87,8 @@
     "js-yaml": "^4.1.0",
     "shellcheck": "^3.0.0",
     "ts-jest": "29.3.4",
-    "undici": "^7.0.1"
+    "undici": "^7.0.1",
+    "vitest": "^3.2.3"
   },
   "overrides": {
     "glob": "^9.0.0",
