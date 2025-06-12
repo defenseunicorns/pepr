@@ -162,7 +162,7 @@ const fetchOpts: RequestInit = {
 };
 
 // Wait for the server to start and report healthy
-async function waitForServer() {
+async function waitForServer(): Promise<void> {
   const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
   if (!resp.ok) {
     await sleep(2);
@@ -170,7 +170,7 @@ async function waitForServer() {
   }
 }
 
-async function validateAPIPath() {
+async function validateAPIPath(): Promise<void> {
   const mutateUrl = `${fetchBaseUrl}/mutate/`;
   const validateUrl = `${fetchBaseUrl}/validate/`;
   const fetchPushOpts = { ...fetchOpts, method: "POST" };
@@ -188,13 +188,13 @@ async function validateAPIPath() {
   expect(evilValidatePath.status).toBe(401);
 }
 
-async function validateMetrics() {
+async function validateMetrics(): Promise<string> {
   const metricsOk = await fetch<string>(`${fetchBaseUrl}/metrics`, fetchOpts);
   expect(metricsOk.ok).toBe(true);
 
   return metricsOk.data;
 }
 
-function sleep(seconds: number) {
+function sleep(seconds: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
