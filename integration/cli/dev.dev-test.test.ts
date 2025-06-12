@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, afterAll, describe, expect, it, jest } from "@jest/globals";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
@@ -14,7 +14,6 @@ import { RequestInit, Agent } from "undici";
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 const five_mins = 1000 * 60 * 5;
-jest.setTimeout(five_mins);
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
@@ -24,7 +23,7 @@ let expectedLines = [
   "Controller startup complete",
 ];
 let success = false;
-describe("dev", () => {
+describe("dev", { timeout: five_mins }, () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
   beforeAll(async () => {
     await workdir.recreate();
@@ -77,7 +76,7 @@ describe("dev", () => {
         }
       });
     }, 180000);
-    it("should be properly configured by the module ", done => {
+    it("should be properly configured by the module ", async () => {
       cmd.stdout.on("data", (data: Buffer) => {
         if (success) {
           return;
@@ -98,8 +97,6 @@ describe("dev", () => {
         } else {
           // Abort all further processing
           success = true;
-          // Finish the test
-          done();
         }
       });
     });

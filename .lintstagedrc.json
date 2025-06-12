@@ -1,15 +1,18 @@
 {
   "*.ts": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs",
+    "eslint --config integration/eslint.config.mjs integration/cli/*.ts integration/helpers/*.ts"
   ],
   "*.mjs": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs",
+    "eslint --config integration/eslint.config.mjs integration/cli/*.ts integration/helpers/*.ts"
   ],
   "*.js": [
     "prettier --config .prettierrc --write",
-    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs "
+    "eslint --fix --ignore-pattern src/templates/eslint.config.mjs",
+    "eslint --config integration/eslint.config.mjs integration/cli/*.ts integration/helpers/*.ts"
   ],
   "*.json": ["prettier --config .prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
