@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { it, beforeAll } from "@jest/globals";
+import { it, beforeAll } from "vitest";
 
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
@@ -14,29 +14,41 @@ export function peprBuild() {
     await fs.mkdir(outputDir, { recursive: true });
     await addScopedRbacMode();
   });
-  it("should successfully build the Pepr project with specific output directory and rbacMode scoped", async () => {
-    execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
-      cwd,
-      stdio: "inherit",
-    });
-  });
+  it(
+    "should successfully build the Pepr project with specific output directory and rbacMode scoped",
+    { timeout: 1000 * 5 * 60 },
+    async () => {
+      execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
+        cwd,
+        stdio: "inherit",
+      });
+    },
+  );
 
-  it("should generate produce the K8s yaml file", async () => {
+  it("should generate produce the K8s yaml file", { timeout: 1000 * 5 * 60 }, async () => {
     await fs.access(resolve(cwd, outputDir, "pepr-module-static-test.yaml"));
   });
 
-  it("should generate a custom image in zarf.yaml with correct image", async () => {
-    const zarfFilePath = resolve(cwd, outputDir, "zarf.yaml");
-    await fs.access(zarfFilePath);
-    const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:${execSync("npx pepr --version", { cwd }).toString().trim()}`;
+  it(
+    "should generate a custom image in zarf.yaml with correct image",
+    { timeout: 1000 * 5 * 60 },
+    async () => {
+      const zarfFilePath = resolve(cwd, outputDir, "zarf.yaml");
+      await fs.access(zarfFilePath);
+      const expectedImage = `gchr.io/defenseunicorns/custom-pepr-controller:${execSync("npx pepr --version", { cwd }).toString().trim()}`;
 
-    await validateZarfYaml(expectedImage, zarfFilePath);
-  });
+      await validateZarfYaml(expectedImage, zarfFilePath);
+    },
+  );
 
-  it("should generate the right values in the values file to create a scoped clusterRole", async () => {
-    const valuesFilePath = resolve(cwd, outputDir, "static-test-chart", "values.yaml");
-    await validateOverridesYamlRbac(valuesFilePath);
-  });
+  it(
+    "should generate the right values in the values file to create a scoped clusterRole",
+    { timeout: 1000 * 5 * 60 },
+    async () => {
+      const valuesFilePath = resolve(cwd, outputDir, "static-test-chart", "values.yaml");
+      await validateOverridesYamlRbac(valuesFilePath);
+    },
+  );
 }
 
 // Set rbacMode in the Pepr Module Config and write it back to disk

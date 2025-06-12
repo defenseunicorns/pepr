@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
-import { expect, it } from "@jest/globals";
+import { expect, it } from "vitest";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
