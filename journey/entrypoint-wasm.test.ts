@@ -5,8 +5,6 @@ import { describe, afterAll } from "vitest";
 import { peprBuild } from "./pepr-build-wasm";
 import { removeFolder } from "./utils";
 import { outputDir } from "./pepr-build.helpers";
-// Unmock unit test things
-// vi.deepUnmock("pino");
 
 afterAll(async () => {
   await removeFolder(outputDir);
