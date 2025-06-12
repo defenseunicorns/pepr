@@ -6,7 +6,7 @@ import { CapabilityCfg } from "../types";
 import { Capability } from "../core/capability";
 import { Schedule } from "../core/schedule";
 import { Store } from "../k8s";
-import { afterEach, describe, it, vi, beforeEach, expect } from "vitest";
+import { afterEach, describe, it, type MockInstance, vi, beforeEach, expect } from "vitest";
 import { K8s } from "kubernetes-fluent-client";
 import Log from "../telemetry/logger";
 
@@ -53,26 +53,24 @@ describe("StoreController", () => {
     vi.useRealTimers();
   });
 
-  type CreateMockImplementationReturn = {
-    Patch: Mock<[], Promise<Store>>;
-    InNamespace: Mock<
-      [],
-      {
-        Get: Mock<[], Promise<Store>>;
+  type MockImplementation = {
+    Patch: MockInstance<() => Promise<Store>>;
+    InNamespace: MockInstance<
+      () => {
+        Get: MockInstance<() => Promise<Store>>;
       }
     >;
-    Watch: Mock<
-      [],
-      {
-        start: Mock<[], Promise<void>>;
+    Watch: MockInstance<
+      () => {
+        start: MockInstance<() => Promise<void>>;
       }
     >;
-    Apply: Mock<[], Promise<Store>>;
-    Logs: Mock<[], Promise<string[]>>;
-    Get: Mock<[], Promise<Store>>;
-    Delete: Mock<[], Promise<void>>;
+    Apply: MockInstance<() => Promise<Store>>;
+    Logs: MockInstance<() => Promise<string[]>>;
+    Get: MockInstance<() => Promise<Store>>;
+    Delete: MockInstance<() => Promise<void>>;
   };
-  const createMockImplementation = (): CreateMockImplementationReturn => {
+  const createMockImplementation = (): MockImplementation => {
     const mockPeprStore = new Store();
     return {
       Patch: vi.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
