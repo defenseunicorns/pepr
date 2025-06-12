@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, jest, it, beforeAll } from "@jest/globals";
+import { describe, expect, vi, it, beforeAll } from "vitest";
 import { execSync, execFileSync, spawnSync } from "child_process";
 import { promises, readdirSync, existsSync, rmSync } from "fs";
 
 import { waitForDeploymentReady } from "./k8s";
 import path from "path";
-
-jest.setTimeout(1000 * 60 * 5);
 
 export function peprUpgrade() {
   let matchedFile = "";
