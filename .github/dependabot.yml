@@ -12,6 +12,9 @@ updates:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
+    ignore:
+      - dependency-name: "jest"
+        versions: ["30.x"]
  
   - package-ecosystem: github-actions
     directory: /
