@@ -1,7 +1,7 @@
 import { kind, KubernetesObject } from "kubernetes-fluent-client";
 import { parseAllDocuments } from "yaml";
 import { readFileSync } from "node:fs";
-import fs from 'fs';
+import fs from "fs";
 
 /**
  * Read resources from a file and return them as JS objects.
@@ -58,8 +58,6 @@ export function select<T extends KubernetesObject, U extends new () => InstanceT
     .at(0) as InstanceType<U>;
 }
 
-
-
 /**
  * Generic Kubernetes object interface (minimum fields needed to match kind + name)
  */
@@ -80,23 +78,19 @@ interface K8sObjectMeta {
 export function getK8sObjectByKindAndName<T>(
   filePath: string,
   kind: string,
-  name: string
+  name: string,
 ): T | null {
-  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const fileContents = fs.readFileSync(filePath, "utf8");
   const cleanedContents = fileContents
-  .split('\n')
-  .filter((line) => !line.trim().startsWith('#'))
-  .join('\n');
+    .split("\n")
+    .filter(line => !line.trim().startsWith("#"))
+    .join("\n");
   const documents = parseAllDocuments(cleanedContents);
 
   for (const doc of documents) {
     const data = doc.toJSON() as K8sObjectMeta;
 
-    if (
-      data &&
-      data.kind === kind &&
-      data.metadata?.name === name
-    ) {
+    if (data && data.kind === kind && data.metadata?.name === name) {
       return data as T;
     }
   }

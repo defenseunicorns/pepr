@@ -16,18 +16,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: [
-      "**/node_modules",
-      "**/dist",
-      "**/hack",
-      "**/pepr-test-module",
-      "**/build.mjs",
-      "**/journey",
-      "**/__mocks__",
-      "integration/testroot",
-      "integration/cli/**/*.test.ts",
-      "integration/eslint.config.mjs",
-    ],
+    ignores: ["integration/testroot"],
   },
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
   {
@@ -111,7 +100,7 @@ export default [
   },
   {
     files: ["**/*.ts"],
-    ignores: ["**/*.test.ts"],
+    // ignores: ["**/*.test.ts"],
 
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",
