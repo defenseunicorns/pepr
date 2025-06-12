@@ -13,7 +13,7 @@ import { expect, describe, jest, beforeEach, it } from "@jest/globals";
 import { Event, Operation } from "../enums";
 import { PeprMutateRequest } from "../mutate-request";
 import { PeprValidateRequest } from "../validate-request";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
 import { OnSchedule } from "./schedule";
