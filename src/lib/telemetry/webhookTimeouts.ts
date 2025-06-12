@@ -18,7 +18,7 @@ export class MeasureWebhookTimeout {
   start(timeout: number = 10): void {
     this.#startTime = getNow();
     this.timeout = timeout;
-    Log.info(`Starting timer at ${this.#startTime}`);
+    Log.debug(`Starting timer at ${this.#startTime}`);
   }
 
   stop(): void {
@@ -27,7 +27,7 @@ export class MeasureWebhookTimeout {
     }
 
     const elapsedTime = getNow() - this.#startTime;
-    Log.info(`Webhook ${this.#startTime} took ${elapsedTime}ms`);
+    Log.debug(`Webhook ${this.#startTime} took ${elapsedTime}ms`);
     this.#startTime = null;
 
     if (elapsedTime > this.timeout) {
