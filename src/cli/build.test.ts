@@ -270,7 +270,6 @@ describe("handleValidCapabilityNames", () => {
         hasSchedule: capability.hasSchedule,
       },
     ];
-    const error = "Capability name is not a valid Kubernetes resource name: test $me";
     handleValidCapabilityNames(capabilityExports);
     expect(consoleErrorSpy.mock.calls[0][0]).toBe(`Error loading capability:`);
     expect(mockExit).toHaveBeenCalled();
