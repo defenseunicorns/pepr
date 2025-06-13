@@ -18,7 +18,8 @@ export default defineConfig({
       reportsDirectory: "./coverage",
       include: ["src/**/*.ts"],
       exclude: [
-         "node_modules", 
+        "src/build-artifact.test.ts",
+        "node_modules", 
         "dist", 
         "build-artifact.test.ts", 
         "src/cli/docs/**", 
