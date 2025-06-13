@@ -1,4 +1,4 @@
-import { describe, beforeEach, it, expect, afterAll } from "@jest/globals";
+import { describe, beforeEach, it, expect, afterAll } from "vitest";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { V1ObjectMeta } from "@kubernetes/client-node";
 import { queueKey, getOrCreateQueue } from "./watch-processor";

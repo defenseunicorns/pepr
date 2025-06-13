@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeAll } from "@jest/globals";
+import { expect, describe, it, beforeAll } from "vitest";
 import { promises as fs } from "fs";
 import path from "path";
 
