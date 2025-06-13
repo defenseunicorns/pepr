@@ -1,18 +1,18 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { convertFromBase64Map, convertToBase64Map } from "../utils";
 import { PeprMutateRequest } from "../mutate-request";
 import { decodeData, reencodeData } from "./decode-utils";
 import { createMockAdmissionRequest } from "../assets/defaultTestObjects";
 
-jest.mock("../utils");
+vi.mock("../utils");
 
 const defaultAdmissionRequest = createMockAdmissionRequest();
 
 const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
   new PeprMutateRequest(admissionRequest);
 
-const mockConvertToBase64Map = jest.mocked(convertToBase64Map);
-const mockConvertFromBase64Map = jest.mocked(convertFromBase64Map);
+const mockConvertToBase64Map = vi.mocked(convertToBase64Map);
+const mockConvertFromBase64Map = vi.mocked(convertFromBase64Map);
 
 describe("decodeData", () => {
   const skips = ["convert", "From", "Base64", "Map"];
