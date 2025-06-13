@@ -1,9 +1,10 @@
 import { migrateAndSetupWatch, StoreMigration } from "./migrateStore";
 import Log from "../telemetry/logger";
 import * as storeCache from "./storeCache";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock, type MockInstance } from "vitest";
 import type { Operation } from "fast-json-patch";
 import { Storage } from "../core/storage";
+import { a } from "../../lib";
 
 const mockPatch = vi.fn();
 const setupWatch = vi.fn();
@@ -26,12 +27,10 @@ vi.mock("kubernetes-fluent-client", async () => {
   };
 });
 vi.mock("./storeCache", async () => {
-  const actualStoreCache = await vi.importActual<typeof import("./storeCache")>("./storeCache");
+  const actualStore = await vi.importActual<typeof import("./storeCache")>("./storeCache");
   return {
-    ...actualStoreCache,
-    storeCache: vi.fn().mockReturnValue({
-      sendUpdatesAndFlushCache: vi.fn(),
-    }),
+    ...actualStore,
+      sendUpdatesAndFlushCache: vi.fn()
   };
 });
 
@@ -79,15 +78,16 @@ describe("migrateAndSetupWatch", () => {
 
   it("should transform keys to v2 with correct values", async () => {
     await migrateAndSetupWatch(storeMigrationData);
-    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as vi.Mock).mock.calls[0] as [
+    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as Mock).mock.calls[0] as [
       Record<string, Operation>,
     ];
-
-    (
-      storeCache.sendUpdatesAndFlushCache as vi.MockedFunction<
-        typeof storeCache.sendUpdatesAndFlushCache
-      >
-    ).mockResolvedValue({} as Record<string, Operation>);
+    const mockedStoreCache = vi.mocked(storeCache);
+    mockedStoreCache.sendUpdatesAndFlushCache.mockResolvedValue({} as Record<string, Operation>);
+    // (
+    //   storeCache.sendUpdatesAndFlushCache as vi.MockedFunction<
+    //     typeof storeCache.sendUpdatesAndFlushCache
+    //   >
+    // ).mockResolvedValue({} as Record<string, Operation>);
 
     const transformedKeys = Object.keys(actualCache);
 
@@ -103,10 +103,12 @@ describe("migrateAndSetupWatch", () => {
   });
 
   it("should call sendUpdatesAndFlushCache with correct name and namespace", async () => {
+    const sendUpdateAndFlushCacheMock = vi.mocked(storeCache.sendUpdatesAndFlushCache);
     await migrateAndSetupWatch(storeMigrationData);
-    const [actualCache, actualNamespace, actualName] = (
-      storeCache.sendUpdatesAndFlushCache as vi.Mock
-    ).mock.calls[0] as [Record<string, Operation>, string, string];
+    const [actualCache, actualNamespace, actualName] = sendUpdateAndFlushCacheMock.mock.calls[0] as [Record<string, Operation>, string, string];
+    // const [actualCache, actualNamespace, actualName] = (
+    //   storeCache.sendUpdatesAndFlushCache as jest.Mock
+    // ).mock.calls[0] as [Record<string, Operation>, string, string];
 
     expect(actualCache).toBeDefined();
     expect(actualNamespace).toBe("pepr-system");
@@ -119,6 +121,7 @@ describe("migrateAndSetupWatch", () => {
   });
 
   it("should not transform keys when store is empty", async () => {
+        const sendUpdateAndFlushCacheMock = vi.mocked(storeCache.sendUpdatesAndFlushCache);
     const emptyStoreMigrationData: StoreMigration = {
       ...storeMigrationData,
       store: {
@@ -127,8 +130,8 @@ describe("migrateAndSetupWatch", () => {
       },
     };
     await migrateAndSetupWatch(emptyStoreMigrationData);
-    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as vi.Mock).mock.calls[0] as [
-      Record<string, Operation>,
+    const [actualCache] = sendUpdateAndFlushCacheMock.mock.calls[0] as unknown as [
+      Record<string, Operation>
     ];
     expect(actualCache).toEqual({});
   });
