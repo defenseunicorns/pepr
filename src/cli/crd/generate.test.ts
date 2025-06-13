@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach, afterEach, vi, type Mock } from "vitest";
+import { expect, describe, it, beforeEach, afterEach, vi, type Mock, type MockInstance } from "vitest";
 import {
   extractSingleLineComment,
   extractDetails,
@@ -15,7 +15,7 @@ import { ErrorMessages, WarningMessages } from "./messages";
 import { Project } from "ts-morph";
 import * as fs from "fs";
 
-Mock("fs");
+vi.mock("fs");
 
 // Helper function to get details string based on parameters
 const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
@@ -228,7 +228,8 @@ describe("generate.ts", () => {
 
     describe("when file content is valid", () => {
       it("should generate a CRD YAML file", () => {
-        const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+        const writeFileMock = vi.mocked(fs.writeFileSync)
+        //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
         const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
         const file = createProjectWithFile(
           "valid.ts",
@@ -244,12 +245,10 @@ describe("generate.ts", () => {
         );
 
         processSourceFile(file, "v1", "/crds");
-
-        expect(writeFileSync).toHaveBeenCalledWith(
-          expect.stringContaining("/crds/widget.yaml"),
-          expect.stringContaining("CustomResourceDefinition"),
-          "utf8",
-        );
+        console.log(writeFileMock.mock.calls);
+        expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
+        expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
+        expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
 
         expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
       });
