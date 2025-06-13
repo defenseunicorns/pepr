@@ -15,8 +15,10 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
+    "src/**/*.test.ts",
+    "vitest.config.ts",
     "node_modules",
     "dist",
     "src/templates/*",
