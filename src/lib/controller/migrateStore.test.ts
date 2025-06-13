@@ -1,33 +1,39 @@
 import { migrateAndSetupWatch, StoreMigration } from "./migrateStore";
 import Log from "../telemetry/logger";
 import * as storeCache from "./storeCache";
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Operation } from "fast-json-patch";
 import { Storage } from "../core/storage";
 
-const mockPatch = jest.fn();
-const setupWatch = jest.fn();
-jest.mock("../telemetry/logger", () => ({
+const mockPatch = vi.fn();
+const setupWatch = vi.fn();
+vi.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
   },
-  redactedStore: jest.fn(x => x),
+  redactedStore: vi.fn(x => x),
 }));
 
-jest.mock("kubernetes-fluent-client", () => {
+vi.mock("kubernetes-fluent-client", async () => {
+  const actualKFC = await vi.importActual<typeof import("kubernetes-fluent-client")>("kubernetes-fluent-client");
   return {
-    ...(jest.requireActual("kubernetes-fluent-client") as object),
-    K8s: jest.fn().mockImplementation(() => ({
+    ...actualKFC,
+    K8s: vi.fn().mockImplementation(() => ({
       Patch: mockPatch,
     })),
   };
 });
-jest.mock("./storeCache", () => ({
-  ...(jest.requireActual("./storeCache") as object),
-  sendUpdatesAndFlushCache: jest.fn(),
-}));
+vi.mock("./storeCache", async () => {
+  const actualStoreCache = await vi.importActual<typeof import("./storeCache")>("./storeCache");
+  return {
+    ...actualStoreCache,
+    storeCache: vi.fn().mockReturnValue({
+      sendUpdatesAndFlushCache: vi.fn(),
+    }),
+  };
+});
 
 // non-migrated store v1
 const storeMigrationData: StoreMigration = {
@@ -57,7 +63,7 @@ const storeMigrationData: StoreMigration = {
 
 describe("migrateAndSetupWatch", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should should patch the stor with a pepr.dev-cacheID label", async () => {
@@ -73,12 +79,12 @@ describe("migrateAndSetupWatch", () => {
 
   it("should transform keys to v2 with correct values", async () => {
     await migrateAndSetupWatch(storeMigrationData);
-    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as jest.Mock).mock.calls[0] as [
+    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as vi.Mock).mock.calls[0] as [
       Record<string, Operation>,
     ];
 
     (
-      storeCache.sendUpdatesAndFlushCache as jest.MockedFunction<
+      storeCache.sendUpdatesAndFlushCache as vi.MockedFunction<
         typeof storeCache.sendUpdatesAndFlushCache
       >
     ).mockResolvedValue({} as Record<string, Operation>);
@@ -99,7 +105,7 @@ describe("migrateAndSetupWatch", () => {
   it("should call sendUpdatesAndFlushCache with correct name and namespace", async () => {
     await migrateAndSetupWatch(storeMigrationData);
     const [actualCache, actualNamespace, actualName] = (
-      storeCache.sendUpdatesAndFlushCache as jest.Mock
+      storeCache.sendUpdatesAndFlushCache as vi.Mock
     ).mock.calls[0] as [Record<string, Operation>, string, string];
 
     expect(actualCache).toBeDefined();
@@ -121,7 +127,7 @@ describe("migrateAndSetupWatch", () => {
       },
     };
     await migrateAndSetupWatch(emptyStoreMigrationData);
-    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as jest.Mock).mock.calls[0] as [
+    const [actualCache] = (storeCache.sendUpdatesAndFlushCache as vi.Mock).mock.calls[0] as [
       Record<string, Operation>,
     ];
     expect(actualCache).toEqual({});
