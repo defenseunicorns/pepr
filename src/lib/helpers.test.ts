@@ -25,7 +25,7 @@ import * as fc from "fast-check";
 import { expect, describe, vi, beforeEach, afterEach, it, type MockInstance } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 
-export const callback = () => undefined;
+export const callback = (): void => undefined;
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -528,7 +528,7 @@ const nonNsViolation: CapabilityExport[] = [
 ];
 
 describe("namespaceComplianceValidator", () => {
-  let errorSpy: MockInstance<(message?: any, ...optionalParams: unknown[]) => void> 
+  let errorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
   beforeEach(() => {
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });

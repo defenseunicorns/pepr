@@ -1,10 +1,9 @@
 import { migrateAndSetupWatch, StoreMigration } from "./migrateStore";
 import Log from "../telemetry/logger";
 import * as storeCache from "./storeCache";
-import { describe, it, expect, vi, beforeEach, type Mock, type MockInstance } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import type { Operation } from "fast-json-patch";
 import { Storage } from "../core/storage";
-import { a } from "../../lib";
 
 const mockPatch = vi.fn();
 const setupWatch = vi.fn();
@@ -18,7 +17,9 @@ vi.mock("../telemetry/logger", () => ({
 }));
 
 vi.mock("kubernetes-fluent-client", async () => {
-  const actualKFC = await vi.importActual<typeof import("kubernetes-fluent-client")>("kubernetes-fluent-client");
+  const actualKFC = await vi.importActual<typeof import("kubernetes-fluent-client")>(
+    "kubernetes-fluent-client",
+  );
   return {
     ...actualKFC,
     K8s: vi.fn().mockImplementation(() => ({
@@ -30,7 +31,7 @@ vi.mock("./storeCache", async () => {
   const actualStore = await vi.importActual<typeof import("./storeCache")>("./storeCache");
   return {
     ...actualStore,
-      sendUpdatesAndFlushCache: vi.fn()
+    sendUpdatesAndFlushCache: vi.fn(),
   };
 });
 
@@ -105,7 +106,8 @@ describe("migrateAndSetupWatch", () => {
   it("should call sendUpdatesAndFlushCache with correct name and namespace", async () => {
     const sendUpdateAndFlushCacheMock = vi.mocked(storeCache.sendUpdatesAndFlushCache);
     await migrateAndSetupWatch(storeMigrationData);
-    const [actualCache, actualNamespace, actualName] = sendUpdateAndFlushCacheMock.mock.calls[0] as [Record<string, Operation>, string, string];
+    const [actualCache, actualNamespace, actualName] = sendUpdateAndFlushCacheMock.mock
+      .calls[0] as [Record<string, Operation>, string, string];
     // const [actualCache, actualNamespace, actualName] = (
     //   storeCache.sendUpdatesAndFlushCache as jest.Mock
     // ).mock.calls[0] as [Record<string, Operation>, string, string];
@@ -121,7 +123,7 @@ describe("migrateAndSetupWatch", () => {
   });
 
   it("should not transform keys when store is empty", async () => {
-        const sendUpdateAndFlushCacheMock = vi.mocked(storeCache.sendUpdatesAndFlushCache);
+    const sendUpdateAndFlushCacheMock = vi.mocked(storeCache.sendUpdatesAndFlushCache);
     const emptyStoreMigrationData: StoreMigration = {
       ...storeMigrationData,
       store: {
@@ -131,7 +133,7 @@ describe("migrateAndSetupWatch", () => {
     };
     await migrateAndSetupWatch(emptyStoreMigrationData);
     const [actualCache] = sendUpdateAndFlushCacheMock.mock.calls[0] as unknown as [
-      Record<string, Operation>
+      Record<string, Operation>,
     ];
     expect(actualCache).toEqual({});
   });

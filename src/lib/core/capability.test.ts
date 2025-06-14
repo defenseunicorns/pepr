@@ -9,7 +9,7 @@ import {
 } from "../types";
 import { a } from "../../lib";
 import { V1Pod } from "@kubernetes/client-node";
-import { expect, describe, vi, beforeEach, it, type Mock, MockInstance } from "vitest";
+import { expect, describe, vi, beforeEach, it, type Mock } from "vitest";
 import { Event, Operation } from "../enums";
 import { PeprMutateRequest } from "../mutate-request";
 import { PeprValidateRequest } from "../validate-request";
@@ -21,9 +21,9 @@ import { AdmissionRequest } from "../common-types";
 import type { Logger } from "pino";
 
 interface PartialLogger {
-  info: (...args: any[]) => void;
-  debug?: (...args: any[]) => void;
-  child?: (...args: any[]) => PartialLogger;
+  info: (...args: unknown[]) => void;
+  debug?: (...args: unknown[]) => void;
+  child?: (...args: unknown[]) => PartialLogger;
 }
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
@@ -57,7 +57,6 @@ vi.mock("./schedule", async () => {
     })),
   };
 });
-
 
 const mockLog = Log as unknown as {
   info: Mock;
@@ -711,8 +710,7 @@ describe("Capability", () => {
     expect(scheduleStoreInstance.onReady).toHaveBeenCalledWith(expect.any(Function));
 
     // Simulate the `onReady` callback being invoked
-    const onReadyCallback = (scheduleStoreInstance.onReady as Mock).mock
-      .calls[0][0] as () => void;
+    const onReadyCallback = (scheduleStoreInstance.onReady as Mock).mock.calls[0][0] as () => void;
     onReadyCallback(); // The callback function is now invoked as a type of `() => void`
 
     // Ensure the new OnSchedule instance is created with the correct schedule data

@@ -151,9 +151,9 @@ describe("checkIronBankImage", () => {
 });
 
 describe("validImagePullSecret", () => {
-  let consoleErrorSpy: MockInstance<(message?: any, ...optionalParams: unknown[]) => void> 
-  let mockExit:  MockInstance<(code?: number | string | null | undefined) => never>;
-   
+  let consoleErrorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>;
+
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
@@ -224,16 +224,15 @@ describe("handleCustomImageBuild", () => {
   });
 });
 describe("handleValidCapabilityNames", () => {
-  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>
-    let consoleErrorSpy: MockInstance<(message?: any, ...optionalParams: unknown[]) => void> 
+  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>;
+  let consoleErrorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
   beforeEach(() => {
     vi.clearAllMocks();
     mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
-    return undefined as never;
+      return undefined as never;
+    });
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
-  consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-  });
-  
 
   it("should call validateCapabilityNames with capabilities", () => {
     const capability = new Capability({

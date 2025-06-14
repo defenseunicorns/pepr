@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach, afterEach, vi, type Mock, type MockInstance } from "vitest";
+import { expect, describe, it, beforeEach, afterEach, vi, type Mock } from "vitest";
 import {
   extractSingleLineComment,
   extractDetails,
@@ -12,7 +12,7 @@ import {
   getAPIVersions,
 } from "./generate";
 import { ErrorMessages, WarningMessages } from "./messages";
-import { Project } from "ts-morph";
+import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
 
 vi.mock("fs");
@@ -52,7 +52,7 @@ const generateTestContent = ({
   return parts.join("\n");
 };
 
-const createProjectWithFile = (name: string, content: string) => {
+const createProjectWithFile = (name: string, content: string): SourceFile => {
   const project = new Project();
   return project.createSourceFile(name, content);
 };
@@ -100,7 +100,7 @@ describe("generate.ts", () => {
       it("should return only directory entries from the api root", () => {
         (fs.readdirSync as Mock).mockReturnValue(["v1", "v2"]);
         (fs.statSync as Mock).mockImplementation(path => ({
-          isDirectory: () =>
+          isDirectory: (): boolean =>
             typeof path === "string" && (path.endsWith("v1") || path.endsWith("v2")),
         }));
 
@@ -111,7 +111,7 @@ describe("generate.ts", () => {
       it("should ignore non-directory entries", () => {
         (fs.readdirSync as Mock).mockReturnValue(["v1", "README.md"]);
         (fs.statSync as Mock).mockImplementation(p => ({
-          isDirectory: () => typeof p === "string" && p.endsWith("v1"),
+          isDirectory: (): boolean => typeof p === "string" && p.endsWith("v1"),
         }));
 
         const versions = getAPIVersions("/api");
@@ -228,7 +228,7 @@ describe("generate.ts", () => {
 
     describe("when file content is valid", () => {
       it("should generate a CRD YAML file", () => {
-        const writeFileMock = vi.mocked(fs.writeFileSync)
+        const writeFileMock = vi.mocked(fs.writeFileSync);
         //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
         const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
         const file = createProjectWithFile(

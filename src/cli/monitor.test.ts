@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, vi, beforeEach,type MockInstance, afterEach } from "vitest";
+import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
 import {
   getLabelsAndErrorMessage,
   getK8sLogFromKubeConfig,
@@ -9,7 +9,6 @@ import {
   processValidateLog,
 } from "./monitor";
 import { KubeConfig, Log as K8sLog } from "@kubernetes/client-node";
-import { SpiedFunction } from "jest-mock";
 
 const payload = {
   level: 30,
@@ -74,7 +73,7 @@ describe("getLabelsAndErrorMessage", () => {
 });
 
 describe("processMutateLog", () => {
-  let consoleLogSpy:  MockInstance<(message?: any, ...optionalParams: unknown[]) => void> 
+  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -124,7 +123,7 @@ describe("processMutateLog", () => {
 });
 
 describe("processValidateLog", () => {
-  let consoleLogSpy: MockInstance<(message?: any, ...optionalParams: any[]) => void>;
+  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
