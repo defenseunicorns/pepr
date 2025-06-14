@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, describe } from "@jest/globals";
+import { expect, it, describe } from "vitest";
 import { kind, KubernetesObject, modelToGroupVersionKind } from "kubernetes-fluent-client";
 import * as fc from "fast-check";
 import { AdmissionRequestCreatePod, AdmissionRequestDeletePod } from "../../fixtures/loader";
@@ -15,7 +15,7 @@ import {
 } from "./adjudicators/defaultTestObjects";
 import { AdmissionRequest } from "../common-types";
 
-const callback = () => undefined;
+const callback = (): void => undefined;
 
 const kindSchema = fc.record({
   group: fc.string(),
@@ -69,7 +69,7 @@ const createBinding = (overrides: Partial<ExtendedBinding> = {}) => {
       annotations = {},
       deletionTimestamp = false,
     } = {},
-    callback = () => {},
+    callback = (): void => {},
     ...rest
   } = overrides;
 

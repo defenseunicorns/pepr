@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, jest, expect, it } from "@jest/globals";
+import { describe, vi, expect, it, type Mock } from "vitest";
 import { createDirectoryIfNotExists } from "./filesystemService";
 import { promises as fs } from "fs";
 
-jest.mock("fs", () => {
+vi.mock("fs", () => {
   return {
     promises: {
-      access: jest.fn(),
-      mkdir: jest.fn(),
+      access: vi.fn(),
+      mkdir: vi.fn(),
     },
   };
 });
 
 describe("createDirectoryIfNotExists function", () => {
   it("should create a directory if it doesn't exist", async () => {
-    (fs.access as jest.Mock).mockRejectedValue({ code: "ENOENT" } as never);
-    (fs.mkdir as jest.Mock).mockResolvedValue(undefined as never);
+    (fs.access as Mock).mockRejectedValue({ code: "ENOENT" } as never);
+    (fs.mkdir as Mock).mockResolvedValue(undefined as never);
 
     const directoryPath = "/pepr/pepr-test-module/asdf";
 
@@ -28,8 +28,8 @@ describe("createDirectoryIfNotExists function", () => {
   });
 
   it("should not create a directory if it already exists", async () => {
-    jest.resetAllMocks();
-    (fs.access as jest.Mock).mockResolvedValue(undefined as never);
+    vi.resetAllMocks();
+    (fs.access as Mock).mockResolvedValue(undefined as never);
 
     const directoryPath = "/pepr/pepr-test-module/asdf";
 
@@ -40,8 +40,8 @@ describe("createDirectoryIfNotExists function", () => {
   });
 
   it("should throw an error for other fs.access errors", async () => {
-    jest.resetAllMocks();
-    (fs.access as jest.Mock).mockRejectedValue({ code: "ERROR" } as never);
+    vi.resetAllMocks();
+    (fs.access as Mock).mockRejectedValue({ code: "ERROR" } as never);
 
     const directoryPath = "/pepr/pepr-test-module/asdf";
 

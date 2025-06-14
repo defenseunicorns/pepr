@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 import { clone } from "ramda";
 import { Binding } from "../types";

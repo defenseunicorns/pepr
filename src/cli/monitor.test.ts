@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, jest, beforeEach, afterEach } from "@jest/globals";
+import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
 import {
   getLabelsAndErrorMessage,
   getK8sLogFromKubeConfig,
@@ -9,7 +9,6 @@ import {
   processValidateLog,
 } from "./monitor";
 import { KubeConfig, Log as K8sLog } from "@kubernetes/client-node";
-import { SpiedFunction } from "jest-mock";
 
 const payload = {
   level: 30,
@@ -30,10 +29,10 @@ const payload = {
   msg: "Check response",
 };
 
-jest.mock("@kubernetes/client-node", () => {
-  const mockKubeConfig = jest.fn();
-  mockKubeConfig.prototype.loadFromDefault = jest.fn();
-  const mockK8sLog = jest.fn();
+vi.mock("@kubernetes/client-node", () => {
+  const mockKubeConfig = vi.fn();
+  mockKubeConfig.prototype.loadFromDefault = vi.fn();
+  const mockK8sLog = vi.fn();
 
   return {
     KubeConfig: mockKubeConfig,
@@ -74,17 +73,14 @@ describe("getLabelsAndErrorMessage", () => {
 });
 
 describe("processMutateLog", () => {
-  let consoleLogSpy: SpiedFunction<{
-    (...data: unknown[]): void;
-    (message?: unknown, ...optionalParams: unknown[]): void;
-  }>;
+  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should log a mutation approval with patch details", () => {
@@ -127,17 +123,14 @@ describe("processMutateLog", () => {
 });
 
 describe("processValidateLog", () => {
-  let consoleLogSpy: SpiedFunction<{
-    (...data: unknown[]): void;
-    (message?: unknown, ...optionalParams: unknown[]): void;
-  }>;
+  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should log a successful validation", () => {

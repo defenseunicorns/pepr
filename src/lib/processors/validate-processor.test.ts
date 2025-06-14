@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, Filters } from "../types";
 import { Event, Operation } from "../enums";
@@ -15,26 +15,28 @@ import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import * as utils from "../utils";
 import { shouldSkipRequest } from "../filter/filter";
 
-jest.mock("../telemetry/logger", () => ({
-  info: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-}));
-
-jest.mock("../telemetry/metrics", () => ({
-  metricsCollector: {
-    addCounter: jest.fn(),
-    incCounter: jest.fn(),
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
   },
-  MeasureWebhookTimeout: jest.fn(),
 }));
 
-jest.mock("../telemetry/timeUtils", () => ({
-  getNow: jest.fn(() => 1000),
+vi.mock("../telemetry/metrics", () => ({
+  metricsCollector: {
+    addCounter: vi.fn(),
+    incCounter: vi.fn(),
+  },
+  MeasureWebhookTimeout: vi.fn(),
 }));
 
-jest.mock("../filter/filter", () => ({
-  shouldSkipRequest: jest.fn(),
+vi.mock("../telemetry/timeUtils", () => ({
+  getNow: vi.fn(() => 1000),
+}));
+
+vi.mock("../filter/filter", () => ({
+  shouldSkipRequest: vi.fn(),
 }));
 
 const testFilters: Filters = {
@@ -96,7 +98,7 @@ describe("processRequest", () => {
       statusCode: 200,
       statusMessage: "yay",
     };
-    const callback = jest.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
     binding = { ...clone(testBinding), validateCallback: callback };
 
     const result = await processRequest(binding, actionMetadata, peprValidateRequest);
@@ -112,7 +114,7 @@ describe("processRequest", () => {
   });
 
   it("responds on unsuccessful validation action", async () => {
-    const callback = jest.fn().mockImplementation(() => {
+    const callback = vi.fn().mockImplementation(() => {
       throw "oof";
     }) as Binding["validateCallback"];
     binding = { ...clone(testBinding), validateCallback: callback };
@@ -133,7 +135,7 @@ describe("processRequest", () => {
 describe("validateProcessor", () => {
   let config: ModuleConfig;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     config = {
       webhookTimeout: 11,
       uuid: "some-uuid",
@@ -149,7 +151,7 @@ describe("validateProcessor", () => {
     const req = testAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStart = jest.spyOn(MeasureWebhookTimeout.prototype, "start");
+    const spyStart = vi.spyOn(MeasureWebhookTimeout.prototype, "start");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -170,7 +172,7 @@ describe("validateProcessor", () => {
     const req: AdmissionRequest = { ...testAdmissionRequest, kind: testGroupVersionKind };
     const reqMetadata = {};
 
-    const spyConvert = jest.spyOn(utils, "convertFromBase64Map");
+    const spyConvert = vi.spyOn(utils, "convertFromBase64Map");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -187,7 +189,7 @@ describe("validateProcessor", () => {
     const req = testAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStop = jest.spyOn(MeasureWebhookTimeout.prototype, "stop");
+    const spyStop = vi.spyOn(MeasureWebhookTimeout.prototype, "stop");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -217,8 +219,8 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
+    const mod = await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const spyProcessRequest = vi.spyOn(mod, "processRequest");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -240,7 +242,7 @@ describe("validateProcessor", () => {
       bindings: [
         {
           isValidate: true,
-          validateCallback: jest.fn(),
+          validateCallback: vi.fn(),
         },
       ],
     } as unknown as Capability);
@@ -249,9 +251,9 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
-    (shouldSkipRequest as jest.Mock).mockReturnValue("Skip reason");
+    const mod = await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const spyProcessRequest = vi.spyOn(mod, "processRequest");
+    (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 

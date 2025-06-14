@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { formatWithPrettier } from "./format.helpers";
 import { promises as fs } from "fs";
 import { resolveConfig, format } from "prettier";
 import { ESLint } from "eslint";
 
-jest.mock("fs", () => ({
+vi.mock("fs", () => ({
   promises: {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
   },
 }));
 
-jest.mock("prettier", () => ({
-  resolveConfig: jest.fn(),
-  format: jest.fn(),
+vi.mock("prettier", () => ({
+  resolveConfig: vi.fn(),
+  format: vi.fn(),
 }));
 
 describe("formatWithPrettier", () => {
-  const mockReadFile = fs.readFile as jest.MockedFunction<typeof fs.readFile>;
-  const mockWriteFile = fs.writeFile as jest.MockedFunction<typeof fs.writeFile>;
-  const mockResolveConfig = resolveConfig as jest.MockedFunction<typeof resolveConfig>;
-  const mockFormat = format as jest.MockedFunction<typeof format>;
+  const mockReadFile = vi.mocked(fs.readFile);
+  const mockWriteFile = vi.mocked(fs.writeFile);
+  const mockResolveConfig = vi.mocked(resolveConfig);
+  const mockFormat = vi.mocked(format);
 
   const mockResults: ESLint.LintResult[] = [
     { filePath: "package.json" } as ESLint.LintResult,
@@ -31,7 +31,7 @@ describe("formatWithPrettier", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should format files and write back to the file system", async () => {
@@ -59,7 +59,7 @@ describe("formatWithPrettier", () => {
 
     const validateOnly = true;
 
-    const mockError = jest.spyOn(console, "error").mockImplementation(() => {
+    const mockError = vi.spyOn(console, "error").mockImplementation(() => {
       return undefined as never;
     });
     const result = await formatWithPrettier(mockResults, validateOnly);

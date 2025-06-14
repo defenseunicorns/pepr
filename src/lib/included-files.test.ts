@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { createDockerfile } from "./included-files";
-import { expect, describe, it } from "@jest/globals";
+import { expect, describe, it } from "vitest";
 import { promises as fs } from "fs";
 
 describe("createDockerfile", () => {
