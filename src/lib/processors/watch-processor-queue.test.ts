@@ -17,7 +17,7 @@ class LoggableKubernetesObject implements KubernetesObject {
   }) {
     if (params.kind) this.kind = params.kind;
     if (params.metadata) this.metadata = params.metadata as V1ObjectMeta;
-    this.toString = () => params.description;
+    this.toString = (): string => params.description;
   }
 }
 

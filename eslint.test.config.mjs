@@ -8,10 +8,6 @@ import globals from "globals";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Optional: Replace with a tsconfig specific to `integration/` if you use one.
-const tsconfigPath = path.resolve(__dirname, "../../tsconfig.json");
-
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
@@ -20,26 +16,24 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["integration/testroot", "journey/", "**/node_modules", "**/dist"],
+    ignores: ["integration/testroot", "journey/"],
   },
-
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
-
   {
-    files: ["**/*.ts"],
+    files: ["**/*.test.ts"],
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+    },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: tsconfigPath,
-        tsconfigRootDir: path.resolve(__dirname, "../.."),
+        project: "./tsconfig.test.json",
+        tsconfigRootDir: __dirname,
         sourceType: "module",
       },
       globals: {
         ...globals.node,
       },
-    },
-    plugins: {
-      "@typescript-eslint": typescriptEslint,
     },
     rules: {
       "@typescript-eslint/no-floating-promises": "warn",
@@ -48,19 +42,11 @@ export default [
       eqeqeq: "error",
       "no-invalid-this": "warn",
       "@typescript-eslint/explicit-function-return-type": "error",
-
       "max-depth": ["warn", { max: 3 }],
-      "max-nested-callbacks": ["warn", { max: 4 }],
+      "max-nested-callbacks": ["warn", { max: 8 }],
       "max-params": ["error", { max: 4 }],
       "max-statements": ["warn", { max: 20 }, { ignoreTopLevelFunctions: true }],
       complexity: ["warn", { max: 10 }],
-    },
-  },
-
-  {
-    files: ["**/*.test.ts"],
-    rules: {
-      "max-nested-callbacks": ["warn", { max: 8 }],
     },
   },
 ];

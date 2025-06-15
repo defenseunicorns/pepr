@@ -78,7 +78,9 @@ export const testAdmissionRequest: AdmissionRequest = {
 
 export const testActionMetadata: Record<string, string> = {};
 
-export const testPeprValidateRequest = (admissionRequest: AdmissionRequest) =>
+export const testPeprValidateRequest = (
+  admissionRequest: AdmissionRequest,
+): PeprValidateRequest<KubernetesObject> =>
   new PeprValidateRequest<KubernetesObject>(admissionRequest);
 
 describe("processRequest", () => {
@@ -219,7 +221,8 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    const mod = await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const mod =
+      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
     const spyProcessRequest = vi.spyOn(mod, "processRequest");
 
     await validateProcessor(config, [capability], req, reqMetadata);
@@ -251,7 +254,8 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    const mod = await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const mod =
+      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
     const spyProcessRequest = vi.spyOn(mod, "processRequest");
     (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
 

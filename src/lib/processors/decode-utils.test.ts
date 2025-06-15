@@ -8,8 +8,9 @@ vi.mock("../utils");
 
 const defaultAdmissionRequest = createMockAdmissionRequest();
 
-const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
-  new PeprMutateRequest(admissionRequest);
+const defaultPeprMutateRequest = (
+  admissionRequest = defaultAdmissionRequest,
+): PeprMutateRequest<KubernetesObject> => new PeprMutateRequest(admissionRequest);
 
 const mockConvertToBase64Map = vi.mocked(convertToBase64Map);
 const mockConvertFromBase64Map = vi.mocked(convertFromBase64Map);

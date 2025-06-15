@@ -82,8 +82,9 @@ const defaultAdmissionRequest: AdmissionRequest = {
   userInfo: {},
 };
 
-const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
-  new PeprMutateRequest(admissionRequest);
+const defaultPeprMutateRequest = (
+  admissionRequest = defaultAdmissionRequest,
+): PeprMutateRequest<KubernetesObject> => new PeprMutateRequest(admissionRequest);
 
 beforeEach(() => {
   vi.resetAllMocks();

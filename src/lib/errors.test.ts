@@ -77,6 +77,6 @@ it("ValidateError should not throw an error for valid errors", () => {
 
 it("ValidateError should throw an error for invalid errors", () => {
   expect(() => ValidateError("invalidError")).toThrowError(
-  "Invalid error: invalidError. Must be one of: audit, ignore, reject"
-);
+    "Invalid error: invalidError. Must be one of: audit, ignore, reject",
+  );
 });

@@ -31,7 +31,7 @@ vi.mock("../webhooks", () => ({
     ],
   })),
 }));
-vi.mock("fs",async () => {
+vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
   return {
     ...actualFs,
@@ -44,7 +44,6 @@ vi.mock("fs",async () => {
 });
 
 vi.mock("crypto", async () => {
-  
   const actualCrypto = await vi.importActual<typeof import("crypto")>("crypto");
   return {
     ...actualCrypto,
@@ -52,17 +51,18 @@ vi.mock("crypto", async () => {
       update: vi.fn().mockReturnThis(),
       digest: vi.fn().mockReturnValue("mocked-hash"),
     })),
-  }
+  };
 });
 
 vi.mock("@kubernetes/client-node", async () => {
-  const actualClientNode = await vi.importActual<typeof import("@kubernetes/client-node")>("@kubernetes/client-node");
+  const actualClientNode =
+    await vi.importActual<typeof import("@kubernetes/client-node")>("@kubernetes/client-node");
   return {
     ...actualClientNode,
     dumpYaml: vi.fn(
-    (resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`,
-  )}
-
+      (resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`,
+    ),
+  };
 });
 
 vi.mock("../pods", () => ({
@@ -110,8 +110,8 @@ describe("generateAllYaml", () => {
 
   it("should read the minified module file and create a hash", async () => {
     const mockReadFile = vi.mocked(fs.readFile);
-    const cryptoCreateHashSpy = vi.spyOn(crypto,"createHash");
-    
+    const cryptoCreateHashSpy = vi.spyOn(crypto, "createHash");
+
     await generateAllYaml(assets, mockDeployments);
     expect(mockReadFile).toHaveBeenCalledTimes(1);
     expect(cryptoCreateHashSpy).toHaveBeenCalledTimes(1);
@@ -140,7 +140,11 @@ describe("generateAllYaml", () => {
     expect(tlsSecret).toHaveBeenCalledWith(assets.name, assets.tls);
     expect(service).toHaveBeenCalledWith(assets.name);
     expect(watcherService).toHaveBeenCalledWith(assets.name);
-    expect(getModuleSecret).toHaveBeenCalledWith(assets.name, "mocked", "3d4a07bcbf2eaec380ad707451832924bee1197fbdf43d20d6d4bc96c8284268");
+    expect(getModuleSecret).toHaveBeenCalledWith(
+      assets.name,
+      "mocked",
+      "3d4a07bcbf2eaec380ad707451832924bee1197fbdf43d20d6d4bc96c8284268",
+    );
     expect(storeRole).toHaveBeenCalledWith(assets.name);
     expect(storeRoleBinding).toHaveBeenCalledWith(assets.name);
   });

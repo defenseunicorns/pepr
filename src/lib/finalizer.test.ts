@@ -160,13 +160,13 @@ describe("addFinalizer", () => {
 describe("removeFinalizer", () => {
   const mockPatch = vi.fn();
 
-  const fakeBinding = () =>
+  const fakeBinding = (): Binding =>
     ({
       model: {},
       kind: {},
     }) as unknown as Binding;
 
-  const fakeObject = () =>
+  const fakeObject = (): KubernetesObject =>
     ({
       metadata: {
         namespace: "test-namespace",

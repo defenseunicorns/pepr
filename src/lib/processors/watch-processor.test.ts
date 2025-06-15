@@ -37,7 +37,7 @@ const testPhaseCallbacks = (
     callback: Mock;
     phase: WatchPhase;
   }[],
-) => {
+): void => {
   mockCallback({} as kind.Pod, phase);
 
   expect(watchCallback).toHaveBeenCalledTimes(1);
@@ -66,7 +66,7 @@ describe("WatchProcessor", () => {
           model: "someModel",
           filters: {},
           event: "Create",
-          watchCallback: () => {
+          watchCallback: (): void => {
             console.log("words");
           },
         },
