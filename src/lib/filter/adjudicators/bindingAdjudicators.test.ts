@@ -671,9 +671,9 @@ describe("definedCallback", () => {
   const validateCallback = (): ValidateActionResponse => {
     return { allowed: false };
   };
-  const mutateCallback = () => {};
-  const watchCallback = () => {};
-  const finalizeCallback = () => {};
+  const mutateCallback = (): void => {};
+  const watchCallback = (): void => {};
+  const finalizeCallback = (): void => {};
 
   //[ Binding, result ]
   it.each([
@@ -761,9 +761,9 @@ describe("definedCallbackName", () => {
   const validateCallback = (): ValidateActionResponse => {
     return { allowed: false };
   };
-  const mutateCallback = () => {};
-  const watchCallback = () => {};
-  const finalizeCallback = () => {};
+  const mutateCallback = (): void => {};
+  const watchCallback = (): void => {};
+  const finalizeCallback = (): void => {};
 
   //[ Binding, result ]
   it.each([
