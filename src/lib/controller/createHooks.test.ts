@@ -1,9 +1,9 @@
-import { describe, beforeEach, jest, it, expect } from "@jest/globals";
+import { describe, beforeEach, vi, it, expect } from "vitest";
 import { createControllerHooks } from "./createHooks";
 import * as watchProcessor from "../processors/watch-processor";
 import { Capability } from "../core/capability";
 
-const setupWatchMock = jest.spyOn(watchProcessor, "setupWatch");
+const setupWatchMock = vi.spyOn(watchProcessor, "setupWatch");
 
 const capabilities = [
   new Capability({
@@ -13,8 +13,8 @@ const capabilities = [
 ];
 
 const opts = {
-  beforeHook: jest.fn(),
-  afterHook: jest.fn(),
+  beforeHook: vi.fn(),
+  afterHook: vi.fn(),
   deferStart: true,
 };
 
@@ -27,7 +27,7 @@ describe.each([["watch"], ["dev"]])("when running in '%s' mode", mode => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = mode === "watch" ? "true" : undefined;
     process.env.PEPR_MODE = mode === "dev" ? "dev" : undefined;
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("when ignored namespaces are not provided", () => {

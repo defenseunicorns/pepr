@@ -10,7 +10,12 @@ const execFilePromise = promisify(childProcess.execFile);
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
-  const command = async (subcommand: string = "") => {
+  const command = async (
+    subcommand: string = "",
+  ): Promise<{
+    stdout: string;
+    stderr: string;
+  }> => {
     const baseArgs = ["ts-node", cliPath];
 
     // If subcommand exists, split it by spaces and add each part as a separate argument

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFinalizer, removeFinalizer } from "./finalizer";
 import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
@@ -10,9 +10,9 @@ import { PeprMutateRequest } from "./mutate-request";
 import { Binding } from "./types";
 import { AdmissionRequest } from "./common-types";
 
-jest.mock("kubernetes-fluent-client");
-const mockK8s = jest.mocked(K8s);
-const mockRegisterKind = jest.mocked(RegisterKind);
+vi.mock("kubernetes-fluent-client");
+const mockK8s = vi.mocked(K8s);
+const mockRegisterKind = vi.mocked(RegisterKind);
 
 const PEPR_FINALIZER = "pepr.dev/finalizer";
 
@@ -158,15 +158,15 @@ describe("addFinalizer", () => {
 });
 
 describe("removeFinalizer", () => {
-  const mockPatch = jest.fn();
+  const mockPatch = vi.fn();
 
-  const fakeBinding = () =>
+  const fakeBinding = (): Binding =>
     ({
       model: {},
       kind: {},
     }) as unknown as Binding;
 
-  const fakeObject = () =>
+  const fakeObject = (): KubernetesObject =>
     ({
       metadata: {
         namespace: "test-namespace",
@@ -176,7 +176,7 @@ describe("removeFinalizer", () => {
 
   describe("when RegisterKind fails", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
 
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return { Patch: mockPatch } as unknown as K8sInit<T, K>;
@@ -199,7 +199,7 @@ describe("removeFinalizer", () => {
 
   describe("when RegisterKind succeeds", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
 
       mockPatch.mockImplementation(ops => {
         return { ops };

@@ -1,10 +1,10 @@
 import { getNamespace, getWatcher, getDeployment, getModuleSecret } from "./pods";
-import { expect, describe, it, jest, afterEach } from "@jest/globals";
+import { expect, describe, it, vi, afterEach } from "vitest";
 import { Assets } from "./assets";
 import { gzipSync } from "zlib";
 import * as helpers from "../helpers";
 
-jest.mock("zlib");
+vi.mock("zlib");
 
 const assets: Assets = JSON.parse(`{
   "config": {
@@ -354,7 +354,7 @@ describe("deployment function", () => {
 });
 describe("moduleSecret function", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("moduleSecret within limit", () => {
@@ -364,8 +364,8 @@ describe("moduleSecret function", () => {
     const compressedData = Buffer.from("compressed data").toString("base64");
 
     // Mock the return value of gzipSync
-    (gzipSync as jest.Mock).mockReturnValue(Buffer.from(compressedData));
-    jest.spyOn(helpers, "secretOverLimit").mockReturnValue(false);
+    (gzipSync as vi.Mock).mockReturnValue(Buffer.from(compressedData));
+    vi.spyOn(helpers, "secretOverLimit").mockReturnValue(false);
 
     const result = getModuleSecret(name, data, hash);
 
@@ -389,10 +389,10 @@ describe("moduleSecret function", () => {
     const hash = "test-hash";
 
     // Mock the return value of gzipSync
-    (gzipSync as jest.Mock).mockReturnValue(data);
-    jest.spyOn(helpers, "secretOverLimit").mockReturnValue(true);
+    (gzipSync as vi.Mock).mockReturnValue(data);
+    vi.spyOn(helpers, "secretOverLimit").mockReturnValue(true);
 
-    const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleErrorMock = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(() => getModuleSecret(name, data, hash)).toThrow(
       "Module secret for test is over the 1MB limit",

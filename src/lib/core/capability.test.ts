@@ -9,7 +9,7 @@ import {
 } from "../types";
 import { a } from "../../lib";
 import { V1Pod } from "@kubernetes/client-node";
-import { expect, describe, jest, beforeEach, it } from "@jest/globals";
+import { expect, describe, vi, beforeEach, it, type Mock } from "vitest";
 import { Event, Operation } from "../enums";
 import { PeprMutateRequest } from "../mutate-request";
 import { PeprValidateRequest } from "../validate-request";
@@ -18,46 +18,57 @@ import { GenericClass } from "kubernetes-fluent-client";
 import { Schedule } from "./schedule";
 import { OnSchedule } from "./schedule";
 import { AdmissionRequest } from "../common-types";
+import type { Logger } from "pino";
+
+interface PartialLogger {
+  info: (...args: unknown[]) => void;
+  debug?: (...args: unknown[]) => void;
+  child?: (...args: unknown[]) => PartialLogger;
+}
 
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
-jest.mock("./envChecks", () => ({
-  isBuildMode: jest.fn(() => true),
-  isWatchMode: jest.fn(() => true),
-  isDevMode: jest.fn(() => true),
+vi.mock("./envChecks", () => ({
+  isBuildMode: vi.fn(() => true),
+  isWatchMode: vi.fn(() => true),
+  isDevMode: vi.fn(() => true),
 }));
 
 // Mock logger globally
-jest.mock("../telemetry/logger", () => ({
-  __esModule: true,
+vi.mock("../telemetry/logger", () => ({
   default: {
-    info: jest.fn(),
-    debug: jest.fn(),
-    child: jest.fn().mockReturnThis(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
   },
 }));
 
-// Mock Storage and OnSchedule
-jest.mock("./storage", () => ({
-  Storage: jest.fn(() => ({
-    onReady: jest.fn(),
-  })),
-}));
+vi.mock("./storage", async () => {
+  return {
+    Storage: vi.fn(() => ({
+      onReady: vi.fn(),
+    })),
+  };
+});
 
-// Mock OnSchedule and ensure it has a mock setStore method
-jest.mock("./schedule", () => ({
-  OnSchedule: jest.fn().mockImplementation(() => ({
-    setStore: jest.fn(), // Ensure setStore is a mocked function
-  })),
-}));
+vi.mock("./schedule", async () => {
+  return {
+    OnSchedule: vi.fn().mockImplementation(() => ({
+      setStore: vi.fn(),
+    })),
+  };
+});
 
-const mockLog = Log as jest.Mocked<typeof Log>;
-
+const mockLog = Log as unknown as {
+  info: Mock;
+  debug: Mock;
+  child: Mock;
+};
 describe("Capability", () => {
   let mockRequest: AdmissionRequest<V1Pod>;
 
   beforeEach(() => {
-    jest.resetModules();
-    jest.clearAllMocks();
+    vi.resetModules();
+    vi.clearAllMocks();
 
     mockRequest = {
       operation: Operation.CREATE,
@@ -139,8 +150,8 @@ describe("Capability", () => {
   it("should correctly chain When, InNamespace, WithLabel, and Mutate methods", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -175,8 +186,8 @@ describe("Capability", () => {
     it("should use child logger for mutate callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-        (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
+        (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Mutate action log");
         },
       );
@@ -214,8 +225,8 @@ describe("Capability", () => {
 
       const capability = new Capability(complexCapabilityConfig);
 
-      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (po: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (po: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
         },
       );
@@ -258,8 +269,8 @@ describe("Capability", () => {
     it("should use child logger for validate callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -291,8 +302,8 @@ describe("Capability", () => {
     it("should use child logger for reconcile callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-        async (update, phase, logger: typeof Log = mockLog) => {
+      const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
+        async (update, phase, logger: PartialLogger = mockLog) => {
           logger.info("Reconcile action log");
         },
       );
@@ -317,14 +328,14 @@ describe("Capability", () => {
     it("should use child logger for finalize callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
-        async (update, logger: typeof Log = mockLog) => {
+      const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
+        async (update, logger: PartialLogger = mockLog) => {
           logger.info("Finalize action log");
         },
       );
 
       // Create a mock WatchLogAction function that matches the expected signature
-      const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {},
       );
@@ -356,7 +367,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       // Mock the watch callback
-      const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
+      const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
         async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
           logger?.info("Watch action log");
         },
@@ -379,14 +390,14 @@ describe("Capability", () => {
   it("should reset the alias before each mutation", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+    const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("First mutation action");
       },
     );
 
-    const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = jest.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+    const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("Second mutation action");
       },
     );
@@ -426,8 +437,8 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     // Mock Watch callback function
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update, phase, logger: typeof Log = mockLog) => {
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("Watch action executed");
       },
     );
@@ -444,7 +455,7 @@ describe("Capability", () => {
 
     // Simulate calling the watch callback with test data
     const testPod = new V1Pod();
-    await binding?.watchCallback?.(testPod, WatchPhase.Added, mockLog);
+    await binding?.watchCallback?.(testPod, WatchPhase.Added, mockLog as unknown as Logger);
 
     // Ensure that the logger's `info` method was called
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
@@ -454,8 +465,8 @@ describe("Capability", () => {
   it("should pass the correct parameters to the Watch action", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update, phase, logger: typeof Log = mockLog) => {
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("Watch action executed");
       },
     );
@@ -469,7 +480,7 @@ describe("Capability", () => {
     const testPhase = WatchPhase.Modified;
 
     // Call the watch callback with custom data
-    await binding?.watchCallback?.(testPod, testPhase, mockLog);
+    await binding?.watchCallback?.(testPod, testPhase, mockLog as unknown as Logger);
 
     expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, mockLog);
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
@@ -478,14 +489,14 @@ describe("Capability", () => {
   it("should use user-provided alias for finalizer with reconcile", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update, phase, logger: typeof Log = mockLog) => {
+    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("external api call (reconcile-create-alias): reconcile/callback");
       },
     );
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
-      async (update: V1Pod, logger: typeof Log = mockLog) => {
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
+      async (update: V1Pod, logger: PartialLogger = mockLog) => {
         logger.info("Finalize action log");
       },
     );
@@ -523,14 +534,14 @@ describe("Capability", () => {
   it("should use user-provided alias for finalizer with watch", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = jest.fn(
-      async (update, phase, logger: typeof Log = mockLog) => {
+    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("external api call (watch-create-alias): watch/callback");
       },
     );
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = jest.fn(
-      async (update: V1Pod, logger: typeof Log = mockLog) => {
+    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
+      async (update: V1Pod, logger: PartialLogger = mockLog) => {
         logger.info("Finalize action log");
       },
     );
@@ -569,8 +580,8 @@ describe("Capability", () => {
     it("should add deletionTimestamp filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -589,8 +600,8 @@ describe("Capability", () => {
     it("should add name filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -609,8 +620,8 @@ describe("Capability", () => {
     it("should add annotation filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -631,8 +642,8 @@ describe("Capability", () => {
     it("should bind an update event", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -647,8 +658,8 @@ describe("Capability", () => {
     it("should bind a delete event", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = jest.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: typeof Log = mockLog) => {
+      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -686,7 +697,7 @@ describe("Capability", () => {
       name: "test-schedule",
       every: 5,
       unit: "minutes",
-      run: jest.fn(),
+      run: vi.fn(),
       startTime: new Date(),
       completions: 1,
     };
@@ -699,8 +710,7 @@ describe("Capability", () => {
     expect(scheduleStoreInstance.onReady).toHaveBeenCalledWith(expect.any(Function));
 
     // Simulate the `onReady` callback being invoked
-    const onReadyCallback = (scheduleStoreInstance.onReady as jest.Mock).mock
-      .calls[0][0] as () => void;
+    const onReadyCallback = (scheduleStoreInstance.onReady as Mock).mock.calls[0][0] as () => void;
     onReadyCallback(); // The callback function is now invoked as a type of `() => void`
 
     // Ensure the new OnSchedule instance is created with the correct schedule data
@@ -721,7 +731,7 @@ describe("Capability", () => {
       name: "test-schedule",
       every: 5,
       unit: "minutes",
-      run: jest.fn(),
+      run: vi.fn(),
       startTime: new Date(),
       completions: 1,
     };

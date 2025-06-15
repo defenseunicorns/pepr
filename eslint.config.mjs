@@ -27,6 +27,7 @@ export default [
       "integration/testroot",
       "integration/cli/**/*.test.ts",
       "integration/eslint.config.mjs",
+      "eslint.test.config.mjs",
     ],
   },
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
@@ -111,7 +112,7 @@ export default [
   },
   {
     files: ["**/*.ts"],
-    ignores: ["**/*.test.ts"],
+    ignores: ["**/*.test.ts", "eslint.test.config.mjs", "integration/eslint.config.mjs"],
 
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",

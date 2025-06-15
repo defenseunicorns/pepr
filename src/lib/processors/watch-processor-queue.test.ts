@@ -1,4 +1,4 @@
-import { describe, beforeEach, it, expect, afterAll } from "@jest/globals";
+import { describe, beforeEach, it, expect, afterAll } from "vitest";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { V1ObjectMeta } from "@kubernetes/client-node";
 import { queueKey, getOrCreateQueue } from "./watch-processor";
@@ -17,7 +17,7 @@ class LoggableKubernetesObject implements KubernetesObject {
   }) {
     if (params.kind) this.kind = params.kind;
     if (params.metadata) this.metadata = params.metadata as V1ObjectMeta;
-    this.toString = () => params.description;
+    this.toString = (): string => params.description;
   }
 }
 

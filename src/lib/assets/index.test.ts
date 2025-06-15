@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { it, describe, expect } from "@jest/globals";
+import { it, describe, expect } from "vitest";
 import { createWebhookYaml } from "./index";
 import { kind } from "kubernetes-fluent-client";
 import { ModuleConfig } from "../types";

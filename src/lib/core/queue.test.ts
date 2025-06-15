@@ -1,13 +1,13 @@
-import { afterEach, describe, expect, jest, it } from "@jest/globals";
+import { afterEach, describe, expect, vi, it } from "vitest";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Queue } from "./queue";
 
 import Log from "../telemetry/logger";
-jest.mock("../telemetry/logger");
+vi.mock("../telemetry/logger");
 
 describe("Queue", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("is uniquely identifiable", () => {
@@ -40,7 +40,7 @@ describe("Queue", () => {
     );
 
     const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
-    const watchCb = () =>
+    const watchCb = (): Promise<void> =>
       new Promise<void>(res => {
         setTimeout(res, 100);
       });
@@ -52,7 +52,7 @@ describe("Queue", () => {
       queue.enqueue(kubeObj, WatchPhase.Added, watchCb),
     ]);
 
-    const logDebug = Log.debug as jest.Mock;
+    const logDebug = Log.debug as vi.Mock;
     const stats = logDebug.mock.calls
       .flat()
       .map(m => JSON.stringify(m))
@@ -77,7 +77,7 @@ describe("Queue", () => {
     const queue = new Queue(name);
 
     const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
-    const watchCb = () =>
+    const watchCb = (): Promise<void> =>
       new Promise<void>(res => {
         setTimeout(res, 10);
       });
@@ -93,7 +93,7 @@ describe("Queue", () => {
     const queue = new Queue(name);
 
     const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
-    const watchCb = () =>
+    const watchCb = (): Promise<void> =>
       new Promise<void>((_, reject) => {
         setTimeout(() => {
           reject("oof");
@@ -111,21 +111,21 @@ describe("Queue", () => {
     const queue = new Queue(name);
 
     const kubeObj = { metadata: { name: "test-nm", namespace: "test-ns" } };
-    const watchA = () =>
+    const watchA = (): Promise<void> =>
       new Promise<void>(resolve => {
         setTimeout(() => {
           Log.info("watchA");
           resolve();
         }, 15);
       });
-    const watchB = () =>
+    const watchB = (): Promise<void> =>
       new Promise<void>(resolve => {
         setTimeout(() => {
           Log.info("watchB");
           resolve();
         }, 10);
       });
-    const watchC = () =>
+    const watchC = (): Promise<void> =>
       new Promise<void>(resolve => {
         setTimeout(() => {
           Log.info("watchC");
@@ -139,7 +139,7 @@ describe("Queue", () => {
       queue.enqueue(kubeObj, WatchPhase.Added, watchC),
     ]);
 
-    const logInfo = Log.info as jest.Mock;
+    const logInfo = Log.info as vi.Mock;
     const calls = logInfo.mock.calls
       .flat()
       .map(m => JSON.stringify(m))

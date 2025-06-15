@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { it, describe, expect, beforeEach, jest, afterEach } from "@jest/globals";
+import { it, describe, expect, beforeEach, vi, afterEach } from "vitest";
 import { CapabilityExport } from "../types";
 import { loadCapabilities } from "./loader";
 import { fork } from "child_process";
 
-jest.mock("child_process", () => ({
-  fork: jest.fn(),
+vi.mock("child_process", () => ({
+  fork: vi.fn(),
 }));
 
 describe("loadCapabilities", () => {
@@ -15,17 +15,17 @@ describe("loadCapabilities", () => {
 
   beforeEach(() => {
     mockProcess = {
-      on: jest.fn(),
-      send: jest.fn(),
+      on: vi.fn(),
+      send: vi.fn(),
     };
 
-    (fork as jest.Mock).mockReturnValue(mockProcess);
-    jest.spyOn(console, "info").mockImplementation(() => {});
+    (fork as vi.Mock).mockReturnValue(mockProcess);
+    vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should resolve the capabilities array when the forked process sends message", async () => {

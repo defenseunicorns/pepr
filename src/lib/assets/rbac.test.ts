@@ -7,7 +7,7 @@ import {
   serviceAccount,
   storeRoleBinding,
 } from "./rbac";
-import { it, describe, expect, jest } from "@jest/globals";
+import { it, describe, expect, vi } from "vitest";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import fs from "fs";
 import { kind } from "kubernetes-fluent-client";
@@ -149,7 +149,7 @@ describe("RBAC Rule Processing", () => {
       },
     ];
 
-    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+    vi.spyOn(fs, "readFileSync").mockImplementation(() => {
       return JSON.stringify({
         pepr: {
           rbac: customRbacWithNoVerbs,
@@ -168,7 +168,7 @@ describe("RBAC Rule Processing", () => {
   });
   it("should handle non-array custom RBAC by defaulting to an empty array", () => {
     // Mock readRBACFromPackageJson to return a non-array value
-    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+    vi.spyOn(fs, "readFileSync").mockImplementation(() => {
       return JSON.stringify({
         pepr: {
           rbac: "not-an-array", // Simulate invalid RBAC structure
@@ -289,7 +289,7 @@ describe("ClusterRole Generation", () => {
 
 describe("RBAC Key Handling", () => {
   it("should handle keys with 3 or more segments and set group correctly", () => {
-    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+    vi.spyOn(helpers, "createRBACMap").mockReturnValue({
       "apps/v1/deployments": {
         plural: "deployments",
         verbs: ["create"],
@@ -317,7 +317,7 @@ describe("RBAC Key Handling", () => {
   });
 
   it("should handle keys with less than 3 segments and set group to an empty string", () => {
-    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+    vi.spyOn(helpers, "createRBACMap").mockReturnValue({
       nodes: {
         plural: "nodes",
         verbs: ["get"],
