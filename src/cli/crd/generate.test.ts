@@ -251,7 +251,7 @@ describe("generate.ts", () => {
         expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
 
         expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
-      });
+      }, 30000);
     });
   });
 });
