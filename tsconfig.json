@@ -15,7 +15,7 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "eslint.test.config.mjs",
     "src/**/*.test.ts",

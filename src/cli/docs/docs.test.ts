@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import path from "path";
 import * as childProcess from "child_process";
 import { promisify } from "util";
