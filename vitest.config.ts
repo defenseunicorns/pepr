@@ -6,7 +6,7 @@ export default defineConfig({
     exclude: [
       "node_modules", 
       "dist", 
-      "build-artifact.test.ts", 
+      "src/build-artifact.test.ts", 
       "src/cli/docs/**", 
       "pepr/**", 
       "src/templates/**",

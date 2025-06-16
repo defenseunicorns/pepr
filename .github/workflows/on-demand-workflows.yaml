@@ -102,7 +102,7 @@ jobs:
           version: v3.3.4
       - run: npm ci
       - run: npm run test:integration
-        timeout-minutes: 30
+        timeout-minutes: 10
 
   build-artifacts:
     if: inputs.run-units == true
@@ -115,7 +115,5 @@ jobs:
           node-version: 24
           cache: "npm"
       - run: npm ci
-      - run: npm run build
-      - run: ls -la dist
       - run: npm run test:artifacts
-        timeout-minutes: 30
+        timeout-minutes: 10
