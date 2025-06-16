@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, afterAll, describe, vi } from "vitest";
+import { beforeAll, afterAll, describe } from "vitest";
 
 import { before } from "./before";
 import { peprBuild } from "./pepr-build";

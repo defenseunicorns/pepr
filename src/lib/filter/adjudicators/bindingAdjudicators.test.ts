@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it } from "@jest/globals";
+import { expect, describe, it } from "vitest";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Binding } from "../../types";
 import { Event } from "../../enums";
@@ -671,9 +671,9 @@ describe("definedCallback", () => {
   const validateCallback = (): ValidateActionResponse => {
     return { allowed: false };
   };
-  const mutateCallback = () => {};
-  const watchCallback = () => {};
-  const finalizeCallback = () => {};
+  const mutateCallback = (): void => {};
+  const watchCallback = (): void => {};
+  const finalizeCallback = (): void => {};
 
   //[ Binding, result ]
   it.each([
@@ -761,9 +761,9 @@ describe("definedCallbackName", () => {
   const validateCallback = (): ValidateActionResponse => {
     return { allowed: false };
   };
-  const mutateCallback = () => {};
-  const watchCallback = () => {};
-  const finalizeCallback = () => {};
+  const mutateCallback = (): void => {};
+  const watchCallback = (): void => {};
+  const finalizeCallback = (): void => {};
 
   //[ Binding, result ]
   it.each([

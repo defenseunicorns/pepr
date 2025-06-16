@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, jest, beforeEach } from "@jest/globals";
+import { expect, describe, it, vi, type Mock, beforeEach } from "vitest";
 import { promises as fs } from "fs";
 import { overridesFile } from "./overridesFile";
 import type { ChartOverrides } from "./overridesFile";
@@ -9,14 +9,17 @@ import { load as loadYaml } from "js-yaml";
 import { ModuleConfig } from "../../types";
 import { V1PolicyRule } from "@kubernetes/client-node";
 
-jest.mock("fs", () => ({
-  ...(jest.requireActual("fs") as object),
-  promises: {
-    readFile: jest.fn<() => Promise<string>>().mockResolvedValue("mocked"),
-    writeFile: jest.fn(),
-    access: jest.fn(),
-  },
-}));
+vi.mock("fs", async () => {
+  const actualFs = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actualFs,
+    promises: {
+      readFile: vi.fn<() => Promise<string>>().mockResolvedValue("mocked"),
+      writeFile: vi.fn(),
+      access: vi.fn(),
+    },
+  };
+});
 
 interface OverridesFileSchema {
   imagePullSecrets: string[];
@@ -87,13 +90,13 @@ describe("overridesFile", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("writes a valid YAML file with expected contents", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as jest.Mock).mock.calls;
+    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
 
     expect(writtenPath).toBe(mockPath);
 
@@ -115,7 +118,7 @@ describe("overridesFile", () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as jest.Mock).mock.calls;
+    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
 
     expect(writtenPath).toBe(mockPath);
 
@@ -129,7 +132,7 @@ describe("overridesFile", () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as jest.Mock).mock.calls;
+    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
 
     expect(writtenPath).toBe(mockPath);
 
@@ -141,7 +144,7 @@ describe("overridesFile", () => {
   it("properly encodes apiPath in base64", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    const [[, writtenContent]] = (fs.writeFile as jest.Mock).mock.calls;
+    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));

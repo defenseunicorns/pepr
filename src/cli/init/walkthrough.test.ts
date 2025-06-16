@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { afterAll, beforeAll, describe, expect, jest, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, expect, vi, it, type MockInstance } from "vitest";
 import prompts from "prompts";
 import {
   walkthrough,
@@ -13,13 +13,13 @@ import {
 } from "./walkthrough";
 import { OnError } from "./enums";
 
-let consoleLog: jest.Spied<typeof console.log>;
-let consoleError: jest.Spied<typeof console.error>;
+let consoleLog: MockInstance<typeof console.log>;
+let consoleError: MockInstance<typeof console.error>;
 
 describe("when processing input", () => {
   beforeAll(() => {
-    consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
-    consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+    consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterAll(() => {

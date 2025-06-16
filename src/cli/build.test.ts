@@ -12,22 +12,22 @@ import {
 } from "./build.helpers";
 
 import { createDirectoryIfNotExists } from "../lib/filesystemService";
-import { expect, describe, it, jest, beforeEach } from "@jest/globals";
+import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
 import { createDockerfile } from "../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
 import { Capability } from "../lib/core/capability";
 
-jest.mock("child_process", () => ({
-  execSync: jest.fn(),
+vi.mock("child_process", () => ({
+  execSync: vi.fn(),
 }));
 
-jest.mock("../lib/included-files", () => ({
-  createDockerfile: jest.fn(),
+vi.mock("../lib/included-files", () => ({
+  createDockerfile: vi.fn(),
 }));
 
-jest.mock("../lib/filesystemService", () => ({
-  createDirectoryIfNotExists: jest.fn(),
+vi.mock("../lib/filesystemService", () => ({
+  createDirectoryIfNotExists: vi.fn(),
 }));
 
 describe("assignImage", () => {
@@ -107,10 +107,10 @@ describe("determineRbacMode", () => {
 });
 
 describe("handleCustomOutputDir", () => {
-  const mockedCreateDirectoryIfNotExists = jest.mocked(createDirectoryIfNotExists);
+  const mockedCreateDirectoryIfNotExists = vi.mocked(createDirectoryIfNotExists);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should return the provided output directory if it exists and is created successfully", async () => {
@@ -151,14 +151,18 @@ describe("checkIronBankImage", () => {
 });
 
 describe("validImagePullSecret", () => {
-  const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-    return undefined as never;
-  });
-
-  const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  let consoleErrorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+      return undefined as never;
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
   it("should not throw an error if the imagePullSecret is valid", () => {
     const imagePullSecret = "valid-secret";
@@ -174,18 +178,19 @@ describe("validImagePullSecret", () => {
   });
   it("should throw an error if the imagePullSecret is invalid", () => {
     const imagePullSecret = "invalid name";
+    const error = "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.";
     validImagePullSecret(imagePullSecret);
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(error);
     expect(mockExit).toHaveBeenCalled();
   });
 });
 
 describe("handleCustomImageBuild", () => {
-  const mockedExecSync = jest.mocked(execSync);
-  const mockedCreateDockerfile = jest.mocked(createDockerfile);
+  const mockedExecSync = vi.mocked(execSync);
+  const mockedCreateDockerfile = vi.mocked(createDockerfile);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call createDockerfile and execute docker commands if includedFiles is not empty", async () => {
@@ -219,11 +224,15 @@ describe("handleCustomImageBuild", () => {
   });
 });
 describe("handleValidCapabilityNames", () => {
-  const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
-    return undefined as never;
+  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>;
+  let consoleErrorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+      return undefined as never;
+    });
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
-
-  const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
   it("should call validateCapabilityNames with capabilities", () => {
     const capability = new Capability({
@@ -260,9 +269,8 @@ describe("handleValidCapabilityNames", () => {
         hasSchedule: capability.hasSchedule,
       },
     ];
-
     handleValidCapabilityNames(capabilityExports);
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(consoleErrorSpy.mock.calls[0][0]).toBe(`Error loading capability:`);
     expect(mockExit).toHaveBeenCalled();
   });
 });

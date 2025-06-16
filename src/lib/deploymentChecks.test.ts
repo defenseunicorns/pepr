@@ -1,25 +1,25 @@
-import { describe, jest, it, beforeEach, afterEach, expect } from "@jest/globals";
+import { describe, vi, it, beforeEach, afterEach, expect } from "vitest";
 import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./deploymentChecks";
 
-jest.mock("kubernetes-fluent-client", () => {
+vi.mock("kubernetes-fluent-client", () => {
   return {
-    K8s: jest.fn(),
-    kind: jest.fn(),
+    K8s: vi.fn(),
+    kind: vi.fn(),
   };
 });
 
 describe("namespaceDeploymentsReady", () => {
-  const mockK8s = jest.mocked(K8s);
+  const mockK8s = vi.mocked(K8s);
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.useRealTimers();
   });
 
   it("should return true if all deployments are ready", async () => {
@@ -54,7 +54,7 @@ describe("namespaceDeploymentsReady", () => {
 
     mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
-        InNamespace: jest.fn().mockReturnThis(),
+        InNamespace: vi.fn().mockReturnThis(),
         Get: () => deployments,
       } as unknown as K8sInit<T, K>;
     });
@@ -126,13 +126,13 @@ describe("namespaceDeploymentsReady", () => {
     mockK8s
       .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
-          InNamespace: jest.fn().mockReturnThis(),
+          InNamespace: vi.fn().mockReturnThis(),
           Get: () => deployments,
         } as unknown as K8sInit<T, K>;
       })
       .mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
-          InNamespace: jest.fn().mockReturnThis(),
+          InNamespace: vi.fn().mockReturnThis(),
           Get: () => deployments2,
         } as unknown as K8sInit<T, K>;
       });
@@ -147,15 +147,15 @@ describe("namespaceDeploymentsReady", () => {
 });
 
 describe("checkDeploymentStatus", () => {
-  const mockK8s = jest.mocked(K8s);
+  const mockK8s = vi.mocked(K8s);
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.useRealTimers();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.useRealTimers();
   });
   it("should return true if all deployments are ready", async () => {
     const deployments = {
@@ -189,7 +189,7 @@ describe("checkDeploymentStatus", () => {
 
     mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
-        InNamespace: jest.fn().mockReturnThis(),
+        InNamespace: vi.fn().mockReturnThis(),
         Get: () => deployments,
       } as unknown as K8sInit<T, K>;
     });
@@ -231,7 +231,7 @@ describe("checkDeploymentStatus", () => {
 
     mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
-        InNamespace: jest.fn().mockReturnThis(),
+        InNamespace: vi.fn().mockReturnThis(),
         Get: () => deployments,
       } as unknown as K8sInit<T, K>;
     });

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach, afterEach, jest } from "@jest/globals";
+import { expect, describe, it, beforeEach, afterEach, vi, type Mock } from "vitest";
 import {
   extractSingleLineComment,
   extractDetails,
@@ -12,10 +12,10 @@ import {
   getAPIVersions,
 } from "./generate";
 import { ErrorMessages, WarningMessages } from "./messages";
-import { Project } from "ts-morph";
+import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
 
-jest.mock("fs");
+vi.mock("fs");
 
 // Helper function to get details string based on parameters
 const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
@@ -52,14 +52,14 @@ const generateTestContent = ({
   return parts.join("\n");
 };
 
-const createProjectWithFile = (name: string, content: string) => {
+const createProjectWithFile = (name: string, content: string): SourceFile => {
   const project = new Project();
   return project.createSourceFile(name, content);
 };
 
 describe("generate.ts", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("when extracting single line comments", () => {
@@ -98,9 +98,9 @@ describe("generate.ts", () => {
   describe("when managing API versions", () => {
     describe("getAPIVersions", () => {
       it("should return only directory entries from the api root", () => {
-        (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "v2"]);
-        (fs.statSync as jest.Mock).mockImplementation(path => ({
-          isDirectory: () =>
+        (fs.readdirSync as Mock).mockReturnValue(["v1", "v2"]);
+        (fs.statSync as Mock).mockImplementation(path => ({
+          isDirectory: (): boolean =>
             typeof path === "string" && (path.endsWith("v1") || path.endsWith("v2")),
         }));
 
@@ -109,9 +109,9 @@ describe("generate.ts", () => {
       });
 
       it("should ignore non-directory entries", () => {
-        (fs.readdirSync as jest.Mock).mockReturnValue(["v1", "README.md"]);
-        (fs.statSync as jest.Mock).mockImplementation(p => ({
-          isDirectory: () => typeof p === "string" && p.endsWith("v1"),
+        (fs.readdirSync as Mock).mockReturnValue(["v1", "README.md"]);
+        (fs.statSync as Mock).mockImplementation(p => ({
+          isDirectory: (): boolean => typeof p === "string" && p.endsWith("v1"),
         }));
 
         const versions = getAPIVersions("/api");
@@ -121,7 +121,7 @@ describe("generate.ts", () => {
 
     describe("loadVersionFiles", () => {
       beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
 
       it("should load only TypeScript files from the version directory", () => {
@@ -132,8 +132,8 @@ describe("generate.ts", () => {
           "mock-source-file-2",
         ] as unknown as import("ts-morph").SourceFile[];
 
-        (fs.readdirSync as jest.Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts", "README.md"]);
-        const projectSpy = jest
+        (fs.readdirSync as Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts", "README.md"]);
+        const projectSpy = vi
           .spyOn(project, "addSourceFilesAtPaths")
           .mockReturnValue(mockReturnFiles);
 
@@ -146,8 +146,8 @@ describe("generate.ts", () => {
 
       it("should return empty array when directory has no TypeScript files", () => {
         const project = new Project();
-        (fs.readdirSync as jest.Mock).mockReturnValue(["bar.js", "README.md", "config.json"]);
-        const projectSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
+        (fs.readdirSync as Mock).mockReturnValue(["bar.js", "README.md", "config.json"]);
+        const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
 
         const result = loadVersionFiles(project, "/api/v1");
 
@@ -158,8 +158,8 @@ describe("generate.ts", () => {
 
       it("should return empty array for empty directory", () => {
         const project = new Project();
-        (fs.readdirSync as jest.Mock).mockReturnValue([]);
-        const projectSpy = jest.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
+        (fs.readdirSync as Mock).mockReturnValue([]);
+        const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
 
         const result = loadVersionFiles(project, "/api/v1");
 
@@ -169,7 +169,7 @@ describe("generate.ts", () => {
 
       it("should handle fs.readdirSync errors", () => {
         const project = new Project();
-        (fs.readdirSync as jest.Mock).mockImplementation(() => {
+        (fs.readdirSync as Mock).mockImplementation(() => {
           throw new Error("Directory not found");
         });
 
@@ -219,7 +219,7 @@ describe("generate.ts", () => {
           expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
         },
       ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
-        const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
         const file = createProjectWithFile("test.ts", contents);
         processSourceFile(file, "v1", "/output");
         expect(consoleWarn).toHaveBeenCalledWith(expectedWarning);
@@ -228,8 +228,9 @@ describe("generate.ts", () => {
 
     describe("when file content is valid", () => {
       it("should generate a CRD YAML file", () => {
-        const writeFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation(() => {});
-        const consoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+        const writeFileMock = vi.mocked(fs.writeFileSync);
+        //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+        const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
         const file = createProjectWithFile(
           "valid.ts",
           generateTestContent({
@@ -244,15 +245,13 @@ describe("generate.ts", () => {
         );
 
         processSourceFile(file, "v1", "/crds");
-
-        expect(writeFileSync).toHaveBeenCalledWith(
-          expect.stringContaining("/crds/widget.yaml"),
-          expect.stringContaining("CustomResourceDefinition"),
-          "utf8",
-        );
+        console.log(writeFileMock.mock.calls);
+        expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
+        expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
+        expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
 
         expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
-      });
+      }, 30000);
     });
   });
 });

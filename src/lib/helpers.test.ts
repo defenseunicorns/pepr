@@ -22,11 +22,10 @@ import {
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
-import { expect, describe, jest, beforeEach, afterEach, it } from "@jest/globals";
-import { SpiedFunction } from "jest-mock";
+import { expect, describe, vi, beforeEach, afterEach, it, type MockInstance } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 
-export const callback = () => undefined;
+export const callback = (): void => undefined;
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -529,12 +528,9 @@ const nonNsViolation: CapabilityExport[] = [
 ];
 
 describe("namespaceComplianceValidator", () => {
-  let errorSpy: SpiedFunction<{
-    (...data: unknown[]): void;
-    (message?: unknown, ...optionalParams: unknown[]): void;
-  }>;
+  let errorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -805,7 +801,7 @@ describe("validateHash", () => {
 
   beforeEach(() => {
     originalExit = process.exit;
-    process.exit = jest.fn() as unknown as (code?: number) => never;
+    process.exit = vi.fn() as unknown as (code?: number) => never;
   });
 
   afterEach(() => {

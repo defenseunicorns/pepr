@@ -17,6 +17,8 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": [
+    "eslint.test.config.mjs",
+    "src/**/*.test.ts",
     "node_modules",
     "dist",
     "src/templates/*",

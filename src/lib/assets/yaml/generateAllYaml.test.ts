@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, jest } from "@jest/globals";
+import { expect, describe, it, vi } from "vitest";
 import { generateAllYaml } from "./generateAllYaml";
 import { Assets } from "../assets";
 import { ModuleConfig } from "../../types";
@@ -9,7 +9,7 @@ import { V1Deployment, KubernetesObject } from "@kubernetes/client-node";
 import { promises as fs } from "fs";
 import { webhookConfigGenerator } from "../webhooks";
 import { WebhookType } from "../../enums";
-import { getModuleSecret, getNamespace } from "../pods";
+import { getNamespace, getModuleSecret } from "../pods";
 import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
 import {
   clusterRole,
@@ -20,8 +20,8 @@ import {
 } from "../rbac";
 import crypto from "crypto";
 
-jest.mock("../webhooks", () => ({
-  webhookConfigGenerator: jest.fn(async (assets: Assets, type: string, timeout: number) => ({
+vi.mock("../webhooks", () => ({
+  webhookConfigGenerator: vi.fn(async (assets: Assets, type: string, timeout: number) => ({
     kind: "WebhookConfig",
     metadata: { name: `${assets.name}-webhook-${type.toLowerCase()}` },
     webhooks: [
@@ -31,47 +31,58 @@ jest.mock("../webhooks", () => ({
     ],
   })),
 }));
-jest.mock("fs", () => ({
-  ...(jest.requireActual("fs") as object),
-  promises: {
-    readFile: jest.fn<() => Promise<string>>().mockResolvedValue("mocked"),
-    writeFile: jest.fn(),
-    access: jest.fn(),
-  },
-}));
-jest.mock("crypto", () => ({
-  ...(jest.requireActual("crypto") as object),
-  createHash: jest.fn(() => ({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn().mockReturnValue("mocked-hash"),
-  })),
+vi.mock("fs", async () => {
+  const actualFs = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actualFs,
+    promises: {
+      readFile: vi.fn<() => Promise<string>>().mockResolvedValue("mocked"),
+      writeFile: vi.fn(),
+      access: vi.fn(),
+    },
+  };
+});
+
+vi.mock("crypto", async () => {
+  const actualCrypto = await vi.importActual<typeof import("crypto")>("crypto");
+  return {
+    ...actualCrypto,
+    createHash: vi.fn(() => ({
+      update: vi.fn().mockReturnThis(),
+      digest: vi.fn().mockReturnValue("mocked-hash"),
+    })),
+  };
+});
+
+vi.mock("@kubernetes/client-node", async () => {
+  const actualClientNode =
+    await vi.importActual<typeof import("@kubernetes/client-node")>("@kubernetes/client-node");
+  return {
+    ...actualClientNode,
+    dumpYaml: vi.fn(
+      (resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`,
+    ),
+  };
+});
+
+vi.mock("../pods", () => ({
+  getNamespace: vi.fn().mockReturnValue({}),
+  getModuleSecret: vi.fn().mockReturnValue({}),
 }));
 
-jest.mock("@kubernetes/client-node", () => ({
-  ...(jest.requireActual("@kubernetes/client-node") as object),
-  dumpYaml: jest.fn(
-    (resource: KubernetesObject) => `mocked-yaml-for-${resource?.metadata?.name || "unknown"}`,
-  ),
+vi.mock("../rbac", () => ({
+  clusterRole: vi.fn().mockReturnValue({}),
+  clusterRoleBinding: vi.fn().mockReturnValue({}),
+  serviceAccount: vi.fn().mockReturnValue({}),
+  storeRole: vi.fn().mockReturnValue({}),
+  storeRoleBinding: vi.fn().mockReturnValue({}),
 }));
 
-jest.mock("../pods", () => ({
-  getNamespace: jest.fn().mockReturnValue({}),
-  getModuleSecret: jest.fn().mockReturnValue({}),
-}));
-
-jest.mock("../rbac", () => ({
-  clusterRole: jest.fn().mockReturnValue({}),
-  clusterRoleBinding: jest.fn().mockReturnValue({}),
-  serviceAccount: jest.fn().mockReturnValue({}),
-  storeRole: jest.fn().mockReturnValue({}),
-  storeRoleBinding: jest.fn().mockReturnValue({}),
-}));
-
-jest.mock("../networking", () => ({
-  apiPathSecret: jest.fn().mockReturnValue({}),
-  service: jest.fn().mockReturnValue({}),
-  tlsSecret: jest.fn().mockReturnValue({}),
-  watcherService: jest.fn().mockReturnValue({}),
+vi.mock("../networking", () => ({
+  apiPathSecret: vi.fn().mockReturnValue({}),
+  service: vi.fn().mockReturnValue({}),
+  tlsSecret: vi.fn().mockReturnValue({}),
+  watcherService: vi.fn().mockReturnValue({}),
 }));
 describe("generateAllYaml", () => {
   const moduleConfig: ModuleConfig = {
@@ -98,10 +109,13 @@ describe("generateAllYaml", () => {
   };
 
   it("should read the minified module file and create a hash", async () => {
-    const mockReadFile = fs.readFile as jest.MockedFunction<typeof fs.readFile>;
+    const mockReadFile = vi.mocked(fs.readFile);
+    const cryptoCreateHashSpy = vi.spyOn(crypto, "createHash");
+
     await generateAllYaml(assets, mockDeployments);
     expect(mockReadFile).toHaveBeenCalledTimes(1);
-    expect(crypto.createHash).toHaveBeenCalledWith("sha256");
+    expect(cryptoCreateHashSpy).toHaveBeenCalledTimes(1);
+    expect(cryptoCreateHashSpy).toHaveBeenCalledWith("sha256");
   });
 
   it("should call webhookConfigGenerator for mutate and validate", async () => {
@@ -126,7 +140,11 @@ describe("generateAllYaml", () => {
     expect(tlsSecret).toHaveBeenCalledWith(assets.name, assets.tls);
     expect(service).toHaveBeenCalledWith(assets.name);
     expect(watcherService).toHaveBeenCalledWith(assets.name);
-    expect(getModuleSecret).toHaveBeenCalledWith(assets.name, "mocked", "mocked-hash");
+    expect(getModuleSecret).toHaveBeenCalledWith(
+      assets.name,
+      "mocked",
+      "3d4a07bcbf2eaec380ad707451832924bee1197fbdf43d20d6d4bc96c8284268",
+    );
     expect(storeRole).toHaveBeenCalledWith(assets.name);
     expect(storeRoleBinding).toHaveBeenCalledWith(assets.name);
   });

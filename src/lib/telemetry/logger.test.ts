@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as fc from "fast-check";
 import { redactedPatch, redactedStore } from "./logger";
 import { AddOperation } from "fast-json-patch";
 
 describe("Logger", () => {
   beforeEach(() => {
-    jest.resetModules(); // Clear the cache for modules
+    vi.resetModules(); // Clear the cache for modules
     process.env = {}; // Clear environment variables
   });
 
