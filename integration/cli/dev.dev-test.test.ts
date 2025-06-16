@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, afterAll, describe, expect, it, jest } from "@jest/globals";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
@@ -14,7 +14,6 @@ import { RequestInit, Agent } from "undici";
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 const five_mins = 1000 * 60 * 5;
-jest.setTimeout(five_mins);
 let expectedLines = [
   "Establishing connection to Kubernetes",
   "Capability hello-pepr registered",
@@ -24,7 +23,7 @@ let expectedLines = [
   "Controller startup complete",
 ];
 let success = false;
-describe("dev", () => {
+describe("dev", { timeout: five_mins }, () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
   beforeAll(async () => {
     await workdir.recreate();
@@ -77,7 +76,7 @@ describe("dev", () => {
         }
       });
     }, 180000);
-    it("should be properly configured by the module ", done => {
+    it("should be properly configured by the module ", async () => {
       cmd.stdout.on("data", (data: Buffer) => {
         if (success) {
           return;
@@ -98,8 +97,6 @@ describe("dev", () => {
         } else {
           // Abort all further processing
           success = true;
-          // Finish the test
-          done();
         }
       });
     });
@@ -162,7 +159,7 @@ const fetchOpts: RequestInit = {
 };
 
 // Wait for the server to start and report healthy
-async function waitForServer() {
+async function waitForServer(): Promise<void> {
   const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
   if (!resp.ok) {
     await sleep(2);
@@ -170,7 +167,7 @@ async function waitForServer() {
   }
 }
 
-async function validateAPIPath() {
+async function validateAPIPath(): Promise<void> {
   const mutateUrl = `${fetchBaseUrl}/mutate/`;
   const validateUrl = `${fetchBaseUrl}/validate/`;
   const fetchPushOpts = { ...fetchOpts, method: "POST" };
@@ -188,13 +185,13 @@ async function validateAPIPath() {
   expect(evilValidatePath.status).toBe(401);
 }
 
-async function validateMetrics() {
+async function validateMetrics(): Promise<string> {
   const metricsOk = await fetch<string>(`${fetchBaseUrl}/metrics`, fetchOpts);
   expect(metricsOk.ok).toBe(true);
 
   return metricsOk.data;
 }
 
-function sleep(seconds: number) {
+function sleep(seconds: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }

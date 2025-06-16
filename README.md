@@ -11,18 +11,24 @@
 
 ## What happened to Pepr's stars?
 
-In February 2025, an accidental change to the repository's visibility reset the star count.  The visibility issue was quickly resolved, but the stars were unfortunately lost.
+In February 2025, an accidental change to the repository's visibility reset the star count.
+The visibility issue was quickly resolved, but the stars were unfortunately lost.
 
-Pepr had over 200 stars, demonstrating its recognition and value within the Kubernetes community.  We're working to rebuild that recognition.
+Pepr had over 200 stars, demonstrating its recognition and value within the Kubernetes community.
+We're working to rebuild that recognition.
 
-If you've previously starred Pepr, or if you find it a useful project, we would greatly appreciate it if you could re-star the repository. We really appreciate your support! :star:
+If you've previously starred Pepr, or if you find it a useful project, we would greatly appreciate it if you could re-star the repository.
+We really appreciate your support! :star:
 
 ## **_Type safe Kubernetes middleware for humans_**
 
 <!-- markdownlint-disable MD033 - Image-styling is unsupported on GitHub-flavored markdown -->
 <img alt="The Pepr Logo" align="right" width="40%" src="_images/pepr.png" />
 
-Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating glue code, bash scripts, and other makeshift solutions. As a Kubernetes controller, Pepr empowers you to define Kubernetes transformations using TypeScript, without software development expertise thanks to plain-english configurations. Pepr transforms a patchwork of forks, scripts, overlays, and other chaos into a cohesive, well-structured, and maintainable system. With Pepr, you can seamlessly transition IT ops organizational knowledge into code, simplifying documentation, testing, validation, and coordination of changes for a more predictable outcome.
+Pepr simplifies Kubernetes management by providing an alternative to complex YAML configurations, custom scripts, and ad-hoc solutions.
+As a Kubernetes controller, Pepr enables you to define Kubernetes transformations using TypeScript, accessible through straightforward configurations even without extensive development expertise.
+Pepr transforms disparate implementation approaches into a cohesive, well-structured, and maintainable system.
+With Pepr, you can efficiently convert organizational knowledge into code, improving documentation, testing, validation, and change management for more predictable outcomes.
 
 ## Features
 
@@ -42,13 +48,17 @@ Pepr is on a mission to save Kubernetes from the tyranny of YAML, intimidating g
 
 ## Example Pepr Action
 
-This quick sample shows how to react to a ConfigMap being created or updated in the cluster. It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap. It also creates a Validating Webhook to make sure the "pepr" label still exists. Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply. For more details see [actions](./docs/030_user-guide/030_actions/) section.
+This quick sample shows how to react to a ConfigMap being created or updated in the cluster.
+It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap.
+It also creates a Validating Webhook to make sure the "pepr" label still exists.
+Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply.
+For more details see [actions](./docs/030_user-guide/030_actions/) section.
 
 ```ts
 When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-demo")
-  .WithLabel("unicorn", "rainbow")
+  .WithLabel("example", "value")
   // Create a Mutate Action for the ConfigMap
   .Mutate(request => {
     // Add a label and annotation to the ConfigMap
@@ -58,7 +68,7 @@ When(a.ConfigMap)
     request.Raw.data["doug-says"] = "Pepr is awesome!";
 
     // Log a message to the Pepr controller logs
-    Log.info("A 🦄 ConfigMap was created or updated:");
+    Log.info("A ConfigMap was created or updated:");
   })
   // Create a Validate Action for the ConfigMap
   .Validate(request => {
@@ -68,7 +78,7 @@ When(a.ConfigMap)
     }
 
     // Reject the ConfigMap if it doesn't have the label
-    return request.Deny("ConfigMap must have a unicorn label");
+    return request.Deny("ConfigMap must have the required pepr label");
   })
   // Watch behaves like controller-runtime's Manager.Watch()
   .Watch(async (cm, phase) => {
@@ -90,7 +100,8 @@ When(a.ConfigMap)
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/en/) v20.0.0+ (even-numbered releases only)
-  - To ensure compatability and optimal performance, it is recommended to use even-numbered releases of Node.js as they are stable releases and receive long-term support for three years. Odd-numbered releases are experimental and may not be supported by certain libraries utilized in Pepr.
+  - To ensure compatability and optimal performance, it is recommended to use even-numbered releases of Node.js as they are stable releases and receive long-term support for three years.
+    Odd-numbered releases are experimental and may not be supported by certain libraries utilized in Pepr.
 
 - [npm](https://www.npmjs.com/) v10.1.0+
 
@@ -98,7 +109,7 @@ When(a.ConfigMap)
   - [Visual Studio Code](https://code.visualstudio.com/) for inline debugging and [Pepr Capabilities](#capability) creation.
   - A Kubernetes cluster for `npx pepr dev`. Pepr modules include `npm run k3d-setup` if you want to test locally with [K3d](https://k3d.io/) and [Docker](https://www.docker.com/).
 
-## Wow, too many words! tl;dr
+## Quick Start Guide
 
 ```bash
 # Create a new Pepr Module
@@ -112,8 +123,6 @@ npm run k3d-setup
 # run `npx pepr dev --host <your_hostname>`
 npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
-
-# Be amazed and ⭐️ this repo!
 ```
 
 > [!TIP]
@@ -127,23 +136,33 @@ kubectl apply -f capabilities/hello-pepr.samples.yaml
 
 ### Module
 
-A module is the top-level collection of capabilities. It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their actions. During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code. The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
+A module is the top-level collection of capabilities.
+It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their actions.
+During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code.
+The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
 
 See [Module](./docs/030_user-guide/020_pepr-modules.md) for more details.
 
 ### Capability
 
-A capability is set of related actions that work together to achieve a specific transformation or operation on Kubernetes resources. Capabilities are user-defined and can include one or more actions. They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations. A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
+A capability is set of related actions that work together to achieve a specific transformation or operation on Kubernetes resources.
+Capabilities are user-defined and can include one or more actions.
+They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations.
+A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
 See [Capabilities](./docs/030_user-guide/040_capabilities.md) for more details.
 
 ### Action
 
-Action is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in from Kubernetes. Actions are the atomic operations that are performed on Kubernetes resources by Pepr.
+Action is a discrete set of behaviors defined in a single function that acts on a given Kubernetes GroupVersionKind (GVK) passed in from Kubernetes.
+Actions are the atomic operations that are performed on Kubernetes resources by Pepr.
 
-For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata. Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
+For example, an action could be responsible for adding a specific label to a Kubernetes resource, or for modifying a specific field in a resource's metadata.
+Actions can be grouped together within a Capability to provide a more comprehensive set of operations that can be performed on Kubernetes resources.
 
-There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle. There is also a `Watch()` Action that can be used to watch for changes to Kubernetes resources that already exist.
+There are both `Mutate()` and `Validate()` Actions that can be used to modify or validate Kubernetes resources within the admission controller lifecycle.
+There are also `Watch()` and `Reconcile()` actions that can be used to watch for changes to Kubernetes resources that already exist.
+Finally, the `Finalize()` can be used after `Watch()` or `Reconcile()` to perform cleanup operations when the resource is deleted.
 
 See [actions](./docs/030_user-guide/030_actions/README.md) for more details.
 
@@ -154,7 +173,11 @@ See [actions](./docs/030_user-guide/030_actions/README.md) for more details.
 
 ## TypeScript
 
-[TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript. It provides optional static typing and a rich type system, allowing developers to write more robust code. TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript. Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system.See the [Typescript docs](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html) to learn more.
+[TypeScript](https://www.typescriptlang.org/) is a strongly typed, object-oriented programming language built on top of JavaScript.
+It provides optional static typing and a rich type system, allowing developers to write more robust code.
+TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript.
+Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system.
+See the [Typescript docs](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html) to learn more.
 
 ## Community
 

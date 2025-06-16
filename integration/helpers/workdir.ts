@@ -13,7 +13,7 @@ export class Workdir {
     this.root = path.resolve(root);
   }
 
-  path() {
+  path(): string {
     return path.join(this.root, this.leaf);
   }
 
@@ -22,11 +22,11 @@ export class Workdir {
     return this.path();
   }
 
-  async exists() {
+  async exists(): Promise<boolean> {
     return existsSync(this.path());
   }
 
-  async isEmpty() {
+  async isEmpty(): Promise<boolean> {
     const contents = await fs.readdir(this.path());
     return contents.length > 0 ? false : true;
   }

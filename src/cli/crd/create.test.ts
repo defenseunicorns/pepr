@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, jest, beforeEach } from "@jest/globals";
+import { expect, describe, it, vi, beforeEach } from "vitest";
 import { validateScope, generateCRDScaffold } from "./create";
 
 describe("generateCRDScaffold", () => {
@@ -32,7 +32,7 @@ describe("generateCRDScaffold", () => {
 
 describe("validateScope", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it.each([["Cluster"], ["Namespaced"]])("should return the scope if it is valid - %s", input => {

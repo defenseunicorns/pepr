@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { MutateResponse, ValidateResponse } from "../k8s";
 import * as sut from "./index.util";
 import { AdmissionRequest } from "../common-types";

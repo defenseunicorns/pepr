@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import { execSync, spawnSync, spawn } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { resolve } from "path";
@@ -33,7 +33,8 @@ export function peprDeploy() {
      * when controller starts up, it will migrate the store
      * and later on the keys will be tested to validate the migration
      */
-    execSync("npx pepr deploy -i pepr:dev --confirm", { cwd, stdio: "inherit" });
+    const image = process.env.PEPR_IMAGE || "pepr:dev";
+    execSync(`npx pepr deploy -i ${image} --confirm`, { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
     await Promise.all([

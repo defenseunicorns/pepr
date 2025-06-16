@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
+import { afterEach, describe, it, vi, beforeEach, expect } from "vitest";
 import { Controller, ControllerHooks } from "./index";
 import { Capability } from "../core/capability";
 import { ModuleConfig, CapabilityCfg } from "../types";
 
-jest.mock("./store", () => {
+vi.mock("./store", () => {
   return {
-    StoreController: jest.fn().mockImplementation((_capabilities, _name, onReady) => {
+    StoreController: vi.fn().mockImplementation((_capabilities, _name, onReady) => {
       if (typeof onReady === "function") {
         onReady();
       }
@@ -32,18 +32,18 @@ describe("Controller", () => {
     mockCapabilities = [new Capability(mockCapabilityConfig)];
 
     mockHooks = {
-      beforeHook: jest.fn(),
-      afterHook: jest.fn(),
-      onReady: jest.fn(),
+      beforeHook: vi.fn(),
+      afterHook: vi.fn(),
+      onReady: vi.fn(),
     };
 
     controller = new Controller(mockConfig, mockCapabilities, mockHooks);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-    jest.useRealTimers();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it("should initialize with provided config, capabilities, and hooks", () => {

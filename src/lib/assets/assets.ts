@@ -257,8 +257,7 @@ export class Assets {
         );
       }
     } catch (err) {
-      console.error(`Error generating helm chart: ${err.message}`);
-      process.exit(1);
+      throw new Error(`Error generating helm chart: ${err.message}`);
     }
   };
 }

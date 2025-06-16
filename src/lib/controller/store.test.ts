@@ -6,22 +6,22 @@ import { CapabilityCfg } from "../types";
 import { Capability } from "../core/capability";
 import { Schedule } from "../core/schedule";
 import { Store } from "../k8s";
-import { afterEach, describe, it, jest, beforeEach, expect } from "@jest/globals";
+import { afterEach, describe, it, type MockInstance, vi, beforeEach, expect } from "vitest";
 import { K8s } from "kubernetes-fluent-client";
 import Log from "../telemetry/logger";
 
-jest.mock("kubernetes-fluent-client");
-jest.mock("../telemetry/logger", () => ({
+vi.mock("kubernetes-fluent-client");
+vi.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
 describe("StoreController", () => {
-  const mockK8s = jest.mocked(K8s);
-  const mockLog = jest.mocked(Log);
+  const mockK8s = vi.mocked(K8s);
+  const mockLog = vi.mocked(Log);
   const capabilityConfig: CapabilityCfg = {
     name: "test-capability",
     description: "Test capability description",
@@ -34,39 +34,56 @@ describe("StoreController", () => {
     name: "test-schedule",
     every: 5,
     unit: "minutes",
-    run: jest.fn(),
+    run: vi.fn(),
     startTime: new Date(),
     completions: 1,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks(); // Clear all mocks before each test
+    vi.clearAllMocks(); // Clear all mocks before each test
     mockLog.info.mockClear(); // Explicitly clear the logger mock
     testCapability = new Capability(capabilityConfig);
     const mockImplementation = createMockImplementation();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockK8s.mockImplementation(() => mockImplementation as any);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
-  const createMockImplementation = () => {
+  type MockImplementation = {
+    Patch: MockInstance<() => Promise<Store>>;
+    InNamespace: MockInstance<
+      () => {
+        Get: MockInstance<() => Promise<Store>>;
+      }
+    >;
+    Watch: MockInstance<
+      () => {
+        start: MockInstance<() => Promise<void>>;
+      }
+    >;
+    Apply: MockInstance<() => Promise<Store>>;
+    Logs: MockInstance<() => Promise<string[]>>;
+    Get: MockInstance<() => Promise<Store>>;
+    Delete: MockInstance<() => Promise<void>>;
+  };
+  const createMockImplementation = (): MockImplementation => {
     const mockPeprStore = new Store();
     return {
-      Patch: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-      InNamespace: jest.fn().mockReturnValue({
-        Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      Patch: vi.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      InNamespace: vi.fn().mockReturnValue({
+        Get: vi.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
       }),
-      Watch: jest.fn().mockReturnValue({
-        start: jest.fn().mockReturnValue(Promise.resolve()),
+      Watch: vi.fn().mockReturnValue({
+        start: vi.fn().mockReturnValue(Promise.resolve()),
       }),
-      Apply: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-      Logs: jest.fn().mockReturnValue(Promise.resolve([] as string[])),
-      Get: jest.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
-      Delete: jest.fn().mockReturnValue(Promise.resolve()),
+      Apply: vi.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      Logs: vi.fn().mockReturnValue(Promise.resolve([] as string[])),
+      Get: vi.fn().mockReturnValue(Promise.resolve(mockPeprStore)),
+      Delete: vi.fn().mockReturnValue(Promise.resolve()),
     };
   };
 
@@ -80,7 +97,7 @@ describe("StoreController", () => {
       }
 
       const controllerStore = new StoreController([testCapability], storeName, () => {});
-      jest.advanceTimersToNextTimer();
+      vi.advanceTimersToNextTimer();
       await Promise.resolve();
 
       const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
@@ -97,7 +114,7 @@ describe("StoreController", () => {
   describe("PeprStore Migration and setupWatch ", () => {
     it("should migrate existing stores and set up a watch on the store resource", async () => {
       new StoreController([testCapability], `pepr-test-schedule`, () => {});
-      jest.advanceTimersToNextTimer();
+      vi.advanceTimersToNextTimer();
       await Promise.resolve();
 
       const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);

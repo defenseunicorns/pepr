@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -60,20 +60,26 @@ jobs:
           npm ci
 
       - name: Rapidfort Login
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
-          registry: "quay.io"
-          username: ${{ secrets.RAPIDFORT_USERNAME }}
-          password: ${{ secrets.RAPIDFORT_PASSWORD }}
+          max_attempts: 5
+          retry_on: error
+          timeout_minutes: 1
+          command: |
+            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - name: build pepr package and container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
-        run: |
-          cd "$PEPR"
-          npm run build:image:unicorn
-          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          ls -l ${GITHUB_WORKSPACE}
-
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 10
+          command: |
+            cd "$PEPR"
+            npm run build:image:unicorn
+            mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
+          
       - name: build pepr package and kfc dev container image
         if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
         run: |
@@ -91,7 +97,7 @@ jobs:
         run: |
           PEPR_TAR="${GITHUB_WORKSPACE}/pepr-img.tar"
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
-          docker image save --output "$PEPR_TAR" pepr:dev
+          docker image save --output "$PEPR_TAR" pepr/private:dev
 
       - name: upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -112,7 +118,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -161,7 +167,7 @@ jobs:
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -210,7 +216,7 @@ jobs:
           command: |
             cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
             npm run --workspace=${{ matrix.name }} test:e2e -- \
-              --image pepr:dev \
+              --image pepr/private:dev \
               --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
