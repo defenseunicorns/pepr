@@ -108,9 +108,6 @@ describe("migrateAndSetupWatch", () => {
     await migrateAndSetupWatch(storeMigrationData);
     const [actualCache, actualNamespace, actualName] = sendUpdateAndFlushCacheMock.mock
       .calls[0] as [Record<string, Operation>, string, string];
-    // const [actualCache, actualNamespace, actualName] = (
-    //   storeCache.sendUpdatesAndFlushCache as jest.Mock
-    // ).mock.calls[0] as [Record<string, Operation>, string, string];
 
     expect(actualCache).toBeDefined();
     expect(actualNamespace).toBe("pepr-system");

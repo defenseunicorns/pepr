@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { heredoc } from "../src/sdk/heredoc";
 import * as sut from "./load.lib";
 
@@ -66,10 +66,10 @@ describe("toMs()", () => {
 
 describe("generateAudienceData()", () => {
   it("creates 'random' datasets", () => {
-    let numSamples = 2;
-    let result = sut.generateAudienceData("random", numSamples);
+    const numSamples = 2;
+    const result = sut.generateAudienceData("random", numSamples);
 
-    let numRows = numSamples * 3; // 2 admission & 1 watch pods
+    const numRows = numSamples * 3; // 2 admission & 1 watch pods
     expect(result).toHaveLength(numRows);
   });
 
@@ -90,14 +90,14 @@ describe("parseActressData()", () => {
   actressData += "\n";
 
   it("converts logged data appropriately split lines", () => {
-    let expected = {
+    const expected = {
       load: `---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  namespace: hello-pepr-load\n  name: cm-UNIQUIFY-ME\n  labels:\n    test-transient: hello-pepr-load\ndata: {}\n`,
       injects: [
         1731682427803, 1731682428102, 1731682428365, 1731682428668, 1731682428978, 1731682429300,
       ],
     };
 
-    let result = sut.parseActressData(actressData);
+    const result = sut.parseActressData(actressData);
 
     expect(result).toEqual(expected);
   });
@@ -115,7 +115,7 @@ describe("parseAudienceData()", () => {
   audienceData += "\n";
 
   it("converts logged data into per-pod datasets", () => {
-    let expected = {
+    const expected = {
       "pepr-pepr-load-aaaa0bbbb-aaaaa": [
         [1731525754189, 2, "m", 106954752, "B"],
         [1731525814222, 4, "m", 109051904, "B"],
@@ -130,7 +130,7 @@ describe("parseAudienceData()", () => {
       ],
     };
 
-    let result = sut.parseAudienceData(audienceData);
+    const result = sut.parseAudienceData(audienceData);
 
     expect(result).toEqual(expected);
   });
