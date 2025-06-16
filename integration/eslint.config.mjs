@@ -9,8 +9,7 @@ import globals from "globals";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Optional: Replace with a tsconfig specific to `integration/` if you use one.
-const tsconfigPath = path.resolve(__dirname, "../../tsconfig.json");
+const tsconfigPath = path.resolve(__dirname, "./tsconfig.json");
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -31,7 +30,7 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: tsconfigPath,
-        tsconfigRootDir: path.resolve(__dirname, "../.."),
+        tsconfigRootDir: path.resolve(__dirname, "./"),
         sourceType: "module",
       },
       globals: {
