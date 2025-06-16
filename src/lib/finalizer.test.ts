@@ -14,6 +14,14 @@ vi.mock("kubernetes-fluent-client");
 const mockK8s = vi.mocked(K8s);
 const mockRegisterKind = vi.mocked(RegisterKind);
 
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const PEPR_FINALIZER = "pepr.dev/finalizer";
 
 describe("addFinalizer", () => {
