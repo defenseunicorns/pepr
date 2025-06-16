@@ -1,16 +1,16 @@
-import { describe, expect, it, jest, afterEach } from "@jest/globals";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { fillStoreCache, sendUpdatesAndFlushCache, updateCacheID } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
-jest.mock("kubernetes-fluent-client");
+vi.mock("kubernetes-fluent-client");
 
 describe("sendCache", () => {
-  const mockK8s = jest.mocked(K8s);
+  const mockK8s = vi.mocked(K8s);
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should reject unsupported operations", () => {
@@ -23,7 +23,7 @@ describe("sendCache", () => {
     it("should clear the cache", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
-          Patch: jest.fn().mockResolvedValueOnce(undefined as never),
+          Patch: vi.fn().mockResolvedValueOnce(undefined as never),
         } as unknown as K8sInit<T, K>;
       });
 
@@ -38,7 +38,7 @@ describe("sendCache", () => {
     it("should clear cache for Unprocessable Entity Errors (HTTP/422)", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
-          Patch: jest.fn().mockRejectedValueOnce({ status: 422 } as never),
+          Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
         } as unknown as K8sInit<T, K>;
       });
 
@@ -53,7 +53,7 @@ describe("sendCache", () => {
     it("should repopulate cache for all other HTTP Errors", async () => {
       mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
         return {
-          Patch: jest.fn().mockRejectedValueOnce({ status: 400 } as never),
+          Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
         } as unknown as K8sInit<T, K>;
       });
 

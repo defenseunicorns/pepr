@@ -8,7 +8,7 @@ import {
   admissionDeployTemplate,
   serviceMonitorTemplate,
 } from "./helm";
-import { expect, describe, it } from "@jest/globals";
+import { expect, describe, it } from "vitest";
 describe("Kubernetes Template Generators", () => {
   describe("nsTemplate", () => {
     it("should generate a Namespace template correctly", () => {

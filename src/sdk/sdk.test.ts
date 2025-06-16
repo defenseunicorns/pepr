@@ -6,18 +6,18 @@ import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 import * as fc from "fast-check";
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Mock } from "jest-mock";
 import { V1OwnerReference } from "@kubernetes/client-node";
 
-jest.mock("kubernetes-fluent-client", () => ({
-  K8s: jest.fn(),
+vi.mock("kubernetes-fluent-client", () => ({
+  K8s: vi.fn(),
   Log: {
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
   kind: {
     CoreEvent: "CoreEvent",
@@ -117,13 +117,13 @@ describe("containers", () => {
 describe("writeEvent", () => {
   let Create: Mock;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    Create = jest.fn();
+    Create = vi.fn();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
+    (K8s as vi.Mock).mockImplementation(() => ({
       Create,
-      PatchStatus: jest.fn(),
+      PatchStatus: vi.fn(),
     }));
   });
 

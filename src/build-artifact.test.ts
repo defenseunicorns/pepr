@@ -1,4 +1,4 @@
-import { describe, beforeAll, it, expect } from "@jest/globals";
+import { describe, beforeAll, it, expect } from "vitest";
 import { execSync } from "child_process";
 
 // These tests require 'src/' and 'dist/' to exist locally. Use 'npm run test:artifacts'.
