@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, describe } from "@jest/globals";
+import { expect, it, describe } from "vitest";
 import { genTLS } from "./tls";
 
 describe("tls", () => {

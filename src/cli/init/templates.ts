@@ -105,6 +105,9 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
     devDependencies: {
       typescript,
     },
+    overrides: {
+      "brace-expansion": "1.1.11",
+    },
   };
 
   return {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi, type Mock, type MockInstance } from "vitest";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
 import { K8sInit, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
@@ -13,30 +13,32 @@ import EventEmitter from "events";
 
 type onCallback = (eventName: string | symbol, listener: (msg: Error | string) => void) => void;
 
-jest.mock("kubernetes-fluent-client");
+vi.mock("kubernetes-fluent-client");
 
-jest.mock("../telemetry/logger", () => ({
-  debug: jest.fn(),
-  error: jest.fn(),
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    debug: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
-jest.mock("../telemetry/metrics", () => ({
+vi.mock("../telemetry/metrics", () => ({
   metricsCollector: {
-    initCacheMissWindow: jest.fn(),
-    incCacheMiss: jest.fn(),
-    incRetryCount: jest.fn(),
+    initCacheMissWindow: vi.fn(),
+    incCacheMiss: vi.fn(),
+    incRetryCount: vi.fn(),
   },
 }));
 
 const testPhaseCallbacks = (
   mockCallback: (payload: kind.Pod, phase: WatchPhase) => void,
-  watchCallback: jest.Mock,
+  watchCallback: Mock,
   phase: WatchPhase,
   cbNotCalled: {
-    callback: jest.Mock;
+    callback: Mock;
     phase: WatchPhase;
   }[],
-) => {
+): void => {
   mockCallback({} as kind.Pod, phase);
 
   expect(watchCallback).toHaveBeenCalledTimes(1);
@@ -49,12 +51,12 @@ const testPhaseCallbacks = (
 };
 
 describe("WatchProcessor", () => {
-  const mockStart = jest.fn();
-  const mockK8s = jest.mocked(K8s);
-  const mockApply = jest.fn();
-  const mockGet = jest.fn();
-  const mockWatch = jest.fn();
-  const mockEvents = jest.fn() as jest.MockedFunction<onCallback>;
+  const mockStart = vi.fn();
+  const mockK8s = vi.mocked(K8s);
+  const mockApply = vi.fn();
+  const mockGet = vi.fn();
+  const mockWatch = vi.fn();
+  const mockEvents = vi.fn() as MockInstance<onCallback>;
 
   const capabilities = [
     {
@@ -65,7 +67,7 @@ describe("WatchProcessor", () => {
           model: "someModel",
           filters: {},
           event: "Create",
-          watchCallback: () => {
+          watchCallback: (): void => {
             console.log("words");
           },
         },
@@ -74,8 +76,8 @@ describe("WatchProcessor", () => {
   ] as unknown as Capability[];
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.useFakeTimers();
+    vi.resetAllMocks();
+    vi.useFakeTimers();
 
     // Set up all mock implementations after reset
     mockStart.mockImplementation(() => Promise.resolve());
@@ -102,7 +104,7 @@ describe("WatchProcessor", () => {
     mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
       return {
         Apply: mockApply,
-        InNamespace: jest.fn().mockReturnThis(),
+        InNamespace: vi.fn().mockReturnThis(),
         Watch: mockWatch,
         Get: mockGet,
       } as unknown as K8sInit<T, K>;
@@ -126,7 +128,7 @@ describe("WatchProcessor", () => {
             model: "someModel",
             filters: { name: "bleh" },
             event: "Create",
-            watchCallback: jest.fn(),
+            watchCallback: vi.fn(),
           },
           {
             isWatch: false,
@@ -134,7 +136,7 @@ describe("WatchProcessor", () => {
             model: "someModel",
             filters: {},
             event: "Create",
-            watchCallback: jest.fn(),
+            watchCallback: vi.fn(),
           },
         ],
       } as unknown as Capability);
@@ -175,7 +177,7 @@ describe("WatchProcessor", () => {
               model: "someModel",
               filters: {},
               event: "Create",
-              watchCallback: jest.fn(),
+              watchCallback: vi.fn(),
             },
           ],
         },
@@ -212,7 +214,7 @@ describe("WatchProcessor", () => {
               model: "someModel",
               filters: {},
               event: "Create",
-              watchCallback: jest.fn(),
+              watchCallback: vi.fn(),
             },
           ],
         },
@@ -231,9 +233,9 @@ describe("WatchProcessor", () => {
 
     describe("when handling events", () => {
       it("configures watches with appropriate phases for each event type", async () => {
-        const watchCallbackCreate = jest.fn();
-        const watchCallbackUpdate = jest.fn();
-        const watchCallbackDelete = jest.fn();
+        const watchCallbackCreate = vi.fn();
+        const watchCallbackUpdate = vi.fn();
+        const watchCallbackDelete = vi.fn();
 
         const capabilities = [
           {
@@ -303,7 +305,7 @@ describe("WatchProcessor", () => {
         const mockInitCacheMissWindow = metricsCollector.initCacheMissWindow;
         const mockIncRetryCount = metricsCollector.incRetryCount;
 
-        const watchCallback = jest.fn();
+        const watchCallback = vi.fn();
         const capabilities = [
           {
             bindings: [
@@ -346,7 +348,7 @@ describe("WatchProcessor", () => {
       });
 
       it("uses environment variable to configure relist interval", async () => {
-        const parseIntSpy = jest.spyOn(global, "parseInt");
+        const parseIntSpy = vi.spyOn(global, "parseInt");
 
         process.env.PEPR_RELIST_INTERVAL_SECONDS = "1800";
         process.env.PEPR_LAST_SEEN_LIMIT_SECONDS = "300";
@@ -368,14 +370,14 @@ describe("WatchProcessor", () => {
               model: "someModel",
               filters: { name: "bleh" },
               event: "Create",
-              watchCallback: jest.fn(),
+              watchCallback: vi.fn(),
             },
             {
               isWatch: false,
               model: "someModel",
               filters: {},
               event: "Create",
-              watchCallback: jest.fn(),
+              watchCallback: vi.fn(),
             },
           ],
         } as unknown as Capability);
@@ -436,7 +438,7 @@ describe("Event Logging", () => {
 
 describe("Watch Event Handling", () => {
   let watcher: WatcherType<GenericClass>;
-  let logEvent: jest.Mock;
+  let logEvent: Mock;
   let metricsCollector: MetricsCollectorInstance;
 
   beforeEach(() => {
@@ -446,13 +448,13 @@ describe("Watch Event Handling", () => {
       events: eventEmitter,
     } as unknown as WatcherType<GenericClass>;
 
-    jest.spyOn(eventEmitter, "on");
-    logEvent = jest.fn();
+    vi.spyOn(eventEmitter, "on");
+    logEvent = vi.fn();
 
     metricsCollector = {
-      incCacheMiss: jest.fn(),
-      initCacheMissWindow: jest.fn(),
-      incRetryCount: jest.fn(),
+      incCacheMiss: vi.fn(),
+      initCacheMissWindow: vi.fn(),
+      incRetryCount: vi.fn(),
     } as unknown as MetricsCollectorInstance;
 
     registerWatchEventHandlers(watcher, logEvent, metricsCollector);

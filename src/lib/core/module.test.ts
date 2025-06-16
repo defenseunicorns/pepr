@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, expect, jest, it, describe, afterEach } from "@jest/globals";
+import { beforeEach, expect, vi, it, describe, afterEach } from "vitest";
 import { clone } from "ramda";
 import { Capability } from "./capability";
 import { Schedule } from "./schedule";
@@ -11,9 +11,9 @@ import { CapabilityExport } from "../types";
 import { OnError } from "../../cli/init/enums";
 
 // Mock Controller
-const startServerMock = jest.fn();
-jest.mock("../controller", () => ({
-  Controller: jest.fn().mockImplementation(() => ({
+const startServerMock = vi.fn();
+vi.mock("../controller", () => ({
+  Controller: vi.fn().mockImplementation(() => ({
     startServer: startServerMock,
   })),
 }));
@@ -37,7 +37,7 @@ describe("PeprModule", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env.PEPR_MODE;
     delete process.env.PEPR_WATCH_MODE;
   });
@@ -82,14 +82,20 @@ describe("PeprModule", () => {
   });
 
   describe("when running in 'build' mode", () => {
-    const sendMock = jest.spyOn(process, "send").mockImplementation(() => true);
+    beforeEach(() => {
+      process.send = vi.fn();
+    });
+
+    afterEach(() => {
+      delete process.send;
+    });
 
     beforeEach(() => {
       process.env.PEPR_MODE = "build";
     });
 
     afterEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should not create a controller", () => {
@@ -110,8 +116,10 @@ describe("PeprModule", () => {
         bindings: capability.bindings,
         hasSchedule: capability.hasSchedule,
       };
-
+      process.send = vi.fn();
+      const sendMock = vi.spyOn(process, "send");
       new PeprModule(mockPackageJSON, [capability]);
+
       expect(sendMock).toHaveBeenCalledWith([expectedExport]);
     });
   });
@@ -131,7 +139,7 @@ describe("Capability", () => {
       name: "test-name",
       every: 1,
       unit: "seconds",
-      run: jest.fn(),
+      run: vi.fn(),
       startTime: new Date(),
       completions: 1,
     };

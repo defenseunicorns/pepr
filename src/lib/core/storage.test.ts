@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DataStore, Storage, v2StoreKey, v2UnescapedStoreKey, stripV2Prefix } from "./storage";
 import fc from "fast-check";
 
@@ -50,7 +50,7 @@ describe("Storage with fuzzing and property-based tests", () => {
 
   beforeEach(() => {
     storage = new Storage();
-    storage.registerSender(jest.fn());
+    storage.registerSender(vi.fn());
   });
 
   it("should correctly set and retrieve items", () => {
@@ -113,7 +113,7 @@ describe("Storage", () => {
   });
 
   it("should set an item", () => {
-    const mockSender = jest.fn();
+    const mockSender = vi.fn();
     storage.registerSender(mockSender);
     const key = "key1";
     storage.setItem(key, "value1");
@@ -122,9 +122,9 @@ describe("Storage", () => {
   });
 
   it("should set an item and wait", () => {
-    const mockSender = jest.fn();
+    const mockSender = vi.fn();
     storage.registerSender(mockSender);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const keys = ["key1", "https://google.com", "sso-client-http://bin"];
 
     keys.map(key => {
@@ -132,24 +132,24 @@ describe("Storage", () => {
       expect(mockSender).toHaveBeenCalledWith("add", [v2StoreKey(key)], "value1");
     });
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("should remove an item and wait", () => {
-    const mockSender = jest.fn();
+    const mockSender = vi.fn();
     storage.registerSender(mockSender);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     const key = "key1";
     // asserting on sender invocation rather than Promise so no need to wait
     void storage.removeItemAndWait(key);
 
     expect(mockSender).toHaveBeenCalledWith("remove", [v2StoreKey(key)], undefined);
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("should remove an item", () => {
-    const mockSender = jest.fn();
+    const mockSender = vi.fn();
     storage.registerSender(mockSender);
     const key = "key1";
     storage.removeItem(key);
@@ -158,7 +158,7 @@ describe("Storage", () => {
   });
 
   it("should clear all items", () => {
-    const mockSender = jest.fn();
+    const mockSender = vi.fn();
     storage.registerSender(mockSender);
 
     storage.receive({ key1: "value1", key2: "value2", "sso-client-http://bin": "value3" });
@@ -199,7 +199,7 @@ describe("Storage", () => {
   });
 
   it("should subscribe and unsubscribe", () => {
-    const mockSubscriber = jest.fn();
+    const mockSubscriber = vi.fn();
     const unsubscribe = storage.subscribe(mockSubscriber);
 
     storage.receive({ key1: "value1" });
@@ -215,7 +215,7 @@ describe("Storage", () => {
   });
 
   it("should call onReady handlers", () => {
-    const mockReadyHandler = jest.fn();
+    const mockReadyHandler = vi.fn();
 
     storage.onReady(mockReadyHandler);
     storage.receive({ key1: "value1" });
@@ -224,7 +224,7 @@ describe("Storage", () => {
   });
 
   it("should handle null data in receive method", () => {
-    const mockSubscriber = jest.fn();
+    const mockSubscriber = vi.fn();
     storage.subscribe(mockSubscriber);
 
     storage.receive(null as unknown as DataStore);
