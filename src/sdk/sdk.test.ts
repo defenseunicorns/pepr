@@ -204,7 +204,9 @@ describe("getOwnerRefFrom", () => {
   );
 
   it("should support all defined fields in the V1OwnerReference type", () => {
-    const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const V1OwnerReferenceFieldCount = V1OwnerReference.getAttributeTypeMap().map(
+      attr => attr.name,
+    ).length;
     const result = getOwnerRefFrom(customResource, false, true);
     expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
   });
