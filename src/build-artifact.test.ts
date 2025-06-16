@@ -1,11 +1,5 @@
 import { describe, beforeAll, it, expect } from "vitest";
 import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
-
-console.log("CWD:", process.cwd());
-console.log("dist exists:", fs.existsSync(path.resolve("dist")));
-console.log("Files:", fs.readdirSync(path.resolve("dist")));
 
 // These tests require 'src/' and 'dist/' to exist locally. Use 'npm run test:artifacts'.
 describe("Published package does not include unintended files", () => {
