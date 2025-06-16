@@ -55,7 +55,7 @@ type ExtendedBinding = Partial<Omit<Binding, "filters">> & {
   callback: () => void;
 };
 
-const createBinding = (overrides: Partial<ExtendedBinding> = {}) => {
+const createBinding = (overrides: Partial<ExtendedBinding> = {}): ExtendedBinding => {
   const {
     model = kind.Pod,
     event = Event.ANY,
