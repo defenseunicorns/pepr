@@ -12,11 +12,6 @@ updates:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
-    ignore:
-      - dependency-name: "jest"
-        versions: ["30"]
-      - dependency-name: "@jest/globals"
-        versions: ["30"]
  
   - package-ecosystem: github-actions
     directory: /

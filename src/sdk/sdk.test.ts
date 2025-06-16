@@ -6,10 +6,9 @@ import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 import * as fc from "fast-check";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, Mock, expect, it, vi } from "vitest";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
-import { Mock } from "jest-mock";
 import { V1OwnerReference } from "@kubernetes/client-node";
 
 vi.mock("kubernetes-fluent-client", () => ({

@@ -758,8 +758,8 @@ describe("replaceString", () => {
   it("replaces single instance of a string", () => {
     const original = "Hello, world!";
     const stringA = "world";
-    const stringB = "Jest";
-    const expected = "Hello, Jest!";
+    const stringB = "Vite";
+    const expected = "Hello, Vite!";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 

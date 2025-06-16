@@ -1,12 +1,11 @@
-const { expect } = require("@jest/globals");
-const { execSync } = require("node:child_process");
-const fs = require("fs");
-const { beforeEach } = require("node:test");
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { execSync } from "node:child_process";
+import { existsSync, rmSync } from "fs";
 
 describe("KFC Dev Helper E2E Test", () => {
   beforeEach(() => {
     try {
-      fs.rmSync("kubernetes-fluent-client", { recursive: true, force: true });
+      rmSync("kubernetes-fluent-client", { recursive: true, force: true });
       execSync("docker rmi pepr:dev");
     } catch (err) {
       console.error(err);
@@ -15,7 +14,7 @@ describe("KFC Dev Helper E2E Test", () => {
 
   afterAll(() => {
     try {
-      fs.rmSync("kubernetes-fluent-client", { recursive: true, force: true });
+      rmSync("kubernetes-fluent-client", { recursive: true, force: true });
     } catch {}
   });
 
@@ -57,7 +56,7 @@ describe("KFC Dev Helper E2E Test", () => {
       stdio: "pipe",
       encoding: "utf8",
     });
-    expect(fs.existsSync("kubernetes-fluent-client")).toBe(true);
+    expect(existsSync("kubernetes-fluent-client")).toBe(true);
 
     let dockerOutput = execSync("docker images");
     expect(dockerOutput.toString()).toContain("pepr");
@@ -68,7 +67,7 @@ describe("KFC Dev Helper E2E Test", () => {
       stdio: "pipe",
       encoding: "utf8",
     });
-    expect(fs.existsSync("kubernetes-fluent-client")).toBe(true);
+    expect(existsSync("kubernetes-fluent-client")).toBe(true);
 
     let dockerOutput = execSync("docker images");
     expect(dockerOutput.toString()).toContain("pepr");
@@ -79,7 +78,7 @@ describe("KFC Dev Helper E2E Test", () => {
       stdio: "pipe",
       encoding: "utf8",
     });
-    expect(fs.existsSync("node_modules/kubernetes-fluent-client/src")).toBe(true);
-    expect(fs.existsSync("node_modules/kubernetes-fluent-client/dist")).toBe(true);
+    expect(existsSync("node_modules/kubernetes-fluent-client/src")).toBe(true);
+    expect(existsSync("node_modules/kubernetes-fluent-client/dist")).toBe(true);
   });
 });
