@@ -14,11 +14,11 @@ vi.mock("kubernetes-fluent-client");
 const mockK8s = vi.mocked(K8s);
 const mockRegisterKind = vi.mocked(RegisterKind);
 
-jest.mock("./telemetry/logger", () => ({
+vi.mock("./telemetry/logger", () => ({
   __esModule: true,
   default: {
-    debug: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
