@@ -7,7 +7,7 @@ import { parseCLIOutput } from "./cli.helper";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execFilePromise = promisify(childProcess.execFile);
-const timeoutMs = 15000
+const timeoutMs = 15000;
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
@@ -26,32 +26,40 @@ describe("Pepr CLI Help Menu", () => {
   };
 
   describe("when 'npx pepr --help' executes", () => {
-    it("should display the help menu with correct information", async () => {
-      try {
-        const { stdout, stderr } = await command();
-        expect(stdout).toBeTruthy();
-        expect(stdout).toContain("-V, --version          output the version number");
-        expect(stdout).toContain("-h, --help             display help for command");
-        expect(stderr).toBeFalsy();
-        expect(stdout).toContain("Type safe K8s middleware for humans");
-      } catch (error) {
-        console.error("Error executing CLI:", error);
-        expect(error).toBeUndefined();
-      }
-    }, timeoutMs);
+    it(
+      "should display the help menu with correct information",
+      async () => {
+        try {
+          const { stdout, stderr } = await command();
+          expect(stdout).toBeTruthy();
+          expect(stdout).toContain("-V, --version          output the version number");
+          expect(stdout).toContain("-h, --help             display help for command");
+          expect(stderr).toBeFalsy();
+          expect(stdout).toContain("Type safe K8s middleware for humans");
+        } catch (error) {
+          console.error("Error executing CLI:", error);
+          expect(error).toBeUndefined();
+        }
+      },
+      timeoutMs,
+    );
 
-    it("should match documented CLI behavior", async () => {
-      try {
-        const { stdout, stderr } = await command();
-        const docsContent = getDocsForCommand();
-        const cliContent = parseCLIOutput(stdout);
-        expect(docsContent).toStrictEqual(cliContent);
-        expect(stderr).toBeFalsy();
-      } catch (error) {
-        console.error("Error executing CLI:", error);
-        expect(error).toBeUndefined();
-      }
-    }, timeoutMs);
+    it(
+      "should match documented CLI behavior",
+      async () => {
+        try {
+          const { stdout, stderr } = await command();
+          const docsContent = getDocsForCommand();
+          const cliContent = parseCLIOutput(stdout);
+          expect(docsContent).toStrictEqual(cliContent);
+          expect(stderr).toBeFalsy();
+        } catch (error) {
+          console.error("Error executing CLI:", error);
+          expect(error).toBeUndefined();
+        }
+      },
+      timeoutMs,
+    );
   });
 
   describe.concurrent.each([
@@ -68,17 +76,21 @@ describe("Pepr CLI Help Menu", () => {
     { commandName: "update" },
     { commandName: "uuid" },
   ])("when 'npx pepr $commandName --help' executes", ({ commandName }) => {
-    it("should match documented CLI behavior", async () => {
-      try {
-        const { stdout, stderr } = await command(commandName);
-        const docsContent = getDocsForCommand(commandName);
-        const cliContent = parseCLIOutput(stdout);
-        expect(docsContent).toStrictEqual(cliContent);
-        expect(stderr).toBeFalsy();
-      } catch (error) {
-        console.error("Error executing CLI:", error);
-        expect(error).toBeUndefined();
-      }
-    }, timeoutMs);
+    it(
+      "should match documented CLI behavior",
+      async () => {
+        try {
+          const { stdout, stderr } = await command(commandName);
+          const docsContent = getDocsForCommand(commandName);
+          const cliContent = parseCLIOutput(stdout);
+          expect(docsContent).toStrictEqual(cliContent);
+          expect(stderr).toBeFalsy();
+        } catch (error) {
+          console.error("Error executing CLI:", error);
+          expect(error).toBeUndefined();
+        }
+      },
+      timeoutMs,
+    );
   });
 });
