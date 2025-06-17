@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { it, describe, expect } from "vitest";
+import { it, describe, expect, beforeEach, vi } from "vitest";
 import {
   peprIgnoreNamespaces,
   validateRule,
@@ -13,6 +13,7 @@ import { Binding, CapabilityExport, ModuleConfig } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { TLSOut } from "../tls";
 import { Assets } from "./assets";
+import Log from "../telemetry/logger";
 
 export type AssetsType = {
   name: string;
@@ -37,6 +38,12 @@ type LooseAssets = Omit<AssetsType, "config" | "deploy"> & {
   config?: AssetsType["config"] & { includedFiles?: string[] };
   hash: string;
 };
+
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    info: vi.fn(),
+  },
+}));
 
 const allBindings: LooseBinding[] = [
   {
@@ -211,127 +218,137 @@ const assets: Assets = new Assets(
 
 assets.capabilities = [...loseAssets.capabilities];
 
-describe("webhookConfigGenerator", () => {
-  it("should have correct timeoutSeconds 10", async () => {
-    const result = await webhookConfigGenerator(assets, WebhookType.MUTATE);
-    expect(result!.webhooks![0].timeoutSeconds).toEqual(10);
-  });
-  it("should have correct failurePolicy based on assets", async () => {
-    const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
-    expect(result!.webhooks![0].failurePolicy).toEqual("Ignore");
-  });
-  it("should respect ignoredNamespaces from assets", async () => {
-    const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
-    expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
-      "kube-system",
-      "pepr-system",
-      "cicd",
-    ]);
-  });
-  it("should use a specified host", async () => {
-    const assetsWithHost = new Assets(
-      assets.config,
-      assets.path,
-      assets.imagePullSecrets,
-      "localhost",
-    );
-    assetsWithHost.capabilities = assets.capabilities;
-    const apiPathPattern = "[a-fA-F0-9]{32}";
-    const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiPathPattern}`);
+describe("when managing webhooks", () => {
+  beforeEach(vi.resetAllMocks);
 
-    const result = await webhookConfigGenerator(assetsWithHost, WebhookType.VALIDATE);
-
-    expect(result!.webhooks![0].clientConfig.url).toMatch(expected);
-  });
-});
-
-describe("validateRule", () => {
-  const defaultBinding: Binding = {
-    event: Event.CREATE,
-    filters: {
-      annotations: {},
-      deletionTimestamp: false,
-      labels: {},
-      name: "",
-      namespaces: [],
-      regexName: "^default$",
-      regexNamespaces: [],
-    },
-    kind: {
-      group: "v1",
-      kind: "Namespace",
-    },
-    model: kind.Namespace,
-  };
-
-  it("should return undefined if isMutateWebhook is true and isMutate is false", () => {
-    const result = validateRule({ ...defaultBinding, isMutate: false }, true);
-    expect(result).toBeUndefined();
-  });
-
-  it("should return a rule object for a Mutate Binding on a Namespace isCreated", () => {
-    const result = validateRule({ ...defaultBinding, isMutate: true }, true);
-    expect(result).toEqual({
-      apiGroups: ["v1"],
-      apiVersions: ["*"],
-      operations: ["CREATE"],
-      resources: ["namespaces"],
+  describe("webhookConfigGenerator", () => {
+    it("should have correct timeoutSeconds 10", async () => {
+      const result = await webhookConfigGenerator(assets, WebhookType.MUTATE);
+      expect(result!.webhooks![0].timeoutSeconds).toEqual(10);
     });
-  });
-
-  it("should return a rule object for a Mutate Binding on a Pod isCreated", () => {
-    const result = validateRule(
-      { ...defaultBinding, isMutate: true, kind: { ...defaultBinding.kind, kind: "Pod" } },
-      true,
-    );
-    expect(result).toEqual({
-      apiGroups: ["v1"],
-      apiVersions: ["*"],
-      operations: ["CREATE"],
-      resources: ["pods", "pods/ephemeralcontainers"],
+    it("should have correct failurePolicy based on assets", async () => {
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].failurePolicy).toEqual("Ignore");
     });
-  });
-
-  it("should return undefined if isMutateWebhook is false and isValidate is false", () => {
-    const result = validateRule({ ...defaultBinding, isValidate: false, isWatch: true }, false);
-    expect(result).toBeUndefined();
-  });
-});
-
-describe("generateWebhookRules", () => {
-  describe("when the assets have a secret object for mutate on a create event", () => {
-    it("should generate a webhook rule for creating Unicorns", async () => {
-      const result = await generateWebhookRules(assets, true);
-      const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
-      expect(secretRule).toEqual([
-        {
-          apiGroups: ["pepr.dev"],
-          apiVersions: ["v1"],
-          operations: ["CREATE"],
-          resources: ["unicorns"],
-        },
+    it("should respect ignoredNamespaces from assets", async () => {
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
+        "kube-system",
+        "pepr-system",
+        "cicd",
       ]);
     });
-    it("should generate a webhook rule for creating secrets", async () => {
-      const result = await generateWebhookRules(assets, true);
-      const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
-      expect(secretRule).toEqual([
-        { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
-      ]);
+    it("should use a specified host", async () => {
+      const assetsWithHost = new Assets(
+        assets.config,
+        assets.path,
+        assets.imagePullSecrets,
+        "localhost",
+      );
+      assetsWithHost.capabilities = assets.capabilities;
+      const apiPathPattern = "[a-fA-F0-9]{32}";
+      const expected = new RegExp(`https:\\/\\/localhost:3000\\/validate\\/${apiPathPattern}`);
+
+      const result = await webhookConfigGenerator(assetsWithHost, WebhookType.VALIDATE);
+
+      expect(result!.webhooks![0].clientConfig.url).toMatch(expected);
     });
   });
 
-  it("should return an empty array if capabilities is empty", async () => {
-    assets.capabilities = [];
-    const result = await generateWebhookRules(assets, true);
-    expect(result).toEqual([]);
-  });
-});
+  describe("validateRule", () => {
+    const defaultBinding: Binding = {
+      event: Event.CREATE,
+      filters: {
+        annotations: {},
+        deletionTimestamp: false,
+        labels: {},
+        name: "",
+        namespaces: [],
+        regexName: "^default$",
+        regexNamespaces: [],
+      },
+      kind: {
+        group: "v1",
+        kind: "Namespace",
+      },
+      model: kind.Namespace,
+    };
 
-describe("peprIgnoreNamespaces", () => {
-  it("should have order of kube-system, then pepr-system for the helm templating", () => {
-    expect(peprIgnoreNamespaces).toEqual(["kube-system", "pepr-system"]);
-    expect(peprIgnoreNamespaces[0]).toEqual("kube-system");
-    expect(peprIgnoreNamespaces[1]).toEqual("pepr-system");
+    it("should return undefined if isMutateWebhook is true and isMutate is false", () => {
+      const result = validateRule({ ...defaultBinding, isMutate: false }, true);
+      expect(result).toBeUndefined();
+    });
+
+    it("should return a rule object for a Mutate Binding on a Namespace isCreated", () => {
+      const result = validateRule({ ...defaultBinding, isMutate: true }, true);
+      expect(result).toEqual({
+        apiGroups: ["v1"],
+        apiVersions: ["*"],
+        operations: ["CREATE"],
+        resources: ["namespaces"],
+      });
+    });
+
+    it("should return a rule object for a Mutate Binding on a Pod isCreated", () => {
+      const result = validateRule(
+        { ...defaultBinding, isMutate: true, kind: { ...defaultBinding.kind, kind: "Pod" } },
+        true,
+      );
+      expect(result).toEqual({
+        apiGroups: ["v1"],
+        apiVersions: ["*"],
+        operations: ["CREATE"],
+        resources: ["pods", "pods/ephemeralcontainers"],
+      });
+    });
+
+    it("should return undefined if isMutateWebhook is false and isValidate is false", () => {
+      const result = validateRule({ ...defaultBinding, isValidate: false, isWatch: true }, false);
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe("generateWebhookRules", () => {
+    describe("when the assets have a secret object for mutate on a create event", () => {
+      it("should generate a webhook rule for creating Unicorns", async () => {
+        const result = await generateWebhookRules(assets, true);
+        const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
+        expect(secretRule).toEqual([
+          {
+            apiGroups: ["pepr.dev"],
+            apiVersions: ["v1"],
+            operations: ["CREATE"],
+            resources: ["unicorns"],
+          },
+        ]);
+      });
+      it("should generate a webhook rule for creating secrets", async () => {
+        const result = await generateWebhookRules(assets, true);
+        const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
+        expect(secretRule).toEqual([
+          { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
+        ]);
+      });
+    });
+
+    it("should return an empty array if capabilities is empty", async () => {
+      assets.capabilities = [];
+      const result = await generateWebhookRules(assets, true);
+      expect(result).toEqual([]);
+    });
+    it("should log an information message stating module capabilites", async () => {
+      assets.capabilities = [...loseAssets.capabilities];
+      await generateWebhookRules(assets, true);
+      expect(Log.info).toHaveBeenCalledOnce();
+      expect(Log.info).toHaveBeenCalledWith("Module static-test has capability: hello-pepr");
+    });
+  });
+
+  describe("peprIgnoreNamespaces", () => {
+    it("should have order of kube-system, then pepr-system for the helm templating", () => {
+      expect(peprIgnoreNamespaces).toEqual(["kube-system", "pepr-system"]);
+      expect(peprIgnoreNamespaces[0]).toEqual("kube-system");
+      expect(peprIgnoreNamespaces[1]).toEqual("pepr-system");
+    });
   });
 });
