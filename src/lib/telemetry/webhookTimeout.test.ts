@@ -6,6 +6,7 @@ import { MeasureWebhookTimeout } from "./webhookTimeouts";
 import { metricsCollector } from "./metrics";
 import { getNow } from "./timeUtils";
 import { WebhookType } from "../enums";
+import Log from "./logger";
 
 vi.mock("./metrics", () => ({
   metricsCollector: {
@@ -18,9 +19,15 @@ vi.mock("./timeUtils", () => ({
   getNow: vi.fn(),
 }));
 
+vi.mock("./logger", () => ({
+  default: {
+    debug: vi.fn(),
+  },
+}));
+
 describe("MeasureWebhookTimeout", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("when initialized", () => {
@@ -43,6 +50,14 @@ describe("MeasureWebhookTimeout", () => {
     });
 
     describe("and the timer was started", () => {
+      it("should log start/stop messages", () => {
+        (getNow as Mock).mockReturnValueOnce(1).mockReturnValueOnce(2);
+        const webhook = new MeasureWebhookTimeout(WebhookType.MUTATE);
+        webhook.start();
+        webhook.stop();
+        expect(Log.debug).toHaveBeenCalledWith("Starting timer at 1");
+        expect(Log.debug).toHaveBeenCalledWith("Webhook 1 took 1ms");
+      });
       describe("and elapsed time is less than timeout", () => {
         it("should not increment the timeout counter", () => {
           (getNow as Mock).mockReturnValueOnce(1000).mockReturnValueOnce(1500);
