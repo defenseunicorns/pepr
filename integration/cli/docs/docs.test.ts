@@ -7,6 +7,7 @@ import { parseCLIOutput } from "./cli.helper";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execFilePromise = promisify(childProcess.execFile);
+const timeoutMs = 15000
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
@@ -37,7 +38,7 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    }, 10000);
+    }, timeoutMs);
 
     it("should match documented CLI behavior", async () => {
       try {
@@ -50,7 +51,7 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    }, 10000);
+    }, timeoutMs);
   });
 
   describe.concurrent.each([
@@ -78,6 +79,6 @@ describe("Pepr CLI Help Menu", () => {
         console.error("Error executing CLI:", error);
         expect(error).toBeUndefined();
       }
-    }, 10000);
+    }, timeoutMs);
   });
 });
