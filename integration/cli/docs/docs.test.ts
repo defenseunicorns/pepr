@@ -53,7 +53,7 @@ describe("Pepr CLI Help Menu", () => {
     }, 10000);
   });
 
-  describe.each([
+  describe.concurrent.each([
     { commandName: "build" },
     { commandName: "crd create" },
     { commandName: "crd generate" },

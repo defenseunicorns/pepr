@@ -3,14 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["src/**/*.test.ts", "hack/**/*.test.ts"],
-    exclude: [
-      "node_modules",
-      "dist",
-      "src/cli/docs/docs.test.ts",
-      "pepr/**",
-      "src/templates/**",
-      "coverage",
-    ],
+    exclude: ["node_modules", "dist", "pepr/**", "src/templates/**", "coverage"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
@@ -21,7 +14,6 @@ export default defineConfig({
         "node_modules",
         "dist",
         "src/build-artifact.test.ts",
-        "src/cli/docs/**",
         "pepr/**",
         "src/templates/**",
         "coverage",
