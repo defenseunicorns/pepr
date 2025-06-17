@@ -1,9 +1,14 @@
 import { afterEach, describe, expect, vi, it } from "vitest";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { Queue } from "./queue";
-
 import Log from "../telemetry/logger";
-vi.mock("../telemetry/logger");
+
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 describe("Queue", () => {
   afterEach(() => {
