@@ -1,16 +1,16 @@
 {
   "*.ts": [
-    "prettier --config .prettierrc --write",
+    "prettier --config config/.prettierrc --write",
     "eslint --config eslint.config.mjs --fix --ignore-pattern config/** --ignore-pattern src/templates/eslint.config.mjs --ignore-pattern vitest.config.ts --ignore-pattern eslint.test.config.mjs --ignore-pattern src/**/*.test.ts --ignore-pattern integration/**/*.ts"
   ],
   "*.test.ts": ["eslint --config eslint.test.config.mjs"],
   "integration/**/*.ts": ["eslint --config integration/eslint.config.mjs"],
-  "*.mjs": ["prettier --config .prettierrc --write"],
-  "*.js": ["prettier --config .prettierrc --write"],
-  "*.json": ["prettier --config .prettierrc --write"],
+  "*.mjs": ["prettier --config config/.prettierrc --write"],
+  "*.js": ["prettier --config config/.prettierrc --write"],
+  "*.json": ["prettier --config config/.prettierrc --write"],
   "*.sh": ["shellcheck -f tty"],
   ".husky/pre-*": ["shellcheck -f tty"],
   "*.md": [
-    "npx -y markdownlint-cli --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules"
+    "npx -y markdownlint-cli --config config/.markdownlint.json --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules"
   ]
 }
