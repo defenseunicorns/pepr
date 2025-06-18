@@ -5,6 +5,8 @@ export default defineConfig({
     include: ["integration/**/*.test.ts"],
     exclude: ["**/node_modules/**", "dist", "coverage"],
     environment: "node",
-    tsconfig: path.resolve(__dirname, "tsconfig.integration.json"),
+    typecheck: {
+      tsconfig: path.resolve(__dirname, "./tsconfig.integration.json"),
+    },
   },
 });

@@ -1,2 +1,2 @@
 #!/bin/bash
-npx lint-staged --verbose
+npx lint-staged --verbose --config config/.lintstagedrc.json
