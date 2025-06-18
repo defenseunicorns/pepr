@@ -12,6 +12,7 @@ import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
 import { Assets } from "./assets";
 import { Event, WebhookType } from "../enums";
 import { Binding } from "../types";
+import Log from "../telemetry/logger";
 
 export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
@@ -49,7 +50,7 @@ export async function generateWebhookRules(
   const { config, capabilities } = assets;
 
   const rules = capabilities.flatMap(capability => {
-    console.info(`Module ${config.uuid} has capability: ${capability.name}`);
+    Log.info(`Module ${config.uuid} has capability: ${capability.name}`);
 
     return capability.bindings
       .map(binding => validateRule(binding, isMutateWebhook))
