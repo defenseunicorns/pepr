@@ -18,6 +18,14 @@ import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
 import { Capability } from "../lib/core/capability";
 
+vi.mock("../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 vi.mock("child_process", () => ({
   execSync: vi.fn(),
 }));
