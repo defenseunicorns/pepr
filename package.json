@@ -51,7 +51,7 @@
     "format:src": "eslint 'src/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern src/templates/eslint.config.mjs",
     "format:tests": "eslint --config eslint.test.config.mjs 'src/**/*.test.ts'",
     "test:journey:upgrade": "npm run test:journey:k3d && npm run test:journey:image && vitest run --config=config/vitest.journey.config.ts journey/pepr-upgrade.test.ts",
-    "test:unit": "npm run gen-data-json && vitest --config config/vitest.root.config.ts run --coverage",
+    "test:unit": "npm run gen-data-json && NODE_OPTIONS=--no-deprecation vitest --config config/vitest.root.config.ts run --coverage",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
   },
   "dependencies": {

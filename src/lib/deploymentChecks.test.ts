@@ -3,6 +3,13 @@ import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./deploymentChecks";
 
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+  },
+}));
+
 vi.mock("kubernetes-fluent-client", () => {
   return {
     K8s: vi.fn(),
