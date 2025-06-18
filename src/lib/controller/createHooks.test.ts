@@ -3,6 +3,14 @@ import { createControllerHooks } from "./createHooks";
 import * as watchProcessor from "../processors/watch-processor";
 import { Capability } from "../core/capability";
 
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 const setupWatchMock = vi.spyOn(watchProcessor, "setupWatch");
 
 const capabilities = [
