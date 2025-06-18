@@ -9,7 +9,7 @@ import globals from "globals";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const tsconfigPath = path.resolve(__dirname, "./tsconfig.json");
+const tsconfigPath = path.resolve(__dirname, "../config/tsconfig.integration.json");
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
