@@ -16,18 +16,18 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["integration/testroot", "journey/"],
+    ignores: ["../integration/testroot", "../journey/"],
   },
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
   {
-    files: ["**/*.test.ts"],
+    files: ["../src/**/*.test.ts"],
     plugins: {
       "@typescript-eslint": typescriptEslint,
     },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: "./config/tsconfig.test.json",
+        project: "./tsconfig.test.json",
         tsconfigRootDir: __dirname,
         sourceType: "module",
       },

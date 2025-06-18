@@ -112,7 +112,7 @@ export default [
   },
   {
     files: ["**/*.ts"],
-    ignores: ["**/*.test.ts", "eslint.test.config.mjs", "integration/eslint.config.mjs"],
+    ignores: ["**/*.test.ts", "config/eslint.test.config.mjs", "integration/eslint.config.mjs"],
 
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",
