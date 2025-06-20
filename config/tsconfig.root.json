@@ -8,9 +8,9 @@
     "lib": ["ES2022"],
     "module": "CommonJS",
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outDir": "../dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDir": "../src",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
