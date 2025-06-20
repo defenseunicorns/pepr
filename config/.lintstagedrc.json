@@ -1,7 +1,7 @@
 {
   "*.ts": [
     "prettier --config config/.prettierrc --write",
-    "eslint --config eslint.config.mjs --fix --ignore-pattern config/** --ignore-pattern src/templates/eslint.config.mjs --ignore-pattern vitest.config.ts --ignore-pattern config/eslint.test.config.mjs --ignore-pattern src/**/*.test.ts --ignore-pattern integration/**/*.ts"
+    "eslint --config config/eslint.root.config.mjs --fix --ignore-pattern config/** --ignore-pattern src/templates/eslint.config.mjs --ignore-pattern vitest.config.ts --ignore-pattern config/eslint.test.config.mjs --ignore-pattern src/**/*.test.ts --ignore-pattern integration/**/*.ts"
   ],
   "*.test.ts": ["eslint --config config/eslint.test.config.mjs"],
   "integration/**/*.ts": ["eslint --config config/eslint.integration.config.mjs"],

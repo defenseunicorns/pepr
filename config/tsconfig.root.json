@@ -15,14 +15,14 @@
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["../src/**/*.ts"],
   "exclude": [
-    "config/eslint.test.config.mjs",
-    "src/**/*.test.ts",
-    "node_modules",
-    "dist",
-    "src/templates/*",
-    "!src/templates/eslint.config.mjs",
-    "integration/testroot"
+    "./eslint.test.config.mjs",
+    "../src/**/*.test.ts",
+    "../node_modules",
+    "../dist",
+    "../src/templates/*",
+    "!../src/templates/eslint.config.mjs",
+    "../integration/testroot"
   ]
 }
