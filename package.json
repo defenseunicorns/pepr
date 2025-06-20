@@ -14,8 +14,7 @@
     "/src",
     "!src/**/*.test.ts",
     "!src/fixtures/**",
-    "!dist/**/*.test.d.ts*",
-    "!src/cli/docs/**"
+    "!dist/**/*.test.d.ts*"
   ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
@@ -30,7 +29,7 @@
     "set:version": "node scripts/set-version.js",
     "test": "npm run test:unit && npm run test:journey && npm run test:journey-wasm",
     "test:artifacts": "npm run build && vitest run src/build-artifact.test.ts",
-    "test:docs": "vitest run --config=config/vitest.root.config.ts src/cli/docs/*.test.ts",
+    "test:docs": "vitest run --config=config/vitest.integration.config.ts integration/cli/docs/*.test.ts",
     "test:integration": "npm run test:integration:prep && npm run test:integration:run",
     "test:integration:prep": "./integration/prep.sh",
     "test:integration:run": "vitest run --config=config/vitest.integration.config.ts integration",
@@ -86,6 +85,7 @@
     "husky": "^9.1.6",
     "js-yaml": "^4.1.0",
     "shellcheck": "^3.0.0",
+    "tsx": "^4.20.3",
     "undici": "^7.0.1",
     "vitest": "^3.2.3"
   },
