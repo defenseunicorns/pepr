@@ -33,6 +33,6 @@ updates:
 registries:
   rapidfort:
     type: "docker-registry"
-    url: "https://quay.io"
+    url: "quay.io"
     username: "{{ secrets.RAPIDFORT_USERNAME }}"
     password: "{{ secrets.RAPIDFORT_PASSWORD }}"

@@ -3,7 +3,7 @@
 
 import { describe, expect, it, beforeAll } from "vitest";
 import { execSync, execFileSync, spawnSync } from "child_process";
-import { promises, readdirSync, existsSync, rmSync } from "fs";
+import { readdirSync, existsSync, rmSync } from "fs";
 
 import { waitForDeploymentReady } from "./k8s";
 import path from "path";
@@ -63,7 +63,7 @@ export function peprUpgrade() {
       try {
         const image = process.env.PEPR_IMAGE || "pepr:dev";
         // Re-generate manifests with pepr@pr-candidate
-        execSync(`npx --yes ts-node ../src/cli.ts build -i ${image}`, {
+        execSync(`npx --yes tsx ../src/cli.ts build -i ${image}`, {
           cwd: "pepr-upgrade-test",
           stdio: "inherit",
         });
@@ -116,22 +116,6 @@ function getManifestData(): { manifestUUID: string; matchedFile: string } {
   console.log(`Manifest file: ${matchedFile}\nManifest UUID: ${manifestUUID}`);
 
   return { manifestUUID, matchedFile };
-}
-
-/**
- * Replace a string in a file and on error throws
- *
- * @param originalString - Original string to replace
- * @param newString - New string to replace with
- */
-async function replaceString(filePath: string, originalString: string, newString: string) {
-  try {
-    let fileContent = await promises.readFile(filePath, "utf8");
-    const modifiedContent = fileContent.split(originalString).join(newString);
-    await promises.writeFile(filePath, modifiedContent, "utf8");
-  } catch (error) {
-    throw error;
-  }
 }
 
 /**

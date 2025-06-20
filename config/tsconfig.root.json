@@ -8,13 +8,21 @@
     "lib": ["ES2022"],
     "module": "CommonJS",
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outDir": "../dist",
     "resolveJsonModule": true,
-    "rootDir": ".",
+    "rootDir": "../src",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
-  "include": ["**/*.ts"],
-  "exclude": ["src"]
+  "include": ["../src/**/*.ts"],
+  "exclude": [
+    "./eslint.test.config.mjs",
+    "../src/**/*.test.ts",
+    "../node_modules",
+    "../dist",
+    "../src/templates/*",
+    "!../src/templates/eslint.config.mjs",
+    "../integration/testroot"
+  ]
 }

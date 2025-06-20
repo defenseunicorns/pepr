@@ -5,10 +5,10 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-# crane digest cgr.dev/chainguard/node-lts:latest-dev
-# cgr.dev/chainguard/node:latest-dev@sha256:96260affdd273eb612d5fa031b8230cde59e06e21cdaf67f85a8f6399abd889a
-FROM docker.io/library/node@sha256:d1db2ecd11f417ab2ff4fef891b4d27194c367d101f9b9cd546a26e424e93d31 AS build
+ARG BUILD_IMAGE=docker.io/library/node@sha256:37c7b4cd8867313fc17ba76c1a6676414c61e2aac113694072bb8e3ef6d0a4c8
+ARG BASE_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot@sha256:595dcd85af33b16450868993ec48992c82d90a692fb0d5c6f435bca16edb85d6
 
+FROM ${BUILD_IMAGE} AS build
 WORKDIR /app
 
 # Copy the node config files
@@ -19,7 +19,8 @@ RUN npm ci
 
 COPY --chown=node:node ./hack/ ./hack/
 
-COPY --chown=node:node ./tsconfig.json ./build.mjs ./
+COPY --chown=node:node ./build.mjs ./
+COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 
 COPY --chown=node:node ./src/ ./src/
 COPY --chown=node:node kubernetes-fluent-client/ ./kubernetes-fluent-client/
@@ -46,10 +47,7 @@ RUN cp -r kubernetes-fluent-client/src node_modules/kubernetes-fluent-client/src
 
 ##### DELIVER #####
 
-# crane digest cgr.dev/chainguard/node-lts:latest
-# cgr.dev/chainguard/node:latest@sha256:f771505c29d1f766c1dc4d3b2ed0f8660a76553685b9d886728bc55d6f430ce8
-# gcr.io/distroless/nodejs22-debian12@sha256:d00edbf864c5b989f1b69951a13c5c902bf369cca572de59b5ec972552848e33
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:595dcd85af33b16450868993ec48992c82d90a692fb0d5c6f435bca16edb85d6
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 

@@ -7,7 +7,7 @@ import path from "path";
 
 // Path definitions
 const projectRoot = path.resolve(__dirname, "../../..");
-const rootConfig = path.join(projectRoot, "eslint.config.mjs");
+const rootConfig = path.join(projectRoot, "config/eslint.root.config.mjs");
 const templateConfig = path.join(projectRoot, "src/templates/eslint.config.mjs");
 
 // Define config item types to check

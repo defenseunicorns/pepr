@@ -1,8 +1,8 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "types": ["vitest/globals"]
   },
-  "include": ["src/**/*.test.ts", "hack/**/*.test.ts"],
+  "include": ["../src/**/*.test.ts", "../hack/**/*.test.ts"],
   "exclude": ["eslint.test.config.mjs"]
 }
