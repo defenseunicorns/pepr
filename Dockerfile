@@ -20,8 +20,8 @@ RUN npm ci
 
 COPY --chown=node:node ./hack/ ./hack/
 
-COPY --chown=node:node ./tsconfig.json ./build.mjs ./
-
+COPY --chown=node:node ./build.mjs ./
+COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \

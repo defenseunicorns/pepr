@@ -39,10 +39,8 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ["eslint.config.mjs"],
-        },
-        tsconfigRootDir: __dirname,
+        project: path.resolve(__dirname, "tsconfig.root.json"),
+        tsconfigRootDir: path.resolve(__dirname, "../"),
         sourceType: "module",
       },
       globals: {
@@ -112,7 +110,7 @@ export default [
   },
   {
     files: ["**/*.ts"],
-    ignores: ["**/*.test.ts", "eslint.test.config.mjs", "integration/eslint.config.mjs"],
+    ignores: ["**/*.test.ts", "./eslint.test.config.mjs", "./eslint.integration.config.mjs"],
 
     rules: {
       "@typescript-eslint/explicit-function-return-type": "error",
