@@ -17,7 +17,7 @@ describe("Pepr CLI Help Menu", () => {
     stdout: string;
     stderr: string;
   }> => {
-    const baseArgs = ["ts-node", cliPath];
+    const baseArgs = ["tsx", cliPath];
 
     // If subcommand exists, split it by spaces and add each part as a separate argument
     const subcommandArgs = subcommand ? subcommand.split(/\s+/) : [];
