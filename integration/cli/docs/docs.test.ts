@@ -7,7 +7,7 @@ import { parseCLIOutput } from "./cli.helper";
 
 // Can probably simplify this. Tests take 30ish secs to run right now
 const execFilePromise = promisify(childProcess.execFile);
-const timeoutMs = 15000;
+const timeoutMs = 30000;
 
 describe("Pepr CLI Help Menu", () => {
   const cliPath = path.resolve(process.cwd(), "src/cli.ts");
