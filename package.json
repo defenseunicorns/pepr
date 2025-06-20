@@ -45,7 +45,7 @@
     "test:journey:unicorn": "npm run test:journey:k3d && npm run test:journey:image:unicorn && npm run test:journey:run",
     "format:check": "npm run format:src && npm run format:tests && npm run format:markdown && npm run format:integration && npm run format:prettier -- --check",
     "format:fix": "npm run format:src -- --fix && npm run format:markdown -- --fix && npm run format:integration -- --fix && npm run format:prettier -- --write",
-    "format:integration": "eslint --config integration/eslint.config.mjs integration/cli integration/helpers",
+    "format:integration": "eslint --config config/eslint.integration.config.mjs integration/cli integration/helpers",
     "format:markdown": "npx -y markdownlint-cli --config config/.markdownlint.json --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules \"**/*.md\"",
     "format:prettier": "prettier --config config/.prettierrc src integration/cli/**/*.ts integration/helpers/**/*.ts",
     "format:src": "eslint 'src/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern src/templates/eslint.config.mjs",

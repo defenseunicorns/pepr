@@ -4,7 +4,7 @@
     "eslint --config eslint.config.mjs --fix --ignore-pattern config/** --ignore-pattern src/templates/eslint.config.mjs --ignore-pattern vitest.config.ts --ignore-pattern config/eslint.test.config.mjs --ignore-pattern src/**/*.test.ts --ignore-pattern integration/**/*.ts"
   ],
   "*.test.ts": ["eslint --config config/eslint.test.config.mjs"],
-  "integration/**/*.ts": ["eslint --config integration/eslint.config.mjs"],
+  "integration/**/*.ts": ["eslint --config config/eslint.integration.config.mjs"],
   "*.mjs": ["prettier --config config/.prettierrc --write"],
   "*.js": ["prettier --config config/.prettierrc --write"],
   "*.json": ["prettier --config config/.prettierrc --write"],
