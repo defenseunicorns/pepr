@@ -43,7 +43,7 @@ cd pepr
 mkdir -p hack
 cp "$PEPR/hack/build-template-data.js" hack/
 cp "$PEPR/build.mjs" .
-cp "$PEPR/tsconfig.json" .
+cp "$PEPR/config/tsconfig.root.json" ./config/tsconfig.root.json
 npm i
 cd ..
 
