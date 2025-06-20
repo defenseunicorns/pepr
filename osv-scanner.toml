@@ -1,7 +1,0 @@
-# One entry for each vulnerability group
-[[IgnoredVulns]]
-id = "GHSA-p8p7-x288-28g6"
-reason = "Library only used client-side and not affected by this vulnerability."
-[[IgnoredVulns]]
-id = "GHSA-952p-6rrq-rcjv"
-reason = "Library is not exposed to end users, it is a dependency of our testing suite which is not shipped."
