@@ -26,6 +26,7 @@ export default function (program: RootCmd): void {
   program
     .command("monitor [module-uuid]")
     .description("Monitor a Pepr Module")
+    .helpOption("-h, --help", "Display help for command")
     .action(async uuid => {
       const { labels, errorMessage } = getLabelsAndErrorMessage(uuid);
 

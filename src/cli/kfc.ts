@@ -10,6 +10,7 @@ export default function (program: RootCmd): void {
   program
     .command("kfc [args...]")
     .description("Execute Kubernetes Fluent Client commands")
+    .helpOption("-h, --help", "Display help for command")
     .action(async (args: string[]) => {
       const { confirm } = await prompt({
         type: "confirm",

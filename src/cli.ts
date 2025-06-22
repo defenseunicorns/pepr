@@ -27,8 +27,10 @@ if (!process.env.PEPR_NODE_WARNINGS) {
 }
 program
   .enablePositionalOptions()
-  .version(version)
+  .version(version, "-V, --version", "Display the version of the Pepr CLI.")
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
+  .helpOption("-h, --help", "Display help for command")
+
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);

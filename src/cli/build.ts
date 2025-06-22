@@ -81,7 +81,8 @@ export default function (program: RootCmd): void {
     )
     .addOption(
       new Option(
-        "-R, --registry-info <registry/username>",
+        // TODO: update short flag - whence confirmed
+        "-T, --registry-info <registry/username>",
         "Provide the image registry and username for building a custom WASM container. Requires authentication.",
       ).conflicts(["customImage", "registry"]),
     )
