@@ -31,13 +31,16 @@ export default function (program: RootCmd): void {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .option("--confirm", "Skip verification prompt when creating a new module.")
-    .option("--description <string>", "Explain the purpose of the new module.")
-    .option("--name <string>", "Set the name of the new module.")
-    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
+    .option("-y, --yes", "Skip verification prompt when creating a new module.")
+    .option("-d, --description <string>", "Explain the purpose of the new module.")
+    .option("-m, --name <string>", "Set the name of the new module.")
     .option(
-      "--uuid [string]",
+      "-k, --skip-post-init",
+      "Skip npm install, git init, and VSCode launch after initialization.",
+    )
+    .option(`-e, --error-behavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
+    .option(
+      "-u, --uuid [string]",
       "Unique identifier for your module with a max length of 36 characters.",
       (uuid: string): string => {
         if (uuid.length > UUID_LENGTH_LIMIT) {
@@ -46,6 +49,7 @@ export default function (program: RootCmd): void {
         return uuid.toLocaleLowerCase();
       },
     )
+    .helpOption("-h, --help", "Display help for command")
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
