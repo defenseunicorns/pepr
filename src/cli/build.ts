@@ -68,64 +68,64 @@ export default function (program: RootCmd): void {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")
-    .option("-e, --entry-point [file]", "Specify the entry point file to build with.", peprTS)
+    .option("-e, --entry-point <file>", "Specify the entry point file to build with.", peprTS)
     .option(
       "-n, --no-embed",
-      "Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.",
+      "Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
     .addOption(
       new Option(
-        "-i, --custom-image <custom-image>",
-        "Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
+        "-i, --custom-image <image>",
+        "Specify a custom image (including version) for deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
       ).conflicts(["registryInfo", "registry"]),
     )
     .addOption(
       new Option(
-        "-r, --registry-info [<registry>/<username>]",
-        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `'registry/username/custom-pepr-controller:<current-version>'`.",
+        "-R, --registry-info <registry/username>",
+        "Provide the image registry and username for building a custom WASM container. Requires authentication.",
       ).conflicts(["customImage", "registry"]),
     )
 
-    .option("-o, --output-dir <output directory>", "Define where to place build output")
+    .option("-o, --output-dir <output directory>", "Define where to place build output.")
     .option(
-      "--timeout <timeout>",
-      "How long the API server should wait for a webhook to respond before treating the call as a failure",
+      "-t, --timeout [seconds]",
+      "How long the API server should wait for a webhook to respond before treating the call as a failure.",
       parseTimeout,
     )
     .option(
-      "--withPullSecret <imagePullSecret>",
+      "-P, --with-pull-secret [name]",
       "Image Pull Secret: Use image pull secret for controller Deployment.",
       "",
     )
-
     .addOption(
       new Option(
-        "--registry <GitHub|Iron Bank>",
-        "Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image.",
+        "-r, --registry [GitHub|Iron Bank]",
+        "Container registry: Choose container registry for deployment manifests. Cannot be used with --custom-image.",
       )
         .conflicts(["customImage", "registryInfo"])
         .choices(["GitHub", "Iron Bank"]),
     )
-
     .addOption(
       new Option(
         "-z, --zarf [manifest|chart]",
-        "Zarf package type: manifest, chart (default: manifest)",
+        "Zarf package type. Options: manifest, chart. Default: manifest",
       )
         .choices(["manifest", "chart"])
         .default("manifest"),
     )
     .addOption(
-      new Option("--rbac-mode [admin|scoped]", "Rbac Mode: admin, scoped (default: admin)").choices(
-        ["admin", "scoped"],
-      ),
+      new Option(
+        "-R, --rbac-mode <admin|scoped>",
+        "RBAC mode for deployments. Options: admin, scoped. Default: admin",
+      ).choices(["admin", "scoped"]),
     )
     .addOption(
       new Option(
-        "--custom-name [name]",
+        "-c, --custom-name [name]",
         "Specify a custom name for zarf component and service monitors in helm charts.",
       ),
     )
+    .helpOption("-h, --help")
     .action(async opts => {
       // assign custom output directory if provided
       outputDir = await handleCustomOutputDir(opts.outputDir);
