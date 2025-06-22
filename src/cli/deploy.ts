@@ -130,14 +130,15 @@ export default function (program: RootCmd): void {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
-    .option("-i, --image [image]", "Override the image tag")
-    .option("--confirm", "Skip confirmation prompt")
-    .option("--pullSecret <name>", "Deploy imagePullSecret for Controller private registry")
-    .option("--docker-server <server>", "Docker server address")
-    .option("--docker-username <username>", "Docker registry username")
-    .option("--docker-email <email>", "Email for Docker registry")
-    .option("--docker-password <password>", "Password for Docker registry")
-    .option("--force", "Force deploy the module, override manager field")
+    .option("-i, --image [image]", "Override the image tag.")
+    .option("-y, --yes", "Skip confirmation prompts.")
+    .option("-p, --pull-secret <name>", "Deploy imagePullSecret for Controller private registry.")
+    .option("-S, --docker-server <server>", "Docker server address.")
+    .option("-U, --docker-username <username>", "Docker registry username.")
+    .option("-E, --docker-email <email>", "Email for Docker registry.")
+    .option("-P, --docker-password <password>", "Password for Docker registry.")
+    .option("-f, --force", "Force deploy the module, override manager field.")
+    .helpOption("-h, --help", "Display help for command")
     .action(async opts => {
       const valResp = validateImagePullSecretDetails(opts);
       if (!valResp.valid) {
