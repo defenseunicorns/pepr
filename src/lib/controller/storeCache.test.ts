@@ -6,128 +6,191 @@ import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
 vi.mock("kubernetes-fluent-client");
 
-describe("sendCache", () => {
-  const mockK8s = vi.mocked(K8s);
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+  },
+}));
 
-  vi.mock("../telemetry/logger", () => ({
-    __esModule: true,
-    default: {
-      error: vi.fn(),
-    },
-  }));
+describe("StoreCache", () => {
+  const mockK8s = vi.mocked(K8s);
 
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  it("should reject unsupported operations", () => {
-    expect(() => {
-      fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion for "unsupported" to verify exception occurs
-    }).toThrow("Unsupported operation: unsupported");
+  describe("fillStoreCache", () => {
+    describe("when given an unsupported operation", () => {
+      it("should throw an error with the operation name", () => {
+        expect(() => {
+          fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion to verify exception occurs
+        }).toThrow("Unsupported operation: unsupported");
+      });
+    });
+
+    describe("add operations", () => {
+      describe("when creating an add operation with a value", () => {
+        it("should add the entry to the cache with the provided value", () => {
+          const emptyCache = {};
+          const capability = "capability";
+          const operation = "add";
+          const params = {
+            key: ["key"],
+            value: "value",
+            version: "",
+          };
+
+          const result = fillStoreCache(emptyCache, capability, operation, params);
+
+          const expected: Record<string, Operation> = {
+            "add:/data/capability-key:value": {
+              op: "add",
+              path: "/data/capability-key",
+              value: "value",
+            },
+          };
+          expect(result).toStrictEqual(expected);
+        });
+      });
+
+      describe("when creating an add operation with undefined value", () => {
+        it("should add the entry to the cache with an empty string value", () => {
+          // Given an empty cache and operation parameters without a value
+          const emptyCache = {};
+          const params = { key: ["key"], version: "" };
+
+          // When fillStoreCache is called
+          const result = fillStoreCache(emptyCache, "capability", "add", params);
+
+          // Then the cache should contain an entry with empty string value
+          const expected: Record<string, Operation> = {
+            "add:/data/capability-key:": {
+              op: "add",
+              path: "/data/capability-key",
+              value: "",
+            },
+          };
+          expect(result).toStrictEqual(expected);
+        });
+      });
+    });
+
+    describe("remove operations", () => {
+      describe("when creating a remove operation with a valid key", () => {
+        it("should add the removal entry to the cache", () => {
+          // Given an empty cache and valid remove parameters
+          const emptyCache = {};
+          const params = { key: ["key"] };
+
+          // When fillStoreCache is called with remove operation
+          const result = fillStoreCache(emptyCache, "capability", "remove", params);
+
+          // Then the cache should contain a removal operation
+          const expected: Record<string, Operation> = {
+            "remove:/data/capability-key": {
+              op: "remove",
+              path: "/data/capability-key",
+            },
+          };
+          expect(result).toStrictEqual(expected);
+        });
+      });
+
+      describe("when creating a remove operation with an empty key", () => {
+        it("should throw an error about requiring a key", () => {
+          // Given an empty cache and invalid remove parameters (empty key)
+          const emptyCache = {};
+          const params = { key: [] };
+
+          // When fillStoreCache is called with remove operation and empty key
+          // Then it should throw an error
+          expect(() => {
+            fillStoreCache(emptyCache, "capability", "remove", params);
+          }).toThrow("Key is required for REMOVE operation");
+        });
+      });
+    });
   });
 
-  describe("when updates are sent to the PeprStore", () => {
-    it("should clear the cache", async () => {
-      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-        return {
-          Patch: vi.fn().mockResolvedValueOnce(undefined as never),
-        } as unknown as K8sInit<T, K>;
-      });
+  describe("sendUpdatesAndFlushCache", () => {
+    describe("when the update is successful", () => {
+      it("should send updates and clear the cache", async () => {
+        // Given a mocked successful Kubernetes patch operation
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockResolvedValueOnce(undefined as never),
+          } as unknown as K8sInit<T, K>;
+        });
 
-      const input: Record<string, Operation> = {
-        entry: { op: "remove", path: "/some/path" },
-        entry2: { op: "add", path: "some/path", value: "value" },
-      };
-      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
-      expect(result).toStrictEqual({});
+        // And a cache with operations
+        const cache: Record<string, Operation> = {
+          entry: { op: "remove", path: "/some/path" },
+          entry2: { op: "add", path: "some/path", value: "value" },
+        };
+
+        // When sendUpdatesAndFlushCache is called
+        const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
+
+        // Then the cache should be cleared
+        expect(result).toStrictEqual({});
+      });
     });
 
-    it("should clear cache for Unprocessable Entity Errors (HTTP/422)", async () => {
-      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-        return {
-          Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
-        } as unknown as K8sInit<T, K>;
-      });
+    describe("when the update fails with a 422 Unprocessable Entity error", () => {
+      it("should clear the cache despite the error", async () => {
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
+          } as unknown as K8sInit<T, K>;
+        });
 
-      const input: Record<string, Operation> = {
-        entry: { op: "remove", path: "/some/path" },
-        entry2: { op: "add", path: "some/path", value: "value" },
-      };
-      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
-      expect(result).toStrictEqual({});
+        // And a cache with operations
+        const cache: Record<string, Operation> = {
+          entry: { op: "remove", path: "/some/path" },
+          entry2: { op: "add", path: "some/path", value: "value" },
+        };
+
+        // When sendUpdatesAndFlushCache is called
+        const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
+
+        // Then the cache should still be cleared
+        expect(result).toStrictEqual({});
+      });
     });
 
-    it("should repopulate cache for all other HTTP Errors", async () => {
-      mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-        return {
-          Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
-        } as unknown as K8sInit<T, K>;
-      });
+    describe("when the update fails with an error other than 422", () => {
+      it("should repopulate the cache with the original operations", async () => {
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
+          } as unknown as K8sInit<T, K>;
+        });
 
-      const input: Record<string, Operation> = {
-        entry: { op: "remove", path: "/some/path" },
-        entry2: { op: "add", path: "some/path", value: "value" },
-      };
-      const result = await sendUpdatesAndFlushCache(input, "some namespace", "some name");
-      expect(result).toStrictEqual(input);
+        const cache: Record<string, Operation> = {
+          entry: { op: "remove", path: "/some/path" },
+          entry2: { op: "add", path: "some/path", value: "value" },
+        };
+        const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
+        expect(result).toStrictEqual(cache);
+      });
     });
   });
 
-  describe("when creating 'add' operations", () => {
-    it("should write to the cache", () => {
-      const input: Record<string, Operation> = {
-        "add:/data/capability-key:value": {
+  describe("updateCacheID", () => {
+    it("should add a cache ID update to the array of patches", () => {
+      const patches: Operation[] = [
+        {
           op: "add",
-          path: "/data/capability-key",
-          value: "value",
+          path: "/data/hello-pepr-v2-a",
+          value: "a",
         },
-      };
-      const result = fillStoreCache({}, "capability", "add", {
-        key: ["key"],
-        value: "value",
-        version: "",
-      });
-      expect(result).toStrictEqual(input);
-    });
+      ];
 
-    it("should write undefined values as empty-string", () => {
-      const input: Record<string, Operation> = {
-        "add:/data/capability-key:": { op: "add", path: "/data/capability-key", value: "" },
-      };
-      const result = fillStoreCache({}, "capability", "add", { key: ["key"], version: "" });
-      expect(result).toStrictEqual(input);
+      const updatedPatches = updateCacheID(patches);
+      expect(updatedPatches.length).toBe(2);
+      expect(updatedPatches[1].op).toBe("replace");
+      expect(updatedPatches[1].path).toBe("/metadata/labels/pepr.dev-cacheID");
     });
-  });
-  describe("when creating 'remove' operations", () => {
-    it("should write to the cache", () => {
-      const input: Record<string, Operation> = {
-        "remove:/data/capability-key": { op: "remove", path: "/data/capability-key" },
-      };
-      const result = fillStoreCache({}, "capability", "remove", { key: ["key"] });
-      expect(result).toStrictEqual(input);
-    });
-
-    it("should require a key to be defined", () => {
-      expect(() => {
-        fillStoreCache({}, "capability", "remove", { key: [] });
-      }).toThrow("Key is required for REMOVE operation");
-    });
-  });
-});
-
-describe("updateCacheId", () => {
-  it("should update the metadata label of the cacheID in the payload array of patches", () => {
-    const patches: Operation[] = [
-      {
-        op: "add",
-        path: "/data/hello-pepr-v2-a",
-        value: "a",
-      },
-    ];
-
-    const updatedPatches = updateCacheID(patches);
-    expect(updatedPatches.length).toBe(2);
-    expect(updatedPatches[1].op).toBe("replace");
-    expect(updatedPatches[1].path).toBe("/metadata/labels/pepr.dev-cacheID");
   });
 });
