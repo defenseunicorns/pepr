@@ -1,5 +1,9 @@
 # Frequently Asked Questions
 
+## What is the `PEPR_WATCH_MODE` environment variable?
+
+The `PEPR_WATCH_MODE` environment variable is used to determine if Pepr binds Admission Endpoints and runs as an Admission Controller or sets up the watch processor and runs as a Kubernetes Controller. For greater availability the Admission Controller runs with two replicas. The variable is set during `npx pepr build` when the manifests are generated. This variable should not be set by the user.
+
 ## Difference between `.Watch()` vs. `.Reconcile()` in Pepr
 
 `.Watch()` and `.Reconcile()` are two distinct mechanisms in Pepr used to handle Kubernetes events. The core difference is **when** and **how** they process events:
