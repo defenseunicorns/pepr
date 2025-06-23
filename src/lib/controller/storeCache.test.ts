@@ -14,9 +14,24 @@ vi.mock("../telemetry/logger", () => ({
   },
 }));
 
-describe("StoreCache", () => {
+/**
+ * Helper function to set up K8s mock implementation
+ * @param mockType - 'success' for resolved promise, 'error' for rejected promise
+ * @param errorStatus - HTTP status code for error responses, defaults to 400
+ */
+function setupK8sMock(mockType: "success" | "error", errorStatus = 400) {
   const mockK8s = vi.mocked(K8s);
+  mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+    return {
+      Patch:
+        mockType === "success"
+          ? vi.fn().mockResolvedValueOnce(undefined as never)
+          : vi.fn().mockRejectedValueOnce({ status: errorStatus } as never),
+    } as unknown as K8sInit<T, K>;
+  });
+}
 
+describe("StoreCache", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -108,11 +123,7 @@ describe("StoreCache", () => {
   describe("sendUpdatesAndFlushCache", () => {
     describe("when update succeeds", () => {
       it("should clear the cache", async () => {
-        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-          return {
-            Patch: vi.fn().mockResolvedValueOnce(undefined as never),
-          } as unknown as K8sInit<T, K>;
-        });
+        setupK8sMock("success");
 
         const cache: Record<string, Operation> = {
           entry: { op: "remove", path: "/some/path" },
@@ -127,11 +138,7 @@ describe("StoreCache", () => {
 
     describe("when update fails", () => {
       it("should log an error message", async () => {
-        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-          return {
-            Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
-          } as unknown as K8sInit<T, K>;
-        });
+        setupK8sMock("error", 422);
 
         await sendUpdatesAndFlushCache(
           {
@@ -145,11 +152,7 @@ describe("StoreCache", () => {
       });
 
       it("should clear the cache after an HTTP/422 Error", async () => {
-        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-          return {
-            Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
-          } as unknown as K8sInit<T, K>;
-        });
+        setupK8sMock("error", 422);
 
         const cache: Record<string, Operation> = {
           entry: { op: "remove", path: "/some/path" },
@@ -162,11 +165,7 @@ describe("StoreCache", () => {
       });
 
       it("should repopulate cache with original operations after non HTTP/422 errors", async () => {
-        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
-          return {
-            Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
-          } as unknown as K8sInit<T, K>;
-        });
+        setupK8sMock("error", 400);
 
         const cache: Record<string, Operation> = {
           entry: { op: "remove", path: "/some/path" },
