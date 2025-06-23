@@ -4,11 +4,6 @@ permissions: read-all
 on:
   workflow_dispatch:
     inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
       branch:
         description: 'Soak test branch'
         required: true
@@ -49,16 +44,9 @@ jobs:
           npm ci
 
       - name: build pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
-  
-      - name: build kfc pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
