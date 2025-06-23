@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   merge_group:
     paths-ignore:
     - "LICENSE"

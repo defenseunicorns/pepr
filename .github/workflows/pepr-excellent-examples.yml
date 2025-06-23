@@ -18,8 +18,12 @@ on:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
