@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fillStoreCache, sendUpdatesAndFlushCache, updateCacheID } from "./storeCache";
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
@@ -9,7 +9,14 @@ vi.mock("kubernetes-fluent-client");
 describe("sendCache", () => {
   const mockK8s = vi.mocked(K8s);
 
-  afterEach(() => {
+  vi.mock("../telemetry/logger", () => ({
+    __esModule: true,
+    default: {
+      error: vi.fn(),
+    },
+  }));
+
+  beforeEach(() => {
     vi.resetAllMocks();
   });
 
