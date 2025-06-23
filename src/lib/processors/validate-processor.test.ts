@@ -83,7 +83,7 @@ export const testPeprValidateRequest = (
 ): PeprValidateRequest<KubernetesObject> =>
   new PeprValidateRequest<KubernetesObject>(admissionRequest);
 
-describe("processRequest", () => {
+describe("when processing requests", () => {
   let binding: Binding;
   let actionMetadata: Record<string, string>;
   let peprValidateRequest: PeprValidateRequest<KubernetesObject>;
@@ -94,7 +94,7 @@ describe("processRequest", () => {
     peprValidateRequest = testPeprValidateRequest(testAdmissionRequest);
   });
 
-  it("responds on successful validation action", async () => {
+  it("should respond on successful validation action", async () => {
     const cbResult = {
       allowed: true,
       statusCode: 200,
@@ -115,7 +115,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds on unsuccessful validation action with exception", async () => {
+  it("should respond on unsuccessful validation action with exception", async () => {
     const callback = vi.fn().mockImplementation(() => {
       throw "oof";
     }) as Binding["validateCallback"];
@@ -133,7 +133,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds on unsuccessful validation with status code", async () => {
+  it("should respond on unsuccessful validation with status code", async () => {
     const cbResult = {
       allowed: false,
       statusCode: 403,
@@ -153,7 +153,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds with namespace in error message when present", async () => {
+  it("should respond with namespace in error message when present", async () => {
     const cbResult = {
       allowed: false,
       statusCode: 403,
@@ -179,7 +179,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds with status message when provided", async () => {
+  it("should respond with status message when provided", async () => {
     const cbResult = {
       allowed: false,
       statusMessage: "Resource validation failed",
@@ -199,7 +199,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("transfers warnings from callback response", async () => {
+  it("should transfer warnings from callback response", async () => {
     const cbResult = {
       allowed: true,
       statusCode: 200,
@@ -223,7 +223,7 @@ describe("processRequest", () => {
   });
 });
 
-describe("validateProcessor", () => {
+describe("when validating requests", () => {
   let config: ModuleConfig;
   beforeEach(() => {
     vi.clearAllMocks();
