@@ -3,6 +3,7 @@ import { fillStoreCache, sendUpdatesAndFlushCache, updateCacheID } from "./store
 import { Operation } from "fast-json-patch";
 import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
 import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import Log from "../telemetry/logger";
 
 vi.mock("kubernetes-fluent-client");
 
@@ -105,7 +106,7 @@ describe("StoreCache", () => {
   });
 
   describe("sendUpdatesAndFlushCache", () => {
-    describe("when update is successful", () => {
+    describe("when update succeeds", () => {
       it("should clear the cache", async () => {
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
@@ -124,8 +125,26 @@ describe("StoreCache", () => {
       });
     });
 
-    describe("when update fails with 422 Unprocessable Entity error", () => {
-      it("should still clear the cache", async () => {
+    describe("when update fails", () => {
+      it("should log an error message", async () => {
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
+          } as unknown as K8sInit<T, K>;
+        });
+
+        await sendUpdatesAndFlushCache(
+          {
+            entry: { op: "remove", path: "/some/path" },
+          },
+          "some namespace",
+          "some name",
+        );
+
+        expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Pepr store update failure");
+      });
+
+      it("should clear the cache after an HTTP/422 Error", async () => {
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
             Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
@@ -141,10 +160,8 @@ describe("StoreCache", () => {
 
         expect(result).toStrictEqual({});
       });
-    });
 
-    describe("when update fails with non-422 error", () => {
-      it("should repopulate cache with original operations", async () => {
+      it("should repopulate cache with original operations after non HTTP/422 errors", async () => {
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
             Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
