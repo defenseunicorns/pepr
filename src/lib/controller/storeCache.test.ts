@@ -25,8 +25,8 @@ function setupK8sMock(mockType: "success" | "error", errorStatus = 400) {
     return {
       Patch:
         mockType === "success"
-          ? vi.fn().mockResolvedValueOnce(undefined as never)
-          : vi.fn().mockRejectedValueOnce({ status: errorStatus } as never),
+          ? vi.fn().mockResolvedValueOnce(undefined)
+          : vi.fn().mockRejectedValueOnce({ status: errorStatus }),
     } as unknown as K8sInit<T, K>;
   });
 }
@@ -40,7 +40,7 @@ describe("StoreCache", () => {
     describe("when given unsupported operations", () => {
       it("should throw error with operation name", () => {
         expect(() => {
-          fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] });
+          fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion to force an error
         }).toThrow("Unsupported operation: unsupported");
       });
     });
