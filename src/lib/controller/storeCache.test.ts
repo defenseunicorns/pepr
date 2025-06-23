@@ -24,7 +24,7 @@ describe("StoreCache", () => {
     describe("when given unsupported operations", () => {
       it("should throw error with operation name", () => {
         expect(() => {
-          fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion to verify exception occurs
+          fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] });
         }).toThrow("Unsupported operation: unsupported");
       });
     });
@@ -56,14 +56,11 @@ describe("StoreCache", () => {
 
       describe("when value is undefined", () => {
         it("should add entry with empty string", () => {
-          // Given an empty cache and operation parameters without a value
           const emptyCache = {};
           const params = { key: ["key"], version: "" };
 
-          // When fillStoreCache is called
           const result = fillStoreCache(emptyCache, "capability", "add", params);
 
-          // Then the cache should contain an entry with empty string value
           const expected: Record<string, Operation> = {
             "add:/data/capability-key:": {
               op: "add",
@@ -79,14 +76,11 @@ describe("StoreCache", () => {
     describe("when using remove operations", () => {
       describe("when key is valid", () => {
         it("should add removal entry to cache", () => {
-          // Given an empty cache and valid remove parameters
           const emptyCache = {};
           const params = { key: ["key"] };
 
-          // When fillStoreCache is called with remove operation
           const result = fillStoreCache(emptyCache, "capability", "remove", params);
 
-          // Then the cache should contain a removal operation
           const expected: Record<string, Operation> = {
             "remove:/data/capability-key": {
               op: "remove",
@@ -99,12 +93,9 @@ describe("StoreCache", () => {
 
       describe("when key is empty", () => {
         it("should throw key required error", () => {
-          // Given an empty cache and invalid remove parameters (empty key)
           const emptyCache = {};
           const params = { key: [] };
 
-          // When fillStoreCache is called with remove operation and empty key
-          // Then it should throw an error
           expect(() => {
             fillStoreCache(emptyCache, "capability", "remove", params);
           }).toThrow("Key is required for REMOVE operation");
@@ -116,23 +107,19 @@ describe("StoreCache", () => {
   describe("sendUpdatesAndFlushCache", () => {
     describe("when update is successful", () => {
       it("should clear the cache", async () => {
-        // Given a mocked successful Kubernetes patch operation
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
             Patch: vi.fn().mockResolvedValueOnce(undefined as never),
           } as unknown as K8sInit<T, K>;
         });
 
-        // And a cache with operations
         const cache: Record<string, Operation> = {
           entry: { op: "remove", path: "/some/path" },
           entry2: { op: "add", path: "some/path", value: "value" },
         };
 
-        // When sendUpdatesAndFlushCache is called
         const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
 
-        // Then the cache should be cleared
         expect(result).toStrictEqual({});
       });
     });
@@ -145,16 +132,13 @@ describe("StoreCache", () => {
           } as unknown as K8sInit<T, K>;
         });
 
-        // And a cache with operations
         const cache: Record<string, Operation> = {
           entry: { op: "remove", path: "/some/path" },
           entry2: { op: "add", path: "some/path", value: "value" },
         };
 
-        // When sendUpdatesAndFlushCache is called
         const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
 
-        // Then the cache should still be cleared
         expect(result).toStrictEqual({});
       });
     });
