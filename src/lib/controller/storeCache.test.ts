@@ -21,17 +21,17 @@ describe("StoreCache", () => {
   });
 
   describe("fillStoreCache", () => {
-    describe("when given an unsupported operation", () => {
-      it("should throw an error with the operation name", () => {
+    describe("when given unsupported operations", () => {
+      it("should throw error with operation name", () => {
         expect(() => {
           fillStoreCache({}, "capability", "unsupported" as "remove", { key: ["key"] }); // Type coercion to verify exception occurs
         }).toThrow("Unsupported operation: unsupported");
       });
     });
 
-    describe("add operations", () => {
-      describe("when creating an add operation with a value", () => {
-        it("should add the entry to the cache with the provided value", () => {
+    describe("when using add operations", () => {
+      describe("when provided with a value", () => {
+        it("should add entry to cache with provided value", () => {
           const emptyCache = {};
           const capability = "capability";
           const operation = "add";
@@ -54,8 +54,8 @@ describe("StoreCache", () => {
         });
       });
 
-      describe("when creating an add operation with undefined value", () => {
-        it("should add the entry to the cache with an empty string value", () => {
+      describe("when value is undefined", () => {
+        it("should add entry with empty string", () => {
           // Given an empty cache and operation parameters without a value
           const emptyCache = {};
           const params = { key: ["key"], version: "" };
@@ -76,9 +76,9 @@ describe("StoreCache", () => {
       });
     });
 
-    describe("remove operations", () => {
-      describe("when creating a remove operation with a valid key", () => {
-        it("should add the removal entry to the cache", () => {
+    describe("when using remove operations", () => {
+      describe("when key is valid", () => {
+        it("should add removal entry to cache", () => {
           // Given an empty cache and valid remove parameters
           const emptyCache = {};
           const params = { key: ["key"] };
@@ -97,8 +97,8 @@ describe("StoreCache", () => {
         });
       });
 
-      describe("when creating a remove operation with an empty key", () => {
-        it("should throw an error about requiring a key", () => {
+      describe("when key is empty", () => {
+        it("should throw key required error", () => {
           // Given an empty cache and invalid remove parameters (empty key)
           const emptyCache = {};
           const params = { key: [] };
@@ -114,8 +114,8 @@ describe("StoreCache", () => {
   });
 
   describe("sendUpdatesAndFlushCache", () => {
-    describe("when the update is successful", () => {
-      it("should send updates and clear the cache", async () => {
+    describe("when update is successful", () => {
+      it("should clear the cache", async () => {
         // Given a mocked successful Kubernetes patch operation
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
@@ -137,8 +137,8 @@ describe("StoreCache", () => {
       });
     });
 
-    describe("when the update fails with a 422 Unprocessable Entity error", () => {
-      it("should clear the cache despite the error", async () => {
+    describe("when update fails with 422 Unprocessable Entity error", () => {
+      it("should still clear the cache", async () => {
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
             Patch: vi.fn().mockRejectedValueOnce({ status: 422 } as never),
@@ -159,8 +159,8 @@ describe("StoreCache", () => {
       });
     });
 
-    describe("when the update fails with an error other than 422", () => {
-      it("should repopulate the cache with the original operations", async () => {
+    describe("when update fails with non-422 error", () => {
+      it("should repopulate cache with original operations", async () => {
         mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
           return {
             Patch: vi.fn().mockRejectedValueOnce({ status: 400 } as never),
@@ -178,7 +178,7 @@ describe("StoreCache", () => {
   });
 
   describe("updateCacheID", () => {
-    it("should add a cache ID update to the array of patches", () => {
+    it("should add cacheID label to patches", () => {
       const patches: Operation[] = [
         {
           op: "add",
