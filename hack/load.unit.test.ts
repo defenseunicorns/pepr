@@ -3,7 +3,14 @@
 
 import { describe, it, expect } from "vitest";
 import { heredoc } from "../src/sdk/heredoc";
-import * as sut from "./load.lib";
+import {
+  toHuman,
+  toMs,
+  generateAudienceData,
+  parseAudienceData,
+  parseActressData,
+  injectsToRps,
+} from "./load.lib";
 
 describe("toHuman()", () => {
   it.each([
@@ -20,7 +27,7 @@ describe("toHuman()", () => {
     // combined
     [34822861001, "1y1mo1w1d1h1m1s1ms"],
   ])("given ms '%s', returns '%s' duration", (ms, human) => {
-    const result = sut.toHuman(ms);
+    const result = toHuman(ms);
     expect(result).toBe(human);
   });
 });
@@ -51,7 +58,7 @@ describe("toMs()", () => {
     ["1y1mo1w1d1h1m1s1ms", 34822861001],
     ["1ms1s1m1h1d1w1mo1y", 34822861001],
   ])("given duration '%s', returns '%s' ms", (human, ms) => {
-    const result = sut.toMs(human);
+    const result = toMs(human);
     expect(result).toBe(ms);
   });
 
@@ -60,14 +67,14 @@ describe("toMs()", () => {
     ["h1m1s", /Unrecognized number .* while parsing/],
     ["1z", /Unrecognized unit .* while parsing/],
   ])("given duration '%s', throws error matching '%s'", (human, err) => {
-    expect(() => sut.toMs(human)).toThrow(err);
+    expect(() => toMs(human)).toThrow(err);
   });
 });
 
 describe("generateAudienceData()", () => {
   it("creates 'random' datasets", () => {
     const numSamples = 2;
-    const result = sut.generateAudienceData("random", numSamples);
+    const result = generateAudienceData("random", numSamples);
 
     const numRows = numSamples * 3; // 2 admission & 1 watch pods
     expect(result).toHaveLength(numRows);
@@ -97,7 +104,7 @@ describe("parseActressData()", () => {
       ],
     };
 
-    const result = sut.parseActressData(actressData);
+    const result = parseActressData(actressData);
 
     expect(result).toEqual(expected);
   });
@@ -130,7 +137,7 @@ describe("parseAudienceData()", () => {
       ],
     };
 
-    const result = sut.parseAudienceData(audienceData);
+    const result = parseAudienceData(audienceData);
 
     expect(result).toEqual(expected);
   });
@@ -149,8 +156,7 @@ describe("injectsToRps()", () => {
     ];
     const injects = expected.map(m => m[0]);
 
-    const result = sut.injectsToRps(injects);
-    console.log(result);
+    const result = injectsToRps(injects);
 
     expect(result).toEqual(expected);
   });

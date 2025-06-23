@@ -6,12 +6,6 @@ permissions:
 
 on:
   workflow_dispatch:
-    inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
   merge_group:
     paths-ignore:
     - "LICENSE"
@@ -69,7 +63,6 @@ jobs:
             echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - name: build pepr package and container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
           max_attempts: 3
@@ -79,19 +72,6 @@ jobs:
             cd "$PEPR"
             npm run build:image:unicorn
             mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          
-      - name: build pepr package and kfc dev container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
-          cp -R "$PEPR/kubernetes-fluent-client/dist" "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          npm run build
-          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          ls -l ${GITHUB_WORKSPACE}
 
       - name: tar pepr image
         run: |
