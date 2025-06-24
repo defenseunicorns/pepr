@@ -5,6 +5,15 @@ import { Controller, ControllerHooks } from "./index";
 import { Capability } from "../core/capability";
 import { ModuleConfig, CapabilityCfg } from "../types";
 
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 vi.mock("./store", () => {
   return {
     StoreController: vi.fn().mockImplementation((_capabilities, _name, onReady) => {

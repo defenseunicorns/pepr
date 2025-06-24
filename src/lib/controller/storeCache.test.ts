@@ -6,6 +6,13 @@ import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
 
 vi.mock("kubernetes-fluent-client");
 
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+  },
+}));
+
 describe("sendCache", () => {
   const mockK8s = vi.mocked(K8s);
 
