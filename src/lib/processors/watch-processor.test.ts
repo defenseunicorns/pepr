@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { beforeEach, describe, expect, it, vi, type Mock, type MockInstance } from "vitest";
 import { GenericClass, K8s, KubernetesObject, kind } from "kubernetes-fluent-client";
-import { K8sInit, WatcherType, WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8sInit, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { WatchCfg, WatchEvent, Watcher } from "kubernetes-fluent-client/dist/fluent/watch";
 import { Capability } from "../core/capability";
 import { setupWatch, logEvent, runBinding, registerWatchEventHandlers } from "./watch-processor";

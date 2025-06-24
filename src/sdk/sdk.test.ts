@@ -203,9 +203,11 @@ describe("getOwnerRefFrom", () => {
   );
 
   it("should support all defined fields in the V1OwnerReference type", () => {
-    const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const definedV1OwnerReferenceFields = V1OwnerReference.getAttributeTypeMap()
+      .map(attr => attr.name)
+      .sort();
     const result = getOwnerRefFrom(customResource, false, true);
-    expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
+    expect(Object.keys(result[0]).sort()).toEqual(definedV1OwnerReferenceFields);
   });
 });
 
