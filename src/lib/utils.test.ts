@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, describe } from "vitest";
+import { expect, it, describe, vi } from "vitest";
 import { convertToBase64Map, convertFromBase64Map, base64Decode, base64Encode } from "./utils";
+
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 describe("utils", () => {
   it("convertToBase64Map should encode all ascii values and skip listed values in skip array", () => {
