@@ -83,7 +83,7 @@ export const testPeprValidateRequest = (
 ): PeprValidateRequest<KubernetesObject> =>
   new PeprValidateRequest<KubernetesObject>(admissionRequest);
 
-describe("processRequest", () => {
+describe("when processing requests", () => {
   let binding: Binding;
   let actionMetadata: Record<string, string>;
   let peprValidateRequest: PeprValidateRequest<KubernetesObject>;
@@ -94,7 +94,7 @@ describe("processRequest", () => {
     peprValidateRequest = testPeprValidateRequest(testAdmissionRequest);
   });
 
-  it("responds on successful validation action", async () => {
+  it("should respond on successful validation action", async () => {
     const cbResult = {
       allowed: true,
       statusCode: 200,
@@ -115,7 +115,7 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds on unsuccessful validation action", async () => {
+  it("should respond on unsuccessful validation action with exception", async () => {
     const callback = vi.fn().mockImplementation(() => {
       throw "oof";
     }) as Binding["validateCallback"];
@@ -132,9 +132,98 @@ describe("processRequest", () => {
       },
     });
   });
+
+  it("should respond on unsuccessful validation with status code", async () => {
+    const cbResult = {
+      allowed: false,
+      statusCode: 403,
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: false,
+      status: {
+        code: 403,
+        message: `Validation failed for ${peprValidateRequest.Request.kind.kind.toLowerCase()}/${peprValidateRequest.Request.name}`,
+      },
+    });
+  });
+
+  it("should respond with namespace in error message when present", async () => {
+    const cbResult = {
+      allowed: false,
+      statusCode: 403,
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const requestWithNamespace = {
+      ...testAdmissionRequest,
+      namespace: "test-namespace",
+    };
+    const peprRequestWithNamespace = testPeprValidateRequest(requestWithNamespace);
+
+    const result = await processRequest(binding, actionMetadata, peprRequestWithNamespace);
+
+    expect(result).toEqual({
+      uid: peprRequestWithNamespace.Request.uid,
+      allowed: false,
+      status: {
+        code: 403,
+        message: `Validation failed for ${peprRequestWithNamespace.Request.kind.kind.toLowerCase()}/${peprRequestWithNamespace.Request.name} in ${peprRequestWithNamespace.Request.namespace} namespace.`,
+      },
+    });
+  });
+
+  it("should respond with status message when provided", async () => {
+    const cbResult = {
+      allowed: false,
+      statusMessage: "Resource validation failed",
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: false,
+      status: {
+        code: 400,
+        message: "Resource validation failed",
+      },
+    });
+  });
+
+  it("should transfer warnings from callback response", async () => {
+    const cbResult = {
+      allowed: true,
+      statusCode: 200,
+      statusMessage: "Validation succeeded with warnings",
+      warnings: ["Warning 1", "Warning 2"],
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: true,
+      status: {
+        code: 200,
+        message: "Validation succeeded with warnings",
+      },
+      warnings: ["Warning 1", "Warning 2"],
+    });
+  });
 });
 
-describe("validateProcessor", () => {
+describe("when validating requests", () => {
   let config: ModuleConfig;
   beforeEach(() => {
     vi.clearAllMocks();

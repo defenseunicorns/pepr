@@ -3,12 +3,6 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
-    inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
   merge_group:
     paths-ignore:
     - "LICENSE"
@@ -18,8 +12,12 @@ on:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
@@ -57,23 +55,9 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
-          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          ls -l ${GITHUB_WORKSPACE}
-
-      - name: build pepr package and kfc dev container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
-          cp -R "$PEPR/kubernetes-fluent-client/dist" "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          npm run build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
