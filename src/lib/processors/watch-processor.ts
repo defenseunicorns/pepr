@@ -12,7 +12,8 @@ import {
   GenericClass,
 } from "kubernetes-fluent-client";
 import { Queue } from "../core/queue";
-import { WatchPhase, WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { KubernetesListObject } from "kubernetes-fluent-client/dist/types";
 import { filterNoMatchReason } from "../filter/filter";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";

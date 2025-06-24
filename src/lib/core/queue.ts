@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { KubernetesObject } from "@kubernetes/client-node";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { randomBytes } from "node:crypto";
 import Log from "../telemetry/logger";
 
