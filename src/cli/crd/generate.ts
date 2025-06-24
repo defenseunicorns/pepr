@@ -21,7 +21,8 @@ import { WarningMessages, ErrorMessages } from "./messages";
 
 export default new Command("generate")
   .description("Generate CRD manifests from TypeScript definitions")
-  .option("--output <output>", "Output directory for generated CRDs", "./crds")
+  .option("-o, --output [directory]", "Output directory for generated CRDs. Default: ./crds")
+  .helpOption("-h, --help", "Display help for command")
   .action(generateCRDs);
 
 export function extractCRDDetails(
