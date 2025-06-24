@@ -9,6 +9,7 @@ export default function (program: RootCmd): void {
   program
     .command("uuid [uuid]")
     .description("Module UUID(s) currently deployed in the cluster")
+    .helpOption("-h, --help", "Display help for command")
     .action(async uuid => {
       const uuidTable: Record<string, string> = {};
       let deployments: KubernetesListObject<kind.Deployment>;

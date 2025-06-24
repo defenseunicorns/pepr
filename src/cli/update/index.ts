@@ -21,7 +21,8 @@ export default function (program: RootCmd): void {
   program
     .command("update")
     .description("Update this Pepr module. Not recommended for prod as it may change files.")
-    .option("--skip-template-update", "Skip updating the template files")
+    .option("-K, --skip-template-update", "Skip updating the template files.")
+    .helpOption("-h, --help", "Display help for command")
     .action(async opts => {
       if (!opts.skipTemplateUpdate) {
         const { confirm } = await prompt({
