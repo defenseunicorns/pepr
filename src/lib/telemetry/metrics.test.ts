@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { performance } from "perf_hooks";
 
 import { MetricsCollector } from "./metrics";
-
-vi.mock("./logger", () => ({
-  default: {
-    debug: vi.fn(),
-    error: vi.fn(),
-  },
-}));
 
 it("constructor initializes counters correctly", () => {
   const collector: MetricsCollector = new MetricsCollector("testPrefix");

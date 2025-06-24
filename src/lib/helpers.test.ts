@@ -30,7 +30,6 @@ export const callback = (): void => undefined;
 vi.mock("./telemetry/logger", () => ({
   __esModule: true,
   default: {
-    debug: vi.fn(),
     error: vi.fn(),
   },
 }));
