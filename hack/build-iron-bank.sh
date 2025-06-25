@@ -29,7 +29,7 @@ echo "PEPR_AMD_TAR=${PEPR_AMD_TAR}"
 
 # Build Pepr
 npm run build
-
+mv pepr-0.0.0-development.tgz "${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
 
 # Build Docker images
 export PEPR_BUILD_VERSION
