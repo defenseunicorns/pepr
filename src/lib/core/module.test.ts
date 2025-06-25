@@ -9,6 +9,7 @@ import { PeprModule } from "./module";
 import { PackageJSON } from "../types";
 import { CapabilityExport } from "../types";
 import { OnError } from "../../cli/init/enums";
+import Log from "../telemetry/logger";
 
 // Mock Controller
 const startServerMock = vi.fn();
@@ -127,7 +128,7 @@ describe("PeprModule", () => {
       process.send = vi.fn();
       const sendMock = vi.spyOn(process, "send");
       new PeprModule(mockPackageJSON, [capability]);
-
+      expect(Log.info).toHaveBeenCalledWith("Capability test registered");
       expect(sendMock).toHaveBeenCalledWith([expectedExport]);
     });
   });
