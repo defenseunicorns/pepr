@@ -18,6 +18,14 @@ vi.mock("../controller", () => ({
   })),
 }));
 
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 const mockPackageJSON: PackageJSON = {
   description: "Test Description",
   pepr: {
