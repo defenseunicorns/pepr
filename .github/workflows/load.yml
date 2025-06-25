@@ -53,7 +53,7 @@ jobs:
       - name: "load.cli.ts prep"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts prep ./
+          npx tsx hack/load.cli.ts prep ./
 
       - name: upload pepr package artifact (.tgz)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -74,12 +74,12 @@ jobs:
       - name: "load.cli.ts cluster up"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts cluster up
+          npx tsx hack/load.cli.ts cluster up
 
       - name: "load.cli.ts deploy"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts deploy \
+          npx tsx hack/load.cli.ts deploy \
             ./pepr-0.0.0-development.tgz \
             ./pepr-dev.tar \
             ${PEXEX}/hello-pepr-load
@@ -87,7 +87,7 @@ jobs:
       - name: "load.cli.ts run"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts run --act-intensity=4000 \
+          npx tsx hack/load.cli.ts run --act-intensity=4000 \
             ${PEXEX}/hello-pepr-load \
             capabilities/configmap.yaml
 
@@ -110,7 +110,7 @@ jobs:
       - name: "load.cli.ts post"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts post
+          npx tsx hack/load.cli.ts post
 
       - name: upload parsed inject log (actress)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -139,7 +139,7 @@ jobs:
       - name: "load.cli.ts graph"
         run: |
           cd "$PEPR"
-          npx ts-node hack/load.cli.ts graph
+          npx tsx hack/load.cli.ts graph
 
       - name: upload load test result graph (watcher)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
