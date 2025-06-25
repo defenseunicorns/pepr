@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, vi, it } from "vitest";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { Queue } from "./queue";
 import Log from "../telemetry/logger";
 import { KubernetesObject } from "kubernetes-fluent-client";
