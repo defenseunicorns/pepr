@@ -3,7 +3,7 @@
 
 import { GenericClass, GroupVersionKind, KubernetesObject } from "kubernetes-fluent-client";
 import { Event } from "./enums";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { Logger } from "pino";
 import { PeprMutateRequest } from "./mutate-request";
 import { PeprValidateRequest } from "./validate-request";
@@ -292,6 +292,14 @@ export type ModuleConfig = {
   uuid: string;
   /** Configure global exclusions that will never be processed by Pepr. */
   alwaysIgnore: WebhookIgnore;
+  /** admission specific ignore */
+  admission?: {
+    alwaysIgnore: WebhookIgnore;
+  };
+  /** watch specific ignore */
+  watch?: {
+    alwaysIgnore: WebhookIgnore;
+  };
 } & Partial<ModuleConfigOptions>;
 
 export type PackageJSON = {
@@ -308,3 +316,4 @@ export type PeprModuleOptions = {
   /** A user-defined callback to post-process or intercept a Pepr response just before it is returned to K8s */
   afterHook?: (res: MutateResponse | ValidateResponse) => void;
 }; // Track if this is a watch mode controller
+export type AdjudicationResult = string | null;

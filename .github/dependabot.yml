@@ -27,3 +27,12 @@ updates:
     directory: /config
     schedule:
       interval: daily
+    registries:
+      - rapidfort
+
+registries:
+  rapidfort:
+    type: "docker-registry"
+    url: "quay.io"
+    username: "{{ secrets.RAPIDFORT_USERNAME }}"
+    password: "{{ secrets.RAPIDFORT_PASSWORD }}"

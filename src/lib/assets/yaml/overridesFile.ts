@@ -1,11 +1,10 @@
-import { genEnv } from "../pods";
-import { ModuleConfig } from "../../types";
-import { CapabilityExport } from "../../types";
+import { genEnv } from "../envrionment";
+import { CapabilityExport, ModuleConfig } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
-
-type ChartOverrides = {
+import { resolveIgnoreNamespaces } from "../ignoredNamespaces";
+export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
   config: ModuleConfig;
@@ -24,7 +23,11 @@ export async function overridesFile(
 
   const overrides = {
     imagePullSecrets,
-    additionalIgnoredNamespaces: [],
+    additionalIgnoredNamespaces: resolveIgnoreNamespaces(
+      config?.alwaysIgnore?.namespaces?.length
+        ? config?.alwaysIgnore?.namespaces
+        : config?.admission?.alwaysIgnore?.namespaces,
+    ),
     rbac: rbacOverrides,
     secrets: {
       apiPath: Buffer.from(apiPath).toString("base64"),
@@ -38,6 +41,7 @@ export async function overridesFile(
     },
     uuid: name,
     admission: {
+      antiAffinity: false,
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
       webhookTimeout: config.webhookTimeout,
@@ -53,7 +57,7 @@ export async function overridesFile(
         "pepr.dev/uuid": config.uuid,
       },
       securityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         fsGroup: 65532,
@@ -85,7 +89,7 @@ export async function overridesFile(
         },
       },
       containerSecurityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
@@ -119,7 +123,7 @@ export async function overridesFile(
         "pepr.dev/uuid": config.uuid,
       },
       securityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         fsGroup: 65532,
@@ -151,7 +155,7 @@ export async function overridesFile(
         },
       },
       containerSecurityContext: {
-        runAsUser: 65532,
+        runAsUser: image.includes("private") ? 1000 : 65532,
         runAsGroup: 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,

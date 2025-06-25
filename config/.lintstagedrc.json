@@ -1,0 +1,16 @@
+{
+  "*.ts": [
+    "prettier --config config/.prettierrc --write",
+    "eslint --config config/eslint.root.config.mjs --fix --ignore-pattern config/** --ignore-pattern src/templates/eslint.config.mjs --ignore-pattern vitest.config.ts --ignore-pattern config/eslint.test.config.mjs --ignore-pattern src/**/*.test.ts --ignore-pattern integration/**/*.ts"
+  ],
+  "*.test.ts": ["eslint --config config/eslint.test.config.mjs"],
+  "integration/**/*.ts": ["eslint --config config/eslint.integration.config.mjs"],
+  "*.mjs": ["prettier --config config/.prettierrc --write"],
+  "*.js": ["prettier --config config/.prettierrc --write"],
+  "*.json": ["prettier --config config/.prettierrc --write"],
+  "*.sh": ["shellcheck -f tty"],
+  ".husky/pre-*": ["shellcheck -f tty"],
+  "*.md": [
+    "npx -y markdownlint-cli --config config/.markdownlint.json --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore pepr-upgrade-test --ignore node_modules"
+  ]
+}

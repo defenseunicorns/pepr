@@ -49,9 +49,11 @@ export class Cmd {
       });
 
       proc.on("close", exitcode => {
-        const stdout = bufout.toString("utf8") === "" ? [] : bufout.toString("utf8").split(/[\r\n]+/);
+        const stdout =
+          bufout.toString("utf8") === "" ? [] : bufout.toString("utf8").split(/[\r\n]+/);
 
-        const stderr = buferr.toString("utf8") === "" ? [] : buferr.toString("utf8").split(/[\r\n]+/);
+        const stderr =
+          buferr.toString("utf8") === "" ? [] : buferr.toString("utf8").split(/[\r\n]+/);
 
         this.result = { stdout, stderr, exitcode: exitcode || 0 };
         resolve(this.result);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { clone } from "ramda";
 import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
@@ -25,33 +25,35 @@ import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
 
-jest.mock("./decode-utils", () => ({
-  decodeData: jest.fn(),
+vi.mock("./decode-utils", () => ({
+  decodeData: vi.fn(),
 }));
 
-jest.mock("../telemetry/logger", () => ({
-  info: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-}));
-
-jest.mock("../telemetry/metrics", () => ({
-  metricsCollector: {
-    addCounter: jest.fn(),
-    incCounter: jest.fn(),
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
   },
-  MeasureWebhookTimeout: jest.fn(),
 }));
 
-jest.mock("../telemetry/timeUtils", () => ({
-  getNow: jest.fn(() => 1000),
+vi.mock("../telemetry/metrics", () => ({
+  metricsCollector: {
+    addCounter: vi.fn(),
+    incCounter: vi.fn(),
+  },
+  MeasureWebhookTimeout: vi.fn(),
 }));
 
-jest.mock("../filter/filter", () => ({
-  shouldSkipRequest: jest.fn(),
+vi.mock("../telemetry/timeUtils", () => ({
+  getNow: vi.fn(() => 1000),
 }));
 
-jest.mock("../utils");
+vi.mock("../filter/filter", () => ({
+  shouldSkipRequest: vi.fn(),
+}));
+
+vi.mock("../utils");
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -80,12 +82,13 @@ const defaultAdmissionRequest: AdmissionRequest = {
   userInfo: {},
 };
 
-const defaultPeprMutateRequest = (admissionRequest = defaultAdmissionRequest) =>
-  new PeprMutateRequest(admissionRequest);
+const defaultPeprMutateRequest = (
+  admissionRequest = defaultAdmissionRequest,
+): PeprMutateRequest<KubernetesObject> => new PeprMutateRequest(admissionRequest);
 
 beforeEach(() => {
-  jest.resetAllMocks();
-  (decodeData as jest.Mock).mockReturnValue({
+  vi.resetAllMocks();
+  (decodeData as Mock).mockReturnValue({
     wrapped: { mockWrapped: true },
     skipped: [],
   });
@@ -156,7 +159,7 @@ const defaultBinding: Binding = {
     regexName: "",
     regexNamespaces: [],
   },
-  mutateCallback: jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>,
+  mutateCallback: vi.fn() as Mock<MutateAction<GenericClass, KubernetesObject>>,
 };
 
 const defaultBindable: Bindable = {
@@ -191,11 +194,11 @@ describe("processRequest", () => {
   });
 
   it("adds a status annotation, warning, and result on failure when Errors.reject", async () => {
-    const mutateCallback = (jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>).mockImplementation(
-      () => {
-        throw "oof";
-      },
-    );
+    const mutateCallback = (
+      vi.fn() as Mock<MutateAction<GenericClass, KubernetesObject>>
+    ).mockImplementation(() => {
+      throw "oof";
+    });
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
     testBindable.config.onError = OnError.REJECT;
@@ -210,32 +213,39 @@ describe("processRequest", () => {
     expect(result.wrapped.Raw.metadata!.annotations![annote]).toBe("warning");
 
     expect(result.response.warnings).toHaveLength(1);
-    expect(result.response.warnings![0]).toBe("Action failed: An error occurred with the mutate action.");
+    expect(result.response.warnings![0]).toBe(
+      "Action failed: An error occurred with the mutate action.",
+    );
     expect(result.response.result).toBe("Pepr module configured to reject on error");
     expect(result.response.auditAnnotations).toBeUndefined();
   });
 
   it("adds a status annotation, warning, and auditAnnotation on failure when Errors.audit", async () => {
-    const mutateCallback = (jest.fn() as jest.Mocked<MutateAction<GenericClass, KubernetesObject>>).mockImplementation(
-      () => {
-        throw "oof";
-      },
-    );
+    const mutateCallback = (
+      vi.fn() as Mock<MutateAction<GenericClass, KubernetesObject>>
+    ).mockImplementation(() => {
+      throw "oof";
+    });
     const testBinding = { ...clone(defaultBinding), mutateCallback };
     const testBindable = { ...clone(defaultBindable), binding: testBinding };
     testBindable.config.onError = OnError.AUDIT;
     const testPeprMutateRequest = defaultPeprMutateRequest();
     const testMutateResponse = clone(defaultMutateResponse);
-    const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
     const result = await processRequest(testBindable, testPeprMutateRequest, testMutateResponse);
 
     expect(result).toEqual({ wrapped: testPeprMutateRequest, response: testMutateResponse });
     expect(result.wrapped.Raw.metadata?.annotations).toBeDefined();
-    expect(result.wrapped.Raw.metadata!.annotations![annote]).toBe("warning");
+    expect(
+      result.wrapped.Raw.metadata!.annotations![
+        `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`
+      ],
+    ).toBe("warning");
 
     expect(result.response.warnings).toHaveLength(1);
-    expect(result.response.warnings![0]).toBe("Action failed: An error occurred with the mutate action.");
+    expect(result.response.warnings![0]).toBe(
+      "Action failed: An error occurred with the mutate action.",
+    );
     expect(result.response.result).toBeUndefined();
     expect(result.response.auditAnnotations).toBeDefined();
 
@@ -251,7 +261,9 @@ describe("processRequest", () => {
 
 describe("updateResponsePatchAndWarnings", () => {
   const mutateResponse: MutateResponse = { uid: "uid", allowed: true, patch: "" };
-  const patches: JSONPatchOperation[] = [{ op: "add", path: "/data/hello-pepr-v2-a", value: "value" }];
+  const patches: JSONPatchOperation[] = [
+    { op: "add", path: "/data/hello-pepr-v2-a", value: "value" },
+  ];
   it("should add a patch to the response if patch length is greater than 0", () => {
     updateResponsePatchAndWarnings(patches, mutateResponse);
     expect(mutateResponse.patch).toBe(base64Encode(JSON.stringify(patches)));
@@ -270,7 +282,7 @@ describe("mutateProcessor", () => {
   let config: ModuleConfig;
   let capability: Capability;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     config = {
       webhookTimeout: 11,
       uuid: "some-uuid",
@@ -280,7 +292,7 @@ describe("mutateProcessor", () => {
       name: "test",
       description: "test",
     });
-    (decodeData as jest.Mock).mockReturnValue({
+    (decodeData as Mock).mockReturnValue({
       wrapped: { mockWrapped: true },
       skipped: [],
     });
@@ -290,7 +302,7 @@ describe("mutateProcessor", () => {
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStart = jest.spyOn(MeasureWebhookTimeout.prototype, "start");
+    const spyStart = vi.spyOn(MeasureWebhookTimeout.prototype, "start");
 
     await mutateProcessor(config, [capability], req, reqMetadata);
 
@@ -302,7 +314,7 @@ describe("mutateProcessor", () => {
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStop = jest.spyOn(MeasureWebhookTimeout.prototype, "stop");
+    const spyStop = vi.spyOn(MeasureWebhookTimeout.prototype, "stop");
 
     await mutateProcessor(config, [capability], req, reqMetadata);
 
@@ -314,7 +326,7 @@ describe("mutateProcessor", () => {
     const req = defaultAdmissionRequest;
     const reqMetadata = {};
 
-    (decodeData as jest.Mock).mockReturnValue({
+    (decodeData as Mock).mockReturnValue({
       wrapped: { mockWrapped: true },
       skipped: [],
     });

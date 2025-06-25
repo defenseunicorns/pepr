@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, describe, expect, it } from "@jest/globals";
+import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -31,6 +31,7 @@ describe("build", () => {
         `--name ${id}`,
         `--description ${id}`,
         `--errorBehavior reject`,
+        `--uuid random-identifier`,
         "--confirm",
         "--skip-post-init",
       ].join(" ");
@@ -56,6 +57,7 @@ describe("build", () => {
         const argz = [
           `--entry-point ${entryPoint}`,
           `--custom-image ${customImage}`,
+          `--custom-name random-identifier`,
           `--output-dir ${outputDir}`,
           `--timeout ${timeout}`,
           `--withPullSecret ${withPullSecret}`,
@@ -168,7 +170,7 @@ describe("build", () => {
 
       it("--zarf, works", async () => {
         const chart = {
-          name: "module",
+          name: "random-identifier",
           namespace: "pepr-system",
           version: "0.0.1",
           localPath: `${uuid}-chart`,
@@ -176,7 +178,7 @@ describe("build", () => {
 
         const zarfYaml = await resource.fromFile(`${outputDir}/zarf.yaml`);
         const component = zarfYaml.components
-          .filter((component: { name: string }) => component.name === "module")
+          .filter((component: { name: string }) => component.name === "random-identifier")
           .at(0);
         expect(component.charts).toContainEqual(chart);
       });

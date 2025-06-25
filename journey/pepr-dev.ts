@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { afterAll, expect, it } from "@jest/globals";
+import { afterAll, expect, it } from "vitest";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { fetch } from "kubernetes-fluent-client";
 import { RequestInit, Agent } from "undici";
@@ -63,7 +63,7 @@ export function peprDev() {
     });
   });
 
-  it("should be properly configured by the test module", done => {
+  it("should be properly configured by the test module", { timeout: 1000 * 5 * 60 }, () => {
     cmd.stdout.on("data", (data: Buffer) => {
       if (success) {
         return;
@@ -84,13 +84,11 @@ export function peprDev() {
       } else {
         // Abort all further processing
         success = true;
-        // Finish the test
-        done();
       }
     });
   });
 
-  it("should be ready to accept requests", async () => {
+  it("should be ready to accept requests", { timeout: 1000 * 5 * 60 }, async () => {
     await waitForServer();
   });
 

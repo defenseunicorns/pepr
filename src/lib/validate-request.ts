@@ -6,8 +6,8 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 
 import { clone } from "ramda";
-import { Operation } from "./enums";
 import { AdmissionRequest, ValidateActionResponse } from "./common-types";
+import { Operation } from "./enums";
 
 /**
  * The RequestWrapper class provides methods to modify Kubernetes objects in the context
@@ -79,9 +79,10 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    *
    * @returns The validation response.
    */
-  Approve = (): ValidateActionResponse => {
+  Approve = (warnings?: string[]): ValidateActionResponse => {
     return {
       allowed: true,
+      warnings,
     };
   };
 
@@ -92,11 +93,16 @@ export class PeprValidateRequest<T extends KubernetesObject> {
    * @param statusCode Optional status code to return to the user.
    * @returns The validation response.
    */
-  Deny = (statusMessage?: string, statusCode?: number): ValidateActionResponse => {
+  Deny = (
+    statusMessage?: string,
+    statusCode?: number,
+    warnings?: string[],
+  ): ValidateActionResponse => {
     return {
       allowed: false,
       statusCode,
       statusMessage,
+      warnings,
     };
   };
 }

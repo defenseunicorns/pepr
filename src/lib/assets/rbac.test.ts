@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { clusterRole, clusterRoleBinding, storeRole, serviceAccount, storeRoleBinding } from "./rbac";
-import { it, describe, expect, jest } from "@jest/globals";
+import {
+  clusterRole,
+  clusterRoleBinding,
+  storeRole,
+  serviceAccount,
+  storeRoleBinding,
+} from "./rbac";
+import { it, describe, expect, vi } from "vitest";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 import fs from "fs";
 import { kind } from "kubernetes-fluent-client";
@@ -115,7 +121,9 @@ describe("RBAC Rule Processing", () => {
       "test-role",
       capabilityWithDuplicates,
       "scoped",
-      capabilityWithDuplicates.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithDuplicates
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // Filter out only the rules for 'pepr.dev' and 'peprstores'
@@ -141,7 +149,7 @@ describe("RBAC Rule Processing", () => {
       },
     ];
 
-    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+    vi.spyOn(fs, "readFileSync").mockImplementation(() => {
       return JSON.stringify({
         pepr: {
           rbac: customRbacWithNoVerbs,
@@ -160,7 +168,7 @@ describe("RBAC Rule Processing", () => {
   });
   it("should handle non-array custom RBAC by defaulting to an empty array", () => {
     // Mock readRBACFromPackageJson to return a non-array value
-    jest.spyOn(fs, "readFileSync").mockImplementation(() => {
+    vi.spyOn(fs, "readFileSync").mockImplementation(() => {
       return JSON.stringify({
         pepr: {
           rbac: "not-an-array", // Simulate invalid RBAC structure
@@ -195,7 +203,9 @@ describe("RBAC Rule Processing", () => {
       "test-role",
       mockCapabilities,
       "scoped",
-      mockCapabilities.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      mockCapabilities
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     // The result should only contain rules from the capabilities, not from the invalid custom RBAC
@@ -263,7 +273,9 @@ describe("ClusterRole Generation", () => {
       "test-role",
       capabilityWithFinalize,
       "scoped",
-      capabilityWithFinalize.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithFinalize
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
@@ -277,7 +289,7 @@ describe("ClusterRole Generation", () => {
 
 describe("RBAC Key Handling", () => {
   it("should handle keys with 3 or more segments and set group correctly", () => {
-    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+    vi.spyOn(helpers, "createRBACMap").mockReturnValue({
       "apps/v1/deployments": {
         plural: "deployments",
         verbs: ["create"],
@@ -296,14 +308,16 @@ describe("RBAC Key Handling", () => {
       "test-role",
       capabilityWithLongKey,
       "scoped",
-      capabilityWithLongKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithLongKey
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);
   });
 
   it("should handle keys with less than 3 segments and set group to an empty string", () => {
-    jest.spyOn(helpers, "createRBACMap").mockReturnValue({
+    vi.spyOn(helpers, "createRBACMap").mockReturnValue({
       nodes: {
         plural: "nodes",
         verbs: ["get"],
@@ -321,7 +335,9 @@ describe("RBAC Key Handling", () => {
       "test-role",
       capabilityWithShortKey,
       "scoped",
-      capabilityWithShortKey.flatMap(c => c.rbac).filter((rule): rule is PolicyRule => rule !== undefined),
+      capabilityWithShortKey
+        .flatMap(c => c.rbac)
+        .filter((rule): rule is PolicyRule => rule !== undefined),
     );
 
     expect(result.rules).toEqual(expected);

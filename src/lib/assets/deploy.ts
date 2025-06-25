@@ -10,13 +10,22 @@ import { Assets } from "./assets";
 import Log from "../telemetry/logger";
 import { apiPathSecret, service, tlsSecret, watcherService } from "./networking";
 import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "./rbac";
+import {
+  clusterRole,
+  clusterRoleBinding,
+  serviceAccount,
+  storeRole,
+  storeRoleBinding,
+} from "./rbac";
 import { peprStoreCRD } from "./store";
 import { webhookConfigGenerator } from "./webhooks";
 import { CapabilityExport, ImagePullSecret } from "../types";
 import { WebhookType } from "../enums";
 
-export async function deployImagePullSecret(imagePullSecret: ImagePullSecret, name: string): Promise<void> {
+export async function deployImagePullSecret(
+  imagePullSecret: ImagePullSecret,
+  name: string,
+): Promise<void> {
   try {
     await K8s(kind.Namespace).Get("pepr-system");
   } catch {
@@ -61,12 +70,18 @@ async function handleWebhookConfiguration(
     Log.info(`Applying ${type} webhook`);
     await K8s(kindMap[type]).Apply(webhookConfig, { force });
   } else {
-    Log.info(`${type.charAt(0).toUpperCase() + type.slice(1)} webhook not needed, removing if it exists`);
+    Log.info(
+      `${type.charAt(0).toUpperCase() + type.slice(1)} webhook not needed, removing if it exists`,
+    );
     await K8s(kindMap[type]).Delete(assets.name);
   }
 }
 
-export async function deployWebhook(assets: Assets, force: boolean, webhookTimeout: number): Promise<void> {
+export async function deployWebhook(
+  assets: Assets,
+  force: boolean,
+  webhookTimeout: number,
+): Promise<void> {
   Log.info("Establishing connection to Kubernetes");
 
   Log.info("Applying pepr-system namespace");
@@ -121,7 +136,12 @@ async function setupRBAC(
   await K8s(kind.RoleBinding).Apply(roleBinding, { force });
 }
 
-async function setupController(assets: Assets, code: Buffer, hash: string, force: boolean): Promise<void> {
+async function setupController(
+  assets: Assets,
+  code: Buffer,
+  hash: string,
+  force: boolean,
+): Promise<void> {
   const { name } = assets;
 
   Log.info("Applying module secret");

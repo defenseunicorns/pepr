@@ -10,7 +10,7 @@ import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../types";
-import { resolveIgnoreNamespaces } from "../assets/webhooks";
+import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { WebhookType } from "../enums";
 import { AdmissionRequest } from "../common-types";
@@ -37,11 +37,21 @@ export async function processRequest(
     if (callbackResp.statusCode || callbackResp.statusMessage) {
       valResp.status = {
         code: callbackResp.statusCode || 400,
-        message: callbackResp.statusMessage || `Validation failed for ${name}`,
+        message:
+          callbackResp.statusMessage ||
+          `Validation failed for ${peprValidateRequest.Request.kind.kind.toLowerCase()}/${peprValidateRequest.Request.name}${peprValidateRequest.Request.namespace ? ` in ${peprValidateRequest.Request.namespace} namespace.` : ""}`,
       };
     }
 
-    Log.info(actionMetadata, `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`);
+    // Transfer any warnings from the callback response to the validation response
+    if (callbackResp.warnings && callbackResp.warnings.length > 0) {
+      valResp.warnings = callbackResp.warnings;
+    }
+
+    Log.info(
+      actionMetadata,
+      `Validation action complete (${label}): ${callbackResp.allowed ? "allowed" : "denied"}`,
+    );
     return valResp;
   } catch (e) {
     // If any validation throws an error, note the failure in the Response
@@ -87,7 +97,11 @@ export async function validateProcessor(
         binding,
         req,
         namespaces,
-        resolveIgnoreNamespaces(config?.alwaysIgnore?.namespaces),
+        resolveIgnoreNamespaces(
+          config?.alwaysIgnore?.namespaces?.length
+            ? config?.alwaysIgnore?.namespaces
+            : config?.admission?.alwaysIgnore?.namespaces,
+        ),
       );
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it } from "@jest/globals";
+import { expect, it } from "vitest";
 import { performance } from "perf_hooks";
 
 import { MetricsCollector } from "./metrics";

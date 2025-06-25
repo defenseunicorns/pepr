@@ -4,11 +4,6 @@ permissions: read-all
 on:
   workflow_dispatch:
     inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
       branch:
         description: 'Soak test branch'
         required: true
@@ -23,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -37,7 +32,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: "npm"
@@ -49,16 +44,9 @@ jobs:
           npm ci
 
       - name: build pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
-  
-      - name: build kfc pepr image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
 
       - name: tar pepr image
         run: |
@@ -67,7 +55,7 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload image tar artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pepr-img.tar
           path: pepr-img.tar
@@ -81,7 +69,7 @@ jobs:
       
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -92,7 +80,7 @@ jobs:
         shell: bash
 
       - name: dowload image tar artifact
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: pepr-img.tar
           path: ${{ github.workspace }}
@@ -122,7 +110,7 @@ jobs:
           ./istioctl install --set profile=demo -y
 
       - name: Set up Kubernetes
-        uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4.0.0
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
         with:
           version: 'latest'
 
@@ -198,7 +186,7 @@ jobs:
         shell: bash
 
       - name: Upload logs
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: soak-test-logs
           path: logs

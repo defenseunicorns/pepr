@@ -7,3 +7,5 @@ export enum OnError {
   IGNORE = "ignore",
   REJECT = "reject",
 }
+
+export const UUID_LENGTH_LIMIT = 36;

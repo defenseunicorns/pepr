@@ -95,6 +95,7 @@ export type ValidateActionResponse = {
   allowed: boolean;
   statusCode?: number;
   statusMessage?: string;
+  warnings?: string[];
 };
 
 // DeepPartial utility type for deep optional properties

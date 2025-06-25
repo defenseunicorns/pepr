@@ -3,7 +3,13 @@
 
 import { __, allPass, curry, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { definedKind, definedNamespaces, definesDelete, definesDeletionTimestamp, definesNamespaces } from "./binding";
+import {
+  definedKind,
+  definedNamespaces,
+  definesDelete,
+  definesDeletionTimestamp,
+  definesNamespaces,
+} from "./binding";
 import { carriedNamespace, carriesNamespace } from "./kubernetesObject";
 
 /*
@@ -14,7 +20,10 @@ import { carriedNamespace, carriesNamespace } from "./kubernetesObject";
 */
 
 export const bindsToKind = curry(
-  allPass([pipe(nthArg(0), definedKind, equals(""), not), pipe((binding, kind) => definedKind(binding) === kind)]),
+  allPass([
+    pipe(nthArg(0), definedKind, equals(""), not),
+    pipe((binding, kind) => definedKind(binding) === kind),
+  ]),
 );
 export const bindsToNamespace = curry(pipe(bindsToKind(__, "Namespace")));
 export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
@@ -74,4 +83,7 @@ export const unbindableNamespaces = allPass([
   ),
 ]);
 
-export const misboundDeleteWithDeletionTimestamp = allPass([definesDelete, definesDeletionTimestamp]);
+export const misboundDeleteWithDeletionTimestamp = allPass([
+  definesDelete,
+  definesDeletionTimestamp,
+]);

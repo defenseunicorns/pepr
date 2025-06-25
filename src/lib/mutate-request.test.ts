@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it } from "@jest/globals";
+import { beforeEach, describe, expect, it } from "vitest";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
@@ -93,7 +93,9 @@ describe("PeprMutateRequest", () => {
       object: undefined as unknown as KubernetesObject,
     };
 
-    expect(() => new PeprMutateRequest(mockRequest)).toThrow("Unable to load the request object into PeprRequest.Raw");
+    expect(() => new PeprMutateRequest(mockRequest)).toThrow(
+      "Unable to load the request object into PeprRequest.Raw",
+    );
   });
 
   it("should merge the provided object with the current resource", () => {

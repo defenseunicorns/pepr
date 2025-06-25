@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest, afterEach } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import { OnSchedule, Schedule, Unit } from "./schedule";
 import { Unsubscribe } from "./storage";
 
@@ -60,18 +60,18 @@ describe("OnSchedule", () => {
     name: "test",
     every: 1,
     unit: "minutes",
-    run: jest.fn(),
+    run: vi.fn(),
   };
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.useRealTimers();
-    jest.clearAllTimers();
-    jest.resetModules();
+    vi.clearAllMocks();
+    vi.useRealTimers();
+    vi.clearAllTimers();
+    vi.resetModules();
   });
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   it("should create an instance of OnSchedule", () => {
@@ -90,23 +90,23 @@ describe("OnSchedule", () => {
     onSchedule.startTime = new Date(new Date().getTime() + 100000);
 
     onSchedule.setupInterval();
-    jest.advanceTimersByTime(100000);
+    vi.advanceTimersByTime(100000);
 
     const secondSchedule = new OnSchedule(mockSchedule);
     onSchedule.setStore(new MockStorage());
     secondSchedule.completions = 9;
     secondSchedule.duration = 1;
     secondSchedule.start();
-    jest.advanceTimersByTime(100000);
+    vi.advanceTimersByTime(100000);
     expect(secondSchedule.completions).toBe(0);
-    jest.runOnlyPendingTimers();
-    jest.clearAllTimers();
+    vi.runOnlyPendingTimers();
+    vi.clearAllTimers();
   });
 
   it("should stop, removeItem, and removeItem", () => {
     const onSchedule = new OnSchedule(mockSchedule);
     onSchedule.setStore(new MockStorage());
-    const removeItemSpy = jest.spyOn(onSchedule.store as MockStorage, "removeItem");
+    const removeItemSpy = vi.spyOn(onSchedule.store as MockStorage, "removeItem");
 
     onSchedule.startInterval();
     onSchedule.stop();
@@ -117,8 +117,8 @@ describe("OnSchedule", () => {
     onSchedule.intervalId = 9 as unknown as NodeJS.Timeout;
     onSchedule.stop();
     expect(onSchedule.intervalId).toBeNull();
-    jest.runOnlyPendingTimers();
-    jest.clearAllTimers();
+    vi.runOnlyPendingTimers();
+    vi.clearAllTimers();
   });
 
   describe("getDuration handles supported inputs", () => {
@@ -170,7 +170,7 @@ describe("OnSchedule", () => {
         name: description,
         every: setup.every,
         unit: setup.unit as Unit,
-        run: jest.fn(),
+        run: vi.fn(),
       };
       const onSchedule = new OnSchedule(mockSchedule);
 
@@ -199,15 +199,15 @@ describe("OnSchedule", () => {
     const onSchedule = new OnSchedule(mockSchedule);
     onSchedule.setStore(new MockStorage());
 
-    const setItemSpy = jest.spyOn(onSchedule.store as MockStorage, "setItem");
+    const setItemSpy = vi.spyOn(onSchedule.store as MockStorage, "setItem");
     onSchedule.saveToStore();
     expect(setItemSpy).toHaveBeenCalledTimes(1);
   });
   it("checkStore retrieves values from the store", () => {
-    mockSchedule.run = () => {};
+    mockSchedule.run = (): void => {};
     const onSchedule = new OnSchedule(mockSchedule);
     onSchedule.setStore(new MockStorage());
-    const getItemSpy = jest.spyOn(onSchedule.store as MockStorage, "getItem");
+    const getItemSpy = vi.spyOn(onSchedule.store as MockStorage, "getItem");
     const startTime = "doesn't";
     const lastTimestamp = "matter";
     getItemSpy.mockReturnValue(

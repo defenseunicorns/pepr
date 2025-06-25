@@ -6,18 +6,17 @@ import { PeprMutateRequest } from "../lib/mutate-request";
 import { a } from "../lib";
 import { containers, writeEvent, getOwnerRefFrom, sanitizeResourceName } from "./sdk";
 import * as fc from "fast-check";
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, Mock, expect, it, vi } from "vitest";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind } from "kubernetes-fluent-client";
-import { Mock } from "jest-mock";
 import { V1OwnerReference } from "@kubernetes/client-node";
 
-jest.mock("kubernetes-fluent-client", () => ({
-  K8s: jest.fn(),
+vi.mock("kubernetes-fluent-client", () => ({
+  K8s: vi.fn(),
   Log: {
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
   kind: {
     CoreEvent: "CoreEvent",
@@ -117,13 +116,13 @@ describe("containers", () => {
 describe("writeEvent", () => {
   let Create: Mock;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    Create = jest.fn();
+    Create = vi.fn();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
+    (K8s as vi.Mock).mockImplementation(() => ({
       Create,
-      PatchStatus: jest.fn(),
+      PatchStatus: vi.fn(),
     }));
   });
 
@@ -204,9 +203,11 @@ describe("getOwnerRefFrom", () => {
   );
 
   it("should support all defined fields in the V1OwnerReference type", () => {
-    const V1OwnerReferenceFieldCount = Object.getOwnPropertyNames(V1OwnerReference).length;
+    const definedV1OwnerReferenceFields = V1OwnerReference.getAttributeTypeMap()
+      .map(attr => attr.name)
+      .sort();
     const result = getOwnerRefFrom(customResource, false, true);
-    expect(Object.keys(result[0]).length).toEqual(V1OwnerReferenceFieldCount);
+    expect(Object.keys(result[0]).sort()).toEqual(definedV1OwnerReferenceFields);
   });
 });
 
@@ -228,16 +229,22 @@ describe("sanitizeResourceName Property-Based Tests", () => {
       fc.property(fc.string(), name => {
         const sanitized = sanitizeResourceName(name);
         if (sanitized.length > 0) {
-          expect(sanitized).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+          // https://regex101.com/r/3tqGf5/1
+          expect(sanitized).toMatch(/^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/);
         }
         expect(sanitized).toBe(sanitized.toLowerCase());
-        expect(sanitized.length).toBeLessThanOrEqual(250);
+        expect(sanitized.length).toBeLessThanOrEqual(63);
       }),
     );
   });
 });
 
 describe("sanitizeResourceName", () => {
+  it("should allow numbers", () => {
+    const resourceName = "testing-123";
+    const sanitizedResourceName = sanitizeResourceName(resourceName);
+    expect(sanitizedResourceName).toEqual("testing-123");
+  });
   it("should return same resource name if no sanitization needed", () => {
     const resourceName = "test-resource";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
@@ -253,21 +260,21 @@ describe("sanitizeResourceName", () => {
   it("should replace sequences of non-alphanumeric characters with a single -", () => {
     const resourceName = "test-*^%- -!=!resource";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
-    expect(sanitizedResourceName).toEqual("test-resource");
+    expect(sanitizedResourceName).toEqual("test------resource");
   });
 
-  it("should truncate name to 250 characters", () => {
+  it("should truncate name to 253 characters", () => {
     const resourceName =
-      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresource";
+      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourcemoreletters";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
     expect(sanitizedResourceName).toEqual(
-      "test-resourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresourceresou",
+      "test-resourceresourceresourceresourceresourceresourceresourcere",
     );
   });
 
-  it("should remove leading and trailing non-letter characters", () => {
+  it("should remove leading and trailing non-alphanumeric characters", () => {
     const resourceName = " 1=-test-resource *2 ";
     const sanitizedResourceName = sanitizeResourceName(resourceName);
-    expect(sanitizedResourceName).toEqual("test-resource");
+    expect(sanitizedResourceName).toEqual("1--test-resource-2");
   });
 });

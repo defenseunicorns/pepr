@@ -36,6 +36,7 @@ Backward compatibility in Pepr applies to the following components:
 Pepr adheres to the following guarantees to ensure a seamless user experience:
 
 ### 1. Pepr Versioning
+
 - **Major Versions (X.0.0)**:
   - Not currently in use until we get to 1.0.
 - **Minor Versions (X.Y.0)**:
@@ -46,6 +47,7 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
   - Include bug fixes, security updates, and performance improvements without changing functionality or APIs.
 
 ### 2. Deprecation Policy
+
 - **Deprecation Announcement**:
   - Any feature slated for removal will be marked as deprecated and announced in release notes.
   - Deprecated features will include clear warnings in logs and CLI outputs.
@@ -54,6 +56,7 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
   - Deprecated features will remain functional for at least **one release** before removal.
 
 ### 3. Test Coverage
+
 - Maintain backward compatibility by validating changes against existing test suites for previously supported versions.
 - Include regression tests to ensure deprecated features continue to function as expected until their removal.
 
@@ -62,6 +65,7 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 ## Handling Breaking Changes
 
 ### 1. Communication
+
 - Breaking changes will only be introduced in minor releases.
 - Users will be notified via:
   - **Release Notes**: Detailed explanation of changes, migration paths, and alternative solutions.
@@ -69,9 +73,11 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
   - **Pepr Slack**: Announcements will be left in the [Pepr Slack](https://kubernetes.slack.com/archives/c06dgh40ucb) channel with a link to the release notes.
 
 ### 2. Migration Paths
+
 - Pepr will provide logic to automatically migrate configurations and data to the new format where possible.
 
 ### 3. Feature Flags
+
 - When possible, introduce breaking changes behind feature flags to allow users to opt-in before full adoption.
 
 ---
@@ -79,14 +85,17 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 ## Examples of Backward Compatibility Practices
 
 ### 1. API Changes
+
 - **Scenario**: Adding a new optional parameter to a public API.
   - **Action**: Ensure the default behavior remains unchanged if the parameter is not provided.
 
 ### 2. CLI Enhancements
+
 - **Scenario**: Renaming a CLI flag.
   - **Action**: Keep the old flag functional while logging a deprecation warning.
 
 ### 3. Configuration Updates
+
 - **Scenario**: Changing a configuration schema.
   - **Action**: Provide an automatic migration tool or fallback to interpret the old schema.
 
@@ -95,9 +104,11 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 ## Monitoring and Feedback
 
 ### 1. Issue Tracking
+
 - Monitor GitHub Issues and Discussions for reports of backward compatibility [issues](https://github.com/defenseunicorns/pepr/issues).
 
 ### 2. Community Involvement
+
 - Solicit feedback from the community on proposed breaking changes before implementation.
 
 ---
@@ -109,7 +120,8 @@ Pepr's backward compatibility strategy ensures developers can rely on consistent
 ---
 
 ### Contact and Support
+
 For questions, concerns, or suggestions regarding backward compatibility, please reach out via:
+
 - [GitHub Issues](https://github.com/defenseunicorns/pepr/issues)
 - [Community Discussions](https://github.com/defenseunicorns/pepr/discussions)
-

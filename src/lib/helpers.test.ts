@@ -22,11 +22,10 @@ import {
 } from "./helpers";
 import { sanitizeResourceName } from "../sdk/sdk";
 import * as fc from "fast-check";
-import { expect, describe, jest, beforeEach, afterEach, it } from "@jest/globals";
-import { SpiedFunction } from "jest-mock";
+import { expect, describe, vi, beforeEach, afterEach, it, type MockInstance } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 
-export const callback = () => undefined;
+export const callback = (): void => undefined;
 
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
@@ -418,7 +417,9 @@ describe("bindingAndCapabilityNSConflict", () => {
 describe("generateWatchNamespaceError", () => {
   it("returns error for ignored namespace conflict", () => {
     const error = generateWatchNamespaceError(["ns1"], ["ns1"], []);
-    expect(error).toBe("Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1].");
+    expect(error).toBe(
+      "Binding uses a Pepr ignored namespace: ignoredNamespaces: [ns1] bindingNamespaces: [ns1].",
+    );
   });
 
   it("returns error for binding and capability namespace conflict", () => {
@@ -498,7 +499,8 @@ const allNSCapabilities: CapabilityExport[] = JSON.parse(`[
 const nonNsViolation: CapabilityExport[] = [
   {
     name: "test-capability-namespaces",
-    description: "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
+    description:
+      "Should be confined to namespaces listed in capabilities and not be able to use ignored namespaces",
     namespaces: ["miami", "dallas", "milwaukee"],
     bindings: [
       {
@@ -526,9 +528,9 @@ const nonNsViolation: CapabilityExport[] = [
 ];
 
 describe("namespaceComplianceValidator", () => {
-  let errorSpy: SpiedFunction<{ (...data: unknown[]): void; (message?: unknown, ...optionalParams: unknown[]): void }>;
+  let errorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -585,6 +587,40 @@ describe("namespaceComplianceValidator", () => {
     }).toThrowError(
       `Ignoring Watch Callback: Regex namespace: ${namespaceViolationCapability.bindings[0].filters.regexNamespaces[0]}, is an ignored namespace: miami.`,
     );
+  });
+  it("should check watch bindings namespaces and regex namespaces", () => {
+    const nonNamespaceViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: ["something"],
+          regexNamespaces: [new RegExp("^brickell").source],
+        },
+        isWatch: true,
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonNamespaceViolationCapability, ["miami"], true);
+    }).toThrow();
+  });
+  it("should check admission binding namespaces and regex namespaces", () => {
+    const nonNamespaceViolationCapability: CapabilityExport = {
+      ...nonNsViolation[0],
+      bindings: nonNsViolation[0].bindings.map(binding => ({
+        ...binding,
+        filters: {
+          ...binding.filters,
+          namespaces: ["something"],
+          regexNamespaces: [new RegExp("^brickell").source],
+        },
+        isWatch: true,
+      })),
+    };
+    expect(() => {
+      namespaceComplianceValidator(nonNamespaceViolationCapability, ["miami"], false);
+    }).toThrow();
   });
   it("should not throw an error for valid regex ignored namespaces", () => {
     const nonNamespaceViolationCapability: CapabilityExport = {
@@ -722,8 +758,8 @@ describe("replaceString", () => {
   it("replaces single instance of a string", () => {
     const original = "Hello, world!";
     const stringA = "world";
-    const stringB = "Jest";
-    const expected = "Hello, Jest!";
+    const stringB = "Vite";
+    const expected = "Hello, Vite!";
     expect(replaceString(original, stringA, stringB)).toBe(expected);
   });
 
@@ -765,7 +801,7 @@ describe("validateHash", () => {
 
   beforeEach(() => {
     originalExit = process.exit;
-    process.exit = jest.fn() as unknown as (code?: number) => never;
+    process.exit = vi.fn() as unknown as (code?: number) => never;
   });
 
   afterEach(() => {

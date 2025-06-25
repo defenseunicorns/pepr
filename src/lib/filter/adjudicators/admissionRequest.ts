@@ -22,4 +22,7 @@ export const declaredKind = pipe(
   (request: AdmissionRequest<KubernetesObject>): string => request?.kind?.kind,
   defaultTo(""),
 );
-export const declaredUid = pipe((request: AdmissionRequest<KubernetesObject>): string => request?.uid, defaultTo(""));
+export const declaredUid = pipe(
+  (request: AdmissionRequest<KubernetesObject>): string => request?.uid,
+  defaultTo(""),
+);

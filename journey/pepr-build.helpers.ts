@@ -2,9 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import { cwd } from "./entrypoint.test";
 import { loadYaml } from "@kubernetes/client-node";
-import { expect } from "@jest/globals";
+import { expect } from "vitest";
 import yaml from "js-yaml";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 

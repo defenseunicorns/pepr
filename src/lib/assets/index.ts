@@ -49,10 +49,16 @@ export function createWebhookYaml(
     },
   ];
 
-  return replacements.reduce((updatedYaml, { search, replace }) => replaceString(updatedYaml, search, replace), yaml);
+  return replacements.reduce(
+    (updatedYaml, { search, replace }) => replaceString(updatedYaml, search, replace),
+    yaml,
+  );
 }
 
-export function helmLayout(basePath: string, unique: string): Record<string, Record<string, string>> {
+export function helmLayout(
+  basePath: string,
+  unique: string,
+): Record<string, Record<string, string>> {
   const helm: Record<string, Record<string, string>> = {
     dirs: {
       chart: resolve(`${basePath}/${unique}-chart`),

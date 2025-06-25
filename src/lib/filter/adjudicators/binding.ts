@@ -27,13 +27,22 @@ export const definesNameRegex = pipe(definedNameRegex, equals(""), not);
 export const definedNamespaces = pipe(binding => binding?.filters?.namespaces, defaultTo([]));
 export const definesNamespaces = pipe(definedNamespaces, equals([]), not);
 
-export const definedNamespaceRegexes = pipe(binding => binding?.filters?.regexNamespaces, defaultTo([]));
+export const definedNamespaceRegexes = pipe(
+  binding => binding?.filters?.regexNamespaces,
+  defaultTo([]),
+);
 export const definesNamespaceRegexes = pipe(definedNamespaceRegexes, equals([]), not);
 
-export const definedAnnotations = pipe((binding: Partial<Binding>) => binding?.filters?.annotations, defaultTo({}));
+export const definedAnnotations = pipe(
+  (binding: Partial<Binding>) => binding?.filters?.annotations,
+  defaultTo({}),
+);
 export const definesAnnotations = pipe(definedAnnotations, equals({}), not);
 
-export const definedLabels = pipe((binding: Partial<Binding>) => binding?.filters?.labels, defaultTo({}));
+export const definedLabels = pipe(
+  (binding: Partial<Binding>) => binding?.filters?.labels,
+  defaultTo({}),
+);
 export const definesLabels = pipe(definedLabels, equals({}), not);
 
 export const definedEvent = (binding: Binding): Event => {
@@ -82,4 +91,8 @@ export const definedCallback = (binding: Partial<Binding>): DefinedCallbackRetur
     binding.isValidate ? binding.validateCallback :
     null;
 };
-export const definedCallbackName = pipe(definedCallback, defaultTo({ name: "" }), callback => callback.name);
+export const definedCallbackName = pipe(
+  definedCallback,
+  defaultTo({ name: "" }),
+  callback => callback.name,
+);

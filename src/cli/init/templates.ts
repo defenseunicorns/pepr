@@ -3,9 +3,10 @@
 
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
-import { v4 as uuidv4, v5 as uuidv5 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
+import { readFileSync } from "fs";
+import path from "path";
 
-import eslintJSON from "../../templates/.eslintrc.template.json";
 import peprSnippetsJSON from "../../templates/pepr.code-snippets.json";
 import prettierJSON from "../../templates/.prettierrc.json";
 import samplesJSON from "../../templates/capabilities/hello-pepr.samples.json";
@@ -33,6 +34,8 @@ export type peprPackageJSON = {
       webhookTimeout: number;
       customLabels: CustomLabels;
       alwaysIgnore: { namespaces: string[] };
+      admission: { alwaysIgnore: { namespaces: string[] } };
+      watch: { alwaysIgnore: { namespaces: string[] } };
       includedFiles: string[];
       env: object;
       rbac?: PolicyRule[];
@@ -47,8 +50,8 @@ export type peprPackageJSON = {
 };
 
 export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPackageJSON {
-  // Generate a random UUID for the module based on the module name
-  const uuid = uuidv5(opts.name, uuidv4());
+  // Generate a random UUID for the module based on the module name if it is not provided
+  const uuid = !opts.uuid ? uuidv4() : opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
@@ -65,7 +68,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
     description: opts.description,
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     engines: {
-      node: ">=18.0.0",
+      node: ">=20.0.0",
     },
     pepr: {
       uuid: pgkVerOverride ? "static-test" : uuid,
@@ -79,6 +82,16 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       alwaysIgnore: {
         namespaces: [],
       },
+      admission: {
+        alwaysIgnore: {
+          namespaces: [],
+        },
+      },
+      watch: {
+        alwaysIgnore: {
+          namespaces: [],
+        },
+      },
       includedFiles: [],
       env: pgkVerOverride ? testEnv : {},
     },
@@ -91,6 +104,9 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
     },
     devDependencies: {
       typescript,
+    },
+    overrides: {
+      "brace-expansion": "1.1.11",
     },
   };
 
@@ -147,6 +163,19 @@ export const prettier = {
 };
 
 export const eslint = {
-  path: ".eslintrc.json",
-  data: eslintJSON,
+  path: "eslint.config.mjs",
+  data: readFileSync(
+    path.resolve(
+      ((): string => {
+        const fullPath = __dirname;
+        const lengthOfSuffix = "pepr/".length;
+        // Find the last occurrence of "pepr/"
+        const lastPeprIndex = fullPath.lastIndexOf("pepr/");
+        // Return the path up to and including the last "pepr/"
+        return fullPath.substring(0, lastPeprIndex + lengthOfSuffix);
+      })(),
+      "src/templates/eslint.config.mjs",
+    ),
+    "utf-8",
+  ),
 };

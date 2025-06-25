@@ -3,12 +3,6 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
-    inputs:
-      kfcBranch:
-        description: 'KFC dev branch'
-        required: false
-        type: string
-        default: 'none'
   merge_group:
     paths-ignore:
     - "LICENSE"
@@ -18,8 +12,12 @@ on:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/
@@ -31,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -45,7 +43,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: "npm"
@@ -57,23 +55,9 @@ jobs:
           npm ci
 
       - name: build pepr package and container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') == 'none' }}
         run: |
           cd "$PEPR"
           npm run build:image
-          mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
-          ls -l ${GITHUB_WORKSPACE}
-
-      - name: build pepr package and kfc dev container image
-        if: ${{ (github.event.inputs.kfcBranch || 'none') != 'none' }}
-        run: |
-          cd "$PEPR"
-          node hack/kfc-dev.js build -b "${{ github.event.inputs.kfcBranch }}"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/src"
-          rm -rf "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          cp -R "$PEPR/kubernetes-fluent-client/src" "$PEPR/node_modules/kubernetes-fluent-client/src"
-          cp -R "$PEPR/kubernetes-fluent-client/dist" "$PEPR/node_modules/kubernetes-fluent-client/dist"
-          npm run build
           mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
           ls -l ${GITHUB_WORKSPACE}
 
@@ -84,7 +68,7 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload artifacts
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pepr-package-and-controller-image
           path: | 
@@ -102,7 +86,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -125,7 +109,7 @@ jobs:
         run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: "npm"
@@ -151,7 +135,7 @@ jobs:
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -160,7 +144,7 @@ jobs:
         shell: bash
 
       - name: download artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: pepr-package-and-controller-image
           path: ${{ github.workspace }}
@@ -180,7 +164,7 @@ jobs:
         run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
 
       - name: setup node
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: "npm"
@@ -196,7 +180,7 @@ jobs:
         with:
           max_attempts: 3
           retry_on: error
-          timeout_minutes: 6
+          timeout_minutes: 8
           command: |
             cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
             npm run --workspace=${{ matrix.name }} test:e2e -- \
@@ -204,7 +188,7 @@ jobs:
               --custom-package ../pepr-0.0.0-development.tgz
 
       - name: upload artifacts (troubleshooting)
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: "troubleshooting_logs_${{matrix.name}}"

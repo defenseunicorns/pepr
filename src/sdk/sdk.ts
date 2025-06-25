@@ -109,17 +109,20 @@ export function getOwnerRefFrom(
  *
  * @param name the name of the resource to sanitize
  * @returns the sanitized resource name
+ *
+ * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/
  */
 export function sanitizeResourceName(name: string): string {
   return (
     name
-      // The name must be lowercase
       .toLowerCase()
-      // Replace sequences of non-alphanumeric characters with a single '-'
-      .replace(/[^a-z0-9]+/g, "-")
-      // Truncate the name to 250 characters
-      .slice(0, 250)
-      // Remove leading and trailing non-letter characters
-      .replace(/^[^a-z]+|[^a-z]+$/g, "")
+      // Replace invalid characters (anything not a-z, 0-9, or '-') with '-'
+      .replace(/[^a-z0-9-]+/g, "-")
+      // Trim to 63 characters (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names)
+      .slice(0, 63)
+      // Remove leading non-alphanumeric characters
+      .replace(/^[^a-z0-9]+/, "")
+      // Remove trailing non-alphanumeric characters
+      .replace(/[^a-z0-9]+$/, "")
   );
 }

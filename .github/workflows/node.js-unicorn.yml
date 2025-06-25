@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+    - "**.md"
   merge_group:
     paths-ignore:
     - "LICENSE"
@@ -24,7 +28,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Use Node.js 22
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: "npm"
@@ -36,12 +40,17 @@ jobs:
         run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-      - name: Chainguard Login
-        uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+      - name: Rapidfort Login
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
-          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          max_attempts: 5
+          retry_on: error
+          timeout_minutes: 1
+          command: |
+            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
       - run: npm ci
       - run: |
+          export PEPR_IMAGE=pepr/private:dev
           npm run test:journey:unicorn
           npm run test:journey-wasm:unicorn

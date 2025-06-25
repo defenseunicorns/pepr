@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { ModuleConfig } from "../types";
+import { ModuleConfig, CapabilityExport } from "../types";
 import { Assets } from "./assets";
-import { expect, describe, it, jest, afterAll } from "@jest/globals";
-import { CapabilityExport } from "../types";
+import { expect, describe, it, vi, beforeEach, afterEach, afterAll, type Mock } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 import { createDirectoryIfNotExists } from "../filesystemService";
 import { promises as fs } from "fs";
@@ -16,23 +15,29 @@ import {
 import { WebhookType } from "../enums";
 import { helmLayout } from "./index";
 
-jest.mock("../filesystemService", () => ({
-  createDirectoryIfNotExists: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+vi.mock("../filesystemService", () => ({
+  createDirectoryIfNotExists: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
 }));
-jest.mock("./yaml/overridesFile", () => ({
-  overridesFile: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
-}));
-jest.mock("fs", () => ({
-  ...(jest.requireActual("fs") as object),
-  promises: {
-    readFile: jest.fn<() => Promise<string>>().mockResolvedValue("mocked"),
-    writeFile: jest.fn(),
-    access: jest.fn(),
-  },
+vi.mock("./yaml/overridesFile", () => ({
+  overridesFile: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
 }));
 
-jest.mock("./loader", () => ({
-  loadCapabilities: jest.fn<() => Promise<CapabilityExport[]>>().mockResolvedValue([
+vi.mock("fs", async () => {
+  const actualFs = await vi.importActual<typeof import("fs")>("fs");
+
+  return {
+    ...actualFs,
+    promises: {
+      ...actualFs.promises,
+      readFile: vi.fn().mockResolvedValue("mocked"),
+      writeFile: vi.fn(),
+      access: vi.fn(),
+    },
+  };
+});
+
+vi.mock("./loader", () => ({
+  loadCapabilities: vi.fn<() => Promise<CapabilityExport[]>>().mockResolvedValue([
     {
       name: "capability-1",
       description: "A test capability",
@@ -43,8 +48,8 @@ jest.mock("./loader", () => ({
   ]),
 }));
 
-jest.mock("./pods", () => ({
-  getWatcher: jest.fn<() => V1Deployment>().mockReturnValue({
+vi.mock("./pods", () => ({
+  getWatcher: vi.fn<() => V1Deployment>().mockReturnValue({
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -80,7 +85,7 @@ jest.mock("./pods", () => ({
       },
     },
   }),
-  getModuleSecret: jest.fn<() => V1Secret>().mockReturnValue({
+  getModuleSecret: vi.fn<() => V1Secret>().mockReturnValue({
     apiVersion: "v1",
     kind: "Secret",
     metadata: {
@@ -92,7 +97,7 @@ jest.mock("./pods", () => ({
       "module-hash.js.gz": "aGVsbG8=",
     },
   }),
-  getDeployment: jest.fn<() => V1Deployment>().mockReturnValue({
+  getDeployment: vi.fn<() => V1Deployment>().mockReturnValue({
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: {
@@ -130,9 +135,9 @@ jest.mock("./pods", () => ({
   }),
 }));
 
-jest.mock("./index", () => ({
-  toYaml: jest.fn<() => string>().mockReturnValue("mocked-yaml"),
-  helmLayout: jest.fn(() => ({
+vi.mock("./index", () => ({
+  toYaml: vi.fn<() => string>().mockReturnValue("mocked-yaml"),
+  helmLayout: vi.fn(() => ({
     files: {
       chartYaml: "/tmp/chart.yaml",
       namespaceYaml: "/tmp/namespace.yaml",
@@ -155,7 +160,7 @@ jest.mock("./index", () => ({
       charts: "/tmp/charts",
     },
   })),
-  createWebhookYaml: jest.fn(
+  createWebhookYaml: vi.fn(
     (
       name: string,
       config: ModuleConfig,
@@ -165,30 +170,54 @@ jest.mock("./index", () => ({
 }));
 
 describe("Assets", () => {
-  const moduleConfig: ModuleConfig = {
-    uuid: "test-uuid",
-    alwaysIgnore: {
-      namespaces: ["zarf"],
-    },
-    peprVersion: "0.0.1",
-    appVersion: "0.0.1",
-    description: "A test module",
-    webhookTimeout: 10,
-    onError: "reject",
-    logLevel: "info",
-    env: {},
-    rbac: [],
-    rbacMode: "scoped",
-    customLabels: {},
-  };
-  const assets = new Assets(moduleConfig, "/tmp", ["secret1", "secret2"], "localhost");
+  let moduleConfig: ModuleConfig;
+  let assets: Assets;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  const createMockWebhookGenerator = (): Mock<
+    () => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
+  > =>
+    vi
+      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
+      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
+
+  const createMockWatcher = (): Mock<() => kind.Deployment | null> =>
+    vi.fn<() => kind.Deployment | null>().mockReturnValue(new kind.Deployment());
+
+  const createMockModuleSecret = (): Mock<() => kind.Secret> =>
+    vi.fn<() => kind.Secret>().mockReturnValue(new kind.Secret());
+
+  beforeEach(() => {
+    moduleConfig = {
+      uuid: "test-uuid",
+      alwaysIgnore: {
+        namespaces: ["zarf"],
+      },
+      peprVersion: "0.0.1",
+      appVersion: "0.0.1",
+      description: "A test module",
+      webhookTimeout: 10,
+      onError: "reject",
+      logLevel: "info",
+      env: {},
+      rbac: [],
+      rbacMode: "scoped",
+      customLabels: {},
+    };
+    assets = new Assets(moduleConfig, "/tmp", ["secret1", "secret2"], "localhost");
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
 
   afterAll(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call deploy function that calls deployFunction with assets, force and webhookTimeout", async () => {
-    const deployFunction = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const deployFunction = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     await assets.deploy(deployFunction, true, assets.config.webhookTimeout);
 
     expect(deployFunction).toHaveBeenCalledWith(assets, true, assets.config.webhookTimeout);
@@ -196,7 +225,7 @@ describe("Assets", () => {
   });
 
   it("should call zarfYaml that calls zarfYamlGenerator with assets, path, and manifests type", () => {
-    const zarfYamlGenerator = jest.fn<() => string>().mockReturnValue("");
+    const zarfYamlGenerator = vi.fn<() => string>().mockReturnValue("");
     assets.zarfYaml(zarfYamlGenerator, "/tmp");
 
     expect(zarfYamlGenerator).toHaveBeenCalledWith(assets, "/tmp", "manifests");
@@ -204,7 +233,7 @@ describe("Assets", () => {
   });
 
   it("should call zarfYamlChart that calls zarfYamlGenerator with assets, path, and charts type", () => {
-    const zarfYamlGenerator = jest.fn<() => string>().mockReturnValue("");
+    const zarfYamlGenerator = vi.fn<() => string>().mockReturnValue("");
     assets.zarfYamlChart(zarfYamlGenerator, "/tmp");
 
     expect(zarfYamlGenerator).toHaveBeenCalledWith(assets, "/tmp", "charts");
@@ -212,8 +241,14 @@ describe("Assets", () => {
   });
 
   it("should call allYaml that calls yamlGenerationFunction with assets deployments", async () => {
-    const yamlGenerationFunction = jest.fn<() => Promise<string>>().mockResolvedValue("");
-    await assets.allYaml(yamlGenerationFunction);
+    const yamlGenerationFunction = vi.fn<() => Promise<string>>().mockResolvedValue("");
+    const getDeploymentFunction = vi
+      .fn<() => kind.Deployment>()
+      .mockReturnValue(new kind.Deployment());
+    const getWatcherFunction = vi
+      .fn<() => kind.Deployment | null>()
+      .mockReturnValue(new kind.Deployment());
+    await assets.allYaml(yamlGenerationFunction, getDeploymentFunction, getWatcherFunction);
     const expectedDeployments = {
       default: expect.any(Object),
       watch: expect.any(Object),
@@ -231,7 +266,8 @@ describe("Assets", () => {
         validationWebhookYaml: "/tmp/validation-webhook.yaml",
       },
     };
-    const validateWebhook: V1ValidatingWebhookConfiguration = new kind.ValidatingWebhookConfiguration();
+    const validateWebhook: V1ValidatingWebhookConfiguration =
+      new kind.ValidatingWebhookConfiguration();
     const mutateWebhook: V1MutatingWebhookConfiguration = new kind.MutatingWebhookConfiguration();
     await assets.writeWebhookFiles(validateWebhook, mutateWebhook, mockHelm);
 
@@ -239,51 +275,68 @@ describe("Assets", () => {
   });
 
   it("should call generateHelmChart which should call createDirectoryIfNotExists twice for templates and charts", async () => {
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
+
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(createDirectoryIfNotExists).toHaveBeenCalledTimes(2);
   });
 
   it("should call generateHelmChart which should write file 40 times for built Kubernetes Manifests and helm chart generation", async () => {
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
+
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(fs.writeFile).toHaveBeenCalledTimes(40);
   });
 
   it("should call generateHelmChart and get no error", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
 
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   it("should call generateHelmChart without an error when asset class instance is correct", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
 
-    const webhookGeneratorFunction = jest
-      .fn<() => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>>()
-      .mockResolvedValue(new kind.MutatingWebhookConfiguration());
-    await assets.generateHelmChart(webhookGeneratorFunction, "/tmp");
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   it("should call generateHelmChart and throw an error when config is incorrect", async () => {
-    const exitString = "Mock console.exit call";
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    const processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error(exitString);
-    });
+    const exitString =
+      "Error generating helm chart: Cannot read properties of null (reading 'dirs')";
 
-    (helmLayout as jest.Mock).mockReturnValue(null);
+    (helmLayout as vi.Mock).mockReturnValue(null);
 
-    const webhookGeneratorFunction = jest
+    const webhookGeneratorFunction = vi
       .fn<
         (
           assets: Assets,
@@ -292,10 +345,16 @@ describe("Assets", () => {
         ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
       >()
       .mockResolvedValue(new kind.ValidatingWebhookConfiguration());
+    const getWatcherFunction = createMockWatcher();
+    const getModuleSecretFunction = createMockModuleSecret();
 
-    await expect(assets.generateHelmChart(webhookGeneratorFunction, "/tmp")).rejects.toThrow(exitString);
-
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    await expect(
+      assets.generateHelmChart(
+        webhookGeneratorFunction,
+        getWatcherFunction,
+        getModuleSecretFunction,
+        "/tmp",
+      ),
+    ).rejects.toThrow(exitString);
   });
 });

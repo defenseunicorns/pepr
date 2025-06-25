@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it } from "@jest/globals";
+import { expect, describe, it } from "vitest";
 import {
   bindsToKind,
   bindsToNamespace,
@@ -61,7 +61,11 @@ describe("missingCarriableNamespace", () => {
     [["name", "space"], { metadata: { namespace: "incorrect" } }, false],
     [["name", "space"], { metadata: { namespace: "name" } }, false],
     [["name", "space"], { metadata: { namespace: "space" } }, false],
-    [["ingress-controller"], { kind: "Namespace", metadata: { name: "ingress-controller" } }, false],
+    [
+      ["ingress-controller"],
+      { kind: "Namespace", metadata: { name: "ingress-controller" } },
+      false,
+    ],
     [["ingress-controller"], { kind: "Namespace", metadata: { name: "egress-controller" } }, true],
   ])("given capabilityNamespaces %j and object %j, returns %s", (nss, obj, expected) => {
     const object = obj as DeepPartial<KubernetesObject>;

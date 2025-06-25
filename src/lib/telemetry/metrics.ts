@@ -56,7 +56,9 @@ export class MetricsCollector {
     this.addSummary(this.#metricNames.mutate, "Mutation operation summary");
     this.addSummary(this.#metricNames.validate, "Validation operation summary");
     this.addGauge(this.#metricNames.cacheMiss, "Number of cache misses per window", ["window"]);
-    this.addGauge(this.#metricNames.resyncFailureCount, "Number of failures per resync operation", ["count"]);
+    this.addGauge(this.#metricNames.resyncFailureCount, "Number of failures per resync operation", [
+      "count",
+    ]);
   }
 
   #getMetricName = (name: string): string => `${this.#prefix}_${name}`;
@@ -173,7 +175,9 @@ export class MetricsCollector {
       if (firstKey !== undefined) {
         this.#cacheMissWindows.delete(firstKey);
       }
-      this.#gauges.get(this.#getMetricName(this.#metricNames.cacheMiss))?.remove({ window: firstKey });
+      this.#gauges
+        .get(this.#getMetricName(this.#metricNames.cacheMiss))
+        ?.remove({ window: firstKey });
     }
   };
 }

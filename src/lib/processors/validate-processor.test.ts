@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, Filters } from "../types";
 import { Event, Operation } from "../enums";
@@ -15,26 +15,28 @@ import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import * as utils from "../utils";
 import { shouldSkipRequest } from "../filter/filter";
 
-jest.mock("../telemetry/logger", () => ({
-  info: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-}));
-
-jest.mock("../telemetry/metrics", () => ({
-  metricsCollector: {
-    addCounter: jest.fn(),
-    incCounter: jest.fn(),
+vi.mock("../telemetry/logger", () => ({
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
   },
-  MeasureWebhookTimeout: jest.fn(),
 }));
 
-jest.mock("../telemetry/timeUtils", () => ({
-  getNow: jest.fn(() => 1000),
+vi.mock("../telemetry/metrics", () => ({
+  metricsCollector: {
+    addCounter: vi.fn(),
+    incCounter: vi.fn(),
+  },
+  MeasureWebhookTimeout: vi.fn(),
 }));
 
-jest.mock("../filter/filter", () => ({
-  shouldSkipRequest: jest.fn(),
+vi.mock("../telemetry/timeUtils", () => ({
+  getNow: vi.fn(() => 1000),
+}));
+
+vi.mock("../filter/filter", () => ({
+  shouldSkipRequest: vi.fn(),
 }));
 
 const testFilters: Filters = {
@@ -76,10 +78,12 @@ export const testAdmissionRequest: AdmissionRequest = {
 
 export const testActionMetadata: Record<string, string> = {};
 
-export const testPeprValidateRequest = (admissionRequest: AdmissionRequest) =>
+export const testPeprValidateRequest = (
+  admissionRequest: AdmissionRequest,
+): PeprValidateRequest<KubernetesObject> =>
   new PeprValidateRequest<KubernetesObject>(admissionRequest);
 
-describe("processRequest", () => {
+describe("when processing requests", () => {
   let binding: Binding;
   let actionMetadata: Record<string, string>;
   let peprValidateRequest: PeprValidateRequest<KubernetesObject>;
@@ -90,13 +94,13 @@ describe("processRequest", () => {
     peprValidateRequest = testPeprValidateRequest(testAdmissionRequest);
   });
 
-  it("responds on successful validation action", async () => {
+  it("should respond on successful validation action", async () => {
     const cbResult = {
       allowed: true,
       statusCode: 200,
       statusMessage: "yay",
     };
-    const callback = jest.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
     binding = { ...clone(testBinding), validateCallback: callback };
 
     const result = await processRequest(binding, actionMetadata, peprValidateRequest);
@@ -111,8 +115,8 @@ describe("processRequest", () => {
     });
   });
 
-  it("responds on unsuccessful validation action", async () => {
-    const callback = jest.fn().mockImplementation(() => {
+  it("should respond on unsuccessful validation action with exception", async () => {
+    const callback = vi.fn().mockImplementation(() => {
       throw "oof";
     }) as Binding["validateCallback"];
     binding = { ...clone(testBinding), validateCallback: callback };
@@ -128,12 +132,101 @@ describe("processRequest", () => {
       },
     });
   });
+
+  it("should respond on unsuccessful validation with status code", async () => {
+    const cbResult = {
+      allowed: false,
+      statusCode: 403,
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: false,
+      status: {
+        code: 403,
+        message: `Validation failed for ${peprValidateRequest.Request.kind.kind.toLowerCase()}/${peprValidateRequest.Request.name}`,
+      },
+    });
+  });
+
+  it("should respond with namespace in error message when present", async () => {
+    const cbResult = {
+      allowed: false,
+      statusCode: 403,
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const requestWithNamespace = {
+      ...testAdmissionRequest,
+      namespace: "test-namespace",
+    };
+    const peprRequestWithNamespace = testPeprValidateRequest(requestWithNamespace);
+
+    const result = await processRequest(binding, actionMetadata, peprRequestWithNamespace);
+
+    expect(result).toEqual({
+      uid: peprRequestWithNamespace.Request.uid,
+      allowed: false,
+      status: {
+        code: 403,
+        message: `Validation failed for ${peprRequestWithNamespace.Request.kind.kind.toLowerCase()}/${peprRequestWithNamespace.Request.name} in ${peprRequestWithNamespace.Request.namespace} namespace.`,
+      },
+    });
+  });
+
+  it("should respond with status message when provided", async () => {
+    const cbResult = {
+      allowed: false,
+      statusMessage: "Resource validation failed",
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: false,
+      status: {
+        code: 400,
+        message: "Resource validation failed",
+      },
+    });
+  });
+
+  it("should transfer warnings from callback response", async () => {
+    const cbResult = {
+      allowed: true,
+      statusCode: 200,
+      statusMessage: "Validation succeeded with warnings",
+      warnings: ["Warning 1", "Warning 2"],
+    };
+    const callback = vi.fn().mockImplementation(() => cbResult) as Binding["validateCallback"];
+    binding = { ...clone(testBinding), validateCallback: callback };
+
+    const result = await processRequest(binding, actionMetadata, peprValidateRequest);
+
+    expect(result).toEqual({
+      uid: peprValidateRequest.Request.uid,
+      allowed: true,
+      status: {
+        code: 200,
+        message: "Validation succeeded with warnings",
+      },
+      warnings: ["Warning 1", "Warning 2"],
+    });
+  });
 });
 
-describe("validateProcessor", () => {
+describe("when validating requests", () => {
   let config: ModuleConfig;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     config = {
       webhookTimeout: 11,
       uuid: "some-uuid",
@@ -149,7 +242,7 @@ describe("validateProcessor", () => {
     const req = testAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStart = jest.spyOn(MeasureWebhookTimeout.prototype, "start");
+    const spyStart = vi.spyOn(MeasureWebhookTimeout.prototype, "start");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -170,7 +263,7 @@ describe("validateProcessor", () => {
     const req: AdmissionRequest = { ...testAdmissionRequest, kind: testGroupVersionKind };
     const reqMetadata = {};
 
-    const spyConvert = jest.spyOn(utils, "convertFromBase64Map");
+    const spyConvert = vi.spyOn(utils, "convertFromBase64Map");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -187,7 +280,7 @@ describe("validateProcessor", () => {
     const req = testAdmissionRequest;
     const reqMetadata = {};
 
-    const spyStop = jest.spyOn(MeasureWebhookTimeout.prototype, "stop");
+    const spyStop = vi.spyOn(MeasureWebhookTimeout.prototype, "stop");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -217,8 +310,9 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
+    const mod =
+      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const spyProcessRequest = vi.spyOn(mod, "processRequest");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 
@@ -240,7 +334,7 @@ describe("validateProcessor", () => {
       bindings: [
         {
           isValidate: true,
-          validateCallback: jest.fn(),
+          validateCallback: vi.fn(),
         },
       ],
     } as unknown as Capability);
@@ -249,9 +343,10 @@ describe("validateProcessor", () => {
     const reqMetadata = {};
 
     // This rule is skipped because we cannot mock this function globally as it is tested above
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const spyProcessRequest = jest.spyOn(require("./validate-processor"), "processRequest");
-    (shouldSkipRequest as jest.Mock).mockReturnValue("Skip reason");
+    const mod =
+      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
+    const spyProcessRequest = vi.spyOn(mod, "processRequest");
+    (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
 
     await validateProcessor(config, [capability], req, reqMetadata);
 

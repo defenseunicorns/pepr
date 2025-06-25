@@ -76,7 +76,7 @@ jobs:
         run: echo "PEPR_EXCELLENT_EXAMPLES_PATH=${GITHUB_WORKSPACE}/pepr-excellent-examples" >> "$GITHUB_ENV"
         
       - name: download artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: pepr-package-and-controller-image
           path: ${{ github.workspace }}
@@ -92,7 +92,7 @@ jobs:
         with:
           max_attempts: 3
           retry_on: error
-          timeout_minutes: 6
+          timeout_minutes: 8
           command: |
             cd $PEPR_EXCELLENT_EXAMPLES_PATH
 
@@ -102,7 +102,7 @@ jobs:
               --custom-package ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz
 
       - name: Upload artifacts (troubleshooting)
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: "troubleshooting_logs_${{matrix.name}}"

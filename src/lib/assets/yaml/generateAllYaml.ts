@@ -5,7 +5,13 @@ import crypto from "crypto";
 import { Assets } from "../assets";
 import { WebhookType } from "../../enums";
 import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
-import { clusterRole, clusterRoleBinding, serviceAccount, storeRole, storeRoleBinding } from "../rbac";
+import {
+  clusterRole,
+  clusterRoleBinding,
+  serviceAccount,
+  storeRole,
+  storeRoleBinding,
+} from "../rbac";
 import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
 import { getModuleSecret, getNamespace } from "../pods";
 import { promises as fs } from "fs";
@@ -35,7 +41,11 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
 
   const webhooks = {
     mutate: await webhookConfigGenerator(assets, WebhookType.MUTATE, assets.config.webhookTimeout),
-    validate: await webhookConfigGenerator(assets, WebhookType.VALIDATE, assets.config.webhookTimeout),
+    validate: await webhookConfigGenerator(
+      assets,
+      WebhookType.VALIDATE,
+      assets.config.webhookTimeout,
+    ),
   };
 
   // Add webhooks and watch deployment if they exist

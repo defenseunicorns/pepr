@@ -206,7 +206,16 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-    const commonChain = { WithLabel, WithAnnotation, WithDeletionTimestamp, Mutate, Validate, Watch, Reconcile, Alias };
+    const commonChain = {
+      WithLabel,
+      WithAnnotation,
+      WithDeletionTimestamp,
+      Mutate,
+      Validate,
+      Watch,
+      Reconcile,
+      Alias,
+    };
 
     type CommonChainType = typeof commonChain;
     type ExtendedCommonChainType = CommonChainType & {
@@ -240,7 +249,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isValidate: true,
           validateCallback: async (req, logger = aliasLogger) => {
-            Log.info(`Executing validate action with alias: ${binding.alias || "no alias provided"}`);
+            if (binding.alias) {
+              Log.info(`Executing validate action with alias: ${binding.alias}`);
+            }
             return await validateCallback(req, logger);
           },
         });
@@ -262,7 +273,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isMutate: true,
           mutateCallback: async (req, logger = aliasLogger) => {
-            Log.info(`Executing mutation action with alias: ${binding.alias || "no alias provided"}`);
+            if (binding.alias) {
+              Log.info(`Executing mutation action with alias: ${binding.alias}`);
+            }
             await mutateCallback(req, logger);
           },
         });
@@ -277,7 +290,9 @@ export class Capability implements CapabilityExport {
         log("Watch Action", watchCallback.toString());
 
         // Create the child logger and cast it to the expected type
-        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+        const aliasLogger = Log.child({
+          alias: binding.alias || "no alias provided",
+        }) as typeof Log;
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
@@ -285,7 +300,9 @@ export class Capability implements CapabilityExport {
           ...binding,
           isWatch: true,
           watchCallback: async (update, phase, logger = aliasLogger) => {
-            Log.info(`Executing watch action with alias: ${binding.alias || "no alias provided"}`);
+            if (binding.alias) {
+              Log.info(`Executing watch action with alias: ${binding.alias}`);
+            }
             await watchCallback(update, phase, logger);
           },
         });
@@ -298,7 +315,9 @@ export class Capability implements CapabilityExport {
         log("Reconcile Action", reconcileCallback.toString());
 
         // Create the child logger and cast it to the expected type
-        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+        const aliasLogger = Log.child({
+          alias: binding.alias || "no alias provided",
+        }) as typeof Log;
 
         // Push the binding to the list of bindings for this capability as a new BindingAction
         // with the callback function to preserve
@@ -307,7 +326,9 @@ export class Capability implements CapabilityExport {
           isWatch: true,
           isQueue: true,
           watchCallback: async (update, phase, logger = aliasLogger) => {
-            Log.info(`Executing reconcile action with alias: ${binding.alias || "no alias provided"}`);
+            if (binding.alias) {
+              Log.info(`Executing reconcile action with alias: ${binding.alias}`);
+            }
             await reconcileCallback(update, phase, logger);
           },
         });
@@ -340,8 +361,13 @@ export class Capability implements CapabilityExport {
           isWatch: true,
           isFinalize: true,
           event: Event.UPDATE,
-          finalizeCallback: async (update: InstanceType<T>, logger = aliasLogger): Promise<boolean | void> => {
-            Log.info(`Executing finalize action with alias: ${binding.alias || "no alias provided"}`);
+          finalizeCallback: async (
+            update: InstanceType<T>,
+            logger = aliasLogger,
+          ): Promise<boolean | void> => {
+            if (binding.alias) {
+              Log.info(`Executing finalize action with alias: ${binding.alias}`);
+            }
             return await finalizeCallback(update, logger);
           },
         };

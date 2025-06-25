@@ -1,4 +1,4 @@
-# Tutorial - Create a Pepr Dashboard
+# Create a Pepr Dashboard
 
 ## Introduction
 

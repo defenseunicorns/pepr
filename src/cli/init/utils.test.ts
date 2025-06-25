@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, it, jest, describe, afterEach } from "@jest/globals";
+import { expect, it, vi, describe, afterEach, type Mock } from "vitest";
 import { promises as fs } from "fs";
 import { sanitizeName, createDir, write } from "./utils";
 
-jest.mock("fs", () => ({
+vi.mock("fs", () => ({
   promises: {
-    mkdir: jest.fn(),
-    writeFile: jest.fn(),
+    mkdir: vi.fn(),
+    writeFile: vi.fn(),
   },
 }));
 
@@ -26,10 +26,10 @@ it("sanitizeName() should throw TypeError when given a non-string", () => {
 });
 
 describe("createDir", () => {
-  const mockedMkdir = fs.mkdir as jest.Mock;
+  const mockedMkdir = fs.mkdir as Mock;
 
   afterEach(() => {
-    jest.clearAllMocks(); // Clear mocks between tests
+    vi.clearAllMocks(); // Clear mocks between tests
   });
 
   it("should create the pepr-test-module dir", async () => {
@@ -61,10 +61,10 @@ describe("createDir", () => {
 });
 
 describe("write", () => {
-  const mockedWriteFile = fs.writeFile as jest.Mock;
+  const mockedWriteFile = fs.writeFile as Mock;
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should write data to a file", async () => {
