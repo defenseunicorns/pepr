@@ -30,26 +30,6 @@ echo "PEPR_AMD_TAR=${PEPR_AMD_TAR}"
 # Build Pepr
 npm run build
 
-# Copy original package
-cp pepr-0.0.0-development.tgz pepr-0.0.0-development.tar.gz
-
-# Decompress, rename, and clean up
-tar -zxvf pepr-0.0.0-development.tar.gz
-mv package pepr
-rm pepr-0.0.0-development.tar.gz
-
-# Prepare package-lock.json and build-template-data.json
-cd pepr
-mkdir -p hack
-cp "$PEPR/hack/build-template-data.js" hack/
-cp "$PEPR/build.mjs" .
-cp "$PEPR/config/tsconfig.root.json" ./config/tsconfig.root.json
-npm i
-cd ..
-
-# Repackage
-tar -zcvf pepr-0.0.0-development.tar.gz pepr
-mv pepr-0.0.0-development.tgz "${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz"
 
 # Build Docker images
 export PEPR_BUILD_VERSION
