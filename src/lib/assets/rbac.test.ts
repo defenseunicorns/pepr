@@ -20,6 +20,13 @@ import {
   capabilityWithShortKey,
 } from "./defaultTestObjects";
 
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+  },
+}));
+
 describe("RBAC Resource Creation", () => {
   it("should create a ClusterRoleBinding with the specified name", () => {
     const roleName = "test-cluster-role";
