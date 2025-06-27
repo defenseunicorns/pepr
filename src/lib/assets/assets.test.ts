@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { ModuleConfig, CapabilityExport } from "../types";
-import { Assets } from "./assets";
+import { Assets, isAdmission, isWatcher } from "./assets";
 import { expect, describe, it, vi, beforeEach, afterEach, afterAll, type Mock } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 import { createDirectoryIfNotExists } from "../filesystemService";
@@ -356,5 +356,83 @@ describe("Assets", () => {
         "/tmp",
       ),
     ).rejects.toThrow(exitString);
+  });
+
+  it("should return true from isAdmission and isWatcher when the binding has finalize", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [{ isFinalize: true }],
+          hasSchedule: false,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isAdmission(mockAssets)).toBe(true);
+    expect(isWatcher(mockAssets)).toBe(true);
+  });
+  it("should return true from isAdmission when any capability has mutate/validate/finalize", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [{ isMutate: true }],
+          hasSchedule: false,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isAdmission(mockAssets)).toBe(true);
+  });
+
+  it("should return false from isAdmission when no capability has admission bindings", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [{ isWatch: true }],
+          hasSchedule: false,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isAdmission(mockAssets)).toBe(false);
+  });
+
+  it("should return true from isWatcher when capability has hasSchedule", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [],
+          hasSchedule: true,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isWatcher(mockAssets)).toBe(true);
+  });
+
+  it("should return true from isWatcher when capability has watch/queue/finalize binding", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [{ isWatch: true }],
+          hasSchedule: false,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isWatcher(mockAssets)).toBe(true);
+  });
+
+  it("should return false from isWatcher when capability has no watch bindings or schedule", () => {
+    const mockAssets = {
+      capabilities: [
+        {
+          bindings: [{ isValidate: true }],
+          hasSchedule: false,
+        },
+      ],
+    } as unknown as Assets;
+
+    expect(isWatcher(mockAssets)).toBe(false);
   });
 });

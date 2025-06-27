@@ -8,6 +8,7 @@ import {
   namespaceTemplate,
   clusterRoleTemplate,
   admissionDeployTemplate,
+  serviceTemplate,
   serviceMonitorTemplate,
   watcherDeployTemplate,
 } from "./helm";
@@ -23,9 +24,24 @@ import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
-import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
+import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
+
+export function isAdmission(assets: Assets): boolean {
+  return assets.capabilities.some(capability =>
+    capability.bindings.some(
+      binding => binding.isFinalize || binding.isMutate || binding.isValidate,
+    ),
+  );
+}
+export function isWatcher(assets: Assets): boolean {
+  return assets.capabilities.some(
+    capability =>
+      capability.hasSchedule ||
+      capability.bindings.some(binding => binding.isFinalize || binding.isWatch || binding.isQueue),
+  );
+}
 
 export class Assets {
   readonly name: string;
@@ -194,8 +210,14 @@ export class Assets {
           (): string => dedent(chartYaml(this.config.uuid, this.config.description || "")),
         ],
         [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
-        [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
-        [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
+        [
+          helm.files.watcherServiceYaml,
+          (): string => toYaml(serviceTemplate(this.name, "watcher")),
+        ],
+        [
+          helm.files.admissionServiceYaml,
+          (): string => toYaml(serviceTemplate(this.name, "admission")),
+        ],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
         [
           helm.files.apiPathSecretYaml,

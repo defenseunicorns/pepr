@@ -300,3 +300,22 @@ export function serviceMonitorTemplate(name: string, type: ControllerType): stri
       {{- end }}
     `;
 }
+
+export function serviceTemplate(name: string, type: ControllerType): string {
+  return `
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ${name}-${type}
+        namespace: pepr-system
+        labels:
+          pepr.dev/controller: ${type}
+      spec:
+        selector:
+          app: ${name}-${type}
+          pepr.dev/controller: ${type}
+        ports:
+        - port: 443
+          targetPort: 3000
+  `;
+}

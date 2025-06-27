@@ -9,8 +9,8 @@ import { V1Deployment, KubernetesObject } from "@kubernetes/client-node";
 import { promises as fs } from "fs";
 import { webhookConfigGenerator } from "../webhooks";
 import { WebhookType } from "../../enums";
-import { getNamespace, getModuleSecret } from "../pods";
-import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
+import { getNamespace, service, getModuleSecret, watcherService } from "../k8sObjects";
+import { apiPathSecret, tlsSecret } from "../networking";
 import {
   clusterRole,
   clusterRoleBinding,
@@ -65,9 +65,11 @@ vi.mock("@kubernetes/client-node", async () => {
   };
 });
 
-vi.mock("../pods", () => ({
+vi.mock("../k8sObjects", () => ({
   getNamespace: vi.fn().mockReturnValue({}),
   getModuleSecret: vi.fn().mockReturnValue({}),
+  watcherService: vi.fn().mockReturnValue({}),
+  service: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock("../rbac", () => ({
@@ -80,9 +82,7 @@ vi.mock("../rbac", () => ({
 
 vi.mock("../networking", () => ({
   apiPathSecret: vi.fn().mockReturnValue({}),
-  service: vi.fn().mockReturnValue({}),
   tlsSecret: vi.fn().mockReturnValue({}),
-  watcherService: vi.fn().mockReturnValue({}),
 }));
 describe("generateAllYaml", () => {
   const moduleConfig: ModuleConfig = {
