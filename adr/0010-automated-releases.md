@@ -1,4 +1,4 @@
-# 11. Automated Releases
+# 10. Automated Releases
 
 Date: 2024-07-17
 
