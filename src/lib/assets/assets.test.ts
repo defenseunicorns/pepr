@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { ModuleConfig, CapabilityExport } from "../types";
+import { ModuleConfig, CapabilityExport, Binding } from "../types";
 import { Assets, isAdmission, isWatcher } from "./assets";
 import { expect, describe, it, vi, beforeEach, afterEach, afterAll, type Mock } from "vitest";
 import { kind } from "kubernetes-fluent-client";
@@ -279,6 +279,16 @@ describe("Assets", () => {
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
 
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
+
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -292,7 +302,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -306,7 +324,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -320,7 +346,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -359,80 +393,68 @@ describe("Assets", () => {
   });
 
   it("should return true from isAdmission and isWatcher when the binding has finalize", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [{ isFinalize: true }],
-          hasSchedule: false,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [{ isFinalize: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isAdmission(mockAssets)).toBe(true);
-    expect(isWatcher(mockAssets)).toBe(true);
+    expect(isAdmission(mockCapabilities)).toBe(true);
+    expect(isWatcher(mockCapabilities)).toBe(true);
   });
   it("should return true from isAdmission when any capability has mutate/validate/finalize", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [{ isMutate: true }],
-          hasSchedule: false,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [{ isMutate: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isAdmission(mockAssets)).toBe(true);
+    expect(isAdmission(mockCapabilities)).toBe(true);
   });
 
   it("should return false from isAdmission when no capability has admission bindings", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [{ isWatch: true }],
-          hasSchedule: false,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [{ isWatch: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isAdmission(mockAssets)).toBe(false);
+    expect(isAdmission(mockCapabilities)).toBe(false);
   });
 
   it("should return true from isWatcher when capability has hasSchedule", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [],
-          hasSchedule: true,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: true,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isWatcher(mockAssets)).toBe(true);
+    expect(isWatcher(mockCapabilities)).toBe(true);
   });
 
   it("should return true from isWatcher when capability has watch/queue/finalize binding", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [{ isWatch: true }],
-          hasSchedule: false,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [{ isWatch: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isWatcher(mockAssets)).toBe(true);
+    expect(isWatcher(mockCapabilities)).toBe(true);
   });
 
   it("should return false from isWatcher when capability has no watch bindings or schedule", () => {
-    const mockAssets = {
-      capabilities: [
-        {
-          bindings: [{ isValidate: true }],
-          hasSchedule: false,
-        },
-      ],
-    } as unknown as Assets;
+    const mockCapabilities = [
+      {
+        bindings: [{ isValidate: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
 
-    expect(isWatcher(mockAssets)).toBe(false);
+    expect(isWatcher(mockCapabilities)).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+type ControllerType = "admission" | "watcher";
+
 export function clusterRoleTemplate(): string {
   return `
     apiVersion: rbac.authorization.k8s.io/v1
@@ -61,8 +63,9 @@ export function chartYaml(name: string, description?: string): string {
 `;
 }
 
-export function watcherDeployTemplate(buildTimestamp: string): string {
+export function watcherDeployTemplate(buildTimestamp: string, type: ControllerType): string {
   return `
+      {{- if .Values.${type}.enabled }}
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -154,11 +157,13 @@ export function watcherDeployTemplate(buildTimestamp: string): string {
               {{- if .Values.watcher.extraVolumes }}
               {{- toYaml .Values.watcher.extraVolumes | nindent 8 }}
               {{- end }}
+      {{- end }}
     `;
 }
 
-export function admissionDeployTemplate(buildTimestamp: string): string {
+export function admissionDeployTemplate(buildTimestamp: string, type: ControllerType): string {
   return `
+      {{- if .Values.${type}.enabled }}
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -270,9 +275,10 @@ export function admissionDeployTemplate(buildTimestamp: string): string {
               {{- if .Values.admission.extraVolumes }}
               {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
               {{- end }}
+      {{- end }}
     `;
 }
-type ControllerType = "admission" | "watcher";
+
 export function serviceMonitorTemplate(name: string, type: ControllerType): string {
   return `
       {{- if .Values.${type}.serviceMonitor.enabled }}
@@ -303,6 +309,7 @@ export function serviceMonitorTemplate(name: string, type: ControllerType): stri
 
 export function serviceTemplate(name: string, type: ControllerType): string {
   return `
+      {{- if .Values.${type}.enabled }}
       apiVersion: v1
       kind: Service
       metadata:
@@ -317,5 +324,6 @@ export function serviceTemplate(name: string, type: ControllerType): string {
         ports:
         - port: 443
           targetPort: 3000
-  `;
+      {{- end }}
+    `;
 }

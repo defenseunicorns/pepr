@@ -7,7 +7,7 @@ import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
 import { Assets } from "./assets";
 import { Binding } from "../types";
-import { genEnv } from "./envrionment";
+import { genEnv } from "./environment";
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
