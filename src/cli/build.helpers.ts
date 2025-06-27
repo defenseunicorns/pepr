@@ -11,7 +11,7 @@ import { promises as fs } from "fs";
 import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
-import { getDeployment, getModuleSecret, getWatcher } from "../lib/assets/pods";
+import { getDeployment, getModuleSecret, getWatcher } from "../lib/assets/k8sObjects";
 
 interface ImageOptions {
   customImage?: string;

@@ -8,6 +8,7 @@ import {
   namespaceTemplate,
   clusterRoleTemplate,
   admissionDeployTemplate,
+  serviceTemplate,
   serviceMonitorTemplate,
   watcherDeployTemplate,
 } from "./helm";
@@ -23,9 +24,35 @@ import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
-import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
+import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
+
+export function isAdmission(capabilities: CapabilityExport[]): boolean {
+  for (const capability of capabilities) {
+    const admissionBindings = capability.bindings.filter(
+      binding => binding.isFinalize || binding.isMutate || binding.isValidate,
+    );
+    if (admissionBindings.length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+export function isWatcher(capabilities: CapabilityExport[]): boolean {
+  for (const capability of capabilities) {
+    if (capability.hasSchedule) {
+      return true;
+    }
+    const watcherBindings = capability.bindings.filter(
+      binding => binding.isFinalize || binding.isWatch || binding.isQueue,
+    );
+    if (watcherBindings.length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export class Assets {
   readonly name: string;
@@ -131,7 +158,7 @@ export class Assets {
     if (validateWebhook || mutateWebhook) {
       await fs.writeFile(
         helm.files.admissionDeploymentYaml,
-        dedent(admissionDeployTemplate(this.buildTimestamp)),
+        dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
       );
       await fs.writeFile(
         helm.files.admissionServiceMonitorYaml,
@@ -194,8 +221,14 @@ export class Assets {
           (): string => dedent(chartYaml(this.config.uuid, this.config.description || "")),
         ],
         [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
-        [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
-        [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
+        [
+          helm.files.watcherServiceYaml,
+          (): string => dedent(serviceTemplate(this.name, "watcher")),
+        ],
+        [
+          helm.files.admissionServiceYaml,
+          (): string => dedent(serviceTemplate(this.name, "admission")),
+        ],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
         [
           helm.files.apiPathSecretYaml,
@@ -221,7 +254,10 @@ export class Assets {
         apiPath: this.apiPath,
         capabilities: this.capabilities,
       };
-      await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);
+      await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets, {
+        admission: isAdmission(this.capabilities),
+        watcher: isWatcher(this.capabilities),
+      });
 
       const webhooks = {
         mutate: await webhookGeneratorFunction(
@@ -242,7 +278,7 @@ export class Assets {
       if (watchDeployment) {
         await fs.writeFile(
           helm.files.watcherDeploymentYaml,
-          dedent(watcherDeployTemplate(this.buildTimestamp)),
+          dedent(watcherDeployTemplate(this.buildTimestamp, "watcher")),
         );
         await fs.writeFile(
           helm.files.watcherServiceMonitorYaml,

@@ -6,6 +6,7 @@ import {
   chartYaml,
   watcherDeployTemplate,
   admissionDeployTemplate,
+  serviceTemplate,
   serviceMonitorTemplate,
 } from "./helm";
 import { expect, describe, it } from "vitest";
@@ -64,6 +65,17 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: monitoring.coreos.com/v1");
       expect(result).toContain("kind: ServiceMonitor");
       expect(result).toContain("name: watcher");
+      expect(result).toContain("pepr.dev/controller: watcher");
+    });
+  });
+
+  describe("serviceTemplate", () => {
+    it("should generate a Service template correctly", () => {
+      const result = serviceTemplate("test-service", "watcher");
+      expect(result).toContain("apiVersion: v1");
+      expect(result).toContain("kind: Service");
+      expect(result).toContain("name: test-service-watcher");
+      expect(result).toContain("app: test-service-watcher");
       expect(result).toContain("pepr.dev/controller: watcher");
     });
   });

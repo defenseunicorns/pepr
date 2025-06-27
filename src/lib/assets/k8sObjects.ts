@@ -7,7 +7,7 @@ import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
 import { Assets } from "./assets";
 import { Binding } from "../types";
-import { genEnv } from "./envrionment";
+import { genEnv } from "./environment";
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
@@ -363,4 +363,56 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
       },
     };
   }
+}
+
+export function service(name: string): kind.Service {
+  return {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name,
+      namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "admission",
+      },
+    },
+    spec: {
+      selector: {
+        app: name,
+        "pepr.dev/controller": "admission",
+      },
+      ports: [
+        {
+          port: 443,
+          targetPort: 3000,
+        },
+      ],
+    },
+  };
+}
+
+export function watcherService(name: string): kind.Service {
+  return {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name: `${name}-watcher`,
+      namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "watcher",
+      },
+    },
+    spec: {
+      selector: {
+        app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
+      },
+      ports: [
+        {
+          port: 443,
+          targetPort: 3000,
+        },
+      ],
+    },
+  };
 }

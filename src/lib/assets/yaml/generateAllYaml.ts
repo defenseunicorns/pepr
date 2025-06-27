@@ -4,7 +4,7 @@
 import crypto from "crypto";
 import { Assets } from "../assets";
 import { WebhookType } from "../../enums";
-import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
+import { apiPathSecret, tlsSecret } from "../networking";
 import {
   clusterRole,
   clusterRoleBinding,
@@ -13,7 +13,7 @@ import {
   storeRoleBinding,
 } from "../rbac";
 import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
-import { getModuleSecret, getNamespace } from "../pods";
+import { getModuleSecret, getNamespace, watcherService, service } from "../k8sObjects";
 import { promises as fs } from "fs";
 import { webhookConfigGenerator } from "../webhooks";
 

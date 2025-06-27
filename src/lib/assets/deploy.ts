@@ -8,8 +8,15 @@ import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
 import { Assets } from "./assets";
 import Log from "../telemetry/logger";
-import { apiPathSecret, service, tlsSecret, watcherService } from "./networking";
-import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
+import { apiPathSecret, tlsSecret } from "./networking";
+import {
+  getDeployment,
+  service,
+  watcherService,
+  getModuleSecret,
+  getNamespace,
+  getWatcher,
+} from "./k8sObjects";
 import {
   clusterRole,
   clusterRoleBinding,

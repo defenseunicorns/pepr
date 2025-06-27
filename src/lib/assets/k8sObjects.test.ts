@@ -1,4 +1,4 @@
-import { getNamespace, getWatcher, getDeployment, getModuleSecret } from "./pods";
+import { getNamespace, getWatcher, getDeployment, getModuleSecret } from "./k8sObjects";
 import { expect, describe, it, vi, afterEach } from "vitest";
 import { Assets } from "./assets";
 import { gzipSync } from "zlib";
