@@ -1,4 +1,4 @@
-# 14. Admission-time verification of image signatures
+# 15. Kubernetes Fluent Client Watch with Undici
 
 Date: 2024-11-20
 
