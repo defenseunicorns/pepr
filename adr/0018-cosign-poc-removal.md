@@ -1,4 +1,4 @@
-# 16. Removal of Cosign Proof-of-Concept from Project
+# 18. Removal of Cosign Proof-of-Concept from Project
 
 Date: 2025-03-18
 

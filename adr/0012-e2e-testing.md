@@ -1,4 +1,4 @@
-# 13. End-to-end (E2E) Testing
+# 12. End-to-end (E2E) Testing
 
 Date: 2024-07-17
 
