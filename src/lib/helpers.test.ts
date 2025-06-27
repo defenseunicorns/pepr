@@ -27,6 +27,13 @@ import { kind } from "kubernetes-fluent-client";
 
 export const callback = (): void => undefined;
 
+vi.mock("./telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+  },
+}));
+
 const mockCapabilities: CapabilityExport[] = JSON.parse(`[
     {
         "name": "hello-pepr",
