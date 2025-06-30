@@ -308,12 +308,13 @@ export function serviceMonitorTemplate(name: string, type: ControllerType): stri
 }
 
 export function serviceTemplate(name: string, type: ControllerType): string {
+  const svcName = type === "admission" ? name : `${name}-${type}`;
   return `
       {{- if .Values.${type}.enabled }}
       apiVersion: v1
       kind: Service
       metadata:
-        name: ${name}-${type}
+        name: ${svcName}
         namespace: pepr-system
         labels:
           pepr.dev/controller: ${type}
