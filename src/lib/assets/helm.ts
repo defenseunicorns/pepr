@@ -320,7 +320,7 @@ export function serviceTemplate(name: string, type: ControllerType): string {
           pepr.dev/controller: ${type}
       spec:
         selector:
-          app: ${name}-${type}
+          app: ${svcName}
           pepr.dev/controller: ${type}
         ports:
         - port: 443
