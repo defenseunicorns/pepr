@@ -3,6 +3,7 @@ import { expect, describe, it, vi, afterEach } from "vitest";
 import { Assets } from "./assets";
 import { gzipSync } from "zlib";
 import * as helpers from "../helpers";
+import { Binding } from "../types";
 
 vi.mock("zlib");
 
@@ -345,7 +346,21 @@ describe("watcher function", () => {
   });
 });
 describe("deployment function", () => {
-  it("deployment", () => {
+  it("deployment without bindings should return null", () => {
+    const result = getDeployment(assets, "test-hash", "test-timestamp");
+
+    expect(result).toBeNull();
+  });
+  it("deployment with bindings should return the deployment", () => {
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isMutate: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     const result = getDeployment(assets, "test-hash", "test-timestamp");
 
     expect(result).toBeTruthy();

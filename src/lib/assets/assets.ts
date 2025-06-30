@@ -109,20 +109,25 @@ export class Assets {
   allYaml = async (
     yamlGenerationFunction: (
       assets: Assets,
-      deployments: { default: V1Deployment; watch: V1Deployment | null },
+      deployments: { admission: V1Deployment | null; watch: V1Deployment | null },
+      services: { admission: kind.Service | null; watch: kind.Service | null },
     ) => Promise<string>,
-    getDeploymentFunction: (
-      assets: Assets,
-      hash: string,
-      buildTimestamp: string,
-      imagePullSecret?: string,
-    ) => kind.Deployment,
-    getWatcherFunction: (
-      assets: Assets,
-      hash: string,
-      buildTimestamp: string,
-      imagePullSecret?: string,
-    ) => kind.Deployment | null,
+    getControllerManifests: {
+      getDeploymentFunction: (
+        assets: Assets,
+        hash: string,
+        buildTimestamp: string,
+        imagePullSecret?: string,
+      ) => kind.Deployment | null;
+      getWatcherFunction: (
+        assets: Assets,
+        hash: string,
+        buildTimestamp: string,
+        imagePullSecret?: string,
+      ) => kind.Deployment | null;
+      getServiceFunction: (name: string, assets: Assets) => kind.Service | null;
+      getWatcherServiceFunction: (name: string, assets: Assets) => kind.Service | null;
+    },
     imagePullSecret?: string,
   ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
@@ -143,11 +148,26 @@ export class Assets {
     const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
-      default: getDeploymentFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
-      watch: getWatcherFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      admission: getControllerManifests.getDeploymentFunction(
+        this,
+        moduleHash,
+        this.buildTimestamp,
+        imagePullSecret,
+      ),
+      watch: getControllerManifests.getWatcherFunction(
+        this,
+        moduleHash,
+        this.buildTimestamp,
+        imagePullSecret,
+      ),
     };
 
-    return yamlGenerationFunction(this, deployments);
+    const services = {
+      admission: getControllerManifests.getServiceFunction(this.name, this),
+      watch: getControllerManifests.getWatcherServiceFunction(this.name, this),
+    };
+
+    return yamlGenerationFunction(this, deployments, services);
   };
 
   writeWebhookFiles = async (

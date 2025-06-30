@@ -248,13 +248,32 @@ describe("Assets", () => {
     const getWatcherFunction = vi
       .fn<() => kind.Deployment | null>()
       .mockReturnValue(new kind.Deployment());
-    await assets.allYaml(yamlGenerationFunction, getDeploymentFunction, getWatcherFunction);
+    const getServiceFunction = vi
+      .fn<() => kind.Service | null>()
+      .mockReturnValue(new kind.Service());
+    const getWatcherServiceFunction = vi
+      .fn<() => kind.Service | null>()
+      .mockReturnValue(new kind.Service());
+    await assets.allYaml(yamlGenerationFunction, {
+      getDeploymentFunction,
+      getWatcherFunction,
+      getServiceFunction,
+      getWatcherServiceFunction,
+    });
     const expectedDeployments = {
-      default: expect.any(Object),
+      admission: expect.any(Object),
+      watch: expect.any(Object),
+    };
+    const expectedServices = {
+      admission: expect.any(Object),
       watch: expect.any(Object),
     };
     expect(yamlGenerationFunction).toHaveBeenCalledTimes(1);
-    expect(yamlGenerationFunction).toHaveBeenCalledWith(assets, expectedDeployments);
+    expect(yamlGenerationFunction).toHaveBeenCalledWith(
+      assets,
+      expectedDeployments,
+      expectedServices,
+    );
   });
 
   it("should call writeWebhookFiles and write admissionController Deployment, ServiceMonitor, and WebhookConfigs", async () => {
