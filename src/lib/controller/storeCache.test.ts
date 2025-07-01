@@ -14,7 +14,6 @@ vi.mock("../telemetry/logger", () => ({
   },
 }));
 
-
 /**
  * Helper function to set up K8s mock implementation
  * @param mockType - 'success' for resolved promise, 'error' for rejected promise
@@ -33,7 +32,6 @@ function setupK8sMock(mockType: "success" | "error", errorStatus = 400) {
 }
 
 describe("StoreCache", () => {
-  const mockK8s = vi.mocked(K8s);
   beforeEach(() => {
     vi.resetAllMocks();
   });
