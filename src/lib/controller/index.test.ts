@@ -14,6 +14,13 @@ vi.mock("./store", () => {
     }),
   };
 });
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 describe("Controller", () => {
   let mockConfig: ModuleConfig;
