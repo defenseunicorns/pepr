@@ -36,3 +36,4 @@ registries:
     url: "quay.io"
     username: "{{ secrets.RAPIDFORT_USERNAME }}"
     password: "{{ secrets.RAPIDFORT_PASSWORD }}"
+    replaces-base: true
