@@ -34,6 +34,6 @@ registries:
   rapidfort:
     type: "docker-registry"
     url: "quay.io"
-    username: "{{ secrets.RAPIDFORT_USERNAME }}"
-    password: "{{ secrets.RAPIDFORT_PASSWORD }}"
+    username: "${{ secrets.RAPIDFORT_USERNAME }}"
+    password: "${{ secrets.RAPIDFORT_PASSWORD }}"
     replaces-base: true
