@@ -110,21 +110,18 @@ async function validateHelmChart() {
   if (helmParsed && k8sParsed) {
     const helmJSON = sortKubernetesObjects(helmParsed);
     const expectedJSON = sortKubernetesObjects(k8sParsed);
-    console.log("Helm JSON:", JSON.stringify(helmJSON, null, 2));
+
     for (const obj of helmJSON) {
       if (obj.metadata && obj.metadata.name) {
-        console.log(`Helm - Object kind: ${obj.kind}, name: ${obj.metadata.name}`);
         differences[`${obj.kind}/${obj.metadata.name}`] = differences[obj.metadata.name];
       }
     }
     for (const obj of expectedJSON) {
       if (obj.metadata && obj.metadata.name) {
-        console.log(`Expected - Object kind: ${obj.kind}, name: ${obj.metadata.name}`);
         delete differences[`${obj.kind}/${obj.metadata.name}`];
       }
     }
 
-    console.log("Differences:", differences);
     expect(helmJSON.toString()).toBe(expectedJSON.toString());
   }
 }
