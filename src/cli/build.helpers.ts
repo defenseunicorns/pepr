@@ -11,7 +11,13 @@ import { promises as fs } from "fs";
 import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
-import { getDeployment, getModuleSecret, getWatcher } from "../lib/assets/pods";
+import {
+  getDeployment,
+  getModuleSecret,
+  getWatcher,
+  service,
+  watcherService,
+} from "../lib/assets/k8sObjects";
 
 interface ImageOptions {
   customImage?: string;
@@ -193,7 +199,16 @@ export async function generateYamlAndWriteToDisk(obj: {
   const chartPath = `${uuid}-chart`;
   const yamlPath = resolve(outputDir, yamlFile);
   try {
-    const yaml = await assets.allYaml(generateAllYaml, getDeployment, getWatcher, imagePullSecret);
+    const yaml = await assets.allYaml(
+      generateAllYaml,
+      {
+        getDeploymentFunction: getDeployment,
+        getWatcherFunction: getWatcher,
+        getServiceFunction: service,
+        getWatcherServiceFunction: watcherService,
+      },
+      imagePullSecret,
+    );
     const zarfPath = resolve(outputDir, "zarf.yaml");
 
     let localZarf = "";

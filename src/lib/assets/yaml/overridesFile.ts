@@ -1,4 +1,4 @@
-import { genEnv } from "../envrionment";
+import { genEnv } from "../environment";
 import { CapabilityExport, ModuleConfig } from "../../types";
 import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
@@ -18,6 +18,7 @@ export async function overridesFile(
   { hash, name, image, config, apiPath, capabilities }: ChartOverrides,
   path: string,
   imagePullSecrets: string[],
+  controllerType: { admission: boolean; watcher: boolean } = { admission: true, watcher: true },
 ): Promise<void> {
   const rbacOverrides = clusterRole(name, capabilities, config.rbacMode, config.rbac).rules;
 
@@ -41,6 +42,7 @@ export async function overridesFile(
     },
     uuid: name,
     admission: {
+      enabled: controllerType.admission === true ? true : false,
       antiAffinity: false,
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
@@ -110,6 +112,7 @@ export async function overridesFile(
       },
     },
     watcher: {
+      enabled: controllerType.watcher === true ? true : false,
       terminationGracePeriodSeconds: 5,
       env: genEnv(config, true, true),
       envFrom: [],

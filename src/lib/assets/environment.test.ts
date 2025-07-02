@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ModuleConfig } from "../types";
-import { genEnv } from "./envrionment";
+import { genEnv } from "./environment";
 
 describe("genEnv", () => {
   it("generates default environment variables without watch mode", () => {

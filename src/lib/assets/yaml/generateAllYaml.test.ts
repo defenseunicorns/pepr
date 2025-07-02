@@ -9,8 +9,8 @@ import { V1Deployment, KubernetesObject } from "@kubernetes/client-node";
 import { promises as fs } from "fs";
 import { webhookConfigGenerator } from "../webhooks";
 import { WebhookType } from "../../enums";
-import { getNamespace, getModuleSecret } from "../pods";
-import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
+import { getNamespace, getModuleSecret } from "../k8sObjects";
+import { apiPathSecret, tlsSecret } from "../networking";
 import {
   clusterRole,
   clusterRoleBinding,
@@ -65,9 +65,11 @@ vi.mock("@kubernetes/client-node", async () => {
   };
 });
 
-vi.mock("../pods", () => ({
+vi.mock("../k8sObjects", () => ({
   getNamespace: vi.fn().mockReturnValue({}),
   getModuleSecret: vi.fn().mockReturnValue({}),
+  watcherService: vi.fn().mockReturnValue({}),
+  service: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock("../rbac", () => ({
@@ -80,9 +82,7 @@ vi.mock("../rbac", () => ({
 
 vi.mock("../networking", () => ({
   apiPathSecret: vi.fn().mockReturnValue({}),
-  service: vi.fn().mockReturnValue({}),
   tlsSecret: vi.fn().mockReturnValue({}),
-  watcherService: vi.fn().mockReturnValue({}),
 }));
 describe("generateAllYaml", () => {
   const moduleConfig: ModuleConfig = {
@@ -103,29 +103,33 @@ describe("generateAllYaml", () => {
   };
   const assets = new Assets(moduleConfig, "/tmp", ["secret1", "secret2"], "localhost");
   assets.capabilities = [];
-  const mockDeployments: { default: V1Deployment; watch: V1Deployment | null } = {
-    default: { kind: "Deployment", metadata: { name: "default-deployment" } } as V1Deployment,
+  const mockDeployments: { admission: V1Deployment; watch: V1Deployment | null } = {
+    admission: { kind: "Deployment", metadata: { name: "default-deployment" } } as V1Deployment,
     watch: { kind: "Deployment", metadata: { name: "watch-deployment" } } as V1Deployment,
+  };
+  const mockServices = {
+    admission: { kind: "Service", metadata: { name: "admission-service" } },
+    watch: { kind: "Service", metadata: { name: "watch-service" } },
   };
 
   it("should read the minified module file and create a hash", async () => {
     const mockReadFile = vi.mocked(fs.readFile);
     const cryptoCreateHashSpy = vi.spyOn(crypto, "createHash");
 
-    await generateAllYaml(assets, mockDeployments);
+    await generateAllYaml(assets, mockDeployments, mockServices);
     expect(mockReadFile).toHaveBeenCalledTimes(1);
     expect(cryptoCreateHashSpy).toHaveBeenCalledTimes(1);
     expect(cryptoCreateHashSpy).toHaveBeenCalledWith("sha256");
   });
 
   it("should call webhookConfigGenerator for mutate and validate", async () => {
-    await generateAllYaml(assets, mockDeployments);
+    await generateAllYaml(assets, mockDeployments, mockServices);
     expect(webhookConfigGenerator).toHaveBeenCalledWith(assets, WebhookType.MUTATE, 10);
     expect(webhookConfigGenerator).toHaveBeenCalledWith(assets, WebhookType.VALIDATE, 10);
   });
 
   it("should call functions to generate kubernetes manifests required to deploy Pepr", async () => {
-    await generateAllYaml(assets, mockDeployments);
+    await generateAllYaml(assets, mockDeployments, mockServices);
 
     expect(getNamespace).toHaveBeenCalledWith(assets.config.customLabels?.namespace);
     expect(clusterRole).toHaveBeenCalledWith(
@@ -138,8 +142,6 @@ describe("generateAllYaml", () => {
     expect(serviceAccount).toHaveBeenCalledWith(assets.name);
     expect(apiPathSecret).toHaveBeenCalledWith(assets.name, assets.apiPath);
     expect(tlsSecret).toHaveBeenCalledWith(assets.name, assets.tls);
-    expect(service).toHaveBeenCalledWith(assets.name);
-    expect(watcherService).toHaveBeenCalledWith(assets.name);
     expect(getModuleSecret).toHaveBeenCalledWith(
       assets.name,
       "mocked",
