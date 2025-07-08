@@ -69,10 +69,9 @@ export default function (program: RootCmd): void {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .addOption(
-      new Option("-M, --rbac-mode <admin|scoped>", "Set RBAC mode (default: admin).").choices([
-        "admin",
-        "scoped",
-      ]),
+      new Option("-M, --rbac-mode <admin|scoped>", "Set RBAC mode.")
+        .choices(["admin", "scoped"])
+        .default("admin"),
     )
     .addOption(
       new Option(
