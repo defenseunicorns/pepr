@@ -87,14 +87,14 @@ Deploy the current module into a Kubernetes cluster, useful for CI systems. Not 
 
 **Options:**
 
-- `-i, --image [image]` - Override the image tag
-- `--confirm` - Skip confirmation prompt
-- `--pullSecret <name>` - Deploy imagePullSecret for Controller private registry
-- `--docker-server <server>` - Docker server address
-- `--docker-username <username>` - Docker registry username
-- `--docker-email <email>` - Email for Docker registry
-- `--docker-password <password>` - Password for Docker registry
-- `--force` - Force deploy the module, override manager field
+- `-E, --docker-email <email>` - Email for Docker registry.
+- `-P, --docker-password <password>` - Password for Docker registry.
+- `-S, --docker-server <server>` - Docker server address.
+- `-U, --docker-username <username>` - Docker registry username.
+- `-f, --force` - Force deploy the module, override manager field.
+- `-i, --image <image>` - Override the image tag.
+- `-p, --pull-secret <name>` - Deploy imagePullSecret for Controller private registry.
+- `-y, --yes` - Skip confirmation prompts.
 - `-h, --help` - display help for command
 
 ## `npx pepr dev`
