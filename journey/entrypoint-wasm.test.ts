@@ -11,7 +11,7 @@ afterAll(async () => {
 });
 
 describe(
-  "Journey: `npx pepr build -r gchr.io/defenseunicorns -o dist/pepr-test-module/child/folder`",
+  "Journey: `npx pepr build --registry-info gchr.io/defenseunicorns --output dist/pepr-test-module/child/folder`",
   { timeout: 1000 * 60 * 5 },
   peprBuild,
 );
