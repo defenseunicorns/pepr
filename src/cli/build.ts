@@ -77,7 +77,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "-I, --registry-info <registry/username>",
-        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.",
+        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.",
       ).conflicts(["customImage", "registry"]),
     )
     .option("-P, --with-pull-secret <name>", "Use image pull secret for controller Deployment.", "")
@@ -91,7 +91,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "-i, --custom-image <image>",
-        "Specify a custom image with version for deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
+        "Specify a custom image with version for deployments. Conflicts with --registry-info and --registry. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'",
       ).conflicts(["registryInfo", "registry"]),
     )
     .option(
@@ -102,7 +102,7 @@ export default function (program: RootCmd): void {
     .addOption(
       new Option(
         "-r, --registry <GitHub|Iron Bank>",
-        "Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image.",
+        "Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info.",
       )
         .conflicts(["customImage", "registryInfo"])
         .choices(["GitHub", "Iron Bank"]),
