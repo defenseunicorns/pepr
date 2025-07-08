@@ -28,6 +28,9 @@ import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
 
+export function norWatchOrAdmission(capabilities: CapabilityExport[]): boolean {
+  return !isAdmission(capabilities) && !isWatcher(capabilities);
+}
 export function isAdmission(capabilities: CapabilityExport[]): boolean {
   for (const capability of capabilities) {
     const admissionBindings = capability.bindings.filter(
@@ -275,7 +278,7 @@ export class Assets {
         capabilities: this.capabilities,
       };
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets, {
-        admission: isAdmission(this.capabilities),
+        admission: isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities),
         watcher: isWatcher(this.capabilities),
       });
 

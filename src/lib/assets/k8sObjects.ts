@@ -5,7 +5,7 @@ import { KubernetesObject } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
-import { Assets, isAdmission, isWatcher } from "./assets";
+import { Assets, isAdmission, isWatcher, norWatchOrAdmission } from "./assets";
 import { genEnv } from "./environment";
 
 /** Generate the pepr-system namespace */
@@ -185,7 +185,7 @@ export function getDeployment(
   const { name, image, config } = assets;
   const app = name;
 
-  if (!isAdmission(assets.capabilities)) {
+  if (!isAdmission(assets.capabilities) && !norWatchOrAdmission(assets.capabilities)) {
     return null;
   }
 
@@ -355,7 +355,7 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
 }
 
 export function service(name: string, assets: Assets): kind.Service | null {
-  if (!isAdmission(assets.capabilities)) {
+  if (!isAdmission(assets.capabilities) && !norWatchOrAdmission(assets.capabilities)) {
     return null;
   }
   return {

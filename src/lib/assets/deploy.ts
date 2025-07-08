@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-import { Assets, isAdmission } from "./assets";
+import { Assets, isAdmission, norWatchOrAdmission } from "./assets";
 import Log from "../telemetry/logger";
 import { apiPathSecret, tlsSecret } from "./networking";
 import {
@@ -155,7 +155,7 @@ async function setupController(
   const mod = getModuleSecret(name, code, hash);
   await K8s(kind.Secret).Apply(mod, { force });
 
-  if (isAdmission(assets.capabilities)) {
+  if (isAdmission(assets.capabilities) || norWatchOrAdmission(assets.capabilities)) {
     const svc = service(name, assets);
     if (svc) {
       Log.info("Applying controller service");

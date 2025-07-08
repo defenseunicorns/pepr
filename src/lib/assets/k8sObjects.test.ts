@@ -346,10 +346,10 @@ describe("watcher function", () => {
   });
 });
 describe("deployment function", () => {
-  it("deployment without bindings should return null", () => {
+  it("deployment without bindings should return not null because a controller must be deployed for the store", () => {
     const result = getDeployment(assets, "test-hash", "test-timestamp");
 
-    expect(result).toBeNull();
+    expect(result).toBeTruthy();
   });
   it("deployment with bindings should return the deployment", () => {
     assets.capabilities = [

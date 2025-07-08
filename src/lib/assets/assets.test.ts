@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { ModuleConfig, CapabilityExport, Binding } from "../types";
-import { Assets, isAdmission, isWatcher } from "./assets";
+import { Assets, isAdmission, isWatcher, norWatchOrAdmission } from "./assets";
 import { expect, describe, it, vi, beforeEach, afterEach, afterAll, type Mock } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 import { createDirectoryIfNotExists } from "../filesystemService";
@@ -409,6 +409,28 @@ describe("Assets", () => {
         "/tmp",
       ),
     ).rejects.toThrow(exitString);
+  });
+
+  it("should return true from norWatchOrAdmission when no capability has watch or admission bindings", () => {
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: true,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(norWatchOrAdmission(mockCapabilities)).toBe(false);
+  });
+
+  it("should return false from norWatchOrAdmission when no capability has a watch or admission bindings", () => {
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(norWatchOrAdmission(mockCapabilities)).toBe(true);
   });
 
   it("should return true from isAdmission and isWatcher when the binding has finalize", () => {
