@@ -30,6 +30,9 @@ RUN npm run build && \
     # Remove Ramda unused Ramda files
     rm -rf node_modules/ramda/dist && \
     rm -rf node_modules/ramda/es && \
+    rm -rf app/node_modules/esbuild && \
+    rm -rf app/node_modules/@esbuild && \
+    rm -rf app/node_modules/.bin/esbuild && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
