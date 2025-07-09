@@ -123,10 +123,12 @@ jobs:
 
       - name: Download ORAS
         run: |
-          ORAS_VERSION="1.2.2"
-          curl -LO "https://github.com/oras-project/oras/releases/download/v${ORAS_VERSION}/oras_${ORAS_VERSION}_linux_amd64.tar.gz"
-          tar -xzf oras_*.tar.gz oras
-          sudo mv oras /usr/local/bin/oras
+          VERSION="1.2.2"
+          curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p oras-install/
+          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+          sudo mv oras-install/oras /usr/local/bin/
+          rm -rf oras_${VERSION}_*.tar.gz oras-install/
 
       - name: Docker login to UDS registry
         run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com

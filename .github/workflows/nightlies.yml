@@ -29,10 +29,12 @@ jobs:
 
       - name: Download ORAS
         run: |
-          ORAS_VERSION="1.2.2"
+          VERSION="1.2.2"
           curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-          tar -xzf oras_*.tar.gz oras
-          sudo mv oras /usr/local/bin/oras
+          mkdir -p oras-install/
+          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+          sudo mv oras-install/oras /usr/local/bin/
+          rm -rf oras_${VERSION}_*.tar.gz oras-install/
 
       - name: Use Node.js 20
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
