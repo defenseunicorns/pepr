@@ -41,8 +41,5 @@ npm run build
 npm publish --tag "nightly"
 
 # UDS Registry
-npm version --no-git-tag-version "$FULL_VERSION"
-npm run build
-npm pack
 oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:"$FULL_VERSION" \
     --artifact-type application/vnd.pepr.module.layer.v1 pepr-"$FULL_VERSION".tgz
