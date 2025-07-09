@@ -30,5 +30,10 @@ while IFS= read -r arg; do
     BUILD_ARGS+=("$arg")
 done < <(node scripts/read-unicorn-build-args.mjs)
 
+# GHCR
 docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag ghcr.io/defenseunicorns/pepr/controller:v"$VERSION" .
 docker buildx build --push --platform linux/arm64/v8,linux/amd64 "${BUILD_ARGS[@]}" --tag ghcr.io/defenseunicorns/pepr/private/controller:v"$VERSION" .
+
+# UDS Registry
+docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag registry.defenseunicorns.com/pepr-dev/controller:v"$VERSION" .
+docker buildx build --push --platform linux/arm64/v8,linux/amd64 "${BUILD_ARGS[@]}" --tag registry.defenseunicorns.com/pepr-dev/private/controller:v"$VERSION" .
