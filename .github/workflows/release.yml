@@ -93,7 +93,7 @@ jobs:
           provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
 
   pack-and-push:
-    needs: [slsa]
+    needs: [publish]
     runs-on: ubuntu-latest
 
     steps:
@@ -107,19 +107,6 @@ jobs:
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: 24
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Apply version tag
-        run: npm run set:version
-
-      - name: Build project
-        run: npm run build
-
-      - name: Create npm package
-        run: |
-          npm pack
 
       - name: Download ORAS
         run: |
