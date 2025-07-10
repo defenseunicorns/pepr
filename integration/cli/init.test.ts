@@ -39,7 +39,7 @@ describe("init", () => {
       const argz = [
         `--name ${name}`,
         `--description ${desc}`,
-        `--errorBehavior ${errorBehavior}`,
+        `--error-behavior ${errorBehavior}`,
         `--uuid random-identifier`,
         "--confirm",
         "--skip-post-init",

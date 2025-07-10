@@ -30,7 +30,7 @@ describe("build", () => {
       const initArgs = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid random-identifier`,
         "--confirm",
         "--skip-post-init",

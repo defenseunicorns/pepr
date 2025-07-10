@@ -42,7 +42,7 @@ describe("dev", { timeout: five_mins }, () => {
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid dev-test`,
         "--confirm",
         "--skip-post-init",

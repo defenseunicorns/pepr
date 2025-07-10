@@ -30,7 +30,7 @@ describe("build rbacMode=scoped", () => {
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid ${id}`,
         "--confirm",
         "--skip-post-init",
