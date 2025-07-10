@@ -116,7 +116,7 @@ export default function (program: RootCmd): void {
     )
     .action(async opts => {
       // assign custom output directory if provided
-      outputDir = await handleCustomOutputDir(opts.outputDir);
+      outputDir = await handleCustomOutputDir(opts.output);
 
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
