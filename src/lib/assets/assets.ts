@@ -8,6 +8,7 @@ import {
   namespaceTemplate,
   clusterRoleTemplate,
   admissionDeployTemplate,
+  serviceTemplate,
   serviceMonitorTemplate,
   watcherDeployTemplate,
 } from "./helm";
@@ -23,9 +24,38 @@ import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
 import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
-import { watcherService, service, tlsSecret, apiPathSecret } from "./networking";
+import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
+
+export function norWatchOrAdmission(capabilities: CapabilityExport[]): boolean {
+  return !isAdmission(capabilities) && !isWatcher(capabilities);
+}
+export function isAdmission(capabilities: CapabilityExport[]): boolean {
+  for (const capability of capabilities) {
+    const admissionBindings = capability.bindings.filter(
+      binding => binding.isFinalize || binding.isMutate || binding.isValidate,
+    );
+    if (admissionBindings.length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+export function isWatcher(capabilities: CapabilityExport[]): boolean {
+  for (const capability of capabilities) {
+    if (capability.hasSchedule) {
+      return true;
+    }
+    const watcherBindings = capability.bindings.filter(
+      binding => binding.isFinalize || binding.isWatch || binding.isQueue,
+    );
+    if (watcherBindings.length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export class Assets {
   readonly name: string;
@@ -82,20 +112,25 @@ export class Assets {
   allYaml = async (
     yamlGenerationFunction: (
       assets: Assets,
-      deployments: { default: V1Deployment; watch: V1Deployment | null },
+      deployments: { admission: V1Deployment | null; watch: V1Deployment | null },
+      services: { admission: kind.Service | null; watch: kind.Service | null },
     ) => Promise<string>,
-    getDeploymentFunction: (
-      assets: Assets,
-      hash: string,
-      buildTimestamp: string,
-      imagePullSecret?: string,
-    ) => kind.Deployment,
-    getWatcherFunction: (
-      assets: Assets,
-      hash: string,
-      buildTimestamp: string,
-      imagePullSecret?: string,
-    ) => kind.Deployment | null,
+    getControllerManifests: {
+      getDeploymentFunction: (
+        assets: Assets,
+        hash: string,
+        buildTimestamp: string,
+        imagePullSecret?: string,
+      ) => kind.Deployment | null;
+      getWatcherFunction: (
+        assets: Assets,
+        hash: string,
+        buildTimestamp: string,
+        imagePullSecret?: string,
+      ) => kind.Deployment | null;
+      getServiceFunction: (name: string, assets: Assets) => kind.Service | null;
+      getWatcherServiceFunction: (name: string, assets: Assets) => kind.Service | null;
+    },
     imagePullSecret?: string,
   ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
@@ -116,11 +151,26 @@ export class Assets {
     const moduleHash = crypto.createHash("sha256").update(code).digest("hex");
 
     const deployments = {
-      default: getDeploymentFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
-      watch: getWatcherFunction(this, moduleHash, this.buildTimestamp, imagePullSecret),
+      admission: getControllerManifests.getDeploymentFunction(
+        this,
+        moduleHash,
+        this.buildTimestamp,
+        imagePullSecret,
+      ),
+      watch: getControllerManifests.getWatcherFunction(
+        this,
+        moduleHash,
+        this.buildTimestamp,
+        imagePullSecret,
+      ),
     };
 
-    return yamlGenerationFunction(this, deployments);
+    const services = {
+      admission: getControllerManifests.getServiceFunction(this.name, this),
+      watch: getControllerManifests.getWatcherServiceFunction(this.name, this),
+    };
+
+    return yamlGenerationFunction(this, deployments, services);
   };
 
   writeWebhookFiles = async (
@@ -131,7 +181,7 @@ export class Assets {
     if (validateWebhook || mutateWebhook) {
       await fs.writeFile(
         helm.files.admissionDeploymentYaml,
-        dedent(admissionDeployTemplate(this.buildTimestamp)),
+        dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
       );
       await fs.writeFile(
         helm.files.admissionServiceMonitorYaml,
@@ -194,8 +244,14 @@ export class Assets {
           (): string => dedent(chartYaml(this.config.uuid, this.config.description || "")),
         ],
         [helm.files.namespaceYaml, (): string => dedent(namespaceTemplate())],
-        [helm.files.watcherServiceYaml, (): string => toYaml(watcherService(this.name))],
-        [helm.files.admissionServiceYaml, (): string => toYaml(service(this.name))],
+        [
+          helm.files.watcherServiceYaml,
+          (): string => dedent(serviceTemplate(this.name, "watcher")),
+        ],
+        [
+          helm.files.admissionServiceYaml,
+          (): string => dedent(serviceTemplate(this.name, "admission")),
+        ],
         [helm.files.tlsSecretYaml, (): string => toYaml(tlsSecret(this.name, this.tls))],
         [
           helm.files.apiPathSecretYaml,
@@ -221,7 +277,10 @@ export class Assets {
         apiPath: this.apiPath,
         capabilities: this.capabilities,
       };
-      await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets);
+      await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets, {
+        admission: isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities),
+        watcher: isWatcher(this.capabilities),
+      });
 
       const webhooks = {
         mutate: await webhookGeneratorFunction(
@@ -242,7 +301,7 @@ export class Assets {
       if (watchDeployment) {
         await fs.writeFile(
           helm.files.watcherDeploymentYaml,
-          dedent(watcherDeployTemplate(this.buildTimestamp)),
+          dedent(watcherDeployTemplate(this.buildTimestamp, "watcher")),
         );
         await fs.writeFile(
           helm.files.watcherServiceMonitorYaml,

@@ -38,8 +38,10 @@ RUN npm run build && \
     cp -r dist node_modules/pepr/dist && \
     cp package.json node_modules/pepr
 
+
 ##### DELIVER #####
 FROM quay.io/rfcurated/node:24.3.0-jammy-fips-rfcurated@sha256:2f764fe6b800d9530fc8d911efcc2cc5585814f74d91b4a538a1c29102dc120e
+
 
 WORKDIR /app
 
