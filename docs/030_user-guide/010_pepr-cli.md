@@ -28,17 +28,17 @@ Build a Pepr Module for deployment.
 
 **Options:**
 
-- `-e, --entry-point [file]` - Specify the entry point file to build with. (default: "pepr.ts")
-- `-n, --no-embed` - Disables embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
-- `-i, --custom-image <custom-image>` - Specify a custom image (including version) for Admission and Watch Deployments. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
-- `-r, --registry-info [<registry>/<username>]` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Builds and pushes `'registry/username/custom-pepr-controller:<current-version>'`.
-- `-o, --output-dir <output directory>` - Define where to place build output
-- `--timeout <timeout>` - How long the API server should wait for a webhook to respond before treating the call as a failure
-- `--withPullSecret <imagePullSecret>` - Image Pull Secret: Use image pull secret for controller Deployment. (default: "")
-- `--registry <GitHub|Iron Bank>` - Container registry: Choose container registry for deployment manifests. Can't be used with --custom-image. (choices: "GitHub", "Iron Bank")
-- `-z, --zarf [manifest|chart]` - Zarf package type: manifest, chart (default: manifest) (choices: "manifest", "chart", default: "manifest")
-- `--rbac-mode [admin|scoped]` - Rbac Mode: admin, scoped (default: admin) (choices: "admin", "scoped")
-- `--custom-name [name]` - Specify a custom name for zarf component and service monitors in helm charts.
+- `-M, --rbac-mode <admin|scoped>` - Set RBAC mode. (choices: "admin", "scoped")
+- `-I, --registry-info <registry/username>` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.
+- `-P, --with-pull-secret <name>` - Use image pull secret for controller Deployment. (default: "")
+- `-c, --custom-name <name>` - Set name for zarf component and service monitors in helm charts.
+- `-e, --entry-point <file>` - Specify the entry point file to build with. (default: "pepr.ts")
+- `-i, --custom-image <image>` - Specify a custom image with version for deployments. Conflicts with --registry-info and --registry. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
+- `-n, --no-embed` - Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
+- `-o, --output <directory>` - Set output directory.
+- `-r, --registry <GitHub|Iron Bank>` - Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info. (choices: "GitHub", "Iron Bank")
+- `-t, --timeout <seconds>` - How long the API server should wait for a webhook to respond before treating the call as a failure.
+- `-z, --zarf <manifest|chart>` - Set Zarf package type (choices: "manifest", "chart", default: "manifest")
 - `-h, --help` - display help for command
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.

@@ -58,9 +58,9 @@ describe("build", () => {
           `--entry-point ${entryPoint}`,
           `--custom-image ${customImage}`,
           `--custom-name random-identifier`,
-          `--output-dir ${outputDir}`,
+          `--output ${outputDir}`,
           `--timeout ${timeout}`,
-          `--withPullSecret ${withPullSecret}`,
+          `--with-pull-secret ${withPullSecret}`,
           `--zarf ${zarf}`,
         ].join(" ");
         const build = await pepr.cli(testModule, { cmd: `pepr build ${argz}` });
@@ -83,7 +83,7 @@ describe("build", () => {
         // build would fail if given entrypoint didn't exist, so... no-op test!
       });
 
-      it("--output-dir, works", async () => {
+      it("--output, works", async () => {
         const dist = `${testModule}/dist`;
         expect(existsSync(dist)).toBe(false);
 
@@ -147,7 +147,7 @@ describe("build", () => {
         expect(valuesYaml.admission.webhookTimeout).toBe(timeout);
       });
 
-      it("--withPullSecret, works", async () => {
+      it("--with-pull-secret, works", async () => {
         const getDepImgPull = (deploy: kind.Deployment): string[] => {
           return deploy!.spec!.template!.spec!.imagePullSecrets!.map(
             imagePullSecret => imagePullSecret.name!,
