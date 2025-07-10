@@ -58,7 +58,7 @@ describe("build", () => {
           `--entry-point ${entryPoint}`,
           `--custom-image ${customImage}`,
           `--custom-name random-identifier`,
-          `--output-dir ${outputDir}`,
+          `--output ${outputDir}`,
           `--timeout ${timeout}`,
           `--with-pull-secret ${withPullSecret}`,
           `--zarf ${zarf}`,
@@ -83,7 +83,7 @@ describe("build", () => {
         // build would fail if given entrypoint didn't exist, so... no-op test!
       });
 
-      it("--output-dir, works", async () => {
+      it("--output, works", async () => {
         const dist = `${testModule}/dist`;
         expect(existsSync(dist)).toBe(false);
 
