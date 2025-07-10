@@ -79,19 +79,19 @@ function generateImagePullSecret(details: ValidatedImagePullSecretDetails): Imag
   };
 }
 
-export async function getUserConfirmation(opts: { confirm: boolean }): Promise<boolean> {
-  if (opts.confirm) {
+export async function getUserConfirmation(opts: { yes: boolean }): Promise<boolean> {
+  if (opts.yes) {
     return true;
   }
 
   // Prompt the user to confirm
-  const confirm = await prompt({
+  const confirmation = await prompt({
     type: "confirm",
-    name: "confirm",
+    name: "yes",
     message: "This will remove and redeploy the module. Continue?",
   });
 
-  return confirm.confirm ? true : false;
+  return confirmation.yes ? true : false;
 }
 
 async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
