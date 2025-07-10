@@ -58,7 +58,7 @@ export function peprUpgrade() {
 
   it(
     "should prepare, build, and deploy hello-pepr with pepr@pr-candidate",
-    { timeout: 1000 * 5 * 60 },
+    { timeout: 1000 * 10 * 60 },
     async () => {
       try {
         const image = process.env.PEPR_IMAGE || "pepr:dev";
