@@ -79,19 +79,19 @@ function generateImagePullSecret(details: ValidatedImagePullSecretDetails): Imag
   };
 }
 
-export async function getUserConfirmation(opts: { confirm: boolean }): Promise<boolean> {
-  if (opts.confirm) {
+export async function getUserConfirmation(opts: { yes: boolean }): Promise<boolean> {
+  if (opts.yes) {
     return true;
   }
 
   // Prompt the user to confirm
-  const confirm = await prompt({
+  const confirmation = await prompt({
     type: "confirm",
-    name: "confirm",
+    name: "yes",
     message: "This will remove and redeploy the module. Continue?",
   });
 
-  return confirm.confirm ? true : false;
+  return confirmation.yes ? true : false;
 }
 
 async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
@@ -130,14 +130,14 @@ export default function (program: RootCmd): void {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")
-    .option("-i, --image [image]", "Override the image tag")
-    .option("--confirm", "Skip confirmation prompt")
-    .option("--pullSecret <name>", "Deploy imagePullSecret for Controller private registry")
-    .option("--docker-server <server>", "Docker server address")
-    .option("--docker-username <username>", "Docker registry username")
-    .option("--docker-email <email>", "Email for Docker registry")
-    .option("--docker-password <password>", "Password for Docker registry")
-    .option("--force", "Force deploy the module, override manager field")
+    .option("-E, --docker-email <email>", "Email for Docker registry.")
+    .option("-P, --docker-password <password>", "Password for Docker registry.")
+    .option("-S, --docker-server <server>", "Docker server address.")
+    .option("-U, --docker-username <username>", "Docker registry username.")
+    .option("-f, --force", "Force deploy the module, override manager field.")
+    .option("-i, --image <image>", "Override the image tag.")
+    .option("-p, --pull-secret <name>", "Deploy imagePullSecret for Controller private registry.")
+    .option("-y, --yes", "Skip confirmation prompts.")
     .action(async opts => {
       const valResp = validateImagePullSecretDetails(opts);
       if (!valResp.valid) {
