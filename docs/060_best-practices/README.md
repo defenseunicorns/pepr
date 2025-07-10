@@ -71,12 +71,12 @@ When(a.Pod)
 
 ## Core Development
 
-When developing new features in Pepr Core, it is recommended to use `npx pepr deploy -i pepr:dev`, which will deploy Pepr's Kubernetes manifests to the cluster with the development image. This will allow you to test your changes without having to build a new image and push it to a registry.
+When developing new features in Pepr Core, it is recommended to use `npx pepr deploy --image pepr:dev`, which will deploy Pepr's Kubernetes manifests to the cluster with the development image. This will allow you to test your changes without having to build a new image and push it to a registry.
 
 The workflow for developing features in Pepr is:
 
 1. Run `npm test` which will create a k3d cluster and build a development image called `pepr:dev`
-2. Deploy development image into the cluster with `npx pepr deploy -i pepr:dev`
+2. Deploy development image into the cluster with `npx pepr deploy --image pepr:dev`
 
 ## Debugging
 
