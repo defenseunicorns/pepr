@@ -4,7 +4,7 @@
 import crypto from "crypto";
 import { Assets } from "../assets";
 import { WebhookType } from "../../enums";
-import { apiPathSecret, service, tlsSecret, watcherService } from "../networking";
+import { apiPathSecret, tlsSecret } from "../networking";
 import {
   clusterRole,
   clusterRoleBinding,
@@ -12,32 +12,59 @@ import {
   storeRole,
   storeRoleBinding,
 } from "../rbac";
-import { dumpYaml, V1Deployment } from "@kubernetes/client-node";
-import { getModuleSecret, getNamespace } from "../pods";
+import { dumpYaml, V1Deployment, V1Service, KubernetesObject } from "@kubernetes/client-node";
+import { getModuleSecret, getNamespace } from "../k8sObjects";
 import { promises as fs } from "fs";
 import { webhookConfigGenerator } from "../webhooks";
 
-type deployments = { default: V1Deployment; watch: V1Deployment | null };
+type deployments = { admission: V1Deployment | null; watch: V1Deployment | null };
+type services = {
+  admission: V1Service | null;
+  watch: V1Service | null;
+};
 
-export async function generateAllYaml(assets: Assets, deployments: deployments): Promise<string> {
+export function pushControllerManifests(
+  resources: KubernetesObject[],
+  deployments: deployments,
+  services: services,
+): KubernetesObject[] {
+  if (deployments.watch) {
+    resources.push(deployments.watch);
+  }
+  if (deployments.admission) {
+    resources.push(deployments.admission);
+  }
+  if (services.admission) {
+    resources.push(services.admission);
+  }
+  if (services.watch) {
+    resources.push(services.watch);
+  }
+  return resources;
+}
+
+export async function generateAllYaml(
+  assets: Assets,
+  deployments: deployments,
+  services: services,
+): Promise<string> {
   const { name, tls, apiPath, path, config } = assets;
   const code = await fs.readFile(path);
   const hash = crypto.createHash("sha256").update(code).digest("hex");
 
-  const resources = [
+  let resources = [
     getNamespace(assets.config.customLabels?.namespace),
     clusterRole(name, assets.capabilities, config.rbacMode, config.rbac),
     clusterRoleBinding(name),
     serviceAccount(name),
     apiPathSecret(name, apiPath),
     tlsSecret(name, tls),
-    deployments.default,
-    service(name),
-    watcherService(name),
     getModuleSecret(name, code, hash),
     storeRole(name),
     storeRoleBinding(name),
   ];
+
+  resources = pushControllerManifests(resources, deployments, services);
 
   const webhooks = {
     mutate: await webhookConfigGenerator(assets, WebhookType.MUTATE, assets.config.webhookTimeout),
@@ -48,8 +75,8 @@ export async function generateAllYaml(assets: Assets, deployments: deployments):
     ),
   };
 
-  // Add webhooks and watch deployment if they exist
-  const additionalResources = [webhooks.mutate, webhooks.validate, deployments.watch].filter(
+  // Add webhooks if they exist
+  const additionalResources = [webhooks.mutate, webhooks.validate].filter(
     resource => resource !== null && resource !== undefined,
   );
 
