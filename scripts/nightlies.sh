@@ -39,3 +39,7 @@ npm install
 npm run build
 
 npm publish --tag "nightly"
+
+# UDS Registry
+oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:"$FULL_VERSION" \
+    --artifact-type application/vnd.pepr.module.layer.v1 pepr-"$FULL_VERSION".tgz
