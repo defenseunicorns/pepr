@@ -16,8 +16,9 @@ export default function (program: RootCmd): void {
   program
     .command("dev")
     .description("Setup a local webhook development environment")
-    .option("-h, --host [host]", "Host to listen on", "host.k3d.internal")
-    .option("--confirm", "Skip confirmation prompt")
+    .option("-H, --host <hostname>", "Host to listen on. Default: host.k3d.internal")
+    .option("-y, --yes", "Skip confirmation prompts.")
+    .helpOption("-h, --help", "Display help for command")
     .action(async opts => {
       // Prompt the user to confirm if they didn't pass the --confirm flag
       if (!opts.confirm) {
