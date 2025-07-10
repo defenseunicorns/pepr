@@ -34,7 +34,7 @@ export function peprDeploy() {
      * and later on the keys will be tested to validate the migration
      */
     const image = process.env.PEPR_IMAGE || "pepr:dev";
-    execSync(`npx pepr deploy -i ${image} --confirm`, { cwd, stdio: "inherit" });
+    execSync(`npx pepr deploy -i ${image} --yes`, { cwd, stdio: "inherit" });
 
     // Wait for the deployments to be ready
     await Promise.all([
