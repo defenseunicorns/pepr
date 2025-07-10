@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { ModuleConfig, CapabilityExport } from "../types";
-import { Assets } from "./assets";
+import { ModuleConfig, CapabilityExport, Binding } from "../types";
+import { Assets, isAdmission, isWatcher, norWatchOrAdmission } from "./assets";
 import { expect, describe, it, vi, beforeEach, afterEach, afterAll, type Mock } from "vitest";
 import { kind } from "kubernetes-fluent-client";
 import { createDirectoryIfNotExists } from "../filesystemService";
@@ -248,13 +248,32 @@ describe("Assets", () => {
     const getWatcherFunction = vi
       .fn<() => kind.Deployment | null>()
       .mockReturnValue(new kind.Deployment());
-    await assets.allYaml(yamlGenerationFunction, getDeploymentFunction, getWatcherFunction);
+    const getServiceFunction = vi
+      .fn<() => kind.Service | null>()
+      .mockReturnValue(new kind.Service());
+    const getWatcherServiceFunction = vi
+      .fn<() => kind.Service | null>()
+      .mockReturnValue(new kind.Service());
+    await assets.allYaml(yamlGenerationFunction, {
+      getDeploymentFunction,
+      getWatcherFunction,
+      getServiceFunction,
+      getWatcherServiceFunction,
+    });
     const expectedDeployments = {
-      default: expect.any(Object),
+      admission: expect.any(Object),
+      watch: expect.any(Object),
+    };
+    const expectedServices = {
+      admission: expect.any(Object),
       watch: expect.any(Object),
     };
     expect(yamlGenerationFunction).toHaveBeenCalledTimes(1);
-    expect(yamlGenerationFunction).toHaveBeenCalledWith(assets, expectedDeployments);
+    expect(yamlGenerationFunction).toHaveBeenCalledWith(
+      assets,
+      expectedDeployments,
+      expectedServices,
+    );
   });
 
   it("should call writeWebhookFiles and write admissionController Deployment, ServiceMonitor, and WebhookConfigs", async () => {
@@ -279,6 +298,16 @@ describe("Assets", () => {
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
 
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
+
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -292,7 +321,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -306,7 +343,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -320,7 +365,15 @@ describe("Assets", () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
-
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isWatch: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
@@ -356,5 +409,93 @@ describe("Assets", () => {
         "/tmp",
       ),
     ).rejects.toThrow(exitString);
+  });
+
+  it("should return true from norWatchOrAdmission when no capability has watch or admission bindings", () => {
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: true,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(norWatchOrAdmission(mockCapabilities)).toBe(false);
+  });
+
+  it("should return false from norWatchOrAdmission when no capability has a watch or admission bindings", () => {
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(norWatchOrAdmission(mockCapabilities)).toBe(true);
+  });
+
+  it("should return true from isAdmission and isWatcher when the binding has finalize", () => {
+    const mockCapabilities = [
+      {
+        bindings: [{ isFinalize: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isAdmission(mockCapabilities)).toBe(true);
+    expect(isWatcher(mockCapabilities)).toBe(true);
+  });
+  it("should return true from isAdmission when any capability has mutate/validate/finalize", () => {
+    const mockCapabilities = [
+      {
+        bindings: [{ isMutate: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isAdmission(mockCapabilities)).toBe(true);
+  });
+
+  it("should return false from isAdmission when no capability has admission bindings", () => {
+    const mockCapabilities = [
+      {
+        bindings: [{ isWatch: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isAdmission(mockCapabilities)).toBe(false);
+  });
+
+  it("should return true from isWatcher when capability has hasSchedule", () => {
+    const mockCapabilities = [
+      {
+        bindings: [],
+        hasSchedule: true,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isWatcher(mockCapabilities)).toBe(true);
+  });
+
+  it("should return true from isWatcher when capability has watch/queue/finalize binding", () => {
+    const mockCapabilities = [
+      {
+        bindings: [{ isWatch: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isWatcher(mockCapabilities)).toBe(true);
+  });
+
+  it("should return false from isWatcher when capability has no watch bindings or schedule", () => {
+    const mockCapabilities = [
+      {
+        bindings: [{ isValidate: true }],
+        hasSchedule: false,
+      },
+    ] as unknown as CapabilityExport[];
+
+    expect(isWatcher(mockCapabilities)).toBe(false);
   });
 });

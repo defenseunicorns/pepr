@@ -10,7 +10,7 @@ WASM support is achieved through adding files as layers atop the Pepr controller
 
 - Add files to the **base** of the Pepr module.
 - Reference the files in the `includedFiles` section of the `pepr` block of the `package.json`
-- Run `npx pepr build` with the `-r` option specifying registry info. Ex: `npx pepr build -r docker.io/cmwylie19`
+- Run `npx pepr build` with the `--registry-info` option specifying registry info. Ex: `npx pepr build --registry-info docker.io/cmwylie19`
 - Pepr builds and pushes a custom image that is used in the `Deployment`.
 
 ## Using WASM Support
@@ -177,5 +177,5 @@ When(a.Pod)
 Build your Pepr module with the registry specified.
 
 ```bash
-npx pepr build -r docker.io/defenseunicorns
+npx pepr build --registry-info docker.io/defenseunicorns
 ```

@@ -42,6 +42,10 @@ jobs:
           command: |
             echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
 
+      - name: UDS Registry Login
+        run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com
+        shell: bash
+
       - name: "Pepr Controller: Login to GHCR"
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
@@ -87,3 +91,37 @@ jobs:
           provenance-name: ${{ needs.slsa.outputs.provenance-name }}
           provenance-download-name: ${{ needs.slsa.outputs.provenance-download-name }}
           provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
+
+  pack-and-push:
+    needs: [publish]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 24
+
+      - name: Download ORAS
+        run: |
+          VERSION="1.2.2"
+          curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p oras-install/
+          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+          sudo mv oras-install/oras /usr/local/bin/
+          rm -rf oras_${VERSION}_*.tar.gz oras-install/
+
+      - name: Docker login to UDS registry
+        run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com
+
+      - name: Push package to UDS OCI registry
+        run: |
+          VERSION=${{ github.ref_name }}
+          oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:${VERSION} \
+            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${VERSION:1}.tgz

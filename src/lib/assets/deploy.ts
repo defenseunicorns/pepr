@@ -6,10 +6,17 @@ import { promises as fs } from "fs";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { V1PolicyRule as PolicyRule } from "@kubernetes/client-node";
 
-import { Assets } from "./assets";
+import { Assets, isAdmission, norWatchOrAdmission } from "./assets";
 import Log from "../telemetry/logger";
-import { apiPathSecret, service, tlsSecret, watcherService } from "./networking";
-import { getDeployment, getModuleSecret, getNamespace, getWatcher } from "./pods";
+import { apiPathSecret, tlsSecret } from "./networking";
+import {
+  getDeployment,
+  service,
+  watcherService,
+  getModuleSecret,
+  getNamespace,
+  getWatcher,
+} from "./k8sObjects";
 import {
   clusterRole,
   clusterRoleBinding,
@@ -148,9 +155,19 @@ async function setupController(
   const mod = getModuleSecret(name, code, hash);
   await K8s(kind.Secret).Apply(mod, { force });
 
-  Log.info("Applying controller service");
-  const svc = service(name);
-  await K8s(kind.Service).Apply(svc, { force });
+  if (isAdmission(assets.capabilities) || norWatchOrAdmission(assets.capabilities)) {
+    const svc = service(name, assets);
+    if (svc) {
+      Log.info("Applying controller service");
+      await K8s(kind.Service).Apply(svc, { force });
+    }
+
+    const dep = getDeployment(assets, hash, assets.buildTimestamp);
+    if (dep) {
+      Log.info("Applying deployment");
+      await K8s(kind.Deployment).Apply(dep, { force });
+    }
+  }
 
   Log.info("Applying TLS secret");
   const tls = tlsSecret(name, assets.tls);
@@ -159,10 +176,6 @@ async function setupController(
   Log.info("Applying API path secret");
   const apiPath = apiPathSecret(name, assets.apiPath);
   await K8s(kind.Secret).Apply(apiPath, { force });
-
-  Log.info("Applying deployment");
-  const dep = getDeployment(assets, hash, assets.buildTimestamp);
-  await K8s(kind.Deployment).Apply(dep, { force });
 }
 
 // Setup the watcher deployment and service
@@ -172,9 +185,10 @@ async function setupWatcher(assets: Assets, hash: string, force: boolean): Promi
   if (watchDeployment) {
     Log.info("Applying watcher deployment");
     await K8s(kind.Deployment).Apply(watchDeployment, { force });
-
+  }
+  const watchSvc = watcherService(assets.name, assets);
+  if (watchSvc) {
     Log.info("Applying watcher service");
-    const watchSvc = watcherService(assets.name);
     await K8s(kind.Service).Apply(watchSvc, { force });
   }
 }
