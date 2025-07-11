@@ -53,8 +53,8 @@ npx pepr init \
   --name operator \
   --uuid my-operator-uuid \
   --description "Kubernetes Controller for WebApp Resources" \
-  --errorBehavior reject \
-  --confirm &&
+  --error-behavior reject \
+  --yes &&
 cd operator # set working directory as the new pepr module
 ```
 

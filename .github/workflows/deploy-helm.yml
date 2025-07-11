@@ -64,7 +64,7 @@ jobs:
       - name: init pepr module
         run: |
           cd "$PEPR"
-          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --errorBehavior "ignore" --uuid "$MOD_NAME" --skip-post-init --confirm
+          npx pepr init --name "$MOD_NAME" --description "$MOD_NAME" --error-behavior "ignore" --uuid "$MOD_NAME" --skip-post-init --yes
           sed -i 's/uuid": ".*",/uuid": "'$MOD_NAME'",/g' "$MOD_PATH/package.json"
 
       - name: build pepr module
