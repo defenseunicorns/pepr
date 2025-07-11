@@ -473,7 +473,7 @@ program
     log(`Deploy Pepr controller into test cluster`);
     let env = { KUBECONFIG };
     cmd = new Cmd({
-      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --confirm`,
+      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
       cwd: workdir,
       env,
     });
