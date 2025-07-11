@@ -44,7 +44,7 @@ describe("dev", { timeout: five_mins }, () => {
         `--description ${id}`,
         `--error-behavior reject`,
         `--uuid dev-test`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });

@@ -132,7 +132,7 @@ Initialize a new Pepr Module.
 **Options:**
 
 - `-d, --description <string>` - Explain the purpose of the new module.
-- `-e, --error-behavior <behavior>` - Set an error behavior (choices: "audit", "ignore", "reject")
+- `-e, --error-behavior <behavior>` - Set an error behavior. (choices: "audit", "ignore", "reject")
 - `-n, --name <string>` - Set the name of the new module.
 - `-s, --skip-post-init` - Skip npm install, git init, and VSCode launch.
 - `-u, --uuid <string>` - Unique identifier for your module with a max length of 36 characters.

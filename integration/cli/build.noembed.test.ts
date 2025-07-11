@@ -32,7 +32,7 @@ describe("build", () => {
         `--description ${id}`,
         `--error-behavior reject`,
         `--uuid random-identifier`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });

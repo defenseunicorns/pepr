@@ -101,17 +101,14 @@ describe("when processing input", () => {
       expect(result).toBe(expected);
     });
 
-    it.each([[true], [false]])(
-      "when flag '--confirm' is %s",
-      async (confirmFlag: boolean | undefined) => {
-        const result = await confirm(
-          "some string",
-          { path: "some path", print: "some print" },
-          "some Pepr TS path",
-          confirmFlag,
-        );
-        expect(result).toBe(confirmFlag);
-      },
-    );
+    it.each([[true], [false]])("when flag '--yes' is %s", async (yesFlag: boolean | undefined) => {
+      const result = await confirm(
+        "some string",
+        { path: "some path", print: "some print" },
+        "some Pepr TS path",
+        yesFlag,
+      );
+      expect(result).toBe(yesFlag);
+    });
   });
 });

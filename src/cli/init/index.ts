@@ -34,7 +34,7 @@ export default function (program: RootCmd): void {
     .description("Initialize a new Pepr Module")
     .option("-d, --description <string>", "Explain the purpose of the new module.")
     .addOption(
-      new Option("-e, --error-behavior <behavior>", "Set an error behavior").choices(ErrorList),
+      new Option("-e, --error-behavior <behavior>", "Set an error behavior.").choices(ErrorList),
     )
     .option("-n, --name <string>", "Set the name of the new module.")
     .option("-s, --skip-post-init", "Skip npm install, git init, and VSCode launch.")
