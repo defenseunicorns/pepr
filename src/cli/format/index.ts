@@ -55,7 +55,7 @@ export async function peprFormat(validateOnly: boolean): Promise<boolean> {
         await ESLint.outputFixes(results);
       }
 
-      hasFailure = await formatWithPrettier(results, validateOnly);
+      hasFailure = hasFailure || (await formatWithPrettier(results, validateOnly));
 
       return !hasFailure;
     } catch (e) {
