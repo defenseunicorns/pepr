@@ -5,9 +5,8 @@ import { KubernetesObject } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
-import { Assets } from "./assets";
-import { Binding } from "../types";
-import { genEnv } from "./envrionment";
+import { Assets, isAdmission, isWatcher, norWatchOrAdmission } from "./assets";
+import { genEnv } from "./environment";
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
@@ -37,27 +36,13 @@ export function getWatcher(
   buildTimestamp: string,
   imagePullSecret?: string,
 ): kind.Deployment | null {
-  const { name, image, capabilities, config } = assets;
+  const { name, image, config } = assets;
 
-  let hasSchedule = false;
-
-  // Append the watcher suffix
-  const app = `${name}-watcher`;
-  const bindings: Binding[] = [];
-
-  // Loop through the capabilities and find any Watch Actions
-  for (const capability of capabilities) {
-    if (capability.hasSchedule) {
-      hasSchedule = true;
-    }
-    const watchers = capability.bindings.filter(binding => binding.isWatch);
-    bindings.push(...watchers);
-  }
-
-  // If there are no watchers, don't deploy the watcher
-  if (bindings.length < 1 && !hasSchedule) {
+  if (!isWatcher(assets.capabilities)) {
     return null;
   }
+  // Append the watcher suffix
+  const app = `${name}-watcher`;
 
   const deploy: kind.Deployment = {
     apiVersion: "apps/v1",
@@ -196,9 +181,13 @@ export function getDeployment(
   hash: string,
   buildTimestamp: string,
   imagePullSecret?: string,
-): kind.Deployment {
+): kind.Deployment | null {
   const { name, image, config } = assets;
   const app = name;
+
+  if (!isAdmission(assets.capabilities) && !norWatchOrAdmission(assets.capabilities)) {
+    return null;
+  }
 
   const deploy: kind.Deployment = {
     apiVersion: "apps/v1",
@@ -363,4 +352,62 @@ export function getModuleSecret(name: string, data: Buffer, hash: string): kind.
       },
     };
   }
+}
+
+export function service(name: string, assets: Assets): kind.Service | null {
+  if (!isAdmission(assets.capabilities) && !norWatchOrAdmission(assets.capabilities)) {
+    return null;
+  }
+  return {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name,
+      namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "admission",
+      },
+    },
+    spec: {
+      selector: {
+        app: name,
+        "pepr.dev/controller": "admission",
+      },
+      ports: [
+        {
+          port: 443,
+          targetPort: 3000,
+        },
+      ],
+    },
+  };
+}
+
+export function watcherService(name: string, assets: Assets): kind.Service | null {
+  if (!isWatcher(assets.capabilities)) {
+    return null;
+  }
+  return {
+    apiVersion: "v1",
+    kind: "Service",
+    metadata: {
+      name: `${name}-watcher`,
+      namespace: "pepr-system",
+      labels: {
+        "pepr.dev/controller": "watcher",
+      },
+    },
+    spec: {
+      selector: {
+        app: `${name}-watcher`,
+        "pepr.dev/controller": "watcher",
+      },
+      ports: [
+        {
+          port: 443,
+          targetPort: 3000,
+        },
+      ],
+    },
+  };
 }

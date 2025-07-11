@@ -18,7 +18,7 @@ export function peprBuild() {
     "should successfully build the Pepr project with specific output directory and rbacMode scoped",
     { timeout: 1000 * 5 * 60 },
     async () => {
-      execSync(`npx pepr build -r gchr.io/defenseunicorns -o ${outputDir}`, {
+      execSync(`npx pepr build --registry-info gchr.io/defenseunicorns --output ${outputDir}`, {
         cwd,
         stdio: "inherit",
       });

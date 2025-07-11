@@ -40,6 +40,7 @@ interface OverridesFileSchema {
   };
   uuid: string;
   admission: {
+    enabled: boolean;
     antiAffinity: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
@@ -52,6 +53,7 @@ interface OverridesFileSchema {
     };
   };
   watcher: {
+    enabled: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
     annotations: {
@@ -148,5 +150,41 @@ describe("overridesFile", () => {
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
+  });
+
+  it("sets admission and watcher to enabled by default", async () => {
+    await overridesFile(mockOverrides, mockPath, imagePullSecrets);
+
+    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.admission.enabled).toBe(true);
+    expect(parsedYaml.watcher.enabled).toBe(true);
+  });
+
+  it("sets admission.enabled to true and watcher.enabled to false based on args", async () => {
+    await overridesFile(mockOverrides, mockPath, imagePullSecrets, {
+      admission: true,
+      watcher: false,
+    });
+
+    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.admission.enabled).toBe(true);
+    expect(parsedYaml.watcher.enabled).toBe(false);
+  });
+
+  it("sets admission.enabled to false and watcher.enabled to true based on args", async () => {
+    await overridesFile(mockOverrides, mockPath, imagePullSecrets, {
+      admission: false,
+      watcher: true,
+    });
+
+    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.admission.enabled).toBe(false);
+    expect(parsedYaml.watcher.enabled).toBe(true);
   });
 });

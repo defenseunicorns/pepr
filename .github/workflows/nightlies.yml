@@ -27,6 +27,15 @@ jobs:
 
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
+      - name: Download ORAS
+        run: |
+          VERSION="1.2.2"
+          curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p oras-install/
+          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+          sudo mv oras-install/oras /usr/local/bin/
+          rm -rf oras_${VERSION}_*.tar.gz oras-install/
+
       - name: Use Node.js 20
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -42,6 +51,10 @@ jobs:
           timeout_minutes: 1
           command: |
             echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
+
+      - name: UDS Registry Login
+        run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com
+        shell: bash
 
       - name: "Pepr Controller: Login to GHCR"
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
