@@ -71,7 +71,7 @@ export default function (program: RootCmd): void {
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
 
-      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.confirm);
+      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.yes);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");
