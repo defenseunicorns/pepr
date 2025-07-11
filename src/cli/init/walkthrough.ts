@@ -137,7 +137,7 @@ export async function confirm(
 ): Promise<boolean> {
   const confirmationPrompt: PromptObject = {
     type: "confirm",
-    name: "confirm",
+    name: "yes",
     message: "Create the new Pepr module?",
   };
   const confirmationMessage = `To be generated:
@@ -162,9 +162,7 @@ ${packageJSON.print.replace(/^/gm, "    │   ")}
     console.log(confirmationMessage);
     const confirm = await prompt([confirmationPrompt]);
     const shouldCreateModule =
-      confirm.confirm === "y" || confirm.confirm === "yes" || confirm.confirm === true
-        ? true
-        : false;
+      confirm.yes === "y" || confirm.yes === "yes" || confirm.yes === true ? true : false;
     return shouldCreateModule;
   }
 }

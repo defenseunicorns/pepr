@@ -131,12 +131,12 @@ Initialize a new Pepr Module.
 
 **Options:**
 
-- `--confirm` - Skip verification prompt when creating a new module.
-- `--description <string>` - Explain the purpose of the new module.
-- `--name <string>` - Set the name of the new module.
-- `--skip-post-init` - Skip npm install, git init, and VSCode launch.
-- `--errorBehavior <audit|ignore|reject>` - Set an errorBehavior.
-- `--uuid [string]` - Unique identifier for your module with a max length of 36 characters.
+- `-d, --description <string>` - Explain the purpose of the new module.
+- `-e, --error-behavior <behavior>` - Set an error behavior. (choices: "audit", "ignore", "reject")
+- `-n, --name <string>` - Set the name of the new module.
+- `-s, --skip-post-init` - Skip npm install, git init, and VSCode launch.
+- `-u, --uuid <string>` - Unique identifier for your module with a max length of 36 characters.
+- `-y, --yes` - Skip verification prompt when creating a new module.
 - `-h, --help` - display help for command
 
 ## `npx pepr kfc`

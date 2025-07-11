@@ -24,6 +24,7 @@ import { createDir, sanitizeName, write } from "./utils";
 import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
 import { UUID_LENGTH_LIMIT } from "./enums";
+import { Option } from "commander";
 
 export default function (program: RootCmd): void {
   let response = {} as PromptOptions;
@@ -31,13 +32,14 @@ export default function (program: RootCmd): void {
   program
     .command("init")
     .description("Initialize a new Pepr Module")
-    .option("--confirm", "Skip verification prompt when creating a new module.")
-    .option("--description <string>", "Explain the purpose of the new module.")
-    .option("--name <string>", "Set the name of the new module.")
-    .option("--skip-post-init", "Skip npm install, git init, and VSCode launch.")
-    .option(`--errorBehavior <${ErrorList.join("|")}>`, "Set an errorBehavior.")
+    .option("-d, --description <string>", "Explain the purpose of the new module.")
+    .addOption(
+      new Option("-e, --error-behavior <behavior>", "Set an error behavior.").choices(ErrorList),
+    )
+    .option("-n, --name <string>", "Set the name of the new module.")
+    .option("-s, --skip-post-init", "Skip npm install, git init, and VSCode launch.")
     .option(
-      "--uuid [string]",
+      "-u, --uuid <string>",
       "Unique identifier for your module with a max length of 36 characters.",
       (uuid: string): string => {
         if (uuid.length > UUID_LENGTH_LIMIT) {
@@ -46,6 +48,7 @@ export default function (program: RootCmd): void {
         return uuid.toLocaleLowerCase();
       },
     )
+    .option("-y, --yes", "Skip verification prompt when creating a new module.")
     .hook("preAction", async thisCommand => {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
@@ -68,7 +71,7 @@ export default function (program: RootCmd): void {
       const dirName = sanitizeName(response.name);
       const packageJSON = genPkgJSON(response, pkgOverride);
 
-      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.confirm);
+      const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.yes);
 
       if (confirmed) {
         console.log("Creating new Pepr module...");

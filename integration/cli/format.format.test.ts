@@ -29,9 +29,9 @@ describe("build", () => {
       const initArgs = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid format`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });

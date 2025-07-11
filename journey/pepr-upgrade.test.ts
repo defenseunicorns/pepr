@@ -18,7 +18,7 @@ export function peprUpgrade() {
       console.log(`Old test directory removed: ${dirPath}`);
     }
     execSync(
-      `npx pepr init --name pepr-upgrade-test --description "Upgrade testing" --errorBehavior "ignore" --uuid "upgrade-test" --skip-post-init --confirm`,
+      `npx pepr init --name pepr-upgrade-test --description "Upgrade testing" --error-behavior "ignore" --uuid "upgrade-test" --skip-post-init --yes`,
     );
   });
 

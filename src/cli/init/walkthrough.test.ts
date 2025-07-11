@@ -30,12 +30,12 @@ describe("when processing input", () => {
   describe("walkthough() returns expected results", () => {
     it.each([
       //Test flag combinations with [["$FLAG", ...]]
-      [["description", "errorBehavior"]],
+      [["description", "error-behavior"]],
       [["description"]],
-      [["errorBehavior"]],
-      [["name", "description", "errorBehavior"]],
+      [["error-behavior"]],
+      [["name", "description", "error-behavior"]],
       [["name", "description"]],
-      [["name", "errorBehavior"]],
+      [["name", "error-behavior"]],
       [["name"]],
       [undefined],
     ])(`when the set flags are: %s`, async (flagInput: string[] | undefined) => {
@@ -77,7 +77,7 @@ describe("when processing input", () => {
       expect(result).toStrictEqual(expected);
     });
 
-    it("should prompt for errorBehavior when given invalid input", async () => {
+    it("should prompt for error-behavior when given invalid input", async () => {
       const expected = { errorBehavior: "audit" };
       prompts.inject(["audit"]);
       const result = await setErrorBehavior("not-valid" as OnError); // Type-Coercion forces invalid input
@@ -101,17 +101,14 @@ describe("when processing input", () => {
       expect(result).toBe(expected);
     });
 
-    it.each([[true], [false]])(
-      "when flag '--confirm' is %s",
-      async (confirmFlag: boolean | undefined) => {
-        const result = await confirm(
-          "some string",
-          { path: "some path", print: "some print" },
-          "some Pepr TS path",
-          confirmFlag,
-        );
-        expect(result).toBe(confirmFlag);
-      },
-    );
+    it.each([[true], [false]])("when flag '--yes' is %s", async (yesFlag: boolean | undefined) => {
+      const result = await confirm(
+        "some string",
+        { path: "some path", print: "some print" },
+        "some Pepr TS path",
+        yesFlag,
+      );
+      expect(result).toBe(yesFlag);
+    });
   });
 });

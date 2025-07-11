@@ -39,9 +39,9 @@ describe("init", () => {
       const argz = [
         `--name ${name}`,
         `--description ${desc}`,
-        `--errorBehavior ${errorBehavior}`,
+        `--error-behavior ${errorBehavior}`,
         `--uuid random-identifier`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
       const result = await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });

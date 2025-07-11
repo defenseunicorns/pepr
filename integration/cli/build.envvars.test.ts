@@ -31,9 +31,9 @@ describe("build env vars", () => {
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid ${id}`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
