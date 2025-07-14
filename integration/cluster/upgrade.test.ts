@@ -76,7 +76,7 @@ describe("build", () => {
           stdio: "inherit",
         });
 
-        execSync(`ls  ../../../../../`, {
+        execSync(`ls  ../../../../../../`, {
           cwd: testModule,
           stdio: "inherit",
         });
