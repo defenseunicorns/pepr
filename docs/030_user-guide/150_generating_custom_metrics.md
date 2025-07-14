@@ -39,10 +39,10 @@ When(a.Pod)
   });
 ```
 
-You can access these metrics through the `/metrics` endpoint of your module. For example, if you are running `npx pepr dev --confirm`, you can create some pods and then query the metrics like this:
+You can access these metrics through the `/metrics` endpoint of your module. For example, if you are running `npx pepr dev --yes`, you can create some pods and then query the metrics like this:
 
 ```bash
-terminal_a > npx pepr dev --confirm
+terminal_a > npx pepr dev --yes
 terminal_b > curl -k http://localhost:3000/metrics
 ...
 # HELP pepr_label_counter example counter for counting number of times hello-pepr label has been applied
