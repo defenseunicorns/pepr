@@ -80,7 +80,7 @@ describe("build", () => {
           cwd: testModule,
           stdio: "inherit",
         });
-        const peprTarball = path.resolve(__dirname, "../../../../pepr-0.0.0-development.tgz");
+        const peprTarball = path.resolve(__dirname, "../../../../pepr/pepr-0.0.0-development.tgz");
         execSync(`npm i ${peprTarball}`, {
           cwd: testModule,
           stdio: "inherit",
