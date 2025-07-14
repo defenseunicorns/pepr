@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { promises as fs } from "fs";
 import path from "path";
@@ -9,16 +9,17 @@ import path from "path";
 // Scaffolds a new CRD TypeScript definition
 const create = new Command("create")
   .description("Create a new CRD TypeScript definition")
-  .requiredOption("--group <group>", "API group (e.g. cache)")
-  .requiredOption("--version <version>", "API version (e.g. v1alpha1)")
-  .requiredOption("--kind <kind>", "Kind name (e.g. Memcached)")
-  .option("--domain <domain>", "Optional domain (e.g. pepr.dev)", "pepr.dev")
-  .option(
-    "--scope <Namespaced | Cluster>",
-    "Whether the resulting custom resource is cluster- or namespace-scoped",
-    validateScope,
-    "Namespaced",
+  .addOption(
+    new Option(
+      "-S, --scope <scope>",
+      "Whether the resulting custom resource is cluster- or namespace-scoped",
+    )
+      .choices(["Namespaced", "Cluster"])
+      .default("Namespaced"),
   )
+  .option("--domain <domain>", "Optional domain (e.g. pepr.dev)", "pepr.dev")
+  .requiredOption("--group <group>", "API group (e.g. cache)")
+  .requiredOption("--kind <kind>", "Kind name (e.g. Memcached)")
   .option("--plural <plural>", "Plural name (e.g. memcacheds)", "")
   .option("--shortName <shortName>", "Short name (e.g. mc)", "")
   .action(async ({ group, version, kind, domain, scope, plural, shortName }) => {
@@ -32,7 +33,8 @@ const create = new Command("create")
       generateCRDScaffold(group, version, kind, { domain, scope, plural, shortName }),
     );
     console.log(`✔ Created ${kind} TypeScript definition in ${outputDir}`);
-  });
+  })
+  .requiredOption("--version <version>", "API version (e.g. v1alpha1)");
 
 export default create;
 
@@ -125,10 +127,3 @@ type ${kind}StatusCondition = {
 
 `;
 };
-
-export function validateScope(value: string): "Cluster" | "Namespaced" {
-  if (value !== "Cluster" && value !== "Namespaced") {
-    throw new Error("Scope must be either 'Cluster' or 'Namespaced'");
-  }
-  return value;
-}
