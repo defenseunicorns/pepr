@@ -16,19 +16,19 @@ export default function (program: RootCmd): void {
   program
     .command("dev")
     .description("Setup a local webhook development environment")
-    .option("-h, --host [host]", "Host to listen on", "host.k3d.internal")
-    .option("--confirm", "Skip confirmation prompt")
+    .option("-H, --host <host>", "Host to listen on", "host.k3d.internal")
+    .option("-y, --yes", "Skip confirmation prompt")
     .action(async opts => {
-      // Prompt the user to confirm if they didn't pass the --confirm flag
-      if (!opts.confirm) {
+      // Prompt the user to confirm if they didn't pass the --yes flag
+      if (!opts.yes) {
         const confirm = await prompt({
           type: "confirm",
-          name: "confirm",
+          name: "yes",
           message: "This will remove and redeploy the module. Continue?",
         });
 
         // Exit if the user doesn't confirm
-        if (!confirm.confirm) {
+        if (!confirm.yes) {
           process.exitCode = 0;
           return;
         }

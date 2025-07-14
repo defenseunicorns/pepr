@@ -53,7 +53,7 @@ describe("dev", { timeout: five_mins }, () => {
     }, time.toMs("2m"));
 
     it("should start the pepr dev server", async () => {
-      cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd: testModule, stdio: "pipe" });
+      cmd = spawn("npx", ["pepr", "dev", "--yes"], { cwd: testModule, stdio: "pipe" });
 
       // This command should not exit on its own
       cmd.on("close", code => {
