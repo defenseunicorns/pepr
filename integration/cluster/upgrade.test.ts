@@ -71,11 +71,7 @@ describe("build", () => {
     async () => {
       try {
         const image = process.env.PEPR_IMAGE || "pepr:dev";
-        execSync(`ls`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
-        execSync(`pwd`, {
+        execSync(`ls  ../../../../../src/`, {
           cwd: testModule,
           stdio: "inherit",
         });
