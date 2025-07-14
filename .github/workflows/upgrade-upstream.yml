@@ -38,5 +38,5 @@ jobs:
 
       - run: npm ci
       - run: |
-          PEPR_IMAGE=pepr:dev 
+          export PEPR_IMAGE=pepr:dev 
           npm run test:journey:upgrade:upstream
