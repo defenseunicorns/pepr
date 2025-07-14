@@ -45,7 +45,7 @@ describe("crd", () => {
         `--group ${group}`,
         `--version ${version}`,
         `--kind ${kind}`,
-        `--shortName ${shortName}`,
+        `--short-name ${shortName}`,
         `--plural ${plural}`,
         `--scope ${scope}`,
         `--domain ${domain}`,
