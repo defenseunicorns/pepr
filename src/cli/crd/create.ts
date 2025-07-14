@@ -17,11 +17,12 @@ const create = new Command("create")
       .choices(["Namespaced", "Cluster"])
       .default("Namespaced"),
   )
-  .option("--domain <domain>", "Optional domain (e.g. pepr.dev)", "pepr.dev")
-  .requiredOption("--group <group>", "API group (e.g. cache)")
-  .requiredOption("--kind <kind>", "Kind name (e.g. Memcached)")
-  .option("--plural <plural>", "Plural name (e.g. memcacheds)", "")
-  .option("--shortName <shortName>", "Short name (e.g. mc)", "")
+  .option("-d, --domain <domain>", "Optional domain for CRD (e.g. pepr.dev)", "pepr.dev")
+  .requiredOption("-g, --group <group>", "API group (e.g. cache)")
+  .requiredOption("-k, --kind <kind>", "Kind name (e.g. memcached)")
+  .option("-p, --plural <plural>", "Plural name for CRD (e.g. memcacheds)")
+  .option("-s, --shortName <name>", "Short name for CRD (e.g. mc)", "")
+  .requiredOption("-v, --version <version>", "API version (e.g. v1alpha1)")
   .action(async ({ group, version, kind, domain, scope, plural, shortName }) => {
     console.log("This feature is currently in alpha.\n");
     const outputDir = path.resolve(`./api/${version}`);
@@ -33,8 +34,7 @@ const create = new Command("create")
       generateCRDScaffold(group, version, kind, { domain, scope, plural, shortName }),
     );
     console.log(`✔ Created ${kind} TypeScript definition in ${outputDir}`);
-  })
-  .requiredOption("--version <version>", "API version (e.g. v1alpha1)");
+  });
 
 export default create;
 
