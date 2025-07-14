@@ -63,13 +63,13 @@ Create a new CRD TypeScript definition.
 
 **Options:**
 
-- `--group <group>` - API group (e.g. cache)
-- `--version <version>` - API version (e.g. v1alpha1)
-- `--kind <kind>` - Kind name (e.g. Memcached)
-- `--domain <domain>` - Optional domain (e.g. pepr.dev) (default: "pepr.dev")
-- `--scope <Namespaced | Cluster>` - Whether the resulting custom resource is cluster- or namespace-scoped (default: "Namespaced")
-- `--plural <plural>` - Plural name (e.g. memcacheds) (default: "")
-- `--shortName <shortName>` - Short name (e.g. mc) (default: "")
+- `-S, --scope <scope>` - Whether the resulting custom resource is cluster- or namespace-scoped (choices: "Namespaced", "Cluster", default: "Namespaced")
+- `-d, --domain <domain>` - Optional domain for CRD (e.g. pepr.dev) (default: "pepr.dev")
+- `-g, --group <group>` - API group (e.g. cache)
+- `-k, --kind <kind>` - Kind name (e.g. memcached)
+- `-p, --plural <plural>` - Plural name for CRD (e.g. memcacheds)
+- `-s, --short-name <name>` - Short name for CRD (e.g. mc) (default: "")
+- `-v, --version <version>` - API version (e.g. v1alpha1)
 - `-h, --help` - display help for command
 
 ## `npx pepr crd generate`
@@ -103,9 +103,9 @@ Setup a local webhook development environment
 
 **Options:**
 
-- `-h, --host [host]` - Host to listen on (default: "host.k3d.internal")
-- `--confirm` - Skip confirmation prompt
-- `--help` - display help for command
+- `-H, --host <host>` - Host to listen on (default: "host.k3d.internal")
+- `-y, --yes` - Skip confirmation prompt
+- `-h, --help` - display help for command
 
 Connect a local cluster to a local version of the Pepr Controller to do real-time debugging of your module. Note the `npx pepr dev` assumes a K3d cluster is running by default. If you are working with Kind or another docker-based K8s distro, you will need to pass the `--host host.docker.internal` option to `npx pepr dev`. If working with a remote cluster you will have to give Pepr a host path to your machine that is reachable from the K8s cluster.
 
@@ -183,7 +183,7 @@ Update the current Pepr Module to the latest SDK version. This command is not re
 
 **Options:**
 
-- `--skip-template-update` - Skip updating the template files
+- `-s, --skip-template-update` - Do not update template files
 - `-h, --help` - display help for command
 
 ## `npx pepr uuid`

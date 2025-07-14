@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, vi, beforeEach } from "vitest";
-import { validateScope, generateCRDScaffold } from "./create";
+import { expect, describe, it } from "vitest";
+import { generateCRDScaffold } from "./create";
 
 describe("generateCRDScaffold", () => {
   it("should generate the correct CRD scaffold", () => {
@@ -27,22 +27,5 @@ describe("generateCRDScaffold", () => {
     expect(result).toContain(`shortName: "${data.shortName}"`);
     expect(result).toContain(`${kind}StatusCondition`);
     expect(result).toContain(`${kind}Status`);
-  });
-});
-
-describe("validateScope", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it.each([["Cluster"], ["Namespaced"]])("should return the scope if it is valid - %s", input => {
-    const result = validateScope(input);
-    expect(result).toBe(input);
-  });
-
-  it("should throw an error if the scope is invalid", () => {
-    expect(() => validateScope("InvalidScope")).toThrow(
-      "Scope must be either 'Cluster' or 'Namespaced'",
-    );
   });
 });
