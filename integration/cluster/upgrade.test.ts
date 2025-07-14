@@ -75,10 +75,16 @@ describe("build", () => {
           cwd: testModule,
           stdio: "inherit",
         });
-        execSync(`npx --yes tsx ../../../../../pepr-0.0.0-development.tgz build -i ${image}`, {
+        execSync(`npm i ../../../../../pepr-0.0.0-development.tgz`, {
           cwd: testModule,
           stdio: "inherit",
         });
+
+        execSync(`./node_modules/pepr/dist/cli.js build -i ${image}`, {
+          cwd: testModule,
+          stdio: "inherit",
+        });
+
         execSync(`kubectl apply -f ${testModule}/dist/pepr-module-${id}.yaml`, {
           cwd: testModule,
           stdio: "inherit",
