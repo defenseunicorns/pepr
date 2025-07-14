@@ -75,6 +75,16 @@ describe("build", () => {
           cwd: testModule,
           stdio: "inherit",
         });
+
+        execSync(`ls  ../../../../../`, {
+          cwd: testModule,
+          stdio: "inherit",
+        });
+        const peprTarball = path.resolve(__dirname, "../../../../pepr-0.0.0-development.tgz");
+        execSync(`npm i ${peprTarball}`, {
+          cwd: testModule,
+          stdio: "inherit",
+        });
         execSync(`npm i ../../../../../pepr-0.0.0-development.tgz`, {
           cwd: testModule,
           stdio: "inherit",
