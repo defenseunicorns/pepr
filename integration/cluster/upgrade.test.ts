@@ -75,7 +75,7 @@ describe("build", () => {
           cwd: testModule,
           stdio: "inherit",
         });
-        execSync(`npx --yes tsx ../../../../../src/cli.ts build -i ${image}`, {
+        execSync(`npx --yes tsx ../../../../../pepr-0.0.0-development.tgz build -i ${image}`, {
           cwd: testModule,
           stdio: "inherit",
         });
