@@ -39,7 +39,7 @@ export function peprDev() {
   let success = false;
 
   it("should start the Pepr dev server", () => {
-    cmd = spawn("npx", ["pepr", "dev", "--confirm"], { cwd, stdio: "pipe" });
+    cmd = spawn("npx", ["pepr", "dev", "--yes"], { cwd, stdio: "pipe" });
 
     // This command should not exit on its own
     cmd.on("close", code => {
