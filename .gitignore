@@ -22,7 +22,6 @@ stats.html
 .vscode
 insecure-tls*
 pepr-test-*
-pepr-upgrade-test
 *.tar
 *.tgz
 load/
