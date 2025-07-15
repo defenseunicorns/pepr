@@ -48,4 +48,4 @@ jobs:
       - run: npm ci
       - run: |
           export PEPR_IMAGE=pepr/private:dev 
-          npm run test:journey:upgrade:unicorn
+          npm run test:upgrade:unicorn
