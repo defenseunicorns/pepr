@@ -40,4 +40,6 @@ jobs:
       - run: |
           export PEPR_IMAGE=pepr:dev 
           npm run test:journey:image
+          npm run test:journey:k3d
+          npm run test:journey:image
           npm run test:journey:upgrade:upstream

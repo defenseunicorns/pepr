@@ -48,5 +48,7 @@ jobs:
       - run: npm ci
       - run: |
           export PEPR_IMAGE=pepr/private:dev 
-          test:journey:image:unicorn
-          npm run test:journey:upgrade:unicorn
+          npm run test:journey:image:unicorn
+          npm run test:journey:k3d
+          npm run test:journey:image:unicorn
+          vitest run integration/cluster/upgrade.test.ts
