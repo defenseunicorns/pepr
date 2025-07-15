@@ -41,4 +41,4 @@ jobs:
           export PEPR_IMAGE=pepr:dev 
           npm run test:journey:k3d
           npm run test:journey:image
-          vitest run integration/cluster/upgrade.test.ts
+          npx vitest run integration/cluster/upgrade.test.ts
