@@ -92,8 +92,7 @@
     "vitest": "^3.2.3"
   },
   "overrides": {
-    "glob": "^9.0.0",
-    "brace-expansion": "1.1.11"
+    "glob": "^9.0.0"
   },
   "peerDependencies": {
     "@types/prompts": "2.4.9",
