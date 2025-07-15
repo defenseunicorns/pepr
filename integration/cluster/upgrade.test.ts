@@ -71,24 +71,27 @@ describe("build", () => {
     async () => {
       try {
         const image = process.env.PEPR_IMAGE || "pepr:dev";
-        execSync(`ls  ../../../../../src/`, {
+        // execSync(`ls  ../../../../../src/`, {
+        //   cwd: testModule,
+        //   stdio: "inherit",
+        // });
+
+        execSync(`ls  ../../../../../`, {
           cwd: testModule,
           stdio: "inherit",
         });
 
-        execSync(`ls  ../../../../../../`, {
+        const peprTarball = path.resolve(__dirname, "../../pepr-0.0.0-development.tgz");
+
+        execSync(`ls -la ${path.dirname(peprTarball)}`, { stdio: "inherit" });
+        execSync(`npm i "${peprTarball}"`, {
           cwd: testModule,
           stdio: "inherit",
         });
-        const peprTarball = path.resolve(__dirname, "../../../../../pepr-0.0.0-development.tgz");
-        execSync(`npm i ${peprTarball}`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
-        execSync(`npm i ../../../../../pepr-0.0.0-development.tgz`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
+        // execSync(`npm i ../../../../../pepr-0.0.0-development.tgz`, {
+        //   cwd: testModule,
+        //   stdio: "inherit",
+        // });
 
         execSync(`./node_modules/pepr/dist/cli.js build -i ${image}`, {
           cwd: testModule,
