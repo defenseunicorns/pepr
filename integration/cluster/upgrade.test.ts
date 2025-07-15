@@ -81,8 +81,12 @@ describe("build", () => {
           stdio: "inherit",
         });
 
-        const peprTarball = path.resolve(__dirname, "../../pepr-0.0.0-development.tgz");
+        const peprTarball1 = path.resolve(__dirname, "../../../pepr-0.0.0-development.tgz");
+        console.log("peprTarball1:", peprTarball1);
+        execSync(`ls -la ${path.dirname(peprTarball1)}`, { stdio: "inherit" });
 
+        const peprTarball = path.resolve(__dirname, "../../pepr-0.0.0-development.tgz");
+        console.log("peprTarball2:", peprTarball);
         execSync(`ls -la ${path.dirname(peprTarball)}`, { stdio: "inherit" });
         execSync(`npm i "${peprTarball}"`, {
           cwd: testModule,
