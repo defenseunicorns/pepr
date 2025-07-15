@@ -51,7 +51,7 @@
     "format:tests": "eslint --config config/eslint.test.config.mjs 'src/**/*.test.ts'",
     "test:journey:upgrade:upstream": "npm run test:journey:k3d && npm run test:journey:image && vitest run integration/cluster/upgrade.test.ts",
     "test:journey:upgrade:unicorn": "npm run test:journey:k3d && npm run test:journey:image:unicorn && vitest run integration/cluster/upgrade.test.ts",
-    "test:unit": "npm run gen-data-json && NODE_OPTIONS=--no-deprecation vitest --config config/vitest.root.config.ts run --coverage",
+    "test:unit": "npm run gen-data-json && NODE_OPTIONS=--no-deprecation npx vitest --config config/vitest.root.config.ts run --coverage",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi"
   },
   "dependencies": {
