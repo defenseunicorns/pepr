@@ -26,41 +26,27 @@ describe("build", () => {
       const argz = [
         `--name ${id}`,
         `--description ${id}`,
-        `--errorBehavior reject`,
+        `--error-behavior reject`,
         `--uuid ${id}`,
-        "--confirm",
+        "--yes",
         "--skip-post-init",
       ].join(" ");
-      execSync(`npx pepr@latest init ${argz}`, {
+      execSync(`npx pepr@nightly init ${argz}`, {
         cwd: workdir.path(),
         stdio: "inherit",
       });
     }, time.toMs("2m"));
 
     it(
-      "should prepare, build, and deploy hello-pepr with pepr@latest",
+      "should prepare, build, and deploy hello-pepr with pepr@nightly",
       { timeout: 1000 * 5 * 60 },
       async () => {
-        try {
-          execSync(`npm i pepr@latest`, { cwd: testModule, stdio: "inherit" });
-          execSync(`node ./node_modules/pepr/dist/cli.js build`, {
-            cwd: testModule,
-            stdio: "inherit",
-          });
-
-          execSync(`kubectl create -f ${testModule}/dist/pepr-module-${id}.yaml`, {
-            cwd: testModule,
-            stdio: "inherit",
-          });
-
-          await Promise.all([
-            waitForDeploymentReady("pepr-system", `pepr-${id}`),
-            waitForDeploymentReady("pepr-system", `pepr-${id}-watcher`),
-          ]);
-        } catch (error) {
-          console.error("Error during installation:", error);
-          expect(error).toBeNull();
-        }
+        await runWithErrorHandling(async () => {
+          await installPepr(testModule, "pepr@nightly");
+          await buildModule(testModule);
+          await applyKubernetesManifest(testModule, id, "create");
+          await waitForModuleDeployments(id);
+        }, "installation");
       },
     );
   });
@@ -69,44 +55,88 @@ describe("build", () => {
     "should prepare, build and deploy with pepr@pr-candidate",
     { timeout: 1000 * 10 * 60 },
     async () => {
-      try {
+      await runWithErrorHandling(async () => {
         const image = process.env.PEPR_IMAGE || "pepr:dev";
-
         const peprTarball = path.resolve(__dirname, "../../pepr-0.0.0-development.tgz");
 
-        execSync(`npm i "${peprTarball}"`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
+        await installPepr(testModule, peprTarball);
+        await buildModule(testModule, image);
+        await applyKubernetesManifest(testModule, id, "apply");
 
-        execSync(`./node_modules/pepr/dist/cli.js build -i ${image}`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
-
-        execSync(`kubectl apply -f ${testModule}/dist/pepr-module-${id}.yaml`, {
-          cwd: testModule,
-          stdio: "inherit",
-        });
-
-        // make sure pods go back down before we wait for the deployment be ready
-        execSync(`kubectl scale deployment pepr-${id} --replicas=0 -n pepr-system`);
-        execSync(`kubectl scale deployment pepr-${id}-watcher --replicas=0 -n pepr-system`);
-        await K8s(kind.Pod).InNamespace("pepr-system").Delete();
-        execSync(`kubectl scale deployment pepr-${id} --replicas=2 -n pepr-system`);
-        execSync(`kubectl scale deployment pepr-${id}-watcher --replicas=1 -n pepr-system`);
-
-        await Promise.all([
-          waitForDeploymentReady("pepr-system", `pepr-${id}`),
-          waitForDeploymentReady("pepr-system", `pepr-${id}-watcher`),
-        ]);
-      } catch (error) {
-        console.error("Error during pepr@pr-candidate deployment:", error);
-        expect(error).toBeNull();
-      }
+        await resetDeployments(id);
+        await waitForModuleDeployments(id);
+      }, "pepr@pr-candidate deployment");
     },
   );
 });
+
+/**
+ * Run a function with standardized error handling
+ */
+async function runWithErrorHandling(fn: () => Promise<void>, context: string): Promise<void> {
+  try {
+    await fn();
+  } catch (error) {
+    console.error(`Error during ${context}:`, error);
+    expect(error).toBeNull();
+  }
+}
+
+/**
+ * Install a Pepr version in the test module
+ */
+async function installPepr(moduleDir: string, peprSource: string): Promise<void> {
+  execSync(`npm install "${peprSource}"`, {
+    cwd: moduleDir,
+    stdio: "inherit",
+  });
+}
+
+/**
+ * Build a Pepr module
+ */
+async function buildModule(moduleDir: string, image?: string): Promise<void> {
+  const imageFlag = image ? `--custom-image ${image}` : "";
+  execSync(`./node_modules/pepr/dist/cli.js build ${imageFlag}`.trim(), {
+    cwd: moduleDir,
+    stdio: "inherit",
+  });
+}
+
+/**
+ * Apply or create the Kubernetes manifest for a Pepr module
+ */
+async function applyKubernetesManifest(
+  moduleDir: string,
+  id: string,
+  operation: "apply" | "create",
+): Promise<void> {
+  execSync(`kubectl ${operation} --filename=${moduleDir}/dist/pepr-module-${id}.yaml`, {
+    cwd: moduleDir,
+    stdio: "inherit",
+  });
+}
+
+/**
+ * Reset deployments by scaling down, cleaning up pods, and scaling back up
+ */
+async function resetDeployments(id: string): Promise<void> {
+  execSync(`kubectl scale deployment pepr-${id} --replicas=0 --namespace pepr-system`);
+  execSync(`kubectl scale deployment pepr-${id}-watcher --replicas=0 --namespace pepr-system`);
+  await K8s(kind.Pod).InNamespace("pepr-system").Delete();
+  execSync(`kubectl scale deployment pepr-${id} --replicas=2 --namespace pepr-system`);
+  execSync(`kubectl scale deployment pepr-${id}-watcher --replicas=1 --namespace pepr-system`);
+}
+
+/**
+ * Wait for both Pepr module deployments to be ready
+ */
+async function waitForModuleDeployments(id: string): Promise<void> {
+  await Promise.all([
+    waitForDeploymentReady("pepr-system", `pepr-${id}`),
+    waitForDeploymentReady("pepr-system", `pepr-${id}-watcher`),
+  ]);
+}
 
 export async function waitForDeploymentReady(namespace: string, name: string): Promise<void> {
   const deployment = await K8s(kind.Deployment).InNamespace(namespace).Get(name);
