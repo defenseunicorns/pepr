@@ -5,14 +5,14 @@ import prompt from "prompts";
 import { Assets } from "../lib/assets/assets";
 import { ChildProcess, fork } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
-import { RootCmd } from "./root";
+import { Command } from "commander";
 import { Store } from "../lib/k8s";
 import { buildModule, loadModule } from "./build";
 import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("dev")
     .description("Setup a local webhook development environment")
