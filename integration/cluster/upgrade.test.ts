@@ -7,7 +7,7 @@ import * as fs from "node:fs/promises";
 import { kind, K8s } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 
@@ -111,7 +111,7 @@ async function applyKubernetesManifest(
   id: string,
   operation: "apply" | "create",
 ): Promise<void> {
-  execSync(`kubectl ${operation} --filename=${moduleDir}/dist/pepr-module-${id}.yaml`, {
+  execFileSync("kubectl", [operation, `--filename=${path.join(moduleDir, "dist", `pepr-module-${id}.yaml`)}`], {
     cwd: moduleDir,
     stdio: "inherit",
   });
