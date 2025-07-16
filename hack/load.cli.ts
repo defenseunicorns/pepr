@@ -480,29 +480,29 @@ program
       });
       log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
       log(await cmd.run(), "");
+
+      log(`Wait for metrics on the Pepr controller to become available`);
+      const start = Date.now();
+      const max = lib.toMs("2m");
+      while (true) {
+        const now = Date.now();
+        const dur = now - start;
+        if (dur > max) {
+          console.error(`Timeout waiting for metrics-server to be ready.`);
+          process.exit(1);
+        }
+
+        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+        let res = await cmd.runRaw();
+        if (res.exitcode === 0) {
+          log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
+          break;
+        }
+
+        await nap(lib.toMs("5s"));
+      }
     } catch (e) {
       console.error(`Failed to deploy image:`, e);
-    }
-
-    log(`Wait for metrics on the Pepr controller to become available`);
-    const start = Date.now();
-    const max = lib.toMs("2m");
-    while (true) {
-      const now = Date.now();
-      const dur = now - start;
-      if (dur > max) {
-        console.error(`Timeout waiting for metrics-server to be ready.`);
-        process.exit(1);
-      }
-
-      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-      let res = await cmd.runRaw();
-      if (res.exitcode === 0) {
-        log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
-        break;
-      }
-
-      await nap(lib.toMs("5s"));
     }
   });
 
