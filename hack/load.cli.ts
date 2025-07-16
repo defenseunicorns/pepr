@@ -485,27 +485,27 @@ program
       log(`Wait for metrics on the Pepr controller to become available`);
       const start = Date.now();
       const max = lib.toMs("5m");
+      const SERVICE_NAME = execSync(
+        `kubectl get svc -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}'`,
+        { stdio: "pipe" },
+      )
+        .toString()
+        .trim();
       while (true) {
+        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+        log(await cmd.run(), "");
+
+        execSync(
+          `kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
+          { stdio: "inherit" },
+        );
+
         const now = Date.now();
         const dur = now - start;
         if (dur > max) {
           console.error(`Timeout waiting for metrics-server to be ready.`);
           process.exit(1);
         }
-
-        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-        log(await cmd.run(), "");
-        const SERVICE_NAME = execSync(
-          `kubectl get svc -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}'`,
-          { stdio: "pipe" },
-        )
-          .toString()
-          .trim();
-
-        execSync(
-          `kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
-          { stdio: "inherit" },
-        );
 
         let res = await cmd.runRaw();
         if (res.exitcode === 0) {
