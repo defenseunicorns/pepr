@@ -9,7 +9,7 @@ import * as fs from "node:fs/promises";
 import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
-
+import { execSync } from "node:child_process";
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
 const TEST_CLUSTER_NAME_MAX_LENGTH = 32;
@@ -482,18 +482,7 @@ program
 
     log(`Wait for metrics on the Pepr controller to become available`);
     const start = Date.now();
-    const max = lib.toMs("5m");
-    try {
-      const cmdDiag = new Cmd({ cmd: `kubectl top -n pepr-system`, env: { KUBECONFIG } });
-      const resultDiag = await cmdDiag.runRaw();
-      log("Diagnostic `kubectl top -n pepr-system` output:");
-      log(resultDiag.stdout.join("\n") || "(no stdout)");
-      log(resultDiag.stderr.join("\n") || "(no stderr)");
-      log(`Exit code: ${resultDiag.exitcode}`, "");
-    } catch (err) {
-      console.error("Error running `kubectl top -n pepr-system` diagnostic check:");
-      console.error(err);
-    }
+    const max = lib.toMs("2m");
     while (true) {
       const now = Date.now();
       const dur = now - start;
@@ -715,6 +704,23 @@ program
       const alpha = Date.now();
 
       log(`Load test start: ${new Date(alpha).toISOString()}`);
+      let output = execSync(`kubectl top po -n pepr-system`, {
+        encoding: "utf8",
+        env: { KUBECONFIG },
+      });
+      log(`kubectl top output:\n${output}`);
+
+      output = execSync(`kubectl top po -n pepr-system`, {
+        encoding: "utf8",
+        env: { KUBECONFIG },
+      });
+      log(`kubectl top output:\n${output}`);
+
+      output = execSync(`kubectl top po -n pepr-system`, {
+        encoding: "utf8",
+        env: { KUBECONFIG },
+      });
+      log(`kubectl top output:\n${output}`);
       log(args);
       const prettyOpts = Object.keys(opts).reduce(
         (acc, key) => {
