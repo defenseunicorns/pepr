@@ -24,7 +24,7 @@ describe("Pepr CLI Update Command", () => {
     vi.mocked(prompt).mockResolvedValue({ confirm: true });
     vi.mocked(child_process.execSync).mockImplementation(() => Buffer.from(""));
 
-    await program.parseAsync(["node", "test", "update"]);
+    await program.parseAsync(["update"], { from: "user" });
 
     expect(prompt).toHaveBeenCalled();
     expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
@@ -38,7 +38,7 @@ describe("Pepr CLI Update Command", () => {
   it("skips template update", async () => {
     vi.mocked(child_process.execSync).mockImplementation(() => Buffer.from(""));
 
-    await program.parseAsync(["node", "test", "update", "--skip-template-update"]);
+    await program.parseAsync(["update", "--skip-template-update"], { from: "user" });
 
     expect(prompt).not.toHaveBeenCalled();
     expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
@@ -53,7 +53,7 @@ describe("Pepr CLI Update Command", () => {
   it("aborts update if user declines prompt", async () => {
     vi.mocked(prompt).mockResolvedValue({ confirm: false });
 
-    await program.parseAsync(["node", "test", "update"]);
+    await program.parseAsync(["update"], { from: "user" });
 
     expect(child_process.execSync).not.toHaveBeenCalled();
   });
@@ -65,7 +65,7 @@ describe("Pepr CLI Update Command", () => {
     });
 
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    await program.parseAsync(["node", "test", "update"]);
+    await program.parseAsync(["update"], { from: "user" });
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining("Error updating Pepr module:"),
       expect.anything(),
@@ -81,7 +81,7 @@ describe("Pepr CLI Update Command", () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
     const spyErr = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await program.parseAsync(["node", "test", "update-templates"]);
+    await program.parseAsync(["update-templates"], { from: "user" });
 
     expect(writeMock).toHaveBeenCalled();
     expect(fs.unlinkSync).toHaveBeenCalled();
