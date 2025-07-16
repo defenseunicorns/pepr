@@ -495,11 +495,18 @@ program
 
         cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
         log(await cmd.run(), "");
-        const results = execSync(
-          `kubectl exec deploy/pepr-pepr-load-watcher -n pepr-system -- curl -k https://localhost:8080/metrics`,
+        const SERVICE_NAME = execSync(
+          `kubectl get svc -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}'`,
+          { stdio: "pipe" },
+        )
+          .toString()
+          .trim();
+
+        execSync(
+          `kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
           { stdio: "inherit" },
         );
-        console.log(results.toString());
+
         let res = await cmd.runRaw();
         if (res.exitcode === 0) {
           log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
