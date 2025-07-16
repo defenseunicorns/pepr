@@ -9,6 +9,7 @@ import * as fs from "node:fs/promises";
 import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
+import { execSync } from "node:child_process";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
@@ -493,6 +494,12 @@ program
         }
 
         cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+        log(await cmd.run(), "");
+        const results = execSync(
+          `kubectl exec deploy/pepr-pepr-load-watcher -n pepr-system -- curl -k https://localhost:8080/metrics`,
+          { stdio: "inherit" },
+        );
+        console.log(results.toString());
         let res = await cmd.runRaw();
         if (res.exitcode === 0) {
           log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
