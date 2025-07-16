@@ -791,7 +791,7 @@ program
       };
       let audienceReady = false;
       const audienceRetryStart = Date.now();
-      const audienceRetryMax = lib.toMs("5m");
+      const audienceRetryMax = lib.toMs("2m");
 
       while (!audienceReady) {
         try {
