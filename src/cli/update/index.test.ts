@@ -85,10 +85,7 @@ describe("Pepr CLI Update Command", () => {
 
     expect(writeMock).toHaveBeenCalled();
     expect(fs.unlinkSync).toHaveBeenCalled();
-    expect(spyErr).toHaveBeenCalledWith(
-      expect.stringContaining("Error updating template files:"),
-      expect.anything(),
-    );
+    expect(spyErr).not.toHaveBeenCalled();
 
     spy.mockRestore();
     spyErr.mockRestore();
