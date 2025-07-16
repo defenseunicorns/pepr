@@ -768,10 +768,10 @@ program
         // let res = await cmd.run();
         let res = await cmd.runRaw();
         if (res.exitcode !== 0) {
-          output = execSync(`kubectl top po -n pepr-system --no-headers`, {
-            encoding: "utf8",
-            env: { KUBECONFIG },
-          });
+          // output = execSync(`kubectl top po -n pepr-system --no-headers`, {
+          //   encoding: "utf8",
+          //   env: { KUBECONFIG },
+          // });
           log(`kubectl top output:\n${output}`);
           output = execSync(`kubectl get po -n pepr-system`, {
             encoding: "utf8",
