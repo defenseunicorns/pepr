@@ -484,7 +484,7 @@ program
 
       log(`Wait for metrics on the Pepr controller to become available`);
       const start = Date.now();
-      const max = lib.toMs("2m");
+      const max = lib.toMs("5m");
       while (true) {
         const now = Date.now();
         const dur = now - start;
