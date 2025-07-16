@@ -5,6 +5,7 @@ import { ESLint } from "eslint";
 import { formatWithPrettier } from "./format.helpers";
 
 import { Command } from "commander";
+import Log from "../../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -47,7 +48,7 @@ export async function peprFormat(validateOnly: boolean): Promise<boolean> {
       const resultText = await formatter.format(results, {} as ESLint.LintResultData);
 
       if (resultText) {
-        console.log(resultText);
+        Log.info(resultText);
       }
 
       // Write the fixes if not in validate-only mode
