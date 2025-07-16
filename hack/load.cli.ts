@@ -496,7 +496,7 @@ program
         log(await cmd.run(), "");
 
         execSync(
-          `kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
+          `kubectl run curler --image=nginx:alpine --rm --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
           { stdio: "inherit" },
         );
 
