@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
 import { dependencies, version } from "./init/templates";
-import { RootCmd } from "./root";
+import { Command } from "commander";
 import { Option } from "commander";
 import { parseTimeout } from "../lib/helpers";
 import { peprFormat } from "./format";
@@ -64,7 +64,7 @@ type BuildModuleReturn = {
   uuid: string;
 };
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("build")
     .description("Build a Pepr Module for deployment")

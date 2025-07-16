@@ -5,7 +5,7 @@ import prompt from "prompts";
 import { CapabilityExport } from "../lib/types";
 import { Assets } from "../lib/assets/assets";
 import { ImagePullSecret } from "../lib/types";
-import { RootCmd } from "./root";
+import { Command } from "commander";
 import { buildModule } from "./build";
 import { deployImagePullSecret, deployWebhook } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
@@ -126,7 +126,7 @@ async function buildAndDeployModule(image: string, force: boolean): Promise<void
   }
 }
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("deploy")
     .description("Deploy a Pepr Module")

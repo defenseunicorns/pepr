@@ -4,9 +4,9 @@
 import { ESLint } from "eslint";
 import { formatWithPrettier } from "./format.helpers";
 
-import { RootCmd } from "../root";
+import { Command } from "commander";
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("format")
     .description("Lint and format this Pepr module")

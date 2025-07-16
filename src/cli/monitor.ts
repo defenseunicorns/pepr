@@ -5,7 +5,7 @@ import { Log as K8sLog, KubeConfig, KubernetesListObject } from "@kubernetes/cli
 import { K8s, kind } from "kubernetes-fluent-client";
 import stream from "stream";
 import { ResponseItem } from "../lib/types";
-import { RootCmd } from "./root";
+import { Command } from "commander";
 
 interface LogPayload {
   namespace: string;
@@ -22,7 +22,7 @@ interface LogPayload {
   };
 }
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("monitor [module-uuid]")
     .description("Monitor a Pepr Module")

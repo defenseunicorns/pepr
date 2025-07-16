@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { resolve } from "path";
 import prompts from "prompts";
 
-import { RootCmd } from "../root";
+import { Command } from "commander";
 import {
   codeSettings,
   eslint,
@@ -26,7 +26,7 @@ import { ErrorList } from "../../lib/errors";
 import { UUID_LENGTH_LIMIT } from "./enums";
 import { Option } from "commander";
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   let response = {} as PromptOptions;
   let pkgOverride = "";
   program
