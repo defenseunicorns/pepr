@@ -463,22 +463,26 @@ program
     log({ cmd: cmd.cmd });
     log(await cmd.run(), "");
 
-    log(`Get test cluster credential`);
-    cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
-    log({ cmd: cmd.cmd });
-    let result = await cmd.run();
-    let KUBECONFIG = result.stdout.join("").trim();
-    log(result, "");
+    try {
+      log(`Get test cluster credential`);
+      cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
+      log({ cmd: cmd.cmd });
+      let result = await cmd.run();
+      let KUBECONFIG = result.stdout.join("").trim();
+      log(result, "");
 
-    log(`Deploy Pepr controller into test cluster`);
-    let env = { KUBECONFIG };
-    cmd = new Cmd({
-      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
-      cwd: workdir,
-      env,
-    });
-    log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
-    log(await cmd.run(), "");
+      log(`Deploy Pepr controller into test cluster`);
+      let env = { KUBECONFIG };
+      cmd = new Cmd({
+        cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
+        cwd: workdir,
+        env,
+      });
+      log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
+      log(await cmd.run(), "");
+    } catch (e) {
+      console.error(`Failed to deploy image:`, e);
+    }
 
     log(`Wait for metrics on the Pepr controller to become available`);
     const start = Date.now();
