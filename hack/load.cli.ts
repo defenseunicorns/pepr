@@ -9,7 +9,6 @@ import * as fs from "node:fs/promises";
 import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
-import { execSync } from "node:child_process";
 
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
@@ -464,59 +463,42 @@ program
     log({ cmd: cmd.cmd });
     log(await cmd.run(), "");
 
-    try {
-      log(`Get test cluster credential`);
-      cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
-      log({ cmd: cmd.cmd });
-      let result = await cmd.run();
-      let KUBECONFIG = result.stdout.join("").trim();
-      log(result, "");
+    log(`Get test cluster credential`);
+    cmd = new Cmd({ cmd: `k3d kubeconfig write ${clusterName}` });
+    log({ cmd: cmd.cmd });
+    let result = await cmd.run();
+    let KUBECONFIG = result.stdout.join("").trim();
+    log(result, "");
 
-      log(`Deploy Pepr controller into test cluster`);
-      let env = { KUBECONFIG };
-      cmd = new Cmd({
-        cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
-        cwd: workdir,
-        env,
-      });
-      log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
-      log(await cmd.run(), "");
+    log(`Deploy Pepr controller into test cluster`);
+    let env = { KUBECONFIG };
+    cmd = new Cmd({
+      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
+      cwd: workdir,
+      env,
+    });
+    log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
+    log(await cmd.run(), "");
 
-      log(`Wait for metrics on the Pepr controller to become available`);
-      const start = Date.now();
-      const max = lib.toMs("5m");
-      const SERVICE_NAME = execSync(
-        `kubectl get svc -n pepr-system -l pepr.dev/controller=watcher -ojsonpath='{.items[0].metadata.name}'`,
-        { stdio: "pipe" },
-      )
-        .toString()
-        .trim();
-      while (true) {
-        cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
-        log(await cmd.run(), "");
-
-        execSync(
-          `kubectl run curler --image=nginx:alpine --rm --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://${SERVICE_NAME}/metrics`,
-          { stdio: "inherit" },
-        );
-
-        const now = Date.now();
-        const dur = now - start;
-        if (dur > max) {
-          console.error(`Timeout waiting for metrics-server to be ready.`);
-          process.exit(1);
-        }
-
-        let res = await cmd.runRaw();
-        if (res.exitcode === 0) {
-          log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
-          break;
-        }
-
-        await nap(lib.toMs("5s"));
+    log(`Wait for metrics on the Pepr controller to become available`);
+    const start = Date.now();
+    const max = lib.toMs("2m");
+    while (true) {
+      const now = Date.now();
+      const dur = now - start;
+      if (dur > max) {
+        console.error(`Timeout waiting for metrics-server to be ready.`);
+        process.exit(1);
       }
-    } catch (e) {
-      console.error(`Failed to deploy image:`, e);
+
+      cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
+      let res = await cmd.runRaw();
+      if (res.exitcode === 0) {
+        log({ max: lib.toHuman(max), actual: lib.toHuman(dur) }, "");
+        break;
+      }
+
+      await nap(lib.toMs("5s"));
     }
   });
 
@@ -775,7 +757,25 @@ program
           .concat("\n");
         await fs.appendFile(audFile, outlines);
       };
-      await audience(); // run immediately, then on schedule
+      let audienceReady = false;
+      const audienceRetryStart = Date.now();
+      const audienceRetryMax = lib.toMs("5m");
+
+      while (!audienceReady) {
+        try {
+          await audience();
+          audienceReady = true;
+        } catch (e) {
+          const now = Date.now();
+          if (now - audienceRetryStart > audienceRetryMax) {
+            console.error(`Timeout waiting for audience (metrics availability):`);
+            console.error(e);
+            process.exit(1);
+          }
+          log("Metrics not ready yet. Retrying...");
+          await nap(lib.toMs("5s"));
+        }
+      }
       const ticket = setInterval(async () => {
         try {
           await audience();
