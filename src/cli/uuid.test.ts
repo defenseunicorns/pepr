@@ -130,7 +130,7 @@ describe("uuid CLI command", () => {
   });
 
   it("should log UUID and description when deployment has a UUID", async () => {
-    await program.parseAsync(["node", "test", "uuid"]);
+    await program.parseAsync(["uuid"], { from: "user" });
 
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
     expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
