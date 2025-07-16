@@ -797,8 +797,9 @@ program
         try {
           await audience();
         } catch (e) {
+          log(`This comes from ticket`);
           console.error(e);
-          process.exit(1);
+          // process.exit(1);
         }
       }, opts.audInterval);
 
