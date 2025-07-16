@@ -21,6 +21,13 @@ vi.mock("kubernetes-fluent-client", async () => {
           annotations: { "pepr.dev/description": "Test annotation" },
         },
       },
+      {
+        metadata: {
+          name: "other-deployment",
+          labels: { "pepr.dev/uuid": "asdf" },
+          annotations: { "pepr.dev/description": "Another annotation" },
+        },
+      }
     ],
   });
 
