@@ -765,7 +765,12 @@ program
 
         cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
         let req = { cmd: cmd.cmd, env };
-        let res = await cmd.run();
+        // let res = await cmd.run();
+        let res = await cmd.runRaw();
+        if (res.exitcode !== 0) {
+          log(`audience failed: ${res.stderr.join("\n")}`);
+          return;
+        }
 
         let outlines = res.stdout
           .filter(f => f)
