@@ -94,6 +94,6 @@ describe("Pepr CLI Update Command", () => {
     expect(fs.unlinkSync).toHaveBeenCalled();
 
     expect(Log.info).toHaveBeenCalledWith("Updating Pepr config and template files...");
-    expect(Log.error).toHaveBeenCalledWith("Error updating template files:", expect.anything());
+    expect(Log.error).not.toHaveBeenCalled();
   });
 });

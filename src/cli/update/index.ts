@@ -88,7 +88,6 @@ export default function (program: Command): void {
             await write(tsPath, helloPepr.data);
           }
         }
-        throw new Error("another error, for testing");
       } catch (e) {
         Log.error(`Error updating template files:`, e);
         process.exitCode = 1;
