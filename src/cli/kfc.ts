@@ -4,9 +4,9 @@
 import { execSync } from "child_process";
 import prompt from "prompts";
 
-import { RootCmd } from "./root";
+import { Command } from "commander";
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("kfc [args...]")
     .description("Execute Kubernetes Fluent Client commands")

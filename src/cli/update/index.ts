@@ -15,9 +15,9 @@ import {
   tsConfig,
 } from "../init/templates";
 import { write } from "../init/utils";
-import { RootCmd } from "../root";
+import { Command } from "commander";
 
-export default function (program: RootCmd): void {
+export default function (program: Command): void {
   program
     .command("update")
     .description("Update this Pepr module. Not recommended for prod as it may change files.")

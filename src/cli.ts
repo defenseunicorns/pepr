@@ -12,7 +12,7 @@ import monitor from "./cli/monitor";
 import init from "./cli/init/index";
 import uuid from "./cli/uuid";
 import { version } from "./cli/init/templates";
-import { RootCmd } from "./cli/root";
+import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
@@ -21,7 +21,7 @@ if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 
-const program = new RootCmd();
+const program = new Command();
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
 }
