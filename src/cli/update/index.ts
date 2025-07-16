@@ -16,6 +16,7 @@ import {
 } from "../init/templates";
 import { write } from "../init/utils";
 import { Command } from "commander";
+import Log from "../../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -38,7 +39,7 @@ export default function (program: Command): void {
         }
       }
 
-      console.log("Updating the Pepr module...");
+      Log.info("Updating the Pepr module...");
 
       try {
         // Update Pepr for the module
@@ -53,9 +54,9 @@ export default function (program: Command): void {
           });
         }
 
-        console.log(`✅ Module updated successfully`);
+        Log.info(`✅ Module updated successfully`);
       } catch (e) {
-        console.error(`Error updating Pepr module:`, e);
+        Log.error(`Error updating Pepr module:`, e);
         process.exitCode = 1;
       }
     });
@@ -64,7 +65,7 @@ export default function (program: Command): void {
     .command("update-templates", { hidden: true })
     .description("Perform template updates")
     .action(async opts => {
-      console.log("Updating Pepr config and template tiles...");
+      Log.info("Updating Pepr config and template files...");
 
       try {
         // Don't update the template files if the user specified the --skip-template-update flag
@@ -89,7 +90,7 @@ export default function (program: Command): void {
         }
         throw new Error("another error, for testing");
       } catch (e) {
-        console.error(`Error updating template files:`, e);
+        Log.error(`Error updating template files:`, e);
         process.exitCode = 1;
       }
     });

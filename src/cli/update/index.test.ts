@@ -5,11 +5,19 @@ import * as child_process from "child_process";
 import * as fs from "fs";
 import * as utils from "../init/utils";
 import prompt from "prompts";
+import Log from "../../lib/telemetry/logger";
 
 vi.mock("prompts");
 vi.mock("child_process");
 vi.mock("fs");
 vi.mock("../init/utils");
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 describe("Pepr CLI Update Command", () => {
   let program: Command;
@@ -33,6 +41,8 @@ describe("Pepr CLI Update Command", () => {
     expect(child_process.execSync).toHaveBeenCalledWith("npx pepr update-templates", {
       stdio: "inherit",
     });
+    expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
+    expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
   });
 
   it("skips template update", async () => {
@@ -48,6 +58,8 @@ describe("Pepr CLI Update Command", () => {
       "npx pepr update-templates",
       expect.anything(),
     );
+    expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
+    expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
   });
 
   it("aborts update if user declines prompt", async () => {
@@ -56,21 +68,19 @@ describe("Pepr CLI Update Command", () => {
     await program.parseAsync(["update"], { from: "user" });
 
     expect(child_process.execSync).not.toHaveBeenCalled();
+    expect(Log.info).not.toHaveBeenCalled();
+    expect(Log.error).not.toHaveBeenCalled();
   });
 
   it("handles update error", async () => {
     vi.mocked(prompt).mockResolvedValue({ confirm: true });
     vi.mocked(child_process.execSync).mockImplementation(() => {
-      throw new Error("fail");
+      throw new Error("some error");
     });
 
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     await program.parseAsync(["update"], { from: "user" });
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining("Error updating Pepr module:"),
-      expect.anything(),
-    );
-    spy.mockRestore();
+    expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
+    expect(Log.error).toHaveBeenCalledWith("Error updating Pepr module:", expect.anything());
   });
 
   it("updates templates fully", async () => {
@@ -78,19 +88,12 @@ describe("Pepr CLI Update Command", () => {
     const writeMock = vi.fn();
     vi.mocked(utils.write).mockImplementation(writeMock);
 
-    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const spyErr = vi.spyOn(console, "error").mockImplementation(() => {});
-
     await program.parseAsync(["update-templates"], { from: "user" });
 
     expect(writeMock).toHaveBeenCalled();
     expect(fs.unlinkSync).toHaveBeenCalled();
-    expect(spyErr).toHaveBeenCalledWith(
-      expect.stringContaining("Error updating template files:"),
-      expect.anything(),
-    );
 
-    spy.mockRestore();
-    spyErr.mockRestore();
+    expect(Log.info).toHaveBeenCalledWith("Updating Pepr config and template files...");
+    expect(Log.error).toHaveBeenCalledWith("Error updating template files:", expect.anything());
   });
 });
