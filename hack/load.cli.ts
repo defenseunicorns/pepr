@@ -756,17 +756,12 @@ program
         let req = { cmd: cmd.cmd, env };
         let res = await cmd.runRaw();
         if (res.exitcode !== 0) {
-          let output = execSync(`kubectl get po -n kube-system`, {
-            encoding: "utf8",
-            env: { KUBECONFIG },
-          });
-          log(`kubectl get po -n kube-system output:\n${output}`);
-          output = execSync(`kubectl get po -n pepr-system`, {
-            encoding: "utf8",
-            env: { KUBECONFIG },
-          });
-          log(`kubectl get po output:\n${output}`);
           log(`audience failed: ${res.stderr.join("\n")}`);
+          let output = execSync(`kubectl get po -n pepr-system`, {
+            encoding: "utf8",
+            env: { KUBECONFIG },
+          });
+          log(`kubectl get po -n pepr-system output:\n${output}`);
           output = execSync(`kubectl top po -n pepr-system --no-headers`, {
             encoding: "utf8",
             env: { KUBECONFIG },
@@ -786,7 +781,6 @@ program
         try {
           await audience();
         } catch (e) {
-          log(`This comes from ticket`);
           const output = execSync(`kubectl describe po -n pepr-system`, {
             encoding: "utf8",
             env: { KUBECONFIG },
