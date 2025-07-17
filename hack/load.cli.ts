@@ -757,15 +757,6 @@ program
         let res = await cmd.runRaw();
         if (res.exitcode !== 0) {
           log(`audience failed: ${res.stderr.join("\n")}`);
-          let output = execSync(`kubectl get po -n pepr-system`, {
-            encoding: "utf8",
-            env: { KUBECONFIG },
-          });
-          log(`kubectl get po -n pepr-system output:\n${output}`);
-          output = execSync(`kubectl top po -n pepr-system --no-headers`, {
-            encoding: "utf8",
-            env: { KUBECONFIG },
-          });
           return;
         }
 
