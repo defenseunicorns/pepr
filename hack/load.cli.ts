@@ -823,6 +823,13 @@ program
             env: { KUBECONFIG },
           });
           log(`kubectl describe po output:\n${output}`);
+          log(`Patch Pepr controller deployment to remove resource limits`);
+          cmd = new Cmd({
+            cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
+            env,
+          });
+          log({ cmd: cmd.cmd, env });
+          log(await cmd.run(), "");
           console.error(e);
           // process.exit(1);
         }
