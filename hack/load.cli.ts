@@ -485,6 +485,7 @@ program
       cmd: `kubectl wait --namespace pepr-system --for=condition=available deployment/pepr-pepr-load --timeout=5m`,
       env,
     });
+    log(await cmd.run(), "");
 
     log(`Patch Pepr controller deployment to remove resource limits`);
     cmd = new Cmd({
@@ -499,6 +500,7 @@ program
       cmd: `kubectl wait --namespace pepr-system --for=condition=available deployment/pepr-pepr-load --timeout=5m`,
       env,
     });
+    log(await cmd.run(), "");
 
     log(`Wait for metrics on the Pepr controller to become available`);
     const start = Date.now();
