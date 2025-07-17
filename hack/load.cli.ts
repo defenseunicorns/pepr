@@ -818,6 +818,11 @@ program
           await audience();
         } catch (e) {
           log(`This comes from ticket`);
+          output = execSync(`kubectl describe po -n pepr-system`, {
+            encoding: "utf8",
+            env: { KUBECONFIG },
+          });
+          log(`kubectl describe po output:\n${output}`);
           console.error(e);
           // process.exit(1);
         }
