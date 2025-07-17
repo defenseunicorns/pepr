@@ -479,6 +479,26 @@ program
     });
     log({ cmd: cmd.cmd, cwd: cmd.cwd, env });
     log(await cmd.run(), "");
+    await nap(lib.toMs("30s"));
+    log("Wait for Controller to become available");
+    cmd = new Cmd({
+      cmd: `kubectl wait --namespace pepr-system --for=condition=available deployment/pepr-pepr-load --timeout=5m`,
+      env,
+    });
+
+    log(`Patch Pepr controller deployment to remove resource limits`);
+    cmd = new Cmd({
+      cmd: `kubectl patch deployment pepr-pepr-load -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
+      env,
+    });
+    log({ cmd: cmd.cmd, env });
+    log(await cmd.run(), "");
+    await nap(lib.toMs("30s"));
+    log("Wait for Controller to become available after patching");
+    cmd = new Cmd({
+      cmd: `kubectl wait --namespace pepr-system --for=condition=available deployment/pepr-pepr-load --timeout=5m`,
+      env,
+    });
 
     log(`Wait for metrics on the Pepr controller to become available`);
     const start = Date.now();
