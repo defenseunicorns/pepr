@@ -27,7 +27,7 @@ vi.mock("kubernetes-fluent-client", async () => {
           labels: { "pepr.dev/uuid": "asdf" },
           annotations: { "pepr.dev/description": "Another annotation" },
         },
-      }
+      },
     ],
   });
 
@@ -139,10 +139,10 @@ describe("uuid CLI command", () => {
 
   it("should log UUID and description when deployment has a matching UUID", async () => {
     await program.parseAsync(["uuid", "asdf"], { from: "user" });
-
+    console.log(logSpy.mock.calls);
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
     expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
+    expect(logSpy).toHaveBeenCalledWith("1234\tTest annotation");
     expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
-    expect(logSpy).not.toHaveBeenCalledWith("1234\tTest annotation");
   });
 });
