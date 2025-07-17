@@ -704,23 +704,6 @@ program
       const alpha = Date.now();
 
       log(`Load test start: ${new Date(alpha).toISOString()}`);
-      let output = execSync(`kubectl top po -n pepr-system`, {
-        encoding: "utf8",
-        env: { KUBECONFIG },
-      });
-      log(`kubectl top output:\n${output}`);
-
-      output = execSync(`kubectl top po -n pepr-system`, {
-        encoding: "utf8",
-        env: { KUBECONFIG },
-      });
-      log(`kubectl top output:\n${output}`);
-
-      output = execSync(`kubectl top po -n pepr-system`, {
-        encoding: "utf8",
-        env: { KUBECONFIG },
-      });
-      log(`kubectl top output:\n${output}`);
       log(args);
       const prettyOpts = Object.keys(opts).reduce(
         (acc, key) => {
@@ -757,7 +740,13 @@ program
       await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
 
       let audFile = `${opts.outputDir}/${alpha}-audience.log`;
-
+      log(`Patch Pepr controller deployment to remove resource limits`);
+      cmd = new Cmd({
+        cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
+        env,
+      });
+      log({ cmd: cmd.cmd, env });
+      log(await cmd.run(), "");
       const audience = async () => {
         process.stdout.write("↓");
 
@@ -765,10 +754,9 @@ program
 
         cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
         let req = { cmd: cmd.cmd, env };
-        // let res = await cmd.run();
         let res = await cmd.runRaw();
         if (res.exitcode !== 0) {
-          output = execSync(`kubectl get po -n kube-system`, {
+          let output = execSync(`kubectl get po -n kube-system`, {
             encoding: "utf8",
             env: { KUBECONFIG },
           });
@@ -783,7 +771,6 @@ program
             encoding: "utf8",
             env: { KUBECONFIG },
           });
-          log(`kubectl top output:\n${output}`);
           return;
         }
 
@@ -794,44 +781,18 @@ program
           .concat("\n");
         await fs.appendFile(audFile, outlines);
       };
-      let audienceReady = false;
-      const audienceRetryStart = Date.now();
-      const audienceRetryMax = lib.toMs("2m");
-
-      while (!audienceReady) {
-        try {
-          await audience();
-          audienceReady = true;
-        } catch (e) {
-          const now = Date.now();
-          if (now - audienceRetryStart > audienceRetryMax) {
-            console.error(`Timeout waiting for audience (metrics availability):`);
-            console.error(e);
-            process.exit(1);
-          }
-          log("Metrics not ready yet. Retrying...");
-          await nap(lib.toMs("5s"));
-        }
-      }
+      await audience(); // run immediately, then on schedule
       const ticket = setInterval(async () => {
         try {
           await audience();
         } catch (e) {
           log(`This comes from ticket`);
-          output = execSync(`kubectl describe po -n pepr-system`, {
+          const output = execSync(`kubectl describe po -n pepr-system`, {
             encoding: "utf8",
             env: { KUBECONFIG },
           });
           log(`kubectl describe po output:\n${output}`);
-          log(`Patch Pepr controller deployment to remove resource limits`);
-          cmd = new Cmd({
-            cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
-            env,
-          });
-          log({ cmd: cmd.cmd, env });
-          log(await cmd.run(), "");
           console.error(e);
-          // process.exit(1);
         }
       }, opts.audInterval);
 
