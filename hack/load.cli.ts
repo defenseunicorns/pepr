@@ -481,28 +481,43 @@ program
     log(await cmd.run(), "");
     await nap(lib.toMs("30s"));
 
-    log("Wait for Controller to become available");
-    cmd = new Cmd({
-      cmd: `kubectl wait --namespace pepr-system --for=condition=ready deployment/pepr-pepr-load-watcher --timeout=5m`,
-      env,
-    });
-    log(await cmd.run(), "");
+    try {
+      log("Wait for Controller to become available");
+      cmd = new Cmd({
+        cmd: `kubectl wait --namespace pepr-system --for=condition=ready deployment/pepr-pepr-load-watcher --timeout=5m`,
+        env,
+      });
+      log(await cmd.run(), "");
+    } catch (e) {
+      console.error("Failed to wait for controller:", e);
+      throw e;
+    }
 
-    log(`Patch Pepr controller deployment to remove resource limits`);
-    cmd = new Cmd({
-      cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
-      env,
-    });
-    log({ cmd: cmd.cmd, env });
-    log(await cmd.run(), "");
-    await nap(lib.toMs("30s"));
+    try {
+      log(`Patch Pepr controller deployment to remove resource limits`);
+      cmd = new Cmd({
+        cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
+        env,
+      });
+      log({ cmd: cmd.cmd, env });
+      log(await cmd.run(), "");
+      await nap(lib.toMs("30s"));
+    } catch (e) {
+      console.error("Failed to patch deployment:", e);
+      throw e;
+    }
 
-    log("Wait for Controller to become available after patching");
-    cmd = new Cmd({
-      cmd: `kubectl wait --namespace pepr-system --for=condition=ready deploy/pepr-pepr-load-watcher --timeout=5m`,
-      env,
-    });
-    log(await cmd.run(), "");
+    try {
+      log("Wait for Controller to become available after patching");
+      cmd = new Cmd({
+        cmd: `kubectl wait --namespace pepr-system --for=condition=ready deploy/pepr-pepr-load-watcher --timeout=5m`,
+        env,
+      });
+      log(await cmd.run(), "");
+    } catch (e) {
+      console.error("Controller did not become ready after patch:", e);
+      throw e;
+    }
 
     log(`Wait for metrics on the Pepr controller to become available`);
     const start = Date.now();
