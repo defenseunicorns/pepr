@@ -55,8 +55,8 @@ export default function (program: Command): void {
         }
 
         Log.info(`✅ Module updated successfully`);
-      } catch (e) {
-        Log.error(`Error updating Pepr module:`, e);
+      } catch (error) {
+        Log.error(error, `Error updating Pepr module:`);
         process.exitCode = 1;
       }
     });
@@ -88,8 +88,8 @@ export default function (program: Command): void {
             await write(tsPath, helloPepr.data);
           }
         }
-      } catch (e) {
-        Log.error(`Error updating template files:`, e);
+      } catch (error) {
+        Log.error(error, `Error updating template files:`);
         process.exitCode = 1;
       }
     });
