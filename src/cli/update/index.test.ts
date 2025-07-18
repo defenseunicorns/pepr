@@ -80,7 +80,7 @@ describe("Pepr CLI Update Command", () => {
 
     await program.parseAsync(["update"], { from: "user" });
     expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
-    expect(Log.error).toHaveBeenCalledWith("Error updating Pepr module:", expect.anything());
+    expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Error updating Pepr module:");
   });
 
   it("updates templates fully", async () => {
