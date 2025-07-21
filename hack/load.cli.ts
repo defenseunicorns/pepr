@@ -9,7 +9,7 @@ import * as fs from "node:fs/promises";
 import * as R from "ramda";
 import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
-
+import { execSync } from "node:child_process";
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
 const TEST_CLUSTER_NAME_DEFAULT = "cluster";
 const TEST_CLUSTER_NAME_MAX_LENGTH = 32;
@@ -740,7 +740,13 @@ program
       await fs.appendFile(actFile, loadTmpl.replace(/\n/g, "\\\\n") + "\n");
 
       let audFile = `${opts.outputDir}/${alpha}-audience.log`;
-
+      log(`Patch Pepr controller deployment to remove resource limits`);
+      cmd = new Cmd({
+        cmd: `kubectl patch deployment pepr-pepr-load-watcher -n pepr-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'`,
+        env,
+      });
+      log({ cmd: cmd.cmd, env });
+      log(await cmd.run(), "");
       const audience = async () => {
         process.stdout.write("↓");
 
@@ -748,7 +754,11 @@ program
 
         cmd = new Cmd({ cmd: `kubectl top --namespace pepr-system pod --no-headers`, env });
         let req = { cmd: cmd.cmd, env };
-        let res = await cmd.run();
+        let res = await cmd.runRaw();
+        if (res.exitcode !== 0) {
+          log(`audience failed: ${res.stderr.join("\n")}`);
+          return;
+        }
 
         let outlines = res.stdout
           .filter(f => f)
@@ -762,8 +772,12 @@ program
         try {
           await audience();
         } catch (e) {
+          const output = execSync(`kubectl describe po -n pepr-system`, {
+            encoding: "utf8",
+            env: { KUBECONFIG },
+          });
+          log(`kubectl describe po output:\n${output}`);
           console.error(e);
-          process.exit(1);
         }
       }, opts.audInterval);
 
