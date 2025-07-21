@@ -3,7 +3,6 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import prompts from "prompts";
 
 import { Command } from "commander";
 import {
@@ -53,15 +52,8 @@ export default function (program: Command): void {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
-        prompts.inject([
-          "pepr-test-module",
-          "A test module for Pepr",
-          "ignore",
-          "static-test",
-          "y",
-        ]);
+        response = await walkthrough(thisCommand.opts());
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
-        response = await walkthrough();
       } else {
         response = await walkthrough(thisCommand.opts());
         Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
