@@ -16,7 +16,7 @@ import {
   watchForChanges,
   determineRbacMode,
   assignImage,
-  handleCustomOutputDir,
+  createOutputDirectory,
   handleValidCapabilityNames,
   handleCustomImageBuild,
   validImagePullSecret,
@@ -69,7 +69,10 @@ export default function (program: Command): void {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .addOption(
-      new Option("-M, --rbac-mode <admin|scoped>", "Set RBAC mode.").choices(["admin", "scoped"]),
+      new Option("-M, --rbac-mode <mode>", "Override module config and set RBAC mode.").choices([
+        "admin",
+        "scoped",
+      ]),
     )
     .addOption(
       new Option(
@@ -95,7 +98,7 @@ export default function (program: Command): void {
       "-n, --no-embed",
       "Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
-    .option("-o, --output <directory>", "Set output directory.")
+    .option("-o, --output <directory>", "Set output directory.", "dist")
     .addOption(
       new Option(
         "-r, --registry <GitHub|Iron Bank>",
@@ -115,8 +118,7 @@ export default function (program: Command): void {
         .default("manifest"),
     )
     .action(async opts => {
-      // assign custom output directory if provided
-      outputDir = await handleCustomOutputDir(opts.output);
+      outputDir = await createOutputDirectory(opts.output);
 
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);

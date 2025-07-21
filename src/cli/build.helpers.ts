@@ -18,6 +18,7 @@ import {
   service,
   watcherService,
 } from "../lib/assets/k8sObjects";
+import Log from "../lib/telemetry/logger";
 
 interface ImageOptions {
   customImage?: string;
@@ -83,18 +84,14 @@ export function determineRbacMode(
  * @returns The desired output directory or the default one
  */
 
-export async function handleCustomOutputDir(outputDir: string): Promise<string> {
-  const defaultOutputDir = "dist";
-  if (outputDir) {
-    try {
-      await createDirectoryIfNotExists(outputDir);
-      return outputDir;
-    } catch (error) {
-      console.error(`Error creating output directory: ${error.message}`);
-      process.exit(1);
-    }
+export async function createOutputDirectory(outputDir: string): Promise<string> {
+  try {
+    await createDirectoryIfNotExists(outputDir);
+    return outputDir;
+  } catch (error) {
+    Log.error(`Error creating output directory: ${error.message}`);
+    process.exit(1);
   }
-  return defaultOutputDir;
 }
 
 /**
