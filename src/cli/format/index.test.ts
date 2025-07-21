@@ -5,6 +5,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { peprFormat } from "./index";
 import { formatWithPrettier } from "./format.helpers";
 import { ESLint } from "eslint";
+import Log from "../../lib/telemetry/logger";
 
 // Mock ESLint
 vi.mock("eslint", () => {
@@ -21,7 +22,14 @@ vi.mock("./format.helpers", () => ({
   formatWithPrettier: vi.fn(),
 }));
 
-describe("peprFormat", () => {
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+  },
+}));
+
+describe("Pepr Format", () => {
   const mockLintFiles = vi.fn();
   const mockLoadFormatter = vi.fn();
   const mockOutputFixes = vi.fn();
@@ -79,6 +87,7 @@ describe("peprFormat", () => {
     const result = await peprFormat(false);
 
     expect(result).toBe(false);
+    expect(Log.info).toHaveBeenCalledWith("Some linting errors");
   });
 
   it("should return false when there are only formatting errors", async () => {
