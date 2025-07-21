@@ -54,6 +54,10 @@ export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>
  * @param cfg Module's config
  * @returns The determined RBAC mode
  * @example
+ * const opts = { rbacMode: "admin" };
+ * const cfg = { pepr: { rbacMode: "scoped" } };
+ * const result = determineRbacMode(opts, cfg);
+ * console.log(result); // "admin"
  */
 export function determineRbacMode(
   opts: { rbacMode?: string },
