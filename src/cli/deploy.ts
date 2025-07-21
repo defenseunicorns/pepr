@@ -54,7 +54,7 @@ export function validateImagePullSecretDetails(details: ImagePullSecretDetails):
   if (missing.length > 0) {
     return {
       valid: false,
-      error: `Error: Must provide ${missing.join(", ")} when providing --pullSecret`,
+      error: `Error: Must provide ${missing.join(", ")} when providing --pull-secret`,
     };
   }
 
