@@ -83,18 +83,15 @@ export function determineRbacMode(
  * @returns The desired output directory or the default one
  */
 
-export async function handleCustomOutputDir(outputDir: string): Promise<string> {
-  const defaultOutputDir = "dist";
-  if (outputDir) {
-    try {
-      await createDirectoryIfNotExists(outputDir);
-      return outputDir;
-    } catch (error) {
-      console.error(`Error creating output directory: ${error.message}`);
-      process.exit(1);
-    }
+export async function createOutputDirectory(outputDir: string): Promise<string> {
+  try {
+    const dir = outputDir === "" ? "dist" : outputDir;
+    await createDirectoryIfNotExists(dir);
+    return dir;
+  } catch (error) {
+    console.error(`Error creating output directory: ${error.message}`);
+    process.exit(1);
   }
-  return defaultOutputDir;
 }
 
 /**
@@ -221,7 +218,7 @@ export async function generateYamlAndWriteToDisk(obj: {
     await fs.writeFile(zarfPath, localZarf);
 
     await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
-    console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
+    console.info(`K8s resource for the module saved to ${yamlPath}`);
   } catch (error) {
     console.error(`Error generating YAML: ${error}`);
     process.exit(1);
