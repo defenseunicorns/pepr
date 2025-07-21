@@ -16,7 +16,7 @@ import {
   watchForChanges,
   determineRbacMode,
   assignImage,
-  handleCustomOutputDir,
+  createOutputDirectory,
   handleValidCapabilityNames,
   handleCustomImageBuild,
   validImagePullSecret,
@@ -69,7 +69,10 @@ export default function (program: Command): void {
     .command("build")
     .description("Build a Pepr Module for deployment")
     .addOption(
-      new Option("-M, --rbac-mode <admin|scoped>", "Set RBAC mode.").choices(["admin", "scoped"]),
+      new Option("-M, --rbac-mode <mode>", "Override module config and set RBAC mode.").choices([
+        "admin",
+        "scoped",
+      ]),
     )
     .addOption(
       new Option(
@@ -95,7 +98,7 @@ export default function (program: Command): void {
       "-n, --no-embed",
       "Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.",
     )
-    .option("-o, --output <directory>", "Set output directory.")
+    .option("-o, --output <directory>", "Set output directory.", "dist")
     .addOption(
       new Option(
         "-r, --registry <GitHub|Iron Bank>",
@@ -115,8 +118,7 @@ export default function (program: Command): void {
         .default("manifest"),
     )
     .action(async opts => {
-      // assign custom output directory if provided
-      outputDir = await handleCustomOutputDir(opts.output);
+      outputDir = await createOutputDirectory(opts.output);
 
       // Build the module
       const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
@@ -154,7 +156,7 @@ export default function (program: Command): void {
 
       // If building without embedding, exit after building
       if (!opts.embed) {
-        console.info(`✅ Module built successfully at ${path}`);
+        console.info(`Module built successfully at ${path}`);
         return;
       }
 
@@ -274,7 +276,7 @@ export async function buildModule(
             build.onEnd(async r => {
               // Print the build size analysis
               if (r?.metafile) {
-                console.log(await analyzeMetafile(r.metafile));
+                console.info(await analyzeMetafile(r.metafile));
               }
 
               // If we're in dev mode, call the reloader function
@@ -331,7 +333,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
   const out = e.stdout.toString() as string;
   const err = e.stderr.toString();
 
-  console.log(out);
+  console.info(out);
   console.error(err);
 
   // Check for version conflicts
@@ -365,7 +367,7 @@ export async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {
-    console.log(
+    console.info(
       "\x1b[33m%s\x1b[0m",
       "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
     );
