@@ -4,9 +4,17 @@ import { it, describe, expect, beforeEach, vi, afterEach } from "vitest";
 import { CapabilityExport } from "../types";
 import { loadCapabilities } from "./loader";
 import { fork } from "child_process";
+import Log from "../../lib/telemetry/logger";
 
 vi.mock("child_process", () => ({
   fork: vi.fn(),
+}));
+
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+  },
 }));
 
 describe("loadCapabilities", () => {
@@ -57,8 +65,8 @@ describe("loadCapabilities", () => {
     const result = await loadCapabilities("/fake/path");
 
     expect(result).toEqual(mockCapabilities);
-    expect(console.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability1"');
-    expect(console.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability2"');
+    expect(Log.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability1"');
+    expect(Log.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability2"');
   });
 
   it("should reject with an error when the process encounters an error", async () => {

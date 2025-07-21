@@ -86,8 +86,9 @@ export function determineRbacMode(
 
 export async function createOutputDirectory(outputDir: string): Promise<string> {
   try {
-    await createDirectoryIfNotExists(outputDir);
-    return outputDir;
+    const dir = outputDir === "" ? "dist" : outputDir;
+    await createDirectoryIfNotExists(dir);
+    return dir;
   } catch (error) {
     Log.error(`Error creating output directory: ${error.message}`);
     process.exit(1);
