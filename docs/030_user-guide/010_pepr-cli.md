@@ -11,16 +11,16 @@ Type safe K8s middleware for humans
 
 **Commands:**
 
-  init [options]         Initialize a new Pepr Module
-  build [options]        Build a Pepr Module for deployment
-  deploy [options]       Deploy a Pepr Module
-  dev [options]          Setup a local webhook development environment
-  update [options]       Update this Pepr module. Not recommended for prod as it may change files.
-  format [options]       Lint and format this Pepr module
-  monitor [module-uuid]  Monitor a Pepr Module
-  uuid [uuid]            Module UUID(s) currently deployed in the cluster
-  kfc [args...]          Execute Kubernetes Fluent Client commands
-  crd                    Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
+  init [options]           Initialize a new Pepr Module
+  build [options]          Build a Pepr Module for deployment
+  deploy [options]         Deploy a Pepr Module
+  dev [options]            Setup a local webhook development environment
+  update [options]         Update this Pepr module. Not recommended for prod as it may change files.
+  format [options]         Lint and format this Pepr module
+  monitor [module-uuid]    Monitor a Pepr Module
+  uuid [uuid]              Module UUID(s) currently deployed in the cluster
+  kfc [options] [args...]  Execute Kubernetes Fluent Client commands
+  crd                      Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
 
 ## `npx pepr build`
 
@@ -145,6 +145,7 @@ Execute a `kubernetes-fluent-client` command. This command is a wrapper around `
 
 **Options:**
 
+- `-y, --yes` - Skip confirmation prompt.
 - `-h, --help` - display help for command
 
 Usage:
