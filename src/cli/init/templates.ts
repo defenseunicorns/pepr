@@ -57,11 +57,6 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string): pepr
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
 
-  const testEnv = {
-    MY_CUSTOM_VAR: "example-value",
-    ZARF_VAR: "###ZARF_VAR_THING###",
-  };
-
   const data = {
     name,
     version: "0.0.1",
@@ -93,7 +88,7 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string): pepr
         },
       },
       includedFiles: [],
-      env: pkgVersionOverride ? testEnv : {},
+      env: {},
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],

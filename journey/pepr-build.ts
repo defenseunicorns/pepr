@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { loadAllYaml } from "@kubernetes/client-node";
-import { expect, it } from "vitest";
+import { beforeAll, expect, it } from "vitest";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
 import { resolve } from "path";
@@ -11,6 +11,25 @@ import { cwd } from "./entrypoint.test";
 import { validateZarfYaml, validateClusterRoleYaml } from "./pepr-build.helpers";
 
 export function peprBuild() {
+  beforeAll(async () => {
+    // Add testEnv to package.json under the env key
+    const packageJsonPath = resolve(cwd, "package.json");
+    const packageJsonContent = await fs.readFile(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonContent);
+
+    // Define test environment variables
+    const testEnv = {
+      MY_CUSTOM_VAR: "example-value",
+      ZARF_VAR: "###ZARF_VAR_THING###",
+    };
+
+    // Add testEnv under pepr.env key
+    packageJson.pepr.env = testEnv;
+
+    //  Write the updated package.json back to the file
+    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  });
+
   it("should build the Pepr module in scoped mode", async () => {
     execSync("npx pepr build --rbac-mode=scoped", { cwd: cwd, stdio: "inherit" });
     validateHelmChart();
