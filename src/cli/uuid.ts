@@ -35,11 +35,16 @@ export default function (program: Command): void {
         }
       });
 
-      Log.info("UUID\t\tDescription");
-      Log.info("--------------------------------------------");
+      // Find the longest UUID to determine padding
+      const longestUUID = Math.max(4, ...Object.keys(uuidTable).map(uuid => uuid.length));
 
+      // Header
+      Log.info(`${"UUID".padEnd(longestUUID + 4)}Description`);
+      Log.info(`${"-".repeat(longestUUID + 4)}${"-".repeat(30)}`);
+
+      // Data rows
       Object.entries(uuidTable).forEach(([uuid, description]) => {
-        Log.info(`${uuid}\t${description}`);
+        Log.info(`${uuid.padEnd(longestUUID + 4)}${description}`);
       });
     });
 }
