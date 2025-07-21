@@ -54,7 +54,7 @@ Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 **Commands:**
 
   create [options]    Create a new CRD TypeScript definition
-  generate [options]  Generate CRD manifests from TypeScript definitions
+  generate [options]  Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.
   help [command]      display help for command
 
 ## `npx pepr crd create`
@@ -74,7 +74,7 @@ Create a new CRD TypeScript definition.
 
 ## `npx pepr crd generate`
 
-Generate CRD manifests from TypeScript definitions
+Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.
 
 **Options:**
 
