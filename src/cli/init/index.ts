@@ -52,12 +52,10 @@ export default function (program: Command): void {
       // TODO: Overrides for testing. Don't be so gross with Node CLI testing
       // TODO: See pepr/#1140
       if (process.env.TEST_MODE === "true") {
-        response = await walkthrough(thisCommand.opts());
         pkgOverride = "file:../pepr-0.0.0-development.tgz";
-      } else {
-        response = await walkthrough(thisCommand.opts());
-        Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
       }
+      response = await walkthrough(thisCommand.opts());
+      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
     })
     .action(async opts => {
       const dirName = sanitizeName(response.name);
