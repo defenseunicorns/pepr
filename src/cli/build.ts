@@ -22,6 +22,7 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
+import Log from "../lib/telemetry/logger";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
@@ -142,7 +143,7 @@ export default function (program: Command): void {
       }
 
       if (opts.registryInfo !== undefined) {
-        console.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
+        Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
         // for journey test to make sure the image is built
 
         // only actually build/push if there are files to include
@@ -156,7 +157,7 @@ export default function (program: Command): void {
 
       // If building without embedding, exit after building
       if (!opts.embed) {
-        console.info(`✅ Module built successfully at ${path}`);
+        Log.info(`Module built successfully at ${path}`);
         return;
       }
 
@@ -212,7 +213,7 @@ export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn>
     await fs.access(cfgPath);
     await fs.access(entryPointPath);
   } catch {
-    console.error(
+    Log.error(
       `Could not find ${cfgPath} or ${entryPointPath} in the current directory. Please run this command from the root of your module's directory.`,
     );
     process.exit(1);
@@ -276,7 +277,7 @@ export async function buildModule(
             build.onEnd(async r => {
               // Print the build size analysis
               if (r?.metafile) {
-                console.log(await analyzeMetafile(r.metafile));
+                Log.info(await analyzeMetafile(r.metafile));
               }
 
               // If we're in dev mode, call the reloader function
@@ -326,15 +327,15 @@ interface BuildModuleResult {
 }
 
 function handleModuleBuildError(e: BuildModuleResult): void {
-  console.error(`Error building module:`, e);
+  Log.error(`Error building module:`, e);
 
   if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
 
   const out = e.stdout.toString() as string;
   const err = e.stderr.toString();
 
-  console.log(out);
-  console.error(err);
+  Log.info(out);
+  Log.error(err);
 
   // Check for version conflicts
   if (out.includes("Types have separate declarations of a private property '_name'.")) {
@@ -347,7 +348,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
 
     // If the regex didn't match, leave a generic error
     if (conflicts.length < 1) {
-      console.info(
+      Log.info(
         `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
         "Version Conflict",
       );
@@ -355,7 +356,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
 
     // Otherwise, loop through each conflicting package and print an error
     conflicts.forEach(match => {
-      console.info(
+      Log.info(
         `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
         "Version Conflict",
       );
@@ -367,7 +368,7 @@ export async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {
-    console.log(
+    Log.info(
       "\x1b[33m%s\x1b[0m",
       "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
     );

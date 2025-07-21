@@ -4,6 +4,7 @@
 import { fork } from "child_process";
 
 import { CapabilityExport } from "../types";
+import Log from "../telemetry/logger";
 
 /**
  * Read the capabilities from the module by running it in build mode
@@ -29,7 +30,7 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
 
       // Iterate through the capabilities and generate the rules
       for (const capability of capabilities) {
-        console.info(`Registered Pepr Capability "${capability.name}"`);
+        Log.info(`Registered Pepr Capability "${capability.name}"`);
       }
 
       resolve(capabilities);

@@ -218,9 +218,9 @@ export async function generateYamlAndWriteToDisk(obj: {
     await fs.writeFile(zarfPath, localZarf);
 
     await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
-    console.info(`✅ K8s resource for the module saved to ${yamlPath}`);
+    Log.info(`K8s resource for the module saved to ${yamlPath}`);
   } catch (error) {
-    console.error(`Error generating YAML: ${error}`);
+    Log.error(`Error generating YAML: ${error}`);
     process.exit(1);
   }
 }
