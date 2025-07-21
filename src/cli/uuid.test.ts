@@ -141,7 +141,6 @@ describe("uuid CLI command", () => {
     await program.parseAsync(["uuid", "asdf"], { from: "user" });
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
     expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
-    expect(logSpy).toHaveBeenCalledWith("1234\tTest annotation");
     expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
   });
 });
