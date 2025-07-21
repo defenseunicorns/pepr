@@ -49,7 +49,7 @@ export type peprPackageJSON = {
   print: string;
 };
 
-export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string): peprPackageJSON {
+export function genPkgJSON(opts: InitOptions): peprPackageJSON {
   // Generate a random UUID for the module based on the module name if it is not provided
   const uuid = !opts.uuid ? uuidv4() : opts.uuid;
   // Generate a name for the module based on the module name
@@ -94,7 +94,7 @@ export function genPkgJSON(opts: InitOptions, pkgVersionOverride?: string): pepr
       "k3d-setup": scripts["test:journey:k3d"],
     },
     dependencies: {
-      pepr: pkgVersionOverride || version,
+      pepr: version,
       undici: "^7.0.1",
     },
     devDependencies: {

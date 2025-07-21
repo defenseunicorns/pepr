@@ -27,7 +27,7 @@ import { Option } from "commander";
 
 export default function (program: Command): void {
   let response = {} as PromptOptions;
-  const pkgOverride = "";
+
   program
     .command("init")
     .description("Initialize a new Pepr Module")
@@ -54,7 +54,7 @@ export default function (program: Command): void {
     })
     .action(async opts => {
       const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response, pkgOverride);
+      const packageJSON = genPkgJSON(response);
 
       const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.yes);
 
