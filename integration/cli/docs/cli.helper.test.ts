@@ -65,7 +65,7 @@ describe("parseCLIOutput", () => {
 
     Commands:
       create [options]       Create a new CRD TypeScript definition
-      generate [options]     Generate CRD manifests from TypeScript definitions
+      generate [options]     Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.
       help [command]         display help for command
     `;
 

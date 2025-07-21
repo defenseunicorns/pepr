@@ -14,8 +14,17 @@ import {
 import { ErrorMessages, WarningMessages } from "./messages";
 import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
+import Log from "../../lib/telemetry/logger";
 
 vi.mock("fs");
+
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
 
 // Helper function to get details string based on parameters
 const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
@@ -219,10 +228,9 @@ describe("generate.ts", () => {
           expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
         },
       ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
-        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
         const file = createProjectWithFile("test.ts", contents);
         processSourceFile(file, "v1", "/output");
-        expect(consoleWarn).toHaveBeenCalledWith(expectedWarning);
+        expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
       });
     });
 
@@ -230,7 +238,6 @@ describe("generate.ts", () => {
       it("should generate a CRD YAML file", () => {
         const writeFileMock = vi.mocked(fs.writeFileSync);
         //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
-        const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
         const file = createProjectWithFile(
           "valid.ts",
           generateTestContent({
@@ -245,12 +252,11 @@ describe("generate.ts", () => {
         );
 
         processSourceFile(file, "v1", "/crds");
-        console.log(writeFileMock.mock.calls);
         expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
         expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
         expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
 
-        expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+        expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
       }, 30000);
     });
   });
