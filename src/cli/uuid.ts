@@ -4,6 +4,7 @@
 import { KubernetesListObject } from "@kubernetes/client-node";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Command } from "commander";
+import Log from "../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -34,11 +35,11 @@ export default function (program: Command): void {
         }
       });
 
-      console.log("UUID\t\tDescription");
-      console.log("--------------------------------------------");
+      Log.info("UUID\t\tDescription");
+      Log.info("--------------------------------------------");
 
       Object.entries(uuidTable).forEach(([uuid, description]) => {
-        console.log(`${uuid}\t${description}`);
+        Log.info(`${uuid}\t${description}`);
       });
     });
 }
