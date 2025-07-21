@@ -12,21 +12,18 @@ import { validateZarfYaml, validateClusterRoleYaml } from "./pepr-build.helpers"
 
 export function peprBuild() {
   beforeAll(async () => {
-    // Add testEnv to package.json under the env key
+    // Add environment variables to package.json under the pepr.env key
     const packageJsonPath = resolve(cwd, "package.json");
     const packageJsonContent = await fs.readFile(packageJsonPath, "utf8");
     const packageJson = JSON.parse(packageJsonContent);
 
-    // Define test environment variables
     const testEnv = {
       MY_CUSTOM_VAR: "example-value",
       ZARF_VAR: "###ZARF_VAR_THING###",
     };
 
-    // Add testEnv under pepr.env key
     packageJson.pepr.env = testEnv;
 
-    //  Write the updated package.json back to the file
     await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
   });
 
