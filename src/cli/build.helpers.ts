@@ -18,7 +18,6 @@ import {
   service,
   watcherService,
 } from "../lib/assets/k8sObjects";
-import Log from "../lib/telemetry/logger";
 
 interface ImageOptions {
   customImage?: string;
@@ -55,10 +54,6 @@ export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>
  * @param cfg Module's config
  * @returns The determined RBAC mode
  * @example
- * const opts = { rbacMode: "admin" };
- * const cfg = { pepr: { rbacMode: "scoped" } };
- * const result = determineRbacMode(opts, cfg);
- * console.log(result); // "admin"
  */
 export function determineRbacMode(
   opts: { rbacMode?: string },
@@ -90,7 +85,7 @@ export async function createOutputDirectory(outputDir: string): Promise<string> 
     await createDirectoryIfNotExists(dir);
     return dir;
   } catch (error) {
-    Log.error(`Error creating output directory: ${error.message}`);
+    console.error(`Error creating output directory: ${error.message}`);
     process.exit(1);
   }
 }
@@ -219,9 +214,9 @@ export async function generateYamlAndWriteToDisk(obj: {
     await fs.writeFile(zarfPath, localZarf);
 
     await assets.generateHelmChart(webhookConfigGenerator, getWatcher, getModuleSecret, outputDir);
-    Log.info(`K8s resource for the module saved to ${yamlPath}`);
+    console.info(`K8s resource for the module saved to ${yamlPath}`);
   } catch (error) {
-    Log.error(`Error generating YAML: ${error}`);
+    console.error(`Error generating YAML: ${error}`);
     process.exit(1);
   }
 }
