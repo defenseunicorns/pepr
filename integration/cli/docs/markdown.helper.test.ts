@@ -12,7 +12,7 @@ describe("getDocsForCommand", () => {
     { command: "dev", optionsCount: 3, subcommands: 0 },
     { command: "format", optionsCount: 2, subcommands: 0 },
     { command: "init", optionsCount: 7, subcommands: 0 },
-    { command: "kfc", optionsCount: 1, subcommands: 0 },
+    { command: "kfc", optionsCount: 2, subcommands: 0 },
     { command: "monitor", optionsCount: 1, subcommands: 0 },
     { command: "update", optionsCount: 2, subcommands: 0 },
     { command: "uuid", optionsCount: 1, subcommands: 0 },

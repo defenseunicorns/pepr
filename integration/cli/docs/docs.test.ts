@@ -32,8 +32,8 @@ describe("Pepr CLI Help Menu", () => {
         try {
           const { stdout, stderr } = await command();
           expect(stdout).toBeTruthy();
-          expect(stdout).toContain("-V, --version          output the version number");
-          expect(stdout).toContain("-h, --help             display help for command");
+          expect(stdout).toContain("-V, --version            output the version number");
+          expect(stdout).toContain("-h, --help               display help for command");
           expect(stderr).toBeFalsy();
           expect(stdout).toContain("Type safe K8s middleware for humans");
         } catch (error) {
