@@ -135,6 +135,7 @@ describe("uuid CLI command", () => {
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
     expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
     expect(logSpy).toHaveBeenCalledWith("1234\tTest annotation");
+    expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
   });
 
   it("should log UUID and description when deployment has a matching UUID", async () => {
