@@ -93,6 +93,9 @@ export function watcherDeployTemplate(buildTimestamp: string, type: ControllerTy
             labels:
               app: {{ .Values.uuid }}-watcher
               pepr.dev/controller: watcher
+              {{- if .Values.watcher.podLabels }}
+              {{- toYaml .Values.watcher.podLabels | nindent 8 }}
+              {{- end }}
           spec:
             terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
             serviceAccountName: {{ .Values.uuid }}
@@ -189,6 +192,9 @@ export function admissionDeployTemplate(buildTimestamp: string, type: Controller
             labels:
               app: {{ .Values.uuid }}
               pepr.dev/controller: admission
+              {{- if .Values.admission.podLabels }}
+              {{- toYaml .Values.admission.podLabels | nindent 8 }}
+              {{- end }}
           spec:
             {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
             affinity:
