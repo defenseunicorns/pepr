@@ -100,6 +100,7 @@ export async function overridesFile(
         },
       },
       podAnnotations: {},
+      podLabels: {},
       nodeSelector: {},
       tolerations: [],
       extraVolumeMounts: [],
@@ -172,6 +173,7 @@ export async function overridesFile(
       extraVolumes: [],
       affinity: {},
       podAnnotations: {},
+      podLabels: {},
       serviceMonitor: {
         enabled: false,
         labels: {},
