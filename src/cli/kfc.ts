@@ -10,18 +10,22 @@ export default function (program: Command): void {
   program
     .command("kfc [args...]")
     .description("Execute Kubernetes Fluent Client commands")
-    .action(async (args: string[]) => {
-      const { confirm } = await prompt({
-        type: "confirm",
-        name: "confirm",
-        message:
-          "For commands that generate files, this may overwrite any previously generated files.\n" +
-          "Are you sure you want to continue?",
-      });
+    .option("-y, --yes", "Skip confirmation prompt.")
+    .action(async (args: string[], options) => {
+      // Skip confirmation if yes flag is provided
+      if (!options.yes) {
+        const { confirm } = await prompt({
+          type: "confirm",
+          name: "confirm",
+          message:
+            "For commands that generate files, this may overwrite any previously generated files.\n" +
+            "Are you sure you want to continue?",
+        });
 
-      // If the user doesn't confirm, exit
-      if (!confirm) {
-        return;
+        // If the user doesn't confirm, exit
+        if (!confirm) {
+          return;
+        }
       }
 
       try {

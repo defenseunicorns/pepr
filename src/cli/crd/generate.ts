@@ -4,6 +4,7 @@
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
+import Log from "../../lib/telemetry/logger";
 import { stringify } from "yaml";
 import {
   Project,
@@ -20,7 +21,9 @@ import { V1JSONSchemaProps } from "@kubernetes/client-node";
 import { WarningMessages, ErrorMessages } from "./messages";
 
 export default new Command("generate")
-  .description("Generate CRD manifests from TypeScript definitions")
+  .description(
+    "Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.",
+  )
   .option("-o, --output <directory>", "Output directory for generated CRDs", "./crds")
   .action(generateCRDs);
 
@@ -48,7 +51,7 @@ export function extractCRDDetails(
 }
 
 export async function generateCRDs(options: { output: string }): Promise<void> {
-  console.log("This feature is currently in alpha.\n");
+  Log.warn("This feature is currently in alpha.\n");
   const outputDir = path.resolve(options.output);
   await createDirectoryIfNotExists(outputDir);
 
@@ -83,13 +86,13 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    console.warn(WarningMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
+    Log.warn(WarningMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
     return;
   }
 
   const spec = sourceFile.getInterface(`${kind}Spec`);
   if (!spec) {
-    console.warn(WarningMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
+    Log.warn(WarningMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
     return;
   }
 
@@ -110,7 +113,7 @@ export function processSourceFile(
 
   const outPath = path.join(outputDir, `${kind.toLowerCase()}.yaml`);
   fs.writeFileSync(outPath, stringify(crd), "utf8");
-  console.log(`✔ Created ${outPath}`);
+  Log.info(`✔ Created ${outPath}`);
 }
 
 // Extracts a comment from the content of a file based on a label.
