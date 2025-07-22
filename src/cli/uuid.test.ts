@@ -104,17 +104,24 @@ describe("getPeprDeploymentsByUUID", () => {
     vi.clearAllMocks();
   });
 
-  it("should fetch deployments without uuid", async () => {
+  it("should fetch all deployments", async () => {
     const result = await getPeprDeploymentsByUUID();
 
     expect(result.items[0].metadata?.labels?.["pepr.dev/uuid"]).toBe("1234");
     expect(result.items[0].metadata?.annotations?.["pepr.dev/description"]).toBe("Test annotation");
+    expect(result.items[1].metadata?.labels?.["pepr.dev/uuid"]).toBe("asdf");
+    expect(result.items[1].metadata?.annotations?.["pepr.dev/description"]).toBe(
+      "Another annotation",
+    );
+    expect(result.items.length).toBe(2);
   });
 
   it("should fetch deployments with a specific uuid", async () => {
-    const result = await getPeprDeploymentsByUUID("abcd-uuid");
+    const result = await getPeprDeploymentsByUUID("1234");
 
     expect(result.items[0].metadata?.labels?.["pepr.dev/uuid"]).toBe("1234");
+    expect(result.items[0].metadata?.annotations?.["pepr.dev/description"]).toBe("Test annotation");
+    expect(result.items.length).toBe(1);
   });
 });
 
@@ -129,7 +136,7 @@ describe("uuid CLI command", () => {
     logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
-  it("should log UUID and description when deployment has a UUID", async () => {
+  it("should log UUID and description of all deployments with a UUID", async () => {
     await program.parseAsync(["uuid"], { from: "user" });
 
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
@@ -138,10 +145,11 @@ describe("uuid CLI command", () => {
     expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
   });
 
-  it("should log UUID and description when deployment has a matching UUID", async () => {
+  it("should log UUID and description of a specific deployment with a matching UUID", async () => {
     await program.parseAsync(["uuid", "asdf"], { from: "user" });
     expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
     expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
     expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
+    expect(logSpy).not.toHaveBeenCalledWith("1234\tTest annotation");
   });
 });
