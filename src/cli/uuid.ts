@@ -25,10 +25,20 @@ export default function (program: Command): void {
 export async function getPeprDeploymentsByUUID(
   uuid?: string,
 ): Promise<KubernetesListObject<kind.Deployment>> {
-  const deployments = await K8s(kind.Deployment)
-    .InNamespace("pepr-system")
-    .WithLabel("pepr.dev/uuid", uuid ?? undefined)
-    .Get();
+  const k8sQuery = K8s(kind.Deployment).InNamespace("pepr-system");
+
+  let deployments = uuid
+    ? await k8sQuery.WithLabel("pepr.dev/uuid", uuid).Get()
+    : await k8sQuery.WithLabel("pepr.dev/uuid").Get();
+
+  if (uuid) {
+    deployments = {
+      ...deployments,
+      items: deployments.items.filter(
+        deploy => deploy.metadata?.labels?.["pepr.dev/uuid"] === uuid,
+      ),
+    };
+  }
 
   return deployments;
 }
