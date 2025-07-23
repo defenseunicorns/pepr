@@ -28,12 +28,34 @@ vi.mock("../../lib/telemetry/logger", () => ({
 
 // Additional mocks for specific tests will be implemented inline
 
-const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
+const getDetailsString = (
+  hasDetails: boolean,
+  hasBadScope: boolean,
+  emptyKey: string = "",
+): string => {
   if (!hasDetails) {
     return "const somethingElse = {};";
   }
 
   const scope = hasBadScope ? "BadScope" : "Namespaced";
+
+  if (emptyKey) {
+    // Create details object with an empty value for the specified key
+    const detailsObj: Record<string, string> = {
+      plural: "widgets",
+      scope: scope,
+      shortName: "wd",
+    };
+    detailsObj[emptyKey] = "";
+
+    // Convert to string format
+    const entries = Object.entries(detailsObj)
+      .map(([key, value]) => `${key}: ${value === "" ? '""' : `"${value}"`}`)
+      .join(", ");
+
+    return `const details = { ${entries} };`;
+  }
+
   return `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };`;
 };
 
@@ -43,6 +65,7 @@ const generateTestContent = ({
   hasDetails = true,
   specInterface = "",
   extraContent = "",
+  emptyKey = "",
 } = {}): string => {
   const parts: string[] = [];
 
@@ -50,7 +73,7 @@ const generateTestContent = ({
   if (kind) parts.push(`// Kind: ${kind}`);
 
   // Add details section
-  parts.push(getDetailsString(hasDetails, hasBadScope));
+  parts.push(getDetailsString(hasDetails, hasBadScope, emptyKey));
 
   // Add interface definition
   if (specInterface) parts.push(`export interface ${specInterface} {}`);
@@ -213,6 +236,10 @@ describe("CRD Generator", () => {
         {
           contents: generateTestContent({ hasDetails: false }),
           expectedError: ErrorMessages.MISSING_DETAILS,
+        },
+        {
+          contents: generateTestContent({ emptyKey: "plural" }),
+          expectedError: ErrorMessages.MISSING_OR_INVALID_KEY("plural"),
         },
       ])("should throw an error: $expectedError", ({ contents, expectedError }) => {
         const file = createProjectWithFile("test.ts", contents);
