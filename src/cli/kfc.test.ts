@@ -102,7 +102,7 @@ describe("kfc CLI command", () => {
     try {
       await command?.parseAsync(["fail"], { from: "user" });
     } catch {
-      // its going to fail because fail is not a KFC command
+      // going to fail because fail is not a KFC command
     }
 
     expect(errorSpy).toHaveBeenCalledWith("Error creating CRD generated class:", error);
