@@ -26,6 +26,8 @@ vi.mock("../../lib/telemetry/logger", () => ({
   },
 }));
 
+// Additional mocks for specific tests will be implemented inline
+
 const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
   if (!hasDetails) {
     return "const somethingElse = {};";
@@ -60,8 +62,7 @@ const generateTestContent = ({
 };
 
 const createProjectWithFile = (name: string, content: string): SourceFile => {
-  const project = new Project();
-  return project.createSourceFile(name, content);
+  return new Project().createSourceFile(name, content);
 };
 
 describe("CRD Generator", () => {
@@ -239,28 +240,48 @@ describe("CRD Generator", () => {
     });
 
     describe("when processing valid source files", () => {
-      it("should generate a complete CRD YAML file", () => {
-        const writeFileMock = vi.mocked(fs.writeFileSync);
-        const file = createProjectWithFile(
-          "valid.ts",
-          generateTestContent({
-            kind: "Widget",
-            specInterface: "WidgetSpec",
-            extraContent: `
-            export type WidgetStatusCondition = {
-              /** The type */
-              type: string;
-            };`,
-          }),
-        );
+      describe("when file content is incomplete", () => {
+        it.each([
+          {
+            contents: generateTestContent({ specInterface: "SomethingSpec" }),
+            expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
+          },
+          {
+            contents: generateTestContent({ kind: "Something" }),
+            expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
+          },
+        ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
+          const file = createProjectWithFile("test.ts", contents);
+          processSourceFile(file, "v1", "/output");
+          expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
+        });
+      });
 
-        processSourceFile(file, "v1", "/crds");
-        expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
-        expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
-        expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
+      describe("when file content is valid", () => {
+        it("should generate a CRD YAML file", () => {
+          const writeFileMock = vi.mocked(fs.writeFileSync);
+          //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
+          const file = createProjectWithFile(
+            "valid.ts",
+            generateTestContent({
+              kind: "Widget",
+              specInterface: "WidgetSpec",
+              extraContent: `
+                export type WidgetStatusCondition = {
+                  /** The type */
+                  type: string;
+                };`,
+            }),
+          );
 
-        expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
-      }, 30000);
+          processSourceFile(file, "v1", "/crds");
+          expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
+          expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
+          expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
+
+          expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+        }, 30000);
+      });
     });
   });
 });
