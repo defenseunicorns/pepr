@@ -94,7 +94,7 @@ describe("create CLI command", () => {
     );
   });
 
-  it("requires the short-name flag", async () => {
+  it.skip("requires the short-name flag", async () => {
     // Is short name really optional? defaults to ""
     // await expect(program.parseAsync(["create", "--group", "group", "--kind", "kind", "--version", "version"], { from: "user" })).rejects.toThrowError(
     //   'process.exit unexpectedly called with "1"',
@@ -104,7 +104,7 @@ describe("create CLI command", () => {
     // );
   });
 
-  it.only("should write files to /api/<version>", async () => {
+  it("should write files to /api/<version>", async () => {
     vi.mock("../../lib/filesystemService", () => ({
       createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
     }));
