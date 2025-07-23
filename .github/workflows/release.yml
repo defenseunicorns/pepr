@@ -122,6 +122,9 @@ jobs:
 
       - name: Push package to UDS OCI registry
         run: |
+          npm install
+          npm run set:version
+          npm run build
           VERSION=${{ github.ref_name }}
           oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:${VERSION} \
             --artifact-type application/vnd.pepr.module.layer.v1 pepr-${VERSION:1}.tgz

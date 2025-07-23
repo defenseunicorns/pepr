@@ -3,7 +3,7 @@
 
 import {
   determineRbacMode,
-  handleCustomOutputDir,
+  createOutputDirectory,
   handleValidCapabilityNames,
   handleCustomImageBuild,
   checkIronBankImage,
@@ -114,7 +114,7 @@ describe("determineRbacMode", () => {
   });
 });
 
-describe("handleCustomOutputDir", () => {
+describe("createOutputDirectory", () => {
   const mockedCreateDirectoryIfNotExists = vi.mocked(createDirectoryIfNotExists);
 
   beforeEach(() => {
@@ -125,15 +125,17 @@ describe("handleCustomOutputDir", () => {
     mockedCreateDirectoryIfNotExists.mockResolvedValueOnce();
 
     const outputDir = "custom-output-dir";
-    const result = await handleCustomOutputDir(outputDir);
+    const result = await createOutputDirectory(outputDir);
 
     expect(mockedCreateDirectoryIfNotExists).toHaveBeenCalledWith(outputDir);
     expect(result).toBe(outputDir);
   });
 
-  it("should return the default output directory if no custom directory is provided", async () => {
+  it("should return the default output directory if an empty string is provided", async () => {
+    mockedCreateDirectoryIfNotExists.mockResolvedValueOnce();
     const outputDir = "";
-    const result = await handleCustomOutputDir(outputDir);
+    const result = await createOutputDirectory(outputDir);
+    expect(mockedCreateDirectoryIfNotExists).toHaveBeenCalledWith("dist");
     expect(result).toBe("dist");
   });
 });

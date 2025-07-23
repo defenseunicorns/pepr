@@ -26,6 +26,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -105,5 +106,14 @@ describe("Pepr Format", () => {
 
     expect(result).toBe(false);
     expect(mockFormatWithPrettier).toHaveBeenCalledWith(mockResults, false);
+  });
+
+  it("should log an error when an exception occurs", async () => {
+    const mockError = new Error("Mock error");
+    mockLintFiles.mockRejectedValue(mockError);
+    const result = await peprFormat(false);
+
+    expect(result).toBe(false);
+    expect(Log.error).toHaveBeenCalledWith(mockError, "Error formatting module:");
   });
 });

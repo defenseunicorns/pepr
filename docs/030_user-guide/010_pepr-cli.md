@@ -28,14 +28,14 @@ Build a Pepr Module for deployment.
 
 **Options:**
 
-- `-M, --rbac-mode <admin|scoped>` - Set RBAC mode. (choices: "admin", "scoped")
+- `-M, --rbac-mode <mode>` - Override module config and set RBAC mode. (choices: "admin", "scoped")
 - `-I, --registry-info <registry/username>` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.
 - `-P, --with-pull-secret <name>` - Use image pull secret for controller Deployment. (default: "")
 - `-c, --custom-name <name>` - Set name for zarf component and service monitors in helm charts.
 - `-e, --entry-point <file>` - Specify the entry point file to build with. (default: "pepr.ts")
 - `-i, --custom-image <image>` - Specify a custom image with version for deployments. Conflicts with --registry-info and --registry. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
 - `-n, --no-embed` - Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
-- `-o, --output <directory>` - Set output directory.
+- `-o, --output <directory>` - Set output directory. (default: "dist")
 - `-r, --registry <GitHub|Iron Bank>` - Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info. (choices: "GitHub", "Iron Bank")
 - `-t, --timeout <seconds>` - How long the API server should wait for a webhook to respond before treating the call as a failure.
 - `-z, --zarf <manifest|chart>` - Set Zarf package type (choices: "manifest", "chart", default: "manifest")
@@ -54,7 +54,7 @@ Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.
 **Commands:**
 
   create [options]    Create a new CRD TypeScript definition
-  generate [options]  Generate CRD manifests from TypeScript definitions
+  generate [options]  Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.
   help [command]      display help for command
 
 ## `npx pepr crd create`
@@ -74,7 +74,7 @@ Create a new CRD TypeScript definition.
 
 ## `npx pepr crd generate`
 
-Generate CRD manifests from TypeScript definitions
+Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.
 
 **Options:**
 
