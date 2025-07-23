@@ -49,18 +49,13 @@ export type peprPackageJSON = {
   print: string;
 };
 
-export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPackageJSON {
+export function genPkgJSON(opts: InitOptions): peprPackageJSON {
   // Generate a random UUID for the module based on the module name if it is not provided
   const uuid = !opts.uuid ? uuidv4() : opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
   const { typescript } = peerDependencies;
-
-  const testEnv = {
-    MY_CUSTOM_VAR: "example-value",
-    ZARF_VAR: "###ZARF_VAR_THING###",
-  };
 
   const data = {
     name,
@@ -71,7 +66,7 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
       node: ">=20.0.0",
     },
     pepr: {
-      uuid: pgkVerOverride ? "static-test" : uuid,
+      uuid: uuid,
       onError: opts.errorBehavior,
       webhookTimeout: 10,
       customLabels: {
@@ -93,13 +88,13 @@ export function genPkgJSON(opts: InitOptions, pgkVerOverride?: string): peprPack
         },
       },
       includedFiles: [],
-      env: pgkVerOverride ? testEnv : {},
+      env: {},
     },
     scripts: {
       "k3d-setup": scripts["test:journey:k3d"],
     },
     dependencies: {
-      pepr: pgkVerOverride || version,
+      pepr: version,
       undici: "^7.0.1",
     },
     devDependencies: {
