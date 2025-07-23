@@ -31,18 +31,18 @@ describe("build", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-      execSync(`npx pepr@nightly init ${argz}`, {
+      execSync(`npx pepr@latest init ${argz}`, {
         cwd: workdir.path(),
         stdio: "inherit",
       });
     }, time.toMs("2m"));
 
     it(
-      "should prepare, build, and deploy hello-pepr with pepr@nightly",
+      "should prepare, build, and deploy hello-pepr with pepr@latest",
       { timeout: 1000 * 5 * 60 },
       async () => {
         await runWithErrorHandling(async () => {
-          await installPepr(testModule, "pepr@nightly");
+          await installPepr(testModule, "pepr@latest");
           await buildModule(testModule);
           await applyKubernetesManifest(testModule, id, "create");
           await waitForModuleDeployments(id);
@@ -111,10 +111,14 @@ async function applyKubernetesManifest(
   id: string,
   operation: "apply" | "create",
 ): Promise<void> {
-  execFileSync("kubectl", [operation, `--filename=${path.join(moduleDir, "dist", `pepr-module-${id}.yaml`)}`], {
-    cwd: moduleDir,
-    stdio: "inherit",
-  });
+  execFileSync(
+    "kubectl",
+    [operation, `--filename=${path.join(moduleDir, "dist", `pepr-module-${id}.yaml`)}`],
+    {
+      cwd: moduleDir,
+      stdio: "inherit",
+    },
+  );
 }
 
 /**
