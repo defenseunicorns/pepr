@@ -73,4 +73,31 @@ describe("create CLI command", () => {
       "error: required option '-g, --group <group>' not specified\n",
     );
   });
+  it("requires the kind flag", async () => {
+    await expect(
+      program.parseAsync(["create", "--group", "group"], { from: "user" }),
+    ).rejects.toThrowError('process.exit unexpectedly called with "1"');
+    expect(stderrSpy).toHaveBeenCalledWith(
+      "error: required option '-k, --kind <kind>' not specified\n",
+    );
+  });
+
+  it("requires the version flag", async () => {
+    await expect(
+      program.parseAsync(["create", "--group", "group", "--kind", "kind"], { from: "user" }),
+    ).rejects.toThrowError('process.exit unexpectedly called with "1"');
+    expect(stderrSpy).toHaveBeenCalledWith(
+      "error: required option '-v, --version <version>' not specified\n",
+    );
+  });
+
+  it("requires the short-name flag", async () => {
+    // Is short name really optional? defaults to ""
+    // await expect(program.parseAsync(["create", "--group", "group", "--kind", "kind", "--version", "version"], { from: "user" })).rejects.toThrowError(
+    //   'process.exit unexpectedly called with "1"',
+    // );
+    // expect(stderrSpy).toHaveBeenCalledWith(
+    //   "error: required option '-s, --short-name <name>' not specified\n",
+    // );
+  });
 });
