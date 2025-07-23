@@ -16,7 +16,7 @@ export default function (program: Command): void {
       const success = await peprFormat(opts.validateOnly);
 
       if (success) {
-        console.info("✅ Module formatted");
+        Log.info("Module formatted");
       } else {
         process.exit(1);
       }
@@ -59,8 +59,8 @@ export async function peprFormat(validateOnly: boolean): Promise<boolean> {
       hasFailure = hasFailure || (await formatWithPrettier(results, validateOnly));
 
       return !hasFailure;
-    } catch (e) {
-      console.error(`Error formatting module:`, e);
+    } catch (error) {
+      Log.error(error, `Error formatting module:`);
       return false;
     }
   }

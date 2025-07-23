@@ -34,6 +34,19 @@ describe("formatWithPrettier", () => {
     vi.clearAllMocks();
   });
 
+  it.each([[false], [true]])(
+    "should do nothing if no results are found (validateOnly: %s)",
+    async validateOnly => {
+      const result = await formatWithPrettier([], validateOnly);
+
+      expect(result).toBe(false);
+      expect(mockReadFile).not.toHaveBeenCalled();
+      expect(mockWriteFile).not.toHaveBeenCalled();
+      expect(mockResolveConfig).not.toHaveBeenCalled();
+      expect(mockFormat).not.toHaveBeenCalled();
+    },
+  );
+
   it("should format files and write back to the file system", async () => {
     mockReadFile.mockResolvedValue("const x =1;");
     mockResolveConfig.mockResolvedValue({ semi: true });

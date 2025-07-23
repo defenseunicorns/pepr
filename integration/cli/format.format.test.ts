@@ -44,7 +44,45 @@ describe("build", () => {
     it("should execute 'pepr format'", () => {
       expect(formatOutput.exitcode).toBe(0);
       expect(formatOutput.stderr.join("").trim()).toContain("");
-      expect(formatOutput.stdout.join("").trim()).toContain("✅ Module formatted");
+      expect(formatOutput.stdout.join("").trim()).toContain("Module formatted");
+    });
+
+    describe("when validating results", () => {
+      beforeAll(async () => {
+        // Add a line break to the line `export const HelloPepr = new Capability({` in `hello-pepr.ts` located in testModule
+        const capabilityFilePath = path.join(testModule, "capabilities", "hello-pepr.ts");
+        const content = await fs.readFile(capabilityFilePath, "utf8");
+
+        // Find the line with Capability declaration and add a line break after 'new'
+        const modifiedContent = content.replace(
+          /export const HelloPepr = new Capability\({/g,
+          "export const HelloPepr = new\nCapability({",
+        );
+
+        // Write the modified content back to file
+        await fs.writeFile(capabilityFilePath, modifiedContent);
+      });
+      it(
+        "should support --validate-only",
+        async () => {
+          formatOutput = await pepr.cli(testModule, { cmd: `pepr format --validate-only` });
+          expect(formatOutput.exitcode).toBe(1);
+          expect(formatOutput.stderr.join("").trim()).toMatch(/File .* is not formatted correctly/);
+          expect(formatOutput.stdout.join("").trim()).toContain("");
+        },
+        time.toMs("15s"),
+      );
+
+      it(
+        "should support -v",
+        async () => {
+          formatOutput = await pepr.cli(testModule, { cmd: `pepr format -v` });
+          expect(formatOutput.exitcode).toBe(1);
+          expect(formatOutput.stderr.join("").trim()).toMatch(/File .* is not formatted correctly/);
+          expect(formatOutput.stdout.join("").trim()).toContain("");
+        },
+        time.toMs("15s"),
+      );
     });
   });
 });
