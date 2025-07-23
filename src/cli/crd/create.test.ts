@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach, vi, afterEach } from "vitest";
+import { expect, describe, it, beforeEach, afterEach, vi } from "vitest";
+import type { MockInstance } from "vitest";
 import create, { generateCRDScaffold } from "./create";
 import { Command } from "commander";
+import { promises as fs } from "fs";
+import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 
 describe("generateCRDScaffold", () => {
   // Common test data
@@ -53,7 +56,7 @@ describe("generateCRDScaffold", () => {
 
 describe("create CLI command", () => {
   let program: Command;
-  let stderrSpy: vi.SpyInstance;
+  let stderrSpy: MockInstance;
 
   beforeEach(() => {
     program = new Command();
@@ -99,5 +102,23 @@ describe("create CLI command", () => {
     // expect(stderrSpy).toHaveBeenCalledWith(
     //   "error: required option '-s, --short-name <name>' not specified\n",
     // );
+  });
+
+  it.only("should write files to /api/<version>", async () => {
+    vi.mock("../../lib/filesystemService", () => ({
+      createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
+    }));
+    const writeFileSpy = vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
+    const createDirSpy = createDirectoryIfNotExists as unknown as ReturnType<typeof vi.fn>;
+
+    await program.parseAsync(["create", "--group", "group", "--kind", "kind", "--version", "v1"], {
+      from: "user",
+    });
+
+    expect(createDirSpy).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
+    expect(writeFileSpy).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/kind_types.ts"),
+      expect.stringContaining("// Kind: kind"),
+    );
   });
 });
