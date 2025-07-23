@@ -122,6 +122,7 @@ jobs:
 
       - name: Push package to UDS OCI registry
         run: |
+          npm install
           npm run set:version
           npm run build
           VERSION=${{ github.ref_name }}
