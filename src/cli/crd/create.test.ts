@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach } from "vitest";
-import { generateCRDScaffold } from "./create";
+import { expect, describe, it, beforeEach, vi, afterEach } from "vitest";
+import create, { generateCRDScaffold } from "./create";
+import { Command } from "commander";
 
 describe("generateCRDScaffold", () => {
   // Common test data
@@ -47,5 +48,29 @@ describe("generateCRDScaffold", () => {
       expect(result).toContain(`${kind}StatusCondition`);
       expect(result).toContain(`${kind}Status`);
     });
+  });
+});
+
+describe("create CLI command", () => {
+  let program: Command;
+  let stderrSpy: vi.SpyInstance;
+
+  beforeEach(() => {
+    program = new Command();
+    program.addCommand(create);
+    stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("requires the group flag", async () => {
+    await expect(program.parseAsync(["create"], { from: "user" })).rejects.toThrowError(
+      'process.exit unexpectedly called with "1"',
+    );
+    expect(stderrSpy).toHaveBeenCalledWith(
+      "error: required option '-g, --group <group>' not specified\n",
+    );
   });
 });
