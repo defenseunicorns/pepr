@@ -3,7 +3,6 @@
 
 import { execSync } from "child_process";
 import { resolve } from "path";
-import prompts from "prompts";
 
 import { Command } from "commander";
 import {
@@ -28,7 +27,7 @@ import { Option } from "commander";
 
 export default function (program: Command): void {
   let response = {} as PromptOptions;
-  let pkgOverride = "";
+
   program
     .command("init")
     .description("Initialize a new Pepr Module")
@@ -50,26 +49,12 @@ export default function (program: Command): void {
     )
     .option("-y, --yes", "Skip verification prompt when creating a new module.")
     .hook("preAction", async thisCommand => {
-      // TODO: Overrides for testing. Don't be so gross with Node CLI testing
-      // TODO: See pepr/#1140
-      if (process.env.TEST_MODE === "true") {
-        prompts.inject([
-          "pepr-test-module",
-          "A test module for Pepr",
-          "ignore",
-          "static-test",
-          "y",
-        ]);
-        pkgOverride = "file:../pepr-0.0.0-development.tgz";
-        response = await walkthrough();
-      } else {
-        response = await walkthrough(thisCommand.opts());
-        Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
-      }
+      response = await walkthrough(thisCommand.opts());
+      Object.entries(response).map(([key, value]) => thisCommand.setOptionValue(key, value));
     })
     .action(async opts => {
       const dirName = sanitizeName(response.name);
-      const packageJSON = genPkgJSON(response, pkgOverride);
+      const packageJSON = genPkgJSON(response);
 
       const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.yes);
 
