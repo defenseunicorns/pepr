@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 export const ErrorMessages = {
   MISSING_DETAILS: "Missing 'details' variable declaration.",
   INVALID_SCOPE: (scope: string): string =>
