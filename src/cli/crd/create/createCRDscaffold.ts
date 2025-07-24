@@ -1,4 +1,4 @@
-export const generateCRDScaffold = (
+export const createCRDscaffold = (
   group: string,
   version: string,
   kind: string,

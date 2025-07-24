@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { describe, beforeEach, it, expect } from "vitest";
-import { generateCRDScaffold } from "./generateCRDscaffold";
+import { createCRDscaffold } from "./createCRDscaffold";
 
 describe("generateCRDScaffold", () => {
   // Common test data
@@ -20,7 +20,7 @@ describe("generateCRDScaffold", () => {
     let result: string;
 
     beforeEach(() => {
-      result = generateCRDScaffold(group, version, kind, data);
+      result = createCRDscaffold(group, version, kind, data);
     });
 
     it("should include type definitions for spec and status", () => {

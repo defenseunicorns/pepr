@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import Log from "../../../lib/telemetry/logger";
-import create from "./create";
+import create from "./index";
 import type { MockInstance } from "vitest";
 import { Command } from "commander";
 import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
@@ -37,7 +37,7 @@ describe("create CLI command", () => {
 
   beforeEach(() => {
     program = new Command();
-    program.addCommand(create);
+    program.addCommand(create());
     stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   });
 
