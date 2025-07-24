@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command } from "commander";
-import { generateCRDs } from "./asdf";
+import { generateCRDs } from "./generators";
 
 export default function (): Command {
   return new Command("generate")
