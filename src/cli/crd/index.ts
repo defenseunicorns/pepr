@@ -5,11 +5,9 @@ import { Command } from "commander";
 import generate from "./generate/";
 import create from "./create";
 
-export default function (program: Command): void {
-  const crd = program
-    .command("crd")
-    .description("Scaffold and generate Kubernetes CRDs from structured TypeScript definitions");
-
-  crd.addCommand(create());
-  crd.addCommand(generate());
+export default function (): Command {
+  return new Command("crd")
+    .description("Scaffold and generate Kubernetes CRDs from structured TypeScript definitions")
+    .addCommand(create())
+    .addCommand(generate());
 }
