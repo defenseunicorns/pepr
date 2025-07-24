@@ -7,6 +7,7 @@ import create, { generateCRDScaffold } from "./create";
 import { Command } from "commander";
 import { promises as fs } from "fs";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
+import Log from "../../lib/telemetry/logger";
 
 describe("generateCRDScaffold", () => {
   // Common test data
@@ -107,13 +108,9 @@ describe("create CLI command", () => {
     );
   });
 
-  it("should write files to /api/<version>", async () => {
-    vi.mock("../../lib/filesystemService", () => ({
-      createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
-    }));
+  describe("when required options are present", () => {
     const writeFileSpy = vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
     const createDirSpy = createDirectoryIfNotExists as unknown as ReturnType<typeof vi.fn>;
-
     const args = [
       "create",
       "--group",
@@ -126,14 +123,46 @@ describe("create CLI command", () => {
       "v1",
     ];
 
-    await program.parseAsync(args, {
-      from: "user",
+    vi.mock("../../lib/telemetry/logger", () => ({
+      __esModule: true,
+      default: {
+        info: vi.fn(),
+        warn: vi.fn(),
+      },
+    }));
+
+    vi.mock("../../lib/filesystemService", () => ({
+      createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    beforeEach(() => vi.resetAllMocks());
+
+    it("should warn that crd features are in alpha", async () => {
+      await program.parseAsync(args, {
+        from: "user",
+      });
+      expect(Log.warn).toHaveBeenCalledWith("This feature is currently in alpha.");
     });
 
-    expect(createDirSpy).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
-    expect(writeFileSpy).toHaveBeenCalledWith(
-      expect.stringContaining("/api/v1/kind_types.ts"),
-      expect.stringContaining("// Kind: kind"),
-    );
+    it("should print the location of created files", async () => {
+      await program.parseAsync(args, {
+        from: "user",
+      });
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining("✔ Created kind TypeScript definition in"),
+      );
+      expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
+    });
+
+    it("should write files to /api/<version>", async () => {
+      await program.parseAsync(args, {
+        from: "user",
+      });
+      expect(createDirSpy).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
+      expect(writeFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/kind_types.ts"),
+        expect.stringContaining("// Kind: kind"),
+      );
+    });
   });
 });
