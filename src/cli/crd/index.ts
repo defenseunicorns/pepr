@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command } from "commander";
-import createCmd from "./create";
+import createCmd from "./create/create";
 import generateCmd from "./generate";
 
 export default function (program: Command): void {

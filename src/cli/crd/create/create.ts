@@ -2,11 +2,10 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command, Option } from "commander";
-import { createDirectoryIfNotExists } from "../../lib/filesystemService";
+import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
 import { promises as fs } from "fs";
-import path from "path";
-import Log from "../../lib/telemetry/logger";
-import { generateCRDScaffold } from "./generateCRDscaffold";
+import Log from "../../../lib/telemetry/logger";
+import { generateCRDScaffold } from "./createCRDscaffold";
 
 // Scaffolds a new CRD TypeScript definition
 const create = new Command("create")
@@ -27,15 +26,15 @@ const create = new Command("create")
   .requiredOption("-v, --version <version>", "API version (e.g. v1alpha1)")
   .action(async ({ group, version, kind, domain, scope, plural, shortName }) => {
     Log.warn("This feature is currently in alpha.");
-    const outputDir = path.resolve(`./api/${version}`);
-    await createDirectoryIfNotExists(outputDir);
+    // const outputDir = path.resolve(`./api/${version}`);
+    await createDirectoryIfNotExists(`./api/${version}`);
 
     // create file in directory with kind
     await fs.writeFile(
       `./api/${version}/${kind.toLowerCase()}_types.ts`,
       generateCRDScaffold(group, version, kind, { domain, scope, plural, shortName }),
     );
-    Log.info(`✔ Created ${kind} TypeScript definition in ${outputDir}`);
+    Log.info(`✔ Created ${kind} TypeScript definition in ./api/${version}`);
   });
 
 export default create;

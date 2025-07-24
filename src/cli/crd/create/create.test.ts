@@ -1,13 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, beforeEach, afterEach, vi } from "vitest";
-import type { MockInstance } from "vitest";
+import Log from "../../../lib/telemetry/logger";
 import create from "./create";
+import type { MockInstance } from "vitest";
 import { Command } from "commander";
+import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
+import { expect, describe, it, beforeEach, afterEach, vi } from "vitest";
 import { promises as fs } from "fs";
-import { createDirectoryIfNotExists } from "../../lib/filesystemService";
-import Log from "../../lib/telemetry/logger";
+
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
+    promises: {
+      writeFile: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
+
+vi.mock("../../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
+vi.mock("../../../lib/filesystemService", () => ({
+  createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("create CLI command", () => {
   let program: Command;
@@ -63,8 +85,6 @@ describe("create CLI command", () => {
   });
 
   describe("when required options are present", () => {
-    const writeFileSpy = vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
-    const createDirSpy = createDirectoryIfNotExists as unknown as ReturnType<typeof vi.fn>;
     const args = [
       "create",
       "--group",
@@ -77,19 +97,9 @@ describe("create CLI command", () => {
       "v1",
     ];
 
-    vi.mock("../../lib/telemetry/logger", () => ({
-      __esModule: true,
-      default: {
-        info: vi.fn(),
-        warn: vi.fn(),
-      },
-    }));
-
-    vi.mock("../../lib/filesystemService", () => ({
-      createDirectoryIfNotExists: vi.fn().mockResolvedValue(undefined),
-    }));
-
-    beforeEach(() => vi.resetAllMocks());
+    beforeEach(() => {
+      vi.resetAllMocks();
+    });
 
     it("should warn that crd features are in alpha", async () => {
       await program.parseAsync(args, {
@@ -112,8 +122,8 @@ describe("create CLI command", () => {
       await program.parseAsync(args, {
         from: "user",
       });
-      expect(createDirSpy).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
-      expect(writeFileSpy).toHaveBeenCalledWith(
+      expect(createDirectoryIfNotExists).toHaveBeenCalledWith(expect.stringContaining("/api/v1"));
+      expect(fs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining("/api/v1/kind_types.ts"),
         expect.stringContaining("// Kind: kind"),
       );
