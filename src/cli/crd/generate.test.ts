@@ -287,7 +287,6 @@ describe("CRD Generator", () => {
       describe("when file content is valid", () => {
         it("should generate a CRD YAML file", () => {
           const writeFileMock = vi.mocked(fs.writeFileSync);
-          //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
           const file = createProjectWithFile(
             "valid.ts",
             generateTestContent({
