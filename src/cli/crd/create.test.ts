@@ -69,7 +69,8 @@ describe("create CLI command", () => {
   });
 
   it("requires the group flag", async () => {
-    await expect(program.parseAsync(["create"], { from: "user" })).rejects.toThrowError(
+    const args = ["create"];
+    await expect(program.parseAsync(args, { from: "user" })).rejects.toThrowError(
       'process.exit unexpectedly called with "1"',
     );
     expect(stderrSpy).toHaveBeenCalledWith(
@@ -77,31 +78,33 @@ describe("create CLI command", () => {
     );
   });
   it("requires the kind flag", async () => {
-    await expect(
-      program.parseAsync(["create", "--group", "group"], { from: "user" }),
-    ).rejects.toThrowError('process.exit unexpectedly called with "1"');
+    const args = ["create", "--group", "group"];
+    await expect(program.parseAsync(args, { from: "user" })).rejects.toThrowError(
+      'process.exit unexpectedly called with "1"',
+    );
     expect(stderrSpy).toHaveBeenCalledWith(
       "error: required option '-k, --kind <kind>' not specified\n",
     );
   });
 
   it("requires the version flag", async () => {
-    await expect(
-      program.parseAsync(["create", "--group", "group", "--kind", "kind"], { from: "user" }),
-    ).rejects.toThrowError('process.exit unexpectedly called with "1"');
+    const args = ["create", "--group", "group", "--kind", "kind", "--short-name", "sn"];
+    await expect(program.parseAsync(args, { from: "user" })).rejects.toThrowError(
+      'process.exit unexpectedly called with "1"',
+    );
     expect(stderrSpy).toHaveBeenCalledWith(
       "error: required option '-v, --version <version>' not specified\n",
     );
   });
 
-  it.skip("requires the short-name flag", async () => {
-    // Is short name really optional? defaults to ""
-    // await expect(program.parseAsync(["create", "--group", "group", "--kind", "kind", "--version", "version"], { from: "user" })).rejects.toThrowError(
-    //   'process.exit unexpectedly called with "1"',
-    // );
-    // expect(stderrSpy).toHaveBeenCalledWith(
-    //   "error: required option '-s, --short-name <name>' not specified\n",
-    // );
+  it("requires the short-name flag", async () => {
+    const args = ["create", "--group", "group", "--kind", "kind", "--version", "version"];
+    await expect(program.parseAsync(args, { from: "user" })).rejects.toThrowError(
+      'process.exit unexpectedly called with "1"',
+    );
+    expect(stderrSpy).toHaveBeenCalledWith(
+      "error: required option '-s, --short-name <name>' not specified\n",
+    );
   });
 
   it("should write files to /api/<version>", async () => {
@@ -111,7 +114,19 @@ describe("create CLI command", () => {
     const writeFileSpy = vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
     const createDirSpy = createDirectoryIfNotExists as unknown as ReturnType<typeof vi.fn>;
 
-    await program.parseAsync(["create", "--group", "group", "--kind", "kind", "--version", "v1"], {
+    const args = [
+      "create",
+      "--group",
+      "group",
+      "--kind",
+      "kind",
+      "--short-name",
+      "sn",
+      "--version",
+      "v1",
+    ];
+
+    await program.parseAsync(args, {
       from: "user",
     });
 
