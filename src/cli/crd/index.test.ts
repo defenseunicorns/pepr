@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import { Command } from "commander";
 import create from "./create";
 import generate from "./generate";
