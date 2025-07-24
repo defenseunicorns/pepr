@@ -15,7 +15,7 @@ import { version } from "./cli/init/templates";
 import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
-import crdwrapper from "./cli/crd/crdwrapper";
+import crd from "./cli/crd";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -29,6 +29,7 @@ program
   .enablePositionalOptions()
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
+  .addCommand(crd())
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);
@@ -49,5 +50,4 @@ format(program);
 monitor(program);
 uuid(program);
 kfc(program);
-crdwrapper(program);
 program.parse();

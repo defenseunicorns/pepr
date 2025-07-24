@@ -11,7 +11,6 @@ Type safe K8s middleware for humans
 
 **Commands:**
 
-  crd                      Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
   init [options]           Initialize a new Pepr Module
   build [options]          Build a Pepr Module for deployment
   deploy [options]         Deploy a Pepr Module
@@ -21,6 +20,7 @@ Type safe K8s middleware for humans
   monitor [module-uuid]    Monitor a Pepr Module
   uuid [uuid]              Module UUID(s) currently deployed in the cluster
   kfc [options] [args...]  Execute Kubernetes Fluent Client commands
+  crd                      Scaffold and generate Kubernetes CRDs from structured TypeScript definitions
 
 ## `npx pepr build`
 
