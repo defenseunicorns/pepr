@@ -22,7 +22,7 @@ const create = new Command("create")
   .requiredOption("-g, --group <group>", "API group (e.g. cache)")
   .requiredOption("-k, --kind <kind>", "Kind name (e.g. memcached)")
   .option("-p, --plural <plural>", "Plural name for CRD (e.g. memcacheds)")
-  .requiredOption("-s, --short-name <name>", "Short name for CRD (e.g. mc)", "")
+  .requiredOption("-s, --short-name <name>", "Short name for CRD (e.g. mc)")
   .requiredOption("-v, --version <version>", "API version (e.g. v1alpha1)")
   .action(async ({ group, version, kind, domain, scope, plural, shortName }) => {
     Log.warn("This feature is currently in alpha.");
