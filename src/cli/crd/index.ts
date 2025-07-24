@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command } from "commander";
-import generateCmd from "./generate/generate";
+import generate from "./generate/";
 import create from "./create";
 
 export default function (program: Command): void {
@@ -11,5 +11,5 @@ export default function (program: Command): void {
     .description("Scaffold and generate Kubernetes CRDs from structured TypeScript definitions");
 
   crd.addCommand(create());
-  crd.addCommand(generateCmd);
+  crd.addCommand(generate());
 }

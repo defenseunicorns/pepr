@@ -1,7 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-
-import { Command } from "commander";
 import fs from "fs";
 import path from "path";
 import Log from "../../../lib/telemetry/logger";
@@ -19,13 +15,6 @@ import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
 import { WarningMessages, ErrorMessages } from "./messages";
-
-export default new Command("generate")
-  .description(
-    "Generate CRD manifests from TypeScript definitions stored in 'api/' of the current directory.",
-  )
-  .option("-o, --output <directory>", "Output directory for generated CRDs", "./crds")
-  .action(generateCRDs);
 
 export function extractCRDDetails(
   content: string,

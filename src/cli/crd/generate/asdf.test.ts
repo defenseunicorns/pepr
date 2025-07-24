@@ -10,7 +10,7 @@ import {
   emptySchema,
   loadVersionFiles,
   getAPIVersions,
-} from "./generate";
+} from "./asdf";
 import { ErrorMessages, WarningMessages } from "./messages";
 import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
