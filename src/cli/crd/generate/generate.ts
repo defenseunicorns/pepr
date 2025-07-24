@@ -4,7 +4,7 @@
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import Log from "../../lib/telemetry/logger";
+import Log from "../../../lib/telemetry/logger";
 import { stringify } from "yaml";
 import {
   Project,
@@ -15,7 +15,7 @@ import {
   SourceFile,
   Type,
 } from "ts-morph";
-import { createDirectoryIfNotExists } from "../../lib/filesystemService";
+import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
 import { WarningMessages, ErrorMessages } from "./messages";
