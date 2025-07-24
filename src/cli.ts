@@ -29,6 +29,7 @@ program
   .enablePositionalOptions()
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
+  .addCommand(crd())
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);
@@ -49,5 +50,4 @@ format(program);
 monitor(program);
 uuid(program);
 kfc(program);
-crd(program);
 program.parse();

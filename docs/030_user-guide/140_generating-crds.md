@@ -9,7 +9,7 @@ npx pepr crd create \
   --group cache \
   --version v1alpha1 \
   --kind Memcache \
-  --shortName mc \
+  --short-name mc \
   --plural memcaches \
   --scope Namespaced
 ```

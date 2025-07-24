@@ -10,15 +10,15 @@ import {
   emptySchema,
   loadVersionFiles,
   getAPIVersions,
-} from "./generate";
+} from "./generators";
 import { ErrorMessages, WarningMessages } from "./messages";
 import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
-import Log from "../../lib/telemetry/logger";
+import Log from "../../../lib/telemetry/logger";
 
 vi.mock("fs");
 
-vi.mock("../../lib/telemetry/logger", () => ({
+vi.mock("../../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
@@ -26,23 +26,46 @@ vi.mock("../../lib/telemetry/logger", () => ({
   },
 }));
 
-// Helper function to get details string based on parameters
-const getDetailsString = (hasDetails: boolean, hasBadScope: boolean): string => {
+// Additional mocks for specific tests will be implemented inline
+
+const getDetailsString = (
+  hasDetails: boolean,
+  hasBadScope: boolean,
+  emptyKey: string = "",
+): string => {
   if (!hasDetails) {
     return "const somethingElse = {};";
   }
 
   const scope = hasBadScope ? "BadScope" : "Namespaced";
+
+  if (emptyKey) {
+    // Create details object with an empty value for the specified key
+    const detailsObj: Record<string, string> = {
+      plural: "widgets",
+      scope: scope,
+      shortName: "wd",
+    };
+    detailsObj[emptyKey] = "";
+
+    // Convert to string format
+    const entries = Object.entries(detailsObj)
+      .map(([key, value]) => `${key}: ${value === "" ? '""' : `"${value}"`}`)
+      .join(", ");
+
+    return `const details = { ${entries} };`;
+  }
+
   return `const details = { plural: "widgets", scope: "${scope}", shortName: "wd" };`;
 };
 
-// Generates test content for CRD tests by combining different parts
 const generateTestContent = ({
   kind = "",
   hasBadScope = false,
   hasDetails = true,
   specInterface = "",
   extraContent = "",
+  emptyKey = "",
 } = {}): string => {
   const parts: string[] = [];
 
@@ -50,7 +73,7 @@ const generateTestContent = ({
   if (kind) parts.push(`// Kind: ${kind}`);
 
   // Add details section
-  parts.push(getDetailsString(hasDetails, hasBadScope));
+  parts.push(getDetailsString(hasDetails, hasBadScope, emptyKey));
 
   // Add interface definition
   if (specInterface) parts.push(`export interface ${specInterface} {}`);
@@ -62,51 +85,54 @@ const generateTestContent = ({
 };
 
 const createProjectWithFile = (name: string, content: string): SourceFile => {
-  const project = new Project();
-  return project.createSourceFile(name, content);
+  return new Project().createSourceFile(name, content);
 };
 
-describe("generate.ts", () => {
+describe("CRD Generator", () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
 
-  describe("when extracting single line comments", () => {
-    it("should extract a labeled single line comment", () => {
-      const content = `// Kind: Widget`;
-      const result = extractSingleLineComment(content, "Kind");
-      expect(result).toBe("Widget");
-    });
+  describe("Single Line Comment Extraction", () => {
+    describe("when extracting comments with labels", () => {
+      it("should extract the comment value when the label exists", () => {
+        const content = `// Kind: Widget`;
+        const result = extractSingleLineComment(content, "Kind");
+        expect(result).toBe("Widget");
+      });
 
-    it("should return undefined if label is missing", () => {
-      const content = `// Group: test`;
-      const result = extractSingleLineComment(content, "Kind");
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe("when manipulating strings", () => {
-    it("should convert the first letter to lowercase", () => {
-      expect(uncapitalize("CamelCase")).toBe("camelCase");
-    });
-
-    it("should return empty string when input is empty", () => {
-      expect(uncapitalize("")).toBe("");
+      it("should return undefined when the requested label doesn't exist", () => {
+        const content = `// Group: test`;
+        const result = extractSingleLineComment(content, "Kind");
+        expect(result).toBeUndefined();
+      });
     });
   });
 
-  describe("when working with schemas", () => {
-    describe("given an emptySchema", () => {
-      it("should return an object with empty properties and required arrays", () => {
+  describe("String Manipulation", () => {
+    describe("when converting string case", () => {
+      it("should convert the first letter to lowercase", () => {
+        expect(uncapitalize("CamelCase")).toBe("camelCase");
+      });
+
+      it("should handle empty string gracefully", () => {
+        expect(uncapitalize("")).toBe("");
+      });
+    });
+  });
+
+  describe("Schema Operations", () => {
+    describe("when creating an empty schema", () => {
+      it("should return a properly structured schema object with empty properties", () => {
         const result = emptySchema();
         expect(result).toEqual({ properties: {}, required: [] });
       });
     });
   });
 
-  describe("when managing API versions", () => {
-    describe("getAPIVersions", () => {
-      it("should return only directory entries from the api root", () => {
+  describe("API Version Management", () => {
+    describe("when retrieving API versions", () => {
+      it("should return only directory entries from the API root", () => {
         (fs.readdirSync as Mock).mockReturnValue(["v1", "v2"]);
         (fs.statSync as Mock).mockImplementation(path => ({
           isDirectory: (): boolean =>
@@ -117,7 +143,7 @@ describe("generate.ts", () => {
         expect(versions).toEqual(["v1", "v2"]);
       });
 
-      it("should ignore non-directory entries", () => {
+      it("should filter out non-directory entries", () => {
         (fs.readdirSync as Mock).mockReturnValue(["v1", "README.md"]);
         (fs.statSync as Mock).mockImplementation(p => ({
           isDirectory: (): boolean => typeof p === "string" && p.endsWith("v1"),
@@ -128,7 +154,7 @@ describe("generate.ts", () => {
       });
     });
 
-    describe("loadVersionFiles", () => {
+    describe("when loading version files", () => {
       beforeEach(() => {
         vi.clearAllMocks();
       });
@@ -153,7 +179,7 @@ describe("generate.ts", () => {
         expect(result).toBe(mockReturnFiles);
       });
 
-      it("should return empty array when directory has no TypeScript files", () => {
+      it("should return an empty array when no TypeScript files exist in the directory", () => {
         const project = new Project();
         (fs.readdirSync as Mock).mockReturnValue(["bar.js", "README.md", "config.json"]);
         const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
@@ -165,7 +191,7 @@ describe("generate.ts", () => {
         expect(result).toEqual([]);
       });
 
-      it("should return empty array for empty directory", () => {
+      it("should return an empty array for an empty directory", () => {
         const project = new Project();
         (fs.readdirSync as Mock).mockReturnValue([]);
         const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
@@ -176,7 +202,7 @@ describe("generate.ts", () => {
         expect(result).toEqual([]);
       });
 
-      it("should handle fs.readdirSync errors", () => {
+      it("should propagate filesystem errors when they occur", () => {
         const project = new Project();
         (fs.readdirSync as Mock).mockImplementation(() => {
           throw new Error("Directory not found");
@@ -187,15 +213,17 @@ describe("generate.ts", () => {
     });
   });
 
-  describe("when extracting CRD details", () => {
-    it("should extract plural, scope, and shortName from the details object", () => {
-      const file = createProjectWithFile("temp.ts", generateTestContent());
+  describe("CRD Details Extraction", () => {
+    describe("when extracting from a valid file", () => {
+      it("should extract plural, scope, and shortName from the details object", () => {
+        const file = createProjectWithFile("temp.ts", generateTestContent());
 
-      const details = extractDetails(file);
-      expect(details).toEqual({
-        plural: "widgets",
-        scope: "Namespaced",
-        shortName: "wd",
+        const details = extractDetails(file);
+        expect(details).toEqual({
+          plural: "widgets",
+          scope: "Namespaced",
+          shortName: "wd",
+        });
       });
     });
 
@@ -209,15 +237,19 @@ describe("generate.ts", () => {
           contents: generateTestContent({ hasDetails: false }),
           expectedError: ErrorMessages.MISSING_DETAILS,
         },
-      ])("should throw: $expectedError", ({ contents, expectedError }) => {
+        {
+          contents: generateTestContent({ emptyKey: "plural" }),
+          expectedError: ErrorMessages.MISSING_OR_INVALID_KEY("plural"),
+        },
+      ])("should throw an error: $expectedError", ({ contents, expectedError }) => {
         const file = createProjectWithFile("test.ts", contents);
         expect(() => extractDetails(file)).toThrow(expectedError);
       });
     });
   });
 
-  describe("when processing source files", () => {
-    describe("when file content is incomplete", () => {
+  describe("Source File Processing", () => {
+    describe("when processing files with incomplete content", () => {
       it.each([
         {
           contents: generateTestContent({ specInterface: "SomethingSpec" }),
@@ -227,37 +259,55 @@ describe("generate.ts", () => {
           contents: generateTestContent({ kind: "Something" }),
           expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
         },
-      ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
+      ])("should log appropriate warnings: $expectedWarning", ({ contents, expectedWarning }) => {
         const file = createProjectWithFile("test.ts", contents);
         processSourceFile(file, "v1", "/output");
         expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
       });
     });
 
-    describe("when file content is valid", () => {
-      it("should generate a CRD YAML file", () => {
-        const writeFileMock = vi.mocked(fs.writeFileSync);
-        //const writeFileSync = vi.spyOn(fs, "writeFileSync").mockImplementation(() => {});
-        const file = createProjectWithFile(
-          "valid.ts",
-          generateTestContent({
-            kind: "Widget",
-            specInterface: "WidgetSpec",
-            extraContent: `
-            export type WidgetStatusCondition = {
-              /** The type */
-              type: string;
-            };`,
-          }),
-        );
+    describe("when processing valid source files", () => {
+      describe("when file content is incomplete", () => {
+        it.each([
+          {
+            contents: generateTestContent({ specInterface: "SomethingSpec" }),
+            expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
+          },
+          {
+            contents: generateTestContent({ kind: "Something" }),
+            expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
+          },
+        ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
+          const file = createProjectWithFile("test.ts", contents);
+          processSourceFile(file, "v1", "/output");
+          expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
+        });
+      });
 
-        processSourceFile(file, "v1", "/crds");
-        expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
-        expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
-        expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
+      describe("when file content is valid", () => {
+        it("should generate a CRD YAML file", () => {
+          const writeFileMock = vi.mocked(fs.writeFileSync);
+          const file = createProjectWithFile(
+            "valid.ts",
+            generateTestContent({
+              kind: "Widget",
+              specInterface: "WidgetSpec",
+              extraContent: `
+                export type WidgetStatusCondition = {
+                  /** The type */
+                  type: string;
+                };`,
+            }),
+          );
 
-        expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
-      }, 30000);
+          processSourceFile(file, "v1", "/crds");
+          expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
+          expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
+          expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
+
+          expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
+        }, 30000);
+      });
     });
   });
 });
