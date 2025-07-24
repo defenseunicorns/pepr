@@ -2,9 +2,9 @@ import { Command } from "commander";
 import generate from ".";
 import { describe } from "node:test";
 import { beforeEach, expect, it, vi } from "vitest";
-import { generateCRDs } from "./asdf";
+import { generateCRDs } from "./generators";
 
-vi.mock("./asdf", () => ({
+vi.mock("./generators", () => ({
   generateCRDs: vi.fn().mockResolvedValue(undefined),
 }));
 
