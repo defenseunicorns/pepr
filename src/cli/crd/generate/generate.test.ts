@@ -14,11 +14,11 @@ import {
 import { ErrorMessages, WarningMessages } from "./messages";
 import { Project, type SourceFile } from "ts-morph";
 import * as fs from "fs";
-import Log from "../../lib/telemetry/logger";
+import Log from "../../../lib/telemetry/logger";
 
 vi.mock("fs");
 
-vi.mock("../../lib/telemetry/logger", () => ({
+vi.mock("../../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
