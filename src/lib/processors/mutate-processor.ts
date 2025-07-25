@@ -30,7 +30,7 @@ export interface Bindable {
   actMeta: Record<string, string>;
 }
 
-export interface Result {
+interface Result {
   wrapped: PeprMutateRequest<KubernetesObject>;
   response: MutateResponse;
 }
