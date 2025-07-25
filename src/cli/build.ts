@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { execFileSync } from "child_process";
-import { BuildContext, BuildOptions, BuildResult, analyzeMetafile } from "esbuild";
+import { BuildContext, BuildOptions, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../lib/assets/assets";
@@ -22,11 +22,11 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
+import { Reloader } from "./types";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
-export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
-export type PeprNestedFields = Pick<
+type PeprNestedFields = Pick<
   ModuleConfig,
   | "uuid"
   | "onError"
@@ -40,7 +40,7 @@ export type PeprNestedFields = Pick<
   peprVersion: string;
 };
 
-export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
   pepr: PeprNestedFields & {
     includedFiles: string[];
   };
@@ -363,7 +363,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
   }
 }
 
-export async function checkFormat(): Promise<void> {
+async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {

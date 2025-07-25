@@ -13,7 +13,8 @@ import { sanitizeName } from "./init/utils";
 import { validateCapabilityNames } from "../lib/helpers";
 import { namespaceComplianceValidator } from "../lib/helpers";
 import { loadCapabilities } from "../lib/assets/loader";
-export interface ImagePullSecretDetails {
+
+interface ImagePullSecretDetails {
   pullSecret?: string;
   dockerServer?: string;
   dockerUsername?: string;
@@ -61,7 +62,7 @@ export function validateImagePullSecretDetails(details: ImagePullSecretDetails):
   return { valid: true };
 }
 
-export type ValidatedImagePullSecretDetails = Required<ImagePullSecretDetails>;
+type ValidatedImagePullSecretDetails = Required<ImagePullSecretDetails>;
 
 function generateImagePullSecret(details: ValidatedImagePullSecretDetails): ImagePullSecret {
   const auth = Buffer.from(`${details.dockerUsername}:${details.dockerPassword}`).toString(

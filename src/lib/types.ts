@@ -68,10 +68,6 @@ export type WhenSelector<T extends GenericClass> = {
   /** Register an action to be executed when a Kubernetes resource is deleted. */
   IsDeleted: () => BindingAll<T>;
 };
-export interface RegExpFilter {
-  obj: RegExp;
-  source: string;
-}
 
 export type Filters = {
   annotations: Record<string, string>;

@@ -4,7 +4,7 @@ import { createDockerfile } from "../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../lib/types";
 import { validateCapabilityNames } from "../lib/helpers";
-import { BuildOptions, BuildResult, context, BuildContext } from "esbuild";
+import { BuildOptions, context, BuildContext } from "esbuild";
 import { Assets } from "../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
@@ -18,6 +18,7 @@ import {
   service,
   watcherService,
 } from "../lib/assets/k8sObjects";
+import { Reloader } from "./types";
 
 interface ImageOptions {
   customImage?: string;
@@ -47,7 +48,6 @@ export function assignImage(imageOptions: ImageOptions): string {
   return "";
 }
 
-export type Reloader = (opts: BuildResult<BuildOptions>) => void | Promise<void>;
 /**
  * Determine the RBAC mode based on the CLI options and the module's config
  * @param opts CLI options
