@@ -1,55 +1,138 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
-import {
+import { expect, describe, it, vi, beforeEach, afterEach, type MockInstance } from "vitest";
+import stream from "stream";
+import { Command } from "commander";
+import monitor, {
   getLabelsAndErrorMessage,
   getK8sLogFromKubeConfig,
   processMutateLog,
   processValidateLog,
+  createLogStream,
+  processLogLine,
 } from "./monitor";
-import { KubeConfig, Log as K8sLog } from "@kubernetes/client-node";
+import { Log } from "@kubernetes/client-node";
+
+const mockLogFn = vi.fn();
+const mockLoadFromDefault = vi.fn();
+
+class MockKubeConfig {
+  public clusters = [];
+  public users = [];
+  public contexts = [];
+  public currentContext = "";
+  public custom_authenticators = [];
+  public addAuthenticator = vi.fn();
+  public getContexts = vi.fn();
+  public setCurrentContext = vi.fn();
+  public getCluster = vi.fn();
+  public getUser = vi.fn();
+  public getCurrentCluster = vi.fn();
+  public getCurrentUser = vi.fn();
+  public loadFromDefault = mockLoadFromDefault;
+}
+
+const mockKubeConfigInstance = new MockKubeConfig();
+
+const mockLogInstance = {
+  log: mockLogFn,
+  config: mockKubeConfigInstance,
+};
+
+vi.mock("@kubernetes/client-node", async () => {
+  const actual =
+    await vi.importActual<typeof import("@kubernetes/client-node")>("@kubernetes/client-node");
+  return {
+    ...actual,
+    KubeConfig: vi.fn(() => mockKubeConfigInstance),
+    Log: vi.fn(() => mockLogInstance),
+  };
+});
+
+vi.mock("kubernetes-fluent-client", () => ({
+  kind: {
+    Pod: {
+      InNamespace: () => ({
+        WithLabel: () => ({
+          Get: vi.fn().mockResolvedValue({
+            items: [{ metadata: { name: "test-pod-1" } }, { metadata: { name: "test-pod-2" } }],
+          }),
+        }),
+      }),
+    },
+  },
+  K8s: vi.fn(() => ({
+    InNamespace: () => ({
+      WithLabel: () => ({
+        Get: vi.fn().mockResolvedValue({
+          items: [{ metadata: { name: "test-pod-1" } }, { metadata: { name: "test-pod-2" } }],
+        }),
+      }),
+    }),
+  })),
+}));
+
+const mockLogStream = new stream.PassThrough();
 
 const payload = {
-  level: 30,
-  time: 1733751945893,
-  pid: 1,
-  hostname: "test-host",
-  uid: "test-uid",
-  namespace: "test-namespace",
+  msg: "Check response",
   name: "test-name",
+  namespace: "test-ns",
+  uid: "test-uid",
   res: {
     allowed: true,
     uid: "test-uid",
     patch: btoa(JSON.stringify({ key: "value" })),
     patchType: "test-patch-type",
-    warning: "test-warning",
-    status: { message: "test-message" },
+    status: { message: "msg" },
   },
-  msg: "Check response",
 };
 
-vi.mock("@kubernetes/client-node", () => {
-  const mockKubeConfig = vi.fn();
-  mockKubeConfig.prototype.loadFromDefault = vi.fn();
-  const mockK8sLog = vi.fn();
+describe("monitor command", () => {
+  let program: Command;
 
-  return {
-    KubeConfig: mockKubeConfig,
-    Log: mockK8sLog,
-  };
+  beforeEach(() => {
+    program = new Command();
+    monitor(program);
+
+    vi.spyOn({ getK8sLogFromKubeConfig }, "getK8sLogFromKubeConfig").mockReturnValue(
+      mockLogInstance as unknown as Log,
+    );
+    vi.spyOn({ createLogStream }, "createLogStream").mockReturnValue(mockLogStream);
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should stream logs for each pod found", async () => {
+    const cmd = program.commands.find(c => c.name() === "monitor");
+    await cmd?.parseAsync(["test-uuid"], { from: "user" });
+
+    expect(mockLogFn).toHaveBeenCalledTimes(2);
+    expect(mockLogFn).toHaveBeenCalledWith(
+      "pepr-system",
+      "test-pod-1",
+      "server",
+      expect.any(stream.PassThrough),
+      expect.objectContaining({ follow: true }),
+    );
+    expect(mockLogFn).toHaveBeenCalledWith(
+      "pepr-system",
+      "test-pod-2",
+      "server",
+      expect.any(stream.PassThrough),
+      expect.objectContaining({ follow: true }),
+    );
+  });
 });
 
 describe("getK8sLogFromKubeConfig", () => {
   it("should create a K8sLog instance from the default KubeConfig", () => {
     const result = getK8sLogFromKubeConfig();
-    expect(KubeConfig).toHaveBeenCalledTimes(1);
-    expect(KubeConfig.prototype.loadFromDefault).toHaveBeenCalledTimes(1);
-
-    const kubeConfigInstance = new KubeConfig();
-    expect(K8sLog).toHaveBeenCalledWith(kubeConfigInstance);
-
-    expect(result).toBeInstanceOf(K8sLog);
+    expect(mockLoadFromDefault).toHaveBeenCalledTimes(1);
+    expect(result).toBe(mockLogInstance);
   });
 });
 
@@ -156,5 +239,89 @@ describe("processValidateLog", () => {
 
     expect(consoleLogSpy).toHaveBeenCalledWith("\n❌  VALIDATE   test-name (test-uid)");
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Failure message 1"));
+  });
+});
+
+describe("processLogLine", () => {
+  let logSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should handle valid mutate log line", () => {
+    const logLine = JSON.stringify({
+      msg: "Check response",
+      namespace: "ns-",
+      name: "pod",
+      res: {
+        uid: "abc123",
+        allowed: true,
+        patchType: "JSONPatch",
+        patch: btoa(JSON.stringify({ foo: "bar" })),
+      },
+    });
+
+    processLogLine(logLine);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("MUTATE"));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("foo"));
+  });
+
+  it("should handle valid validate log line with allowed=true", () => {
+    const logLine = JSON.stringify({
+      msg: "Check response",
+      namespace: "ns-",
+      name: "pod",
+      res: {
+        uid: "val123",
+        allowed: true,
+        status: { message: "" },
+      },
+    });
+
+    processLogLine(logLine);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("VALIDATE"));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("✅"));
+  });
+
+  it("should handle validation failure", () => {
+    const logLine = JSON.stringify({
+      msg: "Check response",
+      namespace: "ns-",
+      name: "pod",
+      res: {
+        uid: "fail123",
+        allowed: false,
+        status: { message: "you shall not pass" },
+      },
+    });
+
+    processLogLine(logLine);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("❌"));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("you shall not pass"));
+  });
+
+  it("should not throw on invalid JSON", () => {
+    expect(() => processLogLine("{ invalid }")).not.toThrow();
+  });
+
+  it("should do nothing if 'msg' field is missing", () => {
+    const logLine = JSON.stringify({
+      namespace: "ns-",
+      name: "pod",
+      res: {
+        uid: "unknown",
+        allowed: true,
+      },
+    });
+
+    expect(() => processLogLine(logLine)).not.toThrow();
   });
 });
