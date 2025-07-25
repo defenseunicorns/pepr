@@ -16,7 +16,7 @@ import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
 import { WarningMessages, ErrorMessages } from "./messages";
 
-export function extractCRDDetails(
+function extractCRDDetails(
   content: string,
   sourceFile: SourceFile,
 ): {
@@ -145,7 +145,7 @@ export function extractDetails(sourceFile: SourceFile): {
   throw new Error(ErrorMessages.INVALID_SCOPE(scope));
 }
 
-export function getJsDocDescription(node: Node): string {
+function getJsDocDescription(node: Node): string {
   if (!Node.isPropertySignature(node) && !Node.isPropertyDeclaration(node)) return "";
   return node
     .getJsDocs()
@@ -155,7 +155,7 @@ export function getJsDocDescription(node: Node): string {
     .trim();
 }
 
-export function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
+function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
   properties: Record<string, V1JSONSchemaProps>;
   required: string[];
 } {
@@ -183,7 +183,7 @@ export function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclarat
   return { properties, required };
 }
 
-export function mapTypeToSchema(type: Type): V1JSONSchemaProps {
+function mapTypeToSchema(type: Type): V1JSONSchemaProps {
   if (type.getText() === "Date") return { type: "string", format: "date-time" };
   if (type.isString()) return { type: "string" };
   if (type.isNumber()) return { type: "number" };
@@ -199,7 +199,7 @@ export function mapTypeToSchema(type: Type): V1JSONSchemaProps {
   return { type: "string" };
 }
 
-export function buildObjectSchema(type: Type): V1JSONSchemaProps {
+function buildObjectSchema(type: Type): V1JSONSchemaProps {
   const props: Record<string, V1JSONSchemaProps> = {};
   const required: string[] = [];
 
@@ -249,7 +249,7 @@ interface CRDConfig {
   conditionSchema: ReturnType<typeof getSchemaFromType>;
 }
 
-export function buildCRD(config: CRDConfig): k.CustomResourceDefinition {
+function buildCRD(config: CRDConfig): k.CustomResourceDefinition {
   return {
     apiVersion: "apiextensions.k8s.io/v1",
     kind: "CustomResourceDefinition",

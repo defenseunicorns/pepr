@@ -363,7 +363,7 @@ function handleModuleBuildError(e: BuildModuleResult): void {
   }
 }
 
-export async function checkFormat(): Promise<void> {
+async function checkFormat(): Promise<void> {
   const validFormat = await peprFormat(true);
 
   if (!validFormat) {
