@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e 
-npm install -g npm
+npm install --global npm
 
 npm run set:version
 

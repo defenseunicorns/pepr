@@ -125,6 +125,7 @@ jobs:
 
       - name: Push package to UDS OCI registry
         run: |
+          npm install --global npm
           npm install
           npm run set:version
           npm run build
