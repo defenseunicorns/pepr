@@ -74,7 +74,8 @@ export const definedCategory = (binding: Partial<Binding>): string => {
 
   return Object.keys(categories).find(key => categories[key]) || "";
 };
-export type DefinedCallbackReturnType =
+
+type DefinedCallbackReturnType =
   | FinalizeAction<GenericClass, InstanceType<GenericClass>>
   | WatchLogAction<GenericClass, InstanceType<GenericClass>>
   | MutateAction<GenericClass, InstanceType<GenericClass>>

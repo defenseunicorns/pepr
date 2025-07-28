@@ -6,7 +6,7 @@ import pointer from "json-pointer";
 export type DataOp = "add" | "remove";
 export type DataStore = Record<string, string>;
 export type DataSender = (op: DataOp, keys: string[], value?: string) => void;
-export type DataReceiver = (data: DataStore) => void;
+type DataReceiver = (data: DataStore) => void;
 export type Unsubscribe = () => void;
 
 const MAX_WAIT_TIME = 15000;

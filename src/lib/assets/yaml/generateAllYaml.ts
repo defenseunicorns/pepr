@@ -23,7 +23,7 @@ type services = {
   watch: V1Service | null;
 };
 
-export function pushControllerManifests(
+function pushControllerManifests(
   resources: KubernetesObject[],
   deployments: deployments,
   services: services,
