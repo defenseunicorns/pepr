@@ -6,7 +6,7 @@
 # Script to build and publish nightly versions of Pepr Controller and Pepr CLI.
 
 set -e
-npm install -g npm
+npm install --global npm
 
 LATEST_VERSION=$(npx --yes pepr@latest --version 2>/dev/null)
 RAW_NIGHTLY_VERSION=$(npx --yes pepr@nightly --version 2>/dev/null || echo "none")
