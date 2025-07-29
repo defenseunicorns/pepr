@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import { resolve, dirname } from "path/posix";
 import { version } from "../init/templates";
-import { PeprConfig } from "./buildModule";
+import { PeprConfig } from "../types";
 
 export type LoadModuleReturn = {
   cfg: PeprConfig;

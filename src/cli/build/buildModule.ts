@@ -7,32 +7,9 @@ import { basename, extname, resolve } from "path";
 import { dependencies } from "../init/templates";
 import { peprFormat } from "../format";
 import { watchForChanges } from "./build.helpers";
-import { Reloader } from "../types";
-import { ModuleConfig } from "../../lib/types";
+import { PeprConfig, Reloader } from "../types";
 import { BuildContext } from "esbuild";
 import { loadModule } from "./loadModule";
-
-type PeprNestedFields = Pick<
-  ModuleConfig,
-  | "uuid"
-  | "onError"
-  | "webhookTimeout"
-  | "customLabels"
-  | "alwaysIgnore"
-  | "env"
-  | "rbac"
-  | "rbacMode"
-> & {
-  peprVersion: string;
-};
-
-export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
-  pepr: PeprNestedFields & {
-    includedFiles: string[];
-  };
-  description: string;
-  version: string;
-};
 
 type BuildModuleReturn = {
   ctx: BuildContext<BuildOptions>;
