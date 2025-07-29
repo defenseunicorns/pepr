@@ -96,7 +96,7 @@ export async function getUserConfirmation(opts: { yes: boolean }): Promise<boole
 }
 
 async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
-  const builtModule = await buildModule();
+  const builtModule = await buildModule("dist");
   if (!builtModule) {
     return;
   }

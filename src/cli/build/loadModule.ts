@@ -13,8 +13,8 @@ export type LoadModuleReturn = {
 };
 
 export async function loadModule(
-  entryPoint = "pepr.ts",
   outputDir: string,
+  entryPoint = "pepr.ts",
 ): Promise<LoadModuleReturn> {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);

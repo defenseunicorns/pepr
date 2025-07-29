@@ -36,7 +36,7 @@ export default function (program: Command): void {
       }
 
       // Build the module
-      const { cfg, path } = await loadModule();
+      const { cfg, path } = await loadModule("dist");
 
       // Generate a secret for the module
       const webhook = new Assets(
