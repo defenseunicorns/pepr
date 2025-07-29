@@ -7,7 +7,8 @@ import { ChildProcess, fork } from "child_process";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { Command } from "commander";
 import { Store } from "../lib/k8s";
-import { buildModule, loadModule } from "./build";
+import { buildModule } from "./build/buildModule";
+import { loadModule } from "./build/loadModule";
 import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
@@ -35,7 +36,7 @@ export default function (program: Command): void {
       }
 
       // Build the module
-      const { cfg, path } = await loadModule();
+      const { cfg, path } = await loadModule("dist", "pepr.ts");
 
       // Generate a secret for the module
       const webhook = new Assets(
@@ -103,7 +104,7 @@ export default function (program: Command): void {
           });
         };
 
-        await buildModule(async r => {
+        await buildModule("dist", async r => {
           if (r.errors.length > 0) {
             console.error(`Error compiling module: ${r.errors}`);
             return;

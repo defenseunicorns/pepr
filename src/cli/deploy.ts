@@ -6,7 +6,7 @@ import { CapabilityExport } from "../lib/types";
 import { Assets } from "../lib/assets/assets";
 import { ImagePullSecret } from "../lib/types";
 import { Command } from "commander";
-import { buildModule } from "./build";
+import { buildModule } from "./build/buildModule";
 import { deployImagePullSecret, deployWebhook } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 import { sanitizeName } from "./init/utils";
@@ -96,7 +96,7 @@ export async function getUserConfirmation(opts: { yes: boolean }): Promise<boole
 }
 
 async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
-  const builtModule = await buildModule();
+  const builtModule = await buildModule("dist");
   if (!builtModule) {
     return;
   }
