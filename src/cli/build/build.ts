@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { execFileSync } from "child_process";
-import { BuildContext, BuildOptions, analyzeMetafile } from "esbuild";
-import { promises as fs } from "fs";
-import { basename, dirname, extname, resolve } from "path";
 import { Assets } from "../../lib/assets/assets";
-import { dependencies, version } from "../init/templates";
 import { Command } from "commander";
 import { Option } from "commander";
 import { parseTimeout } from "../../lib/helpers";
-import { peprFormat } from "../format";
-import { ModuleConfig } from "../../lib/types";
 import {
-  watchForChanges,
   determineRbacMode,
   assignImage,
   createOutputDirectory,
@@ -22,48 +14,9 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
-import { Reloader } from "../types";
+import { buildModule } from "./asdf";
 
-const peprTS = "pepr.ts";
 let outputDir: string = "dist";
-type PeprNestedFields = Pick<
-  ModuleConfig,
-  | "uuid"
-  | "onError"
-  | "webhookTimeout"
-  | "customLabels"
-  | "alwaysIgnore"
-  | "env"
-  | "rbac"
-  | "rbacMode"
-> & {
-  peprVersion: string;
-};
-
-type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
-  pepr: PeprNestedFields & {
-    includedFiles: string[];
-  };
-  description: string;
-  version: string;
-};
-
-type LoadModuleReturn = {
-  cfg: PeprConfig;
-  entryPointPath: string;
-  modulePath: string;
-  name: string;
-  path: string;
-  uuid: string;
-};
-
-type BuildModuleReturn = {
-  ctx: BuildContext<BuildOptions>;
-  path: string;
-  cfg: PeprConfig;
-  uuid: string;
-};
-
 export default function (program: Command): void {
   program
     .command("build")
@@ -87,7 +40,7 @@ export default function (program: Command): void {
         "Set name for zarf component and service monitors in helm charts.",
       ),
     )
-    .option("-e, --entry-point <file>", "Specify the entry point file to build with.", peprTS)
+    .option("-e, --entry-point <file>", "Specify the entry point file to build with.", "pepr.ts")
     .addOption(
       new Option(
         "-i, --custom-image <image>",
@@ -121,7 +74,12 @@ export default function (program: Command): void {
       outputDir = await createOutputDirectory(opts.output);
 
       // Build the module
-      const buildModuleResult = await buildModule(undefined, opts.entryPoint, opts.embed);
+      const buildModuleResult = await buildModule(
+        outputDir,
+        undefined,
+        opts.entryPoint,
+        opts.embed,
+      );
 
       const { cfg, path } = buildModuleResult!;
       // override the name if provided
@@ -190,186 +148,4 @@ export default function (program: Command): void {
         assets,
       });
     });
-}
-
-// Create a list of external libraries to exclude from the bundle, these are already stored in the container
-const externalLibs = Object.keys(dependencies);
-
-// Add the pepr library to the list of external libraries
-externalLibs.push("pepr");
-
-// Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
-externalLibs.push("@kubernetes/client-node");
-
-export async function loadModule(entryPoint = peprTS): Promise<LoadModuleReturn> {
-  // Resolve path to the module / files
-  const entryPointPath = resolve(".", entryPoint);
-  const modulePath = dirname(entryPointPath);
-  const cfgPath = resolve(modulePath, "package.json");
-
-  // Ensure the module's package.json and entrypoint files exist
-  try {
-    await fs.access(cfgPath);
-    await fs.access(entryPointPath);
-  } catch {
-    console.error(
-      `Could not find ${cfgPath} or ${entryPointPath} in the current directory. Please run this command from the root of your module's directory.`,
-    );
-    process.exit(1);
-  }
-
-  // Read the module's UUID from the package.json file
-  const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
-  const cfg = JSON.parse(moduleText);
-  const { uuid } = cfg.pepr;
-  const name = `pepr-${uuid}.js`;
-
-  // Set the Pepr version from the current running version
-  cfg.pepr.peprVersion = version;
-
-  // Exit if the module's UUID could not be found
-  if (!uuid) {
-    throw new Error("Could not load the uuid in package.json");
-  }
-
-  return {
-    cfg,
-    entryPointPath,
-    modulePath,
-    name,
-    path: resolve(outputDir, name),
-    uuid,
-  };
-}
-
-export async function buildModule(
-  reloader?: Reloader,
-  entryPoint = peprTS,
-  embed = true,
-): Promise<BuildModuleReturn | void> {
-  try {
-    const { cfg, modulePath, path, uuid } = await loadModule(entryPoint);
-
-    await checkFormat();
-    // Resolve node_modules folder (in support of npm workspaces!)
-    const npmRoot = execFileSync("npm", ["root"]).toString().trim();
-
-    // Run `tsc` to validate the module's types & output sourcemaps
-    const args = ["--project", `${modulePath}/tsconfig.json`, "--outdir", outputDir];
-    execFileSync(`${npmRoot}/.bin/tsc`, args);
-
-    // Common build options for all builds
-    const ctxCfg: BuildOptions = {
-      bundle: true,
-      entryPoints: [entryPoint],
-      external: externalLibs,
-      format: "cjs",
-      keepNames: true,
-      legalComments: "external",
-      metafile: true,
-      minify: true,
-      outfile: path,
-      plugins: [
-        {
-          name: "reload-server",
-          setup(build): void | Promise<void> {
-            build.onEnd(async r => {
-              // Print the build size analysis
-              if (r?.metafile) {
-                console.info(await analyzeMetafile(r.metafile));
-              }
-
-              // If we're in dev mode, call the reloader function
-              if (reloader) {
-                await reloader(r);
-              }
-            });
-          },
-        },
-      ],
-      platform: "node",
-      sourcemap: true,
-      treeShaking: true,
-    };
-
-    if (reloader) {
-      // Only minify the code if we're not in dev mode
-      ctxCfg.minify = false;
-    }
-
-    // If not embedding (i.e. making a library module to be distro'd via NPM)
-    if (!embed) {
-      // Don't minify
-      ctxCfg.minify = false;
-
-      // Preserve the original file name
-      ctxCfg.outfile = resolve(outputDir, basename(entryPoint, extname(entryPoint))) + ".js";
-
-      // Don't bundle
-      ctxCfg.packages = "external";
-
-      // Don't tree shake
-      ctxCfg.treeShaking = false;
-    }
-
-    const ctx = await watchForChanges(ctxCfg, reloader);
-
-    return { ctx, path, cfg, uuid };
-  } catch (e) {
-    handleModuleBuildError(e);
-  }
-}
-
-interface BuildModuleResult {
-  stdout?: Buffer;
-  stderr: Buffer;
-}
-
-function handleModuleBuildError(e: BuildModuleResult): void {
-  console.error(`Error building module:`, e);
-
-  if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
-
-  const out = e.stdout.toString() as string;
-  const err = e.stderr.toString();
-
-  console.info(out);
-  console.error(err);
-
-  // Check for version conflicts
-  if (out.includes("Types have separate declarations of a private property '_name'.")) {
-    // Try to find the conflicting package
-    const pgkErrMatch = /error TS2322: .*? 'import\("\/.*?\/node_modules\/(.*?)\/node_modules/g;
-    out.matchAll(pgkErrMatch);
-
-    // Look for package conflict errors
-    const conflicts = [...out.matchAll(pgkErrMatch)];
-
-    // If the regex didn't match, leave a generic error
-    if (conflicts.length < 1) {
-      console.info(
-        `\n\tOne or more imported Pepr Capabilities seem to be using an incompatible version of Pepr.\n\tTry updating your Pepr Capabilities to their latest versions.`,
-        "Version Conflict",
-      );
-    }
-
-    // Otherwise, loop through each conflicting package and print an error
-    conflicts.forEach(match => {
-      console.info(
-        `\n\tPackage '${match[1]}' seems to be incompatible with your current version of Pepr.\n\tTry updating to the latest version.`,
-        "Version Conflict",
-      );
-    });
-  }
-}
-
-async function checkFormat(): Promise<void> {
-  const validFormat = await peprFormat(true);
-
-  if (!validFormat) {
-    console.info(
-      "\x1b[33m%s\x1b[0m",
-      "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
-    );
-  }
 }
