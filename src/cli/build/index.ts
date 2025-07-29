@@ -16,7 +16,6 @@ import {
 } from "./build.helpers";
 import { buildModule } from "./buildModule";
 
-let outputDir: string = "dist";
 export default function (program: Command): void {
   program
     .command("build")
@@ -71,7 +70,7 @@ export default function (program: Command): void {
         .default("manifest"),
     )
     .action(async opts => {
-      outputDir = await createOutputDirectory(opts.output);
+      const outputDir = await createOutputDirectory(opts.output);
 
       // Build the module
       const buildModuleResult = await buildModule(
