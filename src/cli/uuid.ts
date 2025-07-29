@@ -13,12 +13,11 @@ export default function (program: Command): void {
       const deployments = await getPeprDeploymentsByUUID(uuid);
       const uuidTable = buildUUIDTable(deployments);
 
-      console.log("UUID\t\tDescription");
-      console.log("--------------------------------------------");
-
-      Object.entries(uuidTable).forEach(([uuid, description]) => {
-        console.log(`${uuid}\t${description}`);
-      });
+      const uuidTableEntries = Object.entries(uuidTable).map(([uuid, description]) => ({
+        UUID: uuid,
+        Description: description,
+      }));
+      console.table(uuidTableEntries);
     });
 }
 
