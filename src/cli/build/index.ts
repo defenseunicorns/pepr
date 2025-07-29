@@ -14,7 +14,7 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
-import { buildModule } from "./asdf";
+import { buildModule } from "./buildModule";
 
 let outputDir: string = "dist";
 export default function (program: Command): void {

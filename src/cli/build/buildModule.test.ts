@@ -3,6 +3,6 @@
 
 import { it, expect } from "vitest";
 
-it("should placeholder", () => {
+it.skip("should placeholder", () => {
   expect(true).toBe(true);
 });

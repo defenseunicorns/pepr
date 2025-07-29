@@ -6,7 +6,7 @@ import { CapabilityExport } from "../lib/types";
 import { Assets } from "../lib/assets/assets";
 import { ImagePullSecret } from "../lib/types";
 import { Command } from "commander";
-import { buildModule } from "./build";
+import { buildModule } from "./build/buildModule";
 import { deployImagePullSecret, deployWebhook } from "../lib/assets/deploy";
 import { namespaceDeploymentsReady } from "../lib/deploymentChecks";
 import { sanitizeName } from "./init/utils";

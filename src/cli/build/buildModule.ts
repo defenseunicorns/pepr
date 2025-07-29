@@ -3,14 +3,14 @@
 
 import { execFileSync } from "child_process";
 import { BuildOptions, analyzeMetafile } from "esbuild";
-import { promises as fs } from "fs";
-import { basename, dirname, extname, resolve } from "path";
-import { dependencies, version } from "../init/templates";
+import { basename, extname, resolve } from "path";
+import { dependencies } from "../init/templates";
 import { peprFormat } from "../format";
 import { watchForChanges } from "./build.helpers";
 import { Reloader } from "../types";
 import { ModuleConfig } from "../../lib/types";
 import { BuildContext } from "esbuild";
+import { loadModule } from "./loadModule";
 
 type PeprNestedFields = Pick<
   ModuleConfig,
@@ -26,21 +26,12 @@ type PeprNestedFields = Pick<
   peprVersion: string;
 };
 
-type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
+export type PeprConfig = Omit<ModuleConfig, keyof PeprNestedFields> & {
   pepr: PeprNestedFields & {
     includedFiles: string[];
   };
   description: string;
   version: string;
-};
-
-type LoadModuleReturn = {
-  cfg: PeprConfig;
-  entryPointPath: string;
-  modulePath: string;
-  name: string;
-  path: string;
-  uuid: string;
 };
 
 type BuildModuleReturn = {
@@ -57,50 +48,6 @@ externalLibs.push("pepr");
 
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
-
-export async function loadModule(
-  entryPoint = "pepr.ts",
-  outputDir: string,
-): Promise<LoadModuleReturn> {
-  // Resolve path to the module / files
-  const entryPointPath = resolve(".", entryPoint);
-  const modulePath = dirname(entryPointPath);
-  const cfgPath = resolve(modulePath, "package.json");
-
-  // Ensure the module's package.json and entrypoint files exist
-  try {
-    await fs.access(cfgPath);
-    await fs.access(entryPointPath);
-  } catch {
-    console.error(
-      `Could not find ${cfgPath} or ${entryPointPath} in the current directory. Please run this command from the root of your module's directory.`,
-    );
-    process.exit(1);
-  }
-
-  // Read the module's UUID from the package.json file
-  const moduleText = await fs.readFile(cfgPath, { encoding: "utf-8" });
-  const cfg = JSON.parse(moduleText);
-  const { uuid } = cfg.pepr;
-  const name = `pepr-${uuid}.js`;
-
-  // Set the Pepr version from the current running version
-  cfg.pepr.peprVersion = version;
-
-  // Exit if the module's UUID could not be found
-  if (!uuid) {
-    throw new Error("Could not load the uuid in package.json");
-  }
-
-  return {
-    cfg,
-    entryPointPath,
-    modulePath,
-    name,
-    path: resolve(outputDir, name),
-    uuid,
-  };
-}
 
 export async function buildModule(
   outputDir: string,
