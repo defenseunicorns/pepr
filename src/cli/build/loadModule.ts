@@ -12,10 +12,7 @@ export type LoadModuleReturn = {
   uuid: string;
 };
 
-export async function loadModule(
-  outputDir: string,
-  entryPoint = "pepr.ts",
-): Promise<LoadModuleReturn> {
+export async function loadModule(outputDir: string, entryPoint: string): Promise<LoadModuleReturn> {
   // Resolve path to the module / files
   const entryPointPath = resolve(".", entryPoint);
   const modulePath = dirname(entryPointPath);

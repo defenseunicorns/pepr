@@ -33,7 +33,7 @@ export async function buildModule(
   embed = true,
 ): Promise<BuildModuleReturn | void> {
   try {
-    const { cfg, modulePath, path, uuid } = await loadModule(entryPoint, outputDir);
+    const { cfg, modulePath, path, uuid } = await loadModule(outputDir, entryPoint);
 
     await checkFormat();
     // Resolve node_modules folder (in support of npm workspaces!)
