@@ -125,9 +125,11 @@ function testUUID() {
 
     // Check if the expected lines are in the output
     const expected = [
-      "UUID\t\tDescription",
-      "--------------------------------------------",
-      "static-test\t",
+      "┌─────────┬───────────────┬──────────────────────────┐",
+      "│ (index) │ UUID          │ Description              │",
+      "├─────────┼───────────────┼──────────────────────────┤",
+      "│ 0       │ 'static-test' │ 'A test module for Pepr' │",
+      "└─────────┴───────────────┴──────────────────────────┘",
     ].join("\n");
     expect(stdout).toMatch(expected);
   });
@@ -142,9 +144,11 @@ function testUUID() {
 
     // Check if the expected lines are in the output
     const expected = [
-      "UUID\t\tDescription",
-      "--------------------------------------------",
-      "static-test\t",
+      "┌─────────┬───────────────┬──────────────────────────┐",
+      "│ (index) │ UUID          │ Description              │",
+      "├─────────┼───────────────┼──────────────────────────┤",
+      "│ 0       │ 'static-test' │ 'A test module for Pepr' │",
+      "└─────────┴───────────────┴──────────────────────────┘",
     ].join("\n");
     expect(stdout).toMatch(expected);
   });

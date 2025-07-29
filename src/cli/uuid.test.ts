@@ -127,29 +127,27 @@ describe("getPeprDeploymentsByUUID", () => {
 
 describe("uuid CLI command", () => {
   let program: Command;
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  let tableSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     program = new Command();
     uuid(program);
-    logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    tableSpy = vi.spyOn(console, "table").mockImplementation(() => {});
   });
 
-  it("should log UUID and description of all deployments with a UUID", async () => {
+  it("should display UUID table for all deployments with a UUID", async () => {
     await program.parseAsync(["uuid"], { from: "user" });
 
-    expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
-    expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
-    expect(logSpy).toHaveBeenCalledWith("1234\tTest annotation");
-    expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
+    expect(tableSpy).toHaveBeenCalledWith([
+      { UUID: "1234", Description: "Test annotation" },
+      { UUID: "asdf", Description: "Another annotation" },
+    ]);
   });
 
-  it("should log UUID and description of a specific deployment with a matching UUID", async () => {
+  it("should display UUID table for a specific deployment with a matching UUID", async () => {
     await program.parseAsync(["uuid", "asdf"], { from: "user" });
-    expect(logSpy).toHaveBeenCalledWith("UUID\t\tDescription");
-    expect(logSpy).toHaveBeenCalledWith("--------------------------------------------");
-    expect(logSpy).toHaveBeenCalledWith("asdf\tAnother annotation");
-    expect(logSpy).not.toHaveBeenCalledWith("1234\tTest annotation");
+
+    expect(tableSpy).toHaveBeenCalledWith([{ UUID: "asdf", Description: "Another annotation" }]);
   });
 });
