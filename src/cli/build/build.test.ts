@@ -11,14 +11,14 @@ import {
   assignImage,
 } from "./build.helpers";
 
-import { createDirectoryIfNotExists } from "../lib/filesystemService";
+import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
-import { createDockerfile } from "../lib/included-files";
+import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
-import { CapabilityExport } from "../lib/types";
-import { Capability } from "../lib/core/capability";
+import { CapabilityExport } from "../../lib/types";
+import { Capability } from "../../lib/core/capability";
 
-vi.mock("../lib/telemetry/logger", () => ({
+vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
@@ -30,11 +30,11 @@ vi.mock("child_process", () => ({
   execSync: vi.fn(),
 }));
 
-vi.mock("../lib/included-files", () => ({
+vi.mock("../../lib/included-files", () => ({
   createDockerfile: vi.fn(),
 }));
 
-vi.mock("../lib/filesystemService", () => ({
+vi.mock("../../lib/filesystemService", () => ({
   createDirectoryIfNotExists: vi.fn(),
 }));
 

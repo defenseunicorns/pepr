@@ -1,24 +1,24 @@
-import { createDirectoryIfNotExists } from "../lib/filesystemService";
-import { sanitizeResourceName } from "../sdk/sdk";
-import { createDockerfile } from "../lib/included-files";
+import { createDirectoryIfNotExists } from "../../lib/filesystemService";
+import { sanitizeResourceName } from "../../sdk/sdk";
+import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
-import { CapabilityExport } from "../lib/types";
-import { validateCapabilityNames } from "../lib/helpers";
+import { CapabilityExport } from "../../lib/types";
+import { validateCapabilityNames } from "../../lib/helpers";
 import { BuildOptions, context, BuildContext } from "esbuild";
-import { Assets } from "../lib/assets/assets";
+import { Assets } from "../../lib/assets/assets";
 import { resolve } from "path";
 import { promises as fs } from "fs";
-import { generateAllYaml } from "../lib/assets/yaml/generateAllYaml";
-import { webhookConfigGenerator } from "../lib/assets/webhooks";
-import { generateZarfYamlGeneric } from "../lib/assets/yaml/generateZarfYaml";
+import { generateAllYaml } from "../../lib/assets/yaml/generateAllYaml";
+import { webhookConfigGenerator } from "../../lib/assets/webhooks";
+import { generateZarfYamlGeneric } from "../../lib/assets/yaml/generateZarfYaml";
 import {
   getDeployment,
   getModuleSecret,
   getWatcher,
   service,
   watcherService,
-} from "../lib/assets/k8sObjects";
-import { Reloader } from "./types";
+} from "../../lib/assets/k8sObjects";
+import { Reloader } from "../types";
 
 interface ImageOptions {
   customImage?: string;

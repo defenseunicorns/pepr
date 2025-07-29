@@ -5,13 +5,13 @@ import { execFileSync } from "child_process";
 import { BuildContext, BuildOptions, analyzeMetafile } from "esbuild";
 import { promises as fs } from "fs";
 import { basename, dirname, extname, resolve } from "path";
-import { Assets } from "../lib/assets/assets";
-import { dependencies, version } from "./init/templates";
+import { Assets } from "../../lib/assets/assets";
+import { dependencies, version } from "../init/templates";
 import { Command } from "commander";
 import { Option } from "commander";
-import { parseTimeout } from "../lib/helpers";
-import { peprFormat } from "./format";
-import { ModuleConfig } from "../lib/types";
+import { parseTimeout } from "../../lib/helpers";
+import { peprFormat } from "../format";
+import { ModuleConfig } from "../../lib/types";
 import {
   watchForChanges,
   determineRbacMode,
@@ -22,7 +22,7 @@ import {
   validImagePullSecret,
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
-import { Reloader } from "./types";
+import { Reloader } from "../types";
 
 const peprTS = "pepr.ts";
 let outputDir: string = "dist";
