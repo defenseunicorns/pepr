@@ -64,7 +64,7 @@ describe("build CLI command", () => {
     stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   });
 
-  it("should call the Build command", async () => {
+  it("should call the Build command with default values", async () => {
     await program.parseAsync(["build"], { from: "user" });
     expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined })); // This isn't the default?
     expect(buildModule).toBeCalled();
@@ -74,6 +74,19 @@ describe("build CLI command", () => {
     expect(handleValidCapabilityNames).toBeCalled();
   });
 
+  describe.each([["-n"], ["--no-embed"]])("when the no embed flag is set (%s)", noEmbedFlag => {
+    it("should exit after building", async () => {
+      vi.spyOn(console, "info").mockImplementation(() => {});
+      await program.parseAsync(["build", noEmbedFlag], { from: "user" });
+      expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined }));
+      expect(buildModule).toBeCalled();
+      expect(createOutputDirectory).toBeCalled();
+      expect(generateYamlAndWriteToDisk).not.toBeCalled();
+      expect(handleCustomImageBuild).not.toBeCalled();
+      expect(handleValidCapabilityNames).not.toBeCalled();
+      expect(console.info).toHaveBeenCalledWith("Module built successfully at some/path");
+    });
+  });
   describe.each([["-i"], ["--custom-image"]])(
     "when the custom image flag is set (%s)",
     customImageFlag => {
