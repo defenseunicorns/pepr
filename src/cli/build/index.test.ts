@@ -101,6 +101,48 @@ describe("build CLI command", () => {
     },
   );
 
+  describe.each([["-P"], ["--with-pull-secret"]])(
+    "when the with pull secret flag is set (%s)",
+    withPullSecretFlag => {
+      it("should do something", async () => {
+        await program.parseAsync(["build", withPullSecretFlag, "secret"], { from: "user" });
+        expect(assignImage).toHaveBeenCalledWith(
+          expect.objectContaining({ customImage: undefined }),
+        );
+        expect(buildModule).toBeCalled();
+        expect(createOutputDirectory).toBeCalled();
+        expect(generateYamlAndWriteToDisk).toHaveBeenCalledWith(
+          expect.objectContaining({ imagePullSecret: "secret" }),
+        );
+        expect(handleCustomImageBuild).not.toBeCalled();
+        expect(handleValidCapabilityNames).toBeCalled();
+      });
+      it.each(["#secret", "@secret", "!secret"])(
+        "reject an invalid pull secret (%s)",
+        async invalidSecret => {
+          const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+          const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+            throw new Error("process.exit called");
+          });
+          try {
+            await expect(
+              program.parseAsync(["build", withPullSecretFlag, invalidSecret], { from: "user" }),
+            ).rejects.toThrowError(
+              "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+            );
+          } catch {
+            expect(stderrSpy).toHaveBeenCalledWith(
+              expect.stringContaining(
+                "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+              ),
+            );
+            expect(exitSpy).toHaveBeenCalledWith(1);
+          }
+        },
+      );
+    },
+  );
+
   describe.each([["-n"], ["--no-embed"]])("when the no embed flag is set (%s)", noEmbedFlag => {
     it("should exit after building", async () => {
       vi.spyOn(console, "info").mockImplementation(() => {});
@@ -235,7 +277,7 @@ describe("build CLI command", () => {
   });
 });
 
-// -I is not in "registry/username" format, can we validate it in .option()?
+// -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
 // -P Can we validate in .option()? Or do earlier in the .action()?
 // When validImagePullSecret passes/fails
 // Needs package.json AND pepr.ts (entrypoint)
