@@ -71,6 +71,25 @@ describe("build CLI command", () => {
     expect(handleValidCapabilityNames).toBeCalled();
   });
 
+  it.each([["-M"], ["--rbac-mode"]])(
+    "should reject unsupported RBAC modes (%s) ",
+    async rbacModeFlag => {
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
+      try {
+        await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
+          ),
+        );
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      }
+    },
+  );
+
   describe.each([
     [
       {
