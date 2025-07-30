@@ -6,8 +6,10 @@ import build from ".";
 import { it, expect, beforeEach, describe, vi } from "vitest";
 import { BuildContext, BuildOptions } from "esbuild";
 import { buildModule, BuildModuleReturn } from "./buildModule";
+// Import the module itself for spying
+import * as buildHelpers from "./build.helpers";
+// Destructure for convenience in the rest of the code
 import {
-  assignImage,
   createOutputDirectory,
   generateYamlAndWriteToDisk,
   handleCustomImageBuild,
@@ -38,11 +40,12 @@ vi.mock("./buildModule.ts", async () => {
   } as unknown as BuildModuleReturn;
 });
 
+const assignImage = vi.spyOn(buildHelpers, "assignImage");
+
 vi.mock("./build.helpers.ts", async () => {
   const actual = await vi.importActual("./build.helpers.ts");
   return {
     ...actual,
-    assignImage: vi.fn().mockReturnValue("some-image"),
     createOutputDirectory: vi.fn().mockReturnValue("some-output-dir"),
     handleCustomImageBuild: vi.fn(),
     handleValidCapabilityNames: vi.fn(),
@@ -63,7 +66,7 @@ describe("build CLI command", () => {
 
   it("should call the Build command", async () => {
     await program.parseAsync(["build"], { from: "user" });
-    expect(assignImage).toBeCalled();
+    expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined })); // This isn't the default?
     expect(buildModule).toBeCalled();
     expect(createOutputDirectory).toBeCalled();
     expect(generateYamlAndWriteToDisk).toBeCalled();
@@ -71,6 +74,23 @@ describe("build CLI command", () => {
     expect(handleValidCapabilityNames).toBeCalled();
   });
 
+  describe.each([["-i"], ["--custom-image"]])(
+    "when the custom image flag is set (%s)",
+    customImageFlag => {
+      it.each([["some-image"]])("should set the image to '%s'", async image => {
+        await program.parseAsync(["build", customImageFlag, image], { from: "user" });
+        expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: image }));
+        expect(buildModule).toBeCalled();
+        expect(createOutputDirectory).toBeCalled();
+        expect(generateYamlAndWriteToDisk).toBeCalled();
+        expect(handleCustomImageBuild).not.toBeCalled();
+        expect(handleValidCapabilityNames).toBeCalled();
+      });
+
+      // Is there such a thing as image validation?
+    },
+  );
+  // Wrap in a describe block for how to use flag?
   it.each([["-M"], ["--rbac-mode"]])(
     "should reject unsupported RBAC modes (%s) ",
     async rbacModeFlag => {
@@ -177,7 +197,6 @@ describe("build CLI command", () => {
 
 // -I is not in "registry/username" format, can we validate it in .option()?
 // -P Can we validate in .option()? Or do earlier in the .action()?
-// When image is not ""
 // When validImagePullSecret passes/fails
 // With and without -n for embed flag (log or not)
 // Needs package.json AND pepr.ts (entrypoint)
