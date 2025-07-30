@@ -11,7 +11,7 @@ import { PeprConfig, Reloader } from "../types";
 import { BuildContext } from "esbuild";
 import { loadModule } from "./loadModule";
 
-type BuildModuleReturn = {
+export type BuildModuleReturn = {
   ctx: BuildContext<BuildOptions>;
   path: string;
   cfg: PeprConfig;
