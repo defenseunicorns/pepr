@@ -90,6 +90,40 @@ describe("build CLI command", () => {
     },
   );
 
+  describe.each(["--timeout", "-t"])("when the timeout flag is set (%s)", timeoutFlag => {
+    it("should accept a timeout in the supported range", async () => {
+      await program.parseAsync(["build", timeoutFlag, "10"], { from: "user" });
+      expect(assignImage).toBeCalled();
+      expect(buildModule).toBeCalled();
+      expect(createOutputDirectory).toBeCalled();
+      expect(generateYamlAndWriteToDisk).toBeCalled();
+      expect(handleCustomImageBuild).not.toBeCalled();
+      expect(handleValidCapabilityNames).toBeCalled();
+    });
+    it.each([["-1"], ["31"]])(
+      "should reject timeouts outside of the supported range (%s)",
+      async invalidTimeout => {
+        await expect(
+          program.parseAsync(["build", timeoutFlag, invalidTimeout], { from: "user" }),
+        ).rejects.toThrowError("Number must be between 1 and 30.");
+      },
+    );
+
+    it("should reject non-numeric timeouts", async () => {
+      await expect(
+        program.parseAsync(["build", timeoutFlag, "not-a-number"], { from: "user" }),
+      ).rejects.toThrowError("Not a number.");
+    });
+    it("should reject float timeouts", async () => {
+      await expect(
+        program.parseAsync(["build", timeoutFlag, "5.2"], { from: "user" }),
+      ).rejects.toThrowError("Value must be an integer.");
+    });
+    // it("should reject float timeouts", async () => {
+    //   await expect(program.parseAsync(["build", timeoutFlag, "5.0"], { from: "user" })).rejects.toThrowError("Value must be an integer.")
+    // });
+  });
+
   describe.each([
     [
       {
@@ -142,10 +176,8 @@ describe("build CLI command", () => {
 });
 
 // -I is not in "registry/username" format, can we validate it in .option()?
-// -M is not "admin" or "scoped"
 // -P Can we validate in .option()? Or do earlier in the .action()?
 // When image is not ""
-// When timeout it less than 0 or more than 30 seconds (see src/lib/helpers:parseTimeout())
 // When validImagePullSecret passes/fails
 // With and without -n for embed flag (log or not)
 // Needs package.json AND pepr.ts (entrypoint)
