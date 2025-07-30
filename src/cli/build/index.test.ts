@@ -72,7 +72,20 @@ describe("build CLI command", () => {
     expect(generateYamlAndWriteToDisk).toBeCalled();
     expect(handleCustomImageBuild).not.toBeCalled();
     expect(handleValidCapabilityNames).toBeCalled();
+    expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBeUndefined();
   });
+
+  describe.each([["-c"], ["--custom-name"]])(
+    "when the custom name flag is set (%s)",
+    customNameFlag => {
+      it("should set the PEPR_CUSTOM_BUILD_NAME envar", async () => {
+        await program.parseAsync(["build", customNameFlag, "name"], {
+          from: "user",
+        });
+        expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBe("name");
+      });
+    },
+  );
 
   describe.each([["-I"], ["--registry-info"]])(
     "when the registry info flag is set (%s)",
