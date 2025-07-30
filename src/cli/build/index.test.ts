@@ -96,7 +96,7 @@ describe("build CLI command", () => {
         conflictValue: "value",
       },
     ],
-  ])("when %j are set", conflictingOptions => {
+  ])("when conflicting options are set %j", conflictingOptions => {
     it("should exit with code 1", async () => {
       const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
         throw new Error("process.exit called");
