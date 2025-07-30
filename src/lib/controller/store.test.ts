@@ -40,8 +40,10 @@ describe("StoreController", () => {
   };
 
   beforeEach(() => {
+    process.env.PEPR_LOG_LEVEL = "debug";
     vi.clearAllMocks(); // Clear all mocks before each test
     mockLog.info.mockClear(); // Explicitly clear the logger mock
+    mockLog.debug.mockClear();
     testCapability = new Capability(capabilityConfig);
     const mockImplementation = createMockImplementation();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,11 +102,12 @@ describe("StoreController", () => {
       vi.advanceTimersToNextTimer();
       await Promise.resolve();
 
-      const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
-      expect(mockLogCalls).toEqual([
-        "Capability test-capability registered",
+      const mockLogCalls = mockLog.debug.mock.calls.flatMap(call => call);
+      expect(mockLogCalls[0]).toEqual("Capability test-capability registered");
+      expect(mockLogCalls[2]).toEqual(
         `Registering ${withSchedule ? "schedule " : ""}store for test-capability`,
-      ]);
+      );
+
       expect(mockK8s).toHaveBeenCalled();
       expect(controllerStore).toBeDefined();
       expect(mockLog.debug).toHaveBeenCalledWith(capabilityConfig);
@@ -117,8 +120,9 @@ describe("StoreController", () => {
       vi.advanceTimersToNextTimer();
       await Promise.resolve();
 
-      const mockLogCalls = mockLog.info.mock.calls.flatMap(call => call);
-      expect(mockLogCalls).toEqual(["Capability test-capability registered"]);
+      const mockLogCalls = mockLog.debug.mock.calls.flatMap(call => call);
+      expect(mockLogCalls[0]).toEqual("Capability test-capability registered");
+      expect(mockLogCalls[1].name).toEqual("test-capability");
       // K8s API calls verification
       expect(mockK8s).toHaveBeenCalled();
       // K8s(Store).Watch() mock - setupWatch
