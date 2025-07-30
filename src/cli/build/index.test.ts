@@ -74,6 +74,33 @@ describe("build CLI command", () => {
     expect(handleValidCapabilityNames).toBeCalled();
   });
 
+  describe.each([["-I"], ["--registry-info"]])(
+    "when the registry info flag is set (%s)",
+    registryInfoFlag => {
+      // Does this actually do anything??
+      it("should include zero additional files in build", async () => {
+        vi.spyOn(console, "info").mockImplementation(() => {});
+        await program.parseAsync(["build", registryInfoFlag, "organization/username"], {
+          from: "user",
+        });
+        expect(assignImage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            customImage: undefined,
+            registryInfo: "organization/username",
+          }),
+        );
+        expect(buildModule).toBeCalled();
+        expect(createOutputDirectory).toBeCalled();
+        expect(generateYamlAndWriteToDisk).toBeCalled();
+        expect(handleCustomImageBuild).toBeCalled();
+        expect(handleValidCapabilityNames).toBeCalled();
+        expect(console.info).toHaveBeenCalledWith(
+          expect.stringContaining("Including 0 files in controller image."),
+        );
+      });
+    },
+  );
+
   describe.each([["-n"], ["--no-embed"]])("when the no embed flag is set (%s)", noEmbedFlag => {
     it("should exit after building", async () => {
       vi.spyOn(console, "info").mockImplementation(() => {});
@@ -211,7 +238,6 @@ describe("build CLI command", () => {
 // -I is not in "registry/username" format, can we validate it in .option()?
 // -P Can we validate in .option()? Or do earlier in the .action()?
 // When validImagePullSecret passes/fails
-// With and without -n for embed flag (log or not)
 // Needs package.json AND pepr.ts (entrypoint)
 
 // Mock Assets()
