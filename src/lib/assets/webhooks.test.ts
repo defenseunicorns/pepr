@@ -355,6 +355,7 @@ describe("Webhook Management", () => {
 
     describe("when capabilities are present", () => {
       it("should log information about module capabilities", async () => {
+        process.env.PEPR_BUILD_LOGS_CALLED = "false"; // Reset for test
         assets.capabilities = [...loseAssets.capabilities];
         await generateWebhookRules(assets, true);
         expect(Log.info).toHaveBeenCalledOnce();

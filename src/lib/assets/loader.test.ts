@@ -18,7 +18,7 @@ describe("loadCapabilities", () => {
       on: vi.fn(),
       send: vi.fn(),
     };
-
+    process.env.PEPR_DEPLOY_LOGS_CALLED = "false";
     (fork as vi.Mock).mockReturnValue(mockProcess);
     vi.spyOn(console, "info").mockImplementation(() => {});
   });

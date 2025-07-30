@@ -28,9 +28,12 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
       const capabilities = message.valueOf() as CapabilityExport[];
 
       // Iterate through the capabilities and generate the rules
-      for (const capability of capabilities) {
-        console.info(`Registered Pepr Capability "${capability.name}"`);
+      if (process.env.PEPR_DEPLOY_LOGS_CALLED === "false") {
+        for (const capability of capabilities) {
+          console.info(`Registered Pepr Capability "${capability.name}"`);
+        }
       }
+      process.env.PEPR_DEPLOY_LOGS_CALLED = "true";
 
       resolve(capabilities);
     });
