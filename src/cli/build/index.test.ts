@@ -31,6 +31,18 @@ vi.mock("./buildModule", async () => {
   } as unknown as BuildModuleReturn;
 });
 
+vi.mock("./build.helpers", async () => {
+  const actual = await vi.importActual("./build.helpers");
+  return {
+    ...actual,
+    assignImage: vi.fn().mockReturnValue("some-image"),
+    createOutputDirectory: vi.fn().mockReturnValue("some-output-dir"),
+    handleCustomImageBuild: vi.fn(),
+    handleValidCapabilityNames: vi.fn(),
+    generateYamlAndWriteToDisk: vi.fn(),
+  };
+});
+
 describe("build CLI command", () => {
   const program = new Command();
 
@@ -57,12 +69,7 @@ describe("build CLI command", () => {
 // With and without -n for embed flag (log or not)
 // Needs package.json AND pepr.ts (entrypoint)
 
-// Mock  buildModule()
 // Mock Assets()
-// Mock assignImage()
-// Mock generateYamlAndWriteToDisk()
-// Mock handleCustomImageBuild()
-// Mock handleValidCapabilityNames()
 
 // Entrypoint validation for non-file input? E.g., a directory -> Could have nicer error handling, not critical
 // Probably don't want to use PEPR_CUSTOM_BUILD_NAME envar
