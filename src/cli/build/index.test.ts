@@ -5,9 +5,16 @@ import { Command } from "commander";
 import build from ".";
 import { it, expect, beforeEach, describe, vi } from "vitest";
 import { BuildContext, BuildOptions } from "esbuild";
-import { BuildModuleReturn } from "./buildModule";
+import { buildModule, BuildModuleReturn } from "./buildModule";
+import {
+  assignImage,
+  createOutputDirectory,
+  generateYamlAndWriteToDisk,
+  handleCustomImageBuild,
+  handleValidCapabilityNames,
+} from "./build.helpers";
 
-vi.mock("./buildModule", async () => {
+vi.mock("./buildModule.ts", async () => {
   return {
     buildModule: vi.fn().mockResolvedValue({
       path: "some/path",
@@ -31,8 +38,8 @@ vi.mock("./buildModule", async () => {
   } as unknown as BuildModuleReturn;
 });
 
-vi.mock("./build.helpers", async () => {
-  const actual = await vi.importActual("./build.helpers");
+vi.mock("./build.helpers.ts", async () => {
+  const actual = await vi.importActual("./build.helpers.ts");
   return {
     ...actual,
     assignImage: vi.fn().mockReturnValue("some-image"),
@@ -52,8 +59,13 @@ describe("build CLI command", () => {
   });
 
   it("should call the Build command", async () => {
-    program.parseAsync(["build"], { from: "user" });
-    expect(build).toBeCalled();
+    await program.parseAsync(["build"], { from: "user" });
+    expect(assignImage).toBeCalled();
+    expect(buildModule).toBeCalled();
+    expect(createOutputDirectory).toBeCalled();
+    expect(generateYamlAndWriteToDisk).toBeCalled();
+    expect(handleCustomImageBuild).not.toBeCalled();
+    expect(handleValidCapabilityNames).toBeCalled();
   });
 });
 
