@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { it, describe, expect, beforeEach, vi } from "vitest";
+import { it, describe, expect, beforeEach, vi, beforeAll } from "vitest";
 import {
   peprIgnoreNamespaces,
   validateRule,
@@ -354,8 +354,10 @@ describe("Webhook Management", () => {
     });
 
     describe("when capabilities are present", () => {
+      beforeAll(() => {
+        process.env.PEPR_BUILD_LOGS_CALLED = "false";
+      });
       it("should log information about module capabilities", async () => {
-        process.env.PEPR_BUILD_LOGS_CALLED = "false"; // Reset for test
         assets.capabilities = [...loseAssets.capabilities];
         await generateWebhookRules(assets, true);
         expect(Log.info).toHaveBeenCalledOnce();
