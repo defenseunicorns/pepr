@@ -51,10 +51,11 @@ vi.mock("./build.helpers.ts", async () => {
 });
 
 describe("build CLI command", () => {
-  const program = new Command();
+  let program: Command;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    program = new Command();
     build(program);
   });
 
@@ -66,6 +67,21 @@ describe("build CLI command", () => {
     expect(generateYamlAndWriteToDisk).toBeCalled();
     expect(handleCustomImageBuild).not.toBeCalled();
     expect(handleValidCapabilityNames).toBeCalled();
+  });
+  describe("when conflicting options are used", () => {
+    it("should log an error and exit", async () => {
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
+      try {
+        await program.parseAsync(
+          ["build", "--custom-image", "some-image", "--registry", "some-registry"],
+          { from: "user" },
+        );
+      } catch {
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      }
+    });
   });
 });
 
