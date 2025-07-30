@@ -52,11 +52,13 @@ vi.mock("./build.helpers.ts", async () => {
 
 describe("build CLI command", () => {
   let program: Command;
+  let stderrSpy;
 
   beforeEach(() => {
     vi.clearAllMocks();
     program = new Command();
     build(program);
+    stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   });
 
   it("should call the Build command", async () => {
@@ -68,26 +70,58 @@ describe("build CLI command", () => {
     expect(handleCustomImageBuild).not.toBeCalled();
     expect(handleValidCapabilityNames).toBeCalled();
   });
-  describe("when conflicting options are used", () => {
-    it("should log an error and exit", async () => {
+
+  describe.each([
+    [
+      {
+        option: "--custom-image",
+        optionValue: "value",
+        conflict: "--registry",
+        conflictValue: "GitHub",
+      },
+    ],
+    [
+      {
+        option: "--custom-image",
+        optionValue: "value",
+        conflict: "--registry-info",
+        conflictValue: "value",
+      },
+    ],
+    [
+      {
+        option: "--registry",
+        optionValue: "Iron Bank",
+        conflict: "--registry-info",
+        conflictValue: "value",
+      },
+    ],
+  ])("when %j are set", conflictingOptions => {
+    it("should exit with code 1", async () => {
       const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
         throw new Error("process.exit called");
       });
       try {
         await program.parseAsync(
-          ["build", "--custom-image", "some-image", "--registry", "some-registry"],
+          [
+            "build",
+            conflictingOptions.option,
+            conflictingOptions.optionValue,
+            conflictingOptions.conflict,
+            conflictingOptions.conflictValue,
+          ],
           { from: "user" },
         );
       } catch {
+        expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
+          expect.stringContaining("cannot be used with option"),
+        );
         expect(exitSpy).toHaveBeenCalledWith(1);
       }
     });
   });
 });
 
-// --custom-image AND --registry
-// --custom-image AND --registry-info
-// --registry AND --registry-info
 // -I is not in "registry/username" format, can we validate it in .option()?
 // -M is not "admin" or "scoped"
 // -P Can we validate in .option()? Or do earlier in the .action()?
