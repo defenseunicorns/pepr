@@ -53,7 +53,7 @@ export default function (program: Command): void {
     .option("-o, --output <directory>", "Set output directory.", "dist")
     .addOption(
       new Option(
-        "-r, --registry <GitHub|Iron Bank>",
+        "-r, --registry <registry>",
         "Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info.",
       )
         .conflicts(["customImage", "registryInfo"])
