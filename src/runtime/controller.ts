@@ -14,7 +14,7 @@ import { peprStoreCRD } from "../lib/assets/store";
 import { validateHash } from "../lib/helpers";
 const { version } = packageJSON;
 
-function runModule(expectedHash: string): void {
+export function runModule(expectedHash: string): void {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
   const jsPath = `/app/module-${expectedHash}.js`;
 
@@ -59,7 +59,7 @@ Log.info(`Pepr Controller (v${version})`);
 
 const hash = process.argv[2];
 
-const startup = async (): Promise<void> => {
+export const startup = async (): Promise<void> => {
   try {
     Log.info("Applying the Pepr Store CRD if it doesn't exist");
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
