@@ -57,7 +57,6 @@ export const startup = async (hash: string): Promise<void> => {
 
     validateHash(hash);
     runModule(hash);
-    console.log("done");
   } catch (err) {
     Log.error(err, `Error starting Pepr Store CRD`);
     process.exit(1);
