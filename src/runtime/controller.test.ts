@@ -57,8 +57,7 @@ describe("when the controller starts", () => {
 
   it("should run the module if hashes match", async () => {
     const { K8s } = await import("kubernetes-fluent-client");
-    const applyMock = vi.fn().mockResolvedValue(undefined);
-    (K8s as Mock).mockReturnValue({ Apply: applyMock });
+    (K8s as Mock).mockReturnValue({ Apply: vi.fn().mockResolvedValueOnce(undefined) });
 
     await startup(mockedHash);
 
@@ -67,47 +66,46 @@ describe("when the controller starts", () => {
     expect(fs.writeFileSync).toHaveBeenCalledWith(jsPath, codeBuffer);
     expect(fork).toHaveBeenCalledWith(jsPath);
   });
+  describe("when startup experiences an error", () => {
+    const runAndExpectError = async (hash: string) => {
+      await expect(startup(hash)).rejects.toThrow('process.exit unexpectedly called with "1"');
+      expect(process.exit).toHaveBeenCalledWith(1);
+      expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Error starting Pepr Store CRD");
+      expect(fork).not.toHaveBeenCalled();
+    };
 
-  it("should exit when file hashes do not match", async () => {
-    const { K8s } = await import("kubernetes-fluent-client");
-    const applyMock = vi.fn().mockResolvedValue(undefined);
-    (K8s as Mock).mockReturnValue({ Apply: applyMock });
+    it("should exit when file hashes do not match", async () => {
+      const { K8s } = await import("kubernetes-fluent-client");
+      (K8s as Mock).mockReturnValue({ Apply: vi.fn().mockResolvedValueOnce(undefined) });
 
-    (fs.existsSync as Mock).mockReturnValue(true);
-    (fs.readFileSync as Mock).mockReturnValue(Buffer.from("gzipped"));
+      await runAndExpectError(mockedHash.replaceAll("c", "d"));
 
-    await expect(startup(mockedHash.replaceAll("c", "d"))).rejects.toThrow(
-      'process.exit unexpectedly called with "1"',
-    );
+      expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Error starting Pepr Store CRD");
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
+      );
+      expect(fs.readFileSync).toHaveBeenCalledWith(
+        expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
+      );
+      expect(fs.writeFileSync).not.toHaveBeenCalledWith();
+    });
 
-    expect(process.exit).toHaveBeenCalledWith(1);
-    expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Error starting Pepr Store CRD");
-    expect(fs.existsSync).toHaveBeenCalledWith(
-      expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
-    );
-    expect(fs.readFileSync).toHaveBeenCalledWith(
-      expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
-    );
-    expect(fs.writeFileSync).not.toHaveBeenCalledWith();
-    expect(fork).not.toHaveBeenCalled();
-  });
+    it("should exit if a file is not found", async () => {
+      (fs.existsSync as Mock).mockReturnValueOnce(false);
 
-  it("should exit if a file is not found", async () => {
-    (fs.existsSync as Mock).mockReturnValueOnce(false);
-    await expect(startup(mockedHash)).rejects.toThrow('process.exit unexpectedly called with "1"');
-    expect(Log.error).toHaveBeenCalledWith(
-      Error(`File not found: /app/load/module-${mockedHash}.js.gz`),
-      "Error starting Pepr Store CRD",
-    );
-    expect(process.exit).toHaveBeenCalledWith(1);
-  });
+      await runAndExpectError(mockedHash);
 
-  it("should log an error and exit on Apply failure", async () => {
-    const { K8s } = await import("kubernetes-fluent-client");
-    const applyMock = vi.fn().mockRejectedValue(new Error("fail"));
-    (K8s as Mock).mockReturnValue({ Apply: applyMock });
+      expect(Log.error).toHaveBeenCalledWith(
+        Error(`File not found: /app/load/module-${mockedHash}.js.gz`),
+        "Error starting Pepr Store CRD",
+      );
+    });
 
-    await expect(startup(mockedHash)).rejects.toThrow('process.exit unexpectedly called with "1"');
-    expect(process.exit).toHaveBeenCalledWith(1);
+    it("should log an error and exit on Apply failure", async () => {
+      const { K8s } = await import("kubernetes-fluent-client");
+      (K8s as Mock).mockReturnValue({ Apply: new Error("fail") });
+
+      await runAndExpectError(mockedHash);
+    });
   });
 });

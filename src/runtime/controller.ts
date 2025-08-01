@@ -52,6 +52,7 @@ function runModule(expectedHash: string): void {
 
 export const startup = async (hash: string): Promise<void> => {
   try {
+    Log.info(`Pepr Controller (v${version})`);
     Log.info("Applying the Pepr Store CRD if it doesn't exist");
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
@@ -64,6 +65,5 @@ export const startup = async (hash: string): Promise<void> => {
 };
 
 // Start the controller
-Log.info(`Pepr Controller (v${version})`);
 const hash = process.argv[2];
 startup(hash).catch(err => Log.error(err, `Error starting Pepr Controller`));
