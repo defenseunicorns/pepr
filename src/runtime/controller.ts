@@ -18,9 +18,6 @@ export function runModule(expectedHash: string): void {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
   const jsPath = `/app/module-${expectedHash}.js`;
 
-  // Set the log level
-  Log.level = "info";
-
   // Check if the path is a valid file
   if (!fs.existsSync(gzPath)) {
     throw new Error(`File not found: ${gzPath}`);
