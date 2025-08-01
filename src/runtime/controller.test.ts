@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { runModule, startup } from "./controller";
-import * as fs from "fs";
-import { gunzipSync } from "zlib";
-import crypto from "crypto";
+import { startup } from "./controller";
+import fs from "fs";
 import { fork } from "child_process";
+import Log from "../lib/telemetry/logger";
 
-vi.mock("fs");
+vi.mock("fs", () => ({
+  __esModule: true,
+  default: {
+    ...vi.importActual("fs"),
+    existsSync: vi.fn().mockReturnValue(true),
+    readFileSync: vi.fn().mockReturnValue(Buffer.from("gzipped")),
+    writeFileSync: vi.fn(),
+  },
+}));
+
 vi.mock("zlib", () => ({
-  gunzipSync: vi.fn(),
+  __esModule: true,
+  ...vi.importActual("zlib"),
+  gunzipSync: vi.fn().mockReturnValue(Buffer.from("controller-test")),
 }));
 vi.mock("child_process", () => ({
   fork: vi.fn(),
@@ -34,9 +44,9 @@ vi.mock("../lib/telemetry/logger", () => ({
   },
 }));
 
-const hashed = crypto.createHash("sha256").update("controller-test").digest("hex");
-const gzPath = `/app/load/module-${hashed}.js.gz`;
-const jsPath = `/app/module-${hashed}.js`;
+const mockedHash = "cccc02c4d7707ff4a7d8ba5c6e646aee32abc2765c2818bf28c54bfd7fb89bfd";
+const gzPath = `/app/load/module-${mockedHash}.js.gz`;
+const jsPath = `/app/module-${mockedHash}.js`;
 const codeBuffer = Buffer.from("controller-test");
 
 describe("runModule", () => {
@@ -44,28 +54,54 @@ describe("runModule", () => {
     vi.clearAllMocks();
   });
 
-  it("runs the module if hash matches", () => {
-    (fs.existsSync as Mock).mockReturnValue(true);
-    (fs.readFileSync as Mock).mockReturnValue(Buffer.from("gzipped"));
-    (gunzipSync as Mock).mockReturnValue(codeBuffer);
+  it("runs the module if hash matches", async () => {
+    const { K8s } = await import("kubernetes-fluent-client");
+    const applyMock = vi.fn().mockResolvedValue(undefined);
+    (K8s as Mock).mockReturnValue({ Apply: applyMock });
 
-    expect(() => runModule(hashed)).not.toThrow();
+    await startup(mockedHash);
+
     expect(fs.existsSync).toHaveBeenCalledWith(gzPath);
     expect(fs.readFileSync).toHaveBeenCalledWith(gzPath);
     expect(fs.writeFileSync).toHaveBeenCalledWith(jsPath, codeBuffer);
     expect(fork).toHaveBeenCalledWith(jsPath);
   });
 
-  it("throws if file not found", () => {
-    (fs.existsSync as Mock).mockReturnValue(false);
-    expect(() => runModule(hashed)).toThrow("File not found");
-  });
+  it("throws in hash doesn't match", async () => {
+    const { K8s } = await import("kubernetes-fluent-client");
+    const applyMock = vi.fn().mockResolvedValue(undefined);
+    (K8s as Mock).mockReturnValue({ Apply: applyMock });
 
-  it("throws if hash doesn't match", () => {
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readFileSync as Mock).mockReturnValue(Buffer.from("gzipped"));
-    (gunzipSync as Mock).mockReturnValue(Buffer.from("bad code"));
-    expect(() => runModule(hashed)).toThrow("File hash does not match");
+
+    await expect(startup("invalid")).rejects.toThrow("process.exit called");
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(fs.existsSync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
+    );
+    expect(fs.readFileSync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
+    );
+    expect(fs.writeFileSync).not.toHaveBeenCalledWith();
+    expect(fork).not.toHaveBeenCalled();
+  });
+
+  it("throws if file not found", async () => {
+    // Mock existsSync to return false for this test only
+    (fs.existsSync as Mock).mockReturnValueOnce(false);
+    await expect(startup(mockedHash)).rejects.toThrow();
+    expect(Log.error).toHaveBeenCalledWith(
+      Error(
+        "File not found: /app/load/module-cccc02c4d7707ff4a7d8ba5c6e646aee32abc2765c2818bf28c54bfd7fb89bfd.js.gz",
+      ),
+      "Error starting Pepr Store CRD",
+    );
+    expect(process.exit).toHaveBeenCalledWith(1);
   });
 });
 
@@ -85,7 +121,7 @@ describe("startup", () => {
       throw new Error(`process.exit called with ${code}`);
     });
 
-    await expect(startup()).rejects.toThrow("process.exit called with 1");
+    await expect(startup(mockedHash)).rejects.toThrow("process.exit called with 1");
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });
