@@ -50,12 +50,15 @@ export async function generateWebhookRules(
   const { config, capabilities } = assets;
 
   const rules = capabilities.flatMap(capability => {
-    Log.info(`Module ${config.uuid} has capability: ${capability.name}`);
+    if (process.env.PEPR_BUILD_LOGS_CALLED === "false") {
+      Log.info(`Module ${config.uuid} has capability: ${capability.name}`);
+    }
 
     return capability.bindings
       .map(binding => validateRule(binding, isMutateWebhook))
       .filter((rule): rule is V1RuleWithOperations => !!rule);
   });
+  process.env.PEPR_BUILD_LOGS_CALLED = "true";
 
   return uniqWith(equals, rules);
 }
