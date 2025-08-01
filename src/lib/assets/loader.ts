@@ -29,7 +29,7 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
 
       // Iterate through the capabilities and generate the rules
       for (const capability of capabilities) {
-        console.info(`Registered Pepr Capability "${capability.name}"`);
+        console.debug(`Registered Pepr Capability "${capability.name}"`);
       }
 
       resolve(capabilities);

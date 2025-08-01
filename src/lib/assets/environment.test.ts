@@ -1,6 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { ModuleConfig } from "../types";
-import { genEnv } from "./environment";
+import { genEnv, getLogLevel } from "./environment";
+
+describe("getLogLevel", () => {
+  it("returns the log level from environment variable if set", () => {
+    process.env.LOG_LEVEL = "debug";
+    const config: ModuleConfig = { uuid: "12345", alwaysIgnore: { namespaces: [] } };
+    const logLevel = getLogLevel(config);
+    expect(logLevel).toBe("debug");
+    delete process.env.LOG_LEVEL; // Clean up after test
+  });
+
+  it("returns the log level from config if environment variable is not set", () => {
+    const config: ModuleConfig = {
+      uuid: "12345",
+      logLevel: "info",
+      alwaysIgnore: { namespaces: [] },
+    };
+    const logLevel = getLogLevel(config);
+    expect(logLevel).toBe("info");
+  });
+});
 
 describe("genEnv", () => {
   it("generates default environment variables without watch mode", () => {

@@ -27,7 +27,7 @@ function runModule(expectedHash: string): void {
   }
 
   try {
-    Log.info(`Loading module ${gzPath}`);
+    Log.debug(`Loading module ${gzPath}`);
 
     // Extract the code from the file
     const codeGZ = fs.readFileSync(gzPath);
@@ -43,7 +43,7 @@ function runModule(expectedHash: string): void {
       throw new Error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
     }
 
-    Log.info(`File hash matches, running module`);
+    Log.debug(`File hash matches, running module`);
 
     // Write the code to a file
     fs.writeFileSync(jsPath, code);
@@ -61,7 +61,7 @@ const hash = process.argv[2];
 
 const startup = async (): Promise<void> => {
   try {
-    Log.info("Applying the Pepr Store CRD if it doesn't exist");
+    Log.debug("Applying the Pepr Store CRD if it doesn't exist");
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
     validateHash(hash);

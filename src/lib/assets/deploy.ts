@@ -100,7 +100,7 @@ export async function deployWebhook(
   // Create the validating webhook configuration if it is needed
   await handleWebhookConfiguration(assets, WebhookType.VALIDATE, webhookTimeout, force);
 
-  Log.info("Applying the Pepr Store CRD if it doesn't exist");
+  Log.debug("Applying the Pepr Store CRD if it doesn't exist");
   await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force });
 
   if (assets.host) return; // Skip resource deployment if a host is already specified

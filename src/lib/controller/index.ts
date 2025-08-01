@@ -57,10 +57,10 @@ export class Controller {
       if (typeof onReady === "function") {
         onReady();
       }
-      Log.info("✅ Controller startup complete");
+      Log.debug("Controller startup complete");
       // Initialize the schedule store for each capability
       new StoreController(capabilities, `pepr-${config.uuid}-schedule`, () => {
-        Log.info("✅ Scheduling processed");
+        Log.debug("Scheduling processed");
       });
     });
 
@@ -112,7 +112,7 @@ export class Controller {
 
     // Handle server listening event
     server.on("listening", () => {
-      Log.info(`Server listening on port ${port}`);
+      Log.debug(`Server listening on port ${port}`);
       // Track that the server is running
       this.#running = true;
     });
