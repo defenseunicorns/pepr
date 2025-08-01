@@ -40,7 +40,6 @@ vi.mock("../lib/telemetry/logger", () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
-    level: "info",
   },
 }));
 
@@ -77,9 +76,12 @@ describe("when the controller starts", () => {
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readFileSync as Mock).mockReturnValue(Buffer.from("gzipped"));
 
-    await expect(startup("invalid")).rejects.toThrow('process.exit unexpectedly called with "1"');
+    await expect(startup(mockedHash.replaceAll("c", "d"))).rejects.toThrow(
+      'process.exit unexpectedly called with "1"',
+    );
 
     expect(process.exit).toHaveBeenCalledWith(1);
+    expect(Log.error).toHaveBeenCalledWith(expect.anything(), "Error starting Pepr Store CRD");
     expect(fs.existsSync).toHaveBeenCalledWith(
       expect.stringMatching(/\/app\/load\/module-.*\.js\.gz/),
     );
