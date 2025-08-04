@@ -7,6 +7,7 @@ import { promises as fs } from "fs";
 import prompts from "prompts";
 import devCommand from "./dev";
 import { EventEmitter } from "events";
+
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
   return {
@@ -127,11 +128,11 @@ describe("dev command", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { buildModule } = await import("./build/buildModule");
     (buildModule as Mock).mockImplementationOnce(async (_, cb) => {
-      await cb({ errors: ["boom"] });
+      await cb({ errors: ["error"] });
     });
 
     await program.parseAsync(["node", "test", "dev", "--yes"]);
-    expect(errorSpy).toHaveBeenCalledWith("Error compiling module: boom");
+    expect(errorSpy).toHaveBeenCalledWith("Error compiling module: error");
     errorSpy.mockRestore();
   });
 
