@@ -38,7 +38,7 @@ vi.mock("../lib/assets/store", () => ({
 }));
 vi.mock("../lib/telemetry/logger", () => ({
   default: {
-    info: vi.fn(),
+    debug: vi.fn(),
     error: vi.fn(),
   },
 }));

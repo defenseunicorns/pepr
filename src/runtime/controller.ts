@@ -38,7 +38,6 @@ function runModule(expectedHash: string): void {
     if (!crypto.timingSafeEqual(Buffer.from(expectedHash, "hex"), Buffer.from(actualHash, "hex"))) {
       throw new Error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
     }
-
     Log.debug(`File hash matches, running module`);
 
     // Write the code to a file
@@ -55,7 +54,6 @@ export const startup = async (hash: string): Promise<void> => {
   try {
     Log.debug(`Pepr Controller (v${version})`);
     Log.debug("Applying the Pepr Store CRD if it doesn't exist");
-
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
     validateHash(hash);
