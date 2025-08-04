@@ -41,7 +41,6 @@ function runModule(expectedHash: string): void {
 
     Log.debug(`File hash matches, running module`);
 
-
     // Write the code to a file
     fs.writeFileSync(jsPath, code);
 
