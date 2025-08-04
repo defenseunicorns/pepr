@@ -18,14 +18,10 @@ function runModule(expectedHash: string): void {
   const gzPath = `/app/load/module-${expectedHash}.js.gz`;
   const jsPath = `/app/module-${expectedHash}.js`;
 
-  // Set the log level
-  Log.level = "info";
-
   // Check if the path is a valid file
   if (!fs.existsSync(gzPath)) {
     throw new Error(`File not found: ${gzPath}`);
   }
-
   try {
     Log.debug(`Loading module ${gzPath}`);
 
@@ -45,6 +41,7 @@ function runModule(expectedHash: string): void {
 
     Log.debug(`File hash matches, running module`);
 
+
     // Write the code to a file
     fs.writeFileSync(jsPath, code);
 
@@ -55,13 +52,11 @@ function runModule(expectedHash: string): void {
   }
 }
 
-Log.info(`Pepr Controller (v${version})`);
-
-const hash = process.argv[2];
-
-const startup = async (): Promise<void> => {
+export const startup = async (hash: string): Promise<void> => {
   try {
+    Log.debug(`Pepr Controller (v${version})`);
     Log.debug("Applying the Pepr Store CRD if it doesn't exist");
+
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
     validateHash(hash);
@@ -72,4 +67,6 @@ const startup = async (): Promise<void> => {
   }
 };
 
-startup().catch(err => Log.error(err, `Error starting Pepr Controller`));
+// Start the controller
+const hash = process.argv[2];
+startup(hash).catch(err => Log.error(err, `Error starting Pepr Controller`));
