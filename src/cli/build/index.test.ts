@@ -12,6 +12,24 @@ import {
   handleCustomImageBuild,
 } from "./build.helpers";
 
+vi.mock("../../lib/tls.ts", async () => {
+  return {
+    ...vi.importActual("../../lib/tls.ts"),
+    genTLS: vi.fn().mockImplementation(() => {
+      return {
+        ca: "some-ca",
+        crt: "some-crt",
+        key: "some-key",
+        pem: {
+          ca: "some-ca",
+          crt: "some-crt",
+          key: "some-key",
+        },
+      };
+    }),
+  };
+});
+
 vi.mock("./buildModule.ts", async () => {
   return {
     buildModule: vi.fn().mockResolvedValue({
