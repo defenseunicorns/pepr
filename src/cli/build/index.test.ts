@@ -275,6 +275,44 @@ describe("build CLI command", () => {
     });
   });
 
+  describe.each([["-r"], ["--registry"]])("when the registry flag is set (%s)", registryFlag => {
+    it.each([["GitHub"], ["Iron Bank"]])("should allow '%s' as the registry", async registry => {
+      await program.parseAsync(["build", registryFlag, registry], { from: "user" });
+      expect(generateYamlAndWriteToDisk).toBeCalled();
+    });
+    it.each([["github"], ["iron bank"]])(
+      "should reject lower-case registry names ('%s')",
+      async registryName => {
+        try {
+          await program.parseAsync(["build", registryFlag, registryName], { from: "user" });
+        } catch {
+          expect(stderrSpy).toHaveBeenCalledWith(
+            `error: option '-r, --registry <registry>' argument '${registryName}' is invalid. Allowed choices are GitHub, Iron Bank.\n`,
+          );
+        }
+      },
+    );
+
+    it("should require a value", async () => {
+      try {
+        await program.parseAsync(["build", registryFlag], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          "error: option '-r, --registry <registry>' argument missing\n",
+        );
+      }
+    });
+    it("should reject unsupported registries", async () => {
+      try {
+        await program.parseAsync(["build", registryFlag, "unsupported"], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          "error: option '-r, --registry <registry>' argument 'unsupported' is invalid. Allowed choices are GitHub, Iron Bank.\n",
+        );
+      }
+    });
+  });
+
   describe.each([["-z"], ["--zarf"]])("when the zarf flag is set (%s)", zarfFlag => {
     it.each([["manifest"], ["chart"]])(
       "should allow '%s' as the zarf package type",
@@ -353,8 +391,6 @@ describe("build CLI command", () => {
     });
   });
 });
-// Add tests for -o, --output
-// Add tests for -r, --registry
 
 // -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
 // -P Can we validate in .option()? Or do earlier in the .action()?
