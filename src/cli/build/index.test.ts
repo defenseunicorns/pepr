@@ -258,6 +258,23 @@ describe("build CLI command", () => {
     },
   );
 
+  describe.each([["-o"], ["--output"]])("when the output flag is set (%s)", outputFlag => {
+    it("should create the output directory", async () => {
+      await program.parseAsync(["build", outputFlag, "some-directory"], { from: "user" });
+      expect(createOutputDirectory).toBeCalled();
+    });
+
+    it("should require a value", async () => {
+      try {
+        await program.parseAsync(["build", outputFlag], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          "error: option '-o, --output <directory>' argument missing\n",
+        );
+      }
+    });
+  });
+
   describe.each([["-z"], ["--zarf"]])("when the zarf flag is set (%s)", zarfFlag => {
     it.each([["manifest"], ["chart"]])(
       "should allow '%s' as the zarf package type",
