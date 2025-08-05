@@ -40,7 +40,7 @@ jobs:
           echo "  - vulnerability: CVE-2025-4802" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-22874" >> ~/.grype.yaml
       - name: Vulnerability Scan
-        uses: anchore/scan-action@df395807f4554463d4455b8047cf58e37b6acaae # v6.5.0
+        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6.5.1
         with:
           image: "pepr:dev"
           fail-build: true
