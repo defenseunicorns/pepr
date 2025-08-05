@@ -258,6 +258,34 @@ describe("build CLI command", () => {
     },
   );
 
+  describe.each([["-z"], ["--zarf"]])("when the zarf flag is set (%s)", zarfFlag => {
+    it.each([["manifest"], ["chart"]])(
+      "should allow '%s' as the zarf package type",
+      async zarfPackageType => {
+        await program.parseAsync(["build", zarfFlag, zarfPackageType], { from: "user" });
+        expect(generateYamlAndWriteToDisk).toBeCalled();
+      },
+    );
+    it("should require a value", async () => {
+      try {
+        await program.parseAsync(["build", zarfFlag], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          "error: option '-z, --zarf <manifest|chart>' argument missing\n",
+        );
+      }
+    });
+    it("should reject unsupported zarf package types", async () => {
+      try {
+        await program.parseAsync(["build", zarfFlag, "unsupported"], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          "error: option '-z, --zarf <manifest|chart>' argument 'unsupported' is invalid. Allowed choices are manifest, chart.\n",
+        );
+      }
+    });
+  });
+
   describe.each([
     [
       {
@@ -310,7 +338,6 @@ describe("build CLI command", () => {
 });
 // Add tests for -o, --output
 // Add tests for -r, --registry
-// Add tests for -z, --zarf
 
 // -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
 // -P Can we validate in .option()? Or do earlier in the .action()?
