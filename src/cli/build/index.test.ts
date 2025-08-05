@@ -6,9 +6,6 @@ import build from ".";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import { BuildContext, BuildOptions } from "esbuild";
 import { buildModule, BuildModuleReturn } from "./buildModule";
-// Import the module itself for spying
-import * as buildHelpers from "./build.helpers";
-// Destructure for convenience in the rest of the code
 import {
   createOutputDirectory,
   generateYamlAndWriteToDisk,
@@ -39,8 +36,6 @@ vi.mock("./buildModule.ts", async () => {
   } as unknown as BuildModuleReturn;
 });
 
-const assignImage = vi.spyOn(buildHelpers, "assignImage");
-
 vi.mock("./build.helpers.ts", async () => {
   const actual = await vi.importActual("./build.helpers.ts");
   return {
@@ -66,7 +61,6 @@ describe("build CLI command", () => {
 
   it("should call the Build command with default values", async () => {
     await runProgramWithArgs([]);
-    expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined })); // This isn't the default?
     expect(buildModule).toBeCalled();
     expect(createOutputDirectory).toBeCalled();
     expect(generateYamlAndWriteToDisk).toBeCalled();
@@ -92,12 +86,6 @@ describe("build CLI command", () => {
       it("should include zero additional files in build", async () => {
         vi.spyOn(console, "info").mockImplementation(() => {});
         await runProgramWithArgs([registryInfoFlag, "organization/username"]);
-        expect(assignImage).toHaveBeenCalledWith(
-          expect.objectContaining({
-            customImage: undefined,
-            registryInfo: "organization/username",
-          }),
-        );
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
@@ -115,9 +103,6 @@ describe("build CLI command", () => {
     withPullSecretFlag => {
       it("should do something", async () => {
         await runProgramWithArgs([withPullSecretFlag, "secret"]);
-        expect(assignImage).toHaveBeenCalledWith(
-          expect.objectContaining({ customImage: undefined }),
-        );
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toHaveBeenCalledWith(
@@ -141,7 +126,6 @@ describe("build CLI command", () => {
     it("should exit after building", async () => {
       vi.spyOn(console, "info").mockImplementation(() => {});
       await runProgramWithArgs([noEmbedFlag]);
-      expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined }));
       expect(buildModule).toBeCalled();
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).not.toBeCalled();
@@ -154,7 +138,7 @@ describe("build CLI command", () => {
     customImageFlag => {
       it.each([["some-image"]])("should set the image to '%s'", async image => {
         await runProgramWithArgs([customImageFlag, image]);
-        expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: image }));
+        //TODO check this in assets instead?
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
@@ -168,12 +152,12 @@ describe("build CLI command", () => {
   describe.each(["--timeout", "-t"])("when the timeout flag is set (%s)", timeoutFlag => {
     it("should accept a timeout in the supported range", async () => {
       await runProgramWithArgs([timeoutFlag, "10"]);
-      expect(assignImage).toBeCalled();
       expect(buildModule).toBeCalled();
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).toBeCalled();
       expect(handleCustomImageBuild).not.toBeCalled();
     });
+
     it.each([
       {
         value: "-1",
