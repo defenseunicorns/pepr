@@ -138,7 +138,7 @@ export class StoreController {
   };
 
   #createStoreResource = async (e: unknown): Promise<void> => {
-    Log.info(`Pepr store not found, creating...`);
+    Log.debug(`Pepr store not found, creating...`);
     Log.debug(e);
 
     try {

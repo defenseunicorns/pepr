@@ -110,7 +110,7 @@ describe("Capability", () => {
     expect(capability.name).toBe(capabilityConfig.name);
     expect(capability.description).toBe(capabilityConfig.description);
     expect(capability.namespaces).toEqual(capabilityConfig.namespaces);
-    expect(mockLog.info).toHaveBeenCalledWith(`Capability ${capabilityConfig.name} registered`);
+    expect(mockLog.debug).toHaveBeenCalledWith(`Capability ${capabilityConfig.name} registered`);
   });
 
   it("should register store and schedule store", () => {
@@ -118,11 +118,11 @@ describe("Capability", () => {
 
     const storeResult = capability.registerStore();
     expect(storeResult).toBeDefined();
-    expect(mockLog.info).toHaveBeenCalledWith(`Registering store for ${capabilityConfig.name}`);
+    expect(mockLog.debug).toHaveBeenCalledWith(`Registering store for ${capabilityConfig.name}`);
 
     const scheduleStoreResult = capability.registerScheduleStore();
     expect(scheduleStoreResult.onReady).toBeDefined();
-    expect(mockLog.info).toHaveBeenCalledWith(
+    expect(mockLog.debug).toHaveBeenCalledWith(
       `Registering schedule store for ${capabilityConfig.name}`,
     );
   });

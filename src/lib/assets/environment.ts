@@ -1,6 +1,13 @@
 import { V1EnvVar } from "@kubernetes/client-node";
 import { ModuleConfig } from "../types";
 
+export function getLogLevel(config: ModuleConfig): string {
+  const fromEnv = process.env.LOG_LEVEL;
+  if (fromEnv) {
+    return fromEnv;
+  }
+  return config.logLevel || "info";
+}
 export function genEnv(
   config: ModuleConfig,
   watchMode = false,
@@ -8,7 +15,7 @@ export function genEnv(
 ): V1EnvVar[] {
   const noWatchDef = {
     PEPR_PRETTY_LOG: "false",
-    LOG_LEVEL: config.logLevel || "info",
+    LOG_LEVEL: getLogLevel(config),
   };
 
   const def = {
