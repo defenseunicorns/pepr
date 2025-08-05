@@ -185,24 +185,21 @@ describe("build CLI command", () => {
       expect(handleCustomImageBuild).not.toBeCalled();
       expect(handleValidCapabilityNames).toBeCalled();
     });
-    it.each([["-1"], ["31"]])(
-      "should reject timeouts outside of the supported range (%s)",
-      async invalidTimeout => {
-        await expect(
-          program.parseAsync(["build", timeoutFlag, invalidTimeout], { from: "user" }),
-        ).rejects.toThrowError("Number must be between 1 and 30.");
+    it.each([
+      {
+        value: "-1",
+        error: "Number must be between 1 and 30.",
+        description: "reject values below minimum",
       },
-    );
-
-    it("should reject non-numeric timeouts", async () => {
-      await expect(
-        program.parseAsync(["build", timeoutFlag, "not-a-number"], { from: "user" }),
-      ).rejects.toThrowError("Not a number.");
-    });
-    it("should reject float timeouts", async () => {
-      await expect(
-        program.parseAsync(["build", timeoutFlag, "5.2"], { from: "user" }),
-      ).rejects.toThrowError("Value must be an integer.");
+      {
+        value: "31",
+        error: "Number must be between 1 and 30.",
+        description: "reject values above maximum",
+      },
+      { value: "not-a-number", error: "Not a number.", description: "reject non-numeric values" },
+      { value: "5.2", error: "Value must be an integer.", description: "reject float values" },
+    ])("should $description: $value", async ({ value, error }) => {
+      await runProgramWithError([timeoutFlag, value], error);
     });
     // it("should reject float timeouts", async () => {
     //   await expect(program.parseAsync(["build", timeoutFlag, "5.0"], { from: "user" })).rejects.toThrowError("Value must be an integer.")
@@ -218,7 +215,7 @@ describe("build CLI command", () => {
       });
       it("should require a value", async () => {
         try {
-          await program.parseAsync(["build", entryPointFlag], { from: "user" });
+          runProgramWithError([entryPointFlag]);
         } catch {
           expectMissingArgument(stderrSpy);
         }
@@ -228,13 +225,13 @@ describe("build CLI command", () => {
 
   describe.each([["-o"], ["--output"]])("when the output flag is set (%s)", outputFlag => {
     it("should create the output directory", async () => {
-      await program.parseAsync(["build", outputFlag, "some-directory"], { from: "user" });
+      runProgramWithArgs([outputFlag, "some-directory"]);
       expect(createOutputDirectory).toBeCalled();
     });
 
     it("should require a value", async () => {
       try {
-        await program.parseAsync(["build", outputFlag], { from: "user" });
+        runProgramWithError([outputFlag]);
       } catch {
         expectMissingArgument(stderrSpy);
       }
@@ -385,6 +382,16 @@ describe("build CLI command", () => {
     expect(outputSpy).toHaveBeenCalledWith(
       expect.stringMatching(/error: option .* argument missing/),
     );
+  };
+  const runProgramWithArgs = async (args: string[]) => {
+    await program.parseAsync(["build", ...args], { from: "user" });
+  };
+
+  const runProgramWithError = async (
+    args: string[],
+    error: string = 'process.exit unexpectedly called with "1"',
+  ) => {
+    await expect(runProgramWithArgs(args)).rejects.toThrowError(error);
   };
 });
 
