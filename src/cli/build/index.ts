@@ -136,7 +136,11 @@ export default function (program: Command): void {
       if (image !== "") assets.image = image;
 
       // Ensure imagePullSecret is valid
-      validImagePullSecret(opts.withPullSecret);
+      if (!validImagePullSecret(opts.withPullSecret)) {
+        throw new Error(
+          "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+        );
+      }
 
       handleValidCapabilityNames(assets.capabilities);
       await generateYamlAndWriteToDisk({

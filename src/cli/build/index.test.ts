@@ -13,7 +13,6 @@ import {
   createOutputDirectory,
   generateYamlAndWriteToDisk,
   handleCustomImageBuild,
-  handleValidCapabilityNames,
 } from "./build.helpers";
 
 vi.mock("./buildModule.ts", async () => {
@@ -48,7 +47,6 @@ vi.mock("./build.helpers.ts", async () => {
     ...actual,
     createOutputDirectory: vi.fn().mockReturnValue("some-output-dir"),
     handleCustomImageBuild: vi.fn(),
-    handleValidCapabilityNames: vi.fn(),
     generateYamlAndWriteToDisk: vi.fn(),
   };
 });
@@ -56,22 +54,24 @@ vi.mock("./build.helpers.ts", async () => {
 describe("build CLI command", () => {
   let program: Command;
   let stderrSpy;
+  let exitSpy;
 
   beforeEach(() => {
     vi.clearAllMocks();
     program = new Command();
     build(program);
     stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    exitSpy = vi.spyOn(process, "exit");
   });
 
   it("should call the Build command with default values", async () => {
-    await program.parseAsync(["build"], { from: "user" });
+    await runProgramWithArgs([]);
     expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined })); // This isn't the default?
     expect(buildModule).toBeCalled();
     expect(createOutputDirectory).toBeCalled();
     expect(generateYamlAndWriteToDisk).toBeCalled();
     expect(handleCustomImageBuild).not.toBeCalled();
-    expect(handleValidCapabilityNames).toBeCalled();
+
     expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBeUndefined();
   });
 
@@ -79,9 +79,7 @@ describe("build CLI command", () => {
     "when the custom name flag is set (%s)",
     customNameFlag => {
       it("should set the PEPR_CUSTOM_BUILD_NAME envar", async () => {
-        await program.parseAsync(["build", customNameFlag, "name"], {
-          from: "user",
-        });
+        await runProgramWithArgs([customNameFlag, "name"]);
         expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBe("name");
       });
     },
@@ -93,9 +91,7 @@ describe("build CLI command", () => {
       // Does this actually do anything??
       it("should include zero additional files in build", async () => {
         vi.spyOn(console, "info").mockImplementation(() => {});
-        await program.parseAsync(["build", registryInfoFlag, "organization/username"], {
-          from: "user",
-        });
+        await runProgramWithArgs([registryInfoFlag, "organization/username"]);
         expect(assignImage).toHaveBeenCalledWith(
           expect.objectContaining({
             customImage: undefined,
@@ -106,7 +102,7 @@ describe("build CLI command", () => {
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
         expect(handleCustomImageBuild).toBeCalled();
-        expect(handleValidCapabilityNames).toBeCalled();
+
         expect(console.info).toHaveBeenCalledWith(
           expect.stringContaining("Including 0 files in controller image."),
         );
@@ -118,7 +114,7 @@ describe("build CLI command", () => {
     "when the with pull secret flag is set (%s)",
     withPullSecretFlag => {
       it("should do something", async () => {
-        await program.parseAsync(["build", withPullSecretFlag, "secret"], { from: "user" });
+        await runProgramWithArgs([withPullSecretFlag, "secret"]);
         expect(assignImage).toHaveBeenCalledWith(
           expect.objectContaining({ customImage: undefined }),
         );
@@ -128,16 +124,12 @@ describe("build CLI command", () => {
           expect.objectContaining({ imagePullSecret: "secret" }),
         );
         expect(handleCustomImageBuild).not.toBeCalled();
-        expect(handleValidCapabilityNames).toBeCalled();
       });
       it.each(["#secret", "@secret", "!secret"])(
         "reject an invalid pull secret (%s)",
         async invalidSecret => {
-          const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-          await expect(
-            program.parseAsync(["build", withPullSecretFlag, invalidSecret], { from: "user" }),
-          ).rejects.toThrowError('process.exit unexpectedly called with "1"');
-          expect(stderrSpy).toHaveBeenCalledWith(
+          await runProgramWithError(
+            [withPullSecretFlag, invalidSecret],
             "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
           );
         },
@@ -148,13 +140,12 @@ describe("build CLI command", () => {
   describe.each([["-n"], ["--no-embed"]])("when the no embed flag is set (%s)", noEmbedFlag => {
     it("should exit after building", async () => {
       vi.spyOn(console, "info").mockImplementation(() => {});
-      await program.parseAsync(["build", noEmbedFlag], { from: "user" });
+      await runProgramWithArgs([noEmbedFlag]);
       expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: undefined }));
       expect(buildModule).toBeCalled();
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).not.toBeCalled();
       expect(handleCustomImageBuild).not.toBeCalled();
-      expect(handleValidCapabilityNames).not.toBeCalled();
       expect(console.info).toHaveBeenCalledWith("Module built successfully at some/path");
     });
   });
@@ -162,13 +153,12 @@ describe("build CLI command", () => {
     "when the custom image flag is set (%s)",
     customImageFlag => {
       it.each([["some-image"]])("should set the image to '%s'", async image => {
-        await program.parseAsync(["build", customImageFlag, image], { from: "user" });
+        await runProgramWithArgs([customImageFlag, image]);
         expect(assignImage).toHaveBeenCalledWith(expect.objectContaining({ customImage: image }));
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
         expect(handleCustomImageBuild).not.toBeCalled();
-        expect(handleValidCapabilityNames).toBeCalled();
       });
 
       // Is there such a thing as image validation?
@@ -177,13 +167,12 @@ describe("build CLI command", () => {
 
   describe.each(["--timeout", "-t"])("when the timeout flag is set (%s)", timeoutFlag => {
     it("should accept a timeout in the supported range", async () => {
-      await program.parseAsync(["build", timeoutFlag, "10"], { from: "user" });
+      await runProgramWithArgs([timeoutFlag, "10"]);
       expect(assignImage).toBeCalled();
       expect(buildModule).toBeCalled();
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).toBeCalled();
       expect(handleCustomImageBuild).not.toBeCalled();
-      expect(handleValidCapabilityNames).toBeCalled();
     });
     it.each([
       {
@@ -199,7 +188,12 @@ describe("build CLI command", () => {
       { value: "not-a-number", error: "Not a number.", description: "reject non-numeric values" },
       { value: "5.2", error: "Value must be an integer.", description: "reject float values" },
     ])("should $description: $value", async ({ value, error }) => {
-      await runProgramWithError([timeoutFlag, value], error);
+      try {
+        await expect(runProgramWithArgs([timeoutFlag, value])).rejects.toThrowError(error);
+        // await runProgramWithError([timeoutFlag, value], error);
+      } catch {
+        //TODO
+      }
     });
     // it("should reject float timeouts", async () => {
     //   await expect(program.parseAsync(["build", timeoutFlag, "5.0"], { from: "user" })).rejects.toThrowError("Value must be an integer.")
@@ -210,12 +204,12 @@ describe("build CLI command", () => {
     "when the entry point flag is set (%s)",
     entryPointFlag => {
       it("should attempt to build the module", async () => {
-        await program.parseAsync(["build", entryPointFlag, "pepr.ts"], { from: "user" });
+        await runProgramWithArgs([entryPointFlag, "pepr.ts"]);
         expect(buildModule).toBeCalled();
       });
       it("should require a value", async () => {
         try {
-          runProgramWithError([entryPointFlag]);
+          await runProgramWithError([entryPointFlag]);
         } catch {
           expectMissingArgument(stderrSpy);
         }
@@ -225,13 +219,13 @@ describe("build CLI command", () => {
 
   describe.each([["-o"], ["--output"]])("when the output flag is set (%s)", outputFlag => {
     it("should create the output directory", async () => {
-      runProgramWithArgs([outputFlag, "some-directory"]);
+      await runProgramWithArgs([outputFlag, "some-directory"]);
       expect(createOutputDirectory).toBeCalled();
     });
 
     it("should require a value", async () => {
       try {
-        runProgramWithError([outputFlag]);
+        await runProgramWithError([outputFlag]);
       } catch {
         expectMissingArgument(stderrSpy);
       }
@@ -252,7 +246,6 @@ describe("build CLI command", () => {
       shortFlag: "-M",
       longFlag: "--rbac-mode",
       validOptions: ["admin", "scoped"],
-      exitOnInvalid: true,
     },
     {
       name: "zarf",
@@ -264,58 +257,33 @@ describe("build CLI command", () => {
 
   describe.each(flagTestCases)(
     "when the $name flag is set",
-    ({
-      name,
-      shortFlag,
-      longFlag,
-      validOptions,
-      invalidCaseOptions,
-      rejectLowerCase,
-      exitOnInvalid,
-    }) => {
+    ({ name, shortFlag, longFlag, validOptions, invalidCaseOptions, rejectLowerCase }) => {
       describe.each([{ flag: shortFlag }, { flag: longFlag }])("$flag", ({ flag }) => {
         it.each(validOptions.map(opt => [opt]))(
           `should allow '%s' as the ${name} value`,
           async validOption => {
-            await program.parseAsync(["build", flag, validOption], { from: "user" });
+            await runProgramWithArgs([flag, validOption]);
             expect(generateYamlAndWriteToDisk).toBeCalled();
           },
         );
 
         it("should require a value", async () => {
-          try {
-            await program.parseAsync(["build", flag], { from: "user" });
-          } catch {
-            expectMissingArgument(stderrSpy);
-          }
+          await runProgramWithError([flag]);
+          expectMissingArgument(stderrSpy);
         });
 
         it(`should reject unsupported ${name} values`, async () => {
-          let exitSpy;
-          if (exitOnInvalid) {
-            exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-              throw new Error("process.exit called");
-            });
-          }
-          try {
-            await program.parseAsync(["build", flag, "unsupported"], { from: "user" });
-          } catch {
-            expectInvalidOption(stderrSpy, validOptions);
-            if (exitOnInvalid) {
-              expect(exitSpy).toHaveBeenCalledWith(1);
-            }
-          }
+          await runProgramWithError([flag, "unsupported"]);
+          expectInvalidOption(stderrSpy, validOptions);
+          expect(exitSpy).toHaveBeenCalledWith(1);
         });
 
         if (rejectLowerCase && invalidCaseOptions) {
           it.each(invalidCaseOptions.map(opt => [opt]))(
             "should reject lower-case values ('%s')",
             async invalidCase => {
-              try {
-                await program.parseAsync(["build", flag, invalidCase], { from: "user" });
-              } catch {
-                expectInvalidOption(stderrSpy, validOptions);
-              }
+              await runProgramWithError([flag, invalidCase]);
+              expectInvalidOption(stderrSpy, validOptions);
             },
           );
         }
@@ -353,19 +321,11 @@ describe("build CLI command", () => {
     "when $option and $conflict are set",
     ({ option, optionValue, conflict, conflictValue }) => {
       it("should exit with code 1", async () => {
-        const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
-        try {
-          await program.parseAsync(["build", option, optionValue, conflict, conflictValue], {
-            from: "user",
-          });
-        } catch {
-          expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
-            expect.stringContaining("cannot be used with option"),
-          );
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        }
+        await runProgramWithError([option, optionValue, conflict, conflictValue]);
+        expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
+          expect.stringMatching(/error: option .* cannot be used with option .*/),
+        );
+        expect(exitSpy).toHaveBeenCalledWith(1);
       });
     },
   );

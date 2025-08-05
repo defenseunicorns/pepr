@@ -12,7 +12,7 @@ import {
 } from "./build.helpers";
 
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
-import { expect, describe, it, vi, beforeEach, type MockInstance, afterEach } from "vitest";
+import { expect, describe, it, vi, beforeEach, type MockInstance } from "vitest";
 import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../../lib/types";
@@ -161,37 +161,20 @@ describe("checkIronBankImage", () => {
 });
 
 describe("validImagePullSecret", () => {
-  let consoleErrorSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
-  let mockExit: MockInstance<(code?: number | string | null | undefined) => never>;
-
-  beforeEach(() => {
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
-    });
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
   it("should not throw an error if the imagePullSecret is valid", () => {
     const imagePullSecret = "valid-secret";
-    validImagePullSecret(imagePullSecret);
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockExit).not.toHaveBeenCalled();
+    const result = validImagePullSecret(imagePullSecret);
+    expect(result).toBe(true);
   });
   it("should not throw an error if the imagePullSecret is empty", () => {
     const imagePullSecret = "";
-    validImagePullSecret(imagePullSecret);
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockExit).not.toHaveBeenCalled();
+    const result = validImagePullSecret(imagePullSecret);
+    expect(result).toBe(true);
   });
   it("should throw an error if the imagePullSecret is invalid", () => {
     const imagePullSecret = "invalid name";
-    const error = "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.";
-    validImagePullSecret(imagePullSecret);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(error);
-    expect(mockExit).toHaveBeenCalled();
+    const result = validImagePullSecret(imagePullSecret);
+    expect(result).toBe(false);
   });
 });
 
