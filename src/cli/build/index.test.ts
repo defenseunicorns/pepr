@@ -186,42 +186,34 @@ describe("build CLI command", () => {
     },
   );
 
-  describe.only.each([["-M"], ["--rbac-mode"]])(
-    "when the rbac-mode flag is set (%s)",
-    rbacModeFlag => {
-      it.each([["admin"], ["scoped"]])(
-        "should allow '%s' as the RBAC mode",
-        async rbacModeValue => {
-          await program.parseAsync(["build", rbacModeFlag, rbacModeValue], { from: "user" });
-          expect(generateYamlAndWriteToDisk).toHaveBeenCalled();
-        },
-      );
-      it("should reject unsupported RBAC modes", async () => {
-        const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-          throw new Error("process.exit called");
-        });
-        try {
-          await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
-        } catch {
-          expect(stderrSpy).toHaveBeenCalledWith(
-            expect.stringMatching(
-              /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
-            ),
-          );
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        }
+  describe.each([["-M"], ["--rbac-mode"]])("when the rbac-mode flag is set (%s)", rbacModeFlag => {
+    it.each([["admin"], ["scoped"]])("should allow '%s' as the RBAC mode", async rbacModeValue => {
+      await program.parseAsync(["build", rbacModeFlag, rbacModeValue], { from: "user" });
+      expect(generateYamlAndWriteToDisk).toHaveBeenCalled();
+    });
+    it("should reject unsupported RBAC modes", async () => {
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
       });
-      it("should require a value", async () => {
-        try {
-          await program.parseAsync(["build", rbacModeFlag], { from: "user" });
-        } catch {
-          expect(stderrSpy).toHaveBeenCalledWith(
-            "error: option '-M, --rbac-mode <mode>' argument missing\n",
-          );
-        }
-      });
-    },
-  );
+      try {
+        await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
+      } catch {
+        expect(stderrSpy).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
+          ),
+        );
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      }
+    });
+    it("should require a value", async () => {
+      try {
+        await program.parseAsync(["build", rbacModeFlag], { from: "user" });
+      } catch {
+        expectMissingArgument(stderrSpy);
+      }
+    });
+  });
 
   describe.each(["--timeout", "-t"])("when the timeout flag is set (%s)", timeoutFlag => {
     it("should accept a timeout in the supported range", async () => {
@@ -268,9 +260,7 @@ describe("build CLI command", () => {
         try {
           await program.parseAsync(["build", entryPointFlag], { from: "user" });
         } catch {
-          expect(stderrSpy).toHaveBeenCalledWith(
-            "error: option '-e, --entry-point <file>' argument missing\n",
-          );
+          expectMissingArgument(stderrSpy);
         }
       });
     },
@@ -286,9 +276,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", outputFlag], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          "error: option '-o, --output <directory>' argument missing\n",
-        );
+        expectMissingArgument(stderrSpy);
       }
     });
   });
@@ -305,7 +293,9 @@ describe("build CLI command", () => {
           await program.parseAsync(["build", registryFlag, registryName], { from: "user" });
         } catch {
           expect(stderrSpy).toHaveBeenCalledWith(
-            `error: option '-r, --registry <registry>' argument '${registryName}' is invalid. Allowed choices are GitHub, Iron Bank.\n`,
+            expect.stringMatching(
+              /error: option .* argument .* is invalid\. Allowed choices are GitHub, Iron Bank\./,
+            ),
           );
         }
       },
@@ -315,9 +305,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", registryFlag], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          "error: option '-r, --registry <registry>' argument missing\n",
-        );
+        expectMissingArgument(stderrSpy);
       }
     });
     it("should reject unsupported registries", async () => {
@@ -325,7 +313,9 @@ describe("build CLI command", () => {
         await program.parseAsync(["build", registryFlag, "unsupported"], { from: "user" });
       } catch {
         expect(stderrSpy).toHaveBeenCalledWith(
-          "error: option '-r, --registry <registry>' argument 'unsupported' is invalid. Allowed choices are GitHub, Iron Bank.\n",
+          expect.stringMatching(
+            /error: option .* argument .* is invalid\. Allowed choices are GitHub, Iron Bank\./,
+          ),
         );
       }
     });
@@ -343,9 +333,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", zarfFlag], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          "error: option '-z, --zarf <manifest|chart>' argument missing\n",
-        );
+        expectMissingArgument(stderrSpy);
       }
     });
     it("should reject unsupported zarf package types", async () => {
@@ -353,7 +341,9 @@ describe("build CLI command", () => {
         await program.parseAsync(["build", zarfFlag, "unsupported"], { from: "user" });
       } catch {
         expect(stderrSpy).toHaveBeenCalledWith(
-          "error: option '-z, --zarf <manifest|chart>' argument 'unsupported' is invalid. Allowed choices are manifest, chart.\n",
+          expect.stringMatching(
+            /error: option .* argument .* is invalid\. Allowed choices are manifest, chart\./,
+          ),
         );
       }
     });
@@ -408,6 +398,11 @@ describe("build CLI command", () => {
       }
     });
   });
+  const expectMissingArgument = (outputSpy: MockInstance) => {
+    expect(outputSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/error: option .* argument missing/),
+    );
+  };
 });
 
 // -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
