@@ -3,7 +3,7 @@
 
 import { Command } from "commander";
 import build from ".";
-import { it, expect, beforeEach, describe, vi } from "vitest";
+import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import { BuildContext, BuildOptions } from "esbuild";
 import { buildModule, BuildModuleReturn } from "./buildModule";
 // Import the module itself for spying
@@ -198,11 +198,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
-          ),
-        );
+        expectInvalidOption(stderrSpy, ["admin", "scoped"]);
         expect(exitSpy).toHaveBeenCalledWith(1);
       }
     });
@@ -292,11 +288,7 @@ describe("build CLI command", () => {
         try {
           await program.parseAsync(["build", registryFlag, registryName], { from: "user" });
         } catch {
-          expect(stderrSpy).toHaveBeenCalledWith(
-            expect.stringMatching(
-              /error: option .* argument .* is invalid\. Allowed choices are GitHub, Iron Bank\./,
-            ),
-          );
+          expectInvalidOption(stderrSpy, ["GitHub", "Iron Bank"]);
         }
       },
     );
@@ -312,11 +304,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", registryFlag, "unsupported"], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /error: option .* argument .* is invalid\. Allowed choices are GitHub, Iron Bank\./,
-          ),
-        );
+        expectInvalidOption(stderrSpy, ["GitHub", "Iron Bank"]);
       }
     });
   });
@@ -340,11 +328,7 @@ describe("build CLI command", () => {
       try {
         await program.parseAsync(["build", zarfFlag, "unsupported"], { from: "user" });
       } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /error: option .* argument .* is invalid\. Allowed choices are manifest, chart\./,
-          ),
-        );
+        expectInvalidOption(stderrSpy, ["manifest", "chart"]);
       }
     });
   });
@@ -398,6 +382,15 @@ describe("build CLI command", () => {
       }
     });
   });
+  const expectInvalidOption = (outputSpy: MockInstance, options: string[]) => {
+    expect(outputSpy).toHaveBeenCalledWith(
+      expect.stringMatching(
+        new RegExp(
+          `error: option .* argument .* is invalid. Allowed choices are ${options.join(", ")}.`,
+        ),
+      ),
+    );
+  };
   const expectMissingArgument = (outputSpy: MockInstance) => {
     expect(outputSpy).toHaveBeenCalledWith(
       expect.stringMatching(/error: option .* argument missing/),
