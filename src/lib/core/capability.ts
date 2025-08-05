@@ -133,7 +133,7 @@ export class Capability implements CapabilityExport {
     this.#namespaces = cfg.namespaces;
     this.hasSchedule = false;
 
-    Log.info(`Capability ${this.#name} registered`);
+    Log.debug(`Capability ${this.#name} registered`);
     Log.debug(cfg);
   }
 
@@ -141,7 +141,7 @@ export class Capability implements CapabilityExport {
    * Register the store with the capability. This is called automatically by the Pepr controller.
    */
   registerScheduleStore = (): Storage => {
-    Log.info(`Registering schedule store for ${this.#name}`);
+    Log.debug(`Registering schedule store for ${this.#name}`);
 
     if (this.#scheduleRegistered) {
       throw new Error(`Schedule store already registered for ${this.#name}`);
@@ -159,7 +159,7 @@ export class Capability implements CapabilityExport {
    * @param store
    */
   registerStore = (): Storage => {
-    Log.info(`Registering store for ${this.#name}`);
+    Log.debug(`Registering store for ${this.#name}`);
 
     if (this.#registered) {
       throw new Error(`Store already registered for ${this.#name}`);
