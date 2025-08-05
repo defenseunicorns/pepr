@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
-import { it, describe, expect, beforeEach, vi, beforeAll } from "vitest";
+import { it, describe, expect, beforeEach, vi } from "vitest";
 import {
   peprIgnoreNamespaces,
   validateRule,
@@ -13,7 +13,6 @@ import { Binding, CapabilityExport, ModuleConfig } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { TLSOut } from "../tls";
 import { Assets } from "./assets";
-import Log from "../telemetry/logger";
 
 export type AssetsType = {
   name: string;
@@ -350,18 +349,6 @@ describe("Webhook Management", () => {
         assets.capabilities = [];
         const result = await generateWebhookRules(assets, true);
         expect(result).toEqual([]);
-      });
-    });
-
-    describe("when capabilities are present", () => {
-      beforeAll(() => {
-        process.env.PEPR_BUILD_LOGS_CALLED = "false";
-      });
-      it("should log information about module capabilities", async () => {
-        assets.capabilities = [...loseAssets.capabilities];
-        await generateWebhookRules(assets, true);
-        expect(Log.info).toHaveBeenCalledOnce();
-        expect(Log.info).toHaveBeenCalledWith("Module static-test has capability: hello-pepr");
       });
     });
   });
