@@ -239,6 +239,25 @@ describe("build CLI command", () => {
     // });
   });
 
+  describe.each([["-e"], ["--entry-point"]])(
+    "when the entry point flag is set (%s)",
+    entryPointFlag => {
+      it("should attempt to build the module", async () => {
+        await program.parseAsync(["build", entryPointFlag, "pepr.ts"], { from: "user" });
+        expect(buildModule).toBeCalled();
+      });
+      it("should require a value", async () => {
+        try {
+          await program.parseAsync(["build", entryPointFlag], { from: "user" });
+        } catch {
+          expect(stderrSpy).toHaveBeenCalledWith(
+            "error: option '-e, --entry-point <file>' argument missing\n",
+          );
+        }
+      });
+    },
+  );
+
   describe.each([
     [
       {
@@ -289,6 +308,9 @@ describe("build CLI command", () => {
     });
   });
 });
+// Add tests for -o, --output
+// Add tests for -r, --registry
+// Add tests for -z, --zarf
 
 // -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
 // -P Can we validate in .option()? Or do earlier in the .action()?
