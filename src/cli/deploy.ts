@@ -14,7 +14,7 @@ import { validateCapabilityNames } from "../lib/helpers";
 import { namespaceComplianceValidator } from "../lib/helpers";
 import { loadCapabilities } from "../lib/assets/loader";
 
-interface ImagePullSecretDetails {
+export interface ImagePullSecretDetails {
   pullSecret?: string;
   dockerServer?: string;
   dockerUsername?: string;
@@ -64,7 +64,7 @@ export function validateImagePullSecretDetails(details: ImagePullSecretDetails):
 
 type ValidatedImagePullSecretDetails = Required<ImagePullSecretDetails>;
 
-function generateImagePullSecret(details: ValidatedImagePullSecretDetails): ImagePullSecret {
+export function generateImagePullSecret(details: ValidatedImagePullSecretDetails): ImagePullSecret {
   const auth = Buffer.from(`${details.dockerUsername}:${details.dockerPassword}`).toString(
     "base64",
   );
@@ -95,7 +95,7 @@ export async function getUserConfirmation(opts: { yes: boolean }): Promise<boole
   return confirmation.yes ? true : false;
 }
 
-async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
+export async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
   const builtModule = await buildModule("dist");
   if (!builtModule) {
     return;
@@ -120,7 +120,7 @@ async function buildAndDeployModule(image: string, force: boolean): Promise<void
 
     // Wait for the pepr-system resources to be fully up
     await namespaceDeploymentsReady();
-    console.info(`✅ Module deployed successfully`);
+    console.info(`Module deployed successfully`);
   } catch (e) {
     console.error(`Error deploying module:`, e);
     process.exit(1);
