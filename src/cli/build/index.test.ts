@@ -337,7 +337,7 @@ describe("build CLI command", () => {
     },
   );
 
-  describe.each([
+  const conflictingOptions = [
     [
       {
         option: "--custom-image",
@@ -362,30 +362,27 @@ describe("build CLI command", () => {
         conflictValue: "value",
       },
     ],
-  ])("when conflicting options are set %j", conflictingOptions => {
-    it("should exit with code 1", async () => {
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw new Error("process.exit called");
+  ];
+  describe.each(conflictingOptions)(
+    "when $option and $conflict are set",
+    ({ option, optionValue, conflict, conflictValue }) => {
+      it("should exit with code 1", async () => {
+        const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
+        try {
+          await program.parseAsync(["build", option, optionValue, conflict, conflictValue], {
+            from: "user",
+          });
+        } catch {
+          expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
+            expect.stringContaining("cannot be used with option"),
+          );
+          expect(exitSpy).toHaveBeenCalledWith(1);
+        }
       });
-      try {
-        await program.parseAsync(
-          [
-            "build",
-            conflictingOptions.option,
-            conflictingOptions.optionValue,
-            conflictingOptions.conflict,
-            conflictingOptions.conflictValue,
-          ],
-          { from: "user" },
-        );
-      } catch {
-        expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
-          expect.stringContaining("cannot be used with option"),
-        );
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      }
-    });
-  });
+    },
+  );
   const expectInvalidOption = (outputSpy: MockInstance, options: string[]) => {
     expect(outputSpy).toHaveBeenCalledWith(
       expect.stringMatching(
