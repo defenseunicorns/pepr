@@ -188,12 +188,7 @@ describe("build CLI command", () => {
       { value: "not-a-number", error: "Not a number.", description: "reject non-numeric values" },
       { value: "5.2", error: "Value must be an integer.", description: "reject float values" },
     ])("should $description: $value", async ({ value, error }) => {
-      try {
-        await expect(runProgramWithArgs([timeoutFlag, value])).rejects.toThrowError(error);
-        // await runProgramWithError([timeoutFlag, value], error);
-      } catch {
-        //TODO
-      }
+      await runProgramWithError([timeoutFlag, value], error);
     });
     // it("should reject float timeouts", async () => {
     //   await expect(program.parseAsync(["build", timeoutFlag, "5.0"], { from: "user" })).rejects.toThrowError("Value must be an integer.")
