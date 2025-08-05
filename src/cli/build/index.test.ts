@@ -138,7 +138,7 @@ describe("build CLI command", () => {
     customImageFlag => {
       it.each([["some-image"]])("should set the image to '%s'", async image => {
         await runProgramWithArgs([customImageFlag, image]);
-        //TODO check this in assets instead?
+        //TODO check this in assets instead of that the assignImage() function was called?
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
