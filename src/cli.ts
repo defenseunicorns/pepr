@@ -21,9 +21,6 @@ if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 
-process.env.PEPR_BUILD_LOGS_CALLED = "false";
-process.env.PEPR_DEPLOY_LOGS_CALLED = "false";
-
 const program = new Command();
 if (!process.env.PEPR_NODE_WARNINGS) {
   process.removeAllListeners("warning");
