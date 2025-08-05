@@ -185,23 +185,41 @@ describe("build CLI command", () => {
       // Is there such a thing as image validation?
     },
   );
-  // Wrap in a describe block for how to use flag?
-  it.each([["-M"], ["--rbac-mode"]])(
-    "should reject unsupported RBAC modes (%s) ",
-    async rbacModeFlag => {
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw new Error("process.exit called");
+
+  describe.only.each([["-M"], ["--rbac-mode"]])(
+    "when the rbac-mode flag is set (%s)",
+    rbacModeFlag => {
+      it.each([["admin"], ["scoped"]])(
+        "should allow '%s' as the RBAC mode",
+        async rbacModeValue => {
+          await program.parseAsync(["build", rbacModeFlag, rbacModeValue], { from: "user" });
+          expect(generateYamlAndWriteToDisk).toHaveBeenCalled();
+        },
+      );
+      it("should reject unsupported RBAC modes", async () => {
+        const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+          throw new Error("process.exit called");
+        });
+        try {
+          await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
+        } catch {
+          expect(stderrSpy).toHaveBeenCalledWith(
+            expect.stringMatching(
+              /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
+            ),
+          );
+          expect(exitSpy).toHaveBeenCalledWith(1);
+        }
       });
-      try {
-        await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
-      } catch {
-        expect(stderrSpy).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /error: option .* argument .* is invalid\. Allowed choices are admin, scoped/,
-          ),
-        );
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      }
+      it("should require a value", async () => {
+        try {
+          await program.parseAsync(["build", rbacModeFlag], { from: "user" });
+        } catch {
+          expect(stderrSpy).toHaveBeenCalledWith(
+            "error: option '-M, --rbac-mode <mode>' argument missing\n",
+          );
+        }
+      });
     },
   );
 
