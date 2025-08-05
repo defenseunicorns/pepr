@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import {
   validateImagePullSecretDetails,
