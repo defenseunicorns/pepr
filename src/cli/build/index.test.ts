@@ -186,31 +186,6 @@ describe("build CLI command", () => {
     },
   );
 
-  describe.each([["-M"], ["--rbac-mode"]])("when the rbac-mode flag is set (%s)", rbacModeFlag => {
-    it.each([["admin"], ["scoped"]])("should allow '%s' as the RBAC mode", async rbacModeValue => {
-      await program.parseAsync(["build", rbacModeFlag, rbacModeValue], { from: "user" });
-      expect(generateYamlAndWriteToDisk).toHaveBeenCalled();
-    });
-    it("should reject unsupported RBAC modes", async () => {
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw new Error("process.exit called");
-      });
-      try {
-        await program.parseAsync(["build", rbacModeFlag, "unsupported"], { from: "user" });
-      } catch {
-        expectInvalidOption(stderrSpy, ["admin", "scoped"]);
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      }
-    });
-    it("should require a value", async () => {
-      try {
-        await program.parseAsync(["build", rbacModeFlag], { from: "user" });
-      } catch {
-        expectMissingArgument(stderrSpy);
-      }
-    });
-  });
-
   describe.each(["--timeout", "-t"])("when the timeout flag is set (%s)", timeoutFlag => {
     it("should accept a timeout in the supported range", async () => {
       await program.parseAsync(["build", timeoutFlag, "10"], { from: "user" });
@@ -277,61 +252,90 @@ describe("build CLI command", () => {
     });
   });
 
-  describe.each([["-r"], ["--registry"]])("when the registry flag is set (%s)", registryFlag => {
-    it.each([["GitHub"], ["Iron Bank"]])("should allow '%s' as the registry", async registry => {
-      await program.parseAsync(["build", registryFlag, registry], { from: "user" });
-      expect(generateYamlAndWriteToDisk).toBeCalled();
-    });
-    it.each([["github"], ["iron bank"]])(
-      "should reject lower-case registry names ('%s')",
-      async registryName => {
-        try {
-          await program.parseAsync(["build", registryFlag, registryName], { from: "user" });
-        } catch {
-          expectInvalidOption(stderrSpy, ["GitHub", "Iron Bank"]);
+  const flagTestCases = [
+    {
+      name: "registry",
+      shortFlag: "-r",
+      longFlag: "--registry",
+      validOptions: ["GitHub", "Iron Bank"],
+      invalidCaseOptions: ["github", "iron bank"],
+      rejectLowerCase: true,
+    },
+    {
+      name: "rbac-mode",
+      shortFlag: "-M",
+      longFlag: "--rbac-mode",
+      validOptions: ["admin", "scoped"],
+      exitOnInvalid: true,
+    },
+    {
+      name: "zarf",
+      shortFlag: "-z",
+      longFlag: "--zarf",
+      validOptions: ["manifest", "chart"],
+    },
+  ];
+
+  describe.only.each(flagTestCases)(
+    "when the $name flag is set",
+    ({
+      name,
+      shortFlag,
+      longFlag,
+      validOptions,
+      invalidCaseOptions,
+      rejectLowerCase,
+      exitOnInvalid,
+    }) => {
+      describe.each([{ flag: shortFlag }, { flag: longFlag }])("$flag", ({ flag }) => {
+        it.each(validOptions.map(opt => [opt]))(
+          `should allow '%s' as the ${name} value`,
+          async validOption => {
+            await program.parseAsync(["build", flag, validOption], { from: "user" });
+            expect(generateYamlAndWriteToDisk).toBeCalled();
+          },
+        );
+
+        it("should require a value", async () => {
+          try {
+            await program.parseAsync(["build", flag], { from: "user" });
+          } catch {
+            expectMissingArgument(stderrSpy);
+          }
+        });
+
+        it(`should reject unsupported ${name} values`, async () => {
+          let exitSpy;
+          if (exitOnInvalid) {
+            exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+              throw new Error("process.exit called");
+            });
+          }
+          try {
+            await program.parseAsync(["build", flag, "unsupported"], { from: "user" });
+          } catch {
+            expectInvalidOption(stderrSpy, validOptions);
+            if (exitOnInvalid) {
+              expect(exitSpy).toHaveBeenCalledWith(1);
+            }
+          }
+        });
+
+        if (rejectLowerCase && invalidCaseOptions) {
+          it.each(invalidCaseOptions.map(opt => [opt]))(
+            "should reject lower-case values ('%s')",
+            async invalidCase => {
+              try {
+                await program.parseAsync(["build", flag, invalidCase], { from: "user" });
+              } catch {
+                expectInvalidOption(stderrSpy, validOptions);
+              }
+            },
+          );
         }
-      },
-    );
-
-    it("should require a value", async () => {
-      try {
-        await program.parseAsync(["build", registryFlag], { from: "user" });
-      } catch {
-        expectMissingArgument(stderrSpy);
-      }
-    });
-    it("should reject unsupported registries", async () => {
-      try {
-        await program.parseAsync(["build", registryFlag, "unsupported"], { from: "user" });
-      } catch {
-        expectInvalidOption(stderrSpy, ["GitHub", "Iron Bank"]);
-      }
-    });
-  });
-
-  describe.each([["-z"], ["--zarf"]])("when the zarf flag is set (%s)", zarfFlag => {
-    it.each([["manifest"], ["chart"]])(
-      "should allow '%s' as the zarf package type",
-      async zarfPackageType => {
-        await program.parseAsync(["build", zarfFlag, zarfPackageType], { from: "user" });
-        expect(generateYamlAndWriteToDisk).toBeCalled();
-      },
-    );
-    it("should require a value", async () => {
-      try {
-        await program.parseAsync(["build", zarfFlag], { from: "user" });
-      } catch {
-        expectMissingArgument(stderrSpy);
-      }
-    });
-    it("should reject unsupported zarf package types", async () => {
-      try {
-        await program.parseAsync(["build", zarfFlag, "unsupported"], { from: "user" });
-      } catch {
-        expectInvalidOption(stderrSpy, ["manifest", "chart"]);
-      }
-    });
-  });
+      });
+    },
+  );
 
   describe.each([
     [
