@@ -134,23 +134,12 @@ describe("build CLI command", () => {
         "reject an invalid pull secret (%s)",
         async invalidSecret => {
           const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-          const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-            throw new Error("process.exit called");
-          });
-          try {
-            await expect(
-              program.parseAsync(["build", withPullSecretFlag, invalidSecret], { from: "user" }),
-            ).rejects.toThrowError(
-              "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
-            );
-          } catch {
-            expect(stderrSpy).toHaveBeenCalledWith(
-              expect.stringContaining(
-                "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
-              ),
-            );
-            expect(exitSpy).toHaveBeenCalledWith(1);
-          }
+          await expect(
+            program.parseAsync(["build", withPullSecretFlag, invalidSecret], { from: "user" }),
+          ).rejects.toThrowError('process.exit unexpectedly called with "1"');
+          expect(stderrSpy).toHaveBeenCalledWith(
+            "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+          );
         },
       );
     },
@@ -276,7 +265,7 @@ describe("build CLI command", () => {
     },
   ];
 
-  describe.only.each(flagTestCases)(
+  describe.each(flagTestCases)(
     "when the $name flag is set",
     ({
       name,
