@@ -23,7 +23,7 @@ function runModule(expectedHash: string): void {
     throw new Error(`File not found: ${gzPath}`);
   }
   try {
-    Log.info(`Loading module ${gzPath}`);
+    Log.debug(`Loading module ${gzPath}`);
 
     // Extract the code from the file
     const codeGZ = fs.readFileSync(gzPath);
@@ -38,7 +38,7 @@ function runModule(expectedHash: string): void {
     if (!crypto.timingSafeEqual(Buffer.from(expectedHash, "hex"), Buffer.from(actualHash, "hex"))) {
       throw new Error(`File hash does not match, expected ${expectedHash} but got ${actualHash}`);
     }
-    Log.info(`File hash matches, running module`);
+    Log.debug(`File hash matches, running module`);
 
     // Write the code to a file
     fs.writeFileSync(jsPath, code);
@@ -52,8 +52,8 @@ function runModule(expectedHash: string): void {
 
 export const startup = async (hash: string): Promise<void> => {
   try {
-    Log.info(`Pepr Controller (v${version})`);
-    Log.info("Applying the Pepr Store CRD if it doesn't exist");
+    Log.debug(`Pepr Controller (v${version})`);
+    Log.debug("Applying the Pepr Store CRD if it doesn't exist");
     await K8s(kind.CustomResourceDefinition).Apply(peprStoreCRD, { force: true });
 
     validateHash(hash);
