@@ -235,7 +235,7 @@ describe("build CLI command", () => {
       shortFlag: "-r",
       longFlag: "--registry",
       validOptions: ["GitHub", "Iron Bank"],
-      invalidCaseOptions: ["github", "iron bank"],
+      additionalInvalidInput: [],
       rejectLowerCase: true,
     },
     {
@@ -243,21 +243,23 @@ describe("build CLI command", () => {
       shortFlag: "-M",
       longFlag: "--rbac-mode",
       validOptions: ["admin", "scoped"],
+      additionalInvalidInput: [],
     },
     {
       name: "zarf",
       shortFlag: "-z",
       longFlag: "--zarf",
       validOptions: ["manifest", "chart"],
+      additionalInvalidInput: [],
     },
   ];
 
   describe.each(flagTestCases)(
-    "when the $name flag is set",
-    ({ name, shortFlag, longFlag, validOptions, invalidCaseOptions, rejectLowerCase }) => {
+    "when an option has a list of choices ($name)",
+    ({ name, shortFlag, longFlag, validOptions, additionalInvalidInput }) => {
       describe.each([{ flag: shortFlag }, { flag: longFlag }])("$flag", ({ flag }) => {
         it.each(validOptions.map(opt => [opt]))(
-          `should allow '%s' as the ${name} value`,
+          `should accept '%s' as the ${name} value`,
           async validOption => {
             await runProgramWithArgs([flag, validOption]);
             expect(generateYamlAndWriteToDisk).toBeCalled();
@@ -269,21 +271,14 @@ describe("build CLI command", () => {
           expectMissingArgument(stderrSpy);
         });
 
-        it(`should reject unsupported ${name} values`, async () => {
-          await runProgramWithError([flag, "unsupported"]);
+        it.only.each([
+          ["unsupported"],
+          ...additionalInvalidInput.map(invalidOpt => [invalidOpt] as string[]),
+        ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
+          await runProgramWithError([flag, invalidInput]);
           expectInvalidOption(stderrSpy, validOptions);
           expect(exitSpy).toHaveBeenCalledWith(1);
         });
-
-        if (rejectLowerCase && invalidCaseOptions) {
-          it.each(invalidCaseOptions.map(opt => [opt]))(
-            "should reject lower-case values ('%s')",
-            async invalidCase => {
-              await runProgramWithError([flag, invalidCase]);
-              expectInvalidOption(stderrSpy, validOptions);
-            },
-          );
-        }
       });
     },
   );
