@@ -27,7 +27,7 @@ import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from 
 import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
-
+import Log from "../telemetry/logger";
 export function norWatchOrAdmission(capabilities: CapabilityExport[]): boolean {
   return !isAdmission(capabilities) && !isWatcher(capabilities);
 }
@@ -134,6 +134,10 @@ export class Assets {
     imagePullSecret?: string,
   ): Promise<string> => {
     this.capabilities = await loadCapabilities(this.path);
+    this.capabilities.flatMap(capability => {
+      Log.info(`Module ${this.config.uuid} has capability: ${capability.name}`);
+      Log.info(`Registered Pepr Capability "${capability.name}"`);
+    });
     // give error if namespaces are not respected
     for (const capability of this.capabilities) {
       // until deployment, Pepr does not distinguish between watch and admission

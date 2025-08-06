@@ -13,7 +13,6 @@ import { Binding, CapabilityExport, ModuleConfig } from "../types";
 import { WebhookIgnore } from "../k8s";
 import { TLSOut } from "../tls";
 import { Assets } from "./assets";
-import Log from "../telemetry/logger";
 
 export type AssetsType = {
   name: string;
@@ -350,15 +349,6 @@ describe("Webhook Management", () => {
         assets.capabilities = [];
         const result = await generateWebhookRules(assets, true);
         expect(result).toEqual([]);
-      });
-    });
-
-    describe("when capabilities are present", () => {
-      it("should log information about module capabilities", async () => {
-        assets.capabilities = [...loseAssets.capabilities];
-        await generateWebhookRules(assets, true);
-        expect(Log.info).toHaveBeenCalledOnce();
-        expect(Log.info).toHaveBeenCalledWith("Module static-test has capability: hello-pepr");
       });
     });
   });
