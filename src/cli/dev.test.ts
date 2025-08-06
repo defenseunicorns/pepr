@@ -170,4 +170,19 @@ describe("dev command", () => {
 
     debugSpy.mockRestore();
   });
+
+  it("should use custom host from --host option", async () => {
+    const hostArg = "kind-control-plane";
+    const AssetsModule = await import("../lib/assets/assets");
+    const AssetsMock = AssetsModule.Assets as Mock;
+
+    await program.parseAsync(["npx", "pepr", "dev", "--yes", "--host", hostArg]);
+
+    expect(AssetsMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(String),
+      expect.any(Array),
+      hostArg,
+    );
+  });
 });
