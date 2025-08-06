@@ -204,13 +204,6 @@ describe("build CLI command", () => {
         await runProgramWithArgs([entryPointFlag, "pepr.ts"]);
         expect(buildModule).toBeCalled();
       });
-      it("should require a value", async () => {
-        try {
-          await runProgramWithError([entryPointFlag]);
-        } catch {
-          expectMissingArgument(stderrSpy);
-        }
-      });
     },
   );
 
@@ -219,17 +212,19 @@ describe("build CLI command", () => {
       await runProgramWithArgs([outputFlag, "some-directory"]);
       expect(createOutputDirectory).toBeCalled();
     });
-
-    it("should require a value", async () => {
-      try {
-        await runProgramWithError([outputFlag]);
-      } catch {
-        expectMissingArgument(stderrSpy);
-      }
-    });
   });
 
   const flagTestCases = [
+    {
+      name: "output",
+      shortFlag: "-o",
+      longFlag: "--output",
+    },
+    {
+      name: "entry point",
+      shortFlag: "-e",
+      longFlag: "--entry-point",
+    },
     {
       name: "registry",
       shortFlag: "-r",
@@ -255,10 +250,28 @@ describe("build CLI command", () => {
   ];
 
   describe.each(flagTestCases)(
-    "when options are enumerated ($name)",
+    "when options accept user-input",
+    ({ name, shortFlag, longFlag }) => {
+      describe.each([
+        { name, flag: shortFlag },
+        { name, flag: longFlag },
+      ])("$name via $flag", ({ flag }) => {
+        it("should require a value", async () => {
+          await runProgramWithError([flag]);
+          expectMissingArgument(stderrSpy);
+        });
+      });
+    },
+  );
+
+  describe.each(flagTestCases)(
+    "when options are enumerated",
     ({ name, shortFlag, longFlag, validOptions, additionalInvalidInput }) => {
-      describe.each([{ flag: shortFlag }, { flag: longFlag }])("$flag", ({ flag }) => {
-        it.each(validOptions.map(opt => [opt]))(
+      describe.each([
+        { name, flag: shortFlag },
+        { name, flag: longFlag },
+      ])("$name via $flag", ({ flag }) => {
+        it.each(validOptions?.map(opt => [opt]) ?? [])(
           `should accept '%s' as the ${name} value`,
           async validOption => {
             await runProgramWithArgs([flag, validOption]);
@@ -266,19 +279,16 @@ describe("build CLI command", () => {
           },
         );
 
-        it("should require a value", async () => {
-          await runProgramWithError([flag]);
-          expectMissingArgument(stderrSpy);
-        });
-
-        it.each([
-          ["unsupported"],
-          ...additionalInvalidInput.map(invalidOpt => [invalidOpt] as string[]),
-        ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
-          await runProgramWithError([flag, invalidInput]);
-          expectInvalidOption(stderrSpy, validOptions);
-          expect(exitSpy).toHaveBeenCalledWith(1);
-        });
+        if (validOptions && validOptions.length > 0) {
+          it.each([
+            ["unsupported"],
+            ...additionalInvalidInput.map(invalidOpt => [invalidOpt] as string[]),
+          ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
+            await runProgramWithError([flag, invalidInput]);
+            expectInvalidOption(stderrSpy, validOptions);
+            expect(exitSpy).toHaveBeenCalledWith(1);
+          });
+        }
       });
     },
   );
