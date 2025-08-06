@@ -255,7 +255,7 @@ describe("build CLI command", () => {
   ];
 
   describe.each(flagTestCases)(
-    "when an option has a list of choices ($name)",
+    "when options are enumerated ($name)",
     ({ name, shortFlag, longFlag, validOptions, additionalInvalidInput }) => {
       describe.each([{ flag: shortFlag }, { flag: longFlag }])("$flag", ({ flag }) => {
         it.each(validOptions.map(opt => [opt]))(
@@ -271,7 +271,7 @@ describe("build CLI command", () => {
           expectMissingArgument(stderrSpy);
         });
 
-        it.only.each([
+        it.each([
           ["unsupported"],
           ...additionalInvalidInput.map(invalidOpt => [invalidOpt] as string[]),
         ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
@@ -310,7 +310,7 @@ describe("build CLI command", () => {
     ],
   ];
   describe.each(conflictingOptions)(
-    "when $option and $conflict are set",
+    "when options conflict ($option and $conflict)",
     ({ option, optionValue, conflict, conflictValue }) => {
       it("should exit with code 1", async () => {
         await runProgramWithError([option, optionValue, conflict, conflictValue]);
