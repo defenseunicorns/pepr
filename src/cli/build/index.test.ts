@@ -87,6 +87,130 @@ describe("build CLI command", () => {
     expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBeUndefined();
   });
 
+  type CommonTestCase = {
+    name: string;
+    shortFlag: string;
+    longFlag: string;
+    enumValues?: string[];
+    invalidEnumValues?: string[];
+  };
+
+  const flagTestCases: CommonTestCase[] = [
+    {
+      name: "output",
+      shortFlag: "-o",
+      longFlag: "--output",
+    },
+    {
+      name: "entry point",
+      shortFlag: "-e",
+      longFlag: "--entry-point",
+    },
+    {
+      name: "registry",
+      shortFlag: "-r",
+      longFlag: "--registry",
+      enumValues: ["GitHub", "Iron Bank"],
+      invalidEnumValues: ["github", "iron bank"],
+    },
+    {
+      name: "rbac-mode",
+      shortFlag: "-M",
+      longFlag: "--rbac-mode",
+      enumValues: ["admin", "scoped"],
+      invalidEnumValues: [],
+    },
+    {
+      name: "zarf",
+      shortFlag: "-z",
+      longFlag: "--zarf",
+      enumValues: ["manifest", "chart"],
+      invalidEnumValues: [],
+    },
+  ];
+
+  describe.each(flagTestCases)(
+    "when options accept user-input",
+    ({ name, shortFlag, longFlag }) => {
+      describe.each([
+        { name, flag: shortFlag },
+        { name, flag: longFlag },
+      ])("$name via $flag", ({ flag }) => {
+        it("should require a value", async () => {
+          await runProgramWithError([flag]);
+          expectMissingArgument(stderrSpy);
+        });
+      });
+    },
+  );
+
+  describe.each(flagTestCases.filter(testCase => testCase.invalidEnumValues !== undefined))(
+    "when options are enumerated",
+    ({ name, shortFlag, longFlag, enumValues, invalidEnumValues }) => {
+      describe.each([
+        { name, flag: shortFlag },
+        { name, flag: longFlag },
+      ])("$name via $flag", ({ flag }) => {
+        it.each(enumValues?.map(opt => [opt]) ?? [])(
+          `should accept '%s' as the ${name} value`,
+          async validOption => {
+            await runProgramWithArgs([flag, validOption]);
+            expect(generateYamlAndWriteToDisk).toBeCalled();
+          },
+        );
+
+        if (enumValues && invalidEnumValues)
+          it.each([
+            ["unsupported"],
+            ...invalidEnumValues.map(invalidOpt => [invalidOpt] as string[]),
+          ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
+            await runProgramWithError([flag, invalidInput]);
+            expectInvalidOption(stderrSpy, enumValues);
+            expect(exitSpy).toHaveBeenCalledWith(1);
+          });
+      });
+    },
+  );
+
+  const conflictingOptions = [
+    [
+      {
+        option: "--custom-image",
+        optionValue: "value",
+        conflict: "--registry",
+        conflictValue: "GitHub",
+      },
+    ],
+    [
+      {
+        option: "--custom-image",
+        optionValue: "value",
+        conflict: "--registry-info",
+        conflictValue: "value",
+      },
+    ],
+    [
+      {
+        option: "--registry",
+        optionValue: "Iron Bank",
+        conflict: "--registry-info",
+        conflictValue: "value",
+      },
+    ],
+  ];
+  describe.each(conflictingOptions)(
+    "when options conflict ($option and $conflict)",
+    ({ option, optionValue, conflict, conflictValue }) => {
+      it("should exit with code 1", async () => {
+        await runProgramWithError([option, optionValue, conflict, conflictValue]);
+        expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
+          expect.stringMatching(/error: option .* cannot be used with option .*/),
+        );
+        expect(exitSpy).toHaveBeenCalledWith(1);
+      });
+    },
+  );
+
   describe.each([["-c"], ["--custom-name"]])(
     "when the custom name flag is set (%s)",
     customNameFlag => {
@@ -214,123 +338,6 @@ describe("build CLI command", () => {
     });
   });
 
-  const flagTestCases = [
-    {
-      name: "output",
-      shortFlag: "-o",
-      longFlag: "--output",
-    },
-    {
-      name: "entry point",
-      shortFlag: "-e",
-      longFlag: "--entry-point",
-    },
-    {
-      name: "registry",
-      shortFlag: "-r",
-      longFlag: "--registry",
-      validOptions: ["GitHub", "Iron Bank"],
-      additionalInvalidInput: [],
-      rejectLowerCase: true,
-    },
-    {
-      name: "rbac-mode",
-      shortFlag: "-M",
-      longFlag: "--rbac-mode",
-      validOptions: ["admin", "scoped"],
-      additionalInvalidInput: [],
-    },
-    {
-      name: "zarf",
-      shortFlag: "-z",
-      longFlag: "--zarf",
-      validOptions: ["manifest", "chart"],
-      additionalInvalidInput: [],
-    },
-  ];
-
-  describe.each(flagTestCases)(
-    "when options accept user-input",
-    ({ name, shortFlag, longFlag }) => {
-      describe.each([
-        { name, flag: shortFlag },
-        { name, flag: longFlag },
-      ])("$name via $flag", ({ flag }) => {
-        it("should require a value", async () => {
-          await runProgramWithError([flag]);
-          expectMissingArgument(stderrSpy);
-        });
-      });
-    },
-  );
-
-  describe.each(flagTestCases)(
-    "when options are enumerated",
-    ({ name, shortFlag, longFlag, validOptions, additionalInvalidInput }) => {
-      describe.each([
-        { name, flag: shortFlag },
-        { name, flag: longFlag },
-      ])("$name via $flag", ({ flag }) => {
-        it.each(validOptions?.map(opt => [opt]) ?? [])(
-          `should accept '%s' as the ${name} value`,
-          async validOption => {
-            await runProgramWithArgs([flag, validOption]);
-            expect(generateYamlAndWriteToDisk).toBeCalled();
-          },
-        );
-
-        if (validOptions && validOptions.length > 0) {
-          it.each([
-            ["unsupported"],
-            ...additionalInvalidInput.map(invalidOpt => [invalidOpt] as string[]),
-          ])(`should reject unsupported ${name} values ('%s')`, async invalidInput => {
-            await runProgramWithError([flag, invalidInput]);
-            expectInvalidOption(stderrSpy, validOptions);
-            expect(exitSpy).toHaveBeenCalledWith(1);
-          });
-        }
-      });
-    },
-  );
-
-  const conflictingOptions = [
-    [
-      {
-        option: "--custom-image",
-        optionValue: "value",
-        conflict: "--registry",
-        conflictValue: "GitHub",
-      },
-    ],
-    [
-      {
-        option: "--custom-image",
-        optionValue: "value",
-        conflict: "--registry-info",
-        conflictValue: "value",
-      },
-    ],
-    [
-      {
-        option: "--registry",
-        optionValue: "Iron Bank",
-        conflict: "--registry-info",
-        conflictValue: "value",
-      },
-    ],
-  ];
-  describe.each(conflictingOptions)(
-    "when options conflict ($option and $conflict)",
-    ({ option, optionValue, conflict, conflictValue }) => {
-      it("should exit with code 1", async () => {
-        await runProgramWithError([option, optionValue, conflict, conflictValue]);
-        expect(stderrSpy).toHaveBeenCalledExactlyOnceWith(
-          expect.stringMatching(/error: option .* cannot be used with option .*/),
-        );
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      });
-    },
-  );
   const expectInvalidOption = (outputSpy: MockInstance, options: string[]) => {
     expect(outputSpy).toHaveBeenCalledWith(
       expect.stringMatching(
