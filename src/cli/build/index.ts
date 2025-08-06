@@ -15,6 +15,7 @@ import {
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
 import { buildModule } from "./buildModule";
+import Log from "../../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -83,7 +84,7 @@ export default function (program: Command): void {
       const { cfg, path } = buildModuleResult!;
       // override the name if provided
       if (opts.customName) {
-        process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName; // Would prefer to not use a random ENVAR
+        process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName;
       }
 
       const image = assignImage({
@@ -99,7 +100,7 @@ export default function (program: Command): void {
       }
 
       if (opts.registryInfo !== undefined) {
-        console.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
+        Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
         // for journey test to make sure the image is built
 
         // only actually build/push if there are files to include
@@ -113,7 +114,7 @@ export default function (program: Command): void {
 
       // If building without embedding, exit after building
       if (!opts.embed) {
-        console.info(`Module built successfully at ${path}`);
+        Log.info(`Module built successfully at ${path}`);
         return;
       }
 

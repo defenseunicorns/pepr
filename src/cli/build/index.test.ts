@@ -11,6 +11,7 @@ import {
   generateYamlAndWriteToDisk,
   handleCustomImageBuild,
 } from "./build.helpers";
+import Log from "../../lib/telemetry/logger";
 
 vi.mock("../../lib/tls.ts", async () => {
   return {
@@ -63,6 +64,13 @@ vi.mock("./build.helpers.ts", async () => {
     generateYamlAndWriteToDisk: vi.fn(),
   };
 });
+
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+  },
+}));
 
 describe("build CLI command", () => {
   let program: Command;
@@ -233,7 +241,7 @@ describe("build CLI command", () => {
         expect(generateYamlAndWriteToDisk).toBeCalled();
         expect(handleCustomImageBuild).toBeCalled();
 
-        expect(console.info).toHaveBeenCalledWith(
+        expect(Log.info).toHaveBeenCalledWith(
           expect.stringContaining("Including 0 files in controller image."),
         );
       });
@@ -272,7 +280,7 @@ describe("build CLI command", () => {
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).not.toBeCalled();
       expect(handleCustomImageBuild).not.toBeCalled();
-      expect(console.info).toHaveBeenCalledWith("Module built successfully at some/path");
+      expect(Log.info).toHaveBeenCalledWith("Module built successfully at some/path");
     });
   });
   describe.each([["-i"], ["--custom-image"]])(
@@ -280,14 +288,18 @@ describe("build CLI command", () => {
     customImageFlag => {
       it.each([["some-image"]])("should set the image to '%s'", async image => {
         await runProgramWithArgs([customImageFlag, image]);
-        //TODO check this in assets instead of that the assignImage() function was called?
         expect(buildModule).toBeCalled();
         expect(createOutputDirectory).toBeCalled();
         expect(generateYamlAndWriteToDisk).toBeCalled();
+        expect(generateYamlAndWriteToDisk).toHaveBeenCalledWith(
+          expect.objectContaining({
+            assets: expect.objectContaining({
+              image: image,
+            }),
+          }),
+        );
         expect(handleCustomImageBuild).not.toBeCalled();
       });
-
-      // Is there such a thing as image validation?
     },
   );
 
@@ -363,14 +375,3 @@ describe("build CLI command", () => {
     await expect(runProgramWithArgs(args)).rejects.toThrowError(error);
   };
 });
-
-// -I is not in "registry/username" format, can we validate it in .option()? We don't validate it at all
-// -P Can we validate in .option()? Or do earlier in the .action()?
-// When validImagePullSecret passes/fails
-// Needs package.json AND pepr.ts (entrypoint)
-
-// Mock Assets()
-
-// Entrypoint validation for non-file input? E.g., a directory -> Could have nicer error handling, not critical
-// Probably don't want to use PEPR_CUSTOM_BUILD_NAME envar
-// Use Log for logging instead of console
