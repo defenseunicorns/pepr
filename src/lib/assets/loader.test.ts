@@ -19,7 +19,7 @@ describe("loadCapabilities", () => {
       send: vi.fn(),
     };
     (fork as vi.Mock).mockReturnValue(mockProcess);
-    vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "debug").mockImplementation(() => {});
   });
 
   afterEach(() => {

@@ -26,7 +26,6 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
     program.on("message", message => {
       // Cast the message to the ModuleCapabilities type
       const capabilities = message.valueOf() as CapabilityExport[];
-
       resolve(capabilities);
     });
 
