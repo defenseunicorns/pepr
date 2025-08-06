@@ -232,7 +232,6 @@ describe("build CLI command", () => {
   describe.each([["-I"], ["--registry-info"]])(
     "when the registry info flag is set (%s)",
     registryInfoFlag => {
-      // Does this actually do anything??
       it("should include zero additional files in build", async () => {
         vi.spyOn(console, "info").mockImplementation(() => {});
         await runProgramWithArgs([registryInfoFlag, "organization/username"]);
