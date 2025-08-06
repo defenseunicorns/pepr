@@ -102,7 +102,7 @@ describe("dev command", () => {
 
   it("should run dev command successfully", async () => {
     const writeFile = fs.writeFile as Mock;
-    await program.parseAsync(["node", "test", "dev", "--yes"]);
+    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
 
     expect(prompts).not.toHaveBeenCalled();
     expect(writeFile).toHaveBeenCalledWith("insecure-tls.crt", "mock-cert");
@@ -118,7 +118,7 @@ describe("dev command", () => {
     const program = new Command();
     devCommand(program);
 
-    await program.parseAsync(["node", "test", "dev"]);
+    await program.parseAsync(["npx", "pepr", "dev"]);
 
     expect(prompts).toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
@@ -131,7 +131,7 @@ describe("dev command", () => {
       await cb({ errors: ["error"] });
     });
 
-    await program.parseAsync(["node", "test", "dev", "--yes"]);
+    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
     expect(errorSpy).toHaveBeenCalledWith("Error compiling module: error");
     errorSpy.mockRestore();
   });
@@ -147,7 +147,7 @@ describe("dev command", () => {
       throw new Error("exit");
     });
 
-    await expect(program.parseAsync(["node", "test", "dev", "--yes"])).rejects.toThrow("exit");
+    await expect(program.parseAsync(["npx", "pepr", "dev", "--yes"])).rejects.toThrow("exit");
 
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("CapabilityValidation Error"));
     exitSpy.mockRestore();
@@ -161,7 +161,7 @@ describe("dev command", () => {
     const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
     const processOnSpy = vi.spyOn(process, "on");
 
-    await program.parseAsync(["node", "test", "dev", "--yes"]);
+    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
 
     const sigHandler = processOnSpy.mock.calls.find(([event]) => event === "SIGINT")?.[1];
     sigHandler?.();
