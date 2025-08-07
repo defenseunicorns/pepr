@@ -102,7 +102,7 @@ describe("dev command", () => {
 
   it("should run dev command successfully", async () => {
     const writeFile = fs.writeFile as Mock;
-    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
+    await program.parseAsync(["dev", "--yes"], { from: "user" });
 
     expect(prompts).not.toHaveBeenCalled();
     expect(writeFile).toHaveBeenCalledWith("insecure-tls.crt", "mock-cert");
@@ -118,7 +118,7 @@ describe("dev command", () => {
     const program = new Command();
     devCommand(program);
 
-    await program.parseAsync(["npx", "pepr", "dev"]);
+    await program.parseAsync(["dev"], { from: "user" });
 
     expect(prompts).toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
@@ -131,7 +131,7 @@ describe("dev command", () => {
       await cb({ errors: ["error"] });
     });
 
-    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
+    await program.parseAsync(["dev", "--yes"], { from: "user" });
     expect(errorSpy).toHaveBeenCalledWith("Error compiling module: error");
     errorSpy.mockRestore();
   });
@@ -147,7 +147,7 @@ describe("dev command", () => {
       throw new Error("exit");
     });
 
-    await expect(program.parseAsync(["npx", "pepr", "dev", "--yes"])).rejects.toThrow("exit");
+    await expect(program.parseAsync(["dev", "--yes"], { from: "user" })).rejects.toThrow("exit");
 
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("CapabilityValidation Error"));
     exitSpy.mockRestore();
@@ -161,7 +161,7 @@ describe("dev command", () => {
     const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
     const processOnSpy = vi.spyOn(process, "on");
 
-    await program.parseAsync(["npx", "pepr", "dev", "--yes"]);
+    await program.parseAsync(["dev", "--yes"], { from: "user" });
 
     const sigHandler = processOnSpy.mock.calls.find(([event]) => event === "SIGINT")?.[1];
     sigHandler?.();
@@ -176,7 +176,7 @@ describe("dev command", () => {
     const AssetsModule = await import("../lib/assets/assets");
     const AssetsMock = AssetsModule.Assets as Mock;
 
-    await program.parseAsync(["npx", "pepr", "dev", "--yes", "--host", hostArg]);
+    await program.parseAsync(["dev", "--yes", "--host", hostArg], { from: "user" });
 
     expect(AssetsMock).toHaveBeenCalledWith(
       expect.any(Object),
