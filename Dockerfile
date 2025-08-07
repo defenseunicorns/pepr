@@ -47,3 +47,5 @@ FROM ${BASE_IMAGE}
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
+RUN mkdir -p /app && chown -R 65532:65532 /app
+USER 65532
