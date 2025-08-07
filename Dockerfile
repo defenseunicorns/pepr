@@ -4,7 +4,7 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-
+ARG REQUIRE_CHOWN="true"
 ARG BUILD_IMAGE=docker.io/library/node@sha256:37c7b4cd8867313fc17ba76c1a6676414c61e2aac113694072bb8e3ef6d0a4c8
 ARG BASE_IMAGE=docker.io/library/node@sha256:e8e882c692a08878d55ec8ff6c5a4a71b3edca25eda0af4406e2a160d8a93cf2
 
@@ -47,6 +47,7 @@ FROM ${BASE_IMAGE}
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
-# Requires chown to avoid permission issues in the controller
-RUN mkdir -p /app && chown -R 65532:65532 /app
+RUN if [ "$APPLY_CHOWN" = "true" ]; then \
+      mkdir -p /app && chown -R 65532:65532 /app; \
+    fi
 USER 65532
