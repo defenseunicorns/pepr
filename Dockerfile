@@ -47,7 +47,7 @@ FROM ${BASE_IMAGE}
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
-RUN if [ "$APPLY_CHOWN" = "true" ]; then \
+RUN if [ "$REQUIRE_CHOWN" = "true" ]; then \
       mkdir -p /app && chown -R 65532:65532 /app; \
     fi
 USER 65532
