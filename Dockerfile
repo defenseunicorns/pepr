@@ -46,6 +46,10 @@ FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
+ARG REQUIRE_CHOWN="true"
+ENV REQUIRE_CHOWN=${REQUIRE_CHOWN}
+
+
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
 RUN if [ "$REQUIRE_CHOWN" = "true" ]; then \
       mkdir -p /app && chown -R 65532:65532 /app; \
