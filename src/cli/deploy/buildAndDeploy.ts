@@ -2,9 +2,9 @@ import { Assets } from "../../lib/assets/assets";
 import { deployWebhook } from "../../lib/assets/deploy";
 import { loadCapabilities } from "../../lib/assets/loader";
 import { namespaceDeploymentsReady } from "../../lib/deploymentChecks";
-import { validateCapabilityNames } from "../../lib/helpers";
+import { namespaceComplianceValidator, validateCapabilityNames } from "../../lib/helpers";
+import { CapabilityExport } from "../../lib/types";
 import { buildModule } from "../build/buildModule";
-import { validateNamespaces } from ".";
 
 export async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
   const builtModule = await buildModule("dist");
@@ -36,4 +36,13 @@ export async function buildAndDeployModule(image: string, force: boolean): Promi
     console.error(`Error deploying module:`, e);
     process.exit(1);
   }
+}
+export function validateNamespaces(capability: CapabilityExport, webhook: Assets): void {
+  namespaceComplianceValidator(capability, webhook.alwaysIgnore?.namespaces);
+  namespaceComplianceValidator(
+    capability,
+    webhook.config.admission?.alwaysIgnore?.namespaces,
+    false,
+  );
+  namespaceComplianceValidator(capability, webhook.config.watch?.alwaysIgnore?.namespaces, true);
 }

@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { CapabilityExport } from "../../lib/types";
-import { Assets } from "../../lib/assets/assets";
 import { Command } from "commander";
 import { deployImagePullSecret } from "../../lib/assets/deploy";
-import { namespaceComplianceValidator } from "../../lib/helpers";
 import { validateImagePullSecretDetails, generateImagePullSecret } from "./imagePullSecret";
 import { getUserConfirmation } from "./userConfirmation";
 import { buildAndDeployModule } from "./buildAndDeploy";
@@ -40,14 +37,4 @@ export default function (program: Command): void {
 
       await buildAndDeployModule(opts.image, opts.force);
     });
-}
-
-export function validateNamespaces(capability: CapabilityExport, webhook: Assets): void {
-  namespaceComplianceValidator(capability, webhook.alwaysIgnore?.namespaces);
-  namespaceComplianceValidator(
-    capability,
-    webhook.config.admission?.alwaysIgnore?.namespaces,
-    false,
-  );
-  namespaceComplianceValidator(capability, webhook.config.watch?.alwaysIgnore?.namespaces, true);
 }
