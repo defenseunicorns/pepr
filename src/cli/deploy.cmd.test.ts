@@ -66,7 +66,9 @@ describe("deploy CLI command", () => {
       throw new Error(`process.exit: ${code}`);
     });
 
-    await program.parseAsync(["npx", "pepr", "deploy", "--image", "pepr:dev", "--force", "--yes"]);
+    await program.parseAsync(["deploy", "--image", "pepr:dev", "--force", "--yes"], {
+      from: "user",
+    });
 
     expect(deploySpy).toHaveBeenCalled();
     expect((await import("../lib/deploymentChecks")).namespaceDeploymentsReady).toHaveBeenCalled();
@@ -78,21 +80,22 @@ describe("deploy CLI command", () => {
     const deployImagePullSecret = (await import("../lib/assets/deploy"))
       .deployImagePullSecret as ReturnType<typeof vi.fn>;
 
-    await program.parseAsync([
-      "npx",
-      "pepr",
-      "deploy",
-      "--pull-secret",
-      "valid-name",
-      "--docker-email",
-      "pepr-dev@defenseunicorns.com",
-      "--docker-server",
-      "docker.io",
-      "--docker-username",
-      "pepr-dev",
-      "--docker-password",
-      "pepr",
-    ]);
+    await program.parseAsync(
+      [
+        "deploy",
+        "--pull-secret",
+        "valid-name",
+        "--docker-email",
+        "pepr-dev@defenseunicorns.com",
+        "--docker-server",
+        "docker.io",
+        "--docker-username",
+        "pepr-dev",
+        "--docker-password",
+        "pepr",
+      ],
+      { from: "user" },
+    );
 
     expect(deployImagePullSecret).toHaveBeenCalled();
   });
@@ -104,7 +107,7 @@ describe("deploy CLI command", () => {
     const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(
-      program.parseAsync(["npx", "pepr", "deploy", "--pull-secret", "!!bad"]),
+      program.parseAsync(["deploy", "--pull-secret", "!!bad"], { from: "user" }),
     ).rejects.toThrow("process.exit: 1");
 
     expect(mockError).toHaveBeenCalledWith(expect.stringContaining("Invalid --pullSecret"));
@@ -121,7 +124,7 @@ describe("deploy CLI command", () => {
     });
 
     await expect(
-      program.parseAsync(["npx", "pepr", "deploy", "--image", "pepr:dev", "--force"]),
+      program.parseAsync(["deploy", "--image", "pepr:dev", "--force"], { from: "user" }),
     ).rejects.toThrow("process.exit: 0");
 
     expect(mockPrompt).toHaveBeenCalled();
