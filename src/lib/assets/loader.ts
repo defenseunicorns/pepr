@@ -26,12 +26,6 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
     program.on("message", message => {
       // Cast the message to the ModuleCapabilities type
       const capabilities = message.valueOf() as CapabilityExport[];
-
-      // Iterate through the capabilities and generate the rules
-      for (const capability of capabilities) {
-        console.info(`Registered Pepr Capability "${capability.name}"`);
-      }
-
       resolve(capabilities);
     });
 

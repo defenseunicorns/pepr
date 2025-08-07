@@ -18,9 +18,8 @@ describe("loadCapabilities", () => {
       on: vi.fn(),
       send: vi.fn(),
     };
-
     (fork as vi.Mock).mockReturnValue(mockProcess);
-    vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "debug").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -57,8 +56,6 @@ describe("loadCapabilities", () => {
     const result = await loadCapabilities("/fake/path");
 
     expect(result).toEqual(mockCapabilities);
-    expect(console.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability1"');
-    expect(console.info).toHaveBeenCalledWith('Registered Pepr Capability "TestCapability2"');
   });
 
   it("should reject with an error when the process encounters an error", async () => {
