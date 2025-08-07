@@ -36,7 +36,7 @@ Build a Pepr Module for deployment.
 - `-i, --custom-image <image>` - Specify a custom image with version for deployments. Conflicts with --registry-info and --registry. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
 - `-n, --no-embed` - Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
 - `-o, --output <directory>` - Set output directory. (default: "dist")
-- `-r, --registry <GitHub|Iron Bank>` - Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info. (choices: "GitHub", "Iron Bank")
+- `-r, --registry <registry>` - Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info. (choices: "GitHub", "Iron Bank")
 - `-t, --timeout <seconds>` - How long the API server should wait for a webhook to respond before treating the call as a failure.
 - `-z, --zarf <manifest|chart>` - Set Zarf package type (choices: "manifest", "chart", default: "manifest")
 - `-h, --help` - display help for command
