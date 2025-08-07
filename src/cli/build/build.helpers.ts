@@ -113,15 +113,9 @@ export function checkIronBankImage(registry: string, image: string, peprVersion:
  * @param imagePullSecret
  * @returns boolean
  */
-export function validImagePullSecret(imagePullSecretName: string): void {
-  if (imagePullSecretName) {
-    const error = "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.";
-    if (sanitizeResourceName(imagePullSecretName) !== imagePullSecretName) {
-      // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
-      console.error(error);
-      process.exit(1);
-    }
-  }
+export function validImagePullSecret(imagePullSecretName: string): boolean {
+  // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+  return sanitizeResourceName(imagePullSecretName) === imagePullSecretName;
 }
 
 /**

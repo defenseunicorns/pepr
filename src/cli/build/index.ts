@@ -15,6 +15,7 @@ import {
   generateYamlAndWriteToDisk,
 } from "./build.helpers";
 import { buildModule } from "./buildModule";
+import Log from "../../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -53,7 +54,7 @@ export default function (program: Command): void {
     .option("-o, --output <directory>", "Set output directory.", "dist")
     .addOption(
       new Option(
-        "-r, --registry <GitHub|Iron Bank>",
+        "-r, --registry <registry>",
         "Container registry: Choose container registry for deployment manifests. Conflicts with --custom-image and --registry-info.",
       )
         .conflicts(["customImage", "registryInfo"])
@@ -99,7 +100,7 @@ export default function (program: Command): void {
       }
 
       if (opts.registryInfo !== undefined) {
-        console.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
+        Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
         // for journey test to make sure the image is built
 
         // only actually build/push if there are files to include
@@ -113,7 +114,7 @@ export default function (program: Command): void {
 
       // If building without embedding, exit after building
       if (!opts.embed) {
-        console.info(`Module built successfully at ${path}`);
+        Log.info(`Module built successfully at ${path}`);
         return;
       }
 
@@ -136,7 +137,11 @@ export default function (program: Command): void {
       if (image !== "") assets.image = image;
 
       // Ensure imagePullSecret is valid
-      validImagePullSecret(opts.withPullSecret);
+      if (!validImagePullSecret(opts.withPullSecret)) {
+        throw new Error(
+          "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
+        );
+      }
 
       handleValidCapabilityNames(assets.capabilities);
       await generateYamlAndWriteToDisk({
