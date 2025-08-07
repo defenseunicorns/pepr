@@ -1,6 +1,6 @@
 import { describe, it, vi, expect, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
-import deploy from "./deploy";
+import deploy from ".";
 import prompts from "prompts";
 
 vi.mock("prompts", () => {
@@ -9,7 +9,7 @@ vi.mock("prompts", () => {
   };
 });
 
-vi.mock("./build/buildModule", () => ({
+vi.mock("../build/buildModule", () => ({
   buildModule: vi.fn().mockResolvedValue({
     cfg: {
       pepr: { webhookTimeout: 10 },
@@ -18,24 +18,24 @@ vi.mock("./build/buildModule", () => ({
     path: "dist/test-module",
   }),
 }));
-vi.mock("../lib/assets/deploy", () => ({
+vi.mock("../../lib/assets/deploy", () => ({
   deployImagePullSecret: vi.fn(),
   deployWebhook: vi.fn(),
 }));
-vi.mock("../lib/deploymentChecks", () => ({
+vi.mock("../../lib/deploymentChecks", () => ({
   namespaceDeploymentsReady: vi.fn(),
 }));
-vi.mock("../lib/helpers", () => ({
+vi.mock("../../lib/helpers", () => ({
   validateCapabilityNames: vi.fn(),
   namespaceComplianceValidator: vi.fn(),
 }));
-vi.mock("../lib/assets/loader", () => ({
+vi.mock("../../lib/assets/loader", () => ({
   loadCapabilities: vi.fn().mockResolvedValue([]),
 }));
 
 const deploySpy = vi.fn();
 
-vi.mock("../lib/assets/assets", () => ({
+vi.mock("../../lib/assets/assets", () => ({
   Assets: vi.fn().mockImplementation(() => ({
     deploy: deploySpy,
     path: "dist/test-module",
@@ -71,13 +71,15 @@ describe("deploy CLI command", () => {
     });
 
     expect(deploySpy).toHaveBeenCalled();
-    expect((await import("../lib/deploymentChecks")).namespaceDeploymentsReady).toHaveBeenCalled();
+    expect(
+      (await import("../../lib/deploymentChecks")).namespaceDeploymentsReady,
+    ).toHaveBeenCalled();
 
     mockExit.mockRestore();
   });
 
   it("deploys imagePullSecret and exits early", async () => {
-    const deployImagePullSecret = (await import("../lib/assets/deploy"))
+    const deployImagePullSecret = (await import("../../lib/assets/deploy"))
       .deployImagePullSecret as ReturnType<typeof vi.fn>;
 
     await program.parseAsync(
