@@ -1,4 +1,4 @@
-import { describe, Mock, afterEach, vi, it, expect } from "vitest";
+import { describe, afterEach, vi, it, expect } from "vitest";
 import { getUserConfirmation } from "./userConfirmation";
 import prompt from "prompts";
 
@@ -7,7 +7,7 @@ vi.mock("prompts", () => ({
 }));
 
 describe("getUserConfirmation", () => {
-  const mockPrompt = prompt as unknown as Mock;
+  const mockPrompt = vi.mocked(prompt);
 
   afterEach(() => {
     vi.restoreAllMocks();

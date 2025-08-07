@@ -1,4 +1,4 @@
-import { describe, vi, beforeEach, Mock, it, expect } from "vitest";
+import { describe, vi, beforeEach, it, expect } from "vitest";
 import { buildAndDeployModule } from "./buildAndDeploy";
 
 vi.mock("../build/buildModule", () => ({
@@ -11,7 +11,6 @@ vi.mock("../../lib/assets/loader", () => ({
 
 vi.mock("../../lib/helpers", () => ({
   validateCapabilityNames: vi.fn(),
-  namespaceComplianceValidator: vi.fn(),
 }));
 
 vi.mock("../../lib/deploymentChecks", () => ({
@@ -34,24 +33,13 @@ vi.mock("../../lib/assets/assets", () => ({
 }));
 
 describe("buildAndDeployModule", () => {
-  let buildModule: ReturnType<typeof vi.fn>;
-  let namespaceDeploymentsReady: ReturnType<typeof vi.fn>;
-  let validateCapabilityNames: ReturnType<typeof vi.fn>;
-  let loadCapabilities: ReturnType<typeof vi.fn>;
-
   beforeEach(async () => {
-    buildModule = (await import("../build/buildModule")).buildModule as Mock;
-    namespaceDeploymentsReady = (await import("../../lib/deploymentChecks"))
-      .namespaceDeploymentsReady as Mock;
-    validateCapabilityNames = (await import("../../lib/helpers")).validateCapabilityNames as Mock;
-    loadCapabilities = (await import("../../lib/assets/loader")).loadCapabilities as Mock;
-
     vi.clearAllMocks();
-    deploySpy.mockClear(); // Reset the deploy method
   });
 
   it("builds and deploys the module", async () => {
-    buildModule.mockResolvedValue({
+    const { buildModule } = await import("../build/buildModule");
+    (buildModule as ReturnType<typeof vi.fn>).mockResolvedValue({
       cfg: {
         pepr: { webhookTimeout: 10 },
         description: "Test Module",
@@ -59,13 +47,18 @@ describe("buildAndDeployModule", () => {
       path: "dist/test-module",
     });
 
-    loadCapabilities.mockResolvedValue([]);
+    const { loadCapabilities } = await import("../../lib/assets/loader");
+    (loadCapabilities as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     await buildAndDeployModule("test-image", false);
 
     expect(buildModule).toHaveBeenCalledWith("dist");
     expect(deploySpy).toHaveBeenCalled();
+
+    const { validateCapabilityNames } = await import("../../lib/helpers");
     expect(validateCapabilityNames).toHaveBeenCalled();
+
+    const { namespaceDeploymentsReady } = await import("../../lib/deploymentChecks");
     expect(namespaceDeploymentsReady).toHaveBeenCalled();
   });
 });
