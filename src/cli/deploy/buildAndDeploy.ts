@@ -4,7 +4,7 @@ import { loadCapabilities } from "../../lib/assets/loader";
 import { namespaceDeploymentsReady } from "../../lib/deploymentChecks";
 import { validateCapabilityNames } from "../../lib/helpers";
 import { buildModule } from "../build/buildModule";
-import { validateNamespaces } from "./deploy";
+import { validateNamespaces } from ".";
 
 export async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
   const builtModule = await buildModule("dist");

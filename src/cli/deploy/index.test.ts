@@ -1,6 +1,6 @@
 import { describe, it, vi, expect, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
-import deploy from "./deploy";
+import deploy from ".";
 import prompts from "prompts";
 
 vi.mock("prompts", () => {
