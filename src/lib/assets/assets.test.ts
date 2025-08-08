@@ -22,6 +22,25 @@ vi.mock("./yaml/overridesFile", () => ({
   overridesFile: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../lib/tls.ts", async () => {
+  // Crypto operations take time, so we mock for unit tests. See pepr/#2515
+  return {
+    ...vi.importActual("../../lib/tls.ts"),
+    genTLS: vi.fn().mockImplementation(() => {
+      return {
+        ca: "some-ca",
+        crt: "some-crt",
+        key: "some-key",
+        pem: {
+          ca: "some-ca",
+          crt: "some-crt",
+          key: "some-key",
+        },
+      };
+    }),
+  };
+});
+
 vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
 
