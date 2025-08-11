@@ -140,15 +140,14 @@ describe("FeatureStore", () => {
       // Save original process.env
       const originalEnv = { ...process.env };
       try {
-        // Set environment variables if any
+        // Set environment variables
         Object.entries(envVars).forEach(([key, value]) => {
           process.env[key] = value;
         });
 
-        // Initialize with provided string or undefined
+        // Initialize with provided string
         featureStore.initialize(initializeString);
 
-        // Check features were loaded correctly
         Object.entries(expectedFeatures).forEach(([key, value]) => {
           expect(featureStore.get(key)).toBe(value);
         });

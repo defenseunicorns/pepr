@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-/**
- * Feature flags store for Pepr CLI
- *
- * This module provides a singleton feature store that can be accessed from
- * anywhere in the CLI application to check feature flag values.
- */
-
 type FeatureValue = string | boolean | number;
 
 /**
@@ -16,6 +9,7 @@ type FeatureValue = string | boolean | number;
  * Uses the Singleton pattern to ensure a single instance is shared across the application
  */
 class FeatureStore {
+  private featureFlagLimit: number = 4;
   private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
 
@@ -108,14 +102,16 @@ class FeatureStore {
   }
 
   /**
-   * Validates that no more than 4 feature flags are active
+   * Validates that no more than `featureFlagLimit` feature flags are active
    *
-   * @throws Error if more than 4 feature flags are active
+   * @throws Error if more than `featureFlagLimit` feature flags are active
    */
   validateFeatureCount(): void {
     const featureCount = Object.keys(this.features).length;
-    if (featureCount > 4) {
-      throw new Error(`Too many feature flags active: ${featureCount} (maximum: 4)`);
+    if (featureCount > this.featureFlagLimit) {
+      throw new Error(
+        `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit})`,
+      );
     }
   }
 }
