@@ -16,6 +16,8 @@ import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
+import { featureFlagStore } from "./lib/features/store";
+import Log from "./lib/telemetry/logger";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -29,13 +31,22 @@ program
   .enablePositionalOptions()
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
+  .option("--features <features>", "Comma-separated feature flags (feature=value)")
+  .hook("preAction", thisCommand => {
+    try {
+      featureFlagStore.initialize(thisCommand.opts().features);
+    } catch (error) {
+      Log.error(error, "Failed to initialize feature store:");
+      process.exit(1);
+    }
+  })
   .addCommand(crd())
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);
       program.help();
     } else {
-      console.error(`Invalid command '${program.args.join(" ")}'\n`);
+      Log.error(`Invalid command '${program.args.join(" ")}'\n`);
       program.outputHelp();
       process.exitCode = 1;
     }
