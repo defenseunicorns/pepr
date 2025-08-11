@@ -73,10 +73,6 @@ export class FeatureStore {
     return { ...this.features };
   }
 
-  hasFeature(key: string): boolean {
-    return key in this.features;
-  }
-
   reset(): void {
     this.features = {};
   }
