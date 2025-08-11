@@ -8,14 +8,14 @@
  * anywhere in the CLI application to check feature flag values.
  */
 
-export type FeatureValue = string | boolean | number;
+type FeatureValue = string | boolean | number;
 
 /**
  * Global store for feature flags
  *
  * Uses the Singleton pattern to ensure a single instance is shared across the application
  */
-export class FeatureStore {
+class FeatureStore {
   private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
 
@@ -36,9 +36,8 @@ export class FeatureStore {
    *
    * @param key The feature key
    * @param value The feature value as string
-   * @param validateNow Whether to validate feature count immediately
    */
-  private addFeature(key: string, value: string, validateNow = false): void {
+  private addFeature(key: string, value: string): void {
     if (!key || value === undefined || value === "") return;
 
     // Attempt type conversion
@@ -50,11 +49,6 @@ export class FeatureStore {
       this.features[key] = Number(value);
     } else {
       this.features[key] = value;
-    }
-
-    // Validate feature count if requested
-    if (validateNow) {
-      this.validateFeatureCount();
     }
   }
 
@@ -87,16 +81,15 @@ export class FeatureStore {
    * Command-line features (provided in the featuresStr) take precedence over environment variables.
    *
    * @param featuresStr Optional comma-separated feature string in format "feature1=value1,feature2=value2"
-   * @param validateNow Whether to validate feature count after loading (default: true)
    */
-  initialize(featuresStr?: string, validateNow = true): void {
+  initialize(featuresStr?: string): void {
     // First load from environment variables
     Object.entries(process.env).forEach(([key, value]) => {
       if (key.startsWith("PEPR_FEATURE_")) {
         const featureName = key.replace("PEPR_FEATURE_", "").toLowerCase();
         if (value) {
           // Don't validate for each env var
-          this.addFeature(featureName, value, false);
+          this.addFeature(featureName, value);
         }
       }
     });
@@ -106,14 +99,12 @@ export class FeatureStore {
       featuresStr.split(",").forEach(feature => {
         const [key, value] = feature.split("=");
         // CLI features override environment variables
-        this.addFeature(key, value, false);
+        this.addFeature(key, value);
       });
     }
 
     // Validate once after all features are processed if requested
-    if (validateNow) {
-      this.validateFeatureCount();
-    }
+    this.validateFeatureCount();
   }
 
   /**
