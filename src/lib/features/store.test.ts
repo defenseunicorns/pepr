@@ -10,7 +10,7 @@ describe("FeatureStore", () => {
     featureStore.reset();
   });
 
-  describe("parsing feature strings", () => {
+  describe("when parsing strings for features", () => {
     it.each([
       {
         type: "boolean",
@@ -66,30 +66,45 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("feature access", () => {
+  describe("when accessing features", () => {
     beforeEach(() => {
       featureStore.parseFromString("string=value,number=42,boolean=true");
     });
 
-    it("gets features with correct types", () => {
-      expect(featureStore.get<string>("string")).toBe("value");
-      expect(featureStore.get<number>("number")).toBe(42);
-      expect(featureStore.get<boolean>("boolean")).toBe(true);
+    describe("with .get()", () => {
+      describe("with existing features", () => {
+        it.each([
+          { type: "string", key: "string", expected: "value" },
+          { type: "number", key: "number", expected: 42 },
+          { type: "boolean", key: "boolean", expected: true },
+        ])("returns $type values with correct type", ({ key, expected }) => {
+          expect(featureStore.get<typeof expected>(key)).toBe(expected);
+        });
+      });
+
+      describe("with non-existent features", () => {
+        it.each([
+          { type: "string", defaultValue: "default", expected: "default" },
+          { type: "number", defaultValue: 100, expected: 100 },
+          { type: "boolean", defaultValue: false, expected: false },
+        ])("returns default $type value when provided", ({ defaultValue, expected }) => {
+          expect(featureStore.get("nonexistent", defaultValue)).toBe(expected);
+        });
+
+        it("returns undefined when no default is provided", () => {
+          expect(featureStore.get("nonexistent")).toBeUndefined();
+        });
+      });
     });
 
-    it("returns default value when feature doesn't exist", () => {
-      expect(featureStore.get("nonexistent", "default")).toBe("default");
-      expect(featureStore.get("nonexistent", 100)).toBe(100);
-      expect(featureStore.get("nonexistent", false)).toBe(false);
-    });
+    describe("with .hasFeature()", () => {
+      it("should return true for existing features", () => {
+        expect(featureStore.hasFeature("string")).toBe(true);
+      });
 
-    it("returns undefined when feature doesn't exist and no default is provided", () => {
-      expect(featureStore.get("nonexistent")).toBeUndefined();
-    });
-
-    it("correctly reports feature existence", () => {
-      expect(featureStore.hasFeature("string")).toBe(true);
-      expect(featureStore.hasFeature("nonexistent")).toBe(false);
+      it("should return false for non-existent features", () => {
+        expect(featureStore.hasFeature("nonexistent")).toBe(false);
+      });
     });
 
     it("returns a copy of all features", () => {
