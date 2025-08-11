@@ -22,7 +22,6 @@ export default [
       "**/hack",
       "**/pepr-test-module",
       "**/build.mjs",
-      "**/journey",
       "**/__mocks__",
       "integration/testroot",
       "integration/cli/**/*.test.ts",
