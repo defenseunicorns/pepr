@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Operation } from "fast-json-patch";
-import { pino, stdTimeFunctions } from "pino";
+import pino, { stdTimeFunctions } from "pino";
 import { Store } from "../k8s";
 
 const isPrettyLog = process.env.PEPR_PRETTY_LOGS === "true";
