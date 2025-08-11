@@ -11,39 +11,58 @@ describe("FeatureStore", () => {
   });
 
   describe("parsing feature strings", () => {
-    it("correctly parses boolean values", () => {
-      featureStore.parseFromString("feature1=true,feature2=false");
+    it.each([
+      {
+        type: "boolean",
+        input: "feature1=true,feature2=false",
+        expected: {
+          feature1: true,
+          feature2: false,
+        },
+      },
+      {
+        type: "numeric",
+        input: "level=5,count=10.5",
+        expected: {
+          level: 5,
+          count: 10.5,
+        },
+      },
+      {
+        type: "string",
+        input: "name=value,mode=advanced",
+        expected: {
+          name: "value",
+          mode: "advanced",
+        },
+      },
+    ])("should parse $type values", ({ input, expected }) => {
+      featureStore.parseFromString(input);
 
-      expect(featureStore.get("feature1")).toBe(true);
-      expect(featureStore.get("feature2")).toBe(false);
+      Object.entries(expected).forEach(([key, value]) => {
+        expect(featureStore.get(key)).toBe(value);
+      });
     });
 
-    it("correctly parses numeric values", () => {
-      featureStore.parseFromString("level=5,count=10.5");
+    it("should handle malformed entries", () => {
+      const input = "valid=true,novalue=,=noproperty,invalid";
+      const expected = { valid: true };
+      const invalidKeys = ["novalue", "noproperty"];
 
-      expect(featureStore.get("level")).toBe(5);
-      expect(featureStore.get("count")).toBe(10.5);
+      featureStore.parseFromString(input);
+
+      Object.entries(expected).forEach(([key, value]) => {
+        expect(featureStore.get(key)).toBe(value);
+      });
+
+      invalidKeys.forEach(key => {
+        expect(featureStore.hasFeature(key)).toBe(false);
+      });
     });
 
-    it("correctly parses string values", () => {
-      featureStore.parseFromString("name=value,mode=advanced");
-
-      expect(featureStore.get("name")).toBe("value");
-      expect(featureStore.get("mode")).toBe("advanced");
-    });
-
-    it("handles empty strings gracefully", () => {
+    it("should handle empty strings", () => {
       featureStore.parseFromString("");
-
       expect(featureStore.getAll()).toEqual({});
-    });
-
-    it("handles malformed entries gracefully", () => {
-      featureStore.parseFromString("valid=true,novalue=,=noproperty,invalid");
-
-      expect(featureStore.get("valid")).toBe(true);
-      expect(featureStore.hasFeature("novalue")).toBe(false);
-      expect(featureStore.hasFeature("noproperty")).toBe(false);
     });
   });
 
