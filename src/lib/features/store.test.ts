@@ -77,7 +77,7 @@ describe("FeatureStore", () => {
           { type: "string", key: "string", expected: "value" },
           { type: "number", key: "number", expected: 42 },
           { type: "boolean", key: "boolean", expected: true },
-        ])("returns $type values with correct type", ({ key, expected }) => {
+        ])("should return $type values", ({ key, expected }) => {
           expect(featureStore.get<typeof expected>(key)).toBe(expected);
         });
       });
@@ -87,11 +87,11 @@ describe("FeatureStore", () => {
           { type: "string", defaultValue: "default", expected: "default" },
           { type: "number", defaultValue: 100, expected: 100 },
           { type: "boolean", defaultValue: false, expected: false },
-        ])("returns default $type value when provided", ({ defaultValue, expected }) => {
+        ])("should return default $type value", ({ defaultValue, expected }) => {
           expect(featureStore.get("nonexistent", defaultValue)).toBe(expected);
         });
 
-        it("returns undefined when no default is provided", () => {
+        it("should return undefined without default", () => {
           expect(featureStore.get("nonexistent")).toBeUndefined();
         });
       });
@@ -107,7 +107,7 @@ describe("FeatureStore", () => {
       });
     });
 
-    it("returns a copy of all features", () => {
+    it("should return all features", () => {
       const features = featureStore.getAll();
       expect(features).toEqual({
         string: "value",
@@ -121,8 +121,8 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("environment variable integration", () => {
-    it("loads features from environment variables", () => {
+  describe("when features are set with environment variables", () => {
+    it("should load features", () => {
       // Save original process.env
       const originalEnv = { ...process.env };
 
@@ -146,13 +146,13 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("feature count validation", () => {
+  describe("when feature count validation limits complexity", () => {
     beforeEach(() => {
       // Reset the feature store before each test
       featureStore.reset();
     });
 
-    it("allows up to 4 feature flags", () => {
+    it("should allow up to 4 feature flags", () => {
       // Should not throw when adding 4 features
       expect(() => {
         featureStore.parseFromString("feature1=true,feature2=false,feature3=42,feature4=test");
@@ -162,7 +162,7 @@ describe("FeatureStore", () => {
       expect(Object.keys(featureStore.getAll()).length).toBe(4);
     });
 
-    it("throws an error when more than 4 feature flags are active", () => {
+    it("should not allow more than 4 feature flags", () => {
       // First add 4 features that should not exceed the limit
       featureStore.reset();
       expect(() => {
@@ -175,7 +175,7 @@ describe("FeatureStore", () => {
       }).toThrow("Too many feature flags active: 5 (maximum: 4)");
     });
 
-    it("validates count during direct method calls", () => {
+    it("should validate feature count during direct method calls", () => {
       // Should pass validation with exactly 4 features
       expect(() => {
         featureStore.parseFromString("feature1=true,feature2=false,feature3=42,feature4=test");
