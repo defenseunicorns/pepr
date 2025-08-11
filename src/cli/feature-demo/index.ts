@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Command } from "commander";
-import { featureStore } from "../../lib/features/store";
+import { featureFlagStore } from "../../lib/features/store";
 import Log from "../../lib/telemetry/logger";
 
 /**
@@ -16,10 +16,10 @@ export default function (program: Command): void {
     .description("Demonstrates how to use feature flags in Pepr")
     .action(async () => {
       // Access global feature flags
-      const experimentalMode = featureStore.get<boolean>("experimental", false);
-      const debugLevel = featureStore.get<number>("debugLevel", 0);
-      const mode = featureStore.get<string>("mode", "standard");
-      const demo = featureStore.get<string>("demo", "standard");
+      const experimentalMode = featureFlagStore.get<boolean>("experimental", false);
+      const debugLevel = featureFlagStore.get<number>("debugLevel", 0);
+      const mode = featureFlagStore.get<string>("mode", "standard");
+      const demo = featureFlagStore.get<string>("demo", "standard");
 
       // Use the feature flags to control behavior
       Log.info(`Feature flags status ():`);
@@ -37,7 +37,7 @@ export default function (program: Command): void {
       if (debugLevel > 0) {
         Log.info(`🐛 Debug level ${debugLevel} activated. Showing debug information...`);
         // Log additional debug information based on debug level
-        Log.info(`All active features: ${featureStore.debug()}`);
+        Log.info(`All active features: ${featureFlagStore.debug()}`);
       }
 
       // Demonstrate different behaviors based on mode

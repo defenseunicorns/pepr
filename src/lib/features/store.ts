@@ -92,7 +92,7 @@ class FeatureStore {
     if (featuresStr) {
       featuresStr.split(",").forEach(feature => {
         const [key, value] = feature.split("=");
-        // CLI features override environment variables
+        // Override environment variables with same key
         this.addFeature(key, value);
       });
     }
@@ -117,4 +117,4 @@ class FeatureStore {
 }
 
 // Export a singleton instance
-export const featureStore = FeatureStore.getInstance();
+export const featureFlagStore = FeatureStore.getInstance();

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { featureStore } from "./store";
+import { featureFlagStore } from "./store";
 import { describe, beforeEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
   beforeEach(() => {
-    featureStore.reset();
+    featureFlagStore.reset();
   });
 
   describe("when accessing features", () => {
     beforeEach(() => {
-      featureStore.initialize("string=value,number=42,boolean=true");
+      featureFlagStore.initialize("string=value,number=42,boolean=true");
     });
 
     describe("which exist", () => {
@@ -20,7 +20,7 @@ describe("FeatureStore", () => {
         { type: "number", key: "number", expected: 42 },
         { type: "boolean", key: "boolean", expected: true },
       ])("should return $type values", ({ key, expected }) => {
-        expect(featureStore.get<typeof expected>(key)).toBe(expected);
+        expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
       });
     });
 
@@ -30,16 +30,16 @@ describe("FeatureStore", () => {
         { type: "number", defaultValue: 100, expected: 100 },
         { type: "boolean", defaultValue: false, expected: false },
       ])("should return default $type value", ({ defaultValue, expected }) => {
-        expect(featureStore.get("nonexistent", defaultValue)).toBe(expected);
+        expect(featureFlagStore.get("nonexistent", defaultValue)).toBe(expected);
       });
 
       it("should return undefined without default", () => {
-        expect(featureStore.get("nonexistent")).toBeUndefined();
+        expect(featureFlagStore.get("nonexistent")).toBeUndefined();
       });
     });
 
     it("should return a copy of all features", () => {
-      const features = featureStore.getAll();
+      const features = featureFlagStore.getAll();
       expect(features).toEqual({
         string: "value",
         number: 42,
@@ -48,7 +48,7 @@ describe("FeatureStore", () => {
 
       // Verify it's a copy by modifying the returned object
       features.string = "modified";
-      expect(featureStore.get("string")).toBe("value"); // Original remains unchanged
+      expect(featureFlagStore.get("string")).toBe("value"); // Original remains unchanged
     });
   });
 
@@ -144,10 +144,10 @@ describe("FeatureStore", () => {
         });
 
         // Initialize with provided string
-        featureStore.initialize(initializeString);
+        featureFlagStore.initialize(initializeString);
 
         Object.entries(expectedFeatures).forEach(([key, value]) => {
-          expect(featureStore.get(key)).toBe(value);
+          expect(featureFlagStore.get(key)).toBe(value);
         });
       } finally {
         // Restore original process.env
@@ -166,7 +166,7 @@ describe("FeatureStore", () => {
 
         // Add 2 more via string to exceed the 4 feature limit
         expect(() => {
-          featureStore.initialize("feature4=new,feature5=extra");
+          featureFlagStore.initialize("feature4=new,feature5=extra");
         }).toThrow("Too many feature flags active: 5 (maximum: 4)");
       } finally {
         // Restore original process.env
