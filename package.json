@@ -45,7 +45,7 @@
     "test:integration:prep": "./integration/prep.sh",
     "test:integration:run": "vitest run --config=config/vitest.integration.config.ts integration",
     "test:unit": "npm run gen-data-json && NODE_OPTIONS=--no-deprecation vitest --config config/vitest.root.config.ts run --coverage",
-    "test:upgrade:unicorn": "npm run cluster:k3d && cluster:k3d:import-unicorn && vitest run integration/cluster/upgrade.test.ts",
+    "test:upgrade:unicorn": "npm run cluster:k3d && npm run cluster:k3d:import-unicorn && vitest run integration/cluster/upgrade.test.ts",
     "test:upgrade:upstream": "npm run cluster:k3d && npm run cluster:k3d:import-upstream && vitest run integration/cluster/upgrade.test.ts"
   },
   "dependencies": {
