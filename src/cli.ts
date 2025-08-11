@@ -16,6 +16,8 @@ import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
+import featureDemo from "./cli/feature-demo";
+import { featureStore } from "./lib/features/store";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -29,6 +31,16 @@ program
   .enablePositionalOptions()
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
+  .option("--features <features>", "Comma-separated feature flags (feature=value)")
+  .hook("preAction", thisCommand => {
+    // Initialize feature store from environment variables
+    featureStore.initFromEnv();
+
+    // Command line features take precedence over environment variables
+    if (thisCommand.opts().features) {
+      featureStore.parseFromString(thisCommand.opts().features);
+    }
+  })
   .addCommand(crd())
   .action(() => {
     if (program.args.length < 1) {
@@ -50,4 +62,5 @@ format(program);
 monitor(program);
 uuid(program);
 kfc(program);
+featureDemo(program);
 program.parse();
