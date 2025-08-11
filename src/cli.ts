@@ -18,6 +18,7 @@ import kfc from "./cli/kfc";
 import crd from "./cli/crd";
 import featureDemo from "./cli/feature-demo";
 import { featureStore } from "./lib/features/store";
+import Log from "./lib/telemetry/logger";
 
 if (process.env.npm_lifecycle_event !== "npx") {
   console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
@@ -34,11 +35,21 @@ program
   .option("--features <features>", "Comma-separated feature flags (feature=value)")
   .hook("preAction", thisCommand => {
     // Initialize feature store from environment variables
-    featureStore.initFromEnv();
+    try {
+      featureStore.initFromEnv();
+    } catch (error) {
+      Log.error(error, "Failed to initialize feature store from environment variables:");
+      process.exit(1);
+    }
 
     // Command line features take precedence over environment variables
     if (thisCommand.opts().features) {
-      featureStore.parseFromString(thisCommand.opts().features);
+      try {
+        featureStore.parseFromString(thisCommand.opts().features);
+      } catch (error) {
+        Log.error(error, "Failed to initialize feature store from CLI flag:");
+        process.exit(1);
+      }
     }
   })
   .addCommand(crd())

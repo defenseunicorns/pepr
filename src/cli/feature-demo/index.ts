@@ -19,12 +19,14 @@ export default function (program: Command): void {
       const experimentalMode = featureStore.get<boolean>("experimental", false);
       const debugLevel = featureStore.get<number>("debugLevel", 0);
       const mode = featureStore.get<string>("mode", "standard");
+      const demo = featureStore.get<string>("demo", "standard");
 
       // Use the feature flags to control behavior
       Log.info(`Feature flags status ():`);
       Log.info(`- experimental mode: ${experimentalMode}`);
       Log.info(`- debug level: ${debugLevel}`);
       Log.info(`- mode: ${mode}`);
+      Log.info(`- demo: ${demo}`);
 
       // Conditional logic based on feature flags
       if (experimentalMode) {
