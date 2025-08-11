@@ -110,7 +110,7 @@ class FeatureStore {
     const featureCount = Object.keys(this.features).length;
     if (featureCount > this.featureFlagLimit) {
       throw new Error(
-        `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit})`,
+        `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit}). Use of more than ${this.featureFlagLimit} feature flags is not supported due to complexity concerns.`,
       );
     }
   }
