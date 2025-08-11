@@ -14,29 +14,27 @@ describe("FeatureStore", () => {
       featureStore.initialize("string=value,number=42,boolean=true");
     });
 
-    describe("with .get()", () => {
-      describe("with existing features", () => {
-        it.each([
-          { type: "string", key: "string", expected: "value" },
-          { type: "number", key: "number", expected: 42 },
-          { type: "boolean", key: "boolean", expected: true },
-        ])("should return $type values", ({ key, expected }) => {
-          expect(featureStore.get<typeof expected>(key)).toBe(expected);
-        });
+    describe("which exist", () => {
+      it.each([
+        { type: "string", key: "string", expected: "value" },
+        { type: "number", key: "number", expected: 42 },
+        { type: "boolean", key: "boolean", expected: true },
+      ])("should return $type values", ({ key, expected }) => {
+        expect(featureStore.get<typeof expected>(key)).toBe(expected);
+      });
+    });
+
+    describe("with non-existent features", () => {
+      it.each([
+        { type: "string", defaultValue: "default", expected: "default" },
+        { type: "number", defaultValue: 100, expected: 100 },
+        { type: "boolean", defaultValue: false, expected: false },
+      ])("should return default $type value", ({ defaultValue, expected }) => {
+        expect(featureStore.get("nonexistent", defaultValue)).toBe(expected);
       });
 
-      describe("with non-existent features", () => {
-        it.each([
-          { type: "string", defaultValue: "default", expected: "default" },
-          { type: "number", defaultValue: 100, expected: 100 },
-          { type: "boolean", defaultValue: false, expected: false },
-        ])("should return default $type value", ({ defaultValue, expected }) => {
-          expect(featureStore.get("nonexistent", defaultValue)).toBe(expected);
-        });
-
-        it("should return undefined without default", () => {
-          expect(featureStore.get("nonexistent")).toBeUndefined();
-        });
+      it("should return undefined without default", () => {
+        expect(featureStore.get("nonexistent")).toBeUndefined();
       });
     });
 
