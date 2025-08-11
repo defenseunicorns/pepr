@@ -32,33 +32,30 @@ export class FeatureStore {
   }
 
   /**
-   * Parse a features string in the format "feature1=value1,feature2=value2"
-   * and populate the feature store
+   * Private method to add a feature and handle type conversion
    *
-   * @param featuresStr The feature string to parse
+   * @param key The feature key
+   * @param value The feature value as string
+   * @param validateNow Whether to validate feature count immediately
    */
-  parseFromString(featuresStr?: string): void {
-    if (!featuresStr) return;
+  private addFeature(key: string, value: string, validateNow = false): void {
+    if (!key || value === undefined || value === "") return;
 
-    featuresStr.split(",").forEach(feature => {
-      const [key, value] = feature.split("=");
-      // Skip entries with empty key or empty/undefined value
-      if (!key || value === undefined || value === "") return;
+    // Attempt type conversion
+    if (value.toLowerCase() === "true") {
+      this.features[key] = true;
+    } else if (value.toLowerCase() === "false") {
+      this.features[key] = false;
+    } else if (!isNaN(Number(value))) {
+      this.features[key] = Number(value);
+    } else {
+      this.features[key] = value;
+    }
 
-      // Attempt type conversion
-      if (value.toLowerCase() === "true") {
-        this.features[key] = true;
-      } else if (value.toLowerCase() === "false") {
-        this.features[key] = false;
-      } else if (!isNaN(Number(value))) {
-        this.features[key] = Number(value);
-      } else {
-        this.features[key] = value;
-      }
-    });
-
-    // Validate feature count after adding new features
-    this.validateFeatureCount();
+    // Validate feature count if requested
+    if (validateNow) {
+      this.validateFeatureCount();
+    }
   }
 
   /**
@@ -72,58 +69,55 @@ export class FeatureStore {
     return (this.features[key] as T) ?? defaultValue;
   }
 
-  /**
-   * Get all feature flags
-   *
-   * @returns A copy of all feature flags
-   */
   getAll(): Record<string, FeatureValue> {
     return { ...this.features };
   }
 
-  /**
-   * Check if a feature exists
-   *
-   * @param key The feature key to check
-   * @returns True if the feature exists
-   */
   hasFeature(key: string): boolean {
     return key in this.features;
   }
 
-  /**
-   * Reset all features
-   *
-   * Useful primarily for testing
-   */
   reset(): void {
     this.features = {};
   }
 
-  /**
-   * Log all features for debugging
-   *
-   * @returns A JSON string of all features
-   */
   debug(): string {
     return JSON.stringify(this.features, null, 2);
   }
 
   /**
-   * Initialize features from environment variables
+   * Initialize features from both environment variables and a features string
    *
-   * Loads any environment variable starting with PEPR_FEATURE_
+   * Command-line features (provided in the featuresStr) take precedence over environment variables.
+   *
+   * @param featuresStr Optional comma-separated feature string in format "feature1=value1,feature2=value2"
+   * @param validateNow Whether to validate feature count after loading (default: true)
    */
-  initFromEnv(): void {
+  initialize(featuresStr?: string, validateNow = true): void {
+    // First load from environment variables
     Object.entries(process.env).forEach(([key, value]) => {
       if (key.startsWith("PEPR_FEATURE_")) {
         const featureName = key.replace("PEPR_FEATURE_", "").toLowerCase();
         if (value) {
-          this.parseFromString(`${featureName}=${value}`);
+          // Don't validate for each env var
+          this.addFeature(featureName, value, false);
         }
       }
     });
-    this.validateFeatureCount();
+
+    // Then load from features string (will override env vars with same keys)
+    if (featuresStr) {
+      featuresStr.split(",").forEach(feature => {
+        const [key, value] = feature.split("=");
+        // CLI features override environment variables
+        this.addFeature(key, value, false);
+      });
+    }
+
+    // Validate once after all features are processed if requested
+    if (validateNow) {
+      this.validateFeatureCount();
+    }
   }
 
   /**

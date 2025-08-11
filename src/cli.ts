@@ -34,22 +34,12 @@ program
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
   .option("--features <features>", "Comma-separated feature flags (feature=value)")
   .hook("preAction", thisCommand => {
-    // Initialize feature store from environment variables
+    // Initialize feature store from both environment variables and CLI flags
     try {
-      featureStore.initFromEnv();
+      featureStore.initialize(thisCommand.opts().features);
     } catch (error) {
-      Log.error(error, "Failed to initialize feature store from environment variables:");
+      Log.error(error, "Failed to initialize feature store:");
       process.exit(1);
-    }
-
-    // Command line features take precedence over environment variables
-    if (thisCommand.opts().features) {
-      try {
-        featureStore.parseFromString(thisCommand.opts().features);
-      } catch (error) {
-        Log.error(error, "Failed to initialize feature store from CLI flag:");
-        process.exit(1);
-      }
     }
   })
   .addCommand(crd())
@@ -58,7 +48,7 @@ program
       console.log(banner);
       program.help();
     } else {
-      console.error(`Invalid command '${program.args.join(" ")}'\n`);
+      Log.error(`Invalid command '${program.args.join(" ")}'\n`);
       program.outputHelp();
       process.exitCode = 1;
     }

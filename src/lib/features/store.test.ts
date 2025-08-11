@@ -6,7 +6,6 @@ import { describe, beforeEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
   beforeEach(() => {
-    // Reset the feature store before each test
     featureStore.reset();
   });
 
@@ -37,7 +36,7 @@ describe("FeatureStore", () => {
         },
       },
     ])("should parse $type values", ({ input, expected }) => {
-      featureStore.parseFromString(input);
+      featureStore.initialize(input);
 
       Object.entries(expected).forEach(([key, value]) => {
         expect(featureStore.get(key)).toBe(value);
@@ -49,7 +48,7 @@ describe("FeatureStore", () => {
       const expected = { valid: true };
       const invalidKeys = ["novalue", "noproperty"];
 
-      featureStore.parseFromString(input);
+      featureStore.initialize(input);
 
       Object.entries(expected).forEach(([key, value]) => {
         expect(featureStore.get(key)).toBe(value);
@@ -61,14 +60,14 @@ describe("FeatureStore", () => {
     });
 
     it("should handle empty strings", () => {
-      featureStore.parseFromString("");
+      featureStore.initialize("");
       expect(featureStore.getAll()).toEqual({});
     });
   });
 
   describe("when accessing features", () => {
     beforeEach(() => {
-      featureStore.parseFromString("string=value,number=42,boolean=true");
+      featureStore.initialize("string=value,number=42,boolean=true");
     });
 
     describe("with .get()", () => {
@@ -121,24 +120,106 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("when features are set with environment variables", () => {
-    it("should load features", () => {
+  describe("when loading from environment variables", () => {
+    it("should load features from environment variables", () => {
       // Save original process.env
       const originalEnv = { ...process.env };
-
       try {
-        // Set test environment variables
+        // Set some test environment variables
         process.env.PEPR_FEATURE_TEST1 = "true";
         process.env.PEPR_FEATURE_TEST2 = "42";
         process.env.PEPR_FEATURE_TEST3 = "value";
 
         // Initialize from environment
-        featureStore.initFromEnv();
+        featureStore.initialize();
 
         // Check features were loaded correctly
         expect(featureStore.get("test1")).toBe(true);
         expect(featureStore.get("test2")).toBe(42);
         expect(featureStore.get("test3")).toBe("value");
+      } finally {
+        // Restore original process.env
+        process.env = originalEnv;
+      }
+    });
+  });
+
+  describe("when using unified initialize method", () => {
+    it("should load features from environment variables when no string is provided", () => {
+      // Save original process.env
+      const originalEnv = { ...process.env };
+      try {
+        // Set some test environment variables
+        process.env.PEPR_FEATURE_TEST1 = "true";
+        process.env.PEPR_FEATURE_TEST2 = "42";
+        process.env.PEPR_FEATURE_TEST3 = "value";
+
+        // Initialize from environment only
+        featureStore.initialize();
+
+        // Check features were loaded correctly
+        expect(featureStore.get("test1")).toBe(true);
+        expect(featureStore.get("test2")).toBe(42);
+        expect(featureStore.get("test3")).toBe("value");
+      } finally {
+        // Restore original process.env
+        process.env = originalEnv;
+      }
+    });
+
+    it("should load features from string when no env vars are present", () => {
+      // Save original process.env
+      const originalEnv = { ...process.env };
+      try {
+        // Use initialize with only string parameter
+        featureStore.initialize("feature1=true,feature2=42,feature3=value");
+
+        // Check features were loaded correctly
+        expect(featureStore.get("feature1")).toBe(true);
+        expect(featureStore.get("feature2")).toBe(42);
+        expect(featureStore.get("feature3")).toBe("value");
+      } finally {
+        // Restore original process.env
+        process.env = originalEnv;
+      }
+    });
+
+    it("should allow CLI features to override environment variables", () => {
+      // Save original process.env
+      const originalEnv = { ...process.env };
+      try {
+        // Set some test environment variables
+        process.env.PEPR_FEATURE_TEST1 = "true";
+        process.env.PEPR_FEATURE_TEST2 = "42";
+        process.env.PEPR_FEATURE_TEST3 = "value";
+
+        // Initialize with both env vars and string that overrides TEST2
+        featureStore.initialize("test2=99,feature4=new");
+
+        // Check features were loaded correctly
+        expect(featureStore.get("test1")).toBe(true); // From env
+        expect(featureStore.get("test2")).toBe(99); // Overridden by CLI
+        expect(featureStore.get("test3")).toBe("value"); // From env
+        expect(featureStore.get("feature4")).toBe("new"); // From CLI only
+      } finally {
+        // Restore original process.env
+        process.env = originalEnv;
+      }
+    });
+
+    it("should enforce feature count validation", () => {
+      // Save original process.env
+      const originalEnv = { ...process.env };
+      try {
+        // Set 3 env variables
+        process.env.PEPR_FEATURE_TEST1 = "true";
+        process.env.PEPR_FEATURE_TEST2 = "42";
+        process.env.PEPR_FEATURE_TEST3 = "value";
+
+        // Add 2 more via string to exceed the 4 feature limit
+        expect(() => {
+          featureStore.initialize("feature4=new,feature5=extra");
+        }).toThrow("Too many feature flags active: 5 (maximum: 4)");
       } finally {
         // Restore original process.env
         process.env = originalEnv;
@@ -155,7 +236,7 @@ describe("FeatureStore", () => {
     it("should allow up to 4 feature flags", () => {
       // Should not throw when adding 4 features
       expect(() => {
-        featureStore.parseFromString("feature1=true,feature2=false,feature3=42,feature4=test");
+        featureStore.initialize("feature1=true,feature2=false,feature3=42,feature4=test");
       }).not.toThrow();
 
       // Verify all 4 features were added
@@ -166,24 +247,24 @@ describe("FeatureStore", () => {
       // First add 4 features that should not exceed the limit
       featureStore.reset();
       expect(() => {
-        featureStore.parseFromString("feature1=true,feature2=false,feature3=42,feature4=test");
+        featureStore.initialize("feature1=true,feature2=false,feature3=42,feature4=test");
       }).not.toThrow();
 
       // Now attempt to add a 5th feature, which should throw
       expect(() => {
-        featureStore.parseFromString("feature5=extra");
+        featureStore.initialize("feature5=extra");
       }).toThrow("Too many feature flags active: 5 (maximum: 4)");
     });
 
     it("should validate feature count during direct method calls", () => {
       // Should pass validation with exactly 4 features
       expect(() => {
-        featureStore.parseFromString("feature1=true,feature2=false,feature3=42,feature4=test");
+        featureStore.initialize("feature1=true,feature2=false,feature3=42,feature4=test");
         featureStore.validateFeatureCount();
       }).not.toThrow();
 
       // Reset and create a scenario with too many features
-      // We need to bypass the parseFromString validation to test the direct validateFeatureCount call
+      // We need to bypass the initialize validation to test the direct validateFeatureCount call
       featureStore.reset();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const store = FeatureStore.getInstance() as any; // Use 'any' to access private features
