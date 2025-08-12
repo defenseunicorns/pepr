@@ -64,8 +64,7 @@ export default function (): Command {
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (error) {
-          console.error(`Error creating Pepr module:`, error);
-          process.exit(1);
+          throw new Error(`Error creating Pepr module:`, { cause: error });
         }
       }
     });
