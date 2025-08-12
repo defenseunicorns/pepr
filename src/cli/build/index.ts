@@ -101,7 +101,6 @@ export default function (program: Command): void {
 
       if (opts.registryInfo !== undefined) {
         Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
-        // for journey test to make sure the image is built
 
         // only actually build/push if there are files to include
         await handleCustomImageBuild(

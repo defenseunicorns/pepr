@@ -91,7 +91,7 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
       env: {},
     },
     scripts: {
-      "k3d-setup": scripts["test:journey:k3d"],
+      "k3d-setup": scripts["cluster:k3d"],
     },
     dependencies: {
       pepr: version,

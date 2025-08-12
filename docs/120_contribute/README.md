@@ -87,12 +87,6 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 ### Run Tests Locally
 
-> [!WARNING]
-> Be cautious when creating test cases in `journey/`!**
->
-> - Test cases that capture end-to-end/journey behavior are usually stored in [pepr-excellent-examples](https://github.com/defenseunicorns/pepr-excellent-examples) or run as a Github workflow (`.github/workflows`).
-> - Journey tests established in `journey/` are from an earlier time in project history.
-
 - Run all tests: `npm test`
 
 ### Test a Local Development Version
