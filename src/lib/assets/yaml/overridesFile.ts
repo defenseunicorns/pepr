@@ -60,9 +60,9 @@ export async function overridesFile(
       },
       securityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
-        fsGroup: 65532,
+        fsGroup: image.includes("private") ? 1000 : 65532,
       },
       readinessProbe: {
         httpGet: {
@@ -92,7 +92,7 @@ export async function overridesFile(
       },
       containerSecurityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
         capabilities: {
@@ -128,9 +128,9 @@ export async function overridesFile(
       },
       securityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
-        fsGroup: 65532,
+        fsGroup: image.includes("private") ? 1000 : 65532,
       },
       readinessProbe: {
         httpGet: {
@@ -160,7 +160,7 @@ export async function overridesFile(
       },
       containerSecurityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
         capabilities: {
