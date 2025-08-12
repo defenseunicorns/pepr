@@ -4,7 +4,7 @@
 import { Command } from "commander";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import init from ".";
-import { doPostInitActions } from "./asdf";
+import { createProjectFiles, doPostInitActions, setupProjectStructure } from "./asdf";
 
 vi.mock("./asdf", async () => {
   return {
@@ -23,6 +23,7 @@ vi.mock("prompts", () => {
 
 const promptsSpy = vi.mocked(await import("prompts")).default;
 vi.spyOn(console, "log");
+const genPkgJSONSpy = vi.spyOn(await import("./templates"), "genPkgJSON");
 // vi.mock("../../lib/telemetry/logger", () => ({
 //   __esModule: true,
 //   default: {
@@ -56,6 +57,9 @@ describe("init CLI command", () => {
   ];
   it("should call the Build command with default values", async () => {
     await runProgramWithArgs(defaultArgs);
+    expect(setupProjectStructure).toBeCalled();
+    expect(createProjectFiles).toBeCalled();
+    expect(doPostInitActions).toBeCalled();
   });
 
   type CommonTestCase = {
@@ -84,7 +88,7 @@ describe("init CLI command", () => {
       longFlag: "--description",
     },
     {
-      name: "error-behavior",
+      name: "errorBehavior",
       shortFlag: "-e",
       longFlag: "--error-behavior",
       enumValues: ["audit", "ignore", "reject"],
@@ -131,6 +135,9 @@ describe("init CLI command", () => {
             const args = [...defaultArgs];
             args.splice(args.indexOf(`--${name}`), 2, flag, validOption);
             await runProgramWithArgs(args);
+            expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
+              expect.objectContaining({ [name]: validOption }),
+            );
           },
         );
 
