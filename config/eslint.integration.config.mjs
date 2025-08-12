@@ -19,7 +19,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["integration/testroot", "journey/", "**/node_modules", "**/dist"],
+    ignores: ["integration/testroot", "**/node_modules", "**/dist"],
   },
 
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
