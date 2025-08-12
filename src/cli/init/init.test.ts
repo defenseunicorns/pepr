@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import init from ".";
 import { createProjectFiles, doPostInitActions, setupProjectStructure } from "./asdf";
+import { v4 as uuidv4 } from "uuid";
 
 vi.mock("./asdf", async () => {
   return {
@@ -17,7 +18,7 @@ vi.mock("./asdf", async () => {
 
 vi.mock("prompts", () => {
   return {
-    default: vi.fn().mockImplementation(() => Promise.resolve({ yes: true })),
+    default: vi.fn().mockImplementation(() => Promise.resolve({ yes: true, uuid: "manual-uuid" })),
   };
 });
 
@@ -153,15 +154,60 @@ describe("init CLI command", () => {
       },
     );
 
+    it("should generate a uuid when given an empty string", async () => {
+      const args = replaceArgumentValue(defaultArgs, uuidFlag, "");
+      await runProgramWithArgs(args);
+      expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          uuid: expect.stringMatching(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+          ),
+        }),
+      );
+    });
+
     it.each([
       {
         value: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB",
         error: "The UUID must be 36 characters or fewer.",
         description: "reject long values",
       },
-      // { value: "", error: "Value must be an integer.", description: "reject empty values" },
     ])("should $description: $value", async ({ value, error }) => {
-      await runProgramWithError([uuidFlag, value], error);
+      const args = replaceArgumentValue(defaultArgs, uuidFlag, value);
+      await runProgramWithError(args, error);
+    });
+  });
+
+  describe("when uuid prompt is used", () => {
+    it("should prompt for uuid", async () => {
+      await runProgramWithArgs([
+        ...defaultArgs.filter(arg => arg !== "--uuid").filter(arg => arg !== "test-uuid"),
+      ]);
+      expect(promptsSpy).toBeCalledWith([
+        expect.objectContaining({
+          message: "Enter a unique identifier for the new Pepr module.\n",
+        }),
+      ]);
+      expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ uuid: "manual-uuid" }),
+      );
+    });
+    it("should generate a uuid when given an empty string", async () => {
+      const testUuid = uuidv4();
+      promptsSpy.mockImplementationOnce(() => Promise.resolve({ uuid: testUuid }));
+
+      await runProgramWithArgs([
+        ...defaultArgs.filter(arg => arg !== "--uuid").filter(arg => arg !== "test-uuid"),
+      ]);
+
+      expect(promptsSpy).toBeCalledWith([
+        expect.objectContaining({
+          message: "Enter a unique identifier for the new Pepr module.\n",
+        }),
+      ]);
+      expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ uuid: testUuid }),
+      );
     });
   });
 

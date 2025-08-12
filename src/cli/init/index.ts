@@ -9,6 +9,8 @@ import { ErrorList } from "../../lib/errors";
 import { UUID_LENGTH_LIMIT } from "./enums";
 import { Option } from "commander";
 import { setupProjectStructure, createProjectFiles, doPostInitActions } from "./asdf";
+import { v4 as uuidv4 } from "uuid";
+import Log from "../../lib/telemetry/logger";
 
 export default function (): Command {
   let response = {} as PromptOptions;
@@ -25,6 +27,10 @@ export default function (): Command {
       "-u, --uuid <string>",
       "Unique identifier for your module with a max length of 36 characters.",
       (uuid: string): string => {
+        if (typeof uuid === "undefined" || uuid === "") {
+          uuid = uuidv4();
+          Log.warn(`The UUID was empty. Generated new UUID: '${uuid}'`);
+        }
         if (uuid.length > UUID_LENGTH_LIMIT) {
           throw new Error("The UUID must be 36 characters or fewer.");
         }
