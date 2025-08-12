@@ -8,7 +8,9 @@ import { confirm, PromptOptions, walkthrough } from "./walkthrough";
 import { ErrorList } from "../../lib/errors";
 import { UUID_LENGTH_LIMIT } from "./enums";
 import { Option } from "commander";
-import { setupProjectStructure, createProjectFiles, doPostInitActions } from "./asdf";
+import { setupProjectStructure } from "./setupProjectStructure";
+import { doPostInitActions } from "./doPostInitActions";
+import { createProjectFiles } from "./createProjectFiles";
 import { v4 as uuidv4 } from "uuid";
 import Log from "../../lib/telemetry/logger";
 
@@ -61,10 +63,8 @@ export default function (): Command {
 
           console.log(`New Pepr module created at ${dirName}`);
           console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
-        } catch (e) {
-          if (e instanceof Error) {
-            console.error(`Error creating Pepr module:`, e);
-          }
+        } catch (error) {
+          console.error(`Error creating Pepr module:`, error);
           process.exit(1);
         }
       }

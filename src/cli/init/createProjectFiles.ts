@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { resolve } from "path/posix";
 import {
   peprPackageJSON,
   gitignore,
@@ -12,14 +12,7 @@ import {
   samplesYaml,
   helloPepr,
 } from "./templates";
-import { createDir, write } from "./utils";
-import { resolve } from "path";
-
-export async function setupProjectStructure(dirName: string): Promise<void> {
-  await createDir(dirName);
-  await createDir(resolve(dirName, ".vscode"));
-  await createDir(resolve(dirName, "capabilities"));
-}
+import { write } from "./utils";
 
 export async function createProjectFiles(
   dirName: string,
@@ -50,25 +43,3 @@ export async function createProjectFiles(
     await write(resolve(dirName, file.dir, file.path), file.data);
   }
 }
-
-export const doPostInitActions = (dirName: string): void => {
-  // run npm install from the new directory
-  process.chdir(dirName);
-  execSync("npm install", {
-    stdio: "inherit",
-  });
-
-  // setup git
-  execSync("git init --initial-branch=main", {
-    stdio: "inherit",
-  });
-
-  // try to open vscode
-  try {
-    execSync("code .", {
-      stdio: "inherit",
-    });
-  } catch {
-    console.warn("VSCode was not found, IDE will not automatically open.");
-  }
-};

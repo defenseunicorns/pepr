@@ -4,14 +4,26 @@
 import { Command } from "commander";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import init from ".";
-import { createProjectFiles, doPostInitActions, setupProjectStructure } from "./asdf";
+import { setupProjectStructure } from "./setupProjectStructure";
+import { doPostInitActions } from "./doPostInitActions";
+import { createProjectFiles } from "./createProjectFiles";
 import { v4 as uuidv4 } from "uuid";
 
-vi.mock("./asdf", async () => {
+vi.mock("./setupProjectStructure", async () => {
   return {
-    ...vi.importActual("./asdf"),
+    ...vi.importActual("./setupProjectStructure"),
     setupProjectStructure: vi.fn().mockResolvedValue(undefined),
+  };
+});
+vi.mock("./createProjectFiles", async () => {
+  return {
+    ...vi.importActual("./createProjectFiles"),
     createProjectFiles: vi.fn().mockResolvedValue(undefined),
+  };
+});
+vi.mock("./doPostInitActions", async () => {
+  return {
+    ...vi.importActual("./doPostInitActions"),
     doPostInitActions: vi.fn().mockResolvedValue(undefined),
   };
 });
@@ -61,6 +73,16 @@ describe("init CLI command", () => {
     expect(setupProjectStructure).toBeCalled();
     expect(createProjectFiles).toBeCalled();
     expect(doPostInitActions).toBeCalled();
+    expect(genPkgJSONSpy).toBeCalled();
+  });
+
+  it("should throw an error if module creation fails", async () => {
+    setupProjectStructure.mockImplementationOnce(() => Promise.reject(new Error("an error")));
+    await runProgramWithError(defaultArgs);
+    expect(setupProjectStructure).toBeCalled(); // Changed from not.toBeCalled()
+    expect(createProjectFiles).not.toBeCalled();
+    expect(doPostInitActions).not.toBeCalled();
+    expect(genPkgJSONSpy).not.toBeCalled();
   });
 
   type CommonTestCase = {
