@@ -10,11 +10,10 @@ import { UUID_LENGTH_LIMIT } from "./enums";
 import { Option } from "commander";
 import { setupProjectStructure, createProjectFiles, doPostInitActions } from "./asdf";
 
-export default function (program: Command): void {
+export default function (): Command {
   let response = {} as PromptOptions;
 
-  program
-    .command("init")
+  return new Command("init")
     .description("Initialize a new Pepr Module")
     .option("-d, --description <string>", "Explain the purpose of the new module.")
     .addOption(
