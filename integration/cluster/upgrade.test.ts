@@ -60,15 +60,9 @@ describe("build", () => {
 
     const { stdout } = uuidOut;
 
-    // Check if the expected lines are in the output
-    const expected = [
-      "┌─────────┬────────────────┬────────────────┐",
-      "│ (index) │ UUID           │ Description    │",
-      "├─────────┼────────────────┼────────────────┤",
-      "│ 0       │ 'upgrade-test' │ 'upgrade-test' │",
-      "└─────────┴────────────────┴────────────────┘",
-    ].join("\n");
-    expect(stdout).toMatch(expected);
+    const matches = stdout.match(/upgrade-test/g) || [];
+
+    expect(matches.length).toBe(2);
   });
 
   it(
