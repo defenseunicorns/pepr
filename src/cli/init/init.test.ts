@@ -154,6 +154,32 @@ describe("init CLI command", () => {
     },
   );
 
+  describe.only.each(["--uuid", "-u"])("when the uuid flag is set (%s)", uuidFlag => {
+    it.each([["🚀"], ["asdf"], ["some-uuid"], ["64ef143f-26de-48c8-a338-54a11fd7af16"]])(
+      "should accept a valid uuid (%s)",
+      async uuidValue => {
+        //TODO: clunky
+        const args = [...defaultArgs];
+        args.splice(args.indexOf(`${uuidFlag}`), 2, uuidFlag, uuidValue);
+        await runProgramWithArgs(args);
+        expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ uuid: uuidValue }),
+        );
+      },
+    );
+
+    it.each([
+      {
+        value: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB",
+        error: "The UUID must be 36 characters or fewer.",
+        description: "reject long values",
+      },
+      // { value: "", error: "Value must be an integer.", description: "reject empty values" },
+    ])("should $description: $value", async ({ value, error }) => {
+      await runProgramWithError([uuidFlag, value], error);
+    });
+  });
+
   describe.each([["-s"], ["--skip-post-init"]])("when post-init is skipped via %s", flag => {
     it("should not call doPostInitActions", async () => {
       await runProgramWithArgs([...defaultArgs, flag]);
