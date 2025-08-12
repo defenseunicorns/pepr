@@ -50,7 +50,7 @@ export class Controller {
     const { beforeHook, afterHook, onReady } = hooks;
     this.#config = config;
     this.#capabilities = capabilities;
-    Log.info({ config }, "Controller configuration");
+    Log.debug({ config }, "Controller configuration");
 
     // Initialize the Pepr store for each capability
     new StoreController(capabilities, `pepr-${config.uuid}-store`, () => {
