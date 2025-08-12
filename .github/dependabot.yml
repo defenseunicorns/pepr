@@ -7,6 +7,9 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: daily
+    ignore:
+      - dependency-name: "pino"
+        versions: ["9.8.0"]
     groups:
       production-dependencies:
         dependency-type: "production"
