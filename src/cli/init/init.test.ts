@@ -4,6 +4,7 @@
 import { Command } from "commander";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import init from ".";
+import { doPostInitActions } from "./asdf";
 
 vi.mock("./asdf", async () => {
   return {
@@ -14,6 +15,14 @@ vi.mock("./asdf", async () => {
   };
 });
 
+vi.mock("prompts", () => {
+  return {
+    default: vi.fn().mockImplementation(() => Promise.resolve({ yes: true })),
+  };
+});
+
+const promptsSpy = vi.mocked(await import("prompts")).default;
+vi.spyOn(console, "log");
 // vi.mock("../../lib/telemetry/logger", () => ({
 //   __esModule: true,
 //   default: {
@@ -137,6 +146,31 @@ describe("init CLI command", () => {
       });
     },
   );
+
+  describe.each([["-s"], ["--skip-post-init"]])("when post-init is skipped via %s", flag => {
+    it("should not call doPostInitActions", async () => {
+      await runProgramWithArgs([...defaultArgs, flag]);
+      expect(doPostInitActions).not.toBeCalled();
+    });
+  });
+
+  describe("when verification is used", () => {
+    it("should prompt for verification", async () => {
+      await runProgramWithArgs([...defaultArgs.filter(arg => arg !== "--yes")]);
+      expect(promptsSpy).toBeCalledWith([
+        expect.objectContaining({ message: "Create the new Pepr module?" }),
+      ]);
+      expect(console.log).toBeCalledWith(expect.stringContaining("To be generated:"));
+    });
+  });
+
+  describe.each([["-y"], ["--yes"]])("when verification is skipped via %s", flag => {
+    it("should not prompt for verification", async () => {
+      await runProgramWithArgs([...defaultArgs, flag]);
+      expect(promptsSpy).not.toBeCalled();
+      expect(console.log).not.toBeCalledWith("Create the new Pepr module?");
+    });
+  });
 
   const expectInvalidOption = (outputSpy: MockInstance, options: string[]) => {
     expect(outputSpy).toHaveBeenCalledWith(
