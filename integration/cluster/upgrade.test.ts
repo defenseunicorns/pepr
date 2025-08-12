@@ -7,7 +7,8 @@ import * as fs from "node:fs/promises";
 import { kind, K8s } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
-import { execSync, execFileSync } from "node:child_process";
+import { execSync, execFileSync, spawnSync } from "node:child_process";
+
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 
@@ -49,6 +50,19 @@ describe("build", () => {
         }, "installation");
       },
     );
+  });
+
+  it("should display the UUIDs of the deployed modules with a specific UUID", async () => {
+    const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
+      shell: true, // Run command in a shell
+      encoding: "utf-8", // Encode result as string
+    });
+
+    const { stdout } = uuidOut;
+
+    const matches = stdout.match(/upgrade-test/g) || [];
+
+    expect(matches.length).toBe(2);
   });
 
   it(
