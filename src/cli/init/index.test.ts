@@ -8,6 +8,7 @@ import { setupProjectStructure } from "./setupProjectStructure";
 import { doPostInitActions } from "./doPostInitActions";
 import { createProjectFiles } from "./createProjectFiles";
 import { v4 as uuidv4 } from "uuid";
+import Log from "../../lib/telemetry/logger";
 
 // Auto-mock the modules with single function exports
 vi.mock("./setupProjectStructure");
@@ -24,15 +25,18 @@ vi.mock("prompts", () => {
 });
 
 const promptsSpy = vi.mocked(await import("prompts")).default;
-vi.spyOn(console, "error");
-vi.spyOn(console, "log");
+vi.spyOn(console, "log").mockImplementation(() => {
+  vi.fn();
+});
 const genPkgJSONSpy = vi.spyOn(await import("./templates"), "genPkgJSON");
-// vi.mock("../../lib/telemetry/logger", () => ({
-//   __esModule: true,
-//   default: {
-//     info: vi.fn(),
-//   },
-// }));
+
+vi.mock("../../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
 
 describe("init CLI command", () => {
   let program: Command;
@@ -77,11 +81,11 @@ describe("init CLI command", () => {
     expect(createProjectFiles).toBeCalled();
     expect(doPostInitActions).toBeCalled();
     expect(genPkgJSONSpy).toBeCalled();
-    expect(console.log).toBeCalledWith(expect.stringContaining("Creating new Pepr module..."));
-    expect(console.log).toBeCalledWith(
+    expect(Log.info).toBeCalledWith(expect.stringContaining("Creating new Pepr module..."));
+    expect(Log.info).toBeCalledWith(
       expect.stringContaining("New Pepr module created at test-name"),
     );
-    expect(console.log).toBeCalledWith(
+    expect(Log.info).toBeCalledWith(
       expect.stringContaining("Open VSCode or your editor of choice in test-name to get started!"),
     );
   });
@@ -268,7 +272,7 @@ describe("init CLI command", () => {
     it("should not prompt for verification", async () => {
       await runProgramWithArgs([...defaultLongArgs, flag]);
       expect(promptsSpy).not.toBeCalled();
-      expect(console.log).not.toBeCalledWith("Create the new Pepr module?");
+      expect(Log.info).not.toBeCalledWith("Create the new Pepr module?");
     });
   });
 

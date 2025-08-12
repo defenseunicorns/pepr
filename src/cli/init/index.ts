@@ -51,7 +51,7 @@ export default function (): Command {
       const confirmed = await confirm(dirName, packageJSON, peprTSTemplate.path, opts.yes);
 
       if (confirmed) {
-        console.log("Creating new Pepr module...");
+        Log.info("Creating new Pepr module...");
 
         try {
           await setupProjectStructure(dirName);
@@ -61,8 +61,8 @@ export default function (): Command {
             doPostInitActions(dirName);
           }
 
-          console.log(`New Pepr module created at ${dirName}`);
-          console.log(`Open VSCode or your editor of choice in ${dirName} to get started!`);
+          Log.info(`New Pepr module created at ${dirName}`);
+          Log.info(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (error) {
           throw new Error(`Error creating Pepr module:`, { cause: error });
         }
