@@ -70,17 +70,6 @@ describe("init CLI command", () => {
     invalidEnumValues?: string[];
   };
 
-  //TODO: A boolean flag test
-  // {
-  //   name: "skip-post-init",
-  //   shortFlag: "-s",
-  //   longFlag: "--skip-post-init",
-  // },
-  // {
-  //   name: "yes",
-  //   shortFlag: "-y",
-  //   longFlag: "--yes",
-  // },
   const flagTestCases: CommonTestCase[] = [
     {
       name: "description",
@@ -131,9 +120,7 @@ describe("init CLI command", () => {
         it.each(enumValues?.map(opt => [opt]) ?? [])(
           `should accept '%s' as the ${name} value`,
           async validOption => {
-            //TODO: clunky
-            const args = [...defaultArgs];
-            args.splice(args.indexOf(`--${name}`), 2, flag, validOption);
+            const args = replaceArgumentValue(defaultArgs, flag, validOption);
             await runProgramWithArgs(args);
             expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
               expect.objectContaining({ [name]: validOption }),
@@ -154,13 +141,11 @@ describe("init CLI command", () => {
     },
   );
 
-  describe.only.each(["--uuid", "-u"])("when the uuid flag is set (%s)", uuidFlag => {
+  describe.each(["--uuid", "-u"])("when the uuid flag is set (%s)", uuidFlag => {
     it.each([["🚀"], ["asdf"], ["some-uuid"], ["64ef143f-26de-48c8-a338-54a11fd7af16"]])(
       "should accept a valid uuid (%s)",
       async uuidValue => {
-        //TODO: clunky
-        const args = [...defaultArgs];
-        args.splice(args.indexOf(`${uuidFlag}`), 2, uuidFlag, uuidValue);
+        const args = replaceArgumentValue(defaultArgs, uuidFlag, uuidValue);
         await runProgramWithArgs(args);
         expect(genPkgJSONSpy).toHaveBeenCalledExactlyOnceWith(
           expect.objectContaining({ uuid: uuidValue }),
@@ -219,6 +204,17 @@ describe("init CLI command", () => {
       expect.stringMatching(/error: option .* argument missing/),
     );
   };
+
+  const replaceArgumentValue = (
+    currentArgs: string[],
+    argFlag: string,
+    newValue: string,
+  ): string[] => {
+    const newArgs = [...currentArgs];
+    newArgs.splice(currentArgs.indexOf(`${argFlag}`), 2, argFlag, newValue);
+    return newArgs;
+  };
+
   const runProgramWithArgs = async (args: string[]) => {
     await program.parseAsync(["init", ...args], { from: "user" });
   };
