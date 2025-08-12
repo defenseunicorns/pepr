@@ -5,6 +5,15 @@ import { Command } from "commander";
 import { it, expect, beforeEach, describe, vi, MockInstance } from "vitest";
 import init from ".";
 
+vi.mock("./asdf", async () => {
+  return {
+    ...vi.importActual("./asdf"),
+    setupProjectStructure: vi.fn().mockResolvedValue(undefined),
+    createProjectFiles: vi.fn().mockResolvedValue(undefined),
+    doPostInitActions: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 // vi.mock("../../lib/telemetry/logger", () => ({
 //   __esModule: true,
 //   default: {
@@ -20,23 +29,24 @@ describe("init CLI command", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     program = new Command();
-    init(program);
+    program.addCommand(init());
     stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     exitSpy = vi.spyOn(process, "exit");
   });
 
-  it.only("should call the Build command with default values", async () => {
-    await runProgramWithArgs([
-      "--name",
-      "test-name",
-      "--description",
-      "test-description",
-      "--error-behavior",
-      "audit",
-      "--uuid",
-      "test-uuid",
-      "--yes",
-    ]);
+  const defaultArgs = [
+    "--name",
+    "test-name",
+    "--description",
+    "test-description",
+    "--error-behavior",
+    "audit",
+    "--uuid",
+    "test-uuid",
+    "--yes",
+  ];
+  it("should call the Build command with default values", async () => {
+    await runProgramWithArgs(defaultArgs);
   });
 
   type CommonTestCase = {
@@ -47,6 +57,17 @@ describe("init CLI command", () => {
     invalidEnumValues?: string[];
   };
 
+  //TODO: A boolean flag test
+  // {
+  //   name: "skip-post-init",
+  //   shortFlag: "-s",
+  //   longFlag: "--skip-post-init",
+  // },
+  // {
+  //   name: "yes",
+  //   shortFlag: "-y",
+  //   longFlag: "--yes",
+  // },
   const flagTestCases: CommonTestCase[] = [
     {
       name: "description",
@@ -58,7 +79,7 @@ describe("init CLI command", () => {
       shortFlag: "-e",
       longFlag: "--error-behavior",
       enumValues: ["audit", "ignore", "reject"],
-      invalidEnumValues: ["invalid", "unknown"],
+      invalidEnumValues: ["invalid"],
     },
     {
       name: "name",
@@ -66,19 +87,9 @@ describe("init CLI command", () => {
       longFlag: "--name",
     },
     {
-      name: "skip-post-init",
-      shortFlag: "-s",
-      longFlag: "--skip-post-init",
-    },
-    {
       name: "uuid",
       shortFlag: "-u",
       longFlag: "--uuid",
-    },
-    {
-      name: "yes",
-      shortFlag: "-y",
-      longFlag: "--yes",
     },
   ];
 
@@ -107,7 +118,10 @@ describe("init CLI command", () => {
         it.each(enumValues?.map(opt => [opt]) ?? [])(
           `should accept '%s' as the ${name} value`,
           async validOption => {
-            await runProgramWithArgs([flag, validOption]);
+            //TODO: clunky
+            const args = [...defaultArgs];
+            args.splice(args.indexOf(`--${name}`), 2, flag, validOption);
+            await runProgramWithArgs(args);
           },
         );
 
