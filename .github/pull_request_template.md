@@ -18,5 +18,5 @@ Relates to #
 - [ ] Other (security config, docs update, etc)
 
 ## Checklist before merging
-- [ ] Unit, [Journey](https://github.com/defenseunicorns/pepr/tree/main/journey), [E2E Tests](https://github.com/defenseunicorns/pepr-excellent-examples), [docs](https://github.com/defenseunicorns/pepr/tree/main/docs), [adr](https://github.com/defenseunicorns/pepr/tree/main/adr) added or updated as needed
+- [ ] Unit, Integration, [docs](https://github.com/defenseunicorns/pepr/tree/main/docs), [adr](https://github.com/defenseunicorns/pepr/tree/main/adr) added or updated as needed
 - [ ] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed

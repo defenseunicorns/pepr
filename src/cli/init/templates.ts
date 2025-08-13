@@ -3,7 +3,6 @@
 
 import { dumpYaml } from "@kubernetes/client-node";
 import { inspect } from "util";
-import { v4 as uuidv4 } from "uuid";
 import { readFileSync } from "fs";
 import path from "path";
 
@@ -50,8 +49,7 @@ export type peprPackageJSON = {
 };
 
 export function genPkgJSON(opts: InitOptions): peprPackageJSON {
-  // Generate a random UUID for the module based on the module name if it is not provided
-  const uuid = !opts.uuid ? uuidv4() : opts.uuid;
+  const uuid = opts.uuid;
   // Generate a name for the module based on the module name
   const name = sanitizeName(opts.name);
   // Make typescript a dev dependency
@@ -91,7 +89,7 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
       env: {},
     },
     scripts: {
-      "k3d-setup": scripts["test:journey:k3d"],
+      "k3d-setup": scripts["cluster:k3d"],
     },
     dependencies: {
       pepr: version,
