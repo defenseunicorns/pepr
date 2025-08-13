@@ -63,7 +63,7 @@ describe("Published package does not include unintended files", () => {
 
     const latestFileCount = await getPublishedFileCount("pepr");
     const diff = Math.abs(packedFiles.length - latestFileCount);
-    const warnThreshold = 15;
+    const warnThreshold = 18;
     if (diff > warnThreshold) {
       const message = `[WARN] Expected file count to be within ${warnThreshold} of the last build, but got difference of ${diff} (this build: ${packedFiles.length}, latest: ${latestFileCount}).
       If this is intentional, increase the 'warnThreshold' in this unit test.

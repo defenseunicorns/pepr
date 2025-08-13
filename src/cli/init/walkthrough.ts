@@ -33,6 +33,9 @@ async function setUUID(uuid?: string): Promise<Answers<string>> {
     name: "uuid",
     message: "Enter a unique identifier for the new Pepr module.\n",
     validate: (val: string) => {
+      if (typeof val === "undefined" || val === "") {
+        return "The UUID must be at least 1 character long";
+      }
       return (
         val.length <= UUID_LENGTH_LIMIT ||
         `The UUID must be ${UUID_LENGTH_LIMIT} characters or fewer.`

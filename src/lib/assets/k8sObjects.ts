@@ -85,9 +85,9 @@ export function getWatcher(
           serviceAccountName: name,
           securityContext: {
             runAsUser: image.includes("private") ? 1000 : 65532,
-            runAsGroup: 65532,
+            runAsGroup: image.includes("private") ? 1000 : 65532,
             runAsNonRoot: true,
-            fsGroup: 65532,
+            fsGroup: image.includes("private") ? 1000 : 65532,
           },
           containers: [
             {
@@ -128,7 +128,7 @@ export function getWatcher(
               },
               securityContext: {
                 runAsUser: image.includes("private") ? 1000 : 65532,
-                runAsGroup: 65532,
+                runAsGroup: image.includes("private") ? 1000 : 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
                 capabilities: {
@@ -228,9 +228,9 @@ export function getDeployment(
           serviceAccountName: name,
           securityContext: {
             runAsUser: image.includes("private") ? 1000 : 65532,
-            runAsGroup: 65532,
+            runAsGroup: image.includes("private") ? 1000 : 65532,
             runAsNonRoot: true,
-            fsGroup: 65532,
+            fsGroup: image.includes("private") ? 1000 : 65532,
           },
           containers: [
             {
@@ -272,7 +272,7 @@ export function getDeployment(
               env: genEnv(config),
               securityContext: {
                 runAsUser: image.includes("private") ? 1000 : 65532,
-                runAsGroup: 65532,
+                runAsGroup: image.includes("private") ? 1000 : 65532,
                 runAsNonRoot: true,
                 allowPrivilegeEscalation: false,
                 capabilities: {

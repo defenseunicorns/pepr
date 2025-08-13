@@ -30,6 +30,7 @@ program
   .version(version)
   .description(`Pepr (v${version}) - Type safe K8s middleware for humans`)
   .addCommand(crd())
+  .addCommand(init())
   .action(() => {
     if (program.args.length < 1) {
       console.log(banner);
@@ -41,7 +42,6 @@ program
     }
   });
 
-init(program);
 build(program);
 deploy(program);
 dev(program);
