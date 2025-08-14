@@ -4,6 +4,9 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 import { resolveIgnoreNamespaces } from "../ignoredNamespaces";
+import { quicktype, InputData, jsonInputForTargetLanguage } from "quicktype-core";
+import yaml from "js-yaml";
+
 export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
@@ -181,6 +184,27 @@ export async function overridesFile(
       },
     },
   };
-
+  /** write values.schema.yaml */
+  await writeSchemaYamlFromObject(JSON.stringify(overrides, null, 2), path);
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
+}
+
+export async function writeSchemaYamlFromObject(
+  valuesString: string,
+  valuesFilePath: string,
+): Promise<void> {
+  const schemaPath = valuesFilePath.replace(/\.yaml$/, ".schema.yaml");
+  const jsonInput = jsonInputForTargetLanguage("schema");
+  await jsonInput.addSource({ name: "Values", samples: [valuesString] });
+
+  const inputData = new InputData();
+  inputData.addInput(jsonInput);
+
+  const { lines } = await quicktype({ inputData, lang: "schema" });
+
+  const schemaJson = lines.join("\n");
+  const schemaObj = JSON.parse(schemaJson);
+  const schemaYaml = yaml.dump(schemaObj, { noRefs: true, forceQuotes: false });
+
+  await fs.writeFile(schemaPath, schemaYaml, "utf8");
 }
