@@ -210,7 +210,7 @@ describe("overridesFile", () => {
     expect(parsedYaml.watcher.enabled).toBe(true);
   });
 
-  it("writes a valid schema.yaml alongside values.yaml", async () => {
+  it("writes a valid schema.json alongside values.yaml", async () => {
     const valuesString = JSON.stringify(
       {
         name: "test",
@@ -224,32 +224,27 @@ describe("overridesFile", () => {
     );
 
     const valuesFilePath = "/tmp/values.yaml";
-    const expectedSchemaPath = "/tmp/values.schema.yaml";
+    const expectedSchemaPath = "/tmp/values.schema.json";
 
     await writeSchemaYamlFromObject(valuesString, valuesFilePath);
 
-    expect(fs.writeFile).toHaveBeenCalledWith(
-      expectedSchemaPath,
-      expect.stringContaining("type: object"),
-      "utf8",
+    const jsonCall = (fs.writeFile as Mock).mock.calls.find(
+      ([path]) => path === expectedSchemaPath,
     );
 
-    const yamlString = (fs.writeFile as Mock).mock.calls.find(
-      ([path]) => path === expectedSchemaPath,
-    )?.[1];
+    expect(jsonCall).toBeDefined();
 
-    expect(typeof yamlString).toBe("string");
+    const [, writtenSchema] = jsonCall!;
+    expect(typeof writtenSchema).toBe("string");
 
-    const rawYaml = loadYaml(yamlString as string);
-    if (typeof rawYaml !== "object" || rawYaml === null) {
-      throw new Error("Parsed schema is not an object");
-    }
+    const parsedSchema = JSON.parse(writtenSchema as string) as JSONSchema7;
 
-    const parsedSchema = rawYaml as JSONSchema7;
-
+    // Validate root structure
     expect(parsedSchema.$ref).toBe("#/definitions/Values");
 
-    expect(parsedSchema.definitions?.Values).toMatchObject({
+    // Validate Values definition
+    const valuesDef = parsedSchema.definitions?.Values as JSONSchema7;
+    expect(valuesDef).toMatchObject({
       type: "object",
       properties: {
         name: { type: "string" },
@@ -260,11 +255,18 @@ describe("overridesFile", () => {
       },
     });
 
-    expect(parsedSchema.definitions?.Features).toMatchObject({
+    expect(valuesDef.required).toEqual(expect.arrayContaining(["name", "version", "features"]));
+    expect(valuesDef.required).toHaveLength(3);
+
+    const featuresDef = parsedSchema.definitions?.Features as JSONSchema7;
+    expect(featuresDef).toMatchObject({
       type: "object",
       properties: {
         enabled: { type: "boolean" },
       },
     });
+
+    expect(featuresDef.required).toEqual(expect.arrayContaining(["enabled"]));
+    expect(featuresDef.required).toHaveLength(1);
   });
 });

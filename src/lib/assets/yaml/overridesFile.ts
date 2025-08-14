@@ -5,7 +5,6 @@ import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 import { resolveIgnoreNamespaces } from "../ignoredNamespaces";
 import { quicktype, InputData, jsonInputForTargetLanguage } from "quicktype-core";
-import yaml from "js-yaml";
 
 export type ChartOverrides = {
   apiPath: string;
@@ -193,7 +192,7 @@ export async function writeSchemaYamlFromObject(
   valuesString: string,
   valuesFilePath: string,
 ): Promise<void> {
-  const schemaPath = valuesFilePath.replace(/\.yaml$/, ".schema.yaml");
+  const schemaPath = valuesFilePath.replace(/\.yaml$/, ".schema.json");
   const jsonInput = jsonInputForTargetLanguage("schema");
   await jsonInput.addSource({ name: "Values", samples: [valuesString] });
 
@@ -204,7 +203,6 @@ export async function writeSchemaYamlFromObject(
 
   const schemaJson = lines.join("\n");
   const schemaObj = JSON.parse(schemaJson);
-  const schemaYaml = yaml.dump(schemaObj, { noRefs: true, forceQuotes: false });
 
-  await fs.writeFile(schemaPath, schemaYaml, "utf8");
+  await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
 }
