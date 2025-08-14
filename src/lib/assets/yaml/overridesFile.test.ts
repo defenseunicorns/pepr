@@ -3,11 +3,12 @@
 
 import { expect, describe, it, vi, type Mock, beforeEach } from "vitest";
 import { promises as fs } from "fs";
-import { overridesFile } from "./overridesFile";
+import { overridesFile, writeSchemaYamlFromObject } from "./overridesFile";
 import type { ChartOverrides } from "./overridesFile";
 import { load as loadYaml } from "js-yaml";
 import { ModuleConfig } from "../../types";
 import { V1PolicyRule } from "@kubernetes/client-node";
+import type { JSONSchema7 } from "json-schema";
 
 vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
@@ -97,12 +98,16 @@ describe("overridesFile", () => {
   it("writes a valid YAML file with expected contents", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
 
+    expect(yamlCall).toBeDefined();
+
+    const [writtenPath, writtenContent] = yamlCall!;
     expect(writtenPath).toBe(mockPath);
-
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
     expect(parsedYaml.imagePullSecrets).toEqual(["secret1", "secret2"]);
     expect(parsedYaml.hash).toBe(mockOverrides.hash);
     expect(parsedYaml.admission.image).toBe(mockOverrides.image);
@@ -119,9 +124,14 @@ describe("overridesFile", () => {
     mockOverrides.config.onError = "ignore";
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
 
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+
+    expect(yamlCall).toBeDefined();
+
+    const [writtenPath, writtenContent] = yamlCall!;
     expect(writtenPath).toBe(mockPath);
 
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
@@ -133,9 +143,14 @@ describe("overridesFile", () => {
     mockOverrides.config.description = "";
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    const [[writtenPath, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
 
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+
+    expect(yamlCall).toBeDefined();
+
+    const [writtenPath, writtenContent] = yamlCall!;
     expect(writtenPath).toBe(mockPath);
 
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
@@ -146,7 +161,7 @@ describe("overridesFile", () => {
   it("properly encodes apiPath in base64", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    const [, [, writtenContent]] = (fs.writeFile as Mock).mock.calls;
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
@@ -155,8 +170,9 @@ describe("overridesFile", () => {
   it("sets admission and watcher to enabled by default", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
-    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
-    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const writtenYaml = calls.find(([path]) => path.endsWith("overrides.yaml"))?.[1];
+    const parsedYaml = loadYaml(writtenYaml as string) as OverridesFileSchema;
 
     expect(parsedYaml.admission.enabled).toBe(true);
     expect(parsedYaml.watcher.enabled).toBe(true);
@@ -168,8 +184,9 @@ describe("overridesFile", () => {
       watcher: false,
     });
 
-    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
-    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const writtenYaml = calls.find(([path]) => path.endsWith("overrides.yaml"))?.[1];
+    const parsedYaml = loadYaml(writtenYaml as string) as OverridesFileSchema;
 
     expect(parsedYaml.admission.enabled).toBe(true);
     expect(parsedYaml.watcher.enabled).toBe(false);
@@ -181,10 +198,75 @@ describe("overridesFile", () => {
       watcher: true,
     });
 
-    const [[, writtenContent]] = (fs.writeFile as Mock).mock.calls;
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+
+    expect(yamlCall).toBeDefined();
+
+    const [, writtenContent] = yamlCall!;
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
     expect(parsedYaml.admission.enabled).toBe(false);
     expect(parsedYaml.watcher.enabled).toBe(true);
+  });
+
+  it("writes a valid schema.json alongside values.yaml", async () => {
+    const valuesString = JSON.stringify(
+      {
+        name: "test",
+        version: 1,
+        features: {
+          enabled: true,
+        },
+      },
+      null,
+      2,
+    );
+
+    const valuesFilePath = "/tmp/values.yaml";
+    const expectedSchemaPath = "/tmp/values.schema.json";
+
+    await writeSchemaYamlFromObject(valuesString, valuesFilePath);
+
+    const jsonCall = (fs.writeFile as Mock).mock.calls.find(
+      ([path]) => path === expectedSchemaPath,
+    );
+
+    expect(jsonCall).toBeDefined();
+
+    const [, writtenSchema] = jsonCall!;
+    expect(typeof writtenSchema).toBe("string");
+
+    const parsedSchema = JSON.parse(writtenSchema as string) as JSONSchema7;
+
+    // Validate root structure
+    expect(parsedSchema.$ref).toBe("#/definitions/Values");
+
+    // Validate Values definition
+    const valuesDef = parsedSchema.definitions?.Values as JSONSchema7;
+    expect(valuesDef).toMatchObject({
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        version: { type: "integer" },
+        features: {
+          $ref: "#/definitions/Features",
+        },
+      },
+    });
+
+    expect(valuesDef.required).toEqual(expect.arrayContaining(["name", "version", "features"]));
+    expect(valuesDef.required).toHaveLength(3);
+
+    const featuresDef = parsedSchema.definitions?.Features as JSONSchema7;
+    expect(featuresDef).toMatchObject({
+      type: "object",
+      properties: {
+        enabled: { type: "boolean" },
+      },
+    });
+
+    expect(featuresDef.required).toEqual(expect.arrayContaining(["enabled"]));
+    expect(featuresDef.required).toHaveLength(1);
   });
 });

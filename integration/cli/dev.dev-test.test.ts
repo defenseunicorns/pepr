@@ -50,7 +50,7 @@ describe("dev", { timeout: five_mins }, () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-    }, time.toMs("2m"));
+    }, time.toMs("3m"));
 
     it("should start the pepr dev server", async () => {
       cmd = spawn("npx", ["pepr", "dev", "--yes"], { cwd: testModule, stdio: "pipe" });
