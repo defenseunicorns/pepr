@@ -12,6 +12,7 @@ import { loadModule } from "./build/loadModule";
 import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
+import Log from "../lib/telemetry/logger";
 
 export default function (program: Command): void {
   program
@@ -61,7 +62,7 @@ export default function (program: Command): void {
 
         // Run the processed javascript file
         const runFork = async (): Promise<void> => {
-          console.info(`Running module ${path}`);
+          Log.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
           await webhook.deploy(deployWebhook, false, 30);
@@ -70,7 +71,7 @@ export default function (program: Command): void {
             // wait for capabilities to be loaded and test names
             validateCapabilityNames(webhook.capabilities);
           } catch (error) {
-            console.error(
+            Log.error(
               `CapabilityValidation Error - Unable to valide capability name(s) in: '${webhook.capabilities.map(item => item.name)}'\n${error}`,
             );
             process.exit(1);
@@ -100,13 +101,13 @@ export default function (program: Command): void {
 
           // listen for CTRL+C and remove webhooks
           process.on("SIGINT", () => {
-            console.debug(`Received SIGINT, removing webhooks`);
+            Log.debug(`Received SIGINT, removing webhooks`);
           });
         };
 
         await buildModule("dist", async r => {
           if (r.errors.length > 0) {
-            console.error(`Error compiling module: ${r.errors}`);
+            Log.error(`Error compiling module: ${r.errors}`);
             return;
           }
 
@@ -118,7 +119,7 @@ export default function (program: Command): void {
           }
         });
       } catch (e) {
-        console.error(`Error deploying module:`, e);
+        Log.error(`Error deploying module:`, e);
         process.exit(1);
       }
     });
