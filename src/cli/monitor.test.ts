@@ -12,7 +12,16 @@ import monitor, {
   createLogStream,
   processLogLine,
 } from "./monitor";
-import { Log } from "@kubernetes/client-node";
+import Log from "../lib/telemetry/logger";
+import { Log as K8sLog } from "@kubernetes/client-node";
+
+vi.mock("../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 const mockLogFn = vi.fn();
 const mockLoadFromDefault = vi.fn();
@@ -97,7 +106,7 @@ describe("monitor command", () => {
     monitor(program);
 
     vi.spyOn({ getK8sLogFromKubeConfig }, "getK8sLogFromKubeConfig").mockReturnValue(
-      mockLogInstance as unknown as Log,
+      mockLogInstance as unknown as K8sLog,
     );
     vi.spyOn({ createLogStream }, "createLogStream").mockReturnValue(mockLogStream);
   });
@@ -156,10 +165,10 @@ describe("getLabelsAndErrorMessage", () => {
 });
 
 describe("processMutateLog", () => {
-  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+  let logSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    logSpy = vi.spyOn(Log, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -180,8 +189,8 @@ describe("processMutateLog", () => {
       "test-uid",
     );
 
-    expect(consoleLogSpy).toHaveBeenCalledWith("\n🔀  MUTATE     test-name (test-uid)");
-    expect(consoleLogSpy).toHaveBeenCalledWith(
+    expect(logSpy).toHaveBeenCalledWith("\n🔀  MUTATE     test-name (test-uid)");
+    expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining(JSON.stringify({ key: "value" }, null, 2)),
     );
   });
@@ -200,16 +209,16 @@ describe("processMutateLog", () => {
       "test-uid",
     );
 
-    expect(consoleLogSpy).toHaveBeenCalledWith("\n🚫  MUTATE     test-name (test-uid)");
-    expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining("{"));
+    expect(logSpy).toHaveBeenCalledWith("\n🚫  MUTATE     test-name (test-uid)");
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining("{"));
   });
 });
 
 describe("processValidateLog", () => {
-  let consoleLogSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
+  let logSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    logSpy = vi.spyOn(Log, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -219,8 +228,8 @@ describe("processValidateLog", () => {
   it("should log a successful validation", () => {
     processValidateLog(payload, "test-name", "test-uid");
 
-    expect(consoleLogSpy).toHaveBeenCalledWith("\n✅  VALIDATE   test-name (test-uid)");
-    expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining("❌"));
+    expect(logSpy).toHaveBeenCalledWith("\n✅  VALIDATE   test-name (test-uid)");
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining("❌"));
   });
 
   it("should log a validation failure with error messages", () => {
@@ -237,8 +246,8 @@ describe("processValidateLog", () => {
       "test-uid",
     );
 
-    expect(consoleLogSpy).toHaveBeenCalledWith("\n❌  VALIDATE   test-name (test-uid)");
-    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Failure message 1"));
+    expect(logSpy).toHaveBeenCalledWith("\n❌  VALIDATE   test-name (test-uid)");
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("Failure message 1"));
   });
 });
 
@@ -246,7 +255,7 @@ describe("processLogLine", () => {
   let logSpy: MockInstance<(message?: unknown, ...optionalParams: unknown[]) => void>;
 
   beforeEach(() => {
-    logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    logSpy = vi.spyOn(Log, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
