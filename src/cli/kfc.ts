@@ -3,7 +3,7 @@
 
 import { execSync } from "child_process";
 import prompt from "prompts";
-
+import Log from "../lib/telemetry/logger";
 import { Command } from "commander";
 
 export default function (program: Command): void {
@@ -42,7 +42,7 @@ export default function (program: Command): void {
           stdio: "inherit",
         });
       } catch (e) {
-        console.error(`Error creating CRD generated class:`, e);
+        Log.error(`Error creating CRD generated class:`, e);
         process.exit(1);
       }
     });

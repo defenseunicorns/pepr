@@ -16,9 +16,9 @@ import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
-
+import Log from "./lib/telemetry/logger";
 if (process.env.npm_lifecycle_event !== "npx") {
-  console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
+  Log.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 
 const program = new Command();
@@ -33,10 +33,10 @@ program
   .addCommand(init())
   .action(() => {
     if (program.args.length < 1) {
-      console.log(banner);
+      Log.info(banner);
       program.help();
     } else {
-      console.error(`Invalid command '${program.args.join(" ")}'\n`);
+      Log.error(`Invalid command '${program.args.join(" ")}'\n`);
       program.outputHelp();
       process.exitCode = 1;
     }

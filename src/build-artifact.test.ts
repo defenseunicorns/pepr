@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
 import { describe, beforeAll, it, expect } from "vitest";
 import { execSync } from "child_process";
 
