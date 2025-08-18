@@ -5,6 +5,8 @@ import {
   AdmissionregistrationV1WebhookClientConfig as AdmissionRegnV1WebhookClientCfg,
   V1LabelSelectorRequirement,
   V1RuleWithOperations,
+  V1MutatingWebhookConfiguration,
+  V1ValidatingWebhookConfiguration,
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
@@ -110,7 +112,7 @@ export async function webhookConfigGenerator(
     return null;
   }
 
-  return {
+  const webhookConfig = {
     apiVersion: "admissionregistration.k8s.io/v1",
     kind: isMutate ? "MutatingWebhookConfiguration" : "ValidatingWebhookConfiguration",
     metadata: { name },
@@ -131,4 +133,54 @@ export async function webhookConfigGenerator(
       },
     ],
   };
+
+  // If additional webhooks are specified, add them to the config
+  if (config.additionalWebhooks) {
+    return configureAdditionalWebhooks(webhookConfig, config.additionalWebhooks);
+  }
+
+  return webhookConfig;
+}
+
+export function configureAdditionalWebhooks(
+  webhookConfig: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration,
+  additionalWebhooks: {
+    failurePolicy: "Fail" | "Ignore";
+    namespace: string;
+  }[],
+): V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration {
+  if (!additionalWebhooks || additionalWebhooks.length === 0) {
+    return webhookConfig;
+  }
+  // set the ignored namespace to the additional webhook namespaces
+  const webhooks = webhookConfig.webhooks ?? [];
+  if (webhooks.length === 0) {
+    return webhookConfig;
+  }
+  const expr = webhooks[0]!.namespaceSelector!.matchExpressions![0]!;
+  expr.values!.push(...additionalWebhooks.map(w => w.namespace));
+
+  additionalWebhooks.forEach(additionalWebhook => {
+    webhooks.push({
+      name: `${webhookConfig.metadata!.name}-${additionalWebhook.namespace}.pepr.dev`,
+      admissionReviewVersions: ["v1", "v1beta1"],
+      clientConfig: webhooks[0]!.clientConfig,
+      failurePolicy: additionalWebhook.failurePolicy,
+      matchPolicy: "Equivalent",
+      timeoutSeconds: webhooks[0]!.timeoutSeconds,
+      namespaceSelector: {
+        matchExpressions: [
+          {
+            key: "kubernetes.io/metadata.name",
+            operator: "In",
+            values: [additionalWebhook.namespace],
+          },
+        ],
+      },
+      rules: webhooks[0].rules,
+      sideEffects: "None",
+    });
+  });
+
+  return webhookConfig;
 }
