@@ -7,6 +7,16 @@ import { promises as fs } from "fs";
 import prompts from "prompts";
 import devCommand from "./dev";
 import { EventEmitter } from "events";
+import Log from "../lib/telemetry/logger";
+
+vi.mock("../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
@@ -125,7 +135,7 @@ describe("dev command", () => {
   });
 
   it("should log error if buildModule has errors", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
     const { buildModule } = await import("./build/buildModule");
     (buildModule as Mock).mockImplementationOnce(async (_, cb) => {
       await cb({ errors: ["error"] });
@@ -142,7 +152,7 @@ describe("dev command", () => {
       throw new Error("validation failed");
     });
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
     const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exit");
     });
@@ -158,7 +168,7 @@ describe("dev command", () => {
     const { validateCapabilityNames } = await import("../lib/helpers");
     (validateCapabilityNames as Mock).mockImplementation(() => {});
 
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const debugSpy = vi.spyOn(Log, "debug").mockImplementation(() => {});
     const processOnSpy = vi.spyOn(process, "on");
 
     await program.parseAsync(["dev", "--yes"], { from: "user" });
