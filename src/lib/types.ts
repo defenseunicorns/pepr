@@ -296,6 +296,13 @@ export type ModuleConfig = {
   watch?: {
     alwaysIgnore: WebhookIgnore;
   };
+  /** Additional webhooks config to be used by the module */
+  additionalWebhooks?: [
+    {
+      failurePolicy: "Fail" | "Ignore";
+      namespace: string;
+    },
+  ];
 } & Partial<ModuleConfigOptions>;
 
 export type PackageJSON = {

@@ -6,6 +6,7 @@ import {
   validateRule,
   generateWebhookRules,
   webhookConfigGenerator,
+  configureAdditionalWebhooks,
 } from "./webhooks";
 import { Event, WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
@@ -359,5 +360,93 @@ describe("Webhook Management", () => {
       expect(peprIgnoreNamespaces[0]).toEqual("kube-system");
       expect(peprIgnoreNamespaces[1]).toEqual("pepr-system");
     });
+  });
+});
+
+describe("configureAdditionalWebhooks", () => {
+  it("should return the original webhookConfig if no additionalWebhooks are provided", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+      webhooks: [],
+    };
+    const result = configureAdditionalWebhooks(webhookConfig, []);
+    expect(result).toEqual(webhookConfig);
+  });
+
+  it("should set the additionalWebhooks namespaces in the namespaceSelector of the first webhook to ignore it", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+      webhooks: [
+        {
+          name: "test-webhook.default.pepr.dev",
+          admissionReviewVersions: ["v1"],
+          clientConfig: { url: "https://example.com/webhook" },
+          failurePolicy: "Ignore",
+          matchPolicy: "Equivalent",
+          timeoutSeconds: 10,
+          namespaceSelector: {
+            matchExpressions: [{ key: "kubernetes.io/metadata.name", operator: "In", values: [] }],
+          },
+          rules: [],
+          sideEffects: "None",
+        },
+      ],
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
+
+    expect(result.webhooks![0].namespaceSelector!.matchExpressions![0].values).toContain(
+      "additional-namespace-1",
+    );
+    expect(result.webhooks![0].namespaceSelector!.matchExpressions![0].values).toContain(
+      "additional-namespace-2",
+    );
+  });
+
+  it("should add additional webhooks to the webhook config", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+      webhooks: [
+        {
+          name: "test-webhook.default.pepr.dev",
+          admissionReviewVersions: ["v1"],
+          clientConfig: { url: "https://example.com/webhook" },
+          failurePolicy: "Ignore",
+          matchPolicy: "Equivalent",
+          timeoutSeconds: 10,
+          namespaceSelector: {
+            matchExpressions: [{ key: "kubernetes.io/metadata.name", operator: "In", values: [] }],
+          },
+          rules: [],
+          sideEffects: "None",
+        },
+      ],
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
+
+    expect(result.webhooks!.length).toBe(3);
+    expect(result.webhooks![1].name).toBe("test-webhook-additional-namespace-1.pepr.dev");
+    expect(result.webhooks![2].name).toBe("test-webhook-additional-namespace-2.pepr.dev");
+    expect(result.webhooks![1].namespaceSelector!.matchExpressions![0].values).toContain(
+      "additional-namespace-1",
+    );
+    expect(result.webhooks![2].namespaceSelector!.matchExpressions![0].values).toContain(
+      "additional-namespace-2",
+    );
+    expect(result.webhooks![1].failurePolicy).toBe("Fail");
+    expect(result.webhooks![2].failurePolicy).toBe("Ignore");
   });
 });
