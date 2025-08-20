@@ -63,7 +63,7 @@ jobs:
     steps:
 
       - name: "install k3d"
-        run: "curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
       - name: Clone Pepr Excellent Examples
