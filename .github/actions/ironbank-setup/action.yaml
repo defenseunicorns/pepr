@@ -21,7 +21,7 @@ runs:
 
     - name: Install k3d
       shell: bash
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+      run: curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
