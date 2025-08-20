@@ -13,7 +13,7 @@ import { concat, equals, uniqWith } from "ramda";
 import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
 import { Assets } from "./assets";
 import { Event, WebhookType } from "../enums";
-import { Binding } from "../types";
+import { Binding, AdditionalWebhook } from "../types";
 
 export const peprIgnoreNamespaces: string[] = ["kube-system", "pepr-system"];
 
@@ -144,10 +144,7 @@ export async function webhookConfigGenerator(
 
 export function configureAdditionalWebhooks(
   webhookConfig: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration,
-  additionalWebhooks: {
-    failurePolicy: "Fail" | "Ignore";
-    namespace: string;
-  }[],
+  additionalWebhooks: AdditionalWebhook[],
 ): V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration {
   if (!additionalWebhooks || additionalWebhooks.length === 0) {
     return webhookConfig;
