@@ -7,6 +7,7 @@ import {
   generateWebhookRules,
   webhookConfigGenerator,
   configureAdditionalWebhooks,
+  checkFailurePolicy,
 } from "./webhooks";
 import { Event, WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
@@ -448,5 +449,18 @@ describe("configureAdditionalWebhooks", () => {
     );
     expect(result.webhooks![1].failurePolicy).toBe("Fail");
     expect(result.webhooks![2].failurePolicy).toBe("Ignore");
+  });
+});
+
+describe("checkFailurePolicy", () => {
+  it("should throw an error for invalid failure policies", () => {
+    expect(() => checkFailurePolicy("InvalidPolicy")).toThrowError(
+      "Invalid failure policy: InvalidPolicy. Must be either 'Fail' or 'Ignore'.",
+    );
+  });
+
+  it("should return the failure policy for valid policies", () => {
+    expect(checkFailurePolicy("Fail")).not.toThrowError();
+    expect(checkFailurePolicy("Ignore")).not.toThrowError();
   });
 });

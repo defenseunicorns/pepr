@@ -142,6 +142,12 @@ export async function webhookConfigGenerator(
   return webhookConfig;
 }
 
+export function checkFailurePolicy(failurePolicy: string): void {
+  if (failurePolicy !== "Fail" && failurePolicy !== "Ignore") {
+    throw new Error(`Invalid failure policy: ${failurePolicy}. Must be either 'Fail' or 'Ignore'.`);
+  }
+}
+
 export function configureAdditionalWebhooks(
   webhookConfig: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration,
   additionalWebhooks: AdditionalWebhook[],
@@ -158,6 +164,7 @@ export function configureAdditionalWebhooks(
   expr.values!.push(...additionalWebhooks.map(w => w.namespace));
 
   additionalWebhooks.forEach(additionalWebhook => {
+    checkFailurePolicy(additionalWebhook.failurePolicy);
     webhooks.push({
       name: `${webhookConfig.metadata!.name}-${additionalWebhook.namespace}.pepr.dev`,
       admissionReviewVersions: ["v1", "v1beta1"],
