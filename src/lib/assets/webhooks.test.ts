@@ -460,7 +460,7 @@ describe("checkFailurePolicy", () => {
   });
 
   it("should return the failure policy for valid policies", () => {
-    expect(checkFailurePolicy("Fail")).not.toThrowError();
-    expect(checkFailurePolicy("Ignore")).not.toThrowError();
+    expect(() => checkFailurePolicy("Fail")).not.toThrowError();
+    expect(() => checkFailurePolicy("Ignore")).not.toThrowError();
   });
 });
