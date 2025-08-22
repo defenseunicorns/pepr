@@ -1,8 +1,7 @@
 name: E2E - Pepr Excellent Examples
 
 permissions: read-all
-env:
-  NPM_CONFIG_OPTIONAL: "true"
+
 on:
   workflow_dispatch:
   merge_group:
