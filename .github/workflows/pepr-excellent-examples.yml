@@ -175,7 +175,7 @@ jobs:
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
-          npm i -D esbuild@latest
+          npm i -D esbuild@0.25.9
           npm ci
 
       - name: run e2e tests
