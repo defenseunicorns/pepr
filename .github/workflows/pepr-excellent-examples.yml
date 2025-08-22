@@ -49,14 +49,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: pepr
 
-      - name: Ensure optional deps + scripts
-        run: |
-          npm config set optional true
-          
       - name: install pepr deps
         run: |
           cd "$PEPR"
-          npm ci
+          npm ci --include=optional 
 
       - name: build pepr package and container image
         run: |
