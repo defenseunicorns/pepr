@@ -54,7 +54,6 @@ jobs:
       - name: install pepr deps
         run: |
           cd "$PEPR"
-          npm i -D esbuild@latest
           npm ci
 
       - name: build pepr package and container image
@@ -176,6 +175,7 @@ jobs:
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
+          npm i -D esbuild@latest
           npm ci
 
       - name: run e2e tests
