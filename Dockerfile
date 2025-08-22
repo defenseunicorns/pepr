@@ -25,7 +25,7 @@ COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \
-    npm ci --omit=dev --omit=peer --include=optional && \
+    npm ci --omit=dev --omit=peer && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \

@@ -54,6 +54,7 @@ jobs:
       - name: install pepr deps
         run: |
           cd "$PEPR"
+          npm i -D esbuild@latest
           npm ci
 
       - name: build pepr package and container image
