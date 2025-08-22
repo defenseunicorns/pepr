@@ -175,7 +175,9 @@ jobs:
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
-          npm install esbuild@0.25.5
+          echo "Node $(node -v)  npm $(npm -v)"
+          npm config list -l | grep -E 'omit|ignore-scripts|include' || true
+          env | grep -E '^(NPM_CONFIG_|npm_config_)' || true
           npm ci
 
       - name: run e2e tests
