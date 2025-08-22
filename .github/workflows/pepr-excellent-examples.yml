@@ -1,6 +1,8 @@
 name: E2E - Pepr Excellent Examples
 
 permissions: read-all
+env:
+  NPM_CONFIG_OPTIONAL: "true"
 on:
   workflow_dispatch:
   merge_group:
@@ -52,7 +54,7 @@ jobs:
       - name: install pepr deps
         run: |
           cd "$PEPR"
-          npm ci --include=optional 
+          npm ci
 
       - name: build pepr package and container image
         run: |
