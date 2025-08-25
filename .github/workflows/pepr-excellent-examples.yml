@@ -167,16 +167,13 @@ jobs:
       - name: setup node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: 22
           cache: "npm"
           cache-dependency-path: pepr-excellent-examples
 
       - name: install pepr-excellent-examples deps
         run: |
           cd "$PEPR_EXCELLENT_EXAMPLES_PATH"
-          echo "Node $(node -v)  npm $(npm -v)"
-          npm config list -l | grep -E 'omit|ignore-scripts|include' || true
-          env | grep -E '^(NPM_CONFIG_|npm_config_)' || true
           npm ci
 
       - name: run e2e tests
