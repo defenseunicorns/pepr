@@ -26,10 +26,10 @@ jobs:
 
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Use Node.js 24
+      - name: Use Node.js 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
@@ -77,7 +77,7 @@ jobs:
       - name: Set up Node registry authentication
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
       - name: Publish package
         id: publish
@@ -104,10 +104,10 @@ jobs:
 
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Use Node.js 24
+      - name: Use Node.js 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
