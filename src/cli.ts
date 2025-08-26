@@ -16,6 +16,7 @@ import { Command } from "commander";
 import update from "./cli/update";
 import kfc from "./cli/kfc";
 import crd from "./cli/crd";
+import featureDemo from "./cli/feature-demo";
 import { featureFlagStore } from "./lib/features/store";
 import Log from "./lib/telemetry/logger";
 
@@ -61,4 +62,5 @@ format(program);
 monitor(program);
 uuid(program);
 kfc(program);
+featureDemo(program);
 program.parse();
