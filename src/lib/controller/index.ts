@@ -16,6 +16,7 @@ import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
 import { AdmissionRequest } from "../common-types";
+import { featureFlagStore } from "../features/store";
 
 export interface ControllerHooks {
   beforeHook?: (req: AdmissionRequest) => void;
@@ -90,6 +91,13 @@ export class Controller {
       );
     }
 
+    // Initialize feature store
+    try {
+      featureFlagStore.initialize();
+      Log.info(featureFlagStore.getAll(), "Feature flags store initialized");
+    } catch (error) {
+      Log.warn(error, "Could not initialize feature flags");
+    }
     // Load SSL certificate and key
     const options = {
       key: fs.readFileSync(process.env.SSL_KEY_PATH || "/etc/certs/tls.key"),
