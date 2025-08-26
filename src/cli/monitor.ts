@@ -6,7 +6,7 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import stream from "stream";
 import { ResponseItem } from "../lib/types";
 import { Command } from "commander";
-
+import Log from "../lib/telemetry/logger";
 interface LogPayload {
   namespace: string;
   name: string;
@@ -39,7 +39,7 @@ export default function (program: Command): void {
       const podNames: string[] = pods.items.flatMap(pod => pod.metadata!.name || "");
 
       if (podNames.length < 1) {
-        console.error(errorMessage);
+        Log.error(errorMessage);
         process.exit(1);
       }
 
@@ -122,9 +122,9 @@ export function processMutateLog(payload: LogPayload, name: string, uid: string)
   const patchType = payload.res.patchType || payload.res.warnings || "";
   const allowOrDeny = payload.res.allowed ? "🔀" : "🚫";
 
-  console.log(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
+  Log.info(`\n${allowOrDeny}  MUTATE     ${name} (${uid})`);
   if (patchType.length > 0) {
-    console.log(`\n\u001b[1;34m${patch}\u001b[0m`);
+    Log.info(`\n\u001b[1;34m${patch}\u001b[0m`);
   }
 }
 
@@ -135,8 +135,8 @@ export function processValidateLog(payload: LogPayload, name: string, uid: strin
     .filter((r: ResponseItem) => !r.allowed)
     .map((r: ResponseItem) => r.status?.message || "");
 
-  console.log(`\n${filteredFailures.length > 0 ? "❌" : "✅"}  VALIDATE   ${name} (${uid})`);
+  Log.info(`\n${filteredFailures.length > 0 ? "❌" : "✅"}  VALIDATE   ${name} (${uid})`);
   if (filteredFailures.length > 0) {
-    console.log(`\u001b[1;31m${filteredFailures}\u001b[0m`);
+    Log.info(`\u001b[1;31m${filteredFailures}\u001b[0m`);
   }
 }

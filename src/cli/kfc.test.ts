@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
 import kfcCommand from "./kfc";
+import Log from "../lib/telemetry/logger";
 
 vi.mock("child_process", () => ({
   execSync: vi.fn(),
@@ -11,7 +12,12 @@ vi.mock("child_process", () => ({
 vi.mock("prompts", () => ({
   default: vi.fn(),
 }));
-
+vi.mock("../lib/telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+  },
+}));
 import { execSync } from "child_process";
 import prompts from "prompts";
 
@@ -95,7 +101,7 @@ describe("kfc CLI command", () => {
     const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit called");
     });
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
 
     const command = program.commands.find(c => c.name() === "kfc");
 

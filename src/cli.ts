@@ -20,7 +20,7 @@ import { featureFlagStore } from "./lib/features/store";
 import Log from "./lib/telemetry/logger";
 
 if (process.env.npm_lifecycle_event !== "npx") {
-  console.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
+  Log.info("Pepr should be run via `npx pepr <command>` instead of `pepr <command>`.");
 }
 
 const program = new Command();
@@ -41,9 +41,10 @@ program
     }
   })
   .addCommand(crd())
+  .addCommand(init())
   .action(() => {
     if (program.args.length < 1) {
-      console.log(banner);
+      Log.info(banner);
       program.help();
     } else {
       Log.error(`Invalid command '${program.args.join(" ")}'\n`);
@@ -52,7 +53,6 @@ program
     }
   });
 
-init(program);
 build(program);
 deploy(program);
 dev(program);

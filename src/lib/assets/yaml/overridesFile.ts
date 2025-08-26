@@ -4,6 +4,8 @@ import { dumpYaml } from "@kubernetes/client-node";
 import { clusterRole } from "../rbac";
 import { promises as fs } from "fs";
 import { resolveIgnoreNamespaces } from "../ignoredNamespaces";
+import { quicktype, InputData, jsonInputForTargetLanguage } from "quicktype-core";
+
 export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
@@ -60,9 +62,9 @@ export async function overridesFile(
       },
       securityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
-        fsGroup: 65532,
+        fsGroup: image.includes("private") ? 1000 : 65532,
       },
       readinessProbe: {
         httpGet: {
@@ -92,7 +94,7 @@ export async function overridesFile(
       },
       containerSecurityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
         capabilities: {
@@ -128,9 +130,9 @@ export async function overridesFile(
       },
       securityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
-        fsGroup: 65532,
+        fsGroup: image.includes("private") ? 1000 : 65532,
       },
       readinessProbe: {
         httpGet: {
@@ -160,7 +162,7 @@ export async function overridesFile(
       },
       containerSecurityContext: {
         runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: 65532,
+        runAsGroup: image.includes("private") ? 1000 : 65532,
         runAsNonRoot: true,
         allowPrivilegeEscalation: false,
         capabilities: {
@@ -181,6 +183,26 @@ export async function overridesFile(
       },
     },
   };
-
+  /** write values.schema.yaml */
+  await writeSchemaYamlFromObject(JSON.stringify(overrides, null, 2), path);
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
+}
+
+export async function writeSchemaYamlFromObject(
+  valuesString: string,
+  valuesFilePath: string,
+): Promise<void> {
+  const schemaPath = valuesFilePath.replace(/\.yaml$/, ".schema.json");
+  const jsonInput = jsonInputForTargetLanguage("schema");
+  await jsonInput.addSource({ name: "Values", samples: [valuesString] });
+
+  const inputData = new InputData();
+  inputData.addInput(jsonInput);
+
+  const { lines } = await quicktype({ inputData, lang: "schema" });
+
+  const schemaJson = lines.join("\n");
+  const schemaObj = JSON.parse(schemaJson);
+
+  await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
 }
