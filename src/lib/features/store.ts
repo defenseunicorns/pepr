@@ -4,7 +4,7 @@
 /**
  * Enum of all known feature flags supported by Pepr
  */
-export enum KnownFeatureFlag {
+export enum FeatureFlags {
   DEBUG_MODE = "debug_mode",
   EXPERIMENTAL_API = "experimental_api",
   PERFORMANCE_METRICS = "performance_metrics",
@@ -47,9 +47,9 @@ class FeatureStore {
     if (!key || value === undefined || value === "") return;
 
     // Validate against known feature flags
-    if (!Object.values(KnownFeatureFlag).includes(key as KnownFeatureFlag)) {
+    if (!Object.values(FeatureFlags).includes(key as FeatureFlags)) {
       throw new Error(
-        `Unknown feature flag: ${key}. Known flags are: ${Object.values(KnownFeatureFlag).join(", ")}`,
+        `Unknown feature flag: ${key}. Known flags are: ${Object.values(FeatureFlags).join(", ")}`,
       );
     }
 
@@ -72,7 +72,7 @@ class FeatureStore {
    * @param defaultValue Optional default value if feature is not set
    * @returns The feature value with correct type, or defaultValue if not found
    */
-  get<T extends FeatureValue>(key: KnownFeatureFlag | string, defaultValue?: T): T {
+  get<T extends FeatureValue>(key: FeatureFlags | string, defaultValue?: T): T {
     return (this.features[key] as T) ?? defaultValue;
   }
 
