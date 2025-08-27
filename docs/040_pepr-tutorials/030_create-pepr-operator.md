@@ -360,7 +360,7 @@ To deploy your operator to a Kubernetes cluster:
 <!-- Start Block -->
 ```bash
 kubectl apply -f dist/pepr-module-my-operator-uuid.yaml;
-# Wait for pods to have. a status so we can check for readiness
+# Wait for pods to have a status so we can check for readiness
 sleep 10; 
 kubectl wait --for=condition=Ready pods -l app -n pepr-system --timeout=120s
 ```
