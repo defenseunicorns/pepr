@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { heredoc } from "./heredoc";
+import { heredoc } from "./load.lib";
 
 describe("heredoc", () => {
   it("trims head/tail empty lines & de-indents", () => {

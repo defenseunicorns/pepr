@@ -1,5 +1,5 @@
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
-import { sanitizeResourceName } from "../../sdk/sdk";
+import { sanitizeResourceName } from "../../lib/sanitizeResourceName";
 import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../../lib/types";

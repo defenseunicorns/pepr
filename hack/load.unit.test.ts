@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { describe, it, expect } from "vitest";
-import { heredoc } from "../src/sdk/heredoc";
 import {
   toHuman,
   toMs,
   generateAudienceData,
+  heredoc,
   parseAudienceData,
   parseActressData,
   injectsToRps,

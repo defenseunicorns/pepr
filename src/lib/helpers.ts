@@ -3,7 +3,7 @@
 
 import Log from "./telemetry/logger";
 import { Binding, CapabilityExport } from "./types";
-import { sanitizeResourceName } from "../sdk/sdk";
+import { sanitizeResourceName } from "../lib/sanitizeResourceName";
 
 export function matchesRegex(pattern: string, testString: string): boolean {
   return new RegExp(pattern).test(testString);

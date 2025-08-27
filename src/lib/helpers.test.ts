@@ -20,7 +20,7 @@ import {
   validateCapabilityNames,
   ValidationError,
 } from "./helpers";
-import { sanitizeResourceName } from "../sdk/sdk";
+import { sanitizeResourceName } from "../lib/sanitizeResourceName";
 import * as fc from "fast-check";
 import { expect, describe, vi, beforeEach, afterEach, it, type MockInstance } from "vitest";
 import { kind } from "kubernetes-fluent-client";

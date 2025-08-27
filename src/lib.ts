@@ -7,7 +7,7 @@ import { PeprModule } from "./lib/core/module";
 import { PeprMutateRequest } from "./lib/mutate-request";
 import * as PeprUtils from "./lib/utils";
 import { PeprValidateRequest } from "./lib/validate-request";
-import * as sdk from "./sdk/sdk";
+import { sanitizeResourceName } from "./lib/sanitizeResourceName";
 import { metricsCollector } from "./lib/telemetry/metrics";
 
 export {
@@ -25,5 +25,5 @@ export {
   fetch,
   fetchStatus,
   kind,
-  sdk,
+  sanitizeResourceName,
 };
