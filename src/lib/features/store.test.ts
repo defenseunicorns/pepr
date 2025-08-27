@@ -230,13 +230,14 @@ describe("FeatureStore", () => {
         expect(() => featureFlagStore.setVersion("1.0.0")).not.toThrow();
         expect(() => featureFlagStore.setVersion("0.1.0")).not.toThrow();
         expect(() => featureFlagStore.setVersion("1.2.3")).not.toThrow();
+        expect(() => featureFlagStore.setVersion("1.0.0-alpha")).not.toThrow();
+        expect(() => featureFlagStore.setVersion("1.0.0-nightly.1")).not.toThrow();
       });
 
       it("should reject invalid version formats", () => {
         expect(() => featureFlagStore.setVersion("1.0")).toThrow();
         expect(() => featureFlagStore.setVersion("v1.0.0")).toThrow();
         expect(() => featureFlagStore.setVersion("latest")).toThrow();
-        expect(() => featureFlagStore.setVersion("1.0.0-alpha")).toThrow();
       });
     });
 
@@ -257,47 +258,78 @@ describe("FeatureStore", () => {
     });
   });
 
+  describe("when using version-based availability", () => {
+    beforeEach(() => {
+      featureFlagStore.reset();
+    });
+
+    describe("with sinceVersion", () => {
+      // Assume EXPERIMENTAL_API has sinceVersion: "1.2.0"
+      it.each([
+        {
+          version: "1.2.0",
+          expected: true,
+          description: "should enable when version equals sinceVersion",
+        },
+        {
+          version: "1.3.0",
+          expected: true,
+          description: "should enable when version is greater than sinceVersion",
+        },
+        {
+          version: "1.1.0",
+          expected: false,
+          description: "should disable when version is less than sinceVersion",
+        },
+        {
+          version: "1.2.0-alpha.1",
+          expected: false,
+          description: "should handle pre-release versions correctly",
+        },
+      ])("$description", ({ version, expected }) => {
+        // Initialize the feature with a value of true before testing
+        featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
+        featureFlagStore.setVersion(version);
+        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(expected);
+      });
+    });
+
+    describe("with untilVersion", () => {
+      // Assume LEGACY_API has untilVersion: "1.9.0"
+      it.each([
+        {
+          version: "1.8.0",
+          expected: true,
+          description: "should enable when version is less than untilVersion",
+        },
+        {
+          version: "1.9.0",
+          expected: true,
+          description: "should enable when version equals untilVersion",
+        },
+        {
+          version: "1.10.0",
+          expected: false,
+          description: "should disable when version is greater than untilVersion",
+        },
+        {
+          version: "1.9.0-beta.1",
+          expected: true,
+          description: "should handle pre-release versions correctly",
+        },
+      ])("$description", ({ version, expected }) => {
+        featureFlagStore.setVersion(version);
+        expect(featureFlagStore.isEnabled(FeatureFlags.CHARLIE_FEATURES.key)).toBe(expected);
+      });
+    });
+  });
+
   describe("when checking feature availability based on version", () => {
     beforeEach(() => {
       featureFlagStore.reset();
     });
 
-    describe("since version testing", () => {
-      it("should enable features when current version >= since version", () => {
-        // Assuming DEBUG_MODE has since="1.0.0"
-        featureFlagStore.setVersion("1.0.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.DEBUG_MODE.key)).toBe(true);
-
-        featureFlagStore.setVersion("1.2.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.DEBUG_MODE.key)).toBe(true);
-      });
-
-      it("should disable features when current version < since version", () => {
-        // Assuming EXPERIMENTAL_API has since="1.2.0"
-        featureFlagStore.setVersion("1.0.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.EXPERIMENTAL_API.key)).toBe(false);
-
-        featureFlagStore.setVersion("1.1.9");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.EXPERIMENTAL_API.key)).toBe(false);
-      });
-    });
-
     describe("until version testing", () => {
-      it("should disable features when current version >= until version", () => {
-        // Assuming CHARLIE_FEATURES has until="2.0.0"
-        featureFlagStore.setVersion("2.0.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.CHARLIE_FEATURES.key)).toBe(false);
-
-        featureFlagStore.setVersion("2.1.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.CHARLIE_FEATURES.key)).toBe(false);
-      });
-
-      it("should enable features when current version < until version", () => {
-        // Assuming CHARLIE_FEATURES has since="1.3.0" and until="2.0.0"
-        featureFlagStore.setVersion("1.9.0");
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.CHARLIE_FEATURES.key)).toBe(true);
-      });
-
       it("should handle null until version", () => {
         // Assuming DEBUG_MODE has until=null
         featureFlagStore.setVersion("999.999.999"); // Very high version
@@ -306,29 +338,36 @@ describe("FeatureStore", () => {
     });
 
     describe("version change impact", () => {
-      it("should re-evaluate feature availability when version changes", () => {
-        // Setup with feature outside its version range
-        featureFlagStore.setVersion("1.0.0");
-        featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
-        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(false);
+      it.each([
+        {
+          scenario: "feature becomes available",
+          flag: FeatureFlags.EXPERIMENTAL_API.key,
+          initialVersion: "1.0.0",
+          initialExpectation: false,
+          newVersion: "1.3.0",
+          finalExpectation: true,
+        },
+        {
+          scenario: "feature becomes unavailable",
+          flag: FeatureFlags.CHARLIE_FEATURES.key,
+          initialVersion: "1.5.0",
+          initialExpectation: true,
+          newVersion: "2.0.0",
+          finalExpectation: false,
+        },
+      ])(
+        "should handle $scenario",
+        ({ flag, initialVersion, initialExpectation, newVersion, finalExpectation }) => {
+          // Setup with feature in its initial version
+          featureFlagStore.setVersion(initialVersion);
+          featureFlagStore.initialize(`${flag}=true`);
+          expect(featureFlagStore.isEnabled(flag)).toBe(initialExpectation);
 
-        // Change to version where feature should be available
-        featureFlagStore.setVersion("1.3.0");
-        // Now the feature should be available and enabled because we set it to true
-        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(true);
-      });
-
-      it("should handle features that become unavailable due to version change", () => {
-        // Setup with feature in its version range
-        featureFlagStore.setVersion("1.5.0");
-        featureFlagStore.initialize(`${FeatureFlags.CHARLIE_FEATURES.key}=true`);
-        expect(featureFlagStore.isEnabled(FeatureFlags.CHARLIE_FEATURES.key)).toBe(true);
-
-        // Change to version outside range
-        featureFlagStore.setVersion("2.0.0");
-        // Feature should now be disabled
-        expect(featureFlagStore.isEnabled(FeatureFlags.CHARLIE_FEATURES.key)).toBe(false);
-      });
+          // Change to new version
+          featureFlagStore.setVersion(newVersion);
+          expect(featureFlagStore.isEnabled(flag)).toBe(finalExpectation);
+        },
+      );
     });
   });
 
@@ -338,43 +377,32 @@ describe("FeatureStore", () => {
       featureFlagStore.setVersion("1.5.0"); // Version where all features should be available
     });
 
-    describe("Alpha features", () => {
-      it("should be disabled by default", () => {
-        // Assuming EXPERIMENTAL_API is an ALPHA feature
-        // Don't explicitly enable it
-        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(false);
-      });
+    it.each([
+      {
+        stageName: "Alpha features",
+        flag: FeatureFlags.EXPERIMENTAL_API.key,
+        defaultValue: false,
+        description: "should be disabled by default but can be enabled",
+      },
+      {
+        stageName: "Beta features",
+        flag: FeatureFlags.PERFORMANCE_METRICS.key,
+        defaultValue: true,
+        description: "should be enabled by default but can be disabled",
+      },
+      {
+        stageName: "GA features",
+        flag: FeatureFlags.DEBUG_MODE.key,
+        defaultValue: true,
+        description: "should be enabled by default but can be disabled",
+      },
+    ])("$stageName: $description", ({ flag, defaultValue }) => {
+      // Test default value
+      expect(featureFlagStore.isEnabled(flag)).toBe(defaultValue);
 
-      it("should be enabled only when explicitly turned on", () => {
-        featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
-        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(true);
-      });
-    });
-
-    describe("Beta features", () => {
-      it("should be enabled by default", () => {
-        // Assuming PERFORMANCE_METRICS is a BETA feature
-        // Don't explicitly set it
-        expect(featureFlagStore.isEnabled(FeatureFlags.PERFORMANCE_METRICS.key)).toBe(true);
-      });
-
-      it("should respect explicit settings", () => {
-        featureFlagStore.initialize(`${FeatureFlags.PERFORMANCE_METRICS.key}=false`);
-        expect(featureFlagStore.isEnabled(FeatureFlags.PERFORMANCE_METRICS.key)).toBe(false);
-      });
-    });
-
-    describe("GA features", () => {
-      it("should always be enabled", () => {
-        // Assuming DEBUG_MODE is a GA feature
-        // Don't explicitly set it
-        expect(featureFlagStore.isEnabled(FeatureFlags.DEBUG_MODE.key)).toBe(true);
-      });
-
-      it("should respect explicit false settings", () => {
-        featureFlagStore.initialize(`${FeatureFlags.DEBUG_MODE.key}=false`);
-        expect(featureFlagStore.isEnabled(FeatureFlags.DEBUG_MODE.key)).toBe(false);
-      });
+      // Test explicit override
+      featureFlagStore.initialize(`${flag}=${!defaultValue}`);
+      expect(featureFlagStore.isEnabled(flag)).toBe(!defaultValue);
     });
   });
 
@@ -385,19 +413,18 @@ describe("FeatureStore", () => {
     });
 
     describe("getFeaturesByStage", () => {
-      it("should return features for a specific stage", () => {
-        const alphaFeatures = featureFlagStore.getFeaturesByStage(FeatureStage.ALPHA);
-        const betaFeatures = featureFlagStore.getFeaturesByStage(FeatureStage.BETA);
-        const gaFeatures = featureFlagStore.getFeaturesByStage(FeatureStage.GA);
+      it.each([
+        { stageName: "ALPHA", stage: FeatureStage.ALPHA },
+        { stageName: "BETA", stage: FeatureStage.BETA },
+        { stageName: "GA", stage: FeatureStage.GA },
+      ])("should return features for $stageName stage", ({ stage }) => {
+        const features = featureFlagStore.getFeaturesByStage(stage);
 
-        expect(alphaFeatures).toBeDefined();
-        expect(betaFeatures).toBeDefined();
-        expect(gaFeatures).toBeDefined();
-
-        // At least one feature in each stage
-        expect(alphaFeatures.length).toBeGreaterThan(0);
-        expect(betaFeatures.length).toBeGreaterThan(0);
-        expect(gaFeatures.length).toBeGreaterThan(0);
+        expect(features).toBeDefined();
+        expect(features.length).toBeGreaterThan(0);
+        features.forEach(feature => {
+          expect(feature.metadata.stage).toBe(stage);
+        });
       });
     });
 
@@ -412,16 +439,30 @@ describe("FeatureStore", () => {
     });
 
     describe("getFeatureMetadata", () => {
-      it("should retrieve metadata for valid feature keys", () => {
-        const metadata = featureFlagStore.getFeatureMetadata(FeatureFlags.DEBUG_MODE.key);
-        expect(metadata).toBeDefined();
-        expect(metadata?.name).toBe("Debug Mode");
-        expect(metadata?.since).toBe("1.0.0");
-      });
+      it.each([
+        {
+          scenario: "valid feature key",
+          key: FeatureFlags.DEBUG_MODE.key,
+          expectedResult: expect.objectContaining({
+            name: "Debug Mode",
+            since: "1.0.0",
+          }),
+          shouldBeNull: false,
+        },
+        {
+          scenario: "invalid feature key",
+          key: "non_existent_feature",
+          expectedResult: null,
+          shouldBeNull: true,
+        },
+      ])("should handle $scenario", ({ key, expectedResult, shouldBeNull }) => {
+        const metadata = featureFlagStore.getFeatureMetadata(key);
 
-      it("should return null for invalid feature keys", () => {
-        const metadata = featureFlagStore.getFeatureMetadata("non_existent_feature");
-        expect(metadata).toBeNull();
+        if (shouldBeNull) {
+          expect(metadata).toBeNull();
+        } else {
+          expect(metadata).toEqual(expectedResult);
+        }
       });
     });
 

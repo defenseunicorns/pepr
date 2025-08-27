@@ -143,7 +143,7 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
       description: "Legacy feature bundle being phased out",
       stage: FeatureStage.GA,
       since: "1.3.0",
-      until: "2.0.0",
+      until: "1.9.0",
       defaultValue: true,
     },
   },
@@ -215,19 +215,35 @@ class FeatureStore {
 
     if (!metadata) return false;
 
-    // Parse versions to components [major, minor, patch]
-    const parseVersion = (version: string): number[] => {
-      return version.split(".").map(Number);
+    // Parse versions to components and handle prerelease versions
+    const parseVersion = (version: string): { parts: number[]; prerelease: string | null } => {
+      const [versionPart, prereleasePart] = version.split("-");
+      return {
+        parts: versionPart.split(".").map(Number),
+        prerelease: prereleasePart || null,
+      };
     };
 
-    // Compare versions
-    const compareVersions = (v1: number[], v2: number[]): number => {
+    // Compare versions according to semver rules
+    const compareVersions = (
+      v1: { parts: number[]; prerelease: string | null },
+      v2: { parts: number[]; prerelease: string | null },
+    ): number => {
+      // Compare major.minor.patch
       for (let i = 0; i < 3; i++) {
-        if (v1[i] !== v2[i]) {
-          return v1[i] > v2[i] ? 1 : -1;
+        if (v1.parts[i] !== v2.parts[i]) {
+          return v1.parts[i] > v2.parts[i] ? 1 : -1;
         }
       }
-      return 0;
+
+      // If major.minor.patch are equal, check prerelease
+      // No prerelease is greater than any prerelease version
+      if (v1.prerelease === null && v2.prerelease !== null) return 1;
+      if (v1.prerelease !== null && v2.prerelease === null) return -1;
+      if (v1.prerelease === v2.prerelease) return 0;
+
+      // Both have prerelease, lexically compare them
+      return v1.prerelease! < v2.prerelease! ? -1 : 1;
     };
 
     const currentV = parseVersion(this.currentVersion);
@@ -239,8 +255,8 @@ class FeatureStore {
     // Check 'until' condition if it exists
     if (metadata.until) {
       const untilV = parseVersion(metadata.until);
-      // Feature is available if since condition is met AND current is less than until
-      return isSinceConditionMet && compareVersions(currentV, untilV) < 0;
+      // Feature is available if since condition is met AND current is less than or equal to until
+      return isSinceConditionMet && compareVersions(currentV, untilV) <= 0;
     }
 
     // If no 'until' version, feature is available if since condition is met
@@ -318,7 +334,7 @@ class FeatureStore {
    */
   setVersion(version: string): void {
     // Validate semver format (x.y.z)
-    const semverRegex = /^\d+\.\d+\.\d+$/;
+    const semverRegex = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/;
     if (!semverRegex.test(version)) {
       throw new Error(`Invalid version format: ${version}. Must be a valid semver in format x.y.z`);
     }
