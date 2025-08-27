@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+/**
+ * Enum of all known feature flags supported by Pepr
+ */
+export enum KnownFeatureFlag {
+  DEBUG_MODE = "debug_mode",
+  EXPERIMENTAL_API = "experimental_api",
+  PERFORMANCE_METRICS = "performance_metrics",
+  BETA_FEATURES = "beta_features",
+  CHARLIE_FEATURES = "charlie_features",
+}
+
 type FeatureValue = string | boolean | number;
 
 /**
@@ -30,9 +41,17 @@ class FeatureStore {
    *
    * @param key The feature key
    * @param value The feature value as string
+   * @throws Error if the feature key is not a known feature flag
    */
   private addFeature(key: string, value: string): void {
     if (!key || value === undefined || value === "") return;
+
+    // Validate against known feature flags
+    if (!Object.values(KnownFeatureFlag).includes(key as KnownFeatureFlag)) {
+      throw new Error(
+        `Unknown feature flag: ${key}. Known flags are: ${Object.values(KnownFeatureFlag).join(", ")}`,
+      );
+    }
 
     // Attempt type conversion
     if (value.toLowerCase() === "true") {
@@ -49,11 +68,11 @@ class FeatureStore {
   /**
    * Get a feature value by key with type safety
    *
-   * @param key The feature key to retrieve
+   * @param key The feature key to retrieve (should be a KnownFeatureFlag)
    * @param defaultValue Optional default value if feature is not set
    * @returns The feature value with correct type, or defaultValue if not found
    */
-  get<T extends FeatureValue>(key: string, defaultValue?: T): T {
+  get<T extends FeatureValue>(key: KnownFeatureFlag | string, defaultValue?: T): T {
     return (this.features[key] as T) ?? defaultValue;
   }
 
@@ -73,8 +92,10 @@ class FeatureStore {
    * Initialize features from both environment variables and a features string
    *
    * Command-line features (provided in the featuresStr) take precedence over environment variables.
+   * All feature flags must be defined in KnownFeatureFlag enum.
    *
    * @param featuresStr Optional comma-separated feature string in format "feature1=value1,feature2=value2"
+   * @throws Error if an unknown feature flag is provided
    */
   initialize(featuresStr?: string): void {
     // First load from environment variables
@@ -82,7 +103,7 @@ class FeatureStore {
       if (key.startsWith("PEPR_FEATURE_")) {
         const featureName = key.replace("PEPR_FEATURE_", "").toLowerCase();
         if (value) {
-          // Don't validate for each env var
+          // Validate against known feature flags
           this.addFeature(featureName, value);
         }
       }
@@ -92,12 +113,14 @@ class FeatureStore {
     if (featuresStr) {
       featuresStr.split(",").forEach(feature => {
         const [key, value] = feature.split("=");
-        // Override environment variables with same key
-        this.addFeature(key, value);
+        if (key && value) {
+          // Override environment variables with same key
+          this.addFeature(key, value);
+        }
       });
     }
 
-    // Validate once after all features are processed if requested
+    // Validate once after all features are processed
     this.validateFeatureCount();
   }
 

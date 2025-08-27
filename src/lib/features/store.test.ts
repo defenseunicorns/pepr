@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { featureFlagStore } from "./store";
+import { featureFlagStore, KnownFeatureFlag } from "./store";
 import { describe, beforeEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
@@ -11,14 +11,16 @@ describe("FeatureStore", () => {
 
   describe("when accessing features", () => {
     beforeEach(() => {
-      featureFlagStore.initialize("string=value,number=42,boolean=true");
+      featureFlagStore.initialize(
+        `${KnownFeatureFlag.DEBUG_MODE}=value,${KnownFeatureFlag.PERFORMANCE_METRICS}=42,${KnownFeatureFlag.BETA_FEATURES}=true`,
+      );
     });
 
     describe("which exist", () => {
       it.each([
-        { type: "string", key: "string", expected: "value" },
-        { type: "number", key: "number", expected: 42 },
-        { type: "boolean", key: "boolean", expected: true },
+        { type: "string", key: KnownFeatureFlag.DEBUG_MODE, expected: "value" },
+        { type: "number", key: KnownFeatureFlag.PERFORMANCE_METRICS, expected: 42 },
+        { type: "boolean", key: KnownFeatureFlag.BETA_FEATURES, expected: true },
       ])("should return $type values", ({ key, expected }) => {
         expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
       });
@@ -30,25 +32,29 @@ describe("FeatureStore", () => {
         { type: "number", defaultValue: 100, expected: 100 },
         { type: "boolean", defaultValue: false, expected: false },
       ])("should return default $type value", ({ defaultValue, expected }) => {
-        expect(featureFlagStore.get("nonexistent", defaultValue)).toBe(expected);
+        // Using a flag we know doesn't exist in our initialized set
+        expect(featureFlagStore.get(KnownFeatureFlag.EXPERIMENTAL_API, defaultValue)).toBe(
+          expected,
+        );
       });
 
       it("should return undefined without default", () => {
-        expect(featureFlagStore.get("nonexistent")).toBeUndefined();
+        // Using a flag we know doesn't exist in our initialized set
+        expect(featureFlagStore.get(KnownFeatureFlag.EXPERIMENTAL_API)).toBeUndefined();
       });
     });
 
     it("should return a copy of all features", () => {
       const features = featureFlagStore.getAll();
       expect(features).toEqual({
-        string: "value",
-        number: 42,
-        boolean: true,
+        [KnownFeatureFlag.DEBUG_MODE]: "value",
+        [KnownFeatureFlag.PERFORMANCE_METRICS]: 42,
+        [KnownFeatureFlag.BETA_FEATURES]: true,
       });
 
       // Verify it's a copy by modifying the returned object
-      features.string = "modified";
-      expect(featureFlagStore.get("string")).toBe("value"); // Original remains unchanged
+      features[KnownFeatureFlag.DEBUG_MODE] = "modified";
+      expect(featureFlagStore.get(KnownFeatureFlag.DEBUG_MODE)).toBe("value"); // Original remains unchanged
     });
   });
 
@@ -57,42 +63,42 @@ describe("FeatureStore", () => {
       {
         name: "should load features from environment variables when no string is provided",
         envVars: {
-          PEPR_FEATURE_TEST1: "true",
-          PEPR_FEATURE_TEST2: "42",
-          PEPR_FEATURE_TEST3: "value",
+          [`PEPR_FEATURE_${KnownFeatureFlag.DEBUG_MODE.toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${KnownFeatureFlag.PERFORMANCE_METRICS.toUpperCase()}`]: "42",
+          [`PEPR_FEATURE_${KnownFeatureFlag.EXPERIMENTAL_API.toUpperCase()}`]: "value",
         },
         initializeString: undefined,
         expectedFeatures: {
-          test1: true,
-          test2: 42,
-          test3: "value",
+          [KnownFeatureFlag.DEBUG_MODE]: true,
+          [KnownFeatureFlag.PERFORMANCE_METRICS]: 42,
+          [KnownFeatureFlag.EXPERIMENTAL_API]: "value",
         },
       },
       {
         name: "should parse string values",
         envVars: {},
-        initializeString: "feature1=value,feature2=advanced",
+        initializeString: `${KnownFeatureFlag.DEBUG_MODE}=value,${KnownFeatureFlag.EXPERIMENTAL_API}=advanced`,
         expectedFeatures: {
-          feature1: "value",
-          feature2: "advanced",
+          [KnownFeatureFlag.DEBUG_MODE]: "value",
+          [KnownFeatureFlag.EXPERIMENTAL_API]: "advanced",
         },
       },
       {
         name: "should parse boolean values",
         envVars: {},
-        initializeString: "feature1=true,feature2=false",
+        initializeString: `${KnownFeatureFlag.DEBUG_MODE}=true,${KnownFeatureFlag.EXPERIMENTAL_API}=false`,
         expectedFeatures: {
-          feature1: true,
-          feature2: false,
+          [KnownFeatureFlag.DEBUG_MODE]: true,
+          [KnownFeatureFlag.EXPERIMENTAL_API]: false,
         },
       },
       {
         name: "should parse numeric values",
         envVars: {},
-        initializeString: "feature1=5,feature2=10.5",
+        initializeString: `${KnownFeatureFlag.DEBUG_MODE}=5,${KnownFeatureFlag.EXPERIMENTAL_API}=10.5`,
         expectedFeatures: {
-          feature1: 5,
-          feature2: 10.5,
+          [KnownFeatureFlag.DEBUG_MODE]: 5,
+          [KnownFeatureFlag.EXPERIMENTAL_API]: 10.5,
         },
       },
       {
@@ -104,34 +110,34 @@ describe("FeatureStore", () => {
       {
         name: "should handle malformed entries",
         envVars: {},
-        initializeString: "valid=true,novalue=,=noproperty,invalid",
+        initializeString: `${KnownFeatureFlag.DEBUG_MODE}=true,novalue=,=noproperty,invalid`,
         expectedFeatures: {
-          valid: true,
+          [KnownFeatureFlag.DEBUG_MODE]: true,
         },
       },
       {
         name: "should load features from string when no env vars are present",
         envVars: {},
-        initializeString: "feature1=true,feature2=42,feature3=value",
+        initializeString: `${KnownFeatureFlag.DEBUG_MODE}=true,${KnownFeatureFlag.PERFORMANCE_METRICS}=42,${KnownFeatureFlag.EXPERIMENTAL_API}=value`,
         expectedFeatures: {
-          feature1: true,
-          feature2: 42,
-          feature3: "value",
+          [KnownFeatureFlag.DEBUG_MODE]: true,
+          [KnownFeatureFlag.PERFORMANCE_METRICS]: 42,
+          [KnownFeatureFlag.EXPERIMENTAL_API]: "value",
         },
       },
       {
         name: "should allow CLI features to override environment variables",
         envVars: {
-          PEPR_FEATURE_TEST1: "true",
-          PEPR_FEATURE_TEST2: "42",
-          PEPR_FEATURE_TEST3: "value",
+          [`PEPR_FEATURE_${KnownFeatureFlag.DEBUG_MODE.toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${KnownFeatureFlag.PERFORMANCE_METRICS.toUpperCase()}`]: "42",
+          [`PEPR_FEATURE_${KnownFeatureFlag.EXPERIMENTAL_API.toUpperCase()}`]: "value",
         },
-        initializeString: "test2=99,feature4=new",
+        initializeString: `${KnownFeatureFlag.PERFORMANCE_METRICS}=99,${KnownFeatureFlag.BETA_FEATURES}=new`,
         expectedFeatures: {
-          test1: true, // From env
-          test2: 99, // Overridden by CLI
-          test3: "value", // From env
-          feature4: "new", // From CLI
+          [KnownFeatureFlag.DEBUG_MODE]: true, // From env
+          [KnownFeatureFlag.PERFORMANCE_METRICS]: 99, // Overridden by CLI
+          [KnownFeatureFlag.EXPERIMENTAL_API]: "value", // From env
+          [KnownFeatureFlag.BETA_FEATURES]: "new", // From CLI
         },
       },
     ])("$name", ({ envVars, initializeString, expectedFeatures }) => {
@@ -160,18 +166,52 @@ describe("FeatureStore", () => {
       const originalEnv = { ...process.env };
       try {
         // Set 3 env variables
-        process.env.PEPR_FEATURE_TEST1 = "true";
-        process.env.PEPR_FEATURE_TEST2 = "42";
-        process.env.PEPR_FEATURE_TEST3 = "value";
+        process.env[`PEPR_FEATURE_${KnownFeatureFlag.DEBUG_MODE.toUpperCase()}`] = "true";
+        process.env[`PEPR_FEATURE_${KnownFeatureFlag.PERFORMANCE_METRICS.toUpperCase()}`] = "42";
+        process.env[`PEPR_FEATURE_${KnownFeatureFlag.EXPERIMENTAL_API.toUpperCase()}`] = "value";
 
         // Add 2 more via string to exceed the 4 feature limit
         expect(() => {
-          featureFlagStore.initialize("feature4=new,feature5=extra");
+          featureFlagStore.initialize(
+            `${KnownFeatureFlag.BETA_FEATURES}=new,${KnownFeatureFlag.CHARLIE_FEATURES}=extra`,
+          );
         }).toThrow("Too many feature flags active: 5 (maximum: 4)");
       } finally {
         // Restore original process.env
         process.env = originalEnv;
       }
+    });
+  });
+
+  // New tests specifically for feature flag validation
+  describe("when validating feature flags", () => {
+    it("should accept known feature flags", () => {
+      featureFlagStore.initialize(`${KnownFeatureFlag.DEBUG_MODE}=true`);
+      expect(featureFlagStore.get(KnownFeatureFlag.DEBUG_MODE)).toBe(true);
+    });
+
+    it("should throw error for unknown feature flags", () => {
+      expect(() => {
+        featureFlagStore.initialize("unknown_flag=value");
+      }).toThrow("Unknown feature flag: unknown_flag");
+    });
+
+    it("should validate flags from environment variables", () => {
+      const originalEnv = { ...process.env };
+      try {
+        process.env.PEPR_FEATURE_UNKNOWN = "value";
+        expect(() => {
+          featureFlagStore.initialize();
+        }).toThrow("Unknown feature flag: unknown");
+      } finally {
+        process.env = originalEnv;
+      }
+    });
+
+    it("should provide type safety when accessing features", () => {
+      featureFlagStore.initialize(`${KnownFeatureFlag.BETA_FEATURES}=true`);
+      const value: boolean = featureFlagStore.get(KnownFeatureFlag.BETA_FEATURES);
+      expect(value).toBe(true);
     });
   });
 });
