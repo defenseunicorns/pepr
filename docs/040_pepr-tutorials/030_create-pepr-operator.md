@@ -504,8 +504,8 @@ Next, apply it to the cluster:
 
 <!-- Start Block -->
 ```bash
-kubectl create namespace webapps;
-kubectl apply -f webapp-light-en.yaml;
+kubectl create namespace webapps &&
+kubectl apply -f webapp-light-en.yaml
 ```
 <!-- End Block -->
 
