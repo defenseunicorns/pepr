@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { featureFlagStore } from "./store";
+import { store } from "./store";
 import { FeatureStage } from "./FeatureTypes";
 import { FeatureFlags } from "./FeatureFlags";
 import { describe, beforeEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
   beforeEach(() => {
-    featureFlagStore.reset();
+    store.reset();
     // Reset the version back to default for tests not related to versioning
-    if (featureFlagStore.setVersion) {
-      featureFlagStore.setVersion("0.0.0");
+    if (store.setVersion) {
+      store.setVersion("0.0.0");
     }
   });
 
   describe("when accessing features", () => {
     beforeEach(() => {
-      featureFlagStore.initialize(
+      store.initialize(
         `${FeatureFlags.DEBUG_MODE.key}=value,${FeatureFlags.PERFORMANCE_METRICS.key}=42,${FeatureFlags.BETA_FEATURES.key}=true`,
       );
     });
@@ -28,7 +28,7 @@ describe("FeatureStore", () => {
         { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
         { type: "boolean", key: FeatureFlags.BETA_FEATURES.key, expected: true },
       ])("should return $type values", ({ key, expected }) => {
-        expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
+        expect(store.get<typeof expected>(key)).toBe(expected);
       });
     });
 
@@ -39,19 +39,17 @@ describe("FeatureStore", () => {
         { type: "boolean", defaultValue: false, expected: false },
       ])("should return default $type value", ({ defaultValue, expected }) => {
         // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key, defaultValue)).toBe(
-          expected,
-        );
+        expect(store.get(FeatureFlags.EXPERIMENTAL_API.key, defaultValue)).toBe(expected);
       });
 
       it("should return undefined without default", () => {
         // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key)).toBeUndefined();
+        expect(store.get(FeatureFlags.EXPERIMENTAL_API.key)).toBeUndefined();
       });
     });
 
     it("should return a copy of all features", () => {
-      const features = featureFlagStore.getAll();
+      const features = store.getAll();
       expect(features).toEqual({
         [FeatureFlags.DEBUG_MODE.key]: "value",
         [FeatureFlags.PERFORMANCE_METRICS.key]: 42,
@@ -60,7 +58,7 @@ describe("FeatureStore", () => {
 
       // Verify it's a copy by modifying the returned object
       features[FeatureFlags.DEBUG_MODE.key] = "modified";
-      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe("value"); // Original remains unchanged
+      expect(store.get(FeatureFlags.DEBUG_MODE.key)).toBe("value"); // Original remains unchanged
     });
   });
 
@@ -156,10 +154,10 @@ describe("FeatureStore", () => {
         });
 
         // Initialize with provided string
-        featureFlagStore.initialize(initializeString);
+        store.initialize(initializeString);
 
         Object.entries(expectedFeatures).forEach(([key, value]) => {
-          expect(featureFlagStore.get(key)).toBe(value);
+          expect(store.get(key)).toBe(value);
         });
       } finally {
         // Restore original process.env
@@ -178,7 +176,7 @@ describe("FeatureStore", () => {
 
         // Add 2 more via string to exceed the 4 feature limit
         expect(() => {
-          featureFlagStore.initialize(
+          store.initialize(
             `${FeatureFlags.BETA_FEATURES.key}=new,${FeatureFlags.CHARLIE_FEATURES.key}=extra`,
           );
         }).toThrow("Too many feature flags active: 5 (maximum: 4)");
@@ -192,13 +190,13 @@ describe("FeatureStore", () => {
   // New tests specifically for feature flag validation
   describe("when validating feature flags", () => {
     it("should accept known feature flags", () => {
-      featureFlagStore.initialize(`${FeatureFlags.DEBUG_MODE.key}=true`);
-      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe(true);
+      store.initialize(`${FeatureFlags.DEBUG_MODE.key}=true`);
+      expect(store.get(FeatureFlags.DEBUG_MODE.key)).toBe(true);
     });
 
     it("should throw error for unknown feature flags", () => {
       expect(() => {
-        featureFlagStore.initialize("unknown_flag=value");
+        store.initialize("unknown_flag=value");
       }).toThrow("Unknown feature flag: unknown_flag");
     });
 
@@ -207,7 +205,7 @@ describe("FeatureStore", () => {
       try {
         process.env.PEPR_FEATURE_UNKNOWN = "value";
         expect(() => {
-          featureFlagStore.initialize();
+          store.initialize();
         }).toThrow("Unknown feature flag: unknown");
       } finally {
         process.env = originalEnv;
@@ -215,8 +213,8 @@ describe("FeatureStore", () => {
     });
 
     it("should provide type safety when accessing features", () => {
-      featureFlagStore.initialize(`${FeatureFlags.BETA_FEATURES.key}=true`);
-      const value: boolean = featureFlagStore.get(FeatureFlags.BETA_FEATURES.key);
+      store.initialize(`${FeatureFlags.BETA_FEATURES.key}=true`);
+      const value: boolean = store.get(FeatureFlags.BETA_FEATURES.key);
       expect(value).toBe(true);
     });
   });
@@ -224,45 +222,45 @@ describe("FeatureStore", () => {
   // Tests for the enhanced version metadata functionality
   describe("when managing versions", () => {
     beforeEach(() => {
-      featureFlagStore.reset();
+      store.reset();
     });
 
     describe("version validation", () => {
       it("should accept valid semver format", () => {
-        expect(() => featureFlagStore.setVersion("1.0.0")).not.toThrow();
-        expect(() => featureFlagStore.setVersion("0.1.0")).not.toThrow();
-        expect(() => featureFlagStore.setVersion("1.2.3")).not.toThrow();
-        expect(() => featureFlagStore.setVersion("1.0.0-alpha")).not.toThrow();
-        expect(() => featureFlagStore.setVersion("1.0.0-nightly.1")).not.toThrow();
+        expect(() => store.setVersion("1.0.0")).not.toThrow();
+        expect(() => store.setVersion("0.1.0")).not.toThrow();
+        expect(() => store.setVersion("1.2.3")).not.toThrow();
+        expect(() => store.setVersion("1.0.0-alpha")).not.toThrow();
+        expect(() => store.setVersion("1.0.0-nightly.1")).not.toThrow();
       });
 
       it("should reject invalid version formats", () => {
-        expect(() => featureFlagStore.setVersion("1.0")).toThrow();
-        expect(() => featureFlagStore.setVersion("v1.0.0")).toThrow();
-        expect(() => featureFlagStore.setVersion("latest")).toThrow();
+        expect(() => store.setVersion("1.0")).toThrow();
+        expect(() => store.setVersion("v1.0.0")).toThrow();
+        expect(() => store.setVersion("latest")).toThrow();
       });
     });
 
     describe("version setting and getting", () => {
       it("should store and retrieve the set version", () => {
-        featureFlagStore.setVersion("1.2.3");
-        expect(featureFlagStore.getVersion()).toBe("1.2.3");
+        store.setVersion("1.2.3");
+        expect(store.getVersion()).toBe("1.2.3");
 
-        featureFlagStore.setVersion("2.0.0");
-        expect(featureFlagStore.getVersion()).toBe("2.0.0");
+        store.setVersion("2.0.0");
+        expect(store.getVersion()).toBe("2.0.0");
       });
 
       it("should have a default version when not explicitly set", () => {
         // Reset should set to default version
-        featureFlagStore.reset();
-        expect(featureFlagStore.getVersion()).toBe("0.0.0");
+        store.reset();
+        expect(store.getVersion()).toBe("0.0.0");
       });
     });
   });
 
   describe("when using version-based availability", () => {
     beforeEach(() => {
-      featureFlagStore.reset();
+      store.reset();
     });
 
     describe("with sinceVersion", () => {
@@ -290,9 +288,9 @@ describe("FeatureStore", () => {
         },
       ])("$description", ({ version, expected }) => {
         // Initialize the feature with a value of true before testing
-        featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
-        featureFlagStore.setVersion(version);
-        expect(featureFlagStore.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(expected);
+        store.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
+        store.setVersion(version);
+        expect(store.isEnabled(FeatureFlags.EXPERIMENTAL_API.key)).toBe(expected);
       });
     });
 
@@ -320,22 +318,22 @@ describe("FeatureStore", () => {
           description: "should handle pre-release versions correctly",
         },
       ])("$description", ({ version, expected }) => {
-        featureFlagStore.setVersion(version);
-        expect(featureFlagStore.isEnabled(FeatureFlags.CHARLIE_FEATURES.key)).toBe(expected);
+        store.setVersion(version);
+        expect(store.isEnabled(FeatureFlags.CHARLIE_FEATURES.key)).toBe(expected);
       });
     });
   });
 
   describe("when checking feature availability based on version", () => {
     beforeEach(() => {
-      featureFlagStore.reset();
+      store.reset();
     });
 
     describe("until version testing", () => {
       it("should handle null until version", () => {
         // Assuming DEBUG_MODE has until=null
-        featureFlagStore.setVersion("999.999.999"); // Very high version
-        expect(featureFlagStore.isFeatureAvailable(FeatureFlags.DEBUG_MODE.key)).toBe(true);
+        store.setVersion("999.999.999"); // Very high version
+        expect(store.isFeatureAvailable(FeatureFlags.DEBUG_MODE.key)).toBe(true);
       });
     });
 
@@ -361,13 +359,13 @@ describe("FeatureStore", () => {
         "should handle $scenario",
         ({ flag, initialVersion, initialExpectation, newVersion, finalExpectation }) => {
           // Setup with feature in its initial version
-          featureFlagStore.setVersion(initialVersion);
-          featureFlagStore.initialize(`${flag}=true`);
-          expect(featureFlagStore.isEnabled(flag)).toBe(initialExpectation);
+          store.setVersion(initialVersion);
+          store.initialize(`${flag}=true`);
+          expect(store.isEnabled(flag)).toBe(initialExpectation);
 
           // Change to new version
-          featureFlagStore.setVersion(newVersion);
-          expect(featureFlagStore.isEnabled(flag)).toBe(finalExpectation);
+          store.setVersion(newVersion);
+          expect(store.isEnabled(flag)).toBe(finalExpectation);
         },
       );
     });
@@ -375,8 +373,8 @@ describe("FeatureStore", () => {
 
   describe("when managing features based on stage", () => {
     beforeEach(() => {
-      featureFlagStore.reset();
-      featureFlagStore.setVersion("1.5.0"); // Version where all features should be available
+      store.reset();
+      store.setVersion("1.5.0"); // Version where all features should be available
     });
 
     it.each([
@@ -400,18 +398,18 @@ describe("FeatureStore", () => {
       },
     ])("$stageName: $description", ({ flag, defaultValue }) => {
       // Test default value
-      expect(featureFlagStore.isEnabled(flag)).toBe(defaultValue);
+      expect(store.isEnabled(flag)).toBe(defaultValue);
 
       // Test explicit override
-      featureFlagStore.initialize(`${flag}=${!defaultValue}`);
-      expect(featureFlagStore.isEnabled(flag)).toBe(!defaultValue);
+      store.initialize(`${flag}=${!defaultValue}`);
+      expect(store.isEnabled(flag)).toBe(!defaultValue);
     });
   });
 
   describe("when using feature utility methods", () => {
     beforeEach(() => {
-      featureFlagStore.reset();
-      featureFlagStore.setVersion("1.5.0"); // Version where all features should be available
+      store.reset();
+      store.setVersion("1.5.0"); // Version where all features should be available
     });
 
     describe("getFeaturesByStage", () => {
@@ -420,7 +418,7 @@ describe("FeatureStore", () => {
         { stageName: "BETA", stage: FeatureStage.BETA },
         { stageName: "GA", stage: FeatureStage.GA },
       ])("should return features for $stageName stage", ({ stage }) => {
-        const features = featureFlagStore.getFeaturesByStage(stage);
+        const features = store.getFeaturesByStage(stage);
 
         expect(features).toBeDefined();
         expect(features.length).toBeGreaterThan(0);
@@ -432,10 +430,10 @@ describe("FeatureStore", () => {
 
     describe("getAvailableFeatures", () => {
       it("should return only available features", () => {
-        const availableFeatures = featureFlagStore.getAvailableFeatures();
+        const availableFeatures = store.getAvailableFeatures();
         expect(availableFeatures.length).toBeGreaterThan(0);
         availableFeatures.forEach(f => {
-          expect(featureFlagStore.isFeatureAvailable(f.key)).toBe(true);
+          expect(store.isFeatureAvailable(f.key)).toBe(true);
         });
       });
     });
@@ -458,33 +456,13 @@ describe("FeatureStore", () => {
           shouldBeNull: true,
         },
       ])("should handle $scenario", ({ key, expectedResult, shouldBeNull }) => {
-        const metadata = featureFlagStore.getFeatureMetadata(key);
+        const metadata = store.getFeatureMetadata(key);
 
         if (shouldBeNull) {
           expect(metadata).toBeNull();
         } else {
           expect(metadata).toEqual(expectedResult);
         }
-      });
-    });
-
-    describe("generateFeaturesDoc", () => {
-      it("should generate complete feature documentation", () => {
-        const docs = featureFlagStore.generateFeaturesDoc();
-
-        expect(docs).toBeDefined();
-        expect(docs.currentVersion).toBe("1.5.0");
-        expect(Object.keys(docs.features).length).toBeGreaterThan(0);
-
-        // Verify structure of a feature entry
-        const debugFeature = docs.features[FeatureFlags.DEBUG_MODE.key];
-        expect(debugFeature).toBeDefined();
-        expect(debugFeature.name).toBeDefined();
-        expect(debugFeature.description).toBeDefined();
-        expect(debugFeature.stage).toBeDefined();
-        expect(debugFeature.since).toBeDefined();
-        expect("until" in debugFeature).toBe(true); // Could be null
-        expect(debugFeature.isAvailable).toBeDefined();
       });
     });
   });

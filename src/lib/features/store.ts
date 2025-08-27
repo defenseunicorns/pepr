@@ -2,29 +2,50 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { FeatureFlags, FeatureValue } from "./FeatureFlags";
-import { FeatureInfo, FeatureMetadata, FeatureStage, FeaturesDoc } from "./FeatureTypes";
+import { FeatureInfo, FeatureMetadata, FeatureStage } from "./FeatureTypes";
+import * as VersionUtils from "./VersionUtils";
 
 /**
  * Global store for feature flags
  *
- * Uses the Singleton pattern to ensure a single instance is shared across the application
+ * Uses a modified Singleton pattern to ensure a single instance is shared across the application
+ * while still allowing for instance creation during testing
  */
-class FeatureStore {
+export class FeatureStore {
   private featureFlagLimit: number = 4;
   private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
   private currentVersion: string = "0.0.0";
+  private featureMetadataMap: Map<string, FeatureMetadata>;
 
-  private constructor() {}
+  private constructor() {
+    // Initialize feature metadata map for O(1) lookups
+    this.featureMetadataMap = new Map();
+    Object.values(FeatureFlags).forEach(feature => {
+      this.featureMetadataMap.set(feature.key, feature.metadata);
+    });
+  }
 
   /**
-   * Get the singleton instance of the feature store
+   * Gets the singleton instance
+   *
+   * @returns The singleton instance of FeatureStore
    */
   static getInstance(): FeatureStore {
     if (!FeatureStore.instance) {
       FeatureStore.instance = new FeatureStore();
     }
     return FeatureStore.instance;
+  }
+
+  /**
+   * Creates a new instance of FeatureStore
+   * This should only be used for testing purposes
+   *
+   * @returns A new instance of FeatureStore
+   */
+  static createInstance(): FeatureStore {
+    return new FeatureStore();
   }
 
   /**
@@ -70,52 +91,7 @@ class FeatureStore {
 
     if (!metadata) return false;
 
-    // Parse versions to components and handle prerelease versions
-    const parseVersion = (version: string): { parts: number[]; prerelease: string | null } => {
-      const [versionPart, prereleasePart] = version.split("-");
-      return {
-        parts: versionPart.split(".").map(Number),
-        prerelease: prereleasePart || null,
-      };
-    };
-
-    // Compare versions according to semver rules
-    const compareVersions = (
-      v1: { parts: number[]; prerelease: string | null },
-      v2: { parts: number[]; prerelease: string | null },
-    ): number => {
-      // Compare major.minor.patch
-      for (let i = 0; i < 3; i++) {
-        if (v1.parts[i] !== v2.parts[i]) {
-          return v1.parts[i] > v2.parts[i] ? 1 : -1;
-        }
-      }
-
-      // If major.minor.patch are equal, check prerelease
-      // No prerelease is greater than any prerelease version
-      if (v1.prerelease === null && v2.prerelease !== null) return 1;
-      if (v1.prerelease !== null && v2.prerelease === null) return -1;
-      if (v1.prerelease === v2.prerelease) return 0;
-
-      // Both have prerelease, lexically compare them
-      return v1.prerelease! < v2.prerelease! ? -1 : 1;
-    };
-
-    const currentV = parseVersion(this.currentVersion);
-    const sinceV = parseVersion(metadata.since);
-
-    // Check if current version is at least the 'since' version
-    const isSinceConditionMet = compareVersions(currentV, sinceV) >= 0;
-
-    // Check 'until' condition if it exists
-    if (metadata.until) {
-      const untilV = parseVersion(metadata.until);
-      // Feature is available if since condition is met AND current is less than or equal to until
-      return isSinceConditionMet && compareVersions(currentV, untilV) <= 0;
-    }
-
-    // If no 'until' version, feature is available if since condition is met
-    return isSinceConditionMet;
+    return VersionUtils.isVersionInRange(this.currentVersion, metadata.since, metadata.until);
   }
 
   /**
@@ -160,12 +136,7 @@ class FeatureStore {
    * @returns FeatureMetadata or null if not found
    */
   getFeatureMetadata(key: string): FeatureMetadata | null {
-    for (const feature of Object.values(FeatureFlags)) {
-      if (feature.key === key) {
-        return feature.metadata;
-      }
-    }
-    return null;
+    return this.featureMetadataMap.get(key) || null;
   }
 
   getAll(): Record<string, FeatureValue> {
@@ -188,12 +159,7 @@ class FeatureStore {
    * @throws Error if version format is invalid
    */
   setVersion(version: string): void {
-    // Validate semver format (x.y.z)
-    const semverRegex = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/;
-    if (!semverRegex.test(version)) {
-      throw new Error(`Invalid version format: ${version}. Must be a valid semver in format x.y.z`);
-    }
-
+    VersionUtils.validateVersion(version);
     this.currentVersion = version;
   }
 
@@ -216,37 +182,15 @@ class FeatureStore {
     return Object.values(FeatureFlags).filter(feature => this.isFeatureAvailable(feature));
   }
 
-  /**
-   * Generate comprehensive documentation for all features
-   *
-   * @returns Documentation object with current version and feature details
-   */
-  generateFeaturesDoc(): FeaturesDoc {
-    const doc: FeaturesDoc = {
-      currentVersion: this.currentVersion,
-      features: {},
-    };
-
-    Object.values(FeatureFlags).forEach(feature => {
-      const isAvailable = this.isFeatureAvailable(feature);
-      doc.features[feature.key] = {
-        name: feature.metadata.name,
-        description: feature.metadata.description,
-        stage: feature.metadata.stage,
-        since: feature.metadata.since,
-        until: feature.metadata.until,
-        isAvailable,
-        isEnabled: isAvailable && this.isEnabled(feature.key),
-        value: this.get(feature.key),
-      };
-    });
-
-    return doc;
-  }
-
   reset(): void {
     this.features = {};
     this.currentVersion = "0.0.0";
+
+    // Re-initialize feature metadata map
+    this.featureMetadataMap.clear();
+    Object.values(FeatureFlags).forEach(feature => {
+      this.featureMetadataMap.set(feature.key, feature.metadata);
+    });
   }
 
   debug(): string {
@@ -264,29 +208,44 @@ class FeatureStore {
    */
   initialize(featuresStr?: string): void {
     // First load from environment variables
-    Object.entries(process.env).forEach(([key, value]) => {
-      if (key.startsWith("PEPR_FEATURE_")) {
-        const featureName = key.replace("PEPR_FEATURE_", "").toLowerCase();
-        if (value) {
-          // Validate against known feature flags
-          this.addFeature(featureName, value);
-        }
-      }
-    });
+    this.loadFromEnvironment();
 
     // Then load from features string (will override env vars with same keys)
     if (featuresStr) {
-      featuresStr.split(",").forEach(feature => {
-        const [key, value] = feature.split("=");
-        if (key && value) {
-          // Override environment variables with same key
-          this.addFeature(key, value);
-        }
-      });
+      this.loadFromString(featuresStr);
     }
 
     // Validate once after all features are processed
     this.validateFeatureCount();
+  }
+
+  /**
+   * Load feature flags from environment variables
+   * Environment variables should be in the format PEPR_FEATURE_{FEATURE_NAME}
+   */
+  private loadFromEnvironment(): void {
+    Object.entries(process.env).forEach(([key, value]) => {
+      if (key.startsWith("PEPR_FEATURE_")) {
+        const featureName = key.replace("PEPR_FEATURE_", "").toLowerCase();
+        if (value) {
+          this.addFeature(featureName, value);
+        }
+      }
+    });
+  }
+
+  /**
+   * Load feature flags from a comma-separated string
+   * @param featuresStr String in format "feature1=value1,feature2=value2"
+   */
+  private loadFromString(featuresStr: string): void {
+    featuresStr.split(",").forEach(feature => {
+      const [key, value] = feature.split("=");
+      if (key && value) {
+        // Override environment variables with same key
+        this.addFeature(key, value);
+      }
+    });
   }
 
   /**
@@ -305,4 +264,7 @@ class FeatureStore {
 }
 
 // Export a singleton instance
-export const featureFlagStore = FeatureStore.getInstance();
+/**
+ * Default singleton instance of FeatureStore for backward compatibility
+ */
+export const store = FeatureStore.getInstance();
