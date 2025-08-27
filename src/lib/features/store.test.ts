@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { featureFlagStore, FeatureFlags, FeatureStage } from "./store";
+import { featureFlagStore } from "./store";
+import { FeatureStage } from "./FeatureTypes";
+import { FeatureFlags } from "./FeatureFlags";
 import { describe, beforeEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
