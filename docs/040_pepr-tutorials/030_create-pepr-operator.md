@@ -264,6 +264,7 @@ new PeprModule(cfg, [WebAppController]);' ./pepr.ts
 
 # Update Imports
 sed -i '' 's|import { HelloPepr } from "./capabilities/hello-pepr";|import { WebAppController } from "./capabilities";|' ./pepr.ts
+cat pepr.ts
 ```
 <!-- End Block -->
 
