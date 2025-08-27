@@ -263,8 +263,11 @@ sed -i '' -e '/new PeprModule(cfg, \[/,/\]);/c\
 new PeprModule(cfg, [WebAppController]);' ./pepr.ts
 
 # Update Imports
-sed -i '' 's|import { HelloPepr } from "./capabilities/hello-pepr";|import { WebAppController } from "./capabilities";|' ./pepr.ts
-cat pepr.ts
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' 's|import { HelloPepr } from "./capabilities/hello-pepr";|import { WebAppController } from "./capabilities";|' ./pepr.ts
+else
+  sed -i 's|import { HelloPepr } from "./capabilities/hello-pepr";|import { WebAppController } from "./capabilities";|' ./pepr.ts
+fi
 ```
 <!-- End Block -->
 
