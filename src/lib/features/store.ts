@@ -25,8 +25,9 @@ export class FeatureStore {
   /**
    * Validates if a feature flag key is known
    * @private
+   * @static
    */
-  private validateFeatureKey(key: string): void {
+  private static validateFeatureKey(key: string): void {
     const validKeys = Object.values(FeatureFlags)
       .filter(f => f?.key)
       .map(f => f.key);
@@ -44,7 +45,7 @@ export class FeatureStore {
     if (!key || value === undefined || value === "") return;
 
     // Validate against known feature flags
-    this.validateFeatureKey(key);
+    FeatureStore.validateFeatureKey(key);
 
     // Simple type conversion
     const lowerValue = value.toLowerCase();
@@ -61,6 +62,9 @@ export class FeatureStore {
   }
 
   get<T extends FeatureValue>(key: string): T {
+    // Validate key is known first
+    FeatureStore.validateFeatureKey(key);
+
     if (!(key in this.features)) {
       const knownKeys = Object.values(FeatureFlags)
         .map(f => f.key)
