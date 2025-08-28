@@ -1,0 +1,51 @@
+name: Tutorials Test
+
+permissions: read-all
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/**"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "docs/**"
+
+jobs:
+  tutorials-test:
+    name: tutorials test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: "install k3d"
+        run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
+        shell: bash
+
+      - name: clone pepr
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: defenseunicorns/pepr
+          path: pepr
+
+      - name: setup node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: "npm"
+          cache-dependency-path: pepr
+
+      - name: "set env: PEPR"
+        run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: install pepr deps
+        run: |
+          cd "$PEPR"
+          npm ci
+          npx vitest run docs/040_pepr-tutorials/tests/*.test.ts   
+
