@@ -108,6 +108,14 @@ export class FeatureStore {
           this.addFeature(key.trim(), value.trim());
         });
     }
+
+    // Apply default values from FeatureFlags for any flags not explicitly set
+    Object.values(FeatureFlags).forEach(feature => {
+      if (!(feature.key in this.features)) {
+        const defaultValue = feature.metadata.defaultValue;
+        this.features[feature.key] = defaultValue;
+      }
+    });
   }
 
   validateFeatureCount(): void {

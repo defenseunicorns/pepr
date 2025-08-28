@@ -10,6 +10,7 @@ describe("FeatureStore", () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     featureFlagStore.reset();
+    featureFlagStore.initialize();
   });
 
   afterEach(() => {
@@ -17,11 +18,25 @@ describe("FeatureStore", () => {
   });
 
   describe("when accessing features", () => {
+    it("should enforce a limit on feature count", () => {
+      const featureFlagCount = Object.values(FeatureFlags).length;
+      const warnThreshold = 4;
+
+      if (featureFlagCount > warnThreshold) {
+        const message = `[WARN] Too many feature flags are active (found ${featureFlagCount}, max ${warnThreshold}).
+        If this is intentional, increase the 'warnThreshold' in this unit test.
+        This test is a backstop to ensure developers do not accidentally increase complexity by using too many feature flags.`;
+        throw new Error(message);
+      }
+
+      expect(featureFlagCount).toBeLessThanOrEqual(warnThreshold);
+    });
+
     describe("which exist", () => {
       it.each([
         { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
         { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
-        { type: "boolean", key: FeatureFlags.BETA_FEATURES.key, expected: true },
+        { type: "boolean", key: FeatureFlags.EXPERIMENTAL_API.key, expected: false },
       ])("should return $type values", ({ key, expected }) => {
         expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
       });
@@ -34,14 +49,12 @@ describe("FeatureStore", () => {
         { type: "boolean", defaultValue: false, expected: false },
       ])("should return default $type value", ({ defaultValue, expected }) => {
         // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key, defaultValue)).toBe(
-          expected,
-        );
+        expect(featureFlagStore.get("not-real", defaultValue)).toBe(expected);
       });
 
       it("should return undefined without default", () => {
         // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key)).toBeUndefined();
+        expect(featureFlagStore.get("not-real")).toBeUndefined();
       });
     });
 
@@ -50,7 +63,7 @@ describe("FeatureStore", () => {
       expect(features).toEqual({
         [FeatureFlags.DEBUG_MODE.key]: "value",
         [FeatureFlags.PERFORMANCE_METRICS.key]: 42,
-        [FeatureFlags.BETA_FEATURES.key]: true,
+        [FeatureFlags.EXPERIMENTAL_API.key]: false,
       });
 
       features[FeatureFlags.DEBUG_MODE.key] = "modified";
@@ -122,11 +135,11 @@ describe("FeatureStore", () => {
           [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
           [`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`]: "42",
         },
-        initializeString: `${FeatureFlags.PERFORMANCE_METRICS.key}=99,${FeatureFlags.BETA_FEATURES.key}=new`,
+        initializeString: `${FeatureFlags.PERFORMANCE_METRICS.key}=99,${FeatureFlags.EXPERIMENTAL_API.key}=new`,
         expectedFeatures: {
           [FeatureFlags.DEBUG_MODE.key]: true, // From env
           [FeatureFlags.PERFORMANCE_METRICS.key]: 99, // Overridden by CLI
-          [FeatureFlags.BETA_FEATURES.key]: "new", // From CLI
+          [FeatureFlags.EXPERIMENTAL_API.key]: "new", // From CLI
         },
       },
     ])("$name", ({ envVars, initializeString, expectedFeatures }) => {
@@ -152,7 +165,8 @@ describe("FeatureStore", () => {
       // Add 2 more via string to exceed the 4 feature limit
       expect(() => {
         featureFlagStore.initialize(
-          `${FeatureFlags.BETA_FEATURES.key}=new,${FeatureFlags.CHARLIE_FEATURES.key}=extra`,
+          `${FeatureFlags.SOME_FEATURE.key}=new`,
+          `${FeatureFlags.ANOTHER_FEATURE.key}=new`,
         );
       }).toThrow("Too many feature flags active: 5 (maximum: 4)");
     });
@@ -176,8 +190,8 @@ describe("FeatureStore", () => {
     });
 
     it("should provide type safety when accessing features", () => {
-      featureFlagStore.initialize(`${FeatureFlags.BETA_FEATURES.key}=true`);
-      const value: boolean = featureFlagStore.get(FeatureFlags.BETA_FEATURES.key);
+      featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
+      const value: boolean = featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key);
       expect(value).toBe(true);
     });
   });

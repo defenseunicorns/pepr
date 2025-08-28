@@ -1,7 +1,7 @@
 export interface FeatureMetadata {
   name: string;
   description: string;
-  defaultValue: boolean;
+  defaultValue: FeatureValue;
 }
 
 export interface FeatureInfo {
@@ -15,7 +15,7 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Debug Mode",
       description: "Enables verbose logging and debugging features",
-      defaultValue: false,
+      defaultValue: "value",
     },
   },
   EXPERIMENTAL_API: {
@@ -31,23 +31,7 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Performance Metrics",
       description: "Enables collection and reporting of performance metrics",
-      defaultValue: false,
-    },
-  },
-  BETA_FEATURES: {
-    key: "beta_features",
-    metadata: {
-      name: "Beta Features Bundle",
-      description: "Enables all current beta features as a bundle",
-      defaultValue: false,
-    },
-  },
-  CHARLIE_FEATURES: {
-    key: "charlie_features",
-    metadata: {
-      name: "Charlie Features",
-      description: "Legacy feature bundle being phased out",
-      defaultValue: false,
+      defaultValue: 42,
     },
   },
 };
