@@ -17,12 +17,6 @@ describe("FeatureStore", () => {
   });
 
   describe("when accessing features", () => {
-    beforeEach(() => {
-      featureFlagStore.initialize(
-        `${FeatureFlags.DEBUG_MODE.key}=value,${FeatureFlags.PERFORMANCE_METRICS.key}=42,${FeatureFlags.BETA_FEATURES.key}=true`,
-      );
-    });
-
     describe("which exist", () => {
       it.each([
         { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
