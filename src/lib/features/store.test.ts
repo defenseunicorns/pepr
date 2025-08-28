@@ -187,7 +187,7 @@ describe("FeatureStore", () => {
 
       if (featureFlagCount > warnThreshold) {
         const message = `[WARN] Too many feature flags are active (found ${featureFlagCount}, max ${warnThreshold}).
-        If this is intentional, increase the 'warnThreshold' in this unit test.
+        If this is intentional, increase the 'warnThreshold' here and the 'featureFlagLimit' in features/store.ts.
         This test is a backstop to ensure developers do not accidentally increase complexity by using too many feature flags.`;
         throw new Error(message);
       }
