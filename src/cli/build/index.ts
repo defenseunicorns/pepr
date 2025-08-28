@@ -13,6 +13,7 @@ import {
   handleCustomImageBuild,
   validImagePullSecret,
   generateYamlAndWriteToDisk,
+  fileExists
 } from "./build.helpers";
 import { buildModule } from "./buildModule";
 import Log from "../../lib/telemetry/logger";
@@ -40,7 +41,7 @@ export default function (program: Command): void {
         "Set name for zarf component and service monitors in helm charts.",
       ),
     )
-    .option("-e, --entry-point <file>", "Specify the entry point file to build with.", "pepr.ts")
+    .option("-e, --entry-point <file>", "Specify the entry point file to build with. Default: pepr.ts", fileExists)
     .addOption(
       new Option(
         "-i, --custom-image <image>",
