@@ -1,8 +1,9 @@
 name: Version Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -79,7 +80,7 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-          
+
       - name: Create release notes and tag release
         run: |
           npx semantic-release \
