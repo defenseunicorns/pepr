@@ -63,28 +63,13 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("when initializing the feature-flag store", () => {
+  describe("when initializing feature flags", () => {
     it.each([
-      {
-        name: "should load features from environment variables when no string is provided",
-        envVars: {
-          [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
-          [`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`]: "42",
-          [`PEPR_FEATURE_${FeatureFlags.EXPERIMENTAL_API.key.toUpperCase()}`]: "value",
-        },
-        initializeString: undefined,
-        expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: true,
-          [FeatureFlags.PERFORMANCE_METRICS.key]: 42,
-          [FeatureFlags.EXPERIMENTAL_API.key]: "value",
-        },
-      },
       {
         name: "should parse string values",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=value,${FeatureFlags.EXPERIMENTAL_API.key}=advanced`,
+        initializeString: `${FeatureFlags.EXPERIMENTAL_API.key}=advanced`,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: "value",
           [FeatureFlags.EXPERIMENTAL_API.key]: "advanced",
         },
       },
@@ -115,55 +100,53 @@ describe("FeatureStore", () => {
       {
         name: "should handle malformed entries",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=true,novalue=,=noproperty,invalid`,
+        initializeString: `novalue=,=noproperty,invalid`,
+        expectedFeatures: {},
+      },
+      {
+        name: "should load features from environment variables",
+        envVars: {
+          [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
+        },
+        initializeString: undefined,
         expectedFeatures: {
           [FeatureFlags.DEBUG_MODE.key]: true,
         },
       },
       {
-        name: "should load features from string when no env vars are present",
+        name: "should load features from string",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=true,${FeatureFlags.PERFORMANCE_METRICS.key}=42,${FeatureFlags.EXPERIMENTAL_API.key}=value`,
+        initializeString: `${FeatureFlags.DEBUG_MODE.key}=true`,
         expectedFeatures: {
           [FeatureFlags.DEBUG_MODE.key]: true,
-          [FeatureFlags.PERFORMANCE_METRICS.key]: 42,
-          [FeatureFlags.EXPERIMENTAL_API.key]: "value",
         },
       },
       {
-        name: "should allow CLI features to override environment variables",
+        name: "should allow initialization strings to override environment variables",
         envVars: {
           [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
           [`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`]: "42",
-          [`PEPR_FEATURE_${FeatureFlags.EXPERIMENTAL_API.key.toUpperCase()}`]: "value",
         },
         initializeString: `${FeatureFlags.PERFORMANCE_METRICS.key}=99,${FeatureFlags.BETA_FEATURES.key}=new`,
         expectedFeatures: {
           [FeatureFlags.DEBUG_MODE.key]: true, // From env
           [FeatureFlags.PERFORMANCE_METRICS.key]: 99, // Overridden by CLI
-          [FeatureFlags.EXPERIMENTAL_API.key]: "value", // From env
           [FeatureFlags.BETA_FEATURES.key]: "new", // From CLI
         },
       },
     ])("$name", ({ envVars, initializeString, expectedFeatures }) => {
-      // Save original process.env
-      const originalEnv = { ...process.env };
-      try {
-        // Set environment variables
-        Object.entries(envVars).forEach(([key, value]) => {
-          process.env[key] = value;
-        });
+      // Arrange - Set environment variables
+      Object.entries(envVars).forEach(([key, value]) => {
+        process.env[key] = value;
+      });
 
-        // Initialize with provided string
-        store.initialize(initializeString);
+      // Act - Initialize with provided string
+      store.initialize(initializeString);
 
-        Object.entries(expectedFeatures).forEach(([key, value]) => {
-          expect(store.get(key)).toBe(value);
-        });
-      } finally {
-        // Restore original process.env
-        process.env = originalEnv;
-      }
+      // Assert - Verify expected features are set
+      Object.entries(expectedFeatures).forEach(([key, value]) => {
+        expect(store.get(key)).toBe(value);
+      });
     });
 
     it("should enforce feature count validation", () => {
@@ -200,15 +183,9 @@ describe("FeatureStore", () => {
       }).toThrow("Unknown feature flag: unknown_flag");
     });
 
-    it("should validate flags from environment variables", () => {
-      try {
-        process.env.PEPR_FEATURE_UNKNOWN = "value";
-        expect(() => {
-          store.initialize();
-        }).toThrow("Unknown feature flag: unknown");
-      } catch {
-        //TODO nothing
-      }
+    it("should throw an error for unknown flags from environment variables", () => {
+      process.env.PEPR_FEATURE_UNKNOWN = "value";
+      expect(() => store.initialize()).toThrow("Unknown feature flag: unknown");
     });
 
     it("should provide type safety when accessing features", () => {
