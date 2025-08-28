@@ -6,12 +6,8 @@ import { FeatureFlags, FeatureInfo } from "./FeatureFlags";
 import { describe, beforeEach, afterEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
-  /**
-   * Helper function to add feature flags to the FeatureFlags object
-   * @param flags Object containing feature flags to add
-   * @returns The updated FeatureFlags object
-   */
   const addFeatureFlags = (flags: Record<string, FeatureInfo>): Record<string, FeatureInfo> => {
+    // Add feature flags to the FeatureFlags object without making real feature flags
     return Object.assign(FeatureFlags, flags);
   };
 
@@ -27,6 +23,7 @@ describe("FeatureStore", () => {
 
   afterEach(() => {
     process.env = originalEnv;
+    //Reset FeatureFlags object
     Object.keys(FeatureFlags)
       .filter(key => !Object.keys(originalFeatureFlags).includes(key))
       .forEach(key => delete FeatureFlags[key]);
