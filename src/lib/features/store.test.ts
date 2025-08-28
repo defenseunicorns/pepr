@@ -33,7 +33,7 @@ describe("FeatureStore", () => {
       });
     });
 
-    describe("with non-existent features", () => {
+    describe("which do not exist", () => {
       it.each([
         { type: "string", defaultValue: "default", expected: "default" },
         { type: "number", defaultValue: 100, expected: 100 },

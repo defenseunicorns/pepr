@@ -8,18 +8,14 @@ export interface FeatureInfo {
   key: string;
   metadata: FeatureMetadata;
 }
-/**
- * All known feature flags with their metadata
- */
-
+// All known feature flags with their metadata
 export const FeatureFlags: Record<string, FeatureInfo> = {
   DEBUG_MODE: {
     key: "debug_mode",
     metadata: {
       name: "Debug Mode",
       description: "Enables verbose logging and debugging features",
-
-      defaultValue: true,
+      defaultValue: false,
     },
   },
   EXPERIMENTAL_API: {
@@ -27,7 +23,6 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Experimental API",
       description: "Enables experimental APIs that may change",
-
       defaultValue: false,
     },
   },
@@ -36,8 +31,7 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Performance Metrics",
       description: "Enables collection and reporting of performance metrics",
-
-      defaultValue: true,
+      defaultValue: false,
     },
   },
   BETA_FEATURES: {
@@ -45,8 +39,7 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Beta Features Bundle",
       description: "Enables all current beta features as a bundle",
-
-      defaultValue: true,
+      defaultValue: false,
     },
   },
   CHARLIE_FEATURES: {
@@ -54,9 +47,9 @@ export const FeatureFlags: Record<string, FeatureInfo> = {
     metadata: {
       name: "Charlie Features",
       description: "Legacy feature bundle being phased out",
-
-      defaultValue: true,
+      defaultValue: false,
     },
   },
 };
+
 export type FeatureValue = string | boolean | number;
