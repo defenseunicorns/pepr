@@ -56,8 +56,14 @@ export class FeatureStore {
             : value;
   }
 
-  get<T extends FeatureValue>(key: string, defaultValue?: T): T {
-    return (this.features[key] as T) ?? defaultValue;
+  get<T extends FeatureValue>(key: string): T {
+    if (!(key in this.features)) {
+      const knownKeys = Object.values(FeatureFlags)
+        .map(f => f.key)
+        .join(", ");
+      throw new Error(`Feature flag '${key}' does not exist. Known flags are: ${knownKeys}`);
+    }
+    return this.features[key] as T;
   }
 
   getAll(): Record<string, FeatureValue> {

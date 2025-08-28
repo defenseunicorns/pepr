@@ -30,30 +30,12 @@ describe("FeatureStore", () => {
   });
 
   describe("when accessing features", () => {
-    describe("which exist", () => {
-      it.each([
-        { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
-        { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
-        { type: "boolean", key: FeatureFlags.EXPERIMENTAL_API.key, expected: false },
-      ])("should return $type values", ({ key, expected }) => {
-        expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
-      });
-    });
-
-    describe("which do not exist", () => {
-      it.each([
-        { type: "string", defaultValue: "default", expected: "default" },
-        { type: "number", defaultValue: 100, expected: 100 },
-        { type: "boolean", defaultValue: false, expected: false },
-      ])("should return default $type value", ({ defaultValue, expected }) => {
-        // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get("not-real", defaultValue)).toBe(expected);
-      });
-
-      it("should return undefined without default", () => {
-        // Using a flag we know doesn't exist in our initialized set
-        expect(featureFlagStore.get("not-real")).toBeUndefined();
-      });
+    it.each([
+      { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
+      { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
+      { type: "boolean", key: FeatureFlags.EXPERIMENTAL_API.key, expected: false },
+    ])("should return $type values", ({ key, expected }) => {
+      expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
     });
 
     it("should return a copy of all features", () => {
@@ -66,6 +48,27 @@ describe("FeatureStore", () => {
 
       features[FeatureFlags.DEBUG_MODE.key] = "modified";
       expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe("value");
+    });
+    it("should accept known feature flags", () => {
+      featureFlagStore.initialize(`${FeatureFlags.DEBUG_MODE.key}=true`);
+      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe(true);
+    });
+
+    it("should throw error for unknown feature flags", () => {
+      expect(() => {
+        featureFlagStore.initialize("unknown_flag=value");
+      }).toThrow("Unknown feature flag: unknown_flag");
+    });
+
+    it("should throw an error for unknown flags from environment variables", () => {
+      process.env.PEPR_FEATURE_UNKNOWN = "value";
+      expect(() => featureFlagStore.initialize()).toThrow("Unknown feature flag: unknown");
+    });
+
+    it("should provide type safety when accessing features", () => {
+      featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
+      const value: boolean = featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key);
+      expect(value).toBe(true);
     });
   });
 
@@ -153,30 +156,6 @@ describe("FeatureStore", () => {
       Object.entries(expectedFeatures).forEach(([key, value]) => {
         expect(featureFlagStore.get(key)).toBe(value);
       });
-    });
-  });
-
-  describe("when validating feature flags", () => {
-    it("should accept known feature flags", () => {
-      featureFlagStore.initialize(`${FeatureFlags.DEBUG_MODE.key}=true`);
-      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe(true);
-    });
-
-    it("should throw error for unknown feature flags", () => {
-      expect(() => {
-        featureFlagStore.initialize("unknown_flag=value");
-      }).toThrow("Unknown feature flag: unknown_flag");
-    });
-
-    it("should throw an error for unknown flags from environment variables", () => {
-      process.env.PEPR_FEATURE_UNKNOWN = "value";
-      expect(() => featureFlagStore.initialize()).toThrow("Unknown feature flag: unknown");
-    });
-
-    it("should provide type safety when accessing features", () => {
-      featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
-      const value: boolean = featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key);
-      expect(value).toBe(true);
     });
   });
 
