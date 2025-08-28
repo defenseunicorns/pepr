@@ -18,14 +18,15 @@ export class FeatureStore {
     }
 
     const lowerValue = value.toLowerCase();
-    this.features[key] =
-      lowerValue === "true"
-        ? true
-        : lowerValue === "false"
-          ? false
-          : !isNaN(Number(value))
-            ? Number(value)
-            : value;
+    if (lowerValue === "true") {
+      this.features[key] = true;
+    } else if (lowerValue === "false") {
+      this.features[key] = false;
+    } else if (!isNaN(Number(value))) {
+      this.features[key] = Number(value);
+    } else {
+      this.features[key] = value;
+    }
   }
 
   get<T extends FeatureValue>(key: string): T {
