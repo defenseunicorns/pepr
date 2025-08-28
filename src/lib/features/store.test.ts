@@ -180,22 +180,6 @@ describe("FeatureStore", () => {
     });
   });
 
-  describe("when using feature utility methods", () => {
-    //TODO: an implementation detail, test some other way?
-    describe("getFeatureMetadata", () => {
-      it("should handle valid feature key", () => {
-        const expected = expect.objectContaining({ name: "Debug Mode" });
-        const result = featureFlagStore.getFeatureMetadata(FeatureFlags.DEBUG_MODE.key);
-        expect(result).toEqual(expected);
-      });
-
-      it("should handle invalid feature key", () => {
-        const metadata = featureFlagStore.getFeatureMetadata("not-valid");
-        expect(metadata).toBeNull();
-      });
-    });
-  });
-
   describe("with a feature flag limit to reduce complexity", () => {
     it("should enforce a limit on feature count", () => {
       const featureFlagCount = Object.values(FeatureFlags).length;

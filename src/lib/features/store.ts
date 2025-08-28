@@ -60,10 +60,6 @@ export class FeatureStore {
     return (this.features[key] as T) ?? defaultValue;
   }
 
-  getFeatureMetadata(key: string): FeatureMetadata | null {
-    return this.featureMetadataMap.get(key) || null;
-  }
-
   getAll(): Record<string, FeatureValue> {
     return { ...this.features };
   }
