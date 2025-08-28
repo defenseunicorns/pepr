@@ -44,13 +44,7 @@ export class FeatureStore {
     return { ...this.features };
   }
 
-  reset(): void {
-    this.features = {};
-  }
-
   initialize(featuresStr?: string, env: Record<string, string | undefined> = process.env): void {
-    this.reset();
-
     Object.keys(env)
       .filter(key => key.startsWith("PEPR_FEATURE_"))
       .forEach(key => {
@@ -86,7 +80,7 @@ export class FeatureStore {
 
   validateFeatureCount(): void {
     const featureCount = Object.keys(this.features).length;
-    if (Object.keys(featureCount).length > this.featureFlagLimit) {
+    if (featureCount > this.featureFlagLimit) {
       throw new Error(
         `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit}). Use of more than ${this.featureFlagLimit} feature flags is not supported.`,
       );

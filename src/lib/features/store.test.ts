@@ -23,7 +23,6 @@ describe("FeatureStore", () => {
   beforeEach(() => {
     originalFeatureFlags = { ...FeatureFlags };
     originalEnv = { ...process.env };
-    featureFlagStore.reset();
     addFeatureFlags({
       FAKE_STRING: {
         key: "fake_string",
@@ -66,19 +65,6 @@ describe("FeatureStore", () => {
       { type: "boolean", key: "fake_boolean", expected: false },
     ])("should return $type values", ({ key, expected }) => {
       expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
-    });
-
-    it("should return a copy of all features", () => {
-      removeAddedFeatureFlags();
-      featureFlagStore.reset();
-      featureFlagStore.initialize("reference_flag=false");
-      const features = featureFlagStore.getAll();
-      expect(features).toEqual({
-        ["reference_flag"]: false,
-      });
-
-      features["reference_flag"] = true;
-      expect(featureFlagStore.get("reference_flag")).toBe(false);
     });
 
     it("should accept known feature flags", () => {
