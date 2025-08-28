@@ -61,11 +61,11 @@ export class FeatureStore {
   }
 
   get<T extends FeatureValue>(key: string): T {
-    // Validate key is known first
-    this.validateFeatureKey(key);
-
     if (!(key in this.features)) {
-      throw new Error(`Feature flag '${key}' exists but has not been set`);
+      const knownKeys = Object.values(FeatureFlags)
+        .map(f => f.key)
+        .join(", ");
+      throw new Error(`Feature flag '${key}' does not exist. Known flags are: ${knownKeys}`);
     }
     return this.features[key] as T;
   }
@@ -111,10 +111,28 @@ export class FeatureStore {
         });
     }
 
+    // Get valid feature flags (filter out any undefined or invalid entries)
+    const validFeatureFlags = Object.values(FeatureFlags).filter(
+      f => f && typeof f === "object" && "key" in f && typeof f.key === "string",
+    );
+
+    // Validate that all features in the store are known
+    Object.keys(this.features).forEach(key => {
+      if (!validFeatureFlags.some(f => f.key === key)) {
+        const knownKeys = validFeatureFlags.map(f => f.key).join(", ");
+        throw new Error(`Unknown feature flag: ${key}. Known flags are: ${knownKeys}`);
+      }
+    });
+
     // Apply default values from FeatureFlags for any flags not explicitly set
-    Object.values(FeatureFlags)
-      // Skip invalid entries and entries without default values
-      .filter(feature => feature?.key && feature?.metadata?.defaultValue !== undefined)
+    validFeatureFlags
+      .filter(
+        feature =>
+          "metadata" in feature &&
+          feature.metadata &&
+          typeof feature.metadata === "object" &&
+          "defaultValue" in feature.metadata,
+      )
       .forEach(feature => {
         if (!(feature.key in this.features)) {
           this.features[feature.key] = feature.metadata.defaultValue;
