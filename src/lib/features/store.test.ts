@@ -30,6 +30,34 @@ describe("FeatureStore", () => {
   });
 
   describe("when accessing features", () => {
+    beforeEach(() => {
+      addFeatureFlags({
+        DEBUG_MODE: {
+          key: "debug_mode",
+          metadata: {
+            name: "Debug Mode",
+            description: "Enables verbose logging and debugging features",
+            defaultValue: "value",
+          },
+        },
+        EXPERIMENTAL_API: {
+          key: "experimental_api",
+          metadata: {
+            name: "Experimental API",
+            description: "Enables experimental APIs that may change",
+            defaultValue: false,
+          },
+        },
+        PERFORMANCE_METRICS: {
+          key: "performance_metrics",
+          metadata: {
+            name: "Performance Metrics",
+            description: "Enables collection and reporting of performance metrics",
+            defaultValue: 42,
+          },
+        },
+      });
+    });
     it.each([
       { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
       { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
@@ -160,7 +188,7 @@ describe("FeatureStore", () => {
   });
 
   describe("with a feature flag limit to reduce complexity", () => {
-    it("should enforce a limit on feature count", () => {
+    it("should limit total feature count", () => {
       const featureFlagCount = Object.values(FeatureFlags).length;
       const warnThreshold = 4;
 
@@ -174,7 +202,7 @@ describe("FeatureStore", () => {
       expect(featureFlagCount).toBeLessThanOrEqual(warnThreshold);
     });
 
-    it("should enforce feature count validation at runtime", () => {
+    it("should limit feature count at runtime", () => {
       addFeatureFlags({
         TEST_FEATURE1: {
           key: "test_feature1",
