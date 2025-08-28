@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { FeatureFlags, FeatureValue } from "./FeatureFlags";
-import { FeatureInfo, FeatureMetadata, FeatureStage } from "./FeatureTypes";
-import * as VersionUtils from "./VersionUtils";
+import { FeatureMetadata } from "./FeatureTypes";
 
 /**
  * Global store for feature flags
@@ -15,7 +14,6 @@ export class FeatureStore {
   private featureFlagLimit: number = 4;
   private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
-  private currentVersion: string = "0.0.0";
   private featureMetadataMap: Map<string, FeatureMetadata>;
 
   private constructor() {
@@ -30,10 +28,6 @@ export class FeatureStore {
       FeatureStore.instance = new FeatureStore();
     }
     return FeatureStore.instance;
-  }
-
-  static createInstance(): FeatureStore {
-    return new FeatureStore();
   }
 
   /**
@@ -64,31 +58,10 @@ export class FeatureStore {
   }
 
   /**
-   * Checks if a feature is available based on the current version
-   * @param key Feature flag key or feature info object
-   */
-  isFeatureAvailable(feature: string | FeatureInfo): boolean {
-    const metadata =
-      typeof feature === "string" ? this.getFeatureMetadata(feature) : feature.metadata;
-    return metadata
-      ? VersionUtils.isVersionInRange(this.currentVersion, metadata.since, metadata.until)
-      : false;
-  }
-
-  /**
    * Get a feature value by key with type safety
    */
   get<T extends FeatureValue>(key: string, defaultValue?: T): T {
     return (this.features[key] as T) ?? defaultValue;
-  }
-
-  /**
-   * Check if a feature is enabled, considering version availability and explicit settings
-   */
-  isEnabled(key: string): boolean {
-    const metadata = this.getFeatureMetadata(key);
-    if (!metadata || !this.isFeatureAvailable(key)) return false;
-    return key in this.features ? Boolean(this.features[key]) : metadata.defaultValue;
   }
 
   getFeatureMetadata(key: string): FeatureMetadata | null {
@@ -98,35 +71,13 @@ export class FeatureStore {
   getAll(): Record<string, FeatureValue> {
     return { ...this.features };
   }
-  getVersion(): string {
-    return this.currentVersion;
-  }
-
-  setVersion(version: string): void {
-    VersionUtils.validateVersion(version);
-    this.currentVersion = version;
-  }
-
-  // Get features by various criteria
-  getFeaturesByStage(stage: FeatureStage): FeatureInfo[] {
-    return Object.values(FeatureFlags).filter(feature => feature.metadata.stage === stage);
-  }
-
-  getAvailableFeatures(): FeatureInfo[] {
-    return Object.values(FeatureFlags).filter(feature => this.isFeatureAvailable(feature));
-  }
 
   reset(): void {
     this.features = {};
-    this.currentVersion = "0.0.0";
     this.featureMetadataMap.clear();
     Object.values(FeatureFlags).forEach(feature =>
       this.featureMetadataMap.set(feature.key, feature.metadata),
     );
-  }
-
-  debug(): string {
-    return JSON.stringify(this.features, null, 2);
   }
 
   /**
