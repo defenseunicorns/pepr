@@ -5,9 +5,6 @@ import { FeatureFlags, FeatureMetadata, FeatureValue } from "./FeatureFlags";
 
 /**
  * Global store for feature flags
- *
- * Uses a modified Singleton pattern to ensure a single instance is shared across the application
- * while still allowing for instance creation during testing
  */
 export class FeatureStore {
   private featureFlagLimit: number = 4;
@@ -16,10 +13,39 @@ export class FeatureStore {
   private featureMetadataMap: Map<string, FeatureMetadata>;
 
   private constructor() {
+    this.initializeMetadata();
+  }
+
+  /**
+   * Initialize or reset the feature metadata map
+   * @private
+   */
+  private initializeMetadata(): void {
     this.featureMetadataMap = new Map();
     Object.values(FeatureFlags).forEach(feature => {
       this.featureMetadataMap.set(feature.key, feature.metadata);
     });
+  }
+
+  /**
+   * Get a list of all known feature flag keys
+   * @private
+   */
+  private getKnownFeatureKeys(): string[] {
+    return Object.values(FeatureFlags).map(f => f.key);
+  }
+
+  /**
+   * Validate that a feature key exists in known features
+   * @private
+   */
+  private validateFeatureKey(key: string, throwError = true): boolean {
+    const isValid = Object.values(FeatureFlags).some(f => f.key === key);
+    if (!isValid && throwError) {
+      const knownKeys = this.getKnownFeatureKeys().join(", ");
+      throw new Error(`Unknown feature flag: ${key}. Known flags are: ${knownKeys}`);
+    }
+    return isValid;
   }
 
   static getInstance(): FeatureStore {
@@ -37,12 +63,7 @@ export class FeatureStore {
     if (!key || value === undefined || value === "") return;
 
     // Validate against known feature flags
-    if (!Object.values(FeatureFlags).some(f => f.key === key)) {
-      const knownKeys = Object.values(FeatureFlags)
-        .map(f => f.key)
-        .join(", ");
-      throw new Error(`Unknown feature flag: ${key}. Known flags are: ${knownKeys}`);
-    }
+    this.validateFeatureKey(key);
 
     // Type conversion with simplified logic
     const lowerValue = value.toLowerCase();
@@ -58,9 +79,7 @@ export class FeatureStore {
 
   get<T extends FeatureValue>(key: string): T {
     if (!(key in this.features)) {
-      const knownKeys = Object.values(FeatureFlags)
-        .map(f => f.key)
-        .join(", ");
+      const knownKeys = this.getKnownFeatureKeys().join(", ");
       throw new Error(`Feature flag '${key}' does not exist. Known flags are: ${knownKeys}`);
     }
     return this.features[key] as T;
@@ -72,10 +91,7 @@ export class FeatureStore {
 
   reset(): void {
     this.features = {};
-    this.featureMetadataMap.clear();
-    Object.values(FeatureFlags).forEach(feature =>
-      this.featureMetadataMap.set(feature.key, feature.metadata),
-    );
+    this.initializeMetadata();
   }
 
   /**
@@ -83,7 +99,14 @@ export class FeatureStore {
    */
   initialize(featuresStr?: string): void {
     this.loadFeatures(featuresStr);
-    this.validateFeatureCount();
+
+    // Validate feature count
+    const featureCount = Object.keys(this.features).length;
+    if (featureCount > this.featureFlagLimit) {
+      throw new Error(
+        `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit}). Use of more than ${this.featureFlagLimit} feature flags is not supported.`,
+      );
+    }
   }
 
   /**
@@ -111,42 +134,14 @@ export class FeatureStore {
         });
     }
 
-    // Get valid feature flags (filter out any undefined or invalid entries)
-    const validFeatureFlags = Object.values(FeatureFlags).filter(
-      f => f && typeof f === "object" && "key" in f && typeof f.key === "string",
-    );
-
-    // Validate that all features in the store are known
-    Object.keys(this.features).forEach(key => {
-      if (!validFeatureFlags.some(f => f.key === key)) {
-        const knownKeys = validFeatureFlags.map(f => f.key).join(", ");
-        throw new Error(`Unknown feature flag: ${key}. Known flags are: ${knownKeys}`);
-      }
-    });
-
     // Apply default values from FeatureFlags for any flags not explicitly set
-    validFeatureFlags
-      .filter(
-        feature =>
-          "metadata" in feature &&
-          feature.metadata &&
-          typeof feature.metadata === "object" &&
-          "defaultValue" in feature.metadata,
-      )
+    Object.values(FeatureFlags)
+      .filter(feature => feature?.metadata?.defaultValue !== undefined)
       .forEach(feature => {
         if (!(feature.key in this.features)) {
           this.features[feature.key] = feature.metadata.defaultValue;
         }
       });
-  }
-
-  validateFeatureCount(): void {
-    const featureCount = Object.keys(this.features).length;
-    if (featureCount > this.featureFlagLimit) {
-      throw new Error(
-        `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit}). Use of more than ${this.featureFlagLimit} feature flags is not supported.`,
-      );
-    }
   }
 }
 
