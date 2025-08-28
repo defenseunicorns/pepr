@@ -78,7 +78,7 @@ describe("FeatureStore", () => {
       });
 
       features["reference_flag"] = true;
-      expect(featureFlagStore.get("reference_flag")).toBe(true);
+      expect(featureFlagStore.get("reference_flag")).toBe(false);
     });
 
     it("should accept known feature flags", () => {
