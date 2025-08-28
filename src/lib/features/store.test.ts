@@ -2,12 +2,24 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { featureFlagStore } from "./store";
-import { FeatureFlags } from "./FeatureFlags";
+import { FeatureFlags, FeatureInfo } from "./FeatureFlags";
 import { describe, beforeEach, afterEach, it, expect } from "vitest";
 
 describe("FeatureStore", () => {
+  /**
+   * Helper function to add feature flags to the FeatureFlags object
+   * @param flags Object containing feature flags to add
+   * @returns The updated FeatureFlags object
+   */
+  const addFeatureFlags = (flags: Record<string, FeatureInfo>): Record<string, FeatureInfo> => {
+    return Object.assign(FeatureFlags, flags);
+  };
+
   let originalEnv: NodeJS.ProcessEnv;
+  let originalFeatureFlags: Record<string, FeatureInfo>;
+
   beforeEach(() => {
+    originalFeatureFlags = { ...FeatureFlags };
     originalEnv = { ...process.env };
     featureFlagStore.reset();
     featureFlagStore.initialize();
@@ -15,6 +27,9 @@ describe("FeatureStore", () => {
 
   afterEach(() => {
     process.env = originalEnv;
+    Object.keys(FeatureFlags)
+      .filter(key => !Object.keys(originalFeatureFlags).includes(key))
+      .forEach(key => delete FeatureFlags[key]);
   });
 
   describe("when accessing features", () => {
@@ -200,11 +215,7 @@ describe("FeatureStore", () => {
     });
 
     it("should enforce feature count validation at runtime", () => {
-      // Save original and add temporary test feature flags
-      const originalFeatureFlags = { ...FeatureFlags };
-
-      // Add two test flags to exceed the limit
-      Object.assign(FeatureFlags, {
+      addFeatureFlags({
         TEST_FEATURE1: {
           key: "test_feature1",
           metadata: { name: "Test 1", description: "Test", defaultValue: true },
@@ -214,14 +225,9 @@ describe("FeatureStore", () => {
           metadata: { name: "Test 2", description: "Test", defaultValue: false },
         },
       });
-
       expect(() => {
         featureFlagStore.initialize();
       }).toThrow("Too many feature flags active: 5 (maximum: 4)");
-      // Restore original feature flags to avoid affecting other tests
-      Object.keys(FeatureFlags)
-        .filter(key => !Object.keys(originalFeatureFlags).includes(key))
-        .forEach(key => delete FeatureFlags[key]);
     });
   });
 });
