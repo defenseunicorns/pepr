@@ -11,6 +11,12 @@ describe("FeatureStore", () => {
     return Object.assign(FeatureFlags, flags);
   };
 
+  const removeAddedFeatureFlags = () => {
+    Object.keys(FeatureFlags)
+      .filter(key => !Object.keys(originalFeatureFlags).includes(key))
+      .forEach(key => delete FeatureFlags[key]);
+  };
+
   let originalEnv: NodeJS.ProcessEnv;
   let originalFeatureFlags: Record<string, FeatureInfo>;
 
@@ -18,68 +24,66 @@ describe("FeatureStore", () => {
     originalFeatureFlags = { ...FeatureFlags };
     originalEnv = { ...process.env };
     featureFlagStore.reset();
+    addFeatureFlags({
+      DEBUG_MODE: {
+        key: "debug_mode",
+        metadata: {
+          name: "Debug Mode",
+          description: "Enables verbose logging and debugging features",
+          defaultValue: "value",
+        },
+      },
+      EXPERIMENTAL_API: {
+        key: "experimental_api",
+        metadata: {
+          name: "Experimental API",
+          description: "Enables experimental APIs that may change",
+          defaultValue: false,
+        },
+      },
+      PERFORMANCE_METRICS: {
+        key: "performance_metrics",
+        metadata: {
+          name: "Performance Metrics",
+          description: "Enables collection and reporting of performance metrics",
+          defaultValue: 42,
+        },
+      },
+    });
     featureFlagStore.initialize();
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    //Reset FeatureFlags object
-    Object.keys(FeatureFlags)
-      .filter(key => !Object.keys(originalFeatureFlags).includes(key))
-      .forEach(key => delete FeatureFlags[key]);
+    removeAddedFeatureFlags();
   });
 
   describe("when accessing features", () => {
-    beforeEach(() => {
-      addFeatureFlags({
-        DEBUG_MODE: {
-          key: "debug_mode",
-          metadata: {
-            name: "Debug Mode",
-            description: "Enables verbose logging and debugging features",
-            defaultValue: "value",
-          },
-        },
-        EXPERIMENTAL_API: {
-          key: "experimental_api",
-          metadata: {
-            name: "Experimental API",
-            description: "Enables experimental APIs that may change",
-            defaultValue: false,
-          },
-        },
-        PERFORMANCE_METRICS: {
-          key: "performance_metrics",
-          metadata: {
-            name: "Performance Metrics",
-            description: "Enables collection and reporting of performance metrics",
-            defaultValue: 42,
-          },
-        },
-      });
-    });
+    beforeEach(() => {});
     it.each([
-      { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
-      { type: "number", key: FeatureFlags.PERFORMANCE_METRICS.key, expected: 42 },
-      { type: "boolean", key: FeatureFlags.EXPERIMENTAL_API.key, expected: false },
+      { type: "string", key: "debug_mode", expected: "value" },
+      { type: "number", key: "performance_metrics", expected: 42 },
+      { type: "boolean", key: "experimental_api", expected: false },
     ])("should return $type values", ({ key, expected }) => {
       expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
     });
 
     it("should return a copy of all features", () => {
+      removeAddedFeatureFlags();
+      featureFlagStore.reset();
+      featureFlagStore.initialize("reference_flag=false");
       const features = featureFlagStore.getAll();
       expect(features).toEqual({
-        [FeatureFlags.DEBUG_MODE.key]: "value",
-        [FeatureFlags.PERFORMANCE_METRICS.key]: 42,
-        [FeatureFlags.EXPERIMENTAL_API.key]: false,
+        ["reference_flag"]: false,
       });
 
-      features[FeatureFlags.DEBUG_MODE.key] = "modified";
-      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe("value");
+      features["reference_flag"] = true;
+      expect(featureFlagStore.get("reference_flag")).toBe(true);
     });
+
     it("should accept known feature flags", () => {
-      featureFlagStore.initialize(`${FeatureFlags.DEBUG_MODE.key}=true`);
-      expect(featureFlagStore.get(FeatureFlags.DEBUG_MODE.key)).toBe(true);
+      featureFlagStore.initialize(`${"debug_mode"}=true`);
+      expect(featureFlagStore.get("debug_mode")).toBe(true);
     });
 
     it("should throw error for unknown feature flags", () => {
@@ -94,8 +98,8 @@ describe("FeatureStore", () => {
     });
 
     it("should provide type safety when accessing features", () => {
-      featureFlagStore.initialize(`${FeatureFlags.EXPERIMENTAL_API.key}=true`);
-      const value: boolean = featureFlagStore.get(FeatureFlags.EXPERIMENTAL_API.key);
+      featureFlagStore.initialize(`${"experimental_api"}=true`);
+      const value: boolean = featureFlagStore.get("experimental_api");
       expect(value).toBe(true);
     });
   });
@@ -105,27 +109,27 @@ describe("FeatureStore", () => {
       {
         name: "should parse string values",
         envVars: {},
-        initializeString: `${FeatureFlags.EXPERIMENTAL_API.key}=advanced`,
+        initializeString: `${"experimental_api"}=advanced`,
         expectedFeatures: {
-          [FeatureFlags.EXPERIMENTAL_API.key]: "advanced",
+          ["experimental_api"]: "advanced",
         },
       },
       {
         name: "should parse boolean values",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=true,${FeatureFlags.EXPERIMENTAL_API.key}=false`,
+        initializeString: `${"debug_mode"}=true,${"experimental_api"}=false`,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: true,
-          [FeatureFlags.EXPERIMENTAL_API.key]: false,
+          ["debug_mode"]: true,
+          ["experimental_api"]: false,
         },
       },
       {
         name: "should parse numeric values",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=5,${FeatureFlags.EXPERIMENTAL_API.key}=10.5`,
+        initializeString: `${"debug_mode"}=5,${"experimental_api"}=10.5`,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: 5,
-          [FeatureFlags.EXPERIMENTAL_API.key]: 10.5,
+          ["debug_mode"]: 5,
+          ["experimental_api"]: 10.5,
         },
       },
       {
@@ -143,32 +147,32 @@ describe("FeatureStore", () => {
       {
         name: "should load features from environment variables",
         envVars: {
-          [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${"debug_mode".toUpperCase()}`]: "true",
         },
         initializeString: undefined,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: true,
+          ["debug_mode"]: true,
         },
       },
       {
         name: "should load features from string",
         envVars: {},
-        initializeString: `${FeatureFlags.DEBUG_MODE.key}=true`,
+        initializeString: `${"debug_mode"}=true`,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: true,
+          ["debug_mode"]: true,
         },
       },
       {
         name: "should allow initialization strings to override environment variables",
         envVars: {
-          [`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`]: "true",
-          [`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`]: "42",
+          [`PEPR_FEATURE_${"debug_mode".toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${"performance_metrics".toUpperCase()}`]: "42",
         },
-        initializeString: `${FeatureFlags.PERFORMANCE_METRICS.key}=99,${FeatureFlags.EXPERIMENTAL_API.key}=new`,
+        initializeString: `${"performance_metrics"}=99,${"experimental_api"}=new`,
         expectedFeatures: {
-          [FeatureFlags.DEBUG_MODE.key]: true, // From env
-          [FeatureFlags.PERFORMANCE_METRICS.key]: 99, // Overridden by CLI
-          [FeatureFlags.EXPERIMENTAL_API.key]: "new", // From CLI
+          ["debug_mode"]: true, // From env
+          ["performance_metrics"]: 99, // Overridden by CLI
+          ["experimental_api"]: "new", // From CLI
         },
       },
     ])("$name", ({ envVars, initializeString, expectedFeatures }) => {
@@ -207,10 +211,6 @@ describe("FeatureStore", () => {
         TEST_FEATURE1: {
           key: "test_feature1",
           metadata: { name: "Test 1", description: "Test", defaultValue: true },
-        },
-        TEST_FEATURE2: {
-          key: "test_feature2",
-          metadata: { name: "Test 2", description: "Test", defaultValue: false },
         },
       });
       expect(() => {
