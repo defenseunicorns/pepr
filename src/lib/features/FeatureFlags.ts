@@ -4,7 +4,7 @@ export interface FeatureMetadata {
   defaultValue: FeatureValue;
 }
 
-export interface FeatureInfo {
+interface FeatureInfo {
   key: string;
   metadata: FeatureMetadata;
 }

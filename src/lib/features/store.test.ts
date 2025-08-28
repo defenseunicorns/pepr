@@ -18,20 +18,6 @@ describe("FeatureStore", () => {
   });
 
   describe("when accessing features", () => {
-    it("should enforce a limit on feature count", () => {
-      const featureFlagCount = Object.values(FeatureFlags).length;
-      const warnThreshold = 4;
-
-      if (featureFlagCount > warnThreshold) {
-        const message = `[WARN] Too many feature flags are active (found ${featureFlagCount}, max ${warnThreshold}).
-        If this is intentional, increase the 'warnThreshold' in this unit test.
-        This test is a backstop to ensure developers do not accidentally increase complexity by using too many feature flags.`;
-        throw new Error(message);
-      }
-
-      expect(featureFlagCount).toBeLessThanOrEqual(warnThreshold);
-    });
-
     describe("which exist", () => {
       it.each([
         { type: "string", key: FeatureFlags.DEBUG_MODE.key, expected: "value" },
@@ -156,20 +142,6 @@ describe("FeatureStore", () => {
         expect(featureFlagStore.get(key)).toBe(value);
       });
     });
-
-    it("should enforce feature count validation", () => {
-      process.env[`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`] = "true";
-      process.env[`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`] = "42";
-      process.env[`PEPR_FEATURE_${FeatureFlags.EXPERIMENTAL_API.key.toUpperCase()}`] = "value";
-
-      // Add 2 more via string to exceed the 4 feature limit
-      expect(() => {
-        featureFlagStore.initialize(
-          `${FeatureFlags.SOME_FEATURE.key}=new`,
-          `${FeatureFlags.ANOTHER_FEATURE.key}=new`,
-        );
-      }).toThrow("Too many feature flags active: 5 (maximum: 4)");
-    });
   });
 
   describe("when validating feature flags", () => {
@@ -209,6 +181,47 @@ describe("FeatureStore", () => {
         const metadata = featureFlagStore.getFeatureMetadata("not-valid");
         expect(metadata).toBeNull();
       });
+    });
+  });
+
+  describe("with a feature flag limit to reduce complexity", () => {
+    it("should enforce a limit on feature count", () => {
+      const featureFlagCount = Object.values(FeatureFlags).length;
+      const warnThreshold = 4;
+
+      if (featureFlagCount > warnThreshold) {
+        const message = `[WARN] Too many feature flags are active (found ${featureFlagCount}, max ${warnThreshold}).
+        If this is intentional, increase the 'warnThreshold' in this unit test.
+        This test is a backstop to ensure developers do not accidentally increase complexity by using too many feature flags.`;
+        throw new Error(message);
+      }
+
+      expect(featureFlagCount).toBeLessThanOrEqual(warnThreshold);
+    });
+
+    it("should enforce feature count validation at runtime", () => {
+      // Save original and add temporary test feature flags
+      const originalFeatureFlags = { ...FeatureFlags };
+
+      // Add two test flags to exceed the limit
+      Object.assign(FeatureFlags, {
+        TEST_FEATURE1: {
+          key: "test_feature1",
+          metadata: { name: "Test 1", description: "Test", defaultValue: true },
+        },
+        TEST_FEATURE2: {
+          key: "test_feature2",
+          metadata: { name: "Test 2", description: "Test", defaultValue: false },
+        },
+      });
+
+      expect(() => {
+        featureFlagStore.initialize();
+      }).toThrow("Too many feature flags active: 5 (maximum: 4)");
+      // Restore original feature flags to avoid affecting other tests
+      Object.keys(FeatureFlags)
+        .filter(key => !Object.keys(originalFeatureFlags).includes(key))
+        .forEach(key => delete FeatureFlags[key]);
     });
   });
 });
