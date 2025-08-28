@@ -120,4 +120,4 @@ export class FeatureStore {
   }
 }
 
-export const store = FeatureStore.getInstance();
+export const featureFlagStore = FeatureStore.getInstance();
