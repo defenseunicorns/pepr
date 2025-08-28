@@ -11,10 +11,6 @@ export class FeatureStore {
   private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
 
-  private constructor() {
-    // No initialization needed
-  }
-
   static getInstance(): FeatureStore {
     if (!FeatureStore.instance) {
       FeatureStore.instance = new FeatureStore();
@@ -22,23 +18,12 @@ export class FeatureStore {
     return FeatureStore.instance;
   }
 
-  /**
-   * Get all valid feature flag keys
-   * @private
-   * @static
-   * @returns Array of valid feature flag keys
-   */
   private static getValidFeatureKeys(): string[] {
     return Object.values(FeatureFlags)
       .filter(f => f?.key)
       .map(f => f.key);
   }
 
-  /**
-   * Validates if a feature flag key is known
-   * @private
-   * @static
-   */
   private static validateFeatureKey(key: string): void {
     const validKeys = FeatureStore.getValidFeatureKeys();
 
@@ -47,10 +32,6 @@ export class FeatureStore {
     }
   }
 
-  /**
-   * Add a feature and handle type conversion
-   * @private
-   */
   private addFeature(key: string, value: string): void {
     if (!key || value === undefined || value === "") return;
 
@@ -76,11 +57,9 @@ export class FeatureStore {
     FeatureStore.validateFeatureKey(key);
 
     if (!(key in this.features)) {
-      const knownKeys = Object.values(FeatureFlags)
-        .map(f => f.key)
-        .join(", ");
-      throw new Error(`Feature flag '${key}' does not exist. Known flags are: ${knownKeys}`);
+      throw new Error(`Feature flag '${key}' exists but has not been set`);
     }
+
     return this.features[key] as T;
   }
 
@@ -95,17 +74,18 @@ export class FeatureStore {
   /**
    * Initialize features from environment variables and/or a features string
    * @param featuresStr Optional string in format "feature1=value1,feature2=value2"
+   * @param env Optional environment object, defaults to process.env
    */
-  initialize(featuresStr?: string): void {
+  initialize(featuresStr?: string, env: Record<string, string | undefined> = process.env): void {
     // Clear existing features
     this.reset();
 
     // Process environment variables
-    Object.keys(process.env)
+    Object.keys(env)
       .filter(key => key.startsWith("PEPR_FEATURE_"))
       .forEach(key => {
         const featureKey = key.replace("PEPR_FEATURE_", "").toLowerCase();
-        this.addFeature(featureKey, process.env[key] || "");
+        this.addFeature(featureKey, env[key] || "");
       });
 
     // Process initialization string if provided
