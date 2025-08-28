@@ -57,9 +57,8 @@ describe("FeatureStore", () => {
         [FeatureFlags.BETA_FEATURES.key]: true,
       });
 
-      // Verify it's a copy by modifying the returned object
       features[FeatureFlags.DEBUG_MODE.key] = "modified";
-      expect(store.get(FeatureFlags.DEBUG_MODE.key)).toBe("value"); // Original remains unchanged
+      expect(store.get(FeatureFlags.DEBUG_MODE.key)).toBe("value");
     });
   });
 
@@ -150,24 +149,16 @@ describe("FeatureStore", () => {
     });
 
     it("should enforce feature count validation", () => {
-      // Save original process.env
-      const originalEnv = { ...process.env };
-      try {
-        // Set 3 env variables
-        process.env[`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`] = "true";
-        process.env[`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`] = "42";
-        process.env[`PEPR_FEATURE_${FeatureFlags.EXPERIMENTAL_API.key.toUpperCase()}`] = "value";
+      process.env[`PEPR_FEATURE_${FeatureFlags.DEBUG_MODE.key.toUpperCase()}`] = "true";
+      process.env[`PEPR_FEATURE_${FeatureFlags.PERFORMANCE_METRICS.key.toUpperCase()}`] = "42";
+      process.env[`PEPR_FEATURE_${FeatureFlags.EXPERIMENTAL_API.key.toUpperCase()}`] = "value";
 
-        // Add 2 more via string to exceed the 4 feature limit
-        expect(() => {
-          store.initialize(
-            `${FeatureFlags.BETA_FEATURES.key}=new,${FeatureFlags.CHARLIE_FEATURES.key}=extra`,
-          );
-        }).toThrow("Too many feature flags active: 5 (maximum: 4)");
-      } finally {
-        // Restore original process.env
-        process.env = originalEnv;
-      }
+      // Add 2 more via string to exceed the 4 feature limit
+      expect(() => {
+        store.initialize(
+          `${FeatureFlags.BETA_FEATURES.key}=new,${FeatureFlags.CHARLIE_FEATURES.key}=extra`,
+        );
+      }).toThrow("Too many feature flags active: 5 (maximum: 4)");
     });
   });
 
