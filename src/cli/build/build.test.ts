@@ -9,10 +9,10 @@ import {
   checkIronBankImage,
   validImagePullSecret,
   assignImage,
-  fileExists
+  fileExists,
 } from "./build.helpers";
 import { accessSync, constants } from "fs";
-import { resolve } from "path"
+import { resolve } from "path";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { expect, describe, it, vi, beforeEach, type MockInstance } from "vitest";
 import { createDockerfile } from "../../lib/included-files";
@@ -52,7 +52,7 @@ describe("fileExists", () => {
   const mockedAccessSync = vi.mocked(accessSync);
 
   beforeEach(() => {
-    vi.clearAllMocks(); 
+    vi.clearAllMocks();
   });
 
   it("returns the entry point when the file exists", () => {

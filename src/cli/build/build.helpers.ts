@@ -30,7 +30,9 @@ export function fileExists(entryPoint: string = "pepr.ts"): string {
   try {
     accessSync(resolve(entryPoint), constants.F_OK);
   } catch {
-    console.error(`The entry-point option requires a file (e.g., pepr.ts), ${entryPoint} is not a file`);
+    console.error(
+      `The entry-point option requires a file (e.g., pepr.ts), ${entryPoint} is not a file`,
+    );
     process.exit(1);
   }
   return entryPoint;

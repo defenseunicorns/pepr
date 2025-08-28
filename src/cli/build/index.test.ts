@@ -12,7 +12,7 @@ import {
   handleCustomImageBuild,
 } from "./build.helpers";
 import Log from "../../lib/telemetry/logger";
-import { accessSync, constants } from "fs";
+import { accessSync } from "fs";
 
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
@@ -347,7 +347,7 @@ describe("build CLI command", () => {
     entryPointFlag => {
       const mockedAccessSync = vi.mocked(accessSync);
       it("should attempt to build the module", async () => {
-         mockedAccessSync.mockImplementationOnce(() => {});
+        mockedAccessSync.mockImplementationOnce(() => {});
         await runProgramWithArgs([entryPointFlag, "pepr.ts"]);
         expect(buildModule).toBeCalled();
       });
