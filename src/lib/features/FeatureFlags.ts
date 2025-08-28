@@ -1,5 +1,13 @@
-import { FeatureInfo } from "./FeatureTypes";
+export interface FeatureMetadata {
+  name: string;
+  description: string;
+  defaultValue: boolean;
+}
 
+export interface FeatureInfo {
+  key: string;
+  metadata: FeatureMetadata;
+}
 /**
  * All known feature flags with their metadata
  */

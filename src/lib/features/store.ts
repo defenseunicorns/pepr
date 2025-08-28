@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { FeatureFlags, FeatureValue } from "./FeatureFlags";
-import { FeatureMetadata } from "./FeatureTypes";
+import { FeatureFlags, FeatureMetadata, FeatureValue } from "./FeatureFlags";
 
 /**
  * Global store for feature flags
@@ -57,9 +56,6 @@ export class FeatureStore {
             : value;
   }
 
-  /**
-   * Get a feature value by key with type safety
-   */
   get<T extends FeatureValue>(key: string, defaultValue?: T): T {
     return (this.features[key] as T) ?? defaultValue;
   }
@@ -114,9 +110,6 @@ export class FeatureStore {
     }
   }
 
-  /**
-   * Validates feature flag count
-   */
   validateFeatureCount(): void {
     const featureCount = Object.keys(this.features).length;
     if (featureCount > this.featureFlagLimit) {
@@ -126,7 +119,5 @@ export class FeatureStore {
     }
   }
 }
-
-// Export a singleton instance
 
 export const store = FeatureStore.getInstance();
