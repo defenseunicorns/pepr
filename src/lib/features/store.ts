@@ -23,14 +23,24 @@ export class FeatureStore {
   }
 
   /**
+   * Get all valid feature flag keys
+   * @private
+   * @static
+   * @returns Array of valid feature flag keys
+   */
+  private static getValidFeatureKeys(): string[] {
+    return Object.values(FeatureFlags)
+      .filter(f => f?.key)
+      .map(f => f.key);
+  }
+
+  /**
    * Validates if a feature flag key is known
    * @private
    * @static
    */
   private static validateFeatureKey(key: string): void {
-    const validKeys = Object.values(FeatureFlags)
-      .filter(f => f?.key)
-      .map(f => f.key);
+    const validKeys = FeatureStore.getValidFeatureKeys();
 
     if (!validKeys.includes(key)) {
       throw new Error(`Unknown feature flag: ${key}. Known flags are: ${validKeys.join(", ")}`);
@@ -83,19 +93,13 @@ export class FeatureStore {
   }
 
   /**
-   * Initialize features from environment variables and a features string
+   * Initialize features from environment variables and/or a features string
+   * @param featuresStr Optional string in format "feature1=value1,feature2=value2"
    */
   initialize(featuresStr?: string): void {
-    this.loadFeatures(featuresStr);
-    this.validateFeatureCount();
-  }
+    // Clear existing features
+    this.reset();
 
-  /**
-   * Load feature flags from environment variables and/or a comma-separated string
-   * @param featuresStr Optional string in format "feature1=value1,feature2=value2"
-   * @private
-   */
-  private loadFeatures(featuresStr?: string): void {
     // Process environment variables
     Object.keys(process.env)
       .filter(key => key.startsWith("PEPR_FEATURE_"))
@@ -115,32 +119,27 @@ export class FeatureStore {
         });
     }
 
-    // Get valid feature flags (filter out any undefined or invalid entries)
-    const validFeatureFlags = Object.values(FeatureFlags).filter(
-      f => f && typeof f === "object" && "key" in f && typeof f.key === "string",
-    );
+    // Apply default values for any feature flags not explicitly set
+    this.applyDefaultValues();
 
-    // Validate that all features in the store are known
-    Object.keys(this.features).forEach(key => {
-      if (!validFeatureFlags.some(f => f.key === key)) {
-        const knownKeys = validFeatureFlags.map(f => f.key).join(", ");
-        throw new Error(`Unknown feature flag: ${key}. Known flags are: ${knownKeys}`);
-      }
-    });
+    // Check feature count limit
+    this.validateFeatureCount();
+  }
 
-    // Apply default values from FeatureFlags for any flags not explicitly set
-    validFeatureFlags
+  /**
+   * Apply default values from FeatureFlags for any flags not explicitly set
+   * @private
+   */
+  private applyDefaultValues(): void {
+    Object.values(FeatureFlags)
       .filter(
         feature =>
-          "metadata" in feature &&
-          feature.metadata &&
-          typeof feature.metadata === "object" &&
-          "defaultValue" in feature.metadata,
+          feature?.key &&
+          feature?.metadata?.defaultValue !== undefined &&
+          !(feature.key in this.features),
       )
       .forEach(feature => {
-        if (!(feature.key in this.features)) {
-          this.features[feature.key] = feature.metadata.defaultValue;
-        }
+        this.features[feature.key] = feature.metadata.defaultValue;
       });
   }
 
