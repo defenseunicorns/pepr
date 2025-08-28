@@ -25,24 +25,24 @@ describe("FeatureStore", () => {
     originalEnv = { ...process.env };
     featureFlagStore.reset();
     addFeatureFlags({
-      DEBUG_MODE: {
-        key: "debug_mode",
+      FAKE_STRING: {
+        key: "fake_string",
         metadata: {
           name: "Debug Mode",
           description: "Enables verbose logging and debugging features",
           defaultValue: "value",
         },
       },
-      EXPERIMENTAL_API: {
-        key: "experimental_api",
+      FAKE_BOOLEAN: {
+        key: "fake_boolean",
         metadata: {
           name: "Experimental API",
           description: "Enables experimental APIs that may change",
           defaultValue: false,
         },
       },
-      PERFORMANCE_METRICS: {
-        key: "performance_metrics",
+      FAKE_NUMBER: {
+        key: "fake_number",
         metadata: {
           name: "Performance Metrics",
           description: "Enables collection and reporting of performance metrics",
@@ -61,9 +61,9 @@ describe("FeatureStore", () => {
   describe("when accessing features", () => {
     beforeEach(() => {});
     it.each([
-      { type: "string", key: "debug_mode", expected: "value" },
-      { type: "number", key: "performance_metrics", expected: 42 },
-      { type: "boolean", key: "experimental_api", expected: false },
+      { type: "string", key: "fake_string", expected: "value" },
+      { type: "number", key: "fake_number", expected: 42 },
+      { type: "boolean", key: "fake_boolean", expected: false },
     ])("should return $type values", ({ key, expected }) => {
       expect(featureFlagStore.get<typeof expected>(key)).toBe(expected);
     });
@@ -82,8 +82,8 @@ describe("FeatureStore", () => {
     });
 
     it("should accept known feature flags", () => {
-      featureFlagStore.initialize(`${"debug_mode"}=true`);
-      expect(featureFlagStore.get("debug_mode")).toBe(true);
+      featureFlagStore.initialize(`${"fake_string"}=true`);
+      expect(featureFlagStore.get("fake_string")).toBe(true);
     });
 
     it("should throw error for unknown feature flags", () => {
@@ -98,8 +98,8 @@ describe("FeatureStore", () => {
     });
 
     it("should provide type safety when accessing features", () => {
-      featureFlagStore.initialize(`${"experimental_api"}=true`);
-      const value: boolean = featureFlagStore.get("experimental_api");
+      featureFlagStore.initialize(`${"fake_boolean"}=true`);
+      const value: boolean = featureFlagStore.get("fake_boolean");
       expect(value).toBe(true);
     });
   });
@@ -109,27 +109,27 @@ describe("FeatureStore", () => {
       {
         name: "should parse string values",
         envVars: {},
-        initializeString: `${"experimental_api"}=advanced`,
+        initializeString: `${"fake_boolean"}=advanced`,
         expectedFeatures: {
-          ["experimental_api"]: "advanced",
+          ["fake_boolean"]: "advanced",
         },
       },
       {
         name: "should parse boolean values",
         envVars: {},
-        initializeString: `${"debug_mode"}=true,${"experimental_api"}=false`,
+        initializeString: `${"fake_string"}=true,${"fake_boolean"}=false`,
         expectedFeatures: {
-          ["debug_mode"]: true,
-          ["experimental_api"]: false,
+          ["fake_string"]: true,
+          ["fake_boolean"]: false,
         },
       },
       {
         name: "should parse numeric values",
         envVars: {},
-        initializeString: `${"debug_mode"}=5,${"experimental_api"}=10.5`,
+        initializeString: `${"fake_string"}=5,${"fake_boolean"}=10.5`,
         expectedFeatures: {
-          ["debug_mode"]: 5,
-          ["experimental_api"]: 10.5,
+          ["fake_string"]: 5,
+          ["fake_boolean"]: 10.5,
         },
       },
       {
@@ -147,32 +147,32 @@ describe("FeatureStore", () => {
       {
         name: "should load features from environment variables",
         envVars: {
-          [`PEPR_FEATURE_${"debug_mode".toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${"fake_string".toUpperCase()}`]: "true",
         },
         initializeString: undefined,
         expectedFeatures: {
-          ["debug_mode"]: true,
+          ["fake_string"]: true,
         },
       },
       {
         name: "should load features from string",
         envVars: {},
-        initializeString: `${"debug_mode"}=true`,
+        initializeString: `${"fake_string"}=true`,
         expectedFeatures: {
-          ["debug_mode"]: true,
+          ["fake_string"]: true,
         },
       },
       {
         name: "should allow initialization strings to override environment variables",
         envVars: {
-          [`PEPR_FEATURE_${"debug_mode".toUpperCase()}`]: "true",
-          [`PEPR_FEATURE_${"performance_metrics".toUpperCase()}`]: "42",
+          [`PEPR_FEATURE_${"fake_string".toUpperCase()}`]: "true",
+          [`PEPR_FEATURE_${"fake_number".toUpperCase()}`]: "42",
         },
-        initializeString: `${"performance_metrics"}=99,${"experimental_api"}=new`,
+        initializeString: `${"fake_number"}=99,${"fake_boolean"}=new`,
         expectedFeatures: {
-          ["debug_mode"]: true, // From env
-          ["performance_metrics"]: 99, // Overridden by CLI
-          ["experimental_api"]: "new", // From CLI
+          ["fake_string"]: true, // From env
+          ["fake_number"]: 99, // Overridden by CLI
+          ["fake_boolean"]: "new", // From CLI
         },
       },
     ])("$name", ({ envVars, initializeString, expectedFeatures }) => {
