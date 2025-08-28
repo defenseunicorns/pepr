@@ -3,58 +3,35 @@
 
 import { FeatureFlags, FeatureValue } from "./FeatureFlags";
 
-/**
- * Global store for feature flags
- */
 export class FeatureStore {
   private featureFlagLimit: number = 4;
-  private static instance: FeatureStore;
   private features: Record<string, FeatureValue> = {};
-
-  static getInstance(): FeatureStore {
-    if (!FeatureStore.instance) {
-      FeatureStore.instance = new FeatureStore();
-    }
-    return FeatureStore.instance;
-  }
-
-  private static getValidFeatureKeys(): string[] {
-    return Object.values(FeatureFlags)
-      .filter(f => f?.key)
-      .map(f => f.key);
-  }
-
-  private static validateFeatureKey(key: string): void {
-    const validKeys = FeatureStore.getValidFeatureKeys();
-
-    if (!validKeys.includes(key)) {
-      throw new Error(`Unknown feature flag: ${key}. Known flags are: ${validKeys.join(", ")}`);
-    }
-  }
 
   private addFeature(key: string, value: string): void {
     if (!key || value === undefined || value === "") return;
 
-    // Validate against known feature flags
-    FeatureStore.validateFeatureKey(key);
-
-    // Simple type conversion
-    const lowerValue = value.toLowerCase();
-
-    if (lowerValue === "true") {
-      this.features[key] = true;
-    } else if (lowerValue === "false") {
-      this.features[key] = false;
-    } else if (!isNaN(Number(value))) {
-      this.features[key] = Number(value);
-    } else {
-      this.features[key] = value;
+    const validKeys = Object.values(FeatureFlags)
+      .filter(f => f?.key)
+      .map(f => f.key);
+    if (!validKeys.includes(key)) {
+      throw new Error(`Unknown feature flag: ${key}`);
     }
+
+    const lowerValue = value.toLowerCase();
+    this.features[key] =
+      lowerValue === "true"
+        ? true
+        : lowerValue === "false"
+          ? false
+          : !isNaN(Number(value))
+            ? Number(value)
+            : value;
   }
 
   get<T extends FeatureValue>(key: string): T {
-    // Validate key is known first
-    FeatureStore.validateFeatureKey(key);
+    if (!Object.values(FeatureFlags).some(f => f?.key === key)) {
+      throw new Error(`Unknown feature flag: ${key}`);
+    }
 
     if (!(key in this.features)) {
       throw new Error(`Feature flag '${key}' exists but has not been set`);
@@ -71,24 +48,15 @@ export class FeatureStore {
     this.features = {};
   }
 
-  /**
-   * Initialize features from environment variables and/or a features string
-   * @param featuresStr Optional string in format "feature1=value1,feature2=value2"
-   * @param env Optional environment object, defaults to process.env
-   */
   initialize(featuresStr?: string, env: Record<string, string | undefined> = process.env): void {
-    // Clear existing features
     this.reset();
 
-    // Process environment variables
     Object.keys(env)
       .filter(key => key.startsWith("PEPR_FEATURE_"))
       .forEach(key => {
-        const featureKey = key.replace("PEPR_FEATURE_", "").toLowerCase();
-        this.addFeature(featureKey, env[key] || "");
+        this.addFeature(key.replace("PEPR_FEATURE_", "").toLowerCase(), env[key] || "");
       });
 
-    // Process initialization string if provided
     if (featuresStr) {
       featuresStr
         .split(",")
@@ -99,17 +67,10 @@ export class FeatureStore {
         });
     }
 
-    // Apply default values for any feature flags not explicitly set
     this.applyDefaultValues();
-
-    // Check feature count limit
     this.validateFeatureCount();
   }
 
-  /**
-   * Apply default values from FeatureFlags for any flags not explicitly set
-   * @private
-   */
   private applyDefaultValues(): void {
     Object.values(FeatureFlags)
       .filter(
@@ -125,7 +86,7 @@ export class FeatureStore {
 
   validateFeatureCount(): void {
     const featureCount = Object.keys(this.features).length;
-    if (featureCount > this.featureFlagLimit) {
+    if (Object.keys(featureCount).length > this.featureFlagLimit) {
       throw new Error(
         `Too many feature flags active: ${featureCount} (maximum: ${this.featureFlagLimit}). Use of more than ${this.featureFlagLimit} feature flags is not supported.`,
       );
@@ -133,4 +94,4 @@ export class FeatureStore {
   }
 }
 
-export const featureFlagStore = FeatureStore.getInstance();
+export const featureFlagStore = new FeatureStore();
