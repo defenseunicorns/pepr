@@ -7,7 +7,7 @@ import { validateCapabilityNames } from "../../lib/helpers";
 import { BuildOptions, context, BuildContext } from "esbuild";
 import { Assets } from "../../lib/assets/assets";
 import { resolve } from "path";
-import { promises as fs } from "fs";
+import { promises as fs, accessSync, constants, statSync } from "fs";
 import { generateAllYaml } from "../../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../../lib/assets/yaml/generateZarfYaml";
@@ -19,6 +19,28 @@ import {
   watcherService,
 } from "../../lib/assets/k8sObjects";
 import { Reloader } from "../types";
+import Log from "../../lib/telemetry/logger";
+/**
+ * Check if a file exists at a given path.
+ *
+ * @param filePath - Path to the file (relative or absolute).
+ * @returns true if the file exists, false otherwise.
+ */
+export function fileExists(entryPoint: string = "pepr.ts"): string {
+  const fullPath = resolve(entryPoint);
+  try {
+    accessSync(resolve(entryPoint), constants.F_OK);
+    if (!statSync(fullPath).isFile()) {
+      throw new Error("Not a file");
+    }
+  } catch {
+    Log.error(
+      `The entry-point option requires a file (e.g., pepr.ts), ${entryPoint} is not a file`,
+    );
+    process.exit(1);
+  }
+  return entryPoint;
+}
 
 interface ImageOptions {
   customImage?: string;

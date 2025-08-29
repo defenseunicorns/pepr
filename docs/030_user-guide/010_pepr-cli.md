@@ -33,7 +33,7 @@ Build a Pepr Module for deployment.
 - `-I, --registry-info <registry/username>` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.
 - `-P, --with-pull-secret <name>` - Use image pull secret for controller Deployment. (default: "")
 - `-c, --custom-name <name>` - Set name for zarf component and service monitors in helm charts.
-- `-e, --entry-point <file>` - Specify the entry point file to build with. (default: "pepr.ts")
+- `-e, --entry-point <file>` - Specify the entry point file to build with. (default: pepr.ts)
 - `-i, --custom-image <image>` - Specify a custom image with version for deployments. Conflicts with --registry-info and --registry. Example: 'docker.io/username/custom-pepr-controller:v1.0.0'
 - `-n, --no-embed` - Disable embedding of deployment files into output module. Useful when creating library modules intended solely for reuse/distribution via NPM.
 - `-o, --output <directory>` - Set output directory. (default: "dist")

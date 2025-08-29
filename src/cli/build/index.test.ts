@@ -12,6 +12,19 @@ import {
   handleCustomImageBuild,
 } from "./build.helpers";
 import Log from "../../lib/telemetry/logger";
+import { accessSync } from "fs";
+
+vi.mock("fs", async () => {
+  const actual = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actual,
+    accessSync: vi.fn(),
+    constants: { F_OK: 0 },
+    statSync: vi.fn(() => ({
+      isFile: () => true,
+    })),
+  };
+});
 
 vi.mock("../../lib/tls.ts", async () => {
   return {
@@ -69,6 +82,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -335,7 +349,9 @@ describe("build CLI command", () => {
   describe.each([["-e"], ["--entry-point"]])(
     "when the entry point flag is set (%s)",
     entryPointFlag => {
+      const mockedAccessSync = vi.mocked(accessSync);
       it("should attempt to build the module", async () => {
+        mockedAccessSync.mockImplementationOnce(() => {});
         await runProgramWithArgs([entryPointFlag, "pepr.ts"]);
         expect(buildModule).toBeCalled();
       });

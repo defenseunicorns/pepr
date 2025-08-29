@@ -9,20 +9,36 @@ import {
   checkIronBankImage,
   validImagePullSecret,
   assignImage,
+  fileExists,
 } from "./build.helpers";
-
+import { accessSync, constants } from "fs";
+import { resolve } from "path";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { expect, describe, it, vi, beforeEach, type MockInstance } from "vitest";
 import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../../lib/types";
 import { Capability } from "../../lib/core/capability";
+import Log from "../../lib/telemetry/logger";
+
+vi.mock("fs", async () => {
+  const actual = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actual,
+    accessSync: vi.fn(),
+    constants: { F_OK: 0 },
+    statSync: vi.fn(() => ({
+      isFile: () => true,
+    })),
+  };
+});
 
 vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
     debug: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -37,7 +53,51 @@ vi.mock("../../lib/included-files", () => ({
 vi.mock("../../lib/filesystemService", () => ({
   createDirectoryIfNotExists: vi.fn(),
 }));
+describe("fileExists", () => {
+  const mockedAccessSync = vi.mocked(accessSync);
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it("logs and exits when the input is a directory", () => {
+    mockedAccessSync.mockImplementationOnce(() => {
+      throw new Error("ENOENT");
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exit");
+    });
+    const logSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
+    expect(() => fileExists("/tmp/overthere")).toThrow("exit");
+    expect(logSpy).toHaveBeenCalledWith(
+      "The entry-point option requires a file (e.g., pepr.ts), /tmp/overthere is not a file",
+    );
+    exitSpy.mockRestore();
+  });
+  it("returns the entry point when the file exists", () => {
+    mockedAccessSync.mockImplementationOnce(() => {});
+    const entry = "kfc.ts";
+    const result = fileExists(entry);
+    expect(mockedAccessSync).toHaveBeenCalledWith(resolve(entry), constants.F_OK);
+    expect(result).toBe(entry);
+  });
+
+  it("logs and exits when the file is missing", () => {
+    mockedAccessSync.mockImplementationOnce(() => {
+      throw new Error("ENOENT");
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exit");
+    });
+    expect(() => fileExists("missing.ts")).toThrow("exit");
+    exitSpy.mockRestore();
+  });
+
+  it("uses default arg when no entry is provided", () => {
+    mockedAccessSync.mockImplementationOnce(() => {});
+    expect(fileExists()).toBe("pepr.ts");
+    expect(mockedAccessSync).toHaveBeenCalledWith(resolve("pepr.ts"), constants.F_OK);
+  });
+});
 describe("assignImage", () => {
   const mockPeprVersion = "1.0.0";
 
