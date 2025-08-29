@@ -27,6 +27,9 @@ vi.mock("fs", async () => {
     ...actual,
     accessSync: vi.fn(),
     constants: { F_OK: 0 },
+    statSync: vi.fn(() => ({
+      isFile: () => true,
+    })),
   };
 });
 

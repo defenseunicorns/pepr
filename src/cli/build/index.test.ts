@@ -20,6 +20,9 @@ vi.mock("fs", async () => {
     ...actual,
     accessSync: vi.fn(),
     constants: { F_OK: 0 },
+    statSync: vi.fn(() => ({
+      isFile: () => true,
+    })),
   };
 });
 
@@ -79,6 +82,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
