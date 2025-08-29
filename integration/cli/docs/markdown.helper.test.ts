@@ -3,7 +3,7 @@ import { getDocsForCommand } from "./markdown.helper";
 
 describe("getDocsForCommand", () => {
   it.each([
-    { command: "", optionsCount: 2, subcommands: 10 },
+    { command: "", optionsCount: 3, subcommands: 10 },
     { command: "build", optionsCount: 12, subcommands: 0 },
     { command: "crd", optionsCount: 1, subcommands: 3 },
     { command: "crd create", optionsCount: 8, subcommands: 0 },
