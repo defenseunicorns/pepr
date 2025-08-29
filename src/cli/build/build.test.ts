@@ -19,6 +19,7 @@ import { createDockerfile } from "../../lib/included-files";
 import { execSync } from "child_process";
 import { CapabilityExport } from "../../lib/types";
 import { Capability } from "../../lib/core/capability";
+import Log from "../../lib/telemetry/logger";
 
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
@@ -34,6 +35,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   default: {
     info: vi.fn(),
     debug: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -54,7 +56,20 @@ describe("fileExists", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
+  it("logs and exits when the input is a directory", () => {
+    mockedAccessSync.mockImplementationOnce(() => {
+      throw new Error("ENOENT");
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exit");
+    });
+    const logSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
+    expect(() => fileExists("/tmp/overthere")).toThrow("exit");
+    expect(logSpy).toHaveBeenCalledWith(
+      "The entry-point option requires a file (e.g., pepr.ts), /tmp/overthere is not a file",
+    );
+    exitSpy.mockRestore();
+  });
   it("returns the entry point when the file exists", () => {
     mockedAccessSync.mockImplementationOnce(() => {});
     const entry = "kfc.ts";

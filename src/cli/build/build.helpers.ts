@@ -19,7 +19,7 @@ import {
   watcherService,
 } from "../../lib/assets/k8sObjects";
 import { Reloader } from "../types";
-
+import Log from "../../lib/telemetry/logger";
 /**
  * Check if a file exists at a given path.
  *
