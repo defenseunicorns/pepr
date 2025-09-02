@@ -49,7 +49,7 @@ export const definedEvent = (binding: Binding): Event => {
   return binding.event;
 };
 
-export const definesDelete = pipe(definedEvent, equals(Event.DELETE));
+export const definesDelete = pipe(definedEvent, equals<Event>(Event.DELETE));
 
 export const definedGroup = pipe((binding): string => binding?.kind?.group, defaultTo(""));
 export const definesGroup = pipe(definedGroup, equals(""), not);
