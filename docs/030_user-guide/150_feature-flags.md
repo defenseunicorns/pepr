@@ -129,7 +129,7 @@ For deployed modules, configure feature flags in the module's `package.json`:
   },
 ```
 
-Build and deploy the module once environment variables are set:
+Build and deploy the module once environment variables are set with a known `$APP_NAME`:
 
 ```bash
 # Edit your package.json to include feature flags
@@ -138,7 +138,8 @@ jq '.pepr.env.PEPR_FEATURE_REFERENCE_FLAG = true' package.json
 npx pepr@latest build
 npx pepr@latest deploy -i pepr:dev
 
-kubectl logs -n pepr-system --selector app=pepr-feat-flag | grep "Feature flags store initialized"
+APP_NAME=pepr-module-name
+kubectl logs -n pepr-system --selector app=$APP_NAME | grep "Feature flags store initialized"
 ```
 
 ## Troubleshooting
