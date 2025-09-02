@@ -10,7 +10,7 @@ export enum Operation {
 }
 
 /**
- * The type of Kubernetes mutating webhook event that the action is registered for
+ * The type of Kubernetes mutating webhook event that the action is registered for.
  */
 export enum Event {
   CREATE = "CREATE",
