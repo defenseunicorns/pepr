@@ -227,16 +227,17 @@ export function secretOverLimit(str: string): boolean {
 }
 
 export const parseTimeout = (value: string): number => {
-  const parsedValue = parseInt(value, 10);
-  const floatValue = parseFloat(value);
-  if (isNaN(parsedValue)) {
-    throw new Error("Not a number.");
-  } else if (parsedValue !== floatValue) {
+  const num = Number(value);
+
+  if (!Number.isInteger(num)) {
     throw new Error("Value must be an integer.");
-  } else if (parsedValue < 1 || parsedValue > 30) {
+  }
+
+  if (num < 1 || num > 30) {
     throw new Error("Number must be between 1 and 30.");
   }
-  return parsedValue;
+
+  return num;
 };
 
 // Remove leading whitespace while keeping format of file
