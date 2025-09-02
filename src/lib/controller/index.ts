@@ -94,7 +94,7 @@ export class Controller {
     // Initialize feature store
     try {
       featureFlagStore.initialize();
-      Log.info(featureFlagStore.getAll(), "Feature flags store initialized");
+      Log.info(`Feature flag store initialized: ${JSON.stringify(featureFlagStore.getAll())}`);
     } catch (error) {
       Log.warn(error, "Could not initialize feature flags");
     }
