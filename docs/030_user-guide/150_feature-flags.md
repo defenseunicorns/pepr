@@ -50,18 +50,6 @@ Pepr's feature flag system supports:
    }
    ```
 
-4. **Access feature flags in your code:**
-
-   ```typescript
-   import { featureFlagStore } from "./lib/features/store";
-   import { FeatureFlags } from "./lib/features/FeatureFlags";
-   
-   // Check if feature is enabled
-   if (featureFlagStore.get(FeatureFlags.REFERENCE_FLAG.key)) {
-     // Feature-specific code
-   }
-   ```
-
 ## Defining Feature Flags
 
 Feature flags in Pepr are defined in the `FeatureFlags` object.
@@ -195,8 +183,8 @@ const allFlags = featureFlagStore.getAll();
 
 // Use feature flags for conditional logic
 if (featureFlagStore.get(FeatureFlags.REFERENCE_FLAG.key)) {
-  console.log(`Flag value: ${isReferenceEnabled} of type ${typeof featureFlagStore.get(FeatureFlags.REFERENCE_FLAG.key)}`)
+  Log.info(`Flag value: ${isReferenceEnabled} of type ${typeof featureFlagStore.get(FeatureFlags.REFERENCE_FLAG.key)}`)
 } else {
-  console.log(`All flags: ${JSON.stringify(allFlags)}`)
+  Log.info(`All flags: ${JSON.stringify(allFlags)}`)
 }
 ```
