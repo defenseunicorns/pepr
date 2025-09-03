@@ -32,7 +32,7 @@ jobs:
       - name: Install Pepr Dependencies
         run: npm ci
       - name: Build Pepr Controller Image
-        run: npm run build:image
+        run: npm run build:ctrlr
       - name: Vulnerability Scan
         uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6.5.1
         with:
