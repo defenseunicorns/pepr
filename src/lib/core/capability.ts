@@ -231,9 +231,9 @@ export class Capability implements CapabilityExport {
     const log = (message: string, cbString: string): void => {
       const filteredObj = pickBy(isNotEmpty, binding.filters);
 
-      Log.info(`${message} configured for ${binding.event}`, prefix);
-      Log.info(filteredObj, prefix);
-      Log.debug(cbString, prefix);
+      Log.info({ prefix }, `${message} configured for ${binding.event}`);
+      Log.info({ prefix }, JSON.stringify(filteredObj));
+      Log.debug({ prefix }, cbString);
     };
 
     function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
@@ -376,49 +376,49 @@ export class Capability implements CapabilityExport {
     }
 
     function InNamespace(...namespaces: string[]): BindingWithName<T> {
-      Log.debug(`Add namespaces filter ${namespaces}`, prefix);
+      Log.debug({ prefix }, `Add namespaces filter ${namespaces}`);
       binding.filters.namespaces.push(...namespaces);
       return { ...commonChain, WithName, WithNameRegex };
     }
 
     function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
-      Log.debug(`Add regex namespaces filter ${namespaces}`, prefix);
+      Log.debug({ prefix }, `Add regex namespaces filter ${namespaces}`);
       binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
       return { ...commonChain, WithName, WithNameRegex };
     }
 
     function WithDeletionTimestamp(): BindingFilter<T> {
-      Log.debug("Add deletionTimestamp filter");
+      Log.debug({ prefix }, "Add deletionTimestamp filter");
       binding.filters.deletionTimestamp = true;
       return commonChain;
     }
 
     function WithNameRegex(regexName: RegExp): BindingFilter<T> {
-      Log.debug(`Add regex name filter ${regexName}`, prefix);
+      Log.debug({ prefix }, `Add regex name filter ${regexName}`);
       binding.filters.regexName = regexName.source;
       return commonChain;
     }
 
     function WithName(name: string): BindingFilter<T> {
-      Log.debug(`Add name filter ${name}`, prefix);
+      Log.debug({ prefix }, `Add name filter ${name}`);
       binding.filters.name = name;
       return commonChain;
     }
 
     function WithLabel(key: string, value = ""): BindingFilter<T> {
-      Log.debug(`Add label filter ${key}=${value}`, prefix);
+      Log.debug({ prefix }, `Add label filter ${key}=${value}`);
       binding.filters.labels[key] = value;
       return commonChain;
     }
 
     function WithAnnotation(key: string, value = ""): BindingFilter<T> {
-      Log.debug(`Add annotation filter ${key}=${value}`, prefix);
+      Log.debug({ prefix }, `Add annotation filter ${key}=${value}`);
       binding.filters.annotations[key] = value;
       return commonChain;
     }
 
     function Alias(alias: string): CommonChainType {
-      Log.debug(`Adding prefix alias ${alias}`, prefix);
+      Log.debug({ prefix }, `Adding prefix alias ${alias}`);
       binding.alias = alias;
       return commonChain;
     }

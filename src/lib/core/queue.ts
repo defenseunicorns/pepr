@@ -116,7 +116,7 @@ export class Queue<K extends KubernetesObject> {
 
       element.resolve();
     } catch (e) {
-      Log.debug(`Error reconciling ${element.item.metadata!.name}`, { error: e });
+      Log.debug({ error: e }, `Error reconciling ${element.item.metadata!.name}`);
       element.reject(e);
     } finally {
       Log.debug(this.stats(), "Queue stats - shift");

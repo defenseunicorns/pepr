@@ -69,7 +69,7 @@ export class MetricsCollector {
     { name, help, labelNames }: Omit<MetricArgs, "registers">,
   ): void => {
     if (collection.has(this.#getMetricName(name))) {
-      Log.debug(`Metric for ${name} already exists`, loggingPrefix);
+      Log.debug({ loggingPrefix }, `Metric for ${name} already exists`);
       return;
     }
 
