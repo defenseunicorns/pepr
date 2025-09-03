@@ -336,7 +336,12 @@ describe("build CLI command", () => {
         error: "Number must be between 1 and 30.",
         description: "reject values above maximum",
       },
-      { value: "not-a-number", error: "Not a number.", description: "reject non-numeric values" },
+      {
+        value: "not-a-number",
+        error: "Value must be an integer.",
+        description: "reject non-numeric values",
+      },
+      { value: "5.0", error: "Value must be an integer.", description: "reject float values" },
       { value: "5.2", error: "Value must be an integer.", description: "reject float values" },
     ])("should $description: $value", async ({ value, error }) => {
       await runProgramWithError([timeoutFlag, value], error);
