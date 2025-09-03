@@ -23,8 +23,9 @@ export default function (program: Command): void {
     .command("update")
     .description("Update this Pepr module. Not recommended for prod as it may change files.")
     .option("-s, --skip-template-update", "Do not update template files")
+    .option("-y, --yes", "Skip confirmation prompt")
     .action(async opts => {
-      if (!opts.skipTemplateUpdate) {
+      if (!opts.skipTemplateUpdate && !opts.yes) {
         const { confirm } = await prompt({
           type: "confirm",
           name: "confirm",

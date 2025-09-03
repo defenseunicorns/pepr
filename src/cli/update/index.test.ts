@@ -45,6 +45,18 @@ describe("Pepr CLI Update Command", () => {
     expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
   });
 
+  it("doesn't prompt the user if --yes is passed", async () => {
+    vi.mocked(child_process.execSync).mockImplementation(() => Buffer.from(""));
+
+    await program.parseAsync(["update", "--yes"], { from: "user" });
+
+    expect(prompt).not.toHaveBeenCalled();
+    expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
+      stdio: "inherit",
+    });
+    expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
+    expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
+  });
   it("skips template update", async () => {
     vi.mocked(child_process.execSync).mockImplementation(() => Buffer.from(""));
 

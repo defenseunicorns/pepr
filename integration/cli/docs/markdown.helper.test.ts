@@ -14,7 +14,7 @@ describe("getDocsForCommand", () => {
     { command: "init", optionsCount: 7, subcommands: 0 },
     { command: "kfc", optionsCount: 2, subcommands: 0 },
     { command: "monitor", optionsCount: 1, subcommands: 0 },
-    { command: "update", optionsCount: 2, subcommands: 0 },
+    { command: "update", optionsCount: 3, subcommands: 0 },
     { command: "uuid", optionsCount: 1, subcommands: 0 },
   ])(
     "should extract the npx pepr $command command ($optionsCount options, $subcommands subcommands)",
