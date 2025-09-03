@@ -229,7 +229,7 @@ export function secretOverLimit(str: string): boolean {
 export const parseTimeout = (value: string): number => {
   const num = Number(value);
 
-  if (!Number.isInteger(num)) {
+  if (!Number.isInteger(num) || value.includes(".")) {
     throw new Error("Value must be an integer.");
   }
 
