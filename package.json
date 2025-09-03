@@ -20,8 +20,9 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
+    "build:ctrlr": "tsc -p config/tsconfig.root.json && node buildctrlr.mjs && npm pack",
     "build": "tsc -p config/tsconfig.root.json && node build.mjs && npm pack",
-    "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
+    "build:image": "npm run build:ctrlr && docker buildx build --output type=docker --tag pepr:dev .",
     "build:image:unicorn": "npm run build && docker buildx build --output type=docker --tag pepr/private:dev $(node scripts/read-unicorn-build-args.mjs) .",
     "ci": "npm ci",
     "cluster:k3d": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0' --wait && kubectl rollout status deployment -n kube-system",
