@@ -15,45 +15,32 @@ WORKDIR /app
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
 
-# Install deps
-RUN npm ci
 
 COPY --chown=node:node ./hack/ ./hack/
 
-COPY --chown=node:node ./build.mjs ./
+COPY --chown=node:node ./buildctrlr.mjs ./
 COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 COPY --chown=node:node ./src/ ./src/
 
-RUN npm run build && \
-    npm ci --omit=dev --omit=peer && \
-    npm cache clean --force && \
-    # Remove @types
-    rm -rf node_modules/@types && \
-    # Remove unused dependencies in the controller image, usually needed by Pepr CLI
-    rm -rf node_modules/ramda/dist && \
-    rm -rf node_modules/ramda/es && \ 
-    rm -rf node_modules/esbuild && \
-    rm -rf node_modules/@esbuild && \
-    rm -rf node_modules/fast-glob && \
-    rm -rf node_modules/.bin/esbuild && \
-    rm -rf node_modules/ts-morph && \
-    rm -rf node_modules/@ts-morph && \
-    rm -rf node_modules/quicktype-core && \
-    rm -rf node_modules/commander && \
-    rm -rf node_modules/heredoc && \
-    rm -rf node_modules/@npmcli && \
-    rm -rf node_modules/@pkgjs && \
-    rm -rf node_modules/@glideapps && \
-    rm -rf node_modules/@jsep-plugin && \
-    rm -rf node_modules/@sigstore && \
-    rm -rf node_modules/benchmarks && \
-    rm -rf node_modules/bare-* && \
-    rm -rf node_modules/bin-links && \
-    rm -rf node_modules/cacache && \
-    find . -name "*.ts" -type f -delete && \
-    mkdir node_modules/pepr && \
-    cp -r dist node_modules/pepr/dist && \
-    cp package.json node_modules/pepr
+# Install deps
+RUN npm ci
+RUN npm run build:ctrlr
+RUN npm ci --omit=dev --omit=peer
+RUN npm cache clean --force
+# Remove unused dependencies in the controller image, usually needed by Pepr CLI
+RUN npm uninstall @types/* ramda esbuild fast-glob ts-morph quicktype-core commander heredoc
+RUN npm uninstall @esbuild/* @ts-morph/* @npmcli/* @pkgjs/* @glideapps/* @jsep-plugin/* @sigstore/*
+RUN npm uninstall bin-links cacache
+# Remove any remaining directories that npm uninstall might miss
+RUN rm -rf node_modules/@types
+RUN rm -rf node_modules/benchmarks
+RUN rm -rf node_modules/cacache
+RUN npm prune --omit=dev --omit=peer
+RUN find . -name "*.ts" -type f -delete
+RUN mkdir node_modules/pepr
+RUN cp -r dist node_modules/pepr/dist
+RUN cp package.json node_modules/pepr
+
 
 ##### DELIVER #####
 

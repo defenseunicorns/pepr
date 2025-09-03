@@ -1,0 +1,47 @@
+/* eslint-disable no-undef */
+
+import { analyzeMetafile, build } from "esbuild";
+import packageJSON from "./package.json" with { type: "json" };
+
+const { dependencies, peerDependencies } = packageJSON;
+const external = Object.keys(dependencies).concat(
+  Object.keys(peerDependencies),
+  "@kubernetes/client-node",
+);
+
+const buildOpts = {
+  bundle: true,
+  external,
+  format: "cjs",
+  legalComments: "eof",
+  metafile: true,
+  platform: "node",
+};
+
+async function builder() {
+  try {
+    // Build the controller runtime
+    const controller = await build({
+      ...buildOpts,
+      entryPoints: ["src/runtime/controller.ts"],
+      outfile: "dist/controller.js",
+    });
+
+    console.log(await analyzeMetafile(controller.metafile));
+
+    // Build the library
+    const lib = await build({
+      ...buildOpts,
+      entryPoints: ["src/lib.ts"],
+      outfile: "dist/lib.js",
+      sourcemap: true,
+    });
+
+    console.log(await analyzeMetafile(lib.metafile));
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+}
+
+builder();

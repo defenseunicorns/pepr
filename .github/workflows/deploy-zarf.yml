@@ -59,7 +59,7 @@ jobs:
       - name: Build Pepr Package + Image
         run: |
           cd "$PEPR"
-          npm run build:image
+          npm run build:ctrlr
 
       - name: "set env: MOD_PATH"
         run: |
