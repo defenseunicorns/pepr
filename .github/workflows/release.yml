@@ -1,8 +1,9 @@
 name: Version Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -83,6 +84,19 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+
+      - name: Create release notes and tag release
+        run: |
+          npx semantic-release \
+          --no-ci \
+          --prepare @semantic-release/npm \
+          --prepare @semantic-release/git \
+          --publish @semantic-release/github
+
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish package
         id: publish
         uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@9103ac683d00ceecdb1c21507a9c7a9983ef46f4 # v2.0.0
