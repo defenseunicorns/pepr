@@ -307,7 +307,7 @@ When(a.Pod)
   .Mutate(pod => // .... )
   .Validate(pod => // .... )
   .Watch(async (pod, phase) => {
-    Log.info(pod, `Pod was ${phase}.`);
+    Log.info({pod}, `Pod was ${phase}.`);
 
     // do consecutive api calls
 ```

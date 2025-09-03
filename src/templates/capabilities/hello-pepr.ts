@@ -66,7 +66,7 @@ When(a.Namespace)
       });
     } catch (error) {
       // You can use the Log object to log messages to the Pepr controller pod
-      Log.error(error, "Failed to apply ConfigMap using server-side apply.");
+      Log.error({ error }, "Failed to apply ConfigMap using server-side apply.");
     }
 
     // You can share data between actions using the Store, including between different types of actions
@@ -139,7 +139,7 @@ When(a.ConfigMap)
   })
   .Watch((cm, phase) => {
     // This Watch Action will watch the ConfigMap after it has been persisted to the cluster
-    Log.info(cm, `ConfigMap was ${phase} with the name example-2`);
+    Log.info({ cm }, `ConfigMap was ${phase} with the name example-2`);
   });
 
 /**
@@ -310,7 +310,7 @@ When(a.ConfigMap)
           },
         });
       } catch (error) {
-        Log.error(error, "Failed to apply ConfigMap using server-side apply.", {
+        Log.error({ error }, "Failed to apply ConfigMap using server-side apply.", {
           cm,
         });
       }
@@ -454,5 +454,5 @@ When(UnicornKind)
  * A callback function that is called once the Pepr Store is fully loaded.
  */
 Store.onReady(data => {
-  Log.info(data, "Pepr Store Ready");
+  Log.info({ data }, "Pepr Store Ready");
 });

@@ -16,9 +16,9 @@ When(a.ConfigMap)
   .InNamespace("hello-pepr-finalize-create")
   .WithName("cm-reconcile-create")
   .Reconcile(function reconcileCreate(cm) {
-    Log.info(cm, "external api call (create): reconcile/callback")
+    Log.info({cm}, "external api call (create): reconcile/callback")
   })
   .Finalize(function finalizeCreate(cm) {
-    Log.info(cm, "external api call (create): reconcile/finalize")
+    Log.info({cm}, "external api call (create): reconcile/finalize")
   });
 ```
