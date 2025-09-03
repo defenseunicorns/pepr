@@ -710,6 +710,7 @@ describe("parseTimeout", () => {
   it("should throw an InvalidArgumentError for numeric strings that represent floating point numbers", () => {
     expect(() => parseTimeout("5.5")).toThrow(Error);
     expect(() => parseTimeout("20.1")).toThrow(Error);
+    expect(() => parseTimeout("5.0")).toThrow(Error);
   });
 });
 
