@@ -341,6 +341,7 @@ describe("build CLI command", () => {
         error: "Value must be an integer.",
         description: "reject non-numeric values",
       },
+      { value: "5.0", error: "Value must be an integer.", description: "reject float values" },
       { value: "5.2", error: "Value must be an integer.", description: "reject float values" },
     ])("should $description: $value", async ({ value, error }) => {
       await runProgramWithError([timeoutFlag, value], error);
