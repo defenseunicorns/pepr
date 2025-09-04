@@ -53,7 +53,7 @@ afterAll(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
-describe("Pepr Operator Tutorial", () => {
+describe("Pepr Operator Tutorial", { timeout: 1000 * 5 * 60 }, () => {
   const markdown = fs.readFileSync(MARKDOWN_FILE, "utf-8");
   const commands = extractCommandBlocks(markdown);
 
