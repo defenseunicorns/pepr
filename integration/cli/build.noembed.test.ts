@@ -35,12 +35,12 @@ describe("build", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });
+      await pepr.cli(workdir.path(), { cmd: `pepr@nightly init ${initArgs}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
 
       const buildArgs = [`--no-embed`].join(" ");
-      buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
+      buildOutput = await pepr.cli(testModule, { cmd: `pepr@nightly build ${buildArgs}` });
     }, time.toMs("3m"));
 
     it("should execute 'pepr build'", () => {

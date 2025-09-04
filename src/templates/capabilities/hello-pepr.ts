@@ -310,9 +310,7 @@ When(a.ConfigMap)
           },
         });
       } catch (error) {
-        Log.error({ error }, "Failed to apply ConfigMap using server-side apply.", {
-          cm,
-        });
+        Log.error({ error, cm }, "Failed to apply ConfigMap using server-side apply.");
       }
     }
 
