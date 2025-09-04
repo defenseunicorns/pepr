@@ -32,7 +32,7 @@ describe("build", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-      execSync(`npx pepr@latest init ${argz}`, {
+      execSync(`npx pepr@nightly init ${argz}`, {
         cwd: workdir.path(),
         stdio: "inherit",
       });
