@@ -36,7 +36,7 @@ describe("build env vars", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr@nightly init ${argz}` });
+      await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
       const data = f.readFileSync(`${testModule}/package.json`, "utf8");
@@ -59,7 +59,7 @@ describe("build env vars", () => {
       let uuid: string;
 
       beforeAll(async () => {
-        const build = await pepr.cli(testModule, { cmd: `pepr@nightly build` });
+        const build = await pepr.cli(testModule, { cmd: `pepr build` });
 
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");

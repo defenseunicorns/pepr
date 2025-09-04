@@ -32,7 +32,7 @@ describe("build", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr@nightly init ${argz}` });
+      await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
     }, time.toMs("2m"));
@@ -41,7 +41,7 @@ describe("build", () => {
       it(
         "builds",
         async () => {
-          const build = await pepr.cli(testModule, { cmd: `pepr@nightly build` });
+          const build = await pepr.cli(testModule, { cmd: `pepr build` });
           expect(build.exitcode).toBe(0);
           expect(build.stderr.join("").trim()).toBe("");
           expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
