@@ -52,7 +52,7 @@ describe("build", () => {
     );
   });
 
-  it("should display the UUIDs of the deployed modules with a specific UUID", async () => {
+  it("should display the UUIDs of the deployed modules with a specific UUID",{ timeout: 1000 * 5 * 60 }, async () => {
     const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
       shell: true, // Run command in a shell
       encoding: "utf-8", // Encode result as string

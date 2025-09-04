@@ -36,7 +36,6 @@ describe("build", () => {
         "--yes",
         "--skip-post-init",
       ].join(" ");
-
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
