@@ -7,15 +7,50 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: daily
-    ignore:
-      - dependency-name: "pino"
-        versions: ["9.8.0"]
     groups:
       production-dependencies:
         dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
- 
+    ignore:
+      - dependency-name: "pino"
+        versions: ["9.8.0"]
+      - dependency-name: "backslash"
+        versions: ["0.2.1"]
+      - dependency-name: "chalk"
+        versions: ["5.6.1"]
+      - dependency-name: "chalk-template"
+        versions: ["1.1.1"]
+      - dependency-name: "color-convert"
+        versions: ["3.1.1"]
+      - dependency-name: "color-name"
+        versions: ["2.0.1"]
+      - dependency-name: "color-string"
+        versions: ["2.1.1"]
+      - dependency-name: "wrap-ansi"
+        versions: ["9.0.1"]
+      - dependency-name: "supports-hyperlinks"
+        versions: ["4.1.1"]
+      - dependency-name: "strip-ansi"
+        versions: ["7.1.1"]
+      - dependency-name: "slice-ansi"
+        versions: ["7.1.1"]
+      - dependency-name: "simple-swizzle"
+        versions: ["0.2.3"]
+      - dependency-name: "is-arrayish"
+        versions: ["0.3.3"]
+      - dependency-name: "error-ex"
+        versions: ["1.3.3"]
+      - dependency-name: "has-ansi"
+        versions: ["6.0.1"]
+      - dependency-name: "ansi-regex"
+        versions: ["6.2.1"]
+      - dependency-name: "ansi-styles"
+        versions: ["6.2.2"]
+      - dependency-name: "supports-color"
+        versions: ["10.2.1"]
+      - dependency-name: "debug"
+        versions: ["4.4.2"] 
   - package-ecosystem: github-actions
     directory: /
     schedule:
