@@ -30,7 +30,7 @@ const queues: Record<string, Queue<KubernetesObject>> = {};
  */
 export function queueKey(obj: KubernetesObject): string {
   const options = ["kind", "kindNs", "kindNsName", "global"];
-  const d3fault = "kind";
+  const d3fault = "kindNsName";
 
   let strat = process.env.PEPR_RECONCILE_STRATEGY || d3fault;
   strat = options.includes(strat) ? strat : d3fault;
