@@ -6,30 +6,28 @@ In this section you can find detailed information about Pepr and how to use it.
 
 You can find the following information in this section:
 
-### [Pepr CLI](010_pepr-cli.md)
+### [Pepr CLI](/user-guide/pepr-cli)
 
-### [SDK](015_sdk.md)
+### [SDK](/user-guide/sdk)
 
-### [Pepr Modules](020_pepr-modules.md)
+### [Pepr Modules](/user-guide/pepr-modules)
 
-### [Pepr Actions](030_actions/)
+### [Pepr Capabilities](/user-guide/capabilities)
 
-### [Pepr Capabilities](040_capabilities.md)
+### [Pepr Store](/user-guide/store)
 
-### [Pepr Store](050_store.md)
+### [Custom Resources](/user-guide/custom-resources)
 
-### [Custom Resources](070_custom-resources.md)
+### [OnSchedule](/user-guide/onschedule)
 
-### [OnSchedule](080_onschedule.md)
+### [RBAC](/user-guide/rbac)
 
-### [RBAC](090_rbac.md)
+### [Metrics](/user-guide/metrics)
 
-### [Metrics](100_metrics.md)
+### [Customization](/user-guide/customization)
 
-### [Customization](110_customization.md)
+### [Filters](/user-guide/filters)
 
-### [Filters](120_filters.md)
+### [Generating CRDs](/user-guide/generating-crds)
 
-### [Generating CRDs](130_generating-crds.md)
-
-### [Custom Metrics](140_generating_custom_metrics.md)
+### [Custom Metrics](/user-guide/generating_custom_metrics)

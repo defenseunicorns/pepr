@@ -8,7 +8,7 @@ For example, an action could be responsible for adding a specific label to a Kub
 
 Actions are `Mutate()`, `Validate()`, `Watch()`, `Reconcile()`, and `Finalize()`. Both Mutate and Validate actions run during the admission controller lifecycle, while Watch and Reconcile actions run in a separate controller that tracks changes to resources, including existing resource; the Finalize action spans both the admission & afterward.
 
-Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`npx pepr init`](./010_pepr-cli.md#pepr-init):
+Let's look at some example actions that are included in the `HelloPepr` capability that is created for you when you [`npx pepr init`](/user-guide/pepr-cli#pepr-init):
 
 ---
 
@@ -66,7 +66,7 @@ When(a.ConfigMap)
   });
 ```
 
-There are many more examples in the `HelloPepr` capability that you can use as a reference when creating your own actions. Note that each time you run [`npx pepr update`](./010_pepr-cli.md#pepr-update), Pepr will automatically update the `HelloPepr` capability with the latest examples and best practices for you to reference and test directly in your Pepr Module.
+There are many more examples in the `HelloPepr` capability that you can use as a reference when creating your own actions. Note that each time you run [`npx pepr update`](/user-guide/pepr-cli#pepr-update), Pepr will automatically update the `HelloPepr` capability with the latest examples and best practices for you to reference and test directly in your Pepr Module.
 
 ---
 
