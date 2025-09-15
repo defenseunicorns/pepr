@@ -29,7 +29,7 @@ admission:
   antiAffinity: true
 ```
 
-Due to the nature of having two different instances of the Admission Controller, it is important to ensure that the modules are idempotent and do not store ephemeral data since there is no gaurantee which replica will serve the request. When state must be saved, use the [`PeprStore`](../030_user-guide/050_store.md).
+Due to the nature of having two different instances of the Admission Controller, it is important to ensure that the modules are idempotent and do not store ephemeral data since there is no guarantee which replica will serve the request. When state must be saved, use the [`PeprStore`](/user-guide/store).
 
 ## Mutating Webhook Errors
 
@@ -44,7 +44,7 @@ By validating the mutated resource, you ensure it adheres to expected formats, s
 1. Catch Logic Errors in Mutations:
 A mutation may not always produce the intended output due to edge cases, unexpected inputs, or incorrect assumptions in the mutation logic.
 
-Validation helps catch such issues early and becomes _particularly_ important if your Module is [configured](https://docs.pepr.dev/main/user-guide/customization/#admission-and-watcher-subparameters) to use a Webhook [failurePolicy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) of `ignore`. In that case, admission requests failures _won't prevent further processing and/or acceptance_ of mutate-failed requests and could result in undesirable resources getting into your cluster!
+Validation helps catch such issues early and becomes _particularly_ important if your Module is [configured](user-guide/customization/#admission-and-watcher-subparameters) to use a Webhook [failurePolicy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) of `ignore`. In that case, admission requests failures _won't prevent further processing and/or acceptance_ of mutate-failed requests and could result in undesirable resources getting into your cluster!
 
 1. Comply with Kubernetes Best Practices:
 Kubernetes resources must meet specific structural and functional requirements. Validating ensures compliance, preventing the risk of deployment failures or runtime errors.
@@ -80,15 +80,15 @@ The workflow for developing features in Pepr is:
 
 ## Debugging
 
-- [Debugging During Module Development](https://docs.pepr.dev/main/best-practices/#debugging-during-module-development)
-- [Logging](https://docs.pepr.dev/main/best-practices/#logging)
-- [Internal Error Occurred](https://docs.pepr.dev/main/best-practices/#internal-error-occurred)
-- [Pepr Store](https://docs.pepr.dev/main/best-practices/#pepr-store)
+- [Debugging During Module Development](/reference/best-practices/#debugging-during-module-development)
+- [Logging](/reference/best-practices/#logging)
+- [Internal Error Occurred](/reference/best-practices/#internal-error-occurred)
+- [Pepr Store](/reference/best-practices/#pepr-store)
 
 Pepr is composed of `Modules`, `Capabilities`, and `Actions`:
 
-- [Actions](https://docs.pepr.dev/main/user-guide/actions/) are the blocks of code containing filters, `Mutate`, `Validate`, `Watch`, `Reconcile`, and `OnSchedule`.
-- [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/) such as `hello-pepr.ts`.
+- [Actions](/actions/) are the blocks of code containing filters, `Mutate`, `Validate`, `Watch`, `Reconcile`, and `OnSchedule`.
+- [Capabilities](/user-guide/capabilities/) such as `hello-pepr.ts`.
 - `Modules` are the result of `npx pepr init`. You can have as many Capabilities as you would like in a Module.
 
 Pepr is a webhook-based system, meaning it is event-driven.
@@ -154,7 +154,7 @@ When(a.Pod)
 
 ### Logging
 
-Pepr can deploy two types of controllers: Admission and Watch. The controllers deployed are dictated by the [Actions](https://docs.pepr.dev/main/user-guide/actions/) called for by a given set of Capabilities (Pepr only deploys what is necessary). Within those controllers, the default log level is `info` but that can be changed to `debug` by setting the `LOG_LEVEL` environment variable to `debug`.
+Pepr can deploy two types of controllers: Admission and Watch. The controllers deployed are dictated by the [Actions](/actions/) called for by a given set of Capabilities (Pepr only deploys what is necessary). Within those controllers, the default log level is `info` but that can be changed to `debug` by setting the `LOG_LEVEL` environment variable to `debug`.
 
 To pull logs for all controller pods:
 
@@ -164,13 +164,13 @@ kubectl logs -l app -n pepr-system
 
 #### Admission Controller
 
-If the focus of the debug is on a `Mutate()` or `Validate()`, the relevenat logs will be from pods with label `pepr.dev/controller: admission`.
+If the focus of the debug is on a `Mutate()` or `Validate()`, the relevant logs will be from pods with label `pepr.dev/controller: admission`.
 
 ```bash
 kubectl logs -l pepr.dev/controller=admission -n pepr-system
 ```
 
-More refined admission logs -- which can be optionally filtered by the module UUID -- can be obtained with [`npx pepr monitor`](https://docs.pepr.dev/main/best-practices/#monitoring)
+More refined admission logs -- which can be optionally filtered by the module UUID -- can be obtained with [`npx pepr monitor`](/reference/best-practices/#monitoring)
 
 ```bash
 npx pepr monitor 
@@ -210,7 +210,7 @@ The failurePolicy and timeouts can be set in the Module's `package.json` file, u
   }
 ```
 
-Read [more on customization](https://docs.pepr.dev/main/user-guide/customization/).
+Read [more on customization](/user-guide/customization/).
 
 ### Pepr Store Custom Resource
 
@@ -220,7 +220,7 @@ If you need to read all store keys, or you think the PeprStore is malfunctioning
 kubectl get peprstore  -n pepr-system -o yaml
 ```
 
-You should run in `npx pepr dev` mode to debug the issue, see the [Debugging During Module Development](https://docs.pepr.dev/main/best-practices/#debugging-during-module-development) section for more information.
+You should run in `npx pepr dev` mode to debug the issue, see the [Debugging During Module Development](/reference/best-practices/#debugging-during-module-development) section for more information.
 
 ## Deployment
 
@@ -269,7 +269,7 @@ However, there are some cases where multiple modules makes sense. For instance d
 To enhance the security of your Pepr Controller, we recommend following these best practices:
 
 - Regularly update Pepr to the latest stable release.
-- Secure Pepr through RBAC using [scoped mode](https://docs.pepr.dev/main/user-guide/rbac/#scoped) taking into account access to the Kubernetes API server needed in the callbacks.
+- Secure Pepr through RBAC using [scoped mode](/user-guide/rbac/#scoped) taking into account access to the Kubernetes API server needed in the callbacks.
 - Practice the principle of least privilege when assigning roles and permissions and avoid giving the service account more permissions than necessary.
 - Use NetworkPolicy to restrict traffic from Pepr Controllers to the minimum required.
 - Limit calls from Pepr to the Kubernetes API server to the minimum required.
@@ -311,5 +311,3 @@ When(a.Pod)
 
     // do consecutive api calls
 ```
-
-[TOP](#pepr-best-practices)

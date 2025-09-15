@@ -47,5 +47,5 @@ jobs:
         run: |
           cd "$PEPR"
           npm ci
-          npx vitest run docs/040_pepr-tutorials/tests/*.test.ts   
+          npx vitest run docs/030_tutorials/tests/*.test.ts   
 

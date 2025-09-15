@@ -8,7 +8,7 @@ After a successful mutation of an object in a module with UUID static-test, and 
 
 ### `SetLabel`
 
-`SetLabel` is used to set a lable on a Kubernetes object as part of a Pepr Mutate action.
+`SetLabel` is used to set a label on a Kubernetes object as part of a Pepr Mutate action.
 
 For example, to add a label when a ConfigMap is created:
 
@@ -80,4 +80,4 @@ When(a.ConfigMap)
 
 ## See Also
 
-Looking for some more generic helpers? Check out the [Module Author SDK](../130_sdk.md) for information on other things that Pepr can help with.
+Looking for some more generic helpers? Check out the [Module Author SDK](/user-guide/sdk) for information on other things that Pepr can help with.

@@ -16,7 +16,7 @@ An example of what the dashboard will look like is shown below:
 
 ### Step 1. Get Cluster Running With Your Pepr Module Deployed
 
-You can learn more about how to create a Pepr module and deploy it in the [Create a Pepr Module](010_create-pepr-module.md) tutorial. The short version is:
+You can learn more about how to create a Pepr module and deploy it in the [Create a Pepr Module](/pepr-tutorials/create-pepr-module) tutorial. The short version is:
 
 ```bash
 #Create your cluster
