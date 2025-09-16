@@ -71,7 +71,7 @@ jobs:
   #   uses: ./.github/workflows/tutorials-test.yml
 
   publish:
-    needs: [slsa, tutorials-test]
+    needs: [slsa]
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
