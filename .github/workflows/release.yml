@@ -66,9 +66,9 @@ jobs:
     with:
       run-scripts: "set:version, ci, build"
 
-  # tutorials-test:
-  #   permissions: read-all 
-  #   uses: ./.github/workflows/tutorials-test.yml
+  tutorials-test:
+    permissions: read-all 
+    uses: ./.github/workflows/tutorials-test.yml
 
   publish:
     needs: [slsa]
