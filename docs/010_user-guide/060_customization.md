@@ -54,7 +54,7 @@ Default (without):
 
 ## Customizing Watch Configuration
 
-The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific enviroment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
+The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific environment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
 
 | Field                        | Description                                                                                                      | Example Values                  |
 |------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------|
@@ -69,7 +69,7 @@ The [Reconcile Action](/actions/reconcile) allows you to maintain ordering of re
 
 | Field | Description | Example Values |
 |-|-|-|
-| `PEPR_RECONCILE_STRATEGY` | How Pepr should order resource updates being Reconcile()'d. | default: `"kind"` |
+| `PEPR_RECONCILE_STRATEGY` | How Pepr should order resource updates being Reconcile()'d. | default: `"kindNsName"` |
 
 | Available Options ||
 |-|-|
