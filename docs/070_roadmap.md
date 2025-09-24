@@ -46,7 +46,7 @@ This section contains work we've considered, but have not slotted in to the road
 - **Pepr v1.0.0**
   - Determine if Pepr is stable enough to be at `v1.0.0` and release it!
 - **OTEL Preparation**:
-  - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core prespective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
+  - Come up with a plan to implement Open Telemetry. Specifically distributed tracing, metrics, logs and events. Use this data to make debugging easier from a UDS Core perspective. There will be documentation work on how to use an OTEL collector with a Pepr Module.
 - **Deno2 Implementation**:
   - If determined to be advisable, move forward with migrating the project to Deno2 (starting with the kubernetes-fluent-client..?). This phase will focus on adapting the codebase, conducting extensive testing, and creating comprehensive documentation to ensure a seamless transition.
 - **Determine if a Transactional PeprStore makes sense**:
@@ -90,14 +90,14 @@ _2024 Roadmap_
     - Create a sharded queue that enables the Module Author to define queueing strategies based on `kind`, `kind/namespace`, `kind/namespace/name`, `global`.
   - **Community Building**:
     - Grow the contributor base, establish a governance model, and encourage community-led initiatives. Look to drive conversation in our Slack Channel.
-    - Based on community feedback, continuously improve and add features. Rigoursly test and document and review code.
+    - Based on community feedback, continuously improve and add features. Rigorously test and document and review code.
   - **Project Advocation**:
     - Publicly advocate for the project and encourage adoption.
   - **Stability**:
     - Ensure that the project is stable and reliable. Make sure that the project is well-tested and documented.
     - Identify new areas of project improvement and work on them.
 
-## Phase 4: Feature Development, Stablization, Code and Testing Quality Improvements
+## Phase 4: Feature Development, Stabilization, Code and Testing Quality Improvements
 
 - **Q4**:
   - **Features**:

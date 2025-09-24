@@ -51,7 +51,7 @@ kubectl logs -n pepr-system  -l app | jq
   "ok": false,
   "status": 403,
   "statusText": "Forbidden",
-  "msg": "Dooes the ServiceAccount permissions to CREATE and PATCH this ConfigMap?"
+  "msg": "Does the ServiceAccount have permissions to CREATE and PATCH this ConfigMap?"
 }
 ```
 

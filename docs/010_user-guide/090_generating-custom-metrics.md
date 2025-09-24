@@ -20,7 +20,7 @@ metricsCollector.addCounter(
 
 // Register a gauge to count how many times a given label has been applied
 metricsCollector.addGauge(
-  "label_guage",
+  "label_gauge",
   "example gauge for counting how times times a given label has been applied",
   ["label"],
 );
@@ -33,9 +33,9 @@ When(a.Pod)
     po.SetLabel("blue", "true");
     po.SetLabel("green", "true");
     metricsCollector.incCounter("label_counter");
-    metricsCollector.incGauge("label_guage", { label: "blue" }, 1);
-    metricsCollector.incGauge("label_guage", { label: "green" }, 1);
-    metricsCollector.incGauge("label_guage", { label: "hello-pepr" }, 1);
+    metricsCollector.incGauge("label_gauge", { label: "blue" }, 1);
+    metricsCollector.incGauge("label_gauge", { label: "green" }, 1);
+    metricsCollector.incGauge("label_gauge", { label: "hello-pepr" }, 1);
   });
 ```
 
@@ -49,8 +49,8 @@ terminal_b > curl -k http://localhost:3000/metrics
 # TYPE pepr_label_counter counter
 pepr_label_counter 0
 
-# HELP pepr_label_guage example gauge for counting how times times a given label has been applied
-# TYPE pepr_label_guage gauge
+# HELP pepr_label_gauge example gauge for counting how times times a given label has been applied
+# TYPE pepr_label_gauge gauge
 terminal_b > kubectl run a --image=nginx 
 terminal_b > kubectl run b --image=nginx
 terminal_b > kubectl run c --image=nginx
@@ -59,9 +59,9 @@ terminal_b > curl -k http://localhost:3000/metrics
 # TYPE pepr_label_counter counter
 pepr_label_counter 3
 
-# HELP pepr_label_guage example gauge for counting how times times a given label has been applied
-# TYPE pepr_label_guage gauge
-pepr_label_guage{label="blue"} 3
-pepr_label_guage{label="green"} 3
-pepr_label_guage{label="hello-pepr"} 3
+# HELP pepr_label_gauge example gauge for counting how times times a given label has been applied
+# TYPE pepr_label_gauge gauge
+pepr_label_gauge{label="blue"} 3
+pepr_label_gauge{label="green"} 3
+pepr_label_gauge{label="hello-pepr"} 3
 ```

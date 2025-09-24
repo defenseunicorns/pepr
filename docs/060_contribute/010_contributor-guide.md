@@ -106,8 +106,9 @@ Please follow the coding conventions and style used in the project. Use ESLint a
       You'll need to re-run the installation after every build, though.
 3. Run `npx pepr dev` inside your module's directory to run the modified version of pepr.
 
-> [!TIP]
-> Make sure to re-run `npm run build` after you modify any of the pepr source files.
+:::tip
+Make sure to re-run `npm run build` after you modify any of the pepr source files.
+:::
 
 ## Contact
 

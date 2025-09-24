@@ -14,20 +14,22 @@ You can find the following information in this section:
 
 ### [Pepr Capabilities](/user-guide/capabilities)
 
-### [Pepr Store](/user-guide/store)
-
 ### [Custom Resources](/user-guide/custom-resources)
+
+### [Customization](/user-guide/customization)
+
+### [Feature Flags](/user-guide/feature-flags)
+
+### [Filters](/user-guide/filters)
+
+### [Custom Metrics](/user-guide/generating-custom-metrics)
+
+### [Generating CRDs](/user-guide/generating-crds)
+
+### [Metrics](/user-guide/metrics-endpoints)
 
 ### [OnSchedule](/user-guide/onschedule)
 
 ### [RBAC](/user-guide/rbac)
 
-### [Metrics](/user-guide/metrics)
-
-### [Customization](/user-guide/customization)
-
-### [Filters](/user-guide/filters)
-
-### [Generating CRDs](/user-guide/generating-crds)
-
-### [Custom Metrics](/user-guide/generating_custom_metrics)
+### [Pepr Store](/user-guide/store)

@@ -850,13 +850,17 @@ password: secret
 
 By clicking on the Prometheus data source, you should be able to test the connection to Prometheus by clicking the "Test" button at the bottom of the screen.
 
-NOTE: The Prometheus server URL should be something like:
+:::note
+The Prometheus server URL should be something like:
+:::
 
 <http://monitoring-kube-prometh-prometheus.default:9090/>
 
 You should now be able to select the Pepr Dashboard from the Grafana UI in the "Dashboards" section.
 
-Note: The dashboard may take a few minutes to populate with data.
+:::note
+The dashboard may take a few minutes to populate with data.
+:::
 
 ## Summary
 

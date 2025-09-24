@@ -302,7 +302,9 @@ Make sure Pepr is updated to the latest version:
 npx pepr update --skip-template-update
 ```
 
-> ⚠️ **Important Note**: Be cautious when updating Pepr in an existing project as it could potentially override custom configurations. The `--skip-template-update` flag helps prevent this.
+:::caution
+Be cautious when updating Pepr in an existing project as it could potentially override custom configurations. The `--skip-template-update` flag helps prevent this.
+:::
 
 ### Building the Operator
 
@@ -446,7 +448,9 @@ FIELDS:
     Theme defines the theme of the web application, either dark or light.
 ```
 
-> 💡 **Note**: `wa` is the short form of `webapp` that kubectl recognizes. This resource structure directly matches the TypeScript interface we defined earlier in our code.
+:::note
+`wa` is the short form of `webapp` that kubectl recognizes. This resource structure directly matches the TypeScript interface we defined earlier in our code.
+:::
 
 [Back to top](#building-a-kubernetes-operator-with-pepr)
 
@@ -611,7 +615,7 @@ Events:
 ### Viewing Your WebApp
 
 To access your WebApp in a browser, use port-forwarding to connect to the service.
-The following command runs the portforward in the background.
+The following command runs the port-forward in the background.
 Be sure to make note of the `Port-forward PID` for later when we tear down the test environment.
 
 ```bash
@@ -693,10 +697,12 @@ kubectl apply -f webapp-dark-es.yaml
 ```
 <!-- End Block -->
 
-> 💡 **Note**: We've changed the theme from light to dark and the language from English (en) to Spanish (es).
+:::note
+We've changed the theme from light to dark and the language from English (en) to Spanish (es).
+:::
 
 Your port-forward should still be active, so you can refresh your browser to see the changes.
-If your porf-forward is no longer active for some reason, create a new one:
+If your port-forward is no longer active for some reason, create a new one:
 
 ```bash
 # Only needed if previous port-forward closed

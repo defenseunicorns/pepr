@@ -10,9 +10,12 @@ Defining a new capability can be done via a [VSCode Snippet](https://code.visual
 
 1. Create a new file in the `capabilities` directory with the name of your capability. For example, `capabilities/my-capability.ts`.
 
-1. Open the new file in VSCode and type `create` in the file. A suggestion should prompt you to generate the content from there.
+2. Open the new file in VSCode and type `create` in the file. A suggestion should prompt you to generate the content from there.
 
-[https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4](https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4)
+<video controls width="100%">
+  <source src="https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4" type="video/mp4">
+  <p>Your browser doesn't support HTML video. <a href="https://user-images.githubusercontent.com/882485/230897379-0bb57dff-9832-479f-8733-79e103703135.mp4">Download the video</a> instead.</p>
+</video>
 
 _If you prefer not to use VSCode, you can also modify or copy the `HelloPepr` capability to meet your needs instead._
 

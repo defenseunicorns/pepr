@@ -14,4 +14,4 @@ We appreciate your help in making Pepr more secure and will acknowledge your con
 
 ## Contact
 
-If you have any questions or concerns regarding the security of Pepr, please contact us at <pepr@defenseunicorns.com>.
+If you have any questions or concerns regarding the security of Pepr, please contact us at [pepr@defenseunicorns.com](mailto:pepr@defenseunicorns.com).
