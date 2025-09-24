@@ -22,7 +22,6 @@ We really appreciate your support! :star:
 
 ## **_Type safe Kubernetes middleware for humans_**
 
-<!-- markdownlint-disable MD033 - Image-styling is unsupported on GitHub-flavored markdown -->
 <img alt="The Pepr Logo" align="right" width="40%" src="_images/pepr.png" />
 
 Pepr simplifies Kubernetes management by providing an alternative to complex YAML configurations, custom scripts, and ad-hoc solutions.
@@ -125,12 +124,16 @@ npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
 ```
 
-> [!TIP]
-> Don't use IP as your `--host`, it's not supported. Make sure to check your
-> local k8s distro documentation how to reach your localhost, which is where
-> `pepr dev` is serving the code from.
+:::tip
+Don't use IP as your `--host`, it's not supported. Make sure to check your
+local k8s distro documentation how to reach your localhost, which is where
+`pepr dev` is serving the code from.
+:::
 
-<https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4>
+  <video controls width="100%">
+    <source src="https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4" type="video/mp4">
+    <p>Your browser doesn't support HTML video. <a href="https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4">Download the video</a> instead.</p>
+  </video>
 
 ## Concepts
 
