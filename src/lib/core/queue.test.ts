@@ -4,7 +4,13 @@ import { Queue } from "./queue";
 import Log from "../telemetry/logger";
 import { KubernetesObject } from "kubernetes-fluent-client";
 
-vi.mock("../telemetry/logger");
+vi.mock("../telemetry/logger", () => ({
+  __esModule: true,
+  default: {
+    debug: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 /**
  * Creates a watch function that resolves or rejects after the specified timeout
@@ -32,8 +38,8 @@ describe("Queue Processing", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(Log.debug, true).mockImplementation(vi.fn());
-    vi.mocked(Log.info, true).mockImplementation(vi.fn());
+    vi.mocked(Log.debug).mockImplementation(vi.fn());
+    vi.mocked(Log.info).mockImplementation(vi.fn());
     queue = new Queue(queueName);
   });
 
