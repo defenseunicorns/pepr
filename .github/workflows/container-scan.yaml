@@ -33,17 +33,13 @@ jobs:
         run: npm ci
       - name: Build Pepr Controller Image
         run: npm run build:image
-      - name: Configure Grype Ignore File
-        run: |
-          mkdir -p ~/.grype
-          echo "ignore:" > ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml
       - name: Vulnerability Scan
         uses: anchore/scan-action@f6601287cdb1efc985d6b765bbf99cb4c0ac29d8 # v7.0.0
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
+          grype-config: ./config/.grype.yaml
       - name: Generate SBOM
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
         with:
