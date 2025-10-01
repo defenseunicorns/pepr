@@ -1,3 +1,0 @@
-ignore:
-# this is affecting all node alpine upstream images
-- vulnerability: CVE-2025-9230
