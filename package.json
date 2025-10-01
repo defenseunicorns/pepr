@@ -66,7 +66,7 @@
     "ts-morph": "^27.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "20.0.0",
+    "@commitlint/cli": "20.1.0",
     "@commitlint/config-conventional": "20.0.0",
     "@fast-check/vitest": "^0.2.1",
     "@types/command-line-args": "^5.2.3",
