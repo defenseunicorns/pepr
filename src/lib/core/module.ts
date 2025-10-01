@@ -8,7 +8,7 @@ import { CapabilityExport } from "../types";
 import { isBuildMode } from "./envChecks";
 import { PackageJSON, PeprModuleOptions, ModuleConfig } from "../types";
 import { createControllerHooks } from "../controller/createHooks";
-
+// Testing
 export class PeprModule {
   #controller!: Controller;
 
