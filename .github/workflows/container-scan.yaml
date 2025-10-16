@@ -25,7 +25,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Use Node.js latest
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 20
           cache: "npm"
@@ -39,13 +39,13 @@ jobs:
           echo "ignore:" > ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml
       - name: Vulnerability Scan
-        uses: anchore/scan-action@f6601287cdb1efc985d6b765bbf99cb4c0ac29d8 # v7.0.0
+        uses: anchore/scan-action@9e8428812aebf5a6a5fc3fdd55de39d1c79b8b12 # v7.0.1
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
       - name: Generate SBOM
-        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        uses: anchore/sbom-action@d8a2c0130026bf585de5c176ab8f7ce62d75bf04 # v0.20.7
         with:
           image: pepr:dev
           upload-artifact: true
