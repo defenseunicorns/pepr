@@ -5,12 +5,8 @@ permissions:
   contents: read
 
 on:
+  workflow_call:
   workflow_dispatch:
-  merge_group:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
-    - "**.md"
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:

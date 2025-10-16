@@ -1,6 +1,7 @@
 name: Upgrade Test - Upstream
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
     branches: ["main"]
@@ -9,11 +10,6 @@ on:
   pull_request:
     branches: ["main"]
     paths-ignore:
-    - "**.md"
-  merge_group:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
     - "**.md"
 
 permissions:

@@ -10,10 +10,6 @@ on:
   pull_request:
     branches:
       - main
-  merge_group:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
     
 jobs:
   container-scans:
