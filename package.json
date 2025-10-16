@@ -7,7 +7,7 @@
   "bin": "dist/cli.js",
   "repository": "defenseunicorns/pepr",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "files": [
     "/dist",
@@ -69,6 +69,7 @@
     "@commitlint/cli": "20.1.0",
     "@commitlint/config-conventional": "20.0.0",
     "@fast-check/vitest": "^0.2.1",
+    "@semantic-release/git": "^10.0.1",
     "@types/command-line-args": "^5.2.3",
     "@types/eslint": "9.6.1",
     "@types/express": "5.0.3",
