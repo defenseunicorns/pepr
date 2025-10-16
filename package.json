@@ -70,7 +70,6 @@
     "@commitlint/config-conventional": "20.0.0",
     "@fast-check/vitest": "^0.2.1",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/npm": "^13.0.0",
     "@types/command-line-args": "^5.2.3",
     "@types/eslint": "9.6.1",
     "@types/express": "5.0.3",

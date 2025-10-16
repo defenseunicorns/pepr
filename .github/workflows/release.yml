@@ -74,6 +74,10 @@ jobs:
   publish:
     needs: [slsa]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -88,7 +92,6 @@ jobs:
       - name: Create release notes and tag release
         run: |
           npx semantic-release \
-          --prepare @semantic-release/npm \
           --publish @semantic-release/github
 
         shell: bash
