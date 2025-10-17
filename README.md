@@ -18,7 +18,7 @@ Pepr had over 200 stars, demonstrating its recognition and value within the Kube
 We're working to rebuild that recognition.
 
 If you've previously starred Pepr, or if you find it a useful project, we would greatly appreciate it if you could re-star the repository.
-We really appreciate your support! :star:
+We really appreciate your support!
 
 ## **_Type safe Kubernetes middleware for humans_**
 
