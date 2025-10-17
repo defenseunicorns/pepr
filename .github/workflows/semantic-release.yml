@@ -12,11 +12,8 @@ jobs:
       run-format: false # no need to check the format again
       run-units: true
       run-integration: true
-  unicorn-pexex:
-    uses: ./.github/workflows/pepr-excellent-examples-unicorn.yml
-    needs: [on-demand-workflows]
   publish:
-    needs: [unicorn-pexex]
+    needs: [on-demand-workflows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
