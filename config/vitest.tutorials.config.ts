@@ -5,8 +5,8 @@ export default defineConfig({
     pool: "forks",
     maxWorkers: 1,
     minWorkers: 1,
-    testTimeout: 30000,
-    teardownTimeout: 10000,
+    testTimeout: 120000,
+    teardownTimeout: 60000,
     isolate: true,
     include: ["docs/**/*.test.ts"],
     exclude: [

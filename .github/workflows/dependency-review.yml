@@ -9,12 +9,10 @@
 name: 'Dependency Review'
 on: 
   pull_request:
-  merge_group:
     paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
     - "**.md"
-
+    - "LICENSE"
+    - "CODEOWNERS" 
 permissions:
   contents: read
 

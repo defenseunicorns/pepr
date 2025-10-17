@@ -5,16 +5,15 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  merge_group:
     paths-ignore:
+    - "**.md"
     - "LICENSE"
-    - "CODEOWNERS"
-    
+    - "CODEOWNERS"   
+  pull_request:
+    paths-ignore:
+    - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"   
 jobs:
   container-scans:
     runs-on: ubuntu-latest

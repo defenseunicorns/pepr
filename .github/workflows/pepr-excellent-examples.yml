@@ -3,21 +3,19 @@ name: E2E - Pepr Excellent Examples
 permissions: read-all
 on:
   workflow_dispatch:
-  merge_group:
-    paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
-    - "**.md"
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
   push:
-    branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
   pull_request:
-    branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
+
 
 # refs
 # https://frontside.com/blog/2022-12-12-dynamic-github-action-jobs/

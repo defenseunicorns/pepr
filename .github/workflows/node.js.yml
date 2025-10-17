@@ -2,19 +2,16 @@ name: Node.js CI
 
 on:
   push:
-    branches: ["main"]
     paths-ignore:
     - "**.md"
-  pull_request:
-    branches: ["main"]
-    paths-ignore:
-    - "**.md"
-  merge_group:
-    paths-ignore:
     - "LICENSE"
     - "CODEOWNERS"
+  pull_request:
+    paths-ignore:
     - "**.md"
-
+    - "LICENSE"
+    - "CODEOWNERS"
+    
 permissions:
   id-token: write # This is needed for OIDC federation.
   contents: read

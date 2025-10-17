@@ -13,11 +13,10 @@ name: "CodeQL"
 
 on:
   push:
-  merge_group:
     paths-ignore:
+    - "**.md"
     - "LICENSE"
     - "CODEOWNERS"
-    - "**.md"
 permissions:
   contents: read
 

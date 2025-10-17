@@ -1,0 +1,40 @@
+name: Semantic Release
+
+on:
+  merge_group:
+
+jobs:
+  on-demand-workflows:
+    uses: ./.github/workflows/on-demand-workflows.yaml
+    secrets:
+      CODECOV_ORG_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+    with:
+      run-format: false # no need to check the format again
+      run-units: true
+      run-integration: true
+  publish:
+    needs: [on-demand-workflows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Node registry authentication
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release \
+          --prepare @semantic-release/npm \
+          --publish @semantic-release/github
