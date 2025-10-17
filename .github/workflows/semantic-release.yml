@@ -2,6 +2,8 @@ name: Semantic Release
 
 on:
   merge_group:
+  push:
+    branches: [main]
 
 jobs:
   on-demand-workflows:
@@ -17,6 +19,7 @@ jobs:
       run-integration: true
   publish:
     needs: [on-demand-workflows]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
