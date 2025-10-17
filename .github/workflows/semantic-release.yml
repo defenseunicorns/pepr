@@ -6,6 +6,9 @@ on:
 jobs:
   on-demand-workflows:
     uses: ./.github/workflows/on-demand-workflows.yaml
+    permissions:
+      id-token: write # This is needed for OIDC federation.
+      contents: read
     secrets:
       CODECOV_ORG_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
     with:
