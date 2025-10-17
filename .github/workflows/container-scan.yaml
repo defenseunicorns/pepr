@@ -5,12 +5,15 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
+    paths-ignore:
+    - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"   
   pull_request:
-    branches:
-      - main
-    
+    paths-ignore:
+    - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"   
 jobs:
   container-scans:
     runs-on: ubuntu-latest

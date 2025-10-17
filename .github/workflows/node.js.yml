@@ -1,15 +1,16 @@
 name: Node.js CI
 
 on:
-  workflow_call:
   push:
-    branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
   pull_request:
-    branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
     
 permissions:
   id-token: write # This is needed for OIDC federation.

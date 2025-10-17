@@ -7,10 +7,14 @@ on:
     branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
   pull_request:
     branches: ["main"]
     paths-ignore:
     - "**.md"
+    - "LICENSE"
+    - "CODEOWNERS"
 
 permissions:
   contents: read

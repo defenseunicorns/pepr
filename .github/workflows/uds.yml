@@ -2,7 +2,6 @@ name: UDS - Smoke Test
 
 permissions: read-all
 on:
-  workflow_call:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
