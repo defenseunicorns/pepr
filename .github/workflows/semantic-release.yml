@@ -31,6 +31,8 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
       - name: Set up Node registry authentication
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
@@ -43,5 +45,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npx semantic-release \
+          --analyze-commits @semantic-release/commit-analyzer \
+          --generate-notes @semantic-release/release-notes-generator \
           --prepare @semantic-release/npm \
           --publish @semantic-release/github
