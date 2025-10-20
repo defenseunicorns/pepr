@@ -4,9 +4,8 @@ name: PR Title Check
 permissions: read-all
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, edited, synchronize]
+  workflow_call:
+
 
 jobs:
   title_check:

@@ -1,20 +1,11 @@
-name: E2E - Pepr Excellent Examples
+name: E2E - Pepr Excellent Examples - Upstream
 
 permissions: read-all
 on:
+  workflow_call:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
-  push:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"
-  pull_request:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"
 
 
 # refs

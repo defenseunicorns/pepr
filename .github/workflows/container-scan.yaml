@@ -4,16 +4,8 @@ permissions:
   actions: read
 
 on:
-  push:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"   
-  pull_request:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"   
+  workflow_call:
+  
 jobs:
   container-scans:
     runs-on: ubuntu-latest
