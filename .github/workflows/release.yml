@@ -165,6 +165,5 @@ jobs:
           npm install
           node scripts/set-version.js "$PEPR_VERSION"
           npm run build
-          VERSION=${{ github.ref_name }}
           oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:v${PEPR_VERSION} \
-            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${VERSION}.tgz
+            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${PEPR_VERSION}.tgz
