@@ -13,7 +13,6 @@ on:
     - "**.md"
     - "LICENSE"
     - "CODEOWNERS"  
-
 permissions:
   contents: read
 
