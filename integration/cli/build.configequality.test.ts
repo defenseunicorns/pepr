@@ -10,9 +10,17 @@ import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import { ModuleConfig } from "../../src/lib/types";
+import type { KubernetesObject } from "@kubernetes/client-node";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
+
+interface PeprPackageJson {
+  name: string;
+  version: string;
+  description: string;
+  pepr: ModuleConfig;
+}
 
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
@@ -22,91 +30,25 @@ describe("build", () => {
   }, time.toMs("1m"));
 
   describe("builds a module", () => {
-    const id = FILE.split(".").at(1);
+    const id = FILE.split(".").at(1) ?? "default";
     const testModule = `${workdir.path()}/${id}`;
     const packageJson = `${testModule}/package.json`;
 
     beforeAll(async () => {
-      await fs.rm(testModule, { recursive: true, force: true });
-      const argz = [
-        `--name ${id}`,
-        `--description ${id}`,
-        `--error-behavior reject`,
-        `--uuid random-identifier`,
-        "--yes",
-        "--skip-post-init",
-      ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(testModule);
-      await pepr.cli(testModule, { cmd: `npm install` });
+      await setupTestModule(testModule, id, workdir.path());
     }, time.toMs("2m"));
 
     describe("maps config options from package.json into pepr + helm manifests", () => {
       let moduleConfig: Required<ModuleConfig>;
-      let peprResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      let helmResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      let peprResources: KubernetesObject[];
+      let helmResources: KubernetesObject[];
       let peprUuid: string;
 
-      // eslint-disable-next-line max-statements
       beforeAll(async () => {
-        // set configuration in package.json
-        const config = await resource.fromFile(packageJson);
-        config.description = "testdesc";
-        config.pepr = {
-          ...config.pepr,
-          peprVersion: "1.2.3",
-          webhookTimeout: 11,
-          onError: "reject",
-          alwaysIgnore: {
-            namespaces: ["garbage"],
-          },
-          logLevel: "warning",
-          env: {
-            TEST: "env",
-          },
-          customLabels: {
-            namespace: {
-              test: "test",
-              value: "value",
-            },
-          },
-          rbacMode: "scoped",
-          rbac: [
-            {
-              apiGroups: ["test"],
-              resources: ["tests"],
-              verbs: ["get", "list"],
-            },
-          ],
-        };
-        await fs.writeFile(packageJson, JSON.stringify(config, null, 2));
-
-        // translate package.json values into ModuleConfig
-        peprUuid = `pepr-${config.pepr.uuid}`;
-        moduleConfig = config.pepr;
-        moduleConfig.appVersion = config.version;
-        moduleConfig.description = config.description;
-
-        // build module
-        const build = await pepr.cli(testModule, { cmd: `pepr build` });
-        expect(build.exitcode).toBe(0);
-        expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
-
-        // load helm manifests
-        const chartDir = `${testModule}/dist/${moduleConfig.uuid}-chart`;
-        const helm = await pepr.cli(chartDir, { cmd: `helm template .` });
-        expect(build.exitcode).toBe(0);
-        expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).not.toBe("");
-
-        const helmManifest = `${chartDir}/reified.yaml`;
-        await fs.writeFile(helmManifest, helm.stdout.join("\n"));
-        helmResources = await resource.fromFile(helmManifest);
-
-        // load pepr manifests
-        const peprManifest = `${testModule}/dist/pepr-module-${moduleConfig.uuid}.yaml`;
-        peprResources = await resource.fromFile(peprManifest);
+        ({ moduleConfig, peprResources, helmResources, peprUuid } = await buildAndLoadResources(
+          packageJson,
+          testModule,
+        ));
       }, time.toMs("2m"));
 
       it("peprVersion", async () => {
@@ -125,6 +67,7 @@ describe("build", () => {
         expect(helmStringified.includes(moduleConfig.appVersion)).toBe(false);
       });
 
+      // eslint-disable-next-line max-statements, complexity
       it("uuid", async () => {
         for (const clusterRole of [
           resource.select(peprResources, kind.ClusterRole, peprUuid),
@@ -174,9 +117,8 @@ describe("build", () => {
           expect(deployAdmission.spec!.template!.metadata!.labels!.app).toBe(peprUuid);
           expect(deployAdmission.spec!.template!.spec!.serviceAccountName).toBe(peprUuid);
           expect(
-            deployAdmission
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "tls-certs")
-              .at(0)!.secret!.secretName,
+            deployAdmission.spec!.template!.spec!.volumes!.find(vol => vol.name === "tls-certs")!
+              .secret!.secretName,
           ).toBe(`${peprUuid}-tls`);
           expect(
             deployAdmission
@@ -258,9 +200,8 @@ describe("build", () => {
           expect(deployWatcher.spec!.template!.metadata!.labels!.app).toBe(`${peprUuid}-watcher`);
           expect(deployWatcher.spec!.template!.spec!.serviceAccountName).toBe(peprUuid);
           expect(
-            deployWatcher
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "tls-certs")
-              .at(0)!.secret!.secretName,
+            deployWatcher.spec!.template!.spec!.volumes!.find(vol => vol.name === "tls-certs")!
+              .secret!.secretName,
           ).toBe(`${peprUuid}-tls`);
           expect(
             deployWatcher.spec!.template!.spec!.volumes!.filter(vol => vol.name === "module").at(0)!
@@ -424,3 +365,94 @@ describe("build", () => {
     });
   });
 });
+
+async function setupTestModule(testModule: string, id: string, workdirPath: string): Promise<void> {
+  await fs.rm(testModule, { recursive: true, force: true });
+
+  const args = [
+    `--name ${id}`,
+    `--description ${id}`,
+    `--error-behavior reject`,
+    `--uuid random-identifier`,
+    "--yes",
+    "--skip-post-init",
+  ].join(" ");
+
+  await pepr.cli(workdirPath, { cmd: `pepr init ${args}` });
+  await pepr.tgzifyModule(testModule);
+  await pepr.cli(testModule, { cmd: `npm install` });
+}
+
+async function preparePeprConfig(packageJson: string): Promise<PeprPackageJson> {
+  const config = (await resource.fromFile(packageJson)) as PeprPackageJson;
+  config.description = "testdesc";
+  config.pepr = {
+    ...config.pepr,
+    peprVersion: "1.2.3",
+    webhookTimeout: 11,
+    onError: "reject",
+    alwaysIgnore: { namespaces: ["garbage"] },
+    logLevel: "warning",
+    env: { TEST: "env" },
+    customLabels: {
+      namespace: { test: "test", value: "value" },
+    },
+    rbacMode: "scoped",
+    rbac: [
+      {
+        apiGroups: ["test"],
+        resources: ["tests"],
+        verbs: ["get", "list"],
+      },
+    ],
+  };
+  await fs.writeFile(packageJson, JSON.stringify(config, null, 2));
+  return config;
+}
+
+async function buildAndLoadResources(
+  packageJson: string,
+  testModule: string,
+): Promise<{
+  moduleConfig: Required<ModuleConfig>;
+  peprResources: KubernetesObject[];
+  helmResources: KubernetesObject[];
+  peprUuid: string;
+}> {
+  const config = await preparePeprConfig(packageJson);
+
+  const peprUuid = `pepr-${config.pepr.uuid}`;
+  const moduleConfig = {
+    ...config.pepr,
+    appVersion: config.version,
+    description: config.description,
+  };
+
+  // Build module
+  const build = await pepr.cli(testModule, { cmd: `pepr build` });
+  expect(build.exitcode).toBe(0);
+  expect(build.stderr.join("").trim()).toBe("");
+  expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+
+  // Load Helm manifests
+  const chartDir = `${testModule}/dist/${moduleConfig.uuid}-chart`;
+  const helm = await pepr.cli(chartDir, { cmd: `helm template .` });
+  expect(helm.exitcode).toBe(0);
+  expect(helm.stderr.join("").trim()).toBe("");
+  expect(helm.stdout.join("").trim()).not.toBe("");
+
+  const helmManifest = `${chartDir}/reified.yaml`;
+  await fs.writeFile(helmManifest, helm.stdout.join("\n"));
+  const helmResources = await resource.fromFile(helmManifest);
+
+  // Load Pepr manifests
+  const peprManifest = `${testModule}/dist/pepr-module-${moduleConfig.uuid}.yaml`;
+  const peprResources = await resource.fromFile(peprManifest);
+
+  return {
+    moduleConfig: moduleConfig as Required<ModuleConfig>,
+    peprResources,
+    helmResources,
+    peprUuid,
+  };
+}
