@@ -2,7 +2,13 @@ name: UDS - Smoke Test
 
 permissions: read-all
 on:
-  workflow_call:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+    - "LICENSE"
+    - "CODEOWNERS"
+    - "**.md"
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
