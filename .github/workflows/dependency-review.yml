@@ -12,7 +12,7 @@ on:
     paths-ignore:
     - "**.md"
     - "LICENSE"
-    - "CODEOWNERS"  
+    - "CODEOWNERS"
 permissions:
   contents: read
 
