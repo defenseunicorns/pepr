@@ -92,8 +92,8 @@ jobs:
   slsa:
     permissions:
       id-token: write
-      actions: none
-      contents: none
+      actions: read
+      contents: read
     needs: [build-and-release]
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
     with:
