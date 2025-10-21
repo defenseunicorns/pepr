@@ -92,12 +92,15 @@ jobs:
         with:
           run-scripts: "ci, build"
 
-  tutorials-test:
-    permissions: read-all 
-    uses: ./.github/workflows/tutorials-test.yml
+  slsa:
+    needs: [build-and-release]
+    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
+    with:
+      run-scripts: "ci, build"
+    secrets: inherit
 
   publish:
-    needs: [build-and-release]
+    needs: [slsa]
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
