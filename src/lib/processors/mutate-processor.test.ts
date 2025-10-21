@@ -19,11 +19,15 @@ import {
   updateStatus,
   logMutateErrorMessage,
   processRequest,
+  getValidBindables,
+  shouldIncludeBinding,
 } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
+import { shouldSkipRequest } from "../filter/filter";
+import Log from "../telemetry/logger";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
@@ -334,5 +338,97 @@ describe("mutateProcessor", () => {
     await mutateProcessor(config, [capability], req, reqMetadata);
 
     expect(decodeData).toHaveBeenCalled();
+  });
+});
+
+describe("getValidBindables", () => {
+  const config = { uuid: "uuid", alwaysIgnore: {} } as ModuleConfig;
+  const req = defaultAdmissionRequest;
+  const reqMetadata = {};
+
+  const baseCapability: Capability = {
+    name: "cap1",
+    bindings: [{ ...defaultBinding }, { ...defaultBinding, mutateCallback: undefined }],
+    namespaces: [],
+  } as unknown as Capability;
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("returns bindables only for bindings with mutateCallback defined", () => {
+    (shouldSkipRequest as Mock).mockReturnValue("");
+    const result = getValidBindables([baseCapability], config, req, reqMetadata);
+
+    // one binding lacks mutateCallback, so only 1 returned
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("cap1");
+  });
+
+  it("filters out bindings when shouldSkipRequest returns non-empty string", () => {
+    (shouldSkipRequest as Mock).mockReturnValue("skip me");
+
+    const result = getValidBindables([baseCapability], config, req, reqMetadata);
+    expect(result).toHaveLength(0);
+  });
+
+  it("includes bindings when shouldSkipRequest returns empty string", () => {
+    (shouldSkipRequest as Mock).mockReturnValue("");
+    const result = getValidBindables([baseCapability], config, req, reqMetadata);
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe("shouldIncludeBinding", () => {
+  const baseBinding = { ...defaultBinding };
+  const baseConfig = {
+    uuid: "uuid",
+    alwaysIgnore: {},
+    admission: { alwaysIgnore: {} },
+  } as ModuleConfig;
+  const baseBindable: Bindable = {
+    binding: baseBinding,
+    config: baseConfig,
+    req: defaultAdmissionRequest,
+    namespaces: [],
+    actMeta: {},
+    name: "cap",
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("returns false if mutateCallback is missing", () => {
+    const bindable = { ...baseBindable, binding: { ...baseBinding, mutateCallback: undefined } };
+    expect(shouldIncludeBinding(bindable)).toBe(false);
+  });
+
+  it("returns false and logs if shouldSkipRequest returns message", () => {
+    (shouldSkipRequest as Mock).mockReturnValue("skip");
+    const result = shouldIncludeBinding(baseBindable);
+    expect(result).toBe(false);
+    expect(Log.debug).toHaveBeenCalledWith("skip");
+  });
+
+  it("returns true if shouldSkipRequest returns empty string", () => {
+    (shouldSkipRequest as Mock).mockReturnValue("");
+    expect(shouldIncludeBinding(baseBindable)).toBe(true);
+  });
+
+  it("uses alwaysIgnore.namespaces if defined", () => {
+    const config = { ...baseConfig, alwaysIgnore: { namespaces: ["ns"] } };
+    const bindable = { ...baseBindable, config };
+    (shouldSkipRequest as Mock).mockReturnValue("");
+    const result = shouldIncludeBinding(bindable);
+    expect(result).toBe(true);
+  });
+
+  it("uses admission.alwaysIgnore.namespaces if alwaysIgnore empty", () => {
+    const config = { ...baseConfig, admission: { alwaysIgnore: { namespaces: ["ns"] } } };
+    const bindable = { ...baseBindable, config };
+    (shouldSkipRequest as Mock).mockReturnValue("");
+    const result = shouldIncludeBinding(bindable);
+    expect(result).toBe(true);
   });
 });
