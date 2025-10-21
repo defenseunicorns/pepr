@@ -88,9 +88,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "v${PEPR_VERSION}" # Needs the "v" prefix in GHCR
-      - uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
-        with:
-          run-scripts: "ci, build"
 
   slsa:
     needs: [build-and-release]
