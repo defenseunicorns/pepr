@@ -7,12 +7,12 @@
 #
 # Source repository: https://github.com/actions/dependency-review-action
 name: 'Dependency Review'
-on: 
+on:
   pull_request:
     paths-ignore:
     - "**.md"
     - "LICENSE"
-    - "CODEOWNERS" 
+    - "CODEOWNERS"
 permissions:
   contents: read
 

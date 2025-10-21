@@ -9,10 +9,12 @@ const packageJSON = require("../package.json");
 const packageLockJSON = require("../package-lock.json");
 
 const generateVersion = () => {
-  let version = "";
-  version = process.env.GITHUB_REF_NAME.split("");
-  version = version[0] === "v" ? version.slice(1) : version;
-  return version.join("");
+  const arg = process.argv[2];
+  if (!arg) {
+    console.error("Usage: node set-version.js <version>");
+    process.exit(1);
+  }
+  return arg;
 };
 
 const packageJSONVersion = (packageJSON, version) => {
