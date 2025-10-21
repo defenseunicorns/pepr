@@ -14,46 +14,6 @@ permissions:
   contents: read
 
 jobs:
-  # Workflows that need to pass for a release to occur
-  commit-lint:
-    uses: ./.github/workflows/commitlint.yml
-  on-demand-workflows:
-    needs: [commit-lint]
-    uses: ./.github/workflows/on-demand-workflows.yaml
-    secrets:
-      CODECOV_ORG_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
-    with:
-      run-format: true
-      run-units: true
-      run-integration: true
-  container-scans:
-    needs: [on-demand-workflows]
-    uses: ./.github/workflows/container-scan.yaml
-  dependency-review:
-    needs: [container-scans]
-    uses: ./.github/workflows/dependency-review.yml
-  secret-scan:
-    needs: [dependency-review]
-    uses: ./.github/workflows/secret-scan.yml
-  uds:
-    needs: [secret-scan]
-    uses: ./.github/workflows/uds.yml
-  upgrade-unicorn:
-    needs: [uds]
-    uses: ./.github/workflows/upgrade-unicorn.yml
-  upgrade-upstream:
-    needs: [upgrade-unicorn]
-    uses: ./.github/workflows/upgrade-upstream.yml
-  pepr-excellent-examples-unicorn:
-    needs: [upgrade-upstream]
-    uses: ./.github/workflows/pepr-excellent-examples-unicorn.yml
-  pepr-excellent-examples-upstream:
-    needs: [pepr-excellent-examples-unicorn]
-    uses: ./.github/workflows/pepr-excellent-examples-upstream.yml
-  pepr-excellent-examples-ironbank-amd:
-    needs: [pepr-excellent-examples-upstream]
-    uses: ./.github/workflows/pepr-excellent-examples-ironbank-amd.yml
-
   build-and-release:
     needs: [pepr-excellent-examples-ironbank-amd]
     runs-on: ubuntu-latest
@@ -120,10 +80,15 @@ jobs:
           --prepare @semantic-release/npm \
           --publish @semantic-release/github
 
+      - name: Capture Pepr version
+        run: |
+          echo "PEPR_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+          echo "Detected version: $(jq -r .version package.json)"
+
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./.github/workflows/scripts/release.sh "$(cat package.json | jq -r .version)"
+        run: ./.github/workflows/scripts/release.sh "v${PEPR_VERSION}" # Needs the "v" prefix in GHCR
       - uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
         with:
           run-scripts: "ci, build"
@@ -145,6 +110,11 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+
+      - name: Set Version in package.json and package-lock.json
+        run: |
+          node scripts/set-version.js "$PEPR_VERSION"
+
       - name: Publish package
         id: publish
         uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@9103ac683d00ceecdb1c21507a9c7a9983ef46f4 # v2.0.0
@@ -193,8 +163,8 @@ jobs:
         run: |
           npm install --global npm
           npm install
-          npm run set:version
+          node scripts/set-version.js "$PEPR_VERSION"
           npm run build
           VERSION=${{ github.ref_name }}
-          oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:${VERSION} \
-            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${VERSION:1}.tgz
+          oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:v${PEPR_VERSION} \
+            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${VERSION}.tgz
