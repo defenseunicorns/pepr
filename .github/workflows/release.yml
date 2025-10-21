@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   build-and-release:
-    needs: [pepr-excellent-examples-ironbank-amd]
     runs-on: ubuntu-latest
 
     permissions:
@@ -110,10 +109,6 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-
-      - name: Set Version in package.json and package-lock.json
-        run: |
-          node scripts/set-version.js "$PEPR_VERSION"
 
       - name: Publish package
         id: publish
