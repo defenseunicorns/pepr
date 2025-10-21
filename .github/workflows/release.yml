@@ -114,6 +114,11 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
 
+      - name: Set Version
+        run: |
+          node scripts/set-version.js "$PEPR_VERSION"
+          npm install
+
       - name: Publish package
         id: publish
         uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@9103ac683d00ceecdb1c21507a9c7a9983ef46f4 # v2.0.0
