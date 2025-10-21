@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
+/* eslint-disable max-statements */
 import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
@@ -18,7 +19,7 @@ describe("crd", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
   beforeAll(async () => {
-    await workdir.recreate();
+    await setupWorkdir(workdir);
   }, time.toMs("60s"));
 
   describe("creates TypeScript types", () => {
@@ -27,7 +28,7 @@ describe("crd", () => {
 
     const group = "cache";
     const version = "v1alpha1";
-    const kind = "Memcached";
+    const kindName = "Memcached";
     const domain = "pepr.dev";
     const scope = "Namespaced";
     const plural = "memcacheds";
@@ -36,46 +37,39 @@ describe("crd", () => {
       workdir.path(),
       "api",
       version,
-      `${kind.toLocaleLowerCase()}_types.ts`,
+      `${kindName.toLowerCase()}_types.ts`,
     );
-    const crdFilePath = path.join(workdir.path(), "crds", `${kind.toLocaleLowerCase()}.yaml`);
+    const crdFilePath = path.join(workdir.path(), "crds", `${kindName.toLowerCase()}.yaml`);
+
     beforeAll(async () => {
-      await fs.rm(testModule, { recursive: true, force: true });
-      const argz = [
-        `--group ${group}`,
-        `--version ${version}`,
-        `--kind ${kind}`,
-        `--short-name ${shortName}`,
-        `--plural ${plural}`,
-        `--scope ${scope}`,
-        `--domain ${domain}`,
-      ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr crd create ${argz}` });
-      await pepr.cli(workdir.path(), { cmd: `pepr crd generate` });
+      await generateCRDArtifacts({
+        workdir,
+        testModule,
+        group,
+        version,
+        kindName,
+        shortName,
+        plural,
+        scope,
+        domain,
+      });
+
+      const { yamlText, json } = await loadGeneratedCRD(crdFilePath);
+      crd = yamlText;
+      crdJSON = json;
     }, time.toMs("2m"));
 
     describe("npx pepr api create - creates TypeScript types", () => {
       it("creates a new CRD TypeScript definition at api/<group>/<kind>_types.ts", async () => {
-        try {
-          await fs.access(tsTypesFilePath);
-          expect(true).toBe(true);
-        } catch (err) {
-          expect(err).toBeFalsy();
-        }
+        await expectFileExists(tsTypesFilePath);
       });
     });
 
     describe("npx pepr api generate - generates a CRD from TypeScript types", () => {
       it("creates a new CRD at crds/<kind>.yaml", async () => {
-        try {
-          await fs.access(crdFilePath);
-          crd = await fs.readFile(crdFilePath, "utf8");
-          crdJSON = yaml.load(crd) as kind.CustomResourceDefinition;
-          expect(crdJSON).toBeDefined();
-          expect(crd).toBeDefined();
-        } catch (err) {
-          expect(err).toBeFalsy();
-        }
+        await expectFileExists(crdFilePath);
+        expect(crdJSON).toBeDefined();
+        expect(crd).toBeDefined();
       });
     });
 
@@ -85,9 +79,9 @@ describe("crd", () => {
 
     it("should produce CRD with accurate top level spec", () => {
       expect(crdJSON.spec.group).toEqual(`${group}.pepr.dev`);
-      expect(crdJSON.spec.names.kind).toEqual(kind);
+      expect(crdJSON.spec.names.kind).toEqual(kindName);
       expect(crdJSON.spec.names.plural).toEqual(plural);
-      expect(crdJSON.spec.names.singular).toEqual(kind.toLowerCase());
+      expect(crdJSON.spec.names.singular).toEqual(kindName.toLowerCase());
       expect(crdJSON.spec.names.shortNames).toEqual([shortName]);
       expect(crdJSON.spec.scope).toEqual(scope);
     });
@@ -414,3 +408,59 @@ describe("crd", () => {
     });
   });
 });
+
+async function setupWorkdir(workdir: Workdir): Promise<void> {
+  await workdir.recreate();
+}
+
+async function generateCRDArtifacts({
+  workdir,
+  testModule,
+  group,
+  version,
+  kindName,
+  shortName,
+  plural,
+  scope,
+  domain,
+}: {
+  workdir: Workdir;
+  testModule: string;
+  group: string;
+  version: string;
+  kindName: string;
+  shortName: string;
+  plural: string;
+  scope: string;
+  domain: string;
+}): Promise<void> {
+  await fs.rm(testModule, { recursive: true, force: true });
+  const args = [
+    `--group ${group}`,
+    `--version ${version}`,
+    `--kind ${kindName}`,
+    `--short-name ${shortName}`,
+    `--plural ${plural}`,
+    `--scope ${scope}`,
+    `--domain ${domain}`,
+  ].join(" ");
+  await pepr.cli(workdir.path(), { cmd: `pepr crd create ${args}` });
+  await pepr.cli(workdir.path(), { cmd: `pepr crd generate` });
+}
+
+async function loadGeneratedCRD(
+  crdFilePath: string,
+): Promise<{ yamlText: string; json: kind.CustomResourceDefinition }> {
+  const yamlText = await fs.readFile(crdFilePath, "utf8");
+  const json = yaml.load(yamlText) as kind.CustomResourceDefinition;
+  return { yamlText, json };
+}
+
+async function expectFileExists(filePath: string): Promise<void> {
+  try {
+    await fs.access(filePath);
+    expect(true).toBe(true);
+  } catch (err) {
+    expect(err).toBeFalsy();
+  }
+}
