@@ -87,7 +87,7 @@ jobs:
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./.github/workflows/scripts/release.sh "v${PEPR_VERSION}" # Needs the "v" prefix in GHCR
+        run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
 
   slsa:
     permissions:
