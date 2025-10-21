@@ -56,6 +56,23 @@ describe("PeprModule", () => {
       new PeprModule(mockPackageJSON);
       expect(startServerMock).toHaveBeenCalledWith(3000);
     });
+    it("should fall back to config.watch.alwaysIgnore.namespaces when pepr.alwaysIgnore is missing", () => {
+      const pkg = clone(mockPackageJSON);
+      Reflect.deleteProperty(pkg.pepr, "alwaysIgnore");
+      pkg.pepr.watch = { alwaysIgnore: { namespaces: ["fallback-ns"] } };
+
+      new PeprModule(pkg);
+      expect(startServerMock).toHaveBeenCalledWith(3000);
+    });
+
+    it("should use pepr.alwaysIgnore.namespaces when it contains values", () => {
+      const pkg = clone(mockPackageJSON);
+      pkg.pepr.alwaysIgnore = { namespaces: ["ns1", "ns2"] };
+      Reflect.deleteProperty(pkg.pepr, "watch");
+
+      new PeprModule(pkg);
+      expect(startServerMock).toHaveBeenCalledWith(3000);
+    });
   });
 
   describe("when instantiated with deferStart option", () => {
@@ -130,6 +147,13 @@ describe("PeprModule", () => {
       new PeprModule(mockPackageJSON, [capability]);
       expect(Log.debug).toHaveBeenCalledWith("Capability test registered");
       expect(sendMock).toHaveBeenCalledWith([expectedExport]);
+    });
+
+    it("should throw an error if process.send is undefined in build mode", () => {
+      process.env.PEPR_MODE = "build";
+      delete process.send; // simulate missing IPC channel
+
+      expect(() => new PeprModule(mockPackageJSON)).toThrow("process.send is not defined");
     });
   });
 });

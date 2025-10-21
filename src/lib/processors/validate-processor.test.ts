@@ -8,7 +8,12 @@ import { Event, Operation } from "../enums";
 import { PeprValidateRequest } from "../validate-request";
 import { clone } from "ramda";
 import { AdmissionRequest } from "../common-types";
-import { processRequest, validateProcessor } from "./validate-processor";
+import {
+  processRequest,
+  validateProcessor,
+  getIgnoreNamespaces,
+  shouldSkipBinding,
+} from "./validate-processor";
 import { ModuleConfig } from "../types";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
@@ -353,5 +358,55 @@ describe("when validating requests", () => {
     expect(spyProcessRequest).not.toHaveBeenCalled();
 
     spyProcessRequest.mockRestore();
+  });
+});
+
+describe("helper functions", () => {
+  const mockBinding = {
+    isValidate: true,
+    validateCallback: vi.fn(),
+  } as unknown as Binding;
+
+  const mockReq = testAdmissionRequest;
+
+  describe("shouldSkipBinding", () => {
+    it("should return true and log if shouldSkipRequest returns a reason", () => {
+      (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
+      const result = shouldSkipBinding(mockBinding, mockReq, [], []);
+      expect(result).toBe(true);
+    });
+
+    it("should return false if shouldSkipRequest returns an empty string", () => {
+      (shouldSkipRequest as Mock).mockReturnValue("");
+      const result = shouldSkipBinding(mockBinding, mockReq, [], []);
+      expect(result).toBe(false);
+    });
+
+    it("should handle undefined namespaces gracefully", () => {
+      (shouldSkipRequest as Mock).mockReturnValue("");
+      const result = shouldSkipBinding(mockBinding, mockReq, undefined, []);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("getIgnoreNamespaces", () => {
+    it("should resolve from alwaysIgnore.namespaces if provided", () => {
+      const config = {
+        alwaysIgnore: { namespaces: ["foo", "bar"] },
+        admission: { alwaysIgnore: { namespaces: ["baz"] } },
+      } as unknown as ModuleConfig;
+
+      const result = getIgnoreNamespaces(config);
+      expect(result).toEqual(expect.arrayContaining(["foo", "bar"]));
+    });
+
+    it("should fall back to admission.alwaysIgnore.namespaces", () => {
+      const config = {
+        admission: { alwaysIgnore: { namespaces: ["baz"] } },
+      } as unknown as ModuleConfig;
+
+      const result = getIgnoreNamespaces(config);
+      expect(result).toEqual(expect.arrayContaining(["baz"]));
+    });
   });
 });
