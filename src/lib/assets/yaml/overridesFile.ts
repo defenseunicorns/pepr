@@ -14,8 +14,34 @@ export type ChartOverrides = {
   name: string;
   image: string;
 };
+export type Probes = {
+  readinessProbe: {
+    httpGet: { path: string; port: number; scheme: "HTTPS" };
+    initialDelaySeconds: number;
+  };
+  livenessProbe: {
+    httpGet: { path: string; port: number; scheme: "HTTPS" };
+    initialDelaySeconds: number;
+  };
+};
+export type Resources = {
+  requests: { memory: string; cpu: string };
+  limits: { memory: string; cpu: string };
+};
+export type PodSecurityContext = {
+  runAsUser: number;
+  runAsGroup: number;
+  runAsNonRoot: true;
+  fsGroup: number;
+};
+export type ContainerSecurityContext = {
+  runAsUser: number;
+  runAsGroup: number;
+  runAsNonRoot: true;
+  allowPrivilegeEscalation: false;
+  capabilities: { drop: ["ALL"] };
+};
 
-// Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
   { hash, name, image, config, apiPath, capabilities }: ChartOverrides,
   path: string,
@@ -28,23 +54,16 @@ export async function overridesFile(
     imagePullSecrets,
     additionalIgnoredNamespaces: resolveIgnoreNamespaces(
       config?.alwaysIgnore?.namespaces?.length
-        ? config?.alwaysIgnore?.namespaces
+        ? config.alwaysIgnore.namespaces
         : config?.admission?.alwaysIgnore?.namespaces,
     ),
     rbac: rbacOverrides,
-    secrets: {
-      apiPath: Buffer.from(apiPath).toString("base64"),
-    },
+    secrets: { apiPath: Buffer.from(apiPath).toString("base64") },
     hash,
-    namespace: {
-      annotations: {},
-      labels: config.customLabels?.namespace ?? {
-        "pepr.dev": "",
-      },
-    },
+    namespace: namespaceBlock(config),
     uuid: name,
     admission: {
-      enabled: controllerType.admission === true ? true : false,
+      enabled: controllerType.admission === true,
       antiAffinity: false,
       terminationGracePeriodSeconds: 5,
       failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
@@ -52,55 +71,12 @@ export async function overridesFile(
       env: genEnv(config, false, true),
       envFrom: [],
       image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
-      },
-      labels: {
-        app: name,
-        "pepr.dev/controller": "admission",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: image.includes("private") ? 1000 : 65532,
-        runAsNonRoot: true,
-        fsGroup: image.includes("private") ? 1000 : 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "256Mi",
-          cpu: "200m",
-        },
-        limits: {
-          memory: "512Mi",
-          cpu: "500m",
-        },
-      },
-      containerSecurityContext: {
-        runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: image.includes("private") ? 1000 : 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
-        },
-      },
+      annotations: controllerAnnotations(config.description),
+      labels: controllerLabels(name, config.uuid, "admission"),
+      securityContext: podSecurityContext(image),
+      ...commonProbes(),
+      resources: commonResources(),
+      containerSecurityContext: containerSecurityContext(image),
       podAnnotations: {},
       podLabels: {},
       nodeSelector: {},
@@ -115,60 +91,17 @@ export async function overridesFile(
       },
     },
     watcher: {
-      enabled: controllerType.watcher === true ? true : false,
+      enabled: controllerType.watcher === true,
       terminationGracePeriodSeconds: 5,
       env: genEnv(config, true, true),
       envFrom: [],
       image,
-      annotations: {
-        "pepr.dev/description": `${config.description}` || "",
-      },
-      labels: {
-        app: `${name}-watcher`,
-        "pepr.dev/controller": "watcher",
-        "pepr.dev/uuid": config.uuid,
-      },
-      securityContext: {
-        runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: image.includes("private") ? 1000 : 65532,
-        runAsNonRoot: true,
-        fsGroup: image.includes("private") ? 1000 : 65532,
-      },
-      readinessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      livenessProbe: {
-        httpGet: {
-          path: "/healthz",
-          port: 3000,
-          scheme: "HTTPS",
-        },
-        initialDelaySeconds: 10,
-      },
-      resources: {
-        requests: {
-          memory: "256Mi",
-          cpu: "200m",
-        },
-        limits: {
-          memory: "512Mi",
-          cpu: "500m",
-        },
-      },
-      containerSecurityContext: {
-        runAsUser: image.includes("private") ? 1000 : 65532,
-        runAsGroup: image.includes("private") ? 1000 : 65532,
-        runAsNonRoot: true,
-        allowPrivilegeEscalation: false,
-        capabilities: {
-          drop: ["ALL"],
-        },
-      },
+      annotations: controllerAnnotations(config.description),
+      labels: controllerLabels(name, config.uuid, "watcher"),
+      securityContext: podSecurityContext(image),
+      ...commonProbes(),
+      resources: commonResources(),
+      containerSecurityContext: containerSecurityContext(image),
       nodeSelector: {},
       tolerations: [],
       extraVolumeMounts: [],
@@ -183,8 +116,10 @@ export async function overridesFile(
       },
     },
   };
-  /** write values.schema.yaml */
+
+  // write values.schema.yaml
   await writeSchemaYamlFromObject(JSON.stringify(overrides, null, 2), path);
+  // write values.yaml
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
@@ -205,4 +140,76 @@ export async function writeSchemaYamlFromObject(
   const schemaObj = JSON.parse(schemaJson);
 
   await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
+}
+
+export function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: number } {
+  const id = image.includes("private") ? 1000 : 65532;
+  return { uid: id, gid: id, fsGroup: id };
+}
+
+export function commonProbes(): Probes {
+  return {
+    readinessProbe: {
+      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+      initialDelaySeconds: 10,
+    },
+    livenessProbe: {
+      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+      initialDelaySeconds: 10,
+    },
+  };
+}
+
+export function commonResources(): Resources {
+  return {
+    requests: { memory: "256Mi", cpu: "200m" },
+    limits: { memory: "512Mi", cpu: "500m" },
+  };
+}
+
+export function podSecurityContext(image: string): PodSecurityContext {
+  const ids = runIdsForImage(image);
+  return {
+    runAsUser: ids.uid,
+    runAsGroup: ids.gid,
+    runAsNonRoot: true,
+    fsGroup: ids.fsGroup,
+  };
+}
+
+export function containerSecurityContext(image: string): ContainerSecurityContext {
+  const ids = runIdsForImage(image);
+  return {
+    runAsUser: ids.uid,
+    runAsGroup: ids.gid,
+    runAsNonRoot: true,
+    allowPrivilegeEscalation: false,
+    capabilities: { drop: ["ALL"] },
+  };
+}
+
+export function controllerLabels(
+  name: string,
+  uuid: string,
+  kind: "admission" | "watcher",
+): Record<string, string> {
+  return {
+    app: kind === "admission" ? name : `${name}-watcher`,
+    "pepr.dev/controller": kind,
+    "pepr.dev/uuid": uuid,
+  };
+}
+
+export function controllerAnnotations(description?: string): Record<string, string> {
+  return { "pepr.dev/description": `${description ?? ""}` };
+}
+
+export function namespaceBlock(config: ModuleConfig): {
+  annotations: Record<string, string>;
+  labels: Record<string, string>;
+} {
+  return {
+    annotations: {},
+    labels: config.customLabels?.namespace ?? { "pepr.dev": "" },
+  };
 }
