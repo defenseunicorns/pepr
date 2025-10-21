@@ -89,7 +89,7 @@ const eventToPhaseMap = {
 export function setupWatch(capabilities: Capability[], ignoredNamespaces?: string[]): void {
   for (const capability of capabilities) {
     for (const binding of capability.bindings.filter(b => b.isWatch)) {
-      runBinding(binding, capability.namespaces, ignoredNamespaces);
+      void runBinding(binding, capability.namespaces, ignoredNamespaces);
     }
   }
 }
