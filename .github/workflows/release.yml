@@ -90,6 +90,8 @@ jobs:
         run: ./.github/workflows/scripts/release.sh "v${PEPR_VERSION}" # Needs the "v" prefix in GHCR
 
   slsa:
+    permissions:
+      id-token: write 
     needs: [build-and-release]
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
     with:
