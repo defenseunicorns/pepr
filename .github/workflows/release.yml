@@ -92,7 +92,7 @@ jobs:
           echo "Detected version: $V"
 
       - name: Publish to GHCR 
-        if: ${{ env.PEPR_VERSION == '0.0.0-development' }}
+        if: ${{ env.PEPR_VERSION != '0.0.0-development' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
