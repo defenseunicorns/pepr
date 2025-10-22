@@ -6,7 +6,7 @@ When you [`npx pepr init`](/user-guide/pepr-cli#pepr-init), a `capabilities` dir
 
 ## Creating a Capability
 
-Defining a new capability can be done via a [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets) generated during [`npx pepr init`](/pepr-cli#pepr-init).
+Defining a new capability can be done via a [VSCode Snippet](https://code.visualstudio.com/docs/editor/userdefinedsnippets) generated during [`npx pepr init`](/user-guide/pepr-cli#pepr-init).
 
 1. Create a new file in the `capabilities` directory with the name of your capability. For example, `capabilities/my-capability.ts`.
 
