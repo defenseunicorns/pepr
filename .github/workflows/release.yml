@@ -92,11 +92,13 @@ jobs:
           echo "Detected version: $V"
 
       - name: Publish to GHCR 
+        if: ${{ env.PEPR_VERSION != '0.0.0-development' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
 
   slsa: # This is where the slsa tarball is built for publish-package step
+    if: ${{ needs.build-and-release.outputs.pepr_version != '0.0.0-development' }}
     permissions:
       id-token: write
       actions: read
@@ -108,6 +110,7 @@ jobs:
     secrets: inherit
 
   publish:
+    if: ${{ needs.build-and-release.outputs.pepr_version != '0.0.0-development' }}
     needs: [slsa, build-and-release]
     runs-on: ubuntu-latest
     env:
@@ -148,6 +151,7 @@ jobs:
           provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
 
   pack-and-push:
+    if: ${{ needs.build-and-release.outputs.pepr_version != '0.0.0-development' }}
     needs: [publish, build-and-release]
     runs-on: ubuntu-latest
     env:
