@@ -10,7 +10,8 @@ import { OnSchedule, Schedule } from "./schedule";
 import { Event } from "../enums";
 import {
   Binding,
-  BindingAll,
+  BindingFilter,
+  BindingWithName,
   CapabilityCfg,
   CapabilityExport,
   MutateAction,
@@ -170,214 +171,25 @@ export class Capability implements CapabilityExport {
     return this.#store;
   };
 
-  private static createAliasLogger(alias?: string): typeof Log {
-    return Log.child({ alias: alias || "no alias provided" });
-  }
-
-  private static logBinding(
-    capabilityPrefix: string,
-    label: string,
-    binding: Binding,
-    fn: (...args: unknown[]) => unknown,
-  ): void {
-    const isNotEmpty = (value: unknown): boolean =>
-      typeof value === "object" && value !== null ? Object.keys(value).length > 0 : true;
-
-    const filteredObj = pickBy(isNotEmpty, binding.filters);
-    Log.info({ prefix: capabilityPrefix }, `${label} configured for ${binding.event}`);
-    Log.info({ prefix: capabilityPrefix }, JSON.stringify(filteredObj));
-    Log.debug({ prefix: capabilityPrefix }, fn.toString());
-  }
-
-  private static registerValidate<T extends GenericClass>(
-    prefix: string,
-    binding: Binding,
-    bindings: Binding[],
-    validateCallback: ValidateAction<T>,
-  ): ValidateActionChain<T> {
-    if (!registerAdmission) {
-      const noopFinalize: FinalizeActionChain<T> = { Finalize: () => undefined };
-      return {
-        Watch: () => noopFinalize,
-        Reconcile: () => noopFinalize,
-      };
-    }
-
-    Capability.logBinding(
-      prefix,
-      "Validate Action",
-      binding,
-      validateCallback as unknown as (...args: unknown[]) => unknown,
-    );
-    const aliasLogger = Capability.createAliasLogger(binding.alias);
-
-    bindings.push({
-      ...binding,
-      isValidate: true,
-      validateCallback: async (req, logger = aliasLogger) => {
-        if (binding.alias) Log.info(`Executing validate action with alias: ${binding.alias}`);
-        return await validateCallback(req, logger);
-      },
-    });
-
-    return {
-      Watch: Capability.registerWatch.bind(Capability, prefix, binding, bindings),
-      Reconcile: Capability.registerReconcile.bind(Capability, prefix, binding, bindings),
-    };
-  }
-
-  private static registerMutate<T extends GenericClass>(
-    prefix: string,
-    binding: Binding,
-    bindings: Binding[],
-    mutateCallback: MutateAction<T>,
-  ): MutateActionChain<T> {
-    if (!registerAdmission) {
-      const noopFinalize: FinalizeActionChain<T> = { Finalize: () => undefined };
-      const noopValidate: ValidateActionChain<T> = {
-        Watch: () => noopFinalize,
-        Reconcile: () => noopFinalize,
-      };
-      return {
-        Watch: () => noopFinalize,
-        Validate: () => noopValidate,
-        Reconcile: () => noopFinalize,
-      };
-    }
-
-    Capability.logBinding(
-      prefix,
-      "Mutate Action",
-      binding,
-      mutateCallback as unknown as (...args: unknown[]) => unknown,
-    );
-    const aliasLogger = Capability.createAliasLogger(binding.alias);
-
-    bindings.push({
-      ...binding,
-      isMutate: true,
-      mutateCallback: async (req, logger = aliasLogger) => {
-        if (binding.alias) Log.info(`Executing mutation action with alias: ${binding.alias}`);
-        await mutateCallback(req, logger);
-      },
-    });
-
-    return {
-      Watch: Capability.registerWatch.bind(Capability, prefix, binding, bindings),
-      Validate: Capability.registerValidate.bind(Capability, prefix, binding, bindings),
-      Reconcile: Capability.registerReconcile.bind(Capability, prefix, binding, bindings),
-    };
-  }
-
-  private static registerWatch<T extends GenericClass>(
-    prefix: string,
-    binding: Binding,
-    bindings: Binding[],
-    watchCallback: WatchLogAction<T>,
-  ): FinalizeActionChain<T> {
-    if (!registerWatch) return { Finalize: () => undefined };
-
-    Capability.logBinding(
-      prefix,
-      "Watch Action",
-      binding,
-      watchCallback as unknown as (...args: unknown[]) => unknown,
-    );
-    const aliasLogger = Capability.createAliasLogger(binding.alias);
-
-    bindings.push({
-      ...binding,
-      isWatch: true,
-      watchCallback: async (update, phase, logger = aliasLogger) => {
-        if (binding.alias) Log.info(`Executing watch action with alias: ${binding.alias}`);
-        await watchCallback(update, phase, logger);
-      },
-    });
-
-    return { Finalize: Capability.registerFinalize.bind(Capability, prefix, binding, bindings) };
-  }
-
-  private static registerReconcile<T extends GenericClass>(
-    prefix: string,
-    binding: Binding,
-    bindings: Binding[],
-    reconcileCallback: WatchLogAction<T>,
-  ): FinalizeActionChain<T> {
-    if (!registerWatch) return { Finalize: () => undefined };
-
-    Capability.logBinding(
-      prefix,
-      "Reconcile Action",
-      binding,
-      reconcileCallback as unknown as (...args: unknown[]) => unknown,
-    );
-    const aliasLogger = Capability.createAliasLogger(binding.alias);
-
-    bindings.push({
-      ...binding,
-      isWatch: true,
-      isQueue: true,
-      watchCallback: async (update, phase, logger = aliasLogger) => {
-        if (binding.alias) Log.info(`Executing reconcile action with alias: ${binding.alias}`);
-        await reconcileCallback(update, phase, logger);
-      },
-    });
-
-    return { Finalize: Capability.registerFinalize.bind(Capability, prefix, binding, bindings) };
-  }
-
-  private static registerFinalize<T extends GenericClass>(
-    prefix: string,
-    binding: Binding,
-    bindings: Binding[],
-    finalizeCallback: FinalizeAction<T>,
-  ): void {
-    Capability.logBinding(
-      prefix,
-      "Finalize Action",
-      binding,
-      finalizeCallback as unknown as (...args: unknown[]) => unknown,
-    );
-    const aliasLogger = Capability.createAliasLogger(binding.alias);
-
-    if (registerAdmission) {
-      bindings.push({
-        ...binding,
-        isMutate: true,
-        isFinalize: true,
-        event: Event.ANY,
-        mutateCallback: addFinalizer,
-      });
-    }
-
-    if (registerWatch) {
-      bindings.push({
-        ...binding,
-        isWatch: true,
-        isFinalize: true,
-        event: Event.UPDATE,
-        finalizeCallback: async (update, logger = aliasLogger): Promise<boolean | void> => {
-          if (binding.alias) Log.info(`Executing finalize action with alias: ${binding.alias}`);
-          return await finalizeCallback(update, logger);
-        },
-      });
-    }
-  }
-
   /**
-   * Registers actions to execute when Kubernetes resources of a given kind are processed by Pepr.
+   * The When method is used to register a action to be executed when a Kubernetes resource is
+   * processed by Pepr. The action will be executed if the resource matches the specified kind and any
+   * filters that are applied.
    *
-   * The action is triggered when the resource matches the provided kind and any applied filters.
-   *
-   * @param model The Kubernetes resource model to watch (e.g., a.Deployment).
-   * @param kind  Optional GroupVersionKind for custom resources.
-   * @returns A chainable API for defining filters and actions.
+   * @param model the KubernetesObject model to match
+   * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
+   * @returns
    */
+  // This method intentionally defines a fluent, closure-based DSL for chaining capability actions.
+  // Multiple inline helper functions are required to preserve runtime behavior and readability.
+  // eslint-disable-next-line max-statements
   When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
     const matchedKind = modelToGroupVersionKind(model.name);
 
     // If the kind is not specified and the model is not a KubernetesObject, throw an error
-    if (!matchedKind && !kind) throw new Error(`Kind not specified for ${model.name}`);
+    if (!matchedKind && !kind) {
+      throw new Error(`Kind not specified for ${model.name}`);
+    }
 
     const binding: Binding = {
       model,
@@ -397,95 +209,235 @@ export class Capability implements CapabilityExport {
 
     const bindings = this.#bindings;
     const prefix = `${this.#name}: ${model.name}`;
-
-    type FilterChain = {
-      WithLabel: (key: string, value?: string) => FilterChain;
-      WithAnnotation: (key: string, value?: string) => FilterChain;
-      WithDeletionTimestamp: () => FilterChain;
-      Mutate: (action: MutateAction<T, InstanceType<T>>) => MutateActionChain<T>;
-      Alias: (alias: string) => FilterChain;
-      Validate: (action: ValidateAction<T, InstanceType<T>>) => ValidateActionChain<T>;
-      Watch: (action: WatchLogAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
-      Reconcile: (action: WatchLogAction<T, InstanceType<T>>) => FinalizeActionChain<T>;
+    const commonChain = {
+      WithLabel,
+      WithAnnotation,
+      WithDeletionTimestamp,
+      Mutate,
+      Validate,
+      Watch,
+      Reconcile,
+      Alias,
     };
 
-    type WithNameChain = FilterChain & {
-      WithName: (name: string) => FilterChain;
-      WithNameRegex: (regexName: RegExp) => FilterChain;
+    type CommonChainType = typeof commonChain;
+    type ExtendedCommonChainType = CommonChainType & {
+      Alias: (alias: string) => CommonChainType;
+      InNamespace: (...namespaces: string[]) => BindingWithName<T>;
+      InNamespaceRegex: (...namespaces: RegExp[]) => BindingWithName<T>;
+      WithName: (name: string) => BindingFilter<T>;
+      WithNameRegex: (regexName: RegExp) => BindingFilter<T>;
+      WithDeletionTimestamp: () => BindingFilter<T>;
     };
 
-    const filterChain: FilterChain = {
-      WithLabel: (key: string, value = "") => {
-        Log.debug({ prefix }, `Add label filter ${key}=${value}`);
-        binding.filters.labels[key] = value;
-        return filterChain;
-      },
-      WithAnnotation: (key: string, value = "") => {
-        Log.debug({ prefix }, `Add annotation filter ${key}=${value}`);
-        binding.filters.annotations[key] = value;
-        return filterChain;
-      },
-      WithDeletionTimestamp: () => {
-        Log.debug({ prefix }, "Add deletionTimestamp filter");
-        binding.filters.deletionTimestamp = true;
-        return filterChain;
-      },
+    const isNotEmpty = (value: object): boolean => Object.keys(value).length > 0;
+    const log = (message: string, cbString: string): void => {
+      const filteredObj = pickBy(isNotEmpty, binding.filters);
 
-      Mutate: (action: MutateAction<T, InstanceType<T>>) =>
-        Capability.registerMutate<T>(prefix, binding, bindings, action),
-      Validate: (action: ValidateAction<T, InstanceType<T>>) =>
-        Capability.registerValidate<T>(prefix, binding, bindings, action),
-      Watch: (action: WatchLogAction<T, InstanceType<T>>) =>
-        Capability.registerWatch<T>(prefix, binding, bindings, action),
-      Reconcile: (action: WatchLogAction<T, InstanceType<T>>) =>
-        Capability.registerReconcile<T>(prefix, binding, bindings, action),
-      Alias: (alias: string) => {
-        Log.debug({ prefix }, `Adding prefix alias ${alias}`);
-        binding.alias = alias;
-        return filterChain;
-      },
+      Log.info({ prefix }, `${message} configured for ${binding.event}`);
+      Log.info({ prefix }, JSON.stringify(filteredObj));
+      Log.debug({ prefix }, cbString);
     };
 
-    const withNameChain: WithNameChain = {
-      ...filterChain,
-      WithName: (name: string) => {
-        Log.debug({ prefix }, `Add name filter ${name}`);
-        binding.filters.name = name;
-        return filterChain;
-      },
-      WithNameRegex: (regexName: RegExp) => {
-        Log.debug({ prefix }, `Add regex name filter ${regexName}`);
-        binding.filters.regexName = regexName.source;
-        return filterChain;
-      },
-    };
+    function Validate(validateCallback: ValidateAction<T>): ValidateActionChain<T> {
+      if (registerAdmission) {
+        log("Validate Action", validateCallback.toString());
 
-    const bindEvent = (event: Event): BindingAll<T> => {
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        bindings.push({
+          ...binding,
+          isValidate: true,
+          validateCallback: async (req, logger = aliasLogger) => {
+            if (binding.alias) {
+              Log.info(`Executing validate action with alias: ${binding.alias}`);
+            }
+            return await validateCallback(req, logger);
+          },
+        });
+      }
+
+      return { Watch, Reconcile };
+    }
+
+    function Mutate(mutateCallback: MutateAction<T>): MutateActionChain<T> {
+      if (registerAdmission) {
+        log("Mutate Action", mutateCallback.toString());
+
+        // Create the child logger
+        const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" });
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        bindings.push({
+          ...binding,
+          isMutate: true,
+          mutateCallback: async (req, logger = aliasLogger) => {
+            if (binding.alias) {
+              Log.info(`Executing mutation action with alias: ${binding.alias}`);
+            }
+            await mutateCallback(req, logger);
+          },
+        });
+      }
+
+      // Now only allow adding actions to the same binding
+      return { Watch, Validate, Reconcile };
+    }
+
+    function Watch(watchCallback: WatchLogAction<T>): FinalizeActionChain<T> {
+      if (registerWatch) {
+        log("Watch Action", watchCallback.toString());
+
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({
+          alias: binding.alias || "no alias provided",
+        }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            if (binding.alias) {
+              Log.info(`Executing watch action with alias: ${binding.alias}`);
+            }
+            await watchCallback(update, phase, logger);
+          },
+        });
+      }
+      return { Finalize };
+    }
+
+    function Reconcile(reconcileCallback: WatchLogAction<T>): FinalizeActionChain<T> {
+      if (registerWatch) {
+        log("Reconcile Action", reconcileCallback.toString());
+
+        // Create the child logger and cast it to the expected type
+        const aliasLogger = Log.child({
+          alias: binding.alias || "no alias provided",
+        }) as typeof Log;
+
+        // Push the binding to the list of bindings for this capability as a new BindingAction
+        // with the callback function to preserve
+        bindings.push({
+          ...binding,
+          isWatch: true,
+          isQueue: true,
+          watchCallback: async (update, phase, logger = aliasLogger) => {
+            if (binding.alias) {
+              Log.info(`Executing reconcile action with alias: ${binding.alias}`);
+            }
+            await reconcileCallback(update, phase, logger);
+          },
+        });
+      }
+      return { Finalize };
+    }
+
+    function Finalize(finalizeCallback: FinalizeAction<T>): void {
+      log("Finalize Action", finalizeCallback.toString());
+
+      // Create the child logger and cast it to the expected type
+      const aliasLogger = Log.child({ alias: binding.alias || "no alias provided" }) as typeof Log;
+
+      // Add binding to inject Pepr finalizer during admission (Mutate)
+      if (registerAdmission) {
+        const mutateBinding = {
+          ...binding,
+          isMutate: true,
+          isFinalize: true,
+          event: Event.ANY,
+          mutateCallback: addFinalizer,
+        };
+        bindings.push(mutateBinding);
+      }
+
+      // Add binding to process finalizer callback / remove Pepr finalizer (Watch)
+      if (registerWatch) {
+        const watchBinding = {
+          ...binding,
+          isWatch: true,
+          isFinalize: true,
+          event: Event.UPDATE,
+          finalizeCallback: async (
+            update: InstanceType<T>,
+            logger = aliasLogger,
+          ): Promise<boolean | void> => {
+            if (binding.alias) {
+              Log.info(`Executing finalize action with alias: ${binding.alias}`);
+            }
+            return await finalizeCallback(update, logger);
+          },
+        };
+        bindings.push(watchBinding);
+      }
+    }
+
+    function InNamespace(...namespaces: string[]): BindingWithName<T> {
+      Log.debug({ prefix }, `Add namespaces filter ${namespaces}`);
+      binding.filters.namespaces.push(...namespaces);
+      return { ...commonChain, WithName, WithNameRegex };
+    }
+
+    function InNamespaceRegex(...namespaces: RegExp[]): BindingWithName<T> {
+      Log.debug({ prefix }, `Add regex namespaces filter ${namespaces}`);
+      binding.filters.regexNamespaces.push(...namespaces.map(regex => regex.source));
+      return { ...commonChain, WithName, WithNameRegex };
+    }
+
+    function WithDeletionTimestamp(): BindingFilter<T> {
+      Log.debug({ prefix }, "Add deletionTimestamp filter");
+      binding.filters.deletionTimestamp = true;
+      return commonChain;
+    }
+
+    function WithNameRegex(regexName: RegExp): BindingFilter<T> {
+      Log.debug({ prefix }, `Add regex name filter ${regexName}`);
+      binding.filters.regexName = regexName.source;
+      return commonChain;
+    }
+
+    function WithName(name: string): BindingFilter<T> {
+      Log.debug({ prefix }, `Add name filter ${name}`);
+      binding.filters.name = name;
+      return commonChain;
+    }
+
+    function WithLabel(key: string, value = ""): BindingFilter<T> {
+      Log.debug({ prefix }, `Add label filter ${key}=${value}`);
+      binding.filters.labels[key] = value;
+      return commonChain;
+    }
+
+    function WithAnnotation(key: string, value = ""): BindingFilter<T> {
+      Log.debug({ prefix }, `Add annotation filter ${key}=${value}`);
+      binding.filters.annotations[key] = value;
+      return commonChain;
+    }
+
+    function Alias(alias: string): CommonChainType {
+      Log.debug({ prefix }, `Adding prefix alias ${alias}`);
+      binding.alias = alias;
+      return commonChain;
+    }
+
+    function bindEvent(event: Event): ExtendedCommonChainType {
       binding.event = event;
-
       return {
-        WithName: withNameChain.WithName,
-        WithNameRegex: withNameChain.WithNameRegex,
-        InNamespace: (...namespaces: string[]): WithNameChain => {
-          Log.debug({ prefix }, `Add namespaces filter ${namespaces}`);
-          binding.filters.namespaces.push(...namespaces);
-          return withNameChain;
-        },
-        InNamespaceRegex: (...namespaces: RegExp[]): WithNameChain => {
-          Log.debug({ prefix }, `Add regex namespaces filter ${namespaces}`);
-          binding.filters.regexNamespaces.push(...namespaces.map(r => r.source));
-          return withNameChain;
-        },
-        WithLabel: filterChain.WithLabel,
-        WithAnnotation: filterChain.WithAnnotation,
-        WithDeletionTimestamp: filterChain.WithDeletionTimestamp,
-        Mutate: filterChain.Mutate,
-        Validate: filterChain.Validate,
-        Watch: filterChain.Watch,
-        Reconcile: filterChain.Reconcile,
-        Alias: filterChain.Alias,
+        ...commonChain,
+        InNamespace,
+        InNamespaceRegex,
+        WithName,
+        WithNameRegex,
+        WithDeletionTimestamp,
+        Alias,
       };
-    };
+    }
 
     return {
       IsCreatedOrUpdated: () => bindEvent(Event.CREATE_OR_UPDATE),

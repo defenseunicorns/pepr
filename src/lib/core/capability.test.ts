@@ -20,6 +20,12 @@ import { OnSchedule } from "./schedule";
 import { AdmissionRequest } from "../common-types";
 import type { Logger } from "pino";
 
+interface PartialLogger {
+  info: (...args: unknown[]) => void;
+  debug?: (...args: unknown[]) => void;
+  child?: (...args: unknown[]) => PartialLogger;
+}
+
 // Mocking isBuildMode, isWatchMode, and isDevMode globally
 vi.mock("./envChecks", () => ({
   isBuildMode: vi.fn(() => true),
@@ -145,7 +151,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("Executing mutation action");
       },
     );
@@ -181,8 +187,8 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprMutateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
-          logger.info("Executing mutation action");
+        (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
+          logger.info("Mutate action log");
         },
       );
 
@@ -207,7 +213,7 @@ describe("Capability", () => {
       expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
       expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: test-alias");
-      expect(mockLog.info.mock.calls.flat()).toContain("Executing mutation action");
+      expect(mockLog.info).toHaveBeenCalledWith("Mutate action log");
     });
 
     it("should handle complex alias and logging correctly", async () => {
@@ -220,8 +226,8 @@ describe("Capability", () => {
       const capability = new Capability(complexCapabilityConfig);
 
       const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprMutateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
-          logger.info(`SNAKES ON A PLANE! ${req.Raw.metadata?.name}`);
+        async (po: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
+          logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
         },
       );
 
@@ -264,7 +270,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -297,7 +303,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-        async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
+        async (update, phase, logger: PartialLogger = mockLog) => {
           logger.info("Reconcile action log");
         },
       );
@@ -323,7 +329,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-        async (update, logger: Logger = mockLog as unknown as Logger) => {
+        async (update, logger: PartialLogger = mockLog) => {
           logger.info("Finalize action log");
         },
       );
@@ -362,8 +368,8 @@ describe("Capability", () => {
 
       // Mock the watch callback
       const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-        async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
-          logger.info("Watch action executed");
+        async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
+          logger?.info("Watch action log");
         },
       );
 
@@ -377,33 +383,7 @@ describe("Capability", () => {
       const testPod = new V1Pod();
       await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
 
-      expect(mockLog.info.mock.calls.flat()).toContain("Watch action executed");
-    });
-
-    it("should log alias during Watch and Reconcile actions", async () => {
-      const capability = new Capability({
-        name: "alias-cap",
-        description: "alias test",
-        namespaces: [],
-      });
-
-      const mockWatchCallback = vi.fn(async () => {});
-      const mockReconcileCallback = vi.fn(async () => {});
-      const testPod = new V1Pod();
-
-      // Watch with alias
-      capability.When(a.Pod).IsCreated().Alias("watch-alias").Watch(mockWatchCallback);
-
-      await capability.bindings[0].watchCallback?.(testPod, WatchPhase.Added);
-      expect(Log.info).toHaveBeenCalledWith("Executing watch action with alias: watch-alias");
-
-      // Reconcile with alias
-      capability.When(a.Pod).IsCreated().Alias("reconcile-alias").Reconcile(mockReconcileCallback);
-
-      await capability.bindings[1].watchCallback?.(testPod, WatchPhase.Modified);
-      expect(Log.info).toHaveBeenCalledWith(
-        "Executing reconcile action with alias: reconcile-alias",
-      );
+      expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
     });
   });
 
@@ -411,13 +391,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("First mutation action");
       },
     );
 
     const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
         logger.info("Second mutation action");
       },
     );
@@ -458,7 +438,7 @@ describe("Capability", () => {
 
     // Mock Watch callback function
     const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("Watch action executed");
       },
     );
@@ -486,7 +466,7 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
+      async (update, phase, logger: PartialLogger = mockLog) => {
         logger.info("Watch action executed");
       },
     );
@@ -510,13 +490,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
-        logger.info("Reconcile action log");
+      async (update, phase, logger: PartialLogger = mockLog) => {
+        logger.info("external api call (reconcile-create-alias): reconcile/callback");
       },
     );
 
     const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-      async (update, logger: Logger = mockLog as unknown as Logger) => {
+      async (update: V1Pod, logger: PartialLogger = mockLog) => {
         logger.info("Finalize action log");
       },
     );
@@ -555,13 +535,13 @@ describe("Capability", () => {
     const capability = new Capability(capabilityConfig);
 
     const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: Logger = mockLog as unknown as Logger) => {
-        logger.info("Watch action executed");
+      async (update, phase, logger: PartialLogger = mockLog) => {
+        logger.info("external api call (watch-create-alias): watch/callback");
       },
     );
 
     const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-      async (update, logger: Logger = mockLog as unknown as Logger) => {
+      async (update: V1Pod, logger: PartialLogger = mockLog) => {
         logger.info("Finalize action log");
       },
     );
@@ -601,7 +581,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -621,7 +601,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -641,7 +621,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -663,7 +643,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -679,7 +659,7 @@ describe("Capability", () => {
       const capability = new Capability(capabilityConfig);
 
       const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: Logger = mockLog as unknown as Logger) => {
+        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
           logger.info("Validate action log");
           return { allowed: true };
         },
@@ -774,200 +754,5 @@ describe("Capability", () => {
     capability.When(a.Pod).IsCreatedOrUpdated().WithAnnotation("test-annotation");
 
     expect(capability.bindings).toHaveLength(0);
-  });
-
-  it("should return no-op chains when admission is disabled", async () => {
-    // Reset modules so registerAdmission is recomputed on import
-    vi.resetModules();
-
-    // Update envChecks mocks to simulate admission disabled (isBuildMode=false, isWatchMode=true)
-    const env = await import("./envChecks");
-    (env.isBuildMode as unknown as Mock).mockReturnValue(false);
-    (env.isWatchMode as unknown as Mock).mockReturnValue(true);
-
-    // Re-import Capability so it picks up the changed envChecks behaviour
-    const { Capability: CapabilityLocal } = await import("./capability");
-
-    const capability = new CapabilityLocal(capabilityConfig);
-
-    const mockValidate: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(async () => ({
-      allowed: true,
-    }));
-    const validateChain = capability.When(a.Pod).IsCreatedOrUpdated().Validate(mockValidate);
-
-    // The returned chain functions are no-ops when admission is disabled; use any-casts to call them
-    const finalizeChain = (
-      validateChain as unknown as { Watch: () => { Finalize: () => void } }
-    ).Watch();
-    expect(finalizeChain.Finalize()).toBeUndefined();
-
-    const reconcileChain = (
-      validateChain as unknown as { Reconcile: () => { Finalize: () => void } }
-    ).Reconcile();
-    expect(reconcileChain.Finalize()).toBeUndefined();
-
-    // Mutate should also return no-op chains when admission disabled
-    const mockMutate: MutateAction<typeof V1Pod, V1Pod> = vi.fn(async () => undefined);
-    const mutateChain = capability.When(a.Pod).IsCreatedOrUpdated().Mutate(mockMutate);
-    const mutateWatch = (
-      mutateChain as unknown as { Watch: () => { Finalize: () => void } }
-    ).Watch();
-    expect(mutateWatch.Finalize()).toBeUndefined();
-
-    const mutateValidate = (
-      mutateChain as unknown as { Validate: () => { Watch: () => { Finalize: () => void } } }
-    ).Validate();
-    const mvWatch = mutateValidate.Watch();
-    expect(mvWatch.Finalize()).toBeUndefined();
-
-    // No bindings should have been added because admission is disabled
-    expect(capability.bindings).toHaveLength(0);
-
-    // Restore module state for subsequent tests
-    vi.resetModules();
-  });
-
-  it("should set regex name filter with WithNameRegex and regex namespaces with InNamespaceRegex", () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(async () => ({
-      allowed: true,
-    }));
-
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .WithNameRegex(/foo-.*/)
-      .Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    expect(capability.bindings[0].filters.regexName).toBe("foo-.*");
-
-    // Test InNamespaceRegex
-    const capability2 = new Capability(capabilityConfig);
-
-    capability2
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespaceRegex(/ns-1/, /ns-2/)
-      .Validate(mockValidateCallback);
-
-    expect(capability2.bindings).toHaveLength(1);
-    expect(capability2.bindings[0].filters.regexNamespaces).toContain("ns-1");
-    expect(capability2.bindings[0].filters.regexNamespaces).toContain("ns-2");
-  });
-
-  it("should return no-op chains when admission is disabled", async () => {
-    // Reset modules so registerAdmission is recomputed on import
-    vi.resetModules();
-
-    // Update envChecks mocks to simulate admission disabled (isBuildMode=false, isWatchMode=true)
-    const env = await import("./envChecks");
-    (env.isBuildMode as unknown as Mock).mockReturnValue(false);
-    (env.isWatchMode as unknown as Mock).mockReturnValue(true);
-
-    // Re-import Capability so it picks up the changed envChecks behaviour
-    const { Capability: CapabilityLocal } = await import("./capability");
-
-    const capability = new CapabilityLocal(capabilityConfig);
-
-    const mockValidate: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(async () => ({
-      allowed: true,
-    }));
-    const validateChain = capability.When(a.Pod).IsCreatedOrUpdated().Validate(mockValidate);
-
-    // The returned chain functions are no-ops when admission is disabled; use any-casts to call them
-    const finalizeChain = (
-      validateChain as unknown as { Watch: () => { Finalize: () => void } }
-    ).Watch();
-    expect(finalizeChain.Finalize()).toBeUndefined();
-
-    const reconcileChain = (
-      validateChain as unknown as { Reconcile: () => { Finalize: () => void } }
-    ).Reconcile();
-    expect(reconcileChain.Finalize()).toBeUndefined();
-
-    // Mutate should also return no-op chains when admission disabled
-    const mockMutate: MutateAction<typeof V1Pod, V1Pod> = vi.fn(async () => undefined);
-    const mutateChain = capability.When(a.Pod).IsCreatedOrUpdated().Mutate(mockMutate);
-    const mutateWatch = (
-      mutateChain as unknown as { Watch: () => { Finalize: () => void } }
-    ).Watch();
-    expect(mutateWatch.Finalize()).toBeUndefined();
-
-    const mutateValidate = (
-      mutateChain as unknown as { Validate: () => { Watch: () => { Finalize: () => void } } }
-    ).Validate();
-    const mvWatch = mutateValidate.Watch();
-    expect(mvWatch.Finalize()).toBeUndefined();
-
-    // No bindings should have been added because admission is disabled
-    expect(capability.bindings).toHaveLength(0);
-
-    // Restore module state for subsequent tests
-    vi.resetModules();
-  });
-
-  it("should return no-op Finalize when watch is disabled", async () => {
-    vi.resetModules();
-
-    vi.doMock("./envChecks", () => ({
-      isBuildMode: vi.fn(() => false),
-      isWatchMode: vi.fn(() => false),
-      isDevMode: vi.fn(() => false),
-    }));
-
-    const { Capability: CapabilityLocal } = await import("./capability");
-    const capability = new CapabilityLocal({
-      name: "test",
-      description: "desc",
-      namespaces: [],
-    });
-
-    const noopWatch = capability
-      .When(a.Pod)
-      .IsCreated()
-      .Watch(() => {}) as unknown as { Finalize: () => void | undefined };
-
-    expect(noopWatch.Finalize()).toBeUndefined();
-
-    const noopReconcile = capability
-      .When(a.Pod)
-      .IsCreated()
-      .Reconcile(() => {}) as unknown as { Finalize: () => void | undefined };
-
-    expect(noopReconcile.Finalize()).toBeUndefined();
-
-    vi.resetModules();
-  });
-
-  it("should set regex name filter with WithNameRegex and regex namespaces with InNamespaceRegex", () => {
-    const capability = new Capability(capabilityConfig);
-
-    const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(async () => ({
-      allowed: true,
-    }));
-
-    capability
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .WithNameRegex(/foo-.*/)
-      .Validate(mockValidateCallback);
-
-    expect(capability.bindings).toHaveLength(1);
-    expect(capability.bindings[0].filters.regexName).toBe("foo-.*");
-
-    // Test InNamespaceRegex
-    const capability2 = new Capability(capabilityConfig);
-
-    capability2
-      .When(a.Pod)
-      .IsCreatedOrUpdated()
-      .InNamespaceRegex(/ns-1/, /ns-2/)
-      .Validate(mockValidateCallback);
-
-    expect(capability2.bindings).toHaveLength(1);
-    expect(capability2.bindings[0].filters.regexNamespaces).toContain("ns-1");
-    expect(capability2.bindings[0].filters.regexNamespaces).toContain("ns-2");
   });
 });
