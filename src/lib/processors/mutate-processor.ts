@@ -213,7 +213,7 @@ export function updateResponsePatchAndWarnings(
   }
 }
 
-function getIgnoreNamespaces(config?: ModuleConfig): string[] | undefined {
+export function getIgnoreNamespaces(config?: ModuleConfig): string[] | undefined {
   const fromConfig = config?.alwaysIgnore?.namespaces?.length
     ? config.alwaysIgnore.namespaces
     : config?.admission?.alwaysIgnore?.namespaces;

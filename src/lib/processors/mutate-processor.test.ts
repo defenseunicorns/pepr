@@ -10,7 +10,7 @@ import { Binding, MutateAction } from "../types";
 import { Event, Operation } from "../enums";
 import { base64Encode } from "../utils";
 import { GenericClass, KubernetesObject } from "kubernetes-fluent-client";
-import { MutateResponse } from "../k8s";
+import { MutateResponse, WebhookIgnore } from "../k8s";
 import { OnError } from "../../cli/init/enums";
 import {
   updateResponsePatchAndWarnings,
@@ -19,11 +19,13 @@ import {
   updateStatus,
   logMutateErrorMessage,
   processRequest,
+  getIgnoreNamespaces,
 } from "./mutate-processor";
 import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
+import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
@@ -54,6 +56,10 @@ vi.mock("../filter/filter", () => ({
 }));
 
 vi.mock("../utils");
+
+vi.mock("../assets/ignoredNamespaces", () => ({
+  resolveIgnoreNamespaces: vi.fn(),
+}));
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -175,6 +181,14 @@ const defaultMutateResponse: MutateResponse = {
   uid: "default-uid",
   allowed: true,
 };
+
+const ignore = (namespaces?: string[]): WebhookIgnore => ({ namespaces });
+
+const baseConfig = (overrides?: Partial<ModuleConfig>): ModuleConfig => ({
+  uuid: "test-uuid",
+  alwaysIgnore: ignore([]), // default: empty list is fine
+  ...overrides,
+});
 
 describe("processRequest", () => {
   it("adds a status annotation on success", async () => {
@@ -334,5 +348,77 @@ describe("mutateProcessor", () => {
     await mutateProcessor(config, [capability], req, reqMetadata);
 
     expect(decodeData).toHaveBeenCalled();
+  });
+});
+
+describe("getIgnoreNamespaces", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("prefers config.alwaysIgnore.namespaces when non-empty", () => {
+    const config = baseConfig({
+      alwaysIgnore: ignore(["ns-a", "ns-b"]),
+      admission: { alwaysIgnore: ignore(["fb-1"]) },
+    });
+
+    (resolveIgnoreNamespaces as unknown as Mock).mockReturnValue(["resolved-a", "resolved-b"]);
+
+    const result = getIgnoreNamespaces(config as ModuleConfig);
+
+    expect(resolveIgnoreNamespaces).toHaveBeenCalledWith(["ns-a", "ns-b"]);
+    expect(result).toEqual(["resolved-a", "resolved-b"]);
+  });
+
+  it("falls back to config.admission.alwaysIgnore.namespaces when primary is empty", () => {
+    const config = baseConfig({
+      alwaysIgnore: ignore([]),
+      admission: { alwaysIgnore: ignore(["fb-a", "fb-b"]) },
+    });
+
+    (resolveIgnoreNamespaces as unknown as Mock).mockReturnValue(["resolved-fallback"]);
+
+    const result = getIgnoreNamespaces(config as ModuleConfig);
+
+    expect(resolveIgnoreNamespaces).toHaveBeenCalledWith(["fb-a", "fb-b"]);
+    expect(result).toEqual(["resolved-fallback"]);
+  });
+
+  it("falls back when primary is undefined", () => {
+    const config = baseConfig({
+      // alwaysIgnore present but no namespaces
+      alwaysIgnore: ignore(undefined),
+      admission: { alwaysIgnore: ignore(["fb-only"]) },
+    });
+
+    (resolveIgnoreNamespaces as unknown as Mock).mockReturnValue(["resolved-fb-only"]);
+
+    const result = getIgnoreNamespaces(config as ModuleConfig);
+
+    expect(resolveIgnoreNamespaces).toHaveBeenCalledWith(["fb-only"]);
+    expect(result).toEqual(["resolved-fb-only"]);
+  });
+
+  it("passes undefined when both sources are absent/empty", () => {
+    const config = baseConfig({
+      alwaysIgnore: ignore([]),
+      admission: { alwaysIgnore: ignore([]) },
+    });
+
+    (resolveIgnoreNamespaces as unknown as Mock).mockReturnValue(undefined);
+
+    const result = getIgnoreNamespaces(config as ModuleConfig);
+
+    expect(resolveIgnoreNamespaces).toHaveBeenCalledWith([]);
+    expect(result).toBeUndefined();
+  });
+
+  it("handles undefined config by passing undefined to resolver", () => {
+    (resolveIgnoreNamespaces as unknown as Mock).mockReturnValue(undefined);
+
+    const result = getIgnoreNamespaces(undefined);
+
+    expect(resolveIgnoreNamespaces).toHaveBeenCalledWith(undefined);
+    expect(result).toBeUndefined();
   });
 });
