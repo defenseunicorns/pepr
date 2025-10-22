@@ -307,7 +307,7 @@ export class Controller {
   }
 }
 
-function getContextAndLog(
+export function getContextAndLog(
   req: express.Request,
   admissionKind: "Mutate" | "Validate",
 ): {
