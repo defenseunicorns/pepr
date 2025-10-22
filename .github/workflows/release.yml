@@ -96,7 +96,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
 
-  slsa:
+  slsa: # This is where the slsa tarball is built for publish-package step
     permissions:
       id-token: write
       actions: read
@@ -104,7 +104,7 @@ jobs:
     needs: [build-and-release]
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
     with:
-      run-scripts: "ci, build"
+      run-scripts: "set-version, ci, build"
     secrets: inherit
 
   publish:
