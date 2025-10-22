@@ -91,6 +91,11 @@ jobs:
           echo "PEPR_VERSION=$V" >> "$GITHUB_ENV"
           echo "Detected version: $V"
 
+      - name: Early Exit step
+        if: ${{ env.PEPR_VERSION == '0.0.0-development' }}
+        run: |
+          echo "No release required, skipping remaining steps."
+
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
