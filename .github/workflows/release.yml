@@ -22,6 +22,10 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write 
+      packages: write
+
+    outputs:
+      pepr_version: ${{ steps.capture.outputs.pepr_version }}
 
     steps:
       - name: Harden Runner
@@ -80,6 +84,7 @@ jobs:
           --publish @semantic-release/github
 
       - name: Capture Pepr version
+        id: capture
         run: |
           echo "PEPR_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
           echo "Detected version: $(jq -r .version package.json)"
@@ -88,6 +93,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
+
+
+
 
   slsa:
     permissions:
@@ -103,6 +111,8 @@ jobs:
   publish:
     needs: [slsa]
     runs-on: ubuntu-latest
+    env:
+      PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -141,7 +151,8 @@ jobs:
   pack-and-push:
     needs: [publish]
     runs-on: ubuntu-latest
-
+    env:
+      PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
