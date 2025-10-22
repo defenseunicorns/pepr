@@ -37,6 +37,7 @@
     "gen-data-json": "node hack/build-template-data.js",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi",
+    "set-version": "bash -lc 'ver=${PEPR_VERSION:-}; if [ -z \"$ver\" ]; then git fetch --tags --force; ver=$(git describe --tags --abbrev=0); fi; ver=${ver#v}; echo Using version $ver; node ./scripts/set-version.js \"$ver\"'",
     "test": "npm run test:unit && npm run test:integration",
     "test:artifacts": "npm run build && vitest run src/build-artifact.test.ts",
     "test:docs": "vitest run --config=config/vitest.integration.config.ts integration/cli/docs/*.test.ts",
