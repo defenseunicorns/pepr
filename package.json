@@ -83,7 +83,7 @@
     "@types/readable-stream": "^4.0.21",
     "@types/urijs": "^1.19.25",
     "@types/ws": "^8.18.1",
-    "@vitest/coverage-v8": "^3.2.3",
+    "@vitest/coverage-v8": "^4.0.1",
     "fast-check": "^4.0.0",
     "globals": "^16.0.0",
     "husky": "^9.1.6",
@@ -91,7 +91,7 @@
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
     "undici": "^7.0.1",
-    "vitest": "^3.2.3"
+    "vitest": "^4.0.1"
   },
   "overrides": {
     "glob": "^9.0.0"
