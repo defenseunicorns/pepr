@@ -221,32 +221,16 @@ export class Controller {
   ): ((req: express.Request, res: express.Response) => Promise<void>) => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
-      // Start the metrics timer
       const startTime = MetricsCollector.observeStart();
 
       try {
-        // Get the request from the body or create an empty request
-        const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
-
-        const { name, namespace, gvk } = {
-          name: request?.name ? `/${request.name}` : "",
-          namespace: request?.namespace || "",
-          gvk: request?.kind || { group: "", version: "", kind: "" },
-        };
-
-        const reqMetadata = { uid: request.uid, namespace, name };
-        Log.info(
-          { ...reqMetadata, gvk, operation: request.operation, admissionKind },
-          "Incoming request",
-        );
-        Log.debug({ ...reqMetadata, request }, "Incoming request body");
+        const { request, reqMetadata } = getContextAndLog(req, admissionKind);
 
         // Run the before hook if it exists
         if (typeof this.#beforeHook === "function") {
           this.#beforeHook(request || {});
         }
 
-        // Process the request
         const response: MutateResponse | ValidateResponse[] =
           admissionKind === "Mutate"
             ? await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata)
@@ -321,4 +305,27 @@ export class Controller {
       res.status(500).send("Internal Server Error");
     }
   }
+}
+
+function getContextAndLog(
+  req: express.Request,
+  admissionKind: "Mutate" | "Validate",
+): {
+  request: AdmissionRequest;
+  reqMetadata: Record<string, string>;
+} {
+  const request = (req.body?.request ?? {}) as AdmissionRequest;
+
+  const name = request?.name ? `/${request.name}` : "";
+  const namespace = request?.namespace || "";
+  const gvk = request?.kind || { group: "", version: "", kind: "" };
+  const reqMetadata = { uid: request.uid, namespace, name };
+
+  Log.info(
+    { ...reqMetadata, gvk, operation: request.operation, admissionKind },
+    "Incoming request",
+  );
+  Log.debug({ ...reqMetadata, request }, "Incoming request body");
+
+  return { request, reqMetadata };
 }
