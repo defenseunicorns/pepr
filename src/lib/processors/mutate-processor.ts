@@ -110,6 +110,7 @@ export async function processRequest(
   return { wrapped, response };
 }
 
+/* eslint max-statements: ["warn", 25] */
 export async function mutateProcessor(
   config: ModuleConfig,
   capabilities: Capability[],
@@ -118,64 +119,80 @@ export async function mutateProcessor(
 ): Promise<MutateResponse> {
   const webhookTimer = new MeasureWebhookTimeout(WebhookType.MUTATE);
   webhookTimer.start(config.webhookTimeout);
+  let response: MutateResponse = {
+    uid: req.uid,
+    warnings: [],
+    allowed: false,
+  };
 
-  const response: MutateResponse = initResponse(req);
   const decoded = decodeData(new PeprMutateRequest(req));
   let wrapped = decoded.wrapped;
 
   Log.info(reqMetadata, `Processing request`);
+  const bindables: Bindable[] = capabilities
+    .flatMap(capa =>
+      capa.bindings.map(bind => ({
+        req,
+        config,
+        name: capa.name,
+        namespaces: capa.namespaces,
+        binding: bind,
+        actMeta: { ...reqMetadata, name: capa.name },
+      })),
+    )
+    .filter(bind => {
+      if (!bind.binding.mutateCallback) {
+        return false;
+      }
 
-  const bindables = getValidBindables(capabilities, config, req, reqMetadata);
+      const shouldSkip = shouldSkipRequest(
+        bind.binding,
+        bind.req,
+        bind.namespaces,
+        getIgnoreNamespaces(bind.config),
+      );
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
+        return false;
+      }
 
-  const processed = await handleBindables(bindables, config, wrapped, response);
-  wrapped = processed.wrapped;
-  const result = processed.response;
+      return true;
+    });
 
-  if (shouldExitEarly(bindables, req)) {
-    webhookTimer.stop();
-    return { ...result, allowed: true };
-  }
-
-  const patches = generatePatches(req, wrapped, decoded, result);
-  webhookTimer.stop();
-
-  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
-  return { ...result, allowed: true };
-}
-
-function initResponse(req: AdmissionRequest): MutateResponse {
-  return { uid: req.uid, warnings: [], allowed: false };
-}
-
-async function handleBindables(
-  bindables: Bindable[],
-  config: ModuleConfig,
-  wrapped: PeprMutateRequest<KubernetesObject>,
-  response: MutateResponse,
-): Promise<Result> {
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
-    if (config.onError === OnError.REJECT && response?.warnings?.length) {
-      break;
+    if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
+      webhookTimer.stop();
+      return response;
     }
   }
-  return { wrapped, response };
-}
 
-function shouldExitEarly(bindables: Bindable[], req: AdmissionRequest): boolean {
-  return bindables.length === 0 || req.operation === "DELETE";
-}
+  // The request is allowed
 
-function generatePatches(
-  req: AdmissionRequest,
-  wrapped: PeprMutateRequest<KubernetesObject>,
-  decoded: ReturnType<typeof decodeData>,
-  response: MutateResponse,
-): Operation[] {
+  // If no capability matched the request, exit early
+  if (bindables.length === 0) {
+    Log.info(reqMetadata, `No matching actions found`);
+    webhookTimer.stop();
+    return { ...response, allowed: true };
+  }
+
+  // delete operations can't be mutate, just return before the transformation
+  if (req.operation === "DELETE") {
+    webhookTimer.stop();
+    return { ...response, allowed: true };
+  }
+
+  // unskip base64-encoded data fields that were skipDecode'd
   const transformed = reencodeData(wrapped, decoded.skipped);
+
+  // Compare the original request to the modified request to get the patches
   const patches = jsonPatch.compare(req.object, transformed);
+
   updateResponsePatchAndWarnings(patches, response);
-  return patches;
+
+  Log.debug({ ...reqMetadata, patches }, `Patches generated`);
+  webhookTimer.stop();
+  return { ...response, allowed: true };
 }
 
 export function updateResponsePatchAndWarnings(
@@ -196,47 +213,10 @@ export function updateResponsePatchAndWarnings(
   }
 }
 
-export function getValidBindables(
-  capabilities: Capability[],
-  config: ModuleConfig,
-  req: AdmissionRequest,
-  reqMetadata: Record<string, string>,
-): Bindable[] {
-  return capabilities
-    .flatMap(capa =>
-      capa.bindings.map(bind => ({
-        req,
-        config,
-        name: capa.name,
-        namespaces: capa.namespaces,
-        binding: bind,
-        actMeta: { ...reqMetadata, name: capa.name },
-      })),
-    )
-    .filter(bind => shouldIncludeBinding(bind));
-}
+function getIgnoreNamespaces(config?: ModuleConfig): string[] | undefined {
+  const fromConfig = config?.alwaysIgnore?.namespaces?.length
+    ? config.alwaysIgnore.namespaces
+    : config?.admission?.alwaysIgnore?.namespaces;
 
-export function shouldIncludeBinding(bind: Bindable): boolean {
-  if (!bind.binding.mutateCallback) return false;
-
-  const ignoreNamespaces = getIgnoreNamespaces(bind.config);
-  const shouldSkip = shouldSkipRequest(
-    bind.binding,
-    bind.req,
-    bind.namespaces,
-    resolveIgnoreNamespaces(ignoreNamespaces),
-  );
-
-  if (shouldSkip) {
-    Log.debug(shouldSkip);
-    return false;
-  }
-
-  return true;
-}
-
-function getIgnoreNamespaces(config: ModuleConfig): string[] | undefined {
-  const alwaysIgnore = config?.alwaysIgnore?.namespaces;
-  if (alwaysIgnore && alwaysIgnore.length) return alwaysIgnore;
-  return config?.admission?.alwaysIgnore?.namespaces;
+  return resolveIgnoreNamespaces(fromConfig);
 }
