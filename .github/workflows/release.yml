@@ -86,16 +86,15 @@ jobs:
       - name: Capture Pepr version
         id: capture
         run: |
-          echo "PEPR_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-          echo "Detected version: $(jq -r .version package.json)"
+          V=$(jq -r .version package.json)
+          echo "pepr_version=$V" >> "$GITHUB_OUTPUT"
+          echo "PEPR_VERSION=$V" >> "$GITHUB_ENV"
+          echo "Detected version: $V"
 
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
-
-
-
 
   slsa:
     permissions:
@@ -109,7 +108,7 @@ jobs:
     secrets: inherit
 
   publish:
-    needs: [slsa]
+    needs: [slsa, build-and-release]
     runs-on: ubuntu-latest
     env:
       PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
@@ -149,7 +148,7 @@ jobs:
           provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
 
   pack-and-push:
-    needs: [publish]
+    needs: [publish, build-and-release]
     runs-on: ubuntu-latest
     env:
       PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
