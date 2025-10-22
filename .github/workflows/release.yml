@@ -22,6 +22,10 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write 
+      packages: write
+
+    outputs:
+      pepr_version: ${{ steps.capture.outputs.pepr_version }}
 
     steps:
       - name: Harden Runner
@@ -80,16 +84,19 @@ jobs:
           --publish @semantic-release/github
 
       - name: Capture Pepr version
+        id: capture
         run: |
-          echo "PEPR_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-          echo "Detected version: $(jq -r .version package.json)"
+          V=$(jq -r .version package.json)
+          echo "pepr_version=$V" >> "$GITHUB_OUTPUT"
+          echo "PEPR_VERSION=$V" >> "$GITHUB_ENV"
+          echo "Detected version: $V"
 
       - name: Publish to GHCR 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ./.github/workflows/scripts/release.sh "${PEPR_VERSION}" 
 
-  slsa:
+  slsa: # This is where the slsa tarball is built for publish-package step
     permissions:
       id-token: write
       actions: read
@@ -97,22 +104,35 @@ jobs:
     needs: [build-and-release]
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
     with:
-      run-scripts: "ci, build"
+      run-scripts: "set-version, ci, build"
     secrets: inherit
 
   publish:
-    needs: [slsa]
+    needs: [slsa, build-and-release]
     runs-on: ubuntu-latest
+    env:
+      PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           egress-policy: audit
+
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
       - name: Set up Node registry authentication
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+
+      - name: Set Version
+        run: |
+          node ./scripts/set-version.js "$PEPR_VERSION"
+          npm install
+          npm run build
 
       - name: Publish package
         id: publish
@@ -128,9 +148,10 @@ jobs:
           provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
 
   pack-and-push:
-    needs: [publish]
+    needs: [publish, build-and-release]
     runs-on: ubuntu-latest
-
+    env:
+      PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -161,8 +182,8 @@ jobs:
       - name: Push package to UDS OCI registry
         run: |
           npm install --global npm
+          node ./scripts/set-version.js "$PEPR_VERSION"
           npm install
-          node scripts/set-version.js "$PEPR_VERSION"
           npm run build
           oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:v${PEPR_VERSION} \
             --artifact-type application/vnd.pepr.module.layer.v1 pepr-${PEPR_VERSION}.tgz
