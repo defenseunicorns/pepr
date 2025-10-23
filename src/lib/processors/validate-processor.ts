@@ -10,7 +10,7 @@ import Log from "../telemetry/logger";
 import { convertFromBase64Map } from "../utils";
 import { PeprValidateRequest } from "../validate-request";
 import { ModuleConfig } from "../types";
-import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
+import { getIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { WebhookType } from "../enums";
 import { AdmissionRequest } from "../common-types";
@@ -117,12 +117,6 @@ export async function handleCapability(
   }
 
   return results;
-}
-
-export function getIgnoreNamespaces(config: ModuleConfig): string[] {
-  const alwaysIgnore = config?.alwaysIgnore?.namespaces;
-  const admissionIgnore = config?.admission?.alwaysIgnore?.namespaces;
-  return resolveIgnoreNamespaces(alwaysIgnore?.length ? alwaysIgnore : admissionIgnore);
 }
 
 export async function processBinding(

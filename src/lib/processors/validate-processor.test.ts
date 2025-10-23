@@ -11,7 +11,6 @@ import { AdmissionRequest } from "../common-types";
 import {
   processRequest,
   validateProcessor,
-  getIgnoreNamespaces,
   shouldSkipBinding,
   processBinding,
   handleCapability,
@@ -391,26 +390,6 @@ describe("helper functions", () => {
     });
   });
 
-  describe("getIgnoreNamespaces", () => {
-    it("should resolve from alwaysIgnore.namespaces if provided", () => {
-      const config = {
-        alwaysIgnore: { namespaces: ["foo", "bar"] },
-        admission: { alwaysIgnore: { namespaces: ["baz"] } },
-      } as unknown as ModuleConfig;
-
-      const result = getIgnoreNamespaces(config);
-      expect(result).toEqual(expect.arrayContaining(["foo", "bar"]));
-    });
-
-    it("should fall back to admission.alwaysIgnore.namespaces", () => {
-      const config = {
-        admission: { alwaysIgnore: { namespaces: ["baz"] } },
-      } as unknown as ModuleConfig;
-
-      const result = getIgnoreNamespaces(config);
-      expect(result).toEqual(expect.arrayContaining(["baz"]));
-    });
-  });
   describe("processBinding", () => {
     const mockBinding = {
       isValidate: true,

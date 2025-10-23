@@ -13,7 +13,7 @@ import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode } from "../utils";
 import { OnError } from "../../cli/init/enums";
-import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
+import { getIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
 
@@ -211,12 +211,4 @@ export function updateResponsePatchAndWarnings(
   if (response.warnings && response.warnings.length < 1) {
     delete response.warnings;
   }
-}
-
-export function getIgnoreNamespaces(config?: ModuleConfig): string[] | undefined {
-  const fromConfig = config?.alwaysIgnore?.namespaces?.length
-    ? config.alwaysIgnore.namespaces
-    : config?.admission?.alwaysIgnore?.namespaces;
-
-  return resolveIgnoreNamespaces(fromConfig);
 }
