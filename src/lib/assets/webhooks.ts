@@ -149,16 +149,13 @@ export function buildClientConfig(
 export function buildNamespaceIgnoreExpressions(assets: Assets): V1LabelSelectorRequirement[] {
   const { config } = assets;
 
-  const resolved =
-    resolveIgnoreNamespaces(
-      config?.alwaysIgnore?.namespaces?.length
-        ? config.alwaysIgnore.namespaces
-        : config?.admission?.alwaysIgnore?.namespaces,
-    ) ?? [];
+  const resolved = resolveIgnoreNamespaces(
+    config?.alwaysIgnore?.namespaces?.length
+      ? config.alwaysIgnore.namespaces
+      : config?.admission?.alwaysIgnore?.namespaces,
+  );
 
   const ignoreValues = concat(peprIgnoreNamespaces, resolved);
-
-  if (ignoreValues.length === 0) return [];
 
   return [
     {

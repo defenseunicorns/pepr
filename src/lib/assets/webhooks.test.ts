@@ -402,7 +402,21 @@ describe("configureAdditionalWebhooks", () => {
     expect(result).toEqual(webhookConfig);
   });
 
-  it("should ignore additionalWebHooks if the original webhookConfig does not contain any webhooks", () => {
+  it("should return the original webhookConfig if no webhooks are present in webhookConfig", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
+    expect(result).toEqual(webhookConfig);
+  });
+
+  it("should ignore additionalWebHooks if the original webhookConfig contains an empty array of webhooks", () => {
     const webhookConfig: kind.MutatingWebhookConfiguration = {
       apiVersion: "admissionregistration.k8s.io/v1",
       kind: "MutatingWebhookConfiguration",
@@ -571,7 +585,7 @@ describe("buildNamespaceIgnoreExpressions", () => {
     ]);
   });
 
-  it("combines default peprIgnoreNamespaces with onfig.admission.alwaysIgnore.namespaces", () => {
+  it("combines default peprIgnoreNamespaces with config.admission.alwaysIgnore.namespaces", () => {
     const localAssets = createTestAssets({
       config: {
         ...(createTestAssets().config as ModuleConfig),
