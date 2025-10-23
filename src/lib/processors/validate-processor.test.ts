@@ -13,6 +13,8 @@ import {
   validateProcessor,
   getIgnoreNamespaces,
   shouldSkipBinding,
+  processBinding,
+  handleCapability,
 } from "./validate-processor";
 import { ModuleConfig } from "../types";
 import { Capability } from "../core/capability";
@@ -407,6 +409,135 @@ describe("helper functions", () => {
 
       const result = getIgnoreNamespaces(config);
       expect(result).toEqual(expect.arrayContaining(["baz"]));
+    });
+  });
+  describe("processBinding", () => {
+    const mockBinding = {
+      isValidate: true,
+      validateCallback: vi.fn(),
+    } as unknown as Binding;
+
+    const mockReq = testAdmissionRequest;
+    const mockActionMetadata = {};
+    const mockWrapped = testPeprValidateRequest(mockReq);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return null when shouldSkipBinding returns true", async () => {
+      (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
+
+      const result = await processBinding(
+        { req: mockReq, namespaces: [], ignoreNamespaces: [] },
+        { binding: mockBinding, actionMetadata: mockActionMetadata, wrapped: mockWrapped },
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("should call validateCallback when shouldSkipBinding returns false", async () => {
+      (shouldSkipRequest as Mock).mockReturnValue("");
+
+      const validateCallback = vi.fn().mockResolvedValue({
+        allowed: true,
+        statusCode: 200,
+        statusMessage: "ok",
+      });
+      const binding = { ...mockBinding, validateCallback };
+
+      const result = await processBinding(
+        { req: mockReq, namespaces: ["ns1"], ignoreNamespaces: [] },
+        { binding, actionMetadata: mockActionMetadata, wrapped: mockWrapped },
+      );
+
+      expect(validateCallback).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        uid: mockWrapped.Request.uid,
+        allowed: true,
+        status: { code: 200, message: "ok" },
+      });
+    });
+  });
+  describe("handleCapability", () => {
+    const mockReq = testAdmissionRequest;
+    const mockWrapped = testPeprValidateRequest(mockReq);
+    const baseContext = {
+      config: {
+        alwaysIgnore: { namespaces: ["ignore-me"] },
+        admission: {},
+      } as unknown as ModuleConfig,
+      req: mockReq,
+      reqMetadata: {},
+      wrapped: mockWrapped,
+    };
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should process all valid bindings and return responses", async () => {
+      (shouldSkipRequest as Mock).mockReturnValue("");
+
+      const validateCallback1 = vi.fn().mockResolvedValue({
+        allowed: true,
+        statusCode: 200,
+        statusMessage: "ok",
+      });
+      const validateCallback2 = vi.fn().mockResolvedValue({
+        allowed: false,
+        statusCode: 400,
+        statusMessage: "bad",
+      });
+
+      const capability = {
+        name: "test-cap",
+        bindings: [
+          { validateCallback: validateCallback1 },
+          { validateCallback: validateCallback2 },
+        ],
+        namespaces: [],
+      } as unknown as Capability;
+
+      const result = await handleCapability(capability, baseContext);
+
+      expect(validateCallback1).toHaveBeenCalled();
+      expect(validateCallback2).toHaveBeenCalled();
+      expect(result.length).toBe(2);
+      expect(result[0].allowed).toBe(true);
+      expect(result[1].allowed).toBe(false);
+    });
+
+    it("should skip bindings without validateCallback", async () => {
+      (shouldSkipRequest as Mock).mockReturnValue("");
+
+      const capability = {
+        name: "test-cap",
+        bindings: [
+          { validateCallback: undefined },
+          { validateCallback: vi.fn().mockResolvedValue({ allowed: true }) },
+        ],
+        namespaces: [],
+      } as unknown as Capability;
+
+      const result = await handleCapability(capability, baseContext);
+
+      expect(result.length).toBe(1);
+      expect(result[0].allowed).toBe(true);
+    });
+
+    it("should skip bindings that should be ignored", async () => {
+      (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
+
+      const capability = {
+        name: "test-cap",
+        bindings: [{ validateCallback: vi.fn() }],
+        namespaces: [],
+      } as unknown as Capability;
+
+      const result = await handleCapability(capability, baseContext);
+
+      expect(result).toEqual([]);
     });
   });
 });
