@@ -280,6 +280,45 @@ describe("overridesFile", () => {
     expect(featuresDef.required).toEqual(expect.arrayContaining(["enabled"]));
     expect(featuresDef.required).toHaveLength(1);
   });
+  it("uses alwaysIgnore.namespaces when non-empty", async () => {
+    const cfgWithAlwaysIgnore = {
+      ...mockOverrides,
+      config: {
+        ...mockOverrides.config,
+        alwaysIgnore: {
+          namespaces: ["ns1", "ns2"],
+        },
+      },
+    };
+
+    await overridesFile(cfgWithAlwaysIgnore, mockPath, imagePullSecrets);
+
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+    const [, writtenContent] = yamlCall!;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.additionalIgnoredNamespaces).toEqual(["ns1", "ns2"]);
+  });
+  it("falls back to admission.alwaysIgnore.namespaces when alwaysIgnore is empty", async () => {
+    const cfgWithAdmissionIgnore = {
+      ...mockOverrides,
+      config: {
+        ...mockOverrides.config,
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: ["nsA", "nsB"] } },
+      },
+    };
+
+    await overridesFile(cfgWithAdmissionIgnore, mockPath, imagePullSecrets);
+
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+    const [, writtenContent] = yamlCall!;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.additionalIgnoredNamespaces).toEqual(["nsA", "nsB"]);
+  });
 });
 
 describe("overrides helpers", () => {
