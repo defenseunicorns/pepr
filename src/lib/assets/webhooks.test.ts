@@ -246,7 +246,7 @@ describe("Webhook Management", () => {
       ]);
     });
 
-    it("should include additionawebhooks info in namespace selector", async () => {
+    it("should include additionalWebhooks info in namespace selector", async () => {
       const additionalWebhooks = [{ failurePolicy: "Ignore", namespace: "additional-namespace-2" }];
       assets.config.additionalWebhooks = additionalWebhooks;
       const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
@@ -256,6 +256,17 @@ describe("Webhook Management", () => {
         "cicd",
         "additional-namespace-2",
       ]);
+    });
+
+    it("should return null when no capabilities are included", async () => {
+      const testAssets: Assets = new Assets(
+        loseAssets.config as ModuleConfig,
+        loseAssets.path,
+        loseAssets.imagePullSecrets,
+      );
+      testAssets.capabilities = [];
+      const result = await webhookConfigGenerator(testAssets, WebhookType.VALIDATE);
+      expect(result).toBeNull();
     });
 
     describe("when a host is specified", () => {
