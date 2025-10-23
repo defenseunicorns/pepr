@@ -42,6 +42,7 @@ export type ContainerSecurityContext = {
   capabilities: { drop: ["ALL"] };
 };
 
+// Helm Chart overrides file (values.yaml) generated from assets
 export async function overridesFile(
   { hash, name, image, config, apiPath, capabilities }: ChartOverrides,
   path: string,
@@ -54,7 +55,7 @@ export async function overridesFile(
     imagePullSecrets,
     additionalIgnoredNamespaces: resolveIgnoreNamespaces(
       config?.alwaysIgnore?.namespaces?.length
-        ? config.alwaysIgnore.namespaces
+        ? config?.alwaysIgnore?.namespaces
         : config?.admission?.alwaysIgnore?.namespaces,
     ),
     rbac: rbacOverrides,

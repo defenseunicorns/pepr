@@ -46,7 +46,7 @@ vi.mock("../telemetry/logger", () => {
       info: vi.fn(),
       debug: vi.fn(),
       error: vi.fn(),
-      child: vi.fn(() => childLogger), // 👈 crucial
+      child: vi.fn(() => childLogger),
     },
   };
 });

@@ -221,6 +221,7 @@ export class Controller {
   ): ((req: express.Request, res: express.Response) => Promise<void>) => {
     // Create the admission request handler
     return async (req: express.Request, res: express.Response) => {
+      // Start the metrics timer
       const startTime = MetricsCollector.observeStart();
 
       try {
@@ -231,6 +232,7 @@ export class Controller {
           this.#beforeHook(request || {});
         }
 
+        // Process the request
         const response: MutateResponse | ValidateResponse[] =
           admissionKind === "Mutate"
             ? await mutateProcessor(this.#config, this.#capabilities, request, reqMetadata)
