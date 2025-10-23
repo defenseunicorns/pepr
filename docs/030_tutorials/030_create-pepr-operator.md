@@ -19,7 +19,7 @@ The WebApp Operator will:
 
 All resources will include `ownerReferences`, triggering cascading deletion when a WebApp is removed. The operator will also automatically restore any managed resources that are deleted externally.
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 - Familiarity with TypeScript
 - Node.js ≥ 20.0
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Tutorial Steps
 
@@ -40,7 +40,7 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 5. [Build and Deploy Your Operator](#build-and-deploy-your-operator)
 6. [Test Your Operator](#test-your-operator)
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Create a new Pepr Module
 
@@ -66,7 +66,7 @@ To track your progress in this tutorial, let's treat it as a `git` repository:
 git init && git add --all && git commit -m "npx pepr init"
 ```
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Create CRD
 
@@ -163,7 +163,7 @@ Commit your changes for CRD registration & validation:
 git add capabilities/crd/ && git commit -m "Create CRD handling logic"
 ```
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Create Helpers
 
@@ -200,7 +200,7 @@ Commit your changes for deployment, service, and configmap generation:
 git add capabilities/controller/ && git commit -m "Add generators for WebApp deployments, services, and configmaps"
 ```
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Create Reconciler
 
@@ -244,7 +244,7 @@ Commit your changes with:
 git add capabilities/ && git commit -m "Create reconciler for webapps"
 ```
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Add capability to Pepr Module
 
@@ -452,7 +452,7 @@ FIELDS:
 `wa` is the short form of `webapp` that kubectl recognizes. This resource structure directly matches the TypeScript interface we defined earlier in our code.
 :::
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
 
 ## Test Your Operator
 
@@ -788,4 +788,4 @@ For more information, check out:
 - [Kubernetes Operator Best Practices](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
 - [Custom Resource Definition Documentation](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
 
-[Back to top](#building-a-kubernetes-operator-with-pepr)
+[Back to top](#introduction)
