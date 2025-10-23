@@ -27,7 +27,7 @@ Pros:
 - is widely used & well-supported -- with over 1500 commits / 200 contributors / 400 releases on GitHub and a million weekly downloads from NPM (at time of writing) there is very little worry about longevity.
 
 Cons:
-- It takes a [firm](https://github.com/semantic-release/semantic-release/issues/1507) [stance](https://semantic-release.gitbook.io/semantic-release/support/faq#can-i-set-the-initial-release-version-of-my-package-to-0.0.1) on _not supporting_ "version zero" (v0.0.1) -style workflows and suggests that projects start at v1.0.0 instead. We get around this by delegating the actual release to SLSA 3 workflow.
+- It takes a [firm](https://github.com/semantic-release/semantic-release/issues/1507) [stance](https://semantic-release.gitbook.io/semantic-release/support/faq#can-i-set-the-initial-release-version-of-my-package-to-0.0.1) on _not supporting_ "version zero" (v0.0.1) -style workflows and suggests that projects start at v1.0.0 instead. We get around this by delegating the actual release to a SLSA 3 workflow.
 
 The balance of Pros, the Con-that-isn't-much-of-a-con, and fact that Pepr's sister project, the [Kubernetes Fluent Client (a.k.a. "the KFC")](https://github.com/defenseunicorns/kubernetes-fluent-client), is already using the semantic-release tool makes pulling it into Pepr an easy choice.
 
