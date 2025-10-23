@@ -246,6 +246,18 @@ describe("Webhook Management", () => {
       ]);
     });
 
+    it("should include additionawebhooks info in namespace selector", async () => {
+      const additionalWebhooks = [{ failurePolicy: "Ignore", namespace: "additional-namespace-2" }];
+      assets.config.additionalWebhooks = additionalWebhooks;
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
+        "kube-system",
+        "pepr-system",
+        "cicd",
+        "additional-namespace-2",
+      ]);
+    });
+
     describe("when a host is specified", () => {
       it("should use that host in webhook URL", async () => {
         const assetsWithHost = new Assets(
@@ -376,6 +388,21 @@ describe("configureAdditionalWebhooks", () => {
       webhooks: [],
     };
     const result = configureAdditionalWebhooks(webhookConfig, []);
+    expect(result).toEqual(webhookConfig);
+  });
+
+  it("should ignore additionalWebHooks if the original webhookConfig does not contain any webhooks", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+      webhooks: [],
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
     expect(result).toEqual(webhookConfig);
   });
 
