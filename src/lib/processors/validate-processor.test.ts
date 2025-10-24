@@ -45,6 +45,26 @@ vi.mock("../filter/filter", () => ({
   shouldSkipRequest: vi.fn(),
 }));
 
+const createMockBinding = (overrides?: Partial<Binding>): Binding => ({
+  event: Event.ANY,
+  filters: testFilters,
+  kind: testGroupVersionKind,
+  model: kind.Pod,
+  isFinalize: false,
+  isMutate: false,
+  isQueue: false,
+  isValidate: false,
+  isWatch: false,
+  ...overrides,
+});
+
+const createMockModuleConfig = (overrides?: Partial<ModuleConfig>): ModuleConfig => ({
+  webhookTimeout: 10,
+  uuid: "test-uuid",
+  alwaysIgnore: {},
+  ...overrides,
+});
+
 const testFilters: Filters = {
   annotations: {},
   deletionTimestamp: false,
@@ -233,11 +253,9 @@ describe("when validating requests", () => {
   let config: ModuleConfig;
   beforeEach(() => {
     vi.clearAllMocks();
-    config = {
+    config = createMockModuleConfig({
       webhookTimeout: 11,
-      uuid: "some-uuid",
-      alwaysIgnore: {},
-    };
+    });
   });
   it("should measure if a timeout occurred based on webhookTimeout", async () => {
     const capability = new Capability({
@@ -295,11 +313,9 @@ describe("when validating requests", () => {
   });
 
   it("should skip bindings that do not have validateCallback", async () => {
-    config = {
+    config = createMockModuleConfig({
       webhookTimeout: 10,
-      uuid: "some-uuid",
-      alwaysIgnore: {},
-    };
+    });
 
     const capability = new Capability({
       name: "test",
@@ -328,11 +344,9 @@ describe("when validating requests", () => {
   });
 
   it("should skip bindings if shouldSkipRequest returns a reason", async () => {
-    config = {
+    config = createMockModuleConfig({
       webhookTimeout: 10,
-      uuid: "some-uuid",
-      alwaysIgnore: {},
-    };
+    });
 
     const capability = new Capability({
       name: "test",
@@ -363,10 +377,7 @@ describe("when validating requests", () => {
 });
 
 describe("helper functions", () => {
-  const mockBinding = {
-    isValidate: true,
-    validateCallback: vi.fn(),
-  } as unknown as Binding;
+  const mockBinding = createMockBinding();
 
   const mockReq = testAdmissionRequest;
 
@@ -391,10 +402,7 @@ describe("helper functions", () => {
   });
 
   describe("processBinding", () => {
-    const mockBinding = {
-      isValidate: true,
-      validateCallback: vi.fn(),
-    } as unknown as Binding;
+    const mockBinding = createMockBinding();
 
     const mockReq = testAdmissionRequest;
     const mockActionMetadata = {};
@@ -442,10 +450,9 @@ describe("helper functions", () => {
     const mockReq = testAdmissionRequest;
     const mockWrapped = testPeprValidateRequest(mockReq);
     const baseContext = {
-      config: {
+      config: createMockModuleConfig({
         alwaysIgnore: { namespaces: ["ignore-me"] },
-        admission: {},
-      } as unknown as ModuleConfig,
+      }),
       req: mockReq,
       reqMetadata: {},
       wrapped: mockWrapped,
