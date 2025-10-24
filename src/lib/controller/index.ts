@@ -17,6 +17,7 @@ import { StoreController } from "./store";
 import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
 import { AdmissionRequest } from "../common-types";
 import { featureFlagStore } from "../features/store";
+import { GroupVersionKind } from "kubernetes-fluent-client";
 
 export interface ControllerHooks {
   beforeHook?: (req: AdmissionRequest) => void;
@@ -225,7 +226,17 @@ export class Controller {
       const startTime = MetricsCollector.observeStart();
 
       try {
-        const { request, reqMetadata } = getContextAndLog(req, admissionKind);
+        // Get the request from the body or create an empty request
+        const request: AdmissionRequest = req.body?.request || ({} as AdmissionRequest);
+
+        const { name, namespace, gvk } = getRequestValues(request);
+
+        const reqMetadata = { uid: request.uid, namespace, name };
+        Log.info(
+          { ...reqMetadata, gvk, operation: request.operation, admissionKind },
+          "Incoming request",
+        );
+        Log.debug({ ...reqMetadata, request }, "Incoming request body");
 
         // Run the before hook if it exists
         if (typeof this.#beforeHook === "function") {
@@ -309,25 +320,14 @@ export class Controller {
   }
 }
 
-export function getContextAndLog(
-  req: express.Request,
-  admissionKind: "Mutate" | "Validate",
-): {
-  request: AdmissionRequest;
-  reqMetadata: Record<string, string>;
+function getRequestValues(request: AdmissionRequest): {
+  name: string;
+  namespace: string;
+  gvk: GroupVersionKind;
 } {
-  const request = (req.body?.request ?? {}) as AdmissionRequest;
-
-  const name = request?.name ? `/${request.name}` : "";
-  const namespace = request?.namespace || "";
-  const gvk = request?.kind || { group: "", version: "", kind: "" };
-  const reqMetadata = { uid: request.uid, namespace, name };
-
-  Log.info(
-    { ...reqMetadata, gvk, operation: request.operation, admissionKind },
-    "Incoming request",
-  );
-  Log.debug({ ...reqMetadata, request }, "Incoming request body");
-
-  return { request, reqMetadata };
+  return {
+    name: request?.name ? `/${request.name}` : "",
+    namespace: request?.namespace || "",
+    gvk: request?.kind || { group: "", version: "", kind: "" },
+  };
 }
