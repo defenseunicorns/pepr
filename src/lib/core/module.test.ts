@@ -13,10 +13,14 @@ import Log from "../telemetry/logger";
 
 // Mock Controller
 const startServerMock = vi.fn();
+const controllerConstructorMock = vi.fn();
 vi.mock("../controller", () => ({
-  Controller: vi.fn().mockImplementation(() => ({
-    startServer: startServerMock,
-  })),
+  Controller: vi.fn().mockImplementation((...args) => {
+    controllerConstructorMock(...args);
+    return {
+      startServer: startServerMock,
+    };
+  }),
 }));
 
 vi.mock("../telemetry/logger", () => ({
@@ -47,6 +51,7 @@ describe("PeprModule", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    controllerConstructorMock.mockClear();
     delete process.env.PEPR_MODE;
     delete process.env.PEPR_WATCH_MODE;
   });
@@ -56,6 +61,7 @@ describe("PeprModule", () => {
       new PeprModule(mockPackageJSON);
       expect(startServerMock).toHaveBeenCalledWith(3000);
     });
+
     it("should fall back to config.watch.alwaysIgnore.namespaces when pepr.alwaysIgnore is missing", () => {
       const pkg = clone(mockPackageJSON);
       Reflect.deleteProperty(pkg.pepr, "alwaysIgnore");
@@ -63,6 +69,8 @@ describe("PeprModule", () => {
 
       new PeprModule(pkg);
       expect(startServerMock).toHaveBeenCalledWith(3000);
+      const controllerConfig = controllerConstructorMock.mock.calls[0]?.[0];
+      expect(controllerConfig?.watch?.alwaysIgnore?.namespaces).toEqual(["fallback-ns"]);
     });
 
     it("should use pepr.alwaysIgnore.namespaces when it contains values", () => {
@@ -72,6 +80,8 @@ describe("PeprModule", () => {
 
       new PeprModule(pkg);
       expect(startServerMock).toHaveBeenCalledWith(3000);
+      const controllerConfig = controllerConstructorMock.mock.calls[0]?.[0];
+      expect(controllerConfig?.alwaysIgnore?.namespaces).toEqual(["ns1", "ns2"]);
     });
   });
 
