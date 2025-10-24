@@ -6,6 +6,9 @@ import {
   validateRule,
   generateWebhookRules,
   webhookConfigGenerator,
+  buildClientConfig,
+  buildNamespaceIgnoreExpressions,
+  makeBaseWebhookConfig,
   configureAdditionalWebhooks,
   checkFailurePolicy,
 } from "./webhooks";
@@ -243,6 +246,29 @@ describe("Webhook Management", () => {
       ]);
     });
 
+    it("should include additionalWebhooks info in namespace selector", async () => {
+      const additionalWebhooks = [{ failurePolicy: "Ignore", namespace: "additional-namespace-2" }];
+      assets.config.additionalWebhooks = additionalWebhooks;
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
+        "kube-system",
+        "pepr-system",
+        "cicd",
+        "additional-namespace-2",
+      ]);
+    });
+
+    it("should return null when no capabilities are included", async () => {
+      const testAssets: Assets = new Assets(
+        loseAssets.config as ModuleConfig,
+        loseAssets.path,
+        loseAssets.imagePullSecrets,
+      );
+      testAssets.capabilities = [];
+      const result = await webhookConfigGenerator(testAssets, WebhookType.VALIDATE);
+      expect(result).toBeNull();
+    });
+
     describe("when a host is specified", () => {
       it("should use that host in webhook URL", async () => {
         const assetsWithHost = new Assets(
@@ -325,7 +351,7 @@ describe("Webhook Management", () => {
   describe("when generating webhook rules", () => {
     describe("when assets contain bindings for custom resources", () => {
       it("should generate a webhook rule for custom resources", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
         expect(secretRule).toEqual([
           {
@@ -338,7 +364,7 @@ describe("Webhook Management", () => {
       });
 
       it("should generate a webhook rule for creating secrets", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
         expect(secretRule).toEqual([
           { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
@@ -349,7 +375,7 @@ describe("Webhook Management", () => {
     describe("when no capabilities exist", () => {
       it("should return an empty array", async () => {
         assets.capabilities = [];
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         expect(result).toEqual([]);
       });
     });
@@ -373,6 +399,35 @@ describe("configureAdditionalWebhooks", () => {
       webhooks: [],
     };
     const result = configureAdditionalWebhooks(webhookConfig, []);
+    expect(result).toEqual(webhookConfig);
+  });
+
+  it("should return the original webhookConfig if no webhooks are present in webhookConfig", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
+    expect(result).toEqual(webhookConfig);
+  });
+
+  it("should ignore additionalWebHooks if the original webhookConfig contains an empty array of webhooks", () => {
+    const webhookConfig: kind.MutatingWebhookConfiguration = {
+      apiVersion: "admissionregistration.k8s.io/v1",
+      kind: "MutatingWebhookConfiguration",
+      metadata: { name: "test-webhook" },
+      webhooks: [],
+    };
+    const additionalWebhooks = [
+      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
+      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
+    ];
+    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
     expect(result).toEqual(webhookConfig);
   });
 
@@ -462,5 +517,274 @@ describe("checkFailurePolicy", () => {
   it("should return the failure policy for valid policies", () => {
     expect(() => checkFailurePolicy("Fail")).not.toThrowError();
     expect(() => checkFailurePolicy("Ignore")).not.toThrowError();
+  });
+});
+
+describe("buildClientConfig", () => {
+  it("creates a service clientConfig when no host is specified", () => {
+    const localAssets = createTestAssets(); // no host
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+    const fullApiPath = "/validate/some-api-path";
+
+    const cfg = buildClientConfig(assetsObj, fullApiPath);
+
+    expect(cfg.caBundle).toBe(assetsObj.tls.ca);
+    expect(cfg.url).toBeUndefined();
+    expect(cfg.service).toEqual({
+      name: assetsObj.name,
+      namespace: "pepr-system",
+      path: fullApiPath,
+    });
+  });
+
+  it("creates a URL clientConfig when host is specified", () => {
+    const localAssets = createTestAssets({ host: "example.local" });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+      localAssets.host,
+    );
+    const fullApiPath = "/mutate/abc123";
+
+    const cfg = buildClientConfig(assetsObj, fullApiPath);
+
+    expect(cfg.service).toBeUndefined();
+    expect(cfg.url).toBe(`https://${localAssets.host}:3000${fullApiPath}`);
+  });
+});
+
+describe("buildNamespaceIgnoreExpressions", () => {
+  it("combines default peprIgnoreNamespaces with config.alwaysIgnore.namespaces", () => {
+    const localAssets = createTestAssets({
+      config: {
+        ...(createTestAssets().config as ModuleConfig),
+        alwaysIgnore: { namespaces: ["asdf", "jkl;"] },
+      } as ModuleConfig,
+    });
+
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+
+    const expr = buildNamespaceIgnoreExpressions(assetsObj);
+
+    // Should produce a single NotIn expression with merged values
+    expect(expr).toEqual([
+      {
+        key: "kubernetes.io/metadata.name",
+        operator: "NotIn",
+        values: expect.arrayContaining(["kube-system", "pepr-system", "asdf", "jkl;"]),
+      },
+    ]);
+  });
+
+  it("combines default peprIgnoreNamespaces with config.admission.alwaysIgnore.namespaces", () => {
+    const localAssets = createTestAssets({
+      config: {
+        ...(createTestAssets().config as ModuleConfig),
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: ["aaa", "bbb"] } },
+      } as ModuleConfig,
+    });
+
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+
+    const expr = buildNamespaceIgnoreExpressions(assetsObj);
+
+    // Should produce a single NotIn expression with merged values
+    expect(expr).toEqual([
+      {
+        key: "kubernetes.io/metadata.name",
+        operator: "NotIn",
+        values: expect.arrayContaining(["kube-system", "pepr-system", "aaa", "bbb"]),
+      },
+    ]);
+  });
+
+  it("falls back gracefully when no extra namespaces are provided", () => {
+    const localAssets = createTestAssets({
+      config: {
+        ...(createTestAssets().config as ModuleConfig),
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: [] } },
+      } as ModuleConfig,
+    });
+
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+
+    const expr = buildNamespaceIgnoreExpressions(assetsObj);
+
+    // Still includes the built-in defaults
+    expect(expr).toEqual([
+      {
+        key: "kubernetes.io/metadata.name",
+        operator: "NotIn",
+        values: expect.arrayContaining(["kube-system", "pepr-system"]),
+      },
+    ]);
+  });
+});
+
+describe("makeBaseWebhookConfig", () => {
+  const sampleRules = [
+    { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
+  ];
+
+  it("builds a MutatingWebhookConfiguration with service clientConfig when host is absent", () => {
+    const localAssets = createTestAssets({ host: undefined });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+    const timeout = 15;
+
+    const cfg = makeBaseWebhookConfig(
+      assetsObj as unknown as Assets,
+      WebhookType.MUTATE,
+      timeout,
+      sampleRules,
+    );
+
+    expect(cfg.kind).toBe("MutatingWebhookConfiguration");
+    expect(cfg.metadata?.name).toBe(assetsObj.name);
+
+    const webhook = cfg.webhooks![0]!;
+    expect(webhook.timeoutSeconds).toBe(timeout);
+    expect(webhook.rules).toEqual(sampleRules);
+    expect(webhook.clientConfig.service).toEqual({
+      name: assetsObj.name,
+      namespace: "pepr-system",
+      path: `/${WebhookType.MUTATE}/${assetsObj.apiPath}`,
+    });
+    expect(webhook.clientConfig.url).toBeUndefined();
+
+    // Failure policy driven by module config (default from factory is "ignore")
+    expect(webhook.failurePolicy).toBe("Ignore");
+
+    // Namespace selector includes defaults + configured ones (factory has "cicd")
+    expect(webhook.namespaceSelector?.matchExpressions?.[0]?.values).toEqual(
+      expect.arrayContaining(["kube-system", "pepr-system", "cicd"]),
+    );
+  });
+
+  it("builds a ValidatingWebhookConfiguration with service clientConfig when host is absent", () => {
+    const localAssets = createTestAssets({ host: undefined });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+    const timeout = 15;
+
+    const cfg = makeBaseWebhookConfig(
+      assetsObj as unknown as Assets,
+      WebhookType.VALIDATE,
+      timeout,
+      sampleRules,
+    );
+
+    expect(cfg.kind).toBe("ValidatingWebhookConfiguration");
+    expect(cfg.metadata?.name).toBe(assetsObj.name);
+
+    const webhook = cfg.webhooks![0]!;
+    expect(webhook.timeoutSeconds).toBe(timeout);
+    expect(webhook.rules).toEqual(sampleRules);
+    expect(webhook.clientConfig.service).toEqual({
+      name: assetsObj.name,
+      namespace: "pepr-system",
+      path: `/${WebhookType.VALIDATE}/${assetsObj.apiPath}`,
+    });
+    expect(webhook.clientConfig.url).toBeUndefined();
+
+    // Failure policy driven by module config (default from factory is "ignore")
+    expect(webhook.failurePolicy).toBe("Ignore");
+
+    // Namespace selector includes defaults + configured ones (factory has "cicd")
+    expect(webhook.namespaceSelector?.matchExpressions?.[0]?.values).toEqual(
+      expect.arrayContaining(["kube-system", "pepr-system", "cicd"]),
+    );
+  });
+
+  it("builds a MutatingWebhookConfiguration with URL clientConfig when host is present", () => {
+    const localAssets = createTestAssets({ host: "asdf" });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+      localAssets.host,
+    );
+    const cfg = makeBaseWebhookConfig(
+      assetsObj as unknown as Assets,
+      WebhookType.MUTATE,
+      10,
+      sampleRules,
+    );
+
+    expect(cfg.kind).toBe("MutatingWebhookConfiguration");
+    const webhook = cfg.webhooks![0]!;
+    expect(webhook.clientConfig.url).toMatch(
+      new RegExp(`^https://asdf:3000/mutate/${assetsObj.apiPath}$`),
+    );
+    expect(webhook.clientConfig.service).toBeUndefined();
+  });
+
+  it("builds a ValidatingWebhookConfiguration with URL clientConfig when host is present", () => {
+    const localAssets = createTestAssets({ host: "asdf" });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+      localAssets.host,
+    );
+    const cfg = makeBaseWebhookConfig(
+      assetsObj as unknown as Assets,
+      WebhookType.VALIDATE,
+      10,
+      sampleRules,
+    );
+
+    expect(cfg.kind).toBe("ValidatingWebhookConfiguration");
+    const webhook = cfg.webhooks![0]!;
+    expect(webhook.clientConfig.url).toMatch(
+      new RegExp(`^https://asdf:3000/validate/${assetsObj.apiPath}$`),
+    );
+    expect(webhook.clientConfig.service).toBeUndefined();
+  });
+
+  it("maps onError=reject to failurePolicy='Fail'", () => {
+    const base = createTestAssets();
+    const localAssets = createTestAssets({
+      config: { ...(base.config as ModuleConfig), onError: "reject" } as ModuleConfig,
+    });
+    const assetsObj = new Assets(
+      localAssets.config as ModuleConfig,
+      localAssets.path,
+      localAssets.imagePullSecrets,
+    );
+
+    const cfg = makeBaseWebhookConfig(
+      assetsObj as unknown as Assets,
+      WebhookType.MUTATE,
+      10,
+      sampleRules,
+    );
+
+    expect(cfg.webhooks![0]!.failurePolicy).toBe("Fail");
   });
 });

@@ -13,10 +13,14 @@ import Log from "../telemetry/logger";
 
 // Mock Controller
 const startServerMock = vi.fn();
+const controllerConstructorMock = vi.fn();
 vi.mock("../controller", () => ({
-  Controller: vi.fn().mockImplementation(() => ({
-    startServer: startServerMock,
-  })),
+  Controller: vi.fn().mockImplementation((...args) => {
+    controllerConstructorMock(...args);
+    return {
+      startServer: startServerMock,
+    };
+  }),
 }));
 
 vi.mock("../telemetry/logger", () => ({
@@ -47,6 +51,7 @@ describe("PeprModule", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    controllerConstructorMock.mockClear();
     delete process.env.PEPR_MODE;
     delete process.env.PEPR_WATCH_MODE;
   });
@@ -55,6 +60,28 @@ describe("PeprModule", () => {
     it("should start the Controller with the default port", () => {
       new PeprModule(mockPackageJSON);
       expect(startServerMock).toHaveBeenCalledWith(3000);
+    });
+
+    it("should fall back to config.watch.alwaysIgnore.namespaces when pepr.alwaysIgnore is missing", () => {
+      const pkg = clone(mockPackageJSON);
+      Reflect.deleteProperty(pkg.pepr, "alwaysIgnore");
+      pkg.pepr.watch = { alwaysIgnore: { namespaces: ["fallback-ns"] } };
+
+      new PeprModule(pkg);
+      expect(startServerMock).toHaveBeenCalledWith(3000);
+      const controllerConfig = controllerConstructorMock.mock.calls[0]?.[0];
+      expect(controllerConfig?.watch?.alwaysIgnore?.namespaces).toEqual(["fallback-ns"]);
+    });
+
+    it("should use pepr.alwaysIgnore.namespaces when it contains values", () => {
+      const pkg = clone(mockPackageJSON);
+      pkg.pepr.alwaysIgnore = { namespaces: ["ns1", "ns2"] };
+      Reflect.deleteProperty(pkg.pepr, "watch");
+
+      new PeprModule(pkg);
+      expect(startServerMock).toHaveBeenCalledWith(3000);
+      const controllerConfig = controllerConstructorMock.mock.calls[0]?.[0];
+      expect(controllerConfig?.alwaysIgnore?.namespaces).toEqual(["ns1", "ns2"]);
     });
   });
 
@@ -130,6 +157,13 @@ describe("PeprModule", () => {
       new PeprModule(mockPackageJSON, [capability]);
       expect(Log.debug).toHaveBeenCalledWith("Capability test registered");
       expect(sendMock).toHaveBeenCalledWith([expectedExport]);
+    });
+
+    it("should throw an error if process.send is undefined in build mode", () => {
+      process.env.PEPR_MODE = "build";
+      delete process.send; // simulate missing IPC channel
+
+      expect(() => new PeprModule(mockPackageJSON)).toThrow("process.send is not defined");
     });
   });
 });
