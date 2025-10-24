@@ -14,7 +14,7 @@ export type ChartOverrides = {
   name: string;
   image: string;
 };
-export type Probes = {
+type Probes = {
   readinessProbe: {
     httpGet: { path: string; port: number; scheme: "HTTPS" };
     initialDelaySeconds: number;
@@ -24,17 +24,17 @@ export type Probes = {
     initialDelaySeconds: number;
   };
 };
-export type Resources = {
+type Resources = {
   requests: { memory: string; cpu: string };
   limits: { memory: string; cpu: string };
 };
-export type PodSecurityContext = {
+type PodSecurityContext = {
   runAsUser: number;
   runAsGroup: number;
   runAsNonRoot: true;
   fsGroup: number;
 };
-export type ContainerSecurityContext = {
+type ContainerSecurityContext = {
   runAsUser: number;
   runAsGroup: number;
   runAsNonRoot: true;
@@ -114,7 +114,6 @@ export async function overridesFile(
     },
   };
 
-  // write values.schema.yaml
   await writeSchemaYamlFromObject(JSON.stringify(overrides, null, 2), path);
   // write values.yaml
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
@@ -139,12 +138,12 @@ export async function writeSchemaYamlFromObject(
   await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
 }
 
-export function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: number } {
+function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: number } {
   const id = image.includes("private") ? 1000 : 65532;
   return { uid: id, gid: id, fsGroup: id };
 }
 
-export function commonProbes(): Probes {
+function commonProbes(): Probes {
   return {
     readinessProbe: {
       httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
@@ -157,14 +156,14 @@ export function commonProbes(): Probes {
   };
 }
 
-export function commonResources(): Resources {
+function commonResources(): Resources {
   return {
     requests: { memory: "256Mi", cpu: "200m" },
     limits: { memory: "512Mi", cpu: "500m" },
   };
 }
 
-export function podSecurityContext(image: string): PodSecurityContext {
+function podSecurityContext(image: string): PodSecurityContext {
   const ids = runIdsForImage(image);
   return {
     runAsUser: ids.uid,
@@ -174,7 +173,7 @@ export function podSecurityContext(image: string): PodSecurityContext {
   };
 }
 
-export function containerSecurityContext(image: string): ContainerSecurityContext {
+function containerSecurityContext(image: string): ContainerSecurityContext {
   const ids = runIdsForImage(image);
   return {
     runAsUser: ids.uid,
@@ -185,7 +184,7 @@ export function containerSecurityContext(image: string): ContainerSecurityContex
   };
 }
 
-export function controllerLabels(
+function controllerLabels(
   name: string,
   uuid: string,
   kind: "admission" | "watcher",
@@ -197,11 +196,11 @@ export function controllerLabels(
   };
 }
 
-export function controllerAnnotations(description?: string): Record<string, string> {
+function controllerAnnotations(description?: string): Record<string, string> {
   return { "pepr.dev/description": `${description ?? ""}` };
 }
 
-export function namespaceBlock(config: ModuleConfig): {
+function namespaceBlock(config: ModuleConfig): {
   annotations: Record<string, string>;
   labels: Record<string, string>;
 } {
