@@ -351,7 +351,7 @@ describe("Webhook Management", () => {
   describe("when generating webhook rules", () => {
     describe("when assets contain bindings for custom resources", () => {
       it("should generate a webhook rule for custom resources", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
         expect(secretRule).toEqual([
           {
@@ -364,7 +364,7 @@ describe("Webhook Management", () => {
       });
 
       it("should generate a webhook rule for creating secrets", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
         expect(secretRule).toEqual([
           { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
@@ -375,7 +375,7 @@ describe("Webhook Management", () => {
     describe("when no capabilities exist", () => {
       it("should return an empty array", async () => {
         assets.capabilities = [];
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         expect(result).toEqual([]);
       });
     });

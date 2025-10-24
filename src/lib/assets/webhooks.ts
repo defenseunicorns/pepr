@@ -46,9 +46,10 @@ export const validateRule = (
 
 export async function generateWebhookRules(
   assets: Assets,
-  isMutateWebhook: boolean,
+  webhookType: WebhookType,
 ): Promise<V1RuleWithOperations[]> {
   const { capabilities } = assets;
+  const isMutateWebhook = webhookType === WebhookType.MUTATE;
 
   const rules = capabilities.flatMap(capability =>
     capability.bindings
@@ -61,15 +62,15 @@ export async function generateWebhookRules(
 
 export async function webhookConfigGenerator(
   assets: Assets,
-  mutateOrValidate: WebhookType,
+  webhookType: WebhookType,
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
-  const rules = await generateWebhookRules(assets, mutateOrValidate === WebhookType.MUTATE);
+  const rules = await generateWebhookRules(assets, webhookType);
   if (rules.length < 1) {
     return null;
   }
 
-  const baseConfig = makeBaseWebhookConfig(assets, mutateOrValidate, timeoutSeconds, rules);
+  const baseConfig = makeBaseWebhookConfig(assets, webhookType, timeoutSeconds, rules);
 
   // If additional webhooks are specified, add them to the config
   if (assets.config.additionalWebhooks) {
