@@ -409,6 +409,18 @@ describe("crd", () => {
   });
 });
 
+type ArtifactParams = {
+  workdir: Workdir;
+  testModule: string;
+  group: string;
+  version: string;
+  kindName: string;
+  shortName: string;
+  plural: string;
+  scope: string;
+  domain: string;
+};
+
 async function setupWorkdir(workdir: Workdir): Promise<void> {
   await workdir.recreate();
 }
@@ -423,17 +435,7 @@ async function generateCRDArtifacts({
   plural,
   scope,
   domain,
-}: {
-  workdir: Workdir;
-  testModule: string;
-  group: string;
-  version: string;
-  kindName: string;
-  shortName: string;
-  plural: string;
-  scope: string;
-  domain: string;
-}): Promise<void> {
+}: ArtifactParams): Promise<void> {
   await fs.rm(testModule, { recursive: true, force: true });
   const args = [
     `--group ${group}`,
