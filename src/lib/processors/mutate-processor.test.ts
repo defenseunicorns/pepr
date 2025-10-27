@@ -24,6 +24,7 @@ import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
+import { shouldSkipRequest } from "../filter/filter";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
@@ -334,5 +335,39 @@ describe("mutateProcessor", () => {
     await mutateProcessor(config, [capability], req, reqMetadata);
 
     expect(decodeData).toHaveBeenCalled();
+  });
+
+  it("processes a binding when mutateCallback is present and not skipped", async () => {
+    vi.mocked(shouldSkipRequest).mockReturnValue("");
+
+    (decodeData as Mock).mockImplementation((wrappedReq: PeprMutateRequest<KubernetesObject>) => ({
+      wrapped: wrappedReq,
+      skipped: [] as string[],
+    }));
+
+    config.onError = OnError.REJECT;
+
+    const mutateCallback = (
+      vi.fn() as Mock<MutateAction<GenericClass, KubernetesObject>>
+    ).mockImplementation(() => {
+      throw "oof";
+    });
+
+    const testBinding = { ...clone(defaultBinding), mutateCallback };
+    const capability = {
+      name: "cap-1",
+      bindings: [testBinding],
+      namespaces: undefined,
+    } as unknown as Capability;
+
+    const req = { ...defaultAdmissionRequest };
+    const reqMetadata = {};
+
+    const result = await mutateProcessor(config, [capability], req, reqMetadata);
+
+    expect(mutateCallback).toHaveBeenCalledTimes(1);
+    expect(result.warnings).toBeDefined();
+    expect(result.warnings!.length).toBeGreaterThan(0);
+    expect(result.allowed).toBe(false);
   });
 });
