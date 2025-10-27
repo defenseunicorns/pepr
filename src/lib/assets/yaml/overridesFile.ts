@@ -115,7 +115,7 @@ export async function overridesFile(
   };
 
   await writeSchemaYamlFromObject(JSON.stringify(overrides, null, 2), path);
-  // write values.yaml
+
   await fs.writeFile(path, dumpYaml(overrides, { noRefs: true, forceQuotes: true }));
 }
 
