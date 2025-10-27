@@ -91,7 +91,7 @@ export async function validateProcessor(
   return responses;
 }
 
-export async function handleCapability(
+async function handleCapability(
   capability: Capability,
   context: {
     config: ModuleConfig;
@@ -119,7 +119,7 @@ export async function handleCapability(
   return results;
 }
 
-export async function processBinding(
+async function processBinding(
   requestCtx: {
     req: AdmissionRequest;
     namespaces: string[] | undefined;
@@ -138,7 +138,7 @@ export async function processBinding(
   return await processRequest(binding, actionMetadata, wrapped);
 }
 
-export function shouldSkipBinding(
+function shouldSkipBinding(
   binding: Binding,
   req: AdmissionRequest,
   namespaces: string[] | undefined,
