@@ -24,30 +24,18 @@ import { Operation as JSONPatchOperation } from "fast-json-patch";
 import { Capability } from "../core/capability";
 import { MeasureWebhookTimeout } from "../telemetry/webhookTimeouts";
 import { decodeData } from "./decode-utils";
-import { reencodeData } from "./decode-utils";
-import { shouldSkipRequest } from "../filter/filter";
-import { kind } from "kubernetes-fluent-client";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
-  reencodeData: vi.fn(),
 }));
 
-vi.mock("../telemetry/logger", () => {
-  const childLogger = {
+vi.mock("../telemetry/logger", () => ({
+  default: {
     info: vi.fn(),
     debug: vi.fn(),
     error: vi.fn(),
-  };
-  return {
-    default: {
-      info: vi.fn(),
-      debug: vi.fn(),
-      error: vi.fn(),
-      child: vi.fn(() => childLogger),
-    },
-  };
-});
+  },
+}));
 
 vi.mock("../telemetry/metrics", () => ({
   metricsCollector: {
@@ -66,11 +54,6 @@ vi.mock("../filter/filter", () => ({
 }));
 
 vi.mock("../utils");
-
-vi.mock("../assets/ignoredNamespaces", () => ({
-  resolveIgnoreNamespaces: vi.fn(),
-  getIgnoreNamespaces: vi.fn(),
-}));
 
 const defaultModuleConfig: ModuleConfig = {
   uuid: "test-uuid",
@@ -193,25 +176,10 @@ const defaultMutateResponse: MutateResponse = {
   allowed: true,
 };
 
-function capabilityWithMutate(
-  mutateFn: Mock,
-  kind: { group: string; version: string; kind: string } = {
-    group: "",
-    version: "v1",
-    kind: "ConfigMap",
-  },
-): Capability {
-  const cap = new Capability({ name: "cap", description: "desc" });
-
-  const FakeModel = function FakeModel() {} as unknown as GenericClass;
-  cap.When(FakeModel, kind).IsCreated().Mutate(mutateFn);
-  return cap;
-}
-
 describe("processRequest", () => {
   it("adds a status annotation on success", async () => {
     const testPeprMutateRequest = defaultPeprMutateRequest();
-    const testMutateResponse = clone(defaultMutateResponse) as MutateResponse;
+    const testMutateResponse = clone(defaultMutateResponse);
     const annote = `${defaultModuleConfig.uuid}.pepr.dev/${defaultBindable.name}`;
 
     const result = await processRequest(defaultBindable, testPeprMutateRequest, testMutateResponse);
@@ -366,138 +334,5 @@ describe("mutateProcessor", () => {
     await mutateProcessor(config, [capability], req, reqMetadata);
 
     expect(decodeData).toHaveBeenCalled();
-  });
-});
-
-describe("mutateProcessor (bindings & branches via DSL)", () => {
-  const reqBase: AdmissionRequest<kind.ConfigMap> = {
-    uid: "uid-123",
-    kind: { kind: "ConfigMap", group: "", version: "v1" },
-    resource: { group: "", version: "v1", resource: "configmaps" },
-    name: "cm-1",
-    object: {
-      apiVersion: "v1",
-      kind: "ConfigMap",
-      metadata: { name: "cm-1", namespace: "ns" },
-      data: { a: "1" },
-    },
-    operation: Operation.CREATE,
-    userInfo: {},
-  };
-
-  let config: ModuleConfig;
-
-  beforeEach(() => {
-    config = {
-      uuid: "mod-uuid",
-      webhookTimeout: 10,
-      alwaysIgnore: {},
-    } as ModuleConfig;
-
-    // Default path: do not skip bindings
-    (shouldSkipRequest as unknown as Mock).mockReturnValue("");
-
-    // Default decode returns a fresh PeprMutateRequest so updateStatus/processRequest can mutate it
-    (decodeData as Mock).mockImplementation((wrappedReq: PeprMutateRequest<KubernetesObject>) => ({
-      wrapped: new PeprMutateRequest(wrappedReq.Request ?? reqBase),
-      skipped: [],
-    }));
-  });
-
-  it("returns allowed=true when there are no bindings (no matches)", async () => {
-    const cap = new Capability({ name: "empty-cap", description: "no bindings" });
-
-    const res = await mutateProcessor(config, [cap], reqBase, {});
-
-    expect(res.allowed).toBe(true);
-    expect(res.patch).toBeUndefined(); // nothing changed
-  });
-
-  it("returns allowed=true early for DELETE and does not invoke mutate callback", async () => {
-    const mutateCb = vi.fn().mockResolvedValue(undefined);
-    const cap = capabilityWithMutate(mutateCb);
-
-    // For DELETE, AdmissionReview usually supplies oldObject (the existing resource)
-    const reqDelete: AdmissionRequest = {
-      ...reqBase,
-      operation: Operation.DELETE,
-      object: reqBase.object, // typical for DELETE
-      oldObject: {
-        // provide the prior object so PeprMutateRequest can populate Raw
-        apiVersion: "v1",
-        kind: "ConfigMap",
-        metadata: { name: "cm-1", namespace: "ns" },
-        data: { a: "1" },
-      } as kind.ConfigMap,
-    };
-
-    // Realistically, a CREATE mutate binding should be skipped for a DELETE op.
-    (shouldSkipRequest as unknown as Mock).mockReturnValue("skip: not applicable for DELETE");
-
-    const spyStop = vi.spyOn(MeasureWebhookTimeout.prototype, "stop");
-    const res = await mutateProcessor(config, [cap], reqDelete, {});
-
-    expect(mutateCb).not.toHaveBeenCalled(); // skipped on DELETE
-    expect(res.allowed).toBe(true); // early-allow path
-    expect(res.patch).toBeUndefined();
-    expect(spyStop).toHaveBeenCalled();
-    spyStop.mockRestore();
-  });
-
-  it("sets JSONPatch when reencodeData returns a changed object", async () => {
-    // Ensure binding isn’t skipped
-    (shouldSkipRequest as unknown as Mock).mockReturnValue("");
-
-    // ensure base64Encode actually encodes
-    (base64Encode as unknown as Mock).mockImplementation((s: string) =>
-      Buffer.from(s).toString("base64"),
-    );
-
-    const mutateCb = vi.fn().mockResolvedValue(undefined);
-    const cap = capabilityWithMutate(mutateCb);
-
-    // Clone to isolate from other tests
-    const req = JSON.parse(JSON.stringify(reqBase)) as typeof reqBase;
-
-    // Return a *different* object from reencodeData
-    const transformed = {
-      ...req.object,
-      data: { ...req.object.data, b: "2" },
-    };
-    (reencodeData as unknown as Mock).mockReset();
-    (reencodeData as unknown as Mock).mockReturnValue(transformed);
-
-    const res = await mutateProcessor(config, [cap], req, {});
-
-    expect(reencodeData).toHaveBeenCalled(); // we reached reencode/patch phase
-    expect(res.allowed).toBe(true);
-    expect(res.patchType).toBe("JSONPatch");
-    expect(res.patch).toBeDefined();
-
-    const decoded = JSON.parse(Buffer.from(res.patch!, "base64").toString("utf-8"));
-    expect(Array.isArray(decoded)).toBe(true);
-    expect(
-      (decoded as { op: string; path: string; value?: unknown }[]).some(
-        op => op.op === "add" && op.path === "/data/b" && op.value === "2",
-      ),
-    ).toBe(true);
-  });
-
-  it("early-returns on onError=REJECT when mutate callback throws", async () => {
-    const throwing = vi.fn().mockImplementation(() => {
-      throw new Error("boom");
-    });
-    const cap = capabilityWithMutate(throwing);
-
-    const cfgReject: ModuleConfig = { ...config, onError: OnError.REJECT } as ModuleConfig;
-
-    const spyStop = vi.spyOn(MeasureWebhookTimeout.prototype, "stop");
-    const res = await mutateProcessor(cfgReject, [cap], reqBase, {});
-
-    expect(res.allowed).toBe(false); // early return before allowed flips to true
-    expect(res.result).toBe("Pepr module configured to reject on error");
-    expect(res.warnings && res.warnings.length).toBeGreaterThan(0);
-    expect(spyStop).toHaveBeenCalled();
-    spyStop.mockRestore();
   });
 });

@@ -149,7 +149,7 @@ export async function mutateProcessor(
         bind.binding,
         bind.req,
         bind.namespaces,
-        getIgnoreNamespaces(bind.config),
+        getIgnoreNamespaces(config),
       );
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);
