@@ -10,7 +10,7 @@ import {
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
-import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
+import { getIgnoreNamespaces } from "./ignoredNamespaces";
 import { Assets } from "./assets";
 import { Event, WebhookType } from "../enums";
 import { Binding, AdditionalWebhook } from "../types";
@@ -65,19 +65,78 @@ export async function webhookConfigGenerator(
   webhookType: WebhookType,
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
+  const ignore: V1LabelSelectorRequirement[] = [];
+
+  const { name, tls, config, apiPath, host } = assets;
+  const ignoreNS = concat(peprIgnoreNamespaces, getIgnoreNamespaces(config));
+
+  // Add any namespaces to ignore
+  if (ignoreNS) {
+    ignore.push({
+      key: "kubernetes.io/metadata.name",
+      operator: "NotIn",
+      values: ignoreNS,
+    });
+  }
+
+  const clientConfig: AdmissionRegnV1WebhookClientCfg = {
+    caBundle: tls.ca,
+  };
+
+  // The URL must include the API Path
+  const fullApiPath = `/${webhookType}/${apiPath}`;
+
+  // If a host is specified, use that with a port of 3000
+  if (host) {
+    clientConfig.url = `https://${host}:3000${fullApiPath}`;
+  } else {
+    // Otherwise, use the service
+    clientConfig.service = {
+      name: name,
+      namespace: "pepr-system",
+      path: fullApiPath,
+    };
+  }
+
+  //const isMutate = webhookType === WebhookType.MUTATE;
   const rules = await generateWebhookRules(assets, webhookType);
+
+  // If there are no rules, return null
   if (rules.length < 1) {
     return null;
   }
 
-  const baseConfig = makeBaseWebhookConfig(assets, webhookType, timeoutSeconds, rules);
+  const webhookConfig = {
+    apiVersion: "admissionregistration.k8s.io/v1",
+    kind:
+      webhookType === WebhookType.MUTATE
+        ? "MutatingWebhookConfiguration"
+        : "ValidatingWebhookConfiguration",
+    metadata: { name },
+    webhooks: [
+      {
+        name: `${name}.pepr.dev`,
+        admissionReviewVersions: ["v1", "v1beta1"],
+        clientConfig,
+        failurePolicy: config.onError === "reject" ? "Fail" : "Ignore",
+        matchPolicy: "Equivalent",
+        timeoutSeconds,
+        namespaceSelector: {
+          matchExpressions: ignore,
+        },
+        rules,
+        // @todo: track side effects state
+        sideEffects: "None",
+      },
+    ],
+  };
 
   // If additional webhooks are specified, add them to the config
-  if (assets.config.additionalWebhooks) {
-    return configureAdditionalWebhooks(baseConfig, assets.config.additionalWebhooks);
+  if (config.additionalWebhooks) {
+    return configureAdditionalWebhooks(webhookConfig, config.additionalWebhooks);
   }
 
-  return baseConfig;
+  return webhookConfig;
 }
 
 export function checkFailurePolicy(failurePolicy: string): void {
@@ -125,76 +184,4 @@ export function configureAdditionalWebhooks(
   });
 
   return webhookConfig;
-}
-
-export function buildClientConfig(
-  assets: Assets,
-  fullApiPath: string,
-): AdmissionRegnV1WebhookClientCfg {
-  const { tls, host, name } = assets;
-  const clientConfig: AdmissionRegnV1WebhookClientCfg = { caBundle: tls.ca };
-
-  // If a host is specified, use that with a port of 3000
-  if (host) {
-    clientConfig.url = `https://${host}:3000${fullApiPath}`;
-  } else {
-    clientConfig.service = {
-      name,
-      namespace: "pepr-system",
-      path: fullApiPath,
-    };
-  }
-  return clientConfig;
-}
-
-export function buildNamespaceIgnoreExpressions(assets: Assets): V1LabelSelectorRequirement[] {
-  const { config } = assets;
-
-  const resolved = resolveIgnoreNamespaces(
-    config?.alwaysIgnore?.namespaces?.length
-      ? config.alwaysIgnore.namespaces
-      : config?.admission?.alwaysIgnore?.namespaces,
-  );
-
-  const ignoreValues = concat(peprIgnoreNamespaces, resolved);
-
-  return [
-    {
-      key: "kubernetes.io/metadata.name",
-      operator: "NotIn",
-      values: ignoreValues,
-    },
-  ];
-}
-
-export function makeBaseWebhookConfig(
-  assets: Assets,
-  mutateOrValidate: WebhookType,
-  timeoutSeconds: number,
-  rules: V1RuleWithOperations[],
-): kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration {
-  const isMutate = mutateOrValidate === WebhookType.MUTATE;
-  // The URL must include the API Path
-  const fullApiPath = `/${mutateOrValidate}/${assets.apiPath}`;
-  const clientConfig = buildClientConfig(assets, fullApiPath);
-  const ignoreExpr = buildNamespaceIgnoreExpressions(assets);
-
-  return {
-    apiVersion: "admissionregistration.k8s.io/v1",
-    kind: isMutate ? "MutatingWebhookConfiguration" : "ValidatingWebhookConfiguration",
-    metadata: { name: assets.name },
-    webhooks: [
-      {
-        name: `${assets.name}.pepr.dev`,
-        admissionReviewVersions: ["v1", "v1beta1"],
-        clientConfig,
-        failurePolicy: assets.config.onError === "reject" ? "Fail" : "Ignore",
-        matchPolicy: "Equivalent",
-        timeoutSeconds,
-        namespaceSelector: { matchExpressions: ignoreExpr },
-        rules,
-        sideEffects: "None",
-      },
-    ],
-  };
 }
