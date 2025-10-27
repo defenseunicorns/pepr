@@ -56,54 +56,39 @@ describe("when namespaces are set in environment variables", () => {
 });
 
 describe("getIgnoreNamespaces", () => {
-  it("should use config.alwaysIgnore.namespaces when non-empty", () => {
-    const config = baseConfig({
-      alwaysIgnore: { namespaces: ["ns-a", "ns-b"] },
-      admission: { alwaysIgnore: { namespaces: ["fb-1"] } },
-    });
+  it.each([
+    [
+      baseConfig({
+        alwaysIgnore: { namespaces: ["ns-a", "ns-b"] },
+        admission: { alwaysIgnore: { namespaces: ["fb-1"] } },
+      }),
+      ["ns-a", "ns-b"],
+    ],
+    [
+      baseConfig({
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: ["fb-a", "fb-b"] } },
+      }),
+      ["fb-a", "fb-b"],
+    ],
+    [
+      baseConfig({
+        alwaysIgnore: { namespaces: undefined },
+        admission: { alwaysIgnore: { namespaces: ["fb-only"] } },
+      }),
+      ["fb-only"],
+    ],
+    [
+      baseConfig({
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: [] } },
+      }),
+      [],
+    ],
+    [undefined, []],
+  ])("given %j, returns '%j'", (given, expected) => {
+    const result = getIgnoreNamespaces(given);
 
-    const result = getIgnoreNamespaces(config as ModuleConfig);
-
-    expect(result).toEqual(["ns-a", "ns-b"]);
-  });
-
-  it("should use config.admission.alwaysIgnore.namespaces when config.alwaysIgnore.namespaces is empty", () => {
-    const config = baseConfig({
-      alwaysIgnore: { namespaces: [] },
-      admission: { alwaysIgnore: { namespaces: ["fb-a", "fb-b"] } },
-    });
-
-    const result = getIgnoreNamespaces(config as ModuleConfig);
-
-    expect(result).toEqual(["fb-a", "fb-b"]);
-  });
-
-  it("should use config.admission.alwaysIgnore.namespaces when config.alwaysIgnore.namespaces is undefined", () => {
-    const config = baseConfig({
-      // alwaysIgnore present but no namespaces
-      alwaysIgnore: { namespaces: undefined },
-      admission: { alwaysIgnore: { namespaces: ["fb-only"] } },
-    });
-
-    const result = getIgnoreNamespaces(config as ModuleConfig);
-
-    expect(result).toEqual(["fb-only"]);
-  });
-
-  it("should return empty array when both sources are absent/empty", () => {
-    const config = baseConfig({
-      alwaysIgnore: { namespaces: [] },
-      admission: { alwaysIgnore: { namespaces: [] } },
-    });
-
-    const result = getIgnoreNamespaces(config as ModuleConfig);
-
-    expect(result).toEqual([]);
-  });
-
-  it("should return empty array when entire config is undefined", () => {
-    const result = getIgnoreNamespaces(undefined);
-
-    expect(result).toEqual([]);
+    expect(result).toEqual(expected);
   });
 });
