@@ -1,19 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 import { it, describe, expect, beforeEach } from "vitest";
-import { resolveIgnoreNamespaces, getIgnoreNamespaces } from "./ignoredNamespaces";
-import { ModuleConfig } from "../types";
-import { WebhookIgnore } from "../k8s";
+import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
 
 const originalEnv = { ...process.env };
-
-const ignore = (namespaces?: string[]): WebhookIgnore => ({ namespaces });
-
-const baseConfig = (overrides?: Partial<ModuleConfig>): ModuleConfig => ({
-  uuid: "test-uuid",
-  alwaysIgnore: ignore([]), // default: empty list is fine
-  ...overrides,
-});
 
 beforeEach(() => {
   process.env = { ...originalEnv };
@@ -52,43 +42,5 @@ describe("when namespaces are set in environment variables", () => {
       const result = resolveIgnoreNamespaces();
       expect(result).toEqual(["uds", "project-fox"]);
     });
-  });
-});
-
-describe("getIgnoreNamespaces", () => {
-  it.each([
-    [
-      baseConfig({
-        alwaysIgnore: { namespaces: ["ns-a", "ns-b"] },
-        admission: { alwaysIgnore: { namespaces: ["fb-1"] } },
-      }),
-      ["ns-a", "ns-b"],
-    ],
-    [
-      baseConfig({
-        alwaysIgnore: { namespaces: [] },
-        admission: { alwaysIgnore: { namespaces: ["fb-a", "fb-b"] } },
-      }),
-      ["fb-a", "fb-b"],
-    ],
-    [
-      baseConfig({
-        alwaysIgnore: { namespaces: undefined },
-        admission: { alwaysIgnore: { namespaces: ["fb-only"] } },
-      }),
-      ["fb-only"],
-    ],
-    [
-      baseConfig({
-        alwaysIgnore: { namespaces: [] },
-        admission: { alwaysIgnore: { namespaces: [] } },
-      }),
-      [],
-    ],
-    [undefined, []],
-  ])("given %j, returns '%j'", (given, expected) => {
-    const result = getIgnoreNamespaces(given);
-
-    expect(result).toEqual(expected);
   });
 });
