@@ -355,4 +355,54 @@ describe("when validating requests", () => {
 
     spyProcessRequest.mockRestore();
   });
+
+  it("should call validateCallback if not skipped", async () => {
+    vi.mocked(shouldSkipRequest).mockReturnValue("");
+
+    const validateCallback = vi.fn().mockResolvedValue({ allowed: false, statusMessage: "nope" });
+
+    const binding = { validateCallback } as unknown as Binding;
+
+    const capability = {
+      name: "cap-1",
+      bindings: [binding],
+      namespaces: undefined,
+    } as unknown as Capability;
+
+    const req = testAdmissionRequest;
+
+    const config = {} as ModuleConfig;
+    const reqMetadata = {};
+
+    const results = await validateProcessor(config, [capability], req, reqMetadata);
+
+    expect(validateCallback).toHaveBeenCalledTimes(1);
+    expect(results).toEqual([
+      { uid: "some-uid", allowed: false, status: { code: 400, message: "nope" } },
+    ]);
+  });
+
+  it("should skip validateCallback if skip request reason given", async () => {
+    vi.mocked(shouldSkipRequest).mockReturnValue("skip me!");
+
+    const validateCallback = vi.fn().mockResolvedValue({ allowed: false, statusMessage: "nope" });
+
+    const binding = { validateCallback } as unknown as Binding;
+
+    const capability = {
+      name: "cap-1",
+      bindings: [binding],
+      namespaces: undefined,
+    } as unknown as Capability;
+
+    const req = testAdmissionRequest;
+
+    const config = {} as ModuleConfig;
+    const reqMetadata = {};
+
+    const results = await validateProcessor(config, [capability], req, reqMetadata);
+
+    expect(validateCallback).not.toHaveBeenCalled();
+    expect(results).toEqual([]);
+  });
 });
