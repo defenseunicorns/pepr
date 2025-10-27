@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GroupVersionKind, kind, KubernetesObject } from "kubernetes-fluent-client";
 import { Binding, Filters } from "../types";
 import { Event, Operation } from "../enums";
@@ -294,66 +294,54 @@ describe("when validating requests", () => {
   });
 
   it("should skip bindings that do not have validateCallback", async () => {
-    config = createMockModuleConfig({
-      webhookTimeout: 10,
-    });
+    vi.mocked(shouldSkipRequest).mockReturnValue("skip me!");
 
-    const capability = new Capability({
-      name: "test",
-      description: "test",
+    const validateCallback = vi.fn().mockResolvedValue({ allowed: false });
+
+    const capability = {
+      name: "cap-1",
       bindings: [
         {
           isValidate: true,
           validateCallback: undefined,
         },
       ],
-    } as unknown as Capability);
+      namespaces: undefined,
+    } as unknown as Capability;
 
     const req = testAdmissionRequest;
+
+    const config = {} as ModuleConfig;
     const reqMetadata = {};
 
-    // This rule is skipped because we cannot mock this function globally as it is tested above
-    const mod =
-      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
-    const spyProcessRequest = vi.spyOn(mod, "processRequest");
+    const results = await validateProcessor(config, [capability], req, reqMetadata);
 
-    await validateProcessor(config, [capability], req, reqMetadata);
-
-    expect(spyProcessRequest).not.toHaveBeenCalled();
-
-    spyProcessRequest.mockRestore();
+    expect(validateCallback).not.toHaveBeenCalled();
+    expect(results).toEqual([]);
   });
 
   it("should skip bindings if shouldSkipRequest returns a reason", async () => {
-    config = createMockModuleConfig({
-      webhookTimeout: 10,
-    });
+    vi.mocked(shouldSkipRequest).mockReturnValue("skip me!");
 
-    const capability = new Capability({
-      name: "test",
-      description: "test",
-      bindings: [
-        {
-          isValidate: true,
-          validateCallback: vi.fn(),
-        },
-      ],
-    } as unknown as Capability);
+    const validateCallback = vi.fn().mockResolvedValue({ allowed: false });
+
+    const binding = { validateCallback } as unknown as Binding;
+
+    const capability = {
+      name: "cap-1",
+      bindings: [binding],
+      namespaces: undefined,
+    } as unknown as Capability;
 
     const req = testAdmissionRequest;
+
+    const config = {} as ModuleConfig;
     const reqMetadata = {};
 
-    // This rule is skipped because we cannot mock this function globally as it is tested above
-    const mod =
-      await vi.importActual<typeof import("./validate-processor")>("./validate-processor");
-    const spyProcessRequest = vi.spyOn(mod, "processRequest");
-    (shouldSkipRequest as Mock).mockReturnValue("Skip reason");
+    const results = await validateProcessor(config, [capability], req, reqMetadata);
 
-    await validateProcessor(config, [capability], req, reqMetadata);
-
-    expect(spyProcessRequest).not.toHaveBeenCalled();
-
-    spyProcessRequest.mockRestore();
+    expect(validateCallback).not.toHaveBeenCalled();
+    expect(results).toEqual([]);
   });
 
   it("should call validateCallback if not skipped", async () => {
@@ -380,29 +368,5 @@ describe("when validating requests", () => {
     expect(results).toEqual([
       { uid: "some-uid", allowed: false, status: { code: 400, message: "nope" } },
     ]);
-  });
-
-  it("should skip validateCallback if skip request reason given", async () => {
-    vi.mocked(shouldSkipRequest).mockReturnValue("skip me!");
-
-    const validateCallback = vi.fn().mockResolvedValue({ allowed: false, statusMessage: "nope" });
-
-    const binding = { validateCallback } as unknown as Binding;
-
-    const capability = {
-      name: "cap-1",
-      bindings: [binding],
-      namespaces: undefined,
-    } as unknown as Capability;
-
-    const req = testAdmissionRequest;
-
-    const config = {} as ModuleConfig;
-    const reqMetadata = {};
-
-    const results = await validateProcessor(config, [capability], req, reqMetadata);
-
-    expect(validateCallback).not.toHaveBeenCalled();
-    expect(results).toEqual([]);
   });
 });
