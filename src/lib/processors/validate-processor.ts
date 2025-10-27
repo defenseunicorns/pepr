@@ -73,81 +73,36 @@ export async function validateProcessor(
 ): Promise<ValidateResponse[]> {
   const webhookTimer = new MeasureWebhookTimeout(WebhookType.VALIDATE);
   webhookTimer.start(config.webhookTimeout);
-
   const wrapped = new PeprValidateRequest(req);
+  const response: ValidateResponse[] = [];
+
+  // If the resource is a secret, decode the data
   if (req.kind.version === "v1" && req.kind.kind === "Secret") {
     convertFromBase64Map(wrapped.Raw as unknown as kind.Secret);
   }
 
   Log.info(reqMetadata, `Processing validation request`);
 
-  const responses = (
-    await Promise.all(
-      capabilities.map(cap => handleCapability(cap, { config, req, reqMetadata, wrapped })),
-    )
-  ).flat();
+  for (const { name, bindings, namespaces } of capabilities) {
+    const actionMetadata = { ...reqMetadata, name };
 
+    for (const binding of bindings) {
+      // Skip this action if it's not a validation action
+      if (!binding.validateCallback) {
+        continue;
+      }
+
+      // Continue to the next action without doing anything if this one should be skipped
+      const shouldSkip = shouldSkipRequest(binding, req, namespaces, getIgnoreNamespaces(config));
+      if (shouldSkip !== "") {
+        Log.debug(shouldSkip);
+        continue;
+      }
+
+      const resp = await processRequest(binding, actionMetadata, wrapped);
+      response.push(resp);
+    }
+  }
   webhookTimer.stop();
-  return responses;
-}
-
-async function handleCapability(
-  capability: Capability,
-  context: {
-    config: ModuleConfig;
-    req: AdmissionRequest;
-    reqMetadata: Record<string, string>;
-    wrapped: PeprValidateRequest<KubernetesObject>;
-  },
-): Promise<ValidateResponse[]> {
-  const { config, req, reqMetadata, wrapped } = context;
-  const { name, bindings, namespaces } = capability;
-  const actionMetadata = { ...reqMetadata, name };
-
-  const ignoreNamespaces = getIgnoreNamespaces(config);
-  const validBindings = bindings.filter(b => b.validateCallback);
-
-  const results: ValidateResponse[] = [];
-  for (const binding of validBindings) {
-    const resp = await processBinding(
-      { req, namespaces, ignoreNamespaces },
-      { binding, actionMetadata, wrapped },
-    );
-    if (resp) results.push(resp);
-  }
-
-  return results;
-}
-
-async function processBinding(
-  requestCtx: {
-    req: AdmissionRequest;
-    namespaces: string[] | undefined;
-    ignoreNamespaces: string[];
-  },
-  validationCtx: {
-    binding: Binding;
-    actionMetadata: Record<string, string>;
-    wrapped: PeprValidateRequest<KubernetesObject>;
-  },
-): Promise<ValidateResponse | null> {
-  const { binding, actionMetadata, wrapped } = validationCtx;
-  const { req, namespaces, ignoreNamespaces } = requestCtx;
-
-  if (shouldSkipBinding(binding, req, namespaces, ignoreNamespaces)) return null;
-  return await processRequest(binding, actionMetadata, wrapped);
-}
-
-function shouldSkipBinding(
-  binding: Binding,
-  req: AdmissionRequest,
-  namespaces: string[] | undefined,
-  ignoreNamespaces: string[],
-): boolean {
-  const reason = shouldSkipRequest(binding, req, namespaces ?? [], ignoreNamespaces);
-  if (reason !== "") {
-    Log.debug(reason);
-    return true;
-  }
-  return false;
+  return response;
 }
