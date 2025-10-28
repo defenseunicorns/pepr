@@ -10,7 +10,7 @@ import {
 } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { concat, equals, uniqWith } from "ramda";
-import { resolveIgnoreNamespaces } from "./ignoredNamespaces";
+import { getIgnoreNamespaces } from "./ignoredNamespaces";
 import { Assets } from "./assets";
 import { Event, WebhookType } from "../enums";
 import { Binding, AdditionalWebhook } from "../types";
@@ -46,9 +46,10 @@ export const validateRule = (
 
 export async function generateWebhookRules(
   assets: Assets,
-  isMutateWebhook: boolean,
+  webhookType: WebhookType,
 ): Promise<V1RuleWithOperations[]> {
   const { capabilities } = assets;
+  const isMutateWebhook = webhookType === WebhookType.MUTATE;
 
   const rules = capabilities.flatMap(capability =>
     capability.bindings
@@ -61,20 +62,13 @@ export async function generateWebhookRules(
 
 export async function webhookConfigGenerator(
   assets: Assets,
-  mutateOrValidate: WebhookType,
+  webhookType: WebhookType,
   timeoutSeconds = 10,
 ): Promise<kind.MutatingWebhookConfiguration | kind.ValidatingWebhookConfiguration | null> {
   const ignore: V1LabelSelectorRequirement[] = [];
 
   const { name, tls, config, apiPath, host } = assets;
-  const ignoreNS = concat(
-    peprIgnoreNamespaces,
-    resolveIgnoreNamespaces(
-      config?.alwaysIgnore?.namespaces?.length
-        ? config?.alwaysIgnore?.namespaces
-        : config?.admission?.alwaysIgnore?.namespaces,
-    ),
-  );
+  const ignoreNS = concat(peprIgnoreNamespaces, getIgnoreNamespaces(config));
 
   // Add any namespaces to ignore
   if (ignoreNS) {
@@ -90,7 +84,7 @@ export async function webhookConfigGenerator(
   };
 
   // The URL must include the API Path
-  const fullApiPath = `/${mutateOrValidate}/${apiPath}`;
+  const fullApiPath = `/${webhookType}/${apiPath}`;
 
   // If a host is specified, use that with a port of 3000
   if (host) {
@@ -104,8 +98,7 @@ export async function webhookConfigGenerator(
     };
   }
 
-  const isMutate = mutateOrValidate === WebhookType.MUTATE;
-  const rules = await generateWebhookRules(assets, isMutate);
+  const rules = await generateWebhookRules(assets, webhookType);
 
   // If there are no rules, return null
   if (rules.length < 1) {
@@ -114,7 +107,10 @@ export async function webhookConfigGenerator(
 
   const webhookConfig = {
     apiVersion: "admissionregistration.k8s.io/v1",
-    kind: isMutate ? "MutatingWebhookConfiguration" : "ValidatingWebhookConfiguration",
+    kind:
+      webhookType === WebhookType.MUTATE
+        ? "MutatingWebhookConfiguration"
+        : "ValidatingWebhookConfiguration",
     metadata: { name },
     webhooks: [
       {

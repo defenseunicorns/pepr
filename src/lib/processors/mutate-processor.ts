@@ -13,7 +13,7 @@ import { ModuleConfig } from "../types";
 import { PeprMutateRequest } from "../mutate-request";
 import { base64Encode } from "../utils";
 import { OnError } from "../../cli/init/enums";
-import { resolveIgnoreNamespaces } from "../assets/ignoredNamespaces";
+import { getIgnoreNamespaces } from "../assets/ignoredNamespaces";
 import { Operation } from "fast-json-patch";
 import { WebhookType } from "../enums";
 
@@ -149,11 +149,7 @@ export async function mutateProcessor(
         bind.binding,
         bind.req,
         bind.namespaces,
-        resolveIgnoreNamespaces(
-          bind?.config?.alwaysIgnore?.namespaces?.length
-            ? bind.config?.alwaysIgnore?.namespaces
-            : bind.config?.admission?.alwaysIgnore?.namespaces,
-        ),
+        getIgnoreNamespaces(config),
       );
       if (shouldSkip !== "") {
         Log.debug(shouldSkip);

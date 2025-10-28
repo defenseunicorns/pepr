@@ -52,6 +52,12 @@ interface OverridesFileSchema {
     labels: {
       [key: string]: string;
     };
+    securityContext: {
+      runAsUser: number;
+      runAsGroup: number;
+      runAsNonRoot: true;
+      fsGroup: number;
+    };
   };
   watcher: {
     enabled: boolean;
@@ -118,6 +124,10 @@ describe("overridesFile", () => {
     expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(
       mockOverrides.config.description,
     );
+    expect(parsedYaml.admission.securityContext.runAsUser).toBe(65532);
+    expect(parsedYaml.admission.securityContext.runAsGroup).toBe(65532);
+    expect(parsedYaml.admission.securityContext.fsGroup).toBe(65532);
+    expect(parsedYaml.admission.securityContext.runAsNonRoot).toBeTruthy();
   });
 
   it("sets correct webhook failurePolicy based on config", async () => {
@@ -139,8 +149,8 @@ describe("overridesFile", () => {
     expect(parsedYaml.admission.failurePolicy).toBe("Ignore");
   });
 
-  it("sets correct annotations based on config", async () => {
-    mockOverrides.config.description = "";
+  it("sets correct podSecurityContext for private images", async () => {
+    mockOverrides.image += "-private";
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
     expect(fs.writeFile).toHaveBeenCalledTimes(2);
@@ -155,9 +165,35 @@ describe("overridesFile", () => {
 
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
-    expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe("");
-    expect(parsedYaml.watcher.annotations["pepr.dev/description"]).toBe("");
+    expect(parsedYaml.admission.securityContext.runAsUser).toBe(1000);
+    expect(parsedYaml.admission.securityContext.runAsGroup).toBe(1000);
+    expect(parsedYaml.admission.securityContext.fsGroup).toBe(1000);
   });
+
+  it.each([
+    ["", ""],
+    [undefined, ""],
+    ["myDescription", "myDescription"],
+  ])("sets correct annotations based on config - given %j, sets %j", async (given, expected) => {
+    mockOverrides.config.description = given;
+    await overridesFile(mockOverrides, mockPath, imagePullSecrets);
+
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
+
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+
+    expect(yamlCall).toBeDefined();
+
+    const [writtenPath, writtenContent] = yamlCall!;
+    expect(writtenPath).toBe(mockPath);
+
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(expected);
+    expect(parsedYaml.watcher.annotations["pepr.dev/description"]).toBe(expected);
+  });
+
   it("properly encodes apiPath in base64", async () => {
     await overridesFile(mockOverrides, mockPath, imagePullSecrets);
 
@@ -268,5 +304,44 @@ describe("overridesFile", () => {
 
     expect(featuresDef.required).toEqual(expect.arrayContaining(["enabled"]));
     expect(featuresDef.required).toHaveLength(1);
+  });
+  it("uses alwaysIgnore.namespaces when non-empty", async () => {
+    const cfgWithAlwaysIgnore = {
+      ...mockOverrides,
+      config: {
+        ...mockOverrides.config,
+        alwaysIgnore: {
+          namespaces: ["ns1", "ns2"],
+        },
+      },
+    };
+
+    await overridesFile(cfgWithAlwaysIgnore, mockPath, imagePullSecrets);
+
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+    const [, writtenContent] = yamlCall!;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.additionalIgnoredNamespaces).toEqual(["ns1", "ns2"]);
+  });
+  it("falls back to admission.alwaysIgnore.namespaces when alwaysIgnore is empty", async () => {
+    const cfgWithAdmissionIgnore = {
+      ...mockOverrides,
+      config: {
+        ...mockOverrides.config,
+        alwaysIgnore: { namespaces: [] },
+        admission: { alwaysIgnore: { namespaces: ["nsA", "nsB"] } },
+      },
+    };
+
+    await overridesFile(cfgWithAdmissionIgnore, mockPath, imagePullSecrets);
+
+    const calls = (fs.writeFile as Mock).mock.calls;
+    const yamlCall = calls.find(([path]) => path === mockPath);
+    const [, writtenContent] = yamlCall!;
+    const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
+
+    expect(parsedYaml.additionalIgnoredNamespaces).toEqual(["nsA", "nsB"]);
   });
 });

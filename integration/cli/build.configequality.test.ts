@@ -10,9 +10,17 @@ import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import { ModuleConfig } from "../../src/lib/types";
+import type { KubernetesObject } from "@kubernetes/client-node";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
+
+interface PeprPackageJson {
+  name: string;
+  version: string;
+  description: string;
+  pepr: ModuleConfig;
+}
 
 describe("build", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
@@ -22,405 +30,457 @@ describe("build", () => {
   }, time.toMs("1m"));
 
   describe("builds a module", () => {
-    const id = FILE.split(".").at(1);
+    const id = FILE.split(".").at(1) ?? "default";
     const testModule = `${workdir.path()}/${id}`;
     const packageJson = `${testModule}/package.json`;
 
     beforeAll(async () => {
-      await fs.rm(testModule, { recursive: true, force: true });
-      const argz = [
-        `--name ${id}`,
-        `--description ${id}`,
-        `--error-behavior reject`,
-        `--uuid random-identifier`,
-        "--yes",
-        "--skip-post-init",
-      ].join(" ");
-      await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
-      await pepr.tgzifyModule(testModule);
-      await pepr.cli(testModule, { cmd: `npm install` });
+      await setupTestModule(testModule, id, workdir.path());
     }, time.toMs("2m"));
 
     describe("maps config options from package.json into pepr + helm manifests", () => {
       let moduleConfig: Required<ModuleConfig>;
-      let peprResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      let helmResources: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      let peprResources: KubernetesObject[];
+      let helmResources: KubernetesObject[];
       let peprUuid: string;
 
-      // eslint-disable-next-line max-statements
       beforeAll(async () => {
-        // set configuration in package.json
-        const config = await resource.fromFile(packageJson);
-        config.description = "testdesc";
-        config.pepr = {
-          ...config.pepr,
-          peprVersion: "1.2.3",
-          webhookTimeout: 11,
-          onError: "reject",
-          alwaysIgnore: {
-            namespaces: ["garbage"],
-          },
-          logLevel: "warning",
-          env: {
-            TEST: "env",
-          },
-          customLabels: {
-            namespace: {
-              test: "test",
-              value: "value",
-            },
-          },
-          rbacMode: "scoped",
-          rbac: [
-            {
-              apiGroups: ["test"],
-              resources: ["tests"],
-              verbs: ["get", "list"],
-            },
-          ],
-        };
-        await fs.writeFile(packageJson, JSON.stringify(config, null, 2));
-
-        // translate package.json values into ModuleConfig
-        peprUuid = `pepr-${config.pepr.uuid}`;
-        moduleConfig = config.pepr;
-        moduleConfig.appVersion = config.version;
-        moduleConfig.description = config.description;
-
-        // build module
-        const build = await pepr.cli(testModule, { cmd: `pepr build` });
-        expect(build.exitcode).toBe(0);
-        expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
-
-        // load helm manifests
-        const chartDir = `${testModule}/dist/${moduleConfig.uuid}-chart`;
-        const helm = await pepr.cli(chartDir, { cmd: `helm template .` });
-        expect(build.exitcode).toBe(0);
-        expect(build.stderr.join("").trim()).toBe("");
-        expect(build.stdout.join("").trim()).not.toBe("");
-
-        const helmManifest = `${chartDir}/reified.yaml`;
-        await fs.writeFile(helmManifest, helm.stdout.join("\n"));
-        helmResources = await resource.fromFile(helmManifest);
-
-        // load pepr manifests
-        const peprManifest = `${testModule}/dist/pepr-module-${moduleConfig.uuid}.yaml`;
-        peprResources = await resource.fromFile(peprManifest);
+        ({ moduleConfig, peprResources, helmResources, peprUuid } = await buildAndLoadResources(
+          packageJson,
+          testModule,
+        ));
       }, time.toMs("2m"));
 
-      it("peprVersion", async () => {
-        const peprStringified = JSON.stringify(peprResources);
-        const helmStringified = JSON.stringify(helmResources);
+      const getPeprResources = (): KubernetesObject[] => peprResources;
+      const getHelmResources = (): KubernetesObject[] => helmResources;
 
+      it("peprVersion", async () => {
+        const peprStringified = JSON.stringify(getPeprResources());
+        const helmStringified = JSON.stringify(getHelmResources());
         expect(peprStringified.includes(moduleConfig.peprVersion)).toBe(false);
         expect(helmStringified.includes(moduleConfig.peprVersion)).toBe(false);
       });
 
       it("appVersion", async () => {
-        const peprStringified = JSON.stringify(peprResources);
-        const helmStringified = JSON.stringify(helmResources);
-
+        const peprStringified = JSON.stringify(getPeprResources());
+        const helmStringified = JSON.stringify(getHelmResources());
         expect(peprStringified.includes(moduleConfig.appVersion)).toBe(false);
         expect(helmStringified.includes(moduleConfig.appVersion)).toBe(false);
       });
 
-      it("uuid", async () => {
-        for (const clusterRole of [
-          resource.select(peprResources, kind.ClusterRole, peprUuid),
-          resource.select(helmResources, kind.ClusterRole, peprUuid),
-        ]) {
-          expect(clusterRole).toBeDefined();
-        }
+      describe("uuid", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const clusterRoleBinding of [
-          resource.select(peprResources, kind.ClusterRoleBinding, peprUuid),
-          resource.select(helmResources, kind.ClusterRoleBinding, peprUuid),
-        ]) {
-          expect(clusterRoleBinding).toBeDefined();
-          expect(clusterRoleBinding.roleRef.name).toBe(peprUuid);
-          expect(clusterRoleBinding!.subjects!.at(0)!.name).toBe(peprUuid);
-        }
+        const resourceKinds = [
+          { kind: kind.ClusterRole, name: (uuid: string): string => uuid },
+          { kind: kind.ServiceAccount, name: (uuid: string): string => uuid },
+          { kind: kind.Secret, name: (uuid: string): string => `${uuid}-api-path` },
+          { kind: kind.Secret, name: (uuid: string): string => `${uuid}-tls` },
+          { kind: kind.Secret, name: (uuid: string): string => `${uuid}-module` },
+          { kind: kind.Service, name: (uuid: string): string => uuid },
+          { kind: kind.Service, name: (uuid: string): string => `${uuid}-watcher` },
+          { kind: kind.Role, name: (uuid: string): string => `${uuid}-store` },
+          { kind: kind.Deployment, name: (uuid: string): string => uuid },
+          { kind: kind.Deployment, name: (uuid: string): string => `${uuid}-watcher` },
+          { kind: kind.MutatingWebhookConfiguration, name: (uuid: string): string => uuid },
+          { kind: kind.ValidatingWebhookConfiguration, name: (uuid: string): string => uuid },
+        ];
 
-        for (const serviceAccount of [
-          resource.select(peprResources, kind.ServiceAccount, peprUuid),
-          resource.select(helmResources, kind.ServiceAccount, peprUuid),
-        ]) {
-          expect(serviceAccount).toBeDefined();
-        }
+        it.each(
+          sources.flatMap(src =>
+            resourceKinds.map(resourceKind => ({
+              source: src.source,
+              getResources: src.getResources,
+              resourceKind: resourceKind.kind,
+              name: resourceKind.name,
+            })),
+          ),
+        )(
+          "$resourceKind in $source resources should be defined",
+          ({ getResources, resourceKind, name }) => {
+            const res = resource.select(getResources(), resourceKind, name(peprUuid));
+            expect(res).toBeDefined();
+          },
+        );
 
-        for (const secretApiPath of [
-          resource.select(peprResources, kind.Secret, `${peprUuid}-api-path`),
-          resource.select(helmResources, kind.Secret, `${peprUuid}-api-path`),
-        ]) {
-          expect(secretApiPath).toBeDefined();
-        }
+        it.each(sources)(
+          "ClusterRoleBinding in $source resources should have correct roleRef and subjects",
+          ({ getResources }) => {
+            const crb = resource.select(getResources(), kind.ClusterRoleBinding, peprUuid);
+            expect(crb).toBeDefined();
+            expect(crb.roleRef.name).toBe(peprUuid);
+            expect(crb.subjects?.[0]?.name).toBe(peprUuid);
+          },
+        );
 
-        for (const secretTls of [
-          resource.select(peprResources, kind.Secret, `${peprUuid}-tls`),
-          resource.select(helmResources, kind.Secret, `${peprUuid}-tls`),
-        ]) {
-          expect(secretTls).toBeDefined();
-        }
+        it.each(sources)(
+          "RoleBinding in $source resources should have correct roleRef and subjects",
+          ({ getResources }) => {
+            const rb = resource.select(getResources(), kind.RoleBinding, `${peprUuid}-store`);
+            expect(rb).toBeDefined();
+            expect(rb.roleRef.name).toBe(`${peprUuid}-store`);
+            expect(rb.subjects?.[0]?.name).toBe(`${peprUuid}-store`);
+          },
+        );
 
-        for (const deployAdmission of [
-          resource.select(peprResources, kind.Deployment, peprUuid),
-          resource.select(helmResources, kind.Deployment, peprUuid),
-        ]) {
-          expect(deployAdmission).toBeDefined();
-          expect(deployAdmission.metadata!.labels!.app).toBe(peprUuid);
-          expect(deployAdmission.metadata!.labels!["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
-          expect(deployAdmission.spec!.selector!.matchLabels!.app).toBe(peprUuid);
-          expect(deployAdmission.spec!.template!.metadata!.labels!.app).toBe(peprUuid);
-          expect(deployAdmission.spec!.template!.spec!.serviceAccountName).toBe(peprUuid);
-          expect(
-            deployAdmission
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "tls-certs")
-              .at(0)!.secret!.secretName,
-          ).toBe(`${peprUuid}-tls`);
-          expect(
-            deployAdmission
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "api-path")
-              .at(0)!.secret!.secretName,
-          ).toBe(`${peprUuid}-api-path`);
-          expect(
-            deployAdmission
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "module")
-              .at(0)!.secret!.secretName,
-          ).toBe(`${peprUuid}-module`);
-        }
+        it.each(sources)(
+          "Deployment (admission) in $source resources should have correct labels and volumes",
+          ({ getResources }) => {
+            const deployment = resource.select(getResources(), kind.Deployment, peprUuid);
+            expect(deployment).toBeDefined();
+            expect(deployment.metadata?.labels?.app).toBe(peprUuid);
+            expect(deployment.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
+            expect(deployment.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
+          },
+        );
 
-        for (const serviceAdmission of [
-          resource.select(peprResources, kind.Service, peprUuid),
-          resource.select(helmResources, kind.Service, peprUuid),
-        ]) {
-          expect(serviceAdmission).toBeDefined();
-          expect(serviceAdmission.spec!.selector!.app).toBe(peprUuid);
-        }
+        it.each(sources)(
+          "Deployment (watcher) in $source resources should have correct labels and volumes",
+          ({ getResources }) => {
+            const deployment = resource.select(
+              getResources(),
+              kind.Deployment,
+              `${peprUuid}-watcher`,
+            );
+            expect(deployment).toBeDefined();
+            expect(deployment.metadata?.labels?.app).toBe(`${peprUuid}-watcher`);
+            expect(deployment.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
+            expect(deployment.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
+          },
+        );
 
-        for (const serviceWatcher of [
-          resource.select(peprResources, kind.Service, `${peprUuid}-watcher`),
-          resource.select(helmResources, kind.Service, `${peprUuid}-watcher`),
-        ]) {
-          expect(serviceWatcher).toBeDefined();
-          expect(serviceWatcher.spec!.selector!.app).toBe(`${peprUuid}-watcher`);
-        }
+        it.each(sources)(
+          "Service (admission) in $source resources should have correct selector",
+          ({ getResources }) => {
+            const svc = resource.select(getResources(), kind.Service, peprUuid);
+            expect(svc).toBeDefined();
+            expect(svc.spec?.selector?.app).toBe(peprUuid);
+          },
+        );
 
-        for (const secretModule of [
-          resource.select(peprResources, kind.Secret, `${peprUuid}-module`),
-          resource.select(helmResources, kind.Secret, `${peprUuid}-module`),
-        ]) {
-          expect(secretModule).toBeDefined();
-        }
+        it.each(sources)(
+          "Service (watcher) in $source resources should have correct selector",
+          ({ getResources }) => {
+            const svc = resource.select(getResources(), kind.Service, `${peprUuid}-watcher`);
+            expect(svc).toBeDefined();
+            expect(svc.spec?.selector?.app).toBe(`${peprUuid}-watcher`);
+          },
+        );
 
-        for (const roleStore of [
-          resource.select(peprResources, kind.Role, `${peprUuid}-store`),
-          resource.select(helmResources, kind.Role, `${peprUuid}-store`),
-        ]) {
-          expect(roleStore).toBeDefined();
-        }
+        it.each(sources)(
+          "MutatingWebhookConfiguration in $source resources should have correct webhook config",
+          ({ getResources }) => {
+            const mwc = resource.select(
+              getResources(),
+              kind.MutatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(mwc).toBeDefined();
+            expect(mwc.webhooks?.[0]?.name).toBe(`${peprUuid}.pepr.dev`);
+            expect(mwc.webhooks?.[0]?.clientConfig?.service?.name).toBe(peprUuid);
+          },
+        );
 
-        for (const roleBindingStore of [
-          resource.select(peprResources, kind.RoleBinding, `${peprUuid}-store`),
-          resource.select(helmResources, kind.RoleBinding, `${peprUuid}-store`),
-        ]) {
-          expect(roleBindingStore).toBeDefined();
-          expect(roleBindingStore.roleRef.name).toBe(`${peprUuid}-store`);
-          expect(roleBindingStore!.subjects!.at(0)!.name).toBe(`${peprUuid}-store`);
-        }
+        it.each(sources)(
+          "ValidatingWebhookConfiguration in $source resources should have correct webhook config",
+          ({ getResources }) => {
+            const vwc = resource.select(
+              getResources(),
+              kind.ValidatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(vwc).toBeDefined();
+            expect(vwc.webhooks?.[0]?.name).toBe(`${peprUuid}.pepr.dev`);
+            expect(vwc.webhooks?.[0]?.clientConfig?.service?.name).toBe(peprUuid);
+          },
+        );
 
-        for (const mwc of [
-          resource.select(peprResources, kind.MutatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.MutatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(mwc).toBeDefined();
-          expect(mwc.webhooks!.at(0)!.name).toBe(`${peprUuid}.pepr.dev`);
-          expect(mwc.webhooks!.at(0)!.clientConfig.service!.name).toBe(peprUuid);
-        }
-
-        for (const vwc of [
-          resource.select(peprResources, kind.ValidatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.ValidatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(vwc).toBeDefined();
-          expect(vwc.webhooks!.at(0)!.name).toBe(`${peprUuid}.pepr.dev`);
-          expect(vwc.webhooks!.at(0)!.clientConfig.service!.name).toBe(peprUuid);
-        }
-
-        for (const deployWatcher of [
-          resource.select(peprResources, kind.Deployment, `${peprUuid}-watcher`),
-          resource.select(helmResources, kind.Deployment, `${peprUuid}-watcher`),
-        ]) {
-          expect(deployWatcher).toBeDefined();
-          expect(deployWatcher.metadata!.labels!.app).toBe(`${peprUuid}-watcher`);
-          expect(deployWatcher.metadata!.labels!["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
-          expect(deployWatcher.spec!.selector!.matchLabels!.app).toBe(`${peprUuid}-watcher`);
-          expect(deployWatcher.spec!.template!.metadata!.labels!.app).toBe(`${peprUuid}-watcher`);
-          expect(deployWatcher.spec!.template!.spec!.serviceAccountName).toBe(peprUuid);
-          expect(
-            deployWatcher
-              .spec!.template!.spec!.volumes!.filter(vol => vol.name === "tls-certs")
-              .at(0)!.secret!.secretName,
-          ).toBe(`${peprUuid}-tls`);
-          expect(
-            deployWatcher.spec!.template!.spec!.volumes!.filter(vol => vol.name === "module").at(0)!
-              .secret!.secretName,
-          ).toBe(`${peprUuid}-module`);
-        }
+        it.each(sources)(
+          "Store ServiceAccount in $source resources should have correct name",
+          ({ getResources }) => {
+            const sa = resource.select(getResources(), kind.ServiceAccount, peprUuid);
+            expect(sa).toBeDefined();
+            expect(sa.metadata?.name).toBe(peprUuid);
+          },
+        );
       });
 
-      it("description", async () => {
-        for (const deployAdmission of [
-          resource.select(peprResources, kind.Deployment, peprUuid),
-          resource.select(helmResources, kind.Deployment, peprUuid),
-        ]) {
-          expect(deployAdmission.metadata!.annotations!["pepr.dev/description"]).toBe(
-            moduleConfig.description,
-          );
-        }
+      describe("webhookTimeout", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const deployWatcher of [
-          resource.select(peprResources, kind.Deployment, `${peprUuid}-watcher`),
-          resource.select(helmResources, kind.Deployment, `${peprUuid}-watcher`),
-        ]) {
-          expect(deployWatcher.metadata!.annotations!["pepr.dev/description"]).toBe(
-            moduleConfig.description,
-          );
-        }
+        it.each(sources)(
+          "MutatingWebhookConfiguration in $source resources should have correct timeout",
+          ({ getResources }) => {
+            const mwc = resource.select(
+              getResources(),
+              kind.MutatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(mwc.webhooks?.[0]?.timeoutSeconds).toBe(moduleConfig.webhookTimeout);
+          },
+        );
+
+        it.each(sources)(
+          "ValidatingWebhookConfiguration in $source resources should have correct timeout",
+          ({ getResources }) => {
+            const vwc = resource.select(
+              getResources(),
+              kind.ValidatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(vwc.webhooks?.[0]?.timeoutSeconds).toBe(moduleConfig.webhookTimeout);
+          },
+        );
       });
 
-      it("webhookTimeout", async () => {
-        for (const mwc of [
-          resource.select(peprResources, kind.MutatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.MutatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(mwc.webhooks!.at(0)!.timeoutSeconds).toBe(moduleConfig.webhookTimeout);
-        }
+      describe("onError", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const vwc of [
-          resource.select(peprResources, kind.ValidatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.ValidatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(vwc.webhooks!.at(0)!.timeoutSeconds).toBe(moduleConfig.webhookTimeout);
-        }
+        it.each(sources)(
+          "MutatingWebhookConfiguration in $source resources should have correct failure policy",
+          ({ getResources }) => {
+            const policy = moduleConfig.onError === "reject" ? "Fail" : "Ignore";
+            const mwc = resource.select(
+              getResources(),
+              kind.MutatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(mwc.webhooks?.[0]?.failurePolicy).toBe(policy);
+          },
+        );
+
+        it.each(sources)(
+          "ValidatingWebhookConfiguration in $source resources should have correct failure policy",
+          ({ getResources }) => {
+            const policy = moduleConfig.onError === "reject" ? "Fail" : "Ignore";
+            const vwc = resource.select(
+              getResources(),
+              kind.ValidatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(vwc.webhooks?.[0]?.failurePolicy).toBe(policy);
+          },
+        );
       });
 
-      it("onError", async () => {
-        const policy = moduleConfig.onError === "reject" ? "Fail" : "Ignore";
+      describe("alwaysIgnore.namespaces", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const mwc of [
-          resource.select(peprResources, kind.MutatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.MutatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(mwc.webhooks!.at(0)!.failurePolicy).toBe(policy);
-        }
+        it.each(sources)(
+          "MutatingWebhookConfiguration in $source resources should contain ignored namespaces",
+          ({ getResources }) => {
+            const mwc = resource.select(
+              getResources(),
+              kind.MutatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(mwc.webhooks?.[0]?.namespaceSelector?.matchExpressions?.[0]?.values).toEqual(
+              expect.arrayContaining(moduleConfig.alwaysIgnore.namespaces!),
+            );
+          },
+        );
 
-        for (const vwc of [
-          resource.select(peprResources, kind.ValidatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.ValidatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(vwc.webhooks!.at(0)!.failurePolicy).toBe(policy);
-        }
+        it.each(sources)(
+          "ValidatingWebhookConfiguration in $source resources should contain ignored namespaces",
+          ({ getResources }) => {
+            const vwc = resource.select(
+              getResources(),
+              kind.ValidatingWebhookConfiguration,
+              peprUuid,
+            );
+            expect(vwc.webhooks?.[0]?.namespaceSelector?.matchExpressions?.[0]?.values).toEqual(
+              expect.arrayContaining(moduleConfig.alwaysIgnore.namespaces!),
+            );
+          },
+        );
       });
 
-      it("alwaysIgnore.namespaces", async () => {
-        for (const mwc of [
-          resource.select(peprResources, kind.MutatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.MutatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(mwc.webhooks!.at(0)!.namespaceSelector!.matchExpressions!.at(0)!.values).toEqual(
-            expect.arrayContaining(moduleConfig.alwaysIgnore.namespaces!),
-          );
-        }
+      describe("logLevel", () => {
+        const deployments = [peprUuid, peprUuid];
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const vwc of [
-          resource.select(peprResources, kind.ValidatingWebhookConfiguration, peprUuid),
-          resource.select(helmResources, kind.ValidatingWebhookConfiguration, peprUuid),
-        ]) {
-          expect(vwc.webhooks!.at(0)!.namespaceSelector!.matchExpressions!.at(0)!.values).toEqual(
-            expect.arrayContaining(moduleConfig.alwaysIgnore.namespaces!),
-          );
-        }
+        it.each(deployments.flatMap(deployment => sources.map(s => ({ ...s, deployment }))))(
+          "$deployment in $source resources should have LOG_LEVEL env var",
+          ({ getResources }) => {
+            const deployment = resource.select(getResources(), kind.Deployment, peprUuid);
+            expect(deployment.spec?.template?.spec?.containers?.[0]?.env).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  name: "LOG_LEVEL",
+                  value: moduleConfig.logLevel,
+                }),
+              ]),
+            );
+          },
+        );
       });
 
-      it("logLevel", async () => {
-        for (const deployAdmission of [
-          resource.select(peprResources, kind.Deployment, peprUuid),
-          resource.select(helmResources, kind.Deployment, peprUuid),
-        ]) {
-          expect(deployAdmission.spec!.template.spec!.containers.at(0)!.env).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({ name: "LOG_LEVEL", value: moduleConfig.logLevel }),
-            ]),
-          );
-        }
+      describe("env", () => {
+        const deployments = [peprUuid, `${peprUuid}-watcher`];
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const deployWatcher of [
-          resource.select(peprResources, kind.Deployment, `${peprUuid}-watcher`),
-          resource.select(helmResources, kind.Deployment, `${peprUuid}-watcher`),
-        ]) {
-          expect(deployWatcher.spec!.template.spec!.containers.at(0)!.env).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({ name: "LOG_LEVEL", value: moduleConfig.logLevel }),
-            ]),
-          );
-        }
+        it.each(deployments.flatMap(deployment => sources.map(s => ({ ...s, deployment }))))(
+          "$deployment in $source resources should have TEST env var",
+          ({ getResources }) => {
+            const deployment = resource.select(
+              getResources(),
+              kind.Deployment,
+              `${peprUuid}-watcher`,
+            );
+            expect(deployment.spec?.template?.spec?.containers?.[0]?.env).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  name: "TEST",
+                  value: moduleConfig.env.TEST,
+                }),
+              ]),
+            );
+          },
+        );
       });
 
-      it("env", async () => {
-        for (const deployAdmission of [
-          resource.select(peprResources, kind.Deployment, peprUuid),
-          resource.select(helmResources, kind.Deployment, peprUuid),
-        ]) {
-          expect(deployAdmission.spec!.template.spec!.containers.at(0)!.env).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({ name: "TEST", value: moduleConfig.env.TEST }),
-            ]),
-          );
-        }
+      describe("customLabels.namespace", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const deployWatcher of [
-          resource.select(peprResources, kind.Deployment, `${peprUuid}-watcher`),
-          resource.select(helmResources, kind.Deployment, `${peprUuid}-watcher`),
-        ]) {
-          expect(deployWatcher.spec!.template.spec!.containers.at(0)!.env).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({ name: "TEST", value: moduleConfig.env.TEST }),
-            ]),
+        it.each(sources)(
+          "Namespace in $source resources should contain custom labels",
+          ({ getResources }) => {
+            const ns = resource.select(getResources(), kind.Namespace, "pepr-system");
+            expect(ns.metadata?.labels).toEqual(
+              expect.objectContaining(moduleConfig.customLabels.namespace!),
+            );
+          },
+        );
+
+        it("Namespace in helm resources should contain additional test labels", () => {
+          const ns = resource.select(getHelmResources(), kind.Namespace, "pepr-system");
+          expect(ns.metadata?.labels).toEqual(
+            expect.objectContaining({ test: "test", value: "value" }),
           );
-        }
+        });
       });
 
-      it("customLabels.namespace", async () => {
-        for (const namespace of [
-          resource.select(peprResources, kind.Namespace, "pepr-system"),
-          resource.select(helmResources, kind.Namespace, "pepr-system"),
-        ]) {
-          expect(namespace.metadata!.labels!).toEqual(
-            expect.objectContaining(moduleConfig.customLabels.namespace!),
-          );
-        }
+      describe("rbacMode: scoped + rbac: [...]", () => {
+        const sources = [
+          { source: "pepr", getResources: getPeprResources },
+          { source: "helm", getResources: getHelmResources },
+        ];
 
-        for (const namespace of [resource.select(helmResources, kind.Namespace, "pepr-system")]) {
-          expect(namespace.metadata!.labels!).toEqual(
-            expect.objectContaining({
-              test: "test",
-              value: "value",
-            }),
-          );
-        }
-      });
-
-      it("rbacMode: scoped + rbac: [...]", async () => {
-        for (const clusterRole of [
-          resource.select(peprResources, kind.ClusterRole, peprUuid),
-          resource.select(helmResources, kind.ClusterRole, peprUuid),
-        ]) {
-          moduleConfig.rbac.forEach(policyRule => {
-            expect(clusterRole.rules).toContainEqual(policyRule);
-          });
-        }
+        it.each(sources)(
+          "ClusterRole in $source resources should contain all policy rules",
+          ({ getResources }) => {
+            const cr = resource.select(getResources(), kind.ClusterRole, peprUuid);
+            moduleConfig.rbac.forEach(rule => expect(cr.rules).toContainEqual(rule));
+          },
+        );
       });
     });
   });
 });
+
+async function setupTestModule(testModule: string, id: string, workdirPath: string): Promise<void> {
+  await fs.rm(testModule, { recursive: true, force: true });
+  const args = [
+    `--name ${id}`,
+    `--description ${id}`,
+    `--error-behavior reject`,
+    `--uuid random-identifier`,
+    "--yes",
+    "--skip-post-init",
+  ].join(" ");
+
+  await pepr.cli(workdirPath, { cmd: `pepr init ${args}` });
+  await pepr.tgzifyModule(testModule);
+  await pepr.cli(testModule, { cmd: `npm install` });
+}
+
+async function preparePeprConfig(packageJson: string): Promise<PeprPackageJson> {
+  const config = (await resource.fromFile(packageJson)) as PeprPackageJson;
+  config.description = "testdesc";
+  config.pepr = {
+    ...config.pepr,
+    peprVersion: "1.2.3",
+    webhookTimeout: 11,
+    onError: "reject",
+    alwaysIgnore: { namespaces: ["garbage"] },
+    logLevel: "warning",
+    env: { TEST: "env" },
+    customLabels: {
+      namespace: { test: "test", value: "value" },
+    },
+    rbacMode: "scoped",
+    rbac: [
+      {
+        apiGroups: ["test"],
+        resources: ["tests"],
+        verbs: ["get", "list"],
+      },
+    ],
+  };
+  await fs.writeFile(packageJson, JSON.stringify(config, null, 2));
+  return config;
+}
+
+async function buildAndLoadResources(
+  packageJson: string,
+  testModule: string,
+): Promise<{
+  moduleConfig: Required<ModuleConfig>;
+  peprResources: KubernetesObject[];
+  helmResources: KubernetesObject[];
+  peprUuid: string;
+}> {
+  const config = await preparePeprConfig(packageJson);
+  const peprUuid = `pepr-${config.pepr.uuid}`;
+  const moduleConfig = {
+    ...config.pepr,
+    appVersion: config.version,
+    description: config.description,
+  };
+
+  const build = await pepr.cli(testModule, { cmd: `pepr build` });
+  expect(build.exitcode).toBe(0);
+  expect(build.stderr.join("").trim()).toBe("");
+  expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+
+  const chartDir = `${testModule}/dist/${moduleConfig.uuid}-chart`;
+  const helm = await pepr.cli(chartDir, { cmd: `helm template .` });
+  expect(helm.exitcode).toBe(0);
+  expect(helm.stderr.join("").trim()).toBe("");
+  expect(helm.stdout.join("").trim()).not.toBe("");
+
+  const helmManifest = `${chartDir}/reified.yaml`;
+  await fs.writeFile(helmManifest, helm.stdout.join("\n"));
+  const helmResources = await resource.fromFile(helmManifest);
+
+  const peprManifest = `${testModule}/dist/pepr-module-${moduleConfig.uuid}.yaml`;
+  const peprResources = await resource.fromFile(peprManifest);
+
+  return {
+    moduleConfig: moduleConfig as Required<ModuleConfig>,
+    peprResources,
+    helmResources,
+    peprUuid,
+  };
+}

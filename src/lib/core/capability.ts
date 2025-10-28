@@ -180,6 +180,9 @@ export class Capability implements CapabilityExport {
    * @param kind if using a custom KubernetesObject not available in `a.*`, specify the GroupVersionKind
    * @returns
    */
+  // This method intentionally defines a fluent, closure-based DSL for chaining capability actions.
+  // Multiple inline helper functions are required to preserve runtime behavior and readability.
+  // eslint-disable-next-line max-statements
   When = <T extends GenericClass>(model: T, kind?: GroupVersionKind): WhenSelector<T> => {
     const matchedKind = modelToGroupVersionKind(model.name);
 

@@ -6,7 +6,6 @@ import {
   validateRule,
   generateWebhookRules,
   webhookConfigGenerator,
-  configureAdditionalWebhooks,
   checkFailurePolicy,
 } from "./webhooks";
 import { Event, WebhookType } from "../enums";
@@ -243,6 +242,39 @@ describe("Webhook Management", () => {
       ]);
     });
 
+    it("should include additionalWebhooks info in namespace selector", async () => {
+      const additionalWebhooks = [{ failurePolicy: "Ignore", namespace: "additional-namespace-2" }];
+      assets.config.additionalWebhooks = additionalWebhooks;
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
+        "kube-system",
+        "pepr-system",
+        "cicd",
+        "additional-namespace-2",
+      ]);
+    });
+
+    it("skips additionalWebhooks if empty", async () => {
+      assets.config.additionalWebhooks = [];
+      const result = await webhookConfigGenerator(assets, WebhookType.VALIDATE);
+      expect(result!.webhooks![0].namespaceSelector!.matchExpressions![0].values).toEqual([
+        "kube-system",
+        "pepr-system",
+        "cicd",
+      ]);
+    });
+
+    it("should return null when no capabilities are included", async () => {
+      const testAssets: Assets = new Assets(
+        loseAssets.config as ModuleConfig,
+        loseAssets.path,
+        loseAssets.imagePullSecrets,
+      );
+      testAssets.capabilities = [];
+      const result = await webhookConfigGenerator(testAssets, WebhookType.VALIDATE);
+      expect(result).toBeNull();
+    });
+
     describe("when a host is specified", () => {
       it("should use that host in webhook URL", async () => {
         const assetsWithHost = new Assets(
@@ -325,7 +357,7 @@ describe("Webhook Management", () => {
   describe("when generating webhook rules", () => {
     describe("when assets contain bindings for custom resources", () => {
       it("should generate a webhook rule for custom resources", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("unicorns"));
         expect(secretRule).toEqual([
           {
@@ -338,7 +370,7 @@ describe("Webhook Management", () => {
       });
 
       it("should generate a webhook rule for creating secrets", async () => {
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         const secretRule = result.filter(rule => rule.resources!.includes("secrets"));
         expect(secretRule).toEqual([
           { apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE"], resources: ["secrets"] },
@@ -349,7 +381,7 @@ describe("Webhook Management", () => {
     describe("when no capabilities exist", () => {
       it("should return an empty array", async () => {
         assets.capabilities = [];
-        const result = await generateWebhookRules(assets, true);
+        const result = await generateWebhookRules(assets, WebhookType.MUTATE);
         expect(result).toEqual([]);
       });
     });
@@ -361,94 +393,6 @@ describe("Webhook Management", () => {
       expect(peprIgnoreNamespaces[0]).toEqual("kube-system");
       expect(peprIgnoreNamespaces[1]).toEqual("pepr-system");
     });
-  });
-});
-
-describe("configureAdditionalWebhooks", () => {
-  it("should return the original webhookConfig if no additionalWebhooks are provided", () => {
-    const webhookConfig: kind.MutatingWebhookConfiguration = {
-      apiVersion: "admissionregistration.k8s.io/v1",
-      kind: "MutatingWebhookConfiguration",
-      metadata: { name: "test-webhook" },
-      webhooks: [],
-    };
-    const result = configureAdditionalWebhooks(webhookConfig, []);
-    expect(result).toEqual(webhookConfig);
-  });
-
-  it("should set the additionalWebhooks namespaces in the namespaceSelector of the first webhook to ignore it", () => {
-    const webhookConfig: kind.MutatingWebhookConfiguration = {
-      apiVersion: "admissionregistration.k8s.io/v1",
-      kind: "MutatingWebhookConfiguration",
-      metadata: { name: "test-webhook" },
-      webhooks: [
-        {
-          name: "test-webhook.default.pepr.dev",
-          admissionReviewVersions: ["v1"],
-          clientConfig: { url: "https://example.com/webhook" },
-          failurePolicy: "Ignore",
-          matchPolicy: "Equivalent",
-          timeoutSeconds: 10,
-          namespaceSelector: {
-            matchExpressions: [{ key: "kubernetes.io/metadata.name", operator: "In", values: [] }],
-          },
-          rules: [],
-          sideEffects: "None",
-        },
-      ],
-    };
-    const additionalWebhooks = [
-      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
-      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
-    ];
-    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
-
-    expect(result.webhooks![0].namespaceSelector!.matchExpressions![0].values).toContain(
-      "additional-namespace-1",
-    );
-    expect(result.webhooks![0].namespaceSelector!.matchExpressions![0].values).toContain(
-      "additional-namespace-2",
-    );
-  });
-
-  it("should add additional webhooks to the webhook config", () => {
-    const webhookConfig: kind.MutatingWebhookConfiguration = {
-      apiVersion: "admissionregistration.k8s.io/v1",
-      kind: "MutatingWebhookConfiguration",
-      metadata: { name: "test-webhook" },
-      webhooks: [
-        {
-          name: "test-webhook.default.pepr.dev",
-          admissionReviewVersions: ["v1"],
-          clientConfig: { url: "https://example.com/webhook" },
-          failurePolicy: "Ignore",
-          matchPolicy: "Equivalent",
-          timeoutSeconds: 10,
-          namespaceSelector: {
-            matchExpressions: [{ key: "kubernetes.io/metadata.name", operator: "In", values: [] }],
-          },
-          rules: [],
-          sideEffects: "None",
-        },
-      ],
-    };
-    const additionalWebhooks = [
-      { failurePolicy: "Fail", namespace: "additional-namespace-1" },
-      { failurePolicy: "Ignore", namespace: "additional-namespace-2" },
-    ];
-    const result = configureAdditionalWebhooks(webhookConfig, additionalWebhooks);
-
-    expect(result.webhooks!.length).toBe(3);
-    expect(result.webhooks![1].name).toBe("test-webhook-additional-namespace-1.pepr.dev");
-    expect(result.webhooks![2].name).toBe("test-webhook-additional-namespace-2.pepr.dev");
-    expect(result.webhooks![1].namespaceSelector!.matchExpressions![0].values).toContain(
-      "additional-namespace-1",
-    );
-    expect(result.webhooks![2].namespaceSelector!.matchExpressions![0].values).toContain(
-      "additional-namespace-2",
-    );
-    expect(result.webhooks![1].failurePolicy).toBe("Fail");
-    expect(result.webhooks![2].failurePolicy).toBe("Ignore");
   });
 });
 
