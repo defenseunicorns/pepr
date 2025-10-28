@@ -98,7 +98,6 @@ export async function webhookConfigGenerator(
     };
   }
 
-  //const isMutate = webhookType === WebhookType.MUTATE;
   const rules = await generateWebhookRules(assets, webhookType);
 
   // If there are no rules, return null

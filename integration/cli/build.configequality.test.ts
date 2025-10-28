@@ -91,11 +91,11 @@ describe("build", () => {
 
         it.each(
           sources.flatMap(src =>
-            resourceKinds.map(r => ({
+            resourceKinds.map(resourceKind => ({
               source: src.source,
               getResources: src.getResources,
-              resourceKind: r.kind,
-              name: r.name,
+              resourceKind: resourceKind.kind,
+              name: resourceKind.name,
             })),
           ),
         )(
@@ -106,7 +106,6 @@ describe("build", () => {
           },
         );
 
-        // --- ClusterRoleBinding tests ---
         it.each(sources)(
           "ClusterRoleBinding in $source resources should have correct roleRef and subjects",
           ({ getResources }) => {
@@ -117,7 +116,6 @@ describe("build", () => {
           },
         );
 
-        // --- RoleBinding tests ---
         it.each(sources)(
           "RoleBinding in $source resources should have correct roleRef and subjects",
           ({ getResources }) => {
@@ -128,50 +126,50 @@ describe("build", () => {
           },
         );
 
-        // --- Deployment (admission) ---
         it.each(sources)(
           "Deployment (admission) in $source resources should have correct labels and volumes",
           ({ getResources }) => {
-            const d = resource.select(getResources(), kind.Deployment, peprUuid);
-            expect(d).toBeDefined();
-            expect(d.metadata?.labels?.app).toBe(peprUuid);
-            expect(d.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
-            expect(d.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
+            const deployment = resource.select(getResources(), kind.Deployment, peprUuid);
+            expect(deployment).toBeDefined();
+            expect(deployment.metadata?.labels?.app).toBe(peprUuid);
+            expect(deployment.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
+            expect(deployment.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
           },
         );
 
-        // --- Deployment (watcher) ---
         it.each(sources)(
           "Deployment (watcher) in $source resources should have correct labels and volumes",
           ({ getResources }) => {
-            const d = resource.select(getResources(), kind.Deployment, `${peprUuid}-watcher`);
-            expect(d).toBeDefined();
-            expect(d.metadata?.labels?.app).toBe(`${peprUuid}-watcher`);
-            expect(d.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
-            expect(d.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
+            const deployment = resource.select(
+              getResources(),
+              kind.Deployment,
+              `${peprUuid}-watcher`,
+            );
+            expect(deployment).toBeDefined();
+            expect(deployment.metadata?.labels?.app).toBe(`${peprUuid}-watcher`);
+            expect(deployment.metadata?.labels?.["pepr.dev/uuid"]).toBe(moduleConfig.uuid);
+            expect(deployment.spec?.template?.spec?.serviceAccountName).toBe(peprUuid);
           },
         );
 
-        // --- Services ---
         it.each(sources)(
           "Service (admission) in $source resources should have correct selector",
           ({ getResources }) => {
-            const s = resource.select(getResources(), kind.Service, peprUuid);
-            expect(s).toBeDefined();
-            expect(s.spec?.selector?.app).toBe(peprUuid);
+            const svc = resource.select(getResources(), kind.Service, peprUuid);
+            expect(svc).toBeDefined();
+            expect(svc.spec?.selector?.app).toBe(peprUuid);
           },
         );
 
         it.each(sources)(
           "Service (watcher) in $source resources should have correct selector",
           ({ getResources }) => {
-            const s = resource.select(getResources(), kind.Service, `${peprUuid}-watcher`);
-            expect(s).toBeDefined();
-            expect(s.spec?.selector?.app).toBe(`${peprUuid}-watcher`);
+            const svc = resource.select(getResources(), kind.Service, `${peprUuid}-watcher`);
+            expect(svc).toBeDefined();
+            expect(svc.spec?.selector?.app).toBe(`${peprUuid}-watcher`);
           },
         );
 
-        // --- Webhooks ---
         it.each(sources)(
           "MutatingWebhookConfiguration in $source resources should have correct webhook config",
           ({ getResources }) => {
@@ -200,7 +198,6 @@ describe("build", () => {
           },
         );
 
-        // --- Store SA ---
         it.each(sources)(
           "Store ServiceAccount in $source resources should have correct name",
           ({ getResources }) => {
@@ -320,8 +317,8 @@ describe("build", () => {
         it.each(deployments.flatMap(deployment => sources.map(s => ({ ...s, deployment }))))(
           "$deployment in $source resources should have LOG_LEVEL env var",
           ({ getResources }) => {
-            const d = resource.select(getResources(), kind.Deployment, peprUuid);
-            expect(d.spec?.template?.spec?.containers?.[0]?.env).toEqual(
+            const deployment = resource.select(getResources(), kind.Deployment, peprUuid);
+            expect(deployment.spec?.template?.spec?.containers?.[0]?.env).toEqual(
               expect.arrayContaining([
                 expect.objectContaining({
                   name: "LOG_LEVEL",
@@ -343,8 +340,12 @@ describe("build", () => {
         it.each(deployments.flatMap(deployment => sources.map(s => ({ ...s, deployment }))))(
           "$deployment in $source resources should have TEST env var",
           ({ getResources }) => {
-            const d = resource.select(getResources(), kind.Deployment, `${peprUuid}-watcher`);
-            expect(d.spec?.template?.spec?.containers?.[0]?.env).toEqual(
+            const deployment = resource.select(
+              getResources(),
+              kind.Deployment,
+              `${peprUuid}-watcher`,
+            );
+            expect(deployment.spec?.template?.spec?.containers?.[0]?.env).toEqual(
               expect.arrayContaining([
                 expect.objectContaining({
                   name: "TEST",
