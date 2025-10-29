@@ -11,18 +11,19 @@ import { CapabilityExport } from "../types";
 import { OnError } from "../../cli/init/enums";
 import Log from "../telemetry/logger";
 
-// Mock Controller
-const startServerMock = vi.fn();
-const controllerConstructorMock = vi.fn();
-vi.mock("../controller", () => ({
-  Controller: vi.fn().mockImplementation((...args) => {
-    controllerConstructorMock(...args);
-    return {
-      startServer: startServerMock,
-    };
-  }),
-}));
+const startServerMock = vi.fn<(port: number) => void>();
+const controllerConstructorMock =
+  vi.fn<(config: unknown, capabilities: unknown, hooks: unknown) => void>();
 
+vi.mock("../controller", () => {
+  class MockController {
+    public startServer = startServerMock;
+    public constructor(config: unknown, capabilities: unknown, hooks: unknown) {
+      controllerConstructorMock(config, capabilities, hooks);
+    }
+  }
+  return { Controller: MockController };
+});
 vi.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {

@@ -15,23 +15,27 @@ import monitor, {
 import Log from "../lib/telemetry/logger";
 import { Log as K8sLog } from "@kubernetes/client-node";
 
-vi.mock("../lib/telemetry/logger", () => ({
-  __esModule: true,
-  default: {
+// --- logger mock ---
+vi.mock("../lib/telemetry/logger", () => {
+  const logger = {
     info: vi.fn(),
     error: vi.fn(),
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: logger,
+  };
+});
 
 const mockLogFn = vi.fn();
 const mockLoadFromDefault = vi.fn();
 
 class MockKubeConfig {
-  public clusters = [];
-  public users = [];
-  public contexts = [];
+  public clusters: unknown[] = [];
+  public users: unknown[] = [];
+  public contexts: unknown[] = [];
   public currentContext = "";
-  public custom_authenticators = [];
+  public custom_authenticators: unknown[] = [];
   public addAuthenticator = vi.fn();
   public getContexts = vi.fn();
   public setCurrentContext = vi.fn();
@@ -41,22 +45,43 @@ class MockKubeConfig {
   public getCurrentUser = vi.fn();
   public loadFromDefault = mockLoadFromDefault;
 }
-
 const mockKubeConfigInstance = new MockKubeConfig();
 
-const mockLogInstance = {
+interface IKubeConfig {
+  loadFromDefault: () => void;
+}
+interface ILog {
+  log: (
+    namespace: string,
+    podName: string,
+    container: string,
+    logStream: NodeJS.ReadableStream,
+    opts: Record<string, unknown>,
+  ) => void;
+  config?: IKubeConfig;
+}
+
+const mockLogInstance: ILog = {
   log: mockLogFn,
   config: mockKubeConfigInstance,
 };
 
-vi.mock("@kubernetes/client-node", async () => {
-  const actual =
-    await vi.importActual<typeof import("@kubernetes/client-node")>("@kubernetes/client-node");
-  return {
-    ...actual,
-    KubeConfig: vi.fn(() => mockKubeConfigInstance),
-    Log: vi.fn(() => mockLogInstance),
-  };
+vi.mock("@kubernetes/client-node", () => {
+  class KubeConfig implements IKubeConfig {
+    public loadFromDefault = mockLoadFromDefault;
+  }
+
+  class Log implements ILog {
+    public log = mockLogFn;
+    public config?: IKubeConfig;
+
+    constructor(kc: IKubeConfig) {
+      mockLogInstance.config = kc;
+      return mockLogInstance as unknown as Log;
+    }
+  }
+
+  return { KubeConfig, Log };
 });
 
 vi.mock("kubernetes-fluent-client", () => ({
@@ -196,6 +221,8 @@ describe("processMutateLog", () => {
   });
 
   it("should log a mutation denial without patch details", () => {
+    const before = (Log.info as unknown as { mock: { calls: unknown[][] } }).mock.calls.length;
+
     processMutateLog(
       {
         ...payload,
@@ -209,8 +236,13 @@ describe("processMutateLog", () => {
       "test-uid",
     );
 
-    expect(logSpy).toHaveBeenCalledWith("\n🚫  MUTATE     test-name (test-uid)");
-    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining("{"));
+    const newCalls = (Log.info as unknown as { mock: { calls: unknown[][] } }).mock.calls.slice(
+      before,
+    );
+    const newCallStrings = newCalls.map(args => String(args[0]));
+
+    expect(newCallStrings).toContain("\n🚫  MUTATE     test-name (test-uid)");
+    expect(newCallStrings.some(s => s.includes("{"))).toBe(false);
   });
 });
 

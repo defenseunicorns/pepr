@@ -6,14 +6,19 @@ import { Capability } from "../core/capability";
 import { ModuleConfig, CapabilityCfg } from "../types";
 
 vi.mock("./store", () => {
-  return {
-    StoreController: vi.fn().mockImplementation((_capabilities, _name, onReady) => {
+  type OnReadyFn = (() => void) | undefined;
+
+  class StoreController {
+    constructor(_capabilities: unknown, _name: string, onReady?: OnReadyFn) {
       if (typeof onReady === "function") {
         onReady();
       }
-    }),
-  };
+    }
+  }
+
+  return { StoreController };
 });
+// --
 vi.mock("../telemetry/logger", () => ({
   __esModule: true,
   default: {

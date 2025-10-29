@@ -1,6 +1,10 @@
 import { describe, vi, beforeEach, it, expect } from "vitest";
 import { buildAndDeployModule } from "./buildAndDeploy";
 
+const h = vi.hoisted(() => ({
+  deploySpy: vi.fn(),
+}));
+
 vi.mock("../build/buildModule", () => ({
   buildModule: vi.fn(),
 }));
@@ -17,21 +21,30 @@ vi.mock("../../lib/deploymentChecks", () => ({
   namespaceDeploymentsReady: vi.fn(),
 }));
 
-const deploySpy = vi.fn();
-vi.mock("../../lib/assets/assets", () => ({
-  Assets: vi.fn().mockImplementation(() => ({
-    deploy: deploySpy,
-    path: "dist/test-module",
-    image: "",
-    config: {
+vi.mock("../../lib/assets/assets", () => {
+  type AssetsCtorCfg = { description: string } & Record<string, unknown>;
+
+  class MockAssets {
+    path: string = "dist/test-module";
+    image: string = "";
+    config: { admission: Record<string, never>; watch: Record<string, never> } = {
       admission: {},
       watch: {},
-    },
-    alwaysIgnore: {},
-    capabilities: [],
-  })),
-}));
+    };
+    alwaysIgnore: Record<string, never> = {};
+    capabilities: Array<{ name?: string }> = [];
 
+    constructor(_cfg: AssetsCtorCfg, path: string) {
+      if (path) this.path = path;
+    }
+
+    deploy = h.deploySpy;
+  }
+
+  return { Assets: MockAssets };
+});
+
+const deploySpy = h.deploySpy;
 describe("buildAndDeployModule", () => {
   beforeEach(async () => {
     vi.clearAllMocks();

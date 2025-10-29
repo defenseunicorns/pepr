@@ -44,24 +44,30 @@ vi.mock("./build/loadModule", () => ({
 }));
 
 vi.mock("./build/buildModule", () => ({
-  buildModule: vi.fn().mockImplementation(async (_, cb) => {
-    await cb({ errors: [] });
-  }),
+  buildModule: vi
+    .fn()
+    .mockImplementation(async (_path, cb: (stats: { errors: unknown[] }) => void) => {
+      await cb({ errors: [] });
+    }),
 }));
 
-vi.mock("../lib/assets/assets", () => ({
-  Assets: vi.fn().mockImplementation(() => ({
-    tls: {
-      pem: {
-        crt: "mock-cert",
-        key: "mock-key",
-      },
-    },
-    apiPath: "/mock/api",
-    capabilities: [{ name: "test-cap" }],
-    deploy: vi.fn().mockResolvedValue(undefined),
-  })),
-}));
+vi.mock("../lib/assets/assets", () => {
+  interface AssetsInstance {
+    tls: { pem: { crt: string; key: string } };
+    apiPath: string;
+    capabilities: Array<{ name: string }>;
+    deploy: ReturnType<typeof vi.fn>;
+  }
+
+  const Assets = vi.fn(function (this: AssetsInstance) {
+    this.tls = { pem: { crt: "mock-cert", key: "mock-key" } };
+    this.apiPath = "/mock/api";
+    this.capabilities = [{ name: "test-cap" }];
+    this.deploy = vi.fn().mockResolvedValue(undefined);
+  });
+
+  return { Assets };
+});
 
 vi.mock("../lib/assets/deploy", () => ({
   deployWebhook: vi.fn(),
@@ -76,7 +82,7 @@ vi.mock("child_process", () => {
     fork: vi.fn(() => {
       const mockChild = Object.assign(new EventEmitter(), {
         kill: vi.fn(),
-        once: vi.fn((event, cb) => {
+        once: vi.fn((event: string, cb: () => void) => {
           if (event === "exit") cb();
         }),
         on: vi.fn(),
@@ -125,10 +131,10 @@ describe("dev command", () => {
   it("should exit early if user declines prompt", async () => {
     (prompts as unknown as Mock).mockResolvedValueOnce({ yes: false });
 
-    const program = new Command();
-    devCommand(program);
+    const programLocal = new Command();
+    devCommand(programLocal);
 
-    await program.parseAsync(["dev"], { from: "user" });
+    await programLocal.parseAsync(["dev"], { from: "user" });
 
     expect(prompts).toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
@@ -137,9 +143,11 @@ describe("dev command", () => {
   it("should log error if buildModule has errors", async () => {
     const errorSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
     const { buildModule } = await import("./build/buildModule");
-    (buildModule as Mock).mockImplementationOnce(async (_, cb) => {
-      await cb({ errors: ["error"] });
-    });
+    (buildModule as Mock).mockImplementationOnce(
+      async (_path, cb: (stats: { errors: unknown[] }) => void) => {
+        await cb({ errors: ["error"] });
+      },
+    );
 
     await program.parseAsync(["dev", "--yes"], { from: "user" });
     expect(errorSpy).toHaveBeenCalledWith("Error compiling module: error");
@@ -173,7 +181,9 @@ describe("dev command", () => {
 
     await program.parseAsync(["dev", "--yes"], { from: "user" });
 
-    const sigHandler = processOnSpy.mock.calls.find(([event]) => event === "SIGINT")?.[1];
+    const sigHandler = processOnSpy.mock.calls.find(([event]) => event === "SIGINT")?.[1] as
+      | (() => void)
+      | undefined;
     sigHandler?.();
 
     expect(debugSpy).toHaveBeenCalledWith("Received SIGINT, removing webhooks");
@@ -184,7 +194,7 @@ describe("dev command", () => {
   it("should use custom host from --host option", async () => {
     const hostArg = "kind-control-plane";
     const AssetsModule = await import("../lib/assets/assets");
-    const AssetsMock = AssetsModule.Assets as Mock;
+    const AssetsMock = AssetsModule.Assets as unknown as Mock;
 
     await program.parseAsync(["dev", "--yes", "--host", hostArg], { from: "user" });
 
