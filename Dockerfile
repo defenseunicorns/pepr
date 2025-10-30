@@ -26,6 +26,8 @@ COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \
     npm ci --omit=dev --omit=peer && \
+    # https://github.com/defenseunicorns/pepr/issues/2747
+    npm i --no-save ws && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
