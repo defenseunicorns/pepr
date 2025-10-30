@@ -4,20 +4,25 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { peprFormat } from "./index";
 import { formatWithPrettier } from "./format.helpers";
-import { ESLint } from "eslint";
 import Log from "../../lib/telemetry/logger";
 
-// Mock ESLint
+const h = vi.hoisted(() => ({
+  mockLintFiles: vi.fn(),
+  mockLoadFormatter: vi.fn(),
+  mockOutputFixes: vi.fn(),
+  mockFormatFn: vi.fn(),
+}));
+
 vi.mock("eslint", () => {
-  return {
-    ESLint: vi.fn(() => ({
-      lintFiles: vi.fn(),
-      loadFormatter: vi.fn(),
-    })),
-  };
+  class MockESLint {
+    constructor() {}
+    lintFiles = h.mockLintFiles;
+    loadFormatter = h.mockLoadFormatter;
+    static outputFixes = h.mockOutputFixes;
+  }
+  return { ESLint: MockESLint };
 });
 
-// Mock formatWithPrettier
 vi.mock("./format.helpers", () => ({
   formatWithPrettier: vi.fn(),
 }));
@@ -31,59 +36,40 @@ vi.mock("../../lib/telemetry/logger", () => ({
 }));
 
 describe("Pepr Format", () => {
-  const mockLintFiles = vi.fn();
-  const mockLoadFormatter = vi.fn();
-  const mockOutputFixes = vi.fn();
-  const mockFormatFn = vi.fn();
   const mockFormatWithPrettier = vi.mocked(formatWithPrettier);
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Setup ESLint mock implementation
-    (ESLint as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-      lintFiles: mockLintFiles,
-      loadFormatter: mockLoadFormatter,
-    }));
-
-    // Mock static method
-    ESLint.outputFixes = mockOutputFixes;
-
-    // Setup formatter mock
-    mockLoadFormatter.mockResolvedValue({
-      format: mockFormatFn,
-    });
+    h.mockLoadFormatter.mockResolvedValue({ format: h.mockFormatFn });
   });
 
   it("should return true when there are no linting errors and formatting succeeds", async () => {
-    // Setup mock results with no errors
     const mockResults = [
       { filePath: "file1.ts", errorCount: 0, fatalErrorCount: 0 },
       { filePath: "file2.ts", errorCount: 0, fatalErrorCount: 0 },
     ];
 
-    mockLintFiles.mockResolvedValue(mockResults);
-    mockFormatFn.mockResolvedValue(""); // No output means no errors
-    mockFormatWithPrettier.mockResolvedValue(false); // No formatting errors
+    h.mockLintFiles.mockResolvedValue(mockResults);
+    h.mockFormatFn.mockResolvedValue("");
+    mockFormatWithPrettier.mockResolvedValue(false);
 
     const result = await peprFormat(false);
 
     expect(result).toBe(true);
-    expect(mockOutputFixes).toHaveBeenCalledWith(mockResults);
+    expect(h.mockOutputFixes).toHaveBeenCalledWith(mockResults);
     expect(mockFormatWithPrettier).toHaveBeenCalledWith(mockResults, false);
     expect(process.exitCode).not.toBe(1);
   });
 
   it("should return false when there are only linting errors", async () => {
-    // Setup mock results with errors
     const mockResults = [
       { filePath: "file1.ts", errorCount: 2, fatalErrorCount: 0 },
       { filePath: "file2.ts", errorCount: 0, fatalErrorCount: 0 },
     ];
 
-    mockLintFiles.mockResolvedValue(mockResults);
-    mockFormatFn.mockResolvedValue("Some linting errors"); // Output indicates errors
-    mockFormatWithPrettier.mockResolvedValue(false); // No formatting errors
+    h.mockLintFiles.mockResolvedValue(mockResults);
+    h.mockFormatFn.mockResolvedValue("Some linting errors");
+    mockFormatWithPrettier.mockResolvedValue(false);
 
     const result = await peprFormat(false);
 
@@ -92,15 +78,14 @@ describe("Pepr Format", () => {
   });
 
   it("should return false when there are only formatting errors", async () => {
-    // Setup mock results with no linting errors but formatting errors
     const mockResults = [
       { filePath: "file1.ts", errorCount: 0, fatalErrorCount: 0 },
       { filePath: "file2.ts", errorCount: 0, fatalErrorCount: 0 },
     ];
 
-    mockLintFiles.mockResolvedValue(mockResults);
-    mockFormatFn.mockResolvedValue("");
-    mockFormatWithPrettier.mockResolvedValue(true); // Formatting errors
+    h.mockLintFiles.mockResolvedValue(mockResults);
+    h.mockFormatFn.mockResolvedValue("");
+    mockFormatWithPrettier.mockResolvedValue(true);
 
     const result = await peprFormat(false);
 
@@ -110,7 +95,8 @@ describe("Pepr Format", () => {
 
   it("should log an error when an exception occurs", async () => {
     const mockError = new Error("Mock error");
-    mockLintFiles.mockRejectedValue(mockError);
+    h.mockLintFiles.mockRejectedValue(mockError);
+
     const result = await peprFormat(false);
 
     expect(result).toBe(false);

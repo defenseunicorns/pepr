@@ -20,42 +20,52 @@ import { OnSchedule } from "./schedule";
 import { AdmissionRequest } from "../common-types";
 import type { Logger } from "pino";
 
-interface PartialLogger {
-  info: (...args: unknown[]) => void;
-  debug?: (...args: unknown[]) => void;
-  child?: (...args: unknown[]) => PartialLogger;
-}
-
-// Mocking isBuildMode, isWatchMode, and isDevMode globally
 vi.mock("./envChecks", () => ({
   isBuildMode: vi.fn(() => true),
   isWatchMode: vi.fn(() => true),
   isDevMode: vi.fn(() => true),
 }));
 
-// Mock logger globally
-vi.mock("../telemetry/logger", () => ({
-  default: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    child: vi.fn().mockReturnThis(),
-  },
-}));
-
-vi.mock("./storage", async () => {
-  return {
-    Storage: vi.fn(() => ({
-      onReady: vi.fn(),
-    })),
-  };
+vi.mock("../telemetry/logger", () => {
+  const info = vi.fn();
+  const debug = vi.fn();
+  const logger = { info, debug, child: vi.fn(() => logger) };
+  return { default: logger };
 });
 
-vi.mock("./schedule", async () => {
-  return {
-    OnSchedule: vi.fn().mockImplementation(() => ({
-      setStore: vi.fn(),
-    })),
+vi.mock("./storage", () => {
+  class Storage {
+    public onReady = vi.fn<(cb: () => void) => void>();
+  }
+  return { Storage };
+});
+
+vi.mock("./schedule", () => {
+  interface OnScheduleInstance {
+    setStore: (store: unknown) => void;
+  }
+
+  function RealOnSchedule(this: OnScheduleInstance) {
+    this.setStore = vi.fn<(store: unknown) => void>();
+  }
+
+  type OnScheduleMock = Mock & {
+    new (schedule: unknown): OnScheduleInstance;
+    (...args: [unknown]): void;
   };
+
+  const OnSchedule = vi.fn(RealOnSchedule) as unknown as OnScheduleMock;
+
+  type Schedule = {
+    name: string;
+    every: number;
+    unit: "seconds" | "minutes" | "hours" | "days" | "weeks" | "cron";
+    run: () => unknown | Promise<unknown>;
+    startTime?: Date;
+    completions?: number;
+  };
+
+  return { OnSchedule, Schedule: undefined as unknown as Schedule };
 });
 
 const mockLog = Log as unknown as {
@@ -63,6 +73,7 @@ const mockLog = Log as unknown as {
   debug: Mock;
   child: Mock;
 };
+
 describe("Capability", () => {
   let mockRequest: AdmissionRequest<V1Pod>;
 
@@ -150,11 +161,10 @@ describe("Capability", () => {
   it("should correctly chain When, InNamespace, WithLabel, and Mutate methods", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-        logger.info("Executing mutation action");
-      },
-    );
+    type MA = MutateAction<typeof V1Pod, V1Pod>;
+    const mockMutateCallback = vi.fn<MA>(async (_req, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Executing mutation action");
+    }) as unknown as MA;
 
     capability
       .When(a.Pod)
@@ -170,12 +180,9 @@ describe("Capability", () => {
     expect(binding.filters.labels).toHaveProperty("test-label", "value");
     expect(binding.alias).toBe("test-alias");
 
-    // Simulate the mutation action
     const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
 
-    if (binding.mutateCallback) {
-      await binding.mutateCallback(peprRequest);
-    }
+    await binding.mutateCallback?.(peprRequest);
 
     expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
@@ -186,11 +193,10 @@ describe("Capability", () => {
     it("should use child logger for mutate callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-        (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Mutate action log");
-        },
-      );
+      type MA = MutateAction<typeof V1Pod, V1Pod>;
+      const mockMutateCallback = vi.fn<MA>((_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Mutate action log");
+      }) as unknown as MA;
 
       capability
         .When(a.Pod)
@@ -203,12 +209,8 @@ describe("Capability", () => {
       expect(capability.bindings).toHaveLength(1);
       const binding = capability.bindings[0];
 
-      // Simulate the mutation action
       const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
-
-      if (binding.mutateCallback) {
-        await binding.mutateCallback(peprRequest);
-      }
+      await binding.mutateCallback?.(peprRequest);
 
       expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
@@ -225,11 +227,10 @@ describe("Capability", () => {
 
       const capability = new Capability(complexCapabilityConfig);
 
-      const mockMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (po: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
-        },
-      );
+      type MA = MutateAction<typeof V1Pod, V1Pod>;
+      const mockMutateCallback = vi.fn<MA>(async (po, logger) => {
+        (logger ?? (Log as unknown as Logger)).info(`SNAKES ON A PLANE! ${po.Raw.metadata?.name}`);
+      }) as unknown as MA;
 
       capability
         .When(a.Pod)
@@ -247,12 +248,8 @@ describe("Capability", () => {
         "reject:pods:runAsRoot:privileged:runAsGroup<10:allowPrivilegeEscalation",
       );
 
-      // Simulate the mutation action
       const peprRequest = new PeprMutateRequest<V1Pod>(mockRequest);
-
-      if (binding.mutateCallback) {
-        await binding.mutateCallback(peprRequest);
-      }
+      await binding.mutateCallback?.(peprRequest);
 
       expect(mockMutateCallback).toHaveBeenCalledWith(peprRequest, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({
@@ -269,12 +266,11 @@ describe("Capability", () => {
     it("should use child logger for validate callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability
         .When(a.Pod)
@@ -286,12 +282,8 @@ describe("Capability", () => {
       expect(capability.bindings).toHaveLength(1);
       const binding = capability.bindings[0];
 
-      // Simulate the validation action
       const mockPeprRequest = new PeprValidateRequest<V1Pod>(mockRequest);
-
-      if (binding.validateCallback) {
-        await binding.validateCallback(mockPeprRequest);
-      }
+      await binding.validateCallback?.(mockPeprRequest);
 
       expect(mockValidateCallback).toHaveBeenCalledWith(mockPeprRequest, expect.anything());
       expect(mockLog.child).toHaveBeenCalledWith({ alias: "test-alias" });
@@ -302,24 +294,20 @@ describe("Capability", () => {
     it("should use child logger for reconcile callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-        async (update, phase, logger: PartialLogger = mockLog) => {
-          logger.info("Reconcile action log");
-        },
-      );
+      type WA = WatchLogAction<typeof V1Pod>;
+      const mockReconcileCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Reconcile action log");
+      }) as unknown as WA;
 
       capability.When(a.Pod).IsCreatedOrUpdated().Reconcile(mockReconcileCallback);
 
       expect(capability.bindings).toHaveLength(1);
       const binding = capability.bindings[0];
 
-      // Simulate calling the reconcile action
       const testPod = new V1Pod();
       const testPhase = WatchPhase.Modified;
 
-      if (binding.watchCallback) {
-        await binding.watchCallback(testPod, testPhase);
-      }
+      await binding.watchCallback?.(testPod, testPhase);
 
       expect(mockReconcileCallback).toHaveBeenCalledWith(testPod, testPhase, expect.anything());
       expect(mockLog.info).toHaveBeenCalledWith("Reconcile action log");
@@ -328,36 +316,24 @@ describe("Capability", () => {
     it("should use child logger for finalize callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-        async (update, logger: PartialLogger = mockLog) => {
-          logger.info("Finalize action log");
-        },
-      );
+      type FA = FinalizeAction<typeof V1Pod>;
+      const mockFinalizeCallback = vi.fn<FA>(async (_update, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Finalize action log");
+      }) as unknown as FA;
 
-      // Create a mock WatchLogAction function that matches the expected signature
-      const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {},
-      );
+      type WA = WatchLogAction<typeof V1Pod>;
+      const mockWatchCallback = vi.fn<WA>(async () => {}) as unknown as WA;
 
-      // Chain .Watch() with the correct function signature before .Finalize()
       capability
         .When(a.Pod)
         .IsCreatedOrUpdated()
         .Watch(mockWatchCallback)
         .Finalize(mockFinalizeCallback);
 
-      // Find the finalize binding
-      const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+      const finalizeBinding = capability.bindings.find(b => b.finalizeCallback);
 
-      expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
-
-      // Simulate calling the finalize action
       const testPod = new V1Pod();
-
-      if (finalizeBinding?.finalizeCallback) {
-        await finalizeBinding.finalizeCallback(testPod);
-      }
+      await finalizeBinding?.finalizeCallback?.(testPod);
 
       expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
       expect(mockLog.info).toHaveBeenCalledWith("Finalize action log");
@@ -366,22 +342,17 @@ describe("Capability", () => {
     it("should use aliasLogger if no logger is provided in watch callback", async () => {
       const capability = new Capability(capabilityConfig);
 
-      // Mock the watch callback
-      const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-        async (update: V1Pod, phase: WatchPhase, logger?: typeof Log) => {
-          logger?.info("Watch action log");
-        },
-      );
+      type WA = WatchLogAction<typeof V1Pod>;
+      const mockWatchCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+        logger?.info("Watch action log");
+      }) as unknown as WA;
 
-      // Chain Watch without providing an explicit logger
       capability.When(a.Pod).IsCreatedOrUpdated().Watch(mockWatchCallback);
 
-      expect(capability.bindings).toHaveLength(1);
       const binding = capability.bindings[0];
 
-      // Simulate the watch action without passing a logger, so aliasLogger is used
       const testPod = new V1Pod();
-      await binding.watchCallback?.(testPod, WatchPhase.Added); // No logger passed
+      await binding.watchCallback?.(testPod, WatchPhase.Added);
 
       expect(mockLog.info).toHaveBeenCalledWith("Watch action log");
     });
@@ -390,19 +361,15 @@ describe("Capability", () => {
   it("should reset the alias before each mutation", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const firstMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-        logger.info("First mutation action");
-      },
-    );
+    type MA = MutateAction<typeof V1Pod, V1Pod>;
+    const firstMutateCallback = vi.fn<MA>(async (_req, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("First mutation action");
+    }) as unknown as MA;
 
-    const secondMutateCallback: MutateAction<typeof V1Pod, V1Pod> = vi.fn(
-      async (req: PeprMutateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-        logger.info("Second mutation action");
-      },
-    );
+    const secondMutateCallback = vi.fn<MA>(async (_req, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Second mutation action");
+    }) as unknown as MA;
 
-    // First mutation with an alias
     capability
       .When(a.Pod)
       .IsCreatedOrUpdated()
@@ -414,21 +381,15 @@ describe("Capability", () => {
 
     expect(capability.bindings).toHaveLength(2);
 
-    // Simulate the first mutation action
     const peprRequest1 = new PeprMutateRequest<V1Pod>(mockRequest);
-    if (capability.bindings[0].mutateCallback) {
-      await capability.bindings[0].mutateCallback(peprRequest1);
-    }
+    await capability.bindings[0].mutateCallback?.(peprRequest1);
 
     expect(firstMutateCallback).toHaveBeenCalledWith(peprRequest1, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "first-alias" });
     expect(mockLog.info).toHaveBeenCalledWith("Executing mutation action with alias: first-alias");
 
-    // Simulate the second mutation action
     const peprRequest2 = new PeprMutateRequest<V1Pod>(mockRequest);
-    if (capability.bindings[1].mutateCallback) {
-      await capability.bindings[1].mutateCallback(peprRequest2);
-    }
+    await capability.bindings[1].mutateCallback?.(peprRequest2);
 
     expect(secondMutateCallback).toHaveBeenCalledWith(peprRequest2, expect.anything());
   });
@@ -436,40 +397,31 @@ describe("Capability", () => {
   it("should register a Watch action and execute it with the logger", async () => {
     const capability = new Capability(capabilityConfig);
 
-    // Mock Watch callback function
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: PartialLogger = mockLog) => {
-        logger.info("Watch action executed");
-      },
-    );
+    type WA = WatchLogAction<typeof V1Pod>;
+    const mockWatchCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Watch action executed");
+    }) as unknown as WA;
 
-    // Chain the When and Watch methods
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
 
-    // Retrieve the registered binding
     const binding = capability.bindings.find(b => b.isWatch === true);
-
-    // Check that the watch callback was registered
     expect(binding).toBeDefined();
     expect(binding?.isWatch).toBe(true);
 
-    // Simulate calling the watch callback with test data
     const testPod = new V1Pod();
-    await binding?.watchCallback?.(testPod, WatchPhase.Added, mockLog as unknown as Logger);
+    await binding?.watchCallback?.(testPod, WatchPhase.Added, Log as unknown as Logger);
 
-    // Ensure that the logger's `info` method was called
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
-    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, WatchPhase.Added, mockLog);
+    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, WatchPhase.Added, Log);
   });
 
   it("should pass the correct parameters to the Watch action", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: PartialLogger = mockLog) => {
-        logger.info("Watch action executed");
-      },
-    );
+    type WA = WatchLogAction<typeof V1Pod>;
+    const mockWatchCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Watch action executed");
+    }) as unknown as WA;
 
     capability.When(a.Pod).IsCreated().Watch(mockWatchCallback);
 
@@ -479,30 +431,27 @@ describe("Capability", () => {
     const testPod = new V1Pod();
     const testPhase = WatchPhase.Modified;
 
-    // Call the watch callback with custom data
-    await binding?.watchCallback?.(testPod, testPhase, mockLog as unknown as Logger);
+    await binding?.watchCallback?.(testPod, testPhase, Log as unknown as Logger);
 
-    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, mockLog);
+    expect(mockWatchCallback).toHaveBeenCalledWith(testPod, testPhase, Log);
     expect(mockLog.info).toHaveBeenCalledWith("Watch action executed");
   });
 
   it("should use user-provided alias for finalizer with reconcile", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockReconcileCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: PartialLogger = mockLog) => {
-        logger.info("external api call (reconcile-create-alias): reconcile/callback");
-      },
-    );
+    type WA = WatchLogAction<typeof V1Pod>;
+    const mockReconcileCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+      (logger ?? (Log as unknown as Logger)).info(
+        "external api call (reconcile-create-alias): reconcile/callback",
+      );
+    }) as unknown as WA;
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-      async (update: V1Pod, logger: PartialLogger = mockLog) => {
-        logger.info("Finalize action log");
-      },
-    );
+    type FA = FinalizeAction<typeof V1Pod>;
+    const mockFinalizeCallback = vi.fn<FA>(async (_update, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Finalize action log");
+    }) as unknown as FA;
 
-    // Set up a When binding with a user-provided alias and Finalize
-    // Chain .Reconcile() with the correct function signature before .Finalize()
     capability
       .When(a.Pod)
       .IsCreatedOrUpdated()
@@ -510,19 +459,11 @@ describe("Capability", () => {
       .Reconcile(mockReconcileCallback)
       .Finalize(mockFinalizeCallback);
 
-    // Find the finalize binding
-    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+    const finalizeBinding = capability.bindings.find(b => b.finalizeCallback);
 
-    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
-
-    // Simulate calling the finalize action
     const testPod = new V1Pod();
+    await finalizeBinding?.finalizeCallback?.(testPod);
 
-    if (finalizeBinding?.finalizeCallback) {
-      await finalizeBinding.finalizeCallback(testPod);
-    }
-
-    // Assertions to ensure the user-provided alias is used in the logger
     expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
     expect(mockLog.info).toHaveBeenCalledWith(
@@ -534,20 +475,18 @@ describe("Capability", () => {
   it("should use user-provided alias for finalizer with watch", async () => {
     const capability = new Capability(capabilityConfig);
 
-    const mockWatchCallback: WatchLogAction<typeof V1Pod> = vi.fn(
-      async (update, phase, logger: PartialLogger = mockLog) => {
-        logger.info("external api call (watch-create-alias): watch/callback");
-      },
-    );
+    type WA = WatchLogAction<typeof V1Pod>;
+    const mockWatchCallback = vi.fn<WA>(async (_update, _phase, logger) => {
+      (logger ?? (Log as unknown as Logger)).info(
+        "external api call (watch-create-alias): watch/callback",
+      );
+    }) as unknown as WA;
 
-    const mockFinalizeCallback: FinalizeAction<typeof V1Pod> = vi.fn(
-      async (update: V1Pod, logger: PartialLogger = mockLog) => {
-        logger.info("Finalize action log");
-      },
-    );
+    type FA = FinalizeAction<typeof V1Pod>;
+    const mockFinalizeCallback = vi.fn<FA>(async (_update, logger) => {
+      (logger ?? (Log as unknown as Logger)).info("Finalize action log");
+    }) as unknown as FA;
 
-    // Set up a When binding with a user-provided alias and Finalize
-    // Chain .Watch() with the correct function signature before .Finalize()
     capability
       .When(a.Pod)
       .IsCreatedOrUpdated()
@@ -555,19 +494,11 @@ describe("Capability", () => {
       .Watch(mockWatchCallback)
       .Finalize(mockFinalizeCallback);
 
-    // Find the finalize binding
-    const finalizeBinding = capability.bindings.find(binding => binding.finalizeCallback);
+    const finalizeBinding = capability.bindings.find(b => b.finalizeCallback);
 
-    expect(finalizeBinding).toBeDefined(); // Ensure the finalize binding exists
-
-    // Simulate calling the finalize action
     const testPod = new V1Pod();
+    await finalizeBinding?.finalizeCallback?.(testPod);
 
-    if (finalizeBinding?.finalizeCallback) {
-      await finalizeBinding.finalizeCallback(testPod);
-    }
-
-    // Assertions to ensure the user-provided alias is used in the logger
     expect(mockFinalizeCallback).toHaveBeenCalledWith(testPod, expect.anything());
     expect(mockLog.child).toHaveBeenCalledWith({ alias: "custom-finalizer-alias" });
     expect(mockLog.info).toHaveBeenCalledWith(
@@ -580,12 +511,11 @@ describe("Capability", () => {
     it("should add deletionTimestamp filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability
         .When(a.Pod)
@@ -593,19 +523,18 @@ describe("Capability", () => {
         .WithDeletionTimestamp()
         .Validate(mockValidateCallback);
 
-      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings).toHaveLength(1);
       expect(capability.bindings[0].filters.deletionTimestamp).toBe(true);
     });
 
     it("should add name filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability
         .When(a.Pod)
@@ -613,19 +542,18 @@ describe("Capability", () => {
         .WithName("test-name")
         .Validate(mockValidateCallback);
 
-      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings).toHaveLength(1);
       expect(capability.bindings[0].filters.name).toBe("test-name");
     });
 
     it("should add annotation filter", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability
         .When(a.Pod)
@@ -633,7 +561,7 @@ describe("Capability", () => {
         .WithAnnotation("test-key", "test-value")
         .Validate(mockValidateCallback);
 
-      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings).toHaveLength(1);
       expect(capability.bindings[0].filters.annotations["test-key"]).toBe("test-value");
     });
   });
@@ -642,53 +570,47 @@ describe("Capability", () => {
     it("should bind an update event", () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability.When(a.Pod).IsUpdated().InNamespace("default").Validate(mockValidateCallback);
 
-      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
+      expect(capability.bindings).toHaveLength(1);
       expect(capability.bindings[0].event).toBe(Event.UPDATE);
     });
 
     it("should bind a delete event", async () => {
       const capability = new Capability(capabilityConfig);
 
-      const mockValidateCallback: ValidateAction<typeof V1Pod, V1Pod> = vi.fn(
-        async (req: PeprValidateRequest<V1Pod>, logger: PartialLogger = mockLog) => {
-          logger.info("Validate action log");
-          return { allowed: true };
-        },
-      );
+      type VA = ValidateAction<typeof V1Pod, V1Pod>;
+      const mockValidateCallback = vi.fn<VA>(async (_req, logger) => {
+        (logger ?? (Log as unknown as Logger)).info("Validate action log");
+        return { allowed: true };
+      }) as unknown as VA;
 
       capability.When(a.Pod).IsDeleted().InNamespace("default").Validate(mockValidateCallback);
 
       expect(capability.bindings).toHaveLength(1);
-
-      expect(capability.bindings).toHaveLength(1); // Ensure binding is created
       expect(capability.bindings[0].event).toBe(Event.DELETE);
     });
   });
+
   it("should throw an error if neither matchedKind nor kind is provided", () => {
     const capability = new Capability(capabilityConfig);
 
-    // Mock a model with just a name, missing the kind
     const mockModel: { name: string } = {
       name: "InvalidModel",
     };
 
-    // Expect an error when neither matchedKind nor kind is provided
     expect(() => {
-      capability.When(mockModel as unknown as GenericClass); // Cast to the expected type without using 'any'
+      capability.When(mockModel as unknown as GenericClass);
     }).toThrowError(`Kind not specified for ${mockModel.name}`);
   });
 
   it("should create a new schedule and watch the schedule store when PEPR_WATCH_MODE is 'true'", () => {
-    // Set the environment variable
     process.env.PEPR_WATCH_MODE = "true";
 
     const capability = new Capability(capabilityConfig);
@@ -702,26 +624,20 @@ describe("Capability", () => {
       completions: 1,
     };
 
-    // Call OnSchedule with a mock schedule
     capability.OnSchedule(mockSchedule);
 
-    // Ensure that the schedule store's `onReady` method is called with the correct callback
     const scheduleStoreInstance = capability.getScheduleStore();
     expect(scheduleStoreInstance.onReady).toHaveBeenCalledWith(expect.any(Function));
 
-    // Simulate the `onReady` callback being invoked
     const onReadyCallback = (scheduleStoreInstance.onReady as Mock).mock.calls[0][0] as () => void;
-    onReadyCallback(); // The callback function is now invoked as a type of `() => void`
+    onReadyCallback();
 
-    // Ensure the new OnSchedule instance is created with the correct schedule data
     expect(OnSchedule).toHaveBeenCalledWith(mockSchedule);
 
-    // Clean up environment variables after the test
     delete process.env.PEPR_WATCH_MODE;
   });
 
   it("should not create a new schedule or watch the schedule store when PEPR_WATCH_MODE is not set", () => {
-    // Ensure environment variables are not set
     delete process.env.PEPR_WATCH_MODE;
     delete process.env.PEPR_MODE;
 
@@ -736,21 +652,17 @@ describe("Capability", () => {
       completions: 1,
     };
 
-    // Call OnSchedule with a mock schedule
     capability.OnSchedule(mockSchedule);
 
-    // Ensure that the schedule store's `onReady` method is not called
     const scheduleStoreInstance = capability.getScheduleStore();
     expect(scheduleStoreInstance.onReady).not.toHaveBeenCalled();
 
-    // Ensure that OnSchedule was not called
     expect(OnSchedule).not.toHaveBeenCalled();
   });
 
   it("should add annotation with an empty value when no value is provided in WithAnnotation", () => {
     const capability = new Capability(capabilityConfig);
 
-    // Chain WithAnnotation without providing a value (default to empty string)
     capability.When(a.Pod).IsCreatedOrUpdated().WithAnnotation("test-annotation");
 
     expect(capability.bindings).toHaveLength(0);

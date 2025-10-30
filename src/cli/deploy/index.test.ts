@@ -3,6 +3,10 @@ import { Command } from "commander";
 import deploy from ".";
 import prompts from "prompts";
 
+const h = vi.hoisted(() => ({
+  deploySpy: vi.fn(),
+}));
+
 vi.mock("prompts", () => {
   return {
     default: vi.fn(),
@@ -18,36 +22,53 @@ vi.mock("../build/buildModule", () => ({
     path: "dist/test-module",
   }),
 }));
+
 vi.mock("../../lib/assets/deploy", () => ({
   deployImagePullSecret: vi.fn(),
   deployWebhook: vi.fn(),
 }));
+
 vi.mock("../../lib/deploymentChecks", () => ({
   namespaceDeploymentsReady: vi.fn(),
 }));
+
 vi.mock("../../lib/helpers", () => ({
   validateCapabilityNames: vi.fn(),
   namespaceComplianceValidator: vi.fn(),
 }));
+
 vi.mock("../../lib/assets/loader", () => ({
   loadCapabilities: vi.fn().mockResolvedValue([]),
 }));
 
-const deploySpy = vi.fn();
+vi.mock("../../lib/assets/assets", () => {
+  type Capability = Record<string, unknown>;
 
-vi.mock("../../lib/assets/assets", () => ({
-  Assets: vi.fn().mockImplementation(() => ({
-    deploy: deploySpy,
-    path: "dist/test-module",
-    image: "",
-    config: {
+  class MockAssets {
+    path: string = "dist/test-module";
+    image: string = "";
+    config: { admission: Record<string, never>; watch: Record<string, never> } = {
       admission: {},
       watch: {},
-    },
-    alwaysIgnore: {},
-    capabilities: [],
-  })),
-}));
+    };
+    alwaysIgnore: Record<string, never> = {};
+    capabilities: Capability[] = [];
+
+    // Match the production signature loosely without `any`
+    // prod is likely: (cfg: Cfg, path: string, caps?: Capability[], host?: string)
+    constructor(...args: unknown[]) {
+      const maybePath = typeof args[1] === "string" ? args[1] : undefined;
+      if (maybePath) this.path = maybePath;
+    }
+
+    deploy = h.deploySpy;
+  }
+
+  return { Assets: MockAssets };
+});
+
+// Re-export the hoisted spy for assertions below
+const deploySpy = h.deploySpy;
 
 describe("deploy CLI command", () => {
   let program: Command;
@@ -117,6 +138,7 @@ describe("deploy CLI command", () => {
     mockExit.mockRestore();
     mockError.mockRestore();
   });
+
   it("exits if user declines confirmation", async () => {
     const mockPrompt = prompts as unknown as ReturnType<typeof vi.fn>;
     mockPrompt.mockResolvedValue({ yes: false });
