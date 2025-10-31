@@ -48,28 +48,28 @@ export default [
     },
 
     rules: {
-      "@typescript-eslint/no-floating-promises": "warn",
-      "class-methods-use-this": "warn",
+      "@typescript-eslint/no-floating-promises": "error",
+      "class-methods-use-this": "error",
 
       complexity: [
-        "warn",
+        "error",
         {
           max: 10,
         },
       ],
 
-      "consistent-this": "warn",
+      "consistent-this": "error",
       eqeqeq: "error",
 
       "max-depth": [
-        "warn",
+        "error",
         {
           max: 3,
         },
       ],
 
       "max-nested-callbacks": [
-        "warn",
+        "error",
         {
           max: 4,
         },
@@ -83,7 +83,7 @@ export default [
       ],
 
       "max-statements": [
-        "warn",
+        "error",
         {
           max: 20,
         },
@@ -92,7 +92,7 @@ export default [
         },
       ],
 
-      "no-invalid-this": "warn",
+      "no-invalid-this": "error",
     },
   },
   {
@@ -100,7 +100,7 @@ export default [
 
     rules: {
       "max-nested-callbacks": [
-        "warn",
+        "error",
         {
           max: 8,
         },
