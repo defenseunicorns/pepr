@@ -41,25 +41,25 @@ export default [
       "@typescript-eslint": typescriptEslint,
     },
     rules: {
-      "@typescript-eslint/no-floating-promises": "warn",
-      "class-methods-use-this": "warn",
-      "consistent-this": "warn",
+      "@typescript-eslint/no-floating-promises": "error",
+      "class-methods-use-this": "error",
+      "consistent-this": "error",
       eqeqeq: "error",
-      "no-invalid-this": "warn",
+      "no-invalid-this": "error",
       "@typescript-eslint/explicit-function-return-type": "error",
 
-      "max-depth": ["warn", { max: 3 }],
-      "max-nested-callbacks": ["warn", { max: 4 }],
+      "max-depth": ["error", { max: 3 }],
+      "max-nested-callbacks": ["error", { max: 4 }],
       "max-params": ["error", { max: 4 }],
-      "max-statements": ["warn", { max: 20 }, { ignoreTopLevelFunctions: true }],
-      complexity: ["warn", { max: 10 }],
+      "max-statements": ["error", { max: 20 }, { ignoreTopLevelFunctions: true }],
+      complexity: ["error", { max: 10 }],
     },
   },
 
   {
     files: ["**/*.test.ts"],
     rules: {
-      "max-nested-callbacks": ["warn", { max: 8 }],
+      "max-nested-callbacks": ["error", { max: 8 }],
     },
   },
 ];
