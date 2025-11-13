@@ -1,13 +1,10 @@
 # Pepr
 
-[![Pepr Documentation](https://img.shields.io/badge/docs--d25ba1)](https://docs.pepr.dev)
-[![Npm package license](https://badgen.net/npm/license/pepr)](https://npmjs.com/package/pepr)
-[![Known Vulnerabilities](https://snyk.io/test/npm/pepr/badge.svg)](https://snyk.io/advisor/npm-package/pepr)
-[![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr)
-[![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr)
-[![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](/contribute/code-of-conduct)
+| | | |
+|:---|:---|:---|
+| [![Pepr Documentation](https://img.shields.io/badge/docs--d25ba1)](https://docs.pepr.dev) | [![Npm package license](https://badgen.net/npm/license/pepr)](https://npmjs.com/package/pepr) | [![Known Vulnerabilities](https://snyk.io/test/npm/pepr/badge.svg)](https://snyk.io/advisor/npm-package/pepr) |
+| [![Npm package version](https://badgen.net/npm/v/pepr)](https://npmjs.com/package/pepr) | [![Npm package total downloads](https://badgen.net/npm/dt/pepr)](https://npmjs.com/package/pepr) | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr) |
+| [![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr) | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](/contribute/code-of-conduct) | |
 
 ## What happened to Pepr's stars?
 
@@ -22,12 +19,25 @@ We really appreciate your support!
 
 ## **_Type safe Kubernetes middleware for humans_**
 
-<img alt="The Pepr Logo" align="right" width="40%" src="_images/pepr.png" />
+<!-- markdownlint-disable MD033 -->
 
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="65%" style="vertical-align: middle; border: none;">
+<div>
 Pepr simplifies Kubernetes management by providing an alternative to complex YAML configurations, custom scripts, and ad-hoc solutions.
 As a Kubernetes controller, Pepr enables you to define Kubernetes transformations using TypeScript, accessible through straightforward configurations even without extensive development expertise.
 Pepr transforms disparate implementation approaches into a cohesive, well-structured, and maintainable system.
 With Pepr, you can efficiently convert organizational knowledge into code, improving documentation, testing, validation, and change management for more predictable outcomes.
+</div>
+</td>
+<td width="35%" align="center" style="vertical-align: middle; border: none;">
+<img alt="The Pepr Logo" width="100%" src="/assets/pepr.png" />
+</td>
+</tr>
+</table>
+
+<!-- markdownlint-enable MD033 -->
 
 ## Features
 
