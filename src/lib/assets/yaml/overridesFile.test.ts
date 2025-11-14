@@ -3,7 +3,7 @@
 
 import { expect, describe, it, vi, type Mock, beforeEach } from "vitest";
 import { promises as fs } from "fs";
-import { overridesFile, writeSchemaYamlFromObject } from "./overridesFile";
+import { overridesFile, writeSchemaYamlFromObject, fixSchemaForFlexibleMaps } from "./overridesFile";
 import type { ChartOverrides } from "./overridesFile";
 import { load as loadYaml } from "js-yaml";
 import { ModuleConfig } from "../../types";
@@ -305,6 +305,62 @@ describe("overridesFile", () => {
     expect(featuresDef.required).toEqual(expect.arrayContaining(["enabled"]));
     expect(featuresDef.required).toHaveLength(1);
   });
+
+  it("generates schema with additionalProperties:true for flexible map fields", async () => {
+    const valuesString = JSON.stringify(
+      {
+        admission: {
+          enabled: true,
+          podLabels: { "custom-label": "custom-value" },
+          podAnnotations: { "custom-annotation": "custom-value" },
+          nodeSelector: { "node-type": "worker" },
+          affinity: {},
+          serviceMonitor: {
+            enabled: false,
+            labels: { "monitoring": "prometheus" },
+            annotations: { "prometheus.io/scrape": "true" }
+          }
+        },
+        watcher: {
+          enabled: true,
+          podLabels: { "watcher-label": "value" },
+          podAnnotations: {},
+          nodeSelector: {},
+          affinity: {},
+          serviceMonitor: {
+            enabled: false,
+            labels: {},
+            annotations: {}
+          }
+        },
+        namespace: {
+          annotations: { "namespace-annotation": "value" },
+          labels: { "namespace-label": "value" }
+        }
+      },
+      null,
+      2,
+    );
+
+    const valuesFilePath = "/tmp/values.yaml";
+    const expectedSchemaPath = "/tmp/values.schema.json";
+
+    await writeSchemaYamlFromObject(valuesString, valuesFilePath);
+
+    const jsonCall = (fs.writeFile as Mock).mock.calls.find(
+      ([path]) => path === expectedSchemaPath,
+    );
+
+    expect(jsonCall).toBeDefined();
+
+    const [, writtenSchema] = jsonCall!;
+    const parsedSchema = JSON.parse(writtenSchema as string) as JSONSchema7;
+
+    const affinityDef = parsedSchema.definitions?.Affinity as JSONSchema7;
+    expect(affinityDef).toBeDefined();
+    expect(affinityDef.additionalProperties).toBe(true);
+    expect(affinityDef.type).toBe("object");
+  });
   it("uses alwaysIgnore.namespaces when non-empty", async () => {
     const cfgWithAlwaysIgnore = {
       ...mockOverrides,
@@ -343,5 +399,246 @@ describe("overridesFile", () => {
     const parsedYaml = loadYaml(writtenContent as string) as OverridesFileSchema;
 
     expect(parsedYaml.additionalIgnoredNamespaces).toEqual(["nsA", "nsB"]);
+  });
+});
+
+describe("fixSchemaForFlexibleMaps", () => {
+  it("should allow additional properties for known flexible map definitions", () => {
+    const schema = {
+      definitions: {
+        Affinity: {
+          type: "object",
+          additionalProperties: false,
+          title: "Affinity",
+          properties: {},
+        },
+        OtherType: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            name: { type: "string" },
+          },
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.Affinity.additionalProperties).toBe(true);
+    expect(schema.definitions.Affinity.title).toBeUndefined();
+    expect(schema.definitions.OtherType.additionalProperties).toBe(false);
+  });
+
+  it("should allow additional properties for empty object definitions", () => {
+    const schema = {
+      definitions: {
+        EmptyObject: {
+          type: "object",
+          additionalProperties: false,
+          title: "EmptyObject",
+        },
+        ObjectWithProperties: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            name: { type: "string" },
+          },
+        },
+        NonObject: {
+          type: "string",
+          additionalProperties: false,
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.EmptyObject.additionalProperties).toBe(true);
+    expect(schema.definitions.EmptyObject.title).toBeUndefined();
+    expect(schema.definitions.ObjectWithProperties.additionalProperties).toBe(false);
+    expect(schema.definitions.NonObject.additionalProperties).toBe(false);
+  });
+
+  it("should handle objects with empty properties object", () => {
+    const schema = {
+      definitions: {
+        EmptyPropsObject: {
+          type: "object",
+          additionalProperties: false,
+          title: "EmptyPropsObject",
+          properties: {},
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.EmptyPropsObject.additionalProperties).toBe(true);
+    expect(schema.definitions.EmptyPropsObject.title).toBeUndefined();
+  });
+
+  it("should not modify definitions that already allow additional properties", () => {
+    const schema = {
+      definitions: {
+        FlexibleObject: {
+          type: "object",
+          additionalProperties: true,
+          properties: {},
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.FlexibleObject.additionalProperties).toBe(true);
+  });
+
+  it("should preserve title if it differs from definition name", () => {
+    const schema = {
+      definitions: {
+        MyObject: {
+          type: "object",
+          additionalProperties: false,
+          title: "CustomTitle",
+          properties: {},
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.MyObject.additionalProperties).toBe(true);
+    expect(schema.definitions.MyObject.title).toBe("CustomTitle");
+  });
+
+  it("should handle schema without definitions", () => {
+    const schema = {
+      type: "object",
+      properties: {},
+    };
+
+    expect(() => fixSchemaForFlexibleMaps(schema)).not.toThrow();
+  });
+
+  it("should handle empty schema", () => {
+    const schema = {};
+
+    expect(() => fixSchemaForFlexibleMaps(schema)).not.toThrow();
+  });
+
+  it("should handle multiple known flexible map definitions", () => {
+    const schema = {
+      definitions: {
+        Affinity: {
+          type: "object",
+          additionalProperties: false,
+          title: "Affinity",
+          properties: {},
+        },
+        UnknownFlexibleMap: {
+          type: "object",
+          additionalProperties: false,
+          title: "UnknownFlexibleMap",
+          properties: {},
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.Affinity.additionalProperties).toBe(true);
+    expect(schema.definitions.UnknownFlexibleMap.additionalProperties).toBe(true);
+  });
+
+  it("should handle complex nested schema structure", () => {
+    const schema = {
+      $schema: "http://json-schema.org/draft-06/schema#",
+      definitions: {
+        Values: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            admission: {
+              $ref: "#/definitions/Admission",
+            },
+          },
+        },
+        Admission: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            podLabels: {
+              $ref: "#/definitions/Affinity",
+            },
+            nodeSelector: {
+              $ref: "#/definitions/Affinity",
+            },
+          },
+        },
+        Affinity: {
+          type: "object",
+          additionalProperties: false,
+          title: "Affinity",
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+
+    expect(schema.definitions.Affinity.additionalProperties).toBe(true);
+    expect(schema.definitions.Affinity.title).toBeUndefined();
+    expect(schema.definitions.Values.additionalProperties).toBe(false);
+    expect(schema.definitions.Admission.additionalProperties).toBe(false);
+  });
+
+  it("should handle schema validation scenario from real world usage", () => {
+    const schema = {
+      $schema: "http://json-schema.org/draft-06/schema#",
+      $ref: "#/definitions/Values",
+      definitions: {
+        Values: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            admission: {
+              $ref: "#/definitions/Admission",
+            },
+            watcher: {
+              $ref: "#/definitions/Admission",
+            },
+          },
+        },
+        Admission: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            podAnnotations: {
+              $ref: "#/definitions/Affinity",
+            },
+            podLabels: {
+              $ref: "#/definitions/Affinity",
+            },
+            nodeSelector: {
+              $ref: "#/definitions/Affinity",
+            },
+            affinity: {
+              $ref: "#/definitions/Affinity",
+            },
+          },
+        },
+        Affinity: {
+          type: "object",
+          additionalProperties: false,
+          title: "Affinity",
+        },
+      },
+    };
+
+    fixSchemaForFlexibleMaps(schema);
+    expect(schema.definitions.Affinity.additionalProperties).toBe(true);
+    expect(schema.definitions.Affinity.title).toBeUndefined();
+    
+    expect(schema.definitions.Values.additionalProperties).toBe(false);
+    expect(schema.definitions.Admission.additionalProperties).toBe(false);
   });
 });

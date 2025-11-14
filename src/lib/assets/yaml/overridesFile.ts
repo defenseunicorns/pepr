@@ -6,6 +6,19 @@ import { promises as fs } from "fs";
 import { getIgnoreNamespaces } from "../ignoredNamespaces";
 import { quicktype, InputData, jsonInputForTargetLanguage } from "quicktype-core";
 
+// JSON Schema types
+interface SchemaProperty {
+  type?: string;
+  additionalProperties?: boolean;
+  properties?: Record<string, unknown>;
+  title?: string;
+  [key: string]: unknown;
+}
+
+interface SchemaDefinition extends SchemaProperty {
+  definitions?: Record<string, SchemaProperty>;
+}
+
 export type ChartOverrides = {
   apiPath: string;
   capabilities: CapabilityExport[];
@@ -133,7 +146,44 @@ export async function writeSchemaYamlFromObject(
   const schemaJson = lines.join("\n");
   const schemaObj = JSON.parse(schemaJson);
 
+  fixSchemaForFlexibleMaps(schemaObj);
+
   await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
+}
+
+export function fixSchemaForFlexibleMaps(schemaObj: SchemaDefinition): void {
+  if (!schemaObj.definitions) {
+    return;
+  }
+
+  // Find all definitions that should allow additional properties (map[string]string types)
+  const commonMapDefinitions = [
+    "Affinity", 
+  ];
+
+  for (const defName of commonMapDefinitions) {
+    const definition = schemaObj.definitions[defName];
+    if (definition) {
+      definition.additionalProperties = true;
+      if (definition.title === defName) {
+        delete definition.title;
+      }
+    }
+  }
+
+  
+  for (const [defName, definition] of Object.entries(schemaObj.definitions)) {
+    if (
+      definition.type === "object" &&
+      definition.additionalProperties === false &&
+      (!definition.properties || Object.keys(definition.properties).length === 0)
+    ) {
+      definition.additionalProperties = true;
+      if (definition.title === defName) {
+        delete definition.title;
+      }
+    }
+  }
 }
 
 function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: number } {
