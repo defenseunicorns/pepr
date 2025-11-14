@@ -3,12 +3,28 @@
 
 import { expect, describe, it, vi, type Mock, beforeEach } from "vitest";
 import { promises as fs } from "fs";
-import { overridesFile, writeSchemaYamlFromObject, fixSchemaForFlexibleMaps } from "./overridesFile";
+import {
+  overridesFile,
+  writeSchemaYamlFromObject,
+  fixSchemaForFlexibleMaps,
+  processCommonMapDefinitions,
+  processEmptyObjectDefinitions,
+  isEmptyObjectDefinition,
+  enableAdditionalProperties,
+} from "./overridesFile";
 import type { ChartOverrides } from "./overridesFile";
 import { load as loadYaml } from "js-yaml";
 import { ModuleConfig } from "../../types";
 import { V1PolicyRule } from "@kubernetes/client-node";
 import type { JSONSchema7 } from "json-schema";
+
+interface TestSchemaProperty {
+  type?: string;
+  additionalProperties?: boolean;
+  properties?: Record<string, unknown>;
+  title?: string;
+  [key: string]: unknown;
+}
 
 vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
@@ -317,9 +333,9 @@ describe("overridesFile", () => {
           affinity: {},
           serviceMonitor: {
             enabled: false,
-            labels: { "monitoring": "prometheus" },
-            annotations: { "prometheus.io/scrape": "true" }
-          }
+            labels: { monitoring: "prometheus" },
+            annotations: { "prometheus.io/scrape": "true" },
+          },
         },
         watcher: {
           enabled: true,
@@ -330,13 +346,13 @@ describe("overridesFile", () => {
           serviceMonitor: {
             enabled: false,
             labels: {},
-            annotations: {}
-          }
+            annotations: {},
+          },
         },
         namespace: {
           annotations: { "namespace-annotation": "value" },
-          labels: { "namespace-label": "value" }
-        }
+          labels: { "namespace-label": "value" },
+        },
       },
       null,
       2,
@@ -637,8 +653,267 @@ describe("fixSchemaForFlexibleMaps", () => {
     fixSchemaForFlexibleMaps(schema);
     expect(schema.definitions.Affinity.additionalProperties).toBe(true);
     expect(schema.definitions.Affinity.title).toBeUndefined();
-    
+
     expect(schema.definitions.Values.additionalProperties).toBe(false);
     expect(schema.definitions.Admission.additionalProperties).toBe(false);
+  });
+});
+
+describe("processCommonMapDefinitions", () => {
+  it("should process known flexible map definitions", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      Affinity: {
+        type: "object",
+        additionalProperties: false,
+        title: "Affinity",
+      },
+      SomeOtherDef: {
+        type: "object",
+        additionalProperties: false,
+      },
+    };
+
+    processCommonMapDefinitions(definitions);
+
+    expect(definitions.Affinity.additionalProperties).toBe(true);
+    expect(definitions.Affinity.title).toBeUndefined();
+    expect(definitions.SomeOtherDef.additionalProperties).toBe(false);
+  });
+
+  it("should handle case when known definition does not exist", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      SomeOtherDef: {
+        type: "object",
+        additionalProperties: false,
+      },
+    };
+
+    expect(() => processCommonMapDefinitions(definitions)).not.toThrow();
+    expect(definitions.SomeOtherDef.additionalProperties).toBe(false);
+  });
+
+  it("should preserve title if it differs from definition name", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      Affinity: {
+        type: "object",
+        additionalProperties: false,
+        title: "CustomAffinityTitle",
+      },
+    };
+
+    processCommonMapDefinitions(definitions);
+
+    expect(definitions.Affinity.additionalProperties).toBe(true);
+    expect(definitions.Affinity.title).toBe("CustomAffinityTitle");
+  });
+
+  it("should handle empty definitions object", () => {
+    const definitions: Record<string, TestSchemaProperty> = {};
+
+    expect(() => processCommonMapDefinitions(definitions)).not.toThrow();
+  });
+});
+
+describe("processEmptyObjectDefinitions", () => {
+  it("should process empty object definitions", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      EmptyObject1: {
+        type: "object",
+        additionalProperties: false,
+        title: "EmptyObject1",
+      },
+      EmptyObject2: {
+        type: "object",
+        additionalProperties: false,
+        properties: {},
+      },
+      NonEmptyObject: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          someField: { type: "string" },
+        },
+      },
+      NonObjectType: {
+        type: "string",
+        additionalProperties: false,
+      },
+    };
+
+    processEmptyObjectDefinitions(definitions);
+
+    expect(definitions.EmptyObject1.additionalProperties).toBe(true);
+    expect(definitions.EmptyObject1.title).toBeUndefined();
+    expect(definitions.EmptyObject2.additionalProperties).toBe(true);
+    expect(definitions.NonEmptyObject.additionalProperties).toBe(false);
+    expect(definitions.NonObjectType.additionalProperties).toBe(false);
+  });
+
+  it("should not modify objects that already allow additional properties", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      AlreadyFlexible: {
+        type: "object",
+        additionalProperties: true,
+      },
+    };
+
+    processEmptyObjectDefinitions(definitions);
+
+    expect(definitions.AlreadyFlexible.additionalProperties).toBe(true);
+  });
+
+  it("should handle definitions with undefined properties", () => {
+    const definitions: Record<string, TestSchemaProperty> = {
+      UndefinedProps: {
+        type: "object",
+        additionalProperties: false,
+        properties: undefined,
+      },
+    };
+
+    processEmptyObjectDefinitions(definitions);
+
+    expect(definitions.UndefinedProps.additionalProperties).toBe(true);
+  });
+
+  it("should handle empty definitions object", () => {
+    const definitions: Record<string, TestSchemaProperty> = {};
+
+    expect(() => processEmptyObjectDefinitions(definitions)).not.toThrow();
+  });
+});
+
+describe("isEmptyObjectDefinition", () => {
+  it("should return true for empty object with no properties", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(true);
+  });
+
+  it("should return true for object with empty properties object", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(true);
+  });
+
+  it("should return false for object with properties", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        someField: { type: "string" },
+      },
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(false);
+  });
+
+  it("should return false for non-object types", () => {
+    const definition: TestSchemaProperty = {
+      type: "string",
+      additionalProperties: false,
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(false);
+  });
+
+  it("should return false when additionalProperties is already true", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: true,
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(false);
+  });
+
+  it("should return false when additionalProperties is undefined", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(false);
+  });
+
+  it("should handle definition with undefined properties", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      properties: undefined,
+    };
+
+    expect(isEmptyObjectDefinition(definition)).toBe(true);
+  });
+});
+
+describe("enableAdditionalProperties", () => {
+  it("should set additionalProperties to true", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+    };
+
+    enableAdditionalProperties(definition, "TestDef");
+
+    expect(definition.additionalProperties).toBe(true);
+  });
+
+  it("should remove title when it matches definition name", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      title: "TestDef",
+    };
+
+    enableAdditionalProperties(definition, "TestDef");
+
+    expect(definition.additionalProperties).toBe(true);
+    expect(definition.title).toBeUndefined();
+  });
+
+  it("should preserve title when it differs from definition name", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      title: "CustomTitle",
+    };
+
+    enableAdditionalProperties(definition, "TestDef");
+
+    expect(definition.additionalProperties).toBe(true);
+    expect(definition.title).toBe("CustomTitle");
+  });
+
+  it("should handle definition without title", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+    };
+
+    enableAdditionalProperties(definition, "TestDef");
+
+    expect(definition.additionalProperties).toBe(true);
+    expect(definition.title).toBeUndefined();
+  });
+
+  it("should preserve other properties", () => {
+    const definition: TestSchemaProperty = {
+      type: "object",
+      additionalProperties: false,
+      properties: { field: { type: "string" } },
+      description: "Test description",
+    };
+
+    enableAdditionalProperties(definition, "TestDef");
+
+    expect(definition.additionalProperties).toBe(true);
+    expect(definition.properties).toEqual({ field: { type: "string" } });
+    expect(definition.description).toBe("Test description");
   });
 });

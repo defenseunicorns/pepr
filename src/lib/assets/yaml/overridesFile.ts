@@ -151,39 +151,47 @@ export async function writeSchemaYamlFromObject(
   await fs.writeFile(schemaPath, JSON.stringify(schemaObj, null, 2), "utf8");
 }
 
+export function processCommonMapDefinitions(definitions: Record<string, SchemaProperty>): void {
+  const commonMapDefinitions = ["Affinity"];
+
+  for (const defName of commonMapDefinitions) {
+    const definition = definitions[defName];
+    if (definition) {
+      enableAdditionalProperties(definition, defName);
+    }
+  }
+}
+
+export function processEmptyObjectDefinitions(definitions: Record<string, SchemaProperty>): void {
+  for (const [defName, definition] of Object.entries(definitions)) {
+    if (isEmptyObjectDefinition(definition)) {
+      enableAdditionalProperties(definition, defName);
+    }
+  }
+}
+
+export function isEmptyObjectDefinition(definition: SchemaProperty): boolean {
+  return (
+    definition.type === "object" &&
+    definition.additionalProperties === false &&
+    (!definition.properties || Object.keys(definition.properties).length === 0)
+  );
+}
+
+export function enableAdditionalProperties(definition: SchemaProperty, defName: string): void {
+  definition.additionalProperties = true;
+  if (definition.title === defName) {
+    delete definition.title;
+  }
+}
+
 export function fixSchemaForFlexibleMaps(schemaObj: SchemaDefinition): void {
   if (!schemaObj.definitions) {
     return;
   }
 
-  // Find all definitions that should allow additional properties (map[string]string types)
-  const commonMapDefinitions = [
-    "Affinity", 
-  ];
-
-  for (const defName of commonMapDefinitions) {
-    const definition = schemaObj.definitions[defName];
-    if (definition) {
-      definition.additionalProperties = true;
-      if (definition.title === defName) {
-        delete definition.title;
-      }
-    }
-  }
-
-  
-  for (const [defName, definition] of Object.entries(schemaObj.definitions)) {
-    if (
-      definition.type === "object" &&
-      definition.additionalProperties === false &&
-      (!definition.properties || Object.keys(definition.properties).length === 0)
-    ) {
-      definition.additionalProperties = true;
-      if (definition.title === defName) {
-        delete definition.title;
-      }
-    }
-  }
+  processCommonMapDefinitions(schemaObj.definitions);
+  processEmptyObjectDefinitions(schemaObj.definitions);
 }
 
 function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: number } {
