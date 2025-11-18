@@ -26,7 +26,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -83,7 +83,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -92,7 +92,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: clone pepr-excellent-examples
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -147,7 +147,7 @@ jobs:
           echo "PEPR_TAR=${PEPR_TAR}" >> "$GITHUB_ENV"
           docker image load --input "$PEPR_TAR"
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples

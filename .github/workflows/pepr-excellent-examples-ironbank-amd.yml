@@ -15,7 +15,7 @@ jobs:
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
       - name: Environment setup
         uses: ./.github/actions/ironbank-setup
@@ -24,7 +24,7 @@ jobs:
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Clone Pepr
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -34,7 +34,7 @@ jobs:
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
 
       - name: Clone Pepr Excellent Examples
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
@@ -67,7 +67,7 @@ jobs:
         shell: bash
 
       - name: Clone Pepr Excellent Examples
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
           path: pepr-excellent-examples
