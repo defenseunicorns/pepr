@@ -56,27 +56,27 @@ Default (without):
 
 The Watch configuration is a part of the Pepr module that allows you to watch for specific resources in the Kubernetes cluster. The Watch configuration can be customized by specific environment variables of the Watcher Deployment and can be set in the field in the `package.json` or in the helm `values.yaml` file.
 
-| Field                        | Description                                                                                                      | Example Values                  |
-|------------------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------|
-| `PEPR_RESYNC_FAILURE_MAX`    | The maximum number of times to fail on a resync interval before re-establishing the watch URL and doing a relist. | default: `"5"`                |
-| `PEPR_RETRY_DELAY_SECONDS`     | The delay between retries in seconds.                                                                            | default: `"10"`                 |
-| `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch | default: `"300"` (5 mins)       |
-| `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources  | default: `"600"` (10 mins)       |
+| Field                          | Description                                                                                                        | Example Values                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `PEPR_RESYNC_FAILURE_MAX`      | The maximum number of times to fail on a resync interval before re-establishing the watch URL and doing a relist.  | default: `"5"`                    |
+| `PEPR_RETRY_DELAY_SECONDS`     | The delay between retries in seconds.                                                                              | default: `"10"`                   |
+| `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch                                 | default: `"300"` (5 mins)         |
+| `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources                                                 | default: `"600"` (10 mins)        |
 
 ## Configuring Reconcile
 
 The [Reconcile Action](/actions/reconcile) allows you to maintain ordering of resource updates processed by a Pepr controller. The Reconcile configuration can be customized via environment variable on the Watcher Deployment, which can be set in the `package.json` or in the helm `values.yaml` file.
 
-| Field | Description | Example Values |
-|-|-|-|
+| Field                     | Description                                                 | Example Values          |
+| -                         | -                                                           | -                       |
 | `PEPR_RECONCILE_STRATEGY` | How Pepr should order resource updates being Reconcile()'d. | default: `"kindNsName"` |
 
-| Available Options ||
-|-|-|
-| `kind`  | separate queues of events for Reconcile()'d resources of a kind |
-| `kindNs` | separate queues of events for Reconcile()'d resources of a kind, within a namespace |
-| `kindNsName` | separate queues of events for Reconcile()'d resources of a kind, within a namespace, per name |
-| `global` | a single queue of events for all Reconcile()'d resources |
+| Available Options |
+| -                 | -                                                                                             |
+| `kind`            | separate queues of events for Reconcile()'d resources of a kind                               |
+| `kindNs`          | separate queues of events for Reconcile()'d resources of a kind, within a namespace           |
+| `kindNsName`      | separate queues of events for Reconcile()'d resources of a kind, within a namespace, per name |
+| `global`          | a single queue of events for all Reconcile()'d resources                                      |
 
 ## Customizing with Helm
 
@@ -84,84 +84,52 @@ Below are the available Helm override configurations after you have built your P
 
 ### Helm Overrides Table
 
-| Parameter                       | Description                               | Example Values                                 |
-|---------------------------------|-------------------------------------------|------------------------------------------------|
-| `additionalIgnoredNamespaces`              | Namespaces to ignore in addition to alwaysIgnore.namespaces from Pepr config in `package.json`.                    | `- pepr-playground`     |
-| `secrets.apiToken`              | Kube API-Server Token.                    | `Buffer.from(apiToken).toString("base64")`     |
-| `hash`                          | Unique hash for deployment. Do not change.| `<your_hash>`                                  |
-| `namespace.annotations`         | Namespace annotations                     | `{}`                                           |
-| `namespace.labels`              | Namespace labels                          | `{"pepr.dev": ""}`                             |
-| `uuid`                          | Unique identifier for the module          | `hub-operator`                                 |
-| `admission.*`                   | Admission controller configurations       | Various, see subparameters below               |
-| `watcher.*`                     | Watcher configurations                    | Various, see subparameters below               |
+| Parameter                         | Description                                                                                     | Example Values                                   |
+| --------------------------------- | -------------------------------------------                                                     | ------------------------------------------------ |
+| `additionalIgnoredNamespaces`     | Namespaces to ignore in addition to alwaysIgnore.namespaces from Pepr config in `package.json`. | `- pepr-playground`                              |
+| `secrets.apiToken`                | Kube API-Server Token.                                                                          | `Buffer.from(apiToken).toString("base64")`       |
+| `hash`                            | Unique hash for deployment. Do not change.                                                      | `<your_hash>`                                    |
+| `namespace.annotations`           | Namespace annotations                                                                           | `{}`                                             |
+| `namespace.labels`                | Namespace labels                                                                                | `{"pepr.dev": ""}`                               |
+| `uuid`                            | Unique identifier for the module                                                                | `hub-operator`                                   |
+| `admission.*`                     | Admission controller configurations                                                             | Various, see subparameters below                 |
+| `watcher.*`                       | Watcher configurations                                                                          | Various, see subparameters below                 |
 
 ### Admission and Watcher Subparameters
 
-| Subparameter                                 | Description                                                         |
-|----------------------------------------------|---------------------------------------------------------------------|
-| `failurePolicy`                              | Webhook failure policy [Ignore, Fail]                               |
-| `webhookTimeout`                             | Timeout seconds for webhooks [1 - 30]                               |
-| `env`                                        | Container environment variables                                     |
-| `image`                                      | Container image                                                     |
-| `annotations`                                | Deployment annotations                                              |
-| `labels`                                     | Deployment labels                                                   |
-| `securityContext`                            | Pod security context                                                |
-| `readinessProbe`                             | Pod readiness probe definition                                      |
-| `livenessProbe`                              | Pod liveness probe definition                                       |
-| `resources`                                  | Resource limits                                                     |
-| `containerSecurityContext`                   | Container's security context                                        |
-| `nodeSelector`                               | Node selection constraints                                          |
-| `tolerations`                                | Tolerations to taints                                               |
-| `affinity`                                   | Node scheduling options                                             |
-| `terminationGracePeriodSeconds`              | Optional duration in seconds the pod needs to terminate gracefully  |
-
-Note: Replace `*` within `admission.*` or `watcher.*` to apply settings specific to the desired subparameter (e.g. `admission.failurePolicy`).
+| Subparameter                    | Description                                                        |
+| -------------                   | -------------                                                      |
+| `failurePolicy`                 | Webhook failure policy [Ignore, Fail]                              |
+| `webhookTimeout`                | Timeout seconds for webhooks [1 - 30]                              |
+| `env`                           | Container environment variables                                    |
+| `image`                         | Container image                                                    |
+| `annotations`                   | Deployment annotations                                             |
+| `labels`                        | Deployment labels                                                  |
+| `securityContext`               | Pod security context                                               |
+| `readinessProbe`                | Pod readiness probe definition                                     |
+| `livenessProbe`                 | Pod liveness probe definition                                      |
+| `resources`                     | Resource limits                                                    |
+| `containerSecurityContext`      | Container's security context                                       |
+| `nodeSelector`                  | Node selection constraints                                         |
+| `tolerations`                   | Tolerations to taints                                              |
+| `affinity`                      | Node scheduling options                                            |
+| `terminationGracePeriodSeconds` | Optional duration in seconds the pod needs to terminate gracefully |
 
 ## Customizing with package.json
 
-Below are the available configurations through `package.json`.
-
 ### package.json Configurations Table
 
-| Field            | Description                            | Example Values                      |
-|------------------|----------------------------------------|-------------------------------------|
-| `uuid`           | Unique identifier for the module       | `hub-operator`                      |
-| `onError`        | Behavior of the webhook failure policy | `audit`, `ignore`, `reject`         |
-| `webhookTimeout` | Webhook timeout in seconds             | `1` - `30`                          |
-| `customLabels`   | Custom labels for namespaces           | `{namespace: {}}`                   |
-| `alwaysIgnore`   | Conditions to always ignore            | `{namespaces: []}`                  |
-| `admission`      | admission namespaces to always ignore  | `{alwaysIgnore: {namespaces: []}}`  |
-| `watch`          | watcher namespaces to always ignore    | `{alwaysIgnore: {namespaces: []}}`  |
-| `includedFiles`  | For working with WebAssembly           | ["main.wasm", "wasm_exec.js"]       |
-| `env`            | Environment variables for the container| `{LOG_LEVEL: "warn"}`               |
-| `rbac`           | Custom RBAC rules (requires building with `rbacMode: scoped`)                | `[{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]` |
-| `rbacMode`       | Configures module to build binding RBAC with principal of least privilege | `scoped`, `admin` |
-| `additionalWebhooks` | Additional webhooks configuration | `[{"failurePolicy": "Fail", "namespace": "example-namespace"}]` |
-
-**admission.alwaysIgnore && watcher.alwaysIgnore**: These configurations cannot be used with the global `alwaysIgnore` field. They are used to specify namespaces that should always be ignored by the admission controller or watcher, respectively.
-**uuid**: An identifier for the module in the `pepr-system` namespace. If not provided, a UUID will be generated. It can be any [kubernetes acceptable name](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) that is under 36 characters.
-
-These tables provide a comprehensive overview of the fields available for customization within the Helm overrides and the `package.json` file. Modify these according to your deployment requirements.
-
-### Example Custom RBAC Rules
-
-The following example demonstrates how to add custom RBAC rules to the Pepr module.
-
-```json
-{
-  "pepr": {
-    "rbac": [
-      {
-        "apiGroups": ["pepr.dev"],
-        "resources": ["customresources"],
-        "verbs": ["get", "list"]
-      },
-      {
-        "apiGroups": ["apps"],
-        "resources": ["deployments"],
-        "verbs": ["create", "delete"]
-      }
-    ]
-  }
-}
-```
+| Field                | Description                             | Example Values                                                                         |
+| -------              | -------------                           | ----------------                                                                       |
+| `uuid`               | Unique identifier for the module        | `hub-operator`                                                                         |
+| `onError`            | Behavior of the webhook failure policy  | `audit`, `ignore`, `reject`                                                            |
+| `webhookTimeout`     | Webhook timeout in seconds              | `1` - `30`                                                                             |
+| `customLabels`       | Custom labels for namespaces            | `{namespace: {}}`                                                                      |
+| `alwaysIgnore`       | Conditions to always ignore             | `{namespaces: []}`                                                                     |
+| `admission`          | admission namespaces to always ignore   | `{alwaysIgnore: {namespaces: []}}`                                                     |
+| `watch`              | watcher namespaces to always ignore     | `{alwaysIgnore: {namespaces: []}}`                                                     |
+| `includedFiles`      | For working with WebAssembly            | ["main.wasm", "wasm_exec.js"]                                                          |
+| `env`                | Environment variables for the container | `{LOG_LEVEL: "warn"}`                                                                  |
+| `rbac`               | Custom RBAC rules                       | `[{"apiGroups": ["<apiGroups>"], "resources": ["<resources>"], "verbs": ["<verbs>"]}]` |
+| `rbacMode`           | RBAC mode                               | `scoped`, `admin`                                                                      |
+| `additionalWebhooks` | Additional webhooks configuration       | `[{"failurePolicy": "Fail", "namespace": "example-namespace"}]`                        |
