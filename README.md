@@ -1,21 +1,10 @@
 # Pepr
 
 | | | |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | [![Pepr Documentation](https://img.shields.io/badge/docs--d25ba1)](https://docs.pepr.dev) | [![Npm package license](https://img.shields.io/npm/l/pepr)](https://npmjs.com/package/pepr) | [![Known Vulnerabilities](https://snyk.io/test/npm/pepr/badge.svg)](https://snyk.io/advisor/npm-package/pepr) |
 | [![Npm package version](https://img.shields.io/npm/v/pepr)](https://npmjs.com/package/pepr) | [![Npm package total downloads](https://img.shields.io/npm/dy/pepr)](https://npmjs.com/package/pepr) | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/pepr/badge)](https://securityscorecards.dev/viewer/?uri=github.com/defenseunicorns/pepr) |
 | [![codecov](https://codecov.io/github/defenseunicorns/pepr/graph/badge.svg?token=7679Y9K1HB)](https://codecov.io/github/defenseunicorns/pepr) | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](/contribute/code-of-conduct) | |
-
-## What happened to Pepr's stars?
-
-In February 2025, an accidental change to the repository's visibility reset the star count.
-The visibility issue was quickly resolved, but the stars were unfortunately lost.
-
-Pepr had over 200 stars, demonstrating its recognition and value within the Kubernetes community.
-We're working to rebuild that recognition.
-
-If you've previously starred Pepr, or if you find it a useful project, we would greatly appreciate it if you could re-star the repository.
-We really appreciate your support!
 
 ## **_Type safe Kubernetes middleware for humans_**
 
