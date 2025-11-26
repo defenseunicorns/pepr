@@ -78,7 +78,6 @@
     "@types/json-schema": "^7.0.15",
     "@types/node": "24.x.x",
     "@types/node-forge": "1.3.14",
-    "@types/ramda": "^0.31.1",
     "@types/readable-stream": "^4.0.21",
     "@types/urijs": "^1.19.25",
     "@types/ws": "^8.18.1",
@@ -96,6 +95,7 @@
     "glob": "^9.0.0"
   },
   "peerDependencies": {
+    "@types/ramda": "^0.31.1",
     "@types/prompts": "2.4.9",
     "@typescript-eslint/eslint-plugin": "8.45.0",
     "@typescript-eslint/parser": "8.45.0",
