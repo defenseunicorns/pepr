@@ -49,7 +49,6 @@
     "test:upgrade:upstream": "npm run cluster:k3d && npm run cluster:k3d:import-upstream && vitest run integration/cluster/upgrade.test.ts"
   },
   "dependencies": {
-    "@types/ramda": "0.31.1",
     "command-line-args": "^6.0.1",
     "commander": "14.0.2",
     "express": "5.1.0",
@@ -74,7 +73,7 @@
     "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/command-line-args": "^5.2.3",
     "@types/eslint": "9.6.1",
-    "@types/express": "5.0.5",
+    "@types/express": "^5.0.5",
     "@types/json-pointer": "^1.0.34",
     "@types/json-schema": "^7.0.15",
     "@types/node": "24.x.x",
@@ -96,6 +95,7 @@
     "glob": "^9.0.0"
   },
   "peerDependencies": {
+    "@types/ramda": "^0.31.1",
     "@types/prompts": "2.4.9",
     "@typescript-eslint/eslint-plugin": "8.45.0",
     "@typescript-eslint/parser": "8.45.0",
