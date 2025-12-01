@@ -24,7 +24,7 @@ npx pepr build --rbac-mode scoped
 
 If encountering unexpected behaviors in Pepr while running in scoped mode, check to see if they are related to RBAC.
 
-1. Check Deployment logs for RBAC errors:
+### Step 1: Check Deployment logs for RBAC errors
 
 ```bash
 kubectl logs -n pepr-system  -l app | jq
@@ -55,7 +55,7 @@ kubectl logs -n pepr-system  -l app | jq
 }
 ```
 
-1. Verify ServiceAccount Permissions with `kubectl auth can-i`
+### Step 2: Verify ServiceAccount Permissions with `kubectl auth can-i`
 
 ```bash
 SA=$(kubectl get deploy -n pepr-system -o=jsonpath='{range .items[0]}{.spec.template.spec.serviceAccountName}{"\n"}{end}')
@@ -66,7 +66,7 @@ kubectl auth can-i create cm --as=system:serviceaccount:pepr-system:$SA -n pepr-
 # example output: no
 ```
 
-1. Describe the ClusterRole
+### Step 3: Describe the ClusterRole
 
 ```bash
 SA=$(kubectl get deploy -n pepr-system -o=jsonpath='{range .items[0]}{.spec.template.spec.serviceAccountName}{"\n"}{end}')
@@ -89,7 +89,9 @@ PolicyRule:
 
 As discussed in the [Modes](#modes) section, the admission controller's primary mutating or validating action doesn't require a ClusterRole (as the request is not persisted or executed while passing through admission control), if you have a use case where the admission controller's logic involves reading other Kubernetes resources or taking additional actions beyond just validating, mutating, or watching the incoming request, appropriate RBAC settings should be reflected in the ClusterRole.
 
-Step 1: Figure out the desired permissions. (`kubectl create clusterrole --help` is a good place to start figuring out the syntax)
+### Step 1: Figure out the desired permissions
+
+**(`kubectl create clusterrole --help` is a good place to start figuring out the syntax)**
 
 ```bash
  kubectl create clusterrole configMapApplier --verb=create,patch --resource=configmap --dry-run=client -oyaml
@@ -110,7 +112,7 @@ rules:
   - patch
 ```
 
-Step 2: Update the ClusterRole in the `dist` folder.
+### Step 2: Update the ClusterRole in the `dist` folder
 
 ```yaml
 ...
@@ -145,4 +147,4 @@ rules:
 ...
 ```
 
-Step 3: Apply the updated configuration
+### Step 3: Apply the updated configuration

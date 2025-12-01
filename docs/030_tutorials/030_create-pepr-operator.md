@@ -31,20 +31,9 @@ All resources will include `ownerReferences`, triggering cascading deletion when
 
 [Back to top](#introduction)
 
-## Tutorial Steps
+## Steps
 
-1. [Create a new Pepr Module](#create-a-new-pepr-module)
-2. [Define the WebApp CRD](#create-crd)
-3. [Create Helper Functions](#create-helpers)
-4. [Implement the Reconciler](#create-reconciler)
-5. [Build and Deploy Your Operator](#build-and-deploy-your-operator)
-6. [Test Your Operator](#test-your-operator)
-
-[Back to top](#introduction)
-
-## Create a new Pepr Module
-
-**[🟢⚪⚪⚪⚪⚪] Step 1 of 6**
+### Step 1: Create a new Pepr Module
 
 First, create a new Pepr module for your operator:
 
@@ -68,9 +57,7 @@ git init && git add --all && git commit -m "npx pepr init"
 
 [Back to top](#introduction)
 
-## Create CRD
-
-**[🟢🟢⚪⚪⚪⚪] Step 2 of 6**
+### Step 2: Create CRD
 
 The WebApp Custom Resource Definition (CRD) specifies the structure and validation for your custom resource.
 Create the necessary directory structure:
@@ -165,9 +152,7 @@ git add capabilities/crd/ && git commit -m "Create CRD handling logic"
 
 [Back to top](#introduction)
 
-## Create Helpers
-
-**[🟢🟢🟢⚪⚪⚪] Step 3 of 6**
+### Step 3: Create Helpers
 
 Now, let's create helper functions that will generate the Kubernetes resources managed by our operator. These helpers will simplify the creation of Deployments, Services, and ConfigMaps for each WebApp instance.
 
@@ -202,9 +187,7 @@ git add capabilities/controller/ && git commit -m "Add generators for WebApp dep
 
 [Back to top](#introduction)
 
-## Create Reconciler
-
-**[🟢🟢🟢🟢⚪⚪] Step 4 of 6**
+### Step 4: Create Reconciler
 
 Now, create the function that reacts to changes in WebApp instances. This function will be called and placed into a queue, guaranteeing ordered and synchronous processing of events, even when the system is under heavy load.
 
@@ -246,7 +229,7 @@ git add capabilities/ && git commit -m "Create reconciler for webapps"
 
 [Back to top](#introduction)
 
-## Add capability to Pepr Module
+#### Add capability to Pepr Module
 
 Ensure that the PeprModule in `pepr.ts` uses `WebAppController`. The implementation should look something like this:
 
@@ -277,11 +260,9 @@ Commit your changes now that the WebAppController is part of the Pepr Module:
 git add pepr.ts && git commit -m "Register WebAppController with pepr module"
 ```
 
-## Build and Deploy Your Operator
+### Step 5: Build and Deploy Your Operator
 
-**[🟢🟢🟢🟢🟢⚪] Step 5 of 6**
-
-### Preparing Your Environment
+#### Preparing Your Environment
 
 Create an ephemeral cluster with `k3d`.
 
@@ -294,7 +275,7 @@ kubectl rollout status deployment -n kube-system
 **What is an ephemeral cluster?**  
 An ephemeral cluster is a temporary Kubernetes cluster that exists only for testing purposes. Tools like Kind (Kubernetes in Docker) and k3d let you quickly create and destroy clusters without affecting your production environments.
 
-### Update and Prepare Pepr
+#### Update and Prepare Pepr
 
 Make sure Pepr is updated to the latest version:
 
@@ -306,7 +287,7 @@ npx pepr update --skip-template-update
 Be cautious when updating Pepr in an existing project as it could potentially override custom configurations. The `--skip-template-update` flag helps prevent this.
 :::
 
-### Building the Operator
+#### Building the Operator
 
 Build the Pepr module by running:
 
@@ -355,7 +336,7 @@ This process creates a self-contained deployment unit that includes everything n
                                                                └───────────────────┘
 ```
 
-### Deploy to Kubernetes
+#### Deploy to Kubernetes
 
 To deploy your operator to a Kubernetes cluster:
 
@@ -454,9 +435,7 @@ FIELDS:
 
 [Back to top](#introduction)
 
-## Test Your Operator
-
-**[🟢🟢🟢🟢🟢🟢] Step 6 of 6**
+### Step 6: Test Your Operator
 
 **Understanding reconciliation**  
 
@@ -495,7 +474,7 @@ This continuous loop ensures your application maintains its expected configurati
 └───────────────────┘
 ```
 
-### Creating a WebApp Instance
+#### Creating a WebApp Instance
 
 Let's create an instance of our custom `WebApp` resource in English with a light theme and 1 replicas:
 
@@ -530,7 +509,7 @@ kubectl apply -f webapp-light-en.yaml
 
 All this logic is in the code we wrote earlier in the tutorial.
 
-### Verifying Resource Creation
+#### Verifying Resource Creation
 
 Now, verify that the WebApp and its owned resources were created properly:
 
@@ -556,7 +535,7 @@ deployment.apps/webapp-light-en   1/1     1            1           5s
 
 > 💡 **Tip**: Our operator created three resources based on our single WebApp definition - this is the power of operators in action!
 
-### Checking WebApp Status
+#### Checking WebApp Status
 
 The status field is how our operator communicates the current state of the WebApp:
 
@@ -612,7 +591,7 @@ Events:
   Normal  InstanceCreatedOrUpdated  36s   webapp-light-en  Ready
 ```
 
-### Viewing Your WebApp
+#### Viewing Your WebApp
 
 To access your WebApp in a browser, use port-forwarding to connect to the service.
 The following command runs the port-forward in the background.
@@ -633,7 +612,7 @@ The browser should display a light theme web application:
 
 ![WebApp Light Theme](resources/030_create-pepr-operator/light.png)
 
-### Testing the Reconciliation Loop
+#### Testing the Reconciliation Loop
 
 A key feature of operators is their ability to automatically repair resources when they're deleted or changed. Let's test this by deleting the ConfigMap:
 
@@ -671,7 +650,7 @@ git add webapp-light-en.yaml && git commit -m "Add WebApp resource for light mod
 
 > 🛠️ **Try it yourself**: Try deleting the Service or Deployment. What happens? The operator should recreate those too!
 
-### Updating the WebApp
+#### Updating the WebApp
 
 Now let's test changing the WebApp's specification.
 Copy down the next WebApp resource with the following command:
@@ -731,7 +710,7 @@ git add webapp-dark-es.yaml && git commit -m "Update WebApp resource for dark mo
 5. It updates the ConfigMap with the new theme and language content
 6. The Deployment automatically detects the ConfigMap change and restarts the pod with the new content
 
-### Cleanup
+#### Cleanup
 
 When you're done testing, you can delete your WebApp and verify that all owned resources are removed:
 
