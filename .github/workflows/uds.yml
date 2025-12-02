@@ -24,7 +24,7 @@ jobs:
           egress-policy: audit
 
       - name: clone pepr
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
@@ -92,7 +92,7 @@ jobs:
         run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
         shell: bash
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: defenseunicorns/uds-core
           path: uds-core
@@ -144,7 +144,7 @@ jobs:
         run: echo "PEPR_IMG=${GITHUB_WORKSPACE}/pepr-img.tar" >> "$GITHUB_ENV"
 
       - name: clone pepr
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: defenseunicorns/pepr
           path: pepr
