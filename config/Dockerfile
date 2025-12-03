@@ -5,7 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-FROM quay.io/rfcurated/node:25.2.1-jammy-fips-rfcurated@sha256:20d05aa1a4a734df203d343ff864fd60e71fcb58c3de21e85a38ff1b94c8232f AS build
+FROM quay.io/rfcurated/node:25.2.1-jammy-fips-rfcurated@sha256:5aa733f0ffa8b478b7d4283aeb4744dabcf8bb4df3becfe18ab7c0bff9096012 AS build
 
 WORKDIR /app
 
@@ -40,7 +40,7 @@ RUN npm run build && \
 
 
 ##### DELIVER #####
-FROM quay.io/rfcurated/node:25.2.1-jammy-fips-rfcurated@sha256:20d05aa1a4a734df203d343ff864fd60e71fcb58c3de21e85a38ff1b94c8232f
+FROM quay.io/rfcurated/node:25.2.1-jammy-fips-rfcurated@sha256:5aa733f0ffa8b478b7d4283aeb4744dabcf8bb4df3becfe18ab7c0bff9096012
 
 
 WORKDIR /app
