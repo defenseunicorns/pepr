@@ -54,6 +54,7 @@ describe("update", () => {
       expect(packageJson.name).toBe(name);
       expect(packageJson.description).toBe(desc);
       expect(packageJson.pepr.onError).toBe(errorBehavior);
+      await pepr.cli(`${workdir.path()}/${name}`, { cmd: `npm install` });
     },
     time.toMs("2m"),
   );
