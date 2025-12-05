@@ -45,13 +45,13 @@ export default function (program: Command): void {
       try {
         // Update Pepr for the module
         execSync("npm install pepr@latest", {
-          stdio: "inherit",
+          stdio: "pipe",
         });
 
         // Don't update the template files if the user specified the --skip-template-update flag
         if (!opts.skipTemplateUpdate) {
           execSync("npx pepr update-templates", {
-            stdio: "inherit",
+            stdio: "pipe",
           });
         }
 
