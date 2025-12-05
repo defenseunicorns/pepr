@@ -11,6 +11,6 @@
   "*.sh": ["shellcheck -f tty"],
   ".husky/pre-*": ["shellcheck -f tty"],
   "*.md": [
-    "npx -y markdownlint-cli --config config/.markdownlint.json --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore node_modules"
+    "npx -y markdownlint-cli --config config/.markdownlint.json --fix --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore node_modules --rules config/markdownlint-step-format-rule.js"
   ]
 }
