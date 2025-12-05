@@ -57,7 +57,7 @@ module.exports = {
       }
 
       // Generic malformed step references
-      if (/\bStep\s+\d+\b/.test(trimmedLine)) {
+      if (/\bstep\s+\d+\b/i.test(trimmedLine)) {
         onError({
           lineNumber,
           detail: "Must use format: '### Step X: Title'",
