@@ -63,6 +63,9 @@ describe("update", () => {
     async () => {
       const argz = ["--skip-template-update"];
       const result = await pepr.cli(`${workdir.path()}/${name}`, { cmd: `pepr update ${argz}` });
+      console.log("=== UPDATE TEST OUTPUT ===");
+      console.log(result.stdout.join("").trim());
+      console.log("=== END OUTPUT ===");
       expect(result.exitcode).toBe(0);
       expect(result.stderr.join("").trim()).toBe("");
       expect(result.stdout.join("").trim()).toContain("Updating the Pepr module...");
