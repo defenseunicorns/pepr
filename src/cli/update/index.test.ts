@@ -36,10 +36,10 @@ describe("Pepr CLI Update Command", () => {
 
     expect(prompt).toHaveBeenCalled();
     expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
-      stdio: "inherit",
+      stdio: "pipe",
     });
     expect(child_process.execSync).toHaveBeenCalledWith("npx pepr update-templates", {
-      stdio: "inherit",
+      stdio: "pipe",
     });
     expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
     expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
@@ -52,7 +52,7 @@ describe("Pepr CLI Update Command", () => {
 
     expect(prompt).not.toHaveBeenCalled();
     expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
-      stdio: "inherit",
+      stdio: "pipe",
     });
     expect(Log.info).toHaveBeenCalledWith("Updating the Pepr module...");
     expect(Log.info).toHaveBeenCalledWith("✅ Module updated successfully");
@@ -64,7 +64,7 @@ describe("Pepr CLI Update Command", () => {
 
     expect(prompt).not.toHaveBeenCalled();
     expect(child_process.execSync).toHaveBeenCalledWith("npm install pepr@latest", {
-      stdio: "inherit",
+      stdio: "pipe",
     });
     expect(child_process.execSync).not.toHaveBeenCalledWith(
       "npx pepr update-templates",
