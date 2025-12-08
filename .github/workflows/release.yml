@@ -104,7 +104,7 @@ jobs:
       actions: read
       contents: read
     needs: [build-and-release]
-    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a #v2.1.0
     with:
       run-scripts: "set-version, ci, build"
     secrets: inherit
