@@ -7,7 +7,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const MARKDOWN_FILE = path.resolve(process.cwd(), "docs/030_tutorials/030_create-pepr-operator.md");
+const MARKDOWN_FILE = path.resolve(process.cwd(), "docs/tutorials/create-pepr-operator.md");
 
 function extractCommandBlocks(markdown: string): string[] {
   const regex = /<!-- Start Block -->([\s\S]*?)<!-- End Block -->/g;

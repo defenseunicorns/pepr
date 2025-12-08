@@ -1,6 +1,6 @@
 import fs from "fs";
 
-const cliDocsPath = "./docs/010_user-guide/010_pepr-cli.md";
+const cliDocsPath = "./docs/user-guide/pepr-cli.md";
 
 /**
  * Get documentation for a Pepr command from the markdown docs
