@@ -17,6 +17,7 @@ dist/
 !hack/*.js
 !.github/workflows/*.js
 !scripts/*.js
+!config/markdownlint-step-format-rule.js
 node_modules/
 stats.html
 .vscode

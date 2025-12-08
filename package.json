@@ -30,7 +30,7 @@
     "format:check": "npm run format:src && npm run format:tests && npm run format:markdown && npm run format:integration && npm run format:prettier -- --check",
     "format:fix": "npm run format:src -- --fix && npm run format:markdown -- --fix && npm run format:integration -- --fix && npm run format:prettier -- --write",
     "format:integration": "eslint --config config/eslint.integration.config.mjs integration/cli integration/helpers",
-    "format:markdown": "npx -y markdownlint-cli --config config/.markdownlint.json --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore node_modules \"**/*.md\"",
+    "format:markdown": "npx -y markdownlint-cli --config config/.markdownlint.json --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore node_modules --rules config/markdownlint-step-format-rule.js \"**/*.md\"",
     "format:prettier": "prettier --config config/.prettierrc src integration/cli/**/*.ts integration/helpers/**/*.ts",
     "format:src": "eslint --config config/eslint.root.config.mjs 'src/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern 'src/templates/**'",
     "format:tests": "eslint --config config/eslint.test.config.mjs 'src/**/*.test.ts'",
@@ -66,8 +66,8 @@
     "ts-morph": "^27.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "20.1.0",
-    "@commitlint/config-conventional": "20.0.0",
+    "@commitlint/cli": "20.2.0",
+    "@commitlint/config-conventional": "20.2.0",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/npm": "^13.0.0",
