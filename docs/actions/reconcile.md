@@ -4,7 +4,7 @@ Reconcile functions the same as Watch but is tailored for building Kubernetes Co
 
 Ordering can be configured to operate in one of two ways: as a single queue that maintains ordering of operations across all resources of a kind (default) or with separate processing queues per resource instance.
 
-See [Configuring Reconcile](/user-guide/customization#configuring-reconcile) for more on configuring how Reconcile behaves.
+See [Configuring Reconcile](../user-guide/customization.md#configuring-reconcile) for more on configuring how Reconcile behaves.
 
 ```ts
 When(WebApp)

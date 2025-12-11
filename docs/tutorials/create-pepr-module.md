@@ -12,7 +12,7 @@ Each Pepr Module is it's own Typescript project, produced by [`npx pepr init`](/
 
 ### Step 1: Create the module
 
-   Use [`npx pepr init`](/user-guide/pepr-cli#pepr-init) to generate a new module.
+   Use [`npx pepr init`](../user-guide/pepr-cli.md#pepr-init) to generate a new module.
 
 ### Step 2: Quickly validate system setup
 
@@ -40,7 +40,7 @@ Each Pepr Module is it's own Typescript project, produced by [`npx pepr init`](/
 
 ### Step 3: Create your custom Pepr Capabilities
 
-   Now that you have confirmed Pepr is working, you can now create new [capabilities](/user-guide/capabilities). You'll also want to disable the `HelloPepr` capability in your module (`pepr.ts`) before pushing to production. You can disable by commenting out or deleting the `HelloPepr` variable below:
+   Now that you have confirmed Pepr is working, you can now create new [capabilities](../user-guide/capabilities.md). You'll also want to disable the `HelloPepr` capability in your module (`pepr.ts`) before pushing to production. You can disable by commenting out or deleting the `HelloPepr` variable below:
 
    ```typescript
    new PeprModule(cfg, [
@@ -51,14 +51,14 @@ Each Pepr Module is it's own Typescript project, produced by [`npx pepr init`](/
    ]);
    ```
 
-   _Note: if you also delete the `capabilities/hello-pepr.ts` file, it will be added again on the next [`npx pepr update`](/user-guide/pepr-cli#pepr-update) so you have the latest examples usages from the Pepr SDK. Therefore, it is sufficient to remove the entry from your `pepr.ts` module
+   _Note: if you also delete the `capabilities/hello-pepr.ts` file, it will be added again on the next [`npx pepr update`](../user-guide/pepr-cli.md#pepr-update) so you have the latest examples usages from the Pepr SDK. Therefore, it is sufficient to remove the entry from your `pepr.ts` module
    config._
 
 ### Step 4: Build and deploy the Pepr Module
 
    Most of the time, you'll likely be iterating on a module with `npx pepr dev` for real-time feedback and validation Once you are ready to move beyond the local dev environment, Pepr provides deployment and build tools you can use.
 
-   `npx pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`npx pepr deploy`](/user-guide/pepr-cli#pepr-deploy) for more info.
+   `npx pepr deploy` - you can use this command to build your module and deploy it into any K8s cluster your current `kubecontext` has access to. This setup is ideal for CI systems during testing, but is not recommended for production use. See [`npx pepr deploy`](../user-guide/pepr-cli.md#pepr-deploy) for more info.
 
 ## Additional Information
 

@@ -16,7 +16,7 @@ An example of what the dashboard will look like is shown below:
 
 ### Step 1: Get Cluster Running With Your Pepr Module Deployed
 
-You can learn more about how to create a Pepr module and deploy it in the [Create a Pepr Module](/tutorials/create-pepr-module) tutorial. The short version is:
+You can learn more about how to create a Pepr module and deploy it in the [Create a Pepr Module](./create-pepr-module.md) tutorial. The short version is:
 
 ```bash
 #Create your cluster
@@ -850,17 +850,15 @@ password: secret
 
 By clicking on the Prometheus data source, you should be able to test the connection to Prometheus by clicking the "Test" button at the bottom of the screen.
 
-:::note
-The Prometheus server URL should be something like:
-:::
+> [!NOTE]
+> The Prometheus server URL should be something like:
 
 <http://monitoring-kube-prometh-prometheus.default:9090/>
 
 You should now be able to select the Pepr Dashboard from the Grafana UI in the "Dashboards" section.
 
-:::note
-The dashboard may take a few minutes to populate with data.
-:::
+> [!NOTE]
+> The dashboard may take a few minutes to populate with data.
 
 ## Summary
 
