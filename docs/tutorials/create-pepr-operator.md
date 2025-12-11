@@ -283,9 +283,9 @@ Make sure Pepr is updated to the latest version:
 npx pepr update --skip-template-update
 ```
 
-:::caution
-Be cautious when updating Pepr in an existing project as it could potentially override custom configurations. The `--skip-template-update` flag helps prevent this.
-:::
+> [!CAUTION]
+> Be cautious when updating Pepr in an existing project as it could potentially override custom configurations.
+> The `--skip-template-update` flag helps prevent this.
 
 #### Building the Operator
 
@@ -429,9 +429,9 @@ FIELDS:
     Theme defines the theme of the web application, either dark or light.
 ```
 
-:::note
-`wa` is the short form of `webapp` that kubectl recognizes. This resource structure directly matches the TypeScript interface we defined earlier in our code.
-:::
+> [!NOTE]
+> `wa` is the short form of `webapp` that kubectl recognizes.
+> This resource structure directly matches the TypeScript interface we defined earlier in our code.
 
 [Back to top](#introduction)
 
@@ -676,9 +676,8 @@ kubectl apply -f webapp-dark-es.yaml
 ```
 <!-- End Block -->
 
-:::note
-We've changed the theme from light to dark and the language from English (en) to Spanish (es).
-:::
+> [!NOTE]
+> We've changed the theme from light to dark and the language from English (en) to Spanish (es).
 
 Your port-forward should still be active, so you can refresh your browser to see the changes.
 If your port-forward is no longer active for some reason, create a new one:

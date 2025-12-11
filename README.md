@@ -21,7 +21,7 @@ With Pepr, you can efficiently convert organizational knowledge into code, impro
 </div>
 </td>
 <td width="35%" align="center" style="vertical-align: middle; border: none;">
-<img alt="The Pepr Logo" width="100%" src="/assets/pepr.png" />
+<img alt="The Pepr Logo" width="100%" src="_images/pepr.png" />
 </td>
 </tr>
 </table>
@@ -32,7 +32,7 @@ With Pepr, you can efficiently convert organizational knowledge into code, impro
 
 - Zero-config K8s Mutating and Validating Webhooks plus Controller generation
 - Automatic leader-elected K8s resource watching
-- Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](/user-guide/store)
+- Lightweight async key-value store backed by K8s for stateful operations with the [Pepr Store](docs/user-guide/store.md)
 - Human-readable fluent API for generating [Pepr Capabilities](#capability)
 - A fluent API for creating/modifying/watching and server-side applying K8s resources via [Kubernetes Fluent Client](https://github.com/defenseunicorns/kubernetes-fluent-client)
 - Generate new K8s resources based off of cluster resource changes
@@ -41,7 +41,7 @@ With Pepr, you can efficiently convert organizational knowledge into code, impro
 - Entire NPM ecosystem available for advanced operations
 - Realtime K8s debugging system for testing/reacting to cluster changes
 - Controller network isolation and tamper-resistant module execution
-- Least-privilege [RBAC](/user-guide/rbac) generation
+- Least-privilege [RBAC](docs/user-guide/rbac.md) generation
 - AMD64 and ARM64 support
 
 ## Example Pepr Action
@@ -50,7 +50,7 @@ This quick sample shows how to react to a ConfigMap being created or updated in 
 It adds a label and annotation to the ConfigMap and adds some data to the ConfigMap.
 It also creates a Validating Webhook to make sure the "pepr" label still exists.
 Finally, after the ConfigMap is created, it logs a message to the Pepr controller and creates or updates a separate ConfigMap with the [kubernetes-fluent-client](https://github.com/defenseunicorns/kubernetes-fluent-client) using server-side apply.
-For more details see [actions](/actions/) section.
+For more details see [actions](docs/actions/README.md) section.
 
 ```ts
 When(a.ConfigMap)
@@ -123,11 +123,10 @@ npx pepr dev
 kubectl apply -f capabilities/hello-pepr.samples.yaml
 ```
 
-:::tip
-Don't use IP as your `--host`, it's not supported. Make sure to check your
-local k8s distro documentation how to reach your localhost, which is where
-`pepr dev` is serving the code from.
-:::
+> [!TIP]
+> Don't use IP as your `--host`, it's not supported. Make sure to check your
+> local k8s distro documentation how to reach your localhost, which is where
+> `pepr dev` is serving the code from.
 
   <video controls width="100%">
     <source src="https://user-images.githubusercontent.com/882485/230895880-c5623077-f811-4870-bb9f-9bb8e5edc118.mp4" type="video/mp4">
@@ -143,7 +142,7 @@ It is a single, complete TypeScript project that includes an entry point to load
 During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code.
 The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
 
-See [Module](/user-guide/pepr-modules) for more details.
+See [Module](docs/user-guide/pepr-modules.md) for more details.
 
 ### Capability
 
@@ -152,7 +151,7 @@ Capabilities are user-defined and can include one or more actions.
 They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations.
 A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
-See [Capabilities](/user-guide/capabilities) for more details.
+See [Capabilities](docs/user-guide/capabilities.md) for more details.
 
 ### Action
 
@@ -166,7 +165,7 @@ There are both `Mutate()` and `Validate()` Actions that can be used to modify or
 There are also `Watch()` and `Reconcile()` actions that can be used to watch for changes to Kubernetes resources that already exist.
 Finally, the `Finalize()` can be used after `Watch()` or `Reconcile()` to perform cleanup operations when the resource is deleted.
 
-See [actions](/actions/) for more details.
+See [actions](docs/actions/README.md) for more details.
 
 ## Logical Pepr Flow
 

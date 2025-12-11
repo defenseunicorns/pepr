@@ -106,4 +106,4 @@ const sanitizedResourceName = sanitizeResourceName(resourceName)
 
 ## See Also
 
-Looking for information on the Pepr mutate helpers? See [Mutate Helpers](/actions/mutate#mutate-helpers) for information on those.
+Looking for information on the Pepr mutate helpers? See [Mutate Helpers](../actions/mutate.md#mutate-helpers) for information on those.

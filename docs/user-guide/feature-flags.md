@@ -55,11 +55,9 @@ Pepr's feature flag system supports:
 Feature flags in Pepr are defined in the `FeatureFlags` object.
 The `FeatureFlags` object is the source of truth for all available feature flags.
 
-:::caution
-To reduce complexity, Pepr enforces a limit of 4 active feature flags.
-Exceeding this limit results in an error (e.g., `Error: Too many feature
-flags active: 5 (maximum: 4).`)
-:::
+> [!CAUTION]
+> To reduce complexity, Pepr enforces a limit of 4 active feature flags.
+> Exceeding this limit results in an error (e.g., `Error: Too many feature flags active: 5 (maximum: 4).`)
 
 Feature Flags have:
 

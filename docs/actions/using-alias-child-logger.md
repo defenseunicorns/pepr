@@ -80,10 +80,10 @@ This will result in log entries when creating a Pod with the that include the al
 {"level":30,"time":1726798510466,"pid":16,"hostname":"pepr-static-test-watcher-6dc69654c9-5ql6b","alias":"reconcile","msg":"alias: reconcile red"}
 ```
 
-:::note
-The Alias function is optional and can be used to provide additional context in the logs. You must pass the logger object as shown above to the action to use the Alias function.
-:::
+> [!NOTE]
+> The Alias function is optional and can be used to provide additional context in the logs.
+> You must pass the logger object as shown above to the action to use the Alias function.
 
 ## See Also
 
-Looking for some more generic helpers? Check out the [Module Author SDK](/user-guide/sdk) for information on other things that Pepr can help with.
+Looking for some more generic helpers? Check out the [Module Author SDK](../user-guide/sdk.md) for information on other things that Pepr can help with.

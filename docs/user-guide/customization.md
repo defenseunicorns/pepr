@@ -65,7 +65,7 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 
 ## Configuring Reconcile
 
-The [Reconcile Action](/actions/reconcile) allows you to maintain ordering of resource updates processed by a Pepr controller. The Reconcile configuration can be customized via environment variable on the Watcher Deployment, which can be set in the `package.json` or in the helm `values.yaml` file.
+The [Reconcile Action](../actions/reconcile.md) allows you to maintain ordering of resource updates processed by a Pepr controller. The Reconcile configuration can be customized via environment variable on the Watcher Deployment, which can be set in the `package.json` or in the helm `values.yaml` file.
 
 | Field                     | Description                                                 | Example Values          |
 | -                         | -                                                           | -                       |
