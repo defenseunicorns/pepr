@@ -177,7 +177,7 @@ See [actions](docs/actions/README.md) for more details.
 It provides optional static typing and a rich type system, allowing developers to write more robust code.
 TypeScript is transpiled to JavaScript, enabling it to run in any environment that supports JavaScript.
 Pepr allows you to use JavaScript or TypeScript to write capabilities, but TypeScript is recommended for its type safety and rich type system.
-See the [Typescript docs](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html) to learn more.
+See the [TypeScript docs](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html) to learn more.
 
 ## Community
 
