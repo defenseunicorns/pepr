@@ -19,6 +19,7 @@ describe("generateCRDScaffold", () => {
   describe("when generating a CRD scaffold with valid inputs", () => {
     let result: string;
 
+    // Create the scaffold before each test
     beforeEach(() => {
       result = createCRDscaffold(group, version, kind, data);
     });
