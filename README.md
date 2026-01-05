@@ -187,3 +187,13 @@ To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/k
 [![Contributor Chart][contributors]](https://github.com/defenseunicorns/pepr/graphs/contributors)
 
 Made with [contrib.rocks](https://contrib.rocks).
+
+
+```bash
+> protoc \
+  --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
+  --ts_proto_out=./src/api \
+  --ts_proto_opt=esModuleInterop=true,outputServices=grpc-js,useOptionals=messages \
+  -I ./src/api \
+  ./src/api/apiv1.proto
+``` 

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/cmwylie19/github.com/cmwylie19/watch-informer/api;api";
+
+service WatchService {
+  rpc Watch (WatchRequest) returns (stream WatchResponse);
+}
+  
+message WatchRequest {
+  string group = 1;
+  string version = 2;
+  string resource = 3;
+  string namespace = 4;  // Optional: Namespace to watch, empty for all namespaces
+  // Selectors -- NEW 
+  string fieldSelector = 5;  // Optional: Field selector for filtering
+  string labelSelector = 6;  // Optional: Label selector for filtering
+  // Informer Configuration
+  int32 resyncPeriodSeconds = 7;  // Optional: Resync period in seconds
+  bool sendInitialList = 8;       // Optional: Whether to send initial list
+  string startResourceVersion = 9; // Optional: Resource version to start from
+}
+  
+message WatchResponse {
+  EventType eventType = 1;  // e.g., "ADD", "UPDATE", "DELETE"
+  bytes details = 2;    // Details of the event
+  string resourceVersion = 3; // Resource version of the event
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  ADDED = 1;
+  MODIFIED = 2;
+  DELETED = 3;
+  BOOKMARK = 4;
+  ERROR = 5;
+  SNAPSHOT_END = 6; // marker if sendInitialList=true
+}

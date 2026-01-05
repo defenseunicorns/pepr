@@ -49,6 +49,7 @@
     "test:upgrade:upstream": "npm run cluster:k3d && npm run cluster:k3d:import-upstream && vitest run integration/cluster/upgrade.test.ts"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
     "@types/ramda": "0.31.1",
     "command-line-args": "^6.0.1",
     "commander": "14.0.2",
@@ -87,7 +88,9 @@
     "globals": "^16.0.0",
     "husky": "^9.1.6",
     "js-yaml": "^4.1.0",
+    "protobufjs": "^8.0.0",
     "shellcheck": "^4.1.0",
+    "ts-proto": "^2.10.1",
     "tsx": "^4.20.3",
     "undici": "^7.0.1",
     "vitest": "^4.0.4"
