@@ -81,7 +81,16 @@ const DEFAULT_ARGS = {
   ],
 };
 
-const VALID_UUID_SAMPLES = ["🚀", "asdf", "some-uuid", "64ef143f-26de-48c8-a338-54a11fd7af16"];
+const VALID_UUID_SAMPLES = ["asdf", "some-uuid", "64ef143f-26de-48c8-a338-54a11fd7af16"];
+
+const INVALID_UUID_SAMPLES = [
+  { value: "🚀", description: "emoji" },
+  { value: "with spaces", description: "spaces" },
+  { value: "invalid!", description: "special characters" },
+  { value: "with_underscore", description: "underscores" },
+  { value: "-starts-with-dash", description: "starts with non-alphanumeric" },
+  { value: "ends-with-dash-", description: "ends with non-alphanumeric" },
+];
 
 describe("init CLI command", () => {
   let program: Command;
@@ -251,6 +260,18 @@ describe("init CLI command", () => {
       const args = replaceArgumentValue(defaultArgs, flag, value);
       await runProgramWithError(args, error);
     });
+
+    it.each(INVALID_UUID_SAMPLES)(
+      "should reject invalid uuid with $description: $value",
+      async ({ value }) => {
+        const args = replaceArgumentValue(defaultArgs, flag, value);
+        await runProgramWithError(
+          args,
+          "Invalid UUID. Must contain only lowercase alphanumeric characters, '-' or '.', " +
+            "and must start and end with an alphanumeric character (RFC 1123).",
+        );
+      },
+    );
   });
 
   // UUID prompt tests

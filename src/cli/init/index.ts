@@ -13,6 +13,7 @@ import { doPostInitActions } from "./doPostInitActions";
 import { createProjectFiles } from "./createProjectFiles";
 import { v4 as uuidv4 } from "uuid";
 import Log from "../../lib/telemetry/logger";
+import { sanitizeResourceName } from "../../sdk/sdk";
 
 export default function (): Command {
   let response = {} as PromptOptions;
@@ -33,10 +34,18 @@ export default function (): Command {
           uuid = uuidv4();
           Log.warn(`The UUID was empty. Generated new UUID: '${uuid}'`);
         }
-        if (uuid.length > UUID_LENGTH_LIMIT) {
+        const normalizedUuid = uuid.toLocaleLowerCase();
+        if (normalizedUuid.length > UUID_LENGTH_LIMIT) {
           throw new Error("The UUID must be 36 characters or fewer.");
         }
-        return uuid.toLocaleLowerCase();
+        if (sanitizeResourceName(normalizedUuid) !== normalizedUuid) {
+          throw new Error(
+            "Invalid UUID. Must contain only lowercase alphanumeric characters, '-' or '.', " +
+              "and must start and end with an alphanumeric character (RFC 1123).",
+          );
+        }
+
+        return normalizedUuid;
       },
     )
     .option("-y, --yes", "Skip verification prompt when creating a new module.")
