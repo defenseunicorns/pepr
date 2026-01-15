@@ -71,6 +71,12 @@ export default function (): Command {
           }
 
           Log.info(`New Pepr module created at ${dirName}`);
+          Log.warn(
+            `This module uses the default RBAC mode "admin" which grants cluster-admin level permissions. ` +
+              `This is suitable for development and learning, but NOT recommended for production. ` +
+              `For production deployments, use "npx pepr build --rbac-mode=scoped" to generate least-privilege RBAC. ` +
+              `See https://docs.pepr.dev/user-guide/rbac/ for more details.`,
+          );
           Log.info(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (error) {
           throw new Error(`Error creating Pepr module:`, { cause: error });

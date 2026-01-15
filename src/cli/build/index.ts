@@ -122,6 +122,17 @@ export default function (program: Command): void {
         return;
       }
 
+      // Determine RBAC mode and warn if using admin mode
+      const rbacMode = determineRbacMode(opts, cfg);
+      if (rbacMode === "admin") {
+        Log.warn(
+          `Building with RBAC mode "admin" which grants cluster-admin level permissions. ` +
+            `This is NOT recommended for production deployments. ` +
+            `Consider using "--rbac-mode=scoped" for least-privilege RBAC. ` +
+            `See https://docs.pepr.dev/user-guide/rbac/ for more details.`,
+        );
+      }
+
       // Generate a secret for the module
       const assets = new Assets(
         {
@@ -131,8 +142,7 @@ export default function (program: Command): void {
           alwaysIgnore: {
             namespaces: cfg.pepr.alwaysIgnore?.namespaces,
           },
-          // Can override the rbacMode with the CLI option
-          rbacMode: determineRbacMode(opts, cfg),
+          rbacMode,
         },
         path,
         opts.withPullSecret === "" ? [] : [opts.withPullSecret],
