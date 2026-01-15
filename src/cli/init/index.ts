@@ -71,6 +71,12 @@ export default function (): Command {
           }
 
           Log.info(`New Pepr module created at ${dirName}`);
+          Log.warn(
+            `The default RBAC mode (admin) generates a ClusterRole with cluster-admin level ` +
+              `permissions for the hello-pepr capability. This is intended for demo/POC purposes only ` +
+              `and should NOT be used in production.` +
+              `See https://docs.pepr.dev/user-guide/rbac/ for more details.`,
+          );
           Log.info(`Open VSCode or your editor of choice in ${dirName} to get started!`);
         } catch (error) {
           throw new Error(`Error creating Pepr module:`, { cause: error });
