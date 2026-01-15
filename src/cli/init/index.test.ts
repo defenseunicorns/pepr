@@ -160,6 +160,20 @@ describe("init CLI command", () => {
     );
   });
 
+  it("should warn about default admin RBAC mode after module creation", async () => {
+    await runProgramWithArgs(DEFAULT_ARGS.long);
+
+    expect(Log.warn).toBeCalledWith(
+      expect.stringContaining('default RBAC mode "admin"'),
+    );
+    expect(Log.warn).toBeCalledWith(
+      expect.stringContaining("NOT recommended for production"),
+    );
+    expect(Log.warn).toBeCalledWith(
+      expect.stringContaining("--rbac-mode=scoped"),
+    );
+  });
+
   it("should throw an error if module creation fails", async () => {
     mockedSetupProjectStructure.mockImplementationOnce(() => Promise.reject(new Error("an error")));
     expect(runProgramWithError(DEFAULT_ARGS.long, "Error creating Pepr module:"));

@@ -82,6 +82,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   __esModule: true,
   default: {
     info: vi.fn(),
+    warn: vi.fn(),
     error: vi.fn(),
   },
 }));
@@ -367,6 +368,36 @@ describe("build CLI command", () => {
     it("should create the output directory", async () => {
       await runProgramWithArgs([outputFlag, "some-directory"]);
       expect(createOutputDirectory).toBeCalled();
+    });
+  });
+
+  describe("RBAC mode warnings", () => {
+    it("should warn when using default admin RBAC mode", async () => {
+      await runProgramWithArgs([]);
+
+      expect(Log.warn).toBeCalledWith(
+        expect.stringContaining('RBAC mode "admin"'),
+      );
+      expect(Log.warn).toBeCalledWith(
+        expect.stringContaining("NOT recommended for production"),
+      );
+      expect(Log.warn).toBeCalledWith(
+        expect.stringContaining("--rbac-mode=scoped"),
+      );
+    });
+
+    it("should warn when explicitly using admin RBAC mode", async () => {
+      await runProgramWithArgs(["--rbac-mode", "admin"]);
+
+      expect(Log.warn).toBeCalledWith(
+        expect.stringContaining('RBAC mode "admin"'),
+      );
+    });
+
+    it("should not warn when using scoped RBAC mode", async () => {
+      await runProgramWithArgs(["--rbac-mode", "scoped"]);
+
+      expect(Log.warn).not.toBeCalled();
     });
   });
 
