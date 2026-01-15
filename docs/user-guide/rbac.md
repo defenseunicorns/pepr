@@ -10,7 +10,7 @@ During the build phase of Pepr (`npx pepr build --rbac-mode [admin|scoped]`), yo
 npx pepr build --rbac-mode admin
 ```
 
-**Description:** The service account is given cluster-admin permissions, granting it full, unrestricted access across the entire cluster. This can be useful for administrative tasks where broad permissions are necessary. However, use this mode with caution, as it can pose security risks if misused. This is the default mode.
+**Description:** The service account is given cluster-admin permissions, granting it full, unrestricted access across the entire cluster. This is the default mode. [!CAUTION] **This mode is intended for demo and proof-of-concept purposes only and should NOT be used in production environments. **The `hello-pepr` capability included with `npx pepr init` is designed to help new users quickly get started without worrying about RBAC configuration. However, running with cluster-admin level permissions violates the principle of least privilege and poses significant security risks.
 
 ### scoped
 
