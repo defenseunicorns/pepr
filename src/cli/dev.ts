@@ -72,7 +72,7 @@ export default function (program: Command): void {
             validateCapabilityNames(webhook.capabilities);
           } catch (error) {
             Log.error(
-              `CapabilityValidation Error - Unable to valide capability name(s) in: '${webhook.capabilities.map(item => item.name)}'\n${error}`,
+              `CapabilityValidation Error - Unable to validate capability name(s) in: '${webhook.capabilities.map(item => item.name)}'\n${error}`,
             );
             process.exit(1);
           }
