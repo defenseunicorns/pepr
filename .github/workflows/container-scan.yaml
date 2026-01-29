@@ -52,7 +52,7 @@ jobs:
 
       - name: Debug show unignored High/Critical
         run: |
-          grype pepr:dev -o json --file grype.json --fail-on never
+          grype pepr:dev -o json --file grype.json
           jq -r '
             .matches[]
             | select((.vulnerability.severity=="High" or .vulnerability.severity=="Critical")
