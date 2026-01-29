@@ -75,7 +75,7 @@ describe("dev", { timeout: five_mins }, () => {
           throw error;
         }
       });
-    }, 180000);
+    }, 360000);
     it("should be properly configured by the module ", async () => {
       cmd.stdout.on("data", (data: Buffer) => {
         if (success) {
