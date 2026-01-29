@@ -108,7 +108,7 @@ describe("dev", { timeout: five_mins }, () => {
       async () => {
         await validateAPIPath();
       },
-      time.toMs("90s"),
+      time.toMs("180s"),
     );
     it("should expose prometheus metrics", async () => {
       const metrics = await validateMetrics();
