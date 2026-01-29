@@ -28,6 +28,7 @@ jobs:
         run: npm ci
       - name: Build Pepr Controller Image
         run: npm run build:image
+
       - name: Configure Grype Ignore File
         run: |
           mkdir -p ~/.grype
@@ -43,6 +44,21 @@ jobs:
           echo "  - vulnerability: CVE-2025-69420" >> ~/.grype.yaml
           echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
 
+      - name: Install grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin v0.106.0
+          grype version
+
+      - name: Debug show unignored High/Critical
+        run: |
+          grype pepr:dev -o json --file grype.json --fail-on never
+          jq -r '
+            .matches[]
+            | select((.vulnerability.severity=="High" or .vulnerability.severity=="Critical")
+                    and (.ignored|not))
+            | "\(.vulnerability.id)\t\(.artifact.name)@\(.artifact.version)\t\(.artifact.type)"
+          ' grype.json | sort -u
 
       - name: Vulnerability Scan
         uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 # v7.3.1
