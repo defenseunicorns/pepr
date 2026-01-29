@@ -43,6 +43,8 @@ jobs:
           echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml   
           echo "  - vulnerability: CVE-2025-69420" >> ~/.grype.yaml
           echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69419" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-15467" >> ~/.grype.yaml
 
       - name: Install grype
         run: |
