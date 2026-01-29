@@ -40,6 +40,8 @@ jobs:
           echo "  - vulnerability: GHSA-8qq5-rm4j-mr97" >> ~/.grype.yaml   
           echo "  - vulnerability: GHSA-5j98-mcp5-4vw2" >> ~/.grype.yaml   
           echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml   
+          echo "  - vulnerability: CVE-2025-69420" >> ~/.grype.yaml
+          echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
 
 
       - name: Vulnerability Scan
