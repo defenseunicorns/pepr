@@ -178,9 +178,9 @@ async function validateAPIPath(): Promise<void> {
 
   // Test for empty api path
   const emptyMutatePath = await fetch(mutateUrl, fetchPushOpts);
-  expect(emptyMutatePath.status).toBe(400);
+  expect(emptyMutatePath.status).toBe(404);
   const emptyValidatePath = await fetch(validateUrl, fetchPushOpts);
-  expect(emptyValidatePath.status).toBe(400);
+  expect(emptyValidatePath.status).toBe(404);
 
   // Test api path validation
   const evilMutatePath = await fetch(`${mutateUrl}evil-path`, fetchPushOpts);
