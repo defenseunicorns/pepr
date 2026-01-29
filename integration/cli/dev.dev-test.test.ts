@@ -103,9 +103,13 @@ describe("dev", { timeout: five_mins }, () => {
     it("should be ready to accept requests", async () => {
       await waitForServer();
     });
-    it("should protect the mutate and validate endpoints with an API path", async () => {
-      await validateAPIPath();
-    });
+    it(
+      "should protect the mutate and validate endpoints with an API path",
+      async () => {
+        await validateAPIPath();
+      },
+      time.toMs("45s"),
+    );
     it("should expose prometheus metrics", async () => {
       const metrics = await validateMetrics();
       expect(metrics).toMatch("pepr_validate");
