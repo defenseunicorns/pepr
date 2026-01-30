@@ -225,6 +225,7 @@ export type WatchEventArgs<K extends WatchEvent, T extends GenericClass> = {
   [WatchEvent.RECONNECT_PENDING]: undefined;
   [WatchEvent.DATA]: undefined;
   [WatchEvent.INC_RESYNC_FAILURE_COUNT]: number;
+  [WatchEvent.WATCH_ERROR]: Error;
 }[K];
 
 export type LogEventFunction = (event: WatchEvent, message?: string) => void;
@@ -245,6 +246,7 @@ export function registerWatchEventHandlers(
         { cause: err },
       );
     },
+    [WatchEvent.WATCH_ERROR]: err => logEvent(WatchEvent.WATCH_ERROR, err.message),
     [WatchEvent.CONNECT]: url => logEvent(WatchEvent.CONNECT, url),
     [WatchEvent.DATA_ERROR]: err => logEvent(WatchEvent.DATA_ERROR, err.message),
     [WatchEvent.RECONNECT]: retryCount =>
