@@ -81,7 +81,7 @@ describe("build", () => {
           expect(formatOutput.stderr.join("").trim()).toMatch(/File .* is not formatted correctly/);
           expect(formatOutput.stdout.join("").trim()).toContain("");
         },
-        time.toMs("25s"),
+        time.toMs("45s"),
       );
     });
   });

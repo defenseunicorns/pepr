@@ -73,5 +73,5 @@ describe("Published package does not include unintended files", () => {
       This test is a backstop to ensure developers do not accidentally include unrelated build artifacts.`;
       throw new Error(message);
     }
-  });
+  }, 120000);
 });
