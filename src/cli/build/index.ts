@@ -157,7 +157,11 @@ export default function (program: Command): void {
         format,
       });
 
-      const { path } = buildModuleResult!;
+      if (!buildModuleResult) {
+        return;
+      }
+
+      const { path } = buildModuleResult;
 
       if (opts.customName) {
         process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName;
@@ -168,6 +172,6 @@ export default function (program: Command): void {
         return;
       }
 
-      await generateDeploymentAssets(buildModuleResult!, opts, outputDir);
+      await generateDeploymentAssets(buildModuleResult, opts, outputDir);
     });
 }
