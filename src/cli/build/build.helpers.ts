@@ -56,9 +56,8 @@ export function determineModuleFormat(packageJsonPath: string): "cjs" | "esm" {
     }
     if (pkg.type !== "commonjs") {
       // No type field specified - warn user
-      console.info(
-        "\x1b[33m%s\x1b[0m",
-        "No 'type' field specified in package.json. Defaulting to CommonJS format. To use ES modules, add '\"type\": \"module\"' to your package.json.",
+      Log.warn(
+        "No 'type' field specified in package.json. Defaulting to CommonJS format. To use ES modules, add '\"type\": \"module\"' to your tsconfig.json or package.json.",
       );
     }
   } catch {

@@ -41,6 +41,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
     info: vi.fn(),
     debug: vi.fn(),
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -178,35 +179,32 @@ describe("determineRbacMode", () => {
 
 describe("determineModuleFormat", () => {
   const mockedReadFileSync = vi.mocked(readFileSync);
-  let consoleInfoSpy: MockInstance;
+  let logWarnSpy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    logWarnSpy = vi.spyOn(Log, "warn").mockImplementation(() => {});
   });
 
   it('should return "esm" when package.json has type: "module"', () => {
     mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ type: "module" }));
     const result = determineModuleFormat("package.json");
     expect(result).toBe("esm");
-    expect(consoleInfoSpy).not.toHaveBeenCalled();
+    expect(logWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should return "cjs" and warn when package.json has no type field', () => {
     mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ name: "test" }));
     const result = determineModuleFormat("package.json");
     expect(result).toBe("cjs");
-    expect(consoleInfoSpy).toHaveBeenCalledWith(
-      "\x1b[33m%s\x1b[0m",
-      expect.stringContaining("No 'type' field specified"),
-    );
+    expect(logWarnSpy).toHaveBeenCalledWith(expect.stringContaining("No 'type' field specified"));
   });
 
   it('should return "cjs" without warning when package.json has type: "commonjs"', () => {
     mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ type: "commonjs" }));
     const result = determineModuleFormat("package.json");
     expect(result).toBe("cjs");
-    expect(consoleInfoSpy).not.toHaveBeenCalled();
+    expect(logWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should return "cjs" when package.json cannot be read', () => {
