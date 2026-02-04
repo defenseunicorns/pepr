@@ -75,6 +75,17 @@ describe("build", () => {
 
         expect(matchingFiles.length).toBe(0);
       });
+
+      it("should produce a module that can be loaded by Node.js", async () => {
+        // Verify the built CJS module is valid and can be required
+        // This catches module resolution errors that esbuild might miss
+        const modulePath = `${testModule}/dist/pepr.js`;
+        const absolutePath = path.resolve(modulePath);
+
+        // Dynamic import works for CJS modules too in modern Node.js
+        // This will throw if the module has syntax errors or unresolved imports
+        await expect(import(absolutePath)).resolves.toBeDefined();
+      });
     });
   });
 });

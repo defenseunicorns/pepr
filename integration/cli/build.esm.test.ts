@@ -73,6 +73,17 @@ describe("build", () => {
         expect(content).not.toContain("require(");
         expect(content).not.toContain("module.exports");
       });
+
+      it("should produce a module that can be loaded by Node.js", async () => {
+        // Verify the built ESM module is valid and can be dynamically imported
+        // This catches module resolution errors that esbuild might miss
+        const modulePath = `${testModule}/dist/pepr.mjs`;
+        const absolutePath = path.resolve(modulePath);
+
+        // Dynamic import to test ESM module validity
+        // This will throw if the module has syntax errors or unresolved imports
+        await expect(import(absolutePath)).resolves.toBeDefined();
+      });
     });
   });
 });
