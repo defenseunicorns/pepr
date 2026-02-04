@@ -34,7 +34,7 @@
     "format:prettier": "prettier --config config/.prettierrc src integration/cli/**/*.ts integration/helpers/**/*.ts",
     "format:src": "eslint --config config/eslint.root.config.mjs 'src/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern 'src/templates/**'",
     "format:tests": "eslint --config config/eslint.test.config.mjs 'src/**/*.test.ts'",
-    "gen-data-json": "node hack/build-template-data.js",
+    "gen-data-json": "node hack/build-template-data.mjs",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi",
     "set-version": "bash -lc 'ver=${PEPR_VERSION:-}; if [ -z \"$ver\" ]; then git fetch --tags --force; ver=$(git describe --tags --abbrev=0); fi; ver=${ver#v}; echo Using version $ver; node ./scripts/set-version.js \"$ver\"'",
