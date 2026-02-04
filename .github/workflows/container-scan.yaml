@@ -54,7 +54,7 @@ jobs:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
-          output-format: json
+          output-format: table
       
       - name: Upload Scan Results
         if: always()
