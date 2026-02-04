@@ -9,24 +9,13 @@ const external = Object.keys(dependencies).concat(
   "@kubernetes/client-node",
 );
 
-const commonBuildOpts = {
+const buildOpts = {
   bundle: true,
   external,
+  format: "cjs",
   legalComments: "eof",
   metafile: true,
   platform: "node",
-};
-
-// CJS build options
-const buildOpts = {
-  ...commonBuildOpts,
-  format: "cjs",
-};
-
-// ESM build options
-const esmBuildOpts = {
-  ...commonBuildOpts,
-  format: "esm",
 };
 
 async function builder() {
@@ -64,7 +53,8 @@ async function builder() {
 
     // Build the library (ESM)
     const libEsm = await build({
-      ...esmBuildOpts,
+      ...buildOpts,
+      format: "esm",
       entryPoints: ["src/lib.ts"],
       outfile: "dist/lib.mjs",
       sourcemap: true,
