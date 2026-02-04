@@ -6,7 +6,7 @@ Date: 2023-05-22
 
 Accepted (Partially Superseded)
 
-> **Note**: This ADR was written when Pepr only supported CommonJS output. ESM build support has since been added. See [ADR-0021](./0021-typescript-module-resolution-for-pepr-modules.md) for the current module resolution strategy that supports both CJS and ESM builds.
+> **Note**: This ADR was written when Pepr only supported CommonJS output. ESM build support has since been added. See [ADR-0021](./0021-typescript-module-resolution.md) for the current module resolution strategy that supports both CJS and ESM builds.
 
 ## Context
 
