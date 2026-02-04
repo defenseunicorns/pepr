@@ -18,15 +18,7 @@
   ],
   "version": "0.0.0-development",
   "main": "dist/lib.js",
-  "module": "dist/lib.mjs",
   "types": "dist/lib.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/lib.d.ts",
-      "import": "./dist/lib.mjs",
-      "require": "./dist/lib.js"
-    }
-  },
   "scripts": {
     "build": "tsc -p config/tsconfig.root.json && node build.mjs && npm pack",
     "build:image": "npm run build && docker buildx build --output type=docker --tag pepr:dev .",
