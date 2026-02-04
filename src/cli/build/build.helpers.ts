@@ -7,7 +7,7 @@ import { validateCapabilityNames } from "../../lib/helpers";
 import { BuildOptions, context, BuildContext } from "esbuild";
 import { Assets } from "../../lib/assets/assets";
 import { resolve } from "path";
-import { promises as fs, accessSync, constants, statSync } from "fs";
+import { promises as fs, accessSync, constants, statSync, readFileSync } from "fs";
 import { generateAllYaml } from "../../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../../lib/assets/yaml/generateZarfYaml";
@@ -40,6 +40,36 @@ export function fileExists(entryPoint: string = "pepr.ts"): string {
     process.exit(1);
   }
   return entryPoint;
+}
+
+/**
+ * Determine the module format based on CLI option or package.json "type" field.
+ * CLI option takes precedence over package.json auto-detection.
+ *
+ * @param cliFormat - The format specified via CLI (cjs, esm, or undefined)
+ * @param packageJsonPath - Path to the package.json file for auto-detection
+ * @returns "cjs" or "esm"
+ */
+export function determineModuleFormat(
+  cliFormat: string | undefined,
+  packageJsonPath: string,
+): "cjs" | "esm" {
+  // CLI flag takes precedence
+  if (cliFormat === "cjs" || cliFormat === "esm") {
+    return cliFormat;
+  }
+
+  // Auto-detect from package.json "type" field
+  try {
+    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    if (pkg.type === "module") {
+      return "esm";
+    }
+  } catch {
+    // If can't read package.json, default to cjs
+  }
+
+  return "cjs"; // Default for backwards compatibility
 }
 
 interface ImageOptions {

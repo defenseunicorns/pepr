@@ -65,7 +65,7 @@ describe("buildAndDeployModule", () => {
 
     await buildAndDeployModule("test-image", false);
 
-    expect(buildModule).toHaveBeenCalledWith("dist");
+    expect(buildModule).toHaveBeenCalledWith("dist", {});
     expect(deploySpy).toHaveBeenCalled();
 
     const { validateCapabilityNames } = await import("../../lib/helpers");

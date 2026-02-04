@@ -3,6 +3,7 @@
 
 import {
   determineRbacMode,
+  determineModuleFormat,
   createOutputDirectory,
   handleValidCapabilityNames,
   handleCustomImageBuild,
@@ -11,7 +12,7 @@ import {
   assignImage,
   fileExists,
 } from "./build.helpers";
-import { accessSync, constants } from "fs";
+import { accessSync, constants, readFileSync } from "fs";
 import { resolve } from "path";
 import { createDirectoryIfNotExists } from "../../lib/filesystemService";
 import { expect, describe, it, vi, beforeEach, type MockInstance } from "vitest";
@@ -26,6 +27,7 @@ vi.mock("fs", async () => {
   return {
     ...actual,
     accessSync: vi.fn(),
+    readFileSync: vi.fn(),
     constants: { F_OK: 0 },
     statSync: vi.fn(() => ({
       isFile: () => true,
@@ -171,6 +173,66 @@ describe("determineRbacMode", () => {
     const cfg = { pepr: {} };
     const result = determineRbacMode(opts, cfg);
     expect(result).toBe("admin");
+  });
+});
+
+describe("determineModuleFormat", () => {
+  const mockedReadFileSync = vi.mocked(readFileSync);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return "cjs" when CLI format is "cjs"', () => {
+    const result = determineModuleFormat("cjs", "package.json");
+    expect(result).toBe("cjs");
+    expect(mockedReadFileSync).not.toHaveBeenCalled();
+  });
+
+  it('should return "esm" when CLI format is "esm"', () => {
+    const result = determineModuleFormat("esm", "package.json");
+    expect(result).toBe("esm");
+    expect(mockedReadFileSync).not.toHaveBeenCalled();
+  });
+
+  it('should return "esm" when package.json has type: "module"', () => {
+    mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ type: "module" }));
+    const result = determineModuleFormat(undefined, "package.json");
+    expect(result).toBe("esm");
+    expect(mockedReadFileSync).toHaveBeenCalledWith("package.json", "utf-8");
+  });
+
+  it('should return "cjs" when package.json has no type field', () => {
+    mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ name: "test" }));
+    const result = determineModuleFormat(undefined, "package.json");
+    expect(result).toBe("cjs");
+  });
+
+  it('should return "cjs" when package.json has type: "commonjs"', () => {
+    mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ type: "commonjs" }));
+    const result = determineModuleFormat(undefined, "package.json");
+    expect(result).toBe("cjs");
+  });
+
+  it('should return "cjs" when package.json cannot be read', () => {
+    mockedReadFileSync.mockImplementationOnce(() => {
+      throw new Error("ENOENT");
+    });
+    const result = determineModuleFormat(undefined, "nonexistent.json");
+    expect(result).toBe("cjs");
+  });
+
+  it('should return "cjs" when package.json contains invalid JSON', () => {
+    mockedReadFileSync.mockReturnValueOnce("invalid json {");
+    const result = determineModuleFormat(undefined, "package.json");
+    expect(result).toBe("cjs");
+  });
+
+  it("should give CLI format precedence over package.json", () => {
+    mockedReadFileSync.mockReturnValueOnce(JSON.stringify({ type: "module" }));
+    const result = determineModuleFormat("cjs", "package.json");
+    expect(result).toBe("cjs");
+    expect(mockedReadFileSync).not.toHaveBeenCalled();
   });
 });
 
