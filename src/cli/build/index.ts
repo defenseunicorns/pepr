@@ -36,7 +36,7 @@ async function generateDeploymentAssets(
   buildResult: BuildModuleReturn,
   opts: BuildOpts,
   outputDir: string,
-): Promise<void> {
+): Promise<Assets> {
   const { cfg, path } = buildResult;
 
   const image = assignImage({
@@ -86,6 +86,8 @@ async function generateDeploymentAssets(
     zarf: opts.zarf,
     assets,
   });
+
+  return assets;
 }
 
 export default function (program: Command): void {
