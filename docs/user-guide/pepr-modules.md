@@ -23,6 +23,8 @@ Because esbuild handles module resolution at build time, Pepr uses TypeScript's 
 - **Import errors are caught** during the build process by esbuild
 
 If you're familiar with stricter Node.js module resolution (like `moduleResolution: "nodenext"`), note that Pepr modules never run as raw Node.js files—they're always processed by the bundler first.
+We recommend using `"nodenext"` in new modules to take advantage of the stricter module resolution.
+Support for `"commonjs"` is available for existing modules, but not recommended.
 
 ### External Dependencies
 

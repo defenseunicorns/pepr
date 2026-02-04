@@ -83,6 +83,8 @@ Use `moduleResolution: "NodeNext"`:
 
 ## References
 
-- [TypeScript: moduleResolution](https://www.typescriptlang.org/tsconfig/moduleResolution.html)
-- [TypeScript: Choosing Compiler Options](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
 - [Is nodenext right for libraries?](https://blog.andrewbran.ch/is-nodenext-right-for-libraries-that-dont-target-node-js/) - Andrew Branch (TypeScript team)
+- [Modules - Choosing Compiler Options](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html#im-writing-a-library)
+- [Modules - ESM/CJS Interoperability](https://www.typescriptlang.org/docs/handbook/modules/appendices/esm-cjs-interop.html)
+- [TypeScript: Choosing Compiler Options](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
+- [TypeScript: moduleResolution](https://www.typescriptlang.org/tsconfig/moduleResolution.html)
