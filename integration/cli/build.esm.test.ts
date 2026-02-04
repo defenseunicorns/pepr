@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -9,6 +9,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import { Result } from "../helpers/cmd";
+import { setupTlsEnv, cleanupTlsEnv } from "../helpers/tls";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -18,7 +19,13 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
+    // Set up TLS certificates for module loading tests
+    await setupTlsEnv(workdir.path());
   }, time.toMs("60s"));
+
+  afterAll(() => {
+    cleanupTlsEnv();
+  });
 
   describe("when building with auto-detection (type: module)", () => {
     const id = `${FILE.split(".").at(1)}-auto`;
