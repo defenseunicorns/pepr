@@ -8,11 +8,26 @@ Accepted
 
 ## Context
 
-With the addition of ESM build support (see [issue #2925](https://github.com/defenseunicorns/pepr/issues/2925)), we needed to evaluate the TypeScript module resolution strategy for `tsconfig.module.json`, which controls how user Pepr modules are type-checked before bundling.
+With ESM build support ([issue #2925](https://github.com/defenseunicorns/pepr/issues/2925)), we needed to choose a TypeScript `moduleResolution` setting for `tsconfig.module.json`.
 
-TypeScript offers several `moduleResolution` options, each with different trade-offs:
+The two main options are:
 
-### Option 1: `bundler` (Current Choice)
+| Setting | Behavior |
+| ------- | -------- |
+| `bundler` | Relaxed resolution for bundled apps. No `.js` extensions required. |
+| `nodenext` | Strict Node.js resolution. Requires `.js` extensions on imports. |
+
+[ADR-0003](./0003-use-commonjs-and-esbuild.md) previously noted frustration with the `.js` extension requirement when strict ESM resolution was attempted.
+
+### Alternatives Considered
+
+**`nodenext`: ** Maximum strictness, catches resolution errors at compile time, and ensures code works in raw Node.js. However, it requires explicit `.js` extensions on relative imports and `with { type: "json" }` syntax for JSON imports in ESM. This would be a breaking change for existing Pepr modules and require different code patterns for CJS vs ESM builds.
+
+**Hybrid approach:** Keep `bundler` as default but provide tooling for stricter checking. Rejected as unnecessary complexity—users can override their tsconfig if needed.
+
+## Decision
+
+Use `moduleResolution: "bundler"` for Pepr modules:
 
 ```json
 {
@@ -21,57 +36,20 @@ TypeScript offers several `moduleResolution` options, each with different trade-
 }
 ```
 
-**Pros:**
-- Works for both CJS and ESM output formats without code changes
-- No file extension requirements (`.js` not needed in imports)
-- Supports JSON imports without special syntax
-- Matches the reality that esbuild handles actual module resolution
-- Simplest developer experience
+**Why:** Pepr modules are always bundled by esbuild before deployment. They never run as raw Node.js files. Since esbuild handles module resolution at build time, TypeScript's job is just type-checking—not enforcing Node.js resolution rules that don't apply.
 
-**Cons:**
-- Less strict than `nodenext` - allows imports that would fail in raw Node.js
-- May mask issues if code is ever run without bundling
-- TypeScript can't catch module resolution errors that only appear at runtime in Node.js
-- Code written with bundler resolution may not work outside bundled contexts
+**Benefits:**
+- Same code works for both CJS and ESM output
+- No `.js` extensions or special JSON import syntax needed
+- No breaking changes to existing modules
 
-### Option 2: `nodenext` / `node16` (Strict Node.js)
+**Trade-off:** Code won't be directly portable to unbundled Node.js contexts. This is acceptable since Pepr modules are never run unbundled.
 
-```json
-{
-  "module": "NodeNext",
-  "moduleResolution": "NodeNext"
-}
-```
+## Consequences
 
-**Pros:**
-- Maximum strictness - catches resolution errors at compile time
-- Ensures code works in raw Node.js without bundling
-- Understands `package.json` exports/imports fields correctly
-- Recommended for library authors publishing to npm
-- Future-proof (nodenext tracks Node.js evolution)
-
-**Cons:**
-- Requires explicit `.js` extensions on relative imports
-- Requires `with { type: "json" }` for JSON imports in ESM
-- Would be a breaking change for existing Pepr modules
-- Different syntax needed for CJS vs ESM (can't use same template for both)
-- More complex developer experience
-
-This decision supersedes the CJS-only approach in [ADR-0003](./0003-use-commonjs-and-esbuild.md), which was written before ESM support was added. The original ADR noted frustration with "phantom `.js` files for imports" when using strict ESM resolution - this problem is avoided by using `bundler` resolution.
-
-## Decision
-
-We will use `moduleResolution: "bundler"` for Pepr module TypeScript configuration.
-
-**Rationale:**
-
-1. **Pepr's architecture**: esbuild always bundles the output, so `bundler` accurately reflects the actual resolution behavior at runtime
-2. **User experience**: Pepr modules are always bundled before deployment - they never run as raw Node.js files
-3. **Practical reliability**: Runtime module resolution is handled by esbuild, not Node.js directly - TypeScript just needs to type-check correctly
-4. **Single template**: The same `tsconfig.module.json` works for both CJS and ESM builds without requiring code changes
-5. **Historical precedent**: ADR-0003 documented the poor developer experience caused by strict ESM resolution requirements
-
-**For users who want stricter checking**, they can override `tsconfig.module.json` in their Pepr module:
+- esbuild catches resolution errors during bundling
+- Integration tests verify built modules load correctly
+- Users wanting stricter checking can override their tsconfig:
 
 ```json
 {
@@ -83,32 +61,7 @@ We will use `moduleResolution: "bundler"` for Pepr module TypeScript configurati
 }
 ```
 
-This would require updating their imports to use `.js` extensions and proper JSON import syntax for ESM.
-
-## Consequences
-
-### Positive
-
-- Consistent developer experience for both CJS and ESM builds
-- No breaking changes for existing Pepr modules
-- Simpler onboarding - users don't need to understand Node.js module resolution nuances
-- JSON imports work without special syntax
-
-### Negative
-
-- TypeScript won't catch module resolution errors that would only appear in unbundled Node.js execution
-- Code written for Pepr may not be directly portable to non-bundled contexts without modification
-- Users seeking maximum strictness must manually configure their tsconfig
-
-### Mitigations
-
-- Integration tests verify that built modules work correctly in the controller
-- The build process (esbuild) will catch actual resolution errors during bundling
-- Documentation notes that Pepr modules are always bundled, so `bundler` resolution is appropriate
-
 ## References
 
-- [TypeScript TSConfig: moduleResolution](https://www.typescriptlang.org/tsconfig/moduleResolution.html)
-- [TypeScript: Choosing Compiler Options](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
+- [TypeScript: moduleResolution](https://www.typescriptlang.org/tsconfig/moduleResolution.html)
 - [Is nodenext right for libraries?](https://blog.andrewbran.ch/is-nodenext-right-for-libraries-that-dont-target-node-js/) - Andrew Branch (TypeScript team)
-- [ADR-0003: Use CommonJS and ESBuild](./0003-use-commonjs-and-esbuild.md)
