@@ -43,33 +43,29 @@ export function fileExists(entryPoint: string = "pepr.ts"): string {
 }
 
 /**
- * Determine the module format based on CLI option or package.json "type" field.
- * CLI option takes precedence over package.json auto-detection.
+ * Determine the module format based on package.json "type" field.
  *
- * @param cliFormat - The format specified via CLI (cjs, esm, or undefined)
  * @param packageJsonPath - Path to the package.json file for auto-detection
  * @returns "cjs" or "esm"
  */
-export function determineModuleFormat(
-  cliFormat: string | undefined,
-  packageJsonPath: string,
-): "cjs" | "esm" {
-  // CLI flag takes precedence
-  if (cliFormat === "cjs" || cliFormat === "esm") {
-    return cliFormat;
-  }
-
-  // Auto-detect from package.json "type" field
+export function determineModuleFormat(packageJsonPath: string): "cjs" | "esm" {
   try {
     const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
     if (pkg.type === "module") {
       return "esm";
     }
+    if (pkg.type !== "commonjs") {
+      // No type field specified - warn user
+      console.info(
+        "\x1b[33m%s\x1b[0m",
+        "No 'type' field specified in package.json. Defaulting to CommonJS format. To use ES modules, add '\"type\": \"module\"' to your package.json.",
+      );
+    }
   } catch {
     // If can't read package.json, default to cjs
   }
 
-  return "cjs"; // Default for backwards compatibility
+  return "cjs";
 }
 
 interface ImageOptions {

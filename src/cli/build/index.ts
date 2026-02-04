@@ -145,15 +145,9 @@ export default function (program: Command): void {
         .choices(["manifest", "chart"])
         .default("manifest"),
     )
-    .addOption(
-      new Option(
-        "-f, --format <format>",
-        "Output module format (cjs for CommonJS, esm for ES modules). Auto-detects from package.json 'type' field if not specified.",
-      ).choices(["cjs", "esm"]),
-    )
     .action(async opts => {
       const outputDir = await createOutputDirectory(opts.output);
-      const format = determineModuleFormat(opts.format, resolve(process.cwd(), "package.json"));
+      const format = determineModuleFormat(resolve(process.cwd(), "package.json"));
 
       const buildModuleResult = await buildModule(outputDir, {
         entryPoint: opts.entryPoint,
