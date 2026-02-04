@@ -41,7 +41,7 @@ async function builder() {
 
     console.log(await analyzeMetafile(controller.metafile));
 
-    // Build the library (CJS)
+    // Build the library
     const lib = await build({
       ...buildOpts,
       entryPoints: ["src/lib.ts"],
@@ -50,17 +50,6 @@ async function builder() {
     });
 
     console.log(await analyzeMetafile(lib.metafile));
-
-    // Build the library (ESM)
-    const libEsm = await build({
-      ...buildOpts,
-      format: "esm",
-      entryPoints: ["src/lib.ts"],
-      outfile: "dist/lib.mjs",
-      sourcemap: true,
-    });
-
-    console.log(await analyzeMetafile(libEsm.metafile));
   } catch (e) {
     console.error(e);
     process.exit(1);
