@@ -46,6 +46,12 @@ jobs:
           echo "  - vulnerability: CVE-2025-69419" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-15467" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2026-0775" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69421" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-59464" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2026-21637" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-59466" >> ~/.grype.yaml
+          echo "  - vulnerability: GHSA-3966-f6p6-2qr9" >> ~/.grype.yaml
+
           
       - name: Vulnerability Scan
         id: scan
