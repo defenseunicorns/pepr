@@ -33,23 +33,15 @@ jobs:
         run: |
           mkdir -p ~/.grype
           echo "ignore:" > ~/.grype.yaml
-          echo "  - vulnerability: GHSA-8qq5-rm4j-mr97" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-59465" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-55131" >> ~/.grype.yaml          
-          echo "  - vulnerability: GHSA-r6q2-hw4h-h46w" >> ~/.grype.yaml                    
-          echo "  - vulnerability: CVE-2025-55130" >> ~/.grype.yaml     
-          echo "  - vulnerability: GHSA-8qq5-rm4j-mr97" >> ~/.grype.yaml   
-          echo "  - vulnerability: GHSA-5j98-mcp5-4vw2" >> ~/.grype.yaml   
-          echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml   
-          echo "  - vulnerability: CVE-2025-69420" >> ~/.grype.yaml
-          echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-69419" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-15467" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2026-0775" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-69421" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-59464" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2026-21637" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-59466" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69419" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69420" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69421" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2026-0775" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2026-21637" >> ~/.grype.yaml
+          echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
           echo "  - vulnerability: GHSA-3966-f6p6-2qr9" >> ~/.grype.yaml
 
           
