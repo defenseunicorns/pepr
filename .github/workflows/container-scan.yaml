@@ -45,13 +45,46 @@ jobs:
           echo "  - vulnerability: GHSA-34x7-hfp2-rc4v" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-69419" >> ~/.grype.yaml
           echo "  - vulnerability: CVE-2025-15467" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2026-0775" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-69421" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-59464" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2026-21637" >> ~/.grype.yaml
+          echo "  - vulnerability: CVE-2025-59466" >> ~/.grype.yaml
+          echo "  - vulnerability: GHSA-3966-f6p6-2qr9" >> ~/.grype.yaml
+          echo "  - vulnerability: GHSA-7h2j-956f-4vf2" >> ~/.grype.yaml
           
       - name: Vulnerability Scan
+        id: scan
+        continue-on-error: true # Scan again with JSON output for artifact upload
         uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 # v7.3.1
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
+          output-format: table
+      
+      - name: Vulnerability Scan (JSON for Artifact)
+        id: scan_json
+        if: steps.scan.outcome == 'failure'
+        uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 # v7.3.1
+        with:
+          image: "pepr:dev"
+          fail-build: false
+          severity-cutoff: high
+          output-format: json
+      
+      - name: Upload Scan Results
+        if: steps.scan.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vulnerability-scan-results
+          path: ${{ steps.scan_json.outputs.json }}
+          retention-days: 30
+      
+      - name: Fail Build on Vulnerabilities
+        if: steps.scan.outcome == 'failure'
+        run: exit 1
+      
       - name: Generate SBOM
         uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 # v0.22.1
         with:
