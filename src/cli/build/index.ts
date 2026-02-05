@@ -7,6 +7,7 @@ import { Option } from "commander";
 import { parseTimeout } from "../../lib/helpers";
 import {
   determineRbacMode,
+  determineModuleFormat,
   assignImage,
   createOutputDirectory,
   handleValidCapabilityNames,
@@ -15,8 +16,79 @@ import {
   generateYamlAndWriteToDisk,
   fileExists,
 } from "./build.helpers";
-import { buildModule } from "./buildModule";
+import { buildModule, BuildModuleReturn } from "./buildModule";
 import Log from "../../lib/telemetry/logger";
+import { resolve } from "path";
+
+interface BuildOpts {
+  customName?: string;
+  customImage?: string;
+  registryInfo?: string;
+  registry?: string;
+  rbacMode?: string;
+  timeout?: number;
+  embed: boolean;
+  withPullSecret: string;
+  zarf: string;
+}
+
+async function generateDeploymentAssets(
+  buildResult: BuildModuleReturn,
+  opts: BuildOpts,
+  outputDir: string,
+): Promise<Assets> {
+  const { cfg, path } = buildResult;
+
+  const image = assignImage({
+    customImage: opts.customImage,
+    registryInfo: opts.registryInfo,
+    peprVersion: cfg.pepr.peprVersion,
+    registry: opts.registry,
+  });
+
+  if (opts.timeout !== undefined) {
+    cfg.pepr.webhookTimeout = opts.timeout;
+  }
+
+  if (opts.registryInfo !== undefined) {
+    Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
+    await handleCustomImageBuild(
+      cfg.pepr.includedFiles,
+      cfg.pepr.peprVersion,
+      cfg.description,
+      image,
+    );
+  }
+
+  const assets = new Assets(
+    {
+      ...cfg.pepr,
+      appVersion: cfg.version,
+      description: cfg.description,
+      alwaysIgnore: { namespaces: cfg.pepr.alwaysIgnore?.namespaces },
+      rbacMode: determineRbacMode(opts, cfg),
+    },
+    path,
+    opts.withPullSecret === "" ? [] : [opts.withPullSecret],
+  );
+
+  if (image !== "") assets.image = image;
+
+  if (!validImagePullSecret(opts.withPullSecret)) {
+    throw new Error("Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.");
+  }
+
+  handleValidCapabilityNames(assets.capabilities);
+  await generateYamlAndWriteToDisk({
+    uuid: cfg.pepr.uuid,
+    outputDir,
+    imagePullSecret: opts.withPullSecret,
+    zarf: opts.zarf,
+    assets,
+  });
+
+  return assets;
+}
 
 export default function (program: Command): void {
   program
@@ -77,83 +149,29 @@ export default function (program: Command): void {
     )
     .action(async opts => {
       const outputDir = await createOutputDirectory(opts.output);
+      const format = determineModuleFormat(resolve(process.cwd(), "package.json"));
 
-      // Build the module
-      const buildModuleResult = await buildModule(
-        outputDir,
-        undefined,
-        opts.entryPoint,
-        opts.embed,
-      );
+      const buildModuleResult = await buildModule(outputDir, {
+        entryPoint: opts.entryPoint,
+        embed: opts.embed,
+        format,
+      });
 
-      const { cfg, path } = buildModuleResult!;
-      // override the name if provided
+      if (!buildModuleResult) {
+        return;
+      }
+
+      const { path } = buildModuleResult;
+
       if (opts.customName) {
         process.env.PEPR_CUSTOM_BUILD_NAME = opts.customName;
       }
 
-      const image = assignImage({
-        customImage: opts.customImage,
-        registryInfo: opts.registryInfo,
-        peprVersion: cfg.pepr.peprVersion,
-        registry: opts.registry,
-      });
-
-      // Check if there is a custom timeout defined
-      if (opts.timeout !== undefined) {
-        cfg.pepr.webhookTimeout = opts.timeout;
-      }
-
-      if (opts.registryInfo !== undefined) {
-        Log.info(`Including ${cfg.pepr.includedFiles.length} files in controller image.`);
-
-        // only actually build/push if there are files to include
-        await handleCustomImageBuild(
-          cfg.pepr.includedFiles,
-          cfg.pepr.peprVersion,
-          cfg.description,
-          image,
-        );
-      }
-
-      // If building without embedding, exit after building
       if (!opts.embed) {
         Log.info(`Module built successfully at ${path}`);
         return;
       }
 
-      // Generate a secret for the module
-      const assets = new Assets(
-        {
-          ...cfg.pepr,
-          appVersion: cfg.version,
-          description: cfg.description,
-          alwaysIgnore: {
-            namespaces: cfg.pepr.alwaysIgnore?.namespaces,
-          },
-          // Can override the rbacMode with the CLI option
-          rbacMode: determineRbacMode(opts, cfg),
-        },
-        path,
-        opts.withPullSecret === "" ? [] : [opts.withPullSecret],
-      );
-
-      if (image !== "") assets.image = image;
-
-      // Ensure imagePullSecret is valid
-      if (!validImagePullSecret(opts.withPullSecret)) {
-        throw new Error(
-          "Invalid imagePullSecret. Please provide a valid name as defined in RFC 1123.",
-        );
-      }
-
-      handleValidCapabilityNames(assets.capabilities);
-      await generateYamlAndWriteToDisk({
-        uuid: cfg.pepr.uuid,
-        outputDir,
-        imagePullSecret: opts.withPullSecret,
-        zarf: opts.zarf,
-        assets,
-      });
+      await generateDeploymentAssets(buildModuleResult, opts, outputDir);
     });
 }

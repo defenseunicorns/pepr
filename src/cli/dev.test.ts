@@ -46,9 +46,13 @@ vi.mock("./build/loadModule", () => ({
 vi.mock("./build/buildModule", () => ({
   buildModule: vi
     .fn()
-    .mockImplementation(async (_path, cb: (stats: { errors: unknown[] }) => void) => {
-      await cb({ errors: [] });
-    }),
+    .mockImplementation(
+      async (_path: string, options: { reloader?: (stats: { errors: unknown[] }) => void }) => {
+        if (options?.reloader) {
+          await options.reloader({ errors: [] });
+        }
+      },
+    ),
 }));
 
 vi.mock("../lib/assets/assets", () => {
@@ -144,8 +148,10 @@ describe("dev command", () => {
     const errorSpy = vi.spyOn(Log, "error").mockImplementation(() => {});
     const { buildModule } = await import("./build/buildModule");
     (buildModule as Mock).mockImplementationOnce(
-      async (_path, cb: (stats: { errors: unknown[] }) => void) => {
-        await cb({ errors: ["error"] });
+      async (_path: string, options: { reloader?: (stats: { errors: unknown[] }) => void }) => {
+        if (options?.reloader) {
+          await options.reloader({ errors: ["error"] });
+        }
       },
     );
 

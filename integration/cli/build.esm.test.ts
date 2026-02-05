@@ -4,7 +4,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
@@ -27,8 +27,8 @@ describe("build", () => {
     cleanupTlsEnv();
   });
 
-  describe("when building a module", () => {
-    const id = FILE.split(".").at(1);
+  describe("when building with auto-detection (type: module)", () => {
+    const id = `${FILE.split(".").at(1)}-auto`;
     const testModule = `${workdir.path()}/${id}`;
     let buildOutput: Result;
 
@@ -38,58 +38,56 @@ describe("build", () => {
         `--name ${id}`,
         `--description ${id}`,
         `--error-behavior reject`,
-        `--uuid random-identifier`,
+        `--uuid esm-test-auto`,
         "--yes",
         "--skip-post-init",
       ].join(" ");
       await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });
       await pepr.tgzifyModule(testModule);
+
+      // Modify package.json to add "type": "module"
+      const packageJsonPath = `${testModule}/package.json`;
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, "utf-8"));
+      packageJson.type = "module";
+      await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+
       await pepr.cli(testModule, { cmd: `npm install` });
 
       const buildArgs = [`--no-embed`].join(" ");
       buildOutput = await pepr.cli(testModule, { cmd: `pepr build ${buildArgs}` });
     }, time.toMs("3m"));
 
-    it("should execute 'pepr build'", () => {
+    it("should execute 'pepr build' successfully with auto-detected ESM", () => {
       expect(buildOutput.exitcode).toBe(0);
-      expect(buildOutput.stderr.join("").trim()).toContain("");
       expect(buildOutput.stdout.join("").trim()).toContain("Module built successfully at");
     });
 
-    describe("for use as a library", () => {
-      it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.js.map`], [`pepr.js`]])(
+    describe("for use as an ESM library (auto-detected)", () => {
+      it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.mjs.map`], [`pepr.mjs`]])(
         "should create: '%s'",
         filename => {
           expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
         },
       );
 
-      it.each([
-        { filename: `^UUID-chart/$` },
-        { filename: `^pepr-UUID\\.js\\.map$` },
-        { filename: `^pepr-UUID\\.js$` },
-        { filename: `^pepr-module-UUID\\.yaml$` },
-        { filename: `^zarf\\.yaml$` },
-        // Legal files are omitted when empty, see esbuild/#3670 https://github.com/evanw/esbuild/blob/main/CHANGELOG.md#0250
-        { filename: `^pepr-UUID\\.js\\.LEGAL\\.txt$` },
-        { filename: `^pepr\\.js\\.LEGAL\\.txt$` },
-      ])("should not create: '$filename'", ({ filename }) => {
-        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-        const regex = new RegExp(filename.replace("UUID", uuidPattern));
-        const files = readdirSync(`${testModule}/dist/`);
+      it("should not create CJS output files", () => {
+        expect(existsSync(`${testModule}/dist/pepr.js`)).toBe(false);
+      });
 
-        const matchingFiles = files.filter(file => regex.test(file));
-
-        expect(matchingFiles.length).toBe(0);
+      it("should use ESM syntax in the output file", async () => {
+        const content = await fs.readFile(`${testModule}/dist/pepr.mjs`, "utf-8");
+        // ESM uses import/export, not require
+        expect(content).not.toContain("require(");
+        expect(content).not.toContain("module.exports");
       });
 
       it("should produce a module that can be loaded by Node.js", async () => {
-        // Verify the built CJS module is valid and can be required
+        // Verify the built ESM module is valid and can be dynamically imported
         // This catches module resolution errors that esbuild might miss
-        const modulePath = `${testModule}/dist/pepr.js`;
+        const modulePath = `${testModule}/dist/pepr.mjs`;
         const absolutePath = path.resolve(modulePath);
 
-        // Dynamic import works for CJS modules too in modern Node.js
+        // Dynamic import to test ESM module validity
         // This will throw if the module has syntax errors or unresolved imports
         await expect(import(absolutePath)).resolves.toBeDefined();
       });

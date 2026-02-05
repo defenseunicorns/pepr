@@ -17,6 +17,14 @@ export type BuildModuleReturn = {
   cfg: PeprConfig;
   uuid: string;
 };
+
+export interface BuildModuleOptions {
+  reloader?: Reloader;
+  entryPoint?: string;
+  embed?: boolean;
+  format?: "cjs" | "esm";
+}
+
 // Create a list of external libraries to exclude from the bundle, these are already stored in the container
 const externalLibs = Object.keys(dependencies);
 
@@ -28,10 +36,9 @@ externalLibs.push("@kubernetes/client-node");
 
 export async function buildModule(
   outputDir: string,
-  reloader?: Reloader,
-  entryPoint = "pepr.ts",
-  embed = true,
+  options: BuildModuleOptions = {},
 ): Promise<BuildModuleReturn | void> {
+  const { reloader, entryPoint = "pepr.ts", embed = true, format = "cjs" } = options;
   try {
     const { cfg, modulePath, path, uuid } = await loadModule(outputDir, entryPoint);
 
@@ -48,7 +55,7 @@ export async function buildModule(
       bundle: true,
       entryPoints: [entryPoint],
       external: externalLibs,
-      format: "cjs",
+      format: format,
       keepNames: true,
       legalComments: "external",
       metafile: true,
@@ -87,8 +94,10 @@ export async function buildModule(
       // Don't minify
       ctxCfg.minify = false;
 
-      // Preserve the original file name
-      ctxCfg.outfile = resolve(outputDir, basename(entryPoint, extname(entryPoint))) + ".js";
+      // Preserve the original file name with appropriate extension for format
+      const outputExtension = format === "esm" ? ".mjs" : ".js";
+      ctxCfg.outfile =
+        resolve(outputDir, basename(entryPoint, extname(entryPoint))) + outputExtension;
 
       // Don't bundle
       ctxCfg.packages = "external";

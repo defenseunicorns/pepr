@@ -4,7 +4,10 @@ import { analyzeMetafile, build } from "esbuild";
 import packageJSON from "./package.json" with { type: "json" };
 
 const { dependencies, peerDependencies } = packageJSON;
-const external = Object.keys(dependencies).concat(Object.keys(peerDependencies), "@kubernetes/client-node");
+const external = Object.keys(dependencies).concat(
+  Object.keys(peerDependencies),
+  "@kubernetes/client-node",
+);
 
 const buildOpts = {
   bundle: true,
@@ -23,7 +26,7 @@ async function builder() {
       entryPoints: ["src/cli.ts"],
       outfile: "dist/cli.js",
       define: {
-        'process.env.PEPR_PRETTY_LOGS': '"true"',
+        "process.env.PEPR_PRETTY_LOGS": '"true"',
       },
     });
 

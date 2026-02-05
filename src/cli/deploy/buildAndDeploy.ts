@@ -7,7 +7,7 @@ import { CapabilityExport } from "../../lib/types";
 import { buildModule } from "../build/buildModule";
 
 export async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
-  const builtModule = await buildModule("dist");
+  const builtModule = await buildModule("dist", {});
   if (!builtModule) {
     return;
   }

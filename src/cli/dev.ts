@@ -105,18 +105,20 @@ export default function (program: Command): void {
           });
         };
 
-        await buildModule("dist", async r => {
-          if (r.errors.length > 0) {
-            Log.error(`Error compiling module: ${r.errors}`);
-            return;
-          }
+        await buildModule("dist", {
+          reloader: async r => {
+            if (r.errors.length > 0) {
+              Log.error(`Error compiling module: ${r.errors}`);
+              return;
+            }
 
-          if (program) {
-            program.once("exit", runFork);
-            program.kill("SIGKILL");
-          } else {
-            await runFork();
-          }
+            if (program) {
+              program.once("exit", runFork);
+              program.kill("SIGKILL");
+            } else {
+              await runFork();
+            }
+          },
         });
       } catch (e) {
         Log.error(`Error deploying module:`, e);

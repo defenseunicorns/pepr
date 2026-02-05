@@ -1,7 +1,9 @@
 // This is a helper script to collect the contents of the template files before building the CLI
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const baseDir = path.join(__dirname, "..", "src", "templates");
 
 // Read the text file
@@ -13,11 +15,15 @@ const packageJSON = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "packa
 
 fs.writeFileSync(
   path.join(baseDir, "data.json"),
-  JSON.stringify({
-    gitIgnore,
-    readmeMd,
-    peprTS,
-    helloPeprTS,
-    packageJSON,
-  })
+  JSON.stringify(
+    {
+      gitIgnore,
+      readmeMd,
+      peprTS,
+      helloPeprTS,
+      packageJSON,
+    },
+    null,
+    2,
+  ) + "\n",
 );
