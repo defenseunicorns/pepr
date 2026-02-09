@@ -75,7 +75,7 @@ jobs:
       
       - name: Upload Scan Results
         if: steps.scan.outcome == 'failure'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: vulnerability-scan-results
           path: ${{ steps.scan_json.outputs.json }}
@@ -86,7 +86,7 @@ jobs:
         run: exit 1
       
       - name: Generate SBOM
-        uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 # v0.22.1
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
         with:
           image: pepr:dev
           upload-artifact: true
