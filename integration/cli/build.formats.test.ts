@@ -109,98 +109,97 @@ describe("build formats", () => {
       ctx.buildOutput = await pepr.cli(testModule, { cmd: buildCmd });
     }, time.toMs("3m"));
 
-    // --- Build process assertions (all cases) ---
+    describe("when building a module", () => {
+      it("should exit with code 0", () => {
+        expect(ctx.buildOutput.exitcode).toBe(0);
+      });
 
-    it("should exit with code 0", () => {
-      expect(ctx.buildOutput.exitcode).toBe(0);
+      it("should produce no stderr output", () => {
+        expect(ctx.buildOutput.stderr.join("").trim()).toBe("");
+      });
+
+      it("should print the expected success message", () => {
+        const expected = testCase.embedded
+          ? "K8s resource for the module saved"
+          : "Module built successfully at";
+        expect(ctx.buildOutput.stdout.join("").trim()).toContain(expected);
+      });
     });
-
-    it("should produce no stderr output", () => {
-      expect(ctx.buildOutput.stderr.join("").trim()).toBe("");
-    });
-
-    it("should print the expected success message", () => {
-      const expected = testCase.embedded
-        ? "K8s resource for the module saved"
-        : "Module built successfully at";
-      expect(ctx.buildOutput.stdout.join("").trim()).toContain(expected);
-    });
-
-    // --- Non-embedded output file assertions ---
 
     if (!testCase.embedded) {
       const ext = testCase.esm ? "mjs" : "js";
 
-      it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.${ext}.map`], [`pepr.${ext}`]])(
-        "should create: '%s'",
-        filename => {
-          expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
-        },
-      );
+      describe("when build is non-embedded", () => {
+        describe("output file generation", () => {
+          it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.${ext}.map`], [`pepr.${ext}`]])(
+            "should create: '%s'",
+            filename => {
+              expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
+            },
+          );
 
-      const wrongExt = testCase.esm ? "js" : "mjs";
-      it(`should not create pepr.${wrongExt} (wrong format)`, () => {
-        expect(existsSync(`${testModule}/dist/pepr.${wrongExt}`)).toBe(false);
+          const wrongExt = testCase.esm ? "js" : "mjs";
+          it(`should not create pepr.${wrongExt} (wrong format)`, () => {
+            expect(existsSync(`${testModule}/dist/pepr.${wrongExt}`)).toBe(false);
+          });
+        });
+
+        describe("embedded artifacts exclusion", () => {
+          it.each([
+            { filename: `^UUID-chart$` },
+            { filename: `^pepr-UUID\\.(js|cjs)$` },
+            { filename: `^pepr-UUID\\.(js|cjs)\\.map$` },
+            { filename: `^pepr-module-UUID\\.yaml$` },
+            { filename: `^zarf\\.yaml$` },
+            // Legal files are omitted when empty, see esbuild/#3670
+            { filename: `^pepr-UUID\\.(js|cjs)\\.LEGAL\\.txt$` },
+            { filename: `^pepr\\.(js|mjs)\\.LEGAL\\.txt$` },
+          ])("should not create: '$filename'", ({ filename }) => {
+            const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+            const regex = new RegExp(filename.replace("UUID", uuidPattern));
+            const files = readdirSync(`${testModule}/dist/`);
+            const matchingFiles = files.filter(file => regex.test(file));
+            expect(matchingFiles.length).toBe(0);
+          });
+        });
+
+        if (testCase.esm) {
+          describe("ESM syntax validation", () => {
+            it("should use ESM syntax (no require/module.exports)", async () => {
+              const content = await fs.readFile(`${testModule}/dist/pepr.mjs`, "utf-8");
+              expect(content).not.toContain("require(");
+              expect(content).not.toContain("module.exports");
+            });
+          });
+        }
+
+        describe("module loading", () => {
+          it("should produce a module that can be loaded by Node.js", async () => {
+            const modulePath = `${testModule}/dist/pepr.${ext}`;
+            const absolutePath = path.resolve(modulePath);
+            await expect(import(absolutePath)).resolves.toBeDefined();
+          });
+        });
       });
     }
-
-    // --- Embedded artifact assertions ---
 
     if (testCase.embedded) {
-      it("should generate K8s YAML manifest", () => {
-        expect(
-          existsSync(`${testModule}/dist/pepr-module-${testCase.initUuid}.yaml`),
-        ).toBe(true);
-      });
+      describe("when build is embedded", () => {
+        describe("artifact generation", () => {
+          it("should generate K8s YAML manifest", () => {
+            expect(existsSync(`${testModule}/dist/pepr-module-${testCase.initUuid}.yaml`)).toBe(
+              true,
+            );
+          });
 
-      it("should generate zarf manifest", () => {
-        expect(existsSync(`${testModule}/dist/zarf.yaml`)).toBe(true);
-      });
+          it("should generate zarf manifest", () => {
+            expect(existsSync(`${testModule}/dist/zarf.yaml`)).toBe(true);
+          });
 
-      it("should generate Helm chart directory", () => {
-        expect(existsSync(`${testModule}/dist/${testCase.initUuid}-chart`)).toBe(true);
-      });
-    }
-
-    // --- No embedded artifacts in non-embedded builds ---
-
-    if (!testCase.embedded) {
-      it.each([
-        { filename: `^UUID-chart$` },
-        { filename: `^pepr-UUID\\.(js|cjs)$` },
-        { filename: `^pepr-UUID\\.(js|cjs)\\.map$` },
-        { filename: `^pepr-module-UUID\\.yaml$` },
-        { filename: `^zarf\\.yaml$` },
-        // Legal files are omitted when empty, see esbuild/#3670
-        { filename: `^pepr-UUID\\.(js|cjs)\\.LEGAL\\.txt$` },
-        { filename: `^pepr\\.(js|mjs)\\.LEGAL\\.txt$` },
-      ])("should not create: '$filename'", ({ filename }) => {
-        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-        const regex = new RegExp(filename.replace("UUID", uuidPattern));
-        const files = readdirSync(`${testModule}/dist/`);
-        const matchingFiles = files.filter(file => regex.test(file));
-        expect(matchingFiles.length).toBe(0);
-      });
-    }
-
-    // --- ESM syntax validation ---
-
-    if (!testCase.embedded && testCase.esm) {
-      it("should use ESM syntax (no require/module.exports)", async () => {
-        const content = await fs.readFile(`${testModule}/dist/pepr.mjs`, "utf-8");
-        expect(content).not.toContain("require(");
-        expect(content).not.toContain("module.exports");
-      });
-    }
-
-    // --- Module loadable by Node.js ---
-
-    if (!testCase.embedded) {
-      it("should produce a module that can be loaded by Node.js", async () => {
-        const ext = testCase.esm ? "mjs" : "js";
-        const modulePath = `${testModule}/dist/pepr.${ext}`;
-        const absolutePath = path.resolve(modulePath);
-        await expect(import(absolutePath)).resolves.toBeDefined();
+          it("should generate Helm chart directory", () => {
+            expect(existsSync(`${testModule}/dist/${testCase.initUuid}-chart`)).toBe(true);
+          });
+        });
       });
     }
   });
