@@ -23,10 +23,8 @@ interface FormatTestCase {
   name: string;
   id: string;
   initUuid: string;
-  esm?: boolean;
-  buildFlags?: string;
-  needsTls?: boolean;
-  assertions: (ctx: BuildContext) => void;
+  esm: boolean;
+  embedded: boolean;
 }
 
 const FORMAT_CASES: FormatTestCase[] = [
@@ -34,128 +32,35 @@ const FORMAT_CASES: FormatTestCase[] = [
     name: "default embedded CJS build",
     id: "cjs",
     initUuid: "random-identifier",
-    assertions: (ctx): void => {
-      it("builds successfully with default options", () => {
-        expect(ctx.buildOutput.exitcode).toBe(0);
-        expect(ctx.buildOutput.stderr.join("").trim()).toBe("");
-        expect(ctx.buildOutput.stdout.join("").trim()).toContain(
-          "K8s resource for the module saved",
-        );
-      });
-    },
+    esm: false,
+    embedded: true,
   },
   {
     name: "embedded ESM build (type: module)",
     id: "esm-embed",
     initUuid: "esm-embed-test",
     esm: true,
-    assertions: (ctx): void => {
-      it("should build successfully", () => {
-        expect(ctx.buildOutput.exitcode).toBe(0);
-        expect(ctx.buildOutput.stdout.join("").trim()).toContain(
-          "K8s resource for the module saved",
-        );
-      });
-
-      it("should generate K8s YAML manifest", () => {
-        expect(existsSync(`${ctx.testModule}/dist/pepr-module-esm-embed-test.yaml`)).toBe(true);
-      });
-
-      it("should generate zarf manifest", () => {
-        expect(existsSync(`${ctx.testModule}/dist/zarf.yaml`)).toBe(true);
-      });
-
-      it("should generate Helm chart directory", () => {
-        expect(existsSync(`${ctx.testModule}/dist/esm-embed-test-chart`)).toBe(true);
-      });
-    },
+    embedded: true,
   },
   {
     name: "non-embedded ESM build (type: module, --no-embed)",
     id: "esm-auto",
     initUuid: "esm-test-auto",
     esm: true,
-    needsTls: true,
-    buildFlags: "--no-embed",
-    assertions: (ctx): void => {
-      it("should build successfully with auto-detected ESM", () => {
-        expect(ctx.buildOutput.exitcode).toBe(0);
-        expect(ctx.buildOutput.stdout.join("").trim()).toContain("Module built successfully at");
-      });
-
-      it.each([["pepr.d.ts.map"], ["pepr.d.ts"], ["pepr.mjs.map"], ["pepr.mjs"]])(
-        "should create: '%s'",
-        filename => {
-          expect(existsSync(`${ctx.testModule}/dist/${filename}`)).toBe(true);
-        },
-      );
-
-      it("should not create CJS output files", () => {
-        expect(existsSync(`${ctx.testModule}/dist/pepr.js`)).toBe(false);
-      });
-
-      it("should use ESM syntax in the output file", async () => {
-        const content = await fs.readFile(`${ctx.testModule}/dist/pepr.mjs`, "utf-8");
-        expect(content).not.toContain("require(");
-        expect(content).not.toContain("module.exports");
-      });
-
-      it("should produce a module that can be loaded by Node.js", async () => {
-        const modulePath = `${ctx.testModule}/dist/pepr.mjs`;
-        const absolutePath = path.resolve(modulePath);
-        await expect(import(absolutePath)).resolves.toBeDefined();
-      });
-    },
+    embedded: false,
   },
   {
     name: "non-embedded CJS build (--no-embed)",
     id: "noembed",
     initUuid: "random-identifier",
-    needsTls: true,
-    buildFlags: "--no-embed",
-    assertions: (ctx): void => {
-      it("should build successfully", () => {
-        expect(ctx.buildOutput.exitcode).toBe(0);
-        expect(ctx.buildOutput.stderr.join("").trim()).toContain("");
-        expect(ctx.buildOutput.stdout.join("").trim()).toContain("Module built successfully at");
-      });
-
-      it.each([["pepr.d.ts.map"], ["pepr.d.ts"], ["pepr.js.map"], ["pepr.js"]])(
-        "should create: '%s'",
-        filename => {
-          expect(existsSync(`${ctx.testModule}/dist/${filename}`)).toBe(true);
-        },
-      );
-
-      it.each([
-        { filename: `^UUID-chart/$` },
-        { filename: `^pepr-UUID\\.js\\.map$` },
-        { filename: `^pepr-UUID\\.js$` },
-        { filename: `^pepr-module-UUID\\.yaml$` },
-        { filename: `^zarf\\.yaml$` },
-        // Legal files are omitted when empty, see esbuild/#3670
-        { filename: `^pepr-UUID\\.js\\.LEGAL\\.txt$` },
-        { filename: `^pepr\\.js\\.LEGAL\\.txt$` },
-      ])("should not create: '$filename'", ({ filename }) => {
-        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-        const regex = new RegExp(filename.replace("UUID", uuidPattern));
-        const files = readdirSync(`${ctx.testModule}/dist/`);
-        const matchingFiles = files.filter(file => regex.test(file));
-        expect(matchingFiles.length).toBe(0);
-      });
-
-      it("should produce a module that can be loaded by Node.js", async () => {
-        const modulePath = `${ctx.testModule}/dist/pepr.js`;
-        const absolutePath = path.resolve(modulePath);
-        await expect(import(absolutePath)).resolves.toBeDefined();
-      });
-    },
+    esm: false,
+    embedded: false,
   },
 ];
 
 describe("build formats", () => {
   const workdir = new Workdir(FILE, `${HERE}/../testroot/cli`);
-  const anyNeedsTls = FORMAT_CASES.some(c => c.needsTls);
+  const anyNeedsTls = FORMAT_CASES.some(c => !c.embedded);
 
   beforeAll(async () => {
     await workdir.recreate();
@@ -200,10 +105,103 @@ describe("build formats", () => {
 
       await pepr.cli(testModule, { cmd: `npm install` });
 
-      const buildCmd = testCase.buildFlags ? `pepr build ${testCase.buildFlags}` : `pepr build`;
+      const buildCmd = testCase.embedded ? `pepr build` : `pepr build --no-embed`;
       ctx.buildOutput = await pepr.cli(testModule, { cmd: buildCmd });
     }, time.toMs("3m"));
 
-    testCase.assertions(ctx);
+    // --- Build process assertions (all cases) ---
+
+    it("should exit with code 0", () => {
+      expect(ctx.buildOutput.exitcode).toBe(0);
+    });
+
+    it("should produce no stderr output", () => {
+      expect(ctx.buildOutput.stderr.join("").trim()).toBe("");
+    });
+
+    it("should print the expected success message", () => {
+      const expected = testCase.embedded
+        ? "K8s resource for the module saved"
+        : "Module built successfully at";
+      expect(ctx.buildOutput.stdout.join("").trim()).toContain(expected);
+    });
+
+    // --- Non-embedded output file assertions ---
+
+    if (!testCase.embedded) {
+      const ext = testCase.esm ? "mjs" : "js";
+
+      it.each([[`pepr.d.ts.map`], [`pepr.d.ts`], [`pepr.${ext}.map`], [`pepr.${ext}`]])(
+        "should create: '%s'",
+        filename => {
+          expect(existsSync(`${testModule}/dist/${filename}`)).toBe(true);
+        },
+      );
+
+      const wrongExt = testCase.esm ? "js" : "mjs";
+      it(`should not create pepr.${wrongExt} (wrong format)`, () => {
+        expect(existsSync(`${testModule}/dist/pepr.${wrongExt}`)).toBe(false);
+      });
+    }
+
+    // --- Embedded artifact assertions ---
+
+    if (testCase.embedded) {
+      it("should generate K8s YAML manifest", () => {
+        expect(
+          existsSync(`${testModule}/dist/pepr-module-${testCase.initUuid}.yaml`),
+        ).toBe(true);
+      });
+
+      it("should generate zarf manifest", () => {
+        expect(existsSync(`${testModule}/dist/zarf.yaml`)).toBe(true);
+      });
+
+      it("should generate Helm chart directory", () => {
+        expect(existsSync(`${testModule}/dist/${testCase.initUuid}-chart`)).toBe(true);
+      });
+    }
+
+    // --- No embedded artifacts in non-embedded builds ---
+
+    if (!testCase.embedded) {
+      it.each([
+        { filename: `^UUID-chart$` },
+        { filename: `^pepr-UUID\\.(js|cjs)$` },
+        { filename: `^pepr-UUID\\.(js|cjs)\\.map$` },
+        { filename: `^pepr-module-UUID\\.yaml$` },
+        { filename: `^zarf\\.yaml$` },
+        // Legal files are omitted when empty, see esbuild/#3670
+        { filename: `^pepr-UUID\\.(js|cjs)\\.LEGAL\\.txt$` },
+        { filename: `^pepr\\.(js|mjs)\\.LEGAL\\.txt$` },
+      ])("should not create: '$filename'", ({ filename }) => {
+        const uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        const regex = new RegExp(filename.replace("UUID", uuidPattern));
+        const files = readdirSync(`${testModule}/dist/`);
+        const matchingFiles = files.filter(file => regex.test(file));
+        expect(matchingFiles.length).toBe(0);
+      });
+    }
+
+    // --- ESM syntax validation ---
+
+    if (!testCase.embedded && testCase.esm) {
+      it("should use ESM syntax (no require/module.exports)", async () => {
+        const content = await fs.readFile(`${testModule}/dist/pepr.mjs`, "utf-8");
+        expect(content).not.toContain("require(");
+        expect(content).not.toContain("module.exports");
+      });
+    }
+
+    // --- Module loadable by Node.js ---
+
+    if (!testCase.embedded) {
+      it("should produce a module that can be loaded by Node.js", async () => {
+        const ext = testCase.esm ? "mjs" : "js";
+        const modulePath = `${testModule}/dist/pepr.${ext}`;
+        const absolutePath = path.resolve(modulePath);
+        await expect(import(absolutePath)).resolves.toBeDefined();
+      });
+    }
   });
 });
