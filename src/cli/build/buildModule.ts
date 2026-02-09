@@ -34,21 +34,52 @@ externalLibs.push("pepr");
 // Add the kubernetes client to the list of external libraries as it is pulled in by kubernetes-fluent-client
 externalLibs.push("@kubernetes/client-node");
 
+/**
+ * Resolve the esbuild output format and file path for the build.
+ *
+ * Embedded builds are fork()ed by loadCapabilities() to extract capabilities, so they must
+ * use CJS format. When the user's package has "type": "module", Node.js treats .js files as
+ * ESM regardless of their content, so we also rename the output to .cjs for correct parsing.
+ */
+function resolveFormatAndPath(
+  embed: boolean,
+  requestedFormat: "cjs" | "esm",
+  loadedPath: string,
+): { format: "cjs" | "esm"; path: string } {
+  if (embed) {
+    return {
+      format: "cjs",
+      path: requestedFormat === "esm" ? loadedPath.replace(/\.js$/, ".cjs") : loadedPath,
+    };
+  }
+  return { format: requestedFormat, path: loadedPath };
+}
+
 export async function buildModule(
   outputDir: string,
   options: BuildModuleOptions = {},
 ): Promise<BuildModuleReturn | void> {
-  const { reloader, entryPoint = "pepr.ts", embed = true, format = "cjs" } = options;
+  const {
+    reloader,
+    entryPoint = "pepr.ts",
+    embed = true,
+    format: requestedFormat = "cjs",
+  } = options;
+
   try {
-    const { cfg, modulePath, path, uuid } = await loadModule(outputDir, entryPoint);
+    const { cfg, modulePath, path: loadedPath, uuid } = await loadModule(outputDir, entryPoint);
+    const { format, path } = resolveFormatAndPath(embed, requestedFormat, loadedPath);
 
     await checkFormat();
-    // Resolve node_modules folder (in support of npm workspaces!)
-    const npmRoot = execFileSync("npm", ["root"]).toString().trim();
 
-    // Run `tsc` to validate the module's types & output sourcemaps
-    const args = ["--project", `${modulePath}/tsconfig.json`, "--outdir", outputDir];
-    execFileSync(`${npmRoot}/.bin/tsc`, args);
+    // Resolve node_modules folder (in support of npm workspaces!) and run tsc
+    const npmRoot = execFileSync("npm", ["root"]).toString().trim();
+    execFileSync(`${npmRoot}/.bin/tsc`, [
+      "--project",
+      `${modulePath}/tsconfig.json`,
+      "--outdir",
+      outputDir,
+    ]);
 
     // Common build options for all builds
     const ctxCfg: BuildOptions = {
