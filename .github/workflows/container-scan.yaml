@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -28,28 +28,41 @@ jobs:
         run: npm ci
       - name: Build Pepr Controller Image
         run: npm run build:image
-      - name: Configure Grype Ignore File
-        run: |
-          mkdir -p ~/.grype
-          echo "ignore:" > ~/.grype.yaml
-          echo "  - vulnerability: GHSA-8qq5-rm4j-mr97" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-59465" >> ~/.grype.yaml
-          echo "  - vulnerability: CVE-2025-55131" >> ~/.grype.yaml          
-          echo "  - vulnerability: GHSA-r6q2-hw4h-h46w" >> ~/.grype.yaml                    
-          echo "  - vulnerability: CVE-2025-55130" >> ~/.grype.yaml     
-          echo "  - vulnerability: GHSA-8qq5-rm4j-mr97" >> ~/.grype.yaml   
-          echo "  - vulnerability: GHSA-5j98-mcp5-4vw2" >> ~/.grype.yaml   
-          echo "  - vulnerability: CVE-2025-9230" >> ~/.grype.yaml   
-
 
       - name: Vulnerability Scan
-        uses: anchore/scan-action@0d444ed77d83ee2ba7f5ced0d90d640a1281d762 # v7.3.0
+        id: scan
+        continue-on-error: true # Scan again with JSON output for artifact upload
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v7.3.2
         with:
           image: "pepr:dev"
           fail-build: true
           severity-cutoff: high
+          output-format: table
+      
+      - name: Vulnerability Scan (JSON for Artifact)
+        id: scan_json
+        if: steps.scan.outcome == 'failure'
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v7.3.2
+        with:
+          image: "pepr:dev"
+          fail-build: false
+          severity-cutoff: high
+          output-format: json
+      
+      - name: Upload Scan Results
+        if: steps.scan.outcome == 'failure'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: vulnerability-scan-results
+          path: ${{ steps.scan_json.outputs.json }}
+          retention-days: 30
+      
+      - name: Fail Build on Vulnerabilities
+        if: steps.scan.outcome == 'failure'
+        run: exit 1
+      
       - name: Generate SBOM
-        uses: anchore/sbom-action@62ad5284b8ced813296287a0b63906cb364b73ee # v0.22.0
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
         with:
           image: pepr:dev
           upload-artifact: true
