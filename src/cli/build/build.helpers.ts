@@ -7,7 +7,7 @@ import { validateCapabilityNames } from "../../lib/helpers";
 import { BuildOptions, context, BuildContext } from "esbuild";
 import { Assets } from "../../lib/assets/assets";
 import { resolve } from "path";
-import { promises as fs, accessSync, constants, statSync } from "fs";
+import { promises as fs, accessSync, constants, statSync, readFileSync } from "fs";
 import { generateAllYaml } from "../../lib/assets/yaml/generateAllYaml";
 import { webhookConfigGenerator } from "../../lib/assets/webhooks";
 import { generateZarfYamlGeneric } from "../../lib/assets/yaml/generateZarfYaml";
@@ -40,6 +40,31 @@ export function fileExists(entryPoint: string = "pepr.ts"): string {
     process.exit(1);
   }
   return entryPoint;
+}
+
+/**
+ * Determine the module format based on package.json "type" field.
+ *
+ * @param packageJsonPath - Path to the package.json file for auto-detection
+ * @returns "cjs" or "esm"
+ */
+export function determineModuleFormat(packageJsonPath: string): "cjs" | "esm" {
+  try {
+    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    if (pkg.type === "module") {
+      return "esm";
+    }
+    if (pkg.type !== "commonjs") {
+      // No type field specified - warn user
+      Log.warn(
+        "No 'type' field specified in package.json. Defaulting to CommonJS format. To use ES modules, add '\"type\": \"module\"' to your tsconfig.json or package.json.",
+      );
+    }
+  } catch {
+    // If can't read package.json, default to cjs
+  }
+
+  return "cjs";
 }
 
 interface ImageOptions {
