@@ -7,6 +7,8 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     groups:
       production-dependencies:
         dependency-type: "production"
@@ -55,11 +57,15 @@ updates:
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: docker
     directory: /config
