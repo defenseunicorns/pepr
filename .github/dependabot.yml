@@ -71,8 +71,6 @@ updates:
     directory: /config
     schedule:
       interval: daily
-    cooldown:
-      default-days: 7
     registries:
       - rapidfort
 
