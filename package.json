@@ -16,7 +16,7 @@
     "!src/fixtures/**",
     "!dist/**/*.test.d.ts*"
   ],
-  "version": "0.0.0-development-eslint-devdep",
+  "version": "0.0.0-development",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "scripts": {
