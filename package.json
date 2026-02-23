@@ -93,7 +93,7 @@
     "selfsigned": "^5.5.0",
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
-    "undici": "7.21.0",
+    "undici": "7.22.0",
     "vitest": "^4.0.4"
   },
   "overrides": {
