@@ -37,7 +37,8 @@ describe("build", () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-
+      // revisit this in the future - https://github.com/defenseunicorns/pepr/issues/2964
+      await pepr.cli(testModule, { cmd: `npm install --no-save ${testModule}` });
       formatOutput = await pepr.cli(testModule, { cmd: `pepr format` });
     }, time.toMs("3m"));
 
