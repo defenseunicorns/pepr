@@ -97,7 +97,8 @@
     "vitest": "^4.0.4"
   },
   "overrides": {
-    "glob": "^9.0.0"
+    "glob": "^9.0.0",
+    "rollup": "4.59.0"
   },
   "peerDependencies": {
     "@types/prompts": "2.4.9",
