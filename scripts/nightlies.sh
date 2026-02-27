@@ -8,8 +8,8 @@
 set -e
 npm install --global npm
 
-LATEST_VERSION=$(npx --yes pepr@latest --version 2>/dev/null)
-RAW_NIGHTLY_VERSION=$(npx --yes pepr@nightly --version 2>/dev/null || echo "none")
+LATEST_VERSION=$(npx -p eslint@9.36.0 -p pepr@latest --yes pepr --version 2>/dev/null)
+RAW_NIGHTLY_VERSION=$(npx -p eslint@9.36.0 -p pepr@nightly --yes pepr --version 2>/dev/null || echo "none")
 
 if [[ "$RAW_NIGHTLY_VERSION" == "none" ]]; then
     echo "No nightly version found. Setting NIGHTLY_VERSION=0."
