@@ -134,6 +134,37 @@ describe("StoreCache", () => {
 
         expect(result).toStrictEqual({});
       });
+
+      it("should preserve entries added during in-flight patch on success", async () => {
+        const cache: Record<string, Operation> = {};
+        fillStoreCache(cache, "hello-pepr", "add", { key: ["old"], value: "v", version: "v2" });
+
+        // Simulate sender() writing a new entry while the Patch is in flight.
+        const mockK8s = vi.mocked(K8s);
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockImplementation(async () => {
+              fillStoreCache(cache, "hello-pepr", "add", {
+                key: ["new"],
+                value: "n",
+                version: "v2",
+              });
+            }),
+          } as unknown as K8sInit<T, K>;
+        });
+
+        await sendUpdatesAndFlushCache(cache, "pepr-system", "pepr-abc123-store");
+
+        // The original entry was sent and should be cleared. The concurrent
+        // entry arrived after the snapshot and must survive.
+        expect(cache).toStrictEqual({
+          "add:/data/hello-pepr-v2-new:n": {
+            op: "add",
+            path: "/data/hello-pepr-v2-new",
+            value: "n",
+          },
+        });
+      });
     });
 
     describe("when update fails", () => {
