@@ -165,14 +165,25 @@ describe("StoreCache", () => {
       });
 
       it("should repopulate cache with original operations after non HTTP/422 errors", async () => {
-        setupK8sMock("error", 400);
+        setupK8sMock("error", 500);
 
-        const cache: Record<string, Operation> = {
-          entry: { op: "remove", path: "/some/path" },
-          entry2: { op: "add", path: "some/path", value: "value" },
-        };
-        const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
-        expect(result).toStrictEqual(cache);
+        // Build the cache via fillStoreCache so keys are realistic
+        // (e.g. "add:/data/hello-pepr-v2-setting:enabled"), not synthetic.
+        const cache: Record<string, Operation> = {};
+        fillStoreCache(cache, "hello-pepr", "add", {
+          key: ["setting"],
+          value: "enabled",
+          version: "v2",
+        });
+        fillStoreCache(cache, "hello-pepr", "remove", { key: ["old-key"], version: "v2" });
+
+        // Snapshot before the call — we compare against this independent
+        // copy, not the same object reference (which would be tautological).
+        const expected = { ...cache };
+
+        const result = await sendUpdatesAndFlushCache(cache, "pepr-system", "pepr-abc123-store");
+
+        expect(result).toStrictEqual(expected);
       });
     });
   });
