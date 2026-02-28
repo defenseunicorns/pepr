@@ -25,8 +25,9 @@ export const sendUpdatesAndFlushCache = async (
     if (err.status === StatusCodes.UNPROCESSABLE_ENTITY) {
       Object.keys(snapshot).forEach(key => delete cache[key]);
     } else {
-      // Restore the snapshotted operations so the next interval tick can re-send them.
-      Object.assign(cache, snapshot);
+      // Restore only entries that were removed during the flush attempt,
+      // preserving any concurrent writes from sender() for colliding keys.
+      restoreMissing(cache, snapshot);
     }
   }
   return cache;
@@ -65,6 +66,18 @@ export const fillStoreCache = (
   }
   return cache;
 };
+
+/** Copy entries from `source` into `target`, skipping keys that already exist in `target`. */
+function restoreMissing(
+  target: Record<string, Operation>,
+  source: Record<string, Operation>,
+): void {
+  for (const [key, value] of Object.entries(source)) {
+    if (!(key in target)) {
+      target[key] = value;
+    }
+  }
+}
 
 export function updateCacheID(payload: Operation[]): Operation[] {
   payload.push({
