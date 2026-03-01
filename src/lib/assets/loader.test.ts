@@ -70,6 +70,65 @@ describe("loadCapabilities", () => {
     await expect(loadCapabilities("/fake/path")).rejects.toThrow("Process failed");
   });
 
+  // loadCapabilities promise never resolves if child exits without sending a
+  // message. We listen on "close" (not "exit") because "close" fires after all
+  // IPC/stdio streams are drained, guaranteeing any pending process.send() from
+  // the child has been delivered as a "message" event first.
+  it("should reject when the child process closes without sending a message", async () => {
+    setTimeout(() => {
+      const closeHandler = mockProcess.on.mock.calls.find(
+        (call: [string, (code: number | null) => void]) => call[0] === "close",
+      )?.[1];
+
+      if (closeHandler) {
+        closeHandler(1);
+      }
+    }, 10);
+
+    await expect(loadCapabilities("/fake/path")).rejects.toThrow(
+      "Child process exited with code 1 before sending capabilities",
+    );
+  });
+
+  it("should include the signal name when the child is killed", async () => {
+    setTimeout(() => {
+      const closeHandler = mockProcess.on.mock.calls.find(
+        (call: [string, (code: number | null, signal: string | null) => void]) =>
+          call[0] === "close",
+      )?.[1];
+
+      if (closeHandler) {
+        closeHandler(null, "SIGTERM");
+      }
+    }, 10);
+
+    await expect(loadCapabilities("/fake/path")).rejects.toThrow(
+      "Child process exited with signal SIGTERM before sending capabilities",
+    );
+  });
+
+  it("should not reject on close if message was already received", async () => {
+    setTimeout(() => {
+      const messageHandler = mockProcess.on.mock.calls.find(
+        (call: [string, [(message: CapabilityExport[]) => void]]) => call[0] === "message",
+      )?.[1];
+      const closeHandler = mockProcess.on.mock.calls.find(
+        (call: [string, (code: number | null) => void]) => call[0] === "close",
+      )?.[1];
+
+      // Message arrives first, then close — close should be a no-op.
+      if (messageHandler) {
+        messageHandler([{ name: "Cap", description: "d", bindings: [], hasSchedule: false }]);
+      }
+      if (closeHandler) {
+        closeHandler(0);
+      }
+    }, 10);
+
+    const result = await loadCapabilities("/fake/path");
+    expect(result).toEqual([{ name: "Cap", description: "d", bindings: [], hasSchedule: false }]);
+  });
+
   it("should call fork with the correct environment variables", async () => {
     try {
       void loadCapabilities("/fake/path");
