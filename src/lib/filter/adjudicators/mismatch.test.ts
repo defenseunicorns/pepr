@@ -182,6 +182,51 @@ describe("mismatchedNamespaceRegex", () => {
   });
 });
 
+describe("mismatchedNameRegex with invalid regex", () => {
+  it("returns true (mismatch) instead of crashing when regexName is invalid", () => {
+    const binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexName: "[invalid(regex" },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { name: "anything" },
+    };
+
+    // An invalid regex should be treated as a mismatch (binding is skipped),
+    // not crash the filter pipeline.
+    expect(mismatchedNameRegex(binding, kubernetesObject)).toBe(true);
+  });
+});
+
+describe("mismatchedNamespaceRegex with invalid regex", () => {
+  it("returns true (mismatch) instead of crashing when a regexNamespaces entry is invalid", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: ["[invalid(regex"] },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { namespace: "anything" },
+    };
+
+    expect(mismatchedNamespaceRegex(binding, kubernetesObject)).toBe(true);
+  });
+
+  it("returns true (mismatch) when any entry in regexNamespaces is invalid, even if others are valid", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: ["^valid$", "[broken("] },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      metadata: { namespace: "no-match" },
+    };
+
+    expect(mismatchedNamespaceRegex(binding, kubernetesObject)).toBe(true);
+  });
+});
+
 describe("mismatchedAnnotations", () => {
   //[ Binding, KubernetesObject, result ]
   it.each([

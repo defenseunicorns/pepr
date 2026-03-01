@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { Binding } from "../../types";
-import { allPass, any, anyPass, equals, not, nthArg, pipe } from "ramda";
+import { allPass, anyPass, equals, not, nthArg, pipe } from "ramda";
+import Log from "../../telemetry/logger";
 import {
   definedAnnotations,
   definedEvent,
@@ -53,11 +54,14 @@ export const mismatchedName = allPass([
 
 export const mismatchedNameRegex = allPass([
   pipe(nthArg(0), definesNameRegex),
-  pipe(
-    (binding, kubernetesObject) =>
-      new RegExp(definedNameRegex(binding)).test(carriedName(kubernetesObject)),
-    not,
-  ),
+  (binding: Binding, kubernetesObject: { metadata?: { name?: string } }): boolean => {
+    try {
+      return !new RegExp(definedNameRegex(binding)).test(carriedName(kubernetesObject));
+    } catch (e) {
+      Log.warn(`Invalid regexName pattern "${definedNameRegex(binding)}": ${e}`);
+      return true;
+    }
+  },
 ]);
 
 export const mismatchedNamespace = allPass([
@@ -71,12 +75,17 @@ export const mismatchedNamespace = allPass([
 
 export const mismatchedNamespaceRegex = allPass([
   pipe(nthArg(0), definesNamespaceRegexes),
-  pipe((binding, kubernetesObject) =>
-    pipe(
-      any((regEx: string) => new RegExp(regEx).test(carriedNamespace(kubernetesObject))),
-      not,
-    )(definedNamespaceRegexes(binding)),
-  ),
+  (binding: Binding, kubernetesObject: { metadata?: { namespace?: string } }): boolean => {
+    const namespace = carriedNamespace(kubernetesObject);
+    try {
+      return !definedNamespaceRegexes(binding).some((regEx: string) =>
+        new RegExp(regEx).test(namespace),
+      );
+    } catch (e) {
+      Log.warn(`Invalid regexNamespaces pattern in binding: ${e}`);
+      return true;
+    }
+  },
 ]);
 
 export const metasMismatch = pipe(
