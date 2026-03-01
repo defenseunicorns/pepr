@@ -225,6 +225,21 @@ describe("mismatchedNamespaceRegex with invalid regex", () => {
 
     expect(mismatchedNamespaceRegex(binding, kubernetesObject)).toBe(true);
   });
+
+  it("returns true (mismatch) when an invalid regex follows a valid one that matches the namespace", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      filters: { ...defaultFilters, regexNamespaces: ["^valid$", "[broken("] },
+    };
+    const kubernetesObject: KubernetesObject = {
+      ...defaultKubernetesObject,
+      // The first regex "^valid$" would match this namespace, but the
+      // invalid second entry must still cause a mismatch.
+      metadata: { namespace: "valid" },
+    };
+
+    expect(mismatchedNamespaceRegex(binding, kubernetesObject)).toBe(true);
+  });
 });
 
 describe("mismatchedAnnotations", () => {

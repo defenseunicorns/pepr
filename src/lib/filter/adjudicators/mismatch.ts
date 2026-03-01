@@ -77,14 +77,16 @@ export const mismatchedNamespaceRegex = allPass([
   pipe(nthArg(0), definesNamespaceRegexes),
   (binding: Binding, kubernetesObject: { metadata?: { namespace?: string } }): boolean => {
     const namespace = carriedNamespace(kubernetesObject);
+    // Compile all patterns upfront so an invalid regex anywhere in the array
+    // is caught before short-circuit matching can skip over it.
+    let compiled: RegExp[];
     try {
-      return !definedNamespaceRegexes(binding).some((regEx: string) =>
-        new RegExp(regEx).test(namespace),
-      );
+      compiled = definedNamespaceRegexes(binding).map((regEx: string) => new RegExp(regEx));
     } catch (e) {
       Log.warn(`Invalid regexNamespaces pattern in binding: ${e}`);
       return true;
     }
+    return !compiled.some((re: RegExp) => re.test(namespace));
   },
 ]);
 
