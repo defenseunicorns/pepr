@@ -226,16 +226,32 @@ describe("bindsToNamespace", () => {
 describe("misboundNamespace", () => {
   //[ Binding, result ]
   it.each([
-    [{ kind: { kind: "Kind" }, filters: { namespaces: [] } }, false],
-    [{ kind: { kind: "Kind" }, filters: { namespaces: ["namespace"] } }, false],
-    [{ kind: { kind: "Namespace" }, filters: { namespaces: [] } }, false],
-    [{ kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"] } }, true],
+    [{ kind: { kind: "Kind" }, filters: { namespaces: [], regexNamespaces: [] } }, false],
+    [
+      { kind: { kind: "Kind" }, filters: { namespaces: ["namespace"], regexNamespaces: [] } },
+      false,
+    ],
+    [{ kind: { kind: "Kind" }, filters: { namespaces: [], regexNamespaces: ["^ns"] } }, false],
+    [{ kind: { kind: "Namespace" }, filters: { namespaces: [], regexNamespaces: [] } }, false],
+    [
+      { kind: { kind: "Namespace" }, filters: { namespaces: ["namespace"], regexNamespaces: [] } },
+      true,
+    ],
+    [{ kind: { kind: "Namespace" }, filters: { namespaces: [], regexNamespaces: ["^ns"] } }, true],
+    [
+      {
+        kind: { kind: "Namespace" },
+        filters: { namespaces: ["namespace"], regexNamespaces: ["^ns"] },
+      },
+      true,
+    ],
   ])("given %j, returns %s", (given, expected) => {
     const binding: Binding = {
       ...defaultBinding,
       filters: {
         ...defaultFilters,
         namespaces: given.filters.namespaces,
+        regexNamespaces: given.filters.regexNamespaces,
       },
       kind: { kind: given.kind.kind, group: defaultBinding.kind.group },
     };

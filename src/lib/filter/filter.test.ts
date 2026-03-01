@@ -7,7 +7,7 @@ import * as fc from "fast-check";
 import { AdmissionRequestCreatePod, AdmissionRequestDeletePod } from "../../fixtures/loader";
 import { filterNoMatchReason, shouldSkipRequest } from "./filter";
 import { Binding } from "../types";
-import { Event } from "../enums";
+import { Event, Operation } from "../enums";
 import {
   defaultBinding,
   defaultFilters,
@@ -271,6 +271,60 @@ describe("shouldSkipRequest", () => {
 
       expect(shouldSkipRequest(binding, pod, ["bleh", "bleh2"])).toMatch(
         /Ignoring Admission Callback: Object carries namespace 'helm-releasename' but namespaces allowed by Capability are '\["bleh","bleh2"\]'\./,
+      );
+    });
+
+    it("should reject when binding targets Namespace kind with a namespace filter", () => {
+      const binding = createBinding({
+        event: Event.CREATE,
+        kind: { kind: "Namespace", group: "", version: "v1" },
+        filters: { namespaces: ["ns1"] },
+        callback,
+      });
+
+      const req: AdmissionRequest = {
+        uid: "test-uid",
+        kind: { kind: "Namespace", group: "", version: "v1" },
+        resource: { group: "", version: "v1", resource: "namespaces" },
+        operation: Operation.CREATE,
+        name: "my-namespace",
+        userInfo: {},
+        object: {
+          apiVersion: "v1",
+          kind: "Namespace",
+          metadata: { name: "my-namespace" },
+        },
+      };
+
+      expect(shouldSkipRequest(binding, req, [])).toEqual(
+        "Ignoring Admission Callback: Cannot use namespace filter on a namespace object.",
+      );
+    });
+
+    it("should reject when binding targets Namespace kind with a regex namespace filter", () => {
+      const binding = createBinding({
+        event: Event.CREATE,
+        kind: { kind: "Namespace", group: "", version: "v1" },
+        filters: { regexNamespaces: ["^prod"] },
+        callback,
+      });
+
+      const req: AdmissionRequest = {
+        uid: "test-uid",
+        kind: { kind: "Namespace", group: "", version: "v1" },
+        resource: { group: "", version: "v1", resource: "namespaces" },
+        operation: Operation.CREATE,
+        name: "my-namespace",
+        userInfo: {},
+        object: {
+          apiVersion: "v1",
+          kind: "Namespace",
+          metadata: { name: "my-namespace" },
+        },
+      };
+
+      expect(shouldSkipRequest(binding, req, [])).toEqual(
+        "Ignoring Admission Callback: Cannot use namespace filter on a namespace object.",
       );
     });
   });
@@ -650,6 +704,24 @@ describe("filterNoMatchReason", () => {
       ...defaultBinding,
       kind: { kind: "Namespace", group: "some-group" },
       filters: { ...defaultFilters, namespaces: ["ns1"] },
+    };
+    const obj = {};
+    const capabilityNamespaces: string[] = [];
+    const result = filterNoMatchReason(
+      binding,
+      obj as unknown as Partial<KubernetesObject>,
+      capabilityNamespaces,
+    );
+    expect(result).toEqual(
+      "Ignoring Watch Callback: Cannot use namespace filter on a namespace object.",
+    );
+  });
+
+  it("returns namespace filter error for namespace objects with regex namespace filters", () => {
+    const binding: Binding = {
+      ...defaultBinding,
+      kind: { kind: "Namespace", group: "some-group" },
+      filters: { ...defaultFilters, namespaces: [], regexNamespaces: ["^prod"] },
     };
     const obj = {};
     const capabilityNamespaces: string[] = [];
