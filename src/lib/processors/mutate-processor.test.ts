@@ -28,7 +28,7 @@ import { shouldSkipRequest } from "../filter/filter";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
-  reencodeData: vi.fn((wrapped: unknown) => wrapped),
+  reencodeData: vi.fn((wrapped: PeprMutateRequest<KubernetesObject>) => clone(wrapped.Raw)),
 }));
 
 vi.mock("../telemetry/logger", () => ({
@@ -377,8 +377,9 @@ describe("mutateProcessor", () => {
 // `response.result !== undefined` to detect rejection. This is the correct
 // signal because `response.result` is only set when processRequest's catch
 // block handles an OnError.REJECT configuration. Checking warnings instead
-// would be fragile: warnings can pre-exist from earlier binding iterations
-// without implying that a rejection occurred.
+// would be fragile: `processRequest` treats the response as an in/out
+// parameter and does not clear pre-existing warnings on success, so the
+// presence of warnings alone does not imply that a rejection occurred.
 
 describe("OnError.REJECT early-return checks response.result", () => {
   describe("processRequest with pre-existing warnings", () => {
@@ -391,9 +392,8 @@ describe("OnError.REJECT early-return checks response.result", () => {
         config: { ...defaultModuleConfig, onError: OnError.REJECT },
       };
 
-      // Simulate a response that already has warnings from a prior binding
-      // failure (e.g., a previous binding errored under AUDIT mode, or
-      // warnings were accumulated from an earlier iteration).
+      // processRequest accepts an existing response and appends to it.
+      // Pre-existing warnings must not cause it to set response.result.
       const responseWithPreExistingWarnings: MutateResponse = {
         uid: "test-uid",
         allowed: false,
@@ -415,9 +415,8 @@ describe("OnError.REJECT early-return checks response.result", () => {
     });
 
     it("should not signal rejection when warnings pre-exist but callback succeeds", async () => {
-      // A response with pre-existing warnings (from a prior binding failure)
-      // must not be treated as a rejection when the current callback succeeds.
-      // The early-return in mutateProcessor checks response.result, not warnings.
+      // A successful callback must not set response.result, regardless of
+      // whether the response already carries warnings.
       const successCallback = vi.fn();
       const testBinding = { ...clone(defaultBinding), mutateCallback: successCallback };
       const testBindable: Bindable = {
