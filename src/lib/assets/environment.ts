@@ -23,10 +23,11 @@ export function genEnv(
     ...noWatchDef,
   };
 
-  if (config.env && config.env["PEPR_WATCH_MODE"]) {
-    delete config.env["PEPR_WATCH_MODE"];
-  }
-  const cfg = config.env || {};
+  // Clone config.env so we don't mutate the caller's object. The delete
+  // prevents a user-supplied PEPR_WATCH_MODE from overriding the programmatic
+  // value set via the watchMode parameter.
+  const cfg = { ...(config.env || {}) };
+  delete cfg["PEPR_WATCH_MODE"];
   return ignoreWatchMode
     ? Object.entries({ ...noWatchDef, ...cfg }).map(([name, value]) => ({ name, value }))
     : Object.entries({ ...def, ...cfg }).map(([name, value]) => ({ name, value }));
