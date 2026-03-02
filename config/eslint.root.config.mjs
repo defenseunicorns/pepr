@@ -1,18 +1,7 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
 import globals from "globals";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
 
 export default [
   {
@@ -29,17 +18,13 @@ export default [
       "eslint.test.config.mjs",
     ],
   },
-  ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
+  js.configs.recommended,
+  ...tsPlugin.configs["flat/recommended"],
   {
-    plugins: {
-      "@typescript-eslint": typescriptEslint,
-    },
-
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
-        project: path.resolve(__dirname, "tsconfig.root.json"),
-        tsconfigRootDir: path.resolve(__dirname, "../"),
+        project: path.resolve(import.meta.dirname, "tsconfig.root.json"),
+        tsconfigRootDir: path.resolve(import.meta.dirname, "../"),
         sourceType: "module",
       },
       globals: {
