@@ -70,7 +70,7 @@ export function toHuman(ms: number): string {
   const [d, r4] = reduceBy(UNITS.d, r3);
   const [h, r5] = reduceBy(UNITS.h, r4);
   const [m, r6] = reduceBy(UNITS.m, r5);
-  const [s] = reduceBy(UNITS.s, r6);
+  const [s, remain] = reduceBy(UNITS.s, r6);
 
   let result = "";
   result = y > 0 ? `${result}${y}y` : result;
