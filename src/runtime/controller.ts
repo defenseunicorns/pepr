@@ -46,7 +46,7 @@ function runModule(expectedHash: string): void {
     // Run the module
     fork(jsPath);
   } catch (e) {
-    throw new Error(`Failed to decompress module: ${e}`);
+    throw new Error(`Failed to decompress module: ${e}`, { cause: e });
   }
 }
 

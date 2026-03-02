@@ -49,7 +49,7 @@ describe(`ESLint Template Configuration (${templateConfig})`, () => {
     {
       type: "languageOptions",
       matcher: /languageOptions/,
-      keySettings: ["parser: tsParser", 'sourceType: "module"', "globals.node"],
+      keySettings: ["flat/recommended", 'sourceType: "module"', "globals.node"],
     },
   ];
 
