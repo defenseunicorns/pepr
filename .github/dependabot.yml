@@ -53,8 +53,6 @@ updates:
         versions: ["10.2.1"]
       - dependency-name: "debug"
         versions: ["4.4.2"] 
-      - dependency-name: "eslint"
-        versions: [">=10.0.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
