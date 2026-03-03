@@ -341,6 +341,104 @@ describe("createRBACMap", () => {
 
     expect(result).toEqual(expected);
   });
+
+  it("should merge watch and finalize verbs for the same resource kind", () => {
+    // When a resource kind has both watch and finalize bindings, both verbs
+    // must appear in the resulting RBAC entry.
+    const capabilities: CapabilityExport[] = [
+      {
+        name: "test-watch-and-finalize",
+        description: "Capability with both watch and finalize on the same kind",
+        namespaces: [],
+        bindings: [
+          {
+            kind: { group: "", version: "v1", kind: "ConfigMap", plural: "configmaps" },
+            event: Event.CREATE,
+            filters: {
+              name: "",
+              namespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+              regexName: "",
+              regexNamespaces: [],
+            },
+            model: kind.ConfigMap,
+            isWatch: true,
+          },
+          {
+            kind: { group: "", version: "v1", kind: "ConfigMap", plural: "configmaps" },
+            event: Event.CREATE,
+            filters: {
+              name: "",
+              namespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+              regexName: "",
+              regexNamespaces: [],
+            },
+            model: kind.ConfigMap,
+            isFinalize: true,
+          },
+        ],
+        hasSchedule: false,
+      },
+    ];
+
+    const result = createRBACMap(capabilities);
+
+    expect(result["/v1/ConfigMap"].verbs.toSorted()).toEqual(["patch", "watch"]);
+  });
+
+  it("should add watch verb when a finalize binding already created the entry for the same key", () => {
+    // Regardless of binding order, a watch binding must still merge its verb
+    // into an entry that was already created by a finalize binding.
+    const capabilities: CapabilityExport[] = [
+      {
+        name: "finalize-then-watch",
+        description: "Capability where finalize precedes watch for the same kind",
+        namespaces: [],
+        bindings: [
+          {
+            kind: { group: "", version: "v1", kind: "Secret", plural: "secrets" },
+            event: Event.CREATE,
+            filters: {
+              name: "",
+              namespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+              regexName: "",
+              regexNamespaces: [],
+            },
+            model: kind.Secret,
+            isFinalize: true,
+          },
+          {
+            kind: { group: "", version: "v1", kind: "Secret", plural: "secrets" },
+            event: Event.CREATE,
+            filters: {
+              name: "",
+              namespaces: [],
+              labels: {},
+              annotations: {},
+              deletionTimestamp: false,
+              regexName: "",
+              regexNamespaces: [],
+            },
+            model: kind.Secret,
+            isWatch: true,
+          },
+        ],
+        hasSchedule: false,
+      },
+    ];
+
+    const result = createRBACMap(capabilities);
+
+    expect(result["/v1/Secret"].verbs.toSorted()).toEqual(["patch", "watch"]);
+  });
 });
 
 describe("hasAnyOverlap", () => {
