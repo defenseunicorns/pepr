@@ -51,18 +51,25 @@ describe("MeasureWebhookTimeout", () => {
 
     describe("and the timer was started", () => {
       it("should log start/stop messages", () => {
-        (getNow as Mock).mockReturnValueOnce(1).mockReturnValueOnce(2);
+        // 50ms elapsed with default 10s timeout
+        (getNow as Mock).mockReturnValueOnce(5000).mockReturnValueOnce(5050);
         const webhook = new MeasureWebhookTimeout(WebhookType.MUTATE);
         webhook.start();
         webhook.stop();
-        expect(Log.debug).toHaveBeenCalledWith("Starting timer at 1");
-        expect(Log.debug).toHaveBeenCalledWith("Webhook 1 took 1ms");
+        expect(Log.debug).toHaveBeenCalledWith("Starting timer at 5000");
+        expect(Log.debug).toHaveBeenCalledWith("Webhook 5000 took 50ms");
       });
+
+      // All tests below use realistic units: timeout parameter is in
+      // seconds (Kubernetes timeoutSeconds, 1-30) and getNow() returns
+      // milliseconds (performance.now()).
+
       describe("and elapsed time is less than timeout", () => {
         it("should not increment the timeout counter", () => {
-          (getNow as Mock).mockReturnValueOnce(1000).mockReturnValueOnce(1500);
+          // 50ms elapsed, 10s timeout → no timeout
+          (getNow as Mock).mockReturnValueOnce(0).mockReturnValueOnce(50);
           const webhook = new MeasureWebhookTimeout(WebhookType.MUTATE);
-          webhook.start(1000);
+          webhook.start(10);
           webhook.stop();
           expect(metricsCollector.incCounter).not.toHaveBeenCalled();
         });
@@ -70,13 +77,25 @@ describe("MeasureWebhookTimeout", () => {
 
       describe("and elapsed time exceeds timeout", () => {
         it("should increment the timeout counter", () => {
-          (getNow as Mock).mockReturnValueOnce(1000).mockReturnValueOnce(2000);
+          // 12s elapsed, 10s timeout → timeout
+          (getNow as Mock).mockReturnValueOnce(0).mockReturnValueOnce(12_000);
           const webhook = new MeasureWebhookTimeout(WebhookType.MUTATE);
-          webhook.start(500);
+          webhook.start(10);
           webhook.stop();
           expect(metricsCollector.incCounter).toHaveBeenCalledWith(
             `${WebhookType.MUTATE}_timeouts`,
           );
+        });
+      });
+
+      describe("and elapsed time exactly equals timeout", () => {
+        it("should not increment the timeout counter", () => {
+          // 10s elapsed, 10s timeout → not a timeout (only strictly greater triggers)
+          (getNow as Mock).mockReturnValueOnce(0).mockReturnValueOnce(10_000);
+          const webhook = new MeasureWebhookTimeout(WebhookType.MUTATE);
+          webhook.start(10);
+          webhook.stop();
+          expect(metricsCollector.incCounter).not.toHaveBeenCalled();
         });
       });
     });
