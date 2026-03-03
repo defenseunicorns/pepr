@@ -53,6 +53,7 @@ export function shouldSkipRequest(
     (): AdjudicationResult => adjudicateMismatchedGroup(binding, req),
     (): AdjudicationResult => adjudicateMismatchedVersion(binding, req),
     (): AdjudicationResult => adjudicateMismatchedKind(binding, req),
+    (): AdjudicationResult => adjudicateMisboundNamespace(binding),
     (): AdjudicationResult => adjudicateUnbindableNamespaces(capabilityNamespaces, binding),
     (): AdjudicationResult => adjudicateUncarryableNamespace(capabilityNamespaces, obj),
     (): AdjudicationResult => adjudicateMismatchedNamespace(binding, obj),
