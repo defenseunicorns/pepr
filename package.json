@@ -64,9 +64,9 @@
     "quicktype-core": "^23.2.6",
     "ramda": "0.32.0",
     "ts-morph": "^27.0.0",
-    "@typescript-eslint/eslint-plugin": "8.45.0",
-    "@typescript-eslint/parser": "8.45.0",
-    "eslint": "9.36.0"
+    "@typescript-eslint/eslint-plugin": "8.55.0",
+    "@typescript-eslint/parser": "8.55.0",
+    "eslint": "10.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "20.4.1",
