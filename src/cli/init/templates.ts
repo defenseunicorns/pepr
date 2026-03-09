@@ -42,7 +42,7 @@ export type peprPackageJSON = {
     };
     scripts: { "k3d-setup": string };
     dependencies: { pepr: string; undici: string };
-    devDependencies: { typescript: string };
+    devDependencies: Record<string, string>;
   };
   path: string;
   print: string;
@@ -97,6 +97,10 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
     },
     devDependencies: {
       typescript,
+      "@typescript-eslint/eslint-plugin": dependencies["@typescript-eslint/eslint-plugin"],
+      "@typescript-eslint/parser": dependencies["@typescript-eslint/parser"],
+      eslint: dependencies["eslint"],
+      globals: devDependencies["globals"],
     },
     overrides: {
       "brace-expansion": "1.1.11",
