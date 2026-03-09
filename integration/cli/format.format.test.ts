@@ -37,7 +37,6 @@ describe("build", () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${initArgs}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-
       formatOutput = await pepr.cli(testModule, { cmd: `pepr format` });
     }, time.toMs("3m"));
 
