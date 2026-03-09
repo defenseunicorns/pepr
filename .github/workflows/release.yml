@@ -140,7 +140,7 @@ jobs:
 
       - name: Publish package
         id: publish
-        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@a09dd8c05eda63cace134cb7dccd7e019f25e6f3 # v2.0.0
+        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@4d014fae4dbd39eb09e8d40348b73db095e6ba9a # v2.0.0
         with:
           access: public
           node-auth-token: ${{ secrets.NPM_TOKEN }}
