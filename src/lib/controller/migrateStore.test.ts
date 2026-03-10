@@ -95,8 +95,8 @@ describe("migrateAndSetupWatch", () => {
     // Make sure we actually get the correct migration
     expect(transformedKeys).toEqual(
       expect.arrayContaining([
-        expect.stringMatching("remove:/data/hello-pepr-example-1-"),
-        expect.stringMatching("add:/data/hello-pepr-example-1-v2-:was-here"),
+        expect.stringMatching("remove:/data/hello-pepr-example-1"),
+        expect.stringMatching("add:/data/hello-pepr-example-1-v2:was-here"),
         expect.stringMatching("remove:/data/hello-pepr-example-1-data"),
         expect.stringMatching('add:/data/hello-pepr-example-1-v2-data:{"key":"ex-1-val"}'),
       ]),
