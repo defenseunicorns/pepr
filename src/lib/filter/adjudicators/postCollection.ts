@@ -1,7 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { __, allPass, curry, difference, equals, gt, length, not, nthArg, pipe } from "ramda";
+import {
+  __,
+  allPass,
+  anyPass,
+  curry,
+  difference,
+  equals,
+  gt,
+  length,
+  not,
+  nthArg,
+  pipe,
+} from "ramda";
 import { KubernetesObject } from "kubernetes-fluent-client";
 import {
   definedKind,
@@ -9,6 +21,7 @@ import {
   definesDelete,
   definesDeletionTimestamp,
   definesNamespaces,
+  definesNamespaceRegexes,
 } from "./binding";
 import { carriedNamespace, carriesNamespace } from "./kubernetesObject";
 
@@ -26,7 +39,10 @@ export const bindsToKind = curry(
   ]),
 );
 export const bindsToNamespace = curry(pipe(bindsToKind(__, "Namespace")));
-export const misboundNamespace = allPass([bindsToNamespace, definesNamespaces]);
+export const misboundNamespace = allPass([
+  bindsToNamespace,
+  anyPass([definesNamespaces, definesNamespaceRegexes]),
+]);
 
 /*
  * If the object does not have a namespace, and it is not a namespace,
