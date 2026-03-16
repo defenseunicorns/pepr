@@ -37,10 +37,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Use Node.js 24
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
@@ -60,14 +60,14 @@ jobs:
         shell: bash
 
       - name: "Pepr Controller: Login to GHCR"
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
           username: dummy
           password: ${{ github.token }}
 
       - name: Set up Node registry authentication
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
@@ -127,7 +127,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node registry authentication
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
@@ -140,7 +140,7 @@ jobs:
 
       - name: Publish package
         id: publish
-        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@a09dd8c05eda63cace134cb7dccd7e019f25e6f3 # v2.0.0
+        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@4d014fae4dbd39eb09e8d40348b73db095e6ba9a # v2.0.0
         with:
           access: public
           node-auth-token: ${{ secrets.NPM_TOKEN }}
@@ -166,7 +166,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Use Node.js 24
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
