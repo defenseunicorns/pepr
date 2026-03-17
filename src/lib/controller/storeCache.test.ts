@@ -117,6 +117,33 @@ describe("StoreCache", () => {
           }).toThrow("Key is required for REMOVE operation");
         });
       });
+
+      describe("when key array contains multiple keys (as dispatched by Storage.clear())", () => {
+        it("should produce individual remove operations per key", () => {
+          const emptyCache = {};
+          // Storage.clear() sends all store keys as a single key array.
+          // fillStoreCache must produce one valid JSON Patch remove per key.
+          const params = { key: ["v2-key1", "v2-key2", "v2-key3"] };
+
+          const result = fillStoreCache(emptyCache, "capability", "remove", params);
+
+          expect(Object.keys(result)).toHaveLength(3);
+          expect(result).toStrictEqual({
+            "remove:/data/capability-v2-key1": {
+              op: "remove",
+              path: "/data/capability-v2-key1",
+            },
+            "remove:/data/capability-v2-key2": {
+              op: "remove",
+              path: "/data/capability-v2-key2",
+            },
+            "remove:/data/capability-v2-key3": {
+              op: "remove",
+              path: "/data/capability-v2-key3",
+            },
+          });
+        });
+      });
     });
   });
 
