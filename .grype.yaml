@@ -25,3 +25,4 @@ ignore:
   - vulnerability: GHSA-9ppj-qmqm-q256
   - vulnerability: CVE-2026-2673
   - vulnerability: GHSA-c2c7-rcm5-vvqj
+  - vulnerability: GHSA-j3q9-mxjg-w52f
