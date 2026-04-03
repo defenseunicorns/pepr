@@ -118,7 +118,9 @@ export class Controller {
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.#app).listen(port);
+    const server = https.createServer(options, this.#app);
+    Controller.#configureServerTimeouts(server);
+    server.listen(port);
 
     // Handle server listening event
     server.on("listening", () => {
@@ -149,6 +151,21 @@ export class Controller {
       });
     });
   };
+
+  // Allow overriding Node.js server timeouts via env vars.
+  // keepAliveTimeout must exceed any upstream proxy keepalive (e.g. konnectivity uses 30s).
+  // headersTimeout must be > keepAliveTimeout per Node.js docs.
+  static #configureServerTimeouts(server: https.Server): void {
+    if (process.env.PEPR_KEEP_ALIVE_TIMEOUT !== undefined) {
+      server.keepAliveTimeout = parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT, 10);
+    }
+    if (process.env.PEPR_HEADERS_TIMEOUT !== undefined) {
+      server.headersTimeout = parseInt(process.env.PEPR_HEADERS_TIMEOUT, 10);
+    }
+    Log.info(
+      `Server timeouts: keepAliveTimeout=${server.keepAliveTimeout}ms headersTimeout=${server.headersTimeout}ms`,
+    );
+  }
 
   #bindEndpoints = (): void => {
     // Health check endpoint
