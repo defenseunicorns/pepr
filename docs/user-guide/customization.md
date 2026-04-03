@@ -26,6 +26,26 @@ You can display warnings in the logs by setting the `PEPR_NODE_WARNINGS` environ
 }
 ```
 
+## Configuring HTTPS Server Timeouts
+
+The Node.js HTTPS server used by the Admission controller has a default `keepAliveTimeout` of 5 seconds. This may be too short when Pepr is deployed behind a reverse proxy or cloud load balancer that uses a longer keepalive (e.g. AKS's konnectivity-agent uses 30 seconds), causing the proxy to receive TCP RST errors when reusing connections that Pepr has already closed.
+
+You can override these timeouts by setting environment variables directly on the Admission `Deployment`. `PEPR_HEADERS_TIMEOUT` must be greater than `PEPR_KEEP_ALIVE_TIMEOUT` per Node.js requirements. Both default to the Node.js server defaults when unset.
+
+```json
+{
+  "env": {
+    "PEPR_KEEP_ALIVE_TIMEOUT": "75000",
+    "PEPR_HEADERS_TIMEOUT": "76000"
+  }
+}
+```
+
+| Variable                  | Description                                              | Default (Node.js) |
+| ------------------------- | -------------------------------------------------------- | ----------------- |
+| `PEPR_KEEP_ALIVE_TIMEOUT` | Milliseconds to keep idle connections open               | `5000`            |
+| `PEPR_HEADERS_TIMEOUT`    | Milliseconds to wait for request headers on a connection | `60000`           |
+
 ## Customizing Log Format
 
 The log format can be customized by setting the `PINO_TIME_STAMP` environment variable in the `package.json` file or directly on the Watcher or Admission `Deployment`. The default value is a partial JSON timestamp string representation of the time. If set to `iso`, the timestamp is displayed in an ISO format.
