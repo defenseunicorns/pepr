@@ -26,7 +26,7 @@ jobs:
           egress-policy: audit
 
       - name: Set up Kubernetes
-        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
+        uses: azure/setup-kubectl@15650b3ad78fff148532a140b8a4c821796b2d7b # v5.0.0
         with:
           version: 'latest'
 
