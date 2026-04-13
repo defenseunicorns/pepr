@@ -99,7 +99,8 @@
   },
   "overrides": {
     "glob": "9.0.0",
-    "rollup": "4.59.0"
+    "rollup": "4.59.0",
+    "lodash": "4.18.1"
   },
   "peerDependencies": {
     "@types/prompts": "2.4.9",
