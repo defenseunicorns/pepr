@@ -164,10 +164,13 @@ jobs:
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
 
-            # Parse and record metrics to TSV
+            # Parse and record metrics to CSV
+            # watch_controller_failures_total: simple counter, take the value directly
             cf=$(grep -v "^#" logs/auditor-log.txt | grep "watch_controller_failures_total" | awk '{print $NF}' | tail -1)
-            cm=$(grep -v "^#" logs/informer-log.txt | grep "pepr_cache_miss" | awk '{print $NF}' | tail -1)
-            rf=$(grep -v "^#" logs/informer-log.txt | grep "pepr_resync_failure_count" | awk '{print $NF}' | tail -1)
+            # pepr_cache_miss: gauge per time window e.g. pepr_cache_miss{window="..."} 16 — sum all windows
+            cm=$(grep -v "^#" logs/informer-log.txt | grep "pepr_cache_miss" | awk '{sum += $NF} END {print sum+0}')
+            # pepr_resync_failure_count: label holds failure count e.g. {count="0"} 1 — sum non-zero count labels
+            rf=$(grep -v "^#" logs/informer-log.txt | grep "pepr_resync_failure_count" | sed 's/.*count="\([^"]*\)".*/\1/' | awk '$1+0 > 0 {sum += $1+0} END {print sum+0}')
             cf=${cf:-0}; cm=${cm:-0}; rf=${rf:-0}
             echo "${i},$(date -u +%Y-%m-%dT%H:%M:%SZ),${cf},${cm},${rf}" >> logs/metrics.csv
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
@@ -210,17 +213,31 @@ jobs:
           final_rf=$(echo "$final" | cut -d',' -f5)
 
           cf_status=$([ "${final_cf}" = "0" ] && echo "✅" || echo "❌")
-          cm_status=$([ "${final_cm}" = "0" ] && echo "✅" || echo "⚠️")
           rf_status=$([ "${final_rf}" = "0" ] && echo "✅" || echo "❌")
+
+          # cache miss: split into startup (first window) and mid-run (all other windows)
+          startup_misses=$(grep -v "^#" logs/informer-log.txt | grep "pepr_cache_miss" | head -1 | awk '{print $NF}')
+          midrun_misses=$(grep -v "^#" logs/informer-log.txt | grep "pepr_cache_miss" | tail -n +2 | awk '{sum += $NF} END {print sum+0}')
+          startup_misses=${startup_misses:-0}
+          if [ "${final_cm}" = "0" ]; then
+            cm_display="0"
+          else
+            cm_display="${final_cm} total (${startup_misses} startup, ${midrun_misses} mid-run)"
+          fi
+          cm_status=$([ "${midrun_misses}" = "0" ] && echo "✅" || echo "⚠️")
+
+          # resync: total resyncs = sum of all gauge values across resync_failure_count lines
+          resync_total=$(grep -v "^#" logs/informer-log.txt | grep "pepr_resync_failure_count" | awk '{sum += $NF} END {print sum+0}')
+          rf_display="${final_rf} failures across ${resync_total} resyncs"
 
           {
             echo "## Soak Test Results"
             echo ""
-            echo "| Metric | Final Value | Status |"
-            echo "|--------|-------------|--------|"
+            echo "| Metric | Value | Status |"
+            echo "|--------|-------|--------|"
             echo "| \`watch_controller_failures_total\` | ${final_cf} | ${cf_status} |"
-            echo "| \`pepr_cache_miss\` | ${final_cm} | ${cm_status} |"
-            echo "| \`pepr_resync_failure_count\` | ${final_rf} | ${rf_status} |"
+            echo "| \`pepr_cache_miss\` | ${cm_display} | ${cm_status} |"
+            echo "| \`pepr_resync_failure_count\` | ${rf_display} | ${rf_status} |"
             echo ""
             echo "**Iterations completed:** ${iters} / 70 | **Duration:** ~$((iters * 5)) minutes"
             echo ""
