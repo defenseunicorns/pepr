@@ -148,6 +148,7 @@ jobs:
           touch logs/auditor-log.txt
           touch logs/informer-log.txt
           touch logs/watch-logs.txt
+          echo "iteration,timestamp,watch_controller_failures_total,pepr_cache_miss,pepr_resync_failure_count" > logs/metrics.csv
 
           update_pod_map
 
@@ -162,6 +163,13 @@ jobs:
             collect_metrics
             cat logs/informer-log.txt
             cat logs/auditor-log.txt
+
+            # Parse and record metrics to TSV
+            cf=$(grep -v "^#" logs/auditor-log.txt | grep "watch_controller_failures_total" | awk '{print $NF}' | tail -1)
+            cm=$(grep -v "^#" logs/informer-log.txt | grep "pepr_cache_miss" | awk '{print $NF}' | tail -1)
+            rf=$(grep -v "^#" logs/informer-log.txt | grep "pepr_resync_failure_count" | awk '{print $NF}' | tail -1)
+            cf=${cf:-0}; cm=${cm:-0}; rf=${rf:-0}
+            echo "${i},$(date -u +%Y-%m-%dT%H:%M:%SZ),${cf},${cm},${rf}" >> logs/metrics.csv
             if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
               update_pod_map
 
@@ -174,6 +182,7 @@ jobs:
                 echo "$pod: ${pod_map[$pod]}"
                 if [ "${pod_map[$pod]}" -gt 1 ]; then
                   echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
+                  echo "Pod $pod was recreated (seen ${pod_map[$pod]} times) at iteration ${i} (~$((i * 5)) minutes into the run." > logs/failure-reason.txt
                   kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
                   exit 1
                 fi
@@ -185,8 +194,48 @@ jobs:
           echo "Soak test passed successfully!"
         shell: bash
 
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ ! -f logs/metrics.csv ] || [ "$(wc -l < logs/metrics.csv)" -lt 2 ]; then
+            echo "## Soak Test Results" >> "$GITHUB_STEP_SUMMARY"
+            echo "No metrics collected." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          final=$(tail -1 logs/metrics.csv)
+          iters=$(echo "$final" | cut -d',' -f1)
+          final_cf=$(echo "$final" | cut -d',' -f3)
+          final_cm=$(echo "$final" | cut -d',' -f4)
+          final_rf=$(echo "$final" | cut -d',' -f5)
+
+          cf_status=$([ "${final_cf}" = "0" ] && echo "✅" || echo "❌")
+          cm_status=$([ "${final_cm}" = "0" ] && echo "✅" || echo "⚠️")
+          rf_status=$([ "${final_rf}" = "0" ] && echo "✅" || echo "❌")
+
+          {
+            echo "## Soak Test Results"
+            echo ""
+            echo "| Metric | Final Value | Status |"
+            echo "|--------|-------------|--------|"
+            echo "| \`watch_controller_failures_total\` | ${final_cf} | ${cf_status} |"
+            echo "| \`pepr_cache_miss\` | ${final_cm} | ${cm_status} |"
+            echo "| \`pepr_resync_failure_count\` | ${final_rf} | ${rf_status} |"
+            echo ""
+            echo "**Iterations completed:** ${iters} / 70 | **Duration:** ~$((iters * 5)) minutes"
+            echo ""
+            if [ -f logs/failure-reason.txt ]; then
+              echo "### ❌ Failure Reason"
+              echo "$(cat logs/failure-reason.txt)"
+            else
+              echo "### ✅ Test Passed"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
       - name: Upload logs
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always()
         with:
           name: soak-test-logs
           path: logs
