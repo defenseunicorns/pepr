@@ -114,9 +114,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Create logs directory
-        run: mkdir -p logs
-
       - name: Deploy applications
         run: |
           kubectl apply -f hack/auditor.ci.yaml
@@ -131,62 +128,17 @@ jobs:
           kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
 
       - name: Run the soak test and collect metrics
-        run: |
-          # Initialize the map to store pod counts
-          declare -A pod_map
-          
-          update_pod_map() {
-            for pod in $(kubectl get pods -n pepr-demo -o jsonpath='{.items[*].metadata.name}'); do
-              count=${pod_map[$pod]}
-              if [ -z "$count" ]; then
-                pod_map[$pod]=1
-              else
-                pod_map[$pod]=$((count + 1))
-              fi
-            done
-          }
-          touch logs/auditor-log.txt
-          touch logs/informer-log.txt
-          touch logs/watch-logs.txt
+        run: bash scripts/soak-test.sh
+        shell: bash
 
-          update_pod_map
-
-          collect_metrics() {
-            kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics | grep watch_controller_failures_total > logs/auditor-log.txt
-            kubectl exec metrics-collector -n watch-auditor -- curl -k https://pepr-soak-ci-watcher.pepr-system.svc.cluster.local/metrics | egrep -E "pepr_cache_miss|pepr_resync_failure_count" > logs/informer-log.txt
-            kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system > logs/watch-logs.txt
-          }
-
-          # Start collecting metrics every 5 minutes and checking pod counts every 30 minutes
-          for i in {1..70}; do  # 70 iterations cover 350 minutes (5 hours and 50 minutes)
-            collect_metrics
-            cat logs/informer-log.txt
-            cat logs/auditor-log.txt
-            if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes 
-              update_pod_map
-
-              kubectl get pods -n pepr-demo 
-              kubectl top po -n pepr-system
-              kubectl get po -n pepr-system
-              
-              # Verify that no pod's count exceeds 1
-              for pod in "${!pod_map[@]}"; do
-                echo "$pod: ${pod_map[$pod]}"
-                if [ "${pod_map[$pod]}" -gt 1 ]; then
-                  echo "Test failed: Pod $pod has count ${pod_map[$pod]}"
-                  kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system
-                  exit 1
-                fi
-              done
-            fi
-            sleep 300s  # Sleep for 5 minutes before the next iteration
-          done
-
-          echo "Soak test passed successfully!"
+      - name: Write job summary
+        if: always()
+        run: bash scripts/soak-summary.sh logs/metrics.csv logs/informer-log.txt logs/failure-reason.txt
         shell: bash
 
       - name: Upload logs
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always()
         with:
           name: soak-test-logs
           path: logs
