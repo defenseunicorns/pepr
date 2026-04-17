@@ -135,8 +135,10 @@ export async function runBinding(
           await binding.watchCallback?.(kubernetesObject, phase);
         }
       } catch (e) {
-        // Errors in the watch callback should not crash the controller
+        // Log the error, then re-throw so KFC knows the callback failed
+        // and does not cache the item as successfully processed
         Log.error(e, "Error executing watch callback");
+        throw e;
       }
     }
   };

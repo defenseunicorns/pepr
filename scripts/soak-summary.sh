@@ -60,6 +60,17 @@ resync_failures_display="${final_resync_failures} failures across ${resync_total
   echo ""
   echo "**Iterations completed:** ${iters} / 70 | **Duration:** ~$((iters * 5)) minutes"
   echo ""
+  # Cache miss trend analysis (post-stabilization)
+  if [ "$(wc -l < "$METRICS_CSV")" -gt 15 ]; then
+    baseline_misses=$(sed -n '15p' "$METRICS_CSV" | cut -d',' -f4)
+    final_misses=$(echo "$final" | cut -d',' -f4)
+    trend_growth=$(( ${final_misses:-0} - ${baseline_misses:-0} ))
+    trend_status=$([ "$trend_growth" -le "${CACHE_MISS_GROWTH_THRESHOLD:-10}" ] && echo "✅ Stable" || echo "⚠️ Growing")
+    echo "### Cache Miss Trend (post-stabilization)"
+    echo "Baseline (iteration 14): ${baseline_misses:-0} | Final (iteration ${iters}): ${final_misses:-0} | Growth: ${trend_growth} | ${trend_status}"
+    echo ""
+  fi
+
   if [ -f "${FAILURE_REASON}" ]; then
     echo "### ❌ Failure Reason"
     cat "${FAILURE_REASON}"
