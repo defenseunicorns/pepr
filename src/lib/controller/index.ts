@@ -118,11 +118,16 @@ export class Controller {
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.#app).listen(port);
+    const server = https.createServer(options, this.#app);
+
+    // Tune HTTP timeouts (defaults align with controller-runtime's webhook server)
+    const { keepAliveTimeoutMs, headersTimeoutMs } = Controller.#applyTimeouts(server);
+
+    server.listen(port);
 
     // Handle server listening event
     server.on("listening", () => {
-      Log.debug(`Server listening on port ${port}`);
+      Log.debug({ port, keepAliveTimeoutMs, headersTimeoutMs }, `Server listening on port ${port}`);
       // Track that the server is running
       this.#running = true;
     });
@@ -281,6 +286,17 @@ export class Controller {
    * @param res the outgoing response
    * @param next the next middleware function
    */
+  static #applyTimeouts(server: https.Server): {
+    keepAliveTimeoutMs: number;
+    headersTimeoutMs: number;
+  } {
+    const keepAliveTimeoutMs = parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS ?? "90000", 10);
+    const headersTimeoutMs = parseInt(process.env.PEPR_HEADERS_TIMEOUT_MS ?? "32000", 10);
+    server.keepAliveTimeout = keepAliveTimeoutMs;
+    server.headersTimeout = headersTimeoutMs;
+    return { keepAliveTimeoutMs, headersTimeoutMs };
+  }
+
   static #logger(req: express.Request, res: express.Response, next: express.NextFunction): void {
     const startTime = Date.now();
 
