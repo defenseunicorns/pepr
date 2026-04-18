@@ -1,0 +1,69 @@
+name: Grype Suppression Audit
+
+on:
+  schedule:
+    - cron: "0 8 * * 1" # Weekly on Monday at 8am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit CVE Suppressions
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@6c3c2f2c1c457b00c10c4848d6f5491db3b629df # v2.18.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Use Node.js latest
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Pepr Dependencies
+        run: npm ci
+
+      - name: Build Pepr Controller Image
+        run: npm run build:image
+
+      - name: Install grype
+        id: grype
+        uses: anchore/scan-action/download-grype@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+
+      - name: Audit suppression list
+        id: audit
+        env:
+          GRYPE_CMD: ${{ steps.grype.outputs.cmd }}
+        run: .github/workflows/scripts/audit-grype-suppressions.sh
+
+      - name: Create or update PR
+        if: steps.audit.outputs.stale_count > 0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
+          STALE_LIST: ${{ steps.audit.outputs.stale_list }}
+          MATCH_COUNT: ${{ steps.audit.outputs.match_count }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: .github/workflows/scripts/open-grype-suppression-pr.sh
+
+      - name: Skip — no stale suppressions
+        if: steps.audit.outputs.stale_count == 0
+        run: echo "All suppressions in .grype.yaml are still active. Nothing to do."
+
+      - name: Write workflow summary
+        if: always()
+        env:
+          STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
+          STALE_LIST: ${{ steps.audit.outputs.stale_list }}
+        run: .github/workflows/scripts/grype-suppression-summary.sh
