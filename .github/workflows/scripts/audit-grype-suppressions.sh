@@ -80,10 +80,11 @@ echo "Non-suppressed matches (after):  ${MATCH_COUNT_AFTER}"
 
 if [ "${MATCH_COUNT_BEFORE}" != "${MATCH_COUNT_AFTER}" ]; then
   echo ""
+  git checkout -- "${GRYPE_YAML}"
+  echo ""
   echo "ERROR: Non-suppressed match count changed from ${MATCH_COUNT_BEFORE} to ${MATCH_COUNT_AFTER}."
   echo "One or more suppressions were incorrectly identified as stale."
   echo "Aborting — .grype.yaml has been restored to its original state via git."
-  git checkout -- "${GRYPE_YAML}"
   exit 1
 fi
 
