@@ -21,6 +21,15 @@ IMAGE="${IMAGE:-pepr:dev}"
 GRYPE_YAML=".grype.yaml"
 GRYPE="${GRYPE_CMD:-grype}"
 
+# Guard: abort if any suppression entry has sub-keys (e.g. package: or fix-state:).
+# The removal loop only handles single-line entries. Multi-line entries would be
+# partially removed, leaving orphaned YAML keys and corrupting the file.
+if grep -qE '^    \S' "${GRYPE_YAML}"; then
+  echo "ERROR: ${GRYPE_YAML} contains multi-line suppression entries (sub-keys detected)."
+  echo "Automatic removal is not supported. Please audit stale suppressions manually."
+  exit 1
+fi
+
 echo "==> Scanning ${IMAGE} with current suppression list..."
 SCAN_JSON=$("${GRYPE}" "${IMAGE}" --config "${GRYPE_YAML}" --output json)
 
@@ -64,9 +73,12 @@ fi
 echo "==> Stale suppressions identified:"
 printf '   %s\n' "${STALE[@]}"
 
-# Remove stale entries from .grype.yaml (one pass per entry to avoid collisions)
+# Remove stale entries from .grype.yaml (one pass per entry to avoid collisions).
+# Use a flexible sed pattern to match any leading whitespace, consistent with how
+# SUPPRESSED_IDS are parsed above, so indentation changes don't cause silent failures.
 for id in "${STALE[@]}"; do
-  grep -vF "  - vulnerability: ${id}" "${GRYPE_YAML}" > tmp_grype.yaml
+  sed -E "/^[[:space:]]*- vulnerability:[[:space:]]+${id}[[:space:]]*$/d" \
+    "${GRYPE_YAML}" > tmp_grype.yaml
   mv tmp_grype.yaml "${GRYPE_YAML}"
 done
 
