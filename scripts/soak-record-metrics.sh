@@ -27,17 +27,20 @@ ctrl_failures="${ctrl_failures:-0}"
 cache_misses="${cache_misses:-0}"
 resync_failures="${resync_failures:-0}"
 
-# Compute deltas against the previous row so each CSV row shows what changed in this interval
-prev_row=$(tail -1 "$METRICS_CSV" 2>/dev/null || true)
-if [[ "$prev_row" == iteration,* ]] || [[ -z "$prev_row" ]]; then
-  # First data row: no previous values to diff against
-  ctrl_failures_delta="$ctrl_failures"
-  cache_misses_delta="$cache_misses"
+# Compute deltas using a state file that tracks the previous cumulative values.
+# Reading deltas back from the CSV would give the wrong base (delta_N-1 != cumulative_N-1).
+PREV_STATE="${METRICS_CSV%.csv}.prev"
+if [ -f "$PREV_STATE" ]; then
+  prev_ctrl=$(cut -d',' -f1 "$PREV_STATE")
+  prev_cache=$(cut -d',' -f2 "$PREV_STATE")
 else
-  prev_ctrl=$(echo "$prev_row" | cut -d',' -f3)
-  prev_cache=$(echo "$prev_row" | cut -d',' -f4)
-  ctrl_failures_delta=$(( ctrl_failures - ${prev_ctrl:-0} ))
-  cache_misses_delta=$(( cache_misses - ${prev_cache:-0} ))
+  prev_ctrl=0
+  prev_cache=0
 fi
+
+ctrl_failures_delta=$(( ctrl_failures - prev_ctrl ))
+cache_misses_delta=$(( cache_misses - prev_cache ))
+
+printf "%s,%s\n" "$ctrl_failures" "$cache_misses" > "$PREV_STATE"
 
 printf "%s,%s,%s,%s,%s\n" "$ITERATION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$ctrl_failures_delta" "$cache_misses_delta" "$resync_failures" >> "$METRICS_CSV"
