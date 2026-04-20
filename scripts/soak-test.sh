@@ -24,12 +24,7 @@ declare -A pod_map
 
 update_pod_map() {
   for pod in $(kubectl get pods -n pepr-demo -o jsonpath='{.items[*].metadata.name}'); do
-    count=${pod_map[$pod]}
-    if [ -z "$count" ]; then
-      pod_map[$pod]=1
-    else
-      pod_map[$pod]=$((count + 1))
-    fi
+    pod_map[$pod]=$(( ${pod_map[$pod]:-0} + 1 ))
   done
 }
 

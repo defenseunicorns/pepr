@@ -28,10 +28,11 @@ final_resync_failures=$(echo "$final" | cut -d',' -f5)
 ctrl_failures_status=$([ "${final_ctrl_failures}" = "0" ] && echo "✅" || echo "❌")
 resync_failures_status=$([ "${final_resync_failures}" = "0" ] && echo "✅" || echo "❌")
 
-# cache miss: split into startup (first window) and mid-run (all other windows)
-startup_misses=$(grep x-v "^#" "$INFORMER_LOG" | grep "pepr_cache_miss" | head -1 | awk '{print $NF}') || true
-midrun_misses=$(grep -v "^#" "$INFORMER_LOG" | grep "pepr_cache_miss" | tail -n +2 | awk '{sum += $NF} END {print sum+0}') || true
+# cache miss: split into startup (first iteration) and mid-run (sum of positive increments thereafter)
+# Derived from the CSV so the breakdown reflects the full run, not just the final scrape snapshot.
+startup_misses=$(awk -F',' 'NR==2{print $4; exit}' "$METRICS_CSV")
 startup_misses="${startup_misses:-0}"
+midrun_misses=$(awk -F',' 'NR==2{prev=$4; next} NR>2{delta=$4-prev; if(delta>0) sum+=delta; prev=$4} END{print sum+0}' "$METRICS_CSV")
 midrun_misses="${midrun_misses:-0}"
 
 if [ "${final_cache_misses}" = "0" ]; then
