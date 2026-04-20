@@ -289,10 +289,8 @@ export class Controller {
   static #applyTimeouts(server: https.Server): {
     keepAliveTimeoutMs: number;
     headersTimeoutMs: number;
-  } {
-    const keepAliveTimeoutMs = parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS ?? "90000", 10);
-    const headersTimeoutMs = parseInt(process.env.PEPR_HEADERS_TIMEOUT_MS ?? "32000", 10);
-    server.keepAliveTimeout = keepAliveTimeoutMs;
+    const keepAliveTimeoutMs = parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS ?? "90000", 10) || 90000;
+    const headersTimeoutMs = parseInt(process.env.PEPR_HEADERS_TIMEOUT_MS ?? "32000", 10) || 32000;
     server.headersTimeout = headersTimeoutMs;
     return { keepAliveTimeoutMs, headersTimeoutMs };
   }
