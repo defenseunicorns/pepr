@@ -17,7 +17,7 @@ mkdir -p "$LOGS_DIR"
 touch "$LOGS_DIR/auditor-log.txt"
 touch "$LOGS_DIR/informer-log.txt"
 touch "$LOGS_DIR/watch-logs.txt"
-echo "iteration,timestamp,watch_controller_failures_total,pepr_cache_miss,pepr_resync_failure_count" > "$LOGS_DIR/metrics.csv"
+echo "iteration,timestamp,watch_controller_failures_delta,pepr_cache_miss_delta,pepr_resync_failure_count" > "$LOGS_DIR/metrics.csv"
 
 # Initialize the map to store pod counts
 declare -A pod_map
