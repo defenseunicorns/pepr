@@ -23,7 +23,11 @@ if (!failureReason) {
   process.exit(1);
 }
 
-const summary = process.env.GITHUB_STEP_SUMMARY!;
+const summary = process.env.GITHUB_STEP_SUMMARY;
+if (!summary) {
+  console.error("GITHUB_STEP_SUMMARY environment variable is not set");
+  process.exit(1);
+}
 
 const csvContent = fs.existsSync(metricsCSV) ? fs.readFileSync(metricsCSV, "utf-8") : "";
 const csvLines = csvContent.split("\n").filter(line => line.trim() !== "");
