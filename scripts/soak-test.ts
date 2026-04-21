@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -90,8 +90,16 @@ async function main(): Promise<void> {
     console.log(fs.readFileSync(`${LOGS_DIR}/informer-log.txt`, "utf-8"));
     console.log(fs.readFileSync(`${LOGS_DIR}/auditor-log.txt`, "utf-8"));
 
-    execSync(
-      `npx tsx ${SCRIPT_DIR}/soak-record-metrics.ts ${i} ${LOGS_DIR}/auditor-log.txt ${LOGS_DIR}/informer-log.txt ${LOGS_DIR}/metrics.csv`,
+    execFileSync(
+      "npx",
+      [
+        "tsx",
+        path.join(SCRIPT_DIR, "soak-record-metrics.ts"),
+        String(i),
+        `${LOGS_DIR}/auditor-log.txt`,
+        `${LOGS_DIR}/informer-log.txt`,
+        `${LOGS_DIR}/metrics.csv`,
+      ],
       { stdio: "inherit" },
     );
 
