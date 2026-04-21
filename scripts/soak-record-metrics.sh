@@ -27,4 +27,20 @@ ctrl_failures="${ctrl_failures:-0}"
 cache_misses="${cache_misses:-0}"
 resync_failures="${resync_failures:-0}"
 
-printf "%s,%s,%s,%s,%s\n" "$ITERATION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$ctrl_failures" "$cache_misses" "$resync_failures" >> "$METRICS_CSV"
+# Compute deltas using a state file that tracks the previous cumulative values.
+# Reading deltas back from the CSV would give the wrong base (delta_N-1 != cumulative_N-1).
+PREV_STATE="${METRICS_CSV%.csv}.prev"
+if [ -f "$PREV_STATE" ]; then
+  prev_ctrl=$(cut -d',' -f1 "$PREV_STATE")
+  prev_cache=$(cut -d',' -f2 "$PREV_STATE")
+else
+  prev_ctrl=0
+  prev_cache=0
+fi
+
+ctrl_failures_delta=$(( ctrl_failures - prev_ctrl ))
+cache_misses_delta=$(( cache_misses - prev_cache ))
+
+printf "%s,%s\n" "$ctrl_failures" "$cache_misses" > "$PREV_STATE"
+
+printf "%s,%s,%s,%s,%s\n" "$ITERATION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$ctrl_failures_delta" "$cache_misses_delta" "$resync_failures" >> "$METRICS_CSV"

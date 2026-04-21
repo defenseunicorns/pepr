@@ -21,24 +21,26 @@ fi
 
 final=$(tail -1 "$METRICS_CSV")
 iters=$(echo "$final" | cut -d',' -f1)
-final_ctrl_failures=$(echo "$final" | cut -d',' -f3)
-final_cache_misses=$(echo "$final" | cut -d',' -f4)
 final_resync_failures=$(echo "$final" | cut -d',' -f5)
 
-ctrl_failures_status=$([ "${final_ctrl_failures}" = "0" ] && echo "✅" || echo "❌")
+# Columns are now per-interval deltas — sum across all rows to get totals
+total_ctrl_failures=$(awk -F',' 'NR>1{sum+=$3} END{print sum+0}' "$METRICS_CSV")
+total_ctrl_failures="${total_ctrl_failures:-0}"
+
+ctrl_failures_status=$([ "${total_ctrl_failures}" = "0" ] && echo "✅" || echo "❌")
 resync_failures_status=$([ "${final_resync_failures}" = "0" ] && echo "✅" || echo "❌")
 
-# cache miss: split into startup (first iteration) and mid-run (sum of positive increments thereafter)
-# Derived from the CSV so the breakdown reflects the full run, not just the final scrape snapshot.
+# cache miss: first data row = startup window delta; rows after = mid-run deltas
 startup_misses=$(awk -F',' 'NR==2{print $4; exit}' "$METRICS_CSV")
 startup_misses="${startup_misses:-0}"
-midrun_misses=$(awk -F',' 'NR==2{prev=$4; next} NR>2{delta=$4-prev; if(delta>0) sum+=delta; prev=$4} END{print sum+0}' "$METRICS_CSV")
+midrun_misses=$(awk -F',' 'NR>2 && $4>0{sum+=$4} END{print sum+0}' "$METRICS_CSV")
 midrun_misses="${midrun_misses:-0}"
+total_cache_misses=$(( startup_misses + midrun_misses ))
 
-if [ "${final_cache_misses}" = "0" ]; then
+if [ "${total_cache_misses}" = "0" ]; then
   cache_misses_display="0"
 else
-  cache_misses_display="${final_cache_misses} total (${startup_misses} startup, ${midrun_misses} mid-run)"
+  cache_misses_display="${total_cache_misses} total (${startup_misses} startup, ${midrun_misses} mid-run)"
 fi
 cache_misses_status=$([ "${midrun_misses}" = "0" ] && echo "✅" || echo "⚠️")
 
@@ -52,7 +54,7 @@ resync_failures_display="${final_resync_failures} failures across ${resync_total
   echo ""
   echo "| Metric | Value | Status |"
   echo "|--------|-------|--------|"
-  echo "| \`watch_controller_failures_total\` | ${final_ctrl_failures} | ${ctrl_failures_status} |"
+  echo "| \`watch_controller_failures_total\` | ${total_ctrl_failures} | ${ctrl_failures_status} |"
   echo "| \`pepr_cache_miss\` | ${cache_misses_display} | ${cache_misses_status} |"
   echo "| \`pepr_resync_failure_count\` | ${resync_failures_display} | ${resync_failures_status} |"
   echo ""
