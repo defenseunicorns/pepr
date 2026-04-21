@@ -104,11 +104,10 @@ async function main(): Promise<void> {
     );
 
     if (i % 2 === 0) {
-      updatePodMap();
-
-      execSync("kubectl get pods -n pepr-demo", { stdio: "inherit" });
-      execSync("kubectl top po -n pepr-system", { stdio: "inherit" });
-      execSync("kubectl get po -n pepr-system", { stdio: "inherit" });
+    if (i < 70) {
+      await sleep(300_000);
+    }
+  }
 
       for (const [pod, count] of podMap) {
         checkPod(pod, count, i);
