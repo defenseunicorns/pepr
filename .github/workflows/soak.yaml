@@ -127,6 +127,15 @@ jobs:
           kubectl wait --for=condition=ready -n watch-auditor pod -l app=watch-auditor
           kubectl wait --for=condition=ready -n pepr-system pod -l app=pepr-soak-ci-watcher
 
+      - name: setup node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: install deps
+        run: npm ci
+
       - name: Run the soak test and collect metrics
         run: npx tsx scripts/soak-test.ts
 
