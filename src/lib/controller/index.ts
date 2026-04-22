@@ -14,7 +14,12 @@ import { ModuleConfig } from "../types";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
-import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
+import {
+  karForMutate,
+  karForValidate,
+  KubeAdmissionReview,
+  parseWebhookTimeouts,
+} from "./index.util";
 import { AdmissionRequest } from "../common-types";
 import { featureFlagStore } from "../features/store";
 import { GroupVersionKind } from "kubernetes-fluent-client";
@@ -280,24 +285,27 @@ export class Controller {
   };
 
   /**
+   * Parse and apply HTTP timeout settings to the server.
+   *
+   * @param server the HTTPS server to configure
+   */
+  static #applyTimeouts(server: https.Server): {
+    keepAliveTimeoutMs: number;
+    headersTimeoutMs: number;
+  } {
+    const { keepAliveTimeoutMs, headersTimeoutMs } = parseWebhookTimeouts();
+    server.keepAliveTimeout = keepAliveTimeoutMs;
+    server.headersTimeout = headersTimeoutMs;
+    return { keepAliveTimeoutMs, headersTimeoutMs };
+  }
+
+  /**
    * Middleware for logging requests
    *
    * @param req the incoming request
    * @param res the outgoing response
    * @param next the next middleware function
    */
-  static #applyTimeouts(server: https.Server): {
-    keepAliveTimeoutMs: number;
-    headersTimeoutMs: number;
-  } {
-    const keepAliveTimeoutMs =
-      parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS ?? "90000", 10) || 90000;
-    const headersTimeoutMs = parseInt(process.env.PEPR_HEADERS_TIMEOUT_MS ?? "32000", 10) || 32000;
-    server.keepAliveTimeout = keepAliveTimeoutMs;
-    server.headersTimeout = headersTimeoutMs;
-    return { keepAliveTimeoutMs, headersTimeoutMs };
-  }
-
   static #logger(req: express.Request, res: express.Response, next: express.NextFunction): void {
     const startTime = Date.now();
 
