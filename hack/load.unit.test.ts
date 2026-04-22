@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { describe, it, expect } from "vitest";
-import { heredoc } from "../src/sdk/heredoc";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
   toHuman,
   toMs,
@@ -85,16 +86,10 @@ describe("generateAudienceData()", () => {
 });
 
 describe("parseActressData()", () => {
-  let actressData = heredoc`
-    ---\\\\napiVersion: v1\\\\nkind: ConfigMap\\\\nmetadata:\\\\n  namespace: hello-pepr-load\\\\n  name: cm-UNIQUIFY-ME\\\\n  labels:\\\\n    test-transient: hello-pepr-load\\\\ndata: {}\\\\n
-    1731682427803	configmap/cm-1731682427524-0 created
-    1731682428102	configmap/cm-1731682427805-1 created
-    1731682428365	configmap/cm-1731682428103-2 created
-    1731682428668	configmap/cm-1731682428366-3 created
-    1731682428978	configmap/cm-1731682428669-4 created
-    1731682429300	configmap/cm-1731682428979-5 created
-  `;
-  actressData += "\n";
+  const actressData = fs.readFileSync(
+    path.join(__dirname, "fixtures/resource-injection-log.txt"),
+    "utf-8",
+  );
 
   it("converts logged data appropriately split lines", () => {
     const expected = {
@@ -111,15 +106,10 @@ describe("parseActressData()", () => {
 });
 
 describe("parseAudienceData()", () => {
-  let audienceData = heredoc`
-    1731525754189	pepr-pepr-load-aaaa0bbbb-aaaaa           2m    102Mi   
-    1731525754189	pepr-pepr-load-aaaa0bbbb-bbbbb           3m    103Mi   
-    1731525754189	pepr-pepr-load-watcher-ccccccccc-ccccc   23m   123Mi   
-    1731525814222	pepr-pepr-load-aaaa0bbbb-aaaaa           4m    104Mi   
-    1731525814222	pepr-pepr-load-aaaa0bbbb-bbbbb           5m    105Mi   
-    1731525814222	pepr-pepr-load-watcher-ccccccccc-ccccc   45m   145Mi   
-  `;
-  audienceData += "\n";
+  const audienceData = fs.readFileSync(
+    path.join(__dirname, "fixtures/pod-resource-usage-log.txt"),
+    "utf-8",
+  );
 
   it("converts logged data into per-pod datasets", () => {
     const expected = {
