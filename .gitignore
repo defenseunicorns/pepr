@@ -45,3 +45,4 @@ coverage/
 *~
 doug
 Dockerfile.controller
+Dockerfile.kfc

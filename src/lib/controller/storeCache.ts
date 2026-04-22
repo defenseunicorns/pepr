@@ -3,7 +3,7 @@ import Log from "../telemetry/logger";
 import { K8s } from "kubernetes-fluent-client";
 import { Store } from "../k8s";
 import { StatusCodes } from "http-status-codes";
-import { Operation } from "fast-json-patch";
+import { Operation } from "kubernetes-fluent-client";
 
 export const sendUpdatesAndFlushCache = async (
   cache: Record<string, Operation>,
