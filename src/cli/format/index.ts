@@ -13,6 +13,12 @@ export default function (program: Command): void {
     .description("Lint and format this Pepr module")
     .option("-v, --validate-only", "Do not modify files, only validate formatting.")
     .action(async opts => {
+      Log.warn(
+        "DEPRECATION NOTICE: Pepr v1.1.6 is the last release that supports ESLint v9. " +
+          "The next release will upgrade to ESLint v10, which includes breaking changes. " +
+          "Review the ESLint v10 migration guide before upgrading Pepr: <ADD_URL_HERE>",
+      );
+
       const success = await peprFormat(opts.validateOnly);
 
       if (success) {
