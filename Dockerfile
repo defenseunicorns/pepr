@@ -5,8 +5,8 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 ARG REQUIRE_CHOWN="true"
-ARG BUILD_IMAGE=docker.io/library/node@sha256:37c7b4cd8867313fc17ba76c1a6676414c61e2aac113694072bb8e3ef6d0a4c8
-ARG BASE_IMAGE=docker.io/library/node@sha256:e8e882c692a08878d55ec8ff6c5a4a71b3edca25eda0af4406e2a160d8a93cf2
+ARG BUILD_IMAGE=docker.io/library/node@sha256:bb20cf73b3ad7212834ec48e2174cdcb5775f6550510a5336b842ae32741ce6c
+ARG BASE_IMAGE=docker.io/library/node@sha256:01743339035a5c3c11a373cd7c83aeab6ed1457b55da6a69e014a95ac4e4700b
 
 FROM ${BUILD_IMAGE} AS build
 
@@ -42,7 +42,6 @@ RUN npm run build && \
     rm -rf node_modules/@ts-morph && \
     rm -rf node_modules/quicktype-core && \
     rm -rf node_modules/commander && \
-    rm -rf node_modules/heredoc && \
     rm -rf node_modules/@npmcli && \
     rm -rf node_modules/@pkgjs && \
     rm -rf node_modules/@glideapps && \
