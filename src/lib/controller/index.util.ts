@@ -19,6 +19,16 @@ export function karForMutate(mr: MutateResponse): KubeAdmissionReview {
   };
 }
 
+export function parseWebhookTimeouts(): { keepAliveTimeoutMs: number; headersTimeoutMs: number } {
+  const keepAliveTimeoutMs = process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS
+    ? parseInt(process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS, 10)
+    : 90000;
+  const headersTimeoutMs = process.env.PEPR_HEADERS_TIMEOUT_MS
+    ? parseInt(process.env.PEPR_HEADERS_TIMEOUT_MS, 10)
+    : 32000;
+  return { keepAliveTimeoutMs, headersTimeoutMs };
+}
+
 export function karForValidate(ar: AdmissionRequest, vr: ValidateResponse[]): KubeAdmissionReview {
   const isAllowed = vr.filter(r => !r.allowed).length === 0;
 
