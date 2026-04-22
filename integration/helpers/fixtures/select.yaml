@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sec
+  namespace: select
+stringData:
+  top: secret
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm
+  namespace: select
+data:
+  fake: news

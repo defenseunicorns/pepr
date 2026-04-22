@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { Operation } from "fast-json-patch";
+import { Operation } from "kubernetes-fluent-client";
 import { pino, stdTimeFunctions } from "pino";
 import { Store } from "../k8s";
 
