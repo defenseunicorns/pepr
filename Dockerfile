@@ -42,7 +42,6 @@ RUN npm run build && \
     rm -rf node_modules/@ts-morph && \
     rm -rf node_modules/quicktype-core && \
     rm -rf node_modules/commander && \
-    rm -rf node_modules/heredoc && \
     rm -rf node_modules/@npmcli && \
     rm -rf node_modules/@pkgjs && \
     rm -rf node_modules/@glideapps && \
