@@ -7,7 +7,6 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as R from "ramda";
-import { heredoc } from "../src/sdk/heredoc";
 import * as lib from "./load.lib";
 import { execSync } from "node:child_process";
 const TEST_CLUSTER_NAME_PREFIX = "pepr-load";
@@ -1163,25 +1162,10 @@ program
     };
 
     log(`Write graphing script output dir`);
-    const octaveScript = heredoc`
-      StrData = fread(stdin, 'char') ;
-      StrData = char( StrData.' ) ;
-      JsonData = jsondecode(StrData) ;
-
-      ax = plotyy (JsonData.x, JsonData.mem.y, JsonData.x, JsonData.rps.y) ;
-
-      xlabel (JsonData.label) ;
-
-      ylim (ax(1), "padded") ;
-      ylabel (ax(1), JsonData.mem.label) ;
-
-      ylim (ax(2), "padded") ;
-      ylabel (ax(2), JsonData.rps.label) ;
-
-      title (JsonData.title) ;
-      fname = [ JsonData.fname ".png" ] ;
-      print ("-dpng", fname) ;
-    `;
+    const octaveScript = await fs.readFile(
+      path.join(__dirname, "fixtures/octave-graph-template.m"),
+      "utf-8",
+    );
     let octaveFile = `${opts.outputDir}/graph.m`;
     await fs.writeFile(octaveFile, octaveScript);
     log(`  script: ${octaveFile}`, "");

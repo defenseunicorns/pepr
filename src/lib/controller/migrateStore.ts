@@ -3,7 +3,7 @@ import { startsWith } from "ramda";
 import Log, { redactedStore } from "../telemetry/logger";
 import { K8s } from "kubernetes-fluent-client";
 import { Store } from "../k8s";
-import { Operation } from "fast-json-patch";
+import { Operation } from "kubernetes-fluent-client";
 import { fillStoreCache, sendUpdatesAndFlushCache } from "./storeCache";
 
 export interface StoreMigration {
