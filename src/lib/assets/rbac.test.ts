@@ -18,6 +18,7 @@ import {
   capabilityWithFinalize,
   capabilityWithLongKey,
   capabilityWithShortKey,
+  capabilityWithWatchAndFinalize,
 } from "./defaultTestObjects";
 
 vi.mock("./telemetry/logger", () => ({
@@ -263,11 +264,15 @@ describe("ClusterRole Generation", () => {
   });
 
   it("should include finalize verbs if isFinalize is true in scoped mode", () => {
+    // The custom RBAC rule contributes ["patch"] for peprstores. The scoped
+    // rule from createRBACMap contributes ["create", "get", "patch", "watch"].
+    // The deduper merges them in insertion order: "patch" first (from custom),
+    // then the remaining verbs from the scoped rule.
     const expected: PolicyRule[] = [
       {
         apiGroups: ["pepr.dev"],
         resources: ["peprstores"],
-        verbs: ["patch"],
+        verbs: ["patch", "create", "get", "watch"],
       },
       {
         apiGroups: ["apiextensions.k8s.io"],
@@ -287,6 +292,16 @@ describe("ClusterRole Generation", () => {
 
     expect(result.rules).toEqual(expected);
   });
+  it("should produce a single rule with merged verbs when a kind has both watch and finalize bindings", () => {
+    const result = clusterRole("test-role", capabilityWithWatchAndFinalize, "scoped", []);
+
+    // Filter to the configmaps rule only (ignore the always-present peprstore/CRD rules).
+    const configmapRules = result.rules?.filter(rule => rule.resources?.includes("configmaps"));
+
+    expect(configmapRules).toHaveLength(1);
+    expect(configmapRules![0].verbs!.toSorted()).toEqual(["patch", "watch"]);
+  });
+
   it("should return an empty rules array when capabilities are empty in scoped mode", () => {
     const result = clusterRole("test-role", [], "scoped", []);
 

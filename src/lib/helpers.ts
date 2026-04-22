@@ -54,19 +54,22 @@ export function createRBACMap(capabilities: CapabilityExport[]): RBACMap {
         plural: "customresourcedefinitions",
       };
 
-      if (!acc[key] && binding.isWatch) {
-        acc[key] = {
-          verbs: ["watch"],
-          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
-        };
+      const plural = binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`;
+
+      if (binding.isWatch) {
+        if (!acc[key]) {
+          acc[key] = { verbs: ["watch"], plural };
+        } else if (!acc[key].verbs.includes("watch")) {
+          acc[key].verbs.push("watch");
+        }
       }
 
-      // Add finalizer rbac
       if (binding.isFinalize) {
-        acc[key] = {
-          verbs: ["patch"],
-          plural: binding.kind.plural || `${binding.kind.kind.toLowerCase()}s`,
-        };
+        if (!acc[key]) {
+          acc[key] = { verbs: ["patch"], plural };
+        } else if (!acc[key].verbs.includes("patch")) {
+          acc[key].verbs.push("patch");
+        }
       }
     });
 
