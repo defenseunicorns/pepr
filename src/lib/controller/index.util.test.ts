@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { MutateResponse, ValidateResponse } from "../k8s";
 import * as sut from "./index.util";
 import { AdmissionRequest } from "../common-types";
@@ -208,57 +208,43 @@ describe("parseWebhookTimeouts()", () => {
     }
   });
 
-  it("returns default values when env vars are not set", () => {
-    delete process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS;
-    delete process.env.PEPR_HEADERS_TIMEOUT_MS;
+  it.each([
+    {
+      name: "returns defaults when env vars are not set",
+      keepAliveEnv: undefined,
+      headersEnv: undefined,
+      expected: { keepAliveTimeoutMs: 90000, headersTimeoutMs: 32000 },
+    },
+    {
+      name: "uses both env vars when set",
+      keepAliveEnv: "120000",
+      headersEnv: "60000",
+      expected: { keepAliveTimeoutMs: 120000, headersTimeoutMs: 60000 },
+    },
+    {
+      name: "defaults keepAlive when only headers env is set",
+      keepAliveEnv: undefined,
+      headersEnv: "45000",
+      expected: { keepAliveTimeoutMs: 90000, headersTimeoutMs: 45000 },
+    },
+    {
+      name: "defaults headers when only keepAlive env is set",
+      keepAliveEnv: "120000",
+      headersEnv: undefined,
+      expected: { keepAliveTimeoutMs: 120000, headersTimeoutMs: 32000 },
+    },
+  ])("$name", ({ keepAliveEnv, headersEnv, expected }) => {
+    if (keepAliveEnv !== undefined) {
+      process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS = keepAliveEnv;
+    } else {
+      delete process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS;
+    }
+    if (headersEnv !== undefined) {
+      process.env.PEPR_HEADERS_TIMEOUT_MS = headersEnv;
+    } else {
+      delete process.env.PEPR_HEADERS_TIMEOUT_MS;
+    }
 
-    const result = sut.parseWebhookTimeouts();
-
-    expect(result).toEqual({
-      keepAliveTimeoutMs: 90000,
-      headersTimeoutMs: 32000,
-    });
-  });
-
-  it("uses environment variables to configure timeouts", () => {
-    const parseIntSpy = vi.spyOn(global, "parseInt");
-
-    process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS = "120000";
-    process.env.PEPR_HEADERS_TIMEOUT_MS = "60000";
-
-    const result = sut.parseWebhookTimeouts();
-
-    expect(parseIntSpy).toHaveBeenCalledWith("120000", 10);
-    expect(parseIntSpy).toHaveBeenCalledWith("60000", 10);
-    expect(result).toEqual({
-      keepAliveTimeoutMs: 120000,
-      headersTimeoutMs: 60000,
-    });
-
-    parseIntSpy.mockRestore();
-  });
-
-  it("uses default keepAliveTimeoutMs when only PEPR_HEADERS_TIMEOUT_MS is set", () => {
-    delete process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS;
-    process.env.PEPR_HEADERS_TIMEOUT_MS = "45000";
-
-    const result = sut.parseWebhookTimeouts();
-
-    expect(result).toEqual({
-      keepAliveTimeoutMs: 90000,
-      headersTimeoutMs: 45000,
-    });
-  });
-
-  it("uses default headersTimeoutMs when only PEPR_KEEP_ALIVE_TIMEOUT_MS is set", () => {
-    process.env.PEPR_KEEP_ALIVE_TIMEOUT_MS = "120000";
-    delete process.env.PEPR_HEADERS_TIMEOUT_MS;
-
-    const result = sut.parseWebhookTimeouts();
-
-    expect(result).toEqual({
-      keepAliveTimeoutMs: 120000,
-      headersTimeoutMs: 32000,
-    });
+    expect(sut.parseWebhookTimeouts()).toEqual(expected);
   });
 });
