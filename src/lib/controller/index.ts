@@ -14,7 +14,12 @@ import { ModuleConfig } from "../types";
 import { mutateProcessor } from "../processors/mutate-processor";
 import { validateProcessor } from "../processors/validate-processor";
 import { StoreController } from "./store";
-import { karForMutate, karForValidate, KubeAdmissionReview } from "./index.util";
+import {
+  karForMutate,
+  karForValidate,
+  KubeAdmissionReview,
+  parseWebhookTimeouts,
+} from "./index.util";
 import { AdmissionRequest } from "../common-types";
 import { featureFlagStore } from "../features/store";
 import { GroupVersionKind } from "kubernetes-fluent-client";
@@ -118,11 +123,16 @@ export class Controller {
     }
 
     // Create HTTPS server
-    const server = https.createServer(options, this.#app).listen(port);
+    const server = https.createServer(options, this.#app);
+
+    // Tune HTTP timeouts (defaults align with controller-runtime's webhook server)
+    const { keepAliveTimeoutMs, headersTimeoutMs } = Controller.#applyTimeouts(server);
+
+    server.listen(port);
 
     // Handle server listening event
     server.on("listening", () => {
-      Log.debug(`Server listening on port ${port}`);
+      Log.debug({ port, keepAliveTimeoutMs, headersTimeoutMs }, `Server listening on port ${port}`);
       // Track that the server is running
       this.#running = true;
     });
@@ -273,6 +283,21 @@ export class Controller {
       }
     };
   };
+
+  /**
+   * Parse and apply HTTP timeout settings to the server.
+   *
+   * @param server the HTTPS server to configure
+   */
+  static #applyTimeouts(server: https.Server): {
+    keepAliveTimeoutMs: number;
+    headersTimeoutMs: number;
+  } {
+    const { keepAliveTimeoutMs, headersTimeoutMs } = parseWebhookTimeouts();
+    server.keepAliveTimeout = keepAliveTimeoutMs;
+    server.headersTimeout = headersTimeoutMs;
+    return { keepAliveTimeoutMs, headersTimeoutMs };
+  }
 
   /**
    * Middleware for logging requests
