@@ -66,4 +66,8 @@ jobs:
         env:
           STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
           STALE_LIST: ${{ steps.audit.outputs.stale_list }}
-        run: .github/workflows/scripts/grype-suppression-summary.sh
+        run: |
+          STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
+          .github/workflows/scripts/grype-suppression-summary.sh \
+            --stale-count "${STALE_COUNT:-0}" \
+            --stale-list "${STALE_LIST_CSV}"
