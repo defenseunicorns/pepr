@@ -13,6 +13,10 @@ set -uo pipefail
 LOGS_DIR="logs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Metric assertion thresholds (configurable via environment)
+CACHE_MISS_GROWTH_THRESHOLD=${CACHE_MISS_GROWTH_THRESHOLD:-10}
+RESYNC_FAILURE_THRESHOLD=${RESYNC_FAILURE_THRESHOLD:-5}
+
 mkdir -p "$LOGS_DIR"
 touch "$LOGS_DIR/auditor-log.txt"
 touch "$LOGS_DIR/informer-log.txt"
@@ -43,6 +47,34 @@ for i in {1..70}; do  # 70 iterations cover 350 minutes (5 hours and 50 minutes)
   cat "$LOGS_DIR/auditor-log.txt"
 
   bash "$SCRIPT_DIR/soak-record-metrics.sh" "$i" "$LOGS_DIR/auditor-log.txt" "$LOGS_DIR/informer-log.txt" "$LOGS_DIR/metrics.csv"
+
+  # Assert watch controller has no failures
+  ctrl_failures=$(tail -1 "$LOGS_DIR/metrics.csv" | cut -d',' -f3)
+  if [ "${ctrl_failures:-0}" != "0" ]; then
+    echo "Watch controller failures detected: $ctrl_failures" > "$LOGS_DIR/failure-reason.txt"
+    collect_metrics
+    exit 1
+  fi
+
+  # After stabilization (~70 minutes), assert cache misses are not growing
+  if [ "$i" -gt 14 ]; then
+    current_cache_misses=$(tail -1 "$LOGS_DIR/metrics.csv" | cut -d',' -f4)
+    baseline_cache_misses=$(sed -n '15p' "$LOGS_DIR/metrics.csv" | cut -d',' -f4)
+    cache_miss_growth=$(( ${current_cache_misses:-0} - ${baseline_cache_misses:-0} ))
+    if [ "$cache_miss_growth" -gt "$CACHE_MISS_GROWTH_THRESHOLD" ]; then
+      echo "Cache misses grew from $baseline_cache_misses to $current_cache_misses (growth: $cache_miss_growth > threshold: $CACHE_MISS_GROWTH_THRESHOLD)" > "$LOGS_DIR/failure-reason.txt"
+      collect_metrics
+      exit 1
+    fi
+  fi
+
+  # Assert resync failures stay below threshold
+  current_resync_failures=$(tail -1 "$LOGS_DIR/metrics.csv" | cut -d',' -f5)
+  if [ "${current_resync_failures:-0}" -gt "$RESYNC_FAILURE_THRESHOLD" ]; then
+    echo "Resync failures exceeded threshold: $current_resync_failures > $RESYNC_FAILURE_THRESHOLD" > "$LOGS_DIR/failure-reason.txt"
+    collect_metrics
+    exit 1
+  fi
 
   if [ $((i % 2)) -eq 0 ]; then  # Every 10 minutes
     update_pod_map
