@@ -6,17 +6,56 @@
 # If a PR for the branch already exists it is updated in place rather than
 # closed and recreated, so any reviewer comments are preserved.
 #
-# Expected environment variables:
-#   STALE_COUNT  - number of stale suppressions removed
-#   STALE_LIST   - newline-separated list of removed IDs
-#   MATCH_COUNT  - non-suppressed match count after removal (for verification note)
-#   RUN_URL      - URL of the workflow run (for PR footer)
+# Usage:
+#   open-grype-suppression-pr.sh --stale-count <n> --stale-list <csv> \
+#     --match-count <n> --run-url <url>
 
 set -euo pipefail
 
+STALE_COUNT=""
+STALE_LIST=""
+MATCH_COUNT=""
+RUN_URL=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --stale-count)
+      STALE_COUNT="$2"
+      shift 2
+      ;;
+    --stale-list)
+      STALE_LIST="$2"
+      shift 2
+      ;;
+    --match-count)
+      MATCH_COUNT="$2"
+      shift 2
+      ;;
+    --run-url)
+      RUN_URL="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "${STALE_COUNT}" ] || [ -z "${MATCH_COUNT}" ] || [ -z "${RUN_URL}" ]; then
+  echo "ERROR: --stale-count, --match-count, and --run-url are required" >&2
+  exit 1
+fi
+
 BRANCH="grype/suppression-audit"
 ENTRY_WORD=$([ "${STALE_COUNT}" -eq 1 ] && echo "y" || echo "ies")
-BULLETS="- ${STALE_LIST//$'\n'/$'\n'- }"
+
+# Convert comma-separated list to markdown bullet points
+IFS=',' read -ra IDS <<< "$STALE_LIST"
+BULLETS=""
+for id in "${IDS[@]}"; do
+  BULLETS="${BULLETS}- ${id}"$'\n'
+done
 
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"

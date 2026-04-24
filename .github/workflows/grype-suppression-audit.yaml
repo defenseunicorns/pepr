@@ -23,7 +23,8 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Use Node.js latest
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -48,14 +49,20 @@ jobs:
         run: .github/workflows/scripts/audit-grype-suppressions.sh
 
       - name: Create or update PR
-        if: steps.audit.outputs.stale_count > 0
+        if: steps.audit.outputs.stale_count != '0' && steps.audit.outputs.stale_count != ''
         env:
           GH_TOKEN: ${{ github.token }}
           STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
           STALE_LIST: ${{ steps.audit.outputs.stale_list }}
           MATCH_COUNT: ${{ steps.audit.outputs.match_count }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: .github/workflows/scripts/open-grype-suppression-pr.sh
+        run: |
+          STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
+          .github/workflows/scripts/open-grype-suppression-pr.sh \
+            --stale-count "${STALE_COUNT}" \
+            --stale-list "${STALE_LIST_CSV}" \
+            --match-count "${MATCH_COUNT}" \
+            --run-url "${RUN_URL}"
 
       - name: Skip — no stale suppressions
         if: steps.audit.outputs.stale_count == 0
@@ -69,5 +76,6 @@ jobs:
         run: |
           STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
           .github/workflows/scripts/grype-suppression-summary.sh \
+            --audit-outcome "${{ steps.audit.outcome }}" \
             --stale-count "${STALE_COUNT:-0}" \
             --stale-list "${STALE_LIST_CSV}"

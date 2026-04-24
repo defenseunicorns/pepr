@@ -5,15 +5,21 @@
 # Writes a GitHub Actions workflow summary for the grype suppression audit.
 #
 # Usage:
-#   grype-suppression-summary.sh --stale-count <n> --stale-list <comma-separated IDs>
+#   grype-suppression-summary.sh --audit-outcome <success|failure|skipped> \
+#     [--stale-count <n>] [--stale-list <comma-separated IDs>]
 
 set -euo pipefail
 
+AUDIT_OUTCOME=""
 STALE_COUNT=0
 STALE_LIST=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --audit-outcome)
+      AUDIT_OUTCOME="$2"
+      shift 2
+      ;;
     --stale-count)
       STALE_COUNT="$2"
       shift 2
@@ -32,6 +38,13 @@ done
 {
   echo "# Grype Suppression Audit"
   echo ""
+
+  if [ "${AUDIT_OUTCOME}" != "success" ]; then
+    echo "> **Warning**: The audit step did not complete successfully (outcome: ${AUDIT_OUTCOME})."
+    echo "> Results below may be incomplete. Check the workflow logs for details."
+    echo ""
+  fi
+
   echo "| | |"
   echo "|---|---|"
   echo "| **Image scanned** | \`pepr:dev\` |"
