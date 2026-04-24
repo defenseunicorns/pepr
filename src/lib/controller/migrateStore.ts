@@ -51,6 +51,6 @@ export async function migrateAndSetupWatch(storeData: StoreMigration): Promise<v
       }
     }
   }
-  storeCache = await sendUpdatesAndFlushCache(storeCache, namespace, name);
+  await sendUpdatesAndFlushCache(storeCache, namespace, name);
   setupWatch();
 }
