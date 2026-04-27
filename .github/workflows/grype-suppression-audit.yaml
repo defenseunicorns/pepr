@@ -43,41 +43,8 @@ jobs:
         uses: anchore/scan-action/download-grype@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
 
       - name: Audit suppression list
-        id: audit
         env:
           GRYPE_CMD: ${{ steps.grype.outputs.cmd }}
-        run: .github/workflows/scripts/audit-grype-suppressions.sh
-
-      - name: Create or update PR
-        id: create-pr
-        if: steps.audit.outputs.stale_count != '0' && steps.audit.outputs.stale_count != ''
-        env:
           GH_TOKEN: ${{ github.token }}
-          STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
-          STALE_LIST: ${{ steps.audit.outputs.stale_list }}
-          MATCH_COUNT: ${{ steps.audit.outputs.match_count }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
-          .github/workflows/scripts/open-grype-suppression-pr.sh \
-            --stale-count "${STALE_COUNT}" \
-            --stale-list "${STALE_LIST_CSV}" \
-            --match-count "${MATCH_COUNT}" \
-            --run-url "${RUN_URL}"
-
-      - name: Skip — no stale suppressions
-        if: steps.audit.outputs.stale_count == 0
-        run: echo "All suppressions in .grype.yaml are still active. Nothing to do."
-
-      - name: Write workflow summary
-        if: always()
-        env:
-          STALE_COUNT: ${{ steps.audit.outputs.stale_count }}
-          STALE_LIST: ${{ steps.audit.outputs.stale_list }}
-        run: |
-          STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
-          .github/workflows/scripts/grype-suppression-summary.sh \
-            --audit-outcome "${{ steps.audit.outcome }}" \
-            --pr-outcome "${{ steps.create-pr.outcome }}" \
-            --stale-count "${STALE_COUNT:-0}" \
-            --stale-list "${STALE_LIST_CSV}"
+        run: npx tsx .github/workflows/scripts/audit-grype-suppressions.ts
