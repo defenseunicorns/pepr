@@ -66,7 +66,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - pepr-build
-      
+    env:
+      CACHE_MISS_GROWTH_THRESHOLD: "10"
+      RESYNC_FAILURE_THRESHOLD: "5"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@6c3c2f2c1c457b00c10c4848d6f5491db3b629df # v2.18.0
@@ -110,7 +112,7 @@ jobs:
           ./istioctl install --set profile=demo -y
 
       - name: Set up Kubernetes
-        uses: azure/setup-kubectl@15650b3ad78fff148532a140b8a4c821796b2d7b # v5.0.0
+        uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
         with:
           version: 'latest'
 

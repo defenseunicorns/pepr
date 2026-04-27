@@ -75,10 +75,10 @@ Step 4: Not a header`;
   });
 
   describe("ignored files", () => {
-    it("should skip BACKWARDS_COMPATABILITY.md", () => {
+    it("should skip BACKWARDS_COMPATIBILITY.md", () => {
       const content = `## Step 1: This should be ignored`;
 
-      const errors = lintMarkdown(content, "BACKWARDS_COMPATABILITY.md");
+      const errors = lintMarkdown(content, "BACKWARDS_COMPATIBILITY.md");
       expect(errors).toHaveLength(0);
     });
 
@@ -89,10 +89,10 @@ Step 4: Not a header`;
       expect(errors).toHaveLength(0);
     });
 
-    it("should skip files containing BACKWARDS_COMPATABILITY.md in path", () => {
+    it("should skip files containing BACKWARDS_COMPATIBILITY.md in path", () => {
       const content = `## Step 1: This should be ignored`;
 
-      const errors = lintMarkdown(content, "docs/BACKWARDS_COMPATABILITY.md");
+      const errors = lintMarkdown(content, "docs/BACKWARDS_COMPATIBILITY.md");
       expect(errors).toHaveLength(0);
     });
 
