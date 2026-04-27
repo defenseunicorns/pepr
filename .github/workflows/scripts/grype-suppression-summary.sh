@@ -6,11 +6,13 @@
 #
 # Usage:
 #   grype-suppression-summary.sh --audit-outcome <success|failure|skipped> \
+#     [--pr-outcome <success|failure|skipped>] \
 #     [--stale-count <n>] [--stale-list <comma-separated IDs>]
 
 set -euo pipefail
 
 AUDIT_OUTCOME=""
+PR_OUTCOME="skipped"
 STALE_COUNT=0
 STALE_LIST=""
 
@@ -18,6 +20,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --audit-outcome)
       AUDIT_OUTCOME="$2"
+      shift 2
+      ;;
+    --pr-outcome)
+      PR_OUTCOME="$2"
       shift 2
       ;;
     --stale-count)
@@ -56,16 +62,27 @@ done
     echo ""
     echo "No changes to \`.grype.yaml\` are needed."
   else
-    echo "## PR created or updated"
-    echo ""
-    echo "The following suppressions were removed from \`.grype.yaml\`. A PR has been opened or updated for review."
-    echo ""
-    echo "### Removed suppressions"
+    echo "### Stale suppressions"
     # Convert comma-separated list to markdown bullet points
     IFS=',' read -ra IDS <<< "$STALE_LIST"
     for id in "${IDS[@]}"; do
       echo "- ${id}"
     done
+    echo ""
+
+    if [ "${PR_OUTCOME}" = "success" ]; then
+      echo "## PR created or updated"
+      echo ""
+      echo "The above suppressions were removed from \`.grype.yaml\`. A PR has been opened or updated for review."
+    elif [ "${PR_OUTCOME}" = "skipped" ]; then
+      echo "## PR step was skipped"
+      echo ""
+      echo "The stale suppressions above were detected but the PR step did not run."
+    else
+      echo "## PR creation failed"
+      echo ""
+      echo "> **Warning**: The PR step failed (outcome: ${PR_OUTCOME}). Check the workflow logs for details."
+    fi
     echo ""
   fi
 } >> "$GITHUB_STEP_SUMMARY"

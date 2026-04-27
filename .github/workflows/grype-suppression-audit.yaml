@@ -49,6 +49,7 @@ jobs:
         run: .github/workflows/scripts/audit-grype-suppressions.sh
 
       - name: Create or update PR
+        id: create-pr
         if: steps.audit.outputs.stale_count != '0' && steps.audit.outputs.stale_count != ''
         env:
           GH_TOKEN: ${{ github.token }}
@@ -77,5 +78,6 @@ jobs:
           STALE_LIST_CSV=$(echo "${STALE_LIST}" | paste -sd ',' -)
           .github/workflows/scripts/grype-suppression-summary.sh \
             --audit-outcome "${{ steps.audit.outcome }}" \
+            --pr-outcome "${{ steps.create-pr.outcome }}" \
             --stale-count "${STALE_COUNT:-0}" \
             --stale-list "${STALE_LIST_CSV}"
