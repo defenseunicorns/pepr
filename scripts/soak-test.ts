@@ -15,6 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOGS_DIR = "logs";
 const SCRIPT_DIR = __dirname;
 
+// Metric assertion thresholds (configurable via environment)
+const CACHE_MISS_GROWTH_THRESHOLD = Number(process.env.CACHE_MISS_GROWTH_THRESHOLD) || 10;
+const RESYNC_FAILURE_THRESHOLD = Number(process.env.RESYNC_FAILURE_THRESHOLD) || 5;
+
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -81,6 +85,61 @@ function checkPod(pod: string, count: number, iteration: number): void {
   }
 }
 
+function failWithReason(reason: string): never {
+  fs.writeFileSync(`${LOGS_DIR}/failure-reason.txt`, reason);
+  collectMetrics();
+  process.exit(1);
+}
+
+function assertCacheMissGrowth(currentDelta: number): void {
+  const csvLines = fs.readFileSync(`${LOGS_DIR}/metrics.csv`, "utf-8").trim().split("\n");
+  const baselineColumns = (csvLines[14] ?? "").split(","); // line index 14 = iteration 14 (header is index 0)
+  const baselineDelta = Number(baselineColumns[3] ?? 0);
+  const growth = currentDelta - baselineDelta;
+  if (growth > CACHE_MISS_GROWTH_THRESHOLD) {
+    failWithReason(
+      `Cache misses grew from ${baselineDelta} to ${currentDelta} (growth: ${growth} > threshold: ${CACHE_MISS_GROWTH_THRESHOLD})`,
+    );
+  }
+}
+
+function assertMetrics(iteration: number): void {
+  const lastRow =
+    fs.readFileSync(`${LOGS_DIR}/metrics.csv`, "utf-8").trim().split("\n").at(-1) ?? "";
+  const columns = lastRow.split(",");
+
+  // Assert watch controller has no failures
+  const ctrlFailures = columns[2] ?? "0";
+  if (ctrlFailures !== "0") {
+    failWithReason(`Watch controller failures detected: ${ctrlFailures}`);
+  }
+
+  // After stabilization (~70 minutes), assert cache misses are not growing
+  if (iteration > 14) {
+    assertCacheMissGrowth(Number(columns[3] ?? 0));
+  }
+
+  // Assert resync failures stay below threshold
+  const currentResyncFailures = Number(columns[4] ?? 0);
+  if (currentResyncFailures > RESYNC_FAILURE_THRESHOLD) {
+    failWithReason(
+      `Resync failures exceeded threshold: ${currentResyncFailures} > ${RESYNC_FAILURE_THRESHOLD}`,
+    );
+  }
+}
+
+function checkPodStability(iteration: number): void {
+  updatePodMap();
+
+  execSync("kubectl get pods -n pepr-demo", { stdio: "inherit" });
+  execSync("kubectl top po -n pepr-system", { stdio: "inherit" });
+  execSync("kubectl get po -n pepr-system", { stdio: "inherit" });
+
+  for (const [pod, count] of podMap) {
+    checkPod(pod, count, iteration);
+  }
+}
+
 async function main(): Promise<void> {
   updatePodMap();
 
@@ -103,15 +162,10 @@ async function main(): Promise<void> {
       { stdio: "inherit" },
     );
 
-    if (i % 2 === 0) {
-    if (i < 70) {
-      await sleep(300_000);
-    }
-  }
+    assertMetrics(i);
 
-      for (const [pod, count] of podMap) {
-        checkPod(pod, count, i);
-      }
+    if (i % 2 === 0) {
+      checkPodStability(i);
     }
 
     await sleep(300_000);
