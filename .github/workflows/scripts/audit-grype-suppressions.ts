@@ -241,13 +241,13 @@ function writeSummary(
     "",
   );
 
-  if (staleCount === 0) {
+  if (staleCount === 0 && auditOutcome === "success") {
     lines.push(
       "## All suppressions are still active",
       "",
       "No changes to `.grype.yaml` are needed.",
     );
-  } else {
+  } else if (staleCount > 0) {
     lines.push("### Stale suppressions");
     for (const id of staleIds) {
       lines.push(`- ${id}`);
