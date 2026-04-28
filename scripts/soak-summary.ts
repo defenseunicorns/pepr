@@ -54,9 +54,9 @@ const midrunMisses = csvLines.slice(2).reduce((sum, line) => {
 }, 0);
 const totalCacheMisses = startupMisses + midrunMisses;
 
-const ctrlFailuresStatus = totalCtrlFailures === 0 ? "✅" : "❌";
-const resyncFailuresStatus = finalResyncFailures === 0 ? "✅" : "❌";
-const cacheMissesStatus = midrunMisses === 0 ? "✅" : "⚠️";
+const ctrlFailuresStatus = totalCtrlFailures === 0 ? "PASS" : "FAIL";
+const resyncFailuresStatus = finalResyncFailures === 0 ? "PASS" : "FAIL";
+const cacheMissesStatus = midrunMisses === 0 ? "PASS" : "WARN";
 
 const resyncTotal = fs
   .readFileSync(informerLog, "utf-8")
@@ -91,8 +91,8 @@ const lines = [
 fs.appendFileSync(summary, lines.join("\n") + "\n");
 
 if (fs.existsSync(failureReason)) {
-  fs.appendFileSync(summary, "### ❌ Failure Reason\n");
+  fs.appendFileSync(summary, "### Failure Reason\n");
   fs.appendFileSync(summary, fs.readFileSync(failureReason, "utf-8"));
 } else {
-  fs.appendFileSync(summary, "### ✅ Test Passed\n");
+  fs.appendFileSync(summary, "### Test Passed\n");
 }
