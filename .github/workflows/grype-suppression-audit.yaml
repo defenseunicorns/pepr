@@ -8,10 +8,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: grype-suppression-audit
+  cancel-in-progress: false
+
 jobs:
   audit:
     name: Audit CVE Suppressions
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     permissions:
       contents: write
