@@ -20,8 +20,6 @@ export default defineConfig({
         "src/build-artifact.test.ts",
         "node_modules",
         "dist",
-        "src/build-artifact.test.ts",
-        "pepr/**",
         "src/templates/**",
         "coverage",
       ],
