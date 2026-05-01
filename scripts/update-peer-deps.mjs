@@ -18,9 +18,9 @@ const NO_BUMPS_AVAILABLE = 2;
 function readPackageJson() {
   return JSON.parse(readFileSync(PACKAGE_JSON, "utf8"));
 }
-
-function writePackageJson(parsed) {
-  writeFileSync(PACKAGE_JSON, JSON.stringify(parsed, null, 2) + "\n");
+function readPackageJson() {
+  const raw = readFileSync(PACKAGE_JSON, "utf8");
+  return { parsed: JSON.parse(raw) };
 }
 
 function npmLatest(pkg) {
