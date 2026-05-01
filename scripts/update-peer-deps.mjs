@@ -200,7 +200,7 @@ function runOpenPr(opts) {
   git(["checkout", "-B", branch]);
   git(["add", "package.json", "package-lock.json"]);
   git(["commit", "-m", title, "--signoff"]);
-  git(["push", "--force", "origin", branch]);
+  git(["push", "--force-with-lease", "origin", branch]);
 
   const bodyFile = join(mkdtempSync(join(tmpdir(), "peer-deps-pr-")), "body.md");
   writeFileSync(bodyFile, renderPrBody(opts, bumps));
