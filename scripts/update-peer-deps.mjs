@@ -9,8 +9,11 @@ import { Command, InvalidArgumentError } from "commander";
 const here = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_JSON = resolve(here, "..", "package.json");
 const NO_BUMPS_AVAILABLE = 2;
+const BOT_NAME = "github-actions[bot]";
+const BOT_EMAIL = "41898282+github-actions[bot]@users.noreply.github.com";
+const PR_LABELS = ["dependencies", "automated"];
 
-// ── Pure logic (no I/O) ─────────────────────────────────────────────────────
+// ── Pure logic ──────────────────────────────────────────────────────────────
 
 export function majorOf(version) {
   const head = Number.parseInt(version.split(".")[0], 10);
@@ -78,37 +81,36 @@ export function renderPrBody(opts, bumps) {
     opts.kind === "minor"
       ? "all minor and patch peerDependency bumps grouped together"
       : `the major-version bump for \`${opts.pkg}\` (isolated for review)`;
-  return [
-    "## Description",
-    "",
-    `Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains ${scope}.`,
-    "",
-    "Updated packages:",
-    "",
-    ...bumps.map(b => `- \`${b.name}\` ${b.from} -> ${b.to}`),
-    "",
-    "### In-workflow verification",
-    "",
-    "- `npm run format:check` — passed",
-    "- `npm run build` — passed",
-    "- `npm run test:unit` — passed",
-    "",
-    "## Related Issue",
-    "",
-    "Relates to #",
-    "",
-    "## Type of change",
-    "",
-    "- [ ] Bug fix (non-breaking change which fixes an issue)",
-    "- [ ] New feature (non-breaking change which adds functionality)",
-    "- [x] Other (security config, docs update, etc)",
-    "",
-    "## Checklist before merging",
-    "",
-    "- [x] Test, docs, adr added or updated as needed",
-    "- [x] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed",
-    "",
-  ].join("\n");
+  const list = bumps.map(b => `- \`${b.name}\` ${b.from} -> ${b.to}`).join("\n");
+  return `## Description
+
+Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains ${scope}.
+
+Updated packages:
+
+${list}
+
+### In-workflow verification
+
+- \`npm run format:check\` — passed
+- \`npm run build\` — passed
+- \`npm run test:unit\` — passed
+
+## Related Issue
+
+Relates to #
+
+## Type of change
+
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [x] Other (security config, docs update, etc)
+
+## Checklist before merging
+
+- [x] Test, docs, adr added or updated as needed
+- [x] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed
+`;
 }
 
 // ── I/O wrappers ────────────────────────────────────────────────────────────
@@ -127,43 +129,38 @@ const fetchLatestVersions = (peers, fetcher = npmLatest) =>
   Object.fromEntries(Object.keys(peers).map(p => [p, fetcher(p)]));
 
 const git = args =>
-  execFileSync("git", args, {
-    encoding: "utf8",
-    stdio: ["ignore", "inherit", "inherit"],
-  });
+  execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
 
-// gh always pipes stderr so "already exists" detection works; on failure we
-// forward the captured streams so workflow logs aren't silenced.
+// gh captures stderr so the create-or-edit fallback can detect "already exists";
+// captured streams are forwarded to the parent on real failures.
 function gh(args) {
   try {
-    const out = execFileSync("gh", args, {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    if (out) process.stdout.write(out);
+    const out = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    process.stdout.write(out);
     return out;
   } catch (err) {
-    if (err.stdout) process.stdout.write(String(err.stdout));
-    if (err.stderr) process.stderr.write(String(err.stderr));
+    process.stdout.write(String(err.stdout ?? ""));
+    process.stderr.write(String(err.stderr ?? ""));
     throw err;
   }
 }
 
 // ── Command handlers ────────────────────────────────────────────────────────
 
-function buildReportFromDisk() {
-  const peers = readPackageJson().peerDependencies ?? {};
+function diskReport() {
+  const peers = readPackageJson().peerDependencies;
   return classifyBumps(peers, fetchLatestVersions(peers));
 }
 
-function readDiffBumps() {
-  return parseDiffBumps(
-    execFileSync("git", ["diff", "-U0", "--", "package.json"], { encoding: "utf8" }),
-  );
+function diskBumps() {
+  const diff = execFileSync("git", ["diff", "-U0", "--", "package.json"], { encoding: "utf8" });
+  const bumps = parseDiffBumps(diff);
+  if (bumps.length === 0) throw new Error("no peerDependency changes in git diff -- package.json");
+  return bumps;
 }
 
 function runReport(opts) {
-  const report = buildReportFromDisk();
+  const report = diskReport();
   if (!opts.matrix) {
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");
     return;
@@ -175,8 +172,7 @@ function runReport(opts) {
 function runApply(opts) {
   requireMajorPkg(opts);
   const parsed = readPackageJson();
-  const peers = parsed.peerDependencies ?? {};
-  const updates = pickUpdates(classifyBumps(peers, fetchLatestVersions(peers)), opts);
+  const updates = pickUpdates(diskReport(), opts);
   if (updates.length === 0) {
     const target = opts.pkg ? ` for "${opts.pkg}"` : "";
     console.error(`no ${opts.kind} peerDependency bumps available${target}`);
@@ -185,52 +181,40 @@ function runApply(opts) {
   for (const u of updates) parsed.peerDependencies[u.name] = u.to;
   writePackageJson(parsed);
   const what = opts.kind === "minor" ? "peerDependencies (minor/patch)" : "peerDependency";
-  const detail = updates.map(u => `${u.name} ${u.from} -> ${u.to}`).join(", ");
-  console.error(`updated ${what}: ${detail}`);
+  console.error(
+    `updated ${what}: ${updates.map(u => `${u.name} ${u.from} -> ${u.to}`).join(", ")}`,
+  );
 }
 
 function runPrBody(opts) {
   requireMajorPkg(opts);
-  const bumps = readDiffBumps();
-  if (bumps.length === 0) throw new Error("no peerDependency changes in git diff -- package.json");
-  process.stdout.write(renderPrBody(opts, bumps));
+  process.stdout.write(renderPrBody(opts, diskBumps()));
 }
 
 function runOpenPr(opts) {
   requireMajorPkg(opts);
-  const bumps = readDiffBumps();
-  if (bumps.length === 0) throw new Error("no peerDependency changes in git diff -- package.json");
-
-  const peers = readPackageJson().peerDependencies ?? {};
+  const bumps = diskBumps();
+  const peers = readPackageJson().peerDependencies;
   const { branch, title } = pickBranchAndTitle(opts, peers);
-  const body = renderPrBody(opts, bumps);
 
-  git(["config", "user.name", "github-actions[bot]"]);
-  git(["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"]);
+  git(["config", "user.name", BOT_NAME]);
+  git(["config", "user.email", BOT_EMAIL]);
   git(["checkout", "-B", branch]);
   git(["add", "package.json", "package-lock.json"]);
   git(["commit", "-m", title, "--signoff"]);
   git(["push", "--force", "origin", branch]);
 
   const bodyFile = join(mkdtempSync(join(tmpdir(), "peer-deps-pr-")), "body.md");
-  writeFileSync(bodyFile, body);
+  writeFileSync(bodyFile, renderPrBody(opts, bumps));
 
-  const labels = ["--label", "dependencies", "--label", "automated"];
-  const head = ["--head", branch, "--title", title, "--body-file", bodyFile];
+  const meta = ["--title", title, "--body-file", bodyFile];
+  const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
+  const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
   try {
-    gh(["pr", "create", "--base", "main", ...head, ...labels]);
+    gh(["pr", "create", "--base", "main", "--head", branch, ...meta, ...labelArgs]);
   } catch (err) {
     if (!/already exists/i.test(String(err.stderr ?? ""))) throw err;
-    gh([
-      "pr",
-      "edit",
-      branch,
-      ...head.slice(2),
-      "--add-label",
-      "dependencies",
-      "--add-label",
-      "automated",
-    ]);
+    gh(["pr", "edit", branch, ...meta, ...addLabelArgs]);
   }
 }
 
