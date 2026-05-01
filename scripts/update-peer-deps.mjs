@@ -96,7 +96,7 @@ ${list}
 
 ## Related Issue
 
-Relates to #
+None, ongoing maintenance
 
 ## Type of change
 
