@@ -40,6 +40,7 @@ function buildSummaryLines(csvLines: string[]): string[] {
   const resyncTotal = fs
     .readFileSync(informerLog, "utf-8")
     .split("\n")
+    .map(line => line.trim())
     .filter(line => !line.startsWith("#"))
     .filter(line => line.includes("pepr_resync_failure_count"))
     .reduce((sum, line) => {

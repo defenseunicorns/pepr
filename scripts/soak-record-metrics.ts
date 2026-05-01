@@ -23,6 +23,7 @@ const [iteration, auditorLog, informerLog, metricsCSV] = program.args;
 const auditorLines = fs
   .readFileSync(auditorLog, "utf-8")
   .split("\n")
+  .map(line => line.trim())
   .filter(line => !line.startsWith("#"))
   .filter(line => line.includes("watch_controller_failures_total"));
 
@@ -32,6 +33,7 @@ const ctrlFailures = lastAuditorLine?.split(/\s+/)?.at(-1) || 0;
 const informerLines = fs
   .readFileSync(informerLog, "utf-8")
   .split("\n")
+  .map(line => line.trim())
   .filter(line => !line.startsWith("#"));
 
 // pepr_cache_miss: gauge per time window e.g. pepr_cache_miss{window="..."} 16 — sum all windows
