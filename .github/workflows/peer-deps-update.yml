@@ -1,0 +1,171 @@
+name: Peer Dependencies Update
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC. Avoids existing daily nightlies (00:00 UTC) and
+    # the Sunday scorecard run; lines up with the 7-day Dependabot cooldown so
+    # peer-dep PRs land in the same review rhythm as production-dep PRs.
+    - cron: "0 6 * * MON"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover pending peer-dep bumps
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      empty: ${{ steps.set-matrix.outputs.empty }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate report
+        run: node scripts/update-peer-deps.mjs --report > /tmp/peer-deps.json
+      - name: Build matrix
+        id: set-matrix
+        run: |
+          set -eu
+          report=/tmp/peer-deps.json
+          minor_count=$(jq '.minor | length' "$report")
+          entries='[]'
+          if [ "$minor_count" -gt 0 ]; then
+            entries=$(echo "$entries" | jq '. + [{kind:"minor", pkg:""}]')
+          fi
+          while IFS= read -r pkg; do
+            [ -z "$pkg" ] && continue
+            entries=$(echo "$entries" | jq --arg p "$pkg" '. + [{kind:"major", pkg:$p}]')
+          done < <(jq -r '.major[].name' "$report")
+          length=$(echo "$entries" | jq 'length')
+          {
+            echo "matrix={\"include\": $entries}"
+            if [ "$length" -eq 0 ]; then
+              echo "empty=true"
+            else
+              echo "empty=false"
+            fi
+          } >> "$GITHUB_OUTPUT"
+          echo "Discovered $length pending peer-dep PR(s)."
+          jq . "$report"
+
+  propose:
+    name: Propose peer-dep PR
+    needs: discover
+    if: needs.discover.outputs.empty == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply bump
+        id: apply
+        env:
+          KIND: ${{ matrix.kind }}
+          PKG: ${{ matrix.pkg }}
+        run: |
+          set -eu
+          today=$(date -u +%Y-%m-%d)
+          if [ "$KIND" = "minor" ]; then
+            node scripts/update-peer-deps.mjs --write minor
+            echo "branch=chore/peer-deps/minor-$today" >> "$GITHUB_OUTPUT"
+            echo "title=chore: bump peerDependencies (minor/patch)" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/update-peer-deps.mjs --write major --pkg "$PKG"
+            new_version=$(node -p "require('./package.json').peerDependencies['$PKG']")
+            echo "branch=chore/peer-deps/major-${PKG}-$today" >> "$GITHUB_OUTPUT"
+            echo "title=chore: bump peerDependency $PKG to $new_version (major)" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Refresh lockfile
+        run: npm install
+      - name: Format check
+        run: npm run format:check
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Build PR body
+        id: body
+        env:
+          KIND: ${{ matrix.kind }}
+          PKG: ${{ matrix.pkg }}
+        run: |
+          set -eu
+          bumps=$(git diff -U0 package.json | grep -E '^\+\s+"' \
+            | sed -E 's/^\+\s+"([^"]+)": "([^"]+)",?\s*$/- `\1` -> `\2`/' || true)
+          if [ "$KIND" = "minor" ]; then
+            scope_blurb="all minor and patch peerDependency bumps grouped together"
+          else
+            scope_blurb="the major-version bump for \`$PKG\` (isolated for review)"
+          fi
+          {
+            echo "body<<__PR_BODY_EOF__"
+            echo "## Description"
+            echo
+            echo "Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains $scope_blurb."
+            echo
+            echo "Updated packages:"
+            echo
+            echo "$bumps"
+            echo
+            echo "### In-workflow verification"
+            echo
+            echo "- \`npm run format:check\` — passed"
+            echo "- \`npm run build\` — passed"
+            echo "- \`npm run test:unit\` — passed"
+            echo
+            echo "## Related Issue"
+            echo
+            echo "Relates to #"
+            echo
+            echo "## Type of change"
+            echo
+            echo "- [ ] Bug fix (non-breaking change which fixes an issue)"
+            echo "- [ ] New feature (non-breaking change which adds functionality)"
+            echo "- [x] Other (security config, docs update, etc)"
+            echo
+            echo "## Checklist before merging"
+            echo
+            echo "- [x] Test, docs, adr added or updated as needed"
+            echo "- [x] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed"
+            echo "__PR_BODY_EOF__"
+          } >> "$GITHUB_OUTPUT"
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # Default GITHUB_TOKEN does not trigger pull_request workflows on the
+          # opened PR (a documented GitHub limitation). Provision a project PAT
+          # or GitHub-App token at PEER_DEPS_PR_TOKEN so node.js.yml runs and
+          # gates these PRs the same as a human-authored one.
+          token: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.apply.outputs.branch }}
+          base: main
+          title: ${{ steps.apply.outputs.title }}
+          body: ${{ steps.body.outputs.body }}
+          commit-message: ${{ steps.apply.outputs.title }}
+          labels: |
+            dependencies
+            automated
+          delete-branch: true
+          signoff: true
