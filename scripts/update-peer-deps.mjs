@@ -13,8 +13,6 @@ const BOT_NAME = "github-actions[bot]";
 const BOT_EMAIL = "41898282+github-actions[bot]@users.noreply.github.com";
 const PR_LABELS = ["dependencies", "automated"];
 
-// ── Pure logic ──────────────────────────────────────────────────────────────
-
 export function majorOf(version) {
   const head = Number.parseInt(version.split(".")[0], 10);
   if (Number.isNaN(head)) throw new Error(`unparseable version "${version}"`);
