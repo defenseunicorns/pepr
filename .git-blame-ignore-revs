@@ -1,0 +1,18 @@
+# git blame ignore-revs file
+#
+# Lists commits that performed mechanical, repository-wide changes (formatter
+# sweeps, codemods, mass renames). Listing them here makes `git blame` and
+# the GitHub blame UI skip past these commits, so blame keeps pointing at the
+# author of the underlying logic instead of the author of the format sweep.
+#
+# Local activation (one-time, per developer):
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub respects this file automatically with no setup required.
+#
+# Only add commits that contain zero logic changes. False positives
+# misattribute authorship.
+
+# chore: consolidate prettier config to one file for consistent behavior (#1952)
+# Repository-wide reformat after enabling bracketSameLine; no logic changes.
+e8d81edca66a904153a401faeb6092f22d81f90f
