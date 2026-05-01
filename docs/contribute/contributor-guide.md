@@ -97,8 +97,8 @@ A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](../../.github
 The `peerDependencies` block in `package.json` is maintained by the [`peer-deps-update`](../../.github/workflows/peer-deps-update.yml) GitHub Actions workflow. The workflow runs every Monday and opens PRs grouped by SemVer risk: a single PR for all minor/patch bumps and a separate PR per major-version bump (so that majors get isolated review and revert paths).
 
 - To trigger an off-cycle run, dispatch the workflow manually from the Actions tab.
-- To inspect the latest peer-dep candidates locally without opening a PR, run `node scripts/update-peer-deps.mjs --report`.
-- To apply bumps locally, run `node scripts/update-peer-deps.mjs --write minor` for the minor/patch group or `node scripts/update-peer-deps.mjs --write major --pkg <name>` for a single major bump.
+- To inspect the latest peer-dep candidates locally without opening a PR, run `node scripts/update-peer-deps.mjs report`.
+- To apply bumps locally, run `node scripts/update-peer-deps.mjs apply --kind minor` for the minor/patch group or `node scripts/update-peer-deps.mjs apply --kind major --pkg <name>` for a single major bump.
 
 Dependabot continues to handle the `dependencies` and `devDependencies` blocks; the two automations never touch the same region of `package.json`.
 

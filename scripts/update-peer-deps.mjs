@@ -60,18 +60,15 @@ export function pickBranchAndTitle(opts, peerVersions) {
   };
 }
 
-export function parseDiffBumps(diff) {
-  const before = {};
-  const after = {};
-  for (const line of diff.split("\n")) {
-    const match = line.match(/^([-+])\s+"([^"]+)":\s+"([^"]+)",?\s*$/);
-    if (match) (match[1] === "-" ? before : after)[match[2]] = match[3];
+export function diffPeerDeps(before, after) {
+  const beforePeers = before.peerDependencies ?? {};
+  const afterPeers = after.peerDependencies ?? {};
+  const bumps = [];
+  for (const [name, to] of Object.entries(afterPeers)) {
+    const from = beforePeers[name];
+    if (from && from !== to) bumps.push({ name, from, to });
   }
-  return Object.keys(after).map(name => ({
-    name,
-    from: before[name] ?? "—",
-    to: after[name],
-  }));
+  return bumps;
 }
 
 export function renderPrBody(opts, bumps) {
@@ -151,9 +148,11 @@ function diskReport() {
 }
 
 function diskBumps() {
-  const diff = execFileSync("git", ["diff", "-U0", "--", "package.json"], { encoding: "utf8" });
-  const bumps = parseDiffBumps(diff);
-  if (bumps.length === 0) throw new Error("no peerDependency changes in git diff -- package.json");
+  const before = JSON.parse(
+    execFileSync("git", ["show", "HEAD:package.json"], { encoding: "utf8" }),
+  );
+  const bumps = diffPeerDeps(before, readPackageJson());
+  if (bumps.length === 0) throw new Error("no peerDependency changes vs HEAD");
   return bumps;
 }
 
