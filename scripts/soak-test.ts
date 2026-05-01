@@ -172,7 +172,9 @@ async function main(): Promise<void> {
         checkPodStability(i);
       }
 
-      await sleep(300_000);
+      if (i < 70) {
+        await sleep(300_000);
+      }
     }
 
     console.log("Soak test passed successfully!");

@@ -16,6 +16,21 @@ const program = new Command()
 
 const [metricsCSV, informerLog, failureReason] = program.args;
 
+function buildCacheMissTrend(csvLines: string[], finalRow: string[], iters: string): string[] {
+  if (csvLines.length <= 15) return [];
+
+  const baselineMisses = Number(csvLines[14]?.split(",")[3]) || 0;
+  const finalMisses = Number(finalRow[3]) || 0;
+  const trendGrowth = finalMisses - baselineMisses;
+  const cacheMissGrowthThreshold = Number(process.env.CACHE_MISS_GROWTH_THRESHOLD) || 10;
+  const trendStatus = trendGrowth <= cacheMissGrowthThreshold ? "✅ Stable" : "⚠️ Growing";
+  return [
+    "### Cache Miss Trend (post-stabilization)",
+    `Baseline (iteration 14): ${baselineMisses} | Final (iteration ${iters}): ${finalMisses} | Growth: ${trendGrowth} | ${trendStatus}`,
+    "",
+  ];
+}
+
 function buildSummaryLines(csvLines: string[]): string[] {
   const finalRow = csvLines.at(-1)!.split(",");
   const iters = finalRow[0];
@@ -33,9 +48,9 @@ function buildSummaryLines(csvLines: string[]): string[] {
   }, 0);
   const totalCacheMisses = startupMisses + midrunMisses;
 
-  const ctrlFailuresStatus = totalCtrlFailures === 0 ? "PASS" : "FAIL";
-  const resyncFailuresStatus = finalResyncFailures === 0 ? "PASS" : "FAIL";
-  const cacheMissesStatus = midrunMisses === 0 ? "PASS" : "WARN";
+  const ctrlFailuresStatus = totalCtrlFailures === 0 ? "✅" : "❌";
+  const resyncFailuresStatus = finalResyncFailures === 0 ? "✅" : "❌";
+  const cacheMissesStatus = midrunMisses === 0 ? "✅" : "⚠️";
 
   const resyncTotal = fs
     .readFileSync(informerLog, "utf-8")
@@ -55,7 +70,7 @@ function buildSummaryLines(csvLines: string[]): string[] {
 
   const resyncFailuresDisplay = `${finalResyncFailures} failures across ${resyncTotal} resyncs`;
 
-  return [
+  const lines = [
     "## Soak Test Results",
     "",
     "| Metric | Value | Status |",
@@ -67,6 +82,10 @@ function buildSummaryLines(csvLines: string[]): string[] {
     `**Iterations completed:** ${iters} / 70 | **Duration:** ~${Number(iters) * 5} minutes`,
     "",
   ];
+
+  lines.push(...buildCacheMissTrend(csvLines, finalRow, iters));
+
+  return lines;
 }
 
 function main(): void {
@@ -89,10 +108,10 @@ function main(): void {
   fs.appendFileSync(summary, buildSummaryLines(csvLines).join("\n") + "\n");
 
   if (fs.existsSync(failureReason)) {
-    fs.appendFileSync(summary, "### Failure Reason\n");
+    fs.appendFileSync(summary, "### ❌ Failure Reason\n");
     fs.appendFileSync(summary, fs.readFileSync(failureReason, "utf-8"));
   } else {
-    fs.appendFileSync(summary, "### Test Passed\n");
+    fs.appendFileSync(summary, "### ✅ Test Passed\n");
   }
 }
 
