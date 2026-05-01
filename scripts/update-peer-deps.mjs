@@ -81,15 +81,6 @@ export function renderPrBody(opts, bumps) {
 
 Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains ${scope}.
 
-### Fan-out context
-
-The workflow runs as a two-job pipeline:
-
-1. **\`discover\`** queries npm for the latest published version of every entry in \`peerDependencies\` and emits a GitHub Actions matrix split by SemVer risk — one cell for the combined minor/patch group, plus one cell per major-version bump.
-2. **\`propose\`** fans out across that matrix with \`fail-fast: false\`. Each cell independently applies its slice, refreshes the lockfile, runs \`format:check\`/\`build\`/\`test:unit\` as gates, and opens its own PR. A broken major (e.g. a TypeScript major that fails \`tsc\`) aborts only its own cell, so unrelated minor/patch bumps still ship as a green PR.
-
-This PR is the output of one such cell, so it can be reviewed and merged independently of the others currently open from the same workflow run.
-
 Updated packages:
 
 ${list}
