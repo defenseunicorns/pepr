@@ -5,28 +5,19 @@
 // Usage: soak-record-metrics.ts <iteration> <auditor-log> <informer-log> <metrics-csv>
 
 import fs from "node:fs";
+import { Command } from "commander";
 
-const iteration = process.argv[2];
-const auditorLog = process.argv[3];
-const informerLog = process.argv[4];
-const metricsCSV = process.argv[5];
+const program = new Command()
+  .description(
+    "Parses Prometheus metrics from soak test log files and appends a row to the metrics CSV.",
+  )
+  .argument("<iteration>", "iteration number")
+  .argument("<auditor-log>", "path to auditor log file")
+  .argument("<informer-log>", "path to informer log file")
+  .argument("<metrics-csv>", "path to metrics CSV file")
+  .parse();
 
-if (!iteration) {
-  console.error("iteration number required");
-  process.exit(1);
-}
-if (!auditorLog) {
-  console.error("auditor log path required");
-  process.exit(1);
-}
-if (!informerLog) {
-  console.error("informer log path required");
-  process.exit(1);
-}
-if (!metricsCSV) {
-  console.error("metrics csv path required");
-  process.exit(1);
-}
+const [iteration, auditorLog, informerLog, metricsCSV] = program.args;
 
 // watch_controller_failures_total: simple counter, take the value directly
 const auditorLines = fs

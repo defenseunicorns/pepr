@@ -76,19 +76,24 @@ function checkPod(pod: string, count: number, iteration: number): void {
   console.log(`${pod}: ${count}`);
   if (count > 1) {
     console.log(`Test failed: Pod ${pod} has count ${count}`);
-    fs.writeFileSync(
-      `${LOGS_DIR}/failure-reason.txt`,
+    execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", { stdio: "inherit" });
+    failWithReason(
       `Pod ${pod} was recreated (seen ${count} times) at iteration ${iteration} (~${iteration * 5} minutes into the run.`,
     );
-    execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", { stdio: "inherit" });
-    process.exit(1);
+  }
+}
+
+class SoakTestFailure extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = "SoakTestFailure";
   }
 }
 
 function failWithReason(reason: string): never {
   fs.writeFileSync(`${LOGS_DIR}/failure-reason.txt`, reason);
   collectMetrics();
-  process.exit(1);
+  throw new SoakTestFailure(reason);
 }
 
 function assertCacheMissGrowth(currentDelta: number): void {
@@ -132,8 +137,8 @@ function checkPodStability(iteration: number): void {
   updatePodMap();
 
   execSync("kubectl get pods -n pepr-demo", { stdio: "inherit" });
-  execSync("kubectl top po -n pepr-system", { stdio: "inherit" });
-  execSync("kubectl get po -n pepr-system", { stdio: "inherit" });
+  execSync("kubectl top pods -n pepr-system", { stdio: "inherit" });
+  execSync("kubectl get pods -n pepr-system", { stdio: "inherit" });
 
   for (const [pod, count] of podMap) {
     checkPod(pod, count, iteration);
@@ -141,37 +146,46 @@ function checkPodStability(iteration: number): void {
 }
 
 async function main(): Promise<void> {
-  updatePodMap();
+  try {
+    updatePodMap();
 
-  for (let i = 1; i <= 70; i++) {
-    collectMetrics();
+    for (let i = 1; i <= 70; i++) {
+      collectMetrics();
 
-    console.log(fs.readFileSync(`${LOGS_DIR}/informer-log.txt`, "utf-8"));
-    console.log(fs.readFileSync(`${LOGS_DIR}/auditor-log.txt`, "utf-8"));
+      console.log(fs.readFileSync(`${LOGS_DIR}/informer-log.txt`, "utf-8"));
+      console.log(fs.readFileSync(`${LOGS_DIR}/auditor-log.txt`, "utf-8"));
 
-    execFileSync(
-      "npx",
-      [
-        "tsx",
-        path.join(SCRIPT_DIR, "soak-record-metrics.ts"),
-        String(i),
-        `${LOGS_DIR}/auditor-log.txt`,
-        `${LOGS_DIR}/informer-log.txt`,
-        `${LOGS_DIR}/metrics.csv`,
-      ],
-      { stdio: "inherit" },
-    );
+      execFileSync(
+        "npx",
+        [
+          "tsx",
+          path.join(SCRIPT_DIR, "soak-record-metrics.ts"),
+          String(i),
+          `${LOGS_DIR}/auditor-log.txt`,
+          `${LOGS_DIR}/informer-log.txt`,
+          `${LOGS_DIR}/metrics.csv`,
+        ],
+        { stdio: "inherit" },
+      );
 
-    assertMetrics(i);
+      assertMetrics(i);
 
-    if (i % 2 === 0) {
-      checkPodStability(i);
+      if (i % 2 === 0) {
+        checkPodStability(i);
+      }
+
+      await sleep(300_000);
     }
 
-    await sleep(300_000);
+    console.log("Soak test passed successfully!");
+  } catch (err) {
+    if (err instanceof SoakTestFailure) {
+      console.error(err.message);
+      process.exitCode = 1;
+    } else {
+      throw err;
+    }
   }
-
-  console.log("Soak test passed successfully!");
 }
 
 void main();
