@@ -44,10 +44,16 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     steps:
+      # `token` is set so subsequent `git push` and `gh pr create` calls use
+      # PEER_DEPS_PR_TOKEN if available. Without that PAT the default
+      # GITHUB_TOKEN works, but PRs created with it do not trigger
+      # pull_request-event workflows (a documented GitHub limitation), which
+      # would leave node.js.yml ungated on these PRs.
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
+          token: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -56,11 +62,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Apply bump
-        id: apply
         env:
           KIND: ${{ matrix.kind }}
           PKG: ${{ matrix.pkg }}
-        run: node scripts/update-peer-deps.mjs apply --kind "$KIND" --pkg "$PKG" --github-output >> "$GITHUB_OUTPUT"
+        run: node scripts/update-peer-deps.mjs apply --kind "$KIND" --pkg "$PKG"
       - name: Refresh lockfile
         run: npm install
       - name: Format check
@@ -69,27 +74,9 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm run test:unit
-      - name: Build PR body
-        id: body
+      - name: Open PR
         env:
+          GH_TOKEN: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
           KIND: ${{ matrix.kind }}
           PKG: ${{ matrix.pkg }}
-        run: node scripts/update-peer-deps.mjs pr-body --kind "$KIND" --pkg "$PKG" --github-output >> "$GITHUB_OUTPUT"
-      - name: Open pull request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          # Default GITHUB_TOKEN does not trigger pull_request workflows on the
-          # opened PR (a documented GitHub limitation). Provision a project PAT
-          # or GitHub-App token at PEER_DEPS_PR_TOKEN so node.js.yml runs and
-          # gates these PRs the same as a human-authored one.
-          token: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
-          branch: ${{ steps.apply.outputs.branch }}
-          base: main
-          title: ${{ steps.apply.outputs.title }}
-          body: ${{ steps.body.outputs.body }}
-          commit-message: ${{ steps.apply.outputs.title }}
-          labels: |
-            dependencies
-            automated
-          delete-branch: true
-          signoff: true
+        run: node scripts/update-peer-deps.mjs open-pr --kind "$KIND" --pkg "$PKG"

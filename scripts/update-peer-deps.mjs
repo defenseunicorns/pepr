@@ -1,15 +1,10 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
+import { tmpdir } from "node:os";
 import { Command, InvalidArgumentError } from "commander";
-
-function requireMajorPkg(opts) {
-  if (opts.kind === "major" && !opts.pkg) {
-    program.error("--kind major requires --pkg <name>");
-  }
-}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_JSON = resolve(here, "..", "package.json");
@@ -89,93 +84,27 @@ function gitDiffPeerBumps() {
   }));
 }
 
-function emitGithubOutputPairs(pairs) {
-  for (const [key, value] of Object.entries(pairs)) {
-    process.stdout.write(`${key}=${value}\n`);
-  }
-}
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function parseKind(value) {
-  if (value !== "minor" && value !== "major") {
-    throw new InvalidArgumentError('must be "minor" or "major"');
-  }
-  return value;
-}
-
-function runReport(opts) {
-  const peers = readPackageJson().peerDependencies ?? {};
-  const report = buildReport(peers);
-  if (opts.matrix) {
-    const include = reportToMatrixInclude(report);
-    emitGithubOutputPairs({
-      matrix: JSON.stringify({ include }),
-      empty: include.length === 0 ? "true" : "false",
-    });
-    return;
-  }
-  process.stdout.write(JSON.stringify(report, null, 2) + "\n");
-}
-
-function runApply(opts) {
-  requireMajorPkg(opts);
-  const parsed = readPackageJson();
-  const peers = parsed.peerDependencies ?? {};
-  const report = buildReport(peers);
-
+function pickBranchAndTitle(opts) {
   if (opts.kind === "minor") {
-    if (Object.keys(report.minor).length === 0) {
-      console.error("no minor/patch peerDependency bumps available");
-      process.exit(NO_BUMPS_AVAILABLE);
-    }
-    for (const [name, { to }] of Object.entries(report.minor)) {
-      parsed.peerDependencies[name] = to;
-    }
-    writePackageJson(parsed);
-    if (opts.githubOutput) {
-      emitGithubOutputPairs({
-        branch: `chore/peer-deps/minor-${today()}`,
-        title: "chore: bump peerDependencies (minor/patch)",
-      });
-    }
-    const summary = Object.entries(report.minor)
-      .map(([n, v]) => `${n} ${v.from} -> ${v.to}`)
-      .join(", ");
-    console.error(`updated peerDependencies (minor/patch): ${summary}`);
-    return;
+    return {
+      branch: "chore/peer-deps/minor",
+      title: "chore: bump peerDependencies (minor/patch)",
+    };
   }
-
-  const target = report.major.find(m => m.name === opts.pkg);
-  if (!target) {
-    console.error(`no major peerDependency bump available for "${opts.pkg}"`);
-    process.exit(NO_BUMPS_AVAILABLE);
-  }
-  parsed.peerDependencies[target.name] = target.to;
-  writePackageJson(parsed);
-  if (opts.githubOutput) {
-    emitGithubOutputPairs({
-      branch: `chore/peer-deps/major-${target.name}-${today()}`,
-      title: `chore: bump peerDependency ${target.name} to ${target.to} (major)`,
-    });
-  }
-  console.error(`updated peerDependency ${target.name} ${target.from} -> ${target.to}`);
+  const peers = readPackageJson().peerDependencies ?? {};
+  const newVersion = peers[opts.pkg];
+  return {
+    branch: `chore/peer-deps/major-${opts.pkg}`,
+    title: `chore: bump peerDependency ${opts.pkg} to ${newVersion} (major)`,
+  };
 }
 
-function runPrBody(opts) {
-  requireMajorPkg(opts);
-  const bumps = gitDiffPeerBumps();
-  if (bumps.length === 0) {
-    throw new Error("no peerDependency changes found in git diff -- package.json");
-  }
+function renderPrBody(opts, bumps) {
   const scope =
     opts.kind === "minor"
       ? "all minor and patch peerDependency bumps grouped together"
       : `the major-version bump for \`${opts.pkg}\` (isolated for review)`;
-
-  const lines = [
+  return [
     "## Description",
     "",
     `Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains ${scope}.`,
@@ -204,15 +133,147 @@ function runPrBody(opts) {
     "",
     "- [x] Test, docs, adr added or updated as needed",
     "- [x] [Contributor Guide Steps](https://docs.pepr.dev/main/contribute/#submitting-a-pull-request) followed",
-  ];
+    "",
+  ].join("\n");
+}
 
-  if (opts.githubOutput) {
-    process.stdout.write("body<<__PR_BODY_EOF__\n");
-    process.stdout.write(lines.join("\n") + "\n");
-    process.stdout.write("__PR_BODY_EOF__\n");
+function git(args) {
+  return execFileSync("git", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "inherit", "inherit"],
+  });
+}
+
+function gh(args, captureStderr = false) {
+  return execFileSync("gh", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "inherit", captureStderr ? "pipe" : "inherit"],
+  });
+}
+
+function parseKind(value) {
+  if (value !== "minor" && value !== "major") {
+    throw new InvalidArgumentError('must be "minor" or "major"');
+  }
+  return value;
+}
+
+function requireMajorPkg(opts) {
+  if (opts.kind === "major" && !opts.pkg) {
+    program.error("--kind major requires --pkg <name>");
+  }
+}
+
+function runReport(opts) {
+  const peers = readPackageJson().peerDependencies ?? {};
+  const report = buildReport(peers);
+  if (opts.matrix) {
+    const include = reportToMatrixInclude(report);
+    process.stdout.write(`matrix=${JSON.stringify({ include })}\n`);
+    process.stdout.write(`empty=${include.length === 0 ? "true" : "false"}\n`);
     return;
   }
-  process.stdout.write(lines.join("\n") + "\n");
+  process.stdout.write(JSON.stringify(report, null, 2) + "\n");
+}
+
+function runApply(opts) {
+  requireMajorPkg(opts);
+  const parsed = readPackageJson();
+  const peers = parsed.peerDependencies ?? {};
+  const report = buildReport(peers);
+
+  if (opts.kind === "minor") {
+    if (Object.keys(report.minor).length === 0) {
+      console.error("no minor/patch peerDependency bumps available");
+      process.exit(NO_BUMPS_AVAILABLE);
+    }
+    for (const [name, { to }] of Object.entries(report.minor)) {
+      parsed.peerDependencies[name] = to;
+    }
+    writePackageJson(parsed);
+    const summary = Object.entries(report.minor)
+      .map(([n, v]) => `${n} ${v.from} -> ${v.to}`)
+      .join(", ");
+    console.error(`updated peerDependencies (minor/patch): ${summary}`);
+    return;
+  }
+
+  const target = report.major.find(m => m.name === opts.pkg);
+  if (!target) {
+    console.error(`no major peerDependency bump available for "${opts.pkg}"`);
+    process.exit(NO_BUMPS_AVAILABLE);
+  }
+  parsed.peerDependencies[target.name] = target.to;
+  writePackageJson(parsed);
+  console.error(`updated peerDependency ${target.name} ${target.from} -> ${target.to}`);
+}
+
+function runPrBody(opts) {
+  requireMajorPkg(opts);
+  const bumps = gitDiffPeerBumps();
+  if (bumps.length === 0) {
+    throw new Error("no peerDependency changes found in git diff -- package.json");
+  }
+  process.stdout.write(renderPrBody(opts, bumps));
+}
+
+function runOpenPr(opts) {
+  requireMajorPkg(opts);
+  const bumps = gitDiffPeerBumps();
+  if (bumps.length === 0) {
+    throw new Error("no peerDependency changes found in git diff -- package.json");
+  }
+
+  const { branch, title } = pickBranchAndTitle(opts);
+  const body = renderPrBody(opts, bumps);
+
+  git(["config", "user.name", "github-actions[bot]"]);
+  git(["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"]);
+
+  git(["checkout", "-B", branch]);
+  git(["add", "package.json", "package-lock.json"]);
+  git(["commit", "-m", title, "--signoff"]);
+  git(["push", "--force", "origin", branch]);
+
+  const dir = mkdtempSync(join(tmpdir(), "peer-deps-pr-"));
+  const bodyFile = join(dir, "body.md");
+  writeFileSync(bodyFile, body);
+
+  const createArgs = [
+    "pr",
+    "create",
+    "--base",
+    "main",
+    "--head",
+    branch,
+    "--title",
+    title,
+    "--body-file",
+    bodyFile,
+    "--label",
+    "dependencies",
+    "--label",
+    "automated",
+  ];
+  try {
+    gh(createArgs);
+  } catch (err) {
+    const stderr = String(err.stderr ?? "");
+    if (!/already exists/i.test(stderr)) throw err;
+    gh([
+      "pr",
+      "edit",
+      branch,
+      "--title",
+      title,
+      "--body-file",
+      bodyFile,
+      "--add-label",
+      "dependencies",
+      "--add-label",
+      "automated",
+    ]);
+  }
 }
 
 const program = new Command();
@@ -232,7 +293,6 @@ program
   .description("Write package.json with the requested peer-dep bumps applied.")
   .requiredOption("--kind <kind>", '"minor" (all minor/patch) or "major" (one package)', parseKind)
   .option("--pkg <name>", "package name (required for --kind major)")
-  .option("--github-output", "emit branch=<...> and title=<...> for $GITHUB_OUTPUT")
   .action(runApply);
 
 program
@@ -240,7 +300,13 @@ program
   .description("Print a markdown PR body for the bumps already staged in package.json.")
   .requiredOption("--kind <kind>", '"minor" or "major"', parseKind)
   .option("--pkg <name>", "package name (required for --kind major)")
-  .option("--github-output", "wrap the body in a $GITHUB_OUTPUT heredoc named 'body'")
   .action(runPrBody);
+
+program
+  .command("open-pr")
+  .description("Commit the staged peer-dep bumps, push the bot branch, and create or update a PR.")
+  .requiredOption("--kind <kind>", '"minor" or "major"', parseKind)
+  .option("--pkg <name>", "package name (required for --kind major)")
+  .action(runOpenPr);
 
 await program.parseAsync(process.argv);
