@@ -61,26 +61,11 @@ export function removeStaleEntries(yamlContent: string, staleIds: string[]): str
   const config = load(yamlContent) as GrypeConfig;
   if (!config?.ignore) return yamlContent;
 
-  // Build the set of vulnerability IDs to keep
-  const keptIds = new Set(
-    config.ignore
-      .map(entry => entry.vulnerability)
-      .filter(id => !staleSet.has(id)),
-  );
+  config.ignore = config.ignore.filter(entry => !staleSet.has(entry.vulnerability));
 
-  // Remove stale lines from the raw YAML text to preserve comments and formatting.
-  // Only simple single-key entries (- vulnerability: <id>) are ever marked stale by
-  // findStaleSuppressions, so a line-based filter is safe here.
-  const lines = yamlContent.split("\n");
-  const filtered = lines.filter(line => {
-    const m = line.match(/^\s*-\s+vulnerability:\s+(\S+)\s*$/);
-    return !m || keptIds.has(m[1]) || !staleSet.has(m[1]);
-  });
-
-  // If the ignore list is now empty, remove the 'ignore:' key header too
-  const result = filtered.join("\n");
-  if (keptIds.size === 0) {
-    return result.replace(/^ignore:\s*\n/m, "");
+  if (config.ignore.length === 0) {
+    delete config.ignore;
   }
-  return result;
+
+  return dump(config, { lineWidth: -1 });
 }
