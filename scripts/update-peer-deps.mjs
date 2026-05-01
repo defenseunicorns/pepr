@@ -64,8 +64,8 @@ export function parseDiffBumps(diff) {
   const before = {};
   const after = {};
   for (const line of diff.split("\n")) {
-    const m = line.match(/^([-+])\s+"([^"]+)":\s+"([^"]+)",?\s*$/);
-    if (m) (m[1] === "-" ? before : after)[m[2]] = m[3];
+    const match = line.match(/^([-+])\s+"([^"]+)":\s+"([^"]+)",?\s*$/);
+    if (match) (match[1] === "-" ? before : after)[match[2]] = match[3];
   }
   return Object.keys(after).map(name => ({
     name,
