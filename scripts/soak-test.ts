@@ -30,16 +30,18 @@ fs.writeFileSync(
   "iteration,timestamp,watch_controller_failures_delta,pepr_cache_miss_delta,pepr_resync_failure_count\n",
 );
 
-let previousPods = new Set<string>();
+const podMap = new Map<string, number>();
 
-function getCurrentPods(): Set<string> {
+function updatePodMap(): void {
   const output = execSync("kubectl get pods -n pepr-demo -o jsonpath='{.items[*].metadata.name}'")
     .toString()
     .trim();
 
-  if (!output) return new Set();
+  if (!output) return;
 
-  return new Set(output.split(" "));
+  for (const pod of output.split(" ")) {
+    podMap.set(pod, (podMap.get(pod) ?? 0) + 1);
+  }
 }
 
 function collectMetrics(): void {
@@ -70,16 +72,14 @@ function collectMetrics(): void {
   });
 }
 
-function checkForNewPods(currentPods: Set<string>, iteration: number): void {
-  for (const pod of currentPods) {
-    console.log(`${pod}: present`);
-    if (!previousPods.has(pod) && previousPods.size > 0) {
-      console.log(`Test failed: Pod ${pod} appeared after initial snapshot`);
-      execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", { stdio: "inherit" });
-      failWithReason(
-        `Pod ${pod} was recreated at iteration ${iteration} (~${iteration * 5} minutes into the run)`,
-      );
-    }
+function checkPod(pod: string, count: number, iteration: number): void {
+  console.log(`${pod}: ${count}`);
+  if (count > 1) {
+    console.log(`Test failed: Pod ${pod} has count ${count}`);
+    execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", { stdio: "inherit" });
+    failWithReason(
+      `Pod ${pod} was recreated (seen ${count} times) at iteration ${iteration} (~${iteration * 5} minutes into the run)`,
+    );
   }
 }
 
@@ -133,19 +133,20 @@ function assertMetrics(iteration: number): void {
 }
 
 function checkPodStability(iteration: number): void {
-  const currentPods = getCurrentPods();
+  updatePodMap();
 
   execSync("kubectl get pods -n pepr-demo", { stdio: "inherit" });
   execSync("kubectl top pods -n pepr-system", { stdio: "inherit" });
   execSync("kubectl get pods -n pepr-system", { stdio: "inherit" });
 
-  checkForNewPods(currentPods, iteration);
-  previousPods = currentPods;
+  for (const [pod, count] of podMap) {
+    checkPod(pod, count, iteration);
+  }
 }
 
 async function main(): Promise<void> {
   try {
-    previousPods = getCurrentPods();
+    updatePodMap();
 
     for (let i = 1; i <= 70; i++) {
       collectMetrics();
