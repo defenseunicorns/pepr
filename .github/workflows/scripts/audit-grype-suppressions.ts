@@ -125,22 +125,28 @@ function ensureBranch(branch: string): void {
   // Create the branch from HEAD if it doesn't already exist on the remote.
   try {
     exec("gh", ["api", `repos/{owner}/{repo}/git/ref/heads/${branch}`]);
-  } catch {
-    const headSha = exec("gh", [
-      "api",
-      "repos/{owner}/{repo}/git/ref/heads/main",
-      "--jq",
-      ".object.sha",
-    ]);
-    exec("gh", [
-      "api",
-      "repos/{owner}/{repo}/git/refs",
-      "-f",
-      `ref=refs/heads/${branch}`,
-      "-f",
-      `sha=${headSha}`,
-    ]);
+    return;
+  } catch (err) {
+    const stderr = String((err as { stderr?: unknown }).stderr ?? "");
+    if (!stderr.includes("Not Found")) {
+      throw err;
+    }
   }
+
+  const headSha = exec("gh", [
+    "api",
+    "repos/{owner}/{repo}/git/ref/heads/main",
+    "--jq",
+    ".object.sha",
+  ]);
+  exec("gh", [
+    "api",
+    "repos/{owner}/{repo}/git/refs",
+    "-f",
+    `ref=refs/heads/${branch}`,
+    "-f",
+    `sha=${headSha}`,
+  ]);
 }
 
 function pushBranch(branch: string, staleCount: number): void {
