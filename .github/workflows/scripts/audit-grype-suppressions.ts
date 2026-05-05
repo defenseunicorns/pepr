@@ -133,9 +133,17 @@ function ensureBranch(branch: string): void {
     }
   }
 
+  const defaultBranch = exec("gh", [
+    "repo",
+    "view",
+    "--json",
+    "defaultBranchRef",
+    "--jq",
+    ".defaultBranchRef.name",
+  ]);
   const headSha = exec("gh", [
     "api",
-    "repos/{owner}/{repo}/git/ref/heads/main",
+    `repos/{owner}/{repo}/git/ref/heads/${defaultBranch}`,
     "--jq",
     ".object.sha",
   ]);
@@ -223,8 +231,6 @@ function openOrUpdatePR(branch: string, title: string, body: string): string {
         bodyFile,
         "--head",
         branch,
-        "--base",
-        "main",
       ]);
     }
   } finally {
