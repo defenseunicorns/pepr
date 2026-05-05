@@ -83,15 +83,6 @@ Please follow the coding conventions and style used in the project. Use ESLint a
   - The pre-push hook is an opinionated way of working, and is therefore optional.
   - You can opt-in to using the pre-push hook by setting `PEPR_HOOK_OPT_IN=1` as an environment variable.
 
-## Automated Workflows
-
-### Grype Suppression Audit
-
-A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](../../.github/workflows/grype-suppression-audit.yaml)) scans the Pepr controller image for stale CVE suppressions in `.grype.yaml`. When stale entries are found, the workflow removes them and opens (or updates) a PR on the bot-owned branch `grype/suppression-audit`.
-
-- **Do not push manual commits to `grype/suppression-audit`** — the workflow force-pushes to this branch weekly and any manual changes will be overwritten.
-- To add context to a suppression entry (e.g. `reason:`), add it directly to `.grype.yaml` on `main`. The audit script skips multi-key entries and will not remove them automatically.
-
 ## Running Tests
 
 ### Run Tests Locally
