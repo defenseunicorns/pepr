@@ -237,7 +237,7 @@ Recommendations for keeping modules small are:
 - Don't repeat yourself
 - Only import the part of the library modules that you need
 
-It is suggested to lint and format your modules  using `npx pepr format`. Configure linting and formatting tools directly in your project.
+It is suggested to lint and format your modules  using `npx pepr format`.
 
 > [!WARNING]
 > `npx pepr format` will be deprecated and removed in summer 2026 with the release of Pepr v2.0.0. "Once removed, module authors must run a linter separately from the pepr CLI."
