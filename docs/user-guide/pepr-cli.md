@@ -121,6 +121,9 @@ These can't be auto-removed because they're global in scope & doing so would ris
 
 ## `npx pepr format`
 
+> [!WARNING]
+> `pepr format` will deprecated and removed in Pepr v2.0.0 expected in summer 2026. "Once removed, module authors must run a linter separately from the pepr CLI."Please configure linting and formatting directly in your project instead.
+
 Lint and format this Pepr module.
 
 **Options:**
