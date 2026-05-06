@@ -121,15 +121,73 @@ function buildPRContent(staleIds: string[], matchCount: number): { title: string
   return { title, body };
 }
 
+function ensureBranch(branch: string): void {
+  // Create the branch from HEAD if it doesn't already exist on the remote.
+  try {
+    exec("gh", ["api", `repos/{owner}/{repo}/git/ref/heads/${branch}`]);
+    return;
+  } catch (err) {
+    const stderr = String((err as { stderr?: unknown }).stderr ?? "");
+    if (!stderr.includes("Not Found")) {
+      throw err;
+    }
+  }
+
+  const defaultBranch = exec("gh", [
+    "repo",
+    "view",
+    "--json",
+    "defaultBranchRef",
+    "--jq",
+    ".defaultBranchRef.name",
+  ]);
+  const headSha = exec("gh", [
+    "api",
+    `repos/{owner}/{repo}/git/ref/heads/${defaultBranch}`,
+    "--jq",
+    ".object.sha",
+  ]);
+  exec("gh", [
+    "api",
+    "repos/{owner}/{repo}/git/refs",
+    "-f",
+    `ref=refs/heads/${branch}`,
+    "-f",
+    `sha=${headSha}`,
+  ]);
+}
+
 function pushBranch(branch: string, staleCount: number): void {
   const commitMsg = `chore: remove ${staleCount} stale CVE suppression(s) from .grype.yaml`;
 
-  exec("git", ["config", "user.name", "github-actions[bot]"]);
-  exec("git", ["config", "user.email", "github-actions[bot]@users.noreply.github.com"]);
-  exec("git", ["checkout", "-B", branch]);
-  exec("git", ["add", ".grype.yaml"]);
-  exec("git", ["commit", "-m", commitMsg]);
-  exec("git", ["push", "origin", branch, "--force-with-lease"]);
+  ensureBranch(branch);
+
+  // Get the current file's blob SHA on the branch (required by the Contents API).
+  const blobSha = exec("gh", [
+    "api",
+    `repos/{owner}/{repo}/contents/${GRYPE_YAML}?ref=${branch}`,
+    "-q",
+    ".sha",
+  ]);
+
+  // Read the locally-modified file and base64-encode it.
+  const content = readFileSync(GRYPE_YAML).toString("base64");
+
+  // Update the file via the Contents API — GitHub auto-verifies the commit.
+  exec("gh", [
+    "api",
+    "-X",
+    "PUT",
+    `repos/{owner}/{repo}/contents/${GRYPE_YAML}`,
+    "-f",
+    `message=${commitMsg}`,
+    "-f",
+    `content=${content}`,
+    "-f",
+    `sha=${blobSha}`,
+    "-f",
+    `branch=${branch}`,
+  ]);
 }
 
 function openOrUpdatePR(branch: string, title: string, body: string): string {
@@ -173,8 +231,6 @@ function openOrUpdatePR(branch: string, title: string, body: string): string {
         bodyFile,
         "--head",
         branch,
-        "--base",
-        "main",
       ]);
     }
   } finally {
