@@ -47,8 +47,7 @@ export function loadCapabilities(path: string): Promise<CapabilityExport[]> {
     program.on("close", (code, signal) => {
       if (settled) return;
       settled = true;
-      const reason = signal ? `signal ${signal}` : `code ${code}`;
-      reject(new Error(`Child process exited with ${reason} before sending capabilities`));
+      const reason = signal ? `signal ${signal}` : code !== null ? `code ${code}` : "unknown reason";
     });
   });
 }
