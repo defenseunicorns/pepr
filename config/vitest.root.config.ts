@@ -2,7 +2,12 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["src/**/*.test.ts", "hack/**/*.test.ts", "config/**/*.test.ts"],
+    include: [
+      "src/**/*.test.ts",
+      "hack/**/*.test.ts",
+      "config/**/*.test.ts",
+      ".github/**/*.test.ts",
+    ],
     exclude: [
       "node_modules",
       "dist",
@@ -20,8 +25,6 @@ export default defineConfig({
         "src/build-artifact.test.ts",
         "node_modules",
         "dist",
-        "src/build-artifact.test.ts",
-        "pepr/**",
         "src/templates/**",
         "coverage",
       ],
