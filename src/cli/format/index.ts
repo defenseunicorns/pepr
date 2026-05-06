@@ -14,8 +14,8 @@ export default function (program: Command): void {
     .option("-v, --validate-only", "Do not modify files, only validate formatting.")
     .action(async opts => {
       Log.warn(
-        "DEPRECATION NOTICE: `pepr format` will be deprecated removed in summer 2026. " +
-          "Please configure linting and formatting directly in your project instead.",
+        "DEPRECATION NOTICE: The pepr format command will be removed in summer 2026. " +
+          "Once removed, module authors must run a linter separately from the pepr CLI.",
       );
 
       const success = await peprFormat(opts.validateOnly);
