@@ -1,16 +1,8 @@
 import fs from "fs";
 import path from "path";
+import ts from "typescript";
 import Log from "../../../lib/telemetry/logger";
 import { stringify } from "yaml";
-import {
-  Project,
-  InterfaceDeclaration,
-  TypeAliasDeclaration,
-  SyntaxKind,
-  Node,
-  SourceFile,
-  Type,
-} from "ts-morph";
 import { createDirectoryIfNotExists } from "../../../lib/filesystemService";
 import { kind as k } from "kubernetes-fluent-client";
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
@@ -18,7 +10,7 @@ import { WarningMessages, ErrorMessages } from "./messages";
 
 function extractCRDDetails(
   content: string,
-  sourceFile: SourceFile,
+  sourceFile: ts.SourceFile,
 ): {
   kind: string | undefined;
   fqdn: string;
@@ -44,14 +36,20 @@ export async function generateCRDs(options: { output: string }): Promise<void> {
   const outputDir = path.resolve(options.output);
   await createDirectoryIfNotExists(outputDir);
 
-  const project = new Project();
   const apiRoot = path.resolve("api");
   const versions = getAPIVersions(apiRoot);
 
   for (const version of versions) {
-    const sourceFiles = loadVersionFiles(project, path.join(apiRoot, version));
-    for (const sourceFile of sourceFiles) {
-      processSourceFile(sourceFile, version, outputDir);
+    const versionDir = path.join(apiRoot, version);
+    const filePaths = loadVersionFilePaths(versionDir);
+    const program = createProgram(filePaths);
+    const checker = program.getTypeChecker();
+
+    for (const filePath of filePaths) {
+      const sourceFile = program.getSourceFile(filePath);
+      if (sourceFile) {
+        processSourceFile(sourceFile, checker, version, outputDir);
+      }
     }
   }
 }
@@ -60,14 +58,22 @@ export function getAPIVersions(apiRoot: string): string[] {
   return fs.readdirSync(apiRoot).filter(v => fs.statSync(path.join(apiRoot, v)).isDirectory());
 }
 
-export function loadVersionFiles(project: Project, versionDir: string): SourceFile[] {
+export function loadVersionFilePaths(versionDir: string): string[] {
   const files = fs.readdirSync(versionDir).filter(f => f.endsWith(".ts"));
-  const filePaths = files.map(f => path.join(versionDir, f));
-  return project.addSourceFilesAtPaths(filePaths);
+  return files.map(f => path.join(versionDir, f));
+}
+
+export function createProgram(filePaths: string[]): ts.Program {
+  return ts.createProgram(filePaths, {
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.ESNext,
+    strict: true,
+  });
 }
 
 export function processSourceFile(
-  sourceFile: SourceFile,
+  sourceFile: ts.SourceFile,
+  checker: ts.TypeChecker,
   version: string,
   outputDir: string,
 ): void {
@@ -75,19 +81,19 @@ export function processSourceFile(
   const { kind, fqdn, scope, plural, shortNames } = extractCRDDetails(content, sourceFile);
 
   if (!kind) {
-    Log.warn(WarningMessages.MISSING_KIND_COMMENT(sourceFile.getBaseName()));
+    Log.warn(WarningMessages.MISSING_KIND_COMMENT(path.basename(sourceFile.fileName)));
     return;
   }
 
-  const spec = sourceFile.getInterface(`${kind}Spec`);
+  const spec = findInterface(sourceFile, `${kind}Spec`);
   if (!spec) {
-    Log.warn(WarningMessages.MISSING_INTERFACE(sourceFile.getBaseName(), kind));
+    Log.warn(WarningMessages.MISSING_INTERFACE(path.basename(sourceFile.fileName), kind));
     return;
   }
 
-  const condition = sourceFile.getTypeAlias(`${kind}StatusCondition`);
-  const specSchema = getSchemaFromType(spec);
-  const conditionSchema = condition ? getSchemaFromType(condition) : emptySchema();
+  const condition = findTypeAlias(sourceFile, `${kind}StatusCondition`);
+  const specSchema = getSchemaFromType(spec, checker);
+  const conditionSchema = condition ? getSchemaFromType(condition, checker) : emptySchema();
 
   const crd = buildCRD({
     kind,
@@ -112,25 +118,41 @@ export function extractSingleLineComment(content: string, label: string): string
   return match?.[1].trim();
 }
 
-export function extractDetails(sourceFile: SourceFile): {
+export function extractDetails(sourceFile: ts.SourceFile): {
   plural: string;
   scope: "Cluster" | "Namespaced";
   shortName: string;
 } {
-  const decl = sourceFile.getVariableDeclaration("details");
-  if (!decl) {
+  let detailsDecl: ts.VariableDeclaration | undefined;
+  ts.forEachChild(sourceFile, node => {
+    if (ts.isVariableStatement(node)) {
+      for (const decl of node.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && decl.name.text === "details") {
+          detailsDecl = decl;
+        }
+      }
+    }
+  });
+
+  if (!detailsDecl) {
     throw new Error(ErrorMessages.MISSING_DETAILS);
   }
 
-  const init = decl.getInitializerIfKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+  const init = detailsDecl.initializer;
+  if (!init || !ts.isObjectLiteralExpression(init)) {
+    throw new Error(ErrorMessages.MISSING_DETAILS);
+  }
 
   const getStr = (key: string): string => {
-    const prop = init.getProperty(key);
-    const value = prop?.getFirstChildByKind(SyntaxKind.StringLiteral)?.getLiteralText();
-    if (!value) {
-      throw new Error(ErrorMessages.MISSING_OR_INVALID_KEY(key));
+    const match = init.properties.find(
+      (prop): prop is ts.PropertyAssignment =>
+        ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name) && prop.name.text === key,
+    );
+
+    if (match && ts.isStringLiteral(match.initializer) && match.initializer.text) {
+      return match.initializer.text;
     }
-    return value;
+    throw new Error(ErrorMessages.MISSING_OR_INVALID_KEY(key));
   };
 
   const scope = getStr("scope");
@@ -145,79 +167,133 @@ export function extractDetails(sourceFile: SourceFile): {
   throw new Error(ErrorMessages.INVALID_SCOPE(scope));
 }
 
-function getJsDocDescription(node: Node): string {
-  if (!Node.isPropertySignature(node) && !Node.isPropertyDeclaration(node)) return "";
-  return node
-    .getJsDocs()
-    .map(doc => doc.getComment())
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+function findInterface(
+  sourceFile: ts.SourceFile,
+  name: string,
+): ts.InterfaceDeclaration | undefined {
+  let result: ts.InterfaceDeclaration | undefined;
+  ts.forEachChild(sourceFile, node => {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === name) {
+      result = node;
+    }
+  });
+  return result;
 }
 
-function getSchemaFromType(decl: InterfaceDeclaration | TypeAliasDeclaration): {
+function findTypeAlias(
+  sourceFile: ts.SourceFile,
+  name: string,
+): ts.TypeAliasDeclaration | undefined {
+  let result: ts.TypeAliasDeclaration | undefined;
+  ts.forEachChild(sourceFile, node => {
+    if (ts.isTypeAliasDeclaration(node) && node.name.text === name) {
+      result = node;
+    }
+  });
+  return result;
+}
+
+function getJsDocDescription(node: ts.Node): string {
+  const jsDocs = ts.getJSDocCommentsAndTags(node);
+  const comments: string[] = [];
+  for (const doc of jsDocs) {
+    if (ts.isJSDoc(doc) && doc.comment) {
+      if (typeof doc.comment === "string") {
+        comments.push(doc.comment);
+      } else {
+        comments.push(doc.comment.map(part => part.text).join(""));
+      }
+    }
+  }
+  return comments.join(" ").trim();
+}
+
+function getSchemaFromType(
+  decl: ts.InterfaceDeclaration | ts.TypeAliasDeclaration,
+  checker: ts.TypeChecker,
+): {
   properties: Record<string, V1JSONSchemaProps>;
   required: string[];
 } {
-  const type = decl.getType();
+  const type = checker.getTypeAtLocation(decl);
   const properties: Record<string, V1JSONSchemaProps> = {};
   const required: string[] = [];
 
   for (const prop of type.getProperties()) {
     const name = uncapitalize(prop.getName());
     const declarations = prop.getDeclarations();
-    if (!declarations.length) continue;
+    if (!declarations || !declarations.length) continue;
 
     const declaration = declarations[0];
     const description = getJsDocDescription(declaration);
-    const valueType = declaration.getType();
+    const valueType = checker.getTypeOfSymbolAtLocation(prop, declaration);
 
     properties[name] = {
-      ...mapTypeToSchema(valueType),
+      ...mapTypeToSchema(valueType, checker),
       ...(description ? { description } : {}),
     };
 
-    if (!prop.isOptional()) required.push(name);
+    if (!(prop.flags & ts.SymbolFlags.Optional)) required.push(name);
   }
 
   return { properties, required };
 }
 
-function mapTypeToSchema(type: Type): V1JSONSchemaProps {
-  if (type.getText() === "Date") return { type: "string", format: "date-time" };
-  if (type.isString()) return { type: "string" };
-  if (type.isNumber()) return { type: "number" };
-  if (type.isBoolean()) return { type: "boolean" };
-  if (type.isArray()) {
-    return {
-      type: "array",
-      items: mapTypeToSchema(type.getArrayElementTypeOrThrow()),
-    };
+function getPrimitiveSchemaType(type: ts.Type): V1JSONSchemaProps | undefined {
+  const { flags } = type;
+  if (flags & ts.TypeFlags.String || flags & ts.TypeFlags.StringLiteral) {
+    return { type: "string" };
+  }
+  if (flags & ts.TypeFlags.Number || flags & ts.TypeFlags.NumberLiteral) {
+    return { type: "number" };
+  }
+  if (
+    flags & ts.TypeFlags.Boolean ||
+    flags & ts.TypeFlags.BooleanLiteral ||
+    flags & ts.TypeFlags.BooleanLike
+  ) {
+    return { type: "boolean" };
+  }
+  return undefined;
+}
+
+function mapTypeToSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
+  if (checker.typeToString(type) === "Date") return { type: "string", format: "date-time" };
+
+  const primitive = getPrimitiveSchemaType(type);
+  if (primitive) return primitive;
+
+  if (checker.isArrayType(type)) {
+    const typeArgs = (type as ts.TypeReference).typeArguments;
+    if (typeArgs && typeArgs.length > 0) {
+      return { type: "array", items: mapTypeToSchema(typeArgs[0], checker) };
+    }
+    return { type: "array" };
   }
 
-  if (type.isObject()) return buildObjectSchema(type);
+  if (type.flags & ts.TypeFlags.Object) return buildObjectSchema(type, checker);
   return { type: "string" };
 }
 
-function buildObjectSchema(type: Type): V1JSONSchemaProps {
+function buildObjectSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
   const props: Record<string, V1JSONSchemaProps> = {};
   const required: string[] = [];
 
   for (const prop of type.getProperties()) {
     const name = uncapitalize(prop.getName());
     const declarations = prop.getDeclarations();
-    if (!declarations.length) continue;
+    if (!declarations || !declarations.length) continue;
 
     const decl = declarations[0];
     const description = getJsDocDescription(decl);
-    const subType = decl.getType();
+    const subType = checker.getTypeOfSymbolAtLocation(prop, decl);
 
     props[name] = {
-      ...mapTypeToSchema(subType),
+      ...mapTypeToSchema(subType, checker),
       ...(description ? { description } : {}),
     };
 
-    if (!prop.isOptional()) required.push(name);
+    if (!(prop.flags & ts.SymbolFlags.Optional)) required.push(name);
   }
 
   return {

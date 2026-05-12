@@ -8,11 +8,11 @@ import {
   processSourceFile,
   uncapitalize,
   emptySchema,
-  loadVersionFiles,
+  loadVersionFilePaths,
   getAPIVersions,
 } from "./generators";
 import { ErrorMessages, WarningMessages } from "./messages";
-import { Project, type SourceFile } from "ts-morph";
+import ts from "typescript";
 import * as fs from "fs";
 import Log from "../../../lib/telemetry/logger";
 
@@ -84,8 +84,48 @@ const generateTestContent = ({
   return parts.join("\n");
 };
 
-const createProjectWithFile = (name: string, content: string): SourceFile => {
-  return new Project().createSourceFile(name, content);
+const createSourceFile = (name: string, content: string): ts.SourceFile => {
+  return ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
+};
+
+const createProgramFromContent = (
+  name: string,
+  content: string,
+): { sourceFile: ts.SourceFile; checker: ts.TypeChecker } => {
+  const host = ts.createCompilerHost({
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.ESNext,
+    strict: true,
+  });
+  const originalGetSourceFile = host.getSourceFile;
+  host.getSourceFile = (fileName, languageVersion, onError, shouldCreate) => {
+    if (fileName === name) {
+      return ts.createSourceFile(fileName, content, languageVersion, true);
+    }
+    return originalGetSourceFile.call(host, fileName, languageVersion, onError, shouldCreate);
+  };
+  host.fileExists = (fileName: string) => {
+    if (fileName === name) return true;
+    return ts.sys.fileExists(fileName);
+  };
+  host.readFile = (fileName: string) => {
+    if (fileName === name) return content;
+    return ts.sys.readFile(fileName);
+  };
+
+  const program = ts.createProgram(
+    [name],
+    {
+      target: ts.ScriptTarget.ESNext,
+      module: ts.ModuleKind.ESNext,
+      strict: true,
+    },
+    host,
+  );
+
+  const sourceFile = program.getSourceFile(name)!;
+  const checker = program.getTypeChecker();
+  return { sourceFile, checker };
 };
 
 describe("CRD Generator", () => {
@@ -154,61 +194,43 @@ describe("CRD Generator", () => {
       });
     });
 
-    describe("when loading version files", () => {
+    describe("when loading version file paths", () => {
       beforeEach(() => {
         vi.clearAllMocks();
       });
 
-      it("should load only TypeScript files from the version directory", () => {
-        const project = new Project();
-        // Create mock source files with type-coercion because only care about the return value behavior
-        const mockReturnFiles = [
-          "mock-source-file-1",
-          "mock-source-file-2",
-        ] as unknown as import("ts-morph").SourceFile[];
-
+      it("should return only TypeScript file paths from the version directory", () => {
         (fs.readdirSync as Mock).mockReturnValue(["foo.ts", "bar.js", "baz.ts", "README.md"]);
-        const projectSpy = vi
-          .spyOn(project, "addSourceFilesAtPaths")
-          .mockReturnValue(mockReturnFiles);
 
-        const result = loadVersionFiles(project, "/api/v1");
+        const result = loadVersionFilePaths("/api/v1");
 
         expect(fs.readdirSync).toHaveBeenCalledWith("/api/v1");
-        expect(projectSpy).toHaveBeenCalledWith(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
-        expect(result).toBe(mockReturnFiles);
+        expect(result).toEqual(["/api/v1/foo.ts", "/api/v1/baz.ts"]);
       });
 
       it("should return an empty array when no TypeScript files exist in the directory", () => {
-        const project = new Project();
         (fs.readdirSync as Mock).mockReturnValue(["bar.js", "README.md", "config.json"]);
-        const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
 
-        const result = loadVersionFiles(project, "/api/v1");
+        const result = loadVersionFilePaths("/api/v1");
 
         expect(fs.readdirSync).toHaveBeenCalledWith("/api/v1");
-        expect(projectSpy).toHaveBeenCalledWith([]);
         expect(result).toEqual([]);
       });
 
       it("should return an empty array for an empty directory", () => {
-        const project = new Project();
         (fs.readdirSync as Mock).mockReturnValue([]);
-        const projectSpy = vi.spyOn(project, "addSourceFilesAtPaths").mockReturnValue([]);
 
-        const result = loadVersionFiles(project, "/api/v1");
+        const result = loadVersionFilePaths("/api/v1");
 
-        expect(projectSpy).toHaveBeenCalledWith([]);
         expect(result).toEqual([]);
       });
 
       it("should propagate filesystem errors when they occur", () => {
-        const project = new Project();
         (fs.readdirSync as Mock).mockImplementation(() => {
           throw new Error("Directory not found");
         });
 
-        expect(() => loadVersionFiles(project, "/non-existent-dir")).toThrow("Directory not found");
+        expect(() => loadVersionFilePaths("/non-existent-dir")).toThrow("Directory not found");
       });
     });
   });
@@ -216,7 +238,7 @@ describe("CRD Generator", () => {
   describe("CRD Details Extraction", () => {
     describe("when extracting from a valid file", () => {
       it("should extract plural, scope, and shortName from the details object", () => {
-        const file = createProjectWithFile("temp.ts", generateTestContent());
+        const file = createSourceFile("temp.ts", generateTestContent());
 
         const details = extractDetails(file);
         expect(details).toEqual({
@@ -242,7 +264,7 @@ describe("CRD Generator", () => {
           expectedError: ErrorMessages.MISSING_OR_INVALID_KEY("plural"),
         },
       ])("should throw an error: $expectedError", ({ contents, expectedError }) => {
-        const file = createProjectWithFile("test.ts", contents);
+        const file = createSourceFile("test.ts", contents);
         expect(() => extractDetails(file)).toThrow(expectedError);
       });
     });
@@ -260,8 +282,8 @@ describe("CRD Generator", () => {
           expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
         },
       ])("should log appropriate warnings: $expectedWarning", ({ contents, expectedWarning }) => {
-        const file = createProjectWithFile("test.ts", contents);
-        processSourceFile(file, "v1", "/output");
+        const { sourceFile, checker } = createProgramFromContent("test.ts", contents);
+        processSourceFile(sourceFile, checker, "v1", "/output");
         expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
       });
     });
@@ -278,8 +300,8 @@ describe("CRD Generator", () => {
             expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
           },
         ])("should warn: $expectedWarning", ({ contents, expectedWarning }) => {
-          const file = createProjectWithFile("test.ts", contents);
-          processSourceFile(file, "v1", "/output");
+          const { sourceFile, checker } = createProgramFromContent("test.ts", contents);
+          processSourceFile(sourceFile, checker, "v1", "/output");
           expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
         });
       });
@@ -287,7 +309,7 @@ describe("CRD Generator", () => {
       describe("when file content is valid", () => {
         it("should generate a CRD YAML file", () => {
           const writeFileMock = vi.mocked(fs.writeFileSync);
-          const file = createProjectWithFile(
+          const { sourceFile, checker } = createProgramFromContent(
             "valid.ts",
             generateTestContent({
               kind: "Widget",
@@ -300,7 +322,7 @@ describe("CRD Generator", () => {
             }),
           );
 
-          processSourceFile(file, "v1", "/crds");
+          processSourceFile(sourceFile, checker, "v1", "/crds");
           expect(writeFileMock.mock.calls[0][0]).toBe("/crds/widget.yaml");
           expect(writeFileMock.mock.calls[0][1]).toContain("CustomResourceDefinition");
           expect(writeFileMock.mock.calls[0][2]).toContain("utf8");
