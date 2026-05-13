@@ -74,12 +74,12 @@ updates:
     schedule:
       interval: daily
     registries:
-      - rapidfort
+      - chainguard
 
 registries:
-  rapidfort:
+  chainguard:
     type: "docker-registry"
-    url: "quay.io"
-    username: "${{ secrets.RAPIDFORT_USERNAME }}"
-    password: "${{ secrets.RAPIDFORT_PASSWORD }}"
+    url: "cgr.dev"
+    username: "${{ secrets.CHAINGUARD_PEPR_USERNAME }}"
+    password: "${{ secrets.CHAINGUARD_PEPR_PASSWORD }}"
     replaces-base: true

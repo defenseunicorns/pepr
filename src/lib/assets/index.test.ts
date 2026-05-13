@@ -58,5 +58,9 @@ describe("createWebhookYaml", () => {
     expect(result).toContain("{{- range .Values.additionalIgnoredNamespaces }}");
     expect(result).toContain("{{ . }}");
     expect(result).toContain("{{- end }}");
+    expect(result).toContain("{{- if .Values.admission.webhookAnnotations }}");
+    expect(result).toContain("{{- toYaml .Values.admission.webhookAnnotations | nindent 4 }}");
+    expect(result).toContain("{{- if .Values.admission.webhookLabels }}");
+    expect(result).toContain("{{- toYaml .Values.admission.webhookLabels | nindent 4 }}");
   });
 });

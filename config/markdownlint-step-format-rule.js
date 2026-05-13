@@ -1,4 +1,4 @@
-const IGNORED_FILES = ["BACKWARDS_COMPATABILITY.md", "CODE-OF-CONDUCT.md"];
+const IGNORED_FILES = ["BACKWARDS_COMPATIBILITY.md", "CODE-OF-CONDUCT.md"];
 
 module.exports = {
   names: ["step-format"],

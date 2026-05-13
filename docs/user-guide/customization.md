@@ -63,6 +63,15 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch                                 | default: `"300"` (5 mins)         |
 | `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources                                                 | default: `"600"` (10 mins)        |
 
+## Customizing Webhook Server Timeouts
+
+The admission webhook server's HTTP timeouts can be tuned via environment variables on the Admission Deployment.
+
+| Field                        | Description                                                        | Example Values           |
+| ---------------------------- | ------------------------------------------------------------------ | ------------------------ |
+| `PEPR_KEEP_ALIVE_TIMEOUT_MS` | Idle timeout on persistent connections (`server.keepAliveTimeout`) | default: `"90000"` (90s) |
+| `PEPR_HEADERS_TIMEOUT_MS`    | Max time to receive full HTTP headers (`server.headersTimeout`)    | default: `"32000"` (32s) |
+
 ## Configuring Reconcile
 
 The [Reconcile Action](../actions/reconcile.md) allows you to maintain ordering of resource updates processed by a Pepr controller. The Reconcile configuration can be customized via environment variable on the Watcher Deployment, which can be set in the `package.json` or in the helm `values.yaml` file.
