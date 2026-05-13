@@ -31,3 +31,5 @@ ignore:
   - vulnerability: CVE-2026-28389
   - vulnerability: CVE-2026-28390
   - vulnerability: CVE-2026-40200
+  - vulnerability: CVE-2026-31789
+  - vulnerability: CVE-2026-28387
