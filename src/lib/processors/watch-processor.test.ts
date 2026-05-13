@@ -22,6 +22,10 @@ vi.mock("../telemetry/logger", () => ({
   },
 }));
 
+vi.mock("../finalizer", () => ({
+  removeFinalizer: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("../telemetry/metrics", () => ({
   metricsCollector: {
     initCacheMissWindow: vi.fn(),
@@ -391,6 +395,125 @@ describe("WatchProcessor", () => {
         parseIntSpy.mockRestore();
       });
     });
+  });
+});
+
+describe("Callback Error Propagation", () => {
+  const mockStart = vi.fn();
+  const mockK8s = vi.mocked(K8s);
+  const mockWatch = vi.fn();
+  const mockEvents = vi.fn() as MockInstance<onCallback>;
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+
+    mockStart.mockImplementation(() => Promise.resolve());
+    mockWatch.mockImplementation(
+      () =>
+        ({
+          start: mockStart,
+          events: {
+            on: mockEvents,
+          },
+        }) as unknown as Watcher<typeof kind.Pod>,
+    );
+
+    mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+      return {
+        Apply: vi.fn(),
+        InNamespace: vi.fn().mockReturnThis(),
+        Watch: mockWatch,
+        Get: vi.fn(),
+      } as unknown as K8sInit<T, K>;
+    });
+  });
+
+  it("should propagate watch callback errors to KFC", async () => {
+    const error = new Error("callback failed");
+    const binding = {
+      isWatch: true,
+      isQueue: false,
+      model: "someModel",
+      filters: {},
+      event: "Create",
+      watchCallback: vi.fn().mockRejectedValue(error),
+    };
+
+    await runBinding(binding as never, [], []);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => Promise<void>, WatchCfg];
+    const [firstCall] = mockWatch.mock.calls as unknown as mockArg[];
+    const kfcCallback = firstCall[0];
+
+    await expect(kfcCallback({} as kind.Pod, WatchPhase.Added)).rejects.toThrow("callback failed");
+    expect(Log.error).toHaveBeenCalledWith(error, "Error executing watch callback");
+  });
+
+  it("should propagate queue callback errors to KFC", async () => {
+    const error = new Error("queue callback failed");
+    const binding = {
+      isWatch: true,
+      isQueue: true,
+      model: "someModel",
+      filters: {},
+      event: "Create",
+      watchCallback: vi.fn().mockRejectedValue(error),
+    };
+
+    await runBinding(binding as never, [], []);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => Promise<void>, WatchCfg];
+    const [firstCall] = mockWatch.mock.calls as unknown as mockArg[];
+    const kfcCallback = firstCall[0];
+
+    const obj = { metadata: { name: "test", namespace: "default" } } as kind.Pod;
+    await expect(kfcCallback(obj, WatchPhase.Added)).rejects.toThrow("queue callback failed");
+    expect(Log.error).toHaveBeenCalledWith(error, "Error executing watch callback");
+  });
+
+  it("should resolve successfully when watch callback succeeds", async () => {
+    const binding = {
+      isWatch: true,
+      isQueue: false,
+      model: "someModel",
+      filters: {},
+      event: "Create",
+      watchCallback: vi.fn().mockResolvedValue(undefined),
+    };
+
+    await runBinding(binding as never, [], []);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => Promise<void>, WatchCfg];
+    const [firstCall] = mockWatch.mock.calls as unknown as mockArg[];
+    const kfcCallback = firstCall[0];
+
+    await expect(kfcCallback({} as kind.Pod, WatchPhase.Added)).resolves.toBeUndefined();
+    expect(Log.error).not.toHaveBeenCalled();
+  });
+
+  it("should propagate finalizer callback errors to KFC", async () => {
+    const error = new Error("finalizer failed");
+    const binding = {
+      isWatch: true,
+      isQueue: false,
+      isFinalize: true,
+      model: "someModel",
+      filters: {},
+      event: "Create",
+      finalizeCallback: vi.fn().mockRejectedValue(error),
+    };
+
+    await runBinding(binding as never, [], []);
+
+    type mockArg = [(payload: kind.Pod, phase: WatchPhase) => Promise<void>, WatchCfg];
+    const [firstCall] = mockWatch.mock.calls as unknown as mockArg[];
+    const kfcCallback = firstCall[0];
+
+    const obj = {
+      metadata: { name: "test", namespace: "default", deletionTimestamp: new Date().toISOString() },
+    } as unknown as kind.Pod;
+    await expect(kfcCallback(obj, WatchPhase.Added)).rejects.toThrow("finalizer failed");
+    expect(Log.error).toHaveBeenCalledWith(error, "Error executing watch callback");
   });
 });
 
