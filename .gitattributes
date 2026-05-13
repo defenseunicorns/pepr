@@ -1,0 +1,17 @@
+# Auto-detect text files and normalize to LF in the repo and on checkout.
+# Keeps line endings consistent across macOS, Linux, and Windows contributors.
+* text=auto eol=lf
+
+# Lockfile: collapse in GitHub PR diffs and exclude from language statistics.
+package-lock.json   linguist-generated
+
+# Documentation paths: exclude from the primary-language donut on GitHub.
+adr/**              linguist-documentation
+docs/**             linguist-documentation
+
+# Explicit binary types (defensive; text=auto already detects most of these).
+*.png               binary
+*.tgz               binary
+
+# Shell scripts must keep LF endings on every platform.
+*.sh                text eol=lf

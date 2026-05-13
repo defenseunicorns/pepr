@@ -9,12 +9,12 @@ Pepr is committed to providing a stable and reliable experience for developers w
 Backward compatibility in Pepr applies to the following components:
 
 1. **Public API**:
-   - Actions Publicly exposed APIs, including function signatures, parameters, and return types. The API includes:
+   - Publicly exposed APIs, including function signatures, parameters, and return types. The API includes:
      - [Actions](https://docs.pepr.dev/main/user-guide/actions/)
      - [Capabilities](https://docs.pepr.dev/main/user-guide/capabilities/)
      - [Store](https://docs.pepr.dev/main/user-guide/store/)
      - [OnSchedule](https://docs.pepr.dev/main/user-guide/onschedule/)
-1. **Configuration**:
+2. **Configuration**:
    - YAML or JSON configuration structures for [Pepr Modules](https://docs.pepr.dev/main/user-guide/pepr-modules/). Configuration includes:
      - Environment Variables
        - [Redact Store Values from Logs](https://docs.pepr.dev/main/user-guide/customization/#redact-store-values-from-logs)
@@ -24,9 +24,9 @@ Backward compatibility in Pepr applies to the following components:
        - [Configuring Reconcile](https://docs.pepr.dev/main/user-guide/customization/#configuring-reconcile)
        - [Customizing with Helm](https://docs.pepr.dev/main/user-guide/customization/#customizing-with-helm)
        - [Customizing with package.json](https://docs.pepr.dev/main/user-guide/customization/#customizing-with-packagejson)
-1. **Pepr SDK**:
+3. **Pepr SDK**:
    - Helper functions to frequently used tasks defined in [SDK](https://docs.pepr.dev/main/user-guide/sdk/).
-1. **CLI Commands**:
+4. **CLI Commands**:
    - Commands, flags, and outputs provided by the [Pepr CLI](https://docs.pepr.dev/main/user-guide/pepr-cli/).
 
 ---
@@ -38,12 +38,12 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 ### 1. Pepr Versioning
 
 - **Major Versions (X.0.0)**:
-  - Not currently in use until we get to 1.0.
+  - Introduce breaking changes after a deprecation grace period.
+  - Include migration paths and detailed upgrade guides.
 - **Minor Versions (X.Y.0)**:
   - Add new features in a backward-compatible manner.
-  - Introduce breaking changes after deprecation.
+  - Introduce deprecations with announcements and migration paths.
 - **Patch Versions (X.Y.Z)**:
-  - Introduce deprecations changes with announcements and migration paths.
   - Include bug fixes, security updates, and performance improvements without changing functionality or APIs.
 
 ### 2. Deprecation Policy
@@ -51,7 +51,7 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 - **Deprecation Announcement**:
   - Any feature slated for removal will be marked as deprecated and announced in release notes.
   - Deprecated features will include clear warnings in logs and CLI outputs.
-  - Deprecation notices will be included [Pepr Slack](https://kubernetes.slack.com/archives/c06dgh40ucb).
+  - Deprecation notices will be included in [Pepr Slack](https://kubernetes.slack.com/archives/c06dgh40ucb).
 - **Grace Period**:
   - Deprecated features will remain functional for at least **one release** before removal.
 
@@ -66,7 +66,7 @@ Pepr adheres to the following guarantees to ensure a seamless user experience:
 
 ### 1. Communication
 
-- Breaking changes will only be introduced in minor releases.
+- Breaking changes will only be introduced in major releases.
 - Users will be notified via:
   - **Release Notes**: Detailed explanation of changes, migration paths, and alternative solutions.
   - **Documentation Updates**: Guides and examples to help users adapt to the changes.

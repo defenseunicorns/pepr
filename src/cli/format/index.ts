@@ -13,6 +13,11 @@ export default function (program: Command): void {
     .description("Lint and format this Pepr module")
     .option("-v, --validate-only", "Do not modify files, only validate formatting.")
     .action(async opts => {
+      Log.warn(
+        "DEPRECATION NOTICE: The pepr format command will be removed in summer 2026. " +
+          "Once removed, module authors must run a linter separately from the pepr CLI.",
+      );
+
       const success = await peprFormat(opts.validateOnly);
 
       if (success) {
