@@ -45,7 +45,6 @@ describe("applyRangePrefix", () => {
 
 describe("classifyBumps", () => {
   it("classifies a minor bump", () => {
-    // ~1.0.0 only covers patch updates; 1.1.0 is outside the range → minor bump.
     const result = classifyBumps({ foo: "~1.0.0" }, { foo: "1.1.0" });
     expect(result.minor).toEqual({ foo: { from: "~1.0.0", to: "~1.1.0" } });
     expect(result.major).toEqual([]);
@@ -70,9 +69,6 @@ describe("classifyBumps", () => {
   });
 
   it("handles a mix of minor and major bumps", () => {
-    // ~1.0.0 only covers patch: 1.2.0 is a minor bump outside the range.
-    // ^2.0.0 covers all 2.x: 3.0.0 is a major bump.
-    // ^3.0.0 already covers 3.0.5: no bump needed.
     const peers = { foo: "~1.0.0", bar: "^2.0.0", baz: "^3.0.0" };
     const latest = { foo: "1.2.0", bar: "3.0.0", baz: "3.0.5" };
     const result = classifyBumps(peers, latest);

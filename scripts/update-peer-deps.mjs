@@ -24,7 +24,6 @@ export function majorOf(version) {
   return coerced.major;
 }
 
-// Preserve the range operator (^, ~, >=, etc.) from currentSpec when writing the new version.
 export function applyRangePrefix(currentSpec, newBareVersion) {
   const m = /^([\^~>=<]+)/.exec(currentSpec);
   return m ? m[1] + newBareVersion : newBareVersion;
@@ -161,7 +160,7 @@ function ghRun(args) {
 
 // Probe for an existing open PR before create/edit so control flow does not
 // depend on parsing gh's English-language error messages across CLI versions.
-function ghPrUpsert(branch, meta, labelArgs, addLabelArgs) {
+function ghPrUpsert(branch, meta) {
   const existing = JSON.parse(
     execFileSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", "number"], {
       encoding: "utf8",
@@ -169,8 +168,10 @@ function ghPrUpsert(branch, meta, labelArgs, addLabelArgs) {
     }),
   );
   if (existing.length === 0) {
+    const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
     ghRun(["pr", "create", "--base", "main", "--head", branch, ...meta, ...labelArgs]);
   } else {
+    const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
     ghRun(["pr", "edit", String(existing[0].number), ...meta, ...addLabelArgs]);
   }
 }
@@ -203,8 +204,6 @@ async function runReport(opts) {
 
 async function runApply(opts) {
   requireMajorPkg(opts);
-  // Read package.json once and derive the report from the same parsed object to
-  // avoid a second file read + full npm re-query inside diskReport().
   const parsed = readPackageJson();
   const report = classifyBumps(
     parsed.peerDependencies,
@@ -232,8 +231,10 @@ function runPrBody(opts) {
 function runOpenPr(opts) {
   requireMajorPkg(opts);
   const bumps = diskBumps();
-  const peers = readPackageJson().peerDependencies;
-  const { branch, title } = pickBranchAndTitle(opts, peers);
+  const { branch, title } = pickBranchAndTitle(
+    opts,
+    Object.fromEntries(bumps.map(b => [b.name, b.to])),
+  );
 
   // --local keeps bot identity scoped to this repo clone and does not pollute
   // ~/.gitconfig on developer machines or shared self-hosted runners.
@@ -252,9 +253,7 @@ function runOpenPr(opts) {
     const bodyFile = join(tmpDir, "body.md");
     writeFileSync(bodyFile, renderPrBody(opts, bumps));
     const meta = ["--title", title, "--body-file", bodyFile];
-    const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
-    const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
-    ghPrUpsert(branch, meta, labelArgs, addLabelArgs);
+    ghPrUpsert(branch, meta);
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
