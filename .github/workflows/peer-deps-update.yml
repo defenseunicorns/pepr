@@ -19,6 +19,7 @@ jobs:
   discover:
     name: Discover pending peer-dep bumps
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       empty: ${{ steps.set-matrix.outputs.empty }}
@@ -45,6 +46,7 @@ jobs:
     needs: discover
     if: needs.discover.outputs.empty == 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
