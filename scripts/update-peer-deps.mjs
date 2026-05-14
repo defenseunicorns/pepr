@@ -3,7 +3,8 @@
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve, join } from "node:path";
 import { tmpdir } from "node:os";
@@ -135,14 +136,20 @@ const readPackageJson = () => JSON.parse(readFileSync(PACKAGE_JSON, "utf8"));
 const writePackageJson = parsed =>
   writeFileSync(PACKAGE_JSON, JSON.stringify(parsed, null, 2) + "\n");
 
-const npmLatest = pkg =>
-  execFileSync("npm", ["view", pkg, "version"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
+const execFileAsync = promisify(execFile);
 
-const fetchLatestVersions = (peers, fetcher = npmLatest) =>
-  Object.fromEntries(Object.keys(peers).map(p => [p, fetcher(p)]));
+const npmLatest = async pkg => {
+  const { stdout } = await execFileAsync("npm", ["view", pkg, "version"], { encoding: "utf8" });
+  return stdout.trim();
+};
+
+// Fetch all latest versions in parallel to cut wall-clock time proportional to
+// the number of peerDependencies.
+const fetchLatestVersions = async (peers, fetcher = npmLatest) => {
+  const names = Object.keys(peers);
+  const versions = await Promise.all(names.map(fetcher));
+  return Object.fromEntries(names.map((name, i) => [name, versions[i]]));
+};
 
 const git = args =>
   execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
@@ -170,9 +177,9 @@ function ghPrUpsert(branch, meta, labelArgs, addLabelArgs) {
 
 // ── Command handlers ────────────────────────────────────────────────────────
 
-function diskReport() {
+async function diskReport() {
   const peers = readPackageJson().peerDependencies;
-  return classifyBumps(peers, fetchLatestVersions(peers));
+  return classifyBumps(peers, await fetchLatestVersions(peers));
 }
 
 function diskBumps() {
@@ -184,8 +191,8 @@ function diskBumps() {
   return bumps;
 }
 
-function runReport(opts) {
-  const report = diskReport();
+async function runReport(opts) {
+  const report = await diskReport();
   if (!opts.matrix) {
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");
     return;
@@ -194,14 +201,14 @@ function runReport(opts) {
   process.stdout.write(`matrix=${JSON.stringify({ include })}\nempty=${include.length === 0}\n`);
 }
 
-function runApply(opts) {
+async function runApply(opts) {
   requireMajorPkg(opts);
   // Read package.json once and derive the report from the same parsed object to
   // avoid a second file read + full npm re-query inside diskReport().
   const parsed = readPackageJson();
   const report = classifyBumps(
     parsed.peerDependencies,
-    fetchLatestVersions(parsed.peerDependencies),
+    await fetchLatestVersions(parsed.peerDependencies),
   );
   const updates = pickUpdates(report, opts);
   if (updates.length === 0) {
