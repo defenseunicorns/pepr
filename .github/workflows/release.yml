@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -46,14 +46,10 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
-      - name: Rapidfort Login
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+      - name: Login to Chainguard
+        uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
         with:
-          max_attempts: 5
-          retry_on: error
-          timeout_minutes: 1
-          command: |
-            echo "${{ secrets.RAPIDFORT_PASSWORD }}" | docker login quay.io --username "${{ secrets.RAPIDFORT_USERNAME }}" --password-stdin
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: UDS Registry Login
         run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com
@@ -118,7 +114,7 @@ jobs:
       PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -159,7 +155,7 @@ jobs:
       PEPR_VERSION: ${{ needs.build-and-release.outputs.pepr_version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 

@@ -29,6 +29,10 @@ export function createWebhookYaml(
       replace: "{{ .Values.admission.webhookTimeout }}",
     },
     {
+      search: "metadata:\n  name: {{ .Values.uuid }}",
+      replace: `metadata:\n  name: {{ .Values.uuid }}\n  {{- if .Values.admission.webhookAnnotations }}\n  annotations:\n    {{- toYaml .Values.admission.webhookAnnotations | nindent 4 }}\n  {{- end }}\n  {{- if .Values.admission.webhookLabels }}\n  labels:\n    {{- toYaml .Values.admission.webhookLabels | nindent 4 }}\n  {{- end }}`,
+    },
+    {
       search: `
         - key: kubernetes.io/metadata.name
           operator: NotIn
