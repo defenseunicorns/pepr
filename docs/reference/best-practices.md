@@ -239,6 +239,9 @@ Recommendations for keeping modules small are:
 
 It is suggested to lint and format your modules using `npx pepr format`.
 
+> [!WARNING]
+> `npx pepr format` will be deprecated and removed in summer 2026 with the release of Pepr v2.0.0. Once removed, module authors must run a linter separately from the Pepr CLI. Please configure linting and formatting directly in your project instead.
+
 ## Monitoring
 
 Pepr can monitor Mutations and Validations from Admission Controller the through the `npx pepr monitor [module-uuid]` command. This command will display neatly formatted log showing approved and rejected Validations as well as the Mutations.  If `[module-uuid]` is not supplied, then it uses all Pepr admission controller logs as the data source. If you are unsure of what modules are currently deployed, issue `npx pepr uuid` to display the modules and their descriptions.

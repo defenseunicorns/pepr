@@ -32,7 +32,7 @@
     "format:integration": "eslint --config config/eslint.integration.config.mjs integration/cli integration/helpers",
     "format:markdown": "npx -y markdownlint-cli --config config/.markdownlint.json --ignore adr --ignore integration/testroot --ignore pepr-test-module --ignore node_modules --rules config/markdownlint-step-format-rule.js \"**/*.md\"",
     "format:prettier": "prettier --config config/.prettierrc src integration/cli/**/*.ts integration/helpers/**/*.ts",
-    "format:src": "eslint --config config/eslint.root.config.mjs 'src/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern 'src/templates/**'",
+    "format:src": "eslint --config config/eslint.root.config.mjs 'src/**/*.ts' '.github/workflows/scripts/**/*.ts' --ignore-pattern '**/*.test.ts' --ignore-pattern 'src/templates/**'",
     "format:tests": "eslint --config config/eslint.test.config.mjs 'src/**/*.test.ts'",
     "gen-data-json": "node hack/build-template-data.mjs",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@types/ramda": "0.31.1",
-    "@typescript-eslint/eslint-plugin": "8.59.0",
-    "@typescript-eslint/parser": "8.59.0",
+    "@typescript-eslint/eslint-plugin": "8.59.1",
+    "@typescript-eslint/parser": "8.59.1",
     "commander": "14.0.3",
     "eslint": "9.39.4",
     "express": "5.2.1",
@@ -64,11 +64,11 @@
     "prom-client": "15.1.3",
     "quicktype-core": "^23.2.6",
     "ramda": "0.32.0",
-    "ts-morph": "^27.0.0"
+    "ts-morph": "^27.0.2"
   },
   "devDependencies": {
-    "@commitlint/cli": "20.4.3",
-    "@commitlint/config-conventional": "20.4.3",
+    "@commitlint/cli": "20.5.0",
+    "@commitlint/config-conventional": "20.5.0",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/npm": "^13.0.0",
