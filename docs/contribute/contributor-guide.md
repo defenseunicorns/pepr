@@ -91,6 +91,7 @@ A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](../../.github
 
 - **Do not push manual commits to `grype/suppression-audit`** — the workflow force-pushes to this branch weekly and any manual changes will be overwritten.
 - To add context to a suppression entry (e.g. `reason:`), add it directly to `.grype.yaml` on `main`. The audit script skips multi-key entries and will not remove them automatically.
+
 ### Peer-Dependency Updates
 
 The `peerDependencies` block in `package.json` is maintained by the [`peer-deps-update`](../../.github/workflows/peer-deps-update.yml) GitHub Actions workflow. The workflow runs every Monday and opens PRs grouped by SemVer risk: a single PR for all minor/patch bumps and a separate PR per major-version bump (so that majors get isolated review and revert paths).
@@ -100,7 +101,6 @@ The `peerDependencies` block in `package.json` is maintained by the [`peer-deps-
 - To apply bumps locally, run `node scripts/update-peer-deps.mjs apply --kind minor` for the minor/patch group or `node scripts/update-peer-deps.mjs apply --kind major --pkg <name>` for a single major bump.
 
 Dependabot continues to handle the `dependencies` and `devDependencies` blocks; the two automations never touch the same region of `package.json`.
-
 
 ## Running Tests
 
