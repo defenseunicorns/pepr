@@ -143,6 +143,57 @@ describe("genEnv", () => {
     expect(result).toEqual(expectedEnv);
   });
 
+  it("does not mutate config.env when PEPR_WATCH_MODE is present", () => {
+    const config: ModuleConfig = {
+      uuid: "12345",
+      logLevel: "info",
+      env: {
+        PEPR_WATCH_MODE: "false",
+        CUSTOM_VAR: "keep_me",
+      },
+      alwaysIgnore: { namespaces: [] },
+    };
+
+    // Snapshot the original env object to verify it's not mutated.
+    const envBefore = { ...config.env };
+
+    genEnv(config, false);
+
+    expect(config.env).toEqual(envBefore);
+  });
+
+  it("does not mutate config.env across consecutive calls with the same config", () => {
+    // This simulates the real usage pattern: genEnv is called once for the
+    // admission deployment and once for the watcher deployment, both sharing
+    // the same ModuleConfig reference.
+    const config: ModuleConfig = {
+      uuid: "12345",
+      logLevel: "info",
+      env: {
+        PEPR_WATCH_MODE: "false",
+        CUSTOM_VAR: "value",
+      },
+      alwaysIgnore: { namespaces: [] },
+    };
+
+    const envSnapshot = { ...config.env };
+
+    // First call — admission (watchMode=false).
+    genEnv(config, false);
+
+    // config.env must be unchanged after the first call. The pre-fix code
+    // deleted PEPR_WATCH_MODE here, which is the actual mutation bug — the
+    // output values alone don't catch it because `def` always supplies
+    // PEPR_WATCH_MODE from the watchMode parameter.
+    expect(config.env).toEqual(envSnapshot);
+
+    // Second call — watcher (watchMode=true).
+    genEnv(config, true);
+
+    // Still unchanged after the second call.
+    expect(config.env).toEqual(envSnapshot);
+  });
+
   it("handles ignoreWatchMode for helm chart", () => {
     const config: ModuleConfig = {
       uuid: "12345",
