@@ -14,7 +14,6 @@ Thank you for your interest in contributing to Pepr! We welcome all contribution
     - [PR Requirements](#pr-requirements)
   - [Coding Guidelines](#coding-guidelines)
     - [Git Hooks](#git-hooks)
-    - [Peer-Dependency Updates](#peer-dependency-updates)
   - [Running Tests](#running-tests)
     - [Run Tests Locally](#run-tests-locally)
     - [Test a Local Development Version](#test-a-local-development-version)
