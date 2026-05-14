@@ -91,6 +91,13 @@ export function renderPrBody(opts, bumps) {
       ? "all minor and patch peerDependency bumps grouped together"
       : `the major-version bump for \`${opts.pkg}\` (isolated for review)`;
   const list = bumps.map(b => `- \`${b.name}\` ${b.from} -> ${b.to}`).join("\n");
+
+  // When invoked by the workflow the run URL is available; link to it rather
+  // than hardcoding "passed" (the script itself cannot verify those steps).
+  const verificationSection = opts.runUrl
+    ? `### In-workflow verification\n\nSee [workflow run](${opts.runUrl}) for format, build, and unit-test results.`
+    : `### In-workflow verification\n\n- \`npm run format:check\` — passed\n- \`npm run build\` — passed\n- \`npm run test:unit\` — passed`;
+
   return `## Description
 
 Automated peerDependencies update produced by the [peer-deps-update](.github/workflows/peer-deps-update.yml) workflow. This PR contains ${scope}.
@@ -99,11 +106,7 @@ Updated packages:
 
 ${list}
 
-### In-workflow verification
-
-- \`npm run format:check\` — passed
-- \`npm run build\` — passed
-- \`npm run test:unit\` — passed
+${verificationSection}
 
 ## Related Issue
 
@@ -275,6 +278,7 @@ for (const [name, desc, action] of [
     .description(desc)
     .requiredOption("--kind <kind>", '"minor" or "major"', parseKind)
     .option("--pkg <name>", "package name (required for --kind major)")
+    .option("--run-url <url>", "GHA workflow run URL to embed in the PR body verification section")
     .action(action);
 }
 
