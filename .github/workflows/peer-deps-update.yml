@@ -96,4 +96,5 @@ jobs:
           GH_TOKEN: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
           KIND: ${{ matrix.kind }}
           PKG: ${{ matrix.pkg }}
-        run: node scripts/update-peer-deps.mjs open-pr --kind "$KIND" --pkg "$PKG"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/update-peer-deps.mjs open-pr --kind "$KIND" --pkg "$PKG" --run-url "$RUN_URL"
