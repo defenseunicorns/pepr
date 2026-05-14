@@ -182,8 +182,14 @@ function runReport(opts) {
 
 function runApply(opts) {
   requireMajorPkg(opts);
+  // Read package.json once and derive the report from the same parsed object to
+  // avoid a second file read + full npm re-query inside diskReport().
   const parsed = readPackageJson();
-  const updates = pickUpdates(diskReport(), opts);
+  const report = classifyBumps(
+    parsed.peerDependencies,
+    fetchLatestVersions(parsed.peerDependencies),
+  );
+  const updates = pickUpdates(report, opts);
   if (updates.length === 0) {
     const target = opts.pkg ? ` for "${opts.pkg}"` : "";
     console.error(`no ${opts.kind} peerDependency bumps available${target}`);
