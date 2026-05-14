@@ -73,6 +73,9 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+      - name: Warn if PEER_DEPS_PR_TOKEN is absent
+        if: ${{ secrets.PEER_DEPS_PR_TOKEN == '' }}
+        run: echo "::warning::PEER_DEPS_PR_TOKEN is not set; PRs will be created with GITHUB_TOKEN and will not trigger pull_request workflows."
       - name: Install dependencies
         run: npm ci
       - name: Apply bump
