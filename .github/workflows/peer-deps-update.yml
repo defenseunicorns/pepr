@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: peer-deps-update
+  cancel-in-progress: false
+
 jobs:
   discover:
     name: Discover pending peer-dep bumps
