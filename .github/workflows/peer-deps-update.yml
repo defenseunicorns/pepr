@@ -79,7 +79,7 @@ jobs:
           PKG: ${{ matrix.pkg }}
         run: node scripts/update-peer-deps.mjs apply --kind "$KIND" --pkg "$PKG"
       - name: Refresh lockfile
-        run: npm install
+        run: npm install --package-lock-only --ignore-scripts
       - name: Format check
         run: npm run format:check
       - name: Build
