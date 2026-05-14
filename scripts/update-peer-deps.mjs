@@ -221,8 +221,10 @@ function runOpenPr(opts) {
   const peers = readPackageJson().peerDependencies;
   const { branch, title } = pickBranchAndTitle(opts, peers);
 
-  git(["config", "user.name", BOT_NAME]);
-  git(["config", "user.email", BOT_EMAIL]);
+  // --local keeps bot identity scoped to this repo clone and does not pollute
+  // ~/.gitconfig on developer machines or shared self-hosted runners.
+  git(["config", "--local", "user.name", BOT_NAME]);
+  git(["config", "--local", "user.email", BOT_EMAIL]);
   git(["checkout", "-B", branch]);
   git(["add", "package.json", "package-lock.json"]);
   git(["commit", "-m", title, "--signoff"]);
