@@ -140,17 +140,24 @@ const fetchLatestVersions = (peers, fetcher = npmLatest) =>
 const git = args =>
   execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
 
-// gh captures stderr so the create-or-edit fallback can detect "already exists";
-// captured streams are forwarded to the parent on real failures.
-function gh(args) {
-  try {
-    const out = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-    process.stdout.write(out);
-    return out;
-  } catch (err) {
-    process.stdout.write(String(err.stdout ?? ""));
-    process.stderr.write(String(err.stderr ?? ""));
-    throw err;
+function ghRun(args) {
+  const out = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  process.stderr.write(out); // gh output goes to stderr; stdout is reserved for machine-readable data
+}
+
+// Probe for an existing open PR before create/edit so control flow does not
+// depend on parsing gh's English-language error messages across CLI versions.
+function ghPrUpsert(branch, meta, labelArgs, addLabelArgs) {
+  const existing = JSON.parse(
+    execFileSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", "number"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }),
+  );
+  if (existing.length === 0) {
+    ghRun(["pr", "create", "--base", "main", "--head", branch, ...meta, ...labelArgs]);
+  } else {
+    ghRun(["pr", "edit", String(existing[0].number), ...meta, ...addLabelArgs]);
   }
 }
 
@@ -227,12 +234,7 @@ function runOpenPr(opts) {
   const meta = ["--title", title, "--body-file", bodyFile];
   const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
   const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
-  try {
-    gh(["pr", "create", "--base", "main", "--head", branch, ...meta, ...labelArgs]);
-  } catch (err) {
-    if (!/already exists/i.test(String(err.stderr ?? ""))) throw err;
-    gh(["pr", "edit", branch, ...meta, ...addLabelArgs]);
-  }
+  ghPrUpsert(branch, meta, labelArgs, addLabelArgs);
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────
