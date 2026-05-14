@@ -65,8 +65,11 @@ export function pickBranchAndTitle(opts, peerVersions) {
       title: "chore: bump peerDependencies (minor/patch)",
     };
   }
+  // Scoped package names (e.g. @types/prompts) contain a slash, which creates
+  // directory ambiguity in git's ref namespace. Replace all non-alnum chars.
+  const slug = opts.pkg.replace(/[^a-z0-9.-]+/gi, "-").replace(/^-|-$/g, "");
   return {
-    branch: `chore/peer-deps/major-${opts.pkg}`,
+    branch: `chore/peer-deps/major-${slug}`,
     title: `chore: bump peerDependency ${opts.pkg} to ${peerVersions[opts.pkg]} (major)`,
   };
 }
