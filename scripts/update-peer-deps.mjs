@@ -126,6 +126,10 @@ None, ongoing maintenance
 }
 
 // ── I/O wrappers ────────────────────────────────────────────────────────────
+//
+// stdout is exclusively for machine-readable output (report --matrix writes
+// to $GITHUB_OUTPUT via >>). All human-readable progress and gh output must
+// go to stderr so they never corrupt the matrix stream.
 
 const readPackageJson = () => JSON.parse(readFileSync(PACKAGE_JSON, "utf8"));
 const writePackageJson = parsed =>
@@ -145,7 +149,7 @@ const git = args =>
 
 function ghRun(args) {
   const out = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-  process.stderr.write(out); // gh output goes to stderr; stdout is reserved for machine-readable data
+  process.stderr.write(out);
 }
 
 // Probe for an existing open PR before create/edit so control flow does not
@@ -266,6 +270,9 @@ const program = new Command()
 function requireMajorPkg(opts) {
   if (opts.kind === "major" && !opts.pkg) {
     program.error("--kind major requires --pkg <name>");
+  }
+  if (opts.kind === "minor" && opts.pkg) {
+    program.error("--pkg is only valid with --kind major");
   }
 }
 
