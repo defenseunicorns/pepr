@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve, join } from "node:path";
 import { tmpdir } from "node:os";
 import { Command, InvalidArgumentError } from "commander";
+import semver from "semver";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_JSON = resolve(here, "..", "package.json");
@@ -14,9 +15,15 @@ const BOT_EMAIL = "41898282+github-actions[bot]@users.noreply.github.com";
 const PR_LABELS = ["dependencies", "automated"];
 
 export function majorOf(version) {
-  const head = Number.parseInt(version.split(".")[0], 10);
-  if (Number.isNaN(head)) throw new Error(`unparseable version "${version}"`);
-  return head;
+  const coerced = semver.coerce(version);
+  if (!coerced) throw new Error(`unparseable version "${version}"`);
+  return coerced.major;
+}
+
+// Preserve the range operator (^, ~, >=, etc.) from currentSpec when writing the new version.
+export function applyRangePrefix(currentSpec, newBareVersion) {
+  const m = /^([\^~>=<]+)/.exec(currentSpec);
+  return m ? m[1] + newBareVersion : newBareVersion;
 }
 
 export function classifyBumps(peers, latest) {
@@ -24,8 +31,9 @@ export function classifyBumps(peers, latest) {
   const major = [];
   for (const [name, current] of Object.entries(peers)) {
     const next = latest[name];
-    if (!next || next === current) continue;
-    const entry = { from: current, to: next };
+    if (!next || semver.satisfies(next, current)) continue;
+    const to = applyRangePrefix(current, next);
+    const entry = { from: current, to };
     if (majorOf(next) > majorOf(current)) major.push({ name, ...entry });
     else minor[name] = entry;
   }
