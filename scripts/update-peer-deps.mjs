@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve, join } from "node:path";
@@ -233,13 +233,20 @@ function runOpenPr(opts) {
   git(["commit", "-m", title, "--signoff"]);
   git(["push", "--force-with-lease", "origin", branch]);
 
-  const bodyFile = join(mkdtempSync(join(tmpdir(), "peer-deps-pr-")), "body.md");
-  writeFileSync(bodyFile, renderPrBody(opts, bumps));
-
-  const meta = ["--title", title, "--body-file", bodyFile];
-  const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
-  const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
-  ghPrUpsert(branch, meta, labelArgs, addLabelArgs);
+  // Use RUNNER_TEMP when available (GHA-scoped, job-local); fall back to OS
+  // tmpdir. Clean up unconditionally so local runs don't leak temp dirs.
+  const tmpBase = process.env.RUNNER_TEMP ?? tmpdir();
+  const tmpDir = mkdtempSync(join(tmpBase, "peer-deps-pr-"));
+  try {
+    const bodyFile = join(tmpDir, "body.md");
+    writeFileSync(bodyFile, renderPrBody(opts, bumps));
+    const meta = ["--title", title, "--body-file", bodyFile];
+    const labelArgs = PR_LABELS.flatMap(l => ["--label", l]);
+    const addLabelArgs = PR_LABELS.flatMap(l => ["--add-label", l]);
+    ghPrUpsert(branch, meta, labelArgs, addLabelArgs);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────
