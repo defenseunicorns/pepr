@@ -7,6 +7,13 @@
 import fs from "node:fs";
 import { Command } from "commander";
 
+import {
+  STABILIZATION_ITERATIONS,
+  TOTAL_ITERATIONS,
+  INTERVAL_MINUTES,
+  parseEnvNumber,
+} from "./soak-constants.js";
+
 const program = new Command()
   .description("Reads soak test metrics and writes a Markdown summary to $GITHUB_STEP_SUMMARY.")
   .argument("<metrics-csv>", "path to metrics CSV file")
@@ -17,22 +24,24 @@ const program = new Command()
 const [metricsCSV, informerLog, failureReason] = program.args;
 
 function buildCacheMissTrend(csvLines: string[], finalRow: string[], iters: string): string[] {
-  if (csvLines.length <= 15) return [];
+  if (csvLines.length <= STABILIZATION_ITERATIONS + 1) return [];
 
-  const baselineMisses = Number(csvLines[14]?.split(",")[3]) || 0;
+  const baselineMisses = Number(csvLines[STABILIZATION_ITERATIONS]?.split(",")[3]) || 0;
   const finalMisses = Number(finalRow[3]) || 0;
   const trendGrowth = finalMisses - baselineMisses;
-  const cacheMissGrowthThreshold = Number(process.env.CACHE_MISS_GROWTH_THRESHOLD) || 10;
+  const cacheMissGrowthThreshold = parseEnvNumber(process.env.CACHE_MISS_GROWTH_THRESHOLD, 10);
   const trendStatus = trendGrowth <= cacheMissGrowthThreshold ? "✅ Stable" : "⚠️ Growing";
   return [
     "### Cache Miss Trend (post-stabilization)",
-    `Baseline (iteration 14): ${baselineMisses} | Final (iteration ${iters}): ${finalMisses} | Growth: ${trendGrowth} | ${trendStatus}`,
+    `Baseline (iteration ${STABILIZATION_ITERATIONS}): ${baselineMisses} | Final (iteration ${iters}): ${finalMisses} | Growth: ${trendGrowth} | ${trendStatus}`,
     "",
   ];
 }
 
 function buildSummaryLines(csvLines: string[]): string[] {
-  const finalRow = csvLines.at(-1)!.split(",");
+  const lastLine = csvLines.at(-1);
+  if (!lastLine) throw new Error("unexpected empty CSV");
+  const finalRow = lastLine.split(",");
   const iters = finalRow[0];
   const finalResyncFailures = Number(finalRow[4]) || 0;
 
@@ -79,7 +88,7 @@ function buildSummaryLines(csvLines: string[]): string[] {
     `| \`pepr_cache_miss\` | ${cacheMissesDisplay} | ${cacheMissesStatus} |`,
     `| \`pepr_resync_failure_count\` | ${resyncFailuresDisplay} | ${resyncFailuresStatus} |`,
     "",
-    `**Iterations completed:** ${iters} / 70 | **Duration:** ~${Number(iters) * 5} minutes`,
+    `**Iterations completed:** ${iters} / ${TOTAL_ITERATIONS} | **Duration:** ~${Number(iters) * INTERVAL_MINUTES} minutes`,
     "",
   ];
 
