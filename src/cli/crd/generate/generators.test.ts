@@ -316,6 +316,70 @@ describe("CRD Generator", () => {
 
           expect(Log.info).toHaveBeenCalledWith(expect.stringContaining("✔ Created"));
         }, 30000);
+
+        it("should correctly map TypeScript types to CRD schema types", () => {
+          const writeFileMock = vi.mocked(fs.writeFileSync);
+          const { sourceFile, checker } = createProgramFromContent(
+            "types.ts",
+            generateTestContent({
+              kind: "Thing",
+              specInterface: "ThingSpec",
+              extraContent: `
+                export interface ThingSpec {
+                  /** A name */
+                  name: string;
+                  count: number;
+                  enabled: boolean;
+                  tags: string[];
+                  sizes?: number[];
+                  /** Creation timestamp */
+                  createdAt: Date;
+                  config: {
+                    key: string;
+                    value: number;
+                  };
+                }
+                export type ThingStatusCondition = {
+                  message: string;
+                  observedGeneration?: number;
+                };`,
+            }),
+          );
+
+          processSourceFile(sourceFile, checker, "v1", "/crds");
+          const yaml = writeFileMock.mock.calls[0][1] as string;
+
+          // Primitive types
+          expect(yaml).toContain("type: string");
+          expect(yaml).toContain("type: number");
+          expect(yaml).toContain("type: boolean");
+
+          // Array types
+          expect(yaml).toContain("type: array");
+
+          // Nested object
+          expect(yaml).toContain("type: object");
+
+          // Date mapping
+          expect(yaml).toContain("format: date-time");
+
+          // JSDoc descriptions
+          expect(yaml).toContain("A name");
+          expect(yaml).toContain("Creation timestamp");
+
+          // Required vs optional - 'sizes' is optional, should not be in required
+          // 'name' is required, should be in required
+          expect(yaml).toContain("name");
+        }, 30000);
+
+        it("should skip files missing kind without throwing when details are also absent", () => {
+          const { sourceFile, checker } = createProgramFromContent(
+            "empty.ts",
+            "export const foo = 1;",
+          );
+          processSourceFile(sourceFile, checker, "v1", "/output");
+          expect(Log.warn).toHaveBeenCalledWith(WarningMessages.MISSING_KIND_COMMENT("empty.ts"));
+        }, 10_000);
       });
     });
   });
