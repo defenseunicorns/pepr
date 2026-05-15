@@ -8,6 +8,7 @@
 
 import fs from "node:fs";
 import { execSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 import { recordMetrics } from "./soak-record-metrics.js";
 import {
@@ -27,13 +28,13 @@ const RESYNC_FAILURE_THRESHOLD = parseEnvNumber(process.env.RESYNC_FAILURE_THRES
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-function collectMetrics(): void {
+export function collectMetrics(logsDir: string = LOGS_DIR): void {
   const auditorOutput = execSync(
     "kubectl exec metrics-collector -n watch-auditor -- curl watch-auditor:8080/metrics",
     { timeout: KUBECTL_TIMEOUT_MS },
   ).toString();
   fs.writeFileSync(
-    `${LOGS_DIR}/auditor-log.txt`,
+    `${logsDir}/auditor-log.txt`,
     auditorOutput
       .split("\n")
       .filter(line => line.includes("watch_controller_failures_total"))
@@ -45,7 +46,7 @@ function collectMetrics(): void {
     { timeout: KUBECTL_TIMEOUT_MS },
   ).toString();
   fs.writeFileSync(
-    `${LOGS_DIR}/informer-log.txt`,
+    `${logsDir}/informer-log.txt`,
     informerOutput
       .split("\n")
       .filter(line => line.match(/pepr_cache_miss|pepr_resync_failure_count/))
@@ -55,46 +56,32 @@ function collectMetrics(): void {
   const watchOutput = execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", {
     timeout: KUBECTL_TIMEOUT_MS,
   }).toString();
-  fs.writeFileSync(`${LOGS_DIR}/watch-logs.txt`, watchOutput);
+  fs.writeFileSync(`${logsDir}/watch-logs.txt`, watchOutput);
 }
 
-function checkPod(pod: string, count: number, elapsedMinutes: number): void {
-  console.log(`${pod}: ${count}`);
-  if (count > 1) {
-    console.log(`Test failed: Pod ${pod} has count ${count}`);
-    try {
-      execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", {
-        stdio: "inherit",
-        timeout: KUBECTL_TIMEOUT_MS,
-      });
-    } catch (e) {
-      console.error("Failed to fetch watcher logs:", e);
-    }
-    failWithReason(
-      `Pod ${pod} was recreated (seen ${count} times) ~${elapsedMinutes} minutes into the run`,
-    );
-  }
-}
-
-class SoakTestFailure extends Error {
+export class SoakTestFailure extends Error {
   constructor(reason: string) {
     super(reason);
     this.name = "SoakTestFailure";
   }
 }
 
-function failWithReason(reason: string): never {
-  fs.writeFileSync(`${LOGS_DIR}/failure-reason.txt`, reason);
+export function failWithReason(reason: string, logsDir: string = LOGS_DIR): never {
+  fs.writeFileSync(`${logsDir}/failure-reason.txt`, reason);
   try {
-    collectMetrics();
-  } catch (e) {
-    console.error("Failed to collect final metrics:", e);
+    collectMetrics(logsDir);
+  } catch {
+    // collectMetrics requires kubectl — expected to fail in test environments
   }
   throw new SoakTestFailure(reason);
 }
 
-function assertCacheMissGrowth(currentDelta: number): void {
-  const csvLines = fs.readFileSync(`${LOGS_DIR}/metrics.csv`, "utf-8").trim().split("\n");
+export function assertCacheMissGrowth(
+  currentDelta: number,
+  logsDir: string = LOGS_DIR,
+  cacheMissGrowthThreshold: number = CACHE_MISS_GROWTH_THRESHOLD,
+): void {
+  const csvLines = fs.readFileSync(`${logsDir}/metrics.csv`, "utf-8").trim().split("\n");
   if (csvLines.length <= STABILIZATION_ITERATIONS) {
     console.warn(
       `Not enough CSV rows (${csvLines.length}) to compute baseline at iteration ${STABILIZATION_ITERATIONS}`,
@@ -105,54 +92,64 @@ function assertCacheMissGrowth(currentDelta: number): void {
   const baselineColumns = (csvLines[STABILIZATION_ITERATIONS] ?? "").split(",");
   const baselineDelta = Number(baselineColumns[3] ?? 0);
   const growth = currentDelta - baselineDelta;
-  if (growth > CACHE_MISS_GROWTH_THRESHOLD) {
+  if (growth > cacheMissGrowthThreshold) {
     failWithReason(
-      `Cache misses grew from ${baselineDelta} to ${currentDelta} (growth: ${growth} > threshold: ${CACHE_MISS_GROWTH_THRESHOLD})`,
+      `Cache misses grew from ${baselineDelta} to ${currentDelta} (growth: ${growth} > threshold: ${cacheMissGrowthThreshold})`,
+      logsDir,
     );
   }
 }
 
-function assertMetrics(iteration: number): void {
+function assertResyncFailures(columns: string[], threshold: number, logsDir: string): void {
+  const currentResyncFailures = Number(columns[4] ?? 0);
+  if (currentResyncFailures > threshold) {
+    failWithReason(
+      `Resync failures exceeded threshold: ${currentResyncFailures} > ${threshold}`,
+      logsDir,
+    );
+  }
+}
+
+export function assertMetrics(
+  iteration: number,
+  logsDir: string = LOGS_DIR,
+  resyncFailureThreshold: number = RESYNC_FAILURE_THRESHOLD,
+  cacheMissGrowthThreshold: number = CACHE_MISS_GROWTH_THRESHOLD,
+): void {
   const lastRow =
-    fs.readFileSync(`${LOGS_DIR}/metrics.csv`, "utf-8").trim().split("\n").at(-1) ?? "";
+    fs.readFileSync(`${logsDir}/metrics.csv`, "utf-8").trim().split("\n").at(-1) ?? "";
   const columns = lastRow.split(",");
 
-  // Assert watch controller has no failures
   const ctrlFailures = Number(columns[2] ?? 0);
   if (ctrlFailures !== 0) {
-    failWithReason(`Watch controller failures detected: ${ctrlFailures}`);
+    failWithReason(`Watch controller failures detected: ${ctrlFailures}`, logsDir);
   }
 
-  // After stabilization, assert cache misses are not growing
   if (iteration > STABILIZATION_ITERATIONS) {
-    assertCacheMissGrowth(Number(columns[3] ?? 0));
+    assertCacheMissGrowth(Number(columns[3] ?? 0), logsDir, cacheMissGrowthThreshold);
   }
 
-  // Assert resync failures stay below threshold
-  const currentResyncFailures = Number(columns[4] ?? 0);
-  if (currentResyncFailures > RESYNC_FAILURE_THRESHOLD) {
-    failWithReason(
-      `Resync failures exceeded threshold: ${currentResyncFailures} > ${RESYNC_FAILURE_THRESHOLD}`,
-    );
-  }
+  assertResyncFailures(columns, resyncFailureThreshold, logsDir);
 }
 
-function updatePodMap(podMap: Map<string, number>): void {
+export function fetchPodNames(): string[] {
   const output = execSync("kubectl get pods -n pepr-demo -o jsonpath='{.items[*].metadata.name}'", {
     timeout: KUBECTL_TIMEOUT_MS,
   })
     .toString()
     .trim();
 
-  if (!output) return;
+  if (!output) return [];
 
-  for (const pod of output.split(" ")) {
-    podMap.set(pod, (podMap.get(pod) ?? 0) + 1);
-  }
+  return output.split(" ");
 }
 
-function checkPodStability(podMap: Map<string, number>, elapsedMinutes: number): void {
-  updatePodMap(podMap);
+export function checkPodStability(
+  initialPods: Set<string>,
+  elapsedMinutes: number,
+  logsDir: string = LOGS_DIR,
+): void {
+  const currentPods = fetchPodNames();
 
   execSync("kubectl get pods -n pepr-demo", {
     stdio: "inherit",
@@ -167,27 +164,35 @@ function checkPodStability(podMap: Map<string, number>, elapsedMinutes: number):
     timeout: KUBECTL_TIMEOUT_MS,
   });
 
-  for (const [pod, count] of podMap) {
-    checkPod(pod, count, elapsedMinutes);
+  const recreated = currentPods.filter(pod => !initialPods.has(pod));
+  if (recreated.length > 0) {
+    try {
+      execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", {
+        stdio: "inherit",
+        timeout: KUBECTL_TIMEOUT_MS,
+      });
+    } catch (e) {
+      console.error("Failed to fetch watcher logs:", e);
+    }
+    failWithReason(
+      `New pods detected (possible recreation) ~${elapsedMinutes} minutes into the run: ${recreated.join(", ")}`,
+      logsDir,
+    );
   }
 }
 
-function initLogFiles(): void {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
-  fs.writeFileSync(`${LOGS_DIR}/auditor-log.txt`, "");
-  fs.writeFileSync(`${LOGS_DIR}/informer-log.txt`, "");
-  fs.writeFileSync(`${LOGS_DIR}/watch-logs.txt`, "");
+export function initLogFiles(logsDir: string = LOGS_DIR): void {
+  fs.mkdirSync(logsDir, { recursive: true });
+  fs.writeFileSync(`${logsDir}/auditor-log.txt`, "");
+  fs.writeFileSync(`${logsDir}/informer-log.txt`, "");
+  fs.writeFileSync(`${logsDir}/watch-logs.txt`, "");
   fs.writeFileSync(
-    `${LOGS_DIR}/metrics.csv`,
+    `${logsDir}/metrics.csv`,
     "iteration,timestamp,watch_controller_failures_delta,pepr_cache_miss_delta,pepr_resync_failure_count\n",
   );
 }
 
-function runIteration(
-  iteration: number,
-  podMap: Map<string, number>,
-  elapsedMinutes: number,
-): void {
+function runIteration(iteration: number, initialPods: Set<string>, elapsedMinutes: number): void {
   collectMetrics();
 
   console.log(fs.readFileSync(`${LOGS_DIR}/informer-log.txt`, "utf-8"));
@@ -203,15 +208,14 @@ function runIteration(
   assertMetrics(iteration);
 
   if (iteration % POD_CHECK_INTERVAL === 0) {
-    checkPodStability(podMap, elapsedMinutes);
+    checkPodStability(initialPods, elapsedMinutes);
   }
 }
 
 async function main(): Promise<void> {
   initLogFiles();
 
-  const podMap = new Map<string, number>();
-  updatePodMap(podMap);
+  const initialPods = new Set(fetchPodNames());
 
   const startTime = Date.now();
   const endTime = startTime + TOTAL_DURATION_MS;
@@ -221,7 +225,7 @@ async function main(): Promise<void> {
     while (Date.now() < endTime) {
       iteration++;
       const elapsedMinutes = Math.round((Date.now() - startTime) / 60_000);
-      runIteration(iteration, podMap, elapsedMinutes);
+      runIteration(iteration, initialPods, elapsedMinutes);
 
       if (Date.now() < endTime) {
         await sleep(INTERVAL_MS);
@@ -242,7 +246,10 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(err => {
-  console.error("Unexpected error:", err);
-  process.exitCode = 1;
-});
+// CLI entry point — only runs when executed directly (not when imported).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error("Unexpected error:", err);
+    process.exitCode = 1;
+  });
+}

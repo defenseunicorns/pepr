@@ -57,6 +57,32 @@ export interface RecordMetricsArgs {
 }
 
 /**
+ * Compute the delta between current and previous values, handling first-iteration
+ * baselines and counter resets (e.g. pod restart).
+ */
+function computeDelta(current: number, prev: number, isBaseline: boolean): number {
+  if (isBaseline) return 0;
+  return current >= prev ? current - prev : current;
+}
+
+/** Read previous cumulative values from the state file, or return zeros if it doesn't exist. */
+function readPrevState(prevStatePath: string): {
+  prevCtrl: number;
+  prevCache: number;
+  isFirstIteration: boolean;
+} {
+  if (!fs.existsSync(prevStatePath)) {
+    return { prevCtrl: 0, prevCache: 0, isFirstIteration: true };
+  }
+  const parts = fs.readFileSync(prevStatePath, "utf-8").trim().split(",");
+  return {
+    prevCtrl: Number(parts[0]) || 0,
+    prevCache: Number(parts[1]) || 0,
+    isFirstIteration: false,
+  };
+}
+
+/**
  * Read metric log files, compute deltas from the previous iteration, and
  * append a row to the metrics CSV. This is the core logic — callable directly
  * from soak-test.ts without spawning a subprocess.
@@ -74,22 +100,14 @@ export function recordMetrics({
   const cacheMisses = parseCacheMisses(informerContent);
   const resyncFailures = parseResyncFailures(informerContent);
 
-  // Compute deltas using a state file that tracks the previous cumulative values.
-  const prevStatePath = metricsCsvPath.replace(/\.csv$/, ".prev");
-
-  let prevCtrl = 0;
-  let prevCache = 0;
-
-  if (fs.existsSync(prevStatePath)) {
-    const parts = fs.readFileSync(prevStatePath, "utf-8").trim().split(",");
-    prevCtrl = Number(parts[0]) || 0;
-    prevCache = Number(parts[1]) || 0;
+  if (!metricsCsvPath.endsWith(".csv")) {
+    throw new Error(`metricsCsvPath must end in .csv, got: ${metricsCsvPath}`);
   }
+  const prevStatePath = `${metricsCsvPath.slice(0, -4)}.prev`;
+  const { prevCtrl, prevCache, isFirstIteration } = readPrevState(prevStatePath);
 
-  // Detect counter resets: if current < prev, the counter was reset (e.g. pod restart).
-  // Treat the new value as the delta rather than producing a negative spike.
-  const ctrlFailuresDelta = ctrlFailures >= prevCtrl ? ctrlFailures - prevCtrl : ctrlFailures;
-  const cacheMissesDelta = cacheMisses >= prevCache ? cacheMisses - prevCache : cacheMisses;
+  const ctrlFailuresDelta = computeDelta(ctrlFailures, prevCtrl, isFirstIteration);
+  const cacheMissesDelta = computeDelta(cacheMisses, prevCache, isFirstIteration);
 
   fs.writeFileSync(prevStatePath, `${ctrlFailures},${cacheMisses}\n`);
 

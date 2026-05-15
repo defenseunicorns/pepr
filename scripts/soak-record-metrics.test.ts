@@ -102,7 +102,7 @@ describe("recordMetrics", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("appends a row to the CSV with correct deltas on first iteration", () => {
+  it("appends a row to the CSV with zero deltas on first iteration (baseline)", () => {
     fs.writeFileSync(auditorPath, "watch_controller_failures_total 5");
     fs.writeFileSync(informerPath, 'pepr_cache_miss{window="5m"} 10');
 
@@ -117,8 +117,8 @@ describe("recordMetrics", () => {
     expect(lines).toHaveLength(2); // header + 1 data row
     const cols = lines[1].split(",");
     expect(cols[0]).toBe("1");
-    expect(cols[2]).toBe("5"); // ctrl delta = 5 - 0
-    expect(cols[3]).toBe("10"); // cache delta = 10 - 0
+    expect(cols[2]).toBe("0"); // first iteration = baseline, delta is 0
+    expect(cols[3]).toBe("0"); // first iteration = baseline, delta is 0
   });
 
   it("computes deltas correctly across iterations", () => {
@@ -145,6 +145,25 @@ describe("recordMetrics", () => {
     const cols = lines[2].split(",");
     expect(cols[2]).toBe("3"); // 8 - 5
     expect(cols[3]).toBe("4"); // 14 - 10
+  });
+
+  it("throws if metricsCsvPath does not end in .csv", () => {
+    const badPath = path.join(tmpDir, "metrics.txt");
+    fs.writeFileSync(badPath, "header\n");
+    fs.writeFileSync(auditorPath, "watch_controller_failures_total 0");
+    fs.writeFileSync(informerPath, "");
+
+    expect(() =>
+      recordMetrics({
+        iteration: 1,
+        auditorLogPath: auditorPath,
+        informerLogPath: informerPath,
+        metricsCsvPath: badPath,
+      }),
+    ).toThrow("metricsCsvPath must end in .csv");
+
+    // Verify the original file was not overwritten
+    expect(fs.readFileSync(badPath, "utf-8")).toBe("header\n");
   });
 
   it("handles counter resets by treating the new value as the delta", () => {
