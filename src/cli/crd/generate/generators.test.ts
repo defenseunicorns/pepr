@@ -263,6 +263,10 @@ describe("CRD Generator", () => {
           contents: generateTestContent({ emptyKey: "plural" }),
           expectedError: ErrorMessages.MISSING_OR_INVALID_KEY("plural"),
         },
+        {
+          contents: "const details = getDetails();",
+          expectedError: ErrorMessages.MISSING_DETAILS,
+        },
       ])("should throw an error: $expectedError", ({ contents, expectedError }) => {
         const file = createSourceFile("test.ts", contents);
         expect(() => extractDetails(file)).toThrow(expectedError);
@@ -380,6 +384,28 @@ describe("CRD Generator", () => {
           processSourceFile(sourceFile, checker, "v1", "/output");
           expect(Log.warn).toHaveBeenCalledWith(WarningMessages.MISSING_KIND_COMMENT("empty.ts"));
         }, 10_000);
+
+        it("should use empty condition schema when no StatusCondition type exists", () => {
+          const writeFileMock = vi.mocked(fs.writeFileSync);
+          const { sourceFile, checker } = createProgramFromContent(
+            "nocond.ts",
+            generateTestContent({
+              kind: "Gadget",
+              specInterface: "GadgetSpec",
+              extraContent: `
+                export interface GadgetSpec {
+                  name: string;
+                }`,
+            }),
+          );
+
+          processSourceFile(sourceFile, checker, "v1", "/crds");
+          const yaml = writeFileMock.mock.calls[0][1] as string;
+          expect(yaml).toContain("CustomResourceDefinition");
+          // Status conditions should have empty properties since no GadgetStatusCondition exists
+          expect(yaml).toContain("conditions");
+          expect(writeFileMock.mock.calls[0][0]).toBe("/crds/gadget.yaml");
+        }, 30000);
       });
     });
   });
