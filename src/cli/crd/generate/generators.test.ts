@@ -271,27 +271,6 @@ describe("CRD Generator", () => {
   });
 
   describe("Source File Processing", () => {
-    describe("when processing files with incomplete content", () => {
-      it.each([
-        {
-          contents: generateTestContent({ specInterface: "SomethingSpec" }),
-          expectedWarning: WarningMessages.MISSING_KIND_COMMENT("test.ts"),
-        },
-        {
-          contents: generateTestContent({ kind: "Something" }),
-          expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
-        },
-      ])(
-        "should log appropriate warnings: $expectedWarning",
-        ({ contents, expectedWarning }) => {
-          const { sourceFile, checker } = createProgramFromContent("test.ts", contents);
-          processSourceFile(sourceFile, checker, "v1", "/output");
-          expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
-        },
-        10_000,
-      );
-    });
-
     describe("when processing valid source files", () => {
       describe("when file content is incomplete", () => {
         it.each([

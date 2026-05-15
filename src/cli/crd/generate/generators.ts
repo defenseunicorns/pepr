@@ -19,6 +19,10 @@ function extractCRDDetails(
   shortNames?: string[];
 } {
   const kind = extractSingleLineComment(content, "Kind");
+  if (!kind) {
+    return { kind: undefined, fqdn: "", scope: "Namespaced", plural: "", shortNames: undefined };
+  }
+
   const group = extractSingleLineComment(content, "Group") ?? "example";
   const domain = extractSingleLineComment(content, "Domain") ?? "pepr.dev";
   const details = extractDetails(sourceFile);
@@ -216,26 +220,7 @@ function getSchemaFromType(
   required: string[];
 } {
   const type = checker.getTypeAtLocation(decl);
-  const properties: Record<string, V1JSONSchemaProps> = {};
-  const required: string[] = [];
-
-  for (const prop of type.getProperties()) {
-    const name = uncapitalize(prop.getName());
-    const declarations = prop.getDeclarations();
-    if (!declarations || !declarations.length) continue;
-
-    const declaration = declarations[0];
-    const description = getJsDocDescription(declaration);
-    const valueType = checker.getTypeOfSymbolAtLocation(prop, declaration);
-
-    properties[name] = {
-      ...mapTypeToSchema(valueType, checker),
-      ...(description ? { description } : {}),
-    };
-
-    if (!(prop.flags & ts.SymbolFlags.Optional)) required.push(name);
-  }
-
+  const { properties, required } = extractObjectProperties(type, checker);
   return { properties, required };
 }
 
@@ -259,8 +244,10 @@ function getPrimitiveSchemaType(type: ts.Type): V1JSONSchemaProps | undefined {
 
 function unwrapOptionalType(type: ts.Type): ts.Type {
   if (type.isUnion()) {
-    const nonUndefined = type.types.filter(t => !(t.flags & ts.TypeFlags.Undefined));
-    if (nonUndefined.length === 1) return nonUndefined[0];
+    const filtered = type.types.filter(
+      t => !(t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Null)),
+    );
+    if (filtered.length === 1) return filtered[0];
   }
   return type;
 }
@@ -282,11 +269,15 @@ function mapTypeToSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaPr
   }
 
   if (resolved.flags & ts.TypeFlags.Object) return buildObjectSchema(resolved, checker);
+  Log.warn(`Unsupported type "${checker.typeToString(resolved)}", defaulting to string`);
   return { type: "string" };
 }
 
-function buildObjectSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
-  const props: Record<string, V1JSONSchemaProps> = {};
+function extractObjectProperties(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+): { properties: Record<string, V1JSONSchemaProps>; required: string[] } {
+  const properties: Record<string, V1JSONSchemaProps> = {};
   const required: string[] = [];
 
   for (const prop of type.getProperties()) {
@@ -298,7 +289,7 @@ function buildObjectSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchema
     const description = getJsDocDescription(decl);
     const subType = checker.getTypeOfSymbolAtLocation(prop, decl);
 
-    props[name] = {
+    properties[name] = {
       ...mapTypeToSchema(subType, checker),
       ...(description ? { description } : {}),
     };
@@ -306,9 +297,14 @@ function buildObjectSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchema
     if (!(prop.flags & ts.SymbolFlags.Optional)) required.push(name);
   }
 
+  return { properties, required };
+}
+
+function buildObjectSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
+  const { properties, required } = extractObjectProperties(type, checker);
   return {
     type: "object",
-    properties: props,
+    properties,
     ...(required.length > 0 ? { required } : {}),
   };
 }
