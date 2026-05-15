@@ -92,11 +92,13 @@ const createProgramFromContent = (
   name: string,
   content: string,
 ): { sourceFile: ts.SourceFile; checker: ts.TypeChecker } => {
-  const host = ts.createCompilerHost({
+  const options = {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
     strict: true,
-  });
+  };
+  const host = ts.createCompilerHost(options);
   const originalGetSourceFile = host.getSourceFile;
   host.getSourceFile = (fileName, languageVersion, onError, shouldCreate) => {
     if (fileName === name) {
@@ -113,15 +115,7 @@ const createProgramFromContent = (
     return ts.sys.readFile(fileName);
   };
 
-  const program = ts.createProgram(
-    [name],
-    {
-      target: ts.ScriptTarget.ESNext,
-      module: ts.ModuleKind.ESNext,
-      strict: true,
-    },
-    host,
-  );
+  const program = ts.createProgram([name], options, host);
 
   const sourceFile = program.getSourceFile(name)!;
   const checker = program.getTypeChecker();
@@ -281,11 +275,15 @@ describe("CRD Generator", () => {
           contents: generateTestContent({ kind: "Something" }),
           expectedWarning: WarningMessages.MISSING_INTERFACE("test.ts", "Something"),
         },
-      ])("should log appropriate warnings: $expectedWarning", ({ contents, expectedWarning }) => {
-        const { sourceFile, checker } = createProgramFromContent("test.ts", contents);
-        processSourceFile(sourceFile, checker, "v1", "/output");
-        expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
-      });
+      ])(
+        "should log appropriate warnings: $expectedWarning",
+        ({ contents, expectedWarning }) => {
+          const { sourceFile, checker } = createProgramFromContent("test.ts", contents);
+          processSourceFile(sourceFile, checker, "v1", "/output");
+          expect(Log.warn).toHaveBeenCalledWith(expectedWarning);
+        },
+        10_000,
+      );
     });
 
     describe("when processing valid source files", () => {

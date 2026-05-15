@@ -67,7 +67,7 @@ export function createProgram(filePaths: string[]): ts.Program {
   return ts.createProgram(filePaths, {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
     strict: true,
   });
 }
