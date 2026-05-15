@@ -67,6 +67,7 @@ export function createProgram(filePaths: string[]): ts.Program {
   return ts.createProgram(filePaths, {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
     strict: true,
   });
 }
@@ -194,10 +195,11 @@ function findTypeAlias(
 }
 
 function getJsDocDescription(node: ts.Node): string {
-  const jsDocs = ts.getJSDocCommentsAndTags(node);
+  const jsDocs = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
+  if (!jsDocs) return "";
   const comments: string[] = [];
   for (const doc of jsDocs) {
-    if (ts.isJSDoc(doc) && doc.comment) {
+    if (doc.comment) {
       if (typeof doc.comment === "string") {
         comments.push(doc.comment);
       } else {
@@ -264,7 +266,7 @@ function mapTypeToSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaPr
   if (primitive) return primitive;
 
   if (checker.isArrayType(type)) {
-    const typeArgs = (type as ts.TypeReference).typeArguments;
+    const typeArgs = checker.getTypeArguments(type as ts.TypeReference);
     if (typeArgs && typeArgs.length > 0) {
       return { type: "array", items: mapTypeToSchema(typeArgs[0], checker) };
     }
