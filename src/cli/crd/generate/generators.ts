@@ -67,7 +67,6 @@ export function createProgram(filePaths: string[]): ts.Program {
   return ts.createProgram(filePaths, {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
     strict: true,
   });
 }
@@ -195,11 +194,10 @@ function findTypeAlias(
 }
 
 function getJsDocDescription(node: ts.Node): string {
-  const jsDocs = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
-  if (!jsDocs) return "";
+  const jsDocs = ts.getJSDocCommentsAndTags(node);
   const comments: string[] = [];
   for (const doc of jsDocs) {
-    if (doc.comment) {
+    if (ts.isJSDoc(doc) && doc.comment) {
       if (typeof doc.comment === "string") {
         comments.push(doc.comment);
       } else {
@@ -259,21 +257,31 @@ function getPrimitiveSchemaType(type: ts.Type): V1JSONSchemaProps | undefined {
   return undefined;
 }
 
-function mapTypeToSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
-  if (checker.typeToString(type) === "Date") return { type: "string", format: "date-time" };
+function unwrapOptionalType(type: ts.Type): ts.Type {
+  if (type.isUnion()) {
+    const nonUndefined = type.types.filter(t => !(t.flags & ts.TypeFlags.Undefined));
+    if (nonUndefined.length === 1) return nonUndefined[0];
+  }
+  return type;
+}
 
-  const primitive = getPrimitiveSchemaType(type);
+function mapTypeToSchema(type: ts.Type, checker: ts.TypeChecker): V1JSONSchemaProps {
+  const resolved = unwrapOptionalType(type);
+
+  if (checker.typeToString(resolved) === "Date") return { type: "string", format: "date-time" };
+
+  const primitive = getPrimitiveSchemaType(resolved);
   if (primitive) return primitive;
 
-  if (checker.isArrayType(type)) {
-    const typeArgs = checker.getTypeArguments(type as ts.TypeReference);
+  if (checker.isArrayType(resolved)) {
+    const typeArgs = checker.getTypeArguments(resolved as ts.TypeReference);
     if (typeArgs && typeArgs.length > 0) {
       return { type: "array", items: mapTypeToSchema(typeArgs[0], checker) };
     }
     return { type: "array" };
   }
 
-  if (type.flags & ts.TypeFlags.Object) return buildObjectSchema(type, checker);
+  if (resolved.flags & ts.TypeFlags.Object) return buildObjectSchema(resolved, checker);
   return { type: "string" };
 }
 
