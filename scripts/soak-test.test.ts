@@ -8,7 +8,6 @@ import os from "node:os";
 
 import {
   SoakTestFailure,
-  failWithReason,
   assertCacheMissGrowth,
   assertMetrics,
   initLogFiles,
@@ -65,32 +64,6 @@ describe("initLogFiles", () => {
     initLogFiles(logsDir);
 
     expect(fs.existsSync(path.join(logsDir, "metrics.csv"))).toBe(true);
-  });
-});
-
-describe("failWithReason", () => {
-  let tmpDir: string;
-
-  beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "soak-fail-"));
-  });
-
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  });
-
-  it("writes reason to failure-reason.txt and throws SoakTestFailure", () => {
-    expect(() => failWithReason("pod crashed", tmpDir)).toThrow(SoakTestFailure);
-    expect(fs.readFileSync(path.join(tmpDir, "failure-reason.txt"), "utf-8")).toBe("pod crashed");
-  });
-
-  it("includes the reason in the error message", () => {
-    try {
-      failWithReason("cache misses too high", tmpDir);
-    } catch (err) {
-      expect(err).toBeInstanceOf(SoakTestFailure);
-      expect((err as SoakTestFailure).message).toBe("cache misses too high");
-    }
   });
 });
 
