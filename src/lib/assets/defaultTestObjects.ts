@@ -152,6 +152,22 @@ export const capabilityWithShortKey: CapabilityExport[] = [
   ),
 ];
 
+export const capabilityWithWatchAndFinalize: CapabilityExport[] = [
+  createMockCapability(
+    [],
+    [
+      createMockBinding(
+        { group: "", version: "v1", kind: "configmap", plural: "configmaps" },
+        { isWatch: true, event: Event.CREATE },
+      ),
+      createMockBinding(
+        { group: "", version: "v1", kind: "configmap", plural: "configmaps" },
+        { isWatch: false, event: Event.CREATE, isFinalize: true },
+      ),
+    ],
+  ),
+];
+
 export const capabilityWithLongKey: CapabilityExport[] = [
   createMockCapability(
     [createMockRbacRule(["apps"], ["deployments"], ["create"])],
