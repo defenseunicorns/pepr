@@ -41,7 +41,7 @@ export function parseResyncFailures(informerContent: string): number {
     .split("\n")
     .map(line => line.trim())
     .filter(line => !line.startsWith("#"))
-    .filter(line => line.includes("pepr_resync_failure_count"))
+    .filter(line => /^pepr_resync_failure_count[\s{]/.test(line))
     .reduce((sum, line) => {
       const match = line.match(/count="(\d+)"/);
       const value = match ? Number(match[1]) : 0;

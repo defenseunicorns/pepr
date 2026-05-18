@@ -61,7 +61,7 @@ export function buildSummaryLines(csvLines: string[], informerLogPath: string): 
     .split("\n")
     .map(line => line.trim())
     .filter(line => !line.startsWith("#"))
-    .filter(line => line.includes("pepr_resync_failure_count"))
+    .filter(line => /^pepr_resync_failure_count[\s{]/.test(line))
     .reduce((sum, line) => {
       const value = Number(line.split(/\s+/).at(-1));
       return sum + (isNaN(value) ? 0 : value);

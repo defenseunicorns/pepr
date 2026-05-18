@@ -6,31 +6,35 @@ import { describe, it, expect } from "vitest";
 import { parseEnvNumber } from "./soak-constants.js";
 
 describe("parseEnvNumber", () => {
-  it("returns the default when envVar is undefined", () => {
-    expect(parseEnvNumber(undefined, 10)).toBe(10);
-  });
-
-  it("returns the default when envVar is empty string", () => {
-    expect(parseEnvNumber("", 10)).toBe(10);
-  });
-
-  it("returns the default when envVar is not a number", () => {
-    expect(parseEnvNumber("abc", 10)).toBe(10);
-  });
-
-  it("parses a valid positive number", () => {
-    expect(parseEnvNumber("42", 10)).toBe(42);
-  });
-
-  it("respects an explicit 0 value (does not treat 0 as falsy)", () => {
-    expect(parseEnvNumber("0", 10)).toBe(0);
-  });
-
-  it("parses negative numbers", () => {
-    expect(parseEnvNumber("-5", 10)).toBe(-5);
-  });
-
-  it("parses floating point numbers", () => {
-    expect(parseEnvNumber("3.14", 10)).toBe(3.14);
+  it.each([
+    {
+      input: undefined,
+      fallback: 10,
+      expected: 10,
+      desc: "returns the default when envVar is undefined",
+    },
+    {
+      input: "",
+      fallback: 10,
+      expected: 10,
+      desc: "returns the default when envVar is empty string",
+    },
+    {
+      input: "abc",
+      fallback: 10,
+      expected: 10,
+      desc: "returns the default when envVar is not a number",
+    },
+    { input: "42", fallback: 10, expected: 42, desc: "parses a valid positive number" },
+    {
+      input: "0",
+      fallback: 10,
+      expected: 0,
+      desc: "respects an explicit 0 value (does not treat 0 as falsy)",
+    },
+    { input: "-5", fallback: 10, expected: -5, desc: "parses negative numbers" },
+    { input: "3.14", fallback: 10, expected: 3.14, desc: "parses floating point numbers" },
+  ])("$desc (input=$input, fallback=$fallback)", ({ input, fallback, expected }) => {
+    expect(parseEnvNumber(input, fallback)).toBe(expected);
   });
 });
