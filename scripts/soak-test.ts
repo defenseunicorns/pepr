@@ -70,8 +70,8 @@ export function failWithReason(reason: string, logsDir: string = LOGS_DIR): neve
   fs.writeFileSync(`${logsDir}/failure-reason.txt`, reason);
   try {
     collectMetrics(logsDir);
-  } catch {
-    // collectMetrics requires kubectl — expected to fail in test environments
+  } catch (e) {
+    console.error("Failed to collect diagnostic metrics during failure handling:", e);
   }
   throw new SoakTestFailure(reason);
 }
