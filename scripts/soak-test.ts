@@ -141,7 +141,7 @@ export function fetchPodNames(): string[] {
 
   if (!output) return [];
 
-  return output.split(" ");
+  return output.split(/\s+/).filter(Boolean);
 }
 
 export function checkPodStability(
