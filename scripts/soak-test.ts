@@ -232,7 +232,7 @@ async function main(): Promise<void> {
       }
     }
 
-    console.log("Soak test passed successfully!");
+    console.log(`Soak test passed successfully! Completed ${iteration} iterations.`);
   } catch (err) {
     if (err instanceof SoakTestFailure) {
       console.error(err.message);
