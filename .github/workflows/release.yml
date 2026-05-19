@@ -20,7 +20,6 @@ jobs:
       pull-requests: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created || 'false' }}
-      release_tag: ${{ steps.release.outputs.tag_name || 'v0.0.0' }}
       release_version: ${{ steps.release.outputs.version || '0.0.0' }}
     steps:
       - name: Harden Runner
@@ -84,7 +83,7 @@ jobs:
       - name: Set Version
         run: |
           node ./scripts/set-version.js "${{ needs.tag-new-version.outputs.release_version }}"
-          npm install
+          npm ci
 
       - name: Publish to GHCR
         env:
