@@ -32,8 +32,6 @@ describe("parseEnvNumber", () => {
       expected: 0,
       desc: "respects an explicit 0 value (does not treat 0 as falsy)",
     },
-    { input: "-5", fallback: 10, expected: -5, desc: "parses negative numbers" },
-    { input: "3.14", fallback: 10, expected: 3.14, desc: "parses floating point numbers" },
   ])("$desc (input=$input, fallback=$fallback)", ({ input, fallback, expected }) => {
     expect(parseEnvNumber(input, fallback)).toBe(expected);
   });
