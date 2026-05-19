@@ -68,10 +68,6 @@
   "devDependencies": {
     "@commitlint/cli": "20.5.0",
     "@commitlint/config-conventional": "20.5.0",
-    "@semantic-release/commit-analyzer": "^13.0.1",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/npm": "^13.0.0",
-    "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/command-line-args": "^5.2.3",
     "@types/express": "5.0.6",
     "@types/json-pointer": "^1.0.34",
