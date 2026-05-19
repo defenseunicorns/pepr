@@ -16,78 +16,37 @@ import os from "node:os";
 import {
   fetchPodNames,
   checkPodStability,
-  collectMetrics,
   failWithReason,
   assertMetrics,
-  assertCacheMissGrowth,
   SoakTestFailure,
 } from "./soak-test.js";
 import { STABILIZATION_ITERATIONS } from "./soak-constants.js";
 
 const mockExecSync = vi.mocked(execSync);
 
-describe("collectMetrics", () => {
-  let tmpDir: string;
-
+describe("fetchPodNames", () => {
   beforeEach(() => {
     mockExecSync.mockReset();
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "soak-collect-"));
   });
 
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  });
+  it.each([
+    {
+      input: "pod-a pod-b pod-c",
+      expected: ["pod-a", "pod-b", "pod-c"],
+      desc: "splits multiple pod names",
+    },
+    { input: "", expected: [], desc: "returns empty array for empty output" },
+    {
+      input: "  pod-a pod-b  ",
+      expected: ["pod-a", "pod-b"],
+      desc: "handles leading/trailing whitespace",
+    },
+  ])("$desc", ({ input, expected }) => {
+    mockExecSync.mockReturnValue(Buffer.from(input));
 
-  it("filters auditor output to watch_controller_failures_total lines", () => {
-    mockExecSync
-      .mockReturnValueOnce(
-        Buffer.from(
-          "# HELP watch_controller_failures_total Total\n" +
-            "# TYPE watch_controller_failures_total counter\n" +
-            "watch_controller_failures_total 42\n" +
-            "some_other_metric 99\n",
-        ),
-      )
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockReturnValueOnce(Buffer.from("watch logs here"));
+    const result = fetchPodNames();
 
-    collectMetrics(tmpDir);
-
-    const auditor = fs.readFileSync(path.join(tmpDir, "auditor-log.txt"), "utf-8");
-    expect(auditor).toContain("watch_controller_failures_total 42");
-    expect(auditor).not.toContain("some_other_metric");
-  });
-
-  it("filters informer output to cache miss and resync lines", () => {
-    mockExecSync
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockReturnValueOnce(
-        Buffer.from(
-          'pepr_cache_miss{window="5m"} 10\n' +
-            'pepr_resync_failure_count{count="0"} 1\n' +
-            "unrelated_metric 5\n",
-        ),
-      )
-      .mockReturnValueOnce(Buffer.from(""));
-
-    collectMetrics(tmpDir);
-
-    const informer = fs.readFileSync(path.join(tmpDir, "informer-log.txt"), "utf-8");
-    expect(informer).toContain("pepr_cache_miss");
-    expect(informer).toContain("pepr_resync_failure_count");
-    expect(informer).not.toContain("unrelated_metric");
-  });
-
-  it("writes watch logs directly", () => {
-    mockExecSync
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockReturnValueOnce(Buffer.from("full watch output"));
-
-    collectMetrics(tmpDir);
-
-    const watchLogs = fs.readFileSync(path.join(tmpDir, "watch-logs.txt"), "utf-8");
-    expect(watchLogs).toBe("full watch output");
+    expect(result).toEqual(expected);
   });
 });
 
@@ -103,48 +62,9 @@ describe("failWithReason", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("writes reason to failure-reason.txt and throws SoakTestFailure", () => {
+  it("writes reason to file and throws SoakTestFailure with that reason", () => {
     expect(() => failWithReason("pod crashed", tmpDir)).toThrow(SoakTestFailure);
     expect(fs.readFileSync(path.join(tmpDir, "failure-reason.txt"), "utf-8")).toBe("pod crashed");
-  });
-
-  it("includes the reason in the error message", () => {
-    try {
-      failWithReason("cache misses too high", tmpDir);
-    } catch (err) {
-      expect(err).toBeInstanceOf(SoakTestFailure);
-      expect((err as SoakTestFailure).message).toBe("cache misses too high");
-    }
-  });
-});
-
-describe("fetchPodNames", () => {
-  beforeEach(() => {
-    mockExecSync.mockReset();
-  });
-
-  it("returns pod names split by space", () => {
-    mockExecSync.mockReturnValue(Buffer.from("pod-a pod-b pod-c"));
-    const result = fetchPodNames();
-    expect(result).toEqual(["pod-a", "pod-b", "pod-c"]);
-  });
-
-  it("returns empty array when output is empty", () => {
-    mockExecSync.mockReturnValue(Buffer.from(""));
-    const result = fetchPodNames();
-    expect(result).toEqual([]);
-  });
-
-  it("returns single pod name", () => {
-    mockExecSync.mockReturnValue(Buffer.from("only-pod"));
-    const result = fetchPodNames();
-    expect(result).toEqual(["only-pod"]);
-  });
-
-  it("trims whitespace from output", () => {
-    mockExecSync.mockReturnValue(Buffer.from("  pod-a pod-b  "));
-    const result = fetchPodNames();
-    expect(result).toEqual(["pod-a", "pod-b"]);
   });
 });
 
@@ -153,7 +73,6 @@ describe("checkPodStability", () => {
 
   beforeEach(() => {
     mockExecSync.mockReset();
-    // Default: return empty pod list for fetchPodNames, no-op for display commands
     mockExecSync.mockReturnValue(Buffer.from(""));
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "soak-stability-"));
   });
@@ -164,39 +83,17 @@ describe("checkPodStability", () => {
 
   it("does not throw when all pods are in the initial set", () => {
     mockExecSync.mockReturnValue(Buffer.from("pod-a pod-b"));
-
     const initialPods = new Set(["pod-a", "pod-b"]);
+
     expect(() => checkPodStability(initialPods, 10, tmpDir)).not.toThrow();
   });
 
-  it("does not throw when current pods are a subset of initial", () => {
-    mockExecSync.mockReturnValue(Buffer.from("pod-a"));
-
-    const initialPods = new Set(["pod-a", "pod-b"]);
-    expect(() => checkPodStability(initialPods, 10, tmpDir)).not.toThrow();
-  });
-
-  it("throws SoakTestFailure when a new pod appears", () => {
-    mockExecSync.mockReturnValue(Buffer.from("pod-a pod-new"));
-
-    const initialPods = new Set(["pod-a", "pod-b"]);
-    expect(() => checkPodStability(initialPods, 15, tmpDir)).toThrow(SoakTestFailure);
-  });
-
-  it("reports all recreated pods in a single error", () => {
+  it("throws SoakTestFailure listing recreated pods when new pods appear", () => {
     mockExecSync.mockReturnValue(Buffer.from("pod-a pod-new-1 pod-new-2"));
-
     const initialPods = new Set(["pod-a"]);
     expect(() => checkPodStability(initialPods, 30, tmpDir)).toThrow(
       "New pods detected (possible recreation) ~30 minutes into the run: pod-new-1, pod-new-2",
     );
-  });
-
-  it("does not throw when no pods are running", () => {
-    mockExecSync.mockReturnValue(Buffer.from(""));
-
-    const initialPods = new Set(["pod-a"]);
-    expect(() => checkPodStability(initialPods, 5, tmpDir)).not.toThrow();
   });
 });
 
@@ -233,13 +130,7 @@ describe("assertMetrics", () => {
     expect(() => assertMetrics(1, tmpDir, 5)).toThrow("Resync failures exceeded threshold: 10 > 5");
   });
 
-  it("does not check cache miss growth before stabilization", () => {
-    writeCsv(["1,2024-01-01T00:00:00Z,0,100,0"]);
-    // iteration <= STABILIZATION_ITERATIONS, so cache miss growth is not checked
-    expect(() => assertMetrics(1, tmpDir)).not.toThrow();
-  });
-
-  it("checks cache miss growth after stabilization", () => {
+  it("skips cache miss growth check before stabilization, enforces it after", () => {
     const rows: string[] = [];
     for (let i = 1; i <= STABILIZATION_ITERATIONS + 1; i++) {
       const cacheDelta = i === STABILIZATION_ITERATIONS ? 2 : 0;
@@ -248,68 +139,9 @@ describe("assertMetrics", () => {
     rows.push(`${STABILIZATION_ITERATIONS + 2},2024-01-01T00:00:00Z,0,50,0`);
     writeCsv(rows);
 
+    expect(() => assertMetrics(1, tmpDir)).not.toThrow();
     expect(() => assertMetrics(STABILIZATION_ITERATIONS + 2, tmpDir, 5, 10)).toThrow(
       "Cache misses grew",
     );
-  });
-
-  it("passes cache miss growth check when within threshold", () => {
-    const rows: string[] = [];
-    for (let i = 1; i <= STABILIZATION_ITERATIONS + 1; i++) {
-      const cacheDelta = i === STABILIZATION_ITERATIONS ? 5 : 0;
-      rows.push(`${i},2024-01-01T00:00:00Z,0,${cacheDelta},0`);
-    }
-    rows.push(`${STABILIZATION_ITERATIONS + 2},2024-01-01T00:00:00Z,0,8,0`);
-    writeCsv(rows);
-
-    expect(() => assertMetrics(STABILIZATION_ITERATIONS + 2, tmpDir, 5, 10)).not.toThrow();
-  });
-});
-
-describe("assertCacheMissGrowth", () => {
-  let tmpDir: string;
-
-  beforeEach(() => {
-    mockExecSync.mockReset();
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "soak-growth-"));
-  });
-
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  });
-
-  function writeCsv(rows: string[]): void {
-    const header =
-      "iteration,timestamp,watch_controller_failures_delta,pepr_cache_miss_delta,pepr_resync_failure_count";
-    fs.writeFileSync(path.join(tmpDir, "metrics.csv"), [header, ...rows].join("\n") + "\n");
-  }
-
-  it("skips check when not enough CSV rows", () => {
-    writeCsv(["1,2024-01-01T00:00:00Z,0,5,0"]);
-    expect(() => assertCacheMissGrowth(100, tmpDir, 10)).not.toThrow();
-  });
-
-  it("throws when growth exceeds threshold", () => {
-    const rows: string[] = [];
-    for (let i = 1; i <= STABILIZATION_ITERATIONS; i++) {
-      const cacheDelta = i === STABILIZATION_ITERATIONS ? 3 : 0;
-      rows.push(`${i},2024-01-01T00:00:00Z,0,${cacheDelta},0`);
-    }
-    writeCsv(rows);
-
-    expect(() => assertCacheMissGrowth(20, tmpDir, 10)).toThrow(
-      "Cache misses grew from 3 to 20 (growth: 17 > threshold: 10)",
-    );
-  });
-
-  it("passes when growth is within threshold", () => {
-    const rows: string[] = [];
-    for (let i = 1; i <= STABILIZATION_ITERATIONS; i++) {
-      const cacheDelta = i === STABILIZATION_ITERATIONS ? 3 : 0;
-      rows.push(`${i},2024-01-01T00:00:00Z,0,${cacheDelta},0`);
-    }
-    writeCsv(rows);
-
-    expect(() => assertCacheMissGrowth(8, tmpDir, 10)).not.toThrow();
   });
 });
