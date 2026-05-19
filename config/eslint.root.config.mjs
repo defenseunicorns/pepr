@@ -40,6 +40,7 @@ export default [
       parserOptions: {
         project: [
           path.resolve(__dirname, "tsconfig.root.json"),
+          path.resolve(__dirname, "tsconfig.scripts.json"),
           path.resolve(__dirname, "../.github/workflows/scripts/tsconfig.json"),
           path.resolve(__dirname, "../scripts/tsconfig.json"),
         ],
