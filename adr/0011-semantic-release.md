@@ -4,7 +4,7 @@ Date: 2024-07-17
 
 ## Status
 
-Accepted
+Superseded by [22. release-please](./0022-release-please.md)
 
 ## Context
 
