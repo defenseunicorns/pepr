@@ -55,6 +55,7 @@ export function collectMetrics(logsDir: string = LOGS_DIR): void {
 
   const watchOutput = execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", {
     timeout: KUBECTL_TIMEOUT_MS,
+    maxBuffer: 10 * 1024 * 1024,
   }).toString();
   fs.writeFileSync(`${logsDir}/watch-logs.txt`, watchOutput);
 }

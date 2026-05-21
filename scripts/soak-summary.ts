@@ -126,26 +126,31 @@ export function writeSummary({
 
 // CLI entry point — only runs when executed directly (not when imported).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const { Command } = await import("commander");
-  const program = new Command()
-    .description("Reads soak test metrics and writes a Markdown summary to $GITHUB_STEP_SUMMARY.")
-    .argument("<metrics-csv>", "path to metrics CSV file")
-    .argument("<informer-log>", "path to informer log file")
-    .argument("<failure-reason>", "path to failure reason file")
-    .parse();
+  (async (): Promise<void> => {
+    const { Command } = await import("commander");
+    const program = new Command()
+      .description("Reads soak test metrics and writes a Markdown summary to $GITHUB_STEP_SUMMARY.")
+      .argument("<metrics-csv>", "path to metrics CSV file")
+      .argument("<informer-log>", "path to informer log file")
+      .argument("<failure-reason>", "path to failure reason file")
+      .parse();
 
-  const [metricsCSV, informerLog, failureReason] = program.args;
+    const [metricsCSV, informerLog, failureReason] = program.args;
 
-  const summary = process.env.GITHUB_STEP_SUMMARY;
-  if (!summary) {
-    console.error("GITHUB_STEP_SUMMARY environment variable is not set");
+    const summary = process.env.GITHUB_STEP_SUMMARY;
+    if (!summary) {
+      console.error("GITHUB_STEP_SUMMARY environment variable is not set");
+      process.exitCode = 1;
+    } else {
+      writeSummary({
+        metricsCsvPath: metricsCSV,
+        informerLogPath: informerLog,
+        failureReasonPath: failureReason,
+        summaryPath: summary,
+      });
+    }
+  })().catch(err => {
+    console.error("Unexpected error:", err);
     process.exitCode = 1;
-  } else {
-    writeSummary({
-      metricsCsvPath: metricsCSV,
-      informerLogPath: informerLog,
-      failureReasonPath: failureReason,
-      summaryPath: summary,
-    });
-  }
+  });
 }
