@@ -229,7 +229,6 @@ async function main(): Promise<void> {
   initLogFiles();
 
   const podMap = new Map<string, number>();
-  updatePodMap(podMap);
 
   const startTime = Date.now();
   const endTime = startTime + TOTAL_DURATION_MS;
