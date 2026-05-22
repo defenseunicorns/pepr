@@ -11,7 +11,7 @@ updates:
       default-days: 7
     commit-message:
       prefix: "deps"
-      include-scope: true
+      include: "scope"
     groups:
       production-dependencies:
         dependency-type: "production"
