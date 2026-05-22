@@ -15,6 +15,7 @@
         { "type": "build", "section": "Build System", "hidden": true },
         { "type": "ci", "section": "Continuous Integration", "hidden": true },
         { "type": "chore", "section": "Chores", "hidden": true },
+        { "type": "deps", "section": "Dependencies" },
         { "type": "*", "section": "Miscellaneous" }
       ]
     }
