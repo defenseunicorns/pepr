@@ -145,12 +145,18 @@ export function fetchPodNames(): string[] {
   return output.split(/\s+/).filter(Boolean);
 }
 
+export function updatePodMap(podMap: Map<string, number>): void {
+  for (const pod of fetchPodNames()) {
+    podMap.set(pod, (podMap.get(pod) ?? 0) + 1);
+  }
+}
+
 export function checkPodStability(
-  initialPods: Set<string>,
+  podMap: Map<string, number>,
   elapsedMinutes: number,
   logsDir: string = LOGS_DIR,
 ): void {
-  const currentPods = fetchPodNames();
+  updatePodMap(podMap);
 
   execSync("kubectl get pods -n pepr-demo", {
     stdio: "inherit",
@@ -165,7 +171,9 @@ export function checkPodStability(
     timeout: KUBECTL_TIMEOUT_MS,
   });
 
-  const recreated = currentPods.filter(pod => !initialPods.has(pod));
+  const recreated = [...podMap.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([pod, count]) => `${pod} (seen ${count} times)`);
   if (recreated.length > 0) {
     try {
       execSync("kubectl logs deploy/pepr-soak-ci-watcher -n pepr-system", {
@@ -176,7 +184,7 @@ export function checkPodStability(
       console.error("Failed to fetch watcher logs:", e);
     }
     failWithReason(
-      `New pods detected (possible recreation) ~${elapsedMinutes} minutes into the run: ${recreated.join(", ")}`,
+      `Pod recreation detected ~${elapsedMinutes} minutes into the run: ${recreated.join(", ")}`,
       logsDir,
     );
   }
@@ -193,7 +201,11 @@ export function initLogFiles(logsDir: string = LOGS_DIR): void {
   );
 }
 
-function runIteration(iteration: number, initialPods: Set<string>, elapsedMinutes: number): void {
+function runIteration(
+  iteration: number,
+  podMap: Map<string, number>,
+  elapsedMinutes: number,
+): void {
   collectMetrics();
 
   console.log(fs.readFileSync(`${LOGS_DIR}/informer-log.txt`, "utf-8"));
@@ -209,14 +221,15 @@ function runIteration(iteration: number, initialPods: Set<string>, elapsedMinute
   assertMetrics(iteration);
 
   if (iteration % POD_CHECK_INTERVAL === 0) {
-    checkPodStability(initialPods, elapsedMinutes);
+    checkPodStability(podMap, elapsedMinutes);
   }
 }
 
 async function main(): Promise<void> {
   initLogFiles();
 
-  const initialPods = new Set(fetchPodNames());
+  const podMap = new Map<string, number>();
+  updatePodMap(podMap);
 
   const startTime = Date.now();
   const endTime = startTime + TOTAL_DURATION_MS;
@@ -226,7 +239,7 @@ async function main(): Promise<void> {
     while (Date.now() < endTime) {
       iteration++;
       const elapsedMinutes = Math.round((Date.now() - startTime) / 60_000);
-      runIteration(iteration, initialPods, elapsedMinutes);
+      runIteration(iteration, podMap, elapsedMinutes);
 
       if (Date.now() < endTime) {
         await sleep(INTERVAL_MS);
