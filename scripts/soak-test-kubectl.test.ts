@@ -81,18 +81,32 @@ describe("checkPodStability", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("does not throw when all pods are in the initial set", () => {
+  it("does not throw when each pod name is only seen once", () => {
     mockExecSync.mockReturnValue(Buffer.from("pod-a pod-b"));
-    const initialPods = new Set(["pod-a", "pod-b"]);
+    const podMap = new Map<string, number>();
 
-    expect(() => checkPodStability(initialPods, 10, tmpDir)).not.toThrow();
+    expect(() => checkPodStability(podMap, 10, tmpDir)).not.toThrow();
   });
 
-  it("throws SoakTestFailure listing recreated pods when new pods appear", () => {
-    mockExecSync.mockReturnValue(Buffer.from("pod-a pod-new-1 pod-new-2"));
-    const initialPods = new Set(["pod-a"]);
-    expect(() => checkPodStability(initialPods, 30, tmpDir)).toThrow(
-      "New pods detected (possible recreation) ~30 minutes into the run: pod-new-1, pod-new-2",
+  it("does not throw for new uniquely-named pods across checks", () => {
+    const podMap = new Map<string, number>();
+
+    mockExecSync.mockReturnValue(Buffer.from("auto-abc"));
+    checkPodStability(podMap, 10, tmpDir);
+
+    mockExecSync.mockReturnValue(Buffer.from("auto-def"));
+    expect(() => checkPodStability(podMap, 20, tmpDir)).not.toThrow();
+  });
+
+  it("throws SoakTestFailure when a pod name is seen more than once", () => {
+    const podMap = new Map<string, number>();
+
+    mockExecSync.mockReturnValue(Buffer.from("pod-a"));
+    checkPodStability(podMap, 10, tmpDir);
+
+    mockExecSync.mockReturnValue(Buffer.from("pod-a"));
+    expect(() => checkPodStability(podMap, 20, tmpDir)).toThrow(
+      "Pod recreation detected ~20 minutes into the run: pod-a (seen 2 times)",
     );
   });
 });
