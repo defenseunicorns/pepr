@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@types/ramda": "0.31.1",
-    "@typescript-eslint/eslint-plugin": "8.59.3",
-    "@typescript-eslint/parser": "8.59.3",
+    "@typescript-eslint/eslint-plugin": "8.59.4",
+    "@typescript-eslint/parser": "8.59.4",
     "commander": "14.0.3",
     "eslint": "9.39.4",
     "express": "5.2.1",
