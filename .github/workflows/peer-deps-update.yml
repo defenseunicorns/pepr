@@ -47,6 +47,9 @@ jobs:
     if: needs.discover.outputs.empty == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # `prod` is where the GitHub App credentials live as environment secrets;
+    # without this block they resolve to empty strings and the token step fails.
+    environment: prod
     permissions:
       contents: write
       pull-requests: write
@@ -62,8 +65,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
-          app-id: ${{ secrets.GRYPE_AUDIT_GITHUB_APP_ID }}
-          private-key: ${{ secrets.GRYPE_AUDIT_GITHUB_APP_SECRET }}
+          app-id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
+          private-key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
       # `token` is the GitHub App installation token created above. App-token
       # PRs (unlike PRs opened with GITHUB_TOKEN) trigger pull_request-event
       # workflows on the bot's PRs — specifically node.js.yml, which is the
