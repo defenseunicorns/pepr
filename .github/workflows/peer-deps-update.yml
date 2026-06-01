@@ -58,24 +58,26 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      # `token` is set so subsequent `git push` and `gh pr create` calls use
-      # PEER_DEPS_PR_TOKEN if available. Without that PAT the default
-      # GITHUB_TOKEN works, but PRs created with it do not trigger
-      # pull_request-event workflows (a documented GitHub limitation), which
-      # would leave node.js.yml ungated on these PRs.
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          app-id: ${{ secrets.GRYPE_AUDIT_GITHUB_APP_ID }}
+          private-key: ${{ secrets.GRYPE_AUDIT_GITHUB_APP_SECRET }}
+      # `token` is the GitHub App installation token created above. App-token
+      # PRs (unlike PRs opened with GITHUB_TOKEN) trigger pull_request-event
+      # workflows on the bot's PRs — specifically node.js.yml, which is the
+      # gate the team relies on for format / unit / integration coverage.
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
-          token: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "20"
           cache: npm
-      - name: Warn if PEER_DEPS_PR_TOKEN is absent
-        if: ${{ secrets.PEER_DEPS_PR_TOKEN == '' }}
-        run: echo "::warning::PEER_DEPS_PR_TOKEN is not set; PRs will be created with GITHUB_TOKEN and will not trigger pull_request workflows."
       - name: Install dependencies
         run: npm ci
       - name: Apply bump
@@ -93,7 +95,7 @@ jobs:
         run: npm run test:unit
       - name: Open PR
         env:
-          GH_TOKEN: ${{ secrets.PEER_DEPS_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           KIND: ${{ matrix.kind }}
           PKG: ${{ matrix.pkg }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
