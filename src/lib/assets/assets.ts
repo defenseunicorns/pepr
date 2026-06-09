@@ -10,6 +10,7 @@ import {
   admissionDeployTemplate,
   serviceTemplate,
   serviceMonitorTemplate,
+  serviceAccountTemplate,
   watcherDeployTemplate,
 } from "./helm";
 import {
@@ -23,7 +24,7 @@ import { helmLayout, createWebhookYaml, toYaml } from "./index";
 import { loadCapabilities } from "./loader";
 import { namespaceComplianceValidator, dedent } from "../helpers";
 import { promises as fs } from "fs";
-import { storeRole, storeRoleBinding, clusterRoleBinding, serviceAccount } from "./rbac";
+import { storeRole, storeRoleBinding, clusterRoleBinding } from "./rbac";
 import { tlsSecret, apiPathSecret } from "./networking";
 import { WebhookType } from "../enums";
 import { kind } from "kubernetes-fluent-client";
@@ -265,7 +266,7 @@ export class Assets {
         [helm.files.storeRoleBindingYaml, (): string => toYaml(storeRoleBinding(this.name))],
         [helm.files.clusterRoleYaml, (): string => dedent(clusterRoleTemplate())],
         [helm.files.clusterRoleBindingYaml, (): string => toYaml(clusterRoleBinding(this.name))],
-        [helm.files.serviceAccountYaml, (): string => toYaml(serviceAccount(this.name))],
+        [helm.files.serviceAccountYaml, (): string => dedent(serviceAccountTemplate())],
         [
           helm.files.moduleSecretYaml,
           (): string => toYaml(getModuleSecretFunction(this.name, code, moduleHash)),

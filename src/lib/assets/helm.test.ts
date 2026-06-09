@@ -8,6 +8,7 @@ import {
   admissionDeployTemplate,
   serviceTemplate,
   serviceMonitorTemplate,
+  serviceAccountTemplate,
 } from "./helm";
 import { expect, describe, it } from "vitest";
 describe("Kubernetes Template Generators", () => {
@@ -17,6 +18,16 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: v1");
       expect(result).toContain("kind: Namespace");
       expect(result).toContain("name: pepr-system");
+    });
+  });
+
+  describe("serviceAccountTemplate", () => {
+    it("should generate a ServiceAccount template with additional annotations", () => {
+      const result = serviceAccountTemplate();
+      expect(result).toContain("apiVersion: v1");
+      expect(result).toContain("kind: ServiceAccount");
+      expect(result).toContain("name: {{ .Values.uuid }}");
+      expect(result).toContain(".Values.serviceAccount.annotations");
     });
   });
 

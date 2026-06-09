@@ -71,6 +71,7 @@ export async function overridesFile(
     secrets: { apiPath: Buffer.from(apiPath).toString("base64") },
     hash,
     namespace: namespaceBlock(config),
+    serviceAccount: { annotations: {} },
     uuid: name,
     admission: {
       enabled: controllerType.admission === true,

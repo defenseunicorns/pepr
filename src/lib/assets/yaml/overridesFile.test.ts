@@ -55,6 +55,11 @@ interface OverridesFileSchema {
       [key: string]: string;
     };
   };
+  serviceAccount: {
+    annotations: {
+      [key: string]: string;
+    };
+  };
   uuid: string;
   admission: {
     enabled: boolean;
@@ -134,6 +139,7 @@ describe("overridesFile", () => {
     expect(parsedYaml.hash).toBe(mockOverrides.hash);
     expect(parsedYaml.admission.image).toBe(mockOverrides.image);
     expect(parsedYaml.admission.antiAffinity).toBe(false);
+    expect(parsedYaml.serviceAccount.annotations).toEqual({});
     expect(parsedYaml.admission.failurePolicy).toBe("Fail");
     expect(parsedYaml.watcher.image).toBe(mockOverrides.image);
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));

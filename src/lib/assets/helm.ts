@@ -34,6 +34,20 @@ export function namespaceTemplate(): string {
     `;
 }
 
+export function serviceAccountTemplate(): string {
+  return `
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: {{ .Values.uuid }}
+      namespace: pepr-system
+      {{- if .Values.serviceAccount.annotations }}
+      annotations:
+        {{- toYaml .Values.serviceAccount.annotations | nindent 4 }}
+      {{- end }}
+  `;
+}
+
 export function chartYaml(name: string, description?: string): string {
   return `
     apiVersion: v2
