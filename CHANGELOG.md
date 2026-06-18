@@ -2,7 +2,6 @@
 
 ## [1.2.2](https://github.com/defenseunicorns/pepr/compare/v1.2.1...v1.2.2) (2026-06-18)
 
-
 ### Dependencies
 
 * bump actions/setup-node from 6.3.0 to 6.4.0 ([#3131](https://github.com/defenseunicorns/pepr/issues/3131)) ([8b958fb](https://github.com/defenseunicorns/pepr/commit/8b958fbf126370ff645123dc824807ddfcf237f4))
