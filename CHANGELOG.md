@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.2](https://github.com/defenseunicorns/pepr/compare/v1.2.1...v1.2.2) (2026-06-18)
+
+
+### Dependencies
+
+* bump actions/setup-node from 6.3.0 to 6.4.0 ([#3131](https://github.com/defenseunicorns/pepr/issues/3131)) ([8b958fb](https://github.com/defenseunicorns/pepr/commit/8b958fbf126370ff645123dc824807ddfcf237f4))
+* bump chainguard node images from 24 to 26 and suppress irrelevant grype findings ([#3166](https://github.com/defenseunicorns/pepr/issues/3166)) ([4491fc1](https://github.com/defenseunicorns/pepr/commit/4491fc1f8639a76ac2259213693f093d7d4d2ba4))
+* **deps-dev:** bump js-yaml from 4.1.1 to 4.2.0 ([#3164](https://github.com/defenseunicorns/pepr/issues/3164)) ([8505f94](https://github.com/defenseunicorns/pepr/commit/8505f945fcc228cf846918e54b6de30d85b618f1))
+* **deps-dev:** bump vite from 8.0.14 to 8.0.16 ([#3161](https://github.com/defenseunicorns/pepr/issues/3161)) ([34b9baf](https://github.com/defenseunicorns/pepr/commit/34b9bafe6d134fdec877415d4ccca1fc74eb2d56))
+* **deps:** bump form-data from 4.0.4 to 4.0.6 ([#3165](https://github.com/defenseunicorns/pepr/issues/3165)) ([b8d73bc](https://github.com/defenseunicorns/pepr/commit/b8d73bcfa3d603eb2d71a65d651a9fc74dc1eec8))
+
 ## [1.2.1](https://github.com/defenseunicorns/pepr/compare/v1.2.0...v1.2.1) (2026-06-01)
 
 ### Bug Fixes
