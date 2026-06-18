@@ -12,6 +12,9 @@ jobs:
   deploy:
     name: deploy test (${{ matrix.deployer }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required by chainguard-dev/setup-chainctl step
     strategy:
       matrix:
         deployer: [helm, zarf]
@@ -56,6 +59,11 @@ jobs:
       - name: Install Pepr Dependencies
         working-directory: ${{ env.PEPR }}
         run: npm ci
+
+      - name: Login to Chainguard
+        uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Build Pepr Package and Image
         working-directory: ${{ env.PEPR }}
