@@ -90,7 +90,10 @@
   },
   "overrides": {
     "glob": "^9.0.0",
-    "rollup": "4.59.0"
+    "rollup": "4.59.0",
+    "brace-expansion": "^5.0.6",
+    "ip-address": "^10.1.1",
+    "tar": "^7.5.16"
   },
   "peerDependencies": {
     "@types/prompts": "^2.4.9",

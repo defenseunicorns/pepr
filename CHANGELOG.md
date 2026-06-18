@@ -2,12 +2,10 @@
 
 ## [1.2.1](https://github.com/defenseunicorns/pepr/compare/v1.2.0...v1.2.1) (2026-06-01)
 
-
 ### Bug Fixes
 
 * **ci:** point peer-deps-update at the App secrets that actually exist ([#3152](https://github.com/defenseunicorns/pepr/issues/3152)) ([da7a107](https://github.com/defenseunicorns/pepr/commit/da7a1077d9303a99fa1d9485be35ae1f8c2f8fee))
 * **ci:** use app-token auth in peer-deps-update workflow ([#3151](https://github.com/defenseunicorns/pepr/issues/3151)) ([029e5e3](https://github.com/defenseunicorns/pepr/commit/029e5e3ef28444283967d5403b2bcd7fcdaf4bad))
-
 
 ### Dependencies
 
