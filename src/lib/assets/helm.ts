@@ -111,12 +111,6 @@ export function watcherDeployTemplate(buildTimestamp: string, type: ControllerTy
               - name: watcher
                 image: {{ .Values.watcher.image }}
                 imagePullPolicy: IfNotPresent
-                {{- if gt (len .Values.imagePullSecrets) 0 }}
-                imagePullSecrets:
-                  {{- range .Values.imagePullSecrets }}
-                  - name: {{ . }}
-                  {{- end }}
-                {{- end }}
                 args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
@@ -150,6 +144,12 @@ export function watcherDeployTemplate(buildTimestamp: string, type: ControllerTy
                   {{- if .Values.watcher.extraVolumeMounts }}
                   {{- toYaml .Values.watcher.extraVolumeMounts | nindent 12 }}
                   {{- end }}
+            {{- if gt (len .Values.imagePullSecrets) 0 }}
+            imagePullSecrets:
+              {{- range .Values.imagePullSecrets }}
+              - name: {{ . }}
+              {{- end }}
+            {{- end }}
             volumes:
               - name: tls-certs
                 secret:
@@ -226,12 +226,6 @@ export function admissionDeployTemplate(buildTimestamp: string, type: Controller
               - name: server
                 image: {{ .Values.admission.image }}
                 imagePullPolicy: IfNotPresent
-                {{- if gt (len .Values.imagePullSecrets) 0 }}
-                imagePullSecrets:
-                  {{- range .Values.imagePullSecrets }}
-                  - name: {{ . }}
-                  {{- end }}
-                {{- end }}
                 args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
@@ -268,6 +262,12 @@ export function admissionDeployTemplate(buildTimestamp: string, type: Controller
                   {{- if .Values.admission.extraVolumeMounts }}
                   {{- toYaml .Values.admission.extraVolumeMounts | nindent 12 }}
                   {{- end }}
+            {{- if gt (len .Values.imagePullSecrets) 0 }}
+            imagePullSecrets:
+              {{- range .Values.imagePullSecrets }}
+              - name: {{ . }}
+              {{- end }}
+            {{- end }}
             volumes:
               - name: tls-certs
                 secret:
