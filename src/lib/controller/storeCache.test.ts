@@ -134,6 +134,37 @@ describe("StoreCache", () => {
 
         expect(result).toStrictEqual({});
       });
+
+      it("should preserve entries added during in-flight patch on success", async () => {
+        const cache: Record<string, Operation> = {};
+        fillStoreCache(cache, "hello-pepr", "add", { key: ["old"], value: "v", version: "v2" });
+
+        // Simulate sender() writing a new entry while the Patch is in flight.
+        const mockK8s = vi.mocked(K8s);
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockImplementation(async () => {
+              fillStoreCache(cache, "hello-pepr", "add", {
+                key: ["new"],
+                value: "n",
+                version: "v2",
+              });
+            }),
+          } as unknown as K8sInit<T, K>;
+        });
+
+        await sendUpdatesAndFlushCache(cache, "pepr-system", "pepr-abc123-store");
+
+        // The original entry was sent and should be cleared. The concurrent
+        // entry arrived after the snapshot and must survive.
+        expect(cache).toStrictEqual({
+          "add:/data/hello-pepr-v2-new:n": {
+            op: "add",
+            path: "/data/hello-pepr-v2-new",
+            value: "n",
+          },
+        });
+      });
     });
 
     describe("when update fails", () => {
@@ -164,15 +195,59 @@ describe("StoreCache", () => {
         expect(result).toStrictEqual({});
       });
 
-      it("should repopulate cache with original operations after non HTTP/422 errors", async () => {
-        setupK8sMock("error", 400);
+      it("should preserve concurrent writes on retryable failure", async () => {
+        const cache: Record<string, Operation> = {};
+        fillStoreCache(cache, "hello-pepr", "remove", { key: ["stale"], version: "v2" });
 
-        const cache: Record<string, Operation> = {
-          entry: { op: "remove", path: "/some/path" },
-          entry2: { op: "add", path: "some/path", value: "value" },
+        // Simulate sender() writing a new entry into the cache while the
+        // Patch is in flight, then the Patch rejects with a retryable error.
+        const concurrentOp: Operation = {
+          op: "add",
+          path: "/data/hello-pepr-v2-new",
+          value: "fresh",
         };
-        const result = await sendUpdatesAndFlushCache(cache, "some namespace", "some name");
-        expect(result).toStrictEqual(cache);
+        const mockK8s = vi.mocked(K8s);
+        mockK8s.mockImplementation(<T extends GenericClass, K extends KubernetesObject>() => {
+          return {
+            Patch: vi.fn().mockImplementation(() => {
+              // This runs after the snapshot is taken but before the catch block.
+              cache["add:/data/hello-pepr-v2-new:fresh"] = concurrentOp;
+              return Promise.reject({ status: 500 });
+            }),
+          } as unknown as K8sInit<T, K>;
+        });
+
+        const result = await sendUpdatesAndFlushCache(cache, "pepr-system", "pepr-abc123-store");
+
+        // The concurrent write must survive — not be clobbered by the snapshot restore.
+        expect(result["add:/data/hello-pepr-v2-new:fresh"]).toStrictEqual(concurrentOp);
+        // The original entry must also be restored for retry.
+        expect(result["remove:/data/hello-pepr-v2-stale"]).toStrictEqual({
+          op: "remove",
+          path: "/data/hello-pepr-v2-stale",
+        });
+      });
+
+      it("should repopulate cache with original operations after non HTTP/422 errors", async () => {
+        setupK8sMock("error", 500);
+
+        // Build the cache via fillStoreCache so keys are realistic
+        // (e.g. "add:/data/hello-pepr-v2-setting:enabled"), not synthetic.
+        const cache: Record<string, Operation> = {};
+        fillStoreCache(cache, "hello-pepr", "add", {
+          key: ["setting"],
+          value: "enabled",
+          version: "v2",
+        });
+        fillStoreCache(cache, "hello-pepr", "remove", { key: ["old-key"], version: "v2" });
+
+        // Snapshot before the call — we compare against this independent
+        // copy, not the same object reference (which would be tautological).
+        const expected = { ...cache };
+
+        const result = await sendUpdatesAndFlushCache(cache, "pepr-system", "pepr-abc123-store");
+
+        expect(result).toStrictEqual(expected);
       });
     });
   });
