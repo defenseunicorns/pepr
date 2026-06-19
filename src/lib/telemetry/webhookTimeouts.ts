@@ -17,7 +17,9 @@ export class MeasureWebhookTimeout {
 
   start(timeout: number = 10): void {
     this.#startTime = getNow();
-    this.timeout = timeout;
+    // Convert to ms: timeout maps to Kubernetes timeoutSeconds,
+    // but getNow() returns milliseconds via performance.now().
+    this.timeout = timeout * 1000;
     Log.debug(`Starting timer at ${this.#startTime}`);
   }
 
