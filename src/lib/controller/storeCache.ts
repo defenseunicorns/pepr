@@ -44,10 +44,13 @@ export const fillStoreCache = (
   op: DataOp,
   cacheItem: CacheItem,
 ): Record<string, Operation> => {
-  const path = [`/data/${capabilityName}`, cacheItem.version, cacheItem.key] // adjust the path, see ADR-0008
-    .filter(str => str !== "" && str !== undefined)
-    .join("-");
   if (op === "add") {
+    if (cacheItem.key.length !== 1) {
+      throw new Error(`ADD operation expects exactly one key, got ${cacheItem.key.length}`);
+    }
+    const path = [`/data/${capabilityName}`, cacheItem.version, cacheItem.key[0]] // adjust the path, see ADR-0008
+      .filter(str => str !== "" && str !== undefined)
+      .join("-");
     const value = cacheItem.value || "";
     const cacheIdx = [op, path, value].join(":");
 
@@ -57,9 +60,15 @@ export const fillStoreCache = (
     if (cacheItem.key.length < 1) {
       throw new Error(`Key is required for REMOVE operation`);
     }
-    const cacheIndex = [op, path].join(":");
-    // Add the operation to the cache
-    cache[cacheIndex] = { op, path };
+    // Produce one remove operation per key. Storage.clear() passes all store
+    // keys in a single dispatch; each needs its own JSON Patch entry.
+    for (const key of cacheItem.key) {
+      const path = [`/data/${capabilityName}`, cacheItem.version, key]
+        .filter(str => str !== "" && str !== undefined)
+        .join("-");
+      const cacheIndex = [op, path].join(":");
+      cache[cacheIndex] = { op, path };
+    }
   } else {
     throw new Error(`Unsupported operation: ${op}`);
   }
