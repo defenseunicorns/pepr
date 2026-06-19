@@ -28,6 +28,7 @@ import { shouldSkipRequest } from "../filter/filter";
 
 vi.mock("./decode-utils", () => ({
   decodeData: vi.fn(),
+  reencodeData: vi.fn((wrapped: PeprMutateRequest<KubernetesObject>) => clone(wrapped.Raw)),
 }));
 
 vi.mock("../telemetry/logger", () => ({
@@ -369,5 +370,147 @@ describe("mutateProcessor", () => {
     expect(result.warnings).toBeDefined();
     expect(result.warnings!.length).toBeGreaterThan(0);
     expect(result.allowed).toBe(false);
+  });
+});
+
+// The early-return in mutateProcessor's binding loop checks
+// `response.result !== undefined` to detect rejection. This is the correct
+// signal because `response.result` is only set when processRequest's catch
+// block handles an OnError.REJECT configuration. Checking warnings instead
+// would be fragile: `processRequest` treats the response as an in/out
+// parameter and does not clear pre-existing warnings on success, so the
+// presence of warnings alone does not imply that a rejection occurred.
+
+describe("OnError.REJECT early-return checks response.result", () => {
+  describe("processRequest with pre-existing warnings", () => {
+    it("should not set response.result when callback succeeds, even with pre-existing warnings", async () => {
+      const successCallback = vi.fn();
+      const testBinding = { ...clone(defaultBinding), mutateCallback: successCallback };
+      const testBindable: Bindable = {
+        ...clone(defaultBindable),
+        binding: testBinding,
+        config: { ...defaultModuleConfig, onError: OnError.REJECT },
+      };
+
+      // processRequest accepts an existing response and appends to it.
+      // Pre-existing warnings must not cause it to set response.result.
+      const responseWithPreExistingWarnings: MutateResponse = {
+        uid: "test-uid",
+        allowed: false,
+        warnings: ["warning from a prior binding failure"],
+      };
+
+      const result = await processRequest(
+        testBindable,
+        defaultPeprMutateRequest(),
+        responseWithPreExistingWarnings,
+      );
+
+      // The callback succeeded — no rejection occurred.
+      expect(successCallback).toHaveBeenCalled();
+      expect(result.response.result).toBeUndefined();
+
+      // Pre-existing warnings survive untouched.
+      expect(result.response.warnings).toContain("warning from a prior binding failure");
+    });
+
+    it("should not signal rejection when warnings pre-exist but callback succeeds", async () => {
+      // A successful callback must not set response.result, regardless of
+      // whether the response already carries warnings.
+      const successCallback = vi.fn();
+      const testBinding = { ...clone(defaultBinding), mutateCallback: successCallback };
+      const testBindable: Bindable = {
+        ...clone(defaultBindable),
+        binding: testBinding,
+        config: { ...defaultModuleConfig, onError: OnError.REJECT },
+      };
+
+      const responseWithWarnings: MutateResponse = {
+        uid: "test-uid",
+        allowed: false,
+        warnings: ["prior warning"],
+      };
+
+      const { response } = await processRequest(
+        testBindable,
+        defaultPeprMutateRequest(),
+        responseWithWarnings,
+      );
+
+      // Warnings survive, but result is not set — no rejection occurred.
+      expect(response.warnings).toContain("prior warning");
+      expect(response.result).toBeUndefined();
+    });
+  });
+
+  describe("mutateProcessor with two bindings under REJECT", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.mocked(shouldSkipRequest).mockReturnValue("");
+      (decodeData as Mock).mockImplementation(
+        (wrappedReq: PeprMutateRequest<KubernetesObject>) => ({
+          wrapped: wrappedReq,
+          skipped: [] as string[],
+        }),
+      );
+    });
+
+    it("should skip the second binding when the first fails", async () => {
+      const config: ModuleConfig = {
+        uuid: "test-uuid",
+        alwaysIgnore: {},
+        onError: OnError.REJECT,
+        webhookTimeout: 10,
+      };
+
+      const failCallback = vi.fn().mockImplementation(() => {
+        throw new Error("first binding fails");
+      });
+      const secondCallback = vi.fn();
+
+      const binding1 = { ...clone(defaultBinding), mutateCallback: failCallback };
+      const binding2 = { ...clone(defaultBinding), mutateCallback: secondCallback };
+
+      const capability = {
+        name: "cap-1",
+        bindings: [binding1, binding2],
+        namespaces: undefined,
+      } as unknown as Capability;
+
+      const result = await mutateProcessor(config, [capability], defaultAdmissionRequest, {});
+
+      expect(failCallback).toHaveBeenCalledTimes(1);
+      expect(secondCallback).not.toHaveBeenCalled();
+      expect(result.result).toBe("Pepr module configured to reject on error");
+      expect(result.allowed).toBe(false);
+    });
+
+    it("should process both bindings when both succeed", async () => {
+      const config: ModuleConfig = {
+        uuid: "test-uuid",
+        alwaysIgnore: {},
+        onError: OnError.REJECT,
+        webhookTimeout: 10,
+      };
+
+      const firstCallback = vi.fn();
+      const secondCallback = vi.fn();
+
+      const binding1 = { ...clone(defaultBinding), mutateCallback: firstCallback };
+      const binding2 = { ...clone(defaultBinding), mutateCallback: secondCallback };
+
+      const capability = {
+        name: "cap-1",
+        bindings: [binding1, binding2],
+        namespaces: undefined,
+      } as unknown as Capability;
+
+      const result = await mutateProcessor(config, [capability], defaultAdmissionRequest, {});
+
+      expect(firstCallback).toHaveBeenCalledTimes(1);
+      expect(secondCallback).toHaveBeenCalledTimes(1);
+      expect(result.result).toBeUndefined();
+      expect(result.allowed).toBe(true);
+    });
   });
 });

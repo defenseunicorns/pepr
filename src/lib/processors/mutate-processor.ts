@@ -161,7 +161,7 @@ export async function mutateProcessor(
 
   for (const bindable of bindables) {
     ({ wrapped, response } = await processRequest(bindable, wrapped, response));
-    if (config.onError === OnError.REJECT && response?.warnings!.length > 0) {
+    if (config.onError === OnError.REJECT && response.result !== undefined) {
       webhookTimer.stop();
       return response;
     }
