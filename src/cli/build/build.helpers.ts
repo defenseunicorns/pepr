@@ -78,6 +78,14 @@ interface ImageOptions {
  * @param imageOptions CLI options for image
  * @returns image string
  */
+export function validateRegistryInfo(registryInfo: string): void {
+  if (!registryInfo.includes("/")) {
+    throw new Error(
+      `Invalid registry-info "${registryInfo}". Expected format: <registry/username> (e.g. docker.io/myuser).`,
+    );
+  }
+}
+
 export function assignImage(imageOptions: ImageOptions): string {
   const { customImage, registryInfo, peprVersion, registry } = imageOptions;
   if (customImage) {
@@ -85,6 +93,7 @@ export function assignImage(imageOptions: ImageOptions): string {
   }
 
   if (registryInfo) {
+    validateRegistryInfo(registryInfo);
     return `${registryInfo}/custom-pepr-controller:${peprVersion}`;
   }
 
