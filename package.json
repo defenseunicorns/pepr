@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@types/ramda": "0.31.1",
-    "@typescript-eslint/eslint-plugin": "8.59.3",
-    "@typescript-eslint/parser": "8.59.3",
+    "@typescript-eslint/eslint-plugin": "8.59.4",
+    "@typescript-eslint/parser": "8.59.4",
     "commander": "14.0.3",
     "eslint": "9.39.4",
     "express": "5.2.1",
@@ -90,7 +90,10 @@
   },
   "overrides": {
     "glob": "^9.0.0",
-    "rollup": "4.59.0"
+    "rollup": "4.59.0",
+    "brace-expansion": "^5.0.6",
+    "ip-address": "^10.1.1",
+    "tar": "^7.5.16"
   },
   "peerDependencies": {
     "@types/prompts": "^2.4.9",
