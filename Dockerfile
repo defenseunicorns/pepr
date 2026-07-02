@@ -6,7 +6,7 @@
 # Any other changes to Dockerfile should be reflected in Publish
 ARG REQUIRE_CHOWN="true"
 ARG BUILD_IMAGE=docker.io/library/node:26@sha256:b46a10d964ad15136ebdf9012142131481caa0697d7a4d4eafe4bbabd818f876
-ARG BASE_IMAGE=docker.io/library/node:26-alpine@sha256:725aeba2364a9b16beae49e180d83bd597dbd0b15c47f1f28875c290bfd255b9
+ARG BASE_IMAGE=docker.io/library/node:26-slim@sha256:a1d9d671994fc2d26e297ac56b4b1522a8bc7fa71c43b14cd1b1fe6c5116f7dc
 
 FROM ${BUILD_IMAGE} AS build
 
