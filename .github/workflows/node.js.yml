@@ -1,6 +1,7 @@
 name: Node.js CI
 
 on:
+  merge_group:
   push:
   pull_request:
 

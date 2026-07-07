@@ -1,6 +1,7 @@
 name: Upgrade Test - Upstream
 
 on:
+  merge_group:
   workflow_dispatch:
   push:
     branches: ["main"]

@@ -5,6 +5,7 @@ permissions:
   contents: read
 
 on:
+  merge_group:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
