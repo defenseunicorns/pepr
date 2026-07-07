@@ -293,7 +293,6 @@ Build the Pepr module by running:
 
 <!-- Start Block -->
 ```bash
-npx pepr format && 
 npx pepr build
 ```
 <!-- End Block -->
