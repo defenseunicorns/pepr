@@ -69,7 +69,6 @@ describe("Pepr CLI Help Menu", () => {
     { commandName: "crd" },
     { commandName: "deploy" },
     { commandName: "dev" },
-    { commandName: "format" },
     { commandName: "init" },
     { commandName: "kfc" },
     { commandName: "monitor" },

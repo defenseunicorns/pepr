@@ -10,7 +10,6 @@ describe("getDocsForCommand", () => {
     { command: "crd generate", optionsCount: 2, subcommands: 0 },
     { command: "deploy", optionsCount: 9, subcommands: 0 },
     { command: "dev", optionsCount: 3, subcommands: 0 },
-    { command: "format", optionsCount: 2, subcommands: 0 },
     { command: "init", optionsCount: 7, subcommands: 0 },
     { command: "kfc", optionsCount: 2, subcommands: 0 },
     { command: "monitor", optionsCount: 1, subcommands: 0 },
