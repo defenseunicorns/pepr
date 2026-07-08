@@ -18,7 +18,6 @@ Type safe K8s middleware for humans
   deploy [options]         Deploy a Pepr Module
   dev [options]            Setup a local webhook development environment
   update [options]         Update this Pepr module. Not recommended for prod as it may change files.
-  format [options]         Lint and format this Pepr module
   monitor [module-uuid]    Monitor a Pepr Module
   uuid [uuid]              Module UUID(s) currently deployed in the cluster
   kfc [options] [args...]  Execute Kubernetes Fluent Client commands
