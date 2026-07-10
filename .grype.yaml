@@ -33,3 +33,16 @@ ignore:
   - vulnerability: CVE-2026-40200
   - vulnerability: CVE-2026-31789
   - vulnerability: CVE-2026-28387
+  # tar is extraneous (not in the production dep tree); npm ci --omit=dev does a
+  # clean install so it is not present in the final container image. Grype picks
+  # it up from the dev install's node_modules on the build host.
+  - vulnerability: GHSA-vmf3-w455-68vh
+  # False positive: grype reads the package.json copied into node_modules/pepr/
+  # by the Dockerfile build stage; the 0.0.0-development version string is not
+  # a published release and has no actual vulnerability surface.
+  - vulnerability: GHSA-w54x-r83c-x79q
+  # False positive: esbuild is explicitly removed from the container image in
+  # the Dockerfile (rm -rf node_modules/esbuild, node_modules/@esbuild). Grype
+  # detects it via the package.json copied into node_modules/pepr/ which lists
+  # esbuild as a peerDependency, but the binary is not present in the image.
+  - vulnerability: GHSA-g7r4-m6w7-qqqr

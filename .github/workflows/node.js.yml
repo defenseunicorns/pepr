@@ -1,28 +1,38 @@
 name: Node.js CI
 
 on:
+  merge_group:
   push:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"
   pull_request:
-    paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"
-    
+
 permissions:
   id-token: write # This is needed for OIDC federation.
   contents: read
 
 jobs:
+  check-paths:
+    runs-on: ubuntu-latest
+    outputs:
+      code-changed: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**'
+              - '!**.md'
+              - '!LICENSE'
+              - '!CODEOWNERS'
+
   on-demand-workflows:
+    needs: check-paths
     uses: ./.github/workflows/on-demand-workflows.yaml
     secrets:
       CODECOV_ORG_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
     with:
-      run-format: true
-      run-units: true
-      run-integration: true
+      run-format: ${{ needs.check-paths.outputs.code-changed == 'true' }}
+      run-units: ${{ needs.check-paths.outputs.code-changed == 'true' }}
+      run-integration: ${{ needs.check-paths.outputs.code-changed == 'true' }}
 

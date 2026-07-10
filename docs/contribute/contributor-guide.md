@@ -83,6 +83,25 @@ Please follow the coding conventions and style used in the project. Use ESLint a
   - The pre-push hook is an opinionated way of working, and is therefore optional.
   - You can opt-in to using the pre-push hook by setting `PEPR_HOOK_OPT_IN=1` as an environment variable.
 
+## Automated Workflows
+
+### Grype Suppression Audit
+
+A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](../../.github/workflows/grype-suppression-audit.yaml)) scans the Pepr controller image for stale CVE suppressions in `.grype.yaml`. When stale entries are found, the workflow removes them and opens (or updates) a PR on the bot-owned branch `grype/suppression-audit`.
+
+- **Do not push manual commits to `grype/suppression-audit`** — the workflow force-pushes to this branch weekly and any manual changes will be overwritten.
+- To add context to a suppression entry (e.g. `reason:`), add it directly to `.grype.yaml` on `main`. The audit script skips multi-key entries and will not remove them automatically.
+
+### Peer-Dependency Updates
+
+The `peerDependencies` block in `package.json` is maintained by the [`peer-deps-update`](../../.github/workflows/peer-deps-update.yml) GitHub Actions workflow. The workflow runs every Monday and opens PRs grouped by SemVer risk: a single PR for all minor/patch bumps and a separate PR per major-version bump (so that majors get isolated review and revert paths).
+
+- To trigger an off-cycle run, dispatch the workflow manually from the Actions tab.
+- To inspect the latest peer-dep candidates locally without opening a PR, run `node scripts/update-peer-deps.mjs report`.
+- To apply bumps locally, run `node scripts/update-peer-deps.mjs apply --kind minor` for the minor/patch group or `node scripts/update-peer-deps.mjs apply --kind major --pkg <name>` for a single major bump.
+
+Dependabot continues to handle the `dependencies` and `devDependencies` blocks; the two automations never touch the same region of `package.json`.
+
 ## Running Tests
 
 ### Run Tests Locally
