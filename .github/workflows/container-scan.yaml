@@ -4,11 +4,12 @@ permissions:
   actions: read
 
 on:
+  merge_group:
   pull_request:
     paths-ignore:
     - "**.md"
     - "LICENSE"
-    - "CODEOWNERS"  
+    - "CODEOWNERS"
   
 jobs:
   container-scans:

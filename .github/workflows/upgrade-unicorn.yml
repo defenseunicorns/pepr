@@ -1,6 +1,7 @@
 name: Upgrade Test - Unicorn
 
 on:
+  merge_group:
   workflow_call:
   workflow_dispatch:
   push:

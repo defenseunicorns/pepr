@@ -2,6 +2,7 @@ name: UDS - Smoke Test
 
 permissions: read-all
 on:
+  merge_group:
   pull_request:
     branches:
       - main
