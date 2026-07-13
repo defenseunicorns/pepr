@@ -2,6 +2,7 @@ name: UDS - Smoke Test
 
 permissions: read-all
 on:
+  merge_group:
   pull_request:
     branches:
       - main
@@ -15,6 +16,7 @@ on:
 
 jobs:
   pepr-build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: pepr build
     runs-on: ubuntu-latest
     permissions:

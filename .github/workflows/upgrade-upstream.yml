@@ -1,6 +1,7 @@
 name: Upgrade Test - Upstream
 
 on:
+  merge_group:
   workflow_dispatch:
   push:
     branches: ["main"]
@@ -21,6 +22,7 @@ permissions:
 
 jobs:
   upgrade-upstream:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     permissions:

@@ -2,6 +2,7 @@ name: E2E - Pepr Excellent Examples - Upstream
 
 permissions: read-all
 on:
+  merge_group:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *' # 12AM EST/9PM PST
@@ -17,6 +18,7 @@ on:
 
 jobs:
   pepr-build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: controller image
     runs-on: ubuntu-latest
     permissions:

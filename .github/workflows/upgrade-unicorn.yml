@@ -1,6 +1,7 @@
 name: Upgrade Test - Unicorn
 
 on:
+  merge_group:
   workflow_call:
   workflow_dispatch:
   push:
@@ -21,6 +22,7 @@ permissions:
 
 jobs:
   upgrade-unicorn:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     permissions:

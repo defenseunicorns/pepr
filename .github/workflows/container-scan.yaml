@@ -4,14 +4,16 @@ permissions:
   actions: read
 
 on:
+  merge_group:
   pull_request:
     paths-ignore:
     - "**.md"
     - "LICENSE"
-    - "CODEOWNERS"  
+    - "CODEOWNERS"
   
 jobs:
   container-scans:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       actions: read
