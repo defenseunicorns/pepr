@@ -5,7 +5,6 @@ import { execFileSync } from "child_process";
 import { BuildOptions, analyzeMetafile } from "esbuild";
 import { basename, extname, resolve } from "path";
 import { dependencies } from "../init/templates";
-import { peprFormat } from "../format";
 import { watchForChanges } from "./build.helpers";
 import { PeprConfig, Reloader } from "../types";
 import { BuildContext } from "esbuild";
@@ -69,8 +68,6 @@ export async function buildModule(
   try {
     const { cfg, modulePath, path: loadedPath, uuid } = await loadModule(outputDir, entryPoint);
     const { format, path } = resolveFormatAndPath(embed, requestedFormat, loadedPath);
-
-    await checkFormat();
 
     // Resolve node_modules folder (in support of npm workspaces!) and run tsc
     const npmRoot = execFileSync("npm", ["root"]).toString().trim();
@@ -185,16 +182,5 @@ function handleModuleBuildError(e: BuildModuleResult): void {
         "Version Conflict",
       );
     });
-  }
-}
-
-async function checkFormat(): Promise<void> {
-  const validFormat = await peprFormat(true);
-
-  if (!validFormat) {
-    console.info(
-      "\x1b[33m%s\x1b[0m",
-      "Formatting errors were found. The build will continue, but you may want to run `npx pepr format` to address any issues.",
-    );
   }
 }

@@ -49,6 +49,8 @@
     "test:upgrade:upstream": "npm run cluster:k3d && npm run cluster:k3d:import-upstream && vitest run integration/cluster/upgrade.test.ts"
   },
   "dependencies": {
+    "@eslint/eslintrc": "3.3.5",
+    "@eslint/js": "9.39.4",
     "@types/ramda": "0.31.1",
     "@typescript-eslint/eslint-plugin": "8.59.4",
     "@typescript-eslint/parser": "8.59.4",
@@ -56,6 +58,7 @@
     "eslint": "9.39.4",
     "express": "5.2.1",
     "fast-json-patch": "3.1.1",
+    "globals": "17.0.0",
     "http-status-codes": "^2.3.0",
     "json-pointer": "^0.6.2",
     "kubernetes-fluent-client": "3.11.7",
@@ -79,9 +82,9 @@
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.0.4",
     "fast-check": "^4.0.0",
-    "globals": "^17.0.0",
     "husky": "^9.1.6",
     "js-yaml": "^4.1.0",
+    "prettier": "^3.6.2",
     "selfsigned": "^5.5.0",
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
@@ -99,7 +102,6 @@
     "@types/prompts": "^2.4.9",
     "esbuild": "^0.28.0",
     "node-forge": "^1.4.0",
-    "prettier": "^3.6.2",
     "prompts": "^2.4.2",
     "typescript": "^5.8.3",
     "uuid": "^13.0.0"

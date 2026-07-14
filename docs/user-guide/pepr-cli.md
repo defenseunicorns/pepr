@@ -18,7 +18,6 @@ Type safe K8s middleware for humans
   deploy [options]         Deploy a Pepr Module
   dev [options]            Setup a local webhook development environment
   update [options]         Update this Pepr module. Not recommended for prod as it may change files.
-  format [options]         Lint and format this Pepr module
   monitor [module-uuid]    Monitor a Pepr Module
   uuid [uuid]              Module UUID(s) currently deployed in the cluster
   kfc [options] [args...]  Execute Kubernetes Fluent Client commands
@@ -118,18 +117,6 @@ Connect a local cluster to a local version of the Pepr Controller to do real-tim
 > - the `PeprStore` CRD.
 
 These can't be auto-removed because they're global in scope & doing so would risk wrecking any other Pepr deployments that are already running in-cluster.  If (for some strange reason) you're _not_ `pepr dev`-ing against an ephemeral dev cluster and need to keep the cluster clean, you'll have to remove these hold-overs yourself (or not)!
-
-## `npx pepr format`
-
-> [!WARNING]
-> `npx pepr format` will be deprecated and removed in summer 2026 with the release of Pepr v2.0.0. Once removed, module authors must run a linter separately from the Pepr CLI. Please configure linting and formatting directly in your project instead.
-
-Lint and format this Pepr module.
-
-**Options:**
-
-- `-v, --validate-only` - Do not modify files, only validate formatting.
-- `-h, --help` - display help for command
 
 ## `npx pepr init`
 
