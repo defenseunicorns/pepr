@@ -87,6 +87,8 @@ export async function overridesFile(
       ...commonProbes(),
       resources: commonResources(),
       containerSecurityContext: containerSecurityContext(image),
+      webhookAnnotations: {},
+      webhookLabels: {},
       podAnnotations: {},
       podLabels: {},
       nodeSelector: {},
