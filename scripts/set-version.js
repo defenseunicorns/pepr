@@ -28,15 +28,7 @@ const packageLockJSONVersion = (packageLockJSON, version) => {
 };
 
 const writeToFile = (file, data) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(file, JSON.stringify(data, null, 2), err => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
 };
 
 const version = generateVersion();

@@ -7,6 +7,7 @@ export default defineConfig({
       "hack/**/*.test.ts",
       "config/**/*.test.ts",
       ".github/**/*.test.ts",
+      "scripts/**/*.test.ts",
     ],
     exclude: [
       "node_modules",
