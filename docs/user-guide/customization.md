@@ -115,6 +115,7 @@ Below are the available Helm override configurations after you have built your P
 | `annotations`                   | Deployment annotations                                             |
 | `labels`                        | Deployment labels                                                  |
 | `securityContext`               | Pod security context                                               |
+| `startupProbe`                  | Pod startup probe definition                                       |
 | `readinessProbe`                | Pod readiness probe definition                                     |
 | `livenessProbe`                 | Pod liveness probe definition                                      |
 | `resources`                     | Resource limits                                                    |
