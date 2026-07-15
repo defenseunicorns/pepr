@@ -9,11 +9,20 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "deps"
+      include: "scope"
     groups:
       production-dependencies:
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
       development-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
       - dependency-name: "pino"
         versions: ["9.8.0"]
@@ -61,6 +70,8 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "deps"
 
   - package-ecosystem: docker
     directory: /
@@ -68,11 +79,15 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "deps"
 
   - package-ecosystem: docker
     directory: /config
     schedule:
       interval: daily
+    commit-message:
+      prefix: "deps"
     registries:
       - chainguard
 
