@@ -5,7 +5,7 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 
-FROM cgr.dev/defenseunicorns.com/node:24-dev@sha256:c8a90ddf682ad194789b95758c7dad4707b9a96c1294d6461ec8059712427e15 AS build
+FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:157c6017890d666a24a6c8eb69458ff53c22e6e2e3209abb19f2c0769ee19bc4 AS build
 
 WORKDIR /app
 
@@ -40,7 +40,7 @@ RUN npm run build && \
 
 
 ##### DELIVER #####
-FROM cgr.dev/defenseunicorns.com/node:24@sha256:4fcf0cbdc5016c1d2d8d6f2680293d45f1ead4303eb640283a0615c8c03dc6ee
+FROM cgr.dev/defenseunicorns.com/node:26@sha256:b79a4c8ef338375c198b1c7df7e833648d3fa0584922e399ce7e7e15c64fc793
 
 
 WORKDIR /app
