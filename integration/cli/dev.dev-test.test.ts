@@ -8,8 +8,7 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { fetch } from "kubernetes-fluent-client";
-import { RequestInit, Agent } from "undici";
+import { fetch, RequestInit, Agent } from "undici";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -190,10 +189,10 @@ async function validateAPIPath(): Promise<void> {
 }
 
 async function validateMetrics(): Promise<string> {
-  const metricsOk = await fetch<string>(`${fetchBaseUrl}/metrics`, fetchOpts);
-  expect(metricsOk.ok).toBe(true);
+  const response = await fetch(`${fetchBaseUrl}/metrics`, fetchOpts);
+  expect(response.ok).toBe(true);
 
-  return metricsOk.data;
+  return response.text();
 }
 
 function sleep(seconds: number): Promise<void> {
