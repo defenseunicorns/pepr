@@ -163,8 +163,8 @@ const fetchOpts: RequestInit = {
 
 // Wait for the server to start and report healthy
 async function waitForServer(): Promise<void> {
-  const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
-  if (!resp.ok) {
+  const response = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts).catch(() => undefined);
+  if (!response?.ok) {
     await sleep(2);
     return waitForServer();
   }
