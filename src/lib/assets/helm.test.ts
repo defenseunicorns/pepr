@@ -37,6 +37,10 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}-watcher");
+      for (const probe of ["startupProbe", "readinessProbe", "livenessProbe"]) {
+        expect(result).toContain(`${probe}:`);
+        expect(result).toContain(`toYaml .Values.watcher.${probe}`);
+      }
     });
   });
 
@@ -46,6 +50,10 @@ describe("Kubernetes Template Generators", () => {
       expect(result).toContain("apiVersion: apps/v1");
       expect(result).toContain("kind: Deployment");
       expect(result).toContain("name: {{ .Values.uuid }}");
+      for (const probe of ["startupProbe", "readinessProbe", "livenessProbe"]) {
+        expect(result).toContain(`${probe}:`);
+        expect(result).toContain(`toYaml .Values.admission.${probe}`);
+      }
     });
   });
 
