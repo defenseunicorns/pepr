@@ -8,7 +8,8 @@ import { Workdir } from "../helpers/workdir";
 import * as time from "../helpers/time";
 import * as pepr from "../helpers/pepr";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { fetch, RequestInit, Agent } from "undici";
+import { fetch } from "kubernetes-fluent-client";
+import { RequestInit, Agent } from "undici";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -163,8 +164,8 @@ const fetchOpts: RequestInit = {
 
 // Wait for the server to start and report healthy
 async function waitForServer(): Promise<void> {
-  const response = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts).catch(() => undefined);
-  if (!response?.ok) {
+  const resp = await fetch(`${fetchBaseUrl}/healthz`, fetchOpts);
+  if (!resp.ok) {
     await sleep(2);
     return waitForServer();
   }
@@ -189,10 +190,10 @@ async function validateAPIPath(): Promise<void> {
 }
 
 async function validateMetrics(): Promise<string> {
-  const response = await fetch(`${fetchBaseUrl}/metrics`, fetchOpts);
-  expect(response.ok).toBe(true);
+  const metricsOk = await fetch<string>(`${fetchBaseUrl}/metrics`, fetchOpts);
+  expect(metricsOk.ok).toBe(true);
 
-  return response.text();
+  return metricsOk.data;
 }
 
 function sleep(seconds: number): Promise<void> {
