@@ -258,6 +258,13 @@ describe("build CLI command", () => {
           expect.stringContaining("Including 0 files in controller image."),
         );
       });
+
+      it("should accept a bare hostname with port", async () => {
+        vi.spyOn(console, "info").mockImplementation(() => {});
+        await runProgramWithArgs([registryInfoFlag, "localhost:5000"]);
+        expect(buildModule).toBeCalled();
+        expect(handleCustomImageBuild).toBeCalled();
+      });
     },
   );
 
