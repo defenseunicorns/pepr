@@ -30,7 +30,7 @@ Build a Pepr Module for deployment.
 **Options:**
 
 - `-M, --rbac-mode <mode>` - Override module config and set RBAC mode. (choices: "admin", "scoped")
-- `-I, --registry-info <registry/username>` - Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.
+- `-I, --registry-info <registry[/namespace]>` - Provide the image registry (and optional namespace) for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry[/namespace]>/custom-pepr-controller:<current-version>'` (e.g. docker.io/myuser, localhost:5000).
 - `-P, --with-pull-secret <name>` - Use image pull secret for controller Deployment. (default: "")
 - `-c, --custom-name <name>` - Set name for zarf component and service monitors in helm charts.
 - `-e, --entry-point <file>` - Specify the entry point file to build with. (default: pepr.ts)
