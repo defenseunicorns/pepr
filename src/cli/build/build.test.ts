@@ -145,6 +145,17 @@ describe("assignImage", () => {
     });
     expect(result).toBe("");
   });
+
+  it("should throw an error if registryInfo does not contain a slash", () => {
+    expect(() =>
+      assignImage({
+        customImage: "",
+        registryInfo: "any-randomstring",
+        peprVersion: mockPeprVersion,
+        registry: "",
+      }),
+    ).toThrow(/Invalid registry-info/);
+  });
 });
 
 describe("determineRbacMode", () => {
