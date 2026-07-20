@@ -15,3 +15,40 @@ ignore:
   # detects it via the package.json copied into node_modules/pepr/ which lists
   # esbuild as a peerDependency, but the binary is not present in the image.
   - vulnerability: GHSA-g7r4-m6w7-qqqr
+
+  # decompress (GHSA-mp2f-45pm-3cg9) and file-type (GHSA-5v7r-6r5c-r473,
+  # GHSA-j47w-4g3g-c36v) are transitive dependencies of shellcheck, which is a
+  # devDependency. The Dockerfile runs `npm ci --omit=dev` in the production
+  # stage, so these packages are not present in the final container image.
+  - vulnerability: GHSA-mp2f-45pm-3cg9
+  - vulnerability: GHSA-5v7r-6r5c-r473
+  - vulnerability: GHSA-j47w-4g3g-c36v
+
+  # nodejs-26 CVEs with no fix version available in the Chainguard base image.
+  # These are upstream Node.js issues awaiting patches from Chainguard.
+  - vulnerability: CVE-2026-48933
+  - vulnerability: CVE-2026-48618
+  - vulnerability: CVE-2026-48619
+  - vulnerability: CVE-2026-48930
+  - vulnerability: CVE-2026-48615
+  - vulnerability: CVE-2026-48928
+  - vulnerability: CVE-2026-48931
+  - vulnerability: CVE-2026-48934
+  - vulnerability: CVE-2026-48617
+  - vulnerability: CVE-2026-48935
+  - vulnerability: CVE-2026-48936
+
+  # libnghttp2-14/nghttp2 CVE with no fix version available in the Chainguard
+  # base image. Awaiting upstream patch.
+  - vulnerability: CVE-2026-58055
+
+  # undici GHSAs — the npm-level instance (7.24.6) is fixed by the
+  # kubernetes-fluent-client override to 7.28.0. The Node.js 26 runtime still
+  # bundles undici 6.26.0 with no upstream fix available.
+  - vulnerability: GHSA-vxpw-j846-p89q
+  - vulnerability: GHSA-vmh5-mc38-953g
+  - vulnerability: GHSA-hm92-r4w5-c3mj
+  - vulnerability: GHSA-pr7r-676h-xcf6
+  - vulnerability: GHSA-p88m-4jfj-68fv
+  - vulnerability: GHSA-g8m3-5g58-fq7m
+  - vulnerability: GHSA-35p6-xmwp-9g52

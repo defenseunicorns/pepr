@@ -93,7 +93,11 @@
     "rollup": "4.59.0",
     "brace-expansion": "^5.0.6",
     "ip-address": "^10.1.1",
-    "tar": "^7.5.16"
+    "tar": "^7.5.16",
+    "kubernetes-fluent-client": {
+      "undici": "7.28.0",
+      "js-yaml": "4.2.0"
+    }
   },
   "peerDependencies": {
     "@types/prompts": "^2.4.9",
