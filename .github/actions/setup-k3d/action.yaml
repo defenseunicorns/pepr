@@ -12,19 +12,15 @@ runs:
   using: composite
   steps:
     - name: install k3d
-      shell: bash
+      uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
       env:
         TAG: ${{ inputs.version }}
-      run: |
-        set -euo pipefail
-        for attempt in 1 2 3 4 5; do
-          if curl -sfL --retry 5 --retry-all-errors --retry-delay 5 \
-               https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash; then
-            k3d version
-            exit 0
-          fi
-          echo "::warning::k3d install attempt ${attempt} failed; backing off"
-          sleep $(( attempt * 10 ))
-        done
-        echo "::error::k3d install failed after 5 attempts"
-        exit 1
+      with:
+        max_attempts: 5
+        timeout_minutes: 3
+        retry_wait_seconds: 10
+        retry_on: any
+        command: |
+          set -eo pipefail
+          curl -sfL --retry 5 --retry-all-errors --retry-delay 5 https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+          k3d version
