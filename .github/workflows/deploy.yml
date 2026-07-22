@@ -35,10 +35,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Install k3d
-        run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
-        shell: bash
-
       - name: Install The Latest Release Version of Zarf
         if: matrix.deployer == 'zarf'
         uses: zarf-dev/setup-zarf@10e539efed02f75ec39eb8823e22a5c795f492ae #v1.0.1
@@ -50,6 +46,9 @@ jobs:
         with:
           repository: defenseunicorns/pepr
           path: pepr
+
+      - name: install k3d
+        uses: ./pepr/.github/actions/setup-k3d
 
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0

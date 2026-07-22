@@ -38,9 +38,8 @@ jobs:
           node-version: 26
           cache: "npm"
 
-      - name: "Install K3d"
-        run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
-        shell: bash
+      - name: install k3d
+        uses: ./.github/actions/setup-k3d
 
       - name: Login to Chainguard
         uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
