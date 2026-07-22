@@ -64,7 +64,7 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
     description: opts.description,
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     engines: {
-      node: ">=20.0.0",
+      node: ">=22.19.0",
     },
     pepr: {
       uuid: uuid,
