@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2023-Present The Pepr Authors
+
+name: setup-k3d
+description: "Install k3d with retry/backoff to tolerate transient network failures"
+inputs:
+  version:
+    description: "k3d version to install, e.g. v5.7.4. Empty installs latest."
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: install k3d
+      shell: bash
+      env:
+        TAG: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        for attempt in 1 2 3 4 5; do
+          if curl -sfL --retry 5 --retry-all-errors --retry-delay 5 \
+               https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash; then
+            k3d version
+            exit 0
+          fi
+          echo "::warning::k3d install attempt ${attempt} failed; backing off"
+          sleep $(( attempt * 10 ))
+        done
+        echo "::error::k3d install failed after 5 attempts"
+        exit 1

@@ -16,15 +16,14 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: "install k3d"
-        run: "curl -s --retry 5 --retry-all-errors --fail https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash"
-        shell: bash
-
       - name: clone pepr
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: defenseunicorns/pepr
           path: pepr
+
+      - name: install k3d
+        uses: ./pepr/.github/actions/setup-k3d
 
       - name: "set env: PEPR"
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
