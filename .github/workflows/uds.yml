@@ -98,14 +98,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: checkout pepr (for setup-k3d action)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          path: pepr
-
-      - name: install k3d
-        uses: ./pepr/.github/actions/setup-k3d
-
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: defenseunicorns/uds-core
@@ -165,6 +157,9 @@ jobs:
 
       - name: "set env: PEPR"
         run: echo "PEPR=${GITHUB_WORKSPACE}/pepr" >> "$GITHUB_ENV"
+
+      - name: install k3d
+        uses: ./pepr/.github/actions/setup-k3d
 
       - name: import docker image from pepr tar
         run: |
