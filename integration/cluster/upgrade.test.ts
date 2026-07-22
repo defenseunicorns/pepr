@@ -36,13 +36,6 @@ describe("build", () => {
         cwd: workdir.path(),
         stdio: "inherit",
       });
-
-      const packageJsonPath = path.join(testModule, "package.json");
-      const peprPackageJsonPath = path.resolve(__dirname, "../../package.json");
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, "utf8"));
-      const peprPackageJson = JSON.parse(await fs.readFile(peprPackageJsonPath, "utf8"));
-      packageJson.devDependencies["@types/node"] = peprPackageJson.devDependencies["@types/node"];
-      await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
     }, time.toMs("2m"));
 
     it(
