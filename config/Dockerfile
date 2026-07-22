@@ -40,7 +40,7 @@ RUN npm run build && \
 
 
 ##### DELIVER #####
-FROM cgr.dev/defenseunicorns.com/node:26@sha256:b79a4c8ef338375c198b1c7df7e833648d3fa0584922e399ce7e7e15c64fc793
+FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:4cb99318578b84de496a61a0ec21b98655e85931f6c411d312122ba6de46a794
 
 
 WORKDIR /app
