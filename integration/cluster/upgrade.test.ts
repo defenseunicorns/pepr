@@ -52,18 +52,22 @@ describe("build", () => {
     );
   });
 
-  it("should display the UUIDs of the deployed modules with a specific UUID",{ timeout: 1000 * 5 * 60 }, async () => {
-    const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
-      shell: true, // Run command in a shell
-      encoding: "utf-8", // Encode result as string
-    });
+  it(
+    "should display the UUIDs of the deployed modules with a specific UUID",
+    { timeout: 1000 * 5 * 60 },
+    async () => {
+      const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
+        shell: true, // Run command in a shell
+        encoding: "utf-8", // Encode result as string
+      });
 
-    const { stdout } = uuidOut;
+      const { stdout } = uuidOut;
 
-    const matches = stdout.match(/upgrade-test/g) || [];
+      const matches = stdout.match(/upgrade-test/g) || [];
 
-    expect(matches.length).toBe(2);
-  });
+      expect(matches.length).toBe(2);
+    },
+  );
 
   it(
     "should prepare, build and deploy with pepr@pr-candidate",

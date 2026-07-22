@@ -95,6 +95,14 @@ export function getWatcher(
               image,
               imagePullPolicy: "IfNotPresent",
               args: ["/app/node_modules/pepr/dist/controller.js", hash],
+              startupProbe: {
+                httpGet: {
+                  path: "/healthz",
+                  port: 3000,
+                  scheme: "HTTPS",
+                },
+                initialDelaySeconds: 10,
+              },
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",
@@ -238,6 +246,14 @@ export function getDeployment(
               image,
               imagePullPolicy: "IfNotPresent",
               args: ["/app/node_modules/pepr/dist/controller.js", hash],
+              startupProbe: {
+                httpGet: {
+                  path: "/healthz",
+                  port: 3000,
+                  scheme: "HTTPS",
+                },
+                initialDelaySeconds: 10,
+              },
               readinessProbe: {
                 httpGet: {
                   path: "/healthz",

@@ -42,7 +42,10 @@ export type peprPackageJSON = {
     };
     scripts: { "k3d-setup": string };
     dependencies: { pepr: string; undici: string };
-    devDependencies: { typescript: string };
+    devDependencies: {
+      "@types/node": string;
+      typescript: string;
+    };
   };
   path: string;
   print: string;
@@ -61,7 +64,7 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
     description: opts.description,
     keywords: ["pepr", "k8s", "policy-engine", "pepr-module", "security"],
     engines: {
-      node: ">=20.0.0",
+      node: ">=22.19.0",
     },
     pepr: {
       uuid: uuid,
@@ -96,6 +99,7 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
       undici: "^7.0.1",
     },
     devDependencies: {
+      "@types/node": devDependencies["@types/node"],
       typescript,
     },
     overrides: {
