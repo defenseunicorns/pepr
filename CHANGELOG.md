@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.1](https://github.com/defenseunicorns/pepr/compare/v1.3.0...v1.3.1) (2026-07-24)
+
+
+### Dependencies
+
+* bump actions/setup-node from 6.4.0 to 7.0.0 ([#3220](https://github.com/defenseunicorns/pepr/issues/3220)) ([040e19e](https://github.com/defenseunicorns/pepr/commit/040e19e43fccf850ec970e56f65c73a5c5fb4227))
+* bump azure/setup-helm from 5.0.0 to 5.0.1 ([#3204](https://github.com/defenseunicorns/pepr/issues/3204)) ([8b05966](https://github.com/defenseunicorns/pepr/commit/8b0596665a2bc97be48aee386c5223a63520a471))
+* bump docker/setup-buildx-action from 4.0.0 to 4.2.0 ([#3221](https://github.com/defenseunicorns/pepr/issues/3221)) ([461417b](https://github.com/defenseunicorns/pepr/commit/461417bf5af267b102e3c6193231cb5d95e6008a))
+* bump dorny/paths-filter from 4.0.1 to 4.0.2 ([#3183](https://github.com/defenseunicorns/pepr/issues/3183)) ([23b5606](https://github.com/defenseunicorns/pepr/commit/23b5606385e83b2285f9a71db5661dc8dfacdf59))
+* bump trufflesecurity/trufflehog from 3.95.8 to 3.95.9 ([#3206](https://github.com/defenseunicorns/pepr/issues/3206)) ([b9feb1d](https://github.com/defenseunicorns/pepr/commit/b9feb1d6b611209d539fa300576773a963487a67))
+* **deps-dev:** bump js-yaml from 4.3.0 to 5.2.1 ([#3188](https://github.com/defenseunicorns/pepr/issues/3188)) ([6ccb08f](https://github.com/defenseunicorns/pepr/commit/6ccb08fdff5b178e2d63d57e65932b31f82c25b6))
+* **deps:** bump esbuild from 0.28.0 to 0.28.1 ([#3216](https://github.com/defenseunicorns/pepr/issues/3216)) ([7087ccb](https://github.com/defenseunicorns/pepr/commit/7087ccb497bc07430f295531bb50aed05cebcdd8))
+* **deps:** bump the production-dependencies group across 1 directory with 3 updates ([#3200](https://github.com/defenseunicorns/pepr/issues/3200)) ([1ec9692](https://github.com/defenseunicorns/pepr/commit/1ec96929d2bc3295867c1a001ccf230b7d5e122f))
+
 ## [1.3.0](https://github.com/defenseunicorns/pepr/compare/v1.2.2...v1.3.0) (2026-07-22)
 
 
