@@ -441,7 +441,7 @@ program
     //
 
     log(`Pepr CLI version`);
-    cmd = new Cmd({ cmd: `npx --yes ${path.basename(worktgz)} --version`, cwd: workdir });
+    cmd = new Cmd({ cmd: `./node_modules/pepr/dist/cli.js --version`, cwd: workdir });
     log({ cmd: cmd.cmd, cwd: cmd.cwd });
     log(await cmd.run(), "");
 
@@ -472,7 +472,7 @@ program
     log(`Deploy Pepr controller into test cluster`);
     let env = { KUBECONFIG };
     cmd = new Cmd({
-      cmd: `npx --yes ${path.basename(worktgz)} deploy --image ${PEPR_TAG} --yes`,
+      cmd: `./node_modules/pepr/dist/cli.js deploy --image ${PEPR_TAG} --yes`,
       cwd: workdir,
       env,
     });

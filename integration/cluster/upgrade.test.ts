@@ -56,7 +56,12 @@ describe("build", () => {
     "should display the UUIDs of the deployed modules with a specific UUID",
     { timeout: 1000 * 5 * 60 },
     async () => {
-      const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
+      // Reuse the pepr@latest already installed in the test module's node_modules
+      // (see installPepr) instead of re-resolving/re-downloading the `latest`
+      // dist-tag via `npx`. `uuid` only lists deployed modules, so the result is
+      // independent of which pepr build runs it.
+      const uuidOut = spawnSync(`./node_modules/pepr/dist/cli.js uuid ${id}`, {
+        cwd: testModule,
         shell: true, // Run command in a shell
         encoding: "utf-8", // Encode result as string
       });
