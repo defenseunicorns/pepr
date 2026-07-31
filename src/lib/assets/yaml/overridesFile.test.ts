@@ -26,6 +26,11 @@ interface TestSchemaProperty {
   [key: string]: unknown;
 }
 
+interface Probe {
+  httpGet: { path: string; port: number; scheme: string };
+  initialDelaySeconds: number;
+}
+
 vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
   return {
@@ -61,6 +66,9 @@ interface OverridesFileSchema {
     antiAffinity: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
+    startupProbe: Probe;
+    readinessProbe: Probe;
+    livenessProbe: Probe;
     annotations: {
       "pepr.dev/description": string;
     };
@@ -79,6 +87,9 @@ interface OverridesFileSchema {
     enabled: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
+    startupProbe: Probe;
+    readinessProbe: Probe;
+    livenessProbe: Probe;
     annotations: {
       "pepr.dev/description": string;
     };
@@ -136,6 +147,17 @@ describe("overridesFile", () => {
     expect(parsedYaml.admission.antiAffinity).toBe(false);
     expect(parsedYaml.admission.failurePolicy).toBe("Fail");
     expect(parsedYaml.watcher.image).toBe(mockOverrides.image);
+    const expectedProbe = {
+      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+      initialDelaySeconds: 10,
+    };
+    const expectedProbes = {
+      startupProbe: expectedProbe,
+      readinessProbe: expectedProbe,
+      livenessProbe: expectedProbe,
+    };
+    expect(parsedYaml.admission).toMatchObject(expectedProbes);
+    expect(parsedYaml.watcher).toMatchObject(expectedProbes);
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
     expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(
       mockOverrides.config.description,

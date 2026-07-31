@@ -28,6 +28,10 @@ export type ChartOverrides = {
   image: string;
 };
 type Probes = {
+  startupProbe: {
+    httpGet: { path: string; port: number; scheme: "HTTPS" };
+    initialDelaySeconds: number;
+  };
   readinessProbe: {
     httpGet: { path: string; port: number; scheme: "HTTPS" };
     initialDelaySeconds: number;
@@ -203,6 +207,10 @@ function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: num
 
 function commonProbes(): Probes {
   return {
+    startupProbe: {
+      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+      initialDelaySeconds: 10,
+    },
     readinessProbe: {
       httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
       initialDelaySeconds: 10,
