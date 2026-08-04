@@ -184,8 +184,7 @@ const matchRegexToCapababilityNamespace = (
     capabilityNamespaces.length > 0
   ) {
     for (const regexNamespace of bindingRegexNamespaces) {
-      let matches = false;
-      matches =
+      const matches =
         regexNamespace !== "" &&
         capabilityNamespaces.some(capabilityNamespace =>
           matchesRegex(regexNamespace, capabilityNamespace),

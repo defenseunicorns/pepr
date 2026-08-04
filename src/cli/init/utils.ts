@@ -38,7 +38,7 @@ export async function createDir(dir: string): Promise<void> {
   } catch (err) {
     // The directory already exists
     if (err && (err as NodeJS.ErrnoException).code === "EEXIST") {
-      throw new Error(`Directory ${dir} already exists`);
+      throw new Error(`Directory ${dir} already exists`, { cause: err });
     } else {
       throw err;
     }
