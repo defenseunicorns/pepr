@@ -43,7 +43,13 @@ export type peprPackageJSON = {
     scripts: { "k3d-setup": string };
     dependencies: { pepr: string; undici: string };
     devDependencies: {
+      "@eslint/eslintrc": string;
+      "@eslint/js": string;
+      "@typescript-eslint/eslint-plugin": string;
+      "@typescript-eslint/parser": string;
       "@types/node": string;
+      eslint: string;
+      globals: string;
       typescript: string;
     };
   };
@@ -99,7 +105,13 @@ export function genPkgJSON(opts: InitOptions): peprPackageJSON {
       undici: "^7.0.1",
     },
     devDependencies: {
+      "@eslint/eslintrc": devDependencies["@eslint/eslintrc"],
+      "@eslint/js": devDependencies["@eslint/js"],
+      "@typescript-eslint/eslint-plugin": dependencies["@typescript-eslint/eslint-plugin"],
+      "@typescript-eslint/parser": dependencies["@typescript-eslint/parser"],
       "@types/node": devDependencies["@types/node"],
+      eslint: dependencies.eslint,
+      globals: dependencies.globals,
       typescript,
     },
     overrides: {

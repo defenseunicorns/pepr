@@ -64,16 +64,15 @@ function reduceBy(unit: number, ms: number): [number, number] {
 }
 
 export function toHuman(ms: number): string {
-  let [y, mo, w, d, h, m, s] = Array(7).fill(0);
-  let remain = ms;
+  const remain = ms;
 
-  [y, remain] = reduceBy(UNITS.y, remain);
-  [mo, remain] = reduceBy(UNITS.mo, remain);
-  [w, remain] = reduceBy(UNITS.w, remain);
-  [d, remain] = reduceBy(UNITS.d, remain);
-  [h, remain] = reduceBy(UNITS.h, remain);
-  [m, remain] = reduceBy(UNITS.m, remain);
-  [s, remain] = reduceBy(UNITS.s, remain);
+  const [y, afterYears] = reduceBy(UNITS.y, remain);
+  const [mo, afterMonths] = reduceBy(UNITS.mo, afterYears);
+  const [w, afterWeeks] = reduceBy(UNITS.w, afterMonths);
+  const [d, afterDays] = reduceBy(UNITS.d, afterWeeks);
+  const [h, afterHours] = reduceBy(UNITS.h, afterDays);
+  const [m, afterMinutes] = reduceBy(UNITS.m, afterHours);
+  const [s] = reduceBy(UNITS.s, afterMinutes);
 
   let result = "";
   result = y > 0 ? `${result}${y}y` : result;
