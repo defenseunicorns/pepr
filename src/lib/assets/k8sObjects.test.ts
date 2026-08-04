@@ -14,6 +14,10 @@ const expectedProbe = {
     scheme: "HTTPS",
   },
   initialDelaySeconds: 10,
+  periodSeconds: 10,
+  timeoutSeconds: 1,
+  successThreshold: 1,
+  failureThreshold: 3,
 };
 
 const assets: Assets = JSON.parse(`{
