@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present The Pepr Authors
 
-import { KubernetesObject } from "@kubernetes/client-node";
+import { KubernetesObject, V1Probe } from "@kubernetes/client-node";
 import { kind } from "kubernetes-fluent-client";
 import { gzipSync } from "zlib";
 import { secretOverLimit } from "../helpers";
 import { Assets, isAdmission, isWatcher, norWatchOrAdmission } from "./assets";
 import { genEnv } from "./environment";
+
+function defaultProbe(): V1Probe {
+  return {
+    httpGet: {
+      path: "/healthz",
+      port: 3000,
+      scheme: "HTTPS",
+    },
+    initialDelaySeconds: 10,
+    periodSeconds: 10,
+    timeoutSeconds: 1,
+    successThreshold: 1,
+    failureThreshold: 3,
+  };
+}
 
 /** Generate the pepr-system namespace */
 export function getNamespace(namespaceLabels?: Record<string, string>): KubernetesObject {
@@ -95,30 +110,9 @@ export function getWatcher(
               image,
               imagePullPolicy: "IfNotPresent",
               args: ["/app/node_modules/pepr/dist/controller.js", hash],
-              startupProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
-              readinessProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
-              livenessProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
+              startupProbe: defaultProbe(),
+              readinessProbe: defaultProbe(),
+              livenessProbe: defaultProbe(),
               ports: [
                 {
                   containerPort: 3000,
@@ -246,30 +240,9 @@ export function getDeployment(
               image,
               imagePullPolicy: "IfNotPresent",
               args: ["/app/node_modules/pepr/dist/controller.js", hash],
-              startupProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
-              readinessProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
-              livenessProbe: {
-                httpGet: {
-                  path: "/healthz",
-                  port: 3000,
-                  scheme: "HTTPS",
-                },
-                initialDelaySeconds: 10,
-              },
+              startupProbe: defaultProbe(),
+              readinessProbe: defaultProbe(),
+              livenessProbe: defaultProbe(),
               ports: [
                 {
                   containerPort: 3000,

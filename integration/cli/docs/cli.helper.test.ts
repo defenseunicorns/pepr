@@ -92,18 +92,16 @@ describe("parseCLIOutput", () => {
       init [options]         Initialize a new Pepr Module
       update [options]       Update this Pepr module. Not recommended for prod as it
                              may change files.
-      format [options]       Lint and format this Pepr module
     `;
 
     it("should properly handle multiline command descriptions", () => {
       const result = parseCLIOutput(multilineOutput);
 
-      expect(result.commands).toHaveLength(3);
+      expect(result.commands).toHaveLength(2);
       expect(result.commands).toContain("init [options]         Initialize a new Pepr Module");
       expect(result.commands).toContain(
         "update [options]       Update this Pepr module. Not recommended for prod as it may change files.",
       );
-      expect(result.commands).toContain("format [options]       Lint and format this Pepr module");
     });
 
     it("should properly handle multiline option descriptions", () => {
