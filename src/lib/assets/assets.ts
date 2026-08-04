@@ -320,7 +320,8 @@ export class Assets {
         );
       }
     } catch (err) {
-      throw new Error(`Error generating helm chart: ${err}`, { cause: err });
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Error generating helm chart: ${message}`, { cause: err });
     }
   };
 }
