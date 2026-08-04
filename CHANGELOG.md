@@ -1,5 +1,52 @@
 # Changelog
 
+## [2.0.0](https://github.com/defenseunicorns/pepr/compare/v1.3.0...v2.0.0) (2026-08-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove pepr format ([#3176](https://github.com/defenseunicorns/pepr/issues/3176))
+
+### Features
+
+* expose all probe properties with Kubernetes defaults ([#3247](https://github.com/defenseunicorns/pepr/issues/3247)) ([af340a7](https://github.com/defenseunicorns/pepr/commit/af340a73f7b6943e305ddff1cb50a37ed6d5437d))
+
+
+### Bug Fixes
+
+* remove pepr format ([#3176](https://github.com/defenseunicorns/pepr/issues/3176)) ([d77e288](https://github.com/defenseunicorns/pepr/commit/d77e288448cbe36173cf165f7d158338b7658694))
+
+
+### Dependencies
+
+* bump actions/checkout from 7.0.0 to 7.0.1 ([#3228](https://github.com/defenseunicorns/pepr/issues/3228)) ([0ccf801](https://github.com/defenseunicorns/pepr/commit/0ccf801f1ab807c5908f109991f14ad0e5fbcb82))
+* bump actions/setup-node from 6.4.0 to 7.0.0 ([#3220](https://github.com/defenseunicorns/pepr/issues/3220)) ([040e19e](https://github.com/defenseunicorns/pepr/commit/040e19e43fccf850ec970e56f65c73a5c5fb4227))
+* bump azure/setup-helm from 5.0.0 to 5.0.1 ([#3204](https://github.com/defenseunicorns/pepr/issues/3204)) ([8b05966](https://github.com/defenseunicorns/pepr/commit/8b0596665a2bc97be48aee386c5223a63520a471))
+* bump docker/login-action from 4.4.0 to 4.5.0 ([#3243](https://github.com/defenseunicorns/pepr/issues/3243)) ([e13d502](https://github.com/defenseunicorns/pepr/commit/e13d502c79dad3c55c639be80ad6c3515f48801d))
+* bump docker/login-action from 4.5.0 to 4.5.1 ([#3246](https://github.com/defenseunicorns/pepr/issues/3246)) ([241afa2](https://github.com/defenseunicorns/pepr/commit/241afa222c236449882950e971a5eb6cc4a56b31))
+* bump docker/setup-buildx-action from 4.0.0 to 4.2.0 ([#3221](https://github.com/defenseunicorns/pepr/issues/3221)) ([461417b](https://github.com/defenseunicorns/pepr/commit/461417bf5af267b102e3c6193231cb5d95e6008a))
+* bump dorny/paths-filter from 4.0.1 to 4.0.2 ([#3183](https://github.com/defenseunicorns/pepr/issues/3183)) ([23b5606](https://github.com/defenseunicorns/pepr/commit/23b5606385e83b2285f9a71db5661dc8dfacdf59))
+* bump github/codeql-action/analyze from 4.37.0 to 4.37.1 ([#3225](https://github.com/defenseunicorns/pepr/issues/3225)) ([537317e](https://github.com/defenseunicorns/pepr/commit/537317e04a113699bd1420f211ee2f5f5566e83e))
+* bump github/codeql-action/analyze from 4.37.1 to 4.37.3 ([#3241](https://github.com/defenseunicorns/pepr/issues/3241)) ([d0b660d](https://github.com/defenseunicorns/pepr/commit/d0b660d5778586f22aa39b96bdc7fff4a25a9e92))
+* bump github/codeql-action/autobuild from 4.37.0 to 4.37.1 ([#3224](https://github.com/defenseunicorns/pepr/issues/3224)) ([d6fc63b](https://github.com/defenseunicorns/pepr/commit/d6fc63bf1e9be8d037a549c20f48ccc14d8cfbb0))
+* bump github/codeql-action/autobuild from 4.37.1 to 4.37.3 ([#3240](https://github.com/defenseunicorns/pepr/issues/3240)) ([96f5766](https://github.com/defenseunicorns/pepr/commit/96f5766feccab1b8f8a7cb72354bc230714de618))
+* bump github/codeql-action/init from 4.37.0 to 4.37.1 ([#3226](https://github.com/defenseunicorns/pepr/issues/3226)) ([4e9f407](https://github.com/defenseunicorns/pepr/commit/4e9f407c0975ddc3e572b8b5d0a986caef144799))
+* bump github/codeql-action/init from 4.37.1 to 4.37.3 ([#3239](https://github.com/defenseunicorns/pepr/issues/3239)) ([ff91783](https://github.com/defenseunicorns/pepr/commit/ff917834d74274cdf5c506ff6fc4bbe2451d36f8))
+* bump github/codeql-action/upload-sarif from 4.35.5 to 4.37.1 ([#3227](https://github.com/defenseunicorns/pepr/issues/3227)) ([0f85662](https://github.com/defenseunicorns/pepr/commit/0f8566296061a6a71f5debd0577ea637fd1f2b30))
+* bump github/codeql-action/upload-sarif from 4.37.1 to 4.37.3 ([#3238](https://github.com/defenseunicorns/pepr/issues/3238)) ([1e962e7](https://github.com/defenseunicorns/pepr/commit/1e962e773369cf3bb017521ae8a814e2b32ca110))
+* bump ossf/scorecard-action from 2.4.3 to 2.4.4 ([#3242](https://github.com/defenseunicorns/pepr/issues/3242)) ([af30e2d](https://github.com/defenseunicorns/pepr/commit/af30e2d38f5898f251278020a77e8528e009482c))
+* bump trufflesecurity/trufflehog from 3.95.8 to 3.95.9 ([#3206](https://github.com/defenseunicorns/pepr/issues/3206)) ([b9feb1d](https://github.com/defenseunicorns/pepr/commit/b9feb1d6b611209d539fa300576773a963487a67))
+* bump trufflesecurity/trufflehog from 3.95.9 to 3.96.0 ([#3245](https://github.com/defenseunicorns/pepr/issues/3245)) ([1c06ee6](https://github.com/defenseunicorns/pepr/commit/1c06ee6ed788b2fb323ee0e790cf696f3e139037))
+* **deps-dev:** bump js-yaml from 4.3.0 to 5.2.1 ([#3188](https://github.com/defenseunicorns/pepr/issues/3188)) ([6ccb08f](https://github.com/defenseunicorns/pepr/commit/6ccb08fdff5b178e2d63d57e65932b31f82c25b6))
+* **deps-dev:** bump js-yaml from 5.2.1 to 5.2.2 ([#3229](https://github.com/defenseunicorns/pepr/issues/3229)) ([2a50a01](https://github.com/defenseunicorns/pepr/commit/2a50a0176ea8e70798591b198b8bee901b9516ab))
+* **deps-dev:** bump undici from 8.7.0 to 8.8.0 in the development-dependencies group ([#3232](https://github.com/defenseunicorns/pepr/issues/3232)) ([9ce91d1](https://github.com/defenseunicorns/pepr/commit/9ce91d1baa34b6598d5966c2d36984fccc148c14))
+* **deps-dev:** bump undici from 8.8.0 to 8.9.0 in the development-dependencies group ([#3244](https://github.com/defenseunicorns/pepr/issues/3244)) ([175f5ec](https://github.com/defenseunicorns/pepr/commit/175f5ec60bad0e21ddd43ac7abded45328469a07))
+* **deps:** bump brace-expansion from 5.0.7 to 5.0.9 ([#3230](https://github.com/defenseunicorns/pepr/issues/3230)) ([7120d03](https://github.com/defenseunicorns/pepr/commit/7120d0330f9b5b00745dd7d76e9e09555bf01bb3))
+* **deps:** bump commander from 14.0.3 to 15.0.0 ([#3186](https://github.com/defenseunicorns/pepr/issues/3186)) ([33b2f11](https://github.com/defenseunicorns/pepr/commit/33b2f11f78a45281af0ce503a573f6418e893e2e))
+* **deps:** bump esbuild from 0.28.0 to 0.28.1 ([#3216](https://github.com/defenseunicorns/pepr/issues/3216)) ([7087ccb](https://github.com/defenseunicorns/pepr/commit/7087ccb497bc07430f295531bb50aed05cebcdd8))
+* **deps:** bump the production-dependencies group across 1 directory with 3 updates ([#3200](https://github.com/defenseunicorns/pepr/issues/3200)) ([1ec9692](https://github.com/defenseunicorns/pepr/commit/1ec96929d2bc3295867c1a001ccf230b7d5e122f))
+* **deps:** bump the production-dependencies group with 2 updates ([#3231](https://github.com/defenseunicorns/pepr/issues/3231)) ([b5539ff](https://github.com/defenseunicorns/pepr/commit/b5539ffbefa0bca2f41908f7a61a7db2bf96f438))
+
 ## [1.3.0](https://github.com/defenseunicorns/pepr/compare/v1.2.2...v1.3.0) (2026-07-22)
 
 
