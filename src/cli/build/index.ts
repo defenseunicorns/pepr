@@ -102,8 +102,8 @@ export default function (program: Command): void {
     )
     .addOption(
       new Option(
-        "-I, --registry-info <registry/username>",
-        "Provide the image registry and username for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry/username>/custom-pepr-controller:<current-version>'`.",
+        "-I, --registry-info <registry[/namespace]>",
+        "Provide the image registry (and optional namespace) for building and pushing a custom WASM container. Requires authentication. Conflicts with --custom-image and --registry. Builds and pushes `'<registry[/namespace]>/custom-pepr-controller:<current-version>'` (e.g. docker.io/myuser, localhost:5000).",
       ).conflicts(["customImage", "registry"]),
     )
     .option("-P, --with-pull-secret <name>", "Use image pull secret for controller Deployment.", "")
