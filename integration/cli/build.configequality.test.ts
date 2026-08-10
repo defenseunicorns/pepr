@@ -6,7 +6,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { kind } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import { ModuleConfig } from "../../src/lib/types";
@@ -27,7 +27,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("1m"));
+  }, ms("1m"));
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1) ?? "default";
@@ -36,7 +36,7 @@ describe("build", () => {
 
     beforeAll(async () => {
       await setupTestModule(testModule, id, workdir.path());
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("maps config options from package.json into pepr + helm manifests", () => {
       let moduleConfig: Required<ModuleConfig>;
@@ -49,7 +49,7 @@ describe("build", () => {
           packageJson,
           testModule,
         ));
-      }, time.toMs("2m"));
+      }, ms("2m"));
 
       const getPeprResources = (): KubernetesObject[] => peprResources;
       const getHelmResources = (): KubernetesObject[] => helmResources;

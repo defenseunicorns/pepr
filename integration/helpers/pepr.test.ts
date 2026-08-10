@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { Workdir } from "./workdir";
-import * as time from "./time";
+import ms from "ms";
 import * as sut from "./pepr";
 
 const FILE = path.basename(__filename);
@@ -59,7 +59,7 @@ describe("pepr", () => {
         expect(result.stderr.join("").trim()).toBe("");
         expect(result.stdout.join("").trim()).toBe("0.0.0-development");
       },
-      time.toMs("2m"),
+      ms("2m"),
     );
   });
 });

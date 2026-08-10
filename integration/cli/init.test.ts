@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 
 const FILE = path.basename(__filename);
@@ -27,7 +27,7 @@ describe("init", () => {
       expect(result.stderr.join("").trim()).toBe("");
       expect(result.stdout.at(0)).toMatch("Usage: pepr init");
     },
-    time.toMs("2m"),
+    ms("2m"),
   );
 
   it(
@@ -56,6 +56,6 @@ describe("init", () => {
       expect(packageJson.description).toBe(desc);
       expect(packageJson.pepr.onError).toBe(errorBehavior);
     },
-    time.toMs("2m"),
+    ms("2m"),
   );
 });

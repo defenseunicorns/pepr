@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import { Workdir } from "../helpers/workdir";
 import * as pepr from "../helpers/pepr";
-import * as time from "../helpers/time";
+import ms from "ms";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -15,7 +15,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   it(
     "gives command line help",
@@ -26,6 +26,6 @@ describe("build", () => {
       expect(result.stderr.join("").trim()).toBe("");
       expect(result.stdout.at(0)).toMatch("Usage: pepr build");
     },
-    time.toMs("60s"),
+    ms("60s"),
   );
 });
