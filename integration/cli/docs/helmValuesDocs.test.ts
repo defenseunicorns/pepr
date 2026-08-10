@@ -93,7 +93,7 @@ function flattenValues(value: JsonValue, currentPath = ""): Map<string, Document
         values.set(path, defaultValue);
       }
       return values;
-    }, new Map<string, string>());
+    }, new Map<string, DocumentedHelmValue>());
   }
 
   return new Map([[currentPath, documentedValue(currentPath, value)]]);
