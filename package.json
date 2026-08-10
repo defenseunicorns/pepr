@@ -56,7 +56,7 @@
     "eslint": "9.39.5",
     "express": "5.2.1",
     "fast-json-patch": "3.1.1",
-    "globals": "17.0.0",
+    "globals": "17.8.0",
     "http-status-codes": "^2.3.0",
     "json-pointer": "^0.6.2",
     "kubernetes-fluent-client": "3.11.10",
@@ -93,7 +93,7 @@
     "brace-expansion": "^5.0.9",
     "ip-address": "^10.1.1",
     "tar": "^7.5.16",
-    "fast-uri": "^3.1.4"
+    "fast-uri": "^3.1.5"
   },
   "peerDependencies": {
     "@types/prompts": "^2.4.9",
