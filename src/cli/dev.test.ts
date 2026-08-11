@@ -188,8 +188,7 @@ describe("dev command", () => {
     await program.parseAsync(["dev", "--yes"], { from: "user" });
 
     const sigHandler = processOnSpy.mock.calls.find(([event]) => event === "SIGINT")?.[1] as
-      | (() => void)
-      | undefined;
+      (() => void) | undefined;
     sigHandler?.();
 
     expect(debugSpy).toHaveBeenCalledWith("Received SIGINT, removing webhooks");

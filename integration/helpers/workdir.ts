@@ -2,7 +2,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { existsSync } from "node:fs";
-import * as time from "./time";
+import { setTimeout as sleep } from "node:timers/promises";
 
 export class Workdir {
   root: string;
@@ -37,7 +37,7 @@ export class Workdir {
 
   async recreate(): Promise<string> {
     await this.delete();
-    await time.nap(100);
+    await sleep(100);
     return await this.create();
   }
 }

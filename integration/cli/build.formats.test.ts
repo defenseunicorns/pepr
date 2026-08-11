@@ -6,7 +6,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { existsSync, readdirSync } from "node:fs";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import { Result } from "../helpers/cmd";
 import { setupTlsEnv, cleanupTlsEnv } from "../helpers/tls";
@@ -67,7 +67,7 @@ describe("build formats", () => {
     if (anyNeedsTls) {
       await setupTlsEnv(workdir.path());
     }
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   afterAll(() => {
     if (anyNeedsTls) {
@@ -107,7 +107,7 @@ describe("build formats", () => {
 
       const buildCmd = testCase.embedded ? `pepr build` : `pepr build --no-embed`;
       ctx.buildOutput = await pepr.cli(testModule, { cmd: buildCmd });
-    }, time.toMs("3m"));
+    }, ms("3m"));
 
     describe("when building a module", () => {
       it("should exit with code 0", () => {

@@ -5,7 +5,7 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { fetch } from "kubernetes-fluent-client";
@@ -27,7 +27,7 @@ describe("dev", { timeout: five_mins }, () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("1m"));
+  }, ms("1m"));
 
   describe("runs a module in dev mode", () => {
     const id = FILE.split(".").at(1);
@@ -50,7 +50,7 @@ describe("dev", { timeout: five_mins }, () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-    }, time.toMs("3m"));
+    }, ms("3m"));
 
     it("should start the pepr dev server", async () => {
       cmd = spawn("npx", ["pepr", "dev", "--yes"], { cwd: testModule, stdio: "pipe" });
@@ -108,7 +108,7 @@ describe("dev", { timeout: five_mins }, () => {
       async () => {
         await validateAPIPath();
       },
-      time.toMs("720s"),
+      ms("720s"),
     );
     it("should expose prometheus metrics", async () => {
       const metrics = await validateMetrics();
