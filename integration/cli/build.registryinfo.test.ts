@@ -6,7 +6,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { kind } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 
@@ -18,7 +18,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
@@ -40,7 +40,7 @@ describe("build", () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("using a custom registry", () => {
       const registryInfo = "registry.io/username";
@@ -63,7 +63,7 @@ describe("build", () => {
           packageJson = await resource.fromFile(`${testModule}/package.json`);
           uuid = packageJson.pepr.uuid;
         },
-        time.toMs("1m"),
+        ms("1m"),
       );
 
       it("outputs appropriate configuration", async () => {

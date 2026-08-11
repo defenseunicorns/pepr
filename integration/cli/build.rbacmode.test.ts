@@ -6,7 +6,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { execSync } from "node:child_process";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import { kind } from "kubernetes-fluent-client";
@@ -19,7 +19,7 @@ describe("build rbacMode=scoped", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
@@ -38,7 +38,7 @@ describe("build rbacMode=scoped", () => {
       await pepr.cli(workdir.path(), { cmd: `pepr init ${argz}` });
       await pepr.tgzifyModule(testModule);
       await pepr.cli(testModule, { cmd: `npm install` });
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("scoped rbac cluster role", () => {
       const outputDir = `${testModule}/dist`;
@@ -55,7 +55,7 @@ describe("build rbacMode=scoped", () => {
 
         packageJson = await resource.fromFile(`${testModule}/package.json`);
         uuid = packageJson.pepr.uuid;
-      }, time.toMs("1m"));
+      }, ms("1m"));
 
       it("creates a scoped rbac role to the kubernetes manifests", async () => {
         const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(
