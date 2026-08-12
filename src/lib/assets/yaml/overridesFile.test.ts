@@ -26,6 +26,15 @@ interface TestSchemaProperty {
   [key: string]: unknown;
 }
 
+interface Probe {
+  httpGet: { path: string; port: number; scheme: string };
+  initialDelaySeconds: number;
+  periodSeconds: number;
+  timeoutSeconds: number;
+  successThreshold: number;
+  failureThreshold: number;
+}
+
 vi.mock("fs", async () => {
   const actualFs = await vi.importActual<typeof import("fs")>("fs");
   return {
@@ -61,6 +70,9 @@ interface OverridesFileSchema {
     antiAffinity: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
+    startupProbe: Probe;
+    readinessProbe: Probe;
+    livenessProbe: Probe;
     annotations: {
       "pepr.dev/description": string;
     };
@@ -79,6 +91,9 @@ interface OverridesFileSchema {
     enabled: boolean;
     terminationGracePeriodSeconds: number;
     failurePolicy: string;
+    startupProbe: Probe;
+    readinessProbe: Probe;
+    livenessProbe: Probe;
     annotations: {
       "pepr.dev/description": string;
     };
@@ -136,6 +151,43 @@ describe("overridesFile", () => {
     expect(parsedYaml.admission.antiAffinity).toBe(false);
     expect(parsedYaml.admission.failurePolicy).toBe("Fail");
     expect(parsedYaml.watcher.image).toBe(mockOverrides.image);
+    const expectedProbe = {
+      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+      initialDelaySeconds: 10,
+      periodSeconds: 10,
+      timeoutSeconds: 1,
+      successThreshold: 1,
+      failureThreshold: 3,
+    };
+    const expectedProbes = {
+      startupProbe: expectedProbe,
+      readinessProbe: expectedProbe,
+      livenessProbe: expectedProbe,
+    };
+    expect(parsedYaml.admission).toMatchObject(expectedProbes);
+    expect(parsedYaml.watcher).toMatchObject(expectedProbes);
+
+    const schemaCall = calls.find(([path]) => path === mockPath.replace(/\.yaml$/, ".schema.json"));
+    expect(schemaCall).toBeDefined();
+    const probeSchema = (JSON.parse(schemaCall![1] as string) as JSONSchema7).definitions
+      ?.Probe as JSONSchema7;
+    expect(probeSchema.properties).toMatchObject({
+      initialDelaySeconds: { type: "integer" },
+      periodSeconds: { type: "integer" },
+      timeoutSeconds: { type: "integer" },
+      successThreshold: { type: "integer" },
+      failureThreshold: { type: "integer" },
+    });
+    expect(probeSchema.required).toEqual(
+      expect.arrayContaining([
+        "initialDelaySeconds",
+        "periodSeconds",
+        "timeoutSeconds",
+        "successThreshold",
+        "failureThreshold",
+      ]),
+    );
+
     expect(parsedYaml.secrets.apiPath).toBe(Buffer.from(mockOverrides.apiPath).toString("base64"));
     expect(parsedYaml.admission.annotations["pepr.dev/description"]).toBe(
       mockOverrides.config.description,

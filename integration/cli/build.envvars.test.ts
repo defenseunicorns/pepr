@@ -7,7 +7,7 @@ import * as fs from "node:fs/promises";
 import * as f from "node:fs";
 import { execSync } from "node:child_process";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import * as resource from "../helpers/resource";
 import YAML from "yaml";
@@ -20,7 +20,7 @@ describe("build env vars", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   describe("builds a module", () => {
     const id = FILE.split(".").at(1);
@@ -50,7 +50,7 @@ describe("build env vars", () => {
         },
       };
       f.writeFileSync(`${testModule}/package.json`, JSON.stringify(json, null, 2));
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("using custom env vars", () => {
       const outputDir = `${testModule}/dist`;
@@ -67,7 +67,7 @@ describe("build env vars", () => {
 
         packageJson = await resource.fromFile(`${testModule}/package.json`);
         uuid = packageJson.pepr.uuid;
-      }, time.toMs("1m"));
+      }, ms("1m"));
 
       it("adds the env vars to values.yaml", () => {
         const valuesYaml = f.readFileSync(`${outputDir}/${uuid}-chart/values.yaml`, "utf-8");

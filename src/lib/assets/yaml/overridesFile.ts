@@ -27,15 +27,18 @@ export type ChartOverrides = {
   name: string;
   image: string;
 };
+type Probe = {
+  httpGet: { path: string; port: number; scheme: "HTTPS" };
+  initialDelaySeconds: number;
+  periodSeconds: number;
+  timeoutSeconds: number;
+  successThreshold: number;
+  failureThreshold: number;
+};
 type Probes = {
-  readinessProbe: {
-    httpGet: { path: string; port: number; scheme: "HTTPS" };
-    initialDelaySeconds: number;
-  };
-  livenessProbe: {
-    httpGet: { path: string; port: number; scheme: "HTTPS" };
-    initialDelaySeconds: number;
-  };
+  startupProbe: Probe;
+  readinessProbe: Probe;
+  livenessProbe: Probe;
 };
 type Resources = {
   requests: { memory: string; cpu: string };
@@ -203,14 +206,20 @@ function runIdsForImage(image: string): { uid: number; gid: number; fsGroup: num
 
 function commonProbes(): Probes {
   return {
-    readinessProbe: {
-      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
-      initialDelaySeconds: 10,
-    },
-    livenessProbe: {
-      httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
-      initialDelaySeconds: 10,
-    },
+    startupProbe: defaultProbe(),
+    readinessProbe: defaultProbe(),
+    livenessProbe: defaultProbe(),
+  };
+}
+
+function defaultProbe(): Probe {
+  return {
+    httpGet: { path: "/healthz", port: 3000, scheme: "HTTPS" },
+    initialDelaySeconds: 10,
+    periodSeconds: 10,
+    timeoutSeconds: 1,
+    successThreshold: 1,
+    failureThreshold: 3,
   };
 }
 

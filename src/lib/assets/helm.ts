@@ -10,7 +10,7 @@ export function clusterRoleTemplate(): string {
     metadata:
       name: {{ .Values.uuid }}
       namespace: pepr-system
-    rules: 
+    rules:
       {{- if .Values.rbac }}
       {{- toYaml .Values.rbac | nindent 2 }}
       {{- end }}
@@ -85,7 +85,7 @@ export function watcherDeployTemplate(buildTimestamp: string, type: ControllerTy
             pepr.dev/controller: watcher
         template:
           metadata:
-            annotations: 
+            annotations:
               buildTimestamp: "${buildTimestamp}"
               {{- if .Values.watcher.podAnnotations }}
               {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
@@ -120,6 +120,8 @@ export function watcherDeployTemplate(buildTimestamp: string, type: ControllerTy
                 args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
+                startupProbe:
+                  {{- toYaml .Values.watcher.startupProbe | nindent 12 }}
                 readinessProbe:
                   {{- toYaml .Values.watcher.readinessProbe | nindent 12 }}
                 livenessProbe:
@@ -235,6 +237,8 @@ export function admissionDeployTemplate(buildTimestamp: string, type: Controller
                 args:
                   - /app/node_modules/pepr/dist/controller.js
                   - {{ .Values.hash }}
+                startupProbe:
+                  {{- toYaml .Values.admission.startupProbe | nindent 12 }}
                 readinessProbe:
                   {{- toYaml .Values.admission.readinessProbe | nindent 12 }}
                 livenessProbe:
@@ -277,7 +281,7 @@ export function admissionDeployTemplate(buildTimestamp: string, type: Controller
                   secretName: {{ .Values.uuid }}-api-path
               - name: module
                 secret:
-                  secretName: {{ .Values.uuid }}-module  
+                  secretName: {{ .Values.uuid }}-module
               {{- if .Values.admission.extraVolumes }}
               {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
               {{- end }}

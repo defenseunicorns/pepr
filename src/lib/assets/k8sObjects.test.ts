@@ -7,6 +7,19 @@ import { Binding } from "../types";
 
 vi.mock("zlib");
 
+const expectedProbe = {
+  httpGet: {
+    path: "/healthz",
+    port: 3000,
+    scheme: "HTTPS",
+  },
+  initialDelaySeconds: 10,
+  periodSeconds: 10,
+  timeoutSeconds: 1,
+  successThreshold: 1,
+  failureThreshold: 3,
+};
+
 const assets: Assets = JSON.parse(`{
   "config": {
     "uuid": "static-test",
@@ -336,6 +349,11 @@ describe("watcher function", () => {
 
     expect(result).toBeTruthy();
     expect(result!.metadata!.name).toBe("pepr-static-test-watcher");
+    expect(result!.spec!.template.spec!.containers[0]).toMatchObject({
+      startupProbe: expectedProbe,
+      readinessProbe: expectedProbe,
+      livenessProbe: expectedProbe,
+    });
   });
 
   it("watcher without bindings", () => {
@@ -365,6 +383,11 @@ describe("deployment function", () => {
 
     expect(result).toBeTruthy();
     expect(result!.metadata!.name).toBe("pepr-static-test");
+    expect(result!.spec!.template.spec!.containers[0]).toMatchObject({
+      startupProbe: expectedProbe,
+      readinessProbe: expectedProbe,
+      livenessProbe: expectedProbe,
+    });
   });
 });
 describe("moduleSecret function", () => {

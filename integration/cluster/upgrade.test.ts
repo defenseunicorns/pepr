@@ -6,7 +6,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { kind, K8s } from "kubernetes-fluent-client";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import { execSync, execFileSync, spawnSync } from "node:child_process";
 
 const FILE = path.basename(__filename);
@@ -19,7 +19,7 @@ describe("build", () => {
 
   beforeAll(async () => {
     await workdir.recreate();
-  }, time.toMs("1m"));
+  }, ms("1m"));
 
   describe("builds a module", () => {
     beforeAll(async () => {
@@ -36,7 +36,7 @@ describe("build", () => {
         cwd: workdir.path(),
         stdio: "inherit",
       });
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     it(
       "should prepare, build, and deploy hello-pepr with pepr@latest",
@@ -52,18 +52,22 @@ describe("build", () => {
     );
   });
 
-  it("should display the UUIDs of the deployed modules with a specific UUID",{ timeout: 1000 * 5 * 60 }, async () => {
-    const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
-      shell: true, // Run command in a shell
-      encoding: "utf-8", // Encode result as string
-    });
+  it(
+    "should display the UUIDs of the deployed modules with a specific UUID",
+    { timeout: 1000 * 5 * 60 },
+    async () => {
+      const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
+        shell: true, // Run command in a shell
+        encoding: "utf-8", // Encode result as string
+      });
 
-    const { stdout } = uuidOut;
+      const { stdout } = uuidOut;
 
-    const matches = stdout.match(/upgrade-test/g) || [];
+      const matches = stdout.match(/upgrade-test/g) || [];
 
-    expect(matches.length).toBe(2);
-  });
+      expect(matches.length).toBe(2);
+    },
+  );
 
   it(
     "should prepare, build and deploy with pepr@pr-candidate",

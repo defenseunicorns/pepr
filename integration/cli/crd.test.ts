@@ -5,10 +5,10 @@ import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import { kind } from "kubernetes-fluent-client";
-import yaml from "js-yaml";
+import { load as loadYaml } from "js-yaml";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
@@ -19,7 +19,7 @@ describe("crd", () => {
 
   beforeAll(async () => {
     await setupWorkdir(workdir);
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   describe("creates TypeScript types", () => {
     const id = FILE.split(".").at(1);
@@ -56,7 +56,7 @@ describe("crd", () => {
       const { yamlText, json } = await loadGeneratedCRD(crdFilePath);
       crd = yamlText;
       crdJSON = json;
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("npx pepr api create - creates TypeScript types", () => {
       it("creates a new CRD TypeScript definition at api/<group>/<kind>_types.ts", async () => {
@@ -456,7 +456,7 @@ async function loadGeneratedCRD(
   crdFilePath: string,
 ): Promise<{ yamlText: string; json: kind.CustomResourceDefinition }> {
   const yamlText = await fs.readFile(crdFilePath, "utf8");
-  const json = yaml.load(yamlText) as kind.CustomResourceDefinition;
+  const json = loadYaml(yamlText) as kind.CustomResourceDefinition;
   return { yamlText, json };
 }
 

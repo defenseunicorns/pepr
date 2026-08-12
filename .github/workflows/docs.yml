@@ -6,7 +6,15 @@ permissions: read-all
 on:
   # enable manual run via GitHub UI
   workflow_dispatch:
-  
+
+  # validate Helm values documentation when related docs or generators change
+  pull_request:
+    paths:
+      - "docs/user-guide/customization.md"
+      - "integration/cli/docs/helmValuesDocs*.ts"
+      - "src/lib/assets/yaml/overridesFile.ts"
+      - "src/lib/assets/assets.ts"
+
   # enable triggering on docs file changes
   # https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#using-filters-to-target-specific-paths-for-pull-request-or-push-events
   push:
@@ -18,14 +26,28 @@ on:
     types:
       - completed
 
-  # Runs on on tags and does not get the secret   
+  # Runs on on tags and does not get the secret
   # release:
   #   types: [published]
 
 jobs:
-  
-  build:
+  validate-helm-values-docs:
     runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Use Node.js 26
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: "npm"
+      - run: npm ci
+      - run: npx vitest run --config=config/vitest.integration.config.ts integration/cli/docs/helmValuesDocs.test.ts
+
+  build:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: validate-helm-values-docs
 
     # makes environment secrets available to job steps
     environment: prod
@@ -33,7 +55,7 @@ jobs:
     steps:
       - name: Get token to trigger defenseunicorns/pepr-docs workflow
         id: get_workflow_trigger_token
-        uses: peter-murray/workflow-application-token-action@d17e3a9a36850ea89f35db16c1067dd2b68ee343 # v4.0.1
+        uses: peter-murray/workflow-application-token-action@cb731e00cb6754f584507134ff389dfb3dc42bbc # v5.1.0
         with:
           application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
           application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
@@ -45,4 +67,3 @@ jobs:
         run: |
           gh api https://api.github.com/repos/defenseunicorns/pepr-docs/dispatches \
             --input - <<< '{"event_type":"update-docs"}'
-
