@@ -5,8 +5,8 @@
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
 ARG REQUIRE_CHOWN="true"
-ARG BUILD_IMAGE=cgr.dev/defenseunicorns.com/node:26-dev@sha256:157c6017890d666a24a6c8eb69458ff53c22e6e2e3209abb19f2c0769ee19bc4
-ARG BASE_IMAGE=cgr.dev/defenseunicorns.com/node:26@sha256:b79a4c8ef338375c198b1c7df7e833648d3fa0584922e399ce7e7e15c64fc793
+ARG BUILD_IMAGE=cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5
+ARG BASE_IMAGE=cgr.dev/defenseunicorns.com/node:26@sha256:d5c007f394f343f3a7fa968092349babdbb10de2fbc073c5bb16f561d7db4ab0
 
 FROM ${BUILD_IMAGE} AS build
 
