@@ -145,6 +145,26 @@ describe("assignImage", () => {
     });
     expect(result).toBe("");
   });
+
+  it("should support a bare hostname with port as registryInfo", () => {
+    const result = assignImage({
+      customImage: "",
+      registryInfo: "localhost:5000",
+      peprVersion: mockPeprVersion,
+      registry: "",
+    });
+    expect(result).toBe("localhost:5000/custom-pepr-controller:1.0.0");
+  });
+
+  it("should support a bare hostname without port as registryInfo", () => {
+    const result = assignImage({
+      customImage: "",
+      registryInfo: "registry.example.com",
+      peprVersion: mockPeprVersion,
+      registry: "",
+    });
+    expect(result).toBe("registry.example.com/custom-pepr-controller:1.0.0");
+  });
 });
 
 describe("determineRbacMode", () => {
