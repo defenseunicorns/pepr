@@ -4,8 +4,7 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-
-FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:157c6017890d666a24a6c8eb69458ff53c22e6e2e3209abb19f2c0769ee19bc4 AS build
+FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5 AS build
 
 WORKDIR /app
 
@@ -40,9 +39,7 @@ RUN npm run build && \
 
 
 ##### DELIVER #####
-FROM cgr.dev/defenseunicorns.com/node:26@sha256:b79a4c8ef338375c198b1c7df7e833648d3fa0584922e399ce7e7e15c64fc793
-
-
+FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
