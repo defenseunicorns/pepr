@@ -4,9 +4,8 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-ARG REQUIRE_CHOWN="true"
-ARG BUILD_IMAGE=cgr.dev/defenseunicorns.com/node:26-dev@sha256:157c6017890d666a24a6c8eb69458ff53c22e6e2e3209abb19f2c0769ee19bc4
-ARG BASE_IMAGE=cgr.dev/defenseunicorns.com/node:26@sha256:b79a4c8ef338375c198b1c7df7e833648d3fa0584922e399ce7e7e15c64fc793
+ARG BUILD_IMAGE=cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5
+ARG BASE_IMAGE=cgr.dev/defenseunicorns.com/node:26-slim@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2
 
 FROM ${BUILD_IMAGE} AS build
 
@@ -60,12 +59,5 @@ FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
-ARG REQUIRE_CHOWN="true"
-ENV REQUIRE_CHOWN=${REQUIRE_CHOWN}
-
-
-COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
-RUN if [ "$REQUIRE_CHOWN" = "true" ]; then \
-      mkdir -p /app && chown -R 65532:65532 /app; \
-    fi
+COPY --from=build --chown=65532:65532 /app/node_modules/ ./node_modules/
 USER 65532
