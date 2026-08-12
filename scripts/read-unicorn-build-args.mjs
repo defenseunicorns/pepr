@@ -19,8 +19,6 @@ try {
   console.log(`BUILD_IMAGE=${buildImage}`);
   console.log("--build-arg");
   console.log(`BASE_IMAGE=${baseImage}`);
-  console.log("--build-arg");
-  console.log(`REQUIRE_CHOWN=false`);
 } catch (error) {
   console.error("Error reading or parsing the Dockerfile:", error);
   process.exit(1);

@@ -4,7 +4,6 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-ARG REQUIRE_CHOWN="true"
 ARG BUILD_IMAGE=cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5
 ARG BASE_IMAGE=cgr.dev/defenseunicorns.com/node:26@sha256:d5c007f394f343f3a7fa968092349babdbb10de2fbc073c5bb16f561d7db4ab0
 
@@ -60,12 +59,5 @@ FROM ${BASE_IMAGE}
 
 WORKDIR /app
 
-ARG REQUIRE_CHOWN="true"
-ENV REQUIRE_CHOWN=${REQUIRE_CHOWN}
-
-
-COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
-RUN if [ "$REQUIRE_CHOWN" = "true" ]; then \
-      mkdir -p /app && chown -R 65532:65532 /app; \
-    fi
+COPY --from=build --chown=65532:65532 /app/node_modules/ ./node_modules/
 USER 65532
