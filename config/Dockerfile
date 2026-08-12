@@ -39,8 +39,7 @@ RUN npm run build && \
 
 
 ##### DELIVER #####
-FROM cgr.dev/defenseunicorns.com/node:26@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2
-
+FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/node_modules/ ./node_modules/
