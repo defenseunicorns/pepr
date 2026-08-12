@@ -22,7 +22,7 @@ jobs:
       release_version: ${{ steps.release.outputs.version || 'UNRELEASED' }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -69,7 +69,7 @@ jobs:
         shell: bash
 
       - name: "Pepr Controller: Login to GHCR"
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: dummy
@@ -111,7 +111,7 @@ jobs:
       PEPR_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -133,7 +133,7 @@ jobs:
 
       - name: Publish package
         id: publish
-        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@4d014fae4dbd39eb09e8d40348b73db095e6ba9a # v2.0.0
+        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@bb91a05077afa6601a3d7538c4cbbdbf0abe7ed9 # v2.0.0
         with:
           access: public
           node-auth-token: ${{ secrets.NPM_TOKEN }}
@@ -152,7 +152,7 @@ jobs:
       PEPR_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 

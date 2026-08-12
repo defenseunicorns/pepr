@@ -4,6 +4,8 @@
 import { expect, describe, it, beforeAll } from "vitest";
 import { promises as fs } from "fs";
 import path from "path";
+import { OnError } from "./enums";
+import { dependencies, devDependencies, genPkgJSON } from "./templates";
 
 // Path definitions
 const projectRoot = path.resolve(__dirname, "../../..");
@@ -145,5 +147,48 @@ describe(`ESLint Template Configuration (${templateConfig})`, () => {
 
       expect(missingItems).toHaveLength(0);
     });
+  });
+
+  it("includes generated package dependencies for every ESLint template import", () => {
+    const packageJson = genPkgJSON({
+      name: "test-module",
+      description: "test module",
+      errorBehavior: OnError.AUDIT,
+      uuid: "test-uuid",
+    }).data;
+
+    const generatedDependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+    };
+    const templateImports = extractValues(
+      templateContent,
+      /import\s+.*?from\s+["']([^"']+)["'];?/g,
+      1,
+    ).filter(importPath => !importPath.startsWith("node:") && !importPath.startsWith("."));
+
+    expect(templateImports).toEqual(
+      expect.arrayContaining([
+        "@eslint/eslintrc",
+        "@eslint/js",
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser",
+        "globals",
+      ]),
+    );
+
+    for (const importPath of templateImports) {
+      expect(generatedDependencies).toHaveProperty(importPath);
+    }
+
+    expect(packageJson.devDependencies).toMatchObject({
+      "@eslint/eslintrc": devDependencies["@eslint/eslintrc"],
+      "@eslint/js": devDependencies["@eslint/js"],
+      "@typescript-eslint/eslint-plugin": dependencies["@typescript-eslint/eslint-plugin"],
+      "@typescript-eslint/parser": dependencies["@typescript-eslint/parser"],
+      eslint: dependencies.eslint,
+      globals: dependencies.globals,
+    });
+    expect(packageJson.devDependencies.eslint).toMatch(/^\^?10\./);
   });
 });

@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { Workdir } from "../helpers/workdir";
-import * as time from "../helpers/time";
+import ms from "ms";
 import * as pepr from "../helpers/pepr";
 import { kind } from "kubernetes-fluent-client";
 import { load as loadYaml } from "js-yaml";
@@ -19,7 +19,7 @@ describe("crd", () => {
 
   beforeAll(async () => {
     await setupWorkdir(workdir);
-  }, time.toMs("60s"));
+  }, ms("60s"));
 
   describe("creates TypeScript types", () => {
     const id = FILE.split(".").at(1);
@@ -56,7 +56,7 @@ describe("crd", () => {
       const { yamlText, json } = await loadGeneratedCRD(crdFilePath);
       crd = yamlText;
       crdJSON = json;
-    }, time.toMs("2m"));
+    }, ms("2m"));
 
     describe("npx pepr api create - creates TypeScript types", () => {
       it("creates a new CRD TypeScript definition at api/<group>/<kind>_types.ts", async () => {
