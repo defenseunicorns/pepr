@@ -180,7 +180,7 @@ See the [TypeScript docs](https://www.typescriptlang.org/docs/handbook/typescrip
 
 ## Community
 
-To join our channel go to [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) and join the `#pepr` channel.
+To join our channel go to [Kubernetes Slack](https://inviter.co/kubernetes) and join the `#pepr` channel.
 
 [contributors]: https://contrib.rocks/image?repo=defenseunicorns/pepr
 [![Contributor Chart][contributors]](https://github.com/defenseunicorns/pepr/graphs/contributors)
