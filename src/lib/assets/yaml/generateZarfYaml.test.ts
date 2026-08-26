@@ -51,9 +51,22 @@ describe("generateZarfYamlGeneric", () => {
       generateZarfYamlGeneric(assets, "static-test-chart", "charts"),
     )![0];
     expect(zarfChart.components[0].charts![0].name).toBe("module");
+    expect(zarfChart.components[0].charts![0].releaseName).toBe("pepr-test-uuid");
     expect(zarfChart.components[0].charts![0].namespace).toBe("pepr-system");
     expect(zarfChart.components[0].charts![0].version).toBe("0.0.2");
     expect(zarfChart.components[0].charts![0].localPath).toBe("static-test-chart");
+  });
+
+  it("should use custom build name as chart release name when provided", () => {
+    process.env.PEPR_CUSTOM_BUILD_NAME = "custom-module";
+    const zarfChart = parseYAMLToJSON(
+      generateZarfYamlGeneric(assets, "static-test-chart", "charts"),
+    )![0];
+    delete process.env.PEPR_CUSTOM_BUILD_NAME;
+
+    expect(zarfChart.components[0].name).toBe("custom-module");
+    expect(zarfChart.components[0].charts![0].name).toBe("custom-module");
+    expect(zarfChart.components[0].charts![0].releaseName).toBe("custom-module");
   });
 
   it("should default to 0.0.1 if no appVersion is provided", () => {
@@ -89,6 +102,7 @@ interface ZarfPackageConfig {
       namespace: string;
       version: string;
       localPath: string;
+      releaseName?: string;
     }[];
   }[];
 }
