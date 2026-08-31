@@ -90,6 +90,7 @@ jobs:
         working-directory: ${{ env.MOD_PATH }}
         run: |
           npm install "${PEPR}/pepr-0.0.0-development.tgz"
+          "${PEPR}/node_modules/.bin/patch-package" --patch-dir ../patches --error-on-fail
           npx pepr build --custom-image pepr:dev
 
       - name: Prepare Test Cluster

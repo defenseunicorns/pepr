@@ -183,4 +183,6 @@ function handleModuleBuildError(e: BuildModuleResult): void {
       );
     });
   }
+
+  process.exit(1);
 }
