@@ -142,18 +142,20 @@ export async function buildModule(
   }
 }
 
-interface BuildModuleResult {
+interface BuildModuleError extends Error {
   stdout?: Buffer;
-  stderr: Buffer;
+  stderr?: Buffer;
 }
 
-function handleModuleBuildError(e: BuildModuleResult): void {
+function handleModuleBuildError(e: BuildModuleError): never {
   console.error(`Error building module:`, e);
 
-  if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
+  if (!e.stdout) {
+    throw e;
+  }
 
   const out = e.stdout.toString() as string;
-  const err = e.stderr.toString();
+  const err = e.stderr?.toString() ?? "";
 
   console.info(out);
   console.error(err);
@@ -184,5 +186,5 @@ function handleModuleBuildError(e: BuildModuleResult): void {
     });
   }
 
-  process.exit(1);
+  throw e;
 }
