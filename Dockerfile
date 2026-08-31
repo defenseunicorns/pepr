@@ -33,7 +33,7 @@ RUN npm run build && \
     rm -rf node_modules/@types && \
     # Remove unused dependencies in the controller image, usually needed by Pepr CLI
     rm -rf node_modules/ramda/dist && \
-    rm -rf node_modules/ramda/es && \ 
+    rm -rf node_modules/ramda/es && \
     rm -rf node_modules/esbuild && \
     rm -rf node_modules/@esbuild && \
     rm -rf node_modules/fast-glob && \
@@ -54,7 +54,6 @@ RUN npm run build && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
     cp package.json node_modules/pepr
-
 ##### DELIVER #####
 
 FROM ${BASE_IMAGE}
