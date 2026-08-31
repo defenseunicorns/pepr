@@ -49,6 +49,7 @@ RUN npm run build && \
     rm -rf node_modules/bare-* && \
     rm -rf node_modules/bin-links && \
     rm -rf node_modules/cacache && \
+    rm -rf patches && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \

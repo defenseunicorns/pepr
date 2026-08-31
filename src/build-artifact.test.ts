@@ -18,9 +18,12 @@ describe("Published package does not include unintended files", () => {
   });
 
   it("should not include files outside known paths", () => {
-    const allowedPrefixes = ["src/", "dist/", "LICENSE", "README.md", "package.json"];
+    const allowedFiles = ["LICENSE", "README.md", "package.json", "patches/apply-patches.mjs"];
+    const allowedPrefixes = ["src/", "dist/"];
     const disallowed = packedFiles.filter(file => {
-      return !allowedPrefixes.some(prefix => file.startsWith(prefix));
+      return (
+        !allowedFiles.includes(file) && !allowedPrefixes.some(prefix => file.startsWith(prefix))
+      );
     });
     expect(disallowed).toEqual([]);
   });

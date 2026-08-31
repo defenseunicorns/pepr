@@ -12,6 +12,7 @@
   "files": [
     "/dist",
     "/patches/apply-patches.mjs",
+    "!/patches/*.patch",
     "/src",
     "!src/**/*.test.ts",
     "!src/fixtures/**",
