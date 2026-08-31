@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Get token to trigger defenseunicorns/pepr-docs workflow
         id: get_workflow_trigger_token
-        uses: peter-murray/workflow-application-token-action@cb731e00cb6754f584507134ff389dfb3dc42bbc # v5.1.0
+        uses: peter-murray/workflow-application-token-action@dad2b81e50ce3edeb5f3b7ffbd79f731368bd668 # v5.1.1
         with:
           application_id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
           application_private_key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
