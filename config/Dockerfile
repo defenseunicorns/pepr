@@ -24,15 +24,29 @@ COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \
     npm prune --omit=dev --omit=peer && \
+    # https://github.com/defenseunicorns/pepr/issues/2747
+    npm i --no-save --omit=dev --omit=peer ws && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
-    # Remove Ramda unused Ramda files and esbuild
+    # Remove unused dependencies in the controller image, usually needed by Pepr CLI
     rm -rf node_modules/ramda/dist && \
     rm -rf node_modules/ramda/es && \
     rm -rf node_modules/esbuild && \
     rm -rf node_modules/@esbuild && \
+    rm -rf node_modules/fast-glob && \
     rm -rf node_modules/.bin/esbuild && \
+    rm -rf node_modules/quicktype-core && \
+    rm -rf node_modules/commander && \
+    rm -rf node_modules/@npmcli && \
+    rm -rf node_modules/@pkgjs && \
+    rm -rf node_modules/@glideapps && \
+    rm -rf node_modules/@jsep-plugin && \
+    rm -rf node_modules/@sigstore && \
+    rm -rf node_modules/benchmarks && \
+    rm -rf node_modules/bare-* && \
+    rm -rf node_modules/bin-links && \
+    rm -rf node_modules/cacache && \
     rm -rf patches && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \

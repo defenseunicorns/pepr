@@ -9,6 +9,7 @@ import { watchForChanges } from "./build.helpers";
 import { PeprConfig, Reloader } from "../types";
 import { BuildContext } from "esbuild";
 import { loadModule } from "./loadModule";
+import { applyBuildCompatibilityPatches } from "./applyCompatibilityPatches";
 
 export type BuildModuleReturn = {
   ctx: BuildContext<BuildOptions>;
@@ -71,6 +72,7 @@ export async function buildModule(
 
     // Resolve node_modules folder (in support of npm workspaces!) and run tsc
     const npmRoot = execFileSync("npm", ["root"]).toString().trim();
+    applyBuildCompatibilityPatches(npmRoot);
     execFileSync(`${npmRoot}/.bin/tsc`, [
       "--project",
       `${modulePath}/tsconfig.json`,

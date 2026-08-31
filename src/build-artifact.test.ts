@@ -20,13 +20,7 @@ describe("Published package does not include unintended files", () => {
   });
 
   it("should not include files outside known paths", () => {
-    const allowedFiles = [
-      "LICENSE",
-      "README.md",
-      "package.json",
-      "patches/apply-patches.mjs",
-      "patches/thread-stream+4.2.0.patch",
-    ];
+    const allowedFiles = ["LICENSE", "README.md", "package.json"];
     const allowedPrefixes = ["src/", "dist/"];
     const disallowed = packedFiles.filter(file => {
       return (

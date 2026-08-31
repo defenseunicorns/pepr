@@ -90,8 +90,8 @@ jobs:
         working-directory: ${{ env.MOD_PATH }}
         run: |
           npm install "${PEPR}/pepr-0.0.0-development.tgz"
-          node -e 'const fs = require("node:fs"); const text = fs.readFileSync("node_modules/thread-stream/index.d.ts", "utf8"); if (!text.includes("workerThreads.Transferable[]") || text.includes("workerThreads.TransferListItem[]")) throw new Error("thread-stream patch was not applied");'
           npx pepr build --custom-image pepr:dev
+          node -e 'const fs = require("node:fs"); const text = fs.readFileSync("node_modules/thread-stream/index.d.ts", "utf8"); if (!text.includes("workerThreads.Transferable[]") || text.includes("workerThreads.TransferListItem[]")) throw new Error("thread-stream patch was not applied");'
 
       - name: Prepare Test Cluster
         run: |
