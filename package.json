@@ -11,6 +11,7 @@
   },
   "files": [
     "/dist",
+    "/patches/apply-patches.mjs",
     "/src",
     "!src/**/*.test.ts",
     "!src/fixtures/**",
@@ -36,7 +37,7 @@
     "format:tests": "eslint --config config/eslint.test.config.mjs 'src/**/*.test.ts'",
     "gen-data-json": "node hack/build-template-data.mjs",
     "prebuild": "rm -fr dist/* && npm run gen-data-json",
-    "postinstall": "patch-package",
+    "postinstall": "node patches/apply-patches.mjs",
     "prepare": "if [ \"$NODE_ENV\" != 'production' ]; then husky; fi",
     "set-version": "bash -lc 'ver=${PEPR_VERSION:-}; if [ -z \"$ver\" ]; then git fetch --tags --force; ver=$(git describe --tags --abbrev=0); fi; ver=${ver#v}; echo Using version $ver; node ./scripts/set-version.js \"$ver\"'",
     "test": "npm run test:unit && npm run test:integration",
