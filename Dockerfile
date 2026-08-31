@@ -13,6 +13,7 @@ WORKDIR /app
 
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
+COPY --chown=node:node ./patches/ ./patches/
 
 # Install deps
 RUN npm ci
@@ -24,7 +25,7 @@ COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \
-    npm ci --omit=dev --omit=peer && \
+    npm prune --omit=dev --omit=peer && \
     # https://github.com/defenseunicorns/pepr/issues/2747
     npm i --no-save ws && \
     npm cache clean --force && \
