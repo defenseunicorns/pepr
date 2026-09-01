@@ -13,6 +13,7 @@ WORKDIR /app
 
 # Copy the node config files
 COPY --chown=node:node ./package*.json ./
+COPY --chown=node:node ./patches/ ./patches/
 
 # Install deps
 RUN npm ci
@@ -24,15 +25,15 @@ COPY --chown=node:node ./config/tsconfig.root.json ./config/tsconfig.root.json
 COPY --chown=node:node ./src/ ./src/
 
 RUN npm run build && \
-    npm ci --omit=dev --omit=peer && \
+    npm prune --omit=dev --omit=peer && \
     # https://github.com/defenseunicorns/pepr/issues/2747
-    npm i --no-save ws && \
+    npm i --no-save --omit=dev --omit=peer ws && \
     npm cache clean --force && \
     # Remove @types
     rm -rf node_modules/@types && \
     # Remove unused dependencies in the controller image, usually needed by Pepr CLI
     rm -rf node_modules/ramda/dist && \
-    rm -rf node_modules/ramda/es && \ 
+    rm -rf node_modules/ramda/es && \
     rm -rf node_modules/esbuild && \
     rm -rf node_modules/@esbuild && \
     rm -rf node_modules/fast-glob && \
@@ -48,11 +49,11 @@ RUN npm run build && \
     rm -rf node_modules/bare-* && \
     rm -rf node_modules/bin-links && \
     rm -rf node_modules/cacache && \
+    rm -rf patches && \
     find . -name "*.ts" -type f -delete && \
     mkdir node_modules/pepr && \
     cp -r dist node_modules/pepr/dist && \
     cp package.json node_modules/pepr
-
 ##### DELIVER #####
 
 FROM ${BASE_IMAGE}

@@ -10,7 +10,9 @@ describe("Published package does not include unintended files", () => {
 
   beforeAll(async () => {
     type BuildArtifact = { mode: number; path: string; size: number };
-    const tarballBuffer = execSync("npm pack --dry-run --json", { stdio: "pipe" });
+    const tarballBuffer = execSync("npm pack --dry-run --json", {
+      stdio: "pipe",
+    });
     const tarballJson = JSON.parse(tarballBuffer.toString());
     packedFiles = tarballJson.flatMap((entry: { files: BuildArtifact[] }) =>
       entry.files.map((f: { path: string }) => f.path),
@@ -18,9 +20,12 @@ describe("Published package does not include unintended files", () => {
   });
 
   it("should not include files outside known paths", () => {
-    const allowedPrefixes = ["src/", "dist/", "LICENSE", "README.md", "package.json"];
+    const allowedFiles = ["LICENSE", "README.md", "package.json"];
+    const allowedPrefixes = ["src/", "dist/"];
     const disallowed = packedFiles.filter(file => {
-      return !allowedPrefixes.some(prefix => file.startsWith(prefix));
+      return (
+        !allowedFiles.includes(file) && !allowedPrefixes.some(prefix => file.startsWith(prefix))
+      );
     });
     expect(disallowed).toEqual([]);
   });
