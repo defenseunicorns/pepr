@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.0.1](https://github.com/defenseunicorns/pepr/compare/v2.0.0...v2.0.1) (2026-09-03)
+
+
+### Bug Fixes
+
+* consume KFC watcher types from package root ([#3307](https://github.com/defenseunicorns/pepr/issues/3307)) ([eb70997](https://github.com/defenseunicorns/pepr/commit/eb709974750ed24c4d551ec35c9fdd6d05cc76a1))
+* **deps:** use patch-package to allow update of @types/node to 26.2.0 ([#3282](https://github.com/defenseunicorns/pepr/issues/3282)) ([0113880](https://github.com/defenseunicorns/pepr/commit/0113880c2366355d90ea0bf7137cad6634a115ac))
+
+
+### Dependencies
+
+* bump docker/setup-buildx-action from 4.2.0 to 4.3.0 ([#3290](https://github.com/defenseunicorns/pepr/issues/3290)) ([c937961](https://github.com/defenseunicorns/pepr/commit/c93796148d16cf797e0944d24120f772fa3ce901))
+* bump dorny/paths-filter from 4.0.2 to 4.0.3 ([#3277](https://github.com/defenseunicorns/pepr/issues/3277)) ([5077db5](https://github.com/defenseunicorns/pepr/commit/5077db51796aaa6d8e7c1be4fb8acc40aa0526a4))
+* bump peter-murray/workflow-application-token-action from 5.1.0 to 5.1.1 ([#3299](https://github.com/defenseunicorns/pepr/issues/3299)) ([5c50b71](https://github.com/defenseunicorns/pepr/commit/5c50b716a705e25e27a24a6081d7c8a94cefb6f2))
+* bump step-security/harden-runner from 2.20.1 to 2.21.0 ([#3288](https://github.com/defenseunicorns/pepr/issues/3288)) ([20a74c9](https://github.com/defenseunicorns/pepr/commit/20a74c9928a1047434b5c9a463a9d1adcf2b0918))
+* bump the codeql-action group with 4 updates ([#3285](https://github.com/defenseunicorns/pepr/issues/3285)) ([d9be1c7](https://github.com/defenseunicorns/pepr/commit/d9be1c7128d9fe2e6e36885caada391f646c04a2))
+* bump the codeql-action group with 4 updates ([#3295](https://github.com/defenseunicorns/pepr/issues/3295)) ([a7733cc](https://github.com/defenseunicorns/pepr/commit/a7733ccb82c3f6b60e471ea03eb46e1d34ef6164))
+* bump trufflesecurity/trufflehog from 3.96.0 to 3.97.0 ([#3286](https://github.com/defenseunicorns/pepr/issues/3286)) ([0056bfa](https://github.com/defenseunicorns/pepr/commit/0056bfacf28acc76e9db534c94c15852594e2837))
+* bump trufflesecurity/trufflehog from 3.97.0 to 3.97.1 ([#3300](https://github.com/defenseunicorns/pepr/issues/3300)) ([b9c0e0d](https://github.com/defenseunicorns/pepr/commit/b9c0e0d726d4e85204401b0d2dc4bdfe556c5d16))
+* **deps-dev:** bump the development-dependencies group across 1 directory with 3 updates ([#3284](https://github.com/defenseunicorns/pepr/issues/3284)) ([e20e53e](https://github.com/defenseunicorns/pepr/commit/e20e53e7c7501cd721d694b053bfb7ef700b8fb2))
+* **deps-dev:** bump the development-dependencies group across 1 directory with 3 updates ([#3291](https://github.com/defenseunicorns/pepr/issues/3291)) ([a594426](https://github.com/defenseunicorns/pepr/commit/a594426d40eecfcade2389558628e5ce6fbbe2bf))
+* **deps-dev:** bump the development-dependencies group with 2 updates ([#3301](https://github.com/defenseunicorns/pepr/issues/3301)) ([c45708d](https://github.com/defenseunicorns/pepr/commit/c45708d85d95156de109a9e6a61a5b52dcd51001))
+* **deps-dev:** bump tsx from 4.23.5 to 4.23.8 in the development-dependencies group ([#3276](https://github.com/defenseunicorns/pepr/issues/3276)) ([d1255cf](https://github.com/defenseunicorns/pepr/commit/d1255cf62c5b0c5ea6cbe1b7792b68d5a6e4574e))
+* **deps:** bump globals from 17.10.0 to 17.11.0 in the production-dependencies group ([#3283](https://github.com/defenseunicorns/pepr/issues/3283)) ([b16fc8b](https://github.com/defenseunicorns/pepr/commit/b16fc8b7976f1dce5c45b8e6f282a3838dda1508))
+* **deps:** bump globals from 17.9.0 to 17.10.0 in the production-dependencies group ([#3280](https://github.com/defenseunicorns/pepr/issues/3280)) ([5a24078](https://github.com/defenseunicorns/pepr/commit/5a24078159c2acf1d5bb5280cbac988b8ad5e096))
+* **deps:** bump the production-dependencies group with 2 updates ([#3278](https://github.com/defenseunicorns/pepr/issues/3278)) ([20d061d](https://github.com/defenseunicorns/pepr/commit/20d061d35a1d1492753fd7b3950271a5011812a7))
+
 ## [2.0.0](https://github.com/defenseunicorns/pepr/compare/v1.3.0...v2.0.0) (2026-08-12)
 
 
