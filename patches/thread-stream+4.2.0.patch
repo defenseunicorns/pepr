@@ -1,0 +1,7 @@
+diff --git a/node_modules/thread-stream/index.d.ts b/node_modules/thread-stream/index.d.ts
+index a84254f..aae772f 100644
+--- a/node_modules/thread-stream/index.d.ts
++++ b/node_modules/thread-stream/index.d.ts
+@@ -89 +89 @@ declare class ThreadStream extends EventEmitter {
+-  emit(eventName: 'message', message: any, transferList?: workerThreads.TransferListItem[]): boolean
++  emit(eventName: 'message', message: any, transferList?: workerThreads.Transferable[]): boolean

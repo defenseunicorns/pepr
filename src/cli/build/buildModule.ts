@@ -9,6 +9,7 @@ import { watchForChanges } from "./build.helpers";
 import { PeprConfig, Reloader } from "../types";
 import { BuildContext } from "esbuild";
 import { loadModule } from "./loadModule";
+import { applyBuildCompatibilityPatches } from "./applyCompatibilityPatches";
 
 export type BuildModuleReturn = {
   ctx: BuildContext<BuildOptions>;
@@ -71,6 +72,7 @@ export async function buildModule(
 
     // Resolve node_modules folder (in support of npm workspaces!) and run tsc
     const npmRoot = execFileSync("npm", ["root"]).toString().trim();
+    applyBuildCompatibilityPatches(npmRoot);
     execFileSync(`${npmRoot}/.bin/tsc`, [
       "--project",
       `${modulePath}/tsconfig.json`,
@@ -142,18 +144,20 @@ export async function buildModule(
   }
 }
 
-interface BuildModuleResult {
+interface BuildModuleError extends Error {
   stdout?: Buffer;
-  stderr: Buffer;
+  stderr?: Buffer;
 }
 
-function handleModuleBuildError(e: BuildModuleResult): void {
+function handleModuleBuildError(e: BuildModuleError): never {
   console.error(`Error building module:`, e);
 
-  if (!e.stdout) process.exit(1); // Exit with a non-zero exit code on any other error
+  if (!e.stdout) {
+    throw e;
+  }
 
   const out = e.stdout.toString() as string;
-  const err = e.stderr.toString();
+  const err = e.stderr?.toString() ?? "";
 
   console.info(out);
   console.error(err);
@@ -183,4 +187,6 @@ function handleModuleBuildError(e: BuildModuleResult): void {
       );
     });
   }
+
+  throw e;
 }
