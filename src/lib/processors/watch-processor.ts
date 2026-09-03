@@ -5,16 +5,16 @@ import { Binding } from "../types";
 import { Capability } from "../core/capability";
 import { Event } from "../enums";
 import {
+  GenericClass,
   K8s,
+  KubernetesListObject,
   KubernetesObject,
   WatchCfg,
   WatchEvent,
-  GenericClass,
+  WatcherType,
+  WatchPhase,
 } from "kubernetes-fluent-client";
 import { Queue } from "../core/queue";
-import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
-import { KubernetesListObject } from "kubernetes-fluent-client/dist/types";
 import { filterNoMatchReason } from "../filter/filter";
 import { metricsCollector, MetricsCollectorInstance } from "../telemetry/metrics";
 import { removeFinalizer } from "../finalizer";
