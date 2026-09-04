@@ -3,8 +3,13 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFinalizer, removeFinalizer } from "./finalizer";
-import { KubernetesObject, K8s, GenericClass, RegisterKind } from "kubernetes-fluent-client";
-import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import {
+  KubernetesObject,
+  K8s,
+  GenericClass,
+  RegisterKind,
+  type K8sInit,
+} from "kubernetes-fluent-client";
 import { Operation } from "./enums";
 import { PeprMutateRequest } from "./mutate-request";
 import { Binding } from "./types";
