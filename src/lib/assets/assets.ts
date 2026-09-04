@@ -181,8 +181,9 @@ export class Assets {
     validateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
     mutateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
     helm: Record<string, Record<string, string>>,
+    deployAdmissionController: boolean = Boolean(validateWebhook || mutateWebhook),
   ): Promise<void> => {
-    if (validateWebhook || mutateWebhook) {
+    if (deployAdmissionController) {
       await fs.writeFile(
         helm.files.admissionDeploymentYaml,
         dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
@@ -281,8 +282,10 @@ export class Assets {
         apiPath: this.apiPath,
         capabilities: this.capabilities,
       };
+      const deployAdmissionController =
+        isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities);
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets, {
-        admission: isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities),
+        admission: deployAdmissionController,
         watcher: isWatcher(this.capabilities),
       });
 
@@ -299,7 +302,12 @@ export class Assets {
         ),
       };
 
-      await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
+      await this.writeWebhookFiles(
+        webhooks.validate,
+        webhooks.mutate,
+        helm,
+        deployAdmissionController,
+      );
 
       const watchDeployment = getWatcherFunction(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
