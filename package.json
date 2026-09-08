@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@types/ramda": "0.32.0",
-    "@typescript-eslint/eslint-plugin": "8.68.0",
-    "@typescript-eslint/parser": "8.68.0",
+    "@typescript-eslint/eslint-plugin": "8.69.0",
+    "@typescript-eslint/parser": "8.69.0",
     "commander": "15.0.0",
     "eslint": "^10.8.0",
     "express": "5.2.1",
@@ -91,14 +91,14 @@
     "selfsigned": "^5.5.0",
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
-    "undici": "8.10.0",
+    "undici": "8.10.1",
     "vitest": "^4.0.4"
   },
   "overrides": {
     "brace-expansion": "^5.0.9",
     "ip-address": "^10.5.0",
     "tar": "^7.5.16",
-    "fast-uri": "^3.1.5"
+    "fast-uri": "^3.1.7"
   },
   "peerDependencies": {
     "@types/prompts": "^2.4.9",
