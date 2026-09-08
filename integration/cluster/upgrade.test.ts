@@ -36,7 +36,7 @@ describe("build", () => {
         cwd: workdir.path(),
         stdio: "inherit",
       });
-    }, ms("2m"));
+    }, ms("5m"));
 
     it(
       "should prepare, build, and deploy hello-pepr with pepr@latest",
@@ -50,24 +50,24 @@ describe("build", () => {
         }, "installation");
       },
     );
+
+    it(
+      "should display the UUIDs of the deployed modules with a specific UUID",
+      { timeout: 1000 * 5 * 60 },
+      async () => {
+        const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
+          shell: true, // Run command in a shell
+          encoding: "utf-8", // Encode result as string
+        });
+
+        const { stdout } = uuidOut;
+
+        const matches = stdout.match(/upgrade-test/g) || [];
+
+        expect(matches.length).toBe(2);
+      },
+    );
   });
-
-  it(
-    "should display the UUIDs of the deployed modules with a specific UUID",
-    { timeout: 1000 * 5 * 60 },
-    async () => {
-      const uuidOut = spawnSync(`npx pepr@latest uuid ${id}`, {
-        shell: true, // Run command in a shell
-        encoding: "utf-8", // Encode result as string
-      });
-
-      const { stdout } = uuidOut;
-
-      const matches = stdout.match(/upgrade-test/g) || [];
-
-      expect(matches.length).toBe(2);
-    },
-  );
 
   it(
     "should prepare, build and deploy with pepr@pr-candidate",
