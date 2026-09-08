@@ -311,9 +311,21 @@ describe("Assets", () => {
     const validateWebhook: V1ValidatingWebhookConfiguration =
       new kind.ValidatingWebhookConfiguration();
     const mutateWebhook: V1MutatingWebhookConfiguration = new kind.MutatingWebhookConfiguration();
+    (fs.writeFile as Mock).mockClear();
+
     await assets.writeWebhookFiles(validateWebhook, mutateWebhook, mockHelm);
 
     expect(fs.writeFile).toHaveBeenCalledTimes(2);
+    expect(fs.writeFile).toHaveBeenCalledWith("/tmp/mutation-webhook.yaml", expect.any(String));
+    expect(fs.writeFile).toHaveBeenCalledWith("/tmp/validation-webhook.yaml", expect.any(String));
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      "/tmp/admission-deployment.yaml",
+      expect.any(String),
+    );
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      "/tmp/admission-service-monitor.yaml",
+      expect.any(String),
+    );
   });
 
   it("should call generateHelmChart which should call createDirectoryIfNotExists twice for templates and charts", async () => {
@@ -338,6 +350,43 @@ describe("Assets", () => {
       "/tmp",
     );
     expect(createDirectoryIfNotExists).toHaveBeenCalledTimes(2);
+  });
+
+  it("should write admission controller files and WebhookConfigs for admission chart capabilities", async () => {
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = vi.fn<() => kind.Deployment | null>().mockReturnValue(null);
+    const getModuleSecretFunction = createMockModuleSecret();
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isMutate: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
+    (fs.writeFile as Mock).mockClear();
+
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
+
+    const admissionAndWebhookFiles = [
+      "/tmp/admission-deployment.yaml",
+      "/tmp/admission-service-monitor.yaml",
+      "/tmp/mutation-webhook.yaml",
+      "/tmp/validation-webhook.yaml",
+    ];
+    const admissionAndWebhookWrites = (fs.writeFile as Mock).mock.calls.filter(([file]) =>
+      admissionAndWebhookFiles.includes(file),
+    );
+
+    expect(admissionAndWebhookWrites.map(([file]) => file).sort()).toEqual(
+      admissionAndWebhookFiles.sort(),
+    );
   });
 
   it("should write admission Deployment for charts when capabilities have no admission or watcher bindings", async () => {
