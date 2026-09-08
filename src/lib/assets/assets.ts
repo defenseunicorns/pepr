@@ -182,24 +182,6 @@ export class Assets {
     mutateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
     helm: Record<string, Record<string, string>>,
   ): Promise<void> => {
-    if (validateWebhook || mutateWebhook) {
-      await fs.writeFile(
-        helm.files.admissionDeploymentYaml,
-        dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
-      );
-      await fs.writeFile(
-        helm.files.admissionServiceMonitorYaml,
-        dedent(
-          serviceMonitorTemplate(
-            process.env.PEPR_CUSTOM_BUILD_NAME
-              ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
-              : "admission",
-            `admission`,
-          ),
-        ),
-      );
-    }
-
     if (mutateWebhook) {
       await fs.writeFile(
         helm.files.mutationWebhookYaml,
@@ -213,6 +195,26 @@ export class Assets {
         createWebhookYaml(this.name, this.config, validateWebhook),
       );
     }
+  };
+
+  writeAdmissionControllerFiles = async (
+    helm: Record<string, Record<string, string>>,
+  ): Promise<void> => {
+    await fs.writeFile(
+      helm.files.admissionDeploymentYaml,
+      dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
+    );
+    await fs.writeFile(
+      helm.files.admissionServiceMonitorYaml,
+      dedent(
+        serviceMonitorTemplate(
+          process.env.PEPR_CUSTOM_BUILD_NAME
+            ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+            : "admission",
+          `admission`,
+        ),
+      ),
+    );
   };
 
   generateHelmChart = async (
@@ -298,6 +300,10 @@ export class Assets {
           this.config.webhookTimeout,
         ),
       };
+
+      if (isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities)) {
+        await this.writeAdmissionControllerFiles(helm);
+      }
 
       await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 

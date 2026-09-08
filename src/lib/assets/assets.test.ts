@@ -171,6 +171,10 @@ vi.mock("./index", () => ({
       serviceAccountYaml: "/tmp/service-account.yaml",
       moduleSecretYaml: "/tmp/module-secret.yaml",
       valuesYaml: "/tmp/values.yaml",
+      admissionDeploymentYaml: "/tmp/admission-deployment.yaml",
+      admissionServiceMonitorYaml: "/tmp/admission-service-monitor.yaml",
+      mutationWebhookYaml: "/tmp/mutation-webhook.yaml",
+      validationWebhookYaml: "/tmp/validation-webhook.yaml",
       watcherDeploymentYaml: "/tmp/watcher-deployment.yaml",
       watcherServiceMonitorYaml: "/tmp/watcher-service-monitor.yaml",
     },
@@ -295,7 +299,7 @@ describe("Assets", () => {
     );
   });
 
-  it("should call writeWebhookFiles and write admissionController Deployment, ServiceMonitor, and WebhookConfigs", async () => {
+  it("should call writeWebhookFiles and write WebhookConfigs", async () => {
     const mockHelm = {
       files: {
         admissionDeploymentYaml: "/tmp/admission-deployment.yaml",
@@ -307,9 +311,21 @@ describe("Assets", () => {
     const validateWebhook: V1ValidatingWebhookConfiguration =
       new kind.ValidatingWebhookConfiguration();
     const mutateWebhook: V1MutatingWebhookConfiguration = new kind.MutatingWebhookConfiguration();
+    (fs.writeFile as Mock).mockClear();
+
     await assets.writeWebhookFiles(validateWebhook, mutateWebhook, mockHelm);
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(4);
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
+    expect(fs.writeFile).toHaveBeenCalledWith("/tmp/mutation-webhook.yaml", expect.any(String));
+    expect(fs.writeFile).toHaveBeenCalledWith("/tmp/validation-webhook.yaml", expect.any(String));
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      "/tmp/admission-deployment.yaml",
+      expect.any(String),
+    );
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      "/tmp/admission-service-monitor.yaml",
+      expect.any(String),
+    );
   });
 
   it("should call generateHelmChart which should call createDirectoryIfNotExists twice for templates and charts", async () => {
@@ -336,7 +352,90 @@ describe("Assets", () => {
     expect(createDirectoryIfNotExists).toHaveBeenCalledTimes(2);
   });
 
-  it("should call generateHelmChart which should write file 40 times for built Kubernetes Manifests and helm chart generation", async () => {
+  it("should write admission controller files and WebhookConfigs for admission chart capabilities", async () => {
+    const webhookGeneratorFunction = createMockWebhookGenerator();
+    const getWatcherFunction = vi.fn<() => kind.Deployment | null>().mockReturnValue(null);
+    const getModuleSecretFunction = createMockModuleSecret();
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [{ isMutate: true }] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
+    (fs.writeFile as Mock).mockClear();
+
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
+
+    const admissionAndWebhookFiles = [
+      "/tmp/admission-deployment.yaml",
+      "/tmp/admission-service-monitor.yaml",
+      "/tmp/mutation-webhook.yaml",
+      "/tmp/validation-webhook.yaml",
+    ];
+    const admissionAndWebhookWrites = (fs.writeFile as Mock).mock.calls.filter(([file]) =>
+      admissionAndWebhookFiles.includes(file),
+    );
+
+    expect(admissionAndWebhookWrites.map(([file]) => file).sort()).toEqual(
+      admissionAndWebhookFiles.sort(),
+    );
+  });
+
+  it("should write admission Deployment for charts when capabilities have no admission or watcher bindings", async () => {
+    const webhookGeneratorFunction = vi
+      .fn<
+        (
+          assets: Assets,
+          mutateOrValidate: WebhookType,
+          timeoutSeconds: number | undefined,
+        ) => Promise<V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null>
+      >()
+      .mockResolvedValue(null);
+    const getWatcherFunction = vi.fn<() => kind.Deployment | null>().mockReturnValue(null);
+    const getModuleSecretFunction = createMockModuleSecret();
+    assets.capabilities = [
+      {
+        name: "capability-1",
+        description: "test",
+        namespaces: ["default"],
+        bindings: [] as unknown as Binding[],
+        hasSchedule: false,
+      },
+    ];
+
+    (fs.writeFile as Mock).mockClear();
+
+    await assets.generateHelmChart(
+      webhookGeneratorFunction,
+      getWatcherFunction,
+      getModuleSecretFunction,
+      "/tmp",
+    );
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      "/tmp/admission-deployment.yaml",
+      expect.stringContaining("kind: Deployment"),
+    );
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      "/tmp/admission-service-monitor.yaml",
+      expect.stringContaining("kind: ServiceMonitor"),
+    );
+    expect(fs.writeFile).not.toHaveBeenCalledWith("/tmp/mutation-webhook.yaml", expect.any(String));
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      "/tmp/validation-webhook.yaml",
+      expect.any(String),
+    );
+  });
+
+  it("should call generateHelmChart which should write expected chart files", async () => {
     const webhookGeneratorFunction = createMockWebhookGenerator();
     const getWatcherFunction = createMockWatcher();
     const getModuleSecretFunction = createMockModuleSecret();
@@ -349,13 +448,15 @@ describe("Assets", () => {
         hasSchedule: false,
       },
     ];
+    (fs.writeFile as Mock).mockClear();
+
     await assets.generateHelmChart(
       webhookGeneratorFunction,
       getWatcherFunction,
       getModuleSecretFunction,
       "/tmp",
     );
-    expect(fs.writeFile).toHaveBeenCalledTimes(40);
+    expect(fs.writeFile).toHaveBeenCalledTimes(16);
   });
 
   it("should call generateHelmChart and get no error", async () => {

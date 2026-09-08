@@ -254,7 +254,7 @@ Pepr can monitor Mutations and Validations from Admission Controller the through
 
 ## Multiple Modules or Multiple Capabilities
 
-Each module has it's own Mutating, Validating webhook configurations, Admission and Watch Controllers and Stores. This allows for each module to be deployed independently of each other. However, creating multiple modules creates overhead on the kube-apiserver, and the cluster.
+Each module can have its own MutatingWebhookConfiguration, ValidatingWebhookConfiguration, Admission Controller, Watch Controller, and Store depending on the actions it contains. This allows for each module to be deployed independently of each other. However, creating multiple modules creates overhead on the kube-apiserver, and the cluster.
 
 Due to the overhead costs, it is recommended to deploy multiple capabilities that share the same resources (when possible). This will simplify analysis of which capabilities are responsible for changes on resources.
 
