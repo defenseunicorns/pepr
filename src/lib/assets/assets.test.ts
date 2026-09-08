@@ -299,7 +299,7 @@ describe("Assets", () => {
     );
   });
 
-  it("should call writeWebhookFiles and write admissionController Deployment, ServiceMonitor, and WebhookConfigs", async () => {
+  it("should call writeWebhookFiles and write WebhookConfigs", async () => {
     const mockHelm = {
       files: {
         admissionDeploymentYaml: "/tmp/admission-deployment.yaml",
@@ -313,7 +313,7 @@ describe("Assets", () => {
     const mutateWebhook: V1MutatingWebhookConfiguration = new kind.MutatingWebhookConfiguration();
     await assets.writeWebhookFiles(validateWebhook, mutateWebhook, mockHelm);
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(4);
+    expect(fs.writeFile).toHaveBeenCalledTimes(2);
   });
 
   it("should call generateHelmChart which should call createDirectoryIfNotExists twice for templates and charts", async () => {

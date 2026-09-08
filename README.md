@@ -138,8 +138,9 @@ kubectl apply -f capabilities/hello-pepr.samples.yaml
 
 A module is the top-level collection of capabilities.
 It is a single, complete TypeScript project that includes an entry point to load all the configuration and capabilities, along with their actions.
-During the Pepr build process, each module produces a unique Kubernetes MutatingWebhookConfiguration and ValidatingWebhookConfiguration, along with a secret containing the transpiled and compressed TypeScript code.
-The webhooks and secret are deployed into the Kubernetes cluster with their own isolated controller.
+During the Pepr build process, each module produces a secret containing the transpiled and compressed TypeScript code.
+Modules with `Mutate()` or `Validate()` actions also produce the corresponding Kubernetes MutatingWebhookConfiguration or ValidatingWebhookConfiguration resources.
+Modules without admission, watch, queue, finalize, or schedule actions still deploy their module code with an isolated admission controller, but do not produce webhook configuration resources unless admission actions are defined.
 
 See [Module](docs/user-guide/pepr-modules.md) for more details.
 
@@ -147,7 +148,7 @@ See [Module](docs/user-guide/pepr-modules.md) for more details.
 
 A capability is set of related actions that work together to achieve a specific transformation or operation on Kubernetes resources.
 Capabilities are user-defined and can include one or more actions.
-They are defined within a Pepr module and can be used in both MutatingWebhookConfigurations and ValidatingWebhookConfigurations.
+They are defined within a Pepr module and can use MutatingWebhookConfigurations, ValidatingWebhookConfigurations, watchers, queues, or schedules depending on the actions they contain.
 A Capability can have a specific scope, such as mutating or validating, and can be reused in multiple Pepr modules.
 
 See [Capabilities](docs/user-guide/capabilities.md) for more details.

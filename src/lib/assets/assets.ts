@@ -181,26 +181,7 @@ export class Assets {
     validateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
     mutateWebhook: V1MutatingWebhookConfiguration | V1ValidatingWebhookConfiguration | null,
     helm: Record<string, Record<string, string>>,
-    deployAdmissionController: boolean = Boolean(validateWebhook || mutateWebhook),
   ): Promise<void> => {
-    if (deployAdmissionController) {
-      await fs.writeFile(
-        helm.files.admissionDeploymentYaml,
-        dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
-      );
-      await fs.writeFile(
-        helm.files.admissionServiceMonitorYaml,
-        dedent(
-          serviceMonitorTemplate(
-            process.env.PEPR_CUSTOM_BUILD_NAME
-              ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
-              : "admission",
-            `admission`,
-          ),
-        ),
-      );
-    }
-
     if (mutateWebhook) {
       await fs.writeFile(
         helm.files.mutationWebhookYaml,
@@ -214,6 +195,26 @@ export class Assets {
         createWebhookYaml(this.name, this.config, validateWebhook),
       );
     }
+  };
+
+  writeAdmissionControllerFiles = async (
+    helm: Record<string, Record<string, string>>,
+  ): Promise<void> => {
+    await fs.writeFile(
+      helm.files.admissionDeploymentYaml,
+      dedent(admissionDeployTemplate(this.buildTimestamp, "admission")),
+    );
+    await fs.writeFile(
+      helm.files.admissionServiceMonitorYaml,
+      dedent(
+        serviceMonitorTemplate(
+          process.env.PEPR_CUSTOM_BUILD_NAME
+            ? `admission-${process.env.PEPR_CUSTOM_BUILD_NAME}`
+            : "admission",
+          `admission`,
+        ),
+      ),
+    );
   };
 
   generateHelmChart = async (
@@ -282,10 +283,8 @@ export class Assets {
         apiPath: this.apiPath,
         capabilities: this.capabilities,
       };
-      const deployAdmissionController =
-        isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities);
       await overridesFile(overrideData, helm.files.valuesYaml, this.imagePullSecrets, {
-        admission: deployAdmissionController,
+        admission: isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities),
         watcher: isWatcher(this.capabilities),
       });
 
@@ -302,12 +301,11 @@ export class Assets {
         ),
       };
 
-      await this.writeWebhookFiles(
-        webhooks.validate,
-        webhooks.mutate,
-        helm,
-        deployAdmissionController,
-      );
+      if (isAdmission(this.capabilities) || norWatchOrAdmission(this.capabilities)) {
+        await this.writeAdmissionControllerFiles(helm);
+      }
+
+      await this.writeWebhookFiles(webhooks.validate, webhooks.mutate, helm);
 
       const watchDeployment = getWatcherFunction(this, moduleHash, this.buildTimestamp);
       if (watchDeployment) {
