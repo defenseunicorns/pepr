@@ -174,6 +174,7 @@ describe("build", () => {
           namespace: "pepr-system",
           version: "0.0.1",
           localPath: `${uuid}-chart`,
+          releaseName: "random-identifier",
         };
 
         const zarfYaml = await resource.fromFile(`${outputDir}/zarf.yaml`);
