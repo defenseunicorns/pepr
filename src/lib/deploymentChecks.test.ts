@@ -1,6 +1,5 @@
 import { describe, vi, it, beforeEach, afterEach, expect } from "vitest";
-import { K8s, GenericClass, KubernetesObject } from "kubernetes-fluent-client";
-import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { K8s, GenericClass, KubernetesObject, type K8sInit } from "kubernetes-fluent-client";
 import { checkDeploymentStatus, namespaceDeploymentsReady } from "./deploymentChecks";
 
 vi.mock("./telemetry/logger", () => ({

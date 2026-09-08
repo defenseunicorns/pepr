@@ -20,7 +20,7 @@ jobs:
       id-token: write # Required by chainguard-dev/setup-chainctl step
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,7 +42,7 @@ jobs:
       - name: Vulnerability Scan
         id: scan
         continue-on-error: true # Scan again with JSON output for artifact upload
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: "pepr:dev"
           fail-build: true
@@ -52,7 +52,7 @@ jobs:
       - name: Vulnerability Scan (JSON for Artifact)
         id: scan_json
         if: steps.scan.outcome == 'failure'
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: "pepr:dev"
           fail-build: false
@@ -72,7 +72,7 @@ jobs:
         run: exit 1
       
       - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
           image: pepr:dev
           upload-artifact: true

@@ -1,8 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fillStoreCache, sendUpdatesAndFlushCache, updateCacheID } from "./storeCache";
 import { Operation } from "fast-json-patch";
-import { GenericClass, K8s, KubernetesObject } from "kubernetes-fluent-client";
-import { K8sInit } from "kubernetes-fluent-client/dist/fluent/types";
+import { GenericClass, K8s, KubernetesObject, type K8sInit } from "kubernetes-fluent-client";
 import Log from "../telemetry/logger";
 
 vi.mock("kubernetes-fluent-client");
