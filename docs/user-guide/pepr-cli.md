@@ -43,6 +43,16 @@ Build a Pepr Module for deployment.
 
 Create a [zarf.yaml](https://zarf.dev) and K8s manifest for the current module. This includes everything needed to deploy Pepr and the current module into production environments.
 
+When building with `--zarf chart`, Pepr sets the chart `releaseName` in the generated `zarf.yaml` to the module name, such as `pepr-<module-uuid>`. If `--custom-name` is provided, Pepr uses that custom name for the Zarf component, chart name, ServiceMonitors, and chart `releaseName`.
+
+```yaml
+components:
+  - name: module
+    charts:
+      - name: module
+        releaseName: pepr-<module-uuid>
+```
+
 ## `npx pepr crd`
 
 Scaffold and generate Kubernetes CRDs from structured TypeScript definitions.

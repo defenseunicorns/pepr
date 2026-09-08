@@ -5,6 +5,7 @@ type ConfigType = "manifests" | "charts";
 
 export function generateZarfYamlGeneric(assets: Assets, path: string, type: ConfigType): string {
   const zarfComponentName = process.env.PEPR_CUSTOM_BUILD_NAME ?? "module";
+  const helmReleaseName = process.env.PEPR_CUSTOM_BUILD_NAME ?? assets.name;
   const manifestSettings = {
     name: zarfComponentName,
     namespace: "pepr-system",
@@ -15,6 +16,7 @@ export function generateZarfYamlGeneric(assets: Assets, path: string, type: Conf
     namespace: "pepr-system",
     version: `${assets.config.appVersion || "0.0.1"}`,
     localPath: path,
+    releaseName: helmReleaseName,
   };
 
   const component = {
