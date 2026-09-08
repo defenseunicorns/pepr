@@ -7,10 +7,10 @@ on:
   merge_group:
   pull_request:
     paths-ignore:
-    - "**.md"
-    - "LICENSE"
-    - "CODEOWNERS"
-  
+      - "**.md"
+      - "LICENSE"
+      - "CODEOWNERS"
+
 jobs:
   container-scans:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -31,6 +31,10 @@ jobs:
           cache: "npm"
       - name: Install Pepr Dependencies
         run: npm ci
+
+      - name: Verify Chainguard image references match
+        run: npm run check:container-image-equality
+
       - name: Login to Chainguard
         uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
         with:
@@ -48,7 +52,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
           output-format: table
-      
+
       - name: Vulnerability Scan (JSON for Artifact)
         id: scan_json
         if: steps.scan.outcome == 'failure'
@@ -58,7 +62,7 @@ jobs:
           fail-build: false
           severity-cutoff: high
           output-format: json
-      
+
       - name: Upload Scan Results
         if: steps.scan.outcome == 'failure'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -66,11 +70,11 @@ jobs:
           name: vulnerability-scan-results
           path: ${{ steps.scan_json.outputs.json }}
           retention-days: 30
-      
+
       - name: Fail Build on Vulnerabilities
         if: steps.scan.outcome == 'failure'
         run: exit 1
-      
+
       - name: Generate SBOM
         uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
