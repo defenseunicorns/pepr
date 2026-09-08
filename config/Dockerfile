@@ -4,7 +4,11 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5 AS build
+FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:4e1dcad29bc85fa86c0cdc030eeb906d4001b6d3e0ba52118e4fea81cd8892e5 AS build-image
+
+FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2 AS base-image
+
+FROM build-image AS build
 
 WORKDIR /app
 
@@ -53,7 +57,7 @@ RUN npm run build && \
     cp package.json node_modules/pepr
 ##### DELIVER #####
 
-FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:9bd2d0f9c28a797d121b9d4b834c32404bdb5d528382eee73cded2657bfac1c2
+FROM base-image
 
 WORKDIR /app
 

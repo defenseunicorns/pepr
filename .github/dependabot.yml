@@ -61,7 +61,7 @@ updates:
       - dependency-name: "supports-color"
         versions: ["10.2.1"]
       - dependency-name: "debug"
-        versions: ["4.4.2"] 
+        versions: ["4.4.2"]
       - dependency-name: "eslint"
         versions: [">=10.0.0"]
   - package-ecosystem: github-actions
@@ -79,22 +79,20 @@ updates:
           - "github/codeql-action/*"
 
   - package-ecosystem: docker
-    directory: /
-    schedule:
-      interval: daily
-    cooldown:
-      default-days: 7
-    commit-message:
-      prefix: "deps"
-
-  - package-ecosystem: docker
-    directory: /config
+    directories:
+      - /
+      - /config
     schedule:
       interval: daily
     commit-message:
       prefix: "deps"
     registries:
       - chainguard
+    groups:
+      chainguard-node:
+        patterns:
+          - "*"
+        group-by: dependency-name
 
 registries:
   chainguard:
