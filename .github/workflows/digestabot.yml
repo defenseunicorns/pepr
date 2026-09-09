@@ -1,0 +1,56 @@
+name: Update Chainguard Image Digests
+
+on:
+  schedule:
+    # Run after the nightly workflow so image-refresh PRs do not contend with it.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digestabot
+  cancel-in-progress: false
+
+jobs:
+  update-digests:
+    name: Update Chainguard image digests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # This environment holds the GitHub App credentials used to open CI-triggering PRs.
+    environment: prod
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_ID }}
+          private-key: ${{ secrets.DOCS_WORKFLOW_GITHUB_APP_SECRET }}
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Login to Chainguard
+        uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
+        with:
+          identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+      - name: Update image digests
+        uses: chainguard-dev/digestabot@33d0b78e580aa0c83fe188eb3dfad6611b662479 # v1.3.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch-for-pr: digestabot/update-chainguard-digests
+          title-for-pr: "deps: update Chainguard image digests"
+          description-for-pr: "Updates digest-pinned Chainguard image references."
+          commit-message: "deps: update Chainguard image digests"
+          labels-for-pr: ""
+          use-gitsign: true
