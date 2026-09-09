@@ -4,8 +4,8 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-    - "LICENSE"
-    - "CODEOWNERS"
+      - "LICENSE"
+      - "CODEOWNERS"
 
 permissions:
   contents: read
@@ -91,7 +91,7 @@ jobs:
   # SLSA builder does a shallow clone (fetch-depth: 1). The "set-version" npm
   # script handles this by running "git fetch --tags --force" before
   # "git describe --tags" to find the tag release-please just created.
-  slsa:  # This is where the slsa tarball is built for publish-package step
+  slsa: # This is where the slsa tarball is built for publish-package step
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
     permissions:
       id-token: write
@@ -107,8 +107,10 @@ jobs:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
     needs: [slsa, tag-new-version]
     runs-on: ubuntu-latest
-    env:
-      PEPR_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -125,24 +127,24 @@ jobs:
           node-version: 26
           registry-url: "https://registry.npmjs.org"
 
-      - name: Set Version
+      # Trusted publishing requires npm 11.5.1 or newer. Pin the version used
+      # for releases so it does not depend on the runner's bundled npm version.
+      - name: Install npm with trusted publishing support
         run: |
-          node ./scripts/set-version.js "$PEPR_VERSION"
-          npm ci
-          npm run build
+          npm install --global npm@11.12.1
+          npm --version
 
-      - name: Publish package
-        id: publish
-        uses: slsa-framework/slsa-github-generator/actions/nodejs/publish@bb91a05077afa6601a3d7538c4cbbdbf0abe7ed9 # v2.0.0
+      - name: Download and verify SLSA package
+        uses: slsa-framework/slsa-github-generator/.github/actions/secure-download-artifact@bb91a05077afa6601a3d7538c4cbbdbf0abe7ed9 # v2.0.0
         with:
-          access: public
-          node-auth-token: ${{ secrets.NPM_TOKEN }}
-          package-name: ${{ needs.slsa.outputs.package-name }}
-          package-download-name: ${{ needs.slsa.outputs.package-download-name }}
-          package-download-sha256: ${{ needs.slsa.outputs.package-download-sha256 }}
-          provenance-name: ${{ needs.slsa.outputs.provenance-name }}
-          provenance-download-name: ${{ needs.slsa.outputs.provenance-download-name }}
-          provenance-download-sha256: ${{ needs.slsa.outputs.provenance-download-sha256 }}
+          name: ${{ needs.slsa.outputs.package-download-name }}
+          path: ${{ runner.temp }}/${{ needs.slsa.outputs.package-name }}
+          sha256: ${{ needs.slsa.outputs.package-download-sha256 }}
+
+      - name: Publish verified SLSA package with npm OIDC
+        env:
+          PACKAGE_PATH: ${{ runner.temp }}/${{ needs.slsa.outputs.package-name }}
+        run: npm publish "$PACKAGE_PATH" --access public --tag latest
 
   pack-and-push:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
