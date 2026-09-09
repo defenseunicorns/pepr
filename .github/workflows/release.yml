@@ -131,7 +131,7 @@ jobs:
       # for releases so it does not depend on the runner's bundled npm version.
       - name: Install npm with trusted publishing support
         run: |
-          npm install --global npm@11.12.1
+          npm install --global npm@12.0.2
           npm --version
 
       - name: Download and verify SLSA package
