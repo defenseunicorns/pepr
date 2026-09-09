@@ -85,7 +85,7 @@ updates:
     schedule:
       interval: daily
     commit-message:
-      prefix: "deps"
+      prefix: "deps(docker)"
     registries:
       - chainguard
     groups:
