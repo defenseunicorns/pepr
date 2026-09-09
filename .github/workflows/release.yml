@@ -87,20 +87,66 @@ jobs:
           RELEASE_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
         run: ./.github/workflows/scripts/release.sh "$RELEASE_VERSION"
 
-  # SLSA builder does a shallow clone (fetch-depth: 1). The "set-version" npm
-  # script handles this by running "git fetch --tags --force" before
-  # "git describe --tags" to find the tag release-please just created.
-  slsa: # This is where the slsa tarball is built for publish-package step
+  slsa:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
-    permissions:
-      id-token: write
-      actions: read
-      contents: read
     needs: [tag-new-version]
-    uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a #v2.1.0
-    with:
-      run-scripts: "set-version, ci, build"
-    secrets: inherit
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    outputs:
+      package-download-sha256: ${{ steps.package.outputs.sha256 }}
+      provenance-url: ${{ steps.attest.outputs.attestation-url }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js 26
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: "npm"
+
+      - name: Build release package
+        env:
+          RELEASE_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
+        run: |
+          node ./scripts/set-version.js "$RELEASE_VERSION"
+          npm ci
+          npm run build
+
+      - name: Record release package digest
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(pepr-*.tgz)
+          if (( ${#packages[@]} != 1 )); then
+            echo "Expected exactly one release package, found ${#packages[@]}." >&2
+            exit 1
+          fi
+          package_path="${packages[0]}"
+          echo "package-path=$package_path" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$package_path" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release package
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: release-package
+          path: ${{ steps.package.outputs.package-path }}
+          if-no-files-found: error
+
+      - name: Attest release package
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ steps.package.outputs.package-path }}
 
   publish:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
@@ -116,10 +162,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
       - name: Set up Node registry authentication
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -133,17 +175,36 @@ jobs:
           npm install --global npm@12.0.2
           npm --version
 
-      - name: Download and verify SLSA package
-        uses: slsa-framework/slsa-github-generator/.github/actions/secure-download-artifact@bb91a05077afa6601a3d7538c4cbbdbf0abe7ed9 # v2.0.0
+      - name: Download release package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: ${{ needs.slsa.outputs.package-download-name }}
-          path: ${{ runner.temp }}/${{ needs.slsa.outputs.package-name }}
-          sha256: ${{ needs.slsa.outputs.package-download-sha256 }}
+          name: release-package
+          path: ${{ runner.temp }}/release-package
 
-      - name: Publish verified SLSA package with npm OIDC
+      - name: Verify release package
+        id: package
+        shell: bash
         env:
-          PACKAGE_PATH: ${{ runner.temp }}/${{ needs.slsa.outputs.package-name }}
-        run: npm publish "$PACKAGE_PATH" --access public --tag latest
+          PACKAGE_DIRECTORY: ${{ runner.temp }}/release-package
+          EXPECTED_SHA256: ${{ needs.slsa.outputs.package-download-sha256 }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=("$PACKAGE_DIRECTORY"/*.tgz)
+          if (( ${#packages[@]} != 1 )); then
+            echo "Expected exactly one release package, found ${#packages[@]}." >&2
+            exit 1
+          fi
+          package_path="${packages[0]}"
+          actual_sha256=$(sha256sum "$package_path" | awk '{print $1}')
+          if [[ "$actual_sha256" != "$EXPECTED_SHA256" ]]; then
+            echo "Release package SHA256 does not match the build output." >&2
+            exit 1
+          fi
+          echo "path=$package_path" >> "$GITHUB_OUTPUT"
+
+      - name: Publish verified package with npm OIDC
+        run: npm publish "${{ steps.package.outputs.path }}" --access public --tag latest
 
   pack-and-push:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}

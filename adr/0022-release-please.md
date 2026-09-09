@@ -44,5 +44,5 @@ We will replace semantic-release with release-please (v5, via `googleapis/releas
 - The release workflow (`.github/workflows/release.yml`) is restructured into: `tag-new-version` → `slsa` → `publish` → `build-and-publish-images` / `pack-and-push`.
 - Merging to `main` no longer immediately releases. Instead, release-please creates/updates a release PR. Merging that PR triggers the release.
 - `package.json` remains at `0.0.0-development` in the repository. The published npm package and container images receive the real version at build time via `set-version.js`.
-- The SLSA 3 compliance workflow is preserved. The SLSA builder resolves the version via `git fetch --tags && git describe --tags` in the `npm run set-version` script.
+- The unmaintained SLSA 3 generator is replaced with GitHub Artifact Attestations. The release workflow generates an OIDC-signed in-toto SLSA provenance predicate for the built tarball, which GitHub stores and consumers can verify with `gh attestation verify`.
 - The workflow name `"Version Release"` is preserved to maintain the `workflow_run` trigger coupling with `docs.yml`.
