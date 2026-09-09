@@ -98,6 +98,6 @@ registries:
   chainguard:
     type: "docker-registry"
     url: "cgr.dev"
-    username: "${{ secrets.CHAINGUARD_IDENTITY }}"
+    username: "${{ secrets.CHAINGUARD_IDENTITY_ID }}"
     password: "${{ secrets.CHAINGUARD_TOKEN }}"
     replaces-base: true
