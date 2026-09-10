@@ -93,7 +93,7 @@
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
     "undici": "8.10.1",
-    "vitest": "^4.0.4"
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "brace-expansion": "^5.0.9",
