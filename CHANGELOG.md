@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.2](https://github.com/defenseunicorns/pepr/compare/v2.0.1...v2.0.2) (2026-09-15)
+
+
+### Bug Fixes
+
+* **ci:** migrate provenance to GitHub artifact attestations ([#3339](https://github.com/defenseunicorns/pepr/issues/3339)) ([3095cfc](https://github.com/defenseunicorns/pepr/commit/3095cfcc233b93ed95b81fe65ddc60b455f34993))
+* **ci:** publish npm releases with trusted publishing ([#3330](https://github.com/defenseunicorns/pepr/issues/3330)) ([a31d3f3](https://github.com/defenseunicorns/pepr/commit/a31d3f39fa8a45c49309ad326102136385105bc6))
+* **ci:** replace ORAS installers with setup action ([#3338](https://github.com/defenseunicorns/pepr/issues/3338)) ([0573d98](https://github.com/defenseunicorns/pepr/commit/0573d981222906784e06b4ad312139f28df29fbc))
+
+
+### Code Refactoring
+
+* **ci:** reuse the release package across registries ([#3340](https://github.com/defenseunicorns/pepr/issues/3340)) ([45cae4f](https://github.com/defenseunicorns/pepr/commit/45cae4f7d53b6e2ddec6b77e302ab5cc328657ae))
+
+
+### Dependencies
+
+* bump trufflesecurity/trufflehog from 3.97.2 to 3.97.4 ([#3334](https://github.com/defenseunicorns/pepr/issues/3334)) ([a201a73](https://github.com/defenseunicorns/pepr/commit/a201a73400a34f29aaa2a6e31acb3ce66d700fc8))
+* **deps-dev:** bump the development-dependencies group across 1 directory with 2 updates ([#3336](https://github.com/defenseunicorns/pepr/issues/3336)) ([9ba2e5a](https://github.com/defenseunicorns/pepr/commit/9ba2e5a5d19e0362ff7b014b32d642cc542319f7))
+* **deps:** bump the production-dependencies group with 2 updates ([#3337](https://github.com/defenseunicorns/pepr/issues/3337)) ([f0780e8](https://github.com/defenseunicorns/pepr/commit/f0780e86118df7e8dc65cad5bef8ced350c87a5e))
+* **docker:** bump defenseunicorns.com/node in / ([#3333](https://github.com/defenseunicorns/pepr/issues/3333)) ([44c27f9](https://github.com/defenseunicorns/pepr/commit/44c27f9b960d61c347e3ed55767a897b0f595213))
+
 ## [2.0.1](https://github.com/defenseunicorns/pepr/compare/v2.0.0...v2.0.1) (2026-09-09)
 
 
