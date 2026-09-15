@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      - name: Use Node.js 24
+      - name: Use Node.js 26
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
@@ -254,8 +254,11 @@ jobs:
 
   pack-and-push:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
-    needs: [publish, tag-new-version]
+    needs: [publish, slsa, tag-new-version]
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     env:
       PEPR_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
     steps:
@@ -264,14 +267,33 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Use Node.js 24
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Download release package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          node-version: 26
-          registry-url: "https://registry.npmjs.org"
-          cache: "npm"
+          name: release-package
+          path: ${{ runner.temp }}/release-package
+
+      - name: Verify release package
+        id: package
+        shell: bash
+        env:
+          PACKAGE_DIRECTORY: ${{ runner.temp }}/release-package
+          EXPECTED_SHA256: ${{ needs.slsa.outputs.package-download-sha256 }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=("$PACKAGE_DIRECTORY"/*.tgz)
+          if (( ${#packages[@]} != 1 )); then
+            echo "Expected exactly one release package, found ${#packages[@]}." >&2
+            exit 1
+          fi
+          package_path="${packages[0]}"
+          actual_sha256=$(sha256sum "$package_path" | awk '{print $1}')
+          if [[ "$actual_sha256" != "$EXPECTED_SHA256" ]]; then
+            echo "Release package SHA256 does not match the build output." >&2
+            exit 1
+          fi
+          echo "name=$(basename "$package_path")" >> "$GITHUB_OUTPUT"
 
       - name: Set up ORAS
         uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d # v2.0.1
@@ -282,10 +304,8 @@ jobs:
         run: echo "${{ secrets.UDS_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.UDS_REGISTRY_USERNAME }}" --password-stdin registry.defenseunicorns.com
 
       - name: Push package to UDS OCI registry
-        run: |
-          npm install --global npm
-          node ./scripts/set-version.js "$PEPR_VERSION"
-          npm ci
-          npm run build
-          oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:v${PEPR_VERSION} \
-            --artifact-type application/vnd.pepr.module.layer.v1 pepr-${PEPR_VERSION}.tgz
+        working-directory: ${{ runner.temp }}/release-package
+        run: >-
+          oras push registry.defenseunicorns.com/pepr-dev/npm/pepr:v${PEPR_VERSION}
+          --artifact-type application/vnd.pepr.module.layer.v1
+          "${{ steps.package.outputs.name }}"
