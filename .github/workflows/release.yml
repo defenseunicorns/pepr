@@ -252,6 +252,85 @@ jobs:
       - name: Publish verified package with npm OIDC
         run: npm publish "${{ steps.package.outputs.path }}" --access public --tag latest
 
+  verify-published-provenance:
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
+    needs: [publish, slsa, tag-new-version]
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: read
+      contents: read
+    env:
+      EXPECTED_SHA256: ${{ needs.slsa.outputs.package-download-sha256 }}
+      PEPR_VERSION: ${{ needs.tag-new-version.outputs.release_version }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Set up Node registry access
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.1
+        with:
+          node-version: 26
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install pinned npm
+        run: |
+          npm install --global npm@12.0.2
+          npm --version
+
+      - name: Download and verify published package
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_directory="${RUNNER_TEMP}/published-package"
+          package_path="${package_directory}/pepr-${PEPR_VERSION}.tgz"
+          mkdir -p "$package_directory"
+
+          for attempt in {1..5}; do
+            if npm pack "pepr@${PEPR_VERSION}" --pack-destination "$package_directory" --silent; then
+              break
+            fi
+            if (( attempt == 5 )); then
+              echo "Unable to download pepr@${PEPR_VERSION} from npm." >&2
+              exit 1
+            fi
+            echo "Published package is not available yet; retrying in 10 seconds."
+            sleep 10
+          done
+
+          actual_sha256=$(sha256sum "$package_path" | awk '{print $1}')
+          if [[ "$actual_sha256" != "$EXPECTED_SHA256" ]]; then
+            echo "Published package SHA256 does not match the build output." >&2
+            exit 1
+          fi
+          echo "path=$package_path" >> "$GITHUB_OUTPUT"
+
+      - name: Verify GitHub artifact attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_DIGEST: ${{ github.sha }}
+        run: >-
+          gh attestation verify "${{ steps.package.outputs.path }}"
+          --repo defenseunicorns/pepr
+          --predicate-type https://slsa.dev/provenance/v1
+          --signer-workflow defenseunicorns/pepr/.github/workflows/release.yml
+          --source-ref refs/heads/main
+          --source-digest "$SOURCE_DIGEST"
+          --deny-self-hosted-runners
+
+      - name: Verify npm registry provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          verification_directory="${RUNNER_TEMP}/npm-provenance"
+          mkdir -p "$verification_directory"
+          cd "$verification_directory"
+          npm init --yes > /dev/null
+          npm install --ignore-scripts --no-audit --no-fund --save-exact "pepr@${PEPR_VERSION}"
+          npm audit signatures
+
   pack-and-push:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
     needs: [publish, slsa, tag-new-version]
