@@ -2,6 +2,7 @@ import { describe, it, vi, expect, beforeEach, afterEach } from "vitest";
 import { Command } from "commander";
 import deploy from ".";
 import prompts from "prompts";
+import Log from "../../lib/telemetry/logger";
 
 const h = vi.hoisted(() => ({
   deploySpy: vi.fn(),
@@ -39,6 +40,10 @@ vi.mock("../../lib/helpers", () => ({
 
 vi.mock("../../lib/assets/loader", () => ({
   loadCapabilities: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../../lib/telemetry/logger", () => ({
+  default: { warn: vi.fn() },
 }));
 
 vi.mock("../../lib/assets/assets", () => {
@@ -95,8 +100,27 @@ describe("deploy CLI command", () => {
     expect(
       (await import("../../lib/deploymentChecks")).namespaceDeploymentsReady,
     ).toHaveBeenCalled();
+    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining("broad cluster-wide permissions"),
+    );
 
     mockExit.mockRestore();
+  });
+
+  it("does not warn when deploying scoped RBAC", async () => {
+    const { buildModule } = await import("../build/buildModule");
+    vi.mocked(buildModule).mockResolvedValueOnce({
+      cfg: {
+        pepr: { rbacMode: "scoped", webhookTimeout: 10 },
+        description: "Test Module",
+      },
+      path: "dist/test-module",
+    } as never);
+
+    await program.parseAsync(["deploy", "--yes"], { from: "user" });
+
+    expect(deploySpy).toHaveBeenCalled();
+    expect(Log.warn).not.toHaveBeenCalled();
   });
 
   it("deploys imagePullSecret and exits early", async () => {

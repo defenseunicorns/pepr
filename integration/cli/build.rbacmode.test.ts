@@ -14,7 +14,7 @@ import { kind } from "kubernetes-fluent-client";
 const FILE = path.basename(__filename);
 const HERE = __dirname;
 
-describe("build rbacMode=scoped", () => {
+describe("build RBAC modes", () => {
   const workdir = new Workdir(`${FILE}`, `${HERE}/../testroot/cli`);
 
   beforeAll(async () => {
@@ -40,18 +40,48 @@ describe("build rbacMode=scoped", () => {
       await pepr.cli(testModule, { cmd: `npm install` });
     }, ms("2m"));
 
-    describe("scoped rbac cluster role", () => {
-      const outputDir = `${testModule}/dist`;
+    const outputDir = `${testModule}/dist`;
+    let packageJson;
+    let uuid: string;
 
-      let packageJson;
-      let uuid: string;
+    describe("default admin RBAC cluster role", () => {
+      beforeAll(async () => {
+        const build = await pepr.cli(testModule, { cmd: `pepr build` });
 
+        expect(build.exitcode).toBe(0);
+        expect(build.stderr.join("").trim()).toBe("");
+        expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+        expect(build.stdout.join("").match(/broad cluster-wide permissions/g)).toHaveLength(1);
+
+        packageJson = await resource.fromFile(`${testModule}/package.json`);
+        uuid = packageJson.pepr.uuid;
+      }, ms("1m"));
+
+      it("creates wildcard RBAC in the kubernetes manifests", async () => {
+        const clusterRole = await resource.getK8sObjectByKindAndName<kind.ClusterRole>(
+          `${outputDir}/pepr-module-${uuid}.yaml`,
+          "ClusterRole",
+          `pepr-${uuid}`,
+        );
+        expect(clusterRole).toBeDefined();
+        expect(clusterRole!.rules).toEqual([
+          {
+            apiGroups: ["*"],
+            resources: ["*"],
+            verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+          },
+        ]);
+      });
+    });
+
+    describe("scoped RBAC cluster role", () => {
       beforeAll(async () => {
         const build = await pepr.cli(testModule, { cmd: `pepr build --rbac-mode scoped` });
 
         expect(build.exitcode).toBe(0);
         expect(build.stderr.join("").trim()).toBe("");
         expect(build.stdout.join("").trim()).toContain("K8s resource for the module saved");
+        expect(build.stdout.join("")).not.toContain("broad cluster-wide permissions");
 
         packageJson = await resource.fromFile(`${testModule}/package.json`);
         uuid = packageJson.pepr.uuid;

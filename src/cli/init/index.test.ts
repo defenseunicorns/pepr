@@ -158,6 +158,9 @@ describe("init CLI command", () => {
     expect(Log.info).toBeCalledWith(
       expect.stringContaining("Open VSCode or your editor of choice in test-name to get started!"),
     );
+    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining("broad cluster-wide permissions"),
+    );
   });
 
   it("should throw an error if module creation fails", async () => {

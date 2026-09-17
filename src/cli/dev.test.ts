@@ -15,6 +15,7 @@ vi.mock("../lib/telemetry/logger", () => ({
     error: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -127,9 +128,27 @@ describe("dev command", () => {
     expect(prompts).not.toHaveBeenCalled();
     expect(writeFile).toHaveBeenCalledWith("insecure-tls.crt", "mock-cert");
     expect(writeFile).toHaveBeenCalledWith("insecure-tls.key", "mock-key");
+    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining("broad cluster-wide permissions"),
+    );
 
     const { validateCapabilityNames } = await import("../lib/helpers");
     expect(validateCapabilityNames).toHaveBeenCalledWith([{ name: "test-cap" }]);
+  });
+
+  it("does not warn when deploying scoped RBAC", async () => {
+    const { loadModule } = await import("./build/loadModule");
+    vi.mocked(loadModule).mockResolvedValueOnce({
+      cfg: {
+        description: "test",
+        pepr: { rbacMode: "scoped", uuid: "1234" },
+      },
+      path: "./test-module.js",
+    } as never);
+
+    await program.parseAsync(["dev", "--yes"], { from: "user" });
+
+    expect(Log.warn).not.toHaveBeenCalled();
   });
 
   it("should exit early if user declines prompt", async () => {
