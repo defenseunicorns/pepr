@@ -37,7 +37,6 @@ async function generateDeploymentAssets(
   buildResult: BuildModuleReturn,
   opts: BuildOpts,
   outputDir: string,
-  rbacMode: string,
 ): Promise<Assets> {
   const { cfg, path } = buildResult;
 
@@ -68,7 +67,7 @@ async function generateDeploymentAssets(
       appVersion: cfg.version,
       description: cfg.description,
       alwaysIgnore: { namespaces: cfg.pepr.alwaysIgnore?.namespaces },
-      rbacMode,
+      rbacMode: determineRbacMode(opts, cfg),
     },
     path,
     opts.withPullSecret === "" ? [] : [opts.withPullSecret],
@@ -174,8 +173,7 @@ export default function (program: Command): void {
         return;
       }
 
-      const rbacMode = determineRbacMode(opts, buildModuleResult.cfg);
-      warnIfAdminRbac(rbacMode);
-      await generateDeploymentAssets(buildModuleResult, opts, outputDir, rbacMode);
+      warnIfAdminRbac(determineRbacMode(opts, buildModuleResult.cfg));
+      await generateDeploymentAssets(buildModuleResult, opts, outputDir);
     });
 }
