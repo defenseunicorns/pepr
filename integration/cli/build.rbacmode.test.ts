@@ -13,34 +13,19 @@ import { kind } from "kubernetes-fluent-client";
 
 const FILE = path.basename(__filename);
 const HERE = __dirname;
-const ADMIN_RULES = [
-  {
-    apiGroups: ["*"],
-    resources: ["*"],
-    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
-  },
-];
-const SCOPED_RULES = [
-  {
-    apiGroups: ["pepr.dev"],
-    resources: ["peprstores"],
-    verbs: ["create", "get", "patch", "watch"],
-  },
-  {
-    apiGroups: ["apiextensions.k8s.io"],
-    resources: ["customresourcedefinitions"],
-    verbs: ["patch", "create"],
-  },
-  { apiGroups: [""], resources: ["namespaces"], verbs: ["watch"] },
-  { apiGroups: [""], resources: ["configmaps"], verbs: ["watch"] },
-];
 const RBAC_CASES = [
   {
     name: "default admin",
     args: "",
     outputDir: "dist-admin",
     warningCount: 1,
-    rules: ADMIN_RULES,
+    rules: [
+      {
+        apiGroups: ["*"],
+        resources: ["*"],
+        verbs: ["create", "delete", "get", "list", "patch", "update", "watch"],
+      },
+    ],
     verifyHelm: false,
   },
   {
@@ -48,7 +33,20 @@ const RBAC_CASES = [
     args: "--rbac-mode scoped",
     outputDir: "dist-scoped",
     warningCount: 0,
-    rules: SCOPED_RULES,
+    rules: [
+      {
+        apiGroups: ["pepr.dev"],
+        resources: ["peprstores"],
+        verbs: ["create", "get", "patch", "watch"],
+      },
+      {
+        apiGroups: ["apiextensions.k8s.io"],
+        resources: ["customresourcedefinitions"],
+        verbs: ["patch", "create"],
+      },
+      { apiGroups: [""], resources: ["namespaces"], verbs: ["watch"] },
+      { apiGroups: [""], resources: ["configmaps"], verbs: ["watch"] },
+    ],
     verifyHelm: true,
   },
 ];
