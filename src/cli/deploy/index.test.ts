@@ -3,6 +3,7 @@ import { Command } from "commander";
 import deploy from ".";
 import prompts from "prompts";
 import Log from "../../lib/telemetry/logger";
+import { ADMIN_RBAC_WARNING } from "../rbacModeWarning";
 
 const h = vi.hoisted(() => ({
   deploySpy: vi.fn(),
@@ -87,41 +88,32 @@ describe("deploy CLI command", () => {
     vi.clearAllMocks();
   });
 
-  it("runs build and deploy when no pullSecret is passed and user confirms", async () => {
-    const mockExit = vi.spyOn(process, "exit").mockImplementation(code => {
-      throw new Error(`process.exit: ${code}`);
-    });
+  it.each([
+    { rbacMode: undefined, expectedWarnings: [ADMIN_RBAC_WARNING] },
+    { rbacMode: "scoped", expectedWarnings: [] },
+  ])(
+    "deploys with RBAC mode $rbacMode and expected warnings",
+    async ({ rbacMode, expectedWarnings }) => {
+      const { buildModule } = await import("../build/buildModule");
+      vi.mocked(buildModule).mockResolvedValueOnce({
+        cfg: {
+          pepr: { rbacMode, webhookTimeout: 10 },
+          description: "Test Module",
+        },
+        path: "dist/test-module",
+      } as never);
 
-    await program.parseAsync(["deploy", "--image", "pepr:dev", "--force", "--yes"], {
-      from: "user",
-    });
+      await program.parseAsync(["deploy", "--image", "pepr:dev", "--force", "--yes"], {
+        from: "user",
+      });
 
-    expect(deploySpy).toHaveBeenCalled();
-    expect(
-      (await import("../../lib/deploymentChecks")).namespaceDeploymentsReady,
-    ).toHaveBeenCalled();
-    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(
-      expect.stringContaining("broad cluster-wide permissions"),
-    );
-
-    mockExit.mockRestore();
-  });
-
-  it("does not warn when deploying scoped RBAC", async () => {
-    const { buildModule } = await import("../build/buildModule");
-    vi.mocked(buildModule).mockResolvedValueOnce({
-      cfg: {
-        pepr: { rbacMode: "scoped", webhookTimeout: 10 },
-        description: "Test Module",
-      },
-      path: "dist/test-module",
-    } as never);
-
-    await program.parseAsync(["deploy", "--yes"], { from: "user" });
-
-    expect(deploySpy).toHaveBeenCalled();
-    expect(Log.warn).not.toHaveBeenCalled();
-  });
+      expect(deploySpy).toHaveBeenCalled();
+      expect(
+        (await import("../../lib/deploymentChecks")).namespaceDeploymentsReady,
+      ).toHaveBeenCalled();
+      expect(vi.mocked(Log.warn).mock.calls.flat()).toEqual(expectedWarnings);
+    },
+  );
 
   it("deploys imagePullSecret and exits early", async () => {
     const deployImagePullSecret = (await import("../../lib/assets/deploy"))

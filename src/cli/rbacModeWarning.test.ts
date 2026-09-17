@@ -14,22 +14,21 @@ describe("warnIfAdminRbac", () => {
     vi.clearAllMocks();
   });
 
-  it.each([undefined, "admin", "unknown"])("warns for non-scoped RBAC mode %s", rbacMode => {
+  it.each([
+    { rbacMode: undefined, expectedWarnings: [ADMIN_RBAC_WARNING] },
+    { rbacMode: "admin", expectedWarnings: [ADMIN_RBAC_WARNING] },
+    { rbacMode: "unknown", expectedWarnings: [ADMIN_RBAC_WARNING] },
+    { rbacMode: "scoped", expectedWarnings: [] },
+  ])("warns appropriately for RBAC mode $rbacMode", ({ rbacMode, expectedWarnings }) => {
     warnIfAdminRbac(rbacMode);
 
-    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(ADMIN_RBAC_WARNING);
+    expect(vi.mocked(Log.warn).mock.calls.flat()).toEqual(expectedWarnings);
   });
 
-  it("does not warn for scoped RBAC mode", () => {
-    warnIfAdminRbac("scoped");
-
-    expect(Log.warn).not.toHaveBeenCalled();
-  });
-
-  it("describes the risk, production restriction, scoped alternative, and documentation", () => {
-    expect(ADMIN_RBAC_WARNING).toContain("broad cluster-wide permissions");
-    expect(ADMIN_RBAC_WARNING).toContain("should NOT be used in production");
-    expect(ADMIN_RBAC_WARNING).toContain("Use scoped RBAC mode");
-    expect(ADMIN_RBAC_WARNING).toContain("https://docs.pepr.dev/user-guide/rbac/");
-  });
+  it.each([
+    "broad cluster-wide permissions",
+    "should NOT be used in production",
+    "Use scoped RBAC mode",
+    "https://docs.pepr.dev/user-guide/rbac/",
+  ])("includes %s", expectedText => expect(ADMIN_RBAC_WARNING).toContain(expectedText));
 });

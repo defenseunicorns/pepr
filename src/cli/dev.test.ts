@@ -8,6 +8,7 @@ import prompts from "prompts";
 import devCommand from "./dev";
 import { EventEmitter } from "events";
 import Log from "../lib/telemetry/logger";
+import { ADMIN_RBAC_WARNING } from "./rbacModeWarning";
 
 vi.mock("../lib/telemetry/logger", () => ({
   __esModule: true,
@@ -121,35 +122,33 @@ describe("dev command", () => {
     devCommand(program);
   });
 
-  it("should run dev command successfully", async () => {
-    const writeFile = fs.writeFile as Mock;
-    await program.parseAsync(["dev", "--yes"], { from: "user" });
+  it.each([
+    { rbacMode: undefined, expectedWarnings: [ADMIN_RBAC_WARNING] },
+    { rbacMode: "scoped", expectedWarnings: [] },
+  ])(
+    "runs with RBAC mode $rbacMode and expected warnings",
+    async ({ rbacMode, expectedWarnings }) => {
+      const { loadModule } = await import("./build/loadModule");
+      vi.mocked(loadModule).mockResolvedValueOnce({
+        cfg: {
+          description: "test",
+          pepr: { rbacMode, uuid: "1234" },
+        },
+        path: "./test-module.js",
+      } as never);
 
-    expect(prompts).not.toHaveBeenCalled();
-    expect(writeFile).toHaveBeenCalledWith("insecure-tls.crt", "mock-cert");
-    expect(writeFile).toHaveBeenCalledWith("insecure-tls.key", "mock-key");
-    expect(Log.warn).toHaveBeenCalledExactlyOnceWith(
-      expect.stringContaining("broad cluster-wide permissions"),
-    );
+      const writeFile = fs.writeFile as Mock;
+      await program.parseAsync(["dev", "--yes"], { from: "user" });
 
-    const { validateCapabilityNames } = await import("../lib/helpers");
-    expect(validateCapabilityNames).toHaveBeenCalledWith([{ name: "test-cap" }]);
-  });
+      expect(prompts).not.toHaveBeenCalled();
+      expect(writeFile).toHaveBeenCalledWith("insecure-tls.crt", "mock-cert");
+      expect(writeFile).toHaveBeenCalledWith("insecure-tls.key", "mock-key");
+      expect(vi.mocked(Log.warn).mock.calls.flat()).toEqual(expectedWarnings);
 
-  it("does not warn when deploying scoped RBAC", async () => {
-    const { loadModule } = await import("./build/loadModule");
-    vi.mocked(loadModule).mockResolvedValueOnce({
-      cfg: {
-        description: "test",
-        pepr: { rbacMode: "scoped", uuid: "1234" },
-      },
-      path: "./test-module.js",
-    } as never);
-
-    await program.parseAsync(["dev", "--yes"], { from: "user" });
-
-    expect(Log.warn).not.toHaveBeenCalled();
-  });
+      const { validateCapabilityNames } = await import("../lib/helpers");
+      expect(validateCapabilityNames).toHaveBeenCalledWith([{ name: "test-cap" }]);
+    },
+  );
 
   it("should exit early if user declines prompt", async () => {
     (prompts as unknown as Mock).mockResolvedValueOnce({ yes: false });
