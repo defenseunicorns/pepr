@@ -19,6 +19,7 @@ import {
 import { buildModule, BuildModuleReturn } from "./buildModule";
 import Log from "../../lib/telemetry/logger";
 import { resolve } from "path";
+import { warnIfAdminRbac } from "../rbacModeWarning";
 
 interface BuildOpts {
   customName?: string;
@@ -36,6 +37,7 @@ async function generateDeploymentAssets(
   buildResult: BuildModuleReturn,
   opts: BuildOpts,
   outputDir: string,
+  rbacMode: string,
 ): Promise<Assets> {
   const { cfg, path } = buildResult;
 
@@ -66,7 +68,7 @@ async function generateDeploymentAssets(
       appVersion: cfg.version,
       description: cfg.description,
       alwaysIgnore: { namespaces: cfg.pepr.alwaysIgnore?.namespaces },
-      rbacMode: determineRbacMode(opts, cfg),
+      rbacMode,
     },
     path,
     opts.withPullSecret === "" ? [] : [opts.withPullSecret],
@@ -172,6 +174,8 @@ export default function (program: Command): void {
         return;
       }
 
-      await generateDeploymentAssets(buildModuleResult, opts, outputDir);
+      const rbacMode = determineRbacMode(opts, buildModuleResult.cfg);
+      warnIfAdminRbac(rbacMode);
+      await generateDeploymentAssets(buildModuleResult, opts, outputDir, rbacMode);
     });
 }

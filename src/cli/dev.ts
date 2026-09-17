@@ -13,6 +13,7 @@ import { deployWebhook } from "../lib/assets/deploy";
 import { promises as fs } from "fs";
 import { validateCapabilityNames } from "../lib/helpers";
 import Log from "../lib/telemetry/logger";
+import { warnIfAdminRbac } from "./rbacModeWarning";
 
 export default function (program: Command): void {
   program
@@ -56,6 +57,7 @@ export default function (program: Command): void {
 
       try {
         let program: ChildProcess;
+        let hasWarnedAboutAdminRbac = false;
         const name = `pepr-${cfg.pepr.uuid}`;
         const scheduleStore = `pepr-${cfg.pepr.uuid}-schedule`;
         const store = `pepr-${cfg.pepr.uuid}-store`;
@@ -65,6 +67,10 @@ export default function (program: Command): void {
           Log.info(`Running module ${path}`);
 
           // Deploy the webhook with a 30 second timeout for debugging, don't force
+          if (!hasWarnedAboutAdminRbac) {
+            warnIfAdminRbac(cfg.pepr.rbacMode);
+            hasWarnedAboutAdminRbac = true;
+          }
           await webhook.deploy(deployWebhook, false, 30);
 
           try {
