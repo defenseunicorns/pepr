@@ -6,7 +6,8 @@ updates:
   - package-ecosystem: npm # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: daily
+      interval: cron
+      cronjob: "0 9 * * 2,5"
     cooldown:
       default-days: 7
     commit-message:
@@ -67,7 +68,8 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: cron
+      cronjob: "0 9 * * 2,5"
     cooldown:
       default-days: 7
     commit-message:
@@ -83,7 +85,10 @@ updates:
       - /
       - /config
     schedule:
-      interval: daily
+      interval: cron
+      cronjob: "0 9 * * 2,5"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "deps(docker)"
     registries:
