@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.4](https://github.com/defenseunicorns/pepr/compare/v2.0.3...v2.0.4) (2026-09-18)
+
+
+### Dependencies
+
+* **deps-dev:** bump fast-check from 4.9.0 to 4.10.0 in the development-dependencies group ([#3356](https://github.com/defenseunicorns/pepr/issues/3356)) ([2565e1a](https://github.com/defenseunicorns/pepr/commit/2565e1a2c3f6e3b6ed9184b602a07995ab9f1f54))
+
 ## [2.0.3](https://github.com/defenseunicorns/pepr/compare/v2.0.2...v2.0.3) (2026-09-18)
 
 
