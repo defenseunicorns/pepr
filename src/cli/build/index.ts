@@ -19,6 +19,7 @@ import {
 import { buildModule, BuildModuleReturn } from "./buildModule";
 import Log from "../../lib/telemetry/logger";
 import { resolve } from "path";
+import { warnIfAdminRbac } from "../rbacModeWarning";
 
 interface BuildOpts {
   customName?: string;
@@ -172,6 +173,7 @@ export default function (program: Command): void {
         return;
       }
 
+      warnIfAdminRbac(determineRbacMode(opts, buildModuleResult.cfg));
       await generateDeploymentAssets(buildModuleResult, opts, outputDir);
     });
 }

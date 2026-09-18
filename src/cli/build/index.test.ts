@@ -13,6 +13,7 @@ import {
 } from "./build.helpers";
 import Log from "../../lib/telemetry/logger";
 import { accessSync } from "fs";
+import { ADMIN_RBAC_WARNING } from "../rbacModeWarning";
 
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
@@ -83,6 +84,7 @@ vi.mock("../../lib/telemetry/logger", () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -105,8 +107,19 @@ describe("build CLI command", () => {
     expect(createOutputDirectory).toBeCalled();
     expect(generateYamlAndWriteToDisk).toBeCalled();
     expect(handleCustomImageBuild).not.toBeCalled();
+    expect(Log.warn).toHaveBeenCalledWith(ADMIN_RBAC_WARNING);
+    expect(
+      vi.mocked(Log.warn).mock.calls.filter(([message]) => message === ADMIN_RBAC_WARNING),
+    ).toHaveLength(1);
 
     expect(process.env.PEPR_CUSTOM_BUILD_NAME).toBeUndefined();
+  });
+
+  it("does not warn when scoped RBAC is generated", async () => {
+    await runProgramWithArgs(["--rbac-mode", "scoped"]);
+
+    expect(generateYamlAndWriteToDisk).toHaveBeenCalled();
+    expect(Log.warn).not.toHaveBeenCalledWith(ADMIN_RBAC_WARNING);
   });
 
   type CommonTestCase = {
@@ -300,6 +313,7 @@ describe("build CLI command", () => {
       expect(createOutputDirectory).toBeCalled();
       expect(generateYamlAndWriteToDisk).not.toBeCalled();
       expect(handleCustomImageBuild).not.toBeCalled();
+      expect(Log.warn).not.toHaveBeenCalledWith(ADMIN_RBAC_WARNING);
       expect(Log.info).toHaveBeenCalledWith("Module built successfully at some/path");
     });
   });

@@ -5,6 +5,7 @@ import { namespaceDeploymentsReady } from "../../lib/deploymentChecks";
 import { namespaceComplianceValidator, validateCapabilityNames } from "../../lib/helpers";
 import { CapabilityExport } from "../../lib/types";
 import { buildModule } from "../build/buildModule";
+import { warnIfAdminRbac } from "../rbacModeWarning";
 
 export async function buildAndDeployModule(image: string, force: boolean): Promise<void> {
   const builtModule = await buildModule("dist", {});
@@ -24,6 +25,7 @@ export async function buildAndDeployModule(image: string, force: boolean): Promi
     validateNamespaces(capability, webhook);
   }
   try {
+    warnIfAdminRbac(builtModule.cfg.pepr.rbacMode);
     await webhook.deploy(deployWebhook, force, builtModule.cfg.pepr.webhookTimeout ?? 10);
 
     // wait for capabilities to be loaded and test names
