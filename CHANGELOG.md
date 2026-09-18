@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.3](https://github.com/defenseunicorns/pepr/compare/v2.0.2...v2.0.3) (2026-09-18)
+
+
+### Bug Fixes
+
+* **cli:** warn when using admin RBAC ([#3353](https://github.com/defenseunicorns/pepr/issues/3353)) ([801351a](https://github.com/defenseunicorns/pepr/commit/801351ae62a6baf17818e2ea1fb611b3fefbff6e))
+
+
+### Documentation
+
+* add release provenance guidance ([#3343](https://github.com/defenseunicorns/pepr/issues/3343)) ([f9e2735](https://github.com/defenseunicorns/pepr/commit/f9e27354fb20278da9c2d5e56d4f18ee3f19d2e0))
+
+
+### Dependencies
+
+* bump actions/download-artifact from 7.0.0 to 8.0.1 ([#3349](https://github.com/defenseunicorns/pepr/issues/3349)) ([42de5d1](https://github.com/defenseunicorns/pepr/commit/42de5d1cfe37a42533e1b7cd3e6c618b04797123))
+* bump the codeql-action group with 4 updates ([#3352](https://github.com/defenseunicorns/pepr/issues/3352)) ([8629a7d](https://github.com/defenseunicorns/pepr/commit/8629a7d2c2fd30fa8c68ce194b2f85c627fc7c48))
+* **deps-dev:** bump @types/node from 26.5.0 to 26.5.1 in the development-dependencies group ([#3350](https://github.com/defenseunicorns/pepr/issues/3350)) ([d9101d1](https://github.com/defenseunicorns/pepr/commit/d9101d1fa34d364d83a619ecbb34791a909a59e2))
+* **docker:** bump defenseunicorns.com/node in / ([#3347](https://github.com/defenseunicorns/pepr/issues/3347)) ([89b8912](https://github.com/defenseunicorns/pepr/commit/89b8912b7460368223338b95a95440afa5215c6e))
+* **docker:** bump defenseunicorns.com/node in / ([#3351](https://github.com/defenseunicorns/pepr/issues/3351)) ([9d3985f](https://github.com/defenseunicorns/pepr/commit/9d3985f48102867d565ae245630a3512267e109f))
+* **docker:** bump defenseunicorns.com/node in / ([#3354](https://github.com/defenseunicorns/pepr/issues/3354)) ([0cafd94](https://github.com/defenseunicorns/pepr/commit/0cafd947aab098576b940ef7a2fd75f70464ba25))
+
 ## [2.0.2](https://github.com/defenseunicorns/pepr/compare/v2.0.1...v2.0.2) (2026-09-15)
 
 
