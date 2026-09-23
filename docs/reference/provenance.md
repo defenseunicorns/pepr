@@ -150,4 +150,4 @@ two-record verification process.
 - [GitHub guidance for SLSA Build Level 3](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/increase-security-rating)
 - [npm provenance](https://docs.npmjs.com/generating-provenance-statements/)
 - [npm signature verification](https://docs.npmjs.com/cli/v11/commands/npm-audit/#audit-signatures)
-- [SLSA security levels](https://slsa.dev/spec/v1.2/levels)
+- [SLSA security levels](https://slsa.dev/spec/v1.2/build-track-basics)

@@ -275,7 +275,7 @@ To enhance the security of your Pepr Controller, we recommend following these be
 - Limit calls from Pepr to the Kubernetes API server to the minimum required.
 - Set webhook failure policies to `Fail` to ensure that the request is rejected if the webhook fails. More Below..
 - Verify the source and build identity of Pepr npm releases by following the
-  [release provenance guidance](provenance.md).
+  [release provenance guidance](./provenance.md).
 
 When using Pepr as a `Validating` Webhook, it is recommended to set the Webhook's `failurePolicy` to `Fail`. This can be done in your Pepr module in the`values.yaml` file of the helm chart by setting `admission.failurePolicy` to `Fail` or in the `package.json` under `pepr` by setting the `onError` flag to `reject`, then running `npx pepr build` again.
 
