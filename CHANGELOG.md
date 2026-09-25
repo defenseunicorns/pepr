@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.4](https://github.com/defenseunicorns/pepr/compare/v2.0.3...v2.0.4) (2026-09-25)
+
+
+### Dependencies
+
+* bump actions/upload-artifact from 6.0.0 to 7.0.1 ([#3348](https://github.com/defenseunicorns/pepr/issues/3348)) ([fc5a249](https://github.com/defenseunicorns/pepr/commit/fc5a2492418644804222ab6b4c2a29cb77bd78a6))
+* bump codecov/codecov-action from 7.0.0 to 7.1.0 ([#3361](https://github.com/defenseunicorns/pepr/issues/3361)) ([d6af8cf](https://github.com/defenseunicorns/pepr/commit/d6af8cfd51f3943207fce03ec5b3008429466cec))
+* bump codecov/codecov-action from 7.1.0 to 7.1.1 ([#3368](https://github.com/defenseunicorns/pepr/issues/3368)) ([3aeb554](https://github.com/defenseunicorns/pepr/commit/3aeb554eb174f1917684864bc7a52c7b4c481cd5))
+* bump docker/setup-buildx-action from 4.3.0 to 4.4.0 ([#3363](https://github.com/defenseunicorns/pepr/issues/3363)) ([9454d85](https://github.com/defenseunicorns/pepr/commit/9454d857c9b5d4c0a40a2b52d6bf659bc741213f))
+* bump the codeql-action group with 4 updates ([#3366](https://github.com/defenseunicorns/pepr/issues/3366)) ([341cd73](https://github.com/defenseunicorns/pepr/commit/341cd735f86b92c0bc1faf88a43401e691a1247a))
+* bump trufflesecurity/trufflehog from 3.97.4 to 3.97.5 ([#3369](https://github.com/defenseunicorns/pepr/issues/3369)) ([f5d8165](https://github.com/defenseunicorns/pepr/commit/f5d81658a6a5168c10c5b0962fc85da6a24d805b))
+* **deps-dev:** bump fast-check from 4.9.0 to 4.10.0 in the development-dependencies group ([#3356](https://github.com/defenseunicorns/pepr/issues/3356)) ([2565e1a](https://github.com/defenseunicorns/pepr/commit/2565e1a2c3f6e3b6ed9184b602a07995ab9f1f54))
+* **deps-dev:** bump js-yaml from 5.4.1 to 5.4.2 in the development-dependencies group ([#3358](https://github.com/defenseunicorns/pepr/issues/3358)) ([bb3974e](https://github.com/defenseunicorns/pepr/commit/bb3974ec1ca8e9b23dfe793380fb37cade7e43aa))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#3365](https://github.com/defenseunicorns/pepr/issues/3365)) ([4e09168](https://github.com/defenseunicorns/pepr/commit/4e09168f642bfe47d2accf0ed5a07c5a4b0cbca7))
+* **docker:** bump defenseunicorns.com/node in / ([#3362](https://github.com/defenseunicorns/pepr/issues/3362)) ([ebe6ce9](https://github.com/defenseunicorns/pepr/commit/ebe6ce92e6793bae0b3e4b32d644de1f6ab992c8))
+* **docker:** bump defenseunicorns.com/node in / ([#3367](https://github.com/defenseunicorns/pepr/issues/3367)) ([c76fa9c](https://github.com/defenseunicorns/pepr/commit/c76fa9c968cdd8c390c41a6fd1c96de063d7af27))
+
 ## [2.0.3](https://github.com/defenseunicorns/pepr/compare/v2.0.2...v2.0.3) (2026-09-18)
 
 
