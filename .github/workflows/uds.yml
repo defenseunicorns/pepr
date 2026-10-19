@@ -132,13 +132,13 @@ jobs:
           uds version
 
       - name: download image tar artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pepr-img.tar
           path: ${{ github.workspace }}
 
       - name: download tgz artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pepr-0.0.0-development.tgz
           path: ${{ github.workspace }}
