@@ -97,7 +97,7 @@
   },
   "overrides": {
     "brace-expansion": "^5.0.9",
-    "ip-address": "^10.5.0",
+    "ip-address": "^10.7.4",
     "tar": "^7.5.16",
     "fast-uri": "^3.1.7"
   },
