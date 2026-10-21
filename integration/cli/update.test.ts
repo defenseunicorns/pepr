@@ -73,8 +73,9 @@ describe("update", () => {
         await fs.readFile(`${workdir.path()}/${name}/package.json`, { encoding: "utf8" }),
       );
       const latestVersion = await pepr.cli(workdir.path(), {
-        cmd: "npx --yes pepr@latest --version",
+        cmd: "npm view pepr@latest version",
       });
+      expect(latestVersion.exitcode).toBe(0);
       expect(packageJson.dependencies.pepr).toContain(latestVersion.stdout.join("").trim());
     },
     ms("2m"),
