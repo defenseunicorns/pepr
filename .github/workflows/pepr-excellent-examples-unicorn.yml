@@ -64,6 +64,7 @@ jobs:
           retry_on: error
           timeout_minutes: 10
           command: |
+            set -e
             cd "$PEPR"
             npm run build:image:unicorn
             mv pepr-0.0.0-development.tgz ${GITHUB_WORKSPACE}/pepr-0.0.0-development.tgz

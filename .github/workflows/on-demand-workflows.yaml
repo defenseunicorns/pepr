@@ -61,6 +61,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - name: Use npm 11.19.0
+        run: npm install --global npm@11.19.0
       - run: npm ci
       - name: Verify dependency patches
         run: npx patch-package --error-on-fail
@@ -82,7 +84,6 @@ jobs:
           node-version: 26
           cache: "npm"
       - run: npm ci
-      - run: npm install ts-node
       - run: npm run gen-data-json
       - run: npm run test:docs
 
