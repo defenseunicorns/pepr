@@ -254,7 +254,7 @@ jobs:
 
   verify-published-provenance:
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
-    needs: [publish, slsa, tag-new-version]
+    needs: [publish, build-and-publish-images, pack-and-push, slsa, tag-new-version]
     runs-on: ubuntu-latest
     permissions:
       attestations: read
