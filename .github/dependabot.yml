@@ -14,6 +14,14 @@ updates:
       prefix: "deps"
       include: "scope"
     groups:
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
       production-dependencies:
         dependency-type: "production"
         update-types:
@@ -21,6 +29,9 @@ updates:
           - "patch"
       development-dependencies:
         dependency-type: "development"
+        exclude-patterns:
+          - "vitest"
+          - "@vitest/*"
         update-types:
           - "minor"
           - "patch"

@@ -82,7 +82,7 @@
     "@types/readable-stream": "^4.0.21",
     "@types/urijs": "^1.19.25",
     "@types/ws": "^8.18.1",
-    "@vitest/coverage-v8": "^4.0.4",
+    "@vitest/coverage-v8": "5.0.4",
     "fast-check": "^4.0.0",
     "husky": "^9.1.6",
     "js-yaml": "^5.2.1",
@@ -93,7 +93,7 @@
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
     "undici": "8.12.0",
-    "vitest": "^4.0.4"
+    "vitest": "5.0.4"
   },
   "overrides": {
     "brace-expansion": "^5.0.12",
