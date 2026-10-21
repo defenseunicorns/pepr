@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.5](https://github.com/defenseunicorns/pepr/compare/v2.0.4...v2.0.5) (2026-10-21)
+
+
+### Bug Fixes
+
+* integration test version check ([#3407](https://github.com/defenseunicorns/pepr/issues/3407)) ([999ec2a](https://github.com/defenseunicorns/pepr/commit/999ec2a276479aeb2427954dac2467e5850a2db3))
+
+### Dependencies
+
+* Update kubernetes-fluent-client to 3.12.5
+
 ## [2.0.4](https://github.com/defenseunicorns/pepr/compare/v2.0.3...v2.0.4) (2026-10-20)
 
 
