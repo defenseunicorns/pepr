@@ -52,7 +52,7 @@ jobs:
       - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
       - name: Use Node.js 26
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26
           registry-url: "https://registry.npmjs.org"
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Use Node.js 26
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26
           cache: "npm"
@@ -209,7 +209,7 @@ jobs:
           egress-policy: audit
 
       - name: Set up Node registry authentication
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26
           registry-url: "https://registry.npmjs.org"
@@ -269,7 +269,7 @@ jobs:
           egress-policy: audit
 
       - name: Set up Node registry access
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.1
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.1
         with:
           node-version: 26
           registry-url: "https://registry.npmjs.org"
