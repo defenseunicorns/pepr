@@ -60,7 +60,7 @@
     "globals": "17.13.0",
     "http-status-codes": "^2.3.0",
     "json-pointer": "^0.6.2",
-    "kubernetes-fluent-client": "3.12.5",
+    "kubernetes-fluent-client": "3.12.6",
     "pino": "10.4.0",
     "pino-pretty": "13.2.0",
     "prom-client": "15.1.3",
