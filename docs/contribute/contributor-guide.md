@@ -85,6 +85,22 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 ## Automated Workflows
 
+### UDS Smoke Test
+
+The [UDS smoke workflow](https://github.com/defenseunicorns/pepr/blob/main/.github/workflows/uds.yml) builds the candidate Pepr library and controller image, then tests them against UDS Core with `uds run slim-dev`.
+
+The three projects share this dependency relationship:
+
+- [Kubernetes Fluent Client (KFC)](https://github.com/defenseunicorns/kubernetes-fluent-client) provides Kubernetes API clients and resource watchers.
+- Pepr depends on KFC and exposes KFC types through its APIs.
+- [UDS Core](https://github.com/defenseunicorns/uds-core) uses Pepr to build its operator and policies, and also depends directly on KFC.
+
+Different KFC pins in Pepr and UDS Core can install two versions of KFC. Their watcher classes contain private members, so TypeScript can reject a UDS watcher passed to a Pepr API even when the public types look compatible.
+
+For smoke testing, the workflow reads KFC's version from the candidate Pepr tarball and installs that KFC version alongside candidate Pepr in the temporary UDS checkout. It saves both dependencies and the lockfile because `slim-dev` runs `npm ci` again. These changes stay in the CI checkout; UDS Core does not need a dependency-update PR before Pepr can test a new KFC version.
+
+The normal dependency upgrade order is KFC first, then Pepr, then UDS Core. After Pepr adopts and releases a KFC update, UDS Core can update its Pepr and direct KFC dependencies together. The smoke test validates candidate Pepr against current UDS source with aligned KFC dependencies; it does not establish compatibility with UDS Core's unchanged dependency pins.
+
 ### Grype Suppression Audit
 
 A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](https://github.com/defenseunicorns/pepr/blob/main/.github/workflows/grype-suppression-audit.yaml)) scans the Pepr controller image for stale CVE suppressions in `.grype.yaml`. When stale entries are found, the workflow removes them and opens (or updates) a PR on the bot-owned branch `grype/suppression-audit`.
