@@ -74,14 +74,14 @@ jobs:
           docker image save --output "$PEPR_TAR" pepr:dev
 
       - name: upload image tar artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pepr-img.tar
           path: pepr-img.tar
           retention-days: 1
 
       - name: upload pepr tgz artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pepr-0.0.0-development.tgz
           path: pepr-0.0.0-development.tgz
