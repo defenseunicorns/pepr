@@ -4,9 +4,9 @@
 # Used to build Controller image
 # In this file, we delete the *.ts intentionally
 # Any other changes to Dockerfile should be reflected in Publish
-FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:c61cb2748515fcc0540dc02d4a05edfd93bae8fde2da8a4f0a36a0d180d4ffc2 AS build-image
+FROM cgr.dev/defenseunicorns.com/node:26-dev@sha256:56cb4f9c8d9c12d5045b339ca111d026b0f9a56e06a10a6fb0dbddabcb7f8063 AS build-image
 
-FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:1bdb9d99f65464d0560663dfb5573af21a5d989975434f0cd0f35e235cc55490 AS base-image
+FROM cgr.dev/defenseunicorns.com/node:26-slim@sha256:78317777be5f1a021c182cfa6549d7202f92470f11d2cff91263586547df9904 AS base-image
 
 FROM build-image AS build
 
