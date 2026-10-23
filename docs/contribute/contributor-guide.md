@@ -85,6 +85,14 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 ## Automated Workflows
 
+### UDS Smoke Test
+
+The [UDS smoke workflow](https://github.com/defenseunicorns/pepr/blob/main/.github/workflows/uds.yml) runs the required `uds run` check against a pinned UDS Core commit. Scheduled and manual runs also run the informational `uds HEAD compatibility` check against UDS Core `main`; its failure does not block Pepr releases.
+
+Both lanes install the candidate Pepr tarball and the exact Kubernetes Fluent Client (KFC) version declared by that tarball into disposable UDS checkouts. The workflow updates the checkout's manifest and lockfile, verifies that UDS and Pepr resolve the same KFC package, and runs the smoke test with the candidate controller image. This validates the aligned dependency combination; it does not establish compatibility with UDS Core's unchanged dependency pins.
+
+To refresh the required fixture, update its commit SHA in both matrix branches in `uds.yml` after a successful smoke run of the candidate Pepr/KFC combination against the proposed commit. Review the informational HEAD results when selecting a new fixture. For dependency releases, release KFC first, update and release Pepr next, then update Pepr and KFC together in UDS Core. A UDS dependency update is not a prerequisite for Pepr's aligned smoke check.
+
 ### Grype Suppression Audit
 
 A weekly GitHub Actions workflow ([`grype-suppression-audit.yaml`](https://github.com/defenseunicorns/pepr/blob/main/.github/workflows/grype-suppression-audit.yaml)) scans the Pepr controller image for stale CVE suppressions in `.grype.yaml`. When stale entries are found, the workflow removes them and opens (or updates) a PR on the bot-owned branch `grype/suppression-audit`.
