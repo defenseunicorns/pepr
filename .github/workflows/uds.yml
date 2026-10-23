@@ -168,7 +168,7 @@ jobs:
       - name: uds run
         run: |
           cd "$UDS_CORE"
-          # Align UDS's direct KFC dependency with candidate Pepr; slim-dev reinstalls from the lockfile.
+          # Align UDS's KFC pin with candidate Pepr; see docs/contribute/contributor-guide.md#uds-smoke-test.
           KFC_VERSION=$(tar -xOf "$PEPR_TGZ" package/package.json |
             node -pe 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).dependencies["kubernetes-fluent-client"]')
           npm install --save-exact "$PEPR_TGZ" "kubernetes-fluent-client@$KFC_VERSION"
