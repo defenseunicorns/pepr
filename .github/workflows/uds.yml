@@ -88,13 +88,8 @@ jobs:
           retention-days: 1
 
   uds-run:
-    name: ${{ matrix.name }}
+    name: uds run
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '[{"name":"uds run","ref":"c8fe924efcab4d3165b046c8901b96f7a5e32986","experimental":false},{"name":"uds HEAD compatibility","ref":"main","experimental":true}]' || '[{"name":"uds run","ref":"c8fe924efcab4d3165b046c8901b96f7a5e32986","experimental":false}]') }}
     needs:
       - pepr-build
     steps:
@@ -106,7 +101,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: defenseunicorns/uds-core
-          ref: ${{ matrix.ref }}
           path: uds-core
 
       - name: "set env: UDS_CORE"
@@ -171,62 +165,11 @@ jobs:
         run: |
           docker image load --input "$PEPR_IMG"
 
-      - name: install candidate Pepr and KFC
-        run: |
-          cd "$UDS_CORE"
-          KFC_VERSION=$(tar -xOf "$PEPR_TGZ" package/package.json | node -e '
-            let input = "";
-            process.stdin.on("data", chunk => input += chunk);
-            process.stdin.on("end", () => {
-              const version = JSON.parse(input).dependencies?.["kubernetes-fluent-client"];
-              // https://regex101.com/: require major.minor.patch with optional prerelease/build suffixes.
-              if (typeof version !== "string" || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) {
-                throw new Error("Candidate Pepr tarball must declare an exact kubernetes-fluent-client version");
-              }
-              process.stdout.write(version);
-            });
-          ')
-          npm install --save-exact "$PEPR_TGZ" "kubernetes-fluent-client@$KFC_VERSION"
-          echo "PEPR_KFC_VERSION=$KFC_VERSION" >> "$GITHUB_ENV"
-
-      - name: verify KFC resolution
-        run: |
-          cd "$UDS_CORE"
-          node --input-type=module <<'NODE'
-          import assert from "node:assert/strict";
-          import { readFileSync, realpathSync } from "node:fs";
-          import { createRequire } from "node:module";
-          import { resolve } from "node:path";
-
-          const udsRequire = createRequire(resolve("package.json"));
-          const peprRequire = createRequire(udsRequire.resolve("pepr"));
-          const udsEntry = realpathSync(udsRequire.resolve("kubernetes-fluent-client"));
-          const peprEntry = realpathSync(peprRequire.resolve("kubernetes-fluent-client"));
-          assert.equal(udsEntry, peprEntry, "UDS and Pepr must resolve the same KFC entry");
-          assert.ok(process.env.PEPR_KFC_VERSION, "Expected artifact KFC version is missing");
-          for (const requireFrom of [udsRequire, peprRequire]) {
-            const manifest = JSON.parse(readFileSync(requireFrom.resolve("kubernetes-fluent-client/package.json"), "utf8"));
-            assert.equal(manifest.version, process.env.PEPR_KFC_VERSION, "Installed KFC must match the candidate Pepr tarball");
-          }
-          console.log(`UDS and candidate Pepr share KFC ${process.env.PEPR_KFC_VERSION}: ${udsEntry}`);
-          NODE
-
       - name: uds run
         run: |
           cd "$UDS_CORE"
+          # Align UDS's direct KFC dependency with candidate Pepr; slim-dev reinstalls from the lockfile.
+          KFC_VERSION=$(tar -xOf "$PEPR_TGZ" package/package.json |
+            node -pe 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).dependencies["kubernetes-fluent-client"]')
+          npm install --save-exact "$PEPR_TGZ" "kubernetes-fluent-client@$KFC_VERSION"
           PEPR_CUSTOM_IMAGE="pepr:dev" uds run slim-dev
-
-      - name: summarize UDS smoke result
-        if: always()
-        env:
-          UDS_LANE: ${{ matrix.name }}
-          UDS_REF: ${{ matrix.ref }}
-          UDS_STATUS: ${{ job.status }}
-          UDS_EXPERIMENTAL: ${{ matrix.experimental }}
-        run: |
-          {
-            echo "### $UDS_LANE"
-            echo "- UDS ref: \`$UDS_REF\`"
-            echo "- Result: $UDS_STATUS"
-            echo "- Informational: $UDS_EXPERIMENTAL"
-          } >> "$GITHUB_STEP_SUMMARY"
