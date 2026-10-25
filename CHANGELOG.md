@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.6](https://github.com/defenseunicorns/pepr/compare/v2.0.5...v2.0.6) (2026-10-23)
+
+
+### Bug Fixes
+
+* **ci:** align UDS smoke KFC with candidate Pepr ([#3419](https://github.com/defenseunicorns/pepr/issues/3419)) ([0279d66](https://github.com/defenseunicorns/pepr/commit/0279d665a60dbb5e8948abd9b28a3315224a7574))
+* **ci:** verify provenance after release publishing completes ([#3409](https://github.com/defenseunicorns/pepr/issues/3409)) ([b7e26c3](https://github.com/defenseunicorns/pepr/commit/b7e26c34050f5810ff4f7b4c1133acb472315c83))
+
+
+### Dependencies
+
+* bump actions/setup-node from 7.0.0 to 7.1.0 ([#3401](https://github.com/defenseunicorns/pepr/issues/3401)) ([c1a4311](https://github.com/defenseunicorns/pepr/commit/c1a43111d713231f2f1052dbfad309f21175adfa))
+* bump actions/upload-artifact from 7.0.1 to 7.0.2 ([#3415](https://github.com/defenseunicorns/pepr/issues/3415)) ([696302e](https://github.com/defenseunicorns/pepr/commit/696302ec9614abda5d2f9c7c73aad1621f3f80b5))
+* bump ossf/scorecard-action from 2.4.4 to 2.5.0 ([#3416](https://github.com/defenseunicorns/pepr/issues/3416)) ([5f1787f](https://github.com/defenseunicorns/pepr/commit/5f1787f2a4907dacd6e402444772e09482f46ea8))
+* bump the codeql-action group with 4 updates ([#3414](https://github.com/defenseunicorns/pepr/issues/3414)) ([20c5ac3](https://github.com/defenseunicorns/pepr/commit/20c5ac3e58ba74260556964934afa16fd28d6f7a))
+* **deps-dev:** bump undici from 8.12.0 to 8.12.2 in the development-dependencies group ([#3411](https://github.com/defenseunicorns/pepr/issues/3411)) ([23082fc](https://github.com/defenseunicorns/pepr/commit/23082fc2e9bda4e4c2b88f718488fce0be19bb2e))
+* **deps:** bump the production-dependencies group across 1 directory with 6 updates ([#3406](https://github.com/defenseunicorns/pepr/issues/3406)) ([c90fa2c](https://github.com/defenseunicorns/pepr/commit/c90fa2ce3f29ea23e3f90bc8ee05d4be6c06f25b))
+* **docker:** bump defenseunicorns.com/node in / ([#3413](https://github.com/defenseunicorns/pepr/issues/3413)) ([6c4140d](https://github.com/defenseunicorns/pepr/commit/6c4140d81a3b63d7bf261d2111b26a582bed2e3e))
+
 ## [2.0.5](https://github.com/defenseunicorns/pepr/compare/v2.0.4...v2.0.5) (2026-10-21)
 
 
