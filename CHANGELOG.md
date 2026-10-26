@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.7](https://github.com/defenseunicorns/pepr/compare/v2.0.6...v2.0.7) (2026-10-26)
+
+
+### Dependencies
+
+* **deps:** bump body-parser from 2.3.0 to 2.4.0 ([#3422](https://github.com/defenseunicorns/pepr/issues/3422)) ([f85bcdf](https://github.com/defenseunicorns/pepr/commit/f85bcdf723f91ea889bd1206908b12456960dfe2))
+* update kubernetes-fluent-client to 3.12.6 ([#3418](https://github.com/defenseunicorns/pepr/issues/3418)) ([5ecd42d](https://github.com/defenseunicorns/pepr/commit/5ecd42daf8ecccfde1abf52f2f4e28492b180895))
+
 ## [2.0.6](https://github.com/defenseunicorns/pepr/compare/v2.0.5...v2.0.6) (2026-10-23)
 
 
