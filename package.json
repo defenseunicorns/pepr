@@ -68,8 +68,8 @@
     "ramda": "0.32.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
     "@types/command-line-args": "^5.2.3",
@@ -92,7 +92,7 @@
     "selfsigned": "^5.5.0",
     "shellcheck": "^4.1.0",
     "tsx": "^4.20.3",
-    "undici": "8.12.2",
+    "undici": "8.12.3",
     "vitest": "^4.0.4"
   },
   "overrides": {
