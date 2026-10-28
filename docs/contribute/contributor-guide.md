@@ -72,8 +72,19 @@ Please follow the coding conventions and style used in the project. Use ESLint a
 
 - Check formatting: `npm run format:check`
 - Fix formatting: `npm run format:fix`
+- Check the root `package.json`: `npm run format:package` (also included in `npm run format:check` and CI).
 - If regex is used, provide a link to regex101.com with an explanation of the regex pattern.
 - Do not use emoji in logs or comments, as it can be distracting and is not consistent with the project's style.
+
+Package manifest checks use `npm-package-json-lint` with rules in `config/.npmpackagejsonlintrc.json`.
+They validate required metadata, field types, names and versions, duplicate properties and dependencies,
+and alphabetical ordering of dependencies and scripts. Only the root manifest is checked; generated and
+integration manifests are excluded. Correct reported violations manually; `npm run format:fix` does
+not fix package manifest lint errors.
+
+The check applies the repository's dependency patches first. A patch for `npm-package-json-lint@11.0.0`
+repairs duplicate-key detection in its bundled rule; keep it until an upstream release passes the
+regression test in `config/package-manifest-lint.test.ts`.
 
 ### Git Hooks
 
