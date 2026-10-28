@@ -27,6 +27,7 @@ pepr-test-*
 *.tgz
 load/
 coverage/
+.vitest/
 .DS_Store
 # Test binary, build with `go test -c`
 *.test
