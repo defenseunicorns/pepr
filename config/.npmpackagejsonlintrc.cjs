@@ -1,5 +1,5 @@
-{
-  "rules": {
+module.exports = {
+  rules: {
     "require-name": "error",
     "require-version": "error",
     "require-description": "error",
@@ -29,11 +29,13 @@
     "peerDependencies-type": "error",
     "name-format": "error",
     "version-format": "error",
-    "no-duplicate-properties": "error",
+    // v11.0.0 loses the shared JSON source symbol in its bundled duplicate-key rule.
+    // Keep this off to avoid patching the dependency; re-enable after an upstream fix.
+    "no-duplicate-properties": "off",
     "no-repeated-dependencies": "error",
     "prefer-alphabetical-dependencies": "error",
     "prefer-alphabetical-devDependencies": "error",
     "prefer-alphabetical-peerDependencies": "error",
-    "prefer-alphabetical-scripts": "error"
-  }
-}
+    "prefer-alphabetical-scripts": "error",
+  },
+};
