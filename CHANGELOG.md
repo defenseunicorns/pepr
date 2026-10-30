@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.0.8](https://github.com/defenseunicorns/pepr/compare/v2.0.7...v2.0.8) (2026-10-30)
+
+
+### Bug Fixes
+
+* **ci:** authenticate soak image builds to Chainguard ([#3429](https://github.com/defenseunicorns/pepr/issues/3429)) ([f1716b6](https://github.com/defenseunicorns/pepr/commit/f1716b68c4b0ff2f6c6fe80e18384fcbb324db33))
+
+
+### Dependencies
+
+* bump azure/setup-kubectl from 5.1.0 to 5.2.0 ([#3417](https://github.com/defenseunicorns/pepr/issues/3417)) ([6cab303](https://github.com/defenseunicorns/pepr/commit/6cab303d6dec695df85715e3d977dfecf9030e65))
+* bump docker/login-action from 4.6.0 to 4.7.0 ([#3435](https://github.com/defenseunicorns/pepr/issues/3435)) ([dba4ba7](https://github.com/defenseunicorns/pepr/commit/dba4ba730666ef6ab8aabd8c09b3561c3f49aa78))
+* bump step-security/harden-runner from 2.22.1 to 2.22.2 ([#3426](https://github.com/defenseunicorns/pepr/issues/3426)) ([eaede3d](https://github.com/defenseunicorns/pepr/commit/eaede3d16905d57a94e64321ca2bfd9e6ed6f446))
+* bump the codeql-action group with 4 updates ([#3432](https://github.com/defenseunicorns/pepr/issues/3432)) ([c2a49be](https://github.com/defenseunicorns/pepr/commit/c2a49befebdd6e6326103aa765b667bf12f3e2d3))
+* bump trufflesecurity/trufflehog from 3.99.2 to 3.99.3 ([#3427](https://github.com/defenseunicorns/pepr/issues/3427)) ([bc15d2f](https://github.com/defenseunicorns/pepr/commit/bc15d2fa64ffcd0d65c430921696ab04246ad570))
+* bump trufflesecurity/trufflehog from 3.99.3 to 3.99.7 ([#3434](https://github.com/defenseunicorns/pepr/issues/3434)) ([9fed018](https://github.com/defenseunicorns/pepr/commit/9fed018101003c955d290bb477057fe75293ef33))
+* **deps-dev:** bump fast-uri from 3.1.8 to 3.1.9 ([#3421](https://github.com/defenseunicorns/pepr/issues/3421)) ([409c128](https://github.com/defenseunicorns/pepr/commit/409c1282a16101fe865675c9474826c41ad71803))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#3425](https://github.com/defenseunicorns/pepr/issues/3425)) ([b7a92ee](https://github.com/defenseunicorns/pepr/commit/b7a92eee2a5bfb06ca77848680d8ccc8c1a4fd12))
+* **deps-dev:** migrate Vitest and coverage to v5 ([#3430](https://github.com/defenseunicorns/pepr/issues/3430)) ([eb019fb](https://github.com/defenseunicorns/pepr/commit/eb019fbaf38fc5925159a59b46f2ac6fe5469be9))
+* **deps:** bump fast-copy from 4.0.0 to 4.3.0 ([#3394](https://github.com/defenseunicorns/pepr/issues/3394)) ([670f123](https://github.com/defenseunicorns/pepr/commit/670f123d12505bff6c9805e75200f4e6b15fc194))
+* **deps:** bump the production-dependencies group with 2 updates ([#3424](https://github.com/defenseunicorns/pepr/issues/3424)) ([0fe8831](https://github.com/defenseunicorns/pepr/commit/0fe883186eb67bac2a73dee43413db5de59d5972))
+* **docker:** bump defenseunicorns.com/node in / ([#3428](https://github.com/defenseunicorns/pepr/issues/3428)) ([14bda83](https://github.com/defenseunicorns/pepr/commit/14bda83468d412a3ed04bd075e25c95ed3117b1a))
+* **docker:** bump defenseunicorns.com/node in / ([#3431](https://github.com/defenseunicorns/pepr/issues/3431)) ([64d9f76](https://github.com/defenseunicorns/pepr/commit/64d9f7677cef1af6b15f5e1f1736dd632f625621))
+* **docker:** bump defenseunicorns.com/node in / ([#3436](https://github.com/defenseunicorns/pepr/issues/3436)) ([480ed8c](https://github.com/defenseunicorns/pepr/commit/480ed8cada2c4cbbda43f6bf92925e91c57f3d04))
+
 ## [2.0.7](https://github.com/defenseunicorns/pepr/compare/v2.0.6...v2.0.7) (2026-10-26)
 
 
