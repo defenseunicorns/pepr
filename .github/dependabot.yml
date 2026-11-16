@@ -5,9 +5,12 @@ version: 2
 updates:
   - package-ecosystem: npm # See documentation for possible values
     directory: "/" # Location of package manifests
+    # Version updates only; advisory-triggered security updates remain immediate.
     schedule:
-      interval: cron
-      cronjob: "0 9 * * 2,5"
+      interval: weekly
+      day: tuesday
+      time: "09:00"
+      timezone: America/Chicago
     cooldown:
       default-days: 7
     commit-message:
@@ -75,9 +78,12 @@ updates:
         versions: [">=10.0.0"]
   - package-ecosystem: github-actions
     directory: /
+    # Version updates only; advisory-triggered security updates remain immediate.
     schedule:
-      interval: cron
-      cronjob: "0 9 * * 2,5"
+      interval: weekly
+      day: tuesday
+      time: "09:00"
+      timezone: America/Chicago
     cooldown:
       default-days: 7
     commit-message:
@@ -92,11 +98,13 @@ updates:
     directories:
       - /
       - /config
+    # Docker has no alert-driven security updates, so check digests frequently.
     schedule:
       interval: cron
-      cronjob: "0 9 * * 2,5"
+      cronjob: "0 * * * *"
     cooldown:
-      default-days: 7
+      # Do not delay image refreshes that may contain security fixes.
+      exclude: ["*"]
     commit-message:
       prefix: "deps(docker)"
     registries:
