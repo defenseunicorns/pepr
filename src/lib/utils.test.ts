@@ -30,6 +30,7 @@ describe("utils", () => {
         test3: base64Encode("test3"),
         test4: "test4",
         test5: undefined as unknown as string,
+        test6: null as unknown as string,
       },
     };
     const skip = convertFromBase64Map(obj);
@@ -39,6 +40,7 @@ describe("utils", () => {
     expect(obj.data["test4"]).toBe("test4");
     expect(skip).toEqual(["test2", "test4"]);
     expect(obj.data["test5"]).toBe("");
+    expect(obj.data["test6"]).toBe("");
   });
 
   it("base64Decode should decode a base64 string", () => {
