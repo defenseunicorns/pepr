@@ -55,6 +55,9 @@ jobs:
           identity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: build pepr image
+        env:
+          # Zarf's local image importer requires a single manifest in the Docker export.
+          BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
         run: |
           cd "$PEPR"
           npm run build:image
