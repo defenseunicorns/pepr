@@ -83,6 +83,11 @@ updates:
     commit-message:
       prefix: "deps"
     groups:
+      # Batch routine updates; keep CodeQL major updates together below.
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       codeql-action:
         patterns:
           - "github/codeql-action"
