@@ -29,6 +29,20 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # Execute the policy from the trusted base commit, never from the PR branch.
+      - name: Check out the trusted auto-merge script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/workflows/scripts/dependabot-auto-merge.ts
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
       # A single verified bot commit prevents manually added changes from qualifying.
       - name: Read verified Dependabot update details
         id: metadata
@@ -44,58 +58,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           METADATA_OUTCOME: ${{ steps.metadata.outcome }}
           DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync } from "node:fs";
-          import { execFileSync } from "node:child_process";
-
-          const eventPr = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8")).pull_request;
-          const currentPr = JSON.parse(execFileSync("gh", [
-            "pr", "view", eventPr.html_url,
-            "--json", "headRefOid,isDraft,autoMergeRequest"
-          ], { encoding: "utf8" }));
-
-          // 1. If new commits arrived, let their newer workflow run handle the PR.
-          if (currentPr.headRefOid !== eventPr.head.sha) {
-            process.exit(0);
-          }
-
-          // 2. Every package must be a development patch, such as 1.2.3 -> 1.2.4.
-          // Missing or invalid metadata never qualifies for auto-merge.
-          let dependencies = [];
-          try {
-            dependencies = JSON.parse(process.env.DEPENDENCIES_JSON || "[]");
-          } catch {
-            console.log("Invalid metadata; auto-merge will stay off.");
-          }
-
-          function isDevelopmentPatch(dependency) {
-            return dependency !== null && typeof dependency === "object" &&
-              dependency.packageEcosystem === "npm_and_yarn" &&
-              dependency.dependencyGroup === "development-dependencies" &&
-              dependency.dependencyType === "direct:development" &&
-              dependency.updateType === "version-update:semver-patch" &&
-              dependency.directory === "/" &&
-              dependency.targetBranch === "main" &&
-              dependency.maintainerChanges === false;
-          }
-
-          const allUpdatesAreDevelopmentPatches = Array.isArray(dependencies) &&
-            dependencies.length > 0 && dependencies.every(isDevelopmentPatch);
-          const canAutoMerge = process.env.METADATA_OUTCOME === "success" &&
-            eventPr.commits === 1 && !eventPr.draft && !currentPr.isDraft &&
-            allUpdatesAreDevelopmentPatches;
-
-          // 3. Turn auto-merge on or off. Required CI and code-owner approval still apply.
-          // This does not check out PR code or change when security PRs are created.
-          if (canAutoMerge) {
-            execFileSync("gh", [
-              "pr", "merge", "--auto", "--squash",
-              "--match-head-commit", eventPr.head.sha, eventPr.html_url
-            ], { stdio: "inherit" });
-          } else if (currentPr.autoMergeRequest) {
-            execFileSync("gh", ["pr", "merge", "--disable-auto", eventPr.html_url], {
-              stdio: "inherit"
-            });
-          }
-          NODE
+        run: node .github/workflows/scripts/dependabot-auto-merge.ts
