@@ -96,10 +96,10 @@ updates:
     directories:
       - /
       - /config
-    # Docker has no alert-driven security updates, so check digests frequently.
+    # Docker security updates are unsupported; check daily, including weekends.
     schedule:
       interval: cron
-      cronjob: "0 * * * *"
+      cronjob: "0 9 * * *"
     cooldown:
       # Do not delay image refreshes that may contain security fixes.
       exclude: ["*"]
