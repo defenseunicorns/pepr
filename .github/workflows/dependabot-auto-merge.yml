@@ -4,14 +4,12 @@ on:
   pull_request:
     branches: [main]
     types:
-      [
-        opened,
-        reopened,
-        synchronize,
-        edited,
-        ready_for_review,
-        converted_to_draft,
-      ]
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - ready_for_review
+      - converted_to_draft
 
 permissions:
   contents: read
@@ -31,68 +29,73 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      # Keep commit verification enabled; do not check out or execute PR code.
-      - name: Fetch verified Dependabot metadata
+      # A single verified bot commit prevents manually added changes from qualifying.
+      - name: Read verified Dependabot update details
         id: metadata
         if: github.event.pull_request.commits == 1
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check every dependency against the auto-merge policy
-        id: policy
+      - name: Enable auto-merge only for development patch updates
+        # Still turn off a previous auto-merge setting if metadata verification fails.
         if: ${{ !cancelled() }}
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           METADATA_OUTCOME: ${{ steps.metadata.outcome }}
-          PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
-          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
           DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
         run: |
           node --input-type=module <<'NODE'
-          import { appendFileSync } from "node:fs";
+          import { readFileSync } from "node:fs";
+          import { execFileSync } from "node:child_process";
 
+          const eventPr = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8")).pull_request;
+          const currentPr = JSON.parse(execFileSync("gh", [
+            "pr", "view", eventPr.html_url,
+            "--json", "headRefOid,isDraft,autoMergeRequest"
+          ], { encoding: "utf8" }));
+
+          // 1. If new commits arrived, let their newer workflow run handle the PR.
+          if (currentPr.headRefOid !== eventPr.head.sha) {
+            process.exit(0);
+          }
+
+          // 2. Every package must be a development patch, such as 1.2.3 -> 1.2.4.
+          // Missing or invalid metadata never qualifies for auto-merge.
           let dependencies = [];
           try {
             dependencies = JSON.parse(process.env.DEPENDENCIES_JSON || "[]");
           } catch {
-            console.log("Invalid metadata; auto-merge is ineligible.");
+            console.log("Invalid metadata; auto-merge will stay off.");
           }
-          const eligible = process.env.METADATA_OUTCOME === "success" &&
-            process.env.PR_COMMIT_COUNT === "1" &&
-            process.env.PR_IS_DRAFT === "false" &&
-            Array.isArray(dependencies) && dependencies.length > 0 &&
-            dependencies.every(dependency =>
+
+          function isDevelopmentPatch(dependency) {
+            return dependency !== null && typeof dependency === "object" &&
               dependency.packageEcosystem === "npm_and_yarn" &&
               dependency.dependencyGroup === "development-dependencies" &&
               dependency.dependencyType === "direct:development" &&
               dependency.updateType === "version-update:semver-patch" &&
               dependency.directory === "/" &&
               dependency.targetBranch === "main" &&
-              dependency.maintainerChanges === false
-            );
+              dependency.maintainerChanges === false;
+          }
 
-          appendFileSync(process.env.GITHUB_OUTPUT, `eligible=${eligible}\n`);
+          const allUpdatesAreDevelopmentPatches = Array.isArray(dependencies) &&
+            dependencies.length > 0 && dependencies.every(isDevelopmentPatch);
+          const canAutoMerge = process.env.METADATA_OUTCOME === "success" &&
+            eventPr.commits === 1 && !eventPr.draft && !currentPr.isDraft &&
+            allUpdatesAreDevelopmentPatches;
+
+          // 3. Turn auto-merge on or off. Required CI and code-owner approval still apply.
+          // This does not check out PR code or change when security PRs are created.
+          if (canAutoMerge) {
+            execFileSync("gh", [
+              "pr", "merge", "--auto", "--squash",
+              "--match-head-commit", eventPr.head.sha, eventPr.html_url
+            ], { stdio: "inherit" });
+          } else if (currentPr.autoMergeRequest) {
+            execFileSync("gh", ["pr", "merge", "--disable-auto", eventPr.html_url], {
+              stdio: "inherit"
+            });
+          }
           NODE
-
-      # Auto-merge still waits for required CI checks and code-owner approval.
-      # Security groups and all non-development/patch updates stay manual.
-      - name: Apply auto-merge policy
-        if: ${{ !cancelled() }}
-        env:
-          ELIGIBLE: ${{ steps.policy.outputs.eligible }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          state=$(gh pr view "$PR_URL" --json headRefOid,isDraft,autoMergeRequest \
-            --jq '[.headRefOid, (.isDraft | tostring), (.autoMergeRequest != null | tostring)] | @tsv')
-          read -r live_head is_draft auto_enabled <<< "$state"
-          # A newer synchronize event owns the policy for a different head.
-          if [[ "$live_head" != "$PR_HEAD_SHA" ]]; then
-            exit 0
-          fi
-          if [[ "$ELIGIBLE" == "true" && "$is_draft" == "false" ]]; then
-            gh pr merge --auto --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
-          elif [[ "$auto_enabled" == "true" ]]; then
-            gh pr merge --disable-auto "$PR_URL"
-          fi
