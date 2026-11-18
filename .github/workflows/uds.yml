@@ -4,8 +4,6 @@ permissions: read-all
 on:
   merge_group:
   pull_request:
-    branches:
-      - main
     paths-ignore:
     - "LICENSE"
     - "CODEOWNERS"
