@@ -105,6 +105,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
+          ref: bcb07160da0a06ae7a8e799c9e57d0c3f52d01f7 # pepr-excellent-examples#531
           path: pepr-excellent-examples
 
       - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
@@ -164,6 +165,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
+          ref: bcb07160da0a06ae7a8e799c9e57d0c3f52d01f7 # pepr-excellent-examples#531
           path: pepr-excellent-examples
 
       - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
