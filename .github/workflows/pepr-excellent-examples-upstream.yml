@@ -26,7 +26,7 @@ jobs:
       id-token: write # Required by chainguard-dev/setup-chainctl step
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -88,7 +88,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -105,6 +105,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
+          ref: bcb07160da0a06ae7a8e799c9e57d0c3f52d01f7 # pepr-excellent-examples#531
           path: pepr-excellent-examples
 
       - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"
@@ -137,7 +138,7 @@ jobs:
       matrix: ${{ fromJSON(needs.examples-matrix.outputs.matrix) }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -164,6 +165,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: defenseunicorns/pepr-excellent-examples
+          ref: bcb07160da0a06ae7a8e799c9e57d0c3f52d01f7 # pepr-excellent-examples#531
           path: pepr-excellent-examples
 
       - name: "set env: PEPR_EXCELLENT_EXAMPLES_PATH"

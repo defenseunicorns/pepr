@@ -5,15 +5,21 @@ version: 2
 updates:
   - package-ecosystem: npm # See documentation for possible values
     directory: "/" # Location of package manifests
+    # Version updates only; advisory-triggered security updates remain immediate.
     schedule:
       interval: cron
-      cronjob: "0 9 * * 2,5"
+      cronjob: "0 9 * * 2,4"
+      timezone: America/Chicago
     cooldown:
       default-days: 7
     commit-message:
       prefix: "deps"
       include: "scope"
     groups:
+      # Security fixes are created independently of version schedules/cooldowns.
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
       vitest:
         patterns:
           - "vitest"
@@ -71,18 +77,23 @@ updates:
         versions: ["10.2.1"]
       - dependency-name: "debug"
         versions: ["4.4.2"]
-      - dependency-name: "eslint"
-        versions: [">=10.0.0"]
   - package-ecosystem: github-actions
     directory: /
+    # Version updates only; advisory-triggered security updates remain immediate.
     schedule:
       interval: cron
-      cronjob: "0 9 * * 2,5"
+      cronjob: "0 9 * * 2,4"
+      timezone: America/Chicago
     cooldown:
       default-days: 7
     commit-message:
       prefix: "deps"
     groups:
+      # Batch routine updates; keep CodeQL major updates together below.
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       codeql-action:
         patterns:
           - "github/codeql-action"
@@ -92,11 +103,13 @@ updates:
     directories:
       - /
       - /config
+    # Docker security updates are unsupported; check daily, including weekends.
     schedule:
       interval: cron
-      cronjob: "0 9 * * 2,5"
+      cronjob: "0 9 * * *"
     cooldown:
-      default-days: 7
+      # Do not delay image refreshes that may contain security fixes.
+      exclude: ["*"]
     commit-message:
       prefix: "deps(docker)"
     registries:
