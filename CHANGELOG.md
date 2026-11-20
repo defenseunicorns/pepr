@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.9](https://github.com/defenseunicorns/pepr/compare/v2.0.8...v2.0.9) (2026-11-20)
+
+
+### Dependencies
+
+* **docker:** bump defenseunicorns.com/node in / ([#3473](https://github.com/defenseunicorns/pepr/issues/3473)) ([2c7999e](https://github.com/defenseunicorns/pepr/commit/2c7999eaed31eb173e2a7f21f63d8d984981a12e))
+
 ## [2.0.8](https://github.com/defenseunicorns/pepr/compare/v2.0.7...v2.0.8) (2026-11-19)
 
 
