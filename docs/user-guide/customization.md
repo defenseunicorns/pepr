@@ -59,9 +59,11 @@ The Watch configuration is a part of the Pepr module that allows you to watch fo
 | Field                          | Description                                                                                                        | Example Values                    |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
 | `PEPR_RESYNC_FAILURE_MAX`      | The maximum number of times to fail on a resync interval before re-establishing the watch URL and doing a relist.  | default: `"5"`                    |
-| `PEPR_RETRY_DELAY_SECONDS`     | The delay between retries in seconds.                                                                              | default: `"10"`                   |
+| `PEPR_RESYNC_DELAY_SECONDS`    | How often the watcher checks whether its watch connection needs to be re-established, in seconds.                    | default: `"5"`                    |
 | `PEPR_LAST_SEEN_LIMIT_SECONDS` | Max seconds to go without receiving a watch event before re-establishing the watch                                 | default: `"300"` (5 mins)         |
 | `PEPR_RELIST_INTERVAL_SECONDS` | Amount of seconds to wait before a relist of the watched resources                                                 | default: `"600"` (10 mins)        |
+
+When a reconciliation callback throws, the watch client leaves the object uncached or retains its previous resource version. A subsequent relist can retry reconciliation for that object. The watcher needs permission to list the watched resources for this recovery path to work. The relist interval controls how often the watcher refreshes its list of objects.
 
 ## Customizing Webhook Server Timeouts
 
